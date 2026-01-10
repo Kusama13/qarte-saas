@@ -72,41 +72,56 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchData = async () => {
+      console.log('Dashboard: Starting fetchData...');
       try {
+        console.log('Dashboard: Getting user...');
         const { data: { user }, error: authError } = await supabase.auth.getUser();
+        console.log('Dashboard: User result:', { user: !!user, error: authError });
 
         if (authError) {
           console.error('Auth error:', authError);
           setError('Erreur d\'authentification: ' + authError.message);
+          setLoading(false);
           return;
         }
 
         if (!user) {
+          console.log('Dashboard: No user, redirecting...');
           router.push('/auth/merchant');
+          setLoading(false);
           return;
         }
 
+      console.log('Dashboard: Getting merchant...');
       const { data: merchantData, error: merchantError } = await supabase
         .from('merchants')
         .select('*')
         .eq('user_id', user.id)
         .single();
+      console.log('Dashboard: Merchant result:', { merchant: !!merchantData, error: merchantError });
 
       if (merchantError) {
         console.error('Merchant error:', merchantError);
         setError('Erreur: ' + merchantError.message);
+        setLoading(false);
         return;
       }
 
       if (!merchantData) {
+        console.log('Dashboard: No merchant, redirecting...');
         router.push('/auth/merchant');
+        setLoading(false);
         return;
       }
 
       if (!merchantData.onboarding_completed) {
+        console.log('Dashboard: Onboarding not completed, redirecting...');
         router.push('/dashboard/setup');
+        setLoading(false);
         return;
       }
+
+      console.log('Dashboard: Loading stats...');
 
       setMerchant(merchantData);
 
