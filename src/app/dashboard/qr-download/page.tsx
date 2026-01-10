@@ -159,7 +159,7 @@ export default function QRDownloadPage() {
       const badgePadding = 18;
 
       pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
-      const rewardText = merchant.reward_description;
+      const rewardText = merchant.reward_description || 'Récompense';
       const stampsText = `apres ${merchant.stamps_required} passages`;
 
       // Calculer largeur basée sur la ligne la plus longue
