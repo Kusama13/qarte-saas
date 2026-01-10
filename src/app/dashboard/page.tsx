@@ -73,17 +73,30 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/auth/merchant');
-        return;
-      }
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-      const { data: merchantData } = await supabase
+        if (authError) {
+          console.error('Auth error:', authError);
+          setError('Erreur d\'authentification: ' + authError.message);
+          return;
+        }
+
+        if (!user) {
+          router.push('/auth/merchant');
+          return;
+        }
+
+      const { data: merchantData, error: merchantError } = await supabase
         .from('merchants')
         .select('*')
         .eq('user_id', user.id)
         .single();
+
+      if (merchantError) {
+        console.error('Merchant error:', merchantError);
+        setError('Erreur: ' + merchantError.message);
+        return;
+      }
 
       if (!merchantData) {
         router.push('/auth/merchant');

@@ -9,7 +9,10 @@
       "Bash(xargs kill:*)",
       "Bash(npx next dev:*)",
       "Bash(pkill:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
