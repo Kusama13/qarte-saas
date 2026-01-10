@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -20,7 +20,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { getDaysRemaining } from '@/lib/utils';
 import { cn } from '@/lib/utils';
-import type { Merchant } from '@/types';
+import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Accueil' },
@@ -31,52 +31,15 @@ const navItems = [
   { href: '/dashboard/settings', icon: Settings, label: 'Paramètres' },
 ];
 
-export default function DashboardLayout({
+function DashboardLayoutContent({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  console.log('DashboardLayout: Rendering');
   const router = useRouter();
   const pathname = usePathname();
-  const [merchant, setMerchant] = useState<Merchant | null>(null);
+  const { merchant, loading } = useMerchant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchMerchant = async () => {
-      console.log('DashboardLayout: fetchMerchant starting...');
-      try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        console.log('DashboardLayout: auth result', { user: !!user, error: authError });
-
-        if (authError || !user) {
-          console.log('DashboardLayout: No user, redirecting...');
-          router.push('/auth/merchant');
-          setLoading(false);
-          return;
-        }
-
-        const { data, error: merchantError } = await supabase
-          .from('merchants')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        console.log('DashboardLayout: merchant result', { merchant: !!data, error: merchantError });
-
-        if (data) {
-          setMerchant(data);
-        }
-      } catch (err) {
-        console.error('DashboardLayout: Error', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMerchant();
-  }, [router]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -220,5 +183,17 @@ export default function DashboardLayout({
         <div className="min-h-screen p-4 md:p-8">{children}</div>
       </main>
     </div>
+  );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <MerchantProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </MerchantProvider>
   );
 }

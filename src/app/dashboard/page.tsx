@@ -5,8 +5,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { formatDate, formatRelativeTime } from '@/lib/utils';
+import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
+import { useMerchant } from '@/contexts/MerchantContext';
 import {
   LineChart,
   Line,
@@ -16,7 +17,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import type { Merchant, LoyaltyCard } from '@/types';
 
 interface StatsCardProps {
   title: string;
@@ -52,9 +52,8 @@ function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
 }
 
 export default function DashboardPage() {
-  console.log('DashboardPage: Component rendering');
   const router = useRouter();
-  const [merchant, setMerchant] = useState<Merchant | null>(null);
+  const { merchant, loading: merchantLoading } = useMerchant();
   const [stats, setStats] = useState({
     totalCustomers: 0,
     activeCustomers: 0,
@@ -72,50 +71,21 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (merchantLoading) return;
+    if (!merchant) return;
+
+    if (!merchant.onboarding_completed) {
+      router.push('/dashboard/setup');
+      return;
+    }
+
     const fetchData = async () => {
-      console.log('Dashboard: Starting fetchData...');
       try {
-        console.log('Dashboard: Getting user...');
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        console.log('Dashboard: User result:', { user: !!user, error: authError });
-
-        if (authError || !user) {
-          // Le layout gère la redirection, on continue à attendre
-          console.log('Dashboard: No user, waiting for layout redirect...');
-          // Ne pas setLoading(false) - laisser le spinner
-          return;
-        }
-
-      console.log('Dashboard: Getting merchant...');
-      const { data: merchantData, error: merchantError } = await supabase
-        .from('merchants')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      console.log('Dashboard: Merchant result:', { merchant: !!merchantData, error: merchantError });
-
-      if (merchantError || !merchantData) {
-        // Le layout gère la redirection
-        console.log('Dashboard: No merchant, waiting for layout redirect...');
-        // Ne pas setLoading(false) - laisser le spinner
-        return;
-      }
-
-      if (!merchantData.onboarding_completed) {
-        console.log('Dashboard: Onboarding not completed, redirecting...');
-        router.push('/dashboard/setup');
-        setLoading(false);
-        return;
-      }
-
-      console.log('Dashboard: Loading stats...');
-
-      setMerchant(merchantData);
 
       const { count: totalCustomers } = await supabase
         .from('loyalty_cards')
         .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchantData.id);
+        .eq('merchant_id', merchant.id);
 
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -123,7 +93,7 @@ export default function DashboardPage() {
       const { count: activeCustomers } = await supabase
         .from('loyalty_cards')
         .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchantData.id)
+        .eq('merchant_id', merchant.id)
         .gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]);
 
       const firstDayOfMonth = new Date();
@@ -133,13 +103,13 @@ export default function DashboardPage() {
       const { count: visitsThisMonth } = await supabase
         .from('visits')
         .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchantData.id)
+        .eq('merchant_id', merchant.id)
         .gte('visited_at', firstDayOfMonth.toISOString());
 
       const { count: redemptionsThisMonth } = await supabase
         .from('redemptions')
         .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchantData.id)
+        .eq('merchant_id', merchant.id)
         .gte('redeemed_at', firstDayOfMonth.toISOString());
 
       setStats({
@@ -160,7 +130,7 @@ export default function DashboardPage() {
             last_name
           )
         `)
-        .eq('merchant_id', merchantData.id)
+        .eq('merchant_id', merchant.id)
         .order('updated_at', { ascending: false })
         .limit(5);
 
@@ -195,7 +165,7 @@ export default function DashboardPage() {
         const { count } = await supabase
           .from('visits')
           .select('*', { count: 'exact', head: true })
-          .eq('merchant_id', merchantData.id)
+          .eq('merchant_id', merchant.id)
           .gte('visited_at', startOfDay)
           .lte('visited_at', endOfDay);
 
@@ -213,9 +183,9 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, [router]);
+  }, [merchant, merchantLoading, router]);
 
-  if (loading) {
+  if (merchantLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
