@@ -29,8 +29,8 @@ export default function MerchantLoginPage() {
       }
 
       if (data?.session) {
-        // Redirection forcée avec window.location (plus fiable que router.push)
-        window.location.href = '/dashboard/setup';
+        // Redirection vers le dashboard (qui redirigera vers setup si nécessaire)
+        window.location.href = '/dashboard';
       }
     } catch (err: any) {
       console.error('Erreur de connexion:', err);

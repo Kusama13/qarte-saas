@@ -100,7 +100,8 @@ export default function MerchantSignupPage() {
           return;
         }
 
-        router.push('/dashboard/setup');
+        // Redirection vers le dashboard (qui redirigera vers setup si nécessaire)
+        window.location.href = '/dashboard';
       }
     } catch {
       setError('Une erreur est survenue. Veuillez réessayer.');
