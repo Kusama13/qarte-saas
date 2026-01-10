@@ -17,7 +17,7 @@ import {
   AlertTriangle,
   HelpCircle,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { getDaysRemaining } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
@@ -38,6 +38,7 @@ function DashboardLayoutContent({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const supabase = createClientComponentClient();
   const { merchant, loading } = useMerchant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

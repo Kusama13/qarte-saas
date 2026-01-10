@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Merchant } from '@/types';
 
 interface MerchantContextType {
@@ -15,6 +15,7 @@ const MerchantContext = createContext<MerchantContextType | undefined>(undefined
 
 export function MerchantProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
 

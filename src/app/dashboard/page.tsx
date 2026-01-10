@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -53,6 +53,7 @@ function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const { merchant, loading: merchantLoading } = useMerchant();
   const [stats, setStats] = useState({
     totalCustomers: 0,
