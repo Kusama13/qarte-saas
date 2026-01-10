@@ -149,12 +149,15 @@ export default function DashboardPage() {
 
       if (recentCards) {
         setRecentCustomers(
-          recentCards.map((card: LoyaltyCard & { customer: { first_name: string; last_name: string } }) => ({
-            id: card.id,
-            name: `${card.customer?.first_name || ''} ${card.customer?.last_name || ''}`.trim() || 'Client',
-            stamps: card.current_stamps,
-            lastVisit: card.last_visit_date || '',
-          }))
+          recentCards.map((card) => {
+            const customer = Array.isArray(card.customer) ? card.customer[0] : card.customer;
+            return {
+              id: card.id,
+              name: `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Client',
+              stamps: card.current_stamps,
+              lastVisit: card.last_visit_date || '',
+            };
+          })
         );
       }
 
