@@ -15,7 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Button, Input, Textarea } from '@/components/ui';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import type { Merchant } from '@/types';
 
 const UNSPLASH_IMAGES = [
@@ -29,6 +29,7 @@ const UNSPLASH_IMAGES = [
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -394,35 +395,43 @@ export default function OnboardingPage() {
               </div>
             )}
 
-            <div className="flex gap-4">
-              {currentStep > 1 && (
-                <Button
-                  variant="outline"
-                  onClick={() => setCurrentStep(currentStep - 1)}
-                >
-                  <ArrowLeft className="w-5 h-5 mr-2" />
-                  Retour
-                </Button>
-              )}
-              {currentStep < 2 ? (
-                <Button
-                  onClick={() => setCurrentStep(currentStep + 1)}
-                  className="flex-1"
-                >
-                  Continuer
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleSave}
-                  loading={loading}
-                  className="flex-1"
-                  disabled={!formData.rewardDescription}
-                >
-                  Générer mon QR code
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              )}
+            <div className="flex flex-col gap-3">
+              <div className="flex gap-4">
+                {currentStep > 1 && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentStep(currentStep - 1)}
+                  >
+                    <ArrowLeft className="w-5 h-5 mr-2" />
+                    Retour
+                  </Button>
+                )}
+                {currentStep < 2 ? (
+                  <Button
+                    onClick={() => setCurrentStep(currentStep + 1)}
+                    className="flex-1"
+                  >
+                    Continuer
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleSave}
+                    loading={loading}
+                    className="flex-1"
+                    disabled={!formData.rewardDescription}
+                  >
+                    Générer mon QR code
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                )}
+              </div>
+              <Link
+                href="/dashboard"
+                className="text-center text-sm text-gray-500 hover:text-primary transition-colors"
+              >
+                Revenir au tableau de bord
+              </Link>
             </div>
           </div>
 
