@@ -80,9 +80,9 @@ export default function DashboardPage() {
         console.log('Dashboard: User result:', { user: !!user, error: authError });
 
         if (authError || !user) {
-          // Le layout gère la redirection, on attend juste
-          console.log('Dashboard: No user, layout will redirect...');
-          setLoading(false);
+          // Le layout gère la redirection, on continue à attendre
+          console.log('Dashboard: No user, waiting for layout redirect...');
+          // Ne pas setLoading(false) - laisser le spinner
           return;
         }
 
@@ -96,8 +96,8 @@ export default function DashboardPage() {
 
       if (merchantError || !merchantData) {
         // Le layout gère la redirection
-        console.log('Dashboard: No merchant, layout will redirect...');
-        setLoading(false);
+        console.log('Dashboard: No merchant, waiting for layout redirect...');
+        // Ne pas setLoading(false) - laisser le spinner
         return;
       }
 
