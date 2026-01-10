@@ -52,6 +52,7 @@ function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
 }
 
 export default function DashboardPage() {
+  console.log('DashboardPage: Component rendering');
   const router = useRouter();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [stats, setStats] = useState({
