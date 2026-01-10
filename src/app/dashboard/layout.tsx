@@ -36,6 +36,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  console.log('DashboardLayout: Rendering');
   const router = useRouter();
   const pathname = usePathname();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
@@ -44,22 +45,34 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const fetchMerchant = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/auth/merchant');
-        return;
-      }
+      console.log('DashboardLayout: fetchMerchant starting...');
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        console.log('DashboardLayout: auth result', { user: !!user, error: authError });
 
-      const { data } = await supabase
-        .from('merchants')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+        if (authError || !user) {
+          console.log('DashboardLayout: No user, redirecting...');
+          router.push('/auth/merchant');
+          setLoading(false);
+          return;
+        }
 
-      if (data) {
-        setMerchant(data);
+        const { data, error: merchantError } = await supabase
+          .from('merchants')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        console.log('DashboardLayout: merchant result', { merchant: !!data, error: merchantError });
+
+        if (data) {
+          setMerchant(data);
+        }
+      } catch (err) {
+        console.error('DashboardLayout: Error', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchMerchant();
