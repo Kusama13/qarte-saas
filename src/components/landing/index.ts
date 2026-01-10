@@ -1,0 +1,10 @@
+export { HeroSection } from './HeroSection';
+export { ProblemSection } from './ProblemSection';
+export { HowItWorks } from './HowItWorks';
+export { FeaturesSection } from './FeaturesSection';
+export { IndustriesSection } from './IndustriesSection';
+export { TestimonialsSection } from './TestimonialsSection';
+export { PricingSection } from './PricingSection';
+export { FAQSection } from './FAQSection';
+export { CTABanner } from './CTABanner';
+export { FloatingButton } from './FloatingButton';
