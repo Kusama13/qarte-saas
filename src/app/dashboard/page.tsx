@@ -79,16 +79,9 @@ export default function DashboardPage() {
         const { data: { user }, error: authError } = await supabase.auth.getUser();
         console.log('Dashboard: User result:', { user: !!user, error: authError });
 
-        if (authError) {
-          console.error('Auth error:', authError);
-          setError('Erreur d\'authentification: ' + authError.message);
-          setLoading(false);
-          return;
-        }
-
-        if (!user) {
-          console.log('Dashboard: No user, redirecting...');
-          router.push('/auth/merchant');
+        if (authError || !user) {
+          // Le layout gère la redirection, on attend juste
+          console.log('Dashboard: No user, layout will redirect...');
           setLoading(false);
           return;
         }
@@ -101,16 +94,9 @@ export default function DashboardPage() {
         .single();
       console.log('Dashboard: Merchant result:', { merchant: !!merchantData, error: merchantError });
 
-      if (merchantError) {
-        console.error('Merchant error:', merchantError);
-        setError('Erreur: ' + merchantError.message);
-        setLoading(false);
-        return;
-      }
-
-      if (!merchantData) {
-        console.log('Dashboard: No merchant, redirecting...');
-        router.push('/auth/merchant');
+      if (merchantError || !merchantData) {
+        // Le layout gère la redirection
+        console.log('Dashboard: No merchant, layout will redirect...');
         setLoading(false);
         return;
       }
@@ -242,6 +228,14 @@ export default function DashboardPage() {
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <p className="text-red-600 mb-4">{error}</p>
         <Button onClick={() => window.location.reload()}>Réessayer</Button>
+      </div>
+    );
+  }
+
+  if (!merchant) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
