@@ -68,10 +68,12 @@ export default function DashboardPage() {
   }>>([]);
   const [chartData, setChartData] = useState<Array<{ date: string; visits: number }>>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         router.push('/auth/merchant');
         return;
@@ -187,8 +189,12 @@ export default function DashboardPage() {
 
       const chartResults = await Promise.all(chartPromises);
       setChartData(chartResults);
-
-      setLoading(false);
+      } catch (err) {
+        console.error('Dashboard error:', err);
+        setError('Erreur lors du chargement des données');
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
@@ -198,6 +204,15 @@ export default function DashboardPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()}>Réessayer</Button>
       </div>
     );
   }
