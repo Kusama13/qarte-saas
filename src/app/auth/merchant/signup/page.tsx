@@ -70,9 +70,16 @@ export default function MerchantSignupPage() {
     }
 
     try {
+      const redirectUrl = typeof window !== 'undefined'
+        ? `${window.location.origin}/auth/callback`
+        : '/auth/callback';
+
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          emailRedirectTo: redirectUrl,
+        },
       });
 
       if (signUpError) {
