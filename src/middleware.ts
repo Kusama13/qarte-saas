@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const protectedRoutes = ['/dashboard'];
+const adminRoutes = ['/admin'];
 const authRoutes = ['/auth/merchant', '/auth/merchant/signup'];
 
 export async function middleware(request: NextRequest) {
@@ -19,12 +20,34 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith(route)
   );
 
+  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
+
   const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
 
+  // Protection des routes dashboard
   if (isProtectedRoute && !session) {
     const redirectUrl = new URL('/auth/merchant', request.url);
     redirectUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(redirectUrl);
+  }
+
+  // Protection des routes admin
+  if (isAdminRoute) {
+    if (!session) {
+      return NextResponse.redirect(new URL('/auth/merchant', request.url));
+    }
+
+    // Vérifier si l'utilisateur est super admin
+    const { data: superAdmin } = await supabase
+      .from('super_admins')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (!superAdmin) {
+      // Connecté mais pas super admin → rediriger vers le dashboard normal
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
   }
 
   if (isAuthRoute && session) {
@@ -37,6 +60,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
+    '/admin/:path*',
     '/auth/merchant',
     '/auth/merchant/signup',
   ],
