@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
+import { sendWelcomeEmail } from '@/lib/email';
 
 // Client avec service role (bypass RLS)
 const supabaseAdmin = createClient(
@@ -49,6 +50,14 @@ export async function POST(request: NextRequest) {
         { error: error.message },
         { status: 500 }
       );
+    }
+
+    // Récupérer l'email de l'utilisateur et envoyer l'email de bienvenue
+    const { data: userData } = await supabaseAdmin.auth.admin.getUserById(user_id);
+    if (userData?.user?.email) {
+      sendWelcomeEmail(userData.user.email, shop_name).catch((err) => {
+        logger.error('Failed to send welcome email', err);
+      });
     }
 
     return NextResponse.json({ merchant: data });

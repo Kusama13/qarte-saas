@@ -3,6 +3,7 @@ import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
+import { sendSubscriptionConfirmedEmail } from '@/lib/email';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,7 +37,8 @@ export async function POST(request: Request) {
 
       logger.debug('Activating subscription for merchant:', merchantId);
 
-      await supabase
+      // Mettre à jour le statut
+      const { data: merchant } = await supabase
         .from('merchants')
         .update({
           subscription_status: 'active',
@@ -44,7 +46,19 @@ export async function POST(request: Request) {
           stripe_subscription_id: session.subscription as string,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', merchantId);
+        .eq('id', merchantId)
+        .select('shop_name, user_id')
+        .single();
+
+      // Envoyer l'email de confirmation
+      if (merchant) {
+        const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+        if (userData?.user?.email) {
+          sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name).catch((err) => {
+            logger.error('Failed to send subscription email', err);
+          });
+        }
+      }
 
       break;
     }
