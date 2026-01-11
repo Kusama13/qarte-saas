@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Store,
   BarChart3,
+  Euro,
   ArrowLeft,
   Menu,
   X,
@@ -20,6 +21,7 @@ const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/merchants', icon: Store, label: 'Commerçants' },
   { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
+  { href: '/admin/revenus', icon: Euro, label: 'Revenus' },
 ];
 
 export default function AdminLayout({
