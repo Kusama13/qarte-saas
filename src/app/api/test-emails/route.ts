@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { resend, EMAIL_FROM, EMAIL_REPLY_TO } from '@/lib/resend';
+import {
+  sendWelcomeEmail,
+  sendTrialEndingEmail,
+  sendTrialExpiredEmail,
+  sendSubscriptionConfirmedEmail,
+} from '@/lib/email';
 
 // Route de test - À SUPPRIMER EN PRODUCTION
 export async function POST(request: NextRequest) {
+  // Vérifier l'authentification admin
+  const authHeader = request.headers.get('authorization');
+  const adminToken = process.env.ADMIN_SECRET_TOKEN;
+
+  if (adminToken && authHeader !== `Bearer ${adminToken}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { email } = await request.json();
 
@@ -10,57 +23,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email requis' }, { status: 400 });
     }
 
-    // Debug info
-    const debug = {
-      hasResend: !!resend,
-      hasApiKey: !!process.env.RESEND_API_KEY,
-      apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 6) || 'none',
-      emailFrom: EMAIL_FROM,
-      emailReplyTo: EMAIL_REPLY_TO,
-    };
+    const results = [];
 
-    if (!resend) {
-      return NextResponse.json({
-        success: false,
-        error: 'Resend not configured',
-        debug,
-      });
-    }
+    // 1. Email de bienvenue
+    const welcome = await sendWelcomeEmail(email, 'Boulangerie Test');
+    results.push({ type: 'welcome', ...welcome });
 
-    // Test avec HTML simple (sans React Email)
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-        </head>
-        <body style="font-family: sans-serif; padding: 20px;">
-          <h1 style="color: #654EDA;">Test Qarte</h1>
-          <p>Ceci est un email de test pour vérifier que Resend fonctionne correctement.</p>
-          <p>Si vous recevez cet email, la configuration est correcte !</p>
-        </body>
-      </html>
-    `;
+    // 2. Email fin d'essai (3 jours)
+    const trialEnding3 = await sendTrialEndingEmail(email, 'Boulangerie Test', 3);
+    results.push({ type: 'trial_ending_3days', ...trialEnding3 });
 
-    const { data, error } = await resend.emails.send({
-      from: EMAIL_FROM,
-      to: email,
-      replyTo: EMAIL_REPLY_TO,
-      subject: 'Test Qarte - Verification',
-      html,
-    });
+    // 3. Email fin d'essai (1 jour - urgent)
+    const trialEnding1 = await sendTrialEndingEmail(email, 'Boulangerie Test', 1);
+    results.push({ type: 'trial_ending_1day', ...trialEnding1 });
+
+    // 4. Email essai expiré (5 jours avant suppression)
+    const trialExpired = await sendTrialExpiredEmail(email, 'Boulangerie Test', 5);
+    results.push({ type: 'trial_expired', ...trialExpired });
+
+    // 5. Email confirmation abonnement
+    const subscription = await sendSubscriptionConfirmedEmail(email, 'Boulangerie Test');
+    results.push({ type: 'subscription_confirmed', ...subscription });
+
+    const successCount = results.filter(r => r.success).length;
 
     return NextResponse.json({
-      success: !error,
-      data,
-      error: error ? { name: error.name, message: error.message } : null,
-      debug,
+      success: successCount === results.length,
+      message: `${successCount}/${results.length} emails envoyés à ${email}`,
+      results,
     });
   } catch (error) {
     return NextResponse.json({
       error: 'Erreur serveur',
-      details: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 });
   }
 }
