@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  sendWelcomeEmail,
-  sendTrialEndingEmail,
-  sendTrialExpiredEmail,
-  sendSubscriptionConfirmedEmail,
-} from '@/lib/email';
+import { resend, EMAIL_FROM, EMAIL_REPLY_TO } from '@/lib/resend';
+import { WelcomeEmail } from '@/emails';
 
 // Route de test - À SUPPRIMER EN PRODUCTION
 export async function POST(request: NextRequest) {
@@ -16,37 +12,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Email requis' }, { status: 400 });
     }
 
-    const results = [];
+    // Debug info
+    const debug = {
+      hasResend: !!resend,
+      hasApiKey: !!process.env.RESEND_API_KEY,
+      apiKeyPrefix: process.env.RESEND_API_KEY?.substring(0, 6) || 'none',
+      emailFrom: EMAIL_FROM,
+      emailReplyTo: EMAIL_REPLY_TO,
+    };
 
-    // 1. Email de bienvenue
-    const welcome = await sendWelcomeEmail(email, 'Boulangerie Test');
-    results.push({ type: 'welcome', ...welcome });
+    if (!resend) {
+      return NextResponse.json({
+        success: false,
+        error: 'Resend not configured',
+        debug,
+      });
+    }
 
-    // 2. Email fin d'essai (3 jours)
-    const trialEnding3 = await sendTrialEndingEmail(email, 'Boulangerie Test', 3);
-    results.push({ type: 'trial_ending_3days', ...trialEnding3 });
-
-    // 3. Email fin d'essai (1 jour - urgent)
-    const trialEnding1 = await sendTrialEndingEmail(email, 'Boulangerie Test', 1);
-    results.push({ type: 'trial_ending_1day', ...trialEnding1 });
-
-    // 4. Email essai expiré (5 jours avant suppression)
-    const trialExpired = await sendTrialExpiredEmail(email, 'Boulangerie Test', 5);
-    results.push({ type: 'trial_expired', ...trialExpired });
-
-    // 5. Email confirmation abonnement
-    const subscription = await sendSubscriptionConfirmedEmail(email, 'Boulangerie Test');
-    results.push({ type: 'subscription_confirmed', ...subscription });
+    // Test simple avec un seul email
+    const { data, error } = await resend.emails.send({
+      from: EMAIL_FROM,
+      to: email,
+      replyTo: EMAIL_REPLY_TO,
+      subject: 'Test Qarte',
+      react: WelcomeEmail({ shopName: 'Boulangerie Test' }),
+    });
 
     return NextResponse.json({
-      success: true,
-      message: `5 emails envoyés à ${email}`,
-      results,
+      success: !error,
+      data,
+      error: error ? { name: error.name, message: error.message } : null,
+      debug,
     });
   } catch (error) {
     return NextResponse.json({
       error: 'Erreur serveur',
-      details: error instanceof Error ? error.message : 'Unknown error'
+      details: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
     }, { status: 500 });
   }
 }

@@ -45,7 +45,7 @@ export async function sendWelcomeEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending welcome email', error);
-    return { success: false, error: 'Failed to send email' };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }
 
@@ -80,7 +80,7 @@ export async function sendTrialEndingEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending trial ending email', error);
-    return { success: false, error: 'Failed to send email' };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }
 
@@ -111,7 +111,7 @@ export async function sendTrialExpiredEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending trial expired email', error);
-    return { success: false, error: 'Failed to send email' };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }
 
@@ -141,6 +141,6 @@ export async function sendSubscriptionConfirmedEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending subscription confirmed email', error);
-    return { success: false, error: 'Failed to send email' };
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }
