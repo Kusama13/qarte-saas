@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import logger from '@/lib/logger';
+import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 
 // Client avec service role (bypass RLS)
 const supabaseAdmin = createClient(
@@ -10,6 +11,15 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 3 créations par heure par IP
+    const ip = getClientIP(request);
+    const rateLimit = checkRateLimit(`merchant-create:${ip}`, RATE_LIMITS.signup);
+
+    if (!rateLimit.success) {
+      logger.warn(`Rate limit exceeded for merchant creation: ${ip}`);
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const body = await request.json();
     const { user_id, slug, shop_name, shop_type, shop_address, phone } = body;
 

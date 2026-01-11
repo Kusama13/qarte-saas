@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
 import { validateEmail } from '@/lib/utils';
 import { z } from 'zod';
+import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
+import logger from '@/lib/logger';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -12,6 +14,15 @@ const contactSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 5 messages par heure par IP
+    const ip = getClientIP(request);
+    const rateLimit = checkRateLimit(`contact:${ip}`, RATE_LIMITS.contact);
+
+    if (!rateLimit.success) {
+      logger.warn(`Rate limit exceeded for contact: ${ip}`);
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const body = await request.json();
     const parsed = contactSchema.safeParse(body);
 
@@ -48,7 +59,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error('Contact insert error:', error);
+      logger.error('Contact insert error:', error);
       return NextResponse.json(
         { error: 'Erreur lors de l\'envoi du message' },
         { status: 500 }
@@ -60,7 +71,7 @@ export async function POST(request: NextRequest) {
       message: 'Votre message a été envoyé avec succès',
     });
   } catch (error) {
-    console.error('Contact error:', error);
+    logger.error('Contact error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }
