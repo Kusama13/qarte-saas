@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import { ArrowLeft, CreditCard } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Politique de Confidentialité | Qarte',
+  description: 'Découvrez comment Qarte protège vos données personnelles. Notre politique de confidentialité détaille la collecte et l\'utilisation de vos informations.',
+};
 
 export default function PrivacyPolicyPage() {
   return (

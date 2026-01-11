@@ -1,0 +1,23 @@
+# Robots.txt for Qarte
+# https://qarte.app
+
+User-agent: *
+Allow: /
+
+# Disallow private/admin areas
+Disallow: /dashboard/
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /api/
+Disallow: /customer/
+
+# Allow public pages
+Allow: /
+Allow: /pricing
+Allow: /contact
+Allow: /cgv
+Allow: /mentions-legales
+Allow: /politique-confidentialite
+
+# Sitemap
+Sitemap: https://qarte.app/sitemap.xml

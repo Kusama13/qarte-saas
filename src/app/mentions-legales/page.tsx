@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import { ArrowLeft, CreditCard } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Mentions Légales | Qarte',
+  description: 'Mentions légales de Qarte, la solution de fidélité digitale pour les commerçants indépendants.',
+};
 
 export default function LegalMentionsPage() {
   return (

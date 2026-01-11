@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import logger from '@/lib/logger';
 
 export async function POST(request: Request) {
   try {
@@ -7,7 +8,7 @@ export async function POST(request: Request) {
     const adminSecretCode = process.env.ADMIN_SECRET_CODE;
 
     if (!adminSecretCode) {
-      console.error('ADMIN_SECRET_CODE not configured');
+      logger.error('ADMIN_SECRET_CODE not configured');
       return NextResponse.json(
         { error: 'Configuration error' },
         { status: 500 }
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Admin auth error:', error);
+    logger.error('Admin auth error', error);
     return NextResponse.json(
       { error: 'Server error' },
       { status: 500 }

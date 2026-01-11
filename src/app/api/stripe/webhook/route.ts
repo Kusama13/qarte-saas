@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
+import logger from '@/lib/logger';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,19 +22,19 @@ export async function POST(request: Request) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message);
+  } catch (err) {
+    logger.error('Webhook signature verification failed', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  console.log('Webhook event:', event.type);
+  logger.debug('Webhook event:', event.type);
 
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object;
       const merchantId = session.metadata?.merchant_id;
 
-      console.log('Activating subscription for merchant:', merchantId);
+      logger.debug('Activating subscription for merchant:', merchantId);
 
       await supabase
         .from('merchants')
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
     case 'customer.subscription.deleted': {
       const subscription = event.data.object;
 
-      console.log('Canceling subscription:', subscription.id);
+      logger.debug('Canceling subscription:', subscription.id);
 
       await supabase
         .from('merchants')
@@ -67,7 +68,7 @@ export async function POST(request: Request) {
     case 'invoice.payment_failed': {
       const invoice = event.data.object;
 
-      console.log('Payment failed for customer:', invoice.customer);
+      logger.debug('Payment failed for customer:', invoice.customer);
 
       await supabase
         .from('merchants')

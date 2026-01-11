@@ -1,5 +1,11 @@
 import Link from 'next/link';
 import { ArrowLeft, CreditCard } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Conditions Générales de Vente | Qarte',
+  description: 'Consultez les conditions générales de vente de Qarte, la solution de fidélité digitale pour commerçants.',
+};
 
 export default function CGVPage() {
   return (
