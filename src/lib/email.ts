@@ -1,4 +1,11 @@
 import { resend, EMAIL_FROM, EMAIL_REPLY_TO } from './resend';
+
+function checkResend() {
+  if (!resend) {
+    return { success: false, error: 'RESEND_API_KEY not configured' };
+  }
+  return null;
+}
 import {
   WelcomeEmail,
   TrialEndingEmail,
@@ -17,8 +24,11 @@ export async function sendWelcomeEmail(
   to: string,
   shopName: string
 ): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
@@ -45,12 +55,15 @@ export async function sendTrialEndingEmail(
   shopName: string,
   daysRemaining: number
 ): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
   try {
     const subject = daysRemaining <= 1
       ? `⏰ Dernier jour d'essai, ${shopName} !`
       : `Votre essai Qarte se termine dans ${daysRemaining} jours`;
 
-    const { error } = await resend.emails.send({
+    const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
@@ -77,8 +90,11 @@ export async function sendTrialExpiredEmail(
   shopName: string,
   daysUntilDeletion: number
 ): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
@@ -104,8 +120,11 @@ export async function sendSubscriptionConfirmedEmail(
   to: string,
   shopName: string
 ): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
