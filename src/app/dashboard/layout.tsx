@@ -44,7 +44,7 @@ function DashboardLayoutContent({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/auth/merchant');
+    window.location.href = '/auth/merchant';
   };
 
   const daysRemaining = merchant?.trial_ends_at
