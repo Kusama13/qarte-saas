@@ -10,10 +10,13 @@ import {
 export async function POST(request: NextRequest) {
   // Seulement en développement ou avec clé secrète
   const authHeader = request.headers.get('authorization');
-  const testSecret = process.env.CRON_SECRET;
+  const testSecret = process.env.CRON_SECRET?.trim();
 
-  if (testSecret && authHeader !== `Bearer ${testSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (testSecret) {
+    const providedToken = authHeader?.replace('Bearer ', '').trim();
+    if (providedToken !== testSecret) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
   }
 
   try {
