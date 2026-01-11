@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Shield, Mail, Lock, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Shield, Mail, Lock, AlertCircle, ArrowLeft, Key } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui';
 
@@ -12,6 +12,7 @@ export default function AdminLoginPage() {
   const supabase = createClientComponentClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [secretCode, setSecretCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,7 +22,19 @@ export default function AdminLoginPage() {
     setError(null);
 
     try {
-      // 1. Authentification
+      // 1. Vérifier le code secret
+      const secretResponse = await fetch('/api/auth/admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secretCode }),
+      });
+
+      if (!secretResponse.ok) {
+        setError('Code secret incorrect');
+        return;
+      }
+
+      // 2. Authentification
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -41,7 +54,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // 2. Vérifier si l'utilisateur est super admin
+      // 3. Vérifier si l'utilisateur est super admin
       const { data: superAdmin, error: superAdminError } = await supabase
         .from('super_admins')
         .select('id')
@@ -55,7 +68,7 @@ export default function AdminLoginPage() {
         return;
       }
 
-      // 3. Rediriger vers le dashboard admin
+      // 4. Rediriger vers le dashboard admin
       router.push('/admin');
       router.refresh();
     } catch (err) {
@@ -126,6 +139,23 @@ export default function AdminLoginPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Code secret admin
+              </label>
+              <div className="relative">
+                <Key className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="password"
+                  value={secretCode}
+                  onChange={(e) => setSecretCode(e.target.value)}
                   placeholder="••••••••"
                   required
                   className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
