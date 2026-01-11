@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resend, EMAIL_FROM, EMAIL_REPLY_TO } from '@/lib/resend';
-import { render } from '@react-email/render';
-import { WelcomeEmail } from '@/emails';
 
 // Route de test - À SUPPRIMER EN PRODUCTION
 export async function POST(request: NextRequest) {
-  // Auth désactivée temporairement pour test
   try {
     const { email } = await request.json();
 
@@ -30,15 +27,26 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Render email to HTML
-    const html = await render(WelcomeEmail({ shopName: 'Boulangerie Test' }));
+    // Test avec HTML simple (sans React Email)
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+        </head>
+        <body style="font-family: sans-serif; padding: 20px;">
+          <h1 style="color: #654EDA;">Test Qarte</h1>
+          <p>Ceci est un email de test pour vérifier que Resend fonctionne correctement.</p>
+          <p>Si vous recevez cet email, la configuration est correcte !</p>
+        </body>
+      </html>
+    `;
 
-    // Test simple avec un seul email
     const { data, error } = await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
       replyTo: EMAIL_REPLY_TO,
-      subject: 'Test Qarte - Bienvenue',
+      subject: 'Test Qarte - Verification',
       html,
     });
 
