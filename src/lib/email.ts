@@ -1,11 +1,5 @@
 import { resend, EMAIL_FROM, EMAIL_REPLY_TO } from './resend';
-
-function checkResend() {
-  if (!resend) {
-    return { success: false, error: 'RESEND_API_KEY not configured' };
-  }
-  return null;
-}
+import { render } from '@react-email/render';
 import {
   WelcomeEmail,
   TrialEndingEmail,
@@ -13,6 +7,13 @@ import {
   SubscriptionConfirmedEmail,
 } from '@/emails';
 import logger from './logger';
+
+function checkResend() {
+  if (!resend) {
+    return { success: false, error: 'RESEND_API_KEY not configured' };
+  }
+  return null;
+}
 
 interface SendEmailResult {
   success: boolean;
@@ -28,12 +29,14 @@ export async function sendWelcomeEmail(
   if (check) return check;
 
   try {
+    const html = await render(WelcomeEmail({ shopName }));
+
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
       subject: `Bienvenue sur Qarte, ${shopName} !`,
-      react: WelcomeEmail({ shopName }),
+      html,
     });
 
     if (error) {
@@ -63,12 +66,14 @@ export async function sendTrialEndingEmail(
       ? `⏰ Dernier jour d'essai, ${shopName} !`
       : `Votre essai Qarte se termine dans ${daysRemaining} jours`;
 
+    const html = await render(TrialEndingEmail({ shopName, daysRemaining }));
+
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
       subject,
-      react: TrialEndingEmail({ shopName, daysRemaining }),
+      html,
     });
 
     if (error) {
@@ -94,12 +99,14 @@ export async function sendTrialExpiredEmail(
   if (check) return check;
 
   try {
+    const html = await render(TrialExpiredEmail({ shopName, daysUntilDeletion }));
+
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
       subject: `⚠️ Urgent : Vos données seront supprimées dans ${daysUntilDeletion} jours`,
-      react: TrialExpiredEmail({ shopName, daysUntilDeletion }),
+      html,
     });
 
     if (error) {
@@ -124,12 +131,14 @@ export async function sendSubscriptionConfirmedEmail(
   if (check) return check;
 
   try {
+    const html = await render(SubscriptionConfirmedEmail({ shopName }));
+
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
       subject: '🎉 Votre abonnement Qarte est activé !',
-      react: SubscriptionConfirmedEmail({ shopName }),
+      html,
     });
 
     if (error) {

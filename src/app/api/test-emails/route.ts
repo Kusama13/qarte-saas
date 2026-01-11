@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { resend, EMAIL_FROM, EMAIL_REPLY_TO } from '@/lib/resend';
+import { render } from '@react-email/render';
 import { WelcomeEmail } from '@/emails';
 
 // Route de test - À SUPPRIMER EN PRODUCTION
@@ -29,13 +30,16 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Render email to HTML
+    const html = await render(WelcomeEmail({ shopName: 'Boulangerie Test' }));
+
     // Test simple avec un seul email
     const { data, error } = await resend.emails.send({
       from: EMAIL_FROM,
       to: email,
       replyTo: EMAIL_REPLY_TO,
-      subject: 'Test Qarte',
-      react: WelcomeEmail({ shopName: 'Boulangerie Test' }),
+      subject: 'Test Qarte - Bienvenue',
+      html,
     });
 
     return NextResponse.json({
