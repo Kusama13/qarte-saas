@@ -110,8 +110,8 @@ export default function MerchantSignupPage() {
           return;
         }
 
-        // Redirection vers le dashboard (qui redirigera vers setup si nécessaire)
-        window.location.href = '/dashboard';
+        // Redirection vers la page de vérification email
+        window.location.href = `/auth/merchant/verify-email?email=${encodeURIComponent(formData.email)}`;
       }
     } catch {
       setError('Une erreur est survenue. Veuillez réessayer.');
