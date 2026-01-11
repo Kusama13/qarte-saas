@@ -12,6 +12,6 @@ export async function GET(request: Request) {
     await supabase.auth.exchangeCodeForSession(code);
   }
 
-  // Rediriger vers la page de connexion avec un message de succès
-  return NextResponse.redirect(new URL('/auth/merchant?verified=true', requestUrl.origin));
+  // Rediriger vers le dashboard (qui redirigera vers setup si nécessaire)
+  return NextResponse.redirect(new URL('/dashboard', requestUrl.origin));
 }
