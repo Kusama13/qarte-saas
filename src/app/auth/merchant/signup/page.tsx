@@ -88,18 +88,25 @@ export default function MerchantSignupPage() {
       if (authData.user) {
         const slug = generateSlug(formData.shopName);
 
-        const { error: merchantError } = await supabase.from('merchants').insert({
-          user_id: authData.user.id,
-          slug,
-          shop_name: formData.shopName,
-          shop_type: formData.shopType,
-          shop_address: formData.shopAddress || null,
-          phone: formData.phone,
+        // Utiliser l'API route pour créer le marchand (bypass RLS)
+        const response = await fetch('/api/merchants/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: authData.user.id,
+            slug,
+            shop_name: formData.shopName,
+            shop_type: formData.shopType,
+            shop_address: formData.shopAddress || null,
+            phone: formData.phone,
+          }),
         });
 
-        if (merchantError) {
-          console.error('Merchant creation error:', merchantError);
-          setError('Erreur lors de la création du profil: ' + merchantError.message);
+        const result = await response.json();
+
+        if (!response.ok) {
+          console.error('Merchant creation error:', result.error);
+          setError('Erreur lors de la création du profil: ' + result.error);
           return;
         }
 
