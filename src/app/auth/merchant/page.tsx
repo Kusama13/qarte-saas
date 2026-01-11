@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import { CheckCircle2, CreditCard } from 'lucide-react';
 
-export default function MerchantLoginPage() {
+function MerchantLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClientComponentClient();
@@ -143,5 +143,17 @@ export default function MerchantLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MerchantLoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <MerchantLoginContent />
+    </Suspense>
   );
 }
