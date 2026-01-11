@@ -8,17 +8,7 @@ import {
 
 // Route de test - À SUPPRIMER EN PRODUCTION
 export async function POST(request: NextRequest) {
-  // Seulement en développement ou avec clé secrète
-  const authHeader = request.headers.get('authorization');
-  const testSecret = process.env.CRON_SECRET?.trim();
-
-  if (testSecret) {
-    const providedToken = authHeader?.replace('Bearer ', '').trim();
-    if (providedToken !== testSecret) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-  }
-
+  // Auth désactivée temporairement pour test
   try {
     const { email } = await request.json();
 
