@@ -16,7 +16,7 @@ import {
   Check,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
-import { supabase } from '@/lib/supabase';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { generateSlug, validateFrenchPhone, validateEmail } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType } from '@/types';
 
@@ -27,6 +27,7 @@ const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
 
 export default function MerchantSignupPage() {
   const router = useRouter();
+  const supabase = createClientComponentClient();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -75,10 +76,11 @@ export default function MerchantSignupPage() {
       });
 
       if (signUpError) {
+        console.error('Signup error:', signUpError);
         if (signUpError.message.includes('already registered')) {
           setError('Cet email est déjà utilisé');
         } else {
-          setError('Erreur lors de la création du compte');
+          setError('Erreur lors de la création du compte: ' + signUpError.message);
         }
         return;
       }
@@ -96,7 +98,8 @@ export default function MerchantSignupPage() {
         });
 
         if (merchantError) {
-          setError('Erreur lors de la création du profil commerçant');
+          console.error('Merchant creation error:', merchantError);
+          setError('Erreur lors de la création du profil: ' + merchantError.message);
           return;
         }
 
