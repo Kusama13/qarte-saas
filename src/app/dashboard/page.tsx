@@ -75,11 +75,6 @@ export default function DashboardPage() {
     if (merchantLoading) return;
     if (!merchant) return;
 
-    if (!merchant.onboarding_completed) {
-      router.push('/dashboard/setup');
-      return;
-    }
-
     const fetchData = async () => {
       try {
 
