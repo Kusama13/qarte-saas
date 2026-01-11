@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { getDaysRemaining, formatDate } from '@/lib/utils';
+import { getTrialStatus, formatDate } from '@/lib/utils';
 import type { Merchant } from '@/types';
 
 const features = [
@@ -91,11 +91,10 @@ export default function SubscriptionPage() {
     );
   }
 
-  const daysRemaining = merchant?.trial_ends_at
-    ? getDaysRemaining(merchant.trial_ends_at)
-    : 0;
-  const isTrialExpired = daysRemaining <= 0 && merchant?.subscription_status === 'trial';
-  const isTrialActive = daysRemaining > 0 && merchant?.subscription_status === 'trial';
+  const trialStatus = getTrialStatus(
+    merchant?.trial_ends_at || null,
+    merchant?.subscription_status || 'trial'
+  );
   const isPaid = merchant?.subscription_status === 'active';
 
   return (
@@ -107,14 +106,26 @@ export default function SubscriptionPage() {
         </p>
       </div>
 
-      {isTrialExpired && (
-        <div className="p-4 mb-8 flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl">
-          <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+      {(trialStatus.isInGracePeriod || trialStatus.isFullyExpired) && (
+        <div className="p-4 mb-8 flex items-start gap-3 bg-red-100 border border-red-300 rounded-xl">
+          <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-red-800">Votre essai gratuit a expiré</p>
-            <p className="text-sm text-red-600">
-              Ajoutez une carte bancaire pour continuer à utiliser Qarte
-            </p>
+            <p className="font-bold text-red-800">Votre essai gratuit a expiré</p>
+            {trialStatus.isInGracePeriod ? (
+              <>
+                <p className="text-sm text-red-700 mt-1">
+                  <strong>Attention :</strong> Vos données seront définitivement supprimées dans{' '}
+                  <strong>{trialStatus.daysUntilDeletion} jour{trialStatus.daysUntilDeletion > 1 ? 's' : ''}</strong>.
+                </p>
+                <p className="text-sm text-red-600 mt-1">
+                  Les fonctionnalités sont limitées : vos clients ne peuvent plus valider leurs passages.
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-red-700 mt-1">
+                Souscrivez maintenant pour récupérer l&apos;accès à votre compte et vos données.
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -123,9 +134,14 @@ export default function SubscriptionPage() {
         <div className="p-6 bg-white rounded-2xl shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold text-gray-900">Plan actuel</h2>
-            {isTrialActive && (
+            {trialStatus.isActive && (
               <span className="px-3 py-1 text-sm font-medium text-primary bg-primary-50 rounded-full">
                 Essai gratuit
+              </span>
+            )}
+            {trialStatus.isInGracePeriod && (
+              <span className="px-3 py-1 text-sm font-medium text-red-700 bg-red-100 rounded-full">
+                Expiré
               </span>
             )}
             {isPaid && (
@@ -145,16 +161,30 @@ export default function SubscriptionPage() {
             </div>
           </div>
 
-          {isTrialActive && (
+          {trialStatus.isActive && (
             <div className="p-4 mb-6 rounded-xl bg-primary-50">
               <div className="flex items-center gap-2 mb-2">
                 <Calendar className="w-5 h-5 text-primary" />
                 <span className="font-medium text-primary">
-                  {daysRemaining} jour{daysRemaining > 1 ? 's' : ''} restant{daysRemaining > 1 ? 's' : ''}
+                  {trialStatus.daysRemaining} jour{trialStatus.daysRemaining > 1 ? 's' : ''} restant{trialStatus.daysRemaining > 1 ? 's' : ''}
                 </span>
               </div>
               <p className="text-sm text-primary-700">
                 Fin de l&apos;essai le {formatDate(merchant?.trial_ends_at || '')}
+              </p>
+            </div>
+          )}
+
+          {trialStatus.isInGracePeriod && (
+            <div className="p-4 mb-6 rounded-xl bg-red-50 border border-red-200">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                <span className="font-medium text-red-700">
+                  Suppression dans {trialStatus.daysUntilDeletion} jour{trialStatus.daysUntilDeletion > 1 ? 's' : ''}
+                </span>
+              </div>
+              <p className="text-sm text-red-600">
+                Souscrivez maintenant pour conserver vos données
               </p>
             </div>
           )}
@@ -199,7 +229,7 @@ export default function SubscriptionPage() {
                 Ajouter une carte bancaire
               </h3>
               <p className="mb-6 text-gray-600">
-                {isTrialActive
+                {trialStatus.isActive
                   ? 'Vous ne serez débité qu\'après la fin de votre essai'
                   : 'Ajoutez une carte pour réactiver votre compte'}
               </p>

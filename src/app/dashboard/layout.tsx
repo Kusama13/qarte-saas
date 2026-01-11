@@ -18,7 +18,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { getDaysRemaining } from '@/lib/utils';
+import { getTrialStatus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 
@@ -47,10 +47,16 @@ function DashboardLayoutContent({
     window.location.href = '/auth/merchant';
   };
 
-  const daysRemaining = merchant?.trial_ends_at
-    ? getDaysRemaining(merchant.trial_ends_at)
-    : 0;
-  const isTrialExpiring = merchant?.subscription_status === 'trial' && daysRemaining <= 3;
+  const trialStatus = getTrialStatus(
+    merchant?.trial_ends_at || null,
+    merchant?.subscription_status || 'trial'
+  );
+
+  // Redirection forcée si plus de 7 jours après expiration
+  if (trialStatus.isFullyExpired && pathname !== '/dashboard/subscription') {
+    router.push('/dashboard/subscription');
+    return null;
+  }
 
   if (loading) {
     return (
@@ -102,26 +108,46 @@ function DashboardLayoutContent({
             </button>
           </div>
 
-          {merchant?.subscription_status === 'trial' && (
+          {/* Banner essai actif */}
+          {trialStatus.isActive && (
             <div
               className={cn(
                 'mx-4 mt-4 p-4 rounded-xl text-sm',
-                isTrialExpiring
+                trialStatus.daysRemaining <= 3
                   ? 'bg-red-50 text-red-700'
                   : 'bg-primary-50 text-primary-700'
               )}
             >
-              {isTrialExpiring && <AlertTriangle className="w-4 h-4 inline mr-2" />}
+              {trialStatus.daysRemaining <= 3 && <AlertTriangle className="w-4 h-4 inline mr-2" />}
               <span className="font-medium">
-                {daysRemaining > 0
-                  ? `${daysRemaining} jour${daysRemaining > 1 ? 's' : ''} d'essai restant${daysRemaining > 1 ? 's' : ''}`
-                  : 'Essai expiré'}
+                {trialStatus.daysRemaining} jour{trialStatus.daysRemaining > 1 ? 's' : ''} d&apos;essai restant{trialStatus.daysRemaining > 1 ? 's' : ''}
               </span>
               <Link
                 href="/dashboard/subscription"
                 className="block mt-1 underline hover:no-underline"
               >
                 Ajouter une carte bancaire
+              </Link>
+            </div>
+          )}
+
+          {/* Banner période de grâce - URGENT */}
+          {trialStatus.isInGracePeriod && (
+            <div className="mx-4 mt-4 p-4 rounded-xl text-sm bg-red-100 text-red-800 border border-red-300">
+              <AlertTriangle className="w-4 h-4 inline mr-2" />
+              <span className="font-bold">Essai expiré</span>
+              <p className="mt-2 text-red-700">
+                Vos données seront supprimées dans{' '}
+                <strong>{trialStatus.daysUntilDeletion} jour{trialStatus.daysUntilDeletion > 1 ? 's' : ''}</strong>.
+              </p>
+              <p className="mt-1 text-xs text-red-600">
+                Fonctionnalités limitées : lecture seule
+              </p>
+              <Link
+                href="/dashboard/subscription"
+                className="block mt-3 px-4 py-2 bg-red-600 text-white text-center rounded-lg font-medium hover:bg-red-700"
+              >
+                Souscrire maintenant
               </Link>
             </div>
           )}

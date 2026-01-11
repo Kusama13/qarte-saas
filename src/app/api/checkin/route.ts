@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase';
-import { formatPhoneNumber, validateFrenchPhone, getTodayInParis } from '@/lib/utils';
+import { formatPhoneNumber, validateFrenchPhone, getTodayInParis, getTrialStatus } from '@/lib/utils';
 import { z } from 'zod';
 
 const checkinSchema = z.object({
@@ -75,6 +75,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Commerce introuvable' },
         { status: 404 }
+      );
+    }
+
+    // Vérifier si l'essai est expiré (période de grâce ou complètement expiré)
+    const trialStatus = getTrialStatus(
+      merchant.trial_ends_at,
+      merchant.subscription_status
+    );
+
+    if (trialStatus.isInGracePeriod || trialStatus.isFullyExpired) {
+      return NextResponse.json(
+        {
+          error: 'Ce commerce n\'accepte plus les passages pour le moment.',
+          trial_expired: true
+        },
+        { status: 403 }
       );
     }
 

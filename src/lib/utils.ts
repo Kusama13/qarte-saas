@@ -58,6 +58,84 @@ export function getDaysRemaining(endDate: string): number {
   return Math.max(0, diffDays);
 }
 
+export interface TrialStatus {
+  isActive: boolean;           // Essai en cours
+  isInGracePeriod: boolean;    // Période de grâce (7 jours après expiration)
+  isFullyExpired: boolean;     // Plus de 7 jours après expiration
+  daysRemaining: number;       // Jours restants (négatif si expiré)
+  daysUntilDeletion: number;   // Jours avant suppression des données
+  gracePeriodDays: number;     // Constante: 7 jours
+}
+
+export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: string): TrialStatus {
+  const GRACE_PERIOD_DAYS = 7;
+
+  // Si abonné, pas de restriction
+  if (subscriptionStatus === 'active') {
+    return {
+      isActive: false,
+      isInGracePeriod: false,
+      isFullyExpired: false,
+      daysRemaining: 0,
+      daysUntilDeletion: 0,
+      gracePeriodDays: GRACE_PERIOD_DAYS,
+    };
+  }
+
+  if (!trialEndsAt) {
+    return {
+      isActive: false,
+      isInGracePeriod: false,
+      isFullyExpired: true,
+      daysRemaining: 0,
+      daysUntilDeletion: 0,
+      gracePeriodDays: GRACE_PERIOD_DAYS,
+    };
+  }
+
+  const end = new Date(trialEndsAt);
+  const now = new Date();
+  const diffTime = end.getTime() - now.getTime();
+  const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  // Essai encore actif
+  if (daysRemaining > 0) {
+    return {
+      isActive: true,
+      isInGracePeriod: false,
+      isFullyExpired: false,
+      daysRemaining,
+      daysUntilDeletion: daysRemaining + GRACE_PERIOD_DAYS,
+      gracePeriodDays: GRACE_PERIOD_DAYS,
+    };
+  }
+
+  // Période de grâce (0 à 7 jours après expiration)
+  const daysExpired = Math.abs(daysRemaining);
+  const daysUntilDeletion = GRACE_PERIOD_DAYS - daysExpired;
+
+  if (daysUntilDeletion > 0) {
+    return {
+      isActive: false,
+      isInGracePeriod: true,
+      isFullyExpired: false,
+      daysRemaining,
+      daysUntilDeletion,
+      gracePeriodDays: GRACE_PERIOD_DAYS,
+    };
+  }
+
+  // Plus de 7 jours après expiration
+  return {
+    isActive: false,
+    isInGracePeriod: false,
+    isFullyExpired: true,
+    daysRemaining,
+    daysUntilDeletion: 0,
+    gracePeriodDays: GRACE_PERIOD_DAYS,
+  };
+}
+
 export async function generateQRCode(url: string): Promise<string> {
   try {
     const qrDataUrl = await QRCode.toDataURL(url, {
