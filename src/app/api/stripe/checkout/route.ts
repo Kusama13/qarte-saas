@@ -5,6 +5,10 @@ import { stripe, PLAN } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
+    // Debug: log config
+    console.log('Checkout - STRIPE_PRICE_ID:', process.env.STRIPE_PRICE_ID ? 'SET' : 'NOT SET');
+    console.log('Checkout - PLAN.priceId:', PLAN.priceId || 'EMPTY');
+
     const supabase = createServerComponentClient({ cookies });
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -18,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     if (!PLAN.priceId) {
       return NextResponse.json(
-        { error: 'Configuration Stripe incomplete' },
+        { error: 'Configuration Stripe incomplete - STRIPE_PRICE_ID manquant' },
         { status: 500 }
       );
     }
@@ -86,8 +90,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error('Checkout error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Erreur lors de la creation de la session' },
+      { error: 'Erreur lors de la creation de la session', details: message },
       { status: 500 }
     );
   }
