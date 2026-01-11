@@ -1,5 +1,5 @@
 # Robots.txt for Qarte
-# https://qarte.app
+# https://getqarte.com
 
 User-agent: *
 Allow: /
@@ -20,4 +20,4 @@ Allow: /mentions-legales
 Allow: /politique-confidentialite
 
 # Sitemap
-Sitemap: https://qarte.app/sitemap.xml
+Sitemap: https://getqarte.com/sitemap.xml
