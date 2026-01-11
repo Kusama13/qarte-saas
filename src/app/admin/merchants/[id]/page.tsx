@@ -13,6 +13,7 @@ import {
   Clock,
   CreditCard,
   TrendingUp,
+  MapPin,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui';
@@ -22,6 +23,7 @@ interface Merchant {
   id: string;
   user_id: string;
   shop_name: string;
+  shop_address: string | null;
   phone: string;
   subscription_status: string;
   trial_ends_at: string | null;
@@ -269,6 +271,12 @@ export default function MerchantDetailPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{merchant.shop_name}</h1>
+              {merchant.shop_address && (
+                <p className="text-gray-600 flex items-center gap-1 mt-1">
+                  <MapPin className="w-4 h-4" />
+                  {merchant.shop_address}
+                </p>
+              )}
               <div className="flex items-center gap-4 mt-2 text-gray-500">
                 <span className="flex items-center gap-1">
                   <Phone className="w-4 h-4" />

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import logger from '@/lib/logger';
 
 // Client avec service role (bypass RLS)
 const supabaseAdmin = createClient(
@@ -12,7 +13,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { user_id, slug, shop_name, shop_type, shop_address, phone } = body;
 
-    if (!user_id || !shop_name || !shop_type || !phone) {
+    if (!user_id || !shop_name || !shop_type || !phone || !shop_address) {
       return NextResponse.json(
         { error: 'Champs requis manquants' },
         { status: 400 }
@@ -26,14 +27,14 @@ export async function POST(request: NextRequest) {
         slug,
         shop_name,
         shop_type,
-        shop_address: shop_address || null,
+        shop_address,
         phone,
       })
       .select()
       .single();
 
     if (error) {
-      console.error('Merchant creation error:', error);
+      logger.error('Merchant creation error', error);
       return NextResponse.json(
         { error: error.message },
         { status: 500 }
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ merchant: data });
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Store, ChevronRight, Filter } from 'lucide-react';
+import { Search, Store, ChevronRight, Filter, MapPin } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cn } from '@/lib/utils';
 
 interface Merchant {
   id: string;
   shop_name: string;
+  shop_address: string | null;
   phone: string;
   subscription_status: string;
   trial_ends_at: string | null;
@@ -221,8 +222,15 @@ export default function AdminMerchantsPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">{merchant.shop_name}</p>
-                    <p className="text-sm text-gray-500">{merchant.phone}</p>
+                    {merchant.shop_address && (
+                      <p className="text-sm text-gray-500 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {merchant.shop_address}
+                      </p>
+                    )}
                     <div className="flex items-center gap-4 mt-1 text-xs text-gray-400">
+                      <span>{merchant.phone}</span>
+                      <span>·</span>
                       <span>{merchant._count?.customers || 0} client{(merchant._count?.customers || 0) > 1 ? 's' : ''}</span>
                       <span>·</span>
                       <span>Inscrit le {formatDate(merchant.created_at)}</span>

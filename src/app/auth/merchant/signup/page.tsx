@@ -69,6 +69,12 @@ export default function MerchantSignupPage() {
       return;
     }
 
+    if (!formData.shopAddress || formData.shopAddress.trim().length < 10) {
+      setError('Veuillez entrer une adresse complète');
+      setLoading(false);
+      return;
+    }
+
     try {
       const redirectUrl = typeof window !== 'undefined'
         ? `${window.location.origin}/auth/callback`
@@ -236,12 +242,13 @@ export default function MerchantSignupPage() {
               <div className="relative">
                 <Input
                   type="text"
-                  label="Adresse (optionnel)"
-                  placeholder="123 rue du Commerce, Paris"
+                  label="Adresse du commerce"
+                  placeholder="123 rue du Commerce, 75001 Paris"
                   value={formData.shopAddress}
                   onChange={(e) =>
                     setFormData({ ...formData, shopAddress: e.target.value })
                   }
+                  required
                 />
                 <MapPin className="absolute w-5 h-5 text-gray-400 right-4 top-10" />
               </div>

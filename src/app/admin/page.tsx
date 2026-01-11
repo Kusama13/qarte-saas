@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   ArrowRight,
   TrendingUp,
+  MapPin,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui';
@@ -51,6 +52,7 @@ function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
 interface Merchant {
   id: string;
   shop_name: string;
+  shop_address: string | null;
   phone: string;
   subscription_status: string;
   trial_ends_at: string | null;
@@ -247,7 +249,12 @@ export default function AdminDashboardPage() {
                   >
                     <div>
                       <p className="font-medium text-gray-900">{merchant.shop_name}</p>
-                      <p className="text-sm text-gray-500">{merchant.phone}</p>
+                      {merchant.shop_address && (
+                        <p className="text-sm text-gray-500 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {merchant.shop_address}
+                        </p>
+                      )}
                     </div>
                     <div className={cn(
                       "px-3 py-1 rounded-full text-sm font-medium",
@@ -300,7 +307,13 @@ export default function AdminDashboardPage() {
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{merchant.shop_name}</p>
-                      <p className="text-sm text-gray-500">
+                      {merchant.shop_address && (
+                        <p className="text-sm text-gray-500 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {merchant.shop_address}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400">
                         Inscrit le {formatDate(merchant.created_at)}
                       </p>
                     </div>
