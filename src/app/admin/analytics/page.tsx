@@ -161,7 +161,7 @@ export default function AdminAnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
@@ -181,8 +181,8 @@ export default function AdminAnalyticsPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="p-6 bg-white rounded-2xl shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100">
-              <Store className="w-6 h-6 text-purple-600" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100">
+              <Store className="w-6 h-6 text-emerald-600" />
             </div>
             <div>
               <p className="text-3xl font-bold text-gray-900">{stats.totalMerchants}</p>
@@ -249,9 +249,9 @@ export default function AdminAnalyticsPage() {
                 type="monotone"
                 dataKey="inscriptions"
                 name="Inscriptions"
-                stroke="#8B5CF6"
+                stroke="#10B981"
                 strokeWidth={2}
-                dot={{ fill: '#8B5CF6', strokeWidth: 2 }}
+                dot={{ fill: '#10B981', strokeWidth: 2 }}
               />
               <Line
                 type="monotone"
@@ -326,7 +326,7 @@ export default function AdminAnalyticsPage() {
             <Bar
               dataKey="count"
               name="Inscriptions"
-              fill="#8B5CF6"
+              fill="#10B981"
               radius={[8, 8, 0, 0]}
             />
           </BarChart>

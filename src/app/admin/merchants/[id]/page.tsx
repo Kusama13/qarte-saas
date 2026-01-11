@@ -229,7 +229,7 @@ export default function MerchantDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
@@ -264,7 +264,7 @@ export default function MerchantDetailPage() {
       <div className="bg-white rounded-2xl shadow-sm p-6">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-16 h-16 font-bold text-2xl text-white rounded-2xl bg-gradient-to-br from-purple-500 to-indigo-600">
+            <div className="flex items-center justify-center w-16 h-16 font-bold text-2xl text-white rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600">
               {merchant.shop_name.charAt(0)}
             </div>
             <div>
@@ -285,12 +285,12 @@ export default function MerchantDetailPage() {
         </div>
 
         {/* Programme de fidélité */}
-        <div className="mt-6 p-4 bg-purple-50 rounded-xl">
+        <div className="mt-6 p-4 bg-emerald-50 rounded-xl">
           <div className="flex items-center gap-2 mb-2">
-            <Gift className="w-5 h-5 text-purple-600" />
-            <span className="font-medium text-purple-900">Programme de fidélité</span>
+            <Gift className="w-5 h-5 text-emerald-600" />
+            <span className="font-medium text-emerald-900">Programme de fidélité</span>
           </div>
-          <p className="text-purple-700">
+          <p className="text-emerald-700">
             <span className="font-semibold">{merchant.stamps_required} passages</span> pour obtenir : {merchant.reward_description || 'Non configuré'}
           </p>
         </div>
@@ -300,8 +300,8 @@ export default function MerchantDetailPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="p-5 bg-white rounded-xl shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-100">
-              <Users className="w-5 h-5 text-purple-600" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-100">
+              <Users className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.totalCustomers}</p>
@@ -371,7 +371,7 @@ export default function MerchantDetailPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-purple-600">
+                  <p className="font-semibold text-emerald-600">
                     {customer.loyalty_card.current_stamps}/{merchant.stamps_required}
                   </p>
                   <p className="text-xs text-gray-500">

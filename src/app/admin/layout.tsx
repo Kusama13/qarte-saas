@@ -33,7 +33,7 @@ export default function AdminLayout({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/auth/merchant';
+    window.location.href = '/auth/admin';
   };
 
   return (
@@ -57,7 +57,7 @@ export default function AdminLayout({
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-50 w-72 h-full bg-gradient-to-b from-purple-600 to-indigo-700 transition-transform duration-300 lg:translate-x-0',
+          'fixed top-0 left-0 z-50 w-72 h-full bg-gradient-to-b from-emerald-600 to-teal-700 transition-transform duration-300 lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >

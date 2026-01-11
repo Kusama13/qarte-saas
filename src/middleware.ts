@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
   // Protection des routes admin
   if (isAdminRoute) {
     if (!session) {
-      return NextResponse.redirect(new URL('/auth/merchant', request.url));
+      return NextResponse.redirect(new URL('/auth/admin', request.url));
     }
 
     // Vérifier si l'utilisateur est super admin
@@ -45,8 +45,9 @@ export async function middleware(request: NextRequest) {
       .single();
 
     if (!superAdmin) {
-      // Connecté mais pas super admin → rediriger vers le dashboard normal
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      // Connecté mais pas super admin → rediriger vers la page login admin
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL('/auth/admin', request.url));
     }
   }
 

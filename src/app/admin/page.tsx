@@ -181,7 +181,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
       </div>
     );
   }
@@ -203,7 +203,7 @@ export default function AdminDashboardPage() {
           title="Total commerçants"
           value={stats.totalMerchants}
           icon={Store}
-          color="#8B5CF6"
+          color="#10B981"
         />
         <StatsCard
           title="En essai"
@@ -295,7 +295,7 @@ export default function AdminDashboardPage() {
                   className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 font-medium text-white rounded-full bg-purple-600">
+                    <div className="flex items-center justify-center w-10 h-10 font-medium text-white rounded-full bg-emerald-600">
                       {merchant.shop_name.charAt(0)}
                     </div>
                     <div>
