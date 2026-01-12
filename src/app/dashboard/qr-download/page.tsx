@@ -92,20 +92,24 @@ export default function QRDownloadPage() {
       const pageHeight = pdf.internal.pageSize.getHeight();
       const primaryColor = hexToRgb(merchant.primary_color);
 
+      // Fond de page
       pdf.setFillColor(250, 250, 252);
       pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
+      // Barre colorée en haut
       pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
-      pdf.rect(0, 0, pageWidth, 8, 'F');
+      pdf.rect(0, 0, pageWidth, 10, 'F');
 
-      const cardMargin = 25;
+      const cardMargin = 20;
       const cardWidth = pageWidth - cardMargin * 2;
-      const cardHeight = 175;
-      const cardY = 25;
+      const cardHeight = 200;
+      const cardY = 20;
 
+      // Ombre de la carte
       pdf.setFillColor(230, 230, 235);
       pdf.roundedRect(cardMargin + 2, cardY + 2, cardWidth, cardHeight, 8, 8, 'F');
 
+      // Carte blanche principale
       pdf.setFillColor(255, 255, 255);
       pdf.roundedRect(cardMargin, cardY, cardWidth, cardHeight, 8, 8, 'F');
 
@@ -113,13 +117,22 @@ export default function QRDownloadPage() {
       pdf.setLineWidth(0.5);
       pdf.roundedRect(cardMargin, cardY, cardWidth, cardHeight, 8, 8, 'S');
 
-      pdf.setTextColor(30, 30, 40);
-      pdf.setFontSize(26);
+      // Titre accrocheur
+      pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
+      pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
-      const shopNameY = cardY + 22;
+      const titleY = cardY + 18;
+      pdf.text('Votre fidelite est recompensee chez', pageWidth / 2, titleY, { align: 'center' });
+
+      // Nom du commerce en grand
+      pdf.setTextColor(30, 30, 40);
+      pdf.setFontSize(24);
+      pdf.setFont('helvetica', 'bold');
+      const shopNameY = titleY + 12;
       pdf.text(merchant.shop_name.toUpperCase(), pageWidth / 2, shopNameY, { align: 'center' });
 
-      const lineWidth = 38;
+      // Ligne décorative
+      const lineWidth = 50;
       pdf.setDrawColor(primaryColor.r, primaryColor.g, primaryColor.b);
       pdf.setLineWidth(2);
       pdf.line(
@@ -129,16 +142,19 @@ export default function QRDownloadPage() {
         shopNameY + 5
       );
 
+      // Texte "Scannez le QR code"
       pdf.setTextColor(100, 100, 110);
-      pdf.setFontSize(13);
+      pdf.setFontSize(11);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Scannez le QR code', pageWidth / 2, shopNameY + 19, { align: 'center' });
+      pdf.text('Scannez le QR code', pageWidth / 2, shopNameY + 18, { align: 'center' });
 
-      const qrSize = 80;
+      // QR Code
+      const qrSize = 70;
       const qrX = (pageWidth - qrSize) / 2;
-      const qrY = shopNameY + 28;
+      const qrY = shopNameY + 24;
 
-      const framePadding = 5;
+      // Cadre autour du QR
+      const framePadding = 4;
       pdf.setDrawColor(primaryColor.r, primaryColor.g, primaryColor.b);
       pdf.setLineWidth(1.5);
       pdf.roundedRect(
@@ -153,46 +169,50 @@ export default function QRDownloadPage() {
 
       pdf.addImage(qrCodeUrl, 'PNG', qrX, qrY, qrSize, qrSize);
 
-      // Reward badge avec 2 lignes
-      const badgeY = qrY + qrSize + 14;
-      const badgeHeight = 38; // Augmenté pour 2 lignes
-      const badgePadding = 18;
+      // Badge récompense avec icône cadeau - PLUS GRAND
+      const badgeY = qrY + qrSize + 10;
+      const badgeHeight = 42;
+      const badgePadding = 20;
 
       pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
-      const rewardText = merchant.reward_description || 'Récompense';
+      const rewardText = merchant.reward_description || 'Recompense';
       const stampsText = `apres ${merchant.stamps_required} passages`;
 
-      // Calculer largeur basée sur la ligne la plus longue
+      // Calculer largeur
+      pdf.setFontSize(15);
+      const giftIcon = '* '; // Symbole pour cadeau
+      const rewardWithIcon = giftIcon + rewardText;
+      const rewardWidth = pdf.getTextWidth(rewardWithIcon);
       pdf.setFontSize(11);
-      const rewardWidth = pdf.getTextWidth(rewardText);
       const stampsWidth = pdf.getTextWidth(stampsText);
       const maxWidth = Math.max(rewardWidth, stampsWidth);
       const textWidth = maxWidth + badgePadding * 2;
 
       const badgeX = (pageWidth - textWidth) / 2;
-      pdf.roundedRect(badgeX, badgeY, textWidth, badgeHeight, 12, 12, 'F');
+      pdf.roundedRect(badgeX, badgeY, textWidth, badgeHeight, 14, 14, 'F');
 
-      // Ligne 1 : Description récompense (bold)
+      // Ligne 1 : Icône cadeau + Description récompense (PLUS GRAND)
       pdf.setTextColor(255, 255, 255);
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(11);
-      pdf.text(rewardText, pageWidth / 2, badgeY + 13, { align: 'center' });
+      pdf.setFontSize(15);
+      pdf.text(rewardWithIcon, pageWidth / 2, badgeY + 16, { align: 'center' });
 
-      // Ligne 2 : Après X passages (normal)
+      // Ligne 2 : Après X passages
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(10);
-      pdf.text(stampsText, pageWidth / 2, badgeY + 27, { align: 'center' });
+      pdf.setFontSize(11);
+      pdf.text(stampsText, pageWidth / 2, badgeY + 32, { align: 'center' });
 
-      const instructionsY = cardY + cardHeight + 16;
+      // Section instructions
+      const instructionsY = cardY + cardHeight + 12;
       pdf.setFillColor(255, 255, 255);
-      pdf.roundedRect(cardMargin, instructionsY, cardWidth, 42, 6, 6, 'F');
+      pdf.roundedRect(cardMargin, instructionsY, cardWidth, 40, 6, 6, 'F');
       pdf.setDrawColor(240, 240, 245);
-      pdf.roundedRect(cardMargin, instructionsY, cardWidth, 42, 6, 6, 'S');
+      pdf.roundedRect(cardMargin, instructionsY, cardWidth, 40, 6, 6, 'S');
 
       pdf.setTextColor(50, 50, 60);
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Comment ca marche ?', cardMargin + 15, instructionsY + 13);
+      pdf.text('Comment ca marche ?', cardMargin + 12, instructionsY + 12);
 
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(90, 90, 100);
@@ -203,23 +223,29 @@ export default function QRDownloadPage() {
         `3. Cumulez ${merchant.stamps_required} passages et recevez votre recompense !`,
       ];
       instructions.forEach((text, i) => {
-        pdf.text(text, cardMargin + 15, instructionsY + 22 + i * 7);
+        pdf.text(text, cardMargin + 12, instructionsY + 21 + i * 6);
       });
 
+      // Footer - Créé avec amour en France
       pdf.setFontSize(9);
-      pdf.setTextColor(160, 160, 170);
-      pdf.text('Powered by', pageWidth / 2 - 12, pageHeight - 18, { align: 'center' });
+      pdf.setTextColor(140, 140, 150);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Cree avec', pageWidth / 2 - 18, pageHeight - 16, { align: 'center' });
 
+      // Coeur rouge
+      pdf.setTextColor(220, 50, 50);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('<3', pageWidth / 2 - 3, pageHeight - 16, { align: 'center' });
+
+      pdf.setTextColor(140, 140, 150);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('en France', pageWidth / 2 + 12, pageHeight - 16, { align: 'center' });
+
+      // URL getqarte.com
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
-      pdf.text('Qarte', pageWidth / 2 + 12, pageHeight - 18, { align: 'center' });
-
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(180, 180, 190);
-      pdf.setFontSize(8);
-      pdf.text('qarte.app - Fidelisez mieux, depensez moins', pageWidth / 2, pageHeight - 12, {
-        align: 'center',
-      });
+      pdf.setFontSize(10);
+      pdf.text('getqarte.com', pageWidth / 2, pageHeight - 9, { align: 'center' });
 
       pdf.save(`qr-code-${merchant.slug}.pdf`);
     } finally {
