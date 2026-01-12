@@ -103,21 +103,25 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber);
 
-      const { data: newCustomer, error: insertError } = await supabase
-        .from('customers')
-        .insert({
+      const response = await fetch('/api/customers/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           phone_number: formattedPhone,
           first_name: firstName.trim(),
           last_name: lastName.trim() || null,
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (insertError) throw insertError;
+      const data = await response.json();
 
-      setCustomer(newCustomer);
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur serveur');
+      }
+
+      setCustomer(data.customer);
       localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
-      await processCheckin(newCustomer);
+      await processCheckin(data.customer);
     } catch (err) {
       console.error(err);
       setError('Erreur lors de l\'inscription');
