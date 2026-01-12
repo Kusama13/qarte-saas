@@ -96,7 +96,7 @@ export default function CGVPage() {
             </h2>
             <p className="text-gray-600">
               Pour toute question concernant ces CGV, contactez-nous à
-              contact@qarte.fr.
+              contact@getqarte.com.
             </p>
           </section>
         </div>

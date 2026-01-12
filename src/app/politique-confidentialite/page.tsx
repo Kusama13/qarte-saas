@@ -114,7 +114,7 @@ export default function PrivacyPolicyPage() {
             </h2>
             <p className="text-gray-600">
               Pour exercer vos droits ou pour toute question relative à vos
-              données personnelles, contactez-nous à : dpo@qarte.fr
+              données personnelles, contactez-nous à : contact@getqarte.com
             </p>
           </section>
         </div>

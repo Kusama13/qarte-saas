@@ -38,7 +38,7 @@ export default function LegalMentionsPage() {
             <p className="text-gray-600">
               Qarte<br />
               [Adresse à compléter]<br />
-              Email : contact@qarte.fr<br />
+              Email : contact@getqarte.com<br />
               Téléphone : [À compléter]
             </p>
           </section>

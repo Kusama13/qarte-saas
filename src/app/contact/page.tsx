@@ -201,10 +201,10 @@ export default function ContactPage() {
           <p>
             Vous pouvez également nous contacter directement à{' '}
             <a
-              href="mailto:contact@qarte.fr"
+              href="mailto:contact@getqarte.com"
               className="text-primary hover:underline"
             >
-              contact@qarte.fr
+              contact@getqarte.com
             </a>
           </p>
         </div>

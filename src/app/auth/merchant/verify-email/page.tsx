@@ -139,7 +139,7 @@ export default function VerifyEmailPage() {
         {/* Footer */}
         <p className="text-center text-sm text-gray-500 mt-6">
           Besoin d'aide ?{' '}
-          <a href="mailto:support@qarte.app" className="text-primary hover:underline">
+          <a href="mailto:support@getqarte.com" className="text-primary hover:underline">
             Contactez-nous
           </a>
         </p>

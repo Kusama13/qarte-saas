@@ -189,7 +189,7 @@ function DashboardLayoutContent({
               </div>
             </div>
             <a
-              href="mailto:support@qarte.app"
+              href="mailto:support@getqarte.com"
               className="flex items-center w-full gap-3 px-4 py-3 text-gray-600 transition-colors rounded-xl hover:bg-gray-100 mb-1"
             >
               <HelpCircle className="w-5 h-5" />

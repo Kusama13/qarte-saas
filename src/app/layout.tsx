@@ -5,7 +5,7 @@ import CookieBanner from '@/components/CookieBanner';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://qarte.app';
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
