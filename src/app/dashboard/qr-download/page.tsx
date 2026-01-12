@@ -77,6 +77,31 @@ export default function QRDownloadPage() {
       : { r: 101, g: 78, b: 218 };
   };
 
+  // Fonction pour gérer les accents français dans jsPDF
+  const sanitizeText = (text: string): string => {
+    return text
+      .replace(/é/g, 'e')
+      .replace(/è/g, 'e')
+      .replace(/ê/g, 'e')
+      .replace(/ë/g, 'e')
+      .replace(/à/g, 'a')
+      .replace(/â/g, 'a')
+      .replace(/ä/g, 'a')
+      .replace(/ù/g, 'u')
+      .replace(/û/g, 'u')
+      .replace(/ü/g, 'u')
+      .replace(/ô/g, 'o')
+      .replace(/ö/g, 'o')
+      .replace(/î/g, 'i')
+      .replace(/ï/g, 'i')
+      .replace(/ç/g, 'c')
+      .replace(/É/g, 'E')
+      .replace(/È/g, 'E')
+      .replace(/Ê/g, 'E')
+      .replace(/À/g, 'A')
+      .replace(/Ç/g, 'C');
+  };
+
   const downloadPDF = async () => {
     if (!qrCodeUrl || !merchant) return;
     setDownloading('pdf');
@@ -129,7 +154,7 @@ export default function QRDownloadPage() {
       pdf.setFontSize(24);
       pdf.setFont('helvetica', 'bold');
       const shopNameY = titleY + 12;
-      pdf.text(merchant.shop_name.toUpperCase(), pageWidth / 2, shopNameY, { align: 'center' });
+      pdf.text(sanitizeText(merchant.shop_name.toUpperCase()), pageWidth / 2, shopNameY, { align: 'center' });
 
       // Ligne décorative
       const lineWidth = 50;
@@ -171,19 +196,19 @@ export default function QRDownloadPage() {
 
       // Badge récompense avec icône cadeau - PLUS GRAND
       const badgeY = qrY + qrSize + 10;
-      const badgeHeight = 42;
-      const badgePadding = 20;
+      const badgeHeight = 46;
+      const badgePadding = 22;
 
       pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
-      const rewardText = merchant.reward_description || 'Recompense';
-      const stampsText = `apres ${merchant.stamps_required} passages`;
+      const rewardText = sanitizeText(merchant.reward_description || 'Recompense');
+      const stampsText = `Apres ${merchant.stamps_required} passages`;
 
-      // Calculer largeur
-      pdf.setFontSize(15);
-      const giftIcon = '* '; // Symbole pour cadeau
-      const rewardWithIcon = giftIcon + rewardText;
+      // Calculer largeur basée sur les deux lignes
+      pdf.setFontSize(16);
+      const giftSymbol = '>> ';
+      const rewardWithIcon = giftSymbol + rewardText;
       const rewardWidth = pdf.getTextWidth(rewardWithIcon);
-      pdf.setFontSize(11);
+      pdf.setFontSize(14);
       const stampsWidth = pdf.getTextWidth(stampsText);
       const maxWidth = Math.max(rewardWidth, stampsWidth);
       const textWidth = maxWidth + badgePadding * 2;
@@ -191,16 +216,16 @@ export default function QRDownloadPage() {
       const badgeX = (pageWidth - textWidth) / 2;
       pdf.roundedRect(badgeX, badgeY, textWidth, badgeHeight, 14, 14, 'F');
 
-      // Ligne 1 : Icône cadeau + Description récompense (PLUS GRAND)
+      // Ligne 1 : Icône cadeau + Description récompense (PLUS GRAND - 16px)
       pdf.setTextColor(255, 255, 255);
       pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(15);
-      pdf.text(rewardWithIcon, pageWidth / 2, badgeY + 16, { align: 'center' });
+      pdf.setFontSize(16);
+      pdf.text(rewardWithIcon, pageWidth / 2, badgeY + 17, { align: 'center' });
 
-      // Ligne 2 : Après X passages
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(11);
-      pdf.text(stampsText, pageWidth / 2, badgeY + 32, { align: 'center' });
+      // Ligne 2 : Après X passages (PLUS GRAND - 14px)
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(14);
+      pdf.text(stampsText, pageWidth / 2, badgeY + 35, { align: 'center' });
 
       // Section instructions
       const instructionsY = cardY + cardHeight + 12;
@@ -223,7 +248,7 @@ export default function QRDownloadPage() {
         `3. Cumulez ${merchant.stamps_required} passages et recevez votre recompense !`,
       ];
       instructions.forEach((text, i) => {
-        pdf.text(text, cardMargin + 12, instructionsY + 21 + i * 6);
+        pdf.text(sanitizeText(text), cardMargin + 12, instructionsY + 21 + i * 6);
       });
 
       // Footer - Créé avec amour en France
