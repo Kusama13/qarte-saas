@@ -69,16 +69,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setSubmitting(true);
 
     try {
-      const { data: existingCustomer } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('phone_number', formattedPhone)
-        .single();
+      const response = await fetch(`/api/customers/register?phone=${encodeURIComponent(formattedPhone)}`);
+      const data = await response.json();
 
-      if (existingCustomer) {
-        setCustomer(existingCustomer);
+      if (data.exists && data.customer) {
+        setCustomer(data.customer);
         localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
-        await processCheckin(existingCustomer);
+        await processCheckin(data.customer);
       } else {
         setStep('register');
       }

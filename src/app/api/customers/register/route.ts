@@ -9,10 +9,44 @@ const supabaseAdmin = createClient(
 
 const registerSchema = z.object({
   phone_number: z.string().min(10),
-  first_name: z.string().min(1),
+  first_name: z.string().min(1).optional(),
   last_name: z.string().optional(),
 });
 
+// GET: Rechercher un client par téléphone
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const phone = searchParams.get('phone');
+
+    if (!phone) {
+      return NextResponse.json(
+        { error: 'Numéro de téléphone requis' },
+        { status: 400 }
+      );
+    }
+
+    const { data: customer } = await supabaseAdmin
+      .from('customers')
+      .select('*')
+      .eq('phone_number', phone)
+      .single();
+
+    if (customer) {
+      return NextResponse.json({ customer, exists: true });
+    }
+
+    return NextResponse.json({ customer: null, exists: false });
+  } catch (error) {
+    console.error('API error:', error);
+    return NextResponse.json(
+      { error: 'Erreur serveur' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST: Créer ou récupérer un client
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
