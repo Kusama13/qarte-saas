@@ -69,7 +69,12 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setSubmitting(true);
 
     try {
-      const response = await fetch(`/api/customers/register?phone=${encodeURIComponent(formattedPhone)}`);
+      if (!merchant) {
+        setStep('register');
+        return;
+      }
+
+      const response = await fetch(`/api/customers/register?phone=${encodeURIComponent(formattedPhone)}&merchant_id=${merchant.id}`);
       const data = await response.json();
 
       if (data.exists && data.customer) {
@@ -112,6 +117,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           phone_number: formattedPhone,
           first_name: firstName.trim(),
           last_name: lastName.trim(),
+          merchant_id: merchant?.id,
         }),
       });
 

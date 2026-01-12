@@ -11,17 +11,19 @@ const registerSchema = z.object({
   phone_number: z.string().min(10),
   first_name: z.string().min(1),
   last_name: z.string().min(1),
+  merchant_id: z.string().uuid(),
 });
 
-// GET: Rechercher un client par téléphone
+// GET: Rechercher un client par téléphone et merchant
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const phone = searchParams.get('phone');
+    const merchantId = searchParams.get('merchant_id');
 
-    if (!phone) {
+    if (!phone || !merchantId) {
       return NextResponse.json(
-        { error: 'Numéro de téléphone requis' },
+        { error: 'Numéro de téléphone et merchant_id requis' },
         { status: 400 }
       );
     }
@@ -30,6 +32,7 @@ export async function GET(request: NextRequest) {
       .from('customers')
       .select('*')
       .eq('phone_number', phone)
+      .eq('merchant_id', merchantId)
       .single();
 
     if (customer) {
@@ -59,13 +62,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { phone_number, first_name, last_name } = parsed.data;
+    const { phone_number, first_name, last_name, merchant_id } = parsed.data;
 
-    // Vérifier si le client existe déjà
+    // Vérifier si le client existe déjà pour ce marchand
     const { data: existing } = await supabaseAdmin
       .from('customers')
       .select('*')
       .eq('phone_number', phone_number)
+      .eq('merchant_id', merchant_id)
       .single();
 
     if (existing) {
@@ -79,6 +83,7 @@ export async function POST(request: NextRequest) {
         phone_number,
         first_name: first_name.trim(),
         last_name: last_name.trim(),
+        merchant_id,
       })
       .select()
       .single();
