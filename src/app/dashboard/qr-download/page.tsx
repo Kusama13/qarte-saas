@@ -17,6 +17,7 @@ import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { generateQRCode, getScanUrl } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
+import { loadRobotoFonts } from '@/lib/fonts/loadFont';
 import type { Merchant } from '@/types';
 
 export default function QRDownloadPage() {
@@ -77,31 +78,6 @@ export default function QRDownloadPage() {
       : { r: 101, g: 78, b: 218 };
   };
 
-  // Fonction pour gérer les accents français dans jsPDF
-  const sanitizeText = (text: string): string => {
-    return text
-      .replace(/é/g, 'e')
-      .replace(/è/g, 'e')
-      .replace(/ê/g, 'e')
-      .replace(/ë/g, 'e')
-      .replace(/à/g, 'a')
-      .replace(/â/g, 'a')
-      .replace(/ä/g, 'a')
-      .replace(/ù/g, 'u')
-      .replace(/û/g, 'u')
-      .replace(/ü/g, 'u')
-      .replace(/ô/g, 'o')
-      .replace(/ö/g, 'o')
-      .replace(/î/g, 'i')
-      .replace(/ï/g, 'i')
-      .replace(/ç/g, 'c')
-      .replace(/É/g, 'E')
-      .replace(/È/g, 'E')
-      .replace(/Ê/g, 'E')
-      .replace(/À/g, 'A')
-      .replace(/Ç/g, 'C');
-  };
-
   const downloadPDF = async () => {
     if (!qrCodeUrl || !merchant) return;
     setDownloading('pdf');
@@ -112,6 +88,9 @@ export default function QRDownloadPage() {
         unit: 'mm',
         format: 'a4',
       });
+
+      // Charger la police Roboto pour les accents français
+      await loadRobotoFonts(pdf);
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
@@ -145,16 +124,16 @@ export default function QRDownloadPage() {
       // Titre accrocheur
       pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
       pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont('Roboto', 'bold');
       const titleY = cardY + 18;
-      pdf.text('Votre fidelite est recompensee chez', pageWidth / 2, titleY, { align: 'center' });
+      pdf.text('Votre fidélité est récompensée chez', pageWidth / 2, titleY, { align: 'center' });
 
       // Nom du commerce en grand
       pdf.setTextColor(30, 30, 40);
       pdf.setFontSize(24);
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont('Roboto', 'bold');
       const shopNameY = titleY + 12;
-      pdf.text(sanitizeText(merchant.shop_name.toUpperCase()), pageWidth / 2, shopNameY, { align: 'center' });
+      pdf.text(merchant.shop_name.toUpperCase(), pageWidth / 2, shopNameY, { align: 'center' });
 
       // Ligne décorative
       const lineWidth = 50;
@@ -170,7 +149,7 @@ export default function QRDownloadPage() {
       // Texte "Scannez le QR code"
       pdf.setTextColor(100, 100, 110);
       pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont('Roboto', 'normal');
       pdf.text('Scannez le QR code', pageWidth / 2, shopNameY + 18, { align: 'center' });
 
       // QR Code
@@ -200,12 +179,13 @@ export default function QRDownloadPage() {
       const badgePadding = 22;
 
       pdf.setFillColor(primaryColor.r, primaryColor.g, primaryColor.b);
-      const rewardText = sanitizeText(merchant.reward_description || 'Recompense');
-      const stampsText = `Apres ${merchant.stamps_required} passages`;
+      const rewardText = merchant.reward_description || 'Récompense';
+      const stampsText = `Après ${merchant.stamps_required} passages`;
 
       // Calculer largeur basée sur les deux lignes
+      pdf.setFont('Roboto', 'bold');
       pdf.setFontSize(16);
-      const giftSymbol = '>> ';
+      const giftSymbol = '★ ';
       const rewardWithIcon = giftSymbol + rewardText;
       const rewardWidth = pdf.getTextWidth(rewardWithIcon);
       pdf.setFontSize(14);
@@ -218,12 +198,12 @@ export default function QRDownloadPage() {
 
       // Ligne 1 : Icône cadeau + Description récompense (PLUS GRAND - 16px)
       pdf.setTextColor(255, 255, 255);
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont('Roboto', 'bold');
       pdf.setFontSize(16);
       pdf.text(rewardWithIcon, pageWidth / 2, badgeY + 17, { align: 'center' });
 
       // Ligne 2 : Après X passages (PLUS GRAND - 14px)
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont('Roboto', 'bold');
       pdf.setFontSize(14);
       pdf.text(stampsText, pageWidth / 2, badgeY + 35, { align: 'center' });
 
@@ -236,38 +216,38 @@ export default function QRDownloadPage() {
 
       pdf.setTextColor(50, 50, 60);
       pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Comment ca marche ?', cardMargin + 12, instructionsY + 12);
+      pdf.setFont('Roboto', 'bold');
+      pdf.text('Comment ça marche ?', cardMargin + 12, instructionsY + 12);
 
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont('Roboto', 'normal');
       pdf.setTextColor(90, 90, 100);
       pdf.setFontSize(9);
       const instructions = [
-        '1. Scannez le QR code avec votre telephone',
-        '2. Validez votre passage a chaque visite',
-        `3. Cumulez ${merchant.stamps_required} passages et recevez votre recompense !`,
+        '1. Scannez le QR code avec votre téléphone',
+        '2. Validez votre passage à chaque visite',
+        `3. Cumulez ${merchant.stamps_required} passages et recevez votre récompense !`,
       ];
       instructions.forEach((text, i) => {
-        pdf.text(sanitizeText(text), cardMargin + 12, instructionsY + 21 + i * 6);
+        pdf.text(text, cardMargin + 12, instructionsY + 21 + i * 6);
       });
 
       // Footer - Créé avec amour en France
       pdf.setFontSize(9);
       pdf.setTextColor(140, 140, 150);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text('Cree avec', pageWidth / 2 - 18, pageHeight - 16, { align: 'center' });
+      pdf.setFont('Roboto', 'normal');
+      pdf.text('Créé avec', pageWidth / 2 - 18, pageHeight - 16, { align: 'center' });
 
       // Coeur rouge
       pdf.setTextColor(220, 50, 50);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('<3', pageWidth / 2 - 3, pageHeight - 16, { align: 'center' });
+      pdf.setFont('Roboto', 'bold');
+      pdf.text('♥', pageWidth / 2 - 2, pageHeight - 16, { align: 'center' });
 
       pdf.setTextColor(140, 140, 150);
-      pdf.setFont('helvetica', 'normal');
+      pdf.setFont('Roboto', 'normal');
       pdf.text('en France', pageWidth / 2 + 12, pageHeight - 16, { align: 'center' });
 
       // URL getqarte.com
-      pdf.setFont('helvetica', 'bold');
+      pdf.setFont('Roboto', 'bold');
       pdf.setTextColor(primaryColor.r, primaryColor.g, primaryColor.b);
       pdf.setFontSize(10);
       pdf.text('getqarte.com', pageWidth / 2, pageHeight - 9, { align: 'center' });
