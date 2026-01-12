@@ -19,8 +19,8 @@ import type { Merchant, Customer, LoyaltyCard } from '@/types';
 
 type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward';
 
-export default function ScanPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
+export default function ScanPage({ params }: { params: Promise<{ code: string }> }) {
+  const { code } = use(params);
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [step, setStep] = useState<Step>('phone');
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,7 @@ export default function ScanPage({ params }: { params: Promise<{ slug: string }>
       const { data } = await supabase
         .from('merchants')
         .select('*')
-        .eq('slug', slug)
+        .eq('scan_code', code)
         .single();
 
       if (data) {
@@ -50,11 +50,11 @@ export default function ScanPage({ params }: { params: Promise<{ slug: string }>
 
     fetchMerchant();
 
-    const savedPhone = localStorage.getItem(`qarte_phone_${slug}`);
+    const savedPhone = localStorage.getItem(`qarte_phone_${code}`);
     if (savedPhone) {
       setPhoneNumber(savedPhone);
     }
-  }, [slug]);
+  }, [code]);
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,7 +77,7 @@ export default function ScanPage({ params }: { params: Promise<{ slug: string }>
 
       if (existingCustomer) {
         setCustomer(existingCustomer);
-        localStorage.setItem(`qarte_phone_${slug}`, formattedPhone);
+        localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
         await processCheckin(existingCustomer);
       } else {
         setStep('register');
@@ -116,7 +116,7 @@ export default function ScanPage({ params }: { params: Promise<{ slug: string }>
       if (insertError) throw insertError;
 
       setCustomer(newCustomer);
-      localStorage.setItem(`qarte_phone_${slug}`, formattedPhone);
+      localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
       await processCheckin(newCustomer);
     } catch (err) {
       console.error(err);

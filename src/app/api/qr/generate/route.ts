@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('slug')
+      .select('scan_code')
       .eq('id', merchant_id)
       .eq('user_id', user.id)
       .single();
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const scanUrl = getScanUrl(merchant.slug);
+    const scanUrl = getScanUrl(merchant.scan_code);
     const qrCodeUrl = await generateQRCode(scanUrl);
 
     return NextResponse.json({

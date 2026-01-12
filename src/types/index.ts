@@ -23,6 +23,7 @@ export interface Merchant {
   id: string;
   user_id: string;
   slug: string;
+  scan_code: string;
   shop_name: string;
   shop_type: ShopType;
   shop_address: string | null;

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 import { sendWelcomeEmail } from '@/lib/email';
+import { generateScanCode } from '@/lib/utils';
 
 // Client avec service role (bypass RLS)
 const supabaseAdmin = createClient(
@@ -31,11 +32,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Générer un code de scan unique
+    let scan_code = generateScanCode();
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    // Vérifier l'unicité du code (très rare mais possible)
+    while (attempts < maxAttempts) {
+      const { data: existing } = await supabaseAdmin
+        .from('merchants')
+        .select('id')
+        .eq('scan_code', scan_code)
+        .single();
+
+      if (!existing) break;
+      scan_code = generateScanCode();
+      attempts++;
+    }
+
     const { data, error } = await supabaseAdmin
       .from('merchants')
       .insert({
         user_id,
         slug,
+        scan_code,
         shop_name,
         shop_type,
         shop_address,

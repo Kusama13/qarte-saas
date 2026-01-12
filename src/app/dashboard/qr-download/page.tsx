@@ -43,7 +43,7 @@ export default function QRDownloadPage() {
 
       if (data) {
         setMerchant(data);
-        const scanUrl = getScanUrl(data.slug);
+        const scanUrl = getScanUrl(data.scan_code);
         const qr = await generateQRCode(scanUrl);
         setQrCodeUrl(qr);
       }
@@ -339,7 +339,7 @@ export default function QRDownloadPage() {
                 <span className="font-medium">Lien de scan :</span>
               </div>
               <p className="mt-1 text-sm text-primary break-all">
-                {getScanUrl(merchant?.slug || '')}
+                {getScanUrl(merchant?.scan_code || '')}
               </p>
             </div>
           </div>

@@ -21,6 +21,17 @@ export function generateSlug(shopName: string): string {
   return slug;
 }
 
+// Génère un code de scan unique (8 caractères alphanumériques)
+// Exclut 0, O, I, l, 1 pour éviter confusion visuelle
+export function generateScanCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 export function formatDate(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return format(d, 'dd/MM/yyyy', { locale: fr });
@@ -205,6 +216,6 @@ export function getAppUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 }
 
-export function getScanUrl(slug: string): string {
-  return `${getAppUrl()}/scan/${slug}`;
+export function getScanUrl(scanCode: string): string {
+  return `${getAppUrl()}/scan/${scanCode}`;
 }
