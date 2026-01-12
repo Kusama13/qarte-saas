@@ -120,6 +120,7 @@ export default function MerchantDetailPage() {
             first_name,
             last_name,
             phone_number,
+            created_at,
             loyalty_cards!inner (
               current_stamps,
               last_visit_date,
