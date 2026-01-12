@@ -82,7 +82,7 @@ export default function MerchantDetailPage() {
 
         // Récupérer les stats
         const { count: totalCustomers } = await supabase
-          .from('loyalty_cards')
+          .from('customers')
           .select('*', { count: 'exact', head: true })
           .eq('merchant_id', merchantId);
 
@@ -112,37 +112,36 @@ export default function MerchantDetailPage() {
           totalRedemptions: totalRedemptions || 0,
         });
 
-        // Récupérer les clients avec leurs cartes
-        const { data: cardsData } = await supabase
-          .from('loyalty_cards')
+        // Récupérer les clients directement (ils ont maintenant un merchant_id)
+        const { data: customersData } = await supabase
+          .from('customers')
           .select(`
             id,
-            current_stamps,
-            last_visit_date,
-            created_at,
-            customer:customers (
-              id,
-              first_name,
-              last_name,
-              phone
+            first_name,
+            last_name,
+            phone_number,
+            loyalty_cards!inner (
+              current_stamps,
+              last_visit_date,
+              created_at
             )
           `)
           .eq('merchant_id', merchantId)
-          .order('last_visit_date', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false })
           .limit(20);
 
-        if (cardsData) {
-          const formattedCustomers = cardsData.map((card) => {
-            const customer = Array.isArray(card.customer) ? card.customer[0] : card.customer;
+        if (customersData) {
+          const formattedCustomers = customersData.map((customer) => {
+            const card = Array.isArray(customer.loyalty_cards) ? customer.loyalty_cards[0] : customer.loyalty_cards;
             return {
-              id: customer?.id || card.id,
-              first_name: customer?.first_name || '',
-              last_name: customer?.last_name || '',
-              phone: customer?.phone || '',
+              id: customer.id,
+              first_name: customer.first_name || '',
+              last_name: customer.last_name || '',
+              phone: customer.phone_number || '',
               loyalty_card: {
-                current_stamps: card.current_stamps,
-                last_visit_date: card.last_visit_date,
-                created_at: card.created_at,
+                current_stamps: card?.current_stamps || 0,
+                last_visit_date: card?.last_visit_date || null,
+                created_at: card?.created_at || customer.created_at,
               },
             };
           });
