@@ -9,7 +9,7 @@ const supabaseAdmin = createClient(
 
 const registerSchema = z.object({
   phone_number: z.string().min(10),
-  first_name: z.string().min(1).optional(),
+  first_name: z.string().min(1),
   last_name: z.string().optional(),
 });
 
