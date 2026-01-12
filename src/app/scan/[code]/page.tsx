@@ -95,6 +95,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       return;
     }
 
+    if (!lastName.trim()) {
+      setError('Le nom est requis');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -106,7 +111,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         body: JSON.stringify({
           phone_number: formattedPhone,
           first_name: firstName.trim(),
-          last_name: lastName.trim() || null,
+          last_name: lastName.trim(),
         }),
       });
 
@@ -359,10 +364,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
               <Input
                 type="text"
-                label="Nom (optionnel)"
+                label="Nom"
                 placeholder="Votre nom"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
+                required
               />
 
               <Button
