@@ -122,6 +122,46 @@ export async function sendTrialExpiredEmail(
   }
 }
 
+// Notification interne nouveau commerçant
+export async function sendNewMerchantNotification(
+  shopName: string,
+  shopType: string,
+  shopAddress: string,
+  phone: string,
+  email: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to: 'sales@getqarte.com',
+      subject: `🎉 Nouveau commerçant : ${shopName}`,
+      html: `
+        <h2>Nouveau commerçant inscrit sur Qarte !</h2>
+        <p><strong>Commerce :</strong> ${shopName}</p>
+        <p><strong>Type :</strong> ${shopType}</p>
+        <p><strong>Adresse :</strong> ${shopAddress}</p>
+        <p><strong>Téléphone :</strong> ${phone}</p>
+        <p><strong>Email :</strong> ${email}</p>
+        <p><strong>Date :</strong> ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
+      `,
+    });
+
+    if (error) {
+      logger.error('Failed to send new merchant notification', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`New merchant notification sent for ${shopName}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending new merchant notification', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
 // Email confirmation d'abonnement
 export async function sendSubscriptionConfirmedEmail(
   to: string,

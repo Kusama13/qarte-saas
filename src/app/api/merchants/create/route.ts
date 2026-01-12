@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
-import { sendWelcomeEmail } from '@/lib/email';
+import { sendWelcomeEmail, sendNewMerchantNotification } from '@/lib/email';
 import { generateScanCode } from '@/lib/utils';
 
 // Client avec service role (bypass RLS)
@@ -72,11 +72,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Récupérer l'email de l'utilisateur et envoyer l'email de bienvenue
+    // Récupérer l'email de l'utilisateur et envoyer les emails
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(user_id);
     if (userData?.user?.email) {
+      // Email de bienvenue au commerçant
       sendWelcomeEmail(userData.user.email, shop_name).catch((err) => {
         logger.error('Failed to send welcome email', err);
+      });
+
+      // Notification interne à sales@getqarte.com
+      sendNewMerchantNotification(
+        shop_name,
+        shop_type,
+        shop_address,
+        phone,
+        userData.user.email
+      ).catch((err) => {
+        logger.error('Failed to send new merchant notification', err);
       });
     }
 
