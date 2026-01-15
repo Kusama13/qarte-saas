@@ -34,6 +34,7 @@ export interface Merchant {
   program_name: string | null;
   welcome_message: string | null;
   promo_message: string | null;
+  review_link: string | null;
   stamps_required: number;
   reward_description: string | null;
   trial_ends_at: string;

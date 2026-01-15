@@ -11,6 +11,8 @@ import {
   Clock,
   Loader2,
   AlertCircle,
+  Star,
+  ExternalLink,
 } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -236,14 +238,29 @@ export default function CustomerCardPage({
             </Button>
           )}
 
-          {redeemSuccess && (
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl text-center">
-              <Check className="w-8 h-8 mx-auto mb-2 text-green-600" />
-              <p className="font-medium text-green-800">Récompense utilisée !</p>
-              <p className="text-sm text-green-600">Votre compteur est remis à zéro</p>
-            </div>
-          )}
         </div>
+
+        {merchant.review_link && (
+          <a
+            href={merchant.review_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl shadow-sm mb-6 hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-full">
+                <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-gray-900">Votre avis compte !</p>
+                <p className="text-sm text-gray-600">
+                  Laissez-nous un avis pour nous aider à nous améliorer
+                </p>
+              </div>
+              <ExternalLink className="w-5 h-5 text-amber-600" />
+            </div>
+          </a>
+        )}
 
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-gray-100">
@@ -284,42 +301,70 @@ export default function CustomerCardPage({
 
       <Modal
         isOpen={showRedeemModal}
-        onClose={() => setShowRedeemModal(false)}
-        title="Utiliser ma récompense"
+        onClose={() => !redeemSuccess && setShowRedeemModal(false)}
+        title={redeemSuccess ? "Félicitations !" : "Utiliser ma récompense"}
       >
-        <div className="text-center">
-          <div
-            className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
-            style={{ backgroundColor: `${merchant.primary_color}20` }}
-          >
-            <Gift className="w-10 h-10" style={{ color: merchant.primary_color }} />
+        {redeemSuccess ? (
+          <div className="text-center">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 bg-green-100">
+              <Check className="w-10 h-10 text-green-600" />
+            </div>
+
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              Récompense utilisée !
+            </h3>
+
+            <p className="text-gray-600 mb-6">
+              Votre compteur a été remis à zéro. Merci de votre fidélité !
+            </p>
+
+            <Button
+              onClick={() => {
+                setShowRedeemModal(false);
+                setRedeemSuccess(false);
+              }}
+              className="w-full"
+              size="lg"
+              style={{ backgroundColor: merchant.primary_color }}
+            >
+              Retour à ma carte
+            </Button>
           </div>
+        ) : (
+          <div className="text-center">
+            <div
+              className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
+              style={{ backgroundColor: `${merchant.primary_color}20` }}
+            >
+              <Gift className="w-10 h-10" style={{ color: merchant.primary_color }} />
+            </div>
 
-          <h3 className="text-xl font-bold text-gray-900 mb-2">
-            {merchant.reward_description}
-          </h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {merchant.reward_description}
+            </h3>
 
-          <p className="text-gray-600 mb-6">
-            Montrez cet écran au commerçant pour valider votre récompense.
-          </p>
+            <p className="text-gray-600 mb-6">
+              Montrez cet écran au commerçant pour valider votre récompense.
+            </p>
 
-          <Button
-            onClick={handleRedeem}
-            loading={redeeming}
-            className="w-full"
-            size="lg"
-            style={{ backgroundColor: merchant.primary_color }}
-          >
-            Confirmer l&apos;utilisation
-          </Button>
+            <Button
+              onClick={handleRedeem}
+              loading={redeeming}
+              className="w-full"
+              size="lg"
+              style={{ backgroundColor: merchant.primary_color }}
+            >
+              Confirmer l&apos;utilisation
+            </Button>
 
-          <button
-            onClick={() => setShowRedeemModal(false)}
-            className="mt-4 text-gray-500 hover:text-gray-700"
-          >
-            Annuler
-          </button>
-        </div>
+            <button
+              onClick={() => setShowRedeemModal(false)}
+              className="mt-4 text-gray-500 hover:text-gray-700"
+            >
+              Annuler
+            </button>
+          </div>
+        )}
       </Modal>
 
       <footer className="py-4 text-center text-xs text-gray-400">

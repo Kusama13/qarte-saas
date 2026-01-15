@@ -11,6 +11,7 @@ import {
   Loader2,
   Image as ImageIcon,
   Check,
+  Star,
 } from 'lucide-react';
 import { Button, Input, Textarea } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -40,6 +41,7 @@ export default function ProgramPage() {
     programName: '',
     welcomeMessage: '',
     promoMessage: '',
+    reviewLink: '',
     stampsRequired: 10,
     rewardDescription: '',
   });
@@ -67,6 +69,7 @@ export default function ProgramPage() {
           programName: data.program_name || '',
           welcomeMessage: data.welcome_message || '',
           promoMessage: data.promo_message || '',
+          reviewLink: data.review_link || '',
           stampsRequired: data.stamps_required || 10,
           rewardDescription: data.reward_description || '',
         });
@@ -118,6 +121,7 @@ export default function ProgramPage() {
           program_name: formData.programName,
           welcome_message: formData.welcomeMessage,
           promo_message: formData.promoMessage || null,
+          review_link: formData.reviewLink || null,
           stamps_required: formData.stampsRequired,
           reward_description: formData.rewardDescription,
         })
@@ -349,6 +353,23 @@ export default function ProgramPage() {
                 setFormData({ ...formData, promoMessage: e.target.value })
               }
               helperText="Ce message s'affichera en bannière sur la page client"
+            />
+          </div>
+
+          <div className="p-6 bg-white rounded-2xl shadow-sm">
+            <h3 className="flex items-center gap-2 mb-4 text-lg font-semibold text-gray-900">
+              <Star className="w-5 h-5 text-primary" />
+              Lien pour laisser un avis (optionnel)
+            </h3>
+
+            <Input
+              type="url"
+              placeholder="Ex: https://g.page/r/votre-commerce/review"
+              value={formData.reviewLink}
+              onChange={(e) =>
+                setFormData({ ...formData, reviewLink: e.target.value })
+              }
+              helperText="Lien vers votre page Google, TripAdvisor, etc. pour recevoir des avis"
             />
           </div>
         </div>
