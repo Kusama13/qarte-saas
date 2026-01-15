@@ -80,6 +80,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       if (data.exists && data.customer) {
         setCustomer(data.customer);
         localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
+        localStorage.setItem('qarte_customer_phone', formattedPhone);
         await processCheckin(data.customer);
       } else {
         setStep('register');
@@ -129,6 +130,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       setCustomer(data.customer);
       localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
+      localStorage.setItem('qarte_customer_phone', formattedPhone);
       await processCheckin(data.customer);
     } catch (err) {
       console.error(err);
@@ -448,10 +450,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 </p>
               )}
 
-            <Link href="/customer/dashboard" className="inline-block mt-8">
+            <Link href={`/customer/card/${merchant.id}`} className="inline-block mt-8">
               <Button variant="outline">
                 <CreditCard className="w-5 h-5 mr-2" />
-                Voir mes cartes
+                Voir ma carte
               </Button>
             </Link>
           </div>
@@ -534,10 +536,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               {loyaltyCard?.current_stamps} / {merchant?.stamps_required} passages
             </p>
 
-            <Link href="/customer/dashboard" className="inline-block mt-8">
+            <Link href={`/customer/card/${merchant.id}`} className="inline-block mt-8">
               <Button variant="outline">
                 <CreditCard className="w-5 h-5 mr-2" />
-                Voir mes cartes
+                Voir ma carte
               </Button>
             </Link>
           </div>
