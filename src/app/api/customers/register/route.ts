@@ -29,33 +29,32 @@ export async function GET(request: NextRequest) {
     }
 
     // 1. Vérifier si le client existe déjà pour CE commerçant
-    const { data: customerForMerchant } = await supabaseAdmin
+    const { data: customersForMerchant } = await supabaseAdmin
       .from('customers')
       .select('*')
       .eq('phone_number', phone)
       .eq('merchant_id', merchantId)
-      .single();
+      .limit(1);
 
-    if (customerForMerchant) {
+    if (customersForMerchant && customersForMerchant.length > 0) {
       return NextResponse.json({
-        customer: customerForMerchant,
+        customer: customersForMerchant[0],
         exists: true,
         existsForMerchant: true
       });
     }
 
     // 2. Vérifier si le client existe chez UN AUTRE commerçant (client Qarte existant)
-    const { data: customerGlobal } = await supabaseAdmin
+    const { data: customersGlobal } = await supabaseAdmin
       .from('customers')
       .select('*')
       .eq('phone_number', phone)
-      .limit(1)
-      .single();
+      .limit(1);
 
-    if (customerGlobal) {
+    if (customersGlobal && customersGlobal.length > 0) {
       // Client existe ailleurs - retourner ses infos pour éviter de redemander nom/prénom
       return NextResponse.json({
-        customer: customerGlobal,
+        customer: customersGlobal[0],
         exists: true,
         existsForMerchant: false,
         existsGlobally: true
