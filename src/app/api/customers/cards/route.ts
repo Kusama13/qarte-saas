@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Disable caching for this route
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -73,7 +77,9 @@ export async function GET(request: NextRequest) {
         last_visit_date: card.last_visit_date,
       }));
 
-    return NextResponse.json({ cards, found: true });
+    const response = NextResponse.json({ cards, found: true });
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    return response;
   } catch (error) {
     console.error('API error:', error);
     return NextResponse.json(
