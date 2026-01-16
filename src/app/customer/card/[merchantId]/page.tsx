@@ -15,14 +15,21 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
-import { supabase } from '@/lib/supabase';
-import { formatDate, formatDateTime, formatPhoneNumber } from '@/lib/utils';
-import type { Merchant, LoyaltyCard, Customer, Visit, Redemption } from '@/types';
+import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
+import type { Merchant, LoyaltyCard, Customer, Visit } from '@/types';
 
 interface CardWithDetails extends LoyaltyCard {
   merchant: Merchant;
   customer: Customer;
 }
+
+const getCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
 
 export default function CustomerCardPage({
   params,
@@ -40,52 +47,31 @@ export default function CustomerCardPage({
 
   useEffect(() => {
     const fetchData = async () => {
-      const savedPhone = localStorage.getItem('qarte_customer_phone');
+      const savedPhone = getCookie('customer_phone');
       if (!savedPhone) {
-        router.push('/customer/dashboard');
+        router.push('/customer/cards');
         return;
       }
 
       const formattedPhone = formatPhoneNumber(savedPhone);
 
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('phone_number', formattedPhone)
-        .single();
+      try {
+        const response = await fetch(
+          `/api/customers/card?phone=${encodeURIComponent(formattedPhone)}&merchant_id=${merchantId}`
+        );
+        const data = await response.json();
 
-      if (!customerData) {
-        router.push('/customer/dashboard');
+        if (!response.ok || !data.found) {
+          router.push('/customer/cards');
+          return;
+        }
+
+        setCard(data.card as CardWithDetails);
+        setVisits(data.visits || []);
+      } catch (error) {
+        console.error('Error fetching card:', error);
+        router.push('/customer/cards');
         return;
-      }
-
-      const { data: cardData } = await supabase
-        .from('loyalty_cards')
-        .select(`
-          *,
-          merchant:merchants (*),
-          customer:customers (*)
-        `)
-        .eq('customer_id', customerData.id)
-        .eq('merchant_id', merchantId)
-        .single();
-
-      if (!cardData) {
-        router.push('/customer/dashboard');
-        return;
-      }
-
-      setCard(cardData as CardWithDetails);
-
-      const { data: visitsData } = await supabase
-        .from('visits')
-        .select('*')
-        .eq('loyalty_card_id', cardData.id)
-        .order('visited_at', { ascending: false })
-        .limit(20);
-
-      if (visitsData) {
-        setVisits(visitsData);
       }
 
       setLoading(false);
@@ -97,23 +83,25 @@ export default function CustomerCardPage({
   const handleRedeem = async () => {
     if (!card) return;
 
+    const savedPhone = getCookie('customer_phone');
+    if (!savedPhone) return;
+
     setRedeeming(true);
 
     try {
-      await supabase.from('redemptions').insert({
-        loyalty_card_id: card.id,
-        merchant_id: card.merchant.id,
-        customer_id: card.customer.id,
-        stamps_used: card.current_stamps,
+      const response = await fetch('/api/redeem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          loyalty_card_id: card.id,
+          customer_phone: savedPhone,
+        }),
       });
 
-      await supabase
-        .from('loyalty_cards')
-        .update({ current_stamps: 0 })
-        .eq('id', card.id);
-
-      setCard({ ...card, current_stamps: 0 });
-      setRedeemSuccess(true);
+      if (response.ok) {
+        setCard({ ...card, current_stamps: 0 });
+        setRedeemSuccess(true);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -134,7 +122,7 @@ export default function CustomerCardPage({
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
         <AlertCircle className="w-16 h-16 mb-4 text-red-500" />
         <p className="text-gray-600">Carte introuvable</p>
-        <Link href="/customer/dashboard" className="mt-4">
+        <Link href="/customer/cards" className="mt-4">
           <Button variant="outline">Retour</Button>
         </Link>
       </div>
@@ -151,7 +139,7 @@ export default function CustomerCardPage({
         style={{ backgroundColor: merchant.primary_color }}
       >
         <Link
-          href="/customer/dashboard"
+          href="/customer/cards"
           className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20"
         >
           <ArrowLeft className="w-5 h-5 text-white" />

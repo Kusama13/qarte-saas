@@ -227,7 +227,7 @@ export default function CustomerCardsPage() {
                   return (
                     <Link
                       key={index}
-                      href={`/scan/${card.scan_code}`}
+                      href={`/customer/card/${card.merchant_id}`}
                       className="block group"
                     >
                       <div
