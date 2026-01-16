@@ -145,13 +145,16 @@ export default function CustomerCardsPage() {
             <span className="text-xl font-bold text-gray-900">Qarte</span>
           </Link>
           {step === 'cards' && (
-            <button
-              onClick={handleChangeNumber}
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Changer de numéro
-            </button>
+            <div className="text-right">
+              <button
+                onClick={handleChangeNumber}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Changer de numéro
+              </button>
+              <p className="text-xs text-gray-400 mt-1">{phoneNumber}</p>
+            </div>
           )}
         </div>
       </header>
