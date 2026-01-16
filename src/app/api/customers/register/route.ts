@@ -75,11 +75,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('POST /api/customers/register body:', body);
+
     const parsed = registerSchema.safeParse(body);
 
     if (!parsed.success) {
+      console.error('Validation error:', parsed.error);
       return NextResponse.json(
-        { error: 'Données invalides' },
+        { error: 'Données invalides', details: parsed.error.errors },
         { status: 400 }
       );
     }
@@ -87,15 +90,16 @@ export async function POST(request: NextRequest) {
     const { phone_number, first_name, last_name, merchant_id } = parsed.data;
 
     // Vérifier si le client existe déjà pour ce marchand
-    const { data: existing } = await supabaseAdmin
+    const { data: existingList } = await supabaseAdmin
       .from('customers')
       .select('*')
       .eq('phone_number', phone_number)
       .eq('merchant_id', merchant_id)
-      .single();
+      .limit(1);
 
-    if (existing) {
-      return NextResponse.json({ customer: existing });
+    if (existingList && existingList.length > 0) {
+      console.log('Customer already exists for merchant:', existingList[0]);
+      return NextResponse.json({ customer: existingList[0] });
     }
 
     // Créer le nouveau client
@@ -118,6 +122,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    console.log('Customer created:', newCustomer);
     return NextResponse.json({ customer: newCustomer });
   } catch (error) {
     console.error('API error:', error);
