@@ -14,7 +14,7 @@ const registerSchema = z.object({
   merchant_id: z.string().uuid(),
 });
 
-// GET: Rechercher un client par téléphone et merchant
+// GET: Rechercher un client par téléphone
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -28,15 +28,38 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data: customer } = await supabaseAdmin
+    // 1. Vérifier si le client existe déjà pour CE commerçant
+    const { data: customerForMerchant } = await supabaseAdmin
       .from('customers')
       .select('*')
       .eq('phone_number', phone)
       .eq('merchant_id', merchantId)
       .single();
 
-    if (customer) {
-      return NextResponse.json({ customer, exists: true });
+    if (customerForMerchant) {
+      return NextResponse.json({
+        customer: customerForMerchant,
+        exists: true,
+        existsForMerchant: true
+      });
+    }
+
+    // 2. Vérifier si le client existe chez UN AUTRE commerçant (client Qarte existant)
+    const { data: customerGlobal } = await supabaseAdmin
+      .from('customers')
+      .select('*')
+      .eq('phone_number', phone)
+      .limit(1)
+      .single();
+
+    if (customerGlobal) {
+      // Client existe ailleurs - retourner ses infos pour éviter de redemander nom/prénom
+      return NextResponse.json({
+        customer: customerGlobal,
+        exists: true,
+        existsForMerchant: false,
+        existsGlobally: true
+      });
     }
 
     return NextResponse.json({ customer: null, exists: false });

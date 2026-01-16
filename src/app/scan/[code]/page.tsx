@@ -78,11 +78,39 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       const data = await response.json();
 
       if (data.exists && data.customer) {
-        setCustomer(data.customer);
-        localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
-        localStorage.setItem('qarte_customer_phone', formattedPhone);
-        await processCheckin(data.customer);
+        // Client existe déjà pour ce commerçant OU globalement
+        if (data.existsForMerchant) {
+          // Client existe pour ce commerçant → checkin direct
+          setCustomer(data.customer);
+          localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
+          localStorage.setItem('qarte_customer_phone', formattedPhone);
+          await processCheckin(data.customer);
+        } else if (data.existsGlobally) {
+          // Client existe chez un autre commerçant → créer pour ce commerçant avec les mêmes infos
+          const createResponse = await fetch('/api/customers/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phone_number: formattedPhone,
+              first_name: data.customer.first_name,
+              last_name: data.customer.last_name,
+              merchant_id: merchant.id,
+            }),
+          });
+
+          const createData = await createResponse.json();
+
+          if (createResponse.ok && createData.customer) {
+            setCustomer(createData.customer);
+            localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
+            localStorage.setItem('qarte_customer_phone', formattedPhone);
+            await processCheckin(createData.customer);
+          } else {
+            setError('Erreur lors de l\'inscription');
+          }
+        }
       } else {
+        // Nouveau client → demander nom/prénom
         setStep('register');
       }
     } catch {
