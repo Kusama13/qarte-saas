@@ -17,8 +17,9 @@ import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validateFrenchPhone } from '@/lib/utils';
 
 interface LoyaltyCardWithMerchant {
+  merchant_id: string;
   shop_name: string;
-  slug: string;
+  scan_code: string;
   logo_url: string | null;
   primary_color: string;
   stamps_required: number;
@@ -68,18 +69,21 @@ export default function CustomerCardsPage() {
     try {
       const formattedPhone = formatPhoneNumber(phone);
 
-      const { data: customer } = await supabase
+      // Récupérer TOUS les clients avec ce numéro (un par commerçant)
+      const { data: customers } = await supabase
         .from('customers')
         .select('id')
-        .eq('phone_number', formattedPhone)
-        .single();
+        .eq('phone_number', formattedPhone);
 
-      if (!customer) {
+      if (!customers || customers.length === 0) {
         setCards([]);
         setStep('cards');
         setLoading(false);
         return;
       }
+
+      // Récupérer les cartes de fidélité pour TOUS ces clients
+      const customerIds = customers.map(c => c.id);
 
       const { data: cardsData, error: cardsError } = await supabase
         .from('loyalty_cards')
@@ -87,22 +91,25 @@ export default function CustomerCardsPage() {
           current_stamps,
           last_visit_date,
           merchant:merchants (
+            id,
             shop_name,
             slug,
+            scan_code,
             logo_url,
             primary_color,
             stamps_required
           )
         `)
-        .eq('customer_id', customer.id);
+        .in('customer_id', customerIds);
 
       if (cardsError) throw cardsError;
 
       const formattedCards: LoyaltyCardWithMerchant[] = (cardsData || [])
         .filter((card: any) => card.merchant)
         .map((card: any) => ({
+          merchant_id: card.merchant.id,
           shop_name: card.merchant.shop_name,
-          slug: card.merchant.slug,
+          scan_code: card.merchant.scan_code,
           logo_url: card.merchant.logo_url,
           primary_color: card.merchant.primary_color,
           stamps_required: card.merchant.stamps_required,
@@ -251,7 +258,7 @@ export default function CustomerCardsPage() {
                   return (
                     <Link
                       key={index}
-                      href={`/scan/${card.slug}`}
+                      href={`/scan/${card.scan_code}`}
                       className="block group"
                     >
                       <div
