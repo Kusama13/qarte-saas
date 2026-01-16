@@ -76,7 +76,9 @@ export default function CustomerCardsPage() {
       }
 
       if (!data.found || data.cards.length === 0) {
+        console.log('No cards found, debug:', data.debug);
         setCards([]);
+        setError(data.debug ? `Aucun compte trouvé (téléphone: ${data.debug.phone})` : '');
         setStep('cards');
         setLoading(false);
         return;

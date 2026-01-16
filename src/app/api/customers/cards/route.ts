@@ -12,6 +12,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const phone = searchParams.get('phone');
 
+    console.log('GET /api/customers/cards - phone:', phone);
+
     if (!phone) {
       return NextResponse.json(
         { error: 'Numéro de téléphone requis' },
@@ -20,13 +22,15 @@ export async function GET(request: NextRequest) {
     }
 
     // Récupérer TOUS les clients avec ce numéro (un par commerçant)
-    const { data: customers } = await supabaseAdmin
+    const { data: customers, error: customersError } = await supabaseAdmin
       .from('customers')
-      .select('id')
+      .select('id, phone_number, first_name, last_name, merchant_id')
       .eq('phone_number', phone);
 
+    console.log('Customers found:', customers, 'Error:', customersError);
+
     if (!customers || customers.length === 0) {
-      return NextResponse.json({ cards: [], found: false });
+      return NextResponse.json({ cards: [], found: false, debug: { phone, customersError } });
     }
 
     // Récupérer les cartes de fidélité pour TOUS ces clients
