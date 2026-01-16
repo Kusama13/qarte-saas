@@ -13,7 +13,6 @@ import {
   Wallet,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validateFrenchPhone } from '@/lib/utils';
 
 interface LoyaltyCardWithMerchant {
@@ -69,53 +68,21 @@ export default function CustomerCardsPage() {
     try {
       const formattedPhone = formatPhoneNumber(phone);
 
-      // Récupérer TOUS les clients avec ce numéro (un par commerçant)
-      const { data: customers } = await supabase
-        .from('customers')
-        .select('id')
-        .eq('phone_number', formattedPhone);
+      const response = await fetch(`/api/customers/cards?phone=${encodeURIComponent(formattedPhone)}`);
+      const data = await response.json();
 
-      if (!customers || customers.length === 0) {
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur serveur');
+      }
+
+      if (!data.found || data.cards.length === 0) {
         setCards([]);
         setStep('cards');
         setLoading(false);
         return;
       }
 
-      // Récupérer les cartes de fidélité pour TOUS ces clients
-      const customerIds = customers.map(c => c.id);
-
-      const { data: cardsData, error: cardsError } = await supabase
-        .from('loyalty_cards')
-        .select(`
-          current_stamps,
-          last_visit_date,
-          merchant:merchants (
-            id,
-            shop_name,
-            slug,
-            scan_code,
-            logo_url,
-            primary_color,
-            stamps_required
-          )
-        `)
-        .in('customer_id', customerIds);
-
-      if (cardsError) throw cardsError;
-
-      const formattedCards: LoyaltyCardWithMerchant[] = (cardsData || [])
-        .filter((card: any) => card.merchant)
-        .map((card: any) => ({
-          merchant_id: card.merchant.id,
-          shop_name: card.merchant.shop_name,
-          scan_code: card.merchant.scan_code,
-          logo_url: card.merchant.logo_url,
-          primary_color: card.merchant.primary_color,
-          stamps_required: card.merchant.stamps_required,
-          current_stamps: card.current_stamps,
-          last_visit_date: card.last_visit_date,
-        }))
+      const formattedCards: LoyaltyCardWithMerchant[] = data.cards
         .sort((a: LoyaltyCardWithMerchant, b: LoyaltyCardWithMerchant) => {
           const aRewardReady = a.current_stamps >= a.stamps_required;
           const bRewardReady = b.current_stamps >= b.stamps_required;
