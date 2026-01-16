@@ -19,6 +19,12 @@ import type { Merchant, Customer, LoyaltyCard } from '@/types';
 
 type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward';
 
+const setCookie = (name: string, value: string, days: number) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+};
+
 export default function ScanPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
   const [merchant, setMerchant] = useState<Merchant | null>(null);
@@ -84,6 +90,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           setCustomer(data.customer);
           localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
           localStorage.setItem('qarte_customer_phone', formattedPhone);
+          setCookie('customer_phone', formattedPhone, 30);
           await processCheckin(data.customer);
         } else if (data.existsGlobally) {
           // Client existe chez un autre commerçant → créer pour ce commerçant avec les mêmes infos
@@ -107,6 +114,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             setCustomer(createData.customer);
             localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
             localStorage.setItem('qarte_customer_phone', formattedPhone);
+            setCookie('customer_phone', formattedPhone, 30);
             await processCheckin(createData.customer);
           } else {
             console.error('Create failed:', createData);
@@ -163,6 +171,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       setCustomer(data.customer);
       localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
       localStorage.setItem('qarte_customer_phone', formattedPhone);
+      setCookie('customer_phone', formattedPhone, 30);
       await processCheckin(data.customer);
     } catch (err) {
       console.error(err);
