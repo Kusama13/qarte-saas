@@ -116,7 +116,7 @@ export default function PendingPointsWidget({ merchantId }: PendingPointsWidgetP
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ` ${time}`;
   };
 
-  const getInitials = (firstName?: string, lastName?: string) => {
+  const getInitials = (firstName?: string | null, lastName?: string | null) => {
     const first = firstName?.[0]?.toUpperCase() || '';
     const last = lastName?.[0]?.toUpperCase() || '';
     return first + last || '?';
