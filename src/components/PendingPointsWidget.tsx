@@ -19,7 +19,7 @@ import type { PendingVisit, LoyaltyMode } from '@/types';
 interface PendingPointsWidgetProps {
   merchantId: string;
   loyaltyMode: LoyaltyMode;
-  productName?: string;
+  productName?: string | null;
 }
 
 interface ToastState {
