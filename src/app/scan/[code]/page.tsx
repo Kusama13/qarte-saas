@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Phone,
@@ -12,13 +12,18 @@ import {
   Loader2,
   CreditCard,
   ChevronRight,
+  Minus,
+  Plus,
+  Undo2,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validateFrenchPhone, getTodayInParis } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
 
-type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward';
+type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'article-select';
 
 const setCookie = (name: string, value: string, days: number) => {
   const expires = new Date();
@@ -41,6 +46,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loyaltyCard, setLoyaltyCard] = useState<LoyaltyCard | null>(null);
 
+  // Article mode state
+  const [quantity, setQuantity] = useState(1);
+  const [canUndo, setCanUndo] = useState(false);
+  const [undoTimer, setUndoTimer] = useState(0);
+  const [lastCheckinPoints, setLastCheckinPoints] = useState(0);
+  const [lastVisitId, setLastVisitId] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchMerchant = async () => {
       const { data } = await supabase
@@ -62,6 +74,34 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       setPhoneNumber(savedPhone);
     }
   }, [code]);
+
+  // Undo timer countdown
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (canUndo && undoTimer > 0) {
+      interval = setInterval(() => {
+        setUndoTimer((prev) => {
+          if (prev <= 1) {
+            setCanUndo(false);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [canUndo, undoTimer]);
+
+  const triggerConfetti = useCallback(() => {
+    if (!merchant) return;
+    const colors = [merchant.primary_color, merchant.secondary_color || '#fbbf24'];
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors,
+    });
+  }, [merchant]);
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,8 +222,39 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     }
   };
 
-  const processCheckin = async (cust: Customer) => {
+  const processCheckin = async (cust: Customer, pointsToAdd?: number) => {
     if (!merchant) return;
+
+    // For article mode, show quantity selector first
+    if (merchant.loyalty_mode === 'article' && pointsToAdd === undefined) {
+      // Get or create the card first
+      let { data: card } = await supabase
+        .from('loyalty_cards')
+        .select('*')
+        .eq('customer_id', cust.id)
+        .eq('merchant_id', merchant.id)
+        .single();
+
+      if (!card) {
+        const { data: newCard, error: cardError } = await supabase
+          .from('loyalty_cards')
+          .insert({
+            customer_id: cust.id,
+            merchant_id: merchant.id,
+            current_stamps: 0,
+            stamps_target: merchant.stamps_required,
+          })
+          .select()
+          .single();
+
+        if (cardError) throw cardError;
+        card = newCard;
+      }
+
+      setLoyaltyCard(card);
+      setStep('article-select');
+      return;
+    }
 
     setStep('checkin');
 
@@ -202,6 +273,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             customer_id: cust.id,
             merchant_id: merchant.id,
             current_stamps: 0,
+            stamps_target: merchant.stamps_required,
           })
           .select()
           .single();
@@ -211,13 +283,15 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       }
 
       const today = getTodayInParis();
-      if (card.last_visit_date === today) {
+      // For visit mode, check if already checked in today
+      if (merchant.loyalty_mode === 'visit' && card.last_visit_date === today) {
         setLoyaltyCard(card);
         setStep('already-checked');
         return;
       }
 
-      const newStamps = card.current_stamps + 1;
+      const points = pointsToAdd || 1;
+      const newStamps = card.current_stamps + points;
 
       const { error: updateError } = await supabase
         .from('loyalty_cards')
@@ -229,16 +303,27 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       if (updateError) throw updateError;
 
-      await supabase.from('visits').insert({
+      const { data: visitData } = await supabase.from('visits').insert({
         loyalty_card_id: card.id,
         merchant_id: merchant.id,
         customer_id: cust.id,
-      });
+        points_earned: points,
+      }).select().single();
 
+      if (visitData) {
+        setLastVisitId(visitData.id);
+      }
+
+      setLastCheckinPoints(points);
       const updatedCard = { ...card, current_stamps: newStamps };
       setLoyaltyCard(updatedCard);
 
+      // Start undo timer
+      setCanUndo(true);
+      setUndoTimer(30);
+
       if (newStamps >= merchant.stamps_required) {
+        triggerConfetti();
         setStep('reward');
       } else {
         setStep('success');
@@ -247,6 +332,45 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       console.error(err);
       setError('Erreur lors de l\'enregistrement du passage');
       setStep('error');
+    }
+  };
+
+  const handleArticleCheckin = async () => {
+    if (!customer) return;
+    await processCheckin(customer, quantity);
+    setQuantity(1); // Reset quantity
+  };
+
+  const handleUndo = async () => {
+    if (!canUndo || !loyaltyCard || !lastVisitId) return;
+
+    setSubmitting(true);
+    try {
+      // Delete the visit
+      await supabase.from('visits').delete().eq('id', lastVisitId);
+
+      // Update the card
+      const newStamps = Math.max(0, loyaltyCard.current_stamps - lastCheckinPoints);
+      await supabase
+        .from('loyalty_cards')
+        .update({ current_stamps: newStamps })
+        .eq('id', loyaltyCard.id);
+
+      setLoyaltyCard({ ...loyaltyCard, current_stamps: newStamps });
+      setCanUndo(false);
+      setUndoTimer(0);
+      setLastVisitId(null);
+
+      // Go back to article select if in article mode
+      if (merchant?.loyalty_mode === 'article') {
+        setStep('article-select');
+      } else {
+        setStep('phone');
+      }
+    } catch (err) {
+      console.error('Undo error:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -456,6 +580,118 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           </div>
         )}
 
+        {step === 'article-select' && loyaltyCard && (
+          <div className="animate-fade-in">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
+              {/* Customer Info */}
+              <div className="flex items-center gap-4 mb-6">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {customer?.first_name[0]}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-lg">
+                    {customer?.first_name} {customer?.last_name || ''}
+                  </p>
+                  <p className="text-sm text-gray-500">{customer?.phone_number}</p>
+                </div>
+              </div>
+
+              {/* Current Points */}
+              <div className="text-center mb-6">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-4xl font-black" style={{ color: primaryColor }}>
+                    {loyaltyCard.current_stamps}
+                  </span>
+                  <span className="text-xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
+                </div>
+                <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-2">
+                  {merchant?.product_name || 'Articles'} cumulés
+                </p>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant?.stamps_required || 10)) * 100)}%`,
+                    background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
+                  }}
+                />
+              </div>
+
+              {/* Quantity Selector */}
+              <div className="mb-6">
+                <p className="text-sm font-medium text-gray-600 mb-3 text-center">
+                  Nombre de {merchant?.product_name || 'articles'}
+                </p>
+                <div className="flex items-center justify-center gap-4">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                    className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Minus className="w-6 h-6 text-gray-600" />
+                  </button>
+                  <div
+                    className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black text-white shadow-lg"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {quantity}
+                  </div>
+                  <button
+                    onClick={() => setQuantity(Math.min(merchant?.max_quantity_per_scan || 5, quantity + 1))}
+                    disabled={quantity >= (merchant?.max_quantity_per_scan || 5)}
+                    className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="w-6 h-6 text-gray-600" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 text-center mt-2">
+                  Max: {merchant?.max_quantity_per_scan || 5} par scan
+                </p>
+              </div>
+
+              {/* Checkin Button */}
+              <button
+                onClick={handleArticleCheckin}
+                disabled={submitting}
+                className="w-full h-16 rounded-2xl text-xl font-bold text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
+              >
+                {submitting ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : (
+                  <>
+                    <Plus className="w-6 h-6" />
+                    Ajouter {quantity} {merchant?.product_name || 'article'}{quantity > 1 ? 's' : ''}
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Reward Preview */}
+            <div className="mt-6 bg-white rounded-3xl shadow-lg border border-gray-100 p-5 flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
+                style={{ backgroundColor: `${primaryColor}15` }}
+              >
+                <Gift className="w-7 h-7" style={{ color: primaryColor }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                  À {merchant?.stamps_required} {merchant?.product_name || 'articles'}
+                </p>
+                <p className="text-base font-bold text-gray-900 leading-tight truncate">{merchant?.reward_description}</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-300" />
+            </div>
+          </div>
+        )}
+
         {step === 'checkin' && (
           <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
             <Loader2
@@ -476,24 +712,41 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 <Check className="w-10 h-10" style={{ color: primaryColor }} />
               </div>
 
-              <h2 className="text-2xl font-black text-gray-900 mb-1">Passage validé !</h2>
+              <h2 className="text-2xl font-black text-gray-900 mb-1">
+                {merchant?.loyalty_mode === 'article'
+                  ? `+${lastCheckinPoints} ${merchant?.product_name || 'article'}${lastCheckinPoints > 1 ? 's' : ''} !`
+                  : 'Passage validé !'
+                }
+              </h2>
               <p className="text-gray-500 mb-8">Merci {customer?.first_name} !</p>
 
               {/* Large Points Display */}
               <div className="mb-8">
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-6xl font-black" style={{ color: primaryColor }}>{loyaltyCard.current_stamps}</span>
+                  <motion.span
+                    key={loyaltyCard.current_stamps}
+                    initial={{ scale: 1.2 }}
+                    animate={{ scale: 1 }}
+                    className="text-6xl font-black"
+                    style={{ color: primaryColor }}
+                  >
+                    {loyaltyCard.current_stamps}
+                  </motion.span>
                   <span className="text-2xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
                 </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Passages cumulés</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
+                  {merchant?.loyalty_mode === 'visit' ? 'Passages cumulés' : `${merchant?.product_name || 'Articles'} cumulés`}
+                </p>
               </div>
 
               {/* Progress Bar */}
               <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
-                <div
-                  className="h-full transition-all duration-1000 ease-out rounded-full"
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant?.stamps_required || 10)) * 100)}%` }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                  className="h-full rounded-full"
                   style={{
-                    width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant?.stamps_required || 10)) * 100)}%`,
                     background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
                   }}
                 />
@@ -506,10 +759,27 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
                 >
                   <p className="font-bold text-gray-700">
-                    Plus que {(merchant?.stamps_required || 10) - loyaltyCard.current_stamps} passage{(merchant?.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''} avant le bonheur !
+                    Plus que {(merchant?.stamps_required || 10) - loyaltyCard.current_stamps} {merchant?.loyalty_mode === 'visit' ? 'passage' : (merchant?.product_name || 'article')}{(merchant?.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''} avant le bonheur !
                   </p>
                 </div>
               )}
+
+              {/* Undo Button */}
+              <AnimatePresence>
+                {canUndo && (
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    onClick={handleUndo}
+                    disabled={submitting}
+                    className="w-full flex items-center justify-center gap-3 py-4 mb-4 rounded-2xl bg-gray-100 hover:bg-gray-200 transition-colors text-gray-700 font-medium"
+                  >
+                    <Undo2 className="w-5 h-5" />
+                    Annuler ({undoTimer}s)
+                  </motion.button>
+                )}
+              </AnimatePresence>
 
               <Link href={`/customer/card/${merchant.id}`}>
                 <button className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2">

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import {
   Upload,
   Palette,
-  Gift,
   Save,
   Loader2,
   Image as ImageIcon,
@@ -13,10 +12,12 @@ import {
   Star,
   ChevronRight,
   X,
+  Gift,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import type { Merchant } from '@/types';
+import { MerchantSettingsForm, ProgramGuide, type LoyaltySettings } from '@/components/loyalty';
+import type { Merchant, LoyaltyMode } from '@/types';
 
 // Images par type de commerce
 const BUSINESS_IMAGES = [
@@ -52,6 +53,7 @@ export default function ProgramPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
   const [formData, setFormData] = useState({
     logoUrl: '',
@@ -60,6 +62,9 @@ export default function ProgramPage() {
     reviewLink: '',
     stampsRequired: 10,
     rewardDescription: '',
+    loyaltyMode: 'visit' as LoyaltyMode,
+    productName: '',
+    maxQuantityPerScan: 5,
   });
 
   useEffect(() => {
@@ -85,6 +90,9 @@ export default function ProgramPage() {
           reviewLink: data.review_link || '',
           stampsRequired: data.stamps_required || 10,
           rewardDescription: data.reward_description || '',
+          loyaltyMode: data.loyalty_mode || 'visit',
+          productName: data.product_name || '',
+          maxQuantityPerScan: data.max_quantity_per_scan || 5,
         });
       }
       setLoading(false);
@@ -134,6 +142,9 @@ export default function ProgramPage() {
           review_link: formData.reviewLink || null,
           stamps_required: formData.stampsRequired,
           reward_description: formData.rewardDescription,
+          loyalty_mode: formData.loyaltyMode,
+          product_name: formData.loyaltyMode === 'article' ? formData.productName : null,
+          max_quantity_per_scan: formData.loyaltyMode === 'article' ? formData.maxQuantityPerScan : 1,
         })
         .eq('id', merchant.id);
 
@@ -143,6 +154,42 @@ export default function ProgramPage() {
       setTimeout(() => setSaved(false), 3000);
     } catch (error) {
       console.error('Error saving:', error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLoyaltySettingsSave = async (settings: LoyaltySettings) => {
+    setFormData(prev => ({
+      ...prev,
+      loyaltyMode: settings.loyalty_mode,
+      productName: settings.product_name || '',
+      maxQuantityPerScan: settings.max_quantity_per_scan,
+      stampsRequired: settings.stamps_required,
+      rewardDescription: settings.reward_description,
+    }));
+    // Auto-save when loyalty settings change
+    if (!merchant) return;
+
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('merchants')
+        .update({
+          loyalty_mode: settings.loyalty_mode,
+          product_name: settings.product_name,
+          max_quantity_per_scan: settings.max_quantity_per_scan,
+          stamps_required: settings.stamps_required,
+          reward_description: settings.reward_description,
+        })
+        .eq('id', merchant.id);
+
+      if (error) throw error;
+
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      console.error('Error saving loyalty settings:', error);
     } finally {
       setSaving(false);
     }
@@ -365,60 +412,16 @@ export default function ProgramPage() {
           </div>
 
           <div className="p-8 bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl shadow-lg shadow-indigo-200/50 border border-white/60 backdrop-blur-xl transition-all duration-300">
-            <div className="flex items-center gap-4 mb-8">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200 ring-4 ring-indigo-50/50">
-                <Gift className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 leading-tight">Programme de fidélité</h3>
-                <p className="text-sm font-medium text-gray-500">Personnalisez l'expérience client</p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="relative p-6 transition-all border bg-gradient-to-br from-emerald-50/80 to-teal-50/50 border-emerald-100/50 rounded-2xl group hover:shadow-md hover:shadow-emerald-100/30">
-                <div className="flex items-center gap-2 mb-5">
-                  <div className="w-1.5 h-6 rounded-full bg-emerald-500" />
-                  <p className="font-bold text-emerald-900">Règle de récompense</p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-3 text-emerald-800 font-medium mb-4">
-                  <span>Après</span>
-                  <div className="relative">
-                    <Input
-                      type="number"
-                      min={2}
-                      max={50}
-                      value={formData.stampsRequired}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          stampsRequired: parseInt(e.target.value) || 10,
-                        })
-                      }
-                      className="w-24 text-center font-bold text-emerald-700 bg-white border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20"
-                    />
-                  </div>
-                  <span>passages, obtenez :</span>
-                </div>
-
-                <div className="relative">
-                  <Input
-                    placeholder="Ex: 20% de réduction, 1 café offert..."
-                    value={formData.rewardDescription}
-                    onChange={(e) =>
-                      setFormData({ ...formData, rewardDescription: e.target.value })
-                    }
-                    className="bg-white border-emerald-200 focus:border-emerald-500 focus:ring-emerald-500/20 placeholder:text-emerald-300"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <div className="p-1.5 rounded-full bg-emerald-100">
-                      <Gift className="w-4 h-4 text-emerald-600" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <MerchantSettingsForm
+              initialMode={formData.loyaltyMode}
+              initialProductName={formData.productName}
+              initialMaxQuantity={formData.maxQuantityPerScan}
+              initialStampsRequired={formData.stampsRequired}
+              initialRewardDescription={formData.rewardDescription}
+              onOpenGuide={() => setShowGuide(true)}
+              onSave={handleLoyaltySettingsSave}
+              loading={saving}
+            />
           </div>
 
           <div className="p-6 bg-gradient-to-br from-amber-50/50 via-white/80 to-yellow-50/50 backdrop-blur-md border border-amber-100/50 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group">
@@ -488,7 +491,9 @@ export default function ProgramPage() {
 
                     {/* Points Card */}
                     <div className="bg-white rounded-[1.5rem] p-4 shadow-sm border border-slate-100/50 flex flex-col items-center">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Points cumulés</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                        {formData.loyaltyMode === 'visit' ? 'Passages cumulés' : `${formData.productName || 'Articles'} cumulés`}
+                      </p>
 
                       <div className="flex items-baseline gap-1 mb-3">
                         <span className="text-4xl font-black tracking-tighter" style={{ color: formData.primaryColor }}>4</span>
@@ -550,6 +555,12 @@ export default function ProgramPage() {
           </div>
         </div>
       </div>
+
+      {/* Program Guide Modal */}
+      <ProgramGuide
+        isOpen={showGuide}
+        onClose={() => setShowGuide(false)}
+      />
     </div>
   );
 }
