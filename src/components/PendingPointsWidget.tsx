@@ -10,6 +10,9 @@ import {
   CheckCircle2,
   ThumbsUp,
   Loader2,
+  Phone,
+  Footprints,
+  ShoppingBag,
 } from 'lucide-react';
 import type { PendingVisit } from '@/types';
 
@@ -204,59 +207,78 @@ export default function PendingPointsWidget({ merchantId }: PendingPointsWidgetP
               ))}
             </div>
           ) : visits.length > 0 ? (
-            <div className="divide-y divide-gray-50">
+            <div className="p-4 space-y-0">
               {visits.map((visit) => (
                 <div
                   key={visit.id}
-                  className={`group relative flex flex-col sm:flex-row sm:items-center justify-between p-6 transition-all duration-300 hover:bg-gray-50/50 ${
-                    processingId === visit.id ? 'opacity-50 pointer-events-none scale-[0.99]' : ''
+                  className={`group relative flex flex-col md:flex-row md:items-center justify-between p-5 mb-3 bg-white border border-gray-100 rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-100 ${
+                    processingId === visit.id ? 'opacity-50 pointer-events-none scale-[0.98]' : ''
                   }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="relative">
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-lg font-bold shadow-sm">
+                  <div className="flex items-center gap-5">
+                    {/* Customer Avatar & Type Overlay */}
+                    <div className="relative shrink-0">
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-xl font-bold shadow-indigo-200 shadow-lg group-hover:scale-105 transition-transform duration-300">
                         {getInitials(visit.customer?.first_name, visit.customer?.last_name)}
                       </div>
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white border-2 border-white flex items-center justify-center">
-                        <Clock className="w-3 h-3 text-gray-400" />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-gray-900">
-                          {visit.customer?.first_name} {visit.customer?.last_name || ''}
-                        </span>
-                        <span className="text-[10px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">
-                          +{visit.points_earned} pt{visit.points_earned > 1 ? 's' : ''}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          {formatRelativeTime(visit.visited_at)}
-                        </span>
-                        {visit.flagged_reason && (
-                          <span className="flex items-center gap-1 text-amber-700 font-medium px-2 py-0.5 rounded-full bg-amber-50">
-                            <AlertCircle className="w-3 h-3" />
-                            {visit.flagged_reason}
-                          </span>
+                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center">
+                        {visit.points_earned === 1 ? (
+                          <Footprints className="w-3.5 h-3.5 text-indigo-600" />
+                        ) : (
+                          <ShoppingBag className="w-3.5 h-3.5 text-indigo-600" />
                         )}
                       </div>
                     </div>
+
+                    {/* Information Grid */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2.5 mb-1 flex-wrap">
+                        <h3 className="font-bold text-gray-900 text-lg leading-tight">
+                          {visit.customer?.first_name} {visit.customer?.last_name || ''}
+                        </h3>
+                        <div className={`px-2 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider ring-1 ring-inset ${
+                          visit.points_earned === 1
+                            ? 'bg-indigo-50 text-indigo-700 ring-indigo-700/10'
+                            : 'bg-violet-50 text-violet-700 ring-violet-700/10'
+                        }`}>
+                          +{visit.points_earned} {visit.points_earned === 1 ? 'passage' : 'articles'}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-gray-400" />
+                          <span className="font-medium tracking-wide">
+                            {visit.customer?.phone_number?.replace(/(\d{2})(?=\d)/g, '$1 ') || '-- -- -- -- --'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-gray-400" />
+                          <span>{formatRelativeTime(visit.visited_at)}</span>
+                        </div>
+                      </div>
+
+                      {visit.flagged_reason && (
+                        <div className="mt-2.5 flex items-center gap-2 text-xs font-bold text-amber-800 bg-amber-50/80 border border-amber-200/50 px-3 py-1.5 rounded-xl w-fit">
+                          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span>Attention : {visit.flagged_reason}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2 mt-4 sm:mt-0">
+                  {/* Enhanced Actions */}
+                  <div className="flex items-center gap-3 mt-5 md:mt-0 md:ml-4">
                     <button
                       onClick={() => handleAction(visit.id, 'reject')}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-gray-600 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all border border-gray-200"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-gray-500 hover:text-rose-600 hover:bg-rose-50 border border-gray-200 hover:border-rose-200 rounded-xl transition-all active:scale-95"
                     >
                       <X className="w-4 h-4" />
                       Refuser
                     </button>
                     <button
                       onClick={() => handleAction(visit.id, 'confirm')}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold bg-emerald-600 text-white hover:bg-emerald-700 rounded-xl transition-all shadow-sm shadow-emerald-100"
+                      className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/20 rounded-xl transition-all active:scale-95 shadow-md shadow-emerald-500/10"
                     >
                       <Check className="w-4 h-4" />
                       Valider
