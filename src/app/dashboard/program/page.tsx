@@ -498,7 +498,7 @@ export default function ProgramPage() {
                   {/* Promo Message Banner */}
                   {formData.promoMessage && (
                     <div
-                      className="px-4 py-2 text-center text-[10px] font-semibold text-white"
+                      className="relative z-20 px-4 py-2 text-center text-[10px] font-semibold text-white"
                       style={{ backgroundColor: formData.secondaryColor }}
                     >
                       {formData.promoMessage}
@@ -506,7 +506,7 @@ export default function ProgramPage() {
                   )}
 
                   {/* Main Card Content */}
-                  <div className="flex-1 px-4 -mt-6 z-10">
+                  <div className={`flex-1 px-4 z-10 ${formData.promoMessage ? 'mt-2' : '-mt-6'}`}>
                     <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100/50 flex flex-col items-center">
                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Points cumulés</p>
 
@@ -548,11 +548,25 @@ export default function ProgramPage() {
                         </p>
                       </div>
                       <ChevronRight size={14} className="text-slate-300" />
-                    </div>
+                    {/* Review Link Card */}
+                    {formData.reviewLink && (
+                      <div className="mt-3 bg-gradient-to-r from-amber-50 to-amber-50/50 rounded-2xl p-3 border border-amber-100 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-100">
+                          <Star size={18} className="text-amber-500 fill-amber-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[9px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">Votre avis compte</p>
+                          <p className="text-[10px] font-medium text-amber-800 truncate leading-tight">
+                            Laissez-nous un avis
+                          </p>
+                        </div>
+                        <ChevronRight size={14} className="text-amber-400" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Qarte Footer */}
-                  <div className="py-6 flex flex-col items-center gap-1 opacity-60">
+                  <div className="py-4 flex flex-col items-center gap-1 opacity-60">
                     <span className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">Powered by</span>
                     <span className="text-xs font-black tracking-tighter bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">QARTE</span>
                   </div>

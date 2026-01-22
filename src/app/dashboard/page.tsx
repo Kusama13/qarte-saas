@@ -28,23 +28,30 @@ interface StatsCardProps {
 
 function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
   return (
-    <div className="p-6 bg-white rounded-2xl shadow-sm">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{value}</p>
+    <div className="group relative p-6 bg-white/80 backdrop-blur-xl border border-white/40 rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:-translate-y-1 overflow-hidden">
+      <div className="relative flex items-start justify-between">
+        <div className="flex flex-col gap-1">
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] leading-none">{title}</p>
+          <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight mt-1">{value}</h3>
           {trend && (
-            <p className="flex items-center gap-1 mt-2 text-sm text-green-600">
-              <TrendingUp className="w-4 h-4" />
-              {trend}
-            </p>
+            <div className="flex items-center gap-1 mt-3 px-2 py-1 w-fit rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/10">
+              <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span className="text-xs font-bold">{trend}</span>
+            </div>
           )}
         </div>
         <div
-          className="flex items-center justify-center w-12 h-12 rounded-xl"
-          style={{ backgroundColor: `${color}20` }}
+          className="relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6"
+          style={{
+            background: `linear-gradient(135deg, ${color}15 0%, ${color}30 100%)`,
+            boxShadow: `0 8px 20px -6px ${color}60`
+          }}
         >
-          <Icon className="w-6 h-6" style={{ color }} />
+          <div
+            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-40 transition-opacity blur-md"
+            style={{ backgroundColor: color }}
+          />
+          <Icon className="relative w-6 h-6 transition-transform duration-500" style={{ color }} />
         </div>
       </div>
     </div>
@@ -208,13 +215,22 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-          Bonjour, {merchant?.shop_name}
+      <div className="relative">
+        <div className="absolute -left-8 -top-8 -z-10 h-32 w-32 rounded-full bg-indigo-50/60 blur-3xl" />
+        <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 md:text-3xl">
+          Bonjour, <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+            {merchant?.shop_name}
+          </span>
         </h1>
-        <p className="mt-1 text-gray-600">
-          Voici un aperçu de votre programme de fidélité
-        </p>
+        <div className="mt-2 flex items-center gap-2.5">
+          <div className="flex h-2 w-2 items-center justify-center">
+            <span className="absolute h-2 w-2 animate-ping rounded-full bg-indigo-400/50" />
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+          </div>
+          <p className="text-sm font-medium text-gray-500 md:text-base">
+            Voici un aperçu de votre programme de fidélité
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -245,91 +261,130 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
-          <h2 className="mb-6 text-lg font-semibold text-gray-900">
-            Visites des 7 derniers jours
-          </h2>
-          {chartData.some((d) => d.visits > 0) ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="date" stroke="#9CA3AF" fontSize={12} />
-                <YAxis stroke="#9CA3AF" fontSize={12} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '12px',
-                  }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="visits"
-                  stroke="#654EDA"
-                  strokeWidth={2}
-                  dot={{ fill: '#654EDA', strokeWidth: 2 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-[250px] text-gray-500">
-              <Calendar className="w-12 h-12 mb-4 text-gray-300" />
-              <p>Aucune visite enregistrée</p>
-              <p className="text-sm">Les données apparaîtront ici</p>
-            </div>
-          )}
+        {/* Analytics Card */}
+        <div className="group relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/20 rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-600 to-violet-600" />
+          <div className="p-8">
+            <h2 className="mb-8 text-xl font-bold tracking-tight text-gray-900">
+              Visites des 7 derniers jours
+            </h2>
+            {chartData.some((d) => d.visits > 0) ? (
+              <div className="h-[250px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="#654EDA" />
+                        <stop offset="100%" stopColor="#7C3AED" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                      dy={10}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#9CA3AF', fontSize: 12 }}
+                      allowDecimals={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                        backdropFilter: 'blur(8px)',
+                        border: '1px solid #E5E7EB',
+                        borderRadius: '16px',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                      }}
+                      itemStyle={{ color: '#654EDA', fontWeight: 600 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="visits"
+                      stroke="url(#lineGradient)"
+                      strokeWidth={4}
+                      dot={{ fill: '#654EDA', strokeWidth: 2, r: 4, stroke: '#fff' }}
+                      activeDot={{ r: 7, fill: '#654EDA', stroke: '#fff', strokeWidth: 3 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[250px] text-gray-500">
+                <div className="p-4 mb-4 rounded-2xl bg-indigo-50/50">
+                  <Calendar className="w-10 h-10 text-indigo-200" />
+                </div>
+                <p className="font-medium text-gray-900">Aucune visite enregistrée</p>
+                <p className="text-sm">Les données apparaîtront après vos premiers scans</p>
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Activité récente
-            </h2>
-            <Link href="/dashboard/customers">
-              <Button variant="ghost" size="sm">
-                Voir tout
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
+        {/* Activity Card */}
+        <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
+          <div className="p-8">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-bold tracking-tight text-gray-900">
+                Activité récente
+              </h2>
+              <Link href="/dashboard/customers">
+                <Button variant="ghost" size="sm" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl">
+                  Voir tout
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
 
-          {recentCustomers.length > 0 ? (
-            <div className="space-y-4">
-              {recentCustomers.map((customer) => (
-                <div
-                  key={customer.id}
-                  className="flex items-center justify-between p-4 rounded-xl bg-gray-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 font-medium text-white rounded-full bg-primary">
-                      {customer.name.charAt(0)}
+            {recentCustomers.length > 0 ? (
+              <div className="space-y-3">
+                {recentCustomers.map((customer) => (
+                  <div
+                    key={customer.id}
+                    className="group/item flex items-center justify-between p-4 rounded-2xl bg-indigo-50/30 border border-transparent hover:bg-white hover:border-indigo-100 hover:shadow-md hover:shadow-indigo-100/50 transition-all duration-200"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center justify-center w-12 h-12 font-bold text-white rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200/50">
+                        {customer.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">{customer.name}</p>
+                        <p className="text-sm text-gray-500">
+                          {customer.lastVisit
+                            ? formatRelativeTime(customer.lastVisit)
+                            : 'Nouveau client'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{customer.name}</p>
-                      <p className="text-sm text-gray-500">
-                        {customer.lastVisit
-                          ? `Dernière visite: ${formatRelativeTime(customer.lastVisit)}`
-                          : 'Nouveau client'}
-                      </p>
+                    <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-baseline gap-1">
+                        <span className="text-lg font-bold text-indigo-600">{customer.stamps}</span>
+                        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">/ {merchant?.stamps_required}</span>
+                      </div>
+                      <div className="h-1.5 w-16 bg-gray-200/50 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full transition-all duration-500"
+                          style={{ width: `${(customer.stamps / (merchant?.stamps_required || 1)) * 100}%` }}
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-primary">
-                      {customer.stamps}/{merchant?.stamps_required}
-                    </p>
-                    <p className="text-xs text-gray-500">passages</p>
-                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                <div className="p-4 mb-4 rounded-2xl bg-indigo-50/50">
+                  <Users className="w-10 h-10 text-indigo-200" />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-              <Users className="w-12 h-12 mb-4 text-gray-300" />
-              <p>Aucun client pour le moment</p>
-              <p className="text-sm">Affichez votre QR code !</p>
-            </div>
-          )}
+                <p className="font-medium text-gray-900">Aucun client pour le moment</p>
+                <p className="text-sm">Affichez votre QR code pour commencer !</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
