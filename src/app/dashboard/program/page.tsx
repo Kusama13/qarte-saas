@@ -12,6 +12,7 @@ import {
   Image as ImageIcon,
   Check,
   Star,
+  ChevronRight,
 } from 'lucide-react';
 import { Button, Input, Textarea } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -447,84 +448,80 @@ export default function ProgramPage() {
 
         <div className="hidden lg:block">
           <div className="sticky top-8">
-            <p className="mb-4 text-sm font-medium text-gray-500 text-center">
+            <p className="mb-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">
               Aperçu en temps réel
             </p>
             <div className="flex justify-center">
-              <div className="phone-mockup">
-                <div className="phone-mockup-screen">
-                  <div className="flex flex-col h-full">
-                    <div
-                      className="flex items-center justify-center h-16"
-                      style={{ backgroundColor: formData.primaryColor }}
-                    >
-                      {formData.logoUrl ? (
-                        <img
-                          src={formData.logoUrl}
-                          alt="Logo"
-                          className="object-cover w-10 h-10 rounded-lg"
-                        />
-                      ) : (
-                        <span className="text-lg font-bold text-white">
-                          {merchant?.shop_name}
-                        </span>
-                      )}
+              <div className="relative w-[280px] h-[560px] bg-white rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-200">
+                <div className="h-full flex flex-col bg-slate-50/50">
+                  {/* Header: Gradient + Pattern + Logo Glassmorphism */}
+                  <div
+                    className="relative pt-10 pb-8 px-6 overflow-hidden"
+                    style={{ background: `linear-gradient(135deg, ${formData.primaryColor}, ${formData.secondaryColor})` }}
+                  >
+                    <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
+                    <div className="relative flex flex-col items-center">
+                      <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-inner mb-3 overflow-hidden">
+                        {formData.logoUrl ? (
+                          <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xl font-black text-white">{merchant?.shop_name?.[0] || 'Q'}</span>
+                        )}
+                      </div>
+                      <h3 className="text-white font-bold text-sm tracking-tight">{merchant?.shop_name}</h3>
                     </div>
+                  </div>
 
-                    {formData.promoMessage && (
-                      <div
-                        className="px-4 py-2 text-xs text-center text-white"
-                        style={{ backgroundColor: formData.secondaryColor }}
-                      >
-                        {formData.promoMessage}
-                      </div>
-                    )}
+                  {/* Main Card Content */}
+                  <div className="flex-1 px-4 -mt-6 z-10">
+                    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100/50 flex flex-col items-center">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Points cumulés</p>
 
-                    <div
-                      className="flex flex-col items-center flex-1 p-4"
-                      style={{
-                        background: `linear-gradient(180deg, ${formData.primaryColor}10 0%, white 100%)`,
-                      }}
-                    >
-                      <p className="mb-2 text-sm font-medium text-center text-gray-900">
-                        {formData.programName || 'Carte Fidélité'}
-                      </p>
-                      <p className="mb-4 text-xs text-center text-gray-600">
-                        {formData.welcomeMessage || 'Bienvenue !'}
-                      </p>
-
-                      <div className="flex flex-wrap justify-center gap-1.5 mb-4">
-                        {[...Array(Math.min(formData.stampsRequired, 12))].map((_, i) => (
-                          <div
-                            key={i}
-                            className="w-5 h-5 rounded-full border-2"
-                            style={{
-                              borderColor: formData.primaryColor,
-                              backgroundColor:
-                                i < 4 ? formData.primaryColor : 'transparent',
-                            }}
-                          />
-                        ))}
+                      {/* Points Display */}
+                      <div className="flex items-baseline gap-1.5 mb-5">
+                        <span className="text-5xl font-black tracking-tighter" style={{ color: formData.primaryColor }}>4</span>
+                        <span className="text-slate-300 text-xl font-bold">/{formData.stampsRequired}</span>
                       </div>
 
-                      <p className="text-xs text-gray-500">
-                        4 / {formData.stampsRequired} passages
-                      </p>
-
-                      {formData.rewardDescription && (
+                      {/* Progress Bar */}
+                      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-5">
                         <div
-                          className="mt-4 p-3 rounded-xl text-center w-full"
-                          style={{ backgroundColor: `${formData.secondaryColor}20` }}
-                        >
-                          <p
-                            className="text-xs font-medium"
-                            style={{ color: formData.primaryColor }}
-                          >
-                            Récompense : {formData.rewardDescription}
-                          </p>
-                        </div>
-                      )}
+                          className="h-full transition-all duration-700 ease-out"
+                          style={{
+                            width: `${Math.min((4 / formData.stampsRequired) * 100, 100)}%`,
+                            background: `linear-gradient(to right, ${formData.primaryColor}, ${formData.secondaryColor})`
+                          }}
+                        />
+                      </div>
+
+                      {/* Status Message */}
+                      <div
+                        className="px-4 py-2 rounded-full text-[11px] font-semibold text-center"
+                        style={{ backgroundColor: `${formData.primaryColor}10`, color: formData.primaryColor }}
+                      >
+                        Plus que {Math.max(formData.stampsRequired - 4, 0)} points avant votre cadeau
+                      </div>
                     </div>
+
+                    {/* Reward Preview Card */}
+                    <div className="mt-4 bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${formData.secondaryColor}15` }}>
+                        <Gift size={18} style={{ color: formData.secondaryColor }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Prochaine offre</p>
+                        <p className="text-[11px] font-bold text-slate-800 truncate leading-tight">
+                          {formData.rewardDescription || 'Chargement...'}
+                        </p>
+                      </div>
+                      <ChevronRight size={14} className="text-slate-300" />
+                    </div>
+                  </div>
+
+                  {/* Qarte Footer */}
+                  <div className="py-6 flex flex-col items-center gap-1 opacity-60">
+                    <span className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">Powered by</span>
+                    <span className="text-xs font-black tracking-tighter bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">QARTE</span>
                   </div>
                 </div>
               </div>

@@ -13,6 +13,7 @@ import {
   AlertCircle,
   Star,
   ExternalLink,
+  ChevronRight,
 } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
 import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
@@ -133,99 +134,106 @@ export default function CustomerCardPage({
   const isRewardReady = card.current_stamps >= merchant.stamps_required;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: `${merchant.primary_color}08` }}>
+    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${merchant.primary_color}10)` }}>
       <header
-        className="sticky top-0 z-10 flex items-center gap-4 h-16 px-4"
-        style={{ backgroundColor: merchant.primary_color }}
+        className="relative h-64 w-full overflow-hidden flex flex-col items-center justify-center text-white px-6"
+        style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
       >
-        <Link
-          href="/customer/cards"
-          className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20"
-        >
-          <ArrowLeft className="w-5 h-5 text-white" />
-        </Link>
-        {merchant.logo_url ? (
-          <img
-            src={merchant.logo_url}
-            alt={merchant.shop_name}
-            className="w-10 h-10 rounded-lg object-cover"
-          />
-        ) : (
-          <span className="text-lg font-bold text-white">{merchant.shop_name}</span>
-        )}
+        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+
+        <div className="absolute top-6 left-6">
+          <Link
+            href="/customer/cards"
+            className="flex items-center justify-center w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg transition-transform hover:scale-105 active:scale-95"
+          >
+            <ArrowLeft className="w-5 h-5 text-white" />
+          </Link>
+        </div>
+
+        <div className="w-24 h-24 rounded-3xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center mb-4 p-1 shadow-2xl overflow-hidden">
+          {merchant.logo_url ? (
+            <img
+              src={merchant.logo_url}
+              alt={merchant.shop_name}
+              className="w-full h-full rounded-2xl object-cover"
+            />
+          ) : (
+            <span className="text-3xl font-black text-white">{merchant.shop_name[0]}</span>
+          )}
+        </div>
+        <h1 className="text-2xl font-black tracking-tight drop-shadow-sm">{merchant.shop_name}</h1>
       </header>
 
       {merchant.promo_message && (
         <div
-          className="px-4 py-2 text-center text-sm text-white"
+          className="px-4 py-3 text-center text-sm font-semibold text-white"
           style={{ backgroundColor: merchant.secondary_color }}
         >
           {merchant.promo_message}
         </div>
       )}
 
-      <main className="px-4 py-6 mx-auto max-w-lg">
-        <div className="p-6 bg-white rounded-2xl shadow-sm mb-6">
-          <h1 className="text-xl font-bold text-gray-900 mb-1">
-            {merchant.program_name || 'Programme Fidélité'}
-          </h1>
-          <p className="text-gray-600 text-sm mb-6">{merchant.welcome_message}</p>
-
-          <div className="flex justify-center gap-2 mb-4 flex-wrap">
-            {[...Array(merchant.stamps_required)].map((_, i) => (
-              <div
-                key={i}
-                className="w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all"
-                style={{
-                  borderColor: merchant.primary_color,
-                  backgroundColor:
-                    i < card.current_stamps ? merchant.primary_color : 'transparent',
-                }}
-              >
-                {i < card.current_stamps && (
-                  <Check className="w-5 h-5 text-white" />
-                )}
-              </div>
-            ))}
+      <main className="flex-1 -mt-12 px-4 pb-12 w-full max-w-lg mx-auto z-10">
+        <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
+          <div className="text-center mb-10">
+            <div className="flex items-baseline justify-center gap-1">
+              <span className="text-6xl font-black" style={{ color: merchant.primary_color }}>{card.current_stamps}</span>
+              <span className="text-2xl font-bold text-gray-300">/{merchant.stamps_required}</span>
+            </div>
+            <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-3">Passages cumulés</p>
           </div>
 
-          <p
-            className="text-center text-lg font-semibold mb-2"
-            style={{ color: merchant.primary_color }}
-          >
-            {card.current_stamps} / {merchant.stamps_required} passages
-          </p>
-
-          {!isRewardReady && card.current_stamps > 0 && (
-            <p className="text-center text-sm text-gray-600">
-              Plus que {merchant.stamps_required - card.current_stamps} passage
-              {merchant.stamps_required - card.current_stamps > 1 ? 's' : ''} pour
-              votre récompense
-            </p>
-          )}
+          <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden mb-10">
+            <div
+              className="h-full transition-all duration-1000 ease-out rounded-full shadow-sm"
+              style={{
+                width: `${Math.min(100, (card.current_stamps / merchant.stamps_required) * 100)}%`,
+                background: `linear-gradient(90deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`
+              }}
+            />
+          </div>
 
           <div
-            className="mt-6 p-4 rounded-xl text-center"
-            style={{ backgroundColor: `${merchant.secondary_color}20` }}
+            className="rounded-2xl p-4 border mb-8 text-center bg-gradient-to-r from-white to-transparent"
+            style={{
+              backgroundColor: `${merchant.primary_color}05`,
+              borderColor: `${merchant.primary_color}15`
+            }}
           >
-            <Gift className="w-8 h-8 mx-auto mb-2" style={{ color: merchant.primary_color }} />
-            <p className="font-medium" style={{ color: merchant.primary_color }}>
-              {merchant.reward_description}
+            <p className="font-bold text-gray-700">
+              {isRewardReady
+                ? "🎉 Félicitations ! Votre cadeau est prêt."
+                : `Plus que ${merchant.stamps_required - card.current_stamps} passage${merchant.stamps_required - card.current_stamps > 1 ? 's' : ''} avant le bonheur !`
+              }
             </p>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-white to-gray-50/50 p-6 flex items-center gap-5 transition-all hover:shadow-lg">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
+              style={{ backgroundColor: `${merchant.primary_color}15` }}
+            >
+              <Gift className="w-7 h-7" style={{ color: merchant.primary_color }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Votre récompense</p>
+              <p className="text-lg font-bold text-gray-900 leading-tight truncate">{merchant.reward_description}</p>
+            </div>
+            <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-400 transition-colors" />
           </div>
 
           {isRewardReady && !redeemSuccess && (
             <Button
               onClick={() => setShowRedeemModal(true)}
-              className="w-full mt-6"
-              size="lg"
-              style={{ backgroundColor: merchant.primary_color }}
+              className="w-full mt-8 h-16 rounded-2xl text-lg font-bold shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+              style={{
+                background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`
+              }}
             >
-              <Gift className="w-5 h-5 mr-2" />
-              Utiliser ma récompense
+              <Gift className="w-6 h-6 mr-3" />
+              Profiter de ma récompense
             </Button>
           )}
-
         </div>
 
         {merchant.review_link && (
@@ -233,27 +241,31 @@ export default function CustomerCardPage({
             href={merchant.review_link}
             target="_blank"
             rel="noopener noreferrer"
-            className="block p-4 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl shadow-sm mb-6 hover:shadow-md transition-shadow"
+            className="group block p-5 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-100 rounded-3xl shadow-lg shadow-amber-900/5 mb-8 hover:shadow-xl hover:shadow-amber-900/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]"
           >
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-full">
-                <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+            <div className="flex items-center gap-5">
+              <div className="flex items-center justify-center w-14 h-14 bg-amber-100 rounded-2xl group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                <Star className="w-7 h-7 text-amber-500 fill-amber-500" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-gray-900">Votre avis compte !</p>
-                <p className="text-sm text-gray-600">
+                <p className="font-bold text-gray-900 text-lg">Votre avis compte !</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
                   Laissez-nous un avis pour nous aider à nous améliorer
                 </p>
               </div>
-              <ExternalLink className="w-5 h-5 text-amber-600" />
+              <div className="p-2.5 rounded-xl bg-white shadow-sm border border-amber-50 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                <ExternalLink className="w-5 h-5" />
+              </div>
             </div>
           </a>
         )}
 
-        <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-gray-400" />
+        <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100/50 overflow-hidden mb-12">
+          <div className="p-6 border-b border-gray-50">
+            <h2 className="font-bold text-gray-900 text-lg flex items-center gap-3">
+              <div className="p-2 bg-gray-50 rounded-xl">
+                <Calendar className="w-5 h-5 text-gray-500" />
+              </div>
               Historique des visites
             </h2>
           </div>
@@ -261,17 +273,17 @@ export default function CustomerCardPage({
           {visits.length > 0 ? (
             <ul className="divide-y divide-gray-50">
               {visits.map((visit) => (
-                <li key={visit.id} className="flex items-center gap-4 px-4 py-3">
+                <li key={visit.id} className="flex items-center gap-4 px-6 py-5 hover:bg-gray-50/40 transition-colors">
                   <div
-                    className="flex items-center justify-center w-10 h-10 rounded-full"
+                    className="flex items-center justify-center w-12 h-12 rounded-2xl shadow-sm"
                     style={{ backgroundColor: `${merchant.primary_color}10` }}
                   >
-                    <Check className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                    <Check className="w-6 h-6" style={{ color: merchant.primary_color }} />
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">Passage validé</p>
-                    <p className="text-sm text-gray-500 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900">Passage validé</p>
+                    <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5" />
                       {formatDateTime(visit.visited_at)}
                     </p>
                   </div>
@@ -279,12 +291,26 @@ export default function CustomerCardPage({
               ))}
             </ul>
           ) : (
-            <div className="p-8 text-center text-gray-500">
-              <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>Aucune visite enregistrée</p>
+            <div className="p-12 text-center">
+              <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-gray-300" />
+              </div>
+              <p className="text-gray-500 font-medium">Aucune visite enregistrée</p>
             </div>
           )}
         </div>
+
+        <footer className="py-12 text-center">
+          <p className="text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase mb-3">Propulsé par</p>
+          <div className="inline-flex items-center gap-2 group cursor-default transition-all duration-300 hover:opacity-70">
+            <div className="w-7 h-7 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-200">
+              <span className="text-white text-xs font-black italic">Q</span>
+            </div>
+            <span className="text-xl font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+              QARTE
+            </span>
+          </div>
+        </footer>
       </main>
 
       <Modal
@@ -354,13 +380,6 @@ export default function CustomerCardPage({
           </div>
         )}
       </Modal>
-
-      <footer className="py-4 text-center text-xs text-gray-400">
-        Powered by{' '}
-        <Link href="/" className="hover:text-primary">
-          Qarte
-        </Link>
-      </footer>
     </div>
   );
 }
