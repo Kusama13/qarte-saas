@@ -47,6 +47,15 @@ function DashboardLayoutContent({
     window.location.href = '/auth/merchant';
   };
 
+  // Wait for merchant data to load before checking trial status
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   const trialStatus = getTrialStatus(
     merchant?.trial_ends_at || null,
     merchant?.subscription_status || 'trial'
@@ -56,14 +65,6 @@ function DashboardLayoutContent({
   if (trialStatus.isFullyExpired && pathname !== '/dashboard/subscription') {
     router.push('/dashboard/subscription');
     return null;
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
   }
 
   if (pathname === '/dashboard/setup' || pathname === '/dashboard/qr-download') {

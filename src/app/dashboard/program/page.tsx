@@ -159,7 +159,8 @@ export default function ProgramPage() {
     }
   };
 
-  const handleLoyaltySettingsSave = async (settings: LoyaltySettings) => {
+  // Real-time preview updates (no save)
+  const handleLoyaltySettingsChange = (settings: LoyaltySettings) => {
     setFormData(prev => ({
       ...prev,
       loyaltyMode: settings.loyalty_mode,
@@ -168,6 +169,9 @@ export default function ProgramPage() {
       stampsRequired: settings.stamps_required,
       rewardDescription: settings.reward_description,
     }));
+  };
+
+  const handleLoyaltySettingsSave = async (settings: LoyaltySettings) => {
     // Auto-save when loyalty settings change
     if (!merchant) return;
 
@@ -419,6 +423,7 @@ export default function ProgramPage() {
               initialStampsRequired={formData.stampsRequired}
               initialRewardDescription={formData.rewardDescription}
               onOpenGuide={() => setShowGuide(true)}
+              onChange={handleLoyaltySettingsChange}
               onSave={handleLoyaltySettingsSave}
               loading={saving}
             />

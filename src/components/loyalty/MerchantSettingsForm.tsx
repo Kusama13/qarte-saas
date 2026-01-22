@@ -27,6 +27,7 @@ interface MerchantSettingsFormProps {
   initialRewardDescription?: string;
   onOpenGuide?: () => void;
   onSave?: (settings: LoyaltySettings) => void;
+  onChange?: (settings: LoyaltySettings) => void;
   loading?: boolean;
 }
 
@@ -46,6 +47,7 @@ export function MerchantSettingsForm({
   initialRewardDescription = '',
   onOpenGuide,
   onSave,
+  onChange,
   loading = false,
 }: MerchantSettingsFormProps) {
   const [mode, setMode] = useState<LoyaltyMode>(initialMode);
@@ -61,6 +63,17 @@ export function MerchantSettingsForm({
     setStampsRequired(initialStampsRequired);
     setRewardDescription(initialRewardDescription || '');
   }, [initialMode, initialProductName, initialMaxQuantity, initialStampsRequired, initialRewardDescription]);
+
+  // Notify parent of changes for real-time preview updates
+  useEffect(() => {
+    onChange?.({
+      loyalty_mode: mode,
+      product_name: mode === 'article' ? productName : null,
+      max_quantity_per_scan: mode === 'article' ? maxQuantity : 1,
+      stamps_required: stampsRequired,
+      reward_description: rewardDescription,
+    });
+  }, [mode, productName, maxQuantity, stampsRequired, rewardDescription, onChange]);
 
   const handleSave = () => {
     onSave?.({
