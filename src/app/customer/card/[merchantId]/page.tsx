@@ -168,33 +168,62 @@ export default function CustomerCardPage({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${merchant.primary_color}10)` }}>
-      <header
-        className="relative h-64 w-full overflow-hidden flex flex-col items-center justify-center text-white px-6"
-        style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
-      >
-        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+      {/* Header with full-width image/logo */}
+      <header className="relative w-full overflow-hidden">
+        {/* Background container with color borders on larger screens */}
+        <div className="relative mx-auto lg:max-w-lg lg:mt-6 lg:rounded-3xl overflow-hidden">
+          {/* Subtle color glow on sides (visible on lg screens) */}
+          <div
+            className="hidden lg:block absolute -inset-4 opacity-30 blur-2xl pointer-events-none"
+            style={{ background: `linear-gradient(135deg, ${merchant.primary_color}40, ${merchant.secondary_color || merchant.primary_color}40)` }}
+          />
 
-        <div className="absolute top-6 left-6">
-          <Link
-            href="/customer/cards"
-            className="flex items-center justify-center w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg transition-transform hover:scale-105 active:scale-95"
+          {/* Main header content */}
+          <div
+            className="relative h-56 sm:h-64 lg:h-72 w-full flex flex-col items-center justify-center text-white"
           >
-            <ArrowLeft className="w-5 h-5 text-white" />
-          </Link>
-        </div>
+            {/* Background: Image or Gradient */}
+            {merchant.logo_url ? (
+              <>
+                <img
+                  src={merchant.logo_url}
+                  alt={merchant.shop_name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                {/* Dark overlay for text readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20" />
+              </>
+            ) : (
+              <>
+                <div
+                  className="absolute inset-0"
+                  style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
+                />
+                <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+              </>
+            )}
 
-        <div className="w-24 h-24 rounded-3xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center mb-4 p-1 shadow-2xl overflow-hidden">
-          {merchant.logo_url ? (
-            <img
-              src={merchant.logo_url}
-              alt={merchant.shop_name}
-              className="w-full h-full rounded-2xl object-cover"
-            />
-          ) : (
-            <span className="text-3xl font-black text-white">{merchant.shop_name[0]}</span>
-          )}
+            {/* Back button */}
+            <div className="absolute top-4 left-4 lg:top-6 lg:left-6 z-20">
+              <Link
+                href="/customer/cards"
+                className="flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg transition-transform hover:scale-105 active:scale-95"
+              >
+                <ArrowLeft className="w-5 h-5 text-white" />
+              </Link>
+            </div>
+
+            {/* Shop name at bottom */}
+            <div className="relative z-10 mt-auto pb-8 text-center">
+              {!merchant.logo_url && (
+                <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center mb-4 mx-auto shadow-2xl">
+                  <span className="text-3xl font-black text-white">{merchant.shop_name[0]}</span>
+                </div>
+              )}
+              <h1 className="text-2xl lg:text-3xl font-black tracking-tight drop-shadow-lg px-4">{merchant.shop_name}</h1>
+            </div>
+          </div>
         </div>
-        <h1 className="text-2xl font-black tracking-tight drop-shadow-sm">{merchant.shop_name}</h1>
       </header>
 
       

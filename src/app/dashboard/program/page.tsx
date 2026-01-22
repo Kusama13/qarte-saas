@@ -562,21 +562,35 @@ export default function ProgramPage() {
             <div className="flex justify-center">
               <div className="relative w-[280px] h-[560px] bg-white rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-200">
                 <div className="h-full flex flex-col bg-slate-50/50">
-                  {/* Header: Gradient + Pattern + Logo */}
-                  <div
-                    className="relative pt-6 pb-6 px-6 overflow-hidden"
-                    style={{ background: `linear-gradient(135deg, ${formData.primaryColor}, ${formData.secondaryColor})` }}
-                  >
-                    <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
-                    <div className="relative flex flex-col items-center">
-                      <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-lg mb-2 overflow-hidden">
-                        {formData.logoUrl ? (
-                          <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-2xl font-black text-white">{merchant?.shop_name?.[0] || 'Q'}</span>
-                        )}
-                      </div>
-                      <h3 className="text-white font-bold text-sm tracking-tight">{merchant?.shop_name}</h3>
+                  {/* Header: Full-width image or gradient */}
+                  <div className="relative h-32 w-full overflow-hidden">
+                    {formData.logoUrl ? (
+                      <>
+                        <img
+                          src={formData.logoUrl}
+                          alt="Logo"
+                          className="absolute inset-0 w-full h-full object-cover"
+                        />
+                        {/* Dark overlay for text readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" />
+                      </>
+                    ) : (
+                      <>
+                        <div
+                          className="absolute inset-0"
+                          style={{ background: `linear-gradient(135deg, ${formData.primaryColor}, ${formData.secondaryColor})` }}
+                        />
+                        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }} />
+                      </>
+                    )}
+                    {/* Shop name at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
+                      {!formData.logoUrl && (
+                        <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-lg mb-2 mx-auto">
+                          <span className="text-lg font-black text-white">{merchant?.shop_name?.[0] || 'Q'}</span>
+                        </div>
+                      )}
+                      <h3 className="text-white font-bold text-sm tracking-tight drop-shadow-lg">{merchant?.shop_name}</h3>
                     </div>
                   </div>
 
