@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import confetti from 'canvas-confetti';
 import {
   ArrowLeft,
   Check,
@@ -114,11 +115,51 @@ export default function CustomerCardPage({
     fetchData();
   }, [merchantId, router]);
 
+  const triggerConfetti = () => {
+    // Fire confetti from both sides
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.7 },
+        colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.7 },
+        colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+
+    // Initial burst
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
+    });
+
+    frame();
+  };
+
   const handleRedeem = async () => {
     if (!card) return;
 
     const savedPhone = getCookie('customer_phone');
-    if (!savedPhone) return;
+    if (!savedPhone) {
+      console.error('No phone found in cookies');
+      return;
+    }
 
     setRedeeming(true);
 
@@ -132,12 +173,19 @@ export default function CustomerCardPage({
         }),
       });
 
-      if (response.ok) {
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         setCard({ ...card, current_stamps: 0 });
         setRedeemSuccess(true);
+        triggerConfetti();
+      } else {
+        console.error('Redeem failed:', data.error);
+        alert(data.error || 'Une erreur est survenue');
       }
     } catch (err) {
-      console.error(err);
+      console.error('Redeem error:', err);
+      alert('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setRedeeming(false);
     }
@@ -399,7 +447,7 @@ export default function CustomerCardPage({
 
             <div className="flex-1 min-w-0 relative z-10">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5">Votre récompense</p>
-              <p className="text-xl font-black text-gray-900 leading-tight truncate tracking-tight">
+              <p className="text-lg sm:text-xl font-black text-gray-900 leading-tight tracking-tight line-clamp-2">
                 {merchant.reward_description}
               </p>
             </div>

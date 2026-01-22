@@ -476,81 +476,58 @@ export default function ProgramPage() {
             {/* Decorative background element */}
             <div className="absolute -right-16 -top-16 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-700" />
 
-            <div className="relative flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
-              {/* Content Section */}
-              <div className="flex-1 w-full space-y-6 min-w-0">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white shadow-lg shadow-amber-200 group-hover:scale-105 transition-all duration-300 shrink-0">
-                    <Star className="w-6 h-6 fill-white" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">
-                      Boostez votre E-réputation
-                    </h3>
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                      <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Impact Prioritaire</span>
-                    </div>
-                  </div>
+            <div className="relative space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white shadow-lg shadow-amber-200 group-hover:scale-105 transition-all duration-300 shrink-0">
+                  <Star className="w-6 h-6 fill-white" />
                 </div>
-
-                <div className="space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 px-1">
-                    <label className="text-sm font-bold text-slate-700">Lien Google ou TripAdvisor</label>
-                    <a href="https://support.google.com/business/answer/7035772" target="_blank" rel="noreferrer" className="text-[11px] text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors font-medium">
-                      Comment trouver mon lien ? <ExternalLink className="w-3 h-3" />
-                    </a>
-                  </div>
-
-                  <div className="relative">
-                    <Input
-                      type="url"
-                      className="bg-white border-2 border-amber-100/80 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 transition-all h-12 text-sm shadow-sm pr-10 rounded-xl w-full"
-                      placeholder="https://g.page/r/votre-commerce/review"
-                      value={formData.reviewLink}
-                      onChange={(e) =>
-                        setFormData({ ...formData, reviewLink: e.target.value })
-                      }
-                    />
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-400">
-                      <Star className="w-4 h-4 fill-current opacity-20" />
-                    </div>
-                  </div>
-                  <p className="text-xs text-slate-500 leading-relaxed px-1 font-medium">
-                    Une fois configuré, vos clients recevront automatiquement une invitation à noter leur expérience.
-                  </p>
-                </div>
-
-                {/* Tips - inline on desktop */}
-                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-amber-100/60">
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                    <span>Répondez à chaque avis</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                    <span>Demandez l&apos;avis oralement</span>
+                <div className="min-w-0">
+                  <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+                    Boostez votre E-réputation
+                  </h3>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                    <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Impact Prioritaire</span>
                   </div>
                 </div>
               </div>
 
-              {/* Preview Section */}
-              <div className="w-full sm:w-64 lg:w-56 shrink-0">
-                <div className="bg-white/90 backdrop-blur-xl rounded-2xl p-5 border border-amber-200/50 shadow-lg shadow-amber-100/30 relative group-hover:-translate-y-1 transition-transform duration-500">
-                  <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-2 py-1 rounded-md border border-amber-100 inline-block mb-3">
-                    Aperçu
-                  </span>
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-slate-800 mb-2">Votre avis compte !</p>
-                    <div className="flex justify-center gap-1 mb-3">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                      ))}
-                    </div>
-                    <div className="h-9 w-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shadow-md">
-                      DONNER MON AVIS
-                    </div>
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 px-1">
+                  <label className="text-sm font-bold text-slate-700">Lien Google ou TripAdvisor</label>
+                  <a href="https://support.google.com/business/answer/7035772" target="_blank" rel="noreferrer" className="text-[11px] text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors font-medium">
+                    Comment trouver mon lien ? <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                <div className="relative">
+                  <Input
+                    type="url"
+                    className="bg-white border-2 border-amber-100/80 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 transition-all h-12 text-sm shadow-sm pr-10 rounded-xl w-full"
+                    placeholder="https://g.page/r/votre-commerce/review"
+                    value={formData.reviewLink}
+                    onChange={(e) =>
+                      setFormData({ ...formData, reviewLink: e.target.value })
+                    }
+                  />
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-400">
+                    <Star className="w-4 h-4 fill-current opacity-20" />
                   </div>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed px-1 font-medium">
+                  Une fois configuré, vos clients recevront automatiquement une invitation à noter leur expérience.
+                </p>
+              </div>
+
+              {/* Tips */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-amber-100/60">
+                <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                  <span>Répondez à chaque avis</span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                  <span>Demandez l&apos;avis oralement</span>
                 </div>
               </div>
             </div>
