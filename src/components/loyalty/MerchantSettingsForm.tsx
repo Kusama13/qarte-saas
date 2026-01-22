@@ -367,18 +367,25 @@ export function MerchantSettingsForm({
       </motion.div>
 
       {/* Save Button */}
-      <Button
-        onClick={handleSave}
-        loading={loading}
-        disabled={!rewardDescription || (mode === 'article' && !productName)}
-        className={`w-full h-14 rounded-2xl text-lg font-bold transition-all ${
-          mode === 'visit'
-            ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:shadow-lg hover:shadow-indigo-200'
-            : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg hover:shadow-orange-200'
-        }`}
-      >
-        Enregistrer les modifications
-      </Button>
+      <div className="space-y-2">
+        <Button
+          onClick={handleSave}
+          loading={loading}
+          disabled={!rewardDescription || (mode === 'article' && !productName)}
+          className={`w-full h-14 rounded-2xl text-lg font-bold transition-all ${
+            mode === 'visit'
+              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:shadow-lg hover:shadow-indigo-200'
+              : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg hover:shadow-orange-200'
+          }`}
+        >
+          Enregistrer les modifications
+        </Button>
+        {(!rewardDescription || (mode === 'article' && !productName)) && (
+          <p className="text-xs text-center text-amber-600">
+            {!rewardDescription ? 'Veuillez renseigner la récompense' : 'Veuillez renseigner le nom du produit'}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
