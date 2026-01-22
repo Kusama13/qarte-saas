@@ -135,94 +135,108 @@ export default function CustomerCardsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100">
-        <div className="flex items-center justify-between px-4 py-4 mx-auto max-w-4xl">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary">
+    <div className="min-h-screen bg-slate-50 relative overflow-hidden">
+      {/* Dynamic Brand Background Blobs */}
+      <div className="absolute top-[-10%] -left-[10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse" />
+      <div className="absolute bottom-[-10%] -right-[10%] w-[50%] h-[50%] bg-violet-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+
+      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-gray-100/50">
+        <div className="flex items-center justify-between px-6 py-4 mx-auto max-w-4xl">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200 group-hover:scale-105 transition-transform">
               <CreditCard className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Qarte</span>
+            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Qarte</span>
           </Link>
           {step === 'cards' && (
             <div className="text-right">
               <button
                 onClick={handleChangeNumber}
-                className="flex items-center gap-2 text-sm text-gray-500 hover:text-primary transition-colors"
+                className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
                 Changer de numéro
               </button>
-              <p className="text-xs text-gray-400 mt-1">{phoneNumber}</p>
+              <p className="text-xs font-medium text-gray-400 mt-0.5">{phoneNumber}</p>
             </div>
           )}
         </div>
       </header>
 
-      <main className="px-4 py-8 mx-auto max-w-4xl">
+      <main className="relative z-10 px-4 py-16 mx-auto max-w-4xl">
         {step === 'phone' && (
           <div className="max-w-md mx-auto animate-fade-in">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-primary-50">
-                <Wallet className="w-8 h-8 text-primary" />
+            <div className="text-center mb-10">
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-[2rem] bg-white shadow-2xl shadow-indigo-100 text-indigo-600 ring-1 ring-gray-100">
+                <Wallet className="w-10 h-10" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
                 Mes cartes de fidélité
               </h1>
-              <p className="mt-2 text-gray-600">
-                Entrez votre numéro de téléphone pour retrouver vos cartes
+              <p className="mt-3 text-lg text-gray-500 font-medium">
+                Entrez votre numéro pour accéder à votre espace
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <div className="p-3 text-sm text-red-700 bg-red-50 rounded-xl">
-                  {error}
+            <div className="p-8 bg-white/80 backdrop-blur-2xl border border-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[2.5rem]">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <div className="p-4 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl">
+                    {error}
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">Numéro de mobile</label>
+                  <div className="relative group">
+                    <Input
+                      type="tel"
+                      placeholder="06 12 34 56 78"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      required
+                      className="h-14 text-lg pl-12 bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-2xl transition-all shadow-sm"
+                    />
+                    <Phone className="absolute w-5 h-5 text-gray-400 left-4 top-1/2 transform -translate-y-1/2 group-focus-within:text-indigo-600 transition-colors" />
+                  </div>
                 </div>
-              )}
 
-              <div className="relative">
-                <Input
-                  type="tel"
-                  placeholder="06 12 34 56 78"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  required
-                  className="text-lg pl-12"
-                />
-                <Phone className="absolute w-5 h-5 text-gray-400 left-4 top-1/2 transform -translate-y-1/2" />
-              </div>
+                <Button
+                  type="submit"
+                  loading={loading}
+                  className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Search className="w-5 h-5 mr-2" />
+                  Retrouver mes cartes
+                </Button>
+              </form>
+            </div>
 
-              <Button type="submit" loading={loading} className="w-full">
-                <Search className="w-5 h-5 mr-2" />
-                Rechercher mes cartes
-              </Button>
-            </form>
-
-            <p className="mt-8 text-sm text-center text-gray-500">
-              Vous n&apos;avez pas encore de carte ?{' '}
-              <span className="text-primary">
-                Scannez un QR code chez un commerçant partenaire.
-              </span>
-            </p>
+            <div className="mt-12 p-6 rounded-3xl bg-emerald-50/50 border border-emerald-100/50 text-center">
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Nouveau ici ? <span className="font-bold text-emerald-600">Scannez un QR code</span> chez un commerçant partenaire pour générer votre carte de fidélité instantanément.
+              </p>
+            </div>
           </div>
         )}
 
         {step === 'cards' && (
-          <div className="animate-fade-in">
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Mes cartes de fidélité
-              </h1>
-              <p className="mt-1 text-gray-600">
-                {cards.length > 0
-                  ? `${cards.length} carte${cards.length > 1 ? 's' : ''} trouvée${cards.length > 1 ? 's' : ''}`
-                  : 'Aucune carte trouvée'}
-              </p>
+          <div className="animate-fade-in space-y-8">
+            <div className="flex items-end justify-between">
+              <div>
+                <h1 className="text-3xl font-black tracking-tight text-gray-900">
+                  Mes cartes
+                </h1>
+                <p className="mt-1 text-sm font-medium text-gray-500">
+                  {cards.length > 0
+                    ? `${cards.length} programme${cards.length > 1 ? 's' : ''} actif${cards.length > 1 ? 's' : ''}`
+                    : 'Aucun programme actif'}
+                </p>
+              </div>
             </div>
 
             {cards.length > 0 ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {cards.map((card, index) => {
                   const isRewardReady = card.current_stamps >= card.stamps_required;
                   const progress = (card.current_stamps / card.stamps_required) * 100;
@@ -233,73 +247,75 @@ export default function CustomerCardsPage() {
                       href={`/customer/card/${card.merchant_id}`}
                       className="block group"
                     >
-                      <div
-                        className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border-t-4"
-                        style={{ borderTopColor: card.primary_color }}
-                      >
-                        <div className="p-5">
-                          <div className="flex items-center gap-4 mb-4">
+                      <div className="relative bg-white rounded-3xl p-6 shadow-sm border border-gray-100 transition-all duration-300 group-hover:shadow-xl group-hover:scale-[1.02] group-hover:border-indigo-100">
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex items-center gap-4">
                             {card.logo_url ? (
                               <img
                                 src={card.logo_url}
                                 alt={card.shop_name}
-                                className="w-14 h-14 rounded-lg object-cover"
+                                className="w-14 h-14 rounded-2xl object-cover shadow-sm ring-1 ring-gray-100"
                               />
                             ) : (
                               <div
-                                className="flex items-center justify-center w-14 h-14 rounded-lg text-white font-bold text-xl"
+                                className="flex items-center justify-center w-14 h-14 rounded-2xl text-white font-bold text-xl shadow-inner"
                                 style={{ backgroundColor: card.primary_color }}
                               >
                                 {card.shop_name.charAt(0)}
                               </div>
                             )}
-                            <div className="flex-1 min-w-0">
-                              <h3 className="font-bold text-gray-900 truncate group-hover:text-primary transition-colors">
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-gray-900 truncate leading-tight">
                                 {card.shop_name}
                               </h3>
-                              {isRewardReady && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold text-green-700 bg-green-100 rounded-full mt-1">
-                                  <Gift className="w-3 h-3" />
-                                  Récompense disponible !
-                                </span>
-                              )}
-                            </div>
-                            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                          </div>
-
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-600">Progression</span>
-                              <span className="font-semibold" style={{ color: card.primary_color }}>
-                                {card.current_stamps} / {card.stamps_required}
+                              <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Fidélité
                               </span>
                             </div>
-                            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                              <div
-                                className="h-full rounded-full transition-all duration-500"
-                                style={{
-                                  width: `${Math.min(progress, 100)}%`,
-                                  backgroundColor: card.primary_color,
-                                }}
-                              />
-                            </div>
+                          </div>
+                          <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
+                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-indigo-600 transition-colors" />
+                          </div>
+                        </div>
 
-                            <div className="flex justify-center gap-1 pt-2">
-                              {[...Array(Math.min(card.stamps_required, 10))].map((_, i) => (
-                                <div
-                                  key={i}
-                                  className="w-4 h-4 rounded-full border-2 transition-all"
-                                  style={{
-                                    borderColor: card.primary_color,
-                                    backgroundColor:
-                                      i < card.current_stamps ? card.primary_color : 'transparent',
-                                  }}
-                                />
-                              ))}
-                              {card.stamps_required > 10 && (
-                                <span className="text-xs text-gray-400 ml-1">...</span>
-                              )}
-                            </div>
+                        {isRewardReady && (
+                          <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500 text-white text-xs font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse">
+                            <Gift className="w-3.5 h-3.5" />
+                            Cadeau disponible !
+                          </div>
+                        )}
+
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Progression</span>
+                            <span className="text-sm font-black text-indigo-600">
+                              {card.current_stamps} / {card.stamps_required}
+                            </span>
+                          </div>
+
+                          <div className="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-indigo-600 to-violet-600 shadow-[0_0_10px_rgba(79,70,229,0.2)]"
+                              style={{ width: `${Math.min(progress, 100)}%` }}
+                            />
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            {[...Array(Math.min(card.stamps_required, 12))].map((_, i) => (
+                              <div
+                                key={i}
+                                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                                  i < card.current_stamps
+                                    ? 'bg-indigo-600 scale-110 shadow-[0_0_8px_rgba(79,70,229,0.3)]'
+                                    : 'bg-gray-200'
+                                }`}
+                              />
+                            ))}
+                            {card.stamps_required > 12 && (
+                              <div className="w-2.5 h-2.5 flex items-center justify-center">
+                                <div className="w-1 h-1 rounded-full bg-gray-300" />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -308,16 +324,15 @@ export default function CustomerCardsPage() {
                 })}
               </div>
             ) : (
-              <div className="text-center py-16 bg-white rounded-2xl shadow-sm">
-                <div className="inline-flex items-center justify-center w-20 h-20 mb-4 rounded-full bg-gray-100">
-                  <CreditCard className="w-10 h-10 text-gray-400" />
+              <div className="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-gray-100">
+                <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-gray-50 text-gray-300">
+                  <CreditCard className="w-10 h-10" />
                 </div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  Aucune carte de fidélité
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Aucune carte trouvée
                 </h2>
-                <p className="text-gray-600 max-w-sm mx-auto">
-                  Aucune carte trouvée pour ce numéro. Scannez un QR code chez un
-                  commerçant partenaire pour commencer !
+                <p className="text-gray-500 max-w-xs mx-auto text-sm leading-relaxed">
+                  Scannez un QR code chez un commerçant pour ajouter votre première carte de fidélité.
                 </p>
               </div>
             )}
@@ -325,11 +340,11 @@ export default function CustomerCardsPage() {
         )}
       </main>
 
-      <footer className="py-6 text-center text-sm text-gray-400">
-        <Link href="/" className="hover:text-primary transition-colors">
+      <footer className="py-12 text-center text-sm font-medium text-gray-400">
+        <Link href="/" className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent font-bold hover:opacity-80 transition-opacity">
           Qarte
         </Link>
-        {' - '}
+        <span className="mx-3 opacity-30">•</span>
         Fidélisez mieux, dépensez moins
       </footer>
     </div>
