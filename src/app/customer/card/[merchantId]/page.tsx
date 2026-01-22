@@ -16,6 +16,11 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
+  X,
+  Scissors,
+  Coffee,
+  Pizza,
+  ShoppingBag,
 } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
 import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
@@ -34,6 +39,30 @@ const getCookie = (name: string): string | null => {
   return null;
 };
 
+// Get icon based on loyalty mode and product name
+const getLoyaltyIcon = (loyaltyMode: string, productName: string | null) => {
+  if (loyaltyMode === 'visit') {
+    return Scissors; // Default icon for visits
+  }
+
+  // For article mode, try to match product name
+  const name = (productName || '').toLowerCase();
+  if (name.includes('café') || name.includes('cafe') || name.includes('coffee')) {
+    return Coffee;
+  }
+  if (name.includes('pizza') || name.includes('burger') || name.includes('sandwich')) {
+    return Pizza;
+  }
+  return ShoppingBag; // Default for articles
+};
+
+const getLoyaltyLabel = (loyaltyMode: string, productName: string | null, count: number) => {
+  if (loyaltyMode === 'visit') {
+    return count === 1 ? 'Passage' : 'Passages';
+  }
+  return productName || (count === 1 ? 'Article' : 'Articles');
+};
+
 export default function CustomerCardPage({
   params,
 }: {
@@ -48,6 +77,7 @@ export default function CustomerCardPage({
   const [card, setCard] = useState<CardWithDetails | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [visitsExpanded, setVisitsExpanded] = useState(false);
+  const [reviewDismissed, setReviewDismissed] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -170,14 +200,23 @@ export default function CustomerCardPage({
       
       <main className="flex-1 -mt-12 px-4 pb-12 w-full max-w-lg mx-auto z-10">
         {/* Review Section - Above Card */}
-        {merchant.review_link && (
-          <a
-            href={merchant.review_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group block p-4 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-100 rounded-3xl shadow-lg shadow-amber-900/5 mb-4 hover:shadow-xl hover:shadow-amber-900/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]"
-          >
-            <div className="flex items-center gap-4">
+        {merchant.review_link && !reviewDismissed && (
+          <div className="relative group p-4 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-100 rounded-3xl shadow-lg shadow-amber-900/5 mb-4 hover:shadow-xl hover:shadow-amber-900/10 transition-all duration-300">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setReviewDismissed(true);
+              }}
+              className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/80 hover:bg-amber-100 transition-colors z-10"
+            >
+              <X className="w-4 h-4 text-amber-600" />
+            </button>
+            <a
+              href={merchant.review_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-4"
+            >
               <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-2xl group-hover:scale-110 transition-transform duration-300 shadow-inner">
                 <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
               </div>
@@ -188,8 +227,8 @@ export default function CustomerCardPage({
               <div className="p-2 rounded-xl bg-white shadow-sm border border-amber-50 group-hover:bg-amber-500 group-hover:text-white transition-all">
                 <ExternalLink className="w-4 h-4" />
               </div>
-            </div>
-          </a>
+            </a>
+          </div>
         )}
 
         <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
@@ -198,7 +237,13 @@ export default function CustomerCardPage({
               <span className="text-6xl font-black" style={{ color: merchant.primary_color }}>{card.current_stamps}</span>
               <span className="text-2xl font-bold text-gray-300">/{merchant.stamps_required}</span>
             </div>
-            <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-3">Passages cumulés</p>
+            <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-3 flex items-center justify-center gap-2">
+              {(() => {
+                const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+                return <LoyaltyIcon className="w-4 h-4" />;
+              })()}
+              {getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, card.current_stamps)} cumulés
+            </p>
           </div>
 
           <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden mb-10">
@@ -221,7 +266,7 @@ export default function CustomerCardPage({
             <p className="font-bold text-gray-700">
               {isRewardReady
                 ? "🎉 Félicitations ! Votre cadeau est prêt."
-                : `Plus que ${merchant.stamps_required - card.current_stamps} passage${merchant.stamps_required - card.current_stamps > 1 ? 's' : ''} avant le bonheur !`
+                : `Plus que ${merchant.stamps_required - card.current_stamps} ${getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, merchant.stamps_required - card.current_stamps).toLowerCase()} avant le bonheur !`
               }
             </p>
           </div>
@@ -258,11 +303,14 @@ export default function CustomerCardPage({
           <div className="p-6 border-b border-gray-50 flex items-center justify-between">
             <h2 className="font-bold text-gray-900 text-lg flex items-center gap-3">
               <div className="p-2 bg-gray-50 rounded-xl">
-                <Calendar className="w-5 h-5 text-gray-500" />
+                {(() => {
+                  const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+                  return <LoyaltyIcon className="w-5 h-5 text-gray-500" />;
+                })()}
               </div>
-              Historique des visites
+              Historique
             </h2>
-            {visits.length > 3 && (
+            {visits.length > 0 && (
               <button
                 onClick={() => setVisitsExpanded(!visitsExpanded)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-xl transition-all"
@@ -276,7 +324,7 @@ export default function CustomerCardPage({
                 ) : (
                   <>
                     <ChevronDown className="w-4 h-4" />
-                    Tout voir ({visits.length})
+                    Voir ({visits.length})
                   </>
                 )}
               </button>
@@ -284,37 +332,52 @@ export default function CustomerCardPage({
           </div>
 
           {visits.length > 0 ? (
-            <ul className="divide-y divide-gray-50">
-              {(visitsExpanded ? visits : visits.slice(0, 3)).map((visit) => (
-                <li key={visit.id} className="flex items-center gap-4 px-6 py-5 hover:bg-gray-50/40 transition-colors">
-                  <div
-                    className="flex items-center justify-center w-12 h-12 rounded-2xl shadow-sm"
-                    style={{ backgroundColor: `${merchant.primary_color}10` }}
-                  >
-                    <Check className="w-6 h-6" style={{ color: merchant.primary_color }} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-gray-900">Passage validé</p>
-                    <p className="text-sm text-gray-500 flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      {formatDateTime(visit.visited_at)}
-                    </p>
-                  </div>
-                  <div
-                    className="px-3 py-1.5 rounded-xl text-sm font-bold"
-                    style={{ backgroundColor: `${merchant.primary_color}10`, color: merchant.primary_color }}
-                  >
-                    +1 pt
-                  </div>
-                </li>
-              ))}
-            </ul>
+            visitsExpanded ? (
+              <ul className="divide-y divide-gray-50">
+                {visits.map((visit) => {
+                  const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+                  const pointsEarned = visit.points_earned || 1;
+                  return (
+                    <li key={visit.id} className="flex items-center gap-4 px-6 py-5 hover:bg-gray-50/40 transition-colors">
+                      <div
+                        className="flex items-center justify-center w-12 h-12 rounded-2xl shadow-sm"
+                        style={{ backgroundColor: `${merchant.primary_color}10` }}
+                      >
+                        <LoyaltyIcon className="w-6 h-6" style={{ color: merchant.primary_color }} />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900">
+                          {merchant.loyalty_mode === 'visit' ? 'Passage validé' : `${pointsEarned} ${merchant.product_name || 'article'}${pointsEarned > 1 ? 's' : ''}`}
+                        </p>
+                        <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5" />
+                          {formatDateTime(visit.visited_at)}
+                        </p>
+                      </div>
+                      <div
+                        className="px-3 py-1.5 rounded-xl text-sm font-bold"
+                        style={{ backgroundColor: `${merchant.primary_color}10`, color: merchant.primary_color }}
+                      >
+                        +{pointsEarned} pt{pointsEarned > 1 ? 's' : ''}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="p-6 text-center text-gray-500">
+                <p className="text-sm">{visits.length} {merchant.loyalty_mode === 'visit' ? 'passage' : 'enregistrement'}{visits.length > 1 ? 's' : ''} au total</p>
+              </div>
+            )
           ) : (
             <div className="p-12 text-center">
               <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-4">
-                <Calendar className="w-8 h-8 text-gray-300" />
+                {(() => {
+                  const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+                  return <LoyaltyIcon className="w-8 h-8 text-gray-300" />;
+                })()}
               </div>
-              <p className="text-gray-500 font-medium">Aucune visite enregistrée</p>
+              <p className="text-gray-500 font-medium">Aucun historique</p>
             </div>
           )}
         </div>

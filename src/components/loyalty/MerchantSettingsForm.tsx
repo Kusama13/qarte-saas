@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Scissors,
@@ -56,7 +56,18 @@ export function MerchantSettingsForm({
   const [stampsRequired, setStampsRequired] = useState(initialStampsRequired);
   const [rewardDescription, setRewardDescription] = useState(initialRewardDescription || '');
 
+  // Use ref for onChange to avoid infinite loops
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
+  // Track if this is the initial mount
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
     setMode(initialMode);
     setProductName(initialProductName || '');
     setMaxQuantity(initialMaxQuantity);
@@ -64,16 +75,17 @@ export function MerchantSettingsForm({
     setRewardDescription(initialRewardDescription || '');
   }, [initialMode, initialProductName, initialMaxQuantity, initialStampsRequired, initialRewardDescription]);
 
-  // Notify parent of changes for real-time preview updates
+  // Notify parent of changes for real-time preview updates (debounced)
   useEffect(() => {
-    onChange?.({
+    const settings = {
       loyalty_mode: mode,
       product_name: mode === 'article' ? productName : null,
       max_quantity_per_scan: mode === 'article' ? maxQuantity : 1,
       stamps_required: stampsRequired,
       reward_description: rewardDescription,
-    });
-  }, [mode, productName, maxQuantity, stampsRequired, rewardDescription, onChange]);
+    };
+    onChangeRef.current?.(settings);
+  }, [mode, productName, maxQuantity, stampsRequired, rewardDescription]);
 
   const handleSave = () => {
     onSave?.({

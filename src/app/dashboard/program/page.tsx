@@ -13,6 +13,10 @@ import {
   ChevronRight,
   X,
   Gift,
+  Scissors,
+  Coffee,
+  Pizza,
+  ShoppingBag,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -31,6 +35,21 @@ const BUSINESS_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200', label: 'Boutique' },
   { url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=200', label: 'Spa' },
 ];
+
+// Get icon based on loyalty mode and product name
+const getLoyaltyIcon = (loyaltyMode: string, productName: string) => {
+  if (loyaltyMode === 'visit') {
+    return Scissors;
+  }
+  const name = (productName || '').toLowerCase();
+  if (name.includes('café') || name.includes('cafe') || name.includes('coffee')) {
+    return Coffee;
+  }
+  if (name.includes('pizza') || name.includes('burger') || name.includes('sandwich')) {
+    return Pizza;
+  }
+  return ShoppingBag;
+};
 
 // 10 palettes de couleurs inspirées des commerces
 const COLOR_PALETTES = [
@@ -55,6 +74,7 @@ export default function ProgramPage() {
   const [saved, setSaved] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
 
+  // Main form data (saved to DB)
   const [formData, setFormData] = useState({
     logoUrl: '',
     primaryColor: '#654EDA',
@@ -65,6 +85,14 @@ export default function ProgramPage() {
     loyaltyMode: 'visit' as LoyaltyMode,
     productName: '',
     maxQuantityPerScan: 5,
+  });
+
+  // Preview data for mockup (updated in real-time, not saved until save button)
+  const [previewData, setPreviewData] = useState({
+    stampsRequired: 10,
+    rewardDescription: '',
+    loyaltyMode: 'visit' as LoyaltyMode,
+    productName: '',
   });
 
   useEffect(() => {
@@ -93,6 +121,12 @@ export default function ProgramPage() {
           loyaltyMode: data.loyalty_mode || 'visit',
           productName: data.product_name || '',
           maxQuantityPerScan: data.max_quantity_per_scan || 5,
+        });
+        setPreviewData({
+          stampsRequired: data.stamps_required || 10,
+          rewardDescription: data.reward_description || '',
+          loyaltyMode: data.loyalty_mode || 'visit',
+          productName: data.product_name || '',
         });
       }
       setLoading(false);
@@ -159,20 +193,17 @@ export default function ProgramPage() {
     }
   };
 
-  // Real-time preview updates (no save)
+  // Real-time preview updates (no save, only updates mockup)
   const handleLoyaltySettingsChange = (settings: LoyaltySettings) => {
-    setFormData(prev => ({
-      ...prev,
+    setPreviewData({
       loyaltyMode: settings.loyalty_mode,
       productName: settings.product_name || '',
-      maxQuantityPerScan: settings.max_quantity_per_scan,
       stampsRequired: settings.stamps_required,
       rewardDescription: settings.reward_description,
-    }));
+    });
   };
 
   const handleLoyaltySettingsSave = async (settings: LoyaltySettings) => {
-    // Auto-save when loyalty settings change
     if (!merchant) return;
 
     setSaving(true);
@@ -189,6 +220,16 @@ export default function ProgramPage() {
         .eq('id', merchant.id);
 
       if (error) throw error;
+
+      // Update formData to reflect saved values
+      setFormData(prev => ({
+        ...prev,
+        loyaltyMode: settings.loyalty_mode,
+        productName: settings.product_name || '',
+        maxQuantityPerScan: settings.max_quantity_per_scan,
+        stampsRequired: settings.stamps_required,
+        rewardDescription: settings.reward_description,
+      }));
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -496,20 +537,24 @@ export default function ProgramPage() {
 
                     {/* Points Card */}
                     <div className="bg-white rounded-[1.5rem] p-4 shadow-sm border border-slate-100/50 flex flex-col items-center">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                        {formData.loyaltyMode === 'visit' ? 'Passages cumulés' : `${formData.productName || 'Articles'} cumulés`}
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
+                        {(() => {
+                          const LoyaltyIcon = getLoyaltyIcon(previewData.loyaltyMode, previewData.productName);
+                          return <LoyaltyIcon className="w-3 h-3" />;
+                        })()}
+                        {previewData.loyaltyMode === 'visit' ? 'Passages cumulés' : `${previewData.productName || 'Articles'} cumulés`}
                       </p>
 
                       <div className="flex items-baseline gap-1 mb-3">
                         <span className="text-4xl font-black tracking-tighter" style={{ color: formData.primaryColor }}>4</span>
-                        <span className="text-slate-300 text-lg font-bold">/{formData.stampsRequired}</span>
+                        <span className="text-slate-300 text-lg font-bold">/{previewData.stampsRequired}</span>
                       </div>
 
                       <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
                         <div
                           className="h-full transition-all duration-700 ease-out"
                           style={{
-                            width: `${Math.min((4 / formData.stampsRequired) * 100, 100)}%`,
+                            width: `${Math.min((4 / previewData.stampsRequired) * 100, 100)}%`,
                             background: `linear-gradient(to right, ${formData.primaryColor}, ${formData.secondaryColor})`
                           }}
                         />
@@ -519,7 +564,7 @@ export default function ProgramPage() {
                         className="px-3 py-1.5 rounded-full text-[10px] font-semibold text-center"
                         style={{ backgroundColor: `${formData.primaryColor}10`, color: formData.primaryColor }}
                       >
-                        Plus que {Math.max(formData.stampsRequired - 4, 0)} avant le cadeau
+                        Plus que {Math.max(previewData.stampsRequired - 4, 0)} avant le cadeau
                       </div>
                     </div>
 
@@ -531,7 +576,7 @@ export default function ProgramPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Récompense</p>
                         <p className="text-[10px] font-bold text-slate-800 truncate leading-tight">
-                          {formData.rewardDescription || 'Chargement...'}
+                          {previewData.rewardDescription || 'Chargement...'}
                         </p>
                       </div>
                       <ChevronRight size={12} className="text-slate-300" />
