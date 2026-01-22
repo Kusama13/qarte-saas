@@ -548,6 +548,8 @@ export default function ProgramPage() {
                         </p>
                       </div>
                       <ChevronRight size={14} className="text-slate-300" />
+                    </div>
+
                     {/* Review Link Card */}
                     {formData.reviewLink && (
                       <div className="mt-3 bg-gradient-to-r from-amber-50 to-amber-50/50 rounded-2xl p-3 border border-amber-100 flex items-center gap-3">
