@@ -19,6 +19,8 @@ export const SHOP_TYPES: Record<ShopType, string> = {
 
 export type SubscriptionStatus = 'trial' | 'active' | 'cancelled' | 'past_due';
 
+export type LoyaltyMode = 'visit' | 'article';
+
 export interface Merchant {
   id: string;
   user_id: string;
@@ -35,6 +37,9 @@ export interface Merchant {
   welcome_message: string | null;
   promo_message: string | null;
   review_link: string | null;
+  loyalty_mode: LoyaltyMode;
+  product_name: string | null;
+  max_quantity_per_scan: number;
   stamps_required: number;
   reward_description: string | null;
   trial_ends_at: string;
@@ -58,6 +63,7 @@ export interface LoyaltyCard {
   customer_id: string;
   merchant_id: string;
   current_stamps: number;
+  stamps_target: number; // Grandfathering: target when card was created
   last_visit_date: string | null;
   created_at: string;
   updated_at: string;
@@ -65,11 +71,24 @@ export interface LoyaltyCard {
   merchant?: Merchant;
 }
 
+export interface Voucher {
+  id: string;
+  loyalty_card_id: string;
+  merchant_id: string;
+  customer_id: string;
+  reward_description: string;
+  is_used: boolean;
+  used_at: string | null;
+  created_at: string;
+  expires_at: string | null;
+}
+
 export interface Visit {
   id: string;
   loyalty_card_id: string;
   merchant_id: string;
   customer_id: string;
+  points_earned: number;
   visited_at: string;
   ip_address: string | null;
 }
