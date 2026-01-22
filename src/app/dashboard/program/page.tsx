@@ -472,83 +472,88 @@ export default function ProgramPage() {
           </div>
 
           {/* Review Link Section */}
-          <div className="relative overflow-hidden p-8 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 border border-amber-200/60 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500 group">
-            {/* Decorative element */}
-            <div className="absolute -right-16 -top-16 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-700" />
+          <div className="relative overflow-hidden p-8 md:p-10 lg:p-14 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 border border-amber-200/60 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500 group">
+            {/* Decorative background element */}
+            <div className="absolute -right-24 -top-24 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-700" />
 
-            <div className="relative flex flex-col lg:flex-row gap-10">
-              <div className="flex-1 space-y-6">
-                <div className="flex items-center gap-5">
-                  <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white shadow-xl shadow-amber-200 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
-                    <Star className="w-7 h-7 fill-white" />
+            <div className="relative flex flex-col lg:flex-row gap-12 lg:gap-16 items-center">
+              {/* Preview Section - Appears first on mobile */}
+              <div className="w-full lg:w-[380px] order-first lg:order-last shrink-0">
+                <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-10 border border-amber-200/50 shadow-2xl shadow-amber-200/30 relative group-hover:-translate-y-2 transition-transform duration-500">
+                  <div className="absolute top-5 left-8">
+                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100">
+                      Aperçu Client
+                    </span>
+                  </div>
+                  <div className="text-center pt-8">
+                    <p className="text-base font-bold text-slate-800 mb-5">Voulez-vous nous aider ?</p>
+                    <div className="flex justify-center gap-2 mb-8">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className="w-6 h-6 text-amber-400 fill-amber-400 drop-shadow-sm" />
+                      ))}
+                    </div>
+                    <div className="h-14 w-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-2xl flex items-center justify-center text-xs font-black text-white shadow-lg shadow-amber-200/50 tracking-widest uppercase">
+                      Donner mon avis
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Content Section */}
+              <div className="flex-1 w-full space-y-8">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white shadow-xl shadow-amber-200 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
+                    <Star className="w-8 h-8 fill-white" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                       Boostez votre E-réputation
                     </h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                      <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Impact Prioritaire</span>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
+                      <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">Impact Prioritaire</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-5">
                   <div className="flex items-center justify-between px-1">
                     <label className="text-sm font-bold text-slate-700">Lien Google ou TripAdvisor</label>
-                    <a href="https://support.google.com/business/answer/7035772" target="_blank" rel="noreferrer" className="text-[11px] text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors">
-                      Comment trouver mon lien ? <ExternalLink className="w-3 h-3" />
+                    <a href="https://support.google.com/business/answer/7035772" target="_blank" rel="noreferrer" className="text-xs text-slate-400 hover:text-amber-600 flex items-center gap-1.5 transition-colors font-medium">
+                      Comment trouver mon lien ? <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
 
                   <div className="relative">
                     <Input
                       type="url"
-                      className="bg-white border-2 border-amber-100/80 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 transition-all h-14 text-base shadow-sm pr-12 rounded-xl"
+                      className="bg-white border-2 border-amber-100/80 focus:border-amber-400 focus:ring-8 focus:ring-amber-400/10 transition-all h-16 text-lg shadow-sm pr-14 rounded-2xl"
                       placeholder="https://g.page/r/votre-commerce/review"
                       value={formData.reviewLink}
                       onChange={(e) =>
                         setFormData({ ...formData, reviewLink: e.target.value })
                       }
                     />
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-amber-400">
-                      <Star className="w-5 h-5 fill-current opacity-20" />
+                    <div className="absolute right-5 top-1/2 -translate-y-1/2 text-amber-400">
+                      <Star className="w-6 h-6 fill-current opacity-20" />
                     </div>
                   </div>
-                  <p className="text-xs text-slate-500 leading-relaxed px-1 font-medium">
-                    Une fois configuré, vos clients recevront automatiquement une invitation à noter leur expérience.
+                  <p className="text-sm text-slate-500 leading-relaxed px-1 font-medium max-w-lg">
+                    Une fois configuré, vos clients recevront automatiquement une invitation à noter leur expérience directement sur votre fiche d&apos;établissement.
                   </p>
                 </div>
               </div>
+            </div>
 
-              <div className="w-full lg:w-72 flex flex-col gap-5">
-                <div className="bg-white/80 backdrop-blur-md rounded-2xl p-5 border border-amber-200/50 shadow-lg shadow-amber-100/20 relative group-hover:-translate-y-1 transition-transform duration-500">
-                  <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-2 py-1 rounded-md border border-amber-100 inline-block mb-4">
-                    Aperçu Client
-                  </span>
-                  <div className="text-center">
-                    <p className="text-xs font-bold text-slate-800 mb-3">Voulez-vous nous aider ?</p>
-                    <div className="flex justify-center gap-1.5 mb-4">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-                      ))}
-                    </div>
-                    <div className="h-8 w-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center text-[10px] font-black text-white shadow-md shadow-amber-200 tracking-wider">
-                      DONNER MON AVIS
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 gap-3 px-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                    <span className="text-[11px] text-slate-600 font-medium">Répondez à chaque avis reçu</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                    <span className="text-[11px] text-slate-600 font-medium">Demandez l&apos;avis oralement</span>
-                  </div>
-                </div>
+            {/* Tips Grid */}
+            <div className="mt-12 pt-8 border-t border-amber-100/60 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/40 border border-transparent hover:border-amber-200 transition-all duration-300">
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.4)]" />
+                <span className="text-sm text-slate-600 font-semibold tracking-tight">Répondez à chaque avis reçu pour montrer votre engagement</span>
+              </div>
+              <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/40 border border-transparent hover:border-amber-200 transition-all duration-300">
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.4)]" />
+                <span className="text-sm text-slate-600 font-semibold tracking-tight">Demandez l&apos;avis oralement au moment du passage en caisse</span>
               </div>
             </div>
           </div>
@@ -562,35 +567,48 @@ export default function ProgramPage() {
             <div className="flex justify-center">
               <div className="relative w-[280px] h-[560px] bg-white rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-200">
                 <div className="h-full flex flex-col bg-slate-50/50">
-                  {/* Header: Full-width image or gradient */}
-                  <div className="relative h-32 w-full overflow-hidden">
-                    {formData.logoUrl ? (
-                      <>
-                        <img
-                          src={formData.logoUrl}
-                          alt="Logo"
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-                        {/* Dark overlay for text readability */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" />
-                      </>
-                    ) : (
-                      <>
-                        <div
-                          className="absolute inset-0"
-                          style={{ background: `linear-gradient(135deg, ${formData.primaryColor}, ${formData.secondaryColor})` }}
-                        />
-                        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }} />
-                      </>
-                    )}
-                    {/* Shop name at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 text-center">
-                      {!formData.logoUrl && (
-                        <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/30 shadow-lg mb-2 mx-auto">
-                          <span className="text-lg font-black text-white">{merchant?.shop_name?.[0] || 'Q'}</span>
-                        </div>
-                      )}
-                      <h3 className="text-white font-bold text-sm tracking-tight drop-shadow-lg">{merchant?.shop_name}</h3>
+                  {/* Header: Premium glassmorphism design */}
+                  <div className="relative h-28 w-full overflow-hidden">
+                    {/* Animated decorative elements */}
+                    <div
+                      className="absolute -top-6 -left-6 w-20 h-20 rounded-full blur-2xl opacity-20 animate-pulse"
+                      style={{ background: formData.primaryColor }}
+                    />
+                    <div
+                      className="absolute -bottom-6 -right-6 w-20 h-20 rounded-full blur-2xl opacity-20 animate-pulse"
+                      style={{ background: formData.secondaryColor, animationDelay: '1s' }}
+                    />
+                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, black 1px, transparent 0)', backgroundSize: '12px 12px' }} />
+
+                    {/* Centered gradient glow */}
+                    <div
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full blur-xl opacity-40 pointer-events-none"
+                      style={{ background: `radial-gradient(circle, ${formData.primaryColor}60, transparent 70%)` }}
+                    />
+
+                    {/* Logo Container with Glassmorphism */}
+                    <div className="relative z-10 h-full flex flex-col items-center justify-center">
+                      <div className="relative w-14 h-14 rounded-full p-1 bg-white/40 backdrop-blur-xl border border-white shadow-xl flex items-center justify-center overflow-hidden mb-1.5">
+                        {formData.logoUrl ? (
+                          <img
+                            src={formData.logoUrl}
+                            alt="Logo"
+                            className="w-full h-full object-cover rounded-full ring-1 ring-black/5"
+                          />
+                        ) : (
+                          <div
+                            className="w-full h-full rounded-full flex items-center justify-center text-white text-lg font-black"
+                            style={{ background: `linear-gradient(135deg, ${formData.primaryColor}, ${formData.secondaryColor})` }}
+                          >
+                            {merchant?.shop_name?.[0] || 'Q'}
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="text-slate-900 font-bold text-xs tracking-tight">{merchant?.shop_name}</h3>
+                      <div className="mt-1 flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/80 border border-white shadow-sm">
+                        <Star size={8} className="text-amber-500 fill-amber-500" />
+                        <span className="text-[8px] font-bold text-slate-600">4 / {previewData.stampsRequired} pts</span>
+                      </div>
                     </div>
                   </div>
 
@@ -709,35 +727,37 @@ export default function ProgramPage() {
         onClose={() => setShowGuide(false)}
       />
 
-      {/* Sticky Save Button (Mobile) */}
-      <div className="fixed bottom-0 left-0 right-0 lg:hidden z-50 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100 shadow-2xl shadow-gray-900/10">
-        <Button
-          onClick={handleSave}
-          loading={saving}
-          disabled={saved}
-          className={`
-            w-full h-14 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300
-            ${saved
-              ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
-              : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200 hover:shadow-xl'}
-          `}
-        >
-          {saved ? (
-            <>
-              <Check className="w-6 h-6" />
-              <span>Enregistré !</span>
-            </>
-          ) : (
-            <>
-              <Save className="w-6 h-6" />
-              <span>Enregistrer les modifications</span>
-            </>
-          )}
-        </Button>
+      {/* Sticky Save Button (All Screens) */}
+      <div className="fixed bottom-0 left-0 right-0 lg:left-72 z-50 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100 shadow-2xl shadow-gray-900/10">
+        <div className="max-w-6xl mx-auto">
+          <Button
+            onClick={handleSave}
+            loading={saving}
+            disabled={saved}
+            className={`
+              w-full h-14 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300
+              ${saved
+                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
+                : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200 hover:shadow-xl'}
+            `}
+          >
+            {saved ? (
+              <>
+                <Check className="w-6 h-6" />
+                <span>Enregistré !</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-6 h-6" />
+                <span>Enregistrer les modifications</span>
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
-      {/* Spacer for sticky button on mobile */}
-      <div className="h-24 lg:hidden" />
+      {/* Spacer for sticky button */}
+      <div className="h-24" />
     </div>
   );
 }

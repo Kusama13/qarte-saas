@@ -168,60 +168,74 @@ export default function CustomerCardPage({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${merchant.primary_color}10)` }}>
-      {/* Header with full-width image/logo */}
+      {/* Header with premium glassmorphism design */}
       <header className="relative w-full overflow-hidden">
-        {/* Background container with color borders on larger screens */}
-        <div className="relative mx-auto lg:max-w-lg lg:mt-6 lg:rounded-3xl overflow-hidden">
-          {/* Subtle color glow on sides (visible on lg screens) */}
+        <div className="relative mx-auto lg:max-w-lg lg:mt-6 lg:rounded-3xl overflow-hidden bg-slate-50/50">
+          {/* Animated decorative background elements */}
           <div
-            className="hidden lg:block absolute -inset-4 opacity-30 blur-2xl pointer-events-none"
-            style={{ background: `linear-gradient(135deg, ${merchant.primary_color}40, ${merchant.secondary_color || merchant.primary_color}40)` }}
+            className="absolute -top-12 -left-12 w-48 h-48 rounded-full blur-3xl opacity-20 animate-pulse"
+            style={{ background: merchant.primary_color }}
           />
-
-          {/* Main header content */}
           <div
-            className="relative h-56 sm:h-64 lg:h-72 w-full flex flex-col items-center justify-center text-white"
-          >
-            {/* Background: Image or Gradient */}
-            {merchant.logo_url ? (
-              <>
-                <img
-                  src={merchant.logo_url}
-                  alt={merchant.shop_name}
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                {/* Dark overlay for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/20" />
-              </>
-            ) : (
-              <>
-                <div
-                  className="absolute inset-0"
-                  style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
-                />
-                <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-              </>
-            )}
+            className="absolute -bottom-12 -right-12 w-48 h-48 rounded-full blur-3xl opacity-20 animate-pulse"
+            style={{ background: merchant.secondary_color || merchant.primary_color, animationDelay: '1s' }}
+          />
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, black 1px, transparent 0)', backgroundSize: '20px 20px' }} />
 
-            {/* Back button */}
-            <div className="absolute top-4 left-4 lg:top-6 lg:left-6 z-20">
+          {/* Reduced height container */}
+          <div className="relative h-44 sm:h-48 lg:h-52 w-full flex flex-col items-center justify-center">
+
+            {/* Elegant Back button */}
+            <div className="absolute top-4 left-4 z-20">
               <Link
                 href="/customer/cards"
-                className="flex items-center justify-center w-10 h-10 lg:w-11 lg:h-11 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg transition-transform hover:scale-105 active:scale-95"
+                className="group flex items-center justify-center w-10 h-10 rounded-full bg-white/80 backdrop-blur-md border border-slate-200 shadow-sm transition-all hover:shadow-md hover:scale-105 active:scale-95"
               >
-                <ArrowLeft className="w-5 h-5 text-white" />
+                <ArrowLeft className="w-5 h-5 text-slate-600 group-hover:text-slate-900" />
               </Link>
             </div>
 
-            {/* Shop name at bottom */}
-            <div className="relative z-10 mt-auto pb-8 text-center">
-              {!merchant.logo_url && (
-                <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center mb-4 mx-auto shadow-2xl">
-                  <span className="text-3xl font-black text-white">{merchant.shop_name[0]}</span>
+            {/* Logo/Image Container with Glassmorphism */}
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full p-1.5 bg-white/40 backdrop-blur-xl border border-white shadow-2xl flex items-center justify-center overflow-hidden mb-3 transition-transform hover:scale-105">
+                {merchant.logo_url ? (
+                  <img
+                    src={merchant.logo_url}
+                    alt={merchant.shop_name}
+                    className="w-full h-full object-cover rounded-full ring-1 ring-black/5"
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full rounded-full flex items-center justify-center text-white text-3xl font-black shadow-inner"
+                    style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
+                  >
+                    {merchant.shop_name[0]}
+                  </div>
+                )}
+                {/* Glossy overlay effect */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+              </div>
+
+              {/* Shop Name & Progress Badge */}
+              <div className="flex flex-col items-center text-center px-4">
+                <h1 className="text-xl lg:text-2xl font-black tracking-tight text-slate-900 leading-tight">
+                  {merchant.shop_name}
+                </h1>
+
+                <div className="mt-2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-white shadow-sm ring-1 ring-black/[0.03]">
+                  <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                  <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tight">
+                    {card.current_stamps} / {merchant.stamps_required} points
+                  </span>
                 </div>
-              )}
-              <h1 className="text-2xl lg:text-3xl font-black tracking-tight drop-shadow-lg px-4">{merchant.shop_name}</h1>
+              </div>
             </div>
+
+            {/* Centered gradient glow behind logo */}
+            <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full blur-2xl opacity-40 pointer-events-none"
+              style={{ background: `radial-gradient(circle, ${merchant.primary_color}60, transparent 70%)` }}
+            />
           </div>
         </div>
       </header>
