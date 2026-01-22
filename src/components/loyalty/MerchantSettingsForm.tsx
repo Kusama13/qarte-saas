@@ -26,9 +26,10 @@ interface MerchantSettingsFormProps {
   initialStampsRequired?: number;
   initialRewardDescription?: string;
   onOpenGuide?: () => void;
-  onSave?: (settings: LoyaltySettings) => void;
+  onSave?: (settings: LoyaltySettings) => Promise<void> | void;
   onChange?: (settings: LoyaltySettings) => void;
   loading?: boolean;
+  saved?: boolean;
 }
 
 export interface LoyaltySettings {
@@ -49,6 +50,7 @@ export function MerchantSettingsForm({
   onSave,
   onChange,
   loading = false,
+  saved = false,
 }: MerchantSettingsFormProps) {
   const [mode, setMode] = useState<LoyaltyMode>(initialMode);
   const [productName, setProductName] = useState(initialProductName || '');
@@ -88,16 +90,13 @@ export function MerchantSettingsForm({
   }, [mode, productName, maxQuantity, stampsRequired, rewardDescription]);
 
   const handleSave = () => {
-    const settings = {
+    onSave?.({
       loyalty_mode: mode,
       product_name: mode === 'article' ? productName : null,
       max_quantity_per_scan: mode === 'article' ? maxQuantity : 1,
       stamps_required: stampsRequired,
       reward_description: rewardDescription,
-    };
-    console.log('MerchantSettingsForm handleSave called with:', settings);
-    console.log('onSave function exists:', !!onSave);
-    onSave?.(settings);
+    });
   };
 
   // Build summary sentence
@@ -371,16 +370,25 @@ export function MerchantSettingsForm({
         <Button
           onClick={handleSave}
           loading={loading}
-          disabled={!rewardDescription || (mode === 'article' && !productName)}
+          disabled={saved || !rewardDescription || (mode === 'article' && !productName)}
           className={`w-full h-14 rounded-2xl text-lg font-bold transition-all ${
-            mode === 'visit'
-              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:shadow-lg hover:shadow-indigo-200'
-              : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg hover:shadow-orange-200'
+            saved
+              ? 'bg-emerald-500 hover:bg-emerald-600'
+              : mode === 'visit'
+                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 hover:shadow-lg hover:shadow-indigo-200'
+                : 'bg-gradient-to-r from-orange-500 to-red-500 hover:shadow-lg hover:shadow-orange-200'
           }`}
         >
-          Enregistrer les modifications
+          {saved ? (
+            <>
+              <Check className="w-5 h-5 mr-2" />
+              Enregistré !
+            </>
+          ) : (
+            'Enregistrer les modifications'
+          )}
         </Button>
-        {(!rewardDescription || (mode === 'article' && !productName)) && (
+        {!saved && (!rewardDescription || (mode === 'article' && !productName)) && (
           <p className="text-xs text-center text-amber-600">
             {!rewardDescription ? 'Veuillez renseigner la récompense' : 'Veuillez renseigner le nom du produit'}
           </p>

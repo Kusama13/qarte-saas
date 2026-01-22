@@ -228,32 +228,20 @@ export default function ProgramPage() {
   };
 
   const handleLoyaltySettingsSave = async (settings: LoyaltySettings) => {
-    console.log('handleLoyaltySettingsSave called with:', settings);
-    console.log('merchant:', merchant);
-
-    if (!merchant) {
-      console.error('No merchant found');
-      return;
-    }
+    if (!merchant) return;
 
     setSaving(true);
     try {
-      const updateData = {
-        loyalty_mode: settings.loyalty_mode,
-        product_name: settings.product_name,
-        max_quantity_per_scan: settings.max_quantity_per_scan,
-        stamps_required: settings.stamps_required,
-        reward_description: settings.reward_description,
-      };
-      console.log('Updating with:', updateData);
-
-      const { error, data } = await supabase
+      const { error } = await supabase
         .from('merchants')
-        .update(updateData)
-        .eq('id', merchant.id)
-        .select();
-
-      console.log('Update response:', { error, data });
+        .update({
+          loyalty_mode: settings.loyalty_mode,
+          product_name: settings.product_name,
+          max_quantity_per_scan: settings.max_quantity_per_scan,
+          stamps_required: settings.stamps_required,
+          reward_description: settings.reward_description,
+        })
+        .eq('id', merchant.id);
 
       if (error) throw error;
 
@@ -503,6 +491,7 @@ export default function ProgramPage() {
               onChange={handleLoyaltySettingsChange}
               onSave={handleLoyaltySettingsSave}
               loading={saving}
+              saved={saved}
             />
 
             {/* Warning when increasing stamps required */}
