@@ -5,7 +5,6 @@ import { z } from 'zod';
 
 const redeemSchema = z.object({
   loyalty_card_id: z.string().uuid(),
-  customer_phone: z.string().min(1),
 });
 
 export async function POST(request: NextRequest) {
@@ -20,47 +19,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { loyalty_card_id, customer_phone } = parsed.data;
-    const formattedPhone = formatPhoneNumber(customer_phone);
-
-    console.log('Redeem request - Raw phone:', customer_phone, '| Formatted:', formattedPhone);
-
-    if (!validateFrenchPhone(formattedPhone)) {
-      return NextResponse.json(
-        { error: 'Numéro de téléphone invalide' },
-        { status: 400 }
-      );
-    }
-
+    const { loyalty_card_id } = parsed.data;
     const supabase = createServerClient();
 
-    // Debug: Check what's in the database
-    const { data: allCustomers } = await supabase
-      .from('customers')
-      .select('id, phone_number')
-      .limit(5);
-    console.log('Sample customers in DB:', allCustomers);
-
-    const { data: customer, error: customerError } = await supabase
-      .from('customers')
-      .select('id')
-      .eq('phone_number', formattedPhone)
-      .single();
-
-    console.log('Customer lookup result:', { customer, error: customerError, searchedPhone: formattedPhone });
-
-    if (!customer) {
-      return NextResponse.json(
-        { error: 'Client introuvable', debug: { searchedPhone: formattedPhone, rawPhone: customer_phone } },
-        { status: 404 }
-      );
-    }
-
+    // Get the loyalty card with merchant info - the card already has customer_id
     const { data: loyaltyCard } = await supabase
       .from('loyalty_cards')
       .select('*, merchant:merchants(*)')
       .eq('id', loyalty_card_id)
-      .eq('customer_id', customer.id)
       .single();
 
     if (!loyaltyCard) {
@@ -86,7 +52,7 @@ export async function POST(request: NextRequest) {
       .insert({
         loyalty_card_id: loyaltyCard.id,
         merchant_id: loyaltyCard.merchant_id,
-        customer_id: customer.id,
+        customer_id: loyaltyCard.customer_id,
         stamps_used: loyaltyCard.current_stamps,
       });
 
