@@ -14,6 +14,8 @@ import {
   Star,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
 import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
@@ -45,6 +47,7 @@ export default function CustomerCardPage({
   const [redeemSuccess, setRedeemSuccess] = useState(false);
   const [card, setCard] = useState<CardWithDetails | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [visitsExpanded, setVisitsExpanded] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -164,15 +167,7 @@ export default function CustomerCardPage({
         <h1 className="text-2xl font-black tracking-tight drop-shadow-sm">{merchant.shop_name}</h1>
       </header>
 
-      {merchant.promo_message && (
-        <div
-          className="px-4 py-3 text-center text-sm font-semibold text-white"
-          style={{ backgroundColor: merchant.secondary_color }}
-        >
-          {merchant.promo_message}
-        </div>
-      )}
-
+      
       <main className="flex-1 -mt-12 px-4 pb-12 w-full max-w-lg mx-auto z-10">
         <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
           <div className="text-center mb-10">
@@ -261,18 +256,37 @@ export default function CustomerCardPage({
         )}
 
         <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100/50 overflow-hidden mb-12">
-          <div className="p-6 border-b border-gray-50">
+          <div className="p-6 border-b border-gray-50 flex items-center justify-between">
             <h2 className="font-bold text-gray-900 text-lg flex items-center gap-3">
               <div className="p-2 bg-gray-50 rounded-xl">
                 <Calendar className="w-5 h-5 text-gray-500" />
               </div>
               Historique des visites
             </h2>
+            {visits.length > 3 && (
+              <button
+                onClick={() => setVisitsExpanded(!visitsExpanded)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-xl transition-all"
+                style={{ color: merchant.primary_color, backgroundColor: `${merchant.primary_color}10` }}
+              >
+                {visitsExpanded ? (
+                  <>
+                    <ChevronUp className="w-4 h-4" />
+                    Réduire
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-4 h-4" />
+                    Tout voir ({visits.length})
+                  </>
+                )}
+              </button>
+            )}
           </div>
 
           {visits.length > 0 ? (
             <ul className="divide-y divide-gray-50">
-              {visits.map((visit) => (
+              {(visitsExpanded ? visits : visits.slice(0, 3)).map((visit) => (
                 <li key={visit.id} className="flex items-center gap-4 px-6 py-5 hover:bg-gray-50/40 transition-colors">
                   <div
                     className="flex items-center justify-center w-12 h-12 rounded-2xl shadow-sm"
@@ -300,8 +314,12 @@ export default function CustomerCardPage({
           )}
         </div>
 
-        <footer className="py-12 text-center">
-          <p className="text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase mb-3">Propulsé par</p>
+        <footer className="py-8 text-center">
+          <div className="flex items-center justify-center gap-1.5 mb-3">
+            <span className="text-[11px] font-medium text-gray-400">Créé avec</span>
+            <span className="text-sm">❤️</span>
+            <span className="text-[11px] font-medium text-gray-400">en France</span>
+          </div>
           <div className="inline-flex items-center gap-2 group cursor-default transition-all duration-300 hover:opacity-70">
             <div className="w-7 h-7 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-200">
               <span className="text-white text-xs font-black italic">Q</span>

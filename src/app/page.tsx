@@ -195,6 +195,7 @@ function HeroSection() {
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
             <a href="#features" className="hover:text-indigo-600 transition-colors">Solutions</a>
             <a href="#pricing" className="hover:text-indigo-600 transition-colors">Tarifs</a>
+            <a href="/contact" className="hover:text-indigo-600 transition-colors">Contact</a>
             <a href="/auth/merchant" className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all shadow-sm">Espace Commerçant</a>
           </div>
         </div>
@@ -1118,6 +1119,7 @@ function FooterSection() {
           </p>
 
           <div className="flex gap-6">
+            <a href="/contact" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">Contact</a>
             <a href="/mentions-legales" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">Mentions légales</a>
             <a href="/cgv" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">CGV</a>
             <a href="/politique-confidentialite" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">Confidentialité</a>

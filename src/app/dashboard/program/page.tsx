@@ -529,10 +529,20 @@ export default function ProgramPage() {
                   </div>
 
                   {/* Footer */}
-                  <div className="py-3 flex items-center justify-center gap-1.5 opacity-50">
-                    <span className="text-[8px] font-medium text-slate-500">Créé avec</span>
-                    <span className="text-[8px]">❤️</span>
-                    <span className="text-[8px] font-medium text-slate-500">en France</span>
+                  <div className="py-2 flex flex-col items-center gap-1 opacity-60">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[8px] font-medium text-slate-500">Créé avec</span>
+                      <span className="text-[8px]">❤️</span>
+                      <span className="text-[8px] font-medium text-slate-500">en France</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-4 h-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded flex items-center justify-center">
+                        <span className="text-white text-[6px] font-black italic">Q</span>
+                      </div>
+                      <span className="text-[10px] font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+                        QARTE
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
