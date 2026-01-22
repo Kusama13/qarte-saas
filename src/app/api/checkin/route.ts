@@ -1,21 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
+import { createClient } from '@supabase/supabase-js';
+import { createHash } from 'crypto';
 import { formatPhoneNumber, validateFrenchPhone, getTodayInParis, getTrialStatus } from '@/lib/utils';
 import { z } from 'zod';
+import type { VisitStatus } from '@/types';
+
+// Use admin client for server-side operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 const checkinSchema = z.object({
-  merchant_slug: z.string().min(1),
+  scan_code: z.string().min(1),
   phone_number: z.string().min(1),
   first_name: z.string().optional(),
   last_name: z.string().optional(),
+  points_to_add: z.number().min(1).max(20).optional().default(1),
 });
 
+// Rate limiting
 const rateLimitMap = new Map<string, { count: number; timestamp: number }>();
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const windowMs = 60 * 1000;
-  const maxRequests = 5;
+  const maxRequests = 10;
 
   const record = rateLimitMap.get(ip);
 
@@ -32,9 +42,28 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+// Hash IP for GDPR compliance
+function hashIP(ip: string): string {
+  return createHash('sha256').update(ip + process.env.SUPABASE_SERVICE_ROLE_KEY).digest('hex');
+}
+
+// Get today's start timestamp in Paris timezone
+function getTodayStartParis(): string {
+  const now = new Date();
+  const parisTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+  parisTime.setHours(0, 0, 0, 0);
+  return parisTime.toISOString();
+}
+
+// Quarantine thresholds
+const QUARANTINE_THRESHOLDS = {
+  visit: 1,   // 1st scan confirmed, 2nd+ pending
+  article: 2, // 1-2 scans confirmed, 3rd+ pending
+};
+
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
 
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
@@ -53,7 +82,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { merchant_slug, phone_number, first_name, last_name } = parsed.data;
+    const { scan_code, phone_number, first_name, last_name, points_to_add } = parsed.data;
     const formattedPhone = formatPhoneNumber(phone_number);
 
     if (!validateFrenchPhone(formattedPhone)) {
@@ -63,12 +92,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient();
-
-    const { data: merchant, error: merchantError } = await supabase
+    // Get merchant by scan_code
+    const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
       .select('*')
-      .eq('slug', merchant_slug)
+      .eq('scan_code', scan_code)
       .single();
 
     if (merchantError || !merchant) {
@@ -78,11 +106,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Vérifier si l'essai est expiré (période de grâce ou complètement expiré)
-    const trialStatus = getTrialStatus(
-      merchant.trial_ends_at,
-      merchant.subscription_status
-    );
+    // Check trial status
+    const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
 
     if (trialStatus.isInGracePeriod || trialStatus.isFullyExpired) {
       return NextResponse.json(
@@ -94,45 +119,97 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if phone is banned
+    const { data: bannedCheck } = await supabaseAdmin
+      .from('banned_numbers')
+      .select('id')
+      .eq('phone_number', formattedPhone)
+      .eq('merchant_id', merchant.id)
+      .single();
+
+    if (bannedCheck) {
+      return NextResponse.json(
+        {
+          error: 'Ce numéro n\'est plus autorisé à utiliser ce programme de fidélité.',
+          banned: true
+        },
+        { status: 403 }
+      );
+    }
+
+    // Get or create customer
     let customer;
-    const { data: existingCustomer } = await supabase
+    const { data: existingCustomer } = await supabaseAdmin
       .from('customers')
       .select('*')
       .eq('phone_number', formattedPhone)
+      .eq('merchant_id', merchant.id)
       .single();
 
     if (existingCustomer) {
       customer = existingCustomer;
     } else {
-      if (!first_name) {
-        return NextResponse.json(
-          { error: 'Le prénom est requis pour créer un compte' },
-          { status: 400 }
-        );
-      }
-
-      const { data: newCustomer, error: customerError } = await supabase
+      // Check if customer exists globally (for another merchant)
+      const { data: globalCustomer } = await supabaseAdmin
         .from('customers')
-        .insert({
-          phone_number: formattedPhone,
-          first_name: first_name.trim(),
-          last_name: last_name?.trim() || null,
-        })
-        .select()
+        .select('*')
+        .eq('phone_number', formattedPhone)
+        .limit(1)
         .single();
 
-      if (customerError) {
-        return NextResponse.json(
-          { error: 'Erreur lors de la création du compte' },
-          { status: 500 }
-        );
-      }
+      if (globalCustomer) {
+        // Create customer for this merchant with same info
+        const { data: newCustomer, error: customerError } = await supabaseAdmin
+          .from('customers')
+          .insert({
+            phone_number: formattedPhone,
+            first_name: globalCustomer.first_name,
+            last_name: globalCustomer.last_name,
+            merchant_id: merchant.id,
+          })
+          .select()
+          .single();
 
-      customer = newCustomer;
+        if (customerError) {
+          return NextResponse.json(
+            { error: 'Erreur lors de la création du compte' },
+            { status: 500 }
+          );
+        }
+        customer = newCustomer;
+      } else {
+        // New customer - need first_name
+        if (!first_name) {
+          return NextResponse.json(
+            { error: 'Le prénom est requis pour créer un compte', needs_registration: true },
+            { status: 400 }
+          );
+        }
+
+        const { data: newCustomer, error: customerError } = await supabaseAdmin
+          .from('customers')
+          .insert({
+            phone_number: formattedPhone,
+            first_name: first_name.trim(),
+            last_name: last_name?.trim() || null,
+            merchant_id: merchant.id,
+          })
+          .select()
+          .single();
+
+        if (customerError) {
+          return NextResponse.json(
+            { error: 'Erreur lors de la création du compte' },
+            { status: 500 }
+          );
+        }
+        customer = newCustomer;
+      }
     }
 
+    // Get or create loyalty card
     let loyaltyCard;
-    const { data: existingCard } = await supabase
+    const { data: existingCard } = await supabaseAdmin
       .from('loyalty_cards')
       .select('*')
       .eq('customer_id', customer.id)
@@ -142,12 +219,13 @@ export async function POST(request: NextRequest) {
     if (existingCard) {
       loyaltyCard = existingCard;
     } else {
-      const { data: newCard, error: cardError } = await supabase
+      const { data: newCard, error: cardError } = await supabaseAdmin
         .from('loyalty_cards')
         .insert({
           customer_id: customer.id,
           merchant_id: merchant.id,
           current_stamps: 0,
+          stamps_target: merchant.stamps_required,
         })
         .select()
         .single();
@@ -158,60 +236,126 @@ export async function POST(request: NextRequest) {
           { status: 500 }
         );
       }
-
       loyaltyCard = newCard;
     }
 
     const today = getTodayInParis();
-    if (loyaltyCard.last_visit_date === today) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Vous avez déjà validé votre passage aujourd\'hui',
-          current_stamps: loyaltyCard.current_stamps,
-          required_stamps: merchant.stamps_required,
-          reward_unlocked: loyaltyCard.current_stamps >= merchant.stamps_required,
-        },
-        { status: 429 }
-      );
+    const todayStart = getTodayStartParis();
+    const loyaltyMode = merchant.loyalty_mode || 'visit';
+
+    // =============================================
+    // QARTE SHIELD: Quarantine Logic
+    // =============================================
+
+    // Count today's scans (confirmed + pending) for this customer/merchant
+    const { count: todayScansCount } = await supabaseAdmin
+      .from('visits')
+      .select('*', { count: 'exact', head: true })
+      .eq('customer_id', customer.id)
+      .eq('merchant_id', merchant.id)
+      .gte('visited_at', todayStart)
+      .in('status', ['confirmed', 'pending']);
+
+    const currentScanNumber = (todayScansCount || 0) + 1;
+    const threshold = QUARANTINE_THRESHOLDS[loyaltyMode as keyof typeof QUARANTINE_THRESHOLDS] || 1;
+
+    // Determine status based on threshold
+    let visitStatus: VisitStatus = 'confirmed';
+    let flaggedReason: string | null = null;
+
+    if (currentScanNumber > threshold) {
+      visitStatus = 'pending';
+      flaggedReason = loyaltyMode === 'visit'
+        ? `${currentScanNumber}ème passage ce jour`
+        : `${currentScanNumber}ème scan ce jour`;
     }
 
-    const newStamps = loyaltyCard.current_stamps + 1;
+    // Points to add
+    const pointsEarned = loyaltyMode === 'article' ? points_to_add : 1;
 
-    const { error: updateError } = await supabase
-      .from('loyalty_cards')
-      .update({
-        current_stamps: newStamps,
-        last_visit_date: today,
+    // Hash IP for GDPR
+    const ipHash = hashIP(ip);
+
+    // Insert visit record
+    const { data: visitData, error: visitError } = await supabaseAdmin
+      .from('visits')
+      .insert({
+        loyalty_card_id: loyaltyCard.id,
+        merchant_id: merchant.id,
+        customer_id: customer.id,
+        ip_address: ip,
+        ip_hash: ipHash,
+        points_earned: pointsEarned,
+        status: visitStatus,
+        flagged_reason: flaggedReason,
       })
-      .eq('id', loyaltyCard.id);
+      .select()
+      .single();
 
-    if (updateError) {
+    if (visitError) {
+      console.error('Visit insert error:', visitError);
       return NextResponse.json(
-        { error: 'Erreur lors de la mise à jour de la carte' },
+        { error: 'Erreur lors de l\'enregistrement du passage' },
         { status: 500 }
       );
     }
 
-    await supabase.from('visits').insert({
-      loyalty_card_id: loyaltyCard.id,
-      merchant_id: merchant.id,
-      customer_id: customer.id,
-      ip_address: ip,
-    });
+    // Only update stamps if confirmed
+    let newStamps = loyaltyCard.current_stamps;
+
+    if (visitStatus === 'confirmed') {
+      newStamps = loyaltyCard.current_stamps + pointsEarned;
+
+      const { error: updateError } = await supabaseAdmin
+        .from('loyalty_cards')
+        .update({
+          current_stamps: newStamps,
+          last_visit_date: today,
+        })
+        .eq('id', loyaltyCard.id);
+
+      if (updateError) {
+        // Rollback visit
+        await supabaseAdmin.from('visits').delete().eq('id', visitData.id);
+        return NextResponse.json(
+          { error: 'Erreur lors de la mise à jour de la carte' },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Count pending visits for this customer at this merchant
+    const { count: pendingCount } = await supabaseAdmin
+      .from('visits')
+      .select('*', { count: 'exact', head: true })
+      .eq('customer_id', customer.id)
+      .eq('merchant_id', merchant.id)
+      .eq('status', 'pending');
 
     const rewardUnlocked = newStamps >= merchant.stamps_required;
 
-    return NextResponse.json({
+    // Build response
+    const response = {
       success: true,
-      message: rewardUnlocked
-        ? 'Félicitations ! Vous avez débloqué votre récompense !'
-        : 'Passage enregistré avec succès',
+      status: visitStatus,
+      visit_id: visitData.id,
+      message: visitStatus === 'pending'
+        ? 'Passage en cours de vérification'
+        : rewardUnlocked
+          ? 'Félicitations ! Vous avez débloqué votre récompense !'
+          : 'Passage enregistré avec succès',
       current_stamps: newStamps,
+      pending_stamps: visitStatus === 'pending' ? pointsEarned : 0,
+      pending_count: pendingCount || 0,
       required_stamps: merchant.stamps_required,
-      reward_unlocked: rewardUnlocked,
+      reward_unlocked: rewardUnlocked && visitStatus === 'confirmed',
       customer_name: customer.first_name,
-    });
+      flagged_reason: flaggedReason,
+      loyalty_mode: loyaltyMode,
+      points_earned: pointsEarned,
+    };
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Checkin error:', error);
     return NextResponse.json(

@@ -8,6 +8,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
+import PendingPointsWidget from '@/components/PendingPointsWidget';
 import {
   LineChart,
   Line,
@@ -232,6 +233,9 @@ export default function DashboardPage() {
           </p>
         </div>
       </div>
+
+      {/* Qarte Shield - Points en attente */}
+      <PendingPointsWidget merchantId={merchant.id} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard

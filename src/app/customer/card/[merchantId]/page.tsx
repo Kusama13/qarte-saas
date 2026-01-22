@@ -22,16 +22,24 @@ import {
   Pizza,
   ShoppingBag,
   SlidersHorizontal,
+  Hourglass,
+  Shield,
+  XCircle,
 } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
 import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
-import type { Merchant, LoyaltyCard, Customer, Visit } from '@/types';
+import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus } from '@/types';
 
 interface PointAdjustment {
   id: string;
   created_at: string;
   adjustment: number;
   reason: string | null;
+}
+
+interface VisitWithStatus extends Visit {
+  status: VisitStatus;
+  flagged_reason: string | null;
 }
 
 interface CardWithDetails extends LoyaltyCard {
@@ -87,10 +95,11 @@ export default function CustomerCardPage({
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [redeemSuccess, setRedeemSuccess] = useState(false);
   const [card, setCard] = useState<CardWithDetails | null>(null);
-  const [visits, setVisits] = useState<Visit[]>([]);
+  const [visits, setVisits] = useState<VisitWithStatus[]>([]);
   const [adjustments, setAdjustments] = useState<PointAdjustment[]>([]);
   const [visitsExpanded, setVisitsExpanded] = useState(false);
   const [reviewDismissed, setReviewDismissed] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,8 +123,12 @@ export default function CustomerCardPage({
         }
 
         setCard(data.card as CardWithDetails);
-        setVisits(data.visits || []);
+        const visitsData = (data.visits || []) as VisitWithStatus[];
+        setVisits(visitsData);
         setAdjustments(data.adjustments || []);
+        // Count pending visits
+        const pending = visitsData.filter((v: VisitWithStatus) => v.status === 'pending').length;
+        setPendingCount(pending);
       } catch (error) {
         console.error('Error fetching card:', error);
         router.push('/customer/cards');
@@ -322,6 +335,31 @@ export default function CustomerCardPage({
 
       
       <main className="flex-1 mt-4 px-4 pb-12 w-full max-w-lg mx-auto z-10">
+        {/* Pending Points Alert - Qarte Shield */}
+        {pendingCount > 0 && (
+          <div className="relative p-4 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-200 rounded-3xl shadow-lg shadow-amber-900/5 mb-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center shrink-0">
+                <Hourglass className="w-6 h-6 text-amber-600 animate-pulse" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-gray-900">
+                  {pendingCount} point{pendingCount > 1 ? 's' : ''} en attente
+                </p>
+                <p className="text-sm text-gray-600">
+                  En attente de validation par le commerçant
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-3 pt-3 border-t border-amber-100">
+              <Shield className="w-3.5 h-3.5 text-gray-400" />
+              <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">
+                Protégé par Qarte Shield
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Review Section - Above Card */}
         {merchant.review_link && !reviewDismissed && (
           <div className="relative group p-4 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-100 rounded-3xl shadow-lg shadow-amber-900/5 mb-4 hover:shadow-xl hover:shadow-amber-900/10 transition-all duration-300">
@@ -531,29 +569,65 @@ export default function CustomerCardPage({
               <ul className="divide-y divide-gray-50">
                 {/* Combine visits and adjustments, sort by date */}
                 {[
-                  ...visits.map((v) => ({ type: 'visit' as const, date: v.visited_at, points: v.points_earned || 1, id: v.id })),
-                  ...adjustments.map((a) => ({ type: 'adjustment' as const, date: a.created_at, points: a.adjustment, reason: a.reason, id: a.id })),
+                  ...visits.map((v) => ({
+                    type: 'visit' as const,
+                    date: v.visited_at,
+                    points: v.points_earned || 1,
+                    id: v.id,
+                    status: v.status || 'confirmed',
+                    flagged_reason: v.flagged_reason
+                  })),
+                  ...adjustments.map((a) => ({
+                    type: 'adjustment' as const,
+                    date: a.created_at,
+                    points: a.adjustment,
+                    reason: a.reason,
+                    id: a.id,
+                    status: 'confirmed' as const,
+                    flagged_reason: null
+                  })),
                 ]
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                   .map((item) => {
                     const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
                     const isAdjustment = item.type === 'adjustment';
+                    const isPending = item.status === 'pending';
+                    const isRejected = item.status === 'rejected';
+
+                    // Determine icon and colors based on status
+                    const getStatusIcon = () => {
+                      if (isAdjustment) return <SlidersHorizontal className="w-6 h-6 text-amber-600" />;
+                      if (isPending) return <Hourglass className="w-6 h-6 text-amber-600 animate-pulse" />;
+                      if (isRejected) return <XCircle className="w-6 h-6 text-red-500" />;
+                      return <LoyaltyIcon className="w-6 h-6" style={{ color: merchant.primary_color }} />;
+                    };
+
+                    const getIconBgColor = () => {
+                      if (isAdjustment) return '#fef3c7';
+                      if (isPending) return '#fef3c7';
+                      if (isRejected) return '#fee2e2';
+                      return `${merchant.primary_color}10`;
+                    };
+
                     return (
-                      <li key={item.id} className="flex items-center gap-4 px-6 py-5 hover:bg-gray-50/40 transition-colors">
+                      <li
+                        key={item.id}
+                        className={`flex items-center gap-4 px-6 py-5 hover:bg-gray-50/40 transition-colors ${isRejected ? 'opacity-60' : ''}`}
+                      >
                         <div
                           className="flex items-center justify-center w-12 h-12 rounded-2xl shadow-sm"
-                          style={{ backgroundColor: isAdjustment ? '#fef3c7' : `${merchant.primary_color}10` }}
+                          style={{ backgroundColor: getIconBgColor() }}
                         >
-                          {isAdjustment ? (
-                            <SlidersHorizontal className="w-6 h-6 text-amber-600" />
-                          ) : (
-                            <LoyaltyIcon className="w-6 h-6" style={{ color: merchant.primary_color }} />
-                          )}
+                          {getStatusIcon()}
                         </div>
                         <div className="flex-1">
-                          <p className="font-semibold text-gray-900">
+                          <p className={`font-semibold ${isRejected ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
                             {isAdjustment
                               ? 'Ajustement manuel'
+                              : isPending
+                              ? 'En attente de validation'
+                              : isRejected
+                              ? 'Passage refusé'
                               : merchant.loyalty_mode === 'visit'
                               ? 'Passage validé'
                               : `${item.points} ${merchant.product_name || 'article'}${item.points > 1 ? 's' : ''}`}
@@ -565,22 +639,32 @@ export default function CustomerCardPage({
                           {isAdjustment && item.reason && (
                             <p className="text-xs text-gray-400 italic mt-0.5">{item.reason}</p>
                           )}
+                          {isPending && (
+                            <p className="text-xs text-amber-600 mt-0.5 flex items-center gap-1">
+                              <Shield className="w-3 h-3" />
+                              Vérification Qarte Shield
+                            </p>
+                          )}
                         </div>
                         <div
                           className={`px-3 py-1.5 rounded-xl text-sm font-bold ${
-                            item.points > 0
+                            isPending
+                              ? 'bg-amber-100 text-amber-700'
+                              : isRejected
+                              ? 'bg-red-100 text-red-500 line-through'
+                              : item.points > 0
                               ? isAdjustment
                                 ? 'bg-green-100 text-green-700'
                                 : ''
                               : 'bg-red-100 text-red-700'
                           }`}
                           style={
-                            item.points > 0 && !isAdjustment
+                            item.points > 0 && !isAdjustment && !isPending && !isRejected
                               ? { backgroundColor: `${merchant.primary_color}10`, color: merchant.primary_color }
                               : {}
                           }
                         >
-                          {item.points > 0 ? '+' : ''}{item.points} pt{Math.abs(item.points) > 1 ? 's' : ''}
+                          {isPending ? '⏳' : isRejected ? '❌' : item.points > 0 ? '+' : ''}{!isPending && !isRejected ? item.points : item.points} pt{Math.abs(item.points) > 1 ? 's' : ''}
                         </div>
                       </li>
                     );

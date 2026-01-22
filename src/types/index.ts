@@ -21,6 +21,9 @@ export type SubscriptionStatus = 'trial' | 'active' | 'cancelled' | 'past_due';
 
 export type LoyaltyMode = 'visit' | 'article';
 
+// Qarte Shield: Visit quarantine status
+export type VisitStatus = 'confirmed' | 'pending' | 'rejected';
+
 export interface Merchant {
   id: string;
   user_id: string;
@@ -91,6 +94,16 @@ export interface Visit {
   points_earned: number;
   visited_at: string;
   ip_address: string | null;
+  // Qarte Shield fields
+  status: VisitStatus;
+  flagged_reason: string | null;
+  ip_hash: string | null;
+}
+
+// Pending visit with customer info for moderation widget
+export interface PendingVisit extends Visit {
+  customer: Customer;
+  loyalty_card: LoyaltyCard;
 }
 
 export interface Redemption {
@@ -126,6 +139,10 @@ export interface CheckinResponse {
   required_stamps?: number;
   reward_unlocked?: boolean;
   customer_name?: string;
+  // Qarte Shield fields
+  status?: VisitStatus;
+  pending_count?: number;
+  flagged_reason?: string;
 }
 
 export interface ApiError {

@@ -5,6 +5,7 @@ import {
   TrialEndingEmail,
   TrialExpiredEmail,
   SubscriptionConfirmedEmail,
+  PendingPointsEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -190,6 +191,52 @@ export async function sendSubscriptionConfirmedEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending subscription confirmed email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email points en attente (Qarte Shield)
+export async function sendPendingPointsEmail(
+  to: string,
+  shopName: string,
+  pendingCount: number,
+  isReminder = false,
+  daysSinceFirst?: number
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const subject = isReminder
+      ? `📋 Rappel : ${pendingCount} point${pendingCount > 1 ? 's' : ''} en attente de validation`
+      : `🛡️ Qarte Shield : ${pendingCount} point${pendingCount > 1 ? 's' : ''} à modérer`;
+
+    const html = await render(
+      PendingPointsEmail({
+        shopName,
+        pendingCount,
+        isReminder,
+        daysSinceFirst,
+      })
+    );
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject,
+      html,
+    });
+
+    if (error) {
+      logger.error('Failed to send pending points email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Pending points email sent to ${to} (${pendingCount} pending, reminder: ${isReminder})`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending pending points email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

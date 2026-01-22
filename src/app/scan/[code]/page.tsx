@@ -15,6 +15,9 @@ import {
   Minus,
   Plus,
   Undo2,
+  Hourglass,
+  Shield,
+  Ban,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -23,7 +26,7 @@ import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validateFrenchPhone, getTodayInParis } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
 
-type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'article-select';
+type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'article-select' | 'pending' | 'banned';
 
 const setCookie = (name: string, value: string, days: number) => {
   const expires = new Date();
@@ -52,6 +55,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const [undoTimer, setUndoTimer] = useState(0);
   const [lastCheckinPoints, setLastCheckinPoints] = useState(0);
   const [lastVisitId, setLastVisitId] = useState<string | null>(null);
+
+  // Qarte Shield: Pending state
+  const [pendingStamps, setPendingStamps] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -254,70 +261,62 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setStep('checkin');
 
     try {
-      let { data: card } = await supabase
-        .from('loyalty_cards')
-        .select('*')
-        .eq('customer_id', cust.id)
-        .eq('merchant_id', merchant.id)
-        .single();
+      const formattedPhone = formatPhoneNumber(phoneNumber);
+      const points = pointsToAdd || 1;
 
-      if (!card) {
-        const { data: newCard, error: cardError } = await supabase
-          .from('loyalty_cards')
-          .insert({
-            customer_id: cust.id,
-            merchant_id: merchant.id,
-            current_stamps: 0,
-            stamps_target: merchant.stamps_required,
-          })
-          .select()
-          .single();
+      // Use the new /api/checkin endpoint with Qarte Shield
+      const response = await fetch('/api/checkin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scan_code: code,
+          phone_number: formattedPhone,
+          first_name: cust.first_name,
+          last_name: cust.last_name,
+          points_to_add: points,
+        }),
+      });
 
-        if (cardError) throw cardError;
-        card = newCard;
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.banned) {
+          setStep('banned');
+          return;
+        }
+        throw new Error(data.error || 'Erreur serveur');
       }
 
-      const today = getTodayInParis();
-      // For visit mode, check if already checked in today
-      if (merchant.loyalty_mode === 'visit' && card.last_visit_date === today) {
-        setLoyaltyCard(card);
-        setStep('already-checked');
+      // Update state with response data
+      setLastVisitId(data.visit_id);
+      setLastCheckinPoints(data.points_earned || points);
+
+      // Create updated card object
+      const updatedCard = {
+        id: data.visit_id,
+        customer_id: cust.id,
+        merchant_id: merchant.id,
+        current_stamps: data.current_stamps,
+        stamps_target: merchant.stamps_required,
+        last_visit_date: getTodayInParis(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setLoyaltyCard(updatedCard as LoyaltyCard);
+
+      // Handle different statuses from Qarte Shield
+      if (data.status === 'pending') {
+        setPendingStamps(data.pending_stamps || points);
+        setPendingCount(data.pending_count || 1);
+        setStep('pending');
         return;
       }
 
-      const points = pointsToAdd || 1;
-      const newStamps = card.current_stamps + points;
-
-      const { error: updateError } = await supabase
-        .from('loyalty_cards')
-        .update({
-          current_stamps: newStamps,
-          last_visit_date: today,
-        })
-        .eq('id', card.id);
-
-      if (updateError) throw updateError;
-
-      const { data: visitData } = await supabase.from('visits').insert({
-        loyalty_card_id: card.id,
-        merchant_id: merchant.id,
-        customer_id: cust.id,
-        points_earned: points,
-      }).select().single();
-
-      if (visitData) {
-        setLastVisitId(visitData.id);
-      }
-
-      setLastCheckinPoints(points);
-      const updatedCard = { ...card, current_stamps: newStamps };
-      setLoyaltyCard(updatedCard);
-
-      // Start undo timer
+      // Confirmed - normal flow
       setCanUndo(true);
       setUndoTimer(30);
 
-      if (newStamps >= merchant.stamps_required) {
+      if (data.reward_unlocked) {
         triggerConfetti();
         setStep('reward');
       } else {
@@ -325,7 +324,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       }
     } catch (err) {
       console.error(err);
-      setError('Erreur lors de l\'enregistrement du passage');
+      setError(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement du passage');
       setStep('error');
     }
   };
@@ -865,6 +864,98 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   Voir ma carte complète
                 </button>
               </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Qarte Shield: Pending Verification Screen */}
+        {step === 'pending' && loyaltyCard && (
+          <div className="animate-fade-in">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
+              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-amber-50">
+                <Hourglass className="w-10 h-10 text-amber-600 animate-pulse" />
+              </div>
+
+              <h2 className="text-2xl font-black text-gray-900 mb-2">
+                Passage en cours de vérification
+              </h2>
+              <p className="text-gray-500 mb-6">
+                Pour votre sécurité, ce passage doit être validé par votre commerçant.
+              </p>
+
+              {/* Info Card */}
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8 text-left">
+                <p className="text-sm text-amber-900 leading-relaxed">
+                  Notre système a détecté plusieurs passages aujourd&apos;hui. Cette mesure protège votre compte contre les utilisations frauduleuses. Votre point sera ajouté dès validation.
+                </p>
+              </div>
+
+              {/* Points Display */}
+              <div className="mb-8">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-5xl font-black" style={{ color: primaryColor }}>
+                    {loyaltyCard.current_stamps}
+                  </span>
+                  <span className="text-xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
+                </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
+                  {merchant?.loyalty_mode === 'visit' ? 'Passages confirmés' : `${merchant?.product_name || 'Articles'} confirmés`}
+                </p>
+                <div className="mt-3 inline-flex px-3 py-1.5 bg-amber-100 rounded-full">
+                  <span className="text-sm font-bold text-amber-700">
+                    + {pendingStamps} en attente
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant?.stamps_required || 10)) * 100)}%`,
+                    background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
+                  }}
+                />
+              </div>
+
+              <Link href={`/customer/card/${merchant.id}`}>
+                <button className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Voir ma carte complète
+                </button>
+              </Link>
+
+              {/* Shield Badge */}
+              <div className="flex items-center justify-center gap-2 mt-6">
+                <Shield className="w-4 h-4 text-gray-400" />
+                <span className="text-xs font-medium text-gray-400 uppercase tracking-widest">
+                  Protégé par Qarte Shield
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Banned Screen */}
+        {step === 'banned' && (
+          <div className="animate-fade-in">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-red-100">
+                <Ban className="w-10 h-10 text-red-600" />
+              </div>
+
+              <h2 className="text-2xl font-black text-gray-900 mb-2">Accès non autorisé</h2>
+              <p className="text-gray-500 mb-8">
+                Ce numéro n&apos;est plus autorisé à utiliser le programme de fidélité de ce commerce.
+              </p>
+              <p className="text-sm text-gray-400 mb-8">
+                Si vous pensez qu&apos;il s&apos;agit d&apos;une erreur, contactez directement le commerçant.
+              </p>
+
+              <Button onClick={() => setStep('phone')} variant="outline">
+                Retour
+              </Button>
             </div>
           </div>
         )}
