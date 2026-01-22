@@ -23,6 +23,8 @@ export async function POST(request: NextRequest) {
     const { loyalty_card_id, customer_phone } = parsed.data;
     const formattedPhone = formatPhoneNumber(customer_phone);
 
+    console.log('Redeem request - Raw phone:', customer_phone, '| Formatted:', formattedPhone);
+
     if (!validateFrenchPhone(formattedPhone)) {
       return NextResponse.json(
         { error: 'Numéro de téléphone invalide' },
@@ -32,15 +34,24 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServerClient();
 
-    const { data: customer } = await supabase
+    // Debug: Check what's in the database
+    const { data: allCustomers } = await supabase
+      .from('customers')
+      .select('id, phone_number')
+      .limit(5);
+    console.log('Sample customers in DB:', allCustomers);
+
+    const { data: customer, error: customerError } = await supabase
       .from('customers')
       .select('id')
       .eq('phone_number', formattedPhone)
       .single();
 
+    console.log('Customer lookup result:', { customer, error: customerError, searchedPhone: formattedPhone });
+
     if (!customer) {
       return NextResponse.json(
-        { error: 'Client introuvable' },
+        { error: 'Client introuvable', debug: { searchedPhone: formattedPhone, rawPhone: customer_phone } },
         { status: 404 }
       );
     }

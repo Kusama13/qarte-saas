@@ -189,8 +189,10 @@ export default function CustomerCardPage({
         setRedeemSuccess(true);
         triggerConfetti();
       } else {
-        console.error('Redeem failed:', data.error);
-        alert(data.error || 'Une erreur est survenue');
+        console.error('Redeem failed:', data);
+        // Show debug info if available
+        const debugInfo = data.debug ? `\nTéléphone envoyé: ${data.debug.searchedPhone}` : '';
+        alert((data.error || 'Une erreur est survenue') + debugInfo);
       }
     } catch (err) {
       console.error('Redeem error:', err);
