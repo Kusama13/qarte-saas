@@ -88,13 +88,16 @@ export function MerchantSettingsForm({
   }, [mode, productName, maxQuantity, stampsRequired, rewardDescription]);
 
   const handleSave = () => {
-    onSave?.({
+    const settings = {
       loyalty_mode: mode,
       product_name: mode === 'article' ? productName : null,
       max_quantity_per_scan: mode === 'article' ? maxQuantity : 1,
       stamps_required: stampsRequired,
       reward_description: rewardDescription,
-    });
+    };
+    console.log('MerchantSettingsForm handleSave called with:', settings);
+    console.log('onSave function exists:', !!onSave);
+    onSave?.(settings);
   };
 
   // Build summary sentence

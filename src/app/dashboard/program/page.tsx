@@ -228,20 +228,32 @@ export default function ProgramPage() {
   };
 
   const handleLoyaltySettingsSave = async (settings: LoyaltySettings) => {
-    if (!merchant) return;
+    console.log('handleLoyaltySettingsSave called with:', settings);
+    console.log('merchant:', merchant);
+
+    if (!merchant) {
+      console.error('No merchant found');
+      return;
+    }
 
     setSaving(true);
     try {
-      const { error } = await supabase
+      const updateData = {
+        loyalty_mode: settings.loyalty_mode,
+        product_name: settings.product_name,
+        max_quantity_per_scan: settings.max_quantity_per_scan,
+        stamps_required: settings.stamps_required,
+        reward_description: settings.reward_description,
+      };
+      console.log('Updating with:', updateData);
+
+      const { error, data } = await supabase
         .from('merchants')
-        .update({
-          loyalty_mode: settings.loyalty_mode,
-          product_name: settings.product_name,
-          max_quantity_per_scan: settings.max_quantity_per_scan,
-          stamps_required: settings.stamps_required,
-          reward_description: settings.reward_description,
-        })
-        .eq('id', merchant.id);
+        .update(updateData)
+        .eq('id', merchant.id)
+        .select();
+
+      console.log('Update response:', { error, data });
 
       if (error) throw error;
 
