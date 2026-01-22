@@ -472,88 +472,86 @@ export default function ProgramPage() {
           </div>
 
           {/* Review Link Section */}
-          <div className="relative overflow-hidden p-8 md:p-10 lg:p-14 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 border border-amber-200/60 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500 group">
+          <div className="relative overflow-hidden p-6 md:p-8 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 border border-amber-200/60 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500 group">
             {/* Decorative background element */}
-            <div className="absolute -right-24 -top-24 w-96 h-96 bg-amber-400/10 rounded-full blur-3xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-700" />
+            <div className="absolute -right-16 -top-16 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-700" />
 
-            <div className="relative flex flex-col lg:flex-row gap-12 lg:gap-16 items-center">
-              {/* Preview Section - Appears first on mobile */}
-              <div className="w-full lg:w-[380px] order-first lg:order-last shrink-0">
-                <div className="bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-10 border border-amber-200/50 shadow-2xl shadow-amber-200/30 relative group-hover:-translate-y-2 transition-transform duration-500">
-                  <div className="absolute top-5 left-8">
-                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100">
-                      Aperçu Client
-                    </span>
-                  </div>
-                  <div className="text-center pt-8">
-                    <p className="text-base font-bold text-slate-800 mb-5">Voulez-vous nous aider ?</p>
-                    <div className="flex justify-center gap-2 mb-8">
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <Star key={i} className="w-6 h-6 text-amber-400 fill-amber-400 drop-shadow-sm" />
-                      ))}
-                    </div>
-                    <div className="h-14 w-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-2xl flex items-center justify-center text-xs font-black text-white shadow-lg shadow-amber-200/50 tracking-widest uppercase">
-                      Donner mon avis
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+            <div className="relative flex flex-col lg:flex-row gap-8 lg:gap-10 items-start">
               {/* Content Section */}
-              <div className="flex-1 w-full space-y-8">
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white shadow-xl shadow-amber-200 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
-                    <Star className="w-8 h-8 fill-white" />
+              <div className="flex-1 w-full space-y-6 min-w-0">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white shadow-lg shadow-amber-200 group-hover:scale-105 transition-all duration-300 shrink-0">
+                    <Star className="w-6 h-6 fill-white" />
                   </div>
-                  <div>
-                    <h3 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+                  <div className="min-w-0">
+                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">
                       Boostez votre E-réputation
                     </h3>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-                      <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">Impact Prioritaire</span>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Impact Prioritaire</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-5">
-                  <div className="flex items-center justify-between px-1">
+                <div className="space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 px-1">
                     <label className="text-sm font-bold text-slate-700">Lien Google ou TripAdvisor</label>
-                    <a href="https://support.google.com/business/answer/7035772" target="_blank" rel="noreferrer" className="text-xs text-slate-400 hover:text-amber-600 flex items-center gap-1.5 transition-colors font-medium">
-                      Comment trouver mon lien ? <ExternalLink className="w-3.5 h-3.5" />
+                    <a href="https://support.google.com/business/answer/7035772" target="_blank" rel="noreferrer" className="text-[11px] text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors font-medium">
+                      Comment trouver mon lien ? <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
 
                   <div className="relative">
                     <Input
                       type="url"
-                      className="bg-white border-2 border-amber-100/80 focus:border-amber-400 focus:ring-8 focus:ring-amber-400/10 transition-all h-16 text-lg shadow-sm pr-14 rounded-2xl"
+                      className="bg-white border-2 border-amber-100/80 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 transition-all h-12 text-sm shadow-sm pr-10 rounded-xl w-full"
                       placeholder="https://g.page/r/votre-commerce/review"
                       value={formData.reviewLink}
                       onChange={(e) =>
                         setFormData({ ...formData, reviewLink: e.target.value })
                       }
                     />
-                    <div className="absolute right-5 top-1/2 -translate-y-1/2 text-amber-400">
-                      <Star className="w-6 h-6 fill-current opacity-20" />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-400">
+                      <Star className="w-4 h-4 fill-current opacity-20" />
                     </div>
                   </div>
-                  <p className="text-sm text-slate-500 leading-relaxed px-1 font-medium max-w-lg">
-                    Une fois configuré, vos clients recevront automatiquement une invitation à noter leur expérience directement sur votre fiche d&apos;établissement.
+                  <p className="text-xs text-slate-500 leading-relaxed px-1 font-medium">
+                    Une fois configuré, vos clients recevront automatiquement une invitation à noter leur expérience.
                   </p>
                 </div>
-              </div>
-            </div>
 
-            {/* Tips Grid */}
-            <div className="mt-12 pt-8 border-t border-amber-100/60 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/40 border border-transparent hover:border-amber-200 transition-all duration-300">
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.4)]" />
-                <span className="text-sm text-slate-600 font-semibold tracking-tight">Répondez à chaque avis reçu pour montrer votre engagement</span>
+                {/* Tips - inline on desktop */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-amber-100/60">
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                    <span>Répondez à chaque avis</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                    <span>Demandez l&apos;avis oralement</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center gap-4 p-5 rounded-2xl bg-white/40 border border-transparent hover:border-amber-200 transition-all duration-300">
-                <div className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0 shadow-[0_0_8px_rgba(251,191,36,0.4)]" />
-                <span className="text-sm text-slate-600 font-semibold tracking-tight">Demandez l&apos;avis oralement au moment du passage en caisse</span>
+
+              {/* Preview Section */}
+              <div className="w-full sm:w-64 lg:w-56 shrink-0">
+                <div className="bg-white/90 backdrop-blur-xl rounded-2xl p-5 border border-amber-200/50 shadow-lg shadow-amber-100/30 relative group-hover:-translate-y-1 transition-transform duration-500">
+                  <span className="text-[8px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-2 py-1 rounded-md border border-amber-100 inline-block mb-3">
+                    Aperçu
+                  </span>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-slate-800 mb-2">Votre avis compte !</p>
+                    <div className="flex justify-center gap-1 mb-3">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
+                      ))}
+                    </div>
+                    <div className="h-9 w-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center text-[10px] font-bold text-white shadow-md">
+                      DONNER MON AVIS
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -588,7 +586,7 @@ export default function ProgramPage() {
 
                     {/* Logo Container with Glassmorphism */}
                     <div className="relative z-10 h-full flex flex-col items-center justify-center">
-                      <div className="relative w-14 h-14 rounded-full p-1 bg-white/40 backdrop-blur-xl border border-white shadow-xl flex items-center justify-center overflow-hidden mb-1.5">
+                      <div className="relative w-12 h-12 rounded-full p-0.5 bg-white/40 backdrop-blur-xl border border-white shadow-lg flex items-center justify-center overflow-hidden mb-2">
                         {formData.logoUrl ? (
                           <img
                             src={formData.logoUrl}
@@ -597,17 +595,20 @@ export default function ProgramPage() {
                           />
                         ) : (
                           <div
-                            className="w-full h-full rounded-full flex items-center justify-center text-white text-lg font-black"
+                            className="w-full h-full rounded-full flex items-center justify-center text-white text-sm font-black"
                             style={{ background: `linear-gradient(135deg, ${formData.primaryColor}, ${formData.secondaryColor})` }}
                           >
                             {merchant?.shop_name?.[0] || 'Q'}
                           </div>
                         )}
                       </div>
-                      <h3 className="text-slate-900 font-bold text-xs tracking-tight">{merchant?.shop_name}</h3>
-                      <div className="mt-1 flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/80 border border-white shadow-sm">
-                        <Star size={8} className="text-amber-500 fill-amber-500" />
-                        <span className="text-[8px] font-bold text-slate-600">4 / {previewData.stampsRequired} pts</span>
+                      {/* Shop name in highlighted container */}
+                      <div className="px-4 py-1.5 bg-white/50 backdrop-blur-xl border border-white/70 rounded-xl shadow-sm mb-1">
+                        <h3 className="text-slate-900 font-bold text-[11px] tracking-tight">{merchant?.shop_name}</h3>
+                      </div>
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/80 border border-white shadow-sm">
+                        <Star size={7} className="text-amber-500 fill-amber-500" />
+                        <span className="text-[7px] font-bold text-slate-600">4 / {previewData.stampsRequired} pts</span>
                       </div>
                     </div>
                   </div>
@@ -640,15 +641,15 @@ export default function ProgramPage() {
                         <span className="text-slate-300 text-base font-bold">/{previewData.stampsRequired}</span>
                       </div>
 
-                      {/* Stamp Circles Grid */}
-                      <div className="grid grid-cols-5 gap-1.5 mb-3 w-full">
+                      {/* Stamp Circles - Flex Wrap */}
+                      <div className="flex flex-wrap justify-center gap-1.5 mb-3">
                         {Array.from({ length: Math.min(previewData.stampsRequired, 10) }).map((_, i) => {
                           const isFilled = i < 4;
                           const LoyaltyIcon = getLoyaltyIcon(previewData.loyaltyMode, previewData.productName);
                           return (
                             <div
                               key={i}
-                              className={`aspect-square rounded-full flex items-center justify-center transition-all ${
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
                                 isFilled ? 'shadow-sm' : 'border border-dashed border-slate-200'
                               }`}
                               style={{
@@ -656,7 +657,7 @@ export default function ProgramPage() {
                               }}
                             >
                               <LoyaltyIcon
-                                className="w-1/2 h-1/2"
+                                className="w-4 h-4"
                                 style={{ color: isFilled ? '#fff' : '#D1D5DB' }}
                               />
                             </div>
@@ -664,22 +665,29 @@ export default function ProgramPage() {
                         })}
                       </div>
 
-                      {/* Small Progress Bar */}
-                      <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-3">
+                      {/* Integrated Progress Card */}
+                      <div
+                        className="relative w-full px-3 py-2 rounded-xl overflow-hidden border"
+                        style={{
+                          backgroundColor: `${formData.primaryColor}08`,
+                          borderColor: `${formData.primaryColor}20`
+                        }}
+                      >
+                        {/* Background Progress */}
                         <div
-                          className="h-full transition-all duration-700 ease-out"
+                          className="absolute inset-y-0 left-0 rounded-l-xl"
                           style={{
                             width: `${Math.min((4 / previewData.stampsRequired) * 100, 100)}%`,
-                            background: `linear-gradient(to right, ${formData.primaryColor}, ${formData.secondaryColor})`
+                            background: `linear-gradient(to right, ${formData.primaryColor}, ${formData.secondaryColor})`,
+                            opacity: 0.2
                           }}
                         />
-                      </div>
-
-                      <div
-                        className="px-3 py-1.5 rounded-full text-[10px] font-semibold text-center"
-                        style={{ backgroundColor: `${formData.primaryColor}10`, color: formData.primaryColor }}
-                      >
-                        Plus que {Math.max(previewData.stampsRequired - 4, 0)} pour la récompense !
+                        <div className="relative flex items-center justify-between gap-2">
+                          <span className="text-[9px] font-semibold text-slate-700">
+                            Plus que {Math.max(previewData.stampsRequired - 4, 0)} pour la récompense !
+                          </span>
+                          <Gift size={12} className="opacity-40" style={{ color: formData.primaryColor }} />
+                        </div>
                       </div>
                     </div>
 
@@ -728,28 +736,28 @@ export default function ProgramPage() {
       />
 
       {/* Sticky Save Button (All Screens) */}
-      <div className="fixed bottom-0 left-0 right-0 lg:left-72 z-50 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100 shadow-2xl shadow-gray-900/10">
-        <div className="max-w-6xl mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 lg:left-72 z-50 p-3 lg:p-4 bg-white/70 backdrop-blur-xl border-t border-gray-100/50 shadow-lg shadow-gray-900/5">
+        <div className="max-w-6xl mx-auto flex justify-center lg:justify-end">
           <Button
             onClick={handleSave}
             loading={saving}
             disabled={saved}
             className={`
-              w-full h-14 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300
+              w-full lg:w-auto h-12 lg:h-10 px-6 rounded-xl font-semibold text-base lg:text-sm flex items-center justify-center gap-2 transition-all duration-300
               ${saved
-                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
-                : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200 hover:shadow-xl'}
+                ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200/50'
+                : 'bg-slate-800 text-white shadow-md hover:bg-slate-700 hover:shadow-lg lg:bg-slate-100 lg:text-slate-700 lg:border lg:border-slate-200 lg:hover:bg-slate-200 lg:hover:border-slate-300'}
             `}
           >
             {saved ? (
               <>
-                <Check className="w-6 h-6" />
+                <Check className="w-5 h-5 lg:w-4 lg:h-4" />
                 <span>Enregistré !</span>
               </>
             ) : (
               <>
-                <Save className="w-6 h-6" />
-                <span>Enregistrer les modifications</span>
+                <Save className="w-5 h-5 lg:w-4 lg:h-4" />
+                <span>Enregistrer</span>
               </>
             )}
           </Button>
@@ -757,7 +765,7 @@ export default function ProgramPage() {
       </div>
 
       {/* Spacer for sticky button */}
-      <div className="h-24" />
+      <div className="h-20 lg:h-16" />
     </div>
   );
 }

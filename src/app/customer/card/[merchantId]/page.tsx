@@ -217,16 +217,28 @@ export default function CustomerCardPage({
               </div>
 
               {/* Shop Name & Progress Badge */}
-              <div className="flex flex-col items-center text-center px-4">
-                <h1 className="text-xl lg:text-2xl font-black tracking-tight text-slate-900 leading-tight">
-                  {merchant.shop_name}
-                </h1>
+              <div className="flex flex-col items-center text-center px-4 relative">
+                {/* Subtle Ambient Glow Background */}
+                <div
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-24 blur-[50px] opacity-[0.18] rounded-full pointer-events-none transition-all duration-700"
+                  style={{ backgroundColor: merchant.primary_color }}
+                />
 
-                <div className="mt-2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-white shadow-sm ring-1 ring-black/[0.03]">
-                  <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                  <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tight">
-                    {card.current_stamps} / {merchant.stamps_required} points
-                  </span>
+                <div className="relative flex flex-col items-center gap-3">
+                  {/* Shop Name Premium Container */}
+                  <div className="px-8 py-3 bg-white/50 backdrop-blur-2xl border border-white/70 rounded-2xl shadow-lg ring-1 ring-black/[0.02]">
+                    <h1 className="text-xl lg:text-2xl font-black tracking-tight text-slate-900 leading-none">
+                      {merchant.shop_name}
+                    </h1>
+                  </div>
+
+                  {/* Enhanced Progress Badge */}
+                  <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-white shadow-sm ring-1 ring-black/[0.03]">
+                    <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tight">
+                      {card.current_stamps} / {merchant.stamps_required} points
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -241,7 +253,7 @@ export default function CustomerCardPage({
       </header>
 
       
-      <main className="flex-1 -mt-12 px-4 pb-12 w-full max-w-lg mx-auto z-10">
+      <main className="flex-1 mt-4 px-4 pb-12 w-full max-w-lg mx-auto z-10">
         {/* Review Section - Above Card */}
         {merchant.review_link && !reviewDismissed && (
           <div className="relative group p-4 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-100 rounded-3xl shadow-lg shadow-amber-900/5 mb-4 hover:shadow-xl hover:shadow-amber-900/10 transition-all duration-300">
@@ -291,24 +303,25 @@ export default function CustomerCardPage({
             </p>
           </div>
 
-          {/* Stamp Circles Grid */}
-          <div className="grid grid-cols-5 gap-3 mb-6">
+          {/* Stamp Circles Container */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8">
             {Array.from({ length: merchant.stamps_required }).map((_, i) => {
               const isFilled = i < card.current_stamps;
               const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
               return (
                 <div
                   key={i}
-                  className={`aspect-square rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
                     isFilled ? 'scale-100 shadow-md' : 'scale-90 border-2 border-dashed'
                   }`}
                   style={{
                     backgroundColor: isFilled ? merchant.primary_color : 'transparent',
                     borderColor: isFilled ? 'transparent' : '#E5E7EB',
+                    boxShadow: isFilled ? `0 4px 12px ${merchant.primary_color}40` : 'none'
                   }}
                 >
                   <LoyaltyIcon
-                    className="w-1/2 h-1/2 transition-transform duration-300"
+                    className="w-6 h-6 transition-transform duration-300"
                     style={{ color: isFilled ? '#fff' : '#D1D5DB' }}
                   />
                 </div>
@@ -316,30 +329,46 @@ export default function CustomerCardPage({
             })}
           </div>
 
-          {/* Small Progress Bar */}
-          <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mb-8">
-            <div
-              className="h-full transition-all duration-1000 ease-out rounded-full"
-              style={{
-                width: `${Math.min(100, (card.current_stamps / merchant.stamps_required) * 100)}%`,
-                background: `linear-gradient(90deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`
-              }}
-            />
-          </div>
-
+          {/* Integrated Status & Progress Card */}
           <div
-            className="rounded-2xl p-4 border mb-8 text-center bg-gradient-to-r from-white to-transparent"
+            className={`relative rounded-2xl p-5 border mb-8 overflow-hidden transition-all duration-700 ${isRewardReady ? 'shadow-lg scale-[1.02]' : ''}`}
             style={{
-              backgroundColor: `${merchant.primary_color}05`,
-              borderColor: `${merchant.primary_color}15`
+              backgroundColor: isRewardReady ? `${merchant.primary_color}15` : `${merchant.primary_color}05`,
+              borderColor: isRewardReady ? merchant.primary_color : `${merchant.primary_color}20`,
             }}
           >
-            <p className="font-bold text-gray-700">
-              {isRewardReady
-                ? "🎉 Félicitations ! Votre cadeau est prêt."
-                : `Plus que ${merchant.stamps_required - card.current_stamps} ${getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, merchant.stamps_required - card.current_stamps).toLowerCase()} pour la récompense !`
-              }
-            </p>
+            {/* Background Progress Fill */}
+            {!isRewardReady && (
+              <div
+                className="absolute inset-y-0 left-0 transition-all duration-1000 ease-out rounded-l-2xl"
+                style={{
+                  width: `${(card.current_stamps / merchant.stamps_required) * 100}%`,
+                  background: `linear-gradient(90deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
+                  opacity: 0.2
+                }}
+              />
+            )}
+
+            {/* Content Overlay */}
+            <div className="relative z-10 flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className={`font-bold transition-colors duration-500 ${isRewardReady ? 'text-gray-900' : 'text-gray-700'}`}>
+                  {isRewardReady
+                    ? "🎉 Félicitations ! Votre cadeau est prêt."
+                    : `Plus que ${merchant.stamps_required - card.current_stamps} ${getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, merchant.stamps_required - card.current_stamps).toLowerCase()} pour la récompense !`
+                  }
+                </p>
+              </div>
+              <div
+                className={`p-2.5 rounded-xl transition-all duration-500 ${isRewardReady ? 'scale-110 rotate-12 shadow-md' : 'opacity-40'}`}
+                style={{
+                  backgroundColor: isRewardReady ? merchant.primary_color : 'transparent',
+                  color: isRewardReady ? '#fff' : merchant.primary_color
+                }}
+              >
+                <Gift className="w-6 h-6" />
+              </div>
+            </div>
           </div>
 
           <div
