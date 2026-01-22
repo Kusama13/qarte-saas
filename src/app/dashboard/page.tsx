@@ -235,7 +235,11 @@ export default function DashboardPage() {
       </div>
 
       {/* Qarte Shield - Points en attente */}
-      <PendingPointsWidget merchantId={merchant.id} />
+      <PendingPointsWidget
+        merchantId={merchant.id}
+        loyaltyMode={merchant.loyalty_mode}
+        productName={merchant.product_name}
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard

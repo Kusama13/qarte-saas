@@ -14,10 +14,12 @@ import {
   Footprints,
   ShoppingBag,
 } from 'lucide-react';
-import type { PendingVisit } from '@/types';
+import type { PendingVisit, LoyaltyMode } from '@/types';
 
 interface PendingPointsWidgetProps {
   merchantId: string;
+  loyaltyMode: LoyaltyMode;
+  productName?: string;
 }
 
 interface ToastState {
@@ -26,7 +28,7 @@ interface ToastState {
   type: 'success' | 'error';
 }
 
-export default function PendingPointsWidget({ merchantId }: PendingPointsWidgetProps) {
+export default function PendingPointsWidget({ merchantId, loyaltyMode, productName }: PendingPointsWidgetProps) {
   const [visits, setVisits] = useState<PendingVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -211,74 +213,77 @@ export default function PendingPointsWidget({ merchantId }: PendingPointsWidgetP
               {visits.map((visit) => (
                 <div
                   key={visit.id}
-                  className={`group relative flex flex-col md:flex-row md:items-center justify-between p-5 mb-3 bg-white border border-gray-100 rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/5 hover:border-indigo-100 ${
+                  className={`group relative flex flex-col lg:flex-row lg:items-center justify-between p-6 mb-4 bg-white border border-gray-100 rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-100 ${
                     processingId === visit.id ? 'opacity-50 pointer-events-none scale-[0.98]' : ''
                   }`}
                 >
-                  <div className="flex items-center gap-5">
-                    {/* Customer Avatar & Type Overlay */}
-                    <div className="relative shrink-0">
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-xl font-bold shadow-indigo-200 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                  <div className="flex items-start md:items-center gap-5">
+                    {/* Customer Avatar */}
+                    <div className="shrink-0">
+                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-xl font-bold shadow-indigo-200 shadow-lg group-hover:scale-110 transition-transform duration-500">
                         {getInitials(visit.customer?.first_name, visit.customer?.last_name)}
-                      </div>
-                      <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border-2 border-white shadow-sm flex items-center justify-center">
-                        {visit.points_earned === 1 ? (
-                          <Footprints className="w-3.5 h-3.5 text-indigo-600" />
-                        ) : (
-                          <ShoppingBag className="w-3.5 h-3.5 text-indigo-600" />
-                        )}
                       </div>
                     </div>
 
                     {/* Information Grid */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2.5 mb-1 flex-wrap">
-                        <h3 className="font-bold text-gray-900 text-lg leading-tight">
-                          {visit.customer?.first_name} {visit.customer?.last_name || ''}
-                        </h3>
-                        <div className={`px-2 py-0.5 rounded-lg text-[11px] font-black uppercase tracking-wider ring-1 ring-inset ${
-                          visit.points_earned === 1
-                            ? 'bg-indigo-50 text-indigo-700 ring-indigo-700/10'
-                            : 'bg-violet-50 text-violet-700 ring-violet-700/10'
-                        }`}>
-                          +{visit.points_earned} {visit.points_earned === 1 ? 'passage' : 'articles'}
-                        </div>
+                      <h3 className="font-extrabold text-gray-900 text-xl leading-none mb-1.5">
+                        {visit.customer?.first_name} {visit.customer?.last_name || ''}
+                      </h3>
+
+                      <div className="flex items-center gap-2 text-indigo-600 font-semibold text-sm mb-3">
+                        {loyaltyMode === 'visit' ? (
+                          <>
+                            <Footprints className="w-4 h-4" />
+                            <span>A tenté de valider un passage</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingBag className="w-4 h-4" />
+                            <span>
+                              A tenté de valider {visit.points_earned} {visit.points_earned > 1 ? (productName || 'articles') : (productName?.replace(/s$/, '') || 'article')}
+                            </span>
+                          </>
+                        )}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500">
-                        <div className="flex items-center gap-1.5">
+                      <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-500">
+                        <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
                           <Phone className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="font-medium tracking-wide">
+                          <span className="tracking-wide">
                             {visit.customer?.phone_number?.replace(/(\d{2})(?=\d)/g, '$1 ') || '-- -- -- -- --'}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
                           <Clock className="w-3.5 h-3.5 text-gray-400" />
                           <span>{formatRelativeTime(visit.visited_at)}</span>
                         </div>
                       </div>
 
                       {visit.flagged_reason && (
-                        <div className="mt-2.5 flex items-center gap-2 text-xs font-bold text-amber-800 bg-amber-50/80 border border-amber-200/50 px-3 py-1.5 rounded-xl w-fit">
-                          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-                          <span>Attention : {visit.flagged_reason}</span>
+                        <div className="mt-3 flex items-start gap-3 p-3 bg-amber-50/80 border-l-4 border-amber-400 rounded-r-xl">
+                          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                          <div className="text-xs leading-relaxed">
+                            <span className="block font-bold text-amber-800 uppercase tracking-tight mb-0.5">Alerte sécurité</span>
+                            <span className="text-amber-900 font-medium">{visit.flagged_reason}</span>
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Enhanced Actions */}
-                  <div className="flex items-center gap-3 mt-5 md:mt-0 md:ml-4">
+                  {/* Actions Section */}
+                  <div className="flex items-center gap-3 mt-6 lg:mt-0 lg:ml-6 shrink-0">
                     <button
                       onClick={() => handleAction(visit.id, 'reject')}
-                      className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-bold text-gray-500 hover:text-rose-600 hover:bg-rose-50 border border-gray-200 hover:border-rose-200 rounded-xl transition-all active:scale-95"
+                      className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-gray-600 hover:text-rose-600 hover:bg-rose-50 border border-gray-200 hover:border-rose-200 rounded-xl transition-all active:scale-95"
                     >
                       <X className="w-4 h-4" />
                       Refuser
                     </button>
                     <button
                       onClick={() => handleAction(visit.id, 'confirm')}
-                      className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg hover:shadow-emerald-500/20 rounded-xl transition-all active:scale-95 shadow-md shadow-emerald-500/10"
+                      className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-8 py-3 text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-500/30 rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-500/10"
                     >
                       <Check className="w-4 h-4" />
                       Valider
