@@ -18,6 +18,8 @@ import {
   Pizza,
   ShoppingBag,
   AlertTriangle,
+  Sparkles,
+  ExternalLink,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -224,43 +226,6 @@ export default function ProgramPage() {
       setShowStampsWarning(true);
     } else {
       setShowStampsWarning(false);
-    }
-  };
-
-  const handleLoyaltySettingsSave = async (settings: LoyaltySettings) => {
-    if (!merchant) return;
-
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('merchants')
-        .update({
-          loyalty_mode: settings.loyalty_mode,
-          product_name: settings.product_name,
-          max_quantity_per_scan: settings.max_quantity_per_scan,
-          stamps_required: settings.stamps_required,
-          reward_description: settings.reward_description,
-        })
-        .eq('id', merchant.id);
-
-      if (error) throw error;
-
-      // Update formData to reflect saved values
-      setFormData(prev => ({
-        ...prev,
-        loyaltyMode: settings.loyalty_mode,
-        productName: settings.product_name || '',
-        maxQuantityPerScan: settings.max_quantity_per_scan,
-        stampsRequired: settings.stamps_required,
-        rewardDescription: settings.reward_description,
-      }));
-
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (error) {
-      console.error('Error saving loyalty settings:', error);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -489,9 +454,6 @@ export default function ProgramPage() {
               initialRewardDescription={formData.rewardDescription}
               onOpenGuide={() => setShowGuide(true)}
               onChange={handleLoyaltySettingsChange}
-              onSave={handleLoyaltySettingsSave}
-              loading={saving}
-              saved={saved}
             />
 
             {/* Warning when increasing stamps required */}
@@ -509,29 +471,86 @@ export default function ProgramPage() {
             )}
           </div>
 
-          <div className="p-6 bg-gradient-to-br from-amber-50/50 via-white/80 to-yellow-50/50 backdrop-blur-md border border-amber-100/50 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group">
-            <div className="flex items-center gap-4 mb-5">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white shadow-lg shadow-amber-200/40 group-hover:scale-105 group-hover:rotate-6 transition-all duration-300">
-                <Star className="w-5 h-5 fill-white" />
+          {/* Review Link Section */}
+          <div className="relative overflow-hidden p-8 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 border border-amber-200/60 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500 group">
+            {/* Decorative element */}
+            <div className="absolute -right-16 -top-16 w-48 h-48 bg-amber-400/10 rounded-full blur-3xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-700" />
+
+            <div className="relative flex flex-col lg:flex-row gap-10">
+              <div className="flex-1 space-y-6">
+                <div className="flex items-center gap-5">
+                  <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white shadow-xl shadow-amber-200 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300">
+                    <Star className="w-7 h-7 fill-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 tracking-tight">
+                      Boostez votre E-réputation
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                      <span className="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Impact Prioritaire</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between px-1">
+                    <label className="text-sm font-bold text-slate-700">Lien Google ou TripAdvisor</label>
+                    <a href="https://support.google.com/business/answer/7035772" target="_blank" rel="noreferrer" className="text-[11px] text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors">
+                      Comment trouver mon lien ? <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+
+                  <div className="relative">
+                    <Input
+                      type="url"
+                      className="bg-white border-2 border-amber-100/80 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 transition-all h-14 text-base shadow-sm pr-12 rounded-xl"
+                      placeholder="https://g.page/r/votre-commerce/review"
+                      value={formData.reviewLink}
+                      onChange={(e) =>
+                        setFormData({ ...formData, reviewLink: e.target.value })
+                      }
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-amber-400">
+                      <Star className="w-5 h-5 fill-current opacity-20" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-500 leading-relaxed px-1 font-medium">
+                    Une fois configuré, vos clients recevront automatiquement une invitation à noter leur expérience.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 leading-none mb-1">
-                  Lien pour laisser un avis
-                </h3>
-                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Recommandé</p>
+
+              <div className="w-full lg:w-72 flex flex-col gap-5">
+                <div className="bg-white/80 backdrop-blur-md rounded-2xl p-5 border border-amber-200/50 shadow-lg shadow-amber-100/20 relative group-hover:-translate-y-1 transition-transform duration-500">
+                  <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-2 py-1 rounded-md border border-amber-100 inline-block mb-4">
+                    Aperçu Client
+                  </span>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-slate-800 mb-3">Voulez-vous nous aider ?</p>
+                    <div className="flex justify-center gap-1.5 mb-4">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
+                      ))}
+                    </div>
+                    <div className="h-8 w-full bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center text-[10px] font-black text-white shadow-md shadow-amber-200 tracking-wider">
+                      DONNER MON AVIS
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 px-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                    <span className="text-[11px] text-slate-600 font-medium">Répondez à chaque avis reçu</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                    <span className="text-[11px] text-slate-600 font-medium">Demandez l&apos;avis oralement</span>
+                  </div>
+                </div>
               </div>
             </div>
-
-            <Input
-              type="url"
-              className="bg-white/60 border-amber-200/50 focus:border-amber-400 focus:ring-amber-400/20 transition-all h-11"
-              placeholder="Ex: https://g.page/r/votre-commerce/review"
-              value={formData.reviewLink}
-              onChange={(e) =>
-                setFormData({ ...formData, reviewLink: e.target.value })
-              }
-              helperText="Redirigez vos clients vers Google ou TripAdvisor pour booster votre e-réputation"
-            />
           </div>
         </div>
 
@@ -675,6 +694,36 @@ export default function ProgramPage() {
         isOpen={showGuide}
         onClose={() => setShowGuide(false)}
       />
+
+      {/* Sticky Save Button (Mobile) */}
+      <div className="fixed bottom-0 left-0 right-0 lg:hidden z-50 p-4 bg-white/80 backdrop-blur-xl border-t border-gray-100 shadow-2xl shadow-gray-900/10">
+        <Button
+          onClick={handleSave}
+          loading={saving}
+          disabled={saved}
+          className={`
+            w-full h-14 rounded-2xl font-bold text-lg flex items-center justify-center gap-3 transition-all duration-300
+            ${saved
+              ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200'
+              : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200 hover:shadow-xl'}
+          `}
+        >
+          {saved ? (
+            <>
+              <Check className="w-6 h-6" />
+              <span>Enregistré !</span>
+            </>
+          ) : (
+            <>
+              <Save className="w-6 h-6" />
+              <span>Enregistrer les modifications</span>
+            </>
+          )}
+        </Button>
+      </div>
+
+      {/* Spacer for sticky button on mobile */}
+      <div className="h-24 lg:hidden" />
     </div>
   );
 }
