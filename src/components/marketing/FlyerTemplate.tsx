@@ -1,7 +1,7 @@
 'use client';
 
 import { forwardRef } from 'react';
-import { Gift, Smartphone, QrCode } from 'lucide-react';
+import { Gift, Smartphone } from 'lucide-react';
 
 interface FlyerTemplateProps {
   shopName: string;
@@ -11,6 +11,8 @@ interface FlyerTemplateProps {
   qrCodeUrl: string;
   rewardDescription: string;
   stampsRequired: number;
+  loyaltyMode?: 'visit' | 'article';
+  productName?: string;
   scale?: number;
 }
 
@@ -24,15 +26,22 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
       qrCodeUrl,
       rewardDescription,
       stampsRequired,
+      loyaltyMode = 'visit',
+      productName,
       scale = 1,
     },
     ref
   ) => {
-    // A6 dimensions in pixels at 96 DPI (approximately)
-    // A6 = 105mm x 148mm = ~397px x 559px at 96 DPI
-    // We'll use a scale factor for the preview
     const width = 397 * scale;
     const height = 559 * scale;
+
+    // Get the appropriate text for stamps
+    const getStampsText = () => {
+      if (loyaltyMode === 'article' && productName) {
+        return `Après ${stampsRequired} ${productName}${stampsRequired > 1 ? 's' : ''}`;
+      }
+      return `Après ${stampsRequired} passage${stampsRequired > 1 ? 's' : ''}`;
+    };
 
     return (
       <div
@@ -74,6 +83,31 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
           }}
         />
 
+        {/* Angled Banner - Top Right */}
+        <div
+          className="absolute flex items-center justify-center"
+          style={{
+            top: `${28 * scale}px`,
+            right: `${-45 * scale}px`,
+            width: `${180 * scale}px`,
+            height: `${28 * scale}px`,
+            backgroundColor: 'rgba(255,255,255,0.95)',
+            transform: 'rotate(45deg)',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.15)',
+          }}
+        >
+          <span
+            className="font-bold text-center"
+            style={{
+              fontSize: `${8 * scale}px`,
+              color: primaryColor,
+              letterSpacing: '0.02em',
+            }}
+          >
+            Carte en 15s !
+          </span>
+        </div>
+
         {/* Content Container */}
         <div className="relative flex flex-col items-center justify-between h-full" style={{ padding: `${24 * scale}px` }}>
           {/* Top Section: Logo & Shop Name */}
@@ -82,9 +116,9 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
               <div
                 className="rounded-full overflow-hidden border-4 border-white/30 shadow-lg"
                 style={{
-                  width: `${64 * scale}px`,
-                  height: `${64 * scale}px`,
-                  marginBottom: `${12 * scale}px`,
+                  width: `${56 * scale}px`,
+                  height: `${56 * scale}px`,
+                  marginBottom: `${10 * scale}px`,
                 }}
               >
                 <img
@@ -97,15 +131,15 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
               <div
                 className="rounded-full flex items-center justify-center border-4 border-white/30 shadow-lg"
                 style={{
-                  width: `${64 * scale}px`,
-                  height: `${64 * scale}px`,
-                  marginBottom: `${12 * scale}px`,
+                  width: `${56 * scale}px`,
+                  height: `${56 * scale}px`,
+                  marginBottom: `${10 * scale}px`,
                   backgroundColor: 'rgba(255,255,255,0.2)',
                 }}
               >
                 <span
                   className="text-white font-black"
-                  style={{ fontSize: `${28 * scale}px` }}
+                  style={{ fontSize: `${24 * scale}px` }}
                 >
                   {shopName[0]?.toUpperCase()}
                 </span>
@@ -114,60 +148,82 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
             <h1
               className="text-white font-black tracking-tight leading-tight"
               style={{
-                fontSize: `${22 * scale}px`,
-                maxWidth: `${280 * scale}px`,
+                fontSize: `${20 * scale}px`,
+                maxWidth: `${260 * scale}px`,
               }}
             >
               {shopName}
             </h1>
-            <p
-              className="text-white/80 font-medium mt-1"
-              style={{ fontSize: `${11 * scale}px` }}
+          </div>
+
+          {/* REWARD SECTION - Now at TOP (more visible) */}
+          <div
+            className="w-full text-center"
+            style={{
+              padding: `${16 * scale}px ${18 * scale}px`,
+              borderRadius: `${18 * scale}px`,
+              backgroundColor: 'rgba(255,255,255,0.95)',
+              boxShadow: '0 15px 40px -10px rgba(0,0,0,0.2)',
+            }}
+          >
+            <div
+              className="flex items-center justify-center gap-2 mb-2"
             >
-              Programme de fidélité
+              <Gift
+                style={{
+                  width: `${20 * scale}px`,
+                  height: `${20 * scale}px`,
+                  color: primaryColor,
+                }}
+              />
+              <span
+                className="font-bold uppercase tracking-wider"
+                style={{ fontSize: `${10 * scale}px`, color: primaryColor }}
+              >
+                Votre récompense
+              </span>
+            </div>
+            <p
+              className="font-black leading-tight"
+              style={{
+                fontSize: `${18 * scale}px`,
+                color: '#1a1a2e',
+                maxWidth: `${280 * scale}px`,
+                margin: '0 auto',
+              }}
+            >
+              {rewardDescription}
+            </p>
+            <p
+              className="font-bold mt-2"
+              style={{
+                fontSize: `${12 * scale}px`,
+                color: primaryColor,
+              }}
+            >
+              {getStampsText()}
             </p>
           </div>
 
-          {/* QR Code Card - Glassmorphism Style */}
+          {/* QR Code Card - Now BELOW reward */}
           <div
             className="relative"
             style={{
-              padding: `${20 * scale}px`,
-              borderRadius: `${20 * scale}px`,
-              backgroundColor: 'rgba(255,255,255,0.95)',
-              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)',
+              padding: `${16 * scale}px`,
+              borderRadius: `${18 * scale}px`,
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.3)',
             }}
           >
-            {/* QR Icon Badge */}
-            <div
-              className="absolute flex items-center justify-center"
-              style={{
-                top: `${-12 * scale}px`,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: `${32 * scale}px`,
-                height: `${32 * scale}px`,
-                borderRadius: `${10 * scale}px`,
-                background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})`,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              }}
-            >
-              <QrCode
-                className="text-white"
-                style={{
-                  width: `${18 * scale}px`,
-                  height: `${18 * scale}px`,
-                }}
-              />
-            </div>
-
             {/* QR Code */}
             <img
               src={qrCodeUrl}
               alt="QR Code"
               style={{
-                width: `${160 * scale}px`,
-                height: `${160 * scale}px`,
+                width: `${140 * scale}px`,
+                height: `${140 * scale}px`,
+                borderRadius: `${8 * scale}px`,
               }}
             />
 
@@ -175,9 +231,9 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
             <div
               className="flex items-center justify-center gap-1 mt-3"
               style={{
-                padding: `${8 * scale}px ${16 * scale}px`,
-                borderRadius: `${12 * scale}px`,
-                backgroundColor: `${primaryColor}10`,
+                padding: `${8 * scale}px ${14 * scale}px`,
+                borderRadius: `${10 * scale}px`,
+                backgroundColor: 'rgba(255,255,255,0.9)',
               }}
             >
               <Smartphone
@@ -199,72 +255,36 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
             </div>
           </div>
 
-          {/* Bottom Section: Reward Info */}
-          <div className="w-full">
-            {/* Reward Badge */}
-            <div
-              className="w-full text-center"
-              style={{
-                padding: `${14 * scale}px ${16 * scale}px`,
-                borderRadius: `${16 * scale}px`,
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.3)',
-              }}
+          {/* Qarte Branding - Updated */}
+          <div
+            className="flex items-center justify-center gap-1"
+            style={{ opacity: 0.8 }}
+          >
+            <span
+              className="text-white font-medium"
+              style={{ fontSize: `${8 * scale}px` }}
             >
-              <div
-                className="flex items-center justify-center gap-2 mb-1"
-              >
-                <Gift
-                  className="text-white"
-                  style={{
-                    width: `${16 * scale}px`,
-                    height: `${16 * scale}px`,
-                  }}
-                />
-                <span
-                  className="text-white font-bold uppercase tracking-wider"
-                  style={{ fontSize: `${9 * scale}px` }}
-                >
-                  Votre récompense
-                </span>
-              </div>
-              <p
-                className="text-white font-black leading-tight"
-                style={{
-                  fontSize: `${15 * scale}px`,
-                  maxWidth: `${280 * scale}px`,
-                  margin: '0 auto',
-                }}
-              >
-                {rewardDescription}
-              </p>
-              <p
-                className="text-white/70 font-medium mt-1"
-                style={{ fontSize: `${10 * scale}px` }}
-              >
-                Après {stampsRequired} passages
-              </p>
-            </div>
-
-            {/* Qarte Branding */}
-            <div
-              className="flex items-center justify-center gap-1 mt-3"
-              style={{ opacity: 0.6 }}
+              Propulsé par
+            </span>
+            <span
+              className="text-white font-black"
+              style={{ fontSize: `${10 * scale}px` }}
             >
-              <span
-                className="text-white font-medium"
-                style={{ fontSize: `${8 * scale}px` }}
-              >
-                Propulsé par
-              </span>
-              <span
-                className="text-white font-black"
-                style={{ fontSize: `${10 * scale}px` }}
-              >
-                QARTE
-              </span>
-            </div>
+              Qarte
+            </span>
+            <span
+              className="text-white"
+              style={{ fontSize: `${9 * scale}px` }}
+            >
+              avec
+            </span>
+            <span style={{ fontSize: `${9 * scale}px` }}>❤️</span>
+            <span
+              className="text-white font-medium"
+              style={{ fontSize: `${8 * scale}px` }}
+            >
+              en France
+            </span>
           </div>
         </div>
       </div>

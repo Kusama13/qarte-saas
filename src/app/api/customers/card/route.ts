@@ -65,6 +65,14 @@ export async function GET(request: NextRequest) {
       .order('visited_at', { ascending: false })
       .limit(20);
 
+    // Récupérer les ajustements manuels
+    const { data: adjustments } = await supabaseAdmin
+      .from('point_adjustments')
+      .select('*')
+      .eq('loyalty_card_id', card.id)
+      .order('created_at', { ascending: false })
+      .limit(20);
+
     const response = NextResponse.json({
       found: true,
       customer,
@@ -73,6 +81,7 @@ export async function GET(request: NextRequest) {
         customer,
       },
       visits: visits || [],
+      adjustments: adjustments || [],
     });
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     return response;

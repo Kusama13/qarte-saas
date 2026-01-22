@@ -8,7 +8,6 @@ import {
   ArrowLeft,
   Check,
   Gift,
-  Calendar,
   Clock,
   Loader2,
   AlertCircle,
@@ -22,10 +21,18 @@ import {
   Coffee,
   Pizza,
   ShoppingBag,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
 import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer, Visit } from '@/types';
+
+interface PointAdjustment {
+  id: string;
+  created_at: string;
+  adjustment: number;
+  reason: string | null;
+}
 
 interface CardWithDetails extends LoyaltyCard {
   merchant: Merchant;
@@ -81,6 +88,7 @@ export default function CustomerCardPage({
   const [redeemSuccess, setRedeemSuccess] = useState(false);
   const [card, setCard] = useState<CardWithDetails | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [adjustments, setAdjustments] = useState<PointAdjustment[]>([]);
   const [visitsExpanded, setVisitsExpanded] = useState(false);
   const [reviewDismissed, setReviewDismissed] = useState(false);
 
@@ -107,6 +115,7 @@ export default function CustomerCardPage({
 
         setCard(data.card as CardWithDetails);
         setVisits(data.visits || []);
+        setAdjustments(data.adjustments || []);
       } catch (error) {
         console.error('Error fetching card:', error);
         router.push('/customer/cards');
@@ -496,7 +505,7 @@ export default function CustomerCardPage({
               </div>
               Historique
             </h2>
-            {visits.length > 0 && (
+            {(visits.length > 0 || adjustments.length > 0) && (
               <button
                 onClick={() => setVisitsExpanded(!visitsExpanded)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-xl transition-all"
@@ -510,49 +519,78 @@ export default function CustomerCardPage({
                 ) : (
                   <>
                     <ChevronDown className="w-4 h-4" />
-                    Voir ({visits.length})
+                    Voir ({visits.length + adjustments.length})
                   </>
                 )}
               </button>
             )}
           </div>
 
-          {visits.length > 0 ? (
+          {(visits.length > 0 || adjustments.length > 0) ? (
             visitsExpanded ? (
               <ul className="divide-y divide-gray-50">
-                {visits.map((visit) => {
-                  const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
-                  const pointsEarned = visit.points_earned || 1;
-                  return (
-                    <li key={visit.id} className="flex items-center gap-4 px-6 py-5 hover:bg-gray-50/40 transition-colors">
-                      <div
-                        className="flex items-center justify-center w-12 h-12 rounded-2xl shadow-sm"
-                        style={{ backgroundColor: `${merchant.primary_color}10` }}
-                      >
-                        <LoyaltyIcon className="w-6 h-6" style={{ color: merchant.primary_color }} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900">
-                          {merchant.loyalty_mode === 'visit' ? 'Passage validé' : `${pointsEarned} ${merchant.product_name || 'article'}${pointsEarned > 1 ? 's' : ''}`}
-                        </p>
-                        <p className="text-sm text-gray-500 flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5" />
-                          {formatDateTime(visit.visited_at)}
-                        </p>
-                      </div>
-                      <div
-                        className="px-3 py-1.5 rounded-xl text-sm font-bold"
-                        style={{ backgroundColor: `${merchant.primary_color}10`, color: merchant.primary_color }}
-                      >
-                        +{pointsEarned} pt{pointsEarned > 1 ? 's' : ''}
-                      </div>
-                    </li>
-                  );
-                })}
+                {/* Combine visits and adjustments, sort by date */}
+                {[
+                  ...visits.map((v) => ({ type: 'visit' as const, date: v.visited_at, points: v.points_earned || 1, id: v.id })),
+                  ...adjustments.map((a) => ({ type: 'adjustment' as const, date: a.created_at, points: a.adjustment, reason: a.reason, id: a.id })),
+                ]
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map((item) => {
+                    const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+                    const isAdjustment = item.type === 'adjustment';
+                    return (
+                      <li key={item.id} className="flex items-center gap-4 px-6 py-5 hover:bg-gray-50/40 transition-colors">
+                        <div
+                          className="flex items-center justify-center w-12 h-12 rounded-2xl shadow-sm"
+                          style={{ backgroundColor: isAdjustment ? '#fef3c7' : `${merchant.primary_color}10` }}
+                        >
+                          {isAdjustment ? (
+                            <SlidersHorizontal className="w-6 h-6 text-amber-600" />
+                          ) : (
+                            <LoyaltyIcon className="w-6 h-6" style={{ color: merchant.primary_color }} />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-semibold text-gray-900">
+                            {isAdjustment
+                              ? 'Ajustement manuel'
+                              : merchant.loyalty_mode === 'visit'
+                              ? 'Passage validé'
+                              : `${item.points} ${merchant.product_name || 'article'}${item.points > 1 ? 's' : ''}`}
+                          </p>
+                          <p className="text-sm text-gray-500 flex items-center gap-1.5">
+                            <Clock className="w-3.5 h-3.5" />
+                            {formatDateTime(item.date)}
+                          </p>
+                          {isAdjustment && item.reason && (
+                            <p className="text-xs text-gray-400 italic mt-0.5">{item.reason}</p>
+                          )}
+                        </div>
+                        <div
+                          className={`px-3 py-1.5 rounded-xl text-sm font-bold ${
+                            item.points > 0
+                              ? isAdjustment
+                                ? 'bg-green-100 text-green-700'
+                                : ''
+                              : 'bg-red-100 text-red-700'
+                          }`}
+                          style={
+                            item.points > 0 && !isAdjustment
+                              ? { backgroundColor: `${merchant.primary_color}10`, color: merchant.primary_color }
+                              : {}
+                          }
+                        >
+                          {item.points > 0 ? '+' : ''}{item.points} pt{Math.abs(item.points) > 1 ? 's' : ''}
+                        </div>
+                      </li>
+                    );
+                  })}
               </ul>
             ) : (
               <div className="p-6 text-center text-gray-500">
-                <p className="text-sm">{visits.length} {merchant.loyalty_mode === 'visit' ? 'passage' : 'enregistrement'}{visits.length > 1 ? 's' : ''} au total</p>
+                <p className="text-sm">
+                  {visits.length + adjustments.length} enregistrement{visits.length + adjustments.length > 1 ? 's' : ''} au total
+                </p>
               </div>
             )
           ) : (

@@ -182,11 +182,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       return;
     }
 
-    if (!lastName.trim()) {
-      setError('Le nom est requis');
-      return;
-    }
-
     setSubmitting(true);
 
     try {
@@ -198,7 +193,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         body: JSON.stringify({
           phone_number: formattedPhone,
           first_name: firstName.trim(),
-          last_name: lastName.trim(),
+          last_name: lastName.trim() || null,
           merchant_id: merchant?.id,
         }),
       });
@@ -544,18 +539,20 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="h-12 bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl"
+                    autoFocus
+                    className="h-14 text-lg bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1">Nom</label>
+                  <label className="text-sm font-bold text-gray-700 ml-1">
+                    Nom <span className="text-gray-400 font-normal">(optionnel)</span>
+                  </label>
                   <Input
                     type="text"
                     placeholder="Votre nom"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    required
                     className="h-12 bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl"
                   />
                 </div>

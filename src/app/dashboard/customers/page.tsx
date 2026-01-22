@@ -13,7 +13,7 @@ import {
   SlidersHorizontal,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { AdjustPointsModal } from '@/components/AdjustPointsModal';
+import { CustomerManagementModal } from '@/components/CustomerManagementModal';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer } from '@/types';
@@ -295,18 +295,19 @@ export default function CustomersPage() {
       </div>
 
       {selectedCustomer && merchant && (
-        <AdjustPointsModal
+        <CustomerManagementModal
           isOpen={adjustModalOpen}
           onClose={() => {
             setAdjustModalOpen(false);
             setSelectedCustomer(null);
           }}
-          customerName={`${selectedCustomer.customer?.first_name || ''} ${selectedCustomer.customer?.last_name || ''}`}
+          customerName={`${selectedCustomer.customer?.first_name || ''} ${selectedCustomer.customer?.last_name || ''}`.trim()}
           customerId={selectedCustomer.customer_id}
           merchantId={merchant.id}
           loyaltyCardId={selectedCustomer.id}
           currentStamps={selectedCustomer.current_stamps}
           stampsRequired={merchant.stamps_required}
+          phoneNumber={selectedCustomer.customer?.phone_number || ''}
           onSuccess={handleAdjustSuccess}
         />
       )}

@@ -14,6 +14,11 @@ import {
   Lightbulb,
   Palette,
   Sparkles,
+  ChevronDown,
+  ChevronUp,
+  Scissors,
+  MapPin,
+  BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -23,6 +28,24 @@ import { toPng } from 'html-to-image';
 import { FlyerTemplate } from '@/components/marketing/FlyerTemplate';
 import type { Merchant } from '@/types';
 
+const PRINTING_INSTRUCTIONS = [
+  {
+    icon: Printer,
+    title: 'Type de papier',
+    description: 'Imprimez sur du papier cartonné (200-250g) pour un meilleur rendu et une meilleure durabilité.',
+  },
+  {
+    icon: Scissors,
+    title: 'Découpe',
+    description: 'Le PDF contient 4 flyers A6 sur une page A4. Découpez le long des pointillés gris.',
+  },
+  {
+    icon: MapPin,
+    title: 'Placement',
+    description: 'Placez les flyers près de la caisse, sur les tables ou à l\'entrée de votre établissement.',
+  },
+];
+
 export default function QRDownloadPage() {
   const router = useRouter();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
@@ -30,6 +53,7 @@ export default function QRDownloadPage() {
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [instructionsOpen, setInstructionsOpen] = useState(false);
   const flyerPreviewRef = useRef<HTMLDivElement>(null);
   const flyerExportRef = useRef<HTMLDivElement>(null);
 
@@ -65,28 +89,23 @@ export default function QRDownloadPage() {
     setIsGenerating(true);
 
     try {
-      // Capture the flyer as a high-resolution PNG
       const flyerImage = await toPng(flyerExportRef.current, {
-        pixelRatio: 4, // HD quality
+        pixelRatio: 4,
         cacheBust: true,
       });
 
-      // Create A4 PDF
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
 
-      const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
-      const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
 
-      // A6 dimensions: 105mm x 148mm
-      // 4 flyers fit perfectly on A4 (2x2 grid)
       const flyerWidth = 105;
       const flyerHeight = 148;
 
-      // Position of each flyer (2x2 grid)
       const positions = [
         { x: 0, y: 0 },
         { x: flyerWidth, y: 0 },
@@ -94,22 +113,17 @@ export default function QRDownloadPage() {
         { x: flyerWidth, y: flyerHeight },
       ];
 
-      // Add each flyer
       positions.forEach((pos) => {
         pdf.addImage(flyerImage, 'PNG', pos.x, pos.y, flyerWidth, flyerHeight);
       });
 
-      // Add cut guides (dashed lines)
       pdf.setDrawColor(200, 200, 200);
       pdf.setLineDashPattern([2, 2], 0);
       pdf.setLineWidth(0.3);
 
-      // Vertical line in center
       pdf.line(pageWidth / 2, 0, pageWidth / 2, pageHeight);
-      // Horizontal line in center
       pdf.line(0, pageHeight / 2, pageWidth, pageHeight / 2);
 
-      // Save the PDF
       pdf.save(`kit-marketing-${merchant.slug}.pdf`);
 
       setDownloadSuccess(true);
@@ -146,6 +160,41 @@ export default function QRDownloadPage() {
     }
   };
 
+  const downloadInstructions = () => {
+    const instructions = `
+INSTRUCTIONS D'IMPRESSION - Kit Marketing ${merchant?.shop_name}
+================================================================
+
+1. TYPE DE PAPIER
+   Imprimez sur du papier cartonné (200-250g) pour un meilleur rendu
+   et une meilleure durabilité.
+
+2. DÉCOUPE
+   Le PDF contient 4 flyers A6 sur une page A4.
+   Découpez le long des pointillés gris.
+
+3. PLACEMENT
+   Placez les flyers près de la caisse, sur les tables
+   ou à l'entrée de votre établissement.
+
+4. CONSEILS SUPPLÉMENTAIRES
+   - Utilisez une imprimante couleur pour un meilleur rendu
+   - Plastifiez les flyers pour une meilleure résistance
+   - Renouvelez régulièrement les flyers abîmés
+
+================================================================
+Généré par Qarte - La fidélité simplifiée
+    `.trim();
+
+    const blob = new Blob([instructions], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `instructions-impression-${merchant?.slug}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -158,7 +207,6 @@ export default function QRDownloadPage() {
     <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="relative overflow-hidden mb-8 p-8 rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700">
-        {/* Decorative elements */}
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
 
@@ -188,12 +236,9 @@ export default function QRDownloadPage() {
             Aperçu du Flyer A6
           </div>
 
-          {/* Flyer Mockup with realistic shadow */}
           <div className="relative flex items-center justify-center p-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl">
-            {/* Paper shadow effect */}
             <div className="absolute inset-0 m-8 bg-black/10 blur-2xl rounded-2xl transform translate-y-4" />
 
-            {/* Flyer Component */}
             <div className="relative transform hover:scale-[1.02] transition-transform duration-300">
               {qrCodeUrl && merchant && (
                 <FlyerTemplate
@@ -205,6 +250,8 @@ export default function QRDownloadPage() {
                   qrCodeUrl={qrCodeUrl}
                   rewardDescription={merchant.reward_description || 'Récompense fidélité'}
                   stampsRequired={merchant.stamps_required}
+                  loyaltyMode={merchant.loyalty_mode as 'visit' | 'article'}
+                  productName={merchant.product_name || undefined}
                   scale={0.65}
                 />
               )}
@@ -261,7 +308,6 @@ export default function QRDownloadPage() {
               Télécharger
             </h3>
 
-            {/* Primary: PDF with 4 flyers */}
             <Button
               onClick={generatePdf}
               disabled={isGenerating}
@@ -277,7 +323,6 @@ export default function QRDownloadPage() {
               {downloadSuccess ? 'Téléchargé !' : 'Télécharger le PDF (A4 - 4 flyers)'}
             </Button>
 
-            {/* Secondary: Single PNG */}
             <Button
               onClick={downloadPng}
               disabled={isGenerating}
@@ -289,37 +334,54 @@ export default function QRDownloadPage() {
             </Button>
           </div>
 
-          {/* Printing Tips */}
-          <div className="p-6 bg-amber-50 border border-amber-100 rounded-2xl">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-                <Lightbulb className="w-5 h-5 text-amber-600" />
+          {/* Instructions Section with Dropdown */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <button
+              onClick={() => setInstructionsOpen(!instructionsOpen)}
+              className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <Lightbulb className="w-5 h-5 text-amber-600" />
+                </div>
+                <div className="text-left">
+                  <h3 className="font-bold text-gray-900">Instructions d&apos;impression</h3>
+                  <p className="text-sm text-gray-500">Conseils pour un résultat optimal</p>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-amber-900 mb-2">Conseils d&apos;impression</h3>
-                <ul className="space-y-2 text-sm text-amber-800">
-                  <li className="flex items-start gap-2">
-                    <Printer className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>Imprimez sur du <strong>papier cartonné</strong> (200-250g) pour un meilleur rendu</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
-                    <span>Le PDF contient 4 flyers A6 sur une page A4, découpez le long des pointillés</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-600" />
-                    <span>Placez les flyers près de la caisse ou sur les tables</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
+              {instructionsOpen ? (
+                <ChevronUp className="w-5 h-5 text-gray-400" />
+              ) : (
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              )}
+            </button>
 
-          {/* QR Code Info */}
-          <div className="p-4 bg-gray-50 rounded-xl">
-            <p className="text-xs text-gray-500 text-center">
-              Le QR code redirige vers <span className="font-mono text-indigo-600">{getScanUrl(merchant?.scan_code || '')}</span>
-            </p>
+            {instructionsOpen && (
+              <div className="px-6 pb-6 border-t border-gray-100">
+                <ul className="space-y-4 mt-4">
+                  {PRINTING_INSTRUCTIONS.map((instruction, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                        <instruction.icon className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-sm">{instruction.title}</p>
+                        <p className="text-sm text-gray-600">{instruction.description}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+
+                <Button
+                  onClick={downloadInstructions}
+                  variant="outline"
+                  className="w-full mt-4 h-10 border-amber-200 text-amber-700 hover:bg-amber-50 rounded-xl"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Télécharger les instructions
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -336,6 +398,8 @@ export default function QRDownloadPage() {
             qrCodeUrl={qrCodeUrl}
             rewardDescription={merchant.reward_description || 'Récompense fidélité'}
             stampsRequired={merchant.stamps_required}
+            loyaltyMode={merchant.loyalty_mode as 'visit' | 'article'}
+            productName={merchant.product_name || undefined}
             scale={1}
           />
         )}
