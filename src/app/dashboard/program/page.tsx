@@ -13,10 +13,11 @@ import {
   ChevronRight,
   X,
   Gift,
-  Scissors,
+  Footprints,
   Coffee,
   Pizza,
   ShoppingBag,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -39,7 +40,7 @@ const BUSINESS_IMAGES = [
 // Get icon based on loyalty mode and product name
 const getLoyaltyIcon = (loyaltyMode: string, productName: string) => {
   if (loyaltyMode === 'visit') {
-    return Scissors;
+    return Footprints; // Walking person for visits
   }
   const name = (productName || '').toLowerCase();
   if (name.includes('café') || name.includes('cafe') || name.includes('coffee')) {
@@ -95,6 +96,10 @@ export default function ProgramPage() {
     productName: '',
   });
 
+  // Track original stamps required for warning
+  const [originalStampsRequired, setOriginalStampsRequired] = useState(10);
+  const [showStampsWarning, setShowStampsWarning] = useState(false);
+
   useEffect(() => {
     const fetchMerchant = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -128,6 +133,7 @@ export default function ProgramPage() {
           loyaltyMode: data.loyalty_mode || 'visit',
           productName: data.product_name || '',
         });
+        setOriginalStampsRequired(data.stamps_required || 10);
       }
       setLoading(false);
     };
@@ -193,14 +199,32 @@ export default function ProgramPage() {
     }
   };
 
-  // Real-time preview updates (no save, only updates mockup)
+  // Real-time preview updates AND formData (so main save button works)
   const handleLoyaltySettingsChange = (settings: LoyaltySettings) => {
+    // Update preview
     setPreviewData({
       loyaltyMode: settings.loyalty_mode,
       productName: settings.product_name || '',
       stampsRequired: settings.stamps_required,
       rewardDescription: settings.reward_description,
     });
+
+    // Also update formData so the main save button uses current values
+    setFormData(prev => ({
+      ...prev,
+      loyaltyMode: settings.loyalty_mode,
+      productName: settings.product_name || '',
+      maxQuantityPerScan: settings.max_quantity_per_scan,
+      stampsRequired: settings.stamps_required,
+      rewardDescription: settings.reward_description,
+    }));
+
+    // Show warning if stamps required increased
+    if (settings.stamps_required > originalStampsRequired) {
+      setShowStampsWarning(true);
+    } else {
+      setShowStampsWarning(false);
+    }
   };
 
   const handleLoyaltySettingsSave = async (settings: LoyaltySettings) => {
@@ -468,6 +492,20 @@ export default function ProgramPage() {
               onSave={handleLoyaltySettingsSave}
               loading={saving}
             />
+
+            {/* Warning when increasing stamps required */}
+            {showStampsWarning && (
+              <div className="mt-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-amber-800 text-sm">Attention</p>
+                  <p className="text-amber-700 text-sm mt-1">
+                    Augmenter le nombre requis ne s&apos;appliquera qu&apos;aux <strong>nouveaux clients</strong>.
+                    Les clients existants garderont leur objectif actuel.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="p-6 bg-gradient-to-br from-amber-50/50 via-white/80 to-yellow-50/50 backdrop-blur-md border border-amber-100/50 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group">
@@ -546,11 +584,36 @@ export default function ProgramPage() {
                       </p>
 
                       <div className="flex items-baseline gap-1 mb-3">
-                        <span className="text-4xl font-black tracking-tighter" style={{ color: formData.primaryColor }}>4</span>
-                        <span className="text-slate-300 text-lg font-bold">/{previewData.stampsRequired}</span>
+                        <span className="text-3xl font-black tracking-tighter" style={{ color: formData.primaryColor }}>4</span>
+                        <span className="text-slate-300 text-base font-bold">/{previewData.stampsRequired}</span>
                       </div>
 
-                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+                      {/* Stamp Circles Grid */}
+                      <div className="grid grid-cols-5 gap-1.5 mb-3 w-full">
+                        {Array.from({ length: Math.min(previewData.stampsRequired, 10) }).map((_, i) => {
+                          const isFilled = i < 4;
+                          const LoyaltyIcon = getLoyaltyIcon(previewData.loyaltyMode, previewData.productName);
+                          return (
+                            <div
+                              key={i}
+                              className={`aspect-square rounded-full flex items-center justify-center transition-all ${
+                                isFilled ? 'shadow-sm' : 'border border-dashed border-slate-200'
+                              }`}
+                              style={{
+                                backgroundColor: isFilled ? formData.primaryColor : 'transparent',
+                              }}
+                            >
+                              <LoyaltyIcon
+                                className="w-1/2 h-1/2"
+                                style={{ color: isFilled ? '#fff' : '#D1D5DB' }}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Small Progress Bar */}
+                      <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-3">
                         <div
                           className="h-full transition-all duration-700 ease-out"
                           style={{
@@ -564,7 +627,7 @@ export default function ProgramPage() {
                         className="px-3 py-1.5 rounded-full text-[10px] font-semibold text-center"
                         style={{ backgroundColor: `${formData.primaryColor}10`, color: formData.primaryColor }}
                       >
-                        Plus que {Math.max(previewData.stampsRequired - 4, 0)} avant le cadeau
+                        Plus que {Math.max(previewData.stampsRequired - 4, 0)} pour la récompense !
                       </div>
                     </div>
 

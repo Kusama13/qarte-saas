@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Scissors,
+  Footprints,
   Pizza,
   HelpCircle,
   Gift,
@@ -167,7 +167,7 @@ export function MerchantSettingsForm({
             )}
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg shadow-slate-200 group-hover:scale-105 transition-transform">
-                <Scissors className="w-6 h-6 text-white" />
+                <Footprints className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h4 className="font-bold text-gray-900">Mode Visite</h4>
@@ -176,7 +176,7 @@ export function MerchantSettingsForm({
             </div>
             <div className="mt-4 flex flex-wrap gap-1.5">
               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-[10px] font-medium text-slate-600">
-                <Scissors className="w-3 h-3" /> Coiffeurs
+                <Footprints className="w-3 h-3" /> Coiffeurs
               </span>
               <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 text-[10px] font-medium text-slate-600">
                 <Sparkles className="w-3 h-3" /> Instituts

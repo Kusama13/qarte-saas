@@ -17,7 +17,7 @@ import {
   ChevronDown,
   ChevronUp,
   X,
-  Scissors,
+  Footprints,
   Coffee,
   Pizza,
   ShoppingBag,
@@ -42,7 +42,7 @@ const getCookie = (name: string): string | null => {
 // Get icon based on loyalty mode and product name
 const getLoyaltyIcon = (loyaltyMode: string, productName: string | null) => {
   if (loyaltyMode === 'visit') {
-    return Scissors; // Default icon for visits
+    return Footprints; // Walking person for visits
   }
 
   // For article mode, try to match product name
@@ -205,11 +205,13 @@ export default function CustomerCardPage({
             <button
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 setReviewDismissed(true);
               }}
-              className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/80 hover:bg-amber-100 transition-colors z-10"
+              className="absolute -top-2 -right-2 p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-amber-50 transition-colors z-20 border border-amber-100/50"
+              aria-label="Fermer"
             >
-              <X className="w-4 h-4 text-amber-600" />
+              <X className="w-3.5 h-3.5 text-amber-500" />
             </button>
             <a
               href={merchant.review_link}
@@ -232,12 +234,12 @@ export default function CustomerCardPage({
         )}
 
         <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
-          <div className="text-center mb-10">
+          <div className="text-center mb-8">
             <div className="flex items-baseline justify-center gap-1">
-              <span className="text-6xl font-black" style={{ color: merchant.primary_color }}>{card.current_stamps}</span>
-              <span className="text-2xl font-bold text-gray-300">/{merchant.stamps_required}</span>
+              <span className="text-5xl font-black" style={{ color: merchant.primary_color }}>{card.current_stamps}</span>
+              <span className="text-xl font-bold text-gray-300">/{merchant.stamps_required}</span>
             </div>
-            <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-3 flex items-center justify-center gap-2">
+            <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-2 flex items-center justify-center gap-2">
               {(() => {
                 const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
                 return <LoyaltyIcon className="w-4 h-4" />;
@@ -246,9 +248,35 @@ export default function CustomerCardPage({
             </p>
           </div>
 
-          <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden mb-10">
+          {/* Stamp Circles Grid */}
+          <div className="grid grid-cols-5 gap-3 mb-6">
+            {Array.from({ length: merchant.stamps_required }).map((_, i) => {
+              const isFilled = i < card.current_stamps;
+              const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+              return (
+                <div
+                  key={i}
+                  className={`aspect-square rounded-full flex items-center justify-center transition-all duration-500 ease-out ${
+                    isFilled ? 'scale-100 shadow-md' : 'scale-90 border-2 border-dashed'
+                  }`}
+                  style={{
+                    backgroundColor: isFilled ? merchant.primary_color : 'transparent',
+                    borderColor: isFilled ? 'transparent' : '#E5E7EB',
+                  }}
+                >
+                  <LoyaltyIcon
+                    className="w-1/2 h-1/2 transition-transform duration-300"
+                    style={{ color: isFilled ? '#fff' : '#D1D5DB' }}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Small Progress Bar */}
+          <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mb-8">
             <div
-              className="h-full transition-all duration-1000 ease-out rounded-full shadow-sm"
+              className="h-full transition-all duration-1000 ease-out rounded-full"
               style={{
                 width: `${Math.min(100, (card.current_stamps / merchant.stamps_required) * 100)}%`,
                 background: `linear-gradient(90deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`
@@ -266,23 +294,50 @@ export default function CustomerCardPage({
             <p className="font-bold text-gray-700">
               {isRewardReady
                 ? "🎉 Félicitations ! Votre cadeau est prêt."
-                : `Plus que ${merchant.stamps_required - card.current_stamps} ${getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, merchant.stamps_required - card.current_stamps).toLowerCase()} avant le bonheur !`
+                : `Plus que ${merchant.stamps_required - card.current_stamps} ${getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, merchant.stamps_required - card.current_stamps).toLowerCase()} pour la récompense !`
               }
             </p>
           </div>
 
-          <div className="group relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-white to-gray-50/50 p-6 flex items-center gap-5 transition-all hover:shadow-lg">
+          <div
+            className="group relative overflow-hidden rounded-[2rem] border border-white bg-white p-6 flex items-center gap-6 transition-all duration-500 hover:-translate-y-1"
+            style={{
+              boxShadow: `0 20px 40px -15px rgba(0,0,0,0.08), 0 0 20px 2px ${merchant.primary_color}10`
+            }}
+          >
+            {/* Subtle Pulse Glow */}
             <div
-              className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
-              style={{ backgroundColor: `${merchant.primary_color}15` }}
+              className="absolute inset-0 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-700 pointer-events-none"
+              style={{ backgroundColor: merchant.primary_color }}
+            />
+
+            {/* Animated Shine Effect */}
+            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-white/60 to-transparent -skew-x-12 pointer-events-none" />
+
+            {/* Icon Area */}
+            <div
+              className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg relative overflow-hidden transform group-hover:scale-105 transition-transform duration-500"
+              style={{
+                background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color}dd)`
+              }}
             >
-              <Gift className="w-7 h-7" style={{ color: merchant.primary_color }} />
+              <div className="absolute inset-0 bg-white/10" />
+              <Gift className="w-8 h-8 text-white relative z-10 drop-shadow-md" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Votre récompense</p>
-              <p className="text-lg font-bold text-gray-900 leading-tight truncate">{merchant.reward_description}</p>
+
+            <div className="flex-1 min-w-0 relative z-10">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5">Votre récompense</p>
+              <p className="text-xl font-black text-gray-900 leading-tight truncate tracking-tight">
+                {merchant.reward_description}
+              </p>
             </div>
-            <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-400 transition-colors" />
+
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-opacity-20"
+              style={{ backgroundColor: `${merchant.primary_color}10` }}
+            >
+              <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" style={{ color: merchant.primary_color }} />
+            </div>
           </div>
 
           {isRewardReady && !redeemSuccess && (
