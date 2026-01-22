@@ -98,13 +98,16 @@ export default function MerchantSignupPage() {
         return;
       }
 
-      if (authData.user) {
+      if (authData.user && authData.session) {
         const slug = generateSlug(formData.shopName);
 
         // Utiliser l'API route pour créer le marchand (bypass RLS)
         const response = await fetch('/api/merchants/create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authData.session.access_token}`,
+          },
           body: JSON.stringify({
             user_id: authData.user.id,
             slug,

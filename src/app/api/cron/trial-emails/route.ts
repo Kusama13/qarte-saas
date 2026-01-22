@@ -13,9 +13,10 @@ const supabase = createClient(
 const CRON_SECRET = process.env.CRON_SECRET;
 
 export async function GET(request: NextRequest) {
-  // Vérifier l'authentification
+  // Vérifier l'authentification (obligatoire)
   const authHeader = request.headers.get('authorization');
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  // CRON_SECRET obligatoire - refuse si non configuré ou invalide
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

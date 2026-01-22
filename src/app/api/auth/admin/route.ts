@@ -1,6 +1,17 @@
 import { NextResponse } from 'next/server';
+import { timingSafeEqual } from 'crypto';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
+
+// Timing-safe string comparison to prevent timing attacks
+function safeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    // Compare against itself to maintain constant time
+    timingSafeEqual(Buffer.from(a), Buffer.from(a));
+    return false;
+  }
+  return timingSafeEqual(Buffer.from(a), Buffer.from(b));
+}
 
 export async function POST(request: Request) {
   try {
@@ -25,7 +36,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (secretCode !== adminSecretCode) {
+    if (!secretCode || !safeCompare(secretCode, adminSecretCode)) {
       return NextResponse.json(
         { error: 'Invalid secret code' },
         { status: 401 }

@@ -8,11 +8,12 @@ import {
 
 // Route de test - À SUPPRIMER EN PRODUCTION
 export async function POST(request: NextRequest) {
-  // Vérifier l'authentification admin
+  // Vérifier l'authentification admin (obligatoire)
   const authHeader = request.headers.get('authorization');
   const adminToken = process.env.ADMIN_SECRET_TOKEN;
 
-  if (adminToken && authHeader !== `Bearer ${adminToken}`) {
+  // Token obligatoire - refuse si non configuré ou invalide
+  if (!adminToken || authHeader !== `Bearer ${adminToken}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

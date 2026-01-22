@@ -32,6 +32,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Vérifier que l'utilisateur authentifié correspond au user_id fourni
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.substring(7);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !user) {
+      logger.warn('Invalid auth token for merchant creation');
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      );
+    }
+
+    // Vérifier que le user_id correspond à l'utilisateur authentifié
+    if (user.id !== user_id) {
+      logger.warn(`User ${user.id} tried to create merchant for different user ${user_id}`);
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 403 }
+      );
+    }
+
     // Générer un code de scan unique
     let scan_code = generateScanCode();
     let attempts = 0;
