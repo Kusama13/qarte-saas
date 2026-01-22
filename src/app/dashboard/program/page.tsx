@@ -6,13 +6,13 @@ import {
   Upload,
   Palette,
   Gift,
-  Megaphone,
   Save,
   Loader2,
   Image as ImageIcon,
   Check,
   Star,
   ChevronRight,
+  X,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -57,7 +57,6 @@ export default function ProgramPage() {
     logoUrl: '',
     primaryColor: '#654EDA',
     secondaryColor: '#9D8FE8',
-    promoMessage: '',
     reviewLink: '',
     stampsRequired: 10,
     rewardDescription: '',
@@ -83,7 +82,6 @@ export default function ProgramPage() {
           logoUrl: data.logo_url || '',
           primaryColor: data.primary_color || '#654EDA',
           secondaryColor: data.secondary_color || '#9D8FE8',
-          promoMessage: data.promo_message || '',
           reviewLink: data.review_link || '',
           stampsRequired: data.stamps_required || 10,
           rewardDescription: data.reward_description || '',
@@ -133,7 +131,6 @@ export default function ProgramPage() {
           logo_url: formData.logoUrl || null,
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
-          promo_message: formData.promoMessage || null,
           review_link: formData.reviewLink || null,
           stamps_required: formData.stampsRequired,
           reward_description: formData.rewardDescription,
@@ -424,25 +421,6 @@ export default function ProgramPage() {
             </div>
           </div>
 
-          <div className="p-6 bg-gradient-to-br from-amber-50/40 via-white/80 to-orange-50/30 backdrop-blur-md border border-orange-100/50 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
-            <h3 className="flex items-center gap-3 mb-6 text-lg font-semibold text-gray-900">
-              <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-tr from-orange-500 to-amber-400 rounded-xl shadow-lg shadow-orange-200/50">
-                <Megaphone className="w-5 h-5 text-white" />
-              </div>
-              Message promotionnel (optionnel)
-            </h3>
-
-            <Input
-              className="bg-white/60 border-orange-200/60 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10 transition-all duration-300"
-              placeholder="Ex: 🎉 2 croissants achetés = 1 offert jusqu'à dimanche"
-              value={formData.promoMessage}
-              onChange={(e) =>
-                setFormData({ ...formData, promoMessage: e.target.value })
-              }
-              helperText="Ce message s'affichera en bannière sur la page client"
-            />
-          </div>
-
           <div className="p-6 bg-gradient-to-br from-amber-50/50 via-white/80 to-yellow-50/50 backdrop-blur-md border border-amber-100/50 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 group">
             <div className="flex items-center gap-4 mb-5">
               <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white shadow-lg shadow-amber-200/40 group-hover:scale-105 group-hover:rotate-6 transition-all duration-300">
@@ -477,47 +455,47 @@ export default function ProgramPage() {
             <div className="flex justify-center">
               <div className="relative w-[280px] h-[560px] bg-white rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-200">
                 <div className="h-full flex flex-col bg-slate-50/50">
-                  {/* Header: Gradient + Pattern + Logo Glassmorphism */}
+                  {/* Header: Gradient + Pattern + Logo */}
                   <div
-                    className="relative pt-10 pb-8 px-6 overflow-hidden"
+                    className="relative pt-6 pb-6 px-6 overflow-hidden"
                     style={{ background: `linear-gradient(135deg, ${formData.primaryColor}, ${formData.secondaryColor})` }}
                   >
                     <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
                     <div className="relative flex flex-col items-center">
-                      <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-inner mb-3 overflow-hidden">
+                      <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 shadow-lg mb-2 overflow-hidden">
                         {formData.logoUrl ? (
                           <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
                         ) : (
-                          <span className="text-xl font-black text-white">{merchant?.shop_name?.[0] || 'Q'}</span>
+                          <span className="text-2xl font-black text-white">{merchant?.shop_name?.[0] || 'Q'}</span>
                         )}
                       </div>
                       <h3 className="text-white font-bold text-sm tracking-tight">{merchant?.shop_name}</h3>
                     </div>
                   </div>
 
-                  {/* Promo Message Banner */}
-                  {formData.promoMessage && (
-                    <div
-                      className="relative z-20 px-4 py-2 text-center text-[10px] font-semibold text-white"
-                      style={{ backgroundColor: formData.secondaryColor }}
-                    >
-                      {formData.promoMessage}
-                    </div>
-                  )}
+                  {/* Main Content */}
+                  <div className="flex-1 px-3 -mt-4 z-10">
+                    {/* Review Banner (compact) */}
+                    {formData.reviewLink && (
+                      <div className="mb-2 bg-amber-50 rounded-xl px-3 py-2 border border-amber-100 flex items-center gap-2">
+                        <Star size={14} className="text-amber-500 fill-amber-500 flex-shrink-0" />
+                        <p className="text-[10px] font-semibold text-amber-700 flex-1">Votre avis compte !</p>
+                        <button className="p-0.5 hover:bg-amber-100 rounded transition-colors">
+                          <X size={12} className="text-amber-400" />
+                        </button>
+                      </div>
+                    )}
 
-                  {/* Main Card Content */}
-                  <div className={`flex-1 px-4 z-10 ${formData.promoMessage ? 'mt-2' : '-mt-6'}`}>
-                    <div className="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100/50 flex flex-col items-center">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Points cumulés</p>
+                    {/* Points Card */}
+                    <div className="bg-white rounded-[1.5rem] p-4 shadow-sm border border-slate-100/50 flex flex-col items-center">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Points cumulés</p>
 
-                      {/* Points Display */}
-                      <div className="flex items-baseline gap-1.5 mb-5">
-                        <span className="text-5xl font-black tracking-tighter" style={{ color: formData.primaryColor }}>4</span>
-                        <span className="text-slate-300 text-xl font-bold">/{formData.stampsRequired}</span>
+                      <div className="flex items-baseline gap-1 mb-3">
+                        <span className="text-4xl font-black tracking-tighter" style={{ color: formData.primaryColor }}>4</span>
+                        <span className="text-slate-300 text-lg font-bold">/{formData.stampsRequired}</span>
                       </div>
 
-                      {/* Progress Bar */}
-                      <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden mb-5">
+                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
                         <div
                           className="h-full transition-all duration-700 ease-out"
                           style={{
@@ -527,50 +505,34 @@ export default function ProgramPage() {
                         />
                       </div>
 
-                      {/* Status Message */}
                       <div
-                        className="px-4 py-2 rounded-full text-[11px] font-semibold text-center"
+                        className="px-3 py-1.5 rounded-full text-[10px] font-semibold text-center"
                         style={{ backgroundColor: `${formData.primaryColor}10`, color: formData.primaryColor }}
                       >
-                        Plus que {Math.max(formData.stampsRequired - 4, 0)} points avant votre cadeau
+                        Plus que {Math.max(formData.stampsRequired - 4, 0)} avant le cadeau
                       </div>
                     </div>
 
-                    {/* Reward Preview Card */}
-                    <div className="mt-4 bg-white rounded-2xl p-3 shadow-sm border border-slate-100 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${formData.secondaryColor}15` }}>
-                        <Gift size={18} style={{ color: formData.secondaryColor }} />
+                    {/* Reward Card */}
+                    <div className="mt-2 bg-white rounded-xl p-2.5 shadow-sm border border-slate-100 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${formData.secondaryColor}15` }}>
+                        <Gift size={14} style={{ color: formData.secondaryColor }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Prochaine offre</p>
-                        <p className="text-[11px] font-bold text-slate-800 truncate leading-tight">
+                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Récompense</p>
+                        <p className="text-[10px] font-bold text-slate-800 truncate leading-tight">
                           {formData.rewardDescription || 'Chargement...'}
                         </p>
                       </div>
-                      <ChevronRight size={14} className="text-slate-300" />
+                      <ChevronRight size={12} className="text-slate-300" />
                     </div>
-
-                    {/* Review Link Card */}
-                    {formData.reviewLink && (
-                      <div className="mt-3 bg-gradient-to-r from-amber-50 to-amber-50/50 rounded-2xl p-3 border border-amber-100 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-amber-100">
-                          <Star size={18} className="text-amber-500 fill-amber-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[9px] font-bold text-amber-600 uppercase tracking-wider mb-0.5">Votre avis compte</p>
-                          <p className="text-[10px] font-medium text-amber-800 truncate leading-tight">
-                            Laissez-nous un avis
-                          </p>
-                        </div>
-                        <ChevronRight size={14} className="text-amber-400" />
-                      </div>
-                    )}
                   </div>
 
-                  {/* Qarte Footer */}
-                  <div className="py-4 flex flex-col items-center gap-1 opacity-60">
-                    <span className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">Powered by</span>
-                    <span className="text-xs font-black tracking-tighter bg-gradient-to-r from-indigo-500 to-purple-600 bg-clip-text text-transparent">QARTE</span>
+                  {/* Footer */}
+                  <div className="py-3 flex items-center justify-center gap-1.5 opacity-50">
+                    <span className="text-[8px] font-medium text-slate-500">Créé avec</span>
+                    <span className="text-[8px]">❤️</span>
+                    <span className="text-[8px] font-medium text-slate-500">en France</span>
                   </div>
                 </div>
               </div>
