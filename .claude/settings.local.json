@@ -15,7 +15,10 @@
       "Bash(git push:*)",
       "Bash(npm run build:*)",
       "Bash(find:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npx shadcn@latest init -y)",
+      "Bash(npx shadcn@latest init --defaults)",
+      "Bash(npx shadcn@latest add:*)"
     ]
   }
 }

@@ -14,17 +14,35 @@ import {
   Star,
   ChevronRight,
 } from 'lucide-react';
-import { Button, Input, Textarea } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import type { Merchant } from '@/types';
 
-const UNSPLASH_IMAGES = [
-  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200',
-  'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200',
-  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200',
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200',
-  'https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=200',
-  'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=200',
+// Images par type de commerce
+const BUSINESS_IMAGES = [
+  { url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=200', label: 'Coiffeur' },
+  { url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200', label: 'Restaurant' },
+  { url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200', label: 'Café' },
+  { url: 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=200', label: 'Boulangerie' },
+  { url: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=200', label: 'Fleuriste' },
+  { url: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=200', label: 'Onglerie' },
+  { url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=200', label: 'Épicerie' },
+  { url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200', label: 'Boutique' },
+  { url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=200', label: 'Spa' },
+];
+
+// 10 palettes de couleurs inspirées des commerces
+const COLOR_PALETTES = [
+  { primary: '#1e293b', secondary: '#475569', name: 'Élégant', icon: '✂️' },
+  { primary: '#dc2626', secondary: '#f97316', name: 'Gourmand', icon: '🍕' },
+  { primary: '#059669', secondary: '#10b981', name: 'Nature', icon: '🌿' },
+  { primary: '#7c3aed', secondary: '#a78bfa', name: 'Moderne', icon: '💜' },
+  { primary: '#db2777', secondary: '#f472b6', name: 'Glamour', icon: '💅' },
+  { primary: '#ea580c', secondary: '#fb923c', name: 'Chaleureux', icon: '🥐' },
+  { primary: '#0891b2', secondary: '#22d3ee', name: 'Frais', icon: '💎' },
+  { primary: '#4f46e5', secondary: '#818cf8', name: 'Premium', icon: '⭐' },
+  { primary: '#16a34a', secondary: '#4ade80', name: 'Bio', icon: '🥗' },
+  { primary: '#0f172a', secondary: '#334155', name: 'Luxe', icon: '🖤' },
 ];
 
 export default function ProgramPage() {
@@ -39,8 +57,6 @@ export default function ProgramPage() {
     logoUrl: '',
     primaryColor: '#654EDA',
     secondaryColor: '#9D8FE8',
-    programName: '',
-    welcomeMessage: '',
     promoMessage: '',
     reviewLink: '',
     stampsRequired: 10,
@@ -67,8 +83,6 @@ export default function ProgramPage() {
           logoUrl: data.logo_url || '',
           primaryColor: data.primary_color || '#654EDA',
           secondaryColor: data.secondary_color || '#9D8FE8',
-          programName: data.program_name || '',
-          welcomeMessage: data.welcome_message || '',
           promoMessage: data.promo_message || '',
           reviewLink: data.review_link || '',
           stampsRequired: data.stamps_required || 10,
@@ -119,8 +133,6 @@ export default function ProgramPage() {
           logo_url: formData.logoUrl || null,
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
-          program_name: formData.programName,
-          welcome_message: formData.welcomeMessage,
           promo_message: formData.promoMessage || null,
           review_link: formData.reviewLink || null,
           stamps_required: formData.stampsRequired,
@@ -241,22 +253,25 @@ export default function ProgramPage() {
               <div className="space-y-3">
                 <label className="text-sm font-semibold tracking-wide text-gray-700 uppercase">Ou choisissez une image</label>
                 <div className="grid grid-cols-3 gap-3">
-                  {UNSPLASH_IMAGES.map((url, index) => (
+                  {BUSINESS_IMAGES.map((image, index) => (
                     <button
                       key={index}
                       type="button"
-                      onClick={() => setFormData({ ...formData, logoUrl: url })}
+                      onClick={() => setFormData({ ...formData, logoUrl: image.url })}
                       className={`relative h-20 overflow-hidden rounded-xl border-2 transition-all duration-300 transform active:scale-95 group/img ${
-                        formData.logoUrl === url
+                        formData.logoUrl === image.url
                           ? 'border-indigo-600 ring-4 ring-indigo-500/10'
                           : 'border-white shadow-sm hover:border-indigo-200 hover:shadow-md'
                       }`}
                     >
-                      <img src={url} alt="" className="object-cover w-full h-full transition-transform duration-500 group-hover/img:scale-110" />
-                      {formData.logoUrl === url && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-indigo-600/10">
-                          <div className="p-1 bg-white rounded-full shadow-sm">
-                            <div className="w-2 h-2 rounded-full bg-indigo-600" />
+                      <img src={image.url} alt={image.label} className="object-cover w-full h-full transition-transform duration-500 group-hover/img:scale-110" />
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-1.5">
+                        <span className="text-[9px] font-bold text-white">{image.label}</span>
+                      </div>
+                      {formData.logoUrl === image.url && (
+                        <div className="absolute top-1.5 right-1.5">
+                          <div className="p-0.5 bg-indigo-600 rounded-full shadow-sm">
+                            <Check className="w-3 h-3 text-white" />
                           </div>
                         </div>
                       )}
@@ -275,7 +290,41 @@ export default function ProgramPage() {
               Couleurs
             </h3>
 
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="space-y-4">
+              <label className="text-sm font-semibold tracking-wide text-gray-700 uppercase">Palettes suggérées</label>
+              <div className="grid grid-cols-5 gap-2">
+                {COLOR_PALETTES.map((palette, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, primaryColor: palette.primary, secondaryColor: palette.secondary })}
+                    className={`relative p-2 rounded-xl border-2 transition-all duration-300 group/palette ${
+                      formData.primaryColor === palette.primary && formData.secondaryColor === palette.secondary
+                        ? 'border-indigo-600 ring-4 ring-indigo-500/10 shadow-lg'
+                        : 'border-gray-100 hover:border-indigo-200 hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-1.5">
+                      <div className="flex gap-0.5">
+                        <div className="w-5 h-5 rounded-l-md" style={{ backgroundColor: palette.primary }} />
+                        <div className="w-5 h-5 rounded-r-md" style={{ backgroundColor: palette.secondary }} />
+                      </div>
+                      <span className="text-sm">{palette.icon}</span>
+                      <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide">{palette.name}</span>
+                    </div>
+                    {formData.primaryColor === palette.primary && formData.secondaryColor === palette.secondary && (
+                      <div className="absolute -top-1 -right-1">
+                        <div className="p-0.5 bg-indigo-600 rounded-full shadow-sm">
+                          <Check className="w-2.5 h-2.5 text-white" />
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 pt-4 border-t border-gray-100">
               <div className="space-y-2.5">
                 <label className="label text-sm font-medium ml-1">Couleur principale</label>
                 <div className="flex items-center gap-3 p-1.5 bg-white/50 rounded-xl border border-gray-200 focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all duration-300">
@@ -330,32 +379,6 @@ export default function ProgramPage() {
             </div>
 
             <div className="space-y-6">
-              <div className="group transition-all duration-200 focus-within:translate-x-1">
-                <Input
-                  label="Nom du programme"
-                  placeholder="Ex: Carte Fidélité Mario Pizza"
-                  value={formData.programName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, programName: e.target.value })
-                  }
-                  className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
-                />
-              </div>
-
-              <div className="group transition-all duration-200 focus-within:translate-x-1">
-                <Textarea
-                  label="Message de bienvenue"
-                  placeholder="Ex: Bienvenue ! Cumulez vos passages..."
-                  value={formData.welcomeMessage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, welcomeMessage: e.target.value })
-                  }
-                  maxLength={200}
-                  showCount
-                  className="border-gray-200 focus:border-indigo-500 focus:ring-indigo-500/10"
-                />
-              </div>
-
               <div className="relative p-6 transition-all border bg-gradient-to-br from-emerald-50/80 to-teal-50/50 border-emerald-100/50 rounded-2xl group hover:shadow-md hover:shadow-emerald-100/30">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-1.5 h-6 rounded-full bg-emerald-500" />
@@ -471,6 +494,16 @@ export default function ProgramPage() {
                       <h3 className="text-white font-bold text-sm tracking-tight">{merchant?.shop_name}</h3>
                     </div>
                   </div>
+
+                  {/* Promo Message Banner */}
+                  {formData.promoMessage && (
+                    <div
+                      className="px-4 py-2 text-center text-[10px] font-semibold text-white"
+                      style={{ backgroundColor: formData.secondaryColor }}
+                    >
+                      {formData.promoMessage}
+                    </div>
+                  )}
 
                   {/* Main Card Content */}
                   <div className="flex-1 px-4 -mt-6 z-10">

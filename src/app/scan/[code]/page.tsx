@@ -11,6 +11,7 @@ import {
   Gift,
   Loader2,
   CreditCard,
+  ChevronRight,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -302,134 +303,166 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const secondaryColor = merchant.secondary_color;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: `${primaryColor}08` }}>
+    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${primaryColor}10)` }}>
+      {/* Premium Header */}
       <header
-        className="sticky top-0 z-10 flex items-center justify-center h-16 px-4"
-        style={{ backgroundColor: primaryColor }}
+        className="relative h-52 w-full overflow-hidden flex flex-col items-center justify-center text-white px-6"
+        style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
       >
-        {merchant.logo_url ? (
-          <img
-            src={merchant.logo_url}
-            alt={merchant.shop_name}
-            className="object-cover w-10 h-10 rounded-lg"
-          />
-        ) : (
-          <span className="text-lg font-bold text-white">{merchant.shop_name}</span>
-        )}
+        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
+
+        <div className="relative flex flex-col items-center">
+          <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center mb-3 p-1 shadow-2xl overflow-hidden">
+            {merchant.logo_url ? (
+              <img
+                src={merchant.logo_url}
+                alt={merchant.shop_name}
+                className="w-full h-full rounded-2xl object-cover"
+              />
+            ) : (
+              <span className="text-3xl font-black text-white">{merchant.shop_name[0]}</span>
+            )}
+          </div>
+          <h1 className="text-xl font-black tracking-tight drop-shadow-sm">{merchant.shop_name}</h1>
+        </div>
       </header>
 
+      {/* Promo Banner */}
       {merchant.promo_message && (
         <div
-          className="px-4 py-2 text-center text-sm text-white"
+          className="px-4 py-3 text-center text-sm font-semibold text-white"
           style={{ backgroundColor: secondaryColor }}
         >
           {merchant.promo_message}
         </div>
       )}
 
-      <main className="px-4 py-8 mx-auto max-w-md">
+      <main className="flex-1 -mt-8 px-4 pb-8 mx-auto max-w-md w-full z-10">
         {step === 'phone' && (
           <div className="animate-fade-in">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {merchant.program_name || 'Programme Fidélité'}
-              </h1>
-              <p className="mt-2 text-gray-600">{merchant.welcome_message}</p>
-            </div>
-
-            <form onSubmit={handlePhoneSubmit} className="space-y-4">
-              {error && (
-                <div className="p-3 text-sm text-red-700 bg-red-50 rounded-xl">
-                  {error}
-                </div>
-              )}
-
-              <div className="relative">
-                <Input
-                  type="tel"
-                  label="Votre numéro de téléphone"
-                  placeholder="06 12 34 56 78"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  required
-                  className="text-lg"
-                />
-                <Phone className="absolute w-5 h-5 text-gray-400 right-4 top-11" />
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
+              <div className="text-center mb-8">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Programme Fidélité</p>
+                <h2 className="text-2xl font-black text-gray-900">Validez votre passage</h2>
               </div>
 
-              <Button
-                type="submit"
-                loading={submitting}
-                className="w-full"
-                style={{ backgroundColor: primaryColor }}
-              >
-                Valider mon passage
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </form>
+              <form onSubmit={handlePhoneSubmit} className="space-y-6">
+                {error && (
+                  <div className="p-4 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl">
+                    {error}
+                  </div>
+                )}
 
-            <div
-              className="mt-8 p-4 rounded-xl text-center"
-              style={{ backgroundColor: `${secondaryColor}20` }}
-            >
-              <Gift className="w-8 h-8 mx-auto mb-2" style={{ color: primaryColor }} />
-              <p className="font-medium" style={{ color: primaryColor }}>
-                {merchant.reward_description}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">
-                après {merchant.stamps_required} passages
-              </p>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">Numéro de téléphone</label>
+                  <div className="relative group">
+                    <Input
+                      type="tel"
+                      placeholder="06 12 34 56 78"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      required
+                      className="h-14 text-lg pl-12 bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl transition-all"
+                    />
+                    <Phone className="absolute w-5 h-5 text-gray-400 left-4 top-1/2 transform -translate-y-1/2 group-focus-within:text-indigo-600 transition-colors" />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
+                >
+                  {submitting ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      Valider mon passage
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+
+            {/* Reward Preview Card */}
+            <div className="mt-6 bg-white rounded-3xl shadow-lg border border-gray-100 p-5 flex items-center gap-4">
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
+                style={{ backgroundColor: `${primaryColor}15` }}
+              >
+                <Gift className="w-7 h-7" style={{ color: primaryColor }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Récompense</p>
+                <p className="text-base font-bold text-gray-900 leading-tight truncate">{merchant.reward_description}</p>
+                <p className="text-xs text-gray-500 mt-0.5">Après {merchant.stamps_required} passages</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-300" />
             </div>
           </div>
         )}
 
         {step === 'register' && (
           <div className="animate-fade-in">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-gray-900">Bienvenue !</h1>
-              <p className="mt-2 text-gray-600">
-                Créez votre compte fidélité en quelques secondes
-              </p>
-            </div>
-
-            <form onSubmit={handleRegisterSubmit} className="space-y-4">
-              {error && (
-                <div className="p-3 text-sm text-red-700 bg-red-50 rounded-xl">
-                  {error}
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
+              <div className="text-center mb-8">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ backgroundColor: `${primaryColor}15` }}>
+                  <User className="w-8 h-8" style={{ color: primaryColor }} />
                 </div>
-              )}
-
-              <div className="relative">
-                <Input
-                  type="text"
-                  label="Prénom"
-                  placeholder="Votre prénom"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                />
-                <User className="absolute w-5 h-5 text-gray-400 right-4 top-11" />
+                <h2 className="text-2xl font-black text-gray-900">Bienvenue !</h2>
+                <p className="mt-2 text-gray-500">Créez votre carte en quelques secondes</p>
               </div>
 
-              <Input
-                type="text"
-                label="Nom"
-                placeholder="Votre nom"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                required
-              />
+              <form onSubmit={handleRegisterSubmit} className="space-y-5">
+                {error && (
+                  <div className="p-4 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl">
+                    {error}
+                  </div>
+                )}
 
-              <Button
-                type="submit"
-                loading={submitting}
-                className="w-full"
-                style={{ backgroundColor: primaryColor }}
-              >
-                Créer mon compte
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </form>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">Prénom</label>
+                  <Input
+                    type="text"
+                    placeholder="Votre prénom"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                    className="h-12 bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">Nom</label>
+                  <Input
+                    type="text"
+                    placeholder="Votre nom"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                    className="h-12 bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
+                >
+                  {submitting ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      Créer mon compte
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
           </div>
         )}
 
@@ -444,145 +477,138 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         )}
 
         {step === 'success' && loyaltyCard && (
-          <div className="animate-fade-in text-center">
-            <div
-              className="inline-flex items-center justify-center w-24 h-24 mb-6 rounded-full animate-pulse-slow"
-              style={{ backgroundColor: `${primaryColor}20` }}
-            >
-              <Check className="w-12 h-12" style={{ color: primaryColor }} />
-            </div>
+          <div className="animate-fade-in">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
+              <div
+                className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl"
+                style={{ backgroundColor: `${primaryColor}15` }}
+              >
+                <Check className="w-10 h-10" style={{ color: primaryColor }} />
+              </div>
 
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Passage validé !
-            </h1>
-            <p className="text-gray-600 mb-8">
-              Merci {customer?.first_name} !
-            </p>
+              <h2 className="text-2xl font-black text-gray-900 mb-1">Passage validé !</h2>
+              <p className="text-gray-500 mb-8">Merci {customer?.first_name} !</p>
 
-            <div className="flex justify-center gap-2 mb-6">
-              {[...Array(merchant?.stamps_required || 10)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all"
-                  style={{
-                    borderColor: primaryColor,
-                    backgroundColor:
-                      i < loyaltyCard.current_stamps ? primaryColor : 'transparent',
-                  }}
-                >
-                  {i < loyaltyCard.current_stamps && (
-                    <Check className="w-4 h-4 text-white" />
-                  )}
+              {/* Large Points Display */}
+              <div className="mb-8">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-6xl font-black" style={{ color: primaryColor }}>{loyaltyCard.current_stamps}</span>
+                  <span className="text-2xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
                 </div>
-              ))}
-            </div>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Passages cumulés</p>
+              </div>
 
-            <p className="text-lg font-semibold" style={{ color: primaryColor }}>
-              {loyaltyCard.current_stamps} / {merchant?.stamps_required} passages
-            </p>
+              {/* Progress Bar */}
+              <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
+                <div
+                  className="h-full transition-all duration-1000 ease-out rounded-full"
+                  style={{
+                    width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant?.stamps_required || 10)) * 100)}%`,
+                    background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
+                  }}
+                />
+              </div>
 
-            {loyaltyCard.current_stamps > 0 &&
-              loyaltyCard.current_stamps < (merchant?.stamps_required || 10) && (
-                <p className="mt-2 text-gray-600">
-                  Plus que{' '}
-                  {(merchant?.stamps_required || 10) - loyaltyCard.current_stamps}{' '}
-                  passage{(merchant?.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''}{' '}
-                  pour votre récompense !
-                </p>
+              {/* Status Message */}
+              {loyaltyCard.current_stamps < (merchant?.stamps_required || 10) && (
+                <div
+                  className="rounded-2xl p-4 mb-6"
+                  style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
+                >
+                  <p className="font-bold text-gray-700">
+                    Plus que {(merchant?.stamps_required || 10) - loyaltyCard.current_stamps} passage{(merchant?.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''} avant le bonheur !
+                  </p>
+                </div>
               )}
 
-            <Link href={`/customer/card/${merchant.id}`} className="inline-block mt-8">
-              <Button variant="outline">
-                <CreditCard className="w-5 h-5 mr-2" />
-                Voir ma carte
-              </Button>
-            </Link>
+              <Link href={`/customer/card/${merchant.id}`}>
+                <button className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Voir ma carte complète
+                </button>
+              </Link>
+            </div>
           </div>
         )}
 
         {step === 'reward' && loyaltyCard && (
-          <div className="animate-fade-in text-center">
-            <div
-              className="inline-flex items-center justify-center w-24 h-24 mb-6 rounded-full animate-pulse-slow"
-              style={{ backgroundColor: `${primaryColor}20` }}
-            >
-              <Gift className="w-12 h-12" style={{ color: primaryColor }} />
+          <div className="animate-fade-in">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-emerald-100">
+                <Gift className="w-10 h-10 text-emerald-600" />
+              </div>
+
+              <h2 className="text-2xl font-black text-gray-900 mb-2">🎉 Félicitations !</h2>
+              <p className="text-gray-500 mb-6">Vous avez atteint {merchant?.stamps_required} passages !</p>
+
+              {/* Reward Card */}
+              <div
+                className="rounded-3xl p-6 mb-8 border"
+                style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}20` }}
+              >
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Votre récompense</p>
+                <p className="text-xl font-black" style={{ color: primaryColor }}>
+                  {merchant?.reward_description}
+                </p>
+              </div>
+
+              <button
+                onClick={handleRedeemReward}
+                disabled={submitting}
+                className="w-full h-16 rounded-2xl text-lg font-bold text-white shadow-lg shadow-emerald-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500"
+              >
+                {submitting ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : (
+                  <>
+                    <Gift className="w-6 h-6" />
+                    Utiliser ma récompense
+                  </>
+                )}
+              </button>
+
+              <p className="mt-4 text-sm text-gray-400">Montrez cet écran au commerçant</p>
             </div>
-
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Félicitations !
-            </h1>
-            <p className="text-gray-600 mb-4">
-              Vous avez atteint {merchant?.stamps_required} passages !
-            </p>
-
-            <div
-              className="p-6 rounded-2xl mb-8"
-              style={{ backgroundColor: `${primaryColor}10` }}
-            >
-              <p className="text-lg font-bold" style={{ color: primaryColor }}>
-                {merchant?.reward_description}
-              </p>
-            </div>
-
-            <Button
-              onClick={handleRedeemReward}
-              loading={submitting}
-              size="lg"
-              className="w-full"
-              style={{ backgroundColor: primaryColor }}
-            >
-              <Gift className="w-5 h-5 mr-2" />
-              Utiliser ma récompense
-            </Button>
-
-            <p className="mt-4 text-sm text-gray-500">
-              Montrez cet écran au commerçant
-            </p>
           </div>
         )}
 
         {step === 'already-checked' && (
-          <div className="animate-fade-in text-center">
-            <div className="inline-flex items-center justify-center w-24 h-24 mb-6 rounded-full bg-yellow-100">
-              <AlertCircle className="w-12 h-12 text-yellow-600" />
-            </div>
+          <div className="animate-fade-in">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
+              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-amber-100">
+                <AlertCircle className="w-10 h-10 text-amber-600" />
+              </div>
 
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Déjà validé aujourd&apos;hui
-            </h1>
-            <p className="text-gray-600 mb-8">
-              Vous avez déjà validé votre passage aujourd&apos;hui. Revenez demain !
-            </p>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">Déjà validé !</h2>
+              <p className="text-gray-500 mb-8">Vous avez déjà validé votre passage aujourd&apos;hui. Revenez demain !</p>
 
-            <div className="flex justify-center gap-2 mb-6">
-              {[...Array(merchant?.stamps_required || 10)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-8 h-8 rounded-full border-2 flex items-center justify-center"
-                  style={{
-                    borderColor: primaryColor,
-                    backgroundColor:
-                      i < (loyaltyCard?.current_stamps || 0) ? primaryColor : 'transparent',
-                  }}
-                >
-                  {i < (loyaltyCard?.current_stamps || 0) && (
-                    <Check className="w-4 h-4 text-white" />
-                  )}
+              {/* Points Display */}
+              <div className="mb-8">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-5xl font-black" style={{ color: primaryColor }}>{loyaltyCard?.current_stamps || 0}</span>
+                  <span className="text-xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
                 </div>
-              ))}
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Passages cumulés</p>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${Math.min(100, ((loyaltyCard?.current_stamps || 0) / (merchant?.stamps_required || 10)) * 100)}%`,
+                    background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
+                  }}
+                />
+              </div>
+
+              <Link href={`/customer/card/${merchant.id}`}>
+                <button className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Voir ma carte complète
+                </button>
+              </Link>
             </div>
-
-            <p className="text-lg font-semibold" style={{ color: primaryColor }}>
-              {loyaltyCard?.current_stamps} / {merchant?.stamps_required} passages
-            </p>
-
-            <Link href={`/customer/card/${merchant.id}`} className="inline-block mt-8">
-              <Button variant="outline">
-                <CreditCard className="w-5 h-5 mr-2" />
-                Voir ma carte
-              </Button>
-            </Link>
           </div>
         )}
 
@@ -604,10 +630,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         )}
       </main>
 
-      <footer className="py-4 text-center text-xs text-gray-400">
-        Powered by{' '}
-        <Link href="/" className="text-primary hover:underline">
-          Qarte
+      {/* Qarte Footer */}
+      <footer className="py-8 text-center">
+        <p className="text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase mb-2">Propulsé par</p>
+        <Link href="/" className="inline-flex items-center gap-2 group transition-all duration-300 hover:opacity-70">
+          <div className="w-6 h-6 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-200">
+            <span className="text-white text-[10px] font-black italic">Q</span>
+          </div>
+          <span className="text-lg font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+            QARTE
+          </span>
         </Link>
       </footer>
     </div>
