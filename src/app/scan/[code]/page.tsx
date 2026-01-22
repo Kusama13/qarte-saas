@@ -327,16 +327,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         </div>
       </header>
 
-      {/* Promo Banner */}
-      {merchant.promo_message && (
-        <div
-          className="px-4 py-3 text-center text-sm font-semibold text-white"
-          style={{ backgroundColor: secondaryColor }}
-        >
-          {merchant.promo_message}
-        </div>
-      )}
-
       <main className="flex-1 -mt-8 px-4 pb-8 mx-auto max-w-md w-full z-10">
         {step === 'phone' && (
           <div className="animate-fade-in">
@@ -631,13 +621,17 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       </main>
 
       {/* Qarte Footer */}
-      <footer className="py-8 text-center">
-        <p className="text-[10px] font-bold text-gray-400 tracking-[0.2em] uppercase mb-2">Propulsé par</p>
-        <Link href="/" className="inline-flex items-center gap-2 group transition-all duration-300 hover:opacity-70">
-          <div className="w-6 h-6 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-lg flex items-center justify-center shadow-md shadow-indigo-200">
-            <span className="text-white text-[10px] font-black italic">Q</span>
+      <footer className="py-6 text-center">
+        <div className="flex items-center justify-center gap-1.5 mb-2">
+          <span className="text-[10px] font-medium text-gray-400">Créé avec</span>
+          <span className="text-xs">❤️</span>
+          <span className="text-[10px] font-medium text-gray-400">en France</span>
+        </div>
+        <Link href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
+          <div className="w-5 h-5 bg-gradient-to-br from-indigo-600 to-violet-600 rounded flex items-center justify-center shadow-md shadow-indigo-200">
+            <span className="text-white text-[8px] font-black italic">Q</span>
           </div>
-          <span className="text-lg font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <span className="text-sm font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
             QARTE
           </span>
         </Link>

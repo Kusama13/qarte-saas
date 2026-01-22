@@ -743,7 +743,7 @@ function ROICalculatorSection() {
           </div>
 
           <a
-            href="#pricing"
+            href="/auth/merchant/signup"
             className="block w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all duration-300 text-center shadow-lg shadow-indigo-500/25"
           >
             Générer ce gain maintenant

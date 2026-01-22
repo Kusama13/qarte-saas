@@ -169,6 +169,29 @@ export default function CustomerCardPage({
 
       
       <main className="flex-1 -mt-12 px-4 pb-12 w-full max-w-lg mx-auto z-10">
+        {/* Review Section - Above Card */}
+        {merchant.review_link && (
+          <a
+            href={merchant.review_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block p-4 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-100 rounded-3xl shadow-lg shadow-amber-900/5 mb-4 hover:shadow-xl hover:shadow-amber-900/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-2xl group-hover:scale-110 transition-transform duration-300 shadow-inner">
+                <Star className="w-6 h-6 text-amber-500 fill-amber-500" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-gray-900">Votre avis compte !</p>
+                <p className="text-sm text-gray-600">Laissez-nous un avis</p>
+              </div>
+              <div className="p-2 rounded-xl bg-white shadow-sm border border-amber-50 group-hover:bg-amber-500 group-hover:text-white transition-all">
+                <ExternalLink className="w-4 h-4" />
+              </div>
+            </div>
+          </a>
+        )}
+
         <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
           <div className="text-center mb-10">
             <div className="flex items-baseline justify-center gap-1">
@@ -231,30 +254,6 @@ export default function CustomerCardPage({
           )}
         </div>
 
-        {merchant.review_link && (
-          <a
-            href={merchant.review_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group block p-5 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-100 rounded-3xl shadow-lg shadow-amber-900/5 mb-8 hover:shadow-xl hover:shadow-amber-900/10 transition-all duration-300 hover:-translate-y-0.5 active:scale-[0.98]"
-          >
-            <div className="flex items-center gap-5">
-              <div className="flex items-center justify-center w-14 h-14 bg-amber-100 rounded-2xl group-hover:scale-110 transition-transform duration-300 shadow-inner">
-                <Star className="w-7 h-7 text-amber-500 fill-amber-500" />
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-gray-900 text-lg">Votre avis compte !</p>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  Laissez-nous un avis pour nous aider à nous améliorer
-                </p>
-              </div>
-              <div className="p-2.5 rounded-xl bg-white shadow-sm border border-amber-50 group-hover:bg-amber-500 group-hover:text-white transition-all">
-                <ExternalLink className="w-5 h-5" />
-              </div>
-            </div>
-          </a>
-        )}
-
         <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100/50 overflow-hidden mb-12">
           <div className="p-6 border-b border-gray-50 flex items-center justify-between">
             <h2 className="font-bold text-gray-900 text-lg flex items-center gap-3">
@@ -300,6 +299,12 @@ export default function CustomerCardPage({
                       <Clock className="w-3.5 h-3.5" />
                       {formatDateTime(visit.visited_at)}
                     </p>
+                  </div>
+                  <div
+                    className="px-3 py-1.5 rounded-xl text-sm font-bold"
+                    style={{ backgroundColor: `${merchant.primary_color}10`, color: merchant.primary_color }}
+                  >
+                    +1 pt
                   </div>
                 </li>
               ))}
