@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CreditCard, Mail, CheckCircle2, RefreshCw, ArrowRight, Loader2 } from 'lucide-react';
+import { CreditCard, Mail, CheckCircle2, RefreshCw, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
@@ -12,53 +12,42 @@ export default function VerifyEmailPage() {
   const supabase = createClientComponentClient();
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
-  const [checking, setChecking] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
 
-  // Récupérer l'email depuis l'URL si disponible
-  const email = typeof window !== 'undefined'
-    ? new URLSearchParams(window.location.search).get('email')
-    : null;
+  // Récupérer l'email depuis l'URL côté client
+  useEffect(() => {
+    const urlEmail = new URLSearchParams(window.location.search).get('email');
+    setEmail(urlEmail);
+  }, []);
 
-  // Fonction pour vérifier si l'utilisateur est maintenant connecté
-  const checkEmailConfirmed = useCallback(async (manual = false) => {
-    if (manual) setChecking(true);
-
-    try {
+  // Vérifier si l'utilisateur a déjà une session (cas où il a confirmé sur le même appareil)
+  useEffect(() => {
+    const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-
       if (session) {
-        // L'utilisateur est maintenant authentifié, rediriger vers le dashboard
         router.push('/dashboard');
-        return true;
       }
+    };
+    checkSession();
 
-      // Essayer de rafraîchir la session (au cas où le token existe mais la session n'est pas chargée)
-      const { data: { session: refreshedSession } } = await supabase.auth.refreshSession();
-
-      if (refreshedSession) {
+    // Écouter les changements d'état d'authentification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
         router.push('/dashboard');
-        return true;
       }
-    } catch (error) {
-      console.error('Error checking auth status:', error);
-    } finally {
-      if (manual) setChecking(false);
-    }
+    });
 
-    return false;
+    return () => subscription.unsubscribe();
   }, [supabase, router]);
 
-  // Polling automatique toutes les 5 secondes pour détecter la confirmation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      checkEmailConfirmed(false);
-    }, 5000);
-
-    // Vérifier immédiatement au chargement
-    checkEmailConfirmed(false);
-
-    return () => clearInterval(interval);
-  }, [checkEmailConfirmed]);
+  // Rediriger vers la page de connexion avec l'email pré-rempli
+  const handleGoToLogin = () => {
+    if (email) {
+      router.push(`/auth/merchant?email=${encodeURIComponent(email)}`);
+    } else {
+      router.push('/auth/merchant');
+    }
+  };
 
   const handleResend = async () => {
     if (!email) return;
@@ -150,21 +139,11 @@ export default function VerifyEmailPage() {
           <div className="space-y-4 mb-6">
             {/* J'ai confirmé mon email button */}
             <Button
-              onClick={() => checkEmailConfirmed(true)}
-              disabled={checking}
+              onClick={handleGoToLogin}
               className="w-full"
             >
-              {checking ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Vérification...
-                </>
-              ) : (
-                <>
-                  J'ai confirmé mon email
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </>
-              )}
+              J'ai confirmé mon email
+              <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
 
             {/* Resend button */}
@@ -187,12 +166,6 @@ export default function VerifyEmailPage() {
                 )}
               </div>
             )}
-          </div>
-
-          {/* Auto-check indicator */}
-          <div className="flex items-center justify-center gap-2 text-xs text-gray-400 mb-4">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-            <span>Détection automatique activée</span>
           </div>
 
           {/* Spam notice */}

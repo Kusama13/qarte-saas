@@ -15,10 +15,17 @@ function MerchantLoginContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [verified, setVerified] = useState(false);
+  const [fromVerification, setFromVerification] = useState(false);
 
   useEffect(() => {
     if (searchParams.get('verified') === 'true') {
       setVerified(true);
+    }
+    // Pré-remplir l'email si fourni (venant de verify-email)
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      setEmail(emailParam);
+      setFromVerification(true);
     }
   }, [searchParams]);
 
@@ -80,11 +87,19 @@ function MerchantLoginContent() {
             </p>
           </div>
 
-          {/* Success Message */}
+          {/* Success Message - Email verified */}
           {verified && (
             <div className="mb-6 bg-emerald-50/50 backdrop-blur-sm border border-emerald-200 text-emerald-700 px-4 py-3 rounded-2xl flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm font-medium">Email vérifié avec succès ! Connectez-vous.</span>
+            </div>
+          )}
+
+          {/* Info Message - Coming from verification page */}
+          {fromVerification && !verified && (
+            <div className="mb-6 bg-indigo-50/50 backdrop-blur-sm border border-indigo-200 text-indigo-700 px-4 py-3 rounded-2xl flex items-center gap-3">
+              <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
+              <span className="text-sm font-medium">Entrez votre mot de passe pour accéder à votre compte.</span>
             </div>
           )}
 
