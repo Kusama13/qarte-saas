@@ -237,7 +237,7 @@ function HeroSection() {
 
           <div className="flex flex-col sm:flex-row gap-5">
             <a
-              href="#pricing"
+              href="/auth/merchant"
               className="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 text-center shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
             >
               <span className="relative z-10">Démarrer Gratuitement</span>
