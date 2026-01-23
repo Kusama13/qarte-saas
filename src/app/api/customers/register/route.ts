@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 const registerSchema = z.object({
   phone_number: z.string().min(10),
   first_name: z.string().min(1),
-  last_name: z.string().min(1),
+  last_name: z.string().optional(),
   merchant_id: z.string().uuid(),
 });
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       .insert({
         phone_number,
         first_name: first_name.trim(),
-        last_name: last_name.trim(),
+        last_name: last_name?.trim() || null,
         merchant_id,
       })
       .select()
