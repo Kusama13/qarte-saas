@@ -98,7 +98,7 @@ export default function MerchantSignupPage() {
         return;
       }
 
-      if (authData.user && authData.session) {
+      if (authData.user) {
         const slug = generateSlug(formData.shopName);
 
         // Utiliser l'API route pour créer le marchand (bypass RLS)
@@ -106,7 +106,9 @@ export default function MerchantSignupPage() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authData.session.access_token}`,
+            ...(authData.session && {
+              'Authorization': `Bearer ${authData.session.access_token}`,
+            }),
           },
           body: JSON.stringify({
             user_id: authData.user.id,
@@ -128,6 +130,8 @@ export default function MerchantSignupPage() {
 
         // Redirection vers la page de vérification email
         window.location.href = `/auth/merchant/verify-email?email=${encodeURIComponent(formData.email)}`;
+      } else {
+        setError('Erreur lors de la création du compte. Veuillez réessayer.');
       }
     } catch {
       setError('Une erreur est survenue. Veuillez réessayer.');
