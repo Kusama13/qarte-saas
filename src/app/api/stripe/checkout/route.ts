@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     // Get merchant info
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('id, shop_name, stripe_customer_id')
+      .select('id, shop_name, stripe_customer_id, trial_ends_at')
       .eq('user_id', user.id)
       .single();
 
@@ -61,6 +61,19 @@ export async function POST(request: NextRequest) {
         .eq('id', merchant.id);
     }
 
+    // Calculate trial end from merchant's trial period
+    let trialEnd: number | undefined;
+    if (merchant.trial_ends_at) {
+      const trialEndsAt = new Date(merchant.trial_ends_at);
+      const now = new Date();
+
+      // Only set trial_end if trial hasn't expired yet
+      if (trialEndsAt > now) {
+        // Stripe requires Unix timestamp in seconds
+        trialEnd = Math.floor(trialEndsAt.getTime() / 1000);
+      }
+    }
+
     // Create checkout session
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -81,6 +94,8 @@ export async function POST(request: NextRequest) {
         metadata: {
           merchant_id: merchant.id,
         },
+        // Billing starts at end of trial period (no immediate charge)
+        ...(trialEnd && { trial_end: trialEnd }),
       },
       allow_promotion_codes: true,
       billing_address_collection: 'required',

@@ -4,6 +4,7 @@ import { validateEmail } from '@/lib/utils';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 import logger from '@/lib/logger';
+import { resend, EMAIL_FROM } from '@/lib/resend';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
@@ -64,6 +65,35 @@ export async function POST(request: NextRequest) {
         { error: 'Erreur lors de l\'envoi du message' },
         { status: 500 }
       );
+    }
+
+    // Envoyer l'email à contact@getqarte.com
+    if (resend) {
+      try {
+        await resend.emails.send({
+          from: EMAIL_FROM,
+          to: 'contact@getqarte.com',
+          replyTo: email,
+          subject: `[Contact Qarte] ${subjectLabels[subject] || subject} - ${name}`,
+          html: `
+            <h2>Nouveau message de contact</h2>
+            <p><strong>Nom :</strong> ${name}</p>
+            <p><strong>Email :</strong> <a href="mailto:${email}">${email}</a></p>
+            <p><strong>Sujet :</strong> ${subjectLabels[subject] || subject}</p>
+            <hr />
+            <p><strong>Message :</strong></p>
+            <p style="white-space: pre-wrap;">${message}</p>
+            <hr />
+            <p style="color: #666; font-size: 12px;">
+              Envoyé depuis le formulaire de contact Qarte le ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}
+            </p>
+          `,
+        });
+        logger.info(`Contact email sent from ${email}`);
+      } catch (emailError) {
+        logger.error('Failed to send contact email:', emailError);
+        // On continue même si l'email échoue, le message est en base
+      }
     }
 
     return NextResponse.json({

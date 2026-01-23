@@ -228,11 +228,22 @@ export default function SubscriptionPage() {
               <h3 className="mb-2 text-lg font-semibold text-gray-900">
                 Ajouter une carte bancaire
               </h3>
-              <p className="mb-6 text-gray-600">
+              <p className="mb-4 text-gray-600">
                 {trialStatus.isActive
-                  ? 'Vous ne serez débité qu\'après la fin de votre essai'
+                  ? 'Sécurisez votre compte dès maintenant'
                   : 'Ajoutez une carte pour réactiver votre compte'}
               </p>
+              {trialStatus.isActive && (
+                <div className="p-3 mb-4 bg-green-50 border border-green-200 rounded-xl text-left">
+                  <p className="text-sm text-green-800 font-medium flex items-center gap-2">
+                    <Check className="w-4 h-4" />
+                    Aucun prélèvement avant le {formatDate(merchant?.trial_ends_at || '')}
+                  </p>
+                  <p className="text-xs text-green-700 mt-1 ml-6">
+                    Votre essai gratuit continue jusqu'à cette date
+                  </p>
+                </div>
+              )}
               <Button 
                 className="w-full"
                 onClick={handleSubscribe}
