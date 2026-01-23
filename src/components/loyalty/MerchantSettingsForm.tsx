@@ -118,10 +118,10 @@ export function MerchantSettingsForm({
         {onOpenGuide && (
           <button
             onClick={onOpenGuide}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors text-xs font-medium"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-105 active:scale-95 text-sm font-bold"
           >
-            <HelpCircle className="w-3.5 h-3.5" />
-            Aide
+            <HelpCircle className="w-4 h-4" />
+            Besoin d'aide ?
           </button>
         )}
       </div>

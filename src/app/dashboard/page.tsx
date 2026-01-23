@@ -85,99 +85,118 @@ export default function DashboardPage() {
 
     const fetchData = async () => {
       try {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const { count: totalCustomers } = await supabase
-        .from('loyalty_cards')
-        .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchant.id);
+        const firstDayOfMonth = new Date();
+        firstDayOfMonth.setDate(1);
+        firstDayOfMonth.setHours(0, 0, 0, 0);
 
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        // Prepare chart date range
+        const last7Days = [];
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          last7Days.push({
+            date: date.toISOString().split('T')[0],
+            label: date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }),
+          });
+        }
+        const sevenDaysAgo = last7Days[0].date;
 
-      const { count: activeCustomers } = await supabase
-        .from('loyalty_cards')
-        .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchant.id)
-        .gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]);
+        // Execute ALL queries in parallel for maximum speed
+        const [
+          totalCustomersResult,
+          activeCustomersResult,
+          visitsThisMonthResult,
+          redemptionsThisMonthResult,
+          recentCardsResult,
+          last7DaysVisitsResult,
+        ] = await Promise.all([
+          // Stats queries
+          supabase
+            .from('loyalty_cards')
+            .select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id),
+          supabase
+            .from('loyalty_cards')
+            .select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id)
+            .gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
+          supabase
+            .from('visits')
+            .select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id)
+            .gte('visited_at', firstDayOfMonth.toISOString()),
+          supabase
+            .from('redemptions')
+            .select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id)
+            .gte('redeemed_at', firstDayOfMonth.toISOString()),
+          // Recent customers
+          supabase
+            .from('loyalty_cards')
+            .select(`
+              id,
+              current_stamps,
+              last_visit_date,
+              customer:customers (
+                first_name,
+                last_name
+              )
+            `)
+            .eq('merchant_id', merchant.id)
+            .order('updated_at', { ascending: false })
+            .limit(5),
+          // Chart data - single query for all 7 days
+          supabase
+            .from('visits')
+            .select('visited_at')
+            .eq('merchant_id', merchant.id)
+            .gte('visited_at', `${sevenDaysAgo}T00:00:00`),
+        ]);
 
-      const firstDayOfMonth = new Date();
-      firstDayOfMonth.setDate(1);
-      firstDayOfMonth.setHours(0, 0, 0, 0);
-
-      const { count: visitsThisMonth } = await supabase
-        .from('visits')
-        .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchant.id)
-        .gte('visited_at', firstDayOfMonth.toISOString());
-
-      const { count: redemptionsThisMonth } = await supabase
-        .from('redemptions')
-        .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchant.id)
-        .gte('redeemed_at', firstDayOfMonth.toISOString());
-
-      setStats({
-        totalCustomers: totalCustomers || 0,
-        activeCustomers: activeCustomers || 0,
-        visitsThisMonth: visitsThisMonth || 0,
-        redemptionsThisMonth: redemptionsThisMonth || 0,
-      });
-
-      const { data: recentCards } = await supabase
-        .from('loyalty_cards')
-        .select(`
-          id,
-          current_stamps,
-          last_visit_date,
-          customer:customers (
-            first_name,
-            last_name
-          )
-        `)
-        .eq('merchant_id', merchant.id)
-        .order('updated_at', { ascending: false })
-        .limit(5);
-
-      if (recentCards) {
-        setRecentCustomers(
-          recentCards.map((card) => {
-            const customer = Array.isArray(card.customer) ? card.customer[0] : card.customer;
-            return {
-              id: card.id,
-              name: `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Client',
-              stamps: card.current_stamps,
-              lastVisit: card.last_visit_date || '',
-            };
-          })
-        );
-      }
-
-      const last7Days = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        last7Days.push({
-          date: date.toISOString().split('T')[0],
-          label: date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }),
+        // Set stats
+        setStats({
+          totalCustomers: totalCustomersResult.count || 0,
+          activeCustomers: activeCustomersResult.count || 0,
+          visitsThisMonth: visitsThisMonthResult.count || 0,
+          redemptionsThisMonth: redemptionsThisMonthResult.count || 0,
         });
-      }
 
-      const chartPromises = last7Days.map(async (day) => {
-        const startOfDay = `${day.date}T00:00:00`;
-        const endOfDay = `${day.date}T23:59:59`;
+        // Set recent customers
+        if (recentCardsResult.data) {
+          setRecentCustomers(
+            recentCardsResult.data.map((card) => {
+              const customer = Array.isArray(card.customer) ? card.customer[0] : card.customer;
+              return {
+                id: card.id,
+                name: `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Client',
+                stamps: card.current_stamps,
+                lastVisit: card.last_visit_date || '',
+              };
+            })
+          );
+        }
 
-        const { count } = await supabase
-          .from('visits')
-          .select('*', { count: 'exact', head: true })
-          .eq('merchant_id', merchant.id)
-          .gte('visited_at', startOfDay)
-          .lte('visited_at', endOfDay);
+        // Process chart data - count visits per day
+        const visitCounts: Record<string, number> = {};
+        last7Days.forEach(day => { visitCounts[day.date] = 0; });
 
-        return { date: day.label, visits: count || 0 };
-      });
+        if (last7DaysVisitsResult.data) {
+          last7DaysVisitsResult.data.forEach((visit) => {
+            const visitDate = visit.visited_at.split('T')[0];
+            if (visitCounts[visitDate] !== undefined) {
+              visitCounts[visitDate]++;
+            }
+          });
+        }
 
-      const chartResults = await Promise.all(chartPromises);
-      setChartData(chartResults);
+        setChartData(last7Days.map(day => ({
+          date: day.label,
+          visits: visitCounts[day.date] || 0,
+        })));
+
       } catch (err) {
         console.error('Dashboard error:', err);
         setError('Erreur lors du chargement des données');
@@ -191,8 +210,49 @@ export default function DashboardPage() {
 
   if (merchantLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-8 animate-pulse">
+        {/* Header skeleton */}
+        <div>
+          <div className="h-8 w-64 bg-gray-200 rounded-lg mb-2"></div>
+          <div className="h-4 w-48 bg-gray-100 rounded-lg"></div>
+        </div>
+
+        {/* Stats skeleton */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="p-6 bg-white rounded-3xl shadow-sm">
+              <div className="flex justify-between">
+                <div>
+                  <div className="h-3 w-20 bg-gray-200 rounded mb-3"></div>
+                  <div className="h-8 w-16 bg-gray-300 rounded"></div>
+                </div>
+                <div className="w-12 h-12 bg-gray-100 rounded-2xl"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts skeleton */}
+        <div className="grid gap-8 lg:grid-cols-2">
+          <div className="p-8 bg-white rounded-3xl shadow-sm">
+            <div className="h-6 w-48 bg-gray-200 rounded mb-8"></div>
+            <div className="h-[250px] bg-gray-50 rounded-2xl"></div>
+          </div>
+          <div className="p-8 bg-white rounded-3xl shadow-sm">
+            <div className="h-6 w-32 bg-gray-200 rounded mb-8"></div>
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                  <div className="w-12 h-12 bg-gray-200 rounded-2xl"></div>
+                  <div className="flex-1">
+                    <div className="h-4 w-24 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 w-16 bg-gray-100 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

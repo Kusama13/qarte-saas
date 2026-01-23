@@ -224,7 +224,7 @@ function DashboardLayoutContent({
 
       {/* Floating WhatsApp Help Button */}
       <a
-        href="https://wa.me/33612345678?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20avec%20Qarte"
+        href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20avec%20Qarte"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all duration-300 hover:scale-105 active:scale-95 group"

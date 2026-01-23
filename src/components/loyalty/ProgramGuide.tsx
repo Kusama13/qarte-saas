@@ -352,7 +352,7 @@ export function ProgramGuide({ isOpen, onClose, onComplete }: ProgramGuideProps)
                     Notre équipe est disponible pour vous aider à configurer votre programme de fidélité parfait.
                   </p>
                   <a
-                    href="https://wa.me/33612345678?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20le%20programme%20de%20fid%C3%A9lit%C3%A9%20Qarte"
+                    href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20le%20programme%20de%20fid%C3%A9lit%C3%A9%20Qarte"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-green-500 text-white font-semibold text-sm hover:bg-green-600 transition-colors shadow-md shadow-green-200"
