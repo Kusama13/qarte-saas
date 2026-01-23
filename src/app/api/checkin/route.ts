@@ -61,6 +61,9 @@ const QUARANTINE_THRESHOLDS = {
   article: 2, // 1-2 scans confirmed, 3rd+ pending
 };
 
+// Max articles per scan before quarantine
+const MAX_ARTICLES_PER_SCAN = 3;
+
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
@@ -259,10 +262,14 @@ export async function POST(request: NextRequest) {
     const currentScanNumber = (todayScansCount || 0) + 1;
     const threshold = QUARANTINE_THRESHOLDS[loyaltyMode as keyof typeof QUARANTINE_THRESHOLDS] || 1;
 
+    // Points to add
+    const pointsEarned = loyaltyMode === 'article' ? points_to_add : 1;
+
     // Determine status based on threshold
     let visitStatus: VisitStatus = 'confirmed';
     let flaggedReason: string | null = null;
 
+    // Check 1: Too many scans today
     if (currentScanNumber > threshold) {
       visitStatus = 'pending';
       flaggedReason = loyaltyMode === 'visit'
@@ -270,8 +277,11 @@ export async function POST(request: NextRequest) {
         : `${currentScanNumber}ème scan ce jour`;
     }
 
-    // Points to add
-    const pointsEarned = loyaltyMode === 'article' ? points_to_add : 1;
+    // Check 2: Too many articles at once (only for article mode)
+    if (loyaltyMode === 'article' && pointsEarned > MAX_ARTICLES_PER_SCAN) {
+      visitStatus = 'pending';
+      flaggedReason = `${pointsEarned} articles en une fois (max ${MAX_ARTICLES_PER_SCAN})`;
+    }
 
     // Hash IP for GDPR
     const ipHash = hashIP(ip);

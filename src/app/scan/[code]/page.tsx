@@ -505,7 +505,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Récompense</p>
                 <p className="text-base font-bold text-gray-900 leading-tight truncate">{merchant.reward_description}</p>
-                <p className="text-xs text-gray-500 mt-0.5">Après {merchant.stamps_required} passages</p>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Après {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
+                </p>
               </div>
               <ChevronRight className="w-5 h-5 text-gray-300" />
             </div>
@@ -795,7 +797,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </div>
 
               <h2 className="text-2xl font-black text-gray-900 mb-2">🎉 Félicitations !</h2>
-              <p className="text-gray-500 mb-6">Vous avez atteint {merchant?.stamps_required} passages !</p>
+              <p className="text-gray-500 mb-6">
+                Vous avez atteint {merchant?.stamps_required} {merchant?.loyalty_mode === 'visit' ? 'passages' : (merchant?.product_name || 'articles')} !
+              </p>
 
               {/* Reward Card */}
               <div
@@ -844,7 +848,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   <span className="text-5xl font-black" style={{ color: primaryColor }}>{loyaltyCard?.current_stamps || 0}</span>
                   <span className="text-xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
                 </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">Passages cumulés</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
+                  {merchant?.loyalty_mode === 'visit' ? 'Passages cumulés' : `${merchant?.product_name || 'Articles'} cumulés`}
+                </p>
               </div>
 
               {/* Progress Bar */}
@@ -886,7 +892,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               {/* Info Card */}
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8 text-left">
                 <p className="text-sm text-amber-900 leading-relaxed">
-                  Notre système a détecté plusieurs passages aujourd&apos;hui. Cette mesure protège votre compte contre les utilisations frauduleuses. Votre point sera ajouté dès validation.
+                  {merchant?.loyalty_mode === 'visit'
+                    ? "Notre système a détecté plusieurs passages aujourd'hui. Cette mesure protège votre compte contre les utilisations frauduleuses. Votre passage sera validé dès confirmation par le commerçant."
+                    : `Notre système a détecté une activité inhabituelle. Cette mesure protège votre compte contre les utilisations frauduleuses. Vos ${merchant?.product_name || 'articles'} seront ajoutés dès validation.`
+                  }
                 </p>
               </div>
 

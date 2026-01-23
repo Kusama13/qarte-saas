@@ -317,7 +317,7 @@ export default function CustomerCardPage({
                   <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-white shadow-sm ring-1 ring-black/[0.03]">
                     <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                     <span className="text-[11px] font-bold text-slate-600 uppercase tracking-tight">
-                      {card.current_stamps} / {merchant.stamps_required} points
+                      {card.current_stamps} / {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
                     </span>
                   </div>
                 </div>
@@ -344,7 +344,10 @@ export default function CustomerCardPage({
               </div>
               <div className="flex-1">
                 <p className="font-bold text-gray-900">
-                  {pendingCount} point{pendingCount > 1 ? 's' : ''} en attente
+                  {pendingCount} {merchant.loyalty_mode === 'visit'
+                    ? (pendingCount > 1 ? 'passages' : 'passage')
+                    : (merchant.product_name || (pendingCount > 1 ? 'articles' : 'article'))
+                  } en attente
                 </p>
                 <p className="text-sm text-gray-600">
                   En attente de validation par le commerçant
@@ -664,7 +667,7 @@ export default function CustomerCardPage({
                               : {}
                           }
                         >
-                          {isPending ? '⏳' : isRejected ? '❌' : item.points > 0 ? '+' : ''}{!isPending && !isRejected ? item.points : item.points} pt{Math.abs(item.points) > 1 ? 's' : ''}
+                          {isPending ? '⏳' : isRejected ? '❌' : item.points > 0 ? '+' : ''}{!isPending && !isRejected ? item.points : item.points}
                         </div>
                       </li>
                     );
