@@ -22,7 +22,12 @@ import {
   Sparkles,
   Coffee,
   ShoppingBag,
-  CheckCircle2
+  CheckCircle2,
+  Play,
+  X,
+  Zap,
+  Clock,
+  Headphones
 } from 'lucide-react';
 
 // ============================================
@@ -305,6 +310,59 @@ function HeroSection() {
   );
 }
 
+// Video Showcase Section
+function VideoShowcaseSection() {
+  const videoId = "H3iwVmjN1Og";
+
+  return (
+    <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Découvrez{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+              Qarte en action
+            </span>
+          </h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            2 minutes pour tout comprendre
+          </p>
+        </div>
+
+        {/* Video Embed */}
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-[2rem] blur opacity-25 group-hover:opacity-40 transition duration-500" />
+
+          <div className="relative aspect-video rounded-3xl overflow-hidden bg-gray-900 shadow-2xl border border-gray-200/50">
+            <iframe
+              className="w-full h-full"
+              src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+              title="Présentation Qarte"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        </div>
+
+        {/* Feature Badges */}
+        <div className="mt-12 flex flex-wrap justify-center gap-4 md:gap-8">
+          {[
+            { icon: <Zap className="w-4 h-4" />, label: "Sans téléchargement" },
+            { icon: <Clock className="w-4 h-4" />, label: "Configuration en 5 min" },
+            { icon: <Headphones className="w-4 h-4" />, label: "Support inclus" }
+          ].map((badge, index) => (
+            <div key={index} className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-700 text-sm font-medium shadow-sm">
+              <span className="text-indigo-600">{badge.icon}</span>
+              {badge.label}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // Storytelling Section
 function StorytellingSection() {
   const { ref, isInView } = useInView();
@@ -317,8 +375,12 @@ function StorytellingSection() {
           <div className="flex flex-col md:flex-row items-start gap-8">
             {/* Avatar */}
             <div className="flex-shrink-0">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-violet-100 border-2 border-indigo-200 flex items-center justify-center shadow-lg">
-                <span className="text-indigo-600 font-bold text-2xl">JT</span>
+              <div className="w-24 h-24 rounded-full border-2 border-indigo-200 shadow-lg overflow-hidden">
+                <img
+                  src="/images/Photos/fondateur/Judicael fondateur.png"
+                  alt="Judicaël, Fondateur de Qarte"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
 
@@ -903,7 +965,7 @@ function TestimonialsSection() {
       name: 'Marie L.',
       role: 'Gérante de salon de coiffure',
       content: 'Depuis Qarte, +40% de mes clientes reviennent plus régulièrement. Et surtout : fini les cartes perdues !',
-      initials: 'ML',
+      image: '/images/Photos/temoignage/Marie temoignage.png',
       stat: '+40%',
       statLabel: 'fidélisation'
     },
@@ -911,7 +973,7 @@ function TestimonialsSection() {
       name: 'Thomas D.',
       role: 'Propriétaire de café',
       content: 'La mise en place a pris 5 minutes. Mes clients adorent scanner le QR, c\'est devenu un jeu pour eux.',
-      initials: 'TD',
+      image: '/images/Photos/temoignage/Thomas temoignage.png',
       stat: '5 min',
       statLabel: 'installation'
     },
@@ -919,7 +981,7 @@ function TestimonialsSection() {
       name: 'Sophie M.',
       role: 'Fleuriste',
       content: 'J\'ai enfin des données sur mes clients. Et le côté écologique, ça correspond à mes valeurs.',
-      initials: 'SM',
+      image: '/images/Photos/temoignage/Sophie temoignage.png',
       stat: '0',
       statLabel: 'papier utilisé'
     }
@@ -947,8 +1009,12 @@ function TestimonialsSection() {
               <div className="flex items-center gap-4 mb-6 relative">
                 <div className="relative">
                   <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
-                  <div className="relative w-16 h-16 bg-gradient-to-br from-indigo-100 to-violet-100 rounded-full flex items-center justify-center shadow-sm border border-indigo-50">
-                    <span className="text-indigo-600 font-bold text-lg">{testimonial.initials}</span>
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-sm border border-indigo-50">
+                    <img
+                      src={testimonial.image}
+                      alt={testimonial.name}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
                 <div>
@@ -1391,6 +1457,7 @@ export default function LandingPageV4() {
 
       <main className="overflow-hidden">
         <HeroSection />
+        <VideoShowcaseSection />
         <StorytellingSection />
         <PainPointsSection />
         <FeaturesSection />
