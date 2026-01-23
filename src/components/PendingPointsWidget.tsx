@@ -13,6 +13,7 @@ import {
   Phone,
   Footprints,
   ShoppingBag,
+  HelpCircle,
 } from 'lucide-react';
 import type { PendingVisit, LoyaltyMode } from '@/types';
 
@@ -34,6 +35,7 @@ export default function PendingPointsWidget({ merchantId, loyaltyMode, productNa
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [bulkProcessing, setBulkProcessing] = useState(false);
   const [toast, setToast] = useState<ToastState>({ show: false, message: '', type: 'success' });
+  const [showHelp, setShowHelp] = useState(false);
 
   const fetchVisits = useCallback(async () => {
     try {
@@ -151,6 +153,76 @@ export default function PendingPointsWidget({ merchantId, loyaltyMode, productNa
         </div>
       </div>
 
+      {/* Help Modal */}
+      {showHelp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowHelp(false)}>
+          <div
+            className="relative w-full max-w-lg mx-4 p-6 bg-white rounded-3xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowHelp(false)}
+              className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Qarte Shield</h3>
+                <p className="text-sm text-gray-500">Protection anti-fraude</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                Qarte Shield protège votre programme de fidélité en détectant les comportements suspects.
+              </p>
+
+              <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <Footprints className="w-5 h-5 text-indigo-600" />
+                  <h4 className="font-bold text-indigo-900">Mode Passage</h4>
+                </div>
+                <p className="text-sm text-indigo-700">
+                  Un client ne peut valider qu&apos;<strong>1 passage par jour</strong>. Toute tentative supplémentaire sera mise en quarantaine.
+                </p>
+              </div>
+
+              <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
+                <div className="flex items-center gap-2 mb-2">
+                  <ShoppingBag className="w-5 h-5 text-orange-600" />
+                  <h4 className="font-bold text-orange-900">Mode Article</h4>
+                </div>
+                <ul className="text-sm text-orange-700 space-y-1">
+                  <li>• Maximum <strong>2 scans par jour</strong> par client</li>
+                  <li>• Maximum <strong>3 articles par scan</strong></li>
+                </ul>
+                <p className="text-sm text-orange-700 mt-2">
+                  Tout dépassement sera mis en quarantaine pour validation manuelle.
+                </p>
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-2xl">
+                <p className="text-sm text-gray-600">
+                  <strong>Validez</strong> si le client était réellement présent. <strong>Refusez</strong> en cas de doute ou de fraude suspectée.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowHelp(false)}
+              className="w-full mt-6 py-3 font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-200"
+            >
+              J&apos;ai compris
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-hidden bg-white border border-gray-200 rounded-3xl shadow-xl shadow-gray-100/50">
         {/* Header Section */}
         <div className="relative p-6 border-b border-gray-100 bg-gradient-to-r from-white to-indigo-50/30">
@@ -168,7 +240,16 @@ export default function PendingPointsWidget({ merchantId, loyaltyMode, productNa
                     </span>
                   )}
                 </h2>
-                <p className="text-sm text-gray-500">Qarte Shield - Modération anti-fraude</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-gray-500">Qarte Shield - Modération anti-fraude</p>
+                  <button
+                    onClick={() => setShowHelp(true)}
+                    className="flex items-center gap-1 px-2 py-0.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
+                  >
+                    <HelpCircle className="w-3.5 h-3.5" />
+                    Comment ça fonctionne ?
+                  </button>
+                </div>
               </div>
             </div>
 
