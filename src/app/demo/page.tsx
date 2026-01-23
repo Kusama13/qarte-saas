@@ -144,41 +144,36 @@ export default function DemoPage() {
   return (
     <div className={`min-h-screen bg-gradient-to-br ${business.colors.light} flex flex-col transition-colors duration-500`}>
       {/* Business Type Selector */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg shadow-gray-200/20 pt-5 pb-4 px-4">
-        <div className="max-w-xl mx-auto">
-          <h2 className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-4 text-center">
-            Choisissez un type de commerce
-          </h2>
-          <div className="flex flex-wrap items-center justify-center gap-2.5">
-            {businesses.map((b, index) => {
-              const TabIcon = b.icon;
-              const isActive = index === activeBusinessIndex;
-              return (
-                <button
-                  key={b.id}
-                  onClick={() => setActiveBusinessIndex(index)}
-                  className={`group flex items-center gap-2.5 px-5 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 active:scale-95 ${
-                    isActive
-                      ? `${b.colors.tabActive} shadow-lg ring-1 ring-black/5 scale-105`
-                      : `${b.colors.tabInactive} bg-gray-50/50 hover:bg-gray-100 hover:shadow-sm`
-                  }`}
-                >
-                  <TabIcon className={`w-4 h-4 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} />
-                  <span className="whitespace-nowrap">{b.label}</span>
-                </button>
-              );
-            })}
-          </div>
+      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm py-2 px-3">
+        <div className="max-w-md mx-auto flex items-center justify-center gap-1.5">
+          {businesses.map((b, index) => {
+            const TabIcon = b.icon;
+            const isActive = index === activeBusinessIndex;
+            return (
+              <button
+                key={b.id}
+                onClick={() => setActiveBusinessIndex(index)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium text-xs transition-all duration-200 active:scale-95 ${
+                  isActive
+                    ? `${b.colors.tabActive} shadow-md`
+                    : `${b.colors.tabInactive} bg-gray-50 hover:bg-gray-100`
+                }`}
+              >
+                <TabIcon className="w-3.5 h-3.5" />
+                <span>{b.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center p-4 py-8">
+      <div className="flex-1 flex items-center justify-center p-4 py-4">
         <div className="w-full max-w-md">
           {/* Demo Badge */}
-          <div className="text-center mb-4">
-            <span className={`inline-block px-4 py-1.5 ${business.colors.accent} text-white text-xs font-bold rounded-full uppercase tracking-wider`}>
-              Démonstration {business.label}
+          <div className="text-center mb-2">
+            <span className={`inline-block px-3 py-1 ${business.colors.accent} text-white text-[10px] font-bold rounded-full uppercase tracking-wider`}>
+              Démo {business.label}
             </span>
           </div>
 
@@ -309,37 +304,30 @@ export default function DemoPage() {
           </div>
 
           {/* Info Text */}
-          <p className="text-center text-gray-500 text-sm mt-6 mb-24">
-            Démonstration interactive. <br />
-            Changez de commerce avec les boutons ci-dessus.
+          <p className="text-center text-gray-500 text-xs mt-4 mb-20">
+            Démonstration interactive — Changez de commerce ci-dessus
           </p>
         </div>
       </div>
 
       {/* Bottom CTA Section */}
-      <div className="sticky bottom-0 left-0 right-0 z-40 w-full border-t border-gray-200/50 bg-white/80 py-4 backdrop-blur-xl">
-        <div className="absolute -top-px left-0 right-0 h-px w-full bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
-        <div className="mx-auto max-w-xl px-4">
-          <div className="flex flex-col items-center gap-4">
-            <p className="text-sm font-medium text-gray-600">
-              Prêt à fidéliser vos clients ?
-            </p>
-            <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Link
-                href="/"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:text-gray-900 active:scale-[0.98] sm:w-auto"
-              >
-                <Home className="w-4 h-4" />
-                Retour à l'accueil
-              </Link>
-              <Link
-                href="/onboarding"
-                className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] sm:w-auto"
-              >
-                Essayer Qarte gratuitement
-                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </div>
+      <div className="sticky bottom-0 left-0 right-0 z-40 w-full border-t border-gray-100 bg-white/90 py-3 backdrop-blur-xl">
+        <div className="mx-auto max-w-md px-4">
+          <div className="flex items-center justify-center gap-3">
+            <Link
+              href="/"
+              className="flex items-center justify-center w-11 h-11 rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm transition-all hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 active:scale-95"
+              title="Retour à l'accueil"
+            >
+              <Home className="w-5 h-5" />
+            </Link>
+            <Link
+              href="/onboarding"
+              className="group flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-indigo-500/25 transition-all hover:shadow-xl hover:shadow-indigo-500/30 active:scale-[0.98]"
+            >
+              Essayer Qarte gratuitement
+              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
           </div>
         </div>
       </div>
