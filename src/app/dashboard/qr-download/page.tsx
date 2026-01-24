@@ -386,6 +386,17 @@ Généré par Qarte - La fidélité simplifiée
         </div>
       </div>
 
+      {/* Bottom CTA - Return to Dashboard */}
+      <div className="mt-12 mb-8">
+        <Link
+          href="/dashboard"
+          className="flex items-center justify-center gap-3 w-full py-5 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-bold text-lg rounded-2xl shadow-xl shadow-slate-200 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Retour au tableau de bord
+        </Link>
+      </div>
+
       {/* Hidden high-res flyer for PDF generation */}
       <div className="fixed left-[-9999px] top-0">
         {qrCodeUrl && merchant && (

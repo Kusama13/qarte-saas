@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   QrCode,
@@ -10,6 +11,8 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Smartphone,
   Users,
   TrendingUp,
@@ -22,12 +25,16 @@ import {
   Sparkles,
   Coffee,
   ShoppingBag,
+  UtensilsCrossed,
+  Flower2,
+  Croissant,
   CheckCircle2,
   Play,
   X,
   Zap,
   Clock,
-  Headphones
+  Headphones,
+  ArrowUp
 } from 'lucide-react';
 
 // ============================================
@@ -376,10 +383,13 @@ function StorytellingSection() {
             {/* Avatar */}
             <div className="flex-shrink-0">
               <div className="w-24 h-24 rounded-full border-2 border-indigo-200 shadow-lg overflow-hidden">
-                <img
-                  src="/images/Photos/fondateur/Judicael fondateur.png"
+                <Image
+                  src="/images/fondateur/judicael.webp"
                   alt="Judicaël, Fondateur de Qarte"
+                  width={96}
+                  height={96}
                   className="w-full h-full object-cover"
+                  priority
                 />
               </div>
             </div>
@@ -709,34 +719,27 @@ function ROICalculatorSection() {
   const [clients, setClients] = useState(200);
   const [basket, setBasket] = useState(25);
 
-  // Simple ROI calculation: 15% increase in revenue from loyalty
-  const monthlyRevenue = clients * basket * 4; // 4 visits per month average
+  const monthlyRevenue = clients * basket * 4;
   const gain = Math.round(monthlyRevenue * 0.15);
-  const netGain = gain - 19; // minus Qarte cost
+  const netGain = gain - 19;
 
   return (
-    <section className="py-24 bg-gradient-to-b from-indigo-50 to-white relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0">
-        <div className="animate-blob absolute top-0 left-1/4 w-96 h-96 bg-indigo-200/40 rounded-full blur-3xl" />
-        <div className="animate-blob absolute bottom-0 right-1/4 w-96 h-96 bg-violet-200/40 rounded-full blur-3xl" style={{ animationDelay: '3s' }} />
-      </div>
-
-      <div ref={ref} className="max-w-4xl mx-auto px-6 relative z-10">
-        <div className={`text-center mb-12 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+    <section className="py-16 bg-gradient-to-b from-indigo-50/50 to-white relative overflow-hidden">
+      <div ref={ref} className="max-w-3xl mx-auto px-6 relative z-10">
+        <div className={`text-center mb-8 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
             Calculez votre <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">ROI</span>
           </h2>
-          <p className="text-xl text-gray-600">Combien Qarte peut vous rapporter chaque mois ?</p>
+          <p className="text-gray-600">Estimez vos gains mensuels avec Qarte</p>
         </div>
 
-        <div className={`bg-white border border-gray-200 rounded-3xl p-8 md:p-12 shadow-xl ${isInView ? 'animate-fade-in-up delay-200' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
-            {/* Slider 1: Clients */}
+        <div className={`bg-white border border-gray-100 rounded-2xl p-6 shadow-lg ${isInView ? 'animate-fade-in-up delay-200' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
+          {/* Sliders Row */}
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div>
-              <div className="flex justify-between mb-3">
-                <label className="text-gray-900 font-medium">Nombre de clients</label>
-                <span className="text-indigo-600 font-bold">{clients}</span>
+              <div className="flex justify-between mb-2">
+                <label className="text-gray-700 text-sm font-medium">Clients actifs</label>
+                <span className="text-indigo-600 font-bold text-sm">{clients}</span>
               </div>
               <input
                 type="range"
@@ -745,19 +748,13 @@ function ROICalculatorSection() {
                 step="10"
                 value={clients}
                 onChange={(e) => setClients(Number(e.target.value))}
-                className="w-full h-3 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-indigo-500 [&::-webkit-slider-thumb]:to-violet-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
+                className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-indigo-500 [&::-webkit-slider-thumb]:to-violet-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
               />
-              <div className="flex justify-between text-sm text-gray-400 mt-1">
-                <span>50</span>
-                <span>1000</span>
-              </div>
             </div>
-
-            {/* Slider 2: Basket */}
             <div>
-              <div className="flex justify-between mb-3">
-                <label className="text-gray-900 font-medium">Panier moyen</label>
-                <span className="text-indigo-600 font-bold">{basket}€</span>
+              <div className="flex justify-between mb-2">
+                <label className="text-gray-700 text-sm font-medium">Panier moyen</label>
+                <span className="text-indigo-600 font-bold text-sm">{basket}€</span>
               </div>
               <input
                 type="range"
@@ -766,41 +763,31 @@ function ROICalculatorSection() {
                 step="5"
                 value={basket}
                 onChange={(e) => setBasket(Number(e.target.value))}
-                className="w-full h-3 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-indigo-500 [&::-webkit-slider-thumb]:to-violet-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
+                className="w-full h-2 bg-gray-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-indigo-500 [&::-webkit-slider-thumb]:to-violet-500 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-md"
               />
-              <div className="flex justify-between text-sm text-gray-400 mt-1">
-                <span>10€</span>
-                <span>100€</span>
-              </div>
             </div>
           </div>
 
-          {/* Results */}
-          <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-6 mb-8">
-            <div className="grid md:grid-cols-3 gap-6 text-center">
-              <div>
-                <p className="text-gray-500 text-sm mb-1">Gain estimé</p>
-                <p className="text-4xl font-bold text-emerald-600">+{gain}€</p>
-                <p className="text-gray-400 text-xs">/ mois</p>
+          {/* Compact Results */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-gradient-to-r from-indigo-50 to-violet-50 rounded-xl border border-indigo-100">
+            <div className="flex items-center gap-6">
+              <div className="text-center">
+                <p className="text-xs text-gray-500 mb-0.5">Gain estimé</p>
+                <p className="text-2xl font-bold text-emerald-600">+{gain}€</p>
               </div>
-              <div className="flex items-center justify-center">
-                <span className="text-3xl text-gray-300">-</span>
+              <span className="text-xl text-gray-300">−</span>
+              <div className="text-center">
+                <p className="text-xs text-gray-500 mb-0.5">Coût Qarte</p>
+                <p className="text-2xl font-bold text-gray-700">19€</p>
               </div>
-              <div>
-                <p className="text-gray-500 text-sm mb-1">Coût Qarte</p>
-                <p className="text-4xl font-bold text-gray-900">19€</p>
-                <p className="text-gray-400 text-xs">/ mois</p>
-              </div>
+              <span className="text-xl text-gray-300">=</span>
             </div>
-
-            <div className="mt-6 pt-6 border-t border-indigo-100 text-center">
-              <p className="text-gray-500 text-sm mb-1">Gain net mensuel</p>
-              <p className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">
+            <div className="text-center sm:text-right">
+              <p className="text-xs text-gray-500 mb-0.5">Gain net / mois</p>
+              <p className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-500">
                 +{netGain}€
               </p>
-              <p className="text-emerald-600 text-sm mt-2 font-medium">
-                Soit un ROI de {Math.round((netGain / 19) * 100)}%
-              </p>
+              <p className="text-xs text-emerald-600 font-medium">ROI {Math.round((netGain / 19) * 100)}%</p>
             </div>
           </div>
 
@@ -851,18 +838,18 @@ function StatsBandSection() {
   ];
 
   return (
-    <section ref={ref} className="py-16 bg-gradient-to-r from-indigo-100 via-violet-100 to-rose-100">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid md:grid-cols-3 gap-8">
+    <section ref={ref} className="py-10 bg-gradient-to-r from-indigo-100/70 via-violet-100/70 to-rose-100/70">
+      <div className="max-w-5xl mx-auto px-6">
+        <div className="grid grid-cols-3 gap-4 md:gap-6">
           {stats.map((stat, index) => (
             <div
               key={index}
               className={`text-center ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}
-              style={{ animationDelay: `${index * 0.15}s` }}
+              style={{ animationDelay: `${index * 0.1}s` }}
             >
-              <div className="text-5xl mb-2">{stat.emoji}</div>
-              <div className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-rose-600 mb-2">{stat.value}</div>
-              <div className="text-gray-600 text-lg font-medium">{stat.label}</div>
+              <div className="text-2xl md:text-3xl mb-1">{stat.emoji}</div>
+              <div className="text-2xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-rose-600 mb-0.5">{stat.value}</div>
+              <div className="text-gray-600 text-xs md:text-sm font-medium">{stat.label}</div>
             </div>
           ))}
         </div>
@@ -919,7 +906,8 @@ function PricingSection() {
                 </span>
                 <span className="text-xl font-semibold text-gray-400">/mois</span>
               </div>
-              <p className="text-indigo-600 font-semibold text-sm mt-4 tracking-wide uppercase">Tout inclus, sans engagement</p>
+              <p className="text-gray-500 text-sm mt-2">soit <span className="font-semibold text-indigo-600">~0,63€</span> par jour</p>
+              <p className="text-indigo-600 font-semibold text-sm mt-3 tracking-wide uppercase">Tout inclus, sans engagement</p>
               <p className="text-emerald-600 font-medium text-sm mt-2">✨ Inscription sans carte bancaire</p>
             </div>
 
@@ -956,16 +944,17 @@ function PricingSection() {
   );
 }
 
-// Testimonials Section
+// Testimonials Section - Stacked Card Carousel
 function TestimonialsSection() {
   const { ref, isInView } = useInView();
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const testimonials = [
     {
       name: 'Marie L.',
       role: 'Gérante de salon de coiffure',
       content: 'Depuis Qarte, +40% de mes clientes reviennent plus régulièrement. Et surtout : fini les cartes perdues !',
-      image: '/images/Photos/temoignage/Marie temoignage.png',
+      image: '/images/temoignages/marie.webp',
       stat: '+40%',
       statLabel: 'fidélisation'
     },
@@ -973,7 +962,7 @@ function TestimonialsSection() {
       name: 'Thomas D.',
       role: 'Propriétaire de café',
       content: 'La mise en place a pris 5 minutes. Mes clients adorent scanner le QR, c\'est devenu un jeu pour eux.',
-      image: '/images/Photos/temoignage/Thomas temoignage.png',
+      image: '/images/temoignages/thomas.webp',
       stat: '5 min',
       statLabel: 'installation'
     },
@@ -981,14 +970,22 @@ function TestimonialsSection() {
       name: 'Sophie M.',
       role: 'Fleuriste',
       content: 'J\'ai enfin des données sur mes clients. Et le côté écologique, ça correspond à mes valeurs.',
-      image: '/images/Photos/temoignage/Sophie temoignage.png',
+      image: '/images/temoignages/sophie.webp',
       stat: '0',
       statLabel: 'papier utilisé'
     }
   ];
 
+  const nextSlide = () => {
+    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  };
+
   return (
-    <section className="py-24 bg-gray-50">
+    <section className="py-24 bg-gray-50 overflow-hidden">
       <div ref={ref} className="max-w-6xl mx-auto px-6">
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -997,47 +994,131 @@ function TestimonialsSection() {
           <p className="text-xl text-gray-600">Des commerçants comme vous, qui ont choisi la simplicité.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
-            <div
-              key={index}
-              className={`relative bg-white p-8 rounded-[2rem] shadow-xl hover:shadow-2xl transition-all duration-500 group ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}
-              style={{ animationDelay: `${(index + 1) * 0.15}s` }}
+        {/* Stacked Cards Container */}
+        <div className={`relative max-w-lg mx-auto ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
+          {/* Cards Stack */}
+          <div className="relative h-[420px] flex items-center justify-center">
+            {testimonials.map((testimonial, index) => {
+              const offset = index - currentIndex;
+              const absOffset = Math.abs(offset);
+              const isActive = index === currentIndex;
+
+              // Calculate position for stacked effect
+              let translateY = 0;
+              let translateX = 0;
+              let scale = 1;
+              let zIndex = testimonials.length - absOffset;
+              let opacity = 1;
+
+              if (offset === 0) {
+                // Active card
+                translateY = 0;
+                scale = 1;
+                zIndex = 10;
+              } else if (offset === 1 || offset === -testimonials.length + 1) {
+                // Next card (behind, slightly down and right)
+                translateY = 20;
+                translateX = 15;
+                scale = 0.95;
+                zIndex = 5;
+                opacity = 0.7;
+              } else if (offset === -1 || offset === testimonials.length - 1) {
+                // Previous card (behind, slightly down and left)
+                translateY = 20;
+                translateX = -15;
+                scale = 0.95;
+                zIndex = 5;
+                opacity = 0.7;
+              } else {
+                // Hidden cards
+                translateY = 40;
+                scale = 0.9;
+                zIndex = 1;
+                opacity = 0;
+              }
+
+              return (
+                <div
+                  key={index}
+                  className="absolute w-full transition-all duration-500 ease-out"
+                  style={{
+                    transform: `translateY(${translateY}px) translateX(${translateX}px) scale(${scale})`,
+                    zIndex,
+                    opacity,
+                    pointerEvents: isActive ? 'auto' : 'none'
+                  }}
+                >
+                  <div className="relative bg-white p-8 rounded-[2rem] shadow-xl group">
+                    <Quote className="absolute top-8 right-8 w-10 h-10 text-indigo-500/10 rotate-180" />
+
+                    <div className="flex items-center gap-4 mb-6 relative">
+                      <div className="relative">
+                        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full blur opacity-20" />
+                        <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-sm border border-indigo-50">
+                          <Image
+                            src={testimonial.image}
+                            alt={testimonial.name}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900 leading-none">{testimonial.name}</h4>
+                        <p className="text-gray-500 text-xs mt-1">{testimonial.role}</p>
+                      </div>
+                    </div>
+
+                    <p className="text-gray-600 mb-8 leading-relaxed italic relative z-10 min-h-[60px]">&quot;{testimonial.content}&quot;</p>
+
+                    <div className="bg-gradient-to-r from-indigo-50 to-violet-50 p-4 rounded-2xl flex items-center gap-3 border border-indigo-100/50">
+                      <span className="text-2xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                        {testimonial.stat}
+                      </span>
+                      <span className="text-indigo-900/60 text-xs font-bold uppercase tracking-wider">{testimonial.statLabel}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Navigation Arrows */}
+          <div className="flex items-center justify-center gap-4 mt-8">
+            <button
+              onClick={prevSlide}
+              className="w-12 h-12 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center hover:bg-indigo-50 hover:border-indigo-200 transition-all duration-300 hover:scale-110 active:scale-95"
+              aria-label="Témoignage précédent"
             >
-              <Quote className="absolute top-8 right-8 w-10 h-10 text-indigo-500/10 rotate-180 transition-transform group-hover:scale-110 duration-500" />
+              <ChevronLeft className="w-5 h-5 text-gray-600" />
+            </button>
 
-              <div className="flex items-center gap-4 mb-6 relative">
-                <div className="relative">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full blur opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden shadow-sm border border-indigo-50">
-                    <img
-                      src={testimonial.image}
-                      alt={testimonial.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex gap-0.5 mb-1.5">
-                    {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <h4 className="font-bold text-gray-900 leading-none">{testimonial.name}</h4>
-                  <p className="text-gray-500 text-xs mt-1">{testimonial.role}</p>
-                </div>
-              </div>
-
-              <p className="text-gray-600 mb-8 leading-relaxed italic relative z-10">&quot;{testimonial.content}&quot;</p>
-
-              <div className="bg-gradient-to-r from-indigo-50 to-violet-50 p-4 rounded-2xl flex items-center gap-3 border border-indigo-100/50 group-hover:border-indigo-200/50 transition-colors duration-300">
-                <span className="text-2xl font-black bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
-                  {testimonial.stat}
-                </span>
-                <span className="text-indigo-900/60 text-xs font-bold uppercase tracking-wider">{testimonial.statLabel}</span>
-              </div>
+            {/* Dot Indicators */}
+            <div className="flex gap-2">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                    index === currentIndex
+                      ? 'bg-indigo-600 w-8'
+                      : 'bg-gray-300 hover:bg-gray-400'
+                  }`}
+                  aria-label={`Aller au témoignage ${index + 1}`}
+                />
+              ))}
             </div>
-          ))}
+
+            <button
+              onClick={nextSlide}
+              className="w-12 h-12 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center hover:bg-indigo-50 hover:border-indigo-200 transition-all duration-300 hover:scale-110 active:scale-95"
+              aria-label="Témoignage suivant"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -1083,27 +1164,49 @@ function FAQSection() {
         </div>
 
         {/* FAQ Accordion */}
-        <div className={`space-y-4 mb-16 ${isInView ? 'animate-fade-in-up delay-200' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
-          {faqs.map((faq, index) => (
-            <div key={index} className="border border-gray-200 rounded-2xl overflow-hidden">
-              <button
-                onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                className="w-full px-6 py-5 flex items-center justify-between bg-white hover:bg-gray-50 transition-colors duration-200 text-left"
+        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 mb-16 ${isInView ? 'animate-fade-in-up delay-200' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
+          {faqs.map((faq, index) => {
+            const isOpen = openIndex === index;
+            return (
+              <div
+                key={index}
+                className={`group transition-all duration-300 ease-out rounded-[2rem] border ${
+                  isOpen
+                    ? 'border-indigo-200 bg-white shadow-xl shadow-indigo-500/5 ring-1 ring-indigo-50'
+                    : 'border-gray-100 bg-white/50 backdrop-blur-sm hover:border-indigo-100 hover:bg-white hover:shadow-lg hover:shadow-gray-200/40'
+                }`}
               >
-                <span className="font-semibold text-gray-900">{faq.question}</span>
-                {openIndex === index ? (
-                  <ChevronUp className="w-5 h-5 text-indigo-500 flex-shrink-0" />
-                ) : (
-                  <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                )}
-              </button>
-              {openIndex === index && (
-                <div className="px-6 pb-5">
-                  <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
-                </div>
-              )}
-            </div>
-          ))}
+                <button
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                  className="w-full px-7 py-6 text-left focus:outline-none"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex gap-4">
+                      <div className={`mt-0.5 flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+                        isOpen ? 'bg-indigo-600 text-white rotate-12 scale-110' : 'bg-gray-100 text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500'
+                      }`}>
+                        {index + 1}
+                      </div>
+                      <span className={`font-bold text-lg leading-tight transition-colors duration-300 ${isOpen ? 'text-indigo-950' : 'text-gray-900'}`}>
+                        {faq.question}
+                      </span>
+                    </div>
+                    <div className={`mt-1.5 transition-all duration-500 transform ${isOpen ? 'rotate-180 text-indigo-600' : 'text-gray-400'}`}>
+                      <ChevronDown className="w-5 h-5" />
+                    </div>
+                  </div>
+
+                  <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100 mt-5' : 'grid-rows-[0fr] opacity-0'}`}>
+                    <div className="overflow-hidden">
+                      <p className="text-gray-600 leading-relaxed pl-12 pr-4 border-l-2 border-indigo-100">
+                        {faq.answer}
+                      </p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            );
+          })}
         </div>
 
         {/* WhatsApp Contact Block */}
@@ -1446,6 +1549,110 @@ function FloatingWhatsAppButton() {
   );
 }
 
+// Scroll to Top Button
+function ScrollToTopButton() {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const toggleVisibility = () => {
+      setIsVisible(window.scrollY > 400);
+    };
+
+    window.addEventListener('scroll', toggleVisibility);
+    return () => window.removeEventListener('scroll', toggleVisibility);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  return (
+    <button
+      onClick={scrollToTop}
+      className={`fixed bottom-6 right-6 z-50 w-12 h-12 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-50 hover:border-indigo-200 hover:scale-110 transition-all duration-300 ${
+        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+      }`}
+      aria-label="Retour en haut"
+    >
+      <ArrowUp className="w-5 h-5 text-gray-600" />
+    </button>
+  );
+}
+
+// Trust Banner - Scrolling Businesses
+function TrustBanner() {
+  const businesses = [
+    { name: "Café du Marché", icon: Coffee },
+    { name: "Bistrot Martin", icon: UtensilsCrossed },
+    { name: "Institut Beauté", icon: Scissors },
+    { name: "Fleurs & Jardins", icon: Flower2 },
+    { name: "Boulangerie Tradition", icon: Croissant },
+    { name: "Le Petit Noir", icon: Coffee },
+    { name: "La Table d'Or", icon: UtensilsCrossed },
+    { name: "Salon Élégance", icon: Scissors },
+    { name: "La Rose Blanche", icon: Flower2 },
+    { name: "Au Pain Doré", icon: Croissant },
+    { name: "Café Lumière", icon: Coffee },
+    { name: "Chez Marcel", icon: UtensilsCrossed },
+    { name: "L'Atelier Coiffure", icon: Scissors },
+    { name: "Pétales d'Amour", icon: Flower2 },
+  ];
+
+  const firstRow = businesses.slice(0, Math.ceil(businesses.length / 2));
+  const secondRow = businesses.slice(Math.ceil(businesses.length / 2));
+
+  const MarqueeRow = ({ items, direction = 1 }: { items: typeof businesses; direction?: number }) => (
+    <div className="flex overflow-hidden select-none">
+      <motion.div
+        initial={{ x: direction > 0 ? 0 : "-50%" }}
+        animate={{ x: direction > 0 ? "-50%" : "0%" }}
+        transition={{
+          duration: 35,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+        className="flex flex-nowrap gap-4 py-3"
+      >
+        {[...items, ...items].map((item, idx) => (
+          <div
+            key={idx}
+            className="flex items-center gap-2.5 px-4 py-2 bg-white border border-gray-100 rounded-full shadow-sm hover:border-indigo-200 hover:shadow-md transition-all duration-300"
+          >
+            <item.icon className="w-4 h-4 text-indigo-500" />
+            <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
+              {item.name}
+            </span>
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+
+  return (
+    <section className="relative py-12 bg-gradient-to-b from-white to-gray-50/80 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6 mb-8 text-center">
+        <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">
+          Ils nous font confiance
+        </p>
+      </div>
+
+      <div className="relative">
+        {/* Gradient Overlays */}
+        <div className="absolute inset-y-0 left-0 w-24 md:w-40 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+        <div className="absolute inset-y-0 right-0 w-24 md:w-40 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+
+        <div className="space-y-3">
+          <MarqueeRow items={firstRow} direction={1} />
+          <MarqueeRow items={secondRow} direction={-1} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ============================================
 // MAIN PAGE COMPONENT
 // ============================================
@@ -1457,6 +1664,7 @@ export default function LandingPageV4() {
 
       <main className="overflow-hidden">
         <HeroSection />
+        <TrustBanner />
         <VideoShowcaseSection />
         <StorytellingSection />
         <PainPointsSection />
@@ -1470,7 +1678,7 @@ export default function LandingPageV4() {
         <FooterSection />
       </main>
 
-      <FloatingWhatsAppButton />
+      <ScrollToTopButton />
     </>
   );
 }
