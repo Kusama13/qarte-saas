@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Helper to get Supabase client at runtime
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
+
   try {
     const { subscription, customerId, merchantId } = await request.json();
 
@@ -62,6 +67,8 @@ export async function POST(request: NextRequest) {
 
 // DELETE - Unsubscribe
 export async function DELETE(request: NextRequest) {
+  const supabase = getSupabase();
+
   try {
     const { endpoint } = await request.json();
 

@@ -2,18 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-// Configure web-push with VAPID keys
-webpush.setVapidDetails(
-  'mailto:contact@qarte.fr',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
-
 interface PushPayload {
   title: string;
   body: string;
@@ -23,6 +11,19 @@ interface PushPayload {
 }
 
 export async function POST(request: NextRequest) {
+  // Initialize Supabase client at runtime
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+
+  // Configure web-push with VAPID keys at runtime
+  webpush.setVapidDetails(
+    'mailto:contact@qarte.fr',
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  );
+
   try {
     const { merchantId, customerId, payload } = await request.json() as {
       merchantId?: string;
