@@ -450,34 +450,72 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         {step === 'phone' && (
           <div className="animate-fade-in">
             {/* Welcome Banner */}
-            <div
-              className="relative mb-6 overflow-hidden rounded-3xl p-6 shadow-xl"
-              style={{
-                background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor || primaryColor} 100%)`,
-              }}
-            >
-              {/* Decorative Background Elements */}
-              <div className="absolute -right-4 -top-4 opacity-10">
-                <Gift size={120} strokeWidth={1.5} className="text-white" />
+            <div className="relative mb-6 overflow-hidden rounded-3xl bg-white shadow-xl border border-gray-100">
+              {/* Logo/Image Section - 70% of card */}
+              <div
+                className="relative h-44 flex items-center justify-center overflow-hidden"
+                style={{ backgroundColor: `${primaryColor}08` }}
+              >
+                {/* Subtle decorative circles */}
+                <div
+                  className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-10"
+                  style={{ backgroundColor: primaryColor }}
+                />
+                <div
+                  className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full opacity-5"
+                  style={{ backgroundColor: secondaryColor || primaryColor }}
+                />
+
+                {/* Logo or Initial */}
+                {merchant.logo_url ? (
+                  <div className="relative">
+                    <div
+                      className="absolute -inset-2 rounded-3xl blur-xl opacity-20"
+                      style={{ backgroundColor: primaryColor }}
+                    />
+                    <img
+                      src={merchant.logo_url}
+                      alt={merchant.shop_name}
+                      className="relative w-28 h-28 rounded-2xl object-cover shadow-lg border-4 border-white"
+                    />
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <div
+                      className="absolute -inset-3 rounded-full blur-xl opacity-20"
+                      style={{ backgroundColor: primaryColor }}
+                    />
+                    <div
+                      className="relative w-28 h-28 rounded-full flex items-center justify-center shadow-lg border-4 border-white"
+                      style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
+                    >
+                      <span className="text-5xl font-black text-white">{merchant.shop_name[0]}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="relative z-10 flex flex-col items-center text-center">
-                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md ring-1 ring-white/30">
-                  <Sparkles className="h-5 w-5 text-white" />
-                </div>
-
-                <h2 className="mb-2 text-lg font-bold tracking-tight text-white drop-shadow-sm">
+              {/* Content Section */}
+              <div className="p-5 text-center">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Programme Fidélité</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-3">
                   Bienvenue chez {merchant.shop_name} !
                 </h2>
 
-                <p className="text-sm text-white/90 mb-2">
-                  Nous récompensons votre fidélité
-                </p>
-
-                <div className="inline-flex items-center rounded-full bg-white/15 px-4 py-2 backdrop-blur-sm border border-white/20">
-                  <Gift className="w-4 h-4 text-white mr-2" />
-                  <span className="text-xs font-semibold text-white">
-                    {merchant.reward_description} après {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
+                {/* Reward Badge */}
+                <div
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl"
+                  style={{ backgroundColor: `${primaryColor}10` }}
+                >
+                  <Gift className="w-5 h-5" style={{ color: primaryColor }} />
+                  <span className="text-sm font-semibold text-gray-700">
+                    {merchant.reward_description}
+                  </span>
+                  <span
+                    className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
                   </span>
                 </div>
               </div>
@@ -527,24 +565,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   )}
                 </button>
               </form>
-            </div>
-
-            {/* Reward Preview Card */}
-            <div className="mt-6 bg-white rounded-3xl shadow-lg border border-gray-100 p-5 flex items-center gap-4">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
-                style={{ backgroundColor: `${primaryColor}15` }}
-              >
-                <Gift className="w-7 h-7" style={{ color: primaryColor }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Récompense</p>
-                <p className="text-base font-bold text-gray-900 leading-tight truncate">{merchant.reward_description}</p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Après {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
-                </p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-300" />
             </div>
           </div>
         )}
