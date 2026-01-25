@@ -123,6 +123,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    console.log('Sending to', subscriptions.length, 'subscriptions');
+
     // Send notifications to all subscriptions
     const results = await Promise.allSettled(
       subscriptions.map(async (sub) => {
@@ -133,6 +135,8 @@ export async function POST(request: NextRequest) {
             auth: sub.auth,
           },
         };
+
+        console.log('Sending to endpoint:', sub.endpoint?.substring(0, 50) + '...');
 
         try {
           await webpush.sendNotification(
@@ -147,6 +151,8 @@ export async function POST(request: NextRequest) {
           );
           return { success: true, endpoint: sub.endpoint };
         } catch (err: any) {
+          console.error('Push send error for endpoint:', sub.endpoint?.substring(0, 50));
+          console.error('Error details:', err.statusCode, err.message, err.body);
           // If subscription is expired/invalid, delete it
           if (err.statusCode === 404 || err.statusCode === 410) {
             await supabase
@@ -170,10 +176,12 @@ export async function POST(request: NextRequest) {
       failed,
       total: subscriptions.length,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Send push error:', error);
+    console.error('Error stack:', error?.stack);
+    console.error('Error message:', error?.message);
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Erreur serveur', details: error?.message || 'Unknown error' },
       { status: 500 }
     );
   }
