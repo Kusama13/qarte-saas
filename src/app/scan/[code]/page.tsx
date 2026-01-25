@@ -23,6 +23,8 @@ import {
   QrCode,
   Star,
   HelpCircle,
+  Bell,
+  BellOff,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -30,6 +32,7 @@ import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validateFrenchPhone, getTodayInParis } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
+import { isPushSupported, subscribeToPush, getPermissionStatus } from '@/lib/push';
 
 type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'article-select' | 'pending' | 'banned';
 
@@ -68,6 +71,12 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   // How it works accordion
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
+  // Push notifications
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
+  const [pushSubscribing, setPushSubscribing] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+
   useEffect(() => {
     const fetchMerchant = async () => {
       const { data } = await supabase
@@ -88,6 +97,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     if (savedPhone) {
       setPhoneNumber(savedPhone);
     }
+
+    // Check push support
+    setPushSupported(isPushSupported());
+    setPushPermission(getPermissionStatus());
+
+    // Check if already subscribed
+    const checkPushSubscription = localStorage.getItem(`qarte_push_${code}`);
+    if (checkPushSubscription === 'subscribed') {
+      setPushSubscribed(true);
+    }
   }, [code]);
 
   // Undo timer countdown
@@ -106,6 +125,29 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     }
     return () => clearInterval(interval);
   }, [canUndo, undoTimer]);
+
+  const handlePushSubscribe = async () => {
+    if (!merchant || !customer) return;
+
+    setPushSubscribing(true);
+    try {
+      const result = await subscribeToPush(customer.id, merchant.id);
+      if (result.success) {
+        setPushSubscribed(true);
+        setPushPermission('granted');
+        localStorage.setItem(`qarte_push_${code}`, 'subscribed');
+      } else {
+        console.error('Push subscribe failed:', result.error);
+        if (result.error === 'Permission refusée') {
+          setPushPermission('denied');
+        }
+      }
+    } catch (error) {
+      console.error('Push subscribe error:', error);
+    } finally {
+      setPushSubscribing(false);
+    }
+  };
 
   const triggerConfetti = useCallback(() => {
     if (!merchant) return;
@@ -926,6 +968,63 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 </button>
               </Link>
             </div>
+
+            {/* Push Notification Prompt */}
+            {pushSupported && !pushSubscribed && pushPermission !== 'denied' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mt-4 bg-white rounded-2xl shadow-lg border border-gray-100 p-5 overflow-hidden"
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${primaryColor}15` }}
+                  >
+                    <Bell className="w-6 h-6" style={{ color: primaryColor }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 mb-1">Ne manquez rien !</h3>
+                    <p className="text-sm text-gray-500 mb-3">
+                      Recevez une alerte quand vous êtes proche de votre récompense
+                    </p>
+                    <button
+                      onClick={handlePushSubscribe}
+                      disabled={pushSubscribing}
+                      className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      {pushSubscribing ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Bell className="w-4 h-4" />
+                          Activer les notifications
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Push subscribed confirmation */}
+            {pushSubscribed && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mt-4 bg-emerald-50 rounded-2xl p-4 flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <Check className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <p className="font-semibold text-emerald-800 text-sm">Notifications activées</p>
+                  <p className="text-xs text-emerald-600">Vous serez alerté de vos récompenses</p>
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
 
