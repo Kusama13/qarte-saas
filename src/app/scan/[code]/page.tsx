@@ -429,110 +429,110 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const secondaryColor = merchant.secondary_color;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${primaryColor}15)` }}>
-      <main className="flex-1 px-4 py-6 pb-8 mx-auto max-w-md w-full">
+    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${primaryColor}12)` }}>
+      <main className="flex-1 px-4 pt-4 pb-4 mx-auto max-w-md w-full">
         {step === 'phone' && (
           <div className="animate-fade-in">
             {/* Welcome Banner */}
-            <div className="relative mb-6 overflow-hidden rounded-3xl shadow-xl border border-gray-100">
-              {/* Logo/Image Section - Large with gradient background */}
+            <div className="relative mb-4 overflow-hidden rounded-3xl shadow-xl border border-gray-100">
+              {/* Logo/Image Section - Compact with gradient background */}
               <div
-                className="relative h-56 flex items-center justify-center overflow-hidden"
-                style={{ background: `linear-gradient(135deg, ${primaryColor}25, ${secondaryColor || primaryColor}35)` }}
+                className="relative h-40 flex items-center justify-center overflow-hidden"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}30, ${secondaryColor || primaryColor}40)` }}
               >
                 {/* Decorative gradient circles */}
                 <div
-                  className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-30"
+                  className="absolute -top-12 -right-12 w-36 h-36 rounded-full opacity-30"
                   style={{ background: `radial-gradient(circle, ${primaryColor}, transparent)` }}
                 />
                 <div
-                  className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full opacity-25"
+                  className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full opacity-25"
                   style={{ background: `radial-gradient(circle, ${secondaryColor || primaryColor}, transparent)` }}
                 />
-                <div
-                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full opacity-10"
-                  style={{ background: `radial-gradient(circle, white, transparent)` }}
-                />
 
-                {/* Logo or Initial - Large */}
+                {/* Logo or Initial */}
                 {merchant.logo_url ? (
                   <div className="relative">
                     <div
-                      className="absolute -inset-4 rounded-3xl blur-2xl opacity-40"
+                      className="absolute -inset-3 rounded-2xl blur-xl opacity-40"
                       style={{ backgroundColor: primaryColor }}
                     />
                     <img
                       src={merchant.logo_url}
                       alt={merchant.shop_name}
-                      className="relative w-40 h-40 rounded-3xl object-cover shadow-2xl border-4 border-white/80"
+                      className="relative w-28 h-28 rounded-2xl object-cover shadow-2xl border-3 border-white/90"
                     />
                   </div>
                 ) : (
                   <div className="relative">
                     <div
-                      className="absolute -inset-4 rounded-full blur-2xl opacity-40"
+                      className="absolute -inset-3 rounded-full blur-xl opacity-40"
                       style={{ backgroundColor: primaryColor }}
                     />
                     <div
-                      className="relative w-40 h-40 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/80"
+                      className="relative w-28 h-28 rounded-full flex items-center justify-center shadow-2xl border-3 border-white/90"
                       style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
                     >
-                      <span className="text-6xl font-black text-white drop-shadow-lg">{merchant.shop_name[0]}</span>
+                      <span className="text-5xl font-black text-white drop-shadow-lg">{merchant.shop_name[0]}</span>
                     </div>
                   </div>
                 )}
               </div>
 
               {/* Content Section */}
-              <div className="relative bg-white p-6 text-center overflow-hidden">
+              <div className="relative bg-white pt-5 pb-4 px-6 text-center overflow-hidden">
                 {/* Subtle Gift icon background */}
                 <Gift
-                  className="absolute -right-6 -bottom-6 w-32 h-32 opacity-[0.04]"
+                  className="absolute -right-4 -bottom-4 w-24 h-24 opacity-[0.03]"
                   style={{ color: primaryColor }}
                 />
 
                 <div className="relative z-10">
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">
-                    Bienvenue chez {merchant.shop_name} !
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
+                    Bienvenue chez <span style={{ color: primaryColor }}>{merchant.shop_name}</span>
                   </h2>
-                  <p className="text-sm text-gray-500 mb-4">
-                    Nous récompensons votre fidélité
-                  </p>
 
-                  {/* Reward Badge */}
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <Sparkles className="w-4 h-4" style={{ color: primaryColor }} />
+                    <p className="text-lg font-extrabold text-gray-900 tracking-tight">
+                      Nous récompensons votre fidélité
+                    </p>
+                    <Sparkles className="w-4 h-4" style={{ color: primaryColor }} />
+                  </div>
+
+                  {/* Reward Badge - Compact & Refined */}
                   <div
-                    className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl shadow-sm border"
-                    style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
+                    className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full border shadow-sm transition-transform active:scale-95"
+                    style={{ backgroundColor: `${primaryColor}05`, borderColor: `${primaryColor}15` }}
                   >
-                    <Gift className="w-5 h-5" style={{ color: primaryColor }} />
-                    <span className="text-sm font-semibold text-gray-700">
+                    <Gift className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                    <span className="text-[13px] font-bold text-gray-800">
                       {merchant.reward_description}
                     </span>
-                    <span className="text-xs text-gray-400 mx-1">après</span>
-                    <span
-                      className="text-xs font-bold px-2.5 py-1 rounded-full text-white shadow-sm"
-                      style={{ backgroundColor: primaryColor }}
-                    >
-                      {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
-                    </span>
+                    <div className="flex items-center gap-1.5 pl-2 border-l border-gray-200">
+                      <span className="text-[10px] font-black px-1.5 py-0.5 rounded text-white shadow-sm" style={{ backgroundColor: primaryColor }}>
+                        {merchant.stamps_required}
+                      </span>
+                      <span className="text-[9px] font-bold uppercase tracking-tighter text-gray-400">
+                        {merchant.loyalty_mode === 'visit' ? 'Visites' : (merchant.product_name || 'Articles')}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* How it works Accordion */}
-            <div className="mb-6">
-              <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+            <div className="mb-4">
+              <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
                 <button
                   onClick={() => setIsHowItWorksOpen(!isHowItWorksOpen)}
-                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50/50 transition-colors focus:outline-none group"
+                  className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50/50 transition-colors focus:outline-none group"
                   aria-expanded={isHowItWorksOpen}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gray-50 text-gray-400 group-hover:text-gray-600 transition-colors">
-                      <HelpCircle className="w-4 h-4" />
-                    </div>
-                    <span className="font-semibold text-gray-700 text-sm">Comment ça marche ?</span>
+                  <div className="flex items-center gap-2">
+                    <HelpCircle className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                    <span className="font-medium text-gray-600 text-sm">Comment ça marche ?</span>
                   </div>
                   <motion.div
                     animate={{ rotate: isHowItWorksOpen ? 180 : 0 }}
@@ -601,21 +601,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </div>
             </div>
 
-            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
-              <div className="text-center mb-8">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Programme Fidélité</p>
-                <h2 className="text-2xl font-black text-gray-900">Validez votre passage</h2>
-              </div>
-
-              <form onSubmit={handlePhoneSubmit} className="space-y-6">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 overflow-hidden">
+              <form onSubmit={handlePhoneSubmit} className="space-y-3">
                 {error && (
-                  <div className="p-4 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl">
+                  <div className="p-3 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl">
                     {error}
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1">Numéro de téléphone</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-gray-600 ml-1">Numéro de téléphone</label>
                   <div className="relative group">
                     <Input
                       type="tel"
@@ -623,16 +618,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       required
-                      className="h-14 text-lg pl-12 bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl transition-all"
+                      className="h-12 text-base pl-11 bg-gray-50/50 border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-200 rounded-xl transition-all"
                     />
-                    <Phone className="absolute w-5 h-5 text-gray-400 left-4 top-1/2 transform -translate-y-1/2 group-focus-within:text-indigo-600 transition-colors" />
+                    <Phone className="absolute w-4 h-4 text-gray-400 left-4 top-1/2 transform -translate-y-1/2 group-focus-within:text-gray-600 transition-colors" />
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full h-12 text-base font-bold rounded-xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
                 >
                   {submitting ? (
@@ -1132,19 +1127,14 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         )}
       </main>
 
-      {/* Qarte Footer */}
-      <footer className="py-6 text-center">
-        <div className="flex items-center justify-center gap-1.5 mb-2">
-          <span className="text-[10px] font-medium text-gray-400">Créé avec</span>
-          <span className="text-xs">❤️</span>
-          <span className="text-[10px] font-medium text-gray-400">en France</span>
-        </div>
-        <Link href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
-          <div className="w-5 h-5 bg-gradient-to-br from-indigo-600 to-violet-600 rounded flex items-center justify-center shadow-md shadow-indigo-200">
-            <span className="text-white text-[8px] font-black italic">Q</span>
+      {/* Qarte Footer - Compact */}
+      <footer className="py-3 text-center">
+        <Link href="/" className="inline-flex items-center gap-1 group transition-all duration-300 hover:opacity-70">
+          <div className="w-4 h-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded flex items-center justify-center">
+            <span className="text-white text-[6px] font-black italic">Q</span>
           </div>
-          <span className="text-sm font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-            QARTE
+          <span className="text-xs font-bold tracking-tight text-gray-400">
+            Propulsé par QARTE
           </span>
         </Link>
       </footer>
