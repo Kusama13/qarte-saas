@@ -29,7 +29,7 @@ import {
   Share,
   PlusSquare,
 } from 'lucide-react';
-import { isPushSupported, subscribeToPush, getPermissionStatus } from '@/lib/push';
+import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
 import { Button, Modal } from '@/components/ui';
 import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus } from '@/types';
@@ -113,6 +113,8 @@ export default function CustomerCardPage({
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const [iOSVersion, setIOSVersion] = useState(0);
+  const [showIOSVersionWarning, setShowIOSVersionWarning] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -154,18 +156,24 @@ export default function CustomerCardPage({
     fetchData();
 
     // Check push support
-    setPushSupported(isPushSupported());
+    const standardPushSupported = isPushSupported();
+    const iOS = isIOSDevice();
+    const standalone = isStandalonePWA();
+    const iosVersion = getIOSVersion();
+    const iosPushSupported = isIOSPushSupported();
+
+    setIsIOS(iOS);
+    setIsStandalone(standalone);
+    setIOSVersion(iosVersion);
+
+    // On iOS in standalone mode, check if iOS version supports push
+    if (iOS && standalone) {
+      setPushSupported(iosPushSupported || standardPushSupported);
+    } else {
+      setPushSupported(standardPushSupported);
+    }
+
     setPushPermission(getPermissionStatus());
-
-    // Detect iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    setIsIOS(isIOSDevice);
-
-    // Check if running as standalone PWA
-    const isStandalonePWA = window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
-    setIsStandalone(isStandalonePWA);
 
     // Check if already subscribed
     const checkPushSubscription = localStorage.getItem(`qarte_push_${merchantId}`);
@@ -216,6 +224,12 @@ export default function CustomerCardPage({
       return;
     }
 
+    // For iOS in standalone mode with old version, show warning
+    if (isIOS && isStandalone && iOSVersion > 0 && iOSVersion < 16) {
+      setShowIOSVersionWarning(true);
+      return;
+    }
+
     setPushSubscribing(true);
     try {
       const result = await subscribeToPush(card.customer.id, card.merchant.id);
@@ -228,9 +242,17 @@ export default function CustomerCardPage({
         if (result.error === 'Permission refusée') {
           setPushPermission('denied');
         }
+        // Show iOS version warning if push failed on iOS standalone
+        if (isIOS && isStandalone && result.error === 'Push non supporté sur ce navigateur') {
+          setShowIOSVersionWarning(true);
+        }
       }
     } catch (error) {
       console.error('Push subscribe error:', error);
+      // Show iOS version warning on error
+      if (isIOS && isStandalone) {
+        setShowIOSVersionWarning(true);
+      }
     } finally {
       setPushSubscribing(false);
     }
@@ -702,6 +724,47 @@ export default function CustomerCardPage({
                     style={{ backgroundColor: merchant.primary_color }}
                   >
                     J&apos;ai compris
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* iOS Version Warning Modal */}
+          {showIOSVersionWarning && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <div
+                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-6 text-center">
+                  <button
+                    onClick={() => setShowIOSVersionWarning(false)}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+
+                  <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-8 h-8 text-amber-600" />
+                  </div>
+
+                  <h3 className="text-xl font-black text-gray-900 mb-2">Mise à jour requise</h3>
+                  <p className="text-gray-600 mb-4">
+                    Les notifications push nécessitent iOS 16.4 ou plus récent.
+                  </p>
+                  <p className="text-sm text-gray-500 mb-6">
+                    Votre version actuelle : iOS {iOSVersion || '?'}
+                    <br />
+                    Allez dans <span className="font-semibold">Réglages → Général → Mise à jour</span> pour mettre à jour votre iPhone.
+                  </p>
+
+                  <button
+                    onClick={() => setShowIOSVersionWarning(false)}
+                    className="w-full py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+                    style={{ backgroundColor: merchant.primary_color }}
+                  >
+                    Compris
                   </button>
                 </div>
               </div>

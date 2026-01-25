@@ -34,7 +34,7 @@ import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validateFrenchPhone, getTodayInParis } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
-import { isPushSupported, subscribeToPush, getPermissionStatus } from '@/lib/push';
+import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
 
 type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'article-select' | 'pending' | 'banned';
 
@@ -102,19 +102,23 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       setPhoneNumber(savedPhone);
     }
 
-    // Check push support
-    setPushSupported(isPushSupported());
+    // Check push support using helper functions
+    const standardPushSupported = isPushSupported();
+    const iOS = isIOSDevice();
+    const standalone = isStandalonePWA();
+    const iosPushSupported = isIOSPushSupported();
+
+    setIsIOS(iOS);
+    setIsStandalone(standalone);
+
+    // On iOS in standalone mode, check if iOS version supports push
+    if (iOS && standalone) {
+      setPushSupported(iosPushSupported || standardPushSupported);
+    } else {
+      setPushSupported(standardPushSupported);
+    }
+
     setPushPermission(getPermissionStatus());
-
-    // Detect iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    setIsIOS(isIOSDevice);
-
-    // Check if running as standalone PWA (added to home screen)
-    const isStandalonePWA = window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true;
-    setIsStandalone(isStandalonePWA);
 
     // Check if already subscribed
     const checkPushSubscription = localStorage.getItem(`qarte_push_${code}`);

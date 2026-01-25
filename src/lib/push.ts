@@ -28,6 +28,36 @@ export function isPushSupported(): boolean {
   );
 }
 
+// Check if device is iOS
+export function isIOSDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+// Check if running as standalone PWA
+export function isStandalonePWA(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true;
+}
+
+// Check iOS version (returns 0 if not iOS or can't detect)
+export function getIOSVersion(): number {
+  if (typeof window === 'undefined') return 0;
+  const match = navigator.userAgent.match(/OS (\d+)_/);
+  return match ? parseInt(match[1], 10) : 0;
+}
+
+// Check if iOS PWA push is supported (iOS 16.4+)
+export function isIOSPushSupported(): boolean {
+  if (!isIOSDevice()) return false;
+  if (!isStandalonePWA()) return false;
+  const version = getIOSVersion();
+  // iOS 16.4+ supports push in PWA
+  return version >= 16;
+}
+
 // Get current permission status
 export function getPermissionStatus(): NotificationPermission | 'unsupported' {
   if (!isPushSupported()) return 'unsupported';
