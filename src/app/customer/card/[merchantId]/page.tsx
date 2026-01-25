@@ -25,7 +25,11 @@ import {
   Hourglass,
   Shield,
   XCircle,
+  Bell,
+  Share,
+  PlusSquare,
 } from 'lucide-react';
+import { isPushSupported, subscribeToPush, getPermissionStatus } from '@/lib/push';
 import { Button, Modal } from '@/components/ui';
 import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus } from '@/types';
@@ -101,6 +105,15 @@ export default function CustomerCardPage({
   const [reviewDismissed, setReviewDismissed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
+  // Push notifications state
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
+  const [pushSubscribing, setPushSubscribing] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       const savedPhone = getCookie('customer_phone');
@@ -139,7 +152,89 @@ export default function CustomerCardPage({
     };
 
     fetchData();
+
+    // Check push support
+    setPushSupported(isPushSupported());
+    setPushPermission(getPermissionStatus());
+
+    // Detect iOS
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    setIsIOS(isIOSDevice);
+
+    // Check if running as standalone PWA
+    const isStandalonePWA = window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
+    setIsStandalone(isStandalonePWA);
+
+    // Check if already subscribed
+    const checkPushSubscription = localStorage.getItem(`qarte_push_${merchantId}`);
+    if (checkPushSubscription === 'subscribed') {
+      setPushSubscribed(true);
+    }
   }, [merchantId, router]);
+
+  // Format reward text based on type
+  const formatRewardText = (reward: string, remaining: number, loyaltyMode: string, productName: string | null) => {
+    const lowerReward = reward.toLowerCase();
+    const unit = loyaltyMode === 'visit'
+      ? (remaining === 1 ? 'passage' : 'passages')
+      : (productName || (remaining === 1 ? 'article' : 'articles'));
+
+    // Percentage discount: "-20%", "20% de réduction", etc.
+    const percentMatch = reward.match(/(\d+)\s*%/);
+    if (percentMatch) {
+      return `Plus que ${remaining} ${unit} pour ${percentMatch[1]}% de réduction !`;
+    }
+
+    // Euro discount: "-5€", "5€ de réduction", etc.
+    const euroMatch = reward.match(/(\d+)\s*€/);
+    if (euroMatch) {
+      return `Plus que ${remaining} ${unit} pour ${euroMatch[1]}€ de réduction !`;
+    }
+
+    // Free item: "gratuit", "offert"
+    if (lowerReward.includes('gratuit') || lowerReward.includes('offert')) {
+      return `Plus que ${remaining} ${unit} pour ${reward.toLowerCase()} !`;
+    }
+
+    // Coffee/drink specific
+    if (lowerReward.includes('café') || lowerReward.includes('boisson') || lowerReward.includes('thé')) {
+      return `Plus que ${remaining} ${unit} pour votre ${reward.toLowerCase()} !`;
+    }
+
+    // Default: show full reward
+    return `Plus que ${remaining} ${unit} pour : ${reward}`;
+  };
+
+  const handlePushSubscribe = async () => {
+    if (!card) return;
+
+    // For iOS not in standalone mode, show instructions
+    if (isIOS && !isStandalone) {
+      setShowIOSInstructions(true);
+      return;
+    }
+
+    setPushSubscribing(true);
+    try {
+      const result = await subscribeToPush(card.customer.id, card.merchant.id);
+      if (result.success) {
+        setPushSubscribed(true);
+        setPushPermission('granted');
+        localStorage.setItem(`qarte_push_${merchantId}`, 'subscribed');
+      } else {
+        console.error('Push subscribe failed:', result.error);
+        if (result.error === 'Permission refusée') {
+          setPushPermission('denied');
+        }
+      }
+    } catch (error) {
+      console.error('Push subscribe error:', error);
+    } finally {
+      setPushSubscribing(false);
+    }
+  };
 
   const triggerConfetti = () => {
     // Fire confetti from both sides
@@ -463,8 +558,8 @@ export default function CustomerCardPage({
               <div className="flex-1">
                 <p className={`font-bold transition-colors duration-500 ${isRewardReady ? 'text-gray-900' : 'text-gray-700'}`}>
                   {isRewardReady
-                    ? "🎉 Félicitations ! Votre cadeau est prêt."
-                    : `Plus que ${merchant.stamps_required - card.current_stamps} ${getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, merchant.stamps_required - card.current_stamps).toLowerCase()} pour la récompense !`
+                    ? `🎉 Félicitations ! ${merchant.reward_description}`
+                    : formatRewardText(merchant.reward_description || 'votre récompense', merchant.stamps_required - card.current_stamps, merchant.loyalty_mode, merchant.product_name)
                   }
                 </p>
               </div>
@@ -480,46 +575,138 @@ export default function CustomerCardPage({
             </div>
           </div>
 
-          <div
-            className="group relative overflow-hidden rounded-[2rem] border border-white bg-white p-6 flex items-center gap-6 transition-all duration-500 hover:-translate-y-1"
-            style={{
-              boxShadow: `0 20px 40px -15px rgba(0,0,0,0.08), 0 0 20px 2px ${merchant.primary_color}10`
-            }}
-          >
-            {/* Subtle Pulse Glow */}
-            <div
-              className="absolute inset-0 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-700 pointer-events-none"
-              style={{ backgroundColor: merchant.primary_color }}
-            />
-
-            {/* Animated Shine Effect */}
-            <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out bg-gradient-to-r from-transparent via-white/60 to-transparent -skew-x-12 pointer-events-none" />
-
-            {/* Icon Area */}
-            <div
-              className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 shadow-lg relative overflow-hidden transform group-hover:scale-105 transition-transform duration-500"
+          {/* Subscribe to Updates Button */}
+          {!pushSubscribed && pushPermission !== 'denied' && (
+            <button
+              onClick={handlePushSubscribe}
+              disabled={pushSubscribing}
+              className="group w-full relative overflow-hidden rounded-2xl border-2 border-dashed p-5 flex items-center gap-4 transition-all duration-300 hover:border-solid hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-50"
               style={{
-                background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color}dd)`
+                borderColor: `${merchant.primary_color}40`,
+                backgroundColor: `${merchant.primary_color}05`
               }}
             >
-              <div className="absolute inset-0 bg-white/10" />
-              <Gift className="w-8 h-8 text-white relative z-10 drop-shadow-md" />
-            </div>
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110"
+                style={{ backgroundColor: `${merchant.primary_color}15` }}
+              >
+                {pushSubscribing ? (
+                  <Loader2 className="w-6 h-6 animate-spin" style={{ color: merchant.primary_color }} />
+                ) : (
+                  <Bell className="w-6 h-6" style={{ color: merchant.primary_color }} />
+                )}
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-bold text-gray-900">
+                  {isIOS && !isStandalone ? "Recevoir les offres exclusives" : "Activer les notifications"}
+                </p>
+                <p className="text-sm text-gray-500">
+                  {isIOS && !isStandalone
+                    ? "Appuyez pour voir comment"
+                    : "Soyez alerté des promos et de vos récompenses"
+                  }
+                </p>
+              </div>
+              <ChevronRight
+                className="w-5 h-5 transition-transform group-hover:translate-x-1"
+                style={{ color: merchant.primary_color }}
+              />
+            </button>
+          )}
 
-            <div className="flex-1 min-w-0 relative z-10">
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5">Votre récompense</p>
-              <p className="text-lg sm:text-xl font-black text-gray-900 leading-tight tracking-tight line-clamp-2">
-                {merchant.reward_description}
-              </p>
-            </div>
-
+          {/* Subscribed confirmation */}
+          {pushSubscribed && (
             <div
-              className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 group-hover:bg-opacity-20"
+              className="w-full rounded-2xl p-4 flex items-center gap-3"
               style={{ backgroundColor: `${merchant.primary_color}10` }}
             >
-              <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" style={{ color: merchant.primary_color }} />
+              <div
+                className="w-10 h-10 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: `${merchant.primary_color}20` }}
+              >
+                <Check className="w-5 h-5" style={{ color: merchant.primary_color }} />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900 text-sm">Notifications activées</p>
+                <p className="text-xs text-gray-500">Vous recevrez nos offres exclusives</p>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* iOS Instructions Modal */}
+          {showIOSInstructions && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <div
+                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div
+                  className="relative p-6 pb-4 text-center"
+                  style={{ background: `linear-gradient(135deg, ${merchant.primary_color}15, ${merchant.primary_color}05)` }}
+                >
+                  <button
+                    onClick={() => setShowIOSInstructions(false)}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                    style={{ backgroundColor: `${merchant.primary_color}20` }}
+                  >
+                    <Bell className="w-8 h-8" style={{ color: merchant.primary_color }} />
+                  </div>
+                  <h3 className="text-xl font-black text-gray-900">Activer les notifications</h3>
+                  <p className="text-sm text-gray-500 mt-1">Sur iPhone, suivez ces 3 étapes</p>
+                </div>
+
+                {/* Steps */}
+                <div className="p-6 space-y-4">
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                      <Share className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">1. Partager</p>
+                      <p className="text-sm text-gray-500">Appuyez sur le bouton partager en bas</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                      <PlusSquare className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">2. Ajouter à l&apos;écran</p>
+                      <p className="text-sm text-gray-500">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
+                      <Check className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
+                      <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 pt-0">
+                  <button
+                    onClick={() => setShowIOSInstructions(false)}
+                    className="w-full py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+                    style={{ backgroundColor: merchant.primary_color }}
+                  >
+                    J&apos;ai compris
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {isRewardReady && !redeemSuccess && (
             <Button
