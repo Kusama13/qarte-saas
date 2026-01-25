@@ -422,97 +422,78 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const secondaryColor = merchant.secondary_color;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${primaryColor}10)` }}>
-      {/* Premium Header */}
-      <header
-        className="relative h-52 w-full overflow-hidden flex flex-col items-center justify-center text-white px-6"
-        style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
-      >
-        <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
-
-        <div className="relative flex flex-col items-center">
-          <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center mb-3 p-1 shadow-2xl overflow-hidden">
-            {merchant.logo_url ? (
-              <img
-                src={merchant.logo_url}
-                alt={merchant.shop_name}
-                className="w-full h-full rounded-2xl object-cover"
-              />
-            ) : (
-              <span className="text-3xl font-black text-white">{merchant.shop_name[0]}</span>
-            )}
-          </div>
-          <h1 className="text-xl font-black tracking-tight drop-shadow-sm">{merchant.shop_name}</h1>
-        </div>
-      </header>
-
-      <main className="flex-1 -mt-8 px-4 pb-8 mx-auto max-w-md w-full z-10">
+    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${primaryColor}15)` }}>
+      <main className="flex-1 px-4 py-6 pb-8 mx-auto max-w-md w-full">
         {step === 'phone' && (
           <div className="animate-fade-in">
             {/* Welcome Banner */}
-            <div className="relative mb-6 overflow-hidden rounded-3xl bg-white shadow-xl border border-gray-100">
-              {/* Logo/Image Section - 70% of card */}
+            <div className="relative mb-6 overflow-hidden rounded-3xl shadow-xl border border-gray-100">
+              {/* Logo/Image Section - Large with gradient background */}
               <div
-                className="relative h-44 flex items-center justify-center overflow-hidden"
-                style={{ backgroundColor: `${primaryColor}08` }}
+                className="relative h-56 flex items-center justify-center overflow-hidden"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}25, ${secondaryColor || primaryColor}35)` }}
               >
-                {/* Subtle decorative circles */}
+                {/* Decorative gradient circles */}
                 <div
-                  className="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-10"
-                  style={{ backgroundColor: primaryColor }}
+                  className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-30"
+                  style={{ background: `radial-gradient(circle, ${primaryColor}, transparent)` }}
                 />
                 <div
-                  className="absolute -bottom-8 -left-8 w-24 h-24 rounded-full opacity-5"
-                  style={{ backgroundColor: secondaryColor || primaryColor }}
+                  className="absolute -bottom-12 -left-12 w-40 h-40 rounded-full opacity-25"
+                  style={{ background: `radial-gradient(circle, ${secondaryColor || primaryColor}, transparent)` }}
+                />
+                <div
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full opacity-10"
+                  style={{ background: `radial-gradient(circle, white, transparent)` }}
                 />
 
-                {/* Logo or Initial */}
+                {/* Logo or Initial - Large */}
                 {merchant.logo_url ? (
                   <div className="relative">
                     <div
-                      className="absolute -inset-2 rounded-3xl blur-xl opacity-20"
+                      className="absolute -inset-4 rounded-3xl blur-2xl opacity-40"
                       style={{ backgroundColor: primaryColor }}
                     />
                     <img
                       src={merchant.logo_url}
                       alt={merchant.shop_name}
-                      className="relative w-28 h-28 rounded-2xl object-cover shadow-lg border-4 border-white"
+                      className="relative w-40 h-40 rounded-3xl object-cover shadow-2xl border-4 border-white/80"
                     />
                   </div>
                 ) : (
                   <div className="relative">
                     <div
-                      className="absolute -inset-3 rounded-full blur-xl opacity-20"
+                      className="absolute -inset-4 rounded-full blur-2xl opacity-40"
                       style={{ backgroundColor: primaryColor }}
                     />
                     <div
-                      className="relative w-28 h-28 rounded-full flex items-center justify-center shadow-lg border-4 border-white"
+                      className="relative w-40 h-40 rounded-full flex items-center justify-center shadow-2xl border-4 border-white/80"
                       style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
                     >
-                      <span className="text-5xl font-black text-white">{merchant.shop_name[0]}</span>
+                      <span className="text-6xl font-black text-white drop-shadow-lg">{merchant.shop_name[0]}</span>
                     </div>
                   </div>
                 )}
               </div>
 
               {/* Content Section */}
-              <div className="p-5 text-center">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">Programme Fidélité</p>
-                <h2 className="text-xl font-bold text-gray-900 mb-3">
+              <div className="bg-white p-6 text-center">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Programme Fidélité</p>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
                   Bienvenue chez {merchant.shop_name} !
                 </h2>
 
                 {/* Reward Badge */}
                 <div
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl"
-                  style={{ backgroundColor: `${primaryColor}10` }}
+                  className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl shadow-sm border"
+                  style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
                 >
                   <Gift className="w-5 h-5" style={{ color: primaryColor }} />
                   <span className="text-sm font-semibold text-gray-700">
                     {merchant.reward_description}
                   </span>
                   <span
-                    className="text-xs font-bold px-2 py-0.5 rounded-full text-white"
+                    className="text-xs font-bold px-2.5 py-1 rounded-full text-white shadow-sm"
                     style={{ backgroundColor: primaryColor }}
                   >
                     {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
