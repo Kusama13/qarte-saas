@@ -13,12 +13,16 @@ import {
   Loader2,
   CreditCard,
   ChevronRight,
+  ChevronDown,
   Minus,
   Plus,
   Undo2,
   Hourglass,
   Shield,
   Ban,
+  QrCode,
+  Star,
+  HelpCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -60,6 +64,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   // Qarte Shield: Pending state
   const [pendingStamps, setPendingStamps] = useState(0);
   const [pendingCount, setPendingCount] = useState(0);
+
+  // How it works accordion
+  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -510,6 +517,87 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     </span>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* How it works Accordion */}
+            <div className="mb-6">
+              <div className="bg-white rounded-3xl shadow-lg border border-gray-100 overflow-hidden">
+                <button
+                  onClick={() => setIsHowItWorksOpen(!isHowItWorksOpen)}
+                  className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50/50 transition-colors focus:outline-none group"
+                  aria-expanded={isHowItWorksOpen}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gray-50 text-gray-400 group-hover:text-gray-600 transition-colors">
+                      <HelpCircle className="w-4 h-4" />
+                    </div>
+                    <span className="font-semibold text-gray-700 text-sm">Comment ça marche ?</span>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: isHowItWorksOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3, ease: "circOut" }}
+                  >
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  </motion.div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isHowItWorksOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }}
+                    >
+                      <div className="px-5 pb-5 pt-1 space-y-4 relative">
+                        {/* Vertical Connector Line */}
+                        <div className="absolute left-[35px] top-5 bottom-8 w-px bg-gray-100" aria-hidden="true" />
+
+                        {[
+                          {
+                            icon: <QrCode className="w-4 h-4" />,
+                            title: "Scannez le QR code",
+                            description: merchant.loyalty_mode === 'visit'
+                              ? "Présentez ce code à chaque visite pour valider votre passage."
+                              : `Scannez à chaque achat de ${merchant.product_name || 'produit'}.`
+                          },
+                          {
+                            icon: <Star className="w-4 h-4" />,
+                            title: "Cumulez vos points",
+                            description: merchant.loyalty_mode === 'visit'
+                              ? "Chaque passage validé vous rapproche de votre récompense."
+                              : `Chaque ${merchant.product_name || 'article'} acheté = 1 point sur votre carte.`
+                          },
+                          {
+                            icon: <Gift className="w-4 h-4" />,
+                            title: "Recevez votre cadeau",
+                            description: `Après ${merchant.stamps_required} ${merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}, obtenez : ${merchant.reward_description}`
+                          }
+                        ].map((step, idx) => (
+                          <motion.div
+                            key={idx}
+                            initial={{ x: -10, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ delay: idx * 0.1 }}
+                            className="flex items-start gap-3 relative z-10"
+                          >
+                            <div
+                              className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-white shadow-sm"
+                              style={{ backgroundColor: primaryColor }}
+                            >
+                              {step.icon}
+                            </div>
+                            <div className="flex-1 pt-0.5">
+                              <h4 className="font-bold text-gray-900 text-sm mb-0.5">{step.title}</h4>
+                              <p className="text-gray-500 text-xs leading-relaxed">{step.description}</p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
