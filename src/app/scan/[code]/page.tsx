@@ -25,6 +25,8 @@ import {
   HelpCircle,
   Bell,
   BellOff,
+  Share,
+  PlusSquare,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -76,6 +78,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
   const [pushSubscribing, setPushSubscribing] = useState(false);
   const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -101,6 +105,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     // Check push support
     setPushSupported(isPushSupported());
     setPushPermission(getPermissionStatus());
+
+    // Detect iOS
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    setIsIOS(isIOSDevice);
+
+    // Check if running as standalone PWA (added to home screen)
+    const isStandalonePWA = window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as any).standalone === true;
+    setIsStandalone(isStandalonePWA);
 
     // Check if already subscribed
     const checkPushSubscription = localStorage.getItem(`qarte_push_${code}`);
@@ -969,8 +983,96 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </Link>
             </div>
 
-            {/* Push Notification Prompt */}
-            {pushSupported && !pushSubscribed && pushPermission !== 'denied' && (
+            {/* Push Notification Prompt - Standard browsers */}
+            {pushSupported && !pushSubscribed && pushPermission !== 'denied' && !isIOS && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mt-4 bg-white rounded-2xl shadow-lg border border-gray-100 p-5 overflow-hidden"
+              >
+                <div className="flex items-start gap-4">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${primaryColor}15` }}
+                  >
+                    <Bell className="w-6 h-6" style={{ color: primaryColor }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 mb-1">Ne manquez rien !</h3>
+                    <p className="text-sm text-gray-500 mb-3">
+                      Recevez une alerte quand vous êtes proche de votre récompense
+                    </p>
+                    <button
+                      onClick={handlePushSubscribe}
+                      disabled={pushSubscribing}
+                      className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      {pushSubscribing ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Bell className="w-4 h-4" />
+                          Activer les notifications
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* iOS-specific instructions */}
+            {isIOS && !pushSubscribed && !isStandalone && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="mt-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl shadow-lg border border-blue-100 p-5 overflow-hidden"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+                    <Bell className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-900 mb-1">Recevez des notifications</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Pour recevoir des alertes sur iPhone, ajoutez cette page à votre écran d&apos;accueil :
+                    </p>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-center gap-3 bg-white/70 rounded-xl p-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
+                          <Share className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-gray-700">
+                          <span className="font-semibold">1.</span> Appuyez sur le bouton <span className="font-semibold">Partager</span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 bg-white/70 rounded-xl p-3">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
+                          <PlusSquare className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-gray-700">
+                          <span className="font-semibold">2.</span> Sélectionnez <span className="font-semibold">&quot;Sur l&apos;écran d&apos;accueil&quot;</span>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 bg-white/70 rounded-xl p-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="text-gray-700">
+                          <span className="font-semibold">3.</span> Ouvrez l&apos;app depuis votre écran d&apos;accueil
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* iOS in standalone mode - can now subscribe */}
+            {isIOS && isStandalone && !pushSubscribed && pushPermission !== 'denied' && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
