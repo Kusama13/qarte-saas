@@ -477,27 +477,38 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </div>
 
               {/* Content Section */}
-              <div className="bg-white p-6 text-center">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Programme Fidélité</p>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">
-                  Bienvenue chez {merchant.shop_name} !
-                </h2>
+              <div className="relative bg-white p-6 text-center overflow-hidden">
+                {/* Subtle Gift icon background */}
+                <Gift
+                  className="absolute -right-6 -bottom-6 w-32 h-32 opacity-[0.04]"
+                  style={{ color: primaryColor }}
+                />
 
-                {/* Reward Badge */}
-                <div
-                  className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl shadow-sm border"
-                  style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
-                >
-                  <Gift className="w-5 h-5" style={{ color: primaryColor }} />
-                  <span className="text-sm font-semibold text-gray-700">
-                    {merchant.reward_description}
-                  </span>
-                  <span
-                    className="text-xs font-bold px-2.5 py-1 rounded-full text-white shadow-sm"
-                    style={{ backgroundColor: primaryColor }}
+                <div className="relative z-10">
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">
+                    Bienvenue chez {merchant.shop_name} !
+                  </h2>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Nous récompensons votre fidélité
+                  </p>
+
+                  {/* Reward Badge */}
+                  <div
+                    className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl shadow-sm border"
+                    style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
                   >
-                    {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
-                  </span>
+                    <Gift className="w-5 h-5" style={{ color: primaryColor }} />
+                    <span className="text-sm font-semibold text-gray-700">
+                      {merchant.reward_description}
+                    </span>
+                    <span className="text-xs text-gray-400 mx-1">après</span>
+                    <span
+                      className="text-xs font-bold px-2.5 py-1 rounded-full text-white shadow-sm"
+                      style={{ backgroundColor: primaryColor }}
+                    >
+                      {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
