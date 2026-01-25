@@ -11,6 +11,8 @@ import {
   Gift,
   Loader2,
   SlidersHorizontal,
+  Bell,
+  BellOff,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/CustomerManagementModal';
@@ -32,6 +34,8 @@ export default function CustomersPage() {
   const [exporting, setExporting] = useState(false);
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithCard | null>(null);
+  const [subscriberIds, setSubscriberIds] = useState<string[]>([]);
+  const [filterPushOnly, setFilterPushOnly] = useState(false);
 
   const fetchData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -63,6 +67,17 @@ export default function CustomersPage() {
       setFilteredCustomers(cardsData as CustomerWithCard[]);
     }
 
+    // Fetch push subscriber IDs
+    try {
+      const response = await fetch(`/api/push/subscribers?merchantId=${merchantData.id}`);
+      const data = await response.json();
+      if (response.ok && data.subscriberIds) {
+        setSubscriberIds(data.subscriberIds);
+      }
+    } catch (err) {
+      console.error('Error fetching subscriber IDs:', err);
+    }
+
     setLoading(false);
   };
 
@@ -80,20 +95,25 @@ export default function CustomersPage() {
   }, [router]);
 
   useEffect(() => {
-    if (!searchQuery.trim()) {
-      setFilteredCustomers(customers);
-      return;
+    let filtered = customers;
+
+    // Apply push filter
+    if (filterPushOnly) {
+      filtered = filtered.filter((card) => subscriberIds.includes(card.customer_id));
     }
 
-    const query = searchQuery.toLowerCase();
-    const filtered = customers.filter((card) => {
-      const name = `${card.customer?.first_name || ''} ${card.customer?.last_name || ''}`.toLowerCase();
-      const phone = card.customer?.phone_number || '';
-      return name.includes(query) || phone.includes(query);
-    });
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((card) => {
+        const name = `${card.customer?.first_name || ''} ${card.customer?.last_name || ''}`.toLowerCase();
+        const phone = card.customer?.phone_number || '';
+        return name.includes(query) || phone.includes(query);
+      });
+    }
 
     setFilteredCustomers(filtered);
-  }, [searchQuery, customers]);
+  }, [searchQuery, customers, filterPushOnly, subscriberIds]);
 
   const exportCSV = async () => {
     setExporting(true);
@@ -163,17 +183,35 @@ export default function CustomersPage() {
       <div className="p-8 bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-xl shadow-indigo-100/50 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-600 to-violet-600 opacity-80" />
 
-        <div className="relative mb-8 max-w-md group">
-          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-            <Search className="w-5 h-5 text-gray-400 transition-all duration-300 group-focus-within:text-indigo-600 group-focus-within:scale-110" />
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+          <div className="relative flex-1 max-w-md group">
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+              <Search className="w-5 h-5 text-gray-400 transition-all duration-300 group-focus-within:text-indigo-600 group-focus-within:scale-110" />
+            </div>
+            <Input
+              type="text"
+              placeholder="Rechercher par nom ou téléphone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-12 bg-white/50 border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 placeholder:text-gray-400"
+            />
           </div>
-          <Input
-            type="text"
-            placeholder="Rechercher par nom ou téléphone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-12 h-12 bg-white/50 border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 placeholder:text-gray-400"
-          />
+          <button
+            onClick={() => setFilterPushOnly(!filterPushOnly)}
+            className={`inline-flex items-center gap-2 px-4 h-12 rounded-2xl border transition-all duration-200 font-medium ${
+              filterPushOnly
+                ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-200'
+                : 'bg-white/50 text-gray-600 border-gray-200 hover:border-amber-300 hover:bg-amber-50'
+            }`}
+          >
+            <Bell className={`w-4 h-4 ${filterPushOnly ? 'text-white' : 'text-amber-500'}`} />
+            <span>Abonnés push</span>
+            <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
+              filterPushOnly ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+            }`}>
+              {subscriberIds.length}
+            </span>
+          </button>
         </div>
 
         {filteredCustomers.length > 0 ? (
@@ -214,21 +252,36 @@ export default function CustomersPage() {
                 {filteredCustomers.map((card) => {
                   const isRewardReady = card.current_stamps >= (merchant?.stamps_required || 10);
                   const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
+                  const isPushSubscriber = subscriberIds.includes(card.customer_id);
 
                   return (
                     <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
-                          <div className="relative flex items-center justify-center w-10 h-10 font-bold text-white rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md shadow-indigo-100 group-hover:scale-105 transition-transform">
+                          <div className={`relative flex items-center justify-center w-10 h-10 font-bold text-white rounded-xl shadow-md group-hover:scale-105 transition-transform ${
+                            isPushSubscriber
+                              ? 'bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-100'
+                              : 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-indigo-100'
+                          }`}>
                             {card.customer?.first_name?.charAt(0) || 'C'}
                             {isRewardReady && (
                               <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full animate-pulse" />
                             )}
+                            {isPushSubscriber && !isRewardReady && (
+                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow">
+                                <Bell className="w-2.5 h-2.5 text-amber-500" />
+                              </div>
+                            )}
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900">
-                              {card.customer?.first_name} {card.customer?.last_name}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-gray-900">
+                                {card.customer?.first_name} {card.customer?.last_name}
+                              </p>
+                              {isPushSubscriber && (
+                                <Bell className="w-3.5 h-3.5 text-amber-500" />
+                              )}
+                            </div>
                             {isRewardReady && (
                               <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-100 rounded-md">
                                 Prêt

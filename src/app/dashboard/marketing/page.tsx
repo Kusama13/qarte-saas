@@ -13,6 +13,8 @@ import {
   Clock,
   Megaphone,
   X,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -23,6 +25,13 @@ interface NotificationTemplate {
   body: string;
   icon: React.ElementType;
   color: string;
+}
+
+interface Subscriber {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  phone_number: string | null;
 }
 
 const templates: NotificationTemplate[] = [
@@ -59,7 +68,9 @@ const templates: NotificationTemplate[] = [
 export default function MarketingPushPage() {
   const { merchant } = useMerchant();
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loadingCount, setLoadingCount] = useState(true);
+  const [showSubscriberList, setShowSubscriberList] = useState(false);
 
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
@@ -71,27 +82,28 @@ export default function MarketingPushPage() {
     message?: string;
   } | null>(null);
 
-  // Fetch subscriber count via API (uses service role to bypass RLS)
+  // Fetch subscriber count and list via API (uses service role to bypass RLS)
   useEffect(() => {
-    const fetchCount = async () => {
+    const fetchSubscribers = async () => {
       if (!merchant?.id) return;
 
       try {
-        const response = await fetch(`/api/push/subscribers?merchantId=${merchant.id}`);
+        const response = await fetch(`/api/push/subscribers?merchantId=${merchant.id}&details=true`);
         const data = await response.json();
 
         if (response.ok) {
           setSubscriberCount(data.count || 0);
+          setSubscribers(data.subscribers || []);
         } else {
-          console.error('Error fetching subscriber count:', data.error);
+          console.error('Error fetching subscribers:', data.error);
         }
       } catch (err) {
-        console.error('Error fetching subscriber count:', err);
+        console.error('Error fetching subscribers:', err);
       }
       setLoadingCount(false);
     };
 
-    fetchCount();
+    fetchSubscribers();
   }, [merchant?.id]);
 
   const handleSend = async () => {
@@ -168,8 +180,8 @@ export default function MarketingPushPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center">
-              <Users className="w-7 h-7 text-indigo-600" />
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center">
+              <Bell className="w-7 h-7 text-amber-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Abonnés aux notifications</p>
@@ -180,6 +192,24 @@ export default function MarketingPushPage() {
               )}
             </div>
           </div>
+          {subscriberCount !== null && subscriberCount > 0 && !loadingCount && (
+            <button
+              onClick={() => setShowSubscriberList(!showSubscriberList)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-700 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors"
+            >
+              {showSubscriberList ? (
+                <>
+                  <ChevronUp className="w-4 h-4" />
+                  Masquer la liste
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  Voir la liste
+                </>
+              )}
+            </button>
+          )}
           {subscriberCount === 0 && !loadingCount && (
             <div className="text-right">
               <p className="text-sm text-gray-400">
@@ -188,6 +218,45 @@ export default function MarketingPushPage() {
             </div>
           )}
         </div>
+
+        {/* Subscriber List */}
+        <AnimatePresence>
+          {showSubscriberList && subscribers.length > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+                  Liste des abonnés ({subscribers.length})
+                </p>
+                <div className="grid gap-2 max-h-64 overflow-y-auto">
+                  {subscribers.map((subscriber) => (
+                    <div
+                      key={subscriber.id}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
+                        {subscriber.first_name?.charAt(0) || '?'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-900 truncate">
+                          {subscriber.first_name} {subscriber.last_name}
+                        </p>
+                        {subscriber.phone_number && (
+                          <p className="text-xs text-gray-500">{subscriber.phone_number}</p>
+                        )}
+                      </div>
+                      <Bell className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Composer */}

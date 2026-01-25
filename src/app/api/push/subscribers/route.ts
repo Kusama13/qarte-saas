@@ -45,21 +45,48 @@ export async function GET(request: NextRequest) {
     // Get unique customer IDs
     const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
 
-    // Count push subscriptions for these customers
-    const { count, error } = await supabase
+    // Get push subscriptions for these customers
+    const { data: subscriptions, error } = await supabase
       .from('push_subscriptions')
-      .select('*', { count: 'exact', head: true })
+      .select('customer_id')
       .in('customer_id', customerIds);
 
     if (error) {
-      console.error('Error counting subscriptions:', error);
+      console.error('Error fetching subscriptions:', error);
       return NextResponse.json(
-        { error: 'Erreur lors du comptage des abonnés' },
+        { error: 'Erreur lors de la récupération des abonnés' },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ count: count || 0 });
+    // Get unique subscriber customer IDs
+    const subscriberIds = [...new Set((subscriptions || []).map(s => s.customer_id))];
+
+    // Check if we need full subscriber info
+    const includeDetails = searchParams.get('details') === 'true';
+
+    if (includeDetails && subscriberIds.length > 0) {
+      // Fetch customer details for subscribers
+      const { data: customers, error: customersError } = await supabase
+        .from('customers')
+        .select('id, first_name, last_name, phone_number')
+        .in('id', subscriberIds);
+
+      if (customersError) {
+        console.error('Error fetching customer details:', customersError);
+      }
+
+      return NextResponse.json({
+        count: subscriberIds.length,
+        subscriberIds,
+        subscribers: customers || []
+      });
+    }
+
+    return NextResponse.json({
+      count: subscriberIds.length,
+      subscriberIds
+    });
   } catch (error) {
     console.error('Subscribers count error:', error);
     return NextResponse.json(
