@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     default: 'Qarte - Digitalisez vos cartes de fidélité',
     template: '%s | Qarte',
   },
-  description: 'La solution la moins chère du marché pour digitaliser vos cartes de fidélité. Essai gratuit 14 jours.',
+  description: 'La solution la moins chère du marché pour digitaliser vos cartes de fidélité. Démarrez gratuitement, sans carte bancaire.',
   keywords: ['carte de fidélité', 'fidélisation client', 'commerce', 'QR code', 'digital', 'programme fidélité'],
   authors: [{ name: 'Qarte' }],
   creator: 'Qarte',
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'Qarte - Digitalisez vos cartes de fidélité',
-    description: 'La solution la moins chère du marché pour digitaliser vos cartes de fidélité. Essai gratuit 14 jours.',
+    description: 'La solution la moins chère du marché pour digitaliser vos cartes de fidélité. Démarrez gratuitement, sans carte bancaire.',
     url: baseUrl,
     siteName: 'Qarte',
     type: 'website',

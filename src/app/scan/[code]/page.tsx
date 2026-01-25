@@ -9,6 +9,7 @@ import {
   Check,
   AlertCircle,
   Gift,
+  Sparkles,
   Loader2,
   CreditCard,
   ChevronRight,
@@ -448,6 +449,40 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       <main className="flex-1 -mt-8 px-4 pb-8 mx-auto max-w-md w-full z-10">
         {step === 'phone' && (
           <div className="animate-fade-in">
+            {/* Welcome Banner */}
+            <div
+              className="relative mb-6 overflow-hidden rounded-3xl p-6 shadow-xl"
+              style={{
+                background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor || primaryColor} 100%)`,
+              }}
+            >
+              {/* Decorative Background Elements */}
+              <div className="absolute -right-4 -top-4 opacity-10">
+                <Gift size={120} strokeWidth={1.5} className="text-white" />
+              </div>
+
+              <div className="relative z-10 flex flex-col items-center text-center">
+                <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-md ring-1 ring-white/30">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+
+                <h2 className="mb-2 text-lg font-bold tracking-tight text-white drop-shadow-sm">
+                  Bienvenue chez {merchant.shop_name} !
+                </h2>
+
+                <p className="text-sm text-white/90 mb-2">
+                  Nous récompensons votre fidélité
+                </p>
+
+                <div className="inline-flex items-center rounded-full bg-white/15 px-4 py-2 backdrop-blur-sm border border-white/20">
+                  <Gift className="w-4 h-4 text-white mr-2" />
+                  <span className="text-xs font-semibold text-white">
+                    {merchant.reward_description} après {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
             <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
               <div className="text-center mb-8">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Programme Fidélité</p>
@@ -653,6 +688,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 </p>
               </div>
 
+              {/* Confirmation Message */}
+              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-4">
+                <p className="text-sm font-medium text-indigo-900 text-center">
+                  Vous ajoutez <span className="font-bold">{quantity} {merchant?.product_name || 'article'}{quantity > 1 ? 's' : ''}</span> à votre carte
+                </p>
+                <p className="text-xs text-indigo-600/70 text-center mt-1">
+                  Merci de valider uniquement vos achats du jour
+                </p>
+              </div>
+
               {/* Checkin Button */}
               <button
                 onClick={handleArticleCheckin}
@@ -665,7 +710,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 ) : (
                   <>
                     <Plus className="w-6 h-6" />
-                    Ajouter {quantity} {merchant?.product_name || 'article'}{quantity > 1 ? 's' : ''}
+                    Valider {quantity} {merchant?.product_name || 'article'}{quantity > 1 ? 's' : ''}
                   </>
                 )}
               </button>
@@ -757,14 +802,14 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
                 >
                   <p className="font-bold text-gray-700">
-                    Plus que {(merchant?.stamps_required || 10) - loyaltyCard.current_stamps} {merchant?.loyalty_mode === 'visit' ? 'passage' : (merchant?.product_name || 'article')}{(merchant?.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''} avant le bonheur !
+                    Plus que {(merchant?.stamps_required || 10) - loyaltyCard.current_stamps} {merchant?.loyalty_mode === 'visit' ? 'passage' : (merchant?.product_name || 'article')}{(merchant?.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''} avant votre récompense !
                   </p>
                 </div>
               )}
 
-              {/* Undo Button */}
+              {/* Undo Button - Only in article mode */}
               <AnimatePresence>
-                {canUndo && (
+                {canUndo && merchant?.loyalty_mode === 'article' && (
                   <motion.button
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}

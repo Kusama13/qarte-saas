@@ -34,7 +34,11 @@ import {
   Zap,
   Clock,
   Headphones,
-  ArrowUp
+  ArrowUp,
+  Bell,
+  Gift,
+  Tag,
+  MessageSquare,
 } from 'lucide-react';
 
 // ============================================
@@ -710,6 +714,121 @@ function FeatureRow({ feature }: { feature: any }) {
         )}
       </div>
     </div>
+  );
+}
+
+// Push Notification Teaser Section
+function PushNotificationTeaser() {
+  const { ref, isInView } = useInView();
+
+  return (
+    <section className="py-20 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
+      <div ref={ref} className="max-w-6xl mx-auto px-6">
+        <div className={`grid lg:grid-cols-2 gap-12 items-center ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          {/* Content */}
+          <div className="order-2 lg:order-1">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 rounded-full mb-6">
+              <Sparkles className="w-4 h-4 text-amber-600" />
+              <span className="font-semibold text-amber-700 text-sm">Bientôt disponible</span>
+            </div>
+
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Notifications{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Push</span>
+            </h2>
+
+            <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+              Restez connecté avec vos clients en temps réel. Envoyez le bon message au bon moment, directement sur leur smartphone.
+            </p>
+
+            <ul className="space-y-4 mb-8">
+              {[
+                { icon: MessageSquare, text: "Rappelez vos clients inactifs", example: '"Cela fait 2 semaines... On vous attend !"' },
+                { icon: Tag, text: "Annoncez vos promotions", example: '"-20% ce weekend uniquement"' },
+                { icon: Gift, text: "Alertes récompenses", example: '"Votre cadeau expire dans 3 jours"' },
+              ].map((item, idx) => (
+                <li key={idx} className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+                    <item.icon className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{item.text}</p>
+                    <p className="text-sm text-gray-500 italic">{item.example}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="inline-flex items-center gap-2 text-sm text-gray-500">
+              <Bell className="w-4 h-4" />
+              <span>Inclus dans votre abonnement, sans surcoût</span>
+            </div>
+          </div>
+
+          {/* Phone Mockup */}
+          <div className="order-1 lg:order-2 flex justify-center">
+            <div className="relative">
+              {/* Phone Frame */}
+              <div className="w-[280px] h-[560px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl border-[6px] border-slate-800 relative z-10">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-slate-800 rounded-b-2xl z-20" />
+                <div className="w-full h-full bg-gradient-to-b from-slate-100 to-slate-200 rounded-[2.2rem] overflow-hidden relative pt-12 px-3">
+
+                  {/* Stacked Notifications */}
+                  <div className="space-y-3">
+                    <div className="bg-white shadow-xl rounded-2xl p-4 flex gap-3 border border-gray-100">
+                      <div className="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-sm font-bold">Q</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-bold text-gray-900">QARTE</span>
+                          <span className="text-[10px] text-gray-400">Maintenant</span>
+                        </div>
+                        <p className="text-sm text-gray-700 font-medium">Offre Flash ! 🔥</p>
+                        <p className="text-xs text-gray-500">-20% sur tout jusqu&apos;à ce soir</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white/90 shadow-lg rounded-2xl p-4 flex gap-3 border border-gray-100 scale-[0.97] opacity-90 -mt-2">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-sm font-bold">Q</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-bold text-gray-900">QARTE</span>
+                          <span className="text-[10px] text-gray-400">Il y a 2h</span>
+                        </div>
+                        <p className="text-sm text-gray-700 font-medium">Récompense dispo ! 🎁</p>
+                        <p className="text-xs text-gray-500">Récupérez votre café offert</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-white/80 shadow-md rounded-2xl p-4 flex gap-3 border border-gray-100 scale-[0.94] opacity-70 -mt-2">
+                      <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-sm font-bold">Q</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-bold text-gray-900">QARTE</span>
+                          <span className="text-[10px] text-gray-400">Hier</span>
+                        </div>
+                        <p className="text-sm text-gray-700 font-medium">On vous attend ! ☕</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Home indicator */}
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-24 h-1 bg-gray-400 rounded-full" />
+                </div>
+              </div>
+
+              {/* Decorative glow */}
+              <div className="absolute -inset-8 bg-amber-500/10 blur-3xl rounded-full -z-10" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -1669,6 +1788,7 @@ export default function LandingPageV4() {
         <StorytellingSection />
         <PainPointsSection />
         <FeaturesSection />
+        <PushNotificationTeaser />
         <UseCasesSection />
         <ROICalculatorSection />
         <StatsBandSection />
