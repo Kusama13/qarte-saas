@@ -1,6 +1,31 @@
 // Push notification utilities
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+// Cache for VAPID public key fetched from API
+let cachedVapidPublicKey: string | null = null;
+
+// Get VAPID public key - try env var first, then fetch from API
+async function getVapidPublicKey(): Promise<string | null> {
+  // Try environment variable first
+  const envKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  if (envKey) return envKey;
+
+  // Return cached key if available
+  if (cachedVapidPublicKey) return cachedVapidPublicKey;
+
+  // Fetch from API endpoint
+  try {
+    const response = await fetch('/api/push/config');
+    if (response.ok) {
+      const data = await response.json();
+      cachedVapidPublicKey = data.vapidPublicKey;
+      return cachedVapidPublicKey;
+    }
+  } catch (error) {
+    console.error('Failed to fetch VAPID key:', error);
+  }
+
+  return null;
+}
 
 // Convert VAPID key to Uint8Array
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -96,12 +121,14 @@ export async function subscribeToPush(
     return { success: false, error: 'Push non supporté sur ce navigateur' };
   }
 
-  if (!VAPID_PUBLIC_KEY) {
-    return { success: false, error: 'Configuration push manquante' };
-  }
-
   if (!customerId) {
     return { success: false, error: 'Customer ID requis' };
+  }
+
+  // Get VAPID public key (from env or API)
+  const vapidPublicKey = await getVapidPublicKey();
+  if (!vapidPublicKey) {
+    return { success: false, error: 'Configuration push manquante' };
   }
 
   try {
@@ -127,7 +154,7 @@ export async function subscribeToPush(
     if (!subscription) {
       subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
       });
     }
 
