@@ -11,20 +11,39 @@ interface PushPayload {
 }
 
 export async function POST(request: NextRequest) {
-  // Initialize Supabase client at runtime
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-
-  // Configure web-push with VAPID keys at runtime
-  webpush.setVapidDetails(
-    'mailto:contact@qarte.fr',
-    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-    process.env.VAPID_PRIVATE_KEY!
-  );
-
   try {
+    // Check environment variables
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      console.error('VAPID keys missing:', { publicKey: !!vapidPublicKey, privateKey: !!vapidPrivateKey });
+      return NextResponse.json(
+        { error: 'Configuration VAPID manquante' },
+        { status: 500 }
+      );
+    }
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Supabase config missing');
+      return NextResponse.json(
+        { error: 'Configuration Supabase manquante' },
+        { status: 500 }
+      );
+    }
+
+    // Initialize Supabase client at runtime
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Configure web-push with VAPID keys at runtime
+    webpush.setVapidDetails(
+      'mailto:contact@qarte.fr',
+      vapidPublicKey,
+      vapidPrivateKey
+    );
+
     const { merchantId, customerId, payload } = await request.json() as {
       merchantId?: string;
       customerId?: string;
