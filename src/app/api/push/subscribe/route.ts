@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   const supabase = getSupabase();
 
   try {
-    const { subscription, customerId, merchantId } = await request.json();
+    const { subscription, customerId } = await request.json();
 
     if (!subscription || !subscription.endpoint) {
       return NextResponse.json(
@@ -22,16 +22,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!customerId) {
+      return NextResponse.json(
+        { error: 'Customer ID requis' },
+        { status: 400 }
+      );
+    }
+
     // Extract keys from subscription
     const keys = subscription.keys || {};
 
     // Upsert subscription (update if endpoint exists, insert if not)
+    // Note: subscription is linked to CUSTOMER only, not merchant
+    // This allows customers with multiple cards to receive notifications from ALL their merchants
     const { data, error } = await supabase
       .from('push_subscriptions')
       .upsert(
         {
-          customer_id: customerId || null,
-          merchant_id: merchantId || null,
+          customer_id: customerId,
           endpoint: subscription.endpoint,
           p256dh: keys.p256dh || '',
           auth: keys.auth || '',
@@ -47,7 +55,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       console.error('Error saving subscription:', error);
       return NextResponse.json(
-        { error: 'Erreur lors de l\'enregistrement' },
+        { error: 'Erreur lors de l\'enregistrement', details: error.message },
         { status: 500 }
       );
     }
@@ -59,7 +67,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Subscribe error:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Erreur serveur', details: error instanceof Error ? error.message : 'Unknown' },
       { status: 500 }
     );
   }

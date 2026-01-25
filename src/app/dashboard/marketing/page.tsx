@@ -72,18 +72,43 @@ export default function MarketingPushPage() {
     message?: string;
   } | null>(null);
 
-  // Fetch subscriber count
+  // Fetch subscriber count - count customers who have a loyalty card AND a push subscription
   useEffect(() => {
     const fetchCount = async () => {
       if (!merchant?.id) return;
 
-      const { count, error } = await supabase
-        .from('push_subscriptions')
-        .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchant.id);
+      try {
+        // Get all customer IDs with loyalty cards for this merchant
+        const { data: loyaltyCards, error: cardsError } = await supabase
+          .from('loyalty_cards')
+          .select('customer_id')
+          .eq('merchant_id', merchant.id);
 
-      if (!error) {
-        setSubscriberCount(count || 0);
+        if (cardsError || !loyaltyCards) {
+          setLoadingCount(false);
+          return;
+        }
+
+        if (loyaltyCards.length === 0) {
+          setSubscriberCount(0);
+          setLoadingCount(false);
+          return;
+        }
+
+        // Get unique customer IDs
+        const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
+
+        // Count push subscriptions for these customers
+        const { count, error } = await supabase
+          .from('push_subscriptions')
+          .select('*', { count: 'exact', head: true })
+          .in('customer_id', customerIds);
+
+        if (!error) {
+          setSubscriberCount(count || 0);
+        }
+      } catch (err) {
+        console.error('Error fetching subscriber count:', err);
       }
       setLoadingCount(false);
     };

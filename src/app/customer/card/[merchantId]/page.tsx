@@ -115,6 +115,8 @@ export default function CustomerCardPage({
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   const [iOSVersion, setIOSVersion] = useState(0);
   const [showIOSVersionWarning, setShowIOSVersionWarning] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -175,9 +177,9 @@ export default function CustomerCardPage({
 
     setPushPermission(getPermissionStatus());
 
-    // Check if already subscribed
-    const checkPushSubscription = localStorage.getItem(`qarte_push_${merchantId}`);
-    if (checkPushSubscription === 'subscribed') {
+    // Check if already subscribed (global key - works for all merchants)
+    const checkPushSubscription = localStorage.getItem('qarte_push_subscribed');
+    if (checkPushSubscription === 'true') {
       setPushSubscribed(true);
     }
   }, [merchantId, router]);
@@ -218,6 +220,9 @@ export default function CustomerCardPage({
   const handlePushSubscribe = async () => {
     if (!card) return;
 
+    // Clear previous error
+    setPushError(null);
+
     // For iOS not in standalone mode, show instructions
     if (isIOS && !isStandalone) {
       setShowIOSInstructions(true);
@@ -232,13 +237,18 @@ export default function CustomerCardPage({
 
     setPushSubscribing(true);
     try {
-      const result = await subscribeToPush(card.customer.id, card.merchant.id);
+      // Only pass customerId - subscription is linked to customer, not merchant
+      const result = await subscribeToPush(card.customer.id);
       if (result.success) {
         setPushSubscribed(true);
         setPushPermission('granted');
-        localStorage.setItem(`qarte_push_${merchantId}`, 'subscribed');
+        localStorage.setItem('qarte_push_subscribed', 'true');
+        // Show success toast
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 4000);
       } else {
         console.error('Push subscribe failed:', result.error);
+        setPushError(result.error || 'Erreur inconnue');
         if (result.error === 'Permission refusée') {
           setPushPermission('denied');
         }
@@ -249,6 +259,7 @@ export default function CustomerCardPage({
       }
     } catch (error) {
       console.error('Push subscribe error:', error);
+      setPushError(error instanceof Error ? error.message : 'Erreur inconnue');
       // Show iOS version warning on error
       if (isIOS && isStandalone) {
         setShowIOSVersionWarning(true);
@@ -620,12 +631,15 @@ export default function CustomerCardPage({
               </div>
               <div className="flex-1 text-left">
                 <p className="font-bold text-gray-900">
-                  {isIOS && !isStandalone ? "Recevoir les offres exclusives" : "Activer les notifications"}
+                  {isIOS && !isStandalone
+                    ? "🎁 Offres exclusives & surprises"
+                    : "🎁 Ne ratez plus aucune offre !"
+                  }
                 </p>
                 <p className="text-sm text-gray-500">
                   {isIOS && !isStandalone
-                    ? "Appuyez pour voir comment"
-                    : "Soyez alerté des promos et de vos récompenses"
+                    ? "Promos flash, cadeaux surprise, alertes fidélité..."
+                    : "Promos exclusives, récompenses proches, ventes flash"
                   }
                 </p>
               </div>
@@ -649,8 +663,42 @@ export default function CustomerCardPage({
                 <Check className="w-5 h-5" style={{ color: merchant.primary_color }} />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 text-sm">Notifications activées</p>
-                <p className="text-xs text-gray-500">Vous recevrez nos offres exclusives</p>
+                <p className="font-semibold text-gray-900 text-sm">🎉 Notifications activées !</p>
+                <p className="text-xs text-gray-500">Vous recevrez nos meilleures offres en avant-première</p>
+              </div>
+            </div>
+          )}
+
+          {/* Push Error Display (for debugging) */}
+          {pushError && (
+            <div className="w-full rounded-2xl p-4 bg-red-50 border border-red-200 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-red-800 text-sm">Erreur d&apos;activation</p>
+                <p className="text-xs text-red-600 mt-1">{pushError}</p>
+                {isIOS && (
+                  <p className="text-xs text-red-500 mt-2">
+                    iOS {iOSVersion || '?'} • {isStandalone ? 'Mode PWA' : 'Navigateur'}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Success Toast */}
+          {showSuccessToast && (
+            <div className="fixed bottom-6 left-4 right-4 z-50 animate-slide-up">
+              <div
+                className="max-w-md mx-auto rounded-2xl p-4 shadow-2xl flex items-center gap-3"
+                style={{ backgroundColor: merchant.primary_color }}
+              >
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <Check className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-white">C&apos;est fait ! 🎉</p>
+                  <p className="text-sm text-white/80">Vous recevrez nos offres exclusives</p>
+                </div>
               </div>
             </div>
           )}

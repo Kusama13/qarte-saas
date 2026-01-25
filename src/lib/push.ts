@@ -87,9 +87,10 @@ export async function requestPermission(): Promise<NotificationPermission> {
 }
 
 // Subscribe to push notifications
+// Note: subscription is linked to CUSTOMER only (not merchant)
+// This allows customers to receive notifications from ALL their merchants
 export async function subscribeToPush(
-  customerId?: string,
-  merchantId?: string
+  customerId?: string
 ): Promise<{ success: boolean; subscription?: PushSubscription; error?: string }> {
   if (!isPushSupported()) {
     return { success: false, error: 'Push non supporté sur ce navigateur' };
@@ -97,6 +98,10 @@ export async function subscribeToPush(
 
   if (!VAPID_PUBLIC_KEY) {
     return { success: false, error: 'Configuration push manquante' };
+  }
+
+  if (!customerId) {
+    return { success: false, error: 'Customer ID requis' };
   }
 
   try {
@@ -133,12 +138,12 @@ export async function subscribeToPush(
       body: JSON.stringify({
         subscription: subscription.toJSON(),
         customerId,
-        merchantId,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Erreur serveur');
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Erreur serveur');
     }
 
     return { success: true, subscription };

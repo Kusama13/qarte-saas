@@ -120,9 +120,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
     setPushPermission(getPermissionStatus());
 
-    // Check if already subscribed
-    const checkPushSubscription = localStorage.getItem(`qarte_push_${code}`);
-    if (checkPushSubscription === 'subscribed') {
+    // Check if already subscribed (global key - works for all merchants)
+    const checkPushSubscription = localStorage.getItem('qarte_push_subscribed');
+    if (checkPushSubscription === 'true') {
       setPushSubscribed(true);
     }
   }, [code]);
@@ -149,11 +149,12 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
     setPushSubscribing(true);
     try {
-      const result = await subscribeToPush(customer.id, merchant.id);
+      const result = await subscribeToPush(customer.id);
       if (result.success) {
         setPushSubscribed(true);
         setPushPermission('granted');
-        localStorage.setItem(`qarte_push_${code}`, 'subscribed');
+        // Use global key - subscription works for ALL merchants
+        localStorage.setItem('qarte_push_subscribed', 'true');
       } else {
         console.error('Push subscribe failed:', result.error);
         if (result.error === 'Permission refusée') {
@@ -1003,9 +1004,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     <Bell className="w-6 h-6" style={{ color: primaryColor }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 mb-1">Ne manquez rien !</h3>
+                    <h3 className="font-bold text-gray-900 mb-1">🎁 Offres exclusives</h3>
                     <p className="text-sm text-gray-500 mb-3">
-                      Recevez une alerte quand vous êtes proche de votre récompense
+                      Promos flash, récompenses proches, surprises... ne ratez rien !
                     </p>
                     <button
                       onClick={handlePushSubscribe}
@@ -1018,7 +1019,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                       ) : (
                         <>
                           <Bell className="w-4 h-4" />
-                          Activer les notifications
+                          Oui, je veux en profiter !
                         </>
                       )}
                     </button>
@@ -1040,9 +1041,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     <Bell className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 mb-1">Recevez des notifications</h3>
+                    <h3 className="font-bold text-gray-900 mb-1">🎁 Promos exclusives sur iPhone</h3>
                     <p className="text-sm text-gray-600 mb-4">
-                      Pour recevoir des alertes sur iPhone, ajoutez cette page à votre écran d&apos;accueil :
+                      Ajoutez cette page pour recevoir nos offres en avant-première :
                     </p>
                     <div className="space-y-3 text-sm">
                       <div className="flex items-center gap-3 bg-white/70 rounded-xl p-3">
@@ -1091,9 +1092,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     <Bell className="w-6 h-6" style={{ color: primaryColor }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 mb-1">Ne manquez rien !</h3>
+                    <h3 className="font-bold text-gray-900 mb-1">🎁 Offres exclusives</h3>
                     <p className="text-sm text-gray-500 mb-3">
-                      Recevez une alerte quand vous êtes proche de votre récompense
+                      Promos flash, récompenses proches, surprises... ne ratez rien !
                     </p>
                     <button
                       onClick={handlePushSubscribe}
@@ -1106,7 +1107,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                       ) : (
                         <>
                           <Bell className="w-4 h-4" />
-                          Activer les notifications
+                          Oui, je veux en profiter !
                         </>
                       )}
                     </button>

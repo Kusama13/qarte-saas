@@ -38,24 +38,61 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build query to get subscriptions
-    let query = supabase.from('push_subscriptions').select('*');
-
-    if (merchantId) {
-      query = query.eq('merchant_id', merchantId);
-    }
+    let subscriptions: any[] = [];
 
     if (customerId) {
-      query = query.eq('customer_id', customerId);
-    }
+      // Send to specific customer
+      const { data, error } = await supabase
+        .from('push_subscriptions')
+        .select('*')
+        .eq('customer_id', customerId);
 
-    const { data: subscriptions, error } = await query;
+      if (error) {
+        console.error('Error fetching subscriptions:', error);
+        return NextResponse.json(
+          { error: 'Erreur lors de la récupération des abonnements' },
+          { status: 500 }
+        );
+      }
+      subscriptions = data || [];
+    } else if (merchantId) {
+      // Send to all customers who have a loyalty card with this merchant
+      // First, get all customer IDs with loyalty cards for this merchant
+      const { data: loyaltyCards, error: cardsError } = await supabase
+        .from('loyalty_cards')
+        .select('customer_id')
+        .eq('merchant_id', merchantId);
 
-    if (error) {
-      console.error('Error fetching subscriptions:', error);
+      if (cardsError) {
+        console.error('Error fetching loyalty cards:', cardsError);
+        return NextResponse.json(
+          { error: 'Erreur lors de la récupération des clients' },
+          { status: 500 }
+        );
+      }
+
+      if (loyaltyCards && loyaltyCards.length > 0) {
+        const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
+
+        // Get push subscriptions for these customers
+        const { data, error } = await supabase
+          .from('push_subscriptions')
+          .select('*')
+          .in('customer_id', customerIds);
+
+        if (error) {
+          console.error('Error fetching subscriptions:', error);
+          return NextResponse.json(
+            { error: 'Erreur lors de la récupération des abonnements' },
+            { status: 500 }
+          );
+        }
+        subscriptions = data || [];
+      }
+    } else {
       return NextResponse.json(
-        { error: 'Erreur lors de la récupération des abonnements' },
-        { status: 500 }
+        { error: 'merchantId ou customerId requis' },
+        { status: 400 }
       );
     }
 
