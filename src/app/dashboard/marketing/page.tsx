@@ -3,328 +3,378 @@
 import React, { useState, useEffect } from 'react';
 import {
   Bell,
-  Megaphone,
-  Clock,
-  Gift,
-  Calendar,
-  Mail,
-  Sparkles,
-  Coffee,
-  Scissors,
-  Croissant,
-  UtensilsCrossed,
+  Send,
+  Users,
+  Loader2,
   CheckCircle2,
-  ChevronRight,
+  AlertCircle,
+  Sparkles,
+  Gift,
+  Clock,
+  Megaphone,
+  X,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useMerchant } from '@/contexts/MerchantContext';
+import { supabase } from '@/lib/supabase';
+
+interface NotificationTemplate {
+  id: string;
+  title: string;
+  body: string;
+  icon: React.ElementType;
+  color: string;
+}
+
+const templates: NotificationTemplate[] = [
+  {
+    id: 'reminder',
+    title: 'On vous attend !',
+    body: 'Cela fait un moment... Passez nous voir !',
+    icon: Clock,
+    color: 'blue',
+  },
+  {
+    id: 'promo',
+    title: 'Offre spéciale',
+    body: '-20% sur tout aujourd\'hui seulement !',
+    icon: Megaphone,
+    color: 'orange',
+  },
+  {
+    id: 'reward',
+    title: 'Récompense proche !',
+    body: 'Plus que quelques points avant votre cadeau !',
+    icon: Gift,
+    color: 'emerald',
+  },
+  {
+    id: 'news',
+    title: 'Nouveauté',
+    body: 'Découvrez notre nouvelle carte !',
+    icon: Sparkles,
+    color: 'violet',
+  },
+];
 
 export default function MarketingPushPage() {
-  const [email, setEmail] = useState('');
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const { merchant } = useMerchant();
+  const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
+  const [loadingCount, setLoadingCount] = useState(true);
 
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<{
+    success: boolean;
+    sent?: number;
+    failed?: number;
+    message?: string;
+  } | null>(null);
+
+  // Fetch subscriber count
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    const fetchCount = async () => {
+      if (!merchant?.id) return;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      setIsSubmitted(true);
+      const { count, error } = await supabase
+        .from('push_subscriptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('merchant_id', merchant.id);
+
+      if (!error) {
+        setSubscriberCount(count || 0);
+      }
+      setLoadingCount(false);
+    };
+
+    fetchCount();
+  }, [merchant?.id]);
+
+  const handleSend = async () => {
+    if (!title.trim() || !body.trim() || !merchant?.id) return;
+
+    setSending(true);
+    setSendResult(null);
+
+    try {
+      const response = await fetch('/api/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          merchantId: merchant.id,
+          payload: {
+            title: title.trim(),
+            body: body.trim(),
+            url: `/scan/${merchant.scan_code}`,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSendResult({
+          success: true,
+          sent: data.sent,
+          failed: data.failed,
+        });
+        // Clear form on success
+        if (data.sent > 0) {
+          setTitle('');
+          setBody('');
+        }
+      } else {
+        setSendResult({
+          success: false,
+          message: data.error || 'Erreur lors de l\'envoi',
+        });
+      }
+    } catch (error) {
+      setSendResult({
+        success: false,
+        message: 'Erreur de connexion',
+      });
+    } finally {
+      setSending(false);
     }
   };
 
-  if (!mounted) return null;
+  const applyTemplate = (template: NotificationTemplate) => {
+    setTitle(template.title);
+    setBody(template.body);
+    setSendResult(null);
+  };
 
   return (
-    <div className="min-h-screen pb-20">
-      {/* Background Decor */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute -top-[10%] -right-[10%] w-[40%] h-[40%] bg-amber-100/50 blur-[120px] rounded-full" />
-        <div className="absolute top-[20%] -left-[10%] w-[30%] h-[30%] bg-orange-100/30 blur-[100px] rounded-full" />
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-200">
+            <Bell className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">Notifications Push</h1>
+            <p className="text-gray-500 text-sm">Envoyez des messages à vos clients</p>
+          </div>
+        </div>
       </div>
 
-      <div className="max-w-5xl mx-auto">
-        {/* Hero Section */}
-        <div className="text-center mb-16 relative">
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="inline-block mb-6 relative"
-          >
-            <div className="absolute inset-0 bg-amber-400 blur-2xl opacity-20 animate-pulse" />
-            <div className="relative bg-white p-5 rounded-3xl shadow-xl shadow-amber-200/50 border border-amber-100">
-              <motion.div
-                animate={{
-                  rotate: [0, -10, 10, -10, 10, 0],
-                }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 4,
-                  times: [0, 0.1, 0.2, 0.3, 0.4, 1]
-                }}
-              >
-                <Bell className="w-12 h-12 text-amber-500 fill-amber-50" />
-              </motion.div>
+      {/* Stats Card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center">
+              <Users className="w-7 h-7 text-indigo-600" />
             </div>
-            <motion.div
-              initial={{ x: 20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="absolute -top-2 -right-14 bg-orange-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg"
-            >
-              Bientôt
-            </motion.div>
-          </motion.div>
-
-          <motion.h1
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tight"
-          >
-            Notifications <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">Push</span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed"
-          >
-            Gardez le contact avec vos clients au moment opportun.
-            Envoyez des messages directs sur leurs smartphones et augmentez votre taux de rétention.
-          </motion.p>
-        </div>
-
-        {/* Benefits Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
-          {[
-            {
-              title: "Rappelez-vous à vos clients",
-              desc: "Relancez automatiquement les clients qui n'ont pas visité depuis un moment.",
-              icon: Clock,
-              color: "amber"
-            },
-            {
-              title: "Annoncez vos promotions",
-              desc: "Diffusez vos offres spéciales et nouveaux produits en un clic.",
-              icon: Megaphone,
-              color: "orange"
-            },
-            {
-              title: "Récompenses expirantes",
-              desc: "Alertez vos clients avant que leurs points n'expirent.",
-              icon: Gift,
-              color: "amber"
-            },
-            {
-              title: "Événements spéciaux",
-              desc: "Promouvez vos soirées thématiques et lancements saisonniers.",
-              icon: Calendar,
-              color: "orange"
-            }
-          ].map((benefit, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              whileHover={{ y: -5 }}
-              className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:shadow-amber-500/5 transition-all"
-            >
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${
-                benefit.color === 'amber' ? 'bg-amber-50 text-amber-600' : 'bg-orange-50 text-orange-600'
-              }`}>
-                <benefit.icon className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">{benefit.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{benefit.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Use Cases & Phone Mockup */}
-        <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
-          <div className="space-y-6 order-2 lg:order-1">
-            <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-widest">
-                <Sparkles className="w-3 h-3" /> Exemples concrets
-              </div>
-              <h2 className="text-3xl font-bold text-slate-900 leading-tight">
-                Adapté à votre métier
-              </h2>
-            </div>
-
-            <div className="grid gap-3">
-              {[
-                { label: "Café", text: "☕ Votre 10ème café vous attend ! Passez nous voir aujourd'hui.", icon: Coffee },
-                { label: "Salon de coiffure", text: "💇 Cela fait 6 semaines... Besoin d'une coupe rafraîchissante ?", icon: Scissors },
-                { label: "Boulangerie", text: "🥐 -20% sur les viennoiseries ce matin jusqu'à 10h !", icon: Croissant },
-                { label: "Restaurant", text: "🍽️ Votre récompense fidélité expire dans 3 jours.", icon: UtensilsCrossed },
-              ].map((item, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ x: -20, opacity: 0 }}
-                  whileInView={{ x: 0, opacity: 1 }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="group flex items-center gap-4 p-4 bg-white rounded-2xl border border-slate-100 hover:border-amber-200 transition-colors shadow-sm"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center group-hover:bg-amber-50 transition-colors">
-                    <item.icon className="w-5 h-5 text-slate-400 group-hover:text-amber-500" />
-                  </div>
-                  <div>
-                    <span className="block text-[10px] uppercase font-bold text-slate-400 mb-0.5 tracking-wider">{item.label}</span>
-                    <p className="text-sm text-slate-700 font-medium italic">&quot;{item.text}&quot;</p>
-                  </div>
-                </motion.div>
-              ))}
+            <div>
+              <p className="text-sm font-medium text-gray-500">Abonnés aux notifications</p>
+              {loadingCount ? (
+                <div className="h-8 w-16 bg-gray-100 rounded animate-pulse mt-1" />
+              ) : (
+                <p className="text-3xl font-black text-gray-900">{subscriberCount}</p>
+              )}
             </div>
           </div>
+          {subscriberCount === 0 && !loadingCount && (
+            <div className="text-right">
+              <p className="text-sm text-gray-400">
+                Les clients s'abonnent après leur premier passage
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
 
-          <div className="flex justify-center order-1 lg:order-2">
-            <div className="relative">
-              {/* Phone Frame */}
-              <div className="w-[260px] h-[520px] bg-slate-900 rounded-[2.5rem] p-2.5 shadow-2xl border-[6px] border-slate-800 relative z-10">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-5 bg-slate-800 rounded-b-2xl z-20" />
-                <div className="w-full h-full bg-gradient-to-b from-slate-800 to-slate-900 rounded-[2rem] overflow-hidden relative pt-10 px-3">
+      {/* Composer */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <Send className="w-5 h-5 text-gray-400" />
+          Composer une notification
+        </h2>
 
-                  {/* Mock Notifications */}
-                  <div className="space-y-2.5">
-                    <motion.div
-                      initial={{ y: 40, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 0.8 }}
-                      className="bg-white/95 backdrop-blur shadow-lg rounded-xl p-3 flex gap-2.5"
-                    >
-                      <div className="w-7 h-7 rounded-lg bg-amber-500 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-[10px] font-bold">Q</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex justify-between items-center mb-0.5">
-                          <span className="text-[9px] font-bold text-slate-900">QARTE</span>
-                          <span className="text-[9px] text-slate-400">Maintenant</span>
-                        </div>
-                        <p className="text-[10px] text-slate-600 leading-tight">Votre 10ème café vous attend ! ☕</p>
-                      </div>
-                    </motion.div>
+        {/* Templates */}
+        <div className="mb-6">
+          <p className="text-sm font-medium text-gray-500 mb-3">Modèles rapides</p>
+          <div className="flex flex-wrap gap-2">
+            {templates.map((template) => (
+              <button
+                key={template.id}
+                onClick={() => applyTemplate(template)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
+                  template.color === 'blue'
+                    ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
+                    : template.color === 'orange'
+                    ? 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
+                    : template.color === 'emerald'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                    : 'bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100'
+                }`}
+              >
+                <template.icon className="w-4 h-4" />
+                <span className="text-sm font-medium">{template.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
-                    <motion.div
-                      initial={{ y: 40, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 1 }}
-                      className="bg-white/95 backdrop-blur shadow-lg rounded-xl p-3 flex gap-2.5 opacity-90 scale-[0.97] origin-top"
-                    >
-                      <div className="w-7 h-7 rounded-lg bg-orange-500 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-[10px] font-bold">Q</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex justify-between items-center mb-0.5">
-                          <span className="text-[9px] font-bold text-slate-900">QARTE</span>
-                          <span className="text-[9px] text-slate-400">Il y a 2h</span>
-                        </div>
-                        <p className="text-[10px] text-slate-600 leading-tight">-20% sur tout jusqu&apos;à ce soir ! 🔥</p>
-                      </div>
-                    </motion.div>
+        {/* Form */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1.5">
+              Titre de la notification
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Offre spéciale !"
+              maxLength={50}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
+            />
+            <p className="text-xs text-gray-400 mt-1 text-right">{title.length}/50</p>
+          </div>
 
-                    <motion.div
-                      initial={{ y: 40, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: 1.2 }}
-                      className="bg-white/95 backdrop-blur shadow-lg rounded-xl p-3 flex gap-2.5 opacity-80 scale-[0.94] origin-top"
-                    >
-                      <div className="w-7 h-7 rounded-lg bg-rose-500 flex items-center justify-center flex-shrink-0">
-                        <span className="text-white text-[10px] font-bold">Q</span>
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex justify-between items-center mb-0.5">
-                          <span className="text-[9px] font-bold text-slate-900">QARTE</span>
-                          <span className="text-[9px] text-slate-400">Hier</span>
-                        </div>
-                        <p className="text-[10px] text-slate-600 leading-tight">Récompense expire dans 3 jours ⏰</p>
-                      </div>
-                    </motion.div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1.5">
+              Message
+            </label>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              placeholder="Ex: -20% sur tout aujourd'hui seulement ! Passez nous voir."
+              maxLength={150}
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none"
+            />
+            <p className="text-xs text-gray-400 mt-1 text-right">{body.length}/150</p>
+          </div>
+
+          {/* Preview */}
+          {(title || body) && (
+            <div className="bg-gray-50 rounded-xl p-4">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
+                Aperçu
+              </p>
+              <div className="bg-white rounded-xl shadow-lg p-3 flex gap-3 max-w-sm">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-sm font-black italic">Q</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <span className="text-xs font-bold text-gray-900">
+                      {merchant?.shop_name || 'Votre commerce'}
+                    </span>
+                    <span className="text-[10px] text-gray-400">Maintenant</span>
                   </div>
-
-                  {/* UI Bottom Bar */}
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/20 rounded-full" />
+                  <p className="text-xs font-semibold text-gray-800 truncate">
+                    {title || 'Titre...'}
+                  </p>
+                  <p className="text-xs text-gray-600 line-clamp-2">
+                    {body || 'Message...'}
+                  </p>
                 </div>
               </div>
-
-              {/* Phone Decorative Shadows */}
-              <div className="absolute -inset-4 bg-amber-500/10 blur-3xl rounded-full -z-10" />
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* CTA Form Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <div className="bg-slate-900 rounded-3xl p-8 md:p-10 text-center relative overflow-hidden shadow-2xl">
-            {/* Background elements */}
-            <div className="absolute top-0 right-0 p-6 opacity-10">
-              <Mail className="w-24 h-24 text-white" />
-            </div>
-            <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-amber-500/20 blur-[60px] rounded-full" />
-
-            <div className="relative z-10">
-              <h2 className="text-2xl font-bold text-white mb-3">Soyez informé du lancement</h2>
-              <p className="text-slate-400 mb-6 max-w-md mx-auto text-sm">
-                Laissez-nous votre email et nous vous préviendrons dès que les notifications push seront disponibles.
-              </p>
-
-              <AnimatePresence mode="wait">
-                {!isSubmitted ? (
-                  <motion.form
-                    key="form"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    onSubmit={handleSubmit}
-                    className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
-                  >
-                    <input
-                      type="email"
-                      required
-                      placeholder="votre@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="flex-1 bg-white/10 border border-white/20 rounded-xl px-5 py-3.5 text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all text-sm"
-                    />
-                    <button
-                      type="submit"
-                      className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all whitespace-nowrap group text-sm"
-                    >
-                      Me notifier
-                      <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                  </motion.form>
-                ) : (
-                  <motion.div
-                    key="success"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="flex flex-col items-center justify-center py-2"
-                  >
-                    <div className="w-14 h-14 bg-emerald-500/20 rounded-full flex items-center justify-center mb-3">
-                      <CheckCircle2 className="w-7 h-7 text-emerald-500" />
+          {/* Result message */}
+          <AnimatePresence>
+            {sendResult && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className={`flex items-center gap-3 p-4 rounded-xl ${
+                  sendResult.success
+                    ? 'bg-emerald-50 text-emerald-800'
+                    : 'bg-red-50 text-red-800'
+                }`}
+              >
+                {sendResult.success ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold">
+                        {sendResult.sent === 0
+                          ? 'Aucun abonné à notifier'
+                          : `${sendResult.sent} notification${sendResult.sent! > 1 ? 's' : ''} envoyée${sendResult.sent! > 1 ? 's' : ''} !`}
+                      </p>
+                      {sendResult.failed && sendResult.failed > 0 && (
+                        <p className="text-sm opacity-75">
+                          {sendResult.failed} échec(s)
+                        </p>
+                      )}
                     </div>
-                    <p className="text-emerald-400 font-bold text-lg mb-1">C&apos;est noté !</p>
-                    <p className="text-slate-400 text-sm">Nous vous contacterons à {email}</p>
-                  </motion.div>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                    <p className="font-semibold">{sendResult.message}</p>
+                  </>
                 )}
-              </AnimatePresence>
+                <button
+                  onClick={() => setSendResult(null)}
+                  className="p-1 hover:bg-black/10 rounded-lg transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-              <p className="text-[10px] text-slate-500 mt-6 uppercase tracking-widest font-medium">
-                Aucun engagement • Inclus dans votre abonnement
-              </p>
-            </div>
-          </div>
-        </motion.div>
+          {/* Send Button */}
+          <button
+            onClick={handleSend}
+            disabled={!title.trim() || !body.trim() || sending || subscriberCount === 0}
+            className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-lg shadow-lg shadow-amber-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+          >
+            {sending ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Envoi en cours...
+              </>
+            ) : (
+              <>
+                <Send className="w-5 h-5" />
+                Envoyer à {subscriberCount || 0} abonné{(subscriberCount || 0) > 1 ? 's' : ''}
+              </>
+            )}
+          </button>
+
+          {subscriberCount === 0 && !loadingCount && (
+            <p className="text-center text-sm text-gray-400">
+              Vous pourrez envoyer des notifications quand des clients s'abonneront
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Tips */}
+      <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100">
+        <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-amber-600" />
+          Conseils pour des notifications efficaces
+        </h3>
+        <ul className="space-y-2 text-sm text-amber-800">
+          <li className="flex items-start gap-2">
+            <span className="text-amber-500 mt-0.5">•</span>
+            <span>Soyez concis et direct - les gens lisent vite</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-amber-500 mt-0.5">•</span>
+            <span>Ajoutez un sentiment d'urgence ou d'exclusivité</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-amber-500 mt-0.5">•</span>
+            <span>N'envoyez pas trop souvent (1-2 fois par semaine max)</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-amber-500 mt-0.5">•</span>
+            <span>Personnalisez avec le nom de votre commerce</span>
+          </li>
+        </ul>
       </div>
     </div>
   );
