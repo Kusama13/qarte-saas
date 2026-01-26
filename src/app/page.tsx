@@ -271,42 +271,17 @@ function HeroSection() {
         {/* iPhone Mockup */}
         <div className={`flex justify-center ${isInView ? 'animate-fade-in-up delay-300' : 'opacity-0'}`} style={{ animationDelay: '0.3s' }}>
           <div className="animate-float relative">
-            <div className="relative w-72 h-[580px] bg-gray-900 rounded-[3rem] p-3 shadow-2xl shadow-gray-900/30">
-              <div className="absolute top-8 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full" />
-              <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden p-6 flex flex-col">
-                {/* App Header */}
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 mx-auto bg-gradient-to-r from-indigo-500 to-violet-500 rounded-2xl flex items-center justify-center mb-3">
-                    <span className="text-2xl font-bold text-white">Q</span>
-                  </div>
-                  <h3 className="text-gray-900 font-semibold">Café du Coin</h3>
-                  <p className="text-gray-500 text-sm">Votre carte fidélité</p>
-                </div>
-
-                {/* Points Display */}
-                <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 rounded-2xl p-6 mb-4">
-                  <div className="text-center mb-4">
-                    <span className="text-5xl font-bold text-gray-900">7</span>
-                    <span className="text-2xl text-gray-400">/10</span>
-                  </div>
-                  <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="w-[70%] h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full" />
-                  </div>
-                  <p className="text-center text-gray-500 text-sm mt-2">Plus que 3 pour votre récompense !</p>
-                </div>
-
-                {/* Reward Preview */}
-                <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200 rounded-xl p-4 mt-auto">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full flex items-center justify-center">
-                      <Star className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-gray-900 font-medium text-sm">Café offert</p>
-                      <p className="text-gray-500 text-xs">À 10 points</p>
-                    </div>
-                  </div>
-                </div>
+            {/* Phone Frame */}
+            <div className="relative w-[280px] h-[570px] bg-gray-900 rounded-[3rem] p-2 shadow-2xl shadow-gray-900/30">
+              {/* Dynamic Island */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-full z-10" />
+              {/* Screen */}
+              <div className="w-full h-full rounded-[2.5rem] overflow-hidden">
+                <img
+                  src="/images/mockup-card.jpg"
+                  alt="Carte de fidélité Qarte"
+                  className="w-full h-full object-cover object-top"
+                />
               </div>
             </div>
           </div>
