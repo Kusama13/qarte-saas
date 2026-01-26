@@ -140,6 +140,7 @@ export default function CustomerCardPage({
   }
   const [offer, setOffer] = useState<MerchantOffer | null>(null);
   const [offerExpanded, setOfferExpanded] = useState(false);
+  const [pwaOfferText, setPwaOfferText] = useState<string | null>(null);
 
   // QR Scanner state
   const [showScanner, setShowScanner] = useState(false);
@@ -174,12 +175,17 @@ export default function CustomerCardPage({
         const pending = visitsData.filter((v: VisitWithStatus) => v.status === 'pending').length;
         setPendingCount(pending);
 
-        // Fetch current offer
+        // Fetch current offer and PWA offer
         try {
           const offerResponse = await fetch(`/api/offers?merchantId=${merchantId}`);
           const offerData = await offerResponse.json();
-          if (offerResponse.ok && offerData.offer && offerData.offer.active) {
-            setOffer(offerData.offer);
+          if (offerResponse.ok) {
+            if (offerData.offer && offerData.offer.active) {
+              setOffer(offerData.offer);
+            }
+            if (offerData.pwaOffer) {
+              setPwaOfferText(offerData.pwaOffer);
+            }
           }
         } catch (offerError) {
           console.error('Error fetching offer:', offerError);
@@ -868,8 +874,8 @@ export default function CustomerCardPage({
             </motion.div>
           )}
 
-          {/* Add to Home Screen Prompt - Show when NOT in PWA and offer exists */}
-          {offer && offer.active && !isStandalone && (
+          {/* Add to Home Screen Prompt - Show when NOT in PWA and (offer exists OR pwa offer configured) */}
+          {((offer && offer.active) || pwaOfferText) && !isStandalone && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -893,10 +899,10 @@ export default function CustomerCardPage({
                   </motion.div>
                   <div className="flex-1">
                     <p className="font-bold text-gray-900 text-sm mb-1">
-                      🎁 Offre exclusive disponible
+                      🎁 {pwaOfferText || 'Offre exclusive disponible'}
                     </p>
                     <p className="text-xs text-gray-600 mb-3">
-                      Ajoutez votre carte à l&apos;écran d&apos;accueil pour voir votre offre exclusive
+                      Ajoutez votre carte à l&apos;écran d&apos;accueil pour en profiter
                     </p>
 
                     {/* iOS Instructions */}

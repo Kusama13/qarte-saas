@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   const { data: merchant, error } = await supabase
     .from('merchants')
-    .select('offer_active, offer_title, offer_description, offer_image_url, offer_expires_at, offer_duration_days, offer_created_at')
+    .select('offer_active, offer_title, offer_description, offer_image_url, offer_expires_at, offer_duration_days, offer_created_at, pwa_offer_text')
     .eq('id', merchantId)
     .single();
 
@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
       durationDays: merchant.offer_duration_days,
       createdAt: merchant.offer_created_at,
       isExpired,
-    }
+    },
+    pwaOffer: merchant.pwa_offer_text || null,
   });
 }
 
@@ -87,6 +88,36 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error saving offer:', error);
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+}
+
+// PATCH to update PWA offer
+export async function PATCH(request: NextRequest) {
+  const supabase = createRouteHandlerClient({ cookies });
+
+  try {
+    const body = await request.json();
+    const { merchantId, pwaOfferText } = body;
+
+    if (!merchantId) {
+      return NextResponse.json({ error: 'merchantId required' }, { status: 400 });
+    }
+
+    const { error } = await supabase
+      .from('merchants')
+      .update({
+        pwa_offer_text: pwaOfferText?.trim() || null,
+      })
+      .eq('id', merchantId);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Error saving PWA offer:', error);
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }
