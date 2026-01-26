@@ -15,13 +15,16 @@ import {
   X,
   ChevronDown,
   ChevronUp,
-  Target,
-  UserPlus,
-  Crown,
-  Moon,
-  Filter,
   History,
   AlertTriangle,
+  Calendar,
+  Trash2,
+  Star,
+  PartyPopper,
+  Heart,
+  Zap,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -32,7 +35,6 @@ interface NotificationTemplate {
   body: string;
   icon: React.ElementType;
   color: string;
-  filters?: FilterType[];
 }
 
 interface Subscriber {
@@ -48,16 +50,6 @@ interface Subscriber {
   card_created_at: string | null;
 }
 
-type FilterType = 'all' | 'close_to_reward' | 'inactive' | 'new' | 'vip' | 'reward_ready';
-
-interface MarketingFilter {
-  id: FilterType;
-  label: string;
-  description: string;
-  icon: React.ElementType;
-  color: string;
-}
-
 interface PushHistoryItem {
   id: string;
   title: string;
@@ -68,15 +60,23 @@ interface PushHistoryItem {
   created_at: string;
 }
 
-// Templates with filter relevance
-const allTemplates: NotificationTemplate[] = [
+interface ScheduledPush {
+  id: string;
+  title: string;
+  body: string;
+  scheduled_time: string;
+  scheduled_date: string;
+  status: string;
+}
+
+// More diverse templates
+const templates: NotificationTemplate[] = [
   {
     id: 'reminder',
     title: 'On vous attend !',
     body: 'Cela fait un moment... Passez nous voir !',
     icon: Clock,
     color: 'blue',
-    filters: ['all', 'inactive'],
   },
   {
     id: 'promo',
@@ -84,92 +84,62 @@ const allTemplates: NotificationTemplate[] = [
     body: '-20% sur tout aujourd\'hui seulement !',
     icon: Megaphone,
     color: 'orange',
-    filters: ['all', 'inactive', 'vip'],
   },
   {
-    id: 'reward_close',
-    title: 'Presque !',
-    body: 'Plus que quelques points avant votre cadeau !',
-    icon: Target,
-    color: 'emerald',
-    filters: ['close_to_reward'],
-  },
-  {
-    id: 'reward_ready',
-    title: 'Cadeau disponible !',
-    body: 'Votre récompense vous attend. Venez la chercher !',
-    icon: Gift,
-    color: 'amber',
-    filters: ['reward_ready'],
-  },
-  {
-    id: 'welcome',
-    title: 'Bienvenue !',
-    body: 'Merci de votre confiance. À très bientôt !',
-    icon: UserPlus,
-    color: 'violet',
-    filters: ['new'],
-  },
-  {
-    id: 'vip',
-    title: 'Merci !',
-    body: 'Vous êtes un client fidèle, on vous adore !',
-    icon: Crown,
+    id: 'flash',
+    title: 'Vente flash',
+    body: '2h pour en profiter ! -30% sur votre commande',
+    icon: Zap,
     color: 'yellow',
-    filters: ['vip'],
   },
   {
-    id: 'news',
+    id: 'happy_hour',
+    title: 'Happy Hour',
+    body: 'De 17h à 19h, boissons à moitié prix !',
+    icon: PartyPopper,
+    color: 'pink',
+  },
+  {
+    id: 'new_product',
     title: 'Nouveauté',
-    body: 'Découvrez notre nouvelle carte !',
+    body: 'Découvrez notre nouveau produit !',
     icon: Sparkles,
     color: 'violet',
-    filters: ['all'],
-  },
-];
-
-const marketingFilters: MarketingFilter[] = [
-  {
-    id: 'all',
-    label: 'Tous',
-    description: 'Tous les abonnés',
-    icon: Users,
-    color: 'gray',
   },
   {
-    id: 'close_to_reward',
-    label: 'Presque récompensés',
-    description: 'Plus que 1-2 points',
-    icon: Target,
-    color: 'emerald',
-  },
-  {
-    id: 'reward_ready',
-    label: 'Récompense prête',
-    description: 'Peuvent utiliser leur récompense',
-    icon: Gift,
+    id: 'loyalty',
+    title: 'Points doublés',
+    body: 'Aujourd\'hui vos points sont doublés !',
+    icon: Star,
     color: 'amber',
   },
   {
-    id: 'inactive',
-    label: 'Inactifs',
-    description: 'Pas de visite depuis 30+ jours',
+    id: 'weekend',
+    title: 'Bon weekend !',
+    body: 'Venez profiter de nos offres du weekend',
+    icon: Sun,
+    color: 'emerald',
+  },
+  {
+    id: 'thanks',
+    title: 'Merci !',
+    body: 'Merci de votre fidélité, on vous adore !',
+    icon: Heart,
+    color: 'red',
+  },
+  {
+    id: 'gift',
+    title: 'Surprise !',
+    body: 'Un cadeau vous attend en boutique',
+    icon: Gift,
+    color: 'purple',
+  },
+  {
+    id: 'evening',
+    title: 'Ce soir',
+    body: 'Soirée spéciale ce soir, on vous attend !',
     icon: Moon,
-    color: 'blue',
-  },
-  {
-    id: 'new',
-    label: 'Nouveaux',
-    description: 'Inscrits depuis moins de 7 jours',
-    icon: UserPlus,
-    color: 'violet',
-  },
-  {
-    id: 'vip',
-    label: 'VIP',
-    description: '10+ visites au total',
-    icon: Crown,
-    color: 'yellow',
+    color: 'indigo',
   },
 ];
 
@@ -185,7 +155,6 @@ export default function MarketingPushPage() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [sendResult, setSendResult] = useState<{
     success: boolean;
     sent?: number;
@@ -195,9 +164,16 @@ export default function MarketingPushPage() {
   const [pushHistory, setPushHistory] = useState<PushHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
+  // Scheduling
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState<'10:00' | '18:00'>('10:00');
+  const [scheduling, setScheduling] = useState(false);
+  const [scheduledPushes, setScheduledPushes] = useState<ScheduledPush[]>([]);
+  const [loadingScheduled, setLoadingScheduled] = useState(true);
+
   // Tips popup
   const [showTipsPopup, setShowTipsPopup] = useState(false);
-  const [showTipsTooltip, setShowTipsTooltip] = useState(false);
 
   // Check if first visit
   useEffect(() => {
@@ -208,6 +184,12 @@ export default function MarketingPushPage() {
         localStorage.setItem(TIPS_SHOWN_KEY, 'true');
       }
     }
+  }, []);
+
+  // Set default schedule date to today
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    setScheduleDate(today);
   }, []);
 
   // Fetch subscriber count and list
@@ -253,62 +235,41 @@ export default function MarketingPushPage() {
     fetchHistory();
   }, [merchant?.id]);
 
-  // Get templates relevant to current filter
-  const getRelevantTemplates = () => {
-    return allTemplates.filter(t => !t.filters || t.filters.includes(selectedFilter));
-  };
+  // Fetch scheduled pushes
+  useEffect(() => {
+    const fetchScheduled = async () => {
+      if (!merchant?.id) return;
 
-  // Filter subscribers based on selected filter
-  const getFilteredSubscribers = (subs: Subscriber[], filter: FilterType = selectedFilter): Subscriber[] => {
-    const now = new Date();
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      try {
+        const response = await fetch(`/api/push/schedule?merchantId=${merchant.id}`);
+        const data = await response.json();
 
-    switch (filter) {
-      case 'close_to_reward':
-        return subs.filter(s =>
-          s.stamps_required - s.current_stamps <= 2 &&
-          s.stamps_required - s.current_stamps > 0
-        );
-      case 'reward_ready':
-        return subs.filter(s => s.current_stamps >= s.stamps_required);
-      case 'inactive':
-        return subs.filter(s => {
-          if (!s.last_visit) return true;
-          return new Date(s.last_visit) < thirtyDaysAgo;
-        });
-      case 'new':
-        return subs.filter(s => {
-          if (!s.card_created_at) return false;
-          return new Date(s.card_created_at) >= sevenDaysAgo;
-        });
-      case 'vip':
-        return subs.filter(s => s.total_visits >= 10);
-      default:
-        return subs;
-    }
-  };
+        if (response.ok) {
+          setScheduledPushes(data.scheduled || []);
+        }
+      } catch (err) {
+        console.error('Error fetching scheduled:', err);
+      }
+      setLoadingScheduled(false);
+    };
 
-  const filteredSubscribers = getFilteredSubscribers(subscribers);
-  const filteredCount = filteredSubscribers.length;
+    fetchScheduled();
+  }, [merchant?.id]);
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim() || !merchant?.id) return;
-    if (filteredCount === 0) return;
+    if (subscriberCount === 0) return;
 
     setSending(true);
     setSendResult(null);
 
     try {
-      const targetCustomerIds = filteredSubscribers.map(s => s.id);
-
       const response = await fetch('/api/push/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           merchantId: merchant.id,
-          customerIds: targetCustomerIds.length < subscribers.length ? targetCustomerIds : undefined,
-          filterType: selectedFilter,
+          filterType: 'all',
           payload: {
             title: merchant.shop_name || 'Qarte',
             body: `${title.trim()}: ${body.trim()}`,
@@ -341,13 +302,74 @@ export default function MarketingPushPage() {
     }
   };
 
+  const handleSchedule = async () => {
+    if (!title.trim() || !body.trim() || !merchant?.id || !scheduleDate) return;
+
+    setScheduling(true);
+
+    try {
+      const response = await fetch('/api/push/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          merchantId: merchant.id,
+          title: title.trim(),
+          body: body.trim(),
+          scheduledTime: scheduleTime,
+          scheduledDate: scheduleDate,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSendResult({ success: true, message: `Programmé pour ${scheduleTime === '10:00' ? '10h' : '18h'}` });
+        setTitle('');
+        setBody('');
+        setShowSchedule(false);
+        // Refresh scheduled list
+        const scheduledResponse = await fetch(`/api/push/schedule?merchantId=${merchant.id}`);
+        const scheduledData = await scheduledResponse.json();
+        if (scheduledResponse.ok) {
+          setScheduledPushes(scheduledData.scheduled || []);
+        }
+      } else {
+        setSendResult({ success: false, message: data.error || 'Erreur' });
+      }
+    } catch {
+      setSendResult({ success: false, message: 'Erreur de connexion' });
+    } finally {
+      setScheduling(false);
+    }
+  };
+
+  const handleCancelScheduled = async (id: string) => {
+    try {
+      const response = await fetch(`/api/push/schedule?id=${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        setScheduledPushes(prev => prev.filter(p => p.id !== id));
+      }
+    } catch (err) {
+      console.error('Error canceling scheduled push:', err);
+    }
+  };
+
   const applyTemplate = (template: NotificationTemplate) => {
     setTitle(template.title);
     setBody(template.body);
     setSendResult(null);
   };
 
-  const relevantTemplates = getRelevantTemplates();
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (dateStr === today.toISOString().split('T')[0]) return "Aujourd'hui";
+    if (dateStr === tomorrow.toISOString().split('T')[0]) return 'Demain';
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -376,8 +398,8 @@ export default function MarketingPushPage() {
               </div>
               <ul className="space-y-3 text-sm text-gray-700 mb-6">
                 <li className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>N'envoyez pas trop souvent</strong> (1-2 fois par semaine max)</span>
+                  <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                  <span><strong className="text-red-600">N'envoyez pas trop souvent</strong> (1-2 fois par semaine max)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
@@ -388,8 +410,8 @@ export default function MarketingPushPage() {
                   <span>Ajoutez un sentiment d'<strong>urgence ou d'exclusivité</strong></span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                  <span>Utilisez les <strong>filtres</strong> pour cibler les bons clients</span>
+                  <Clock className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>Meilleurs moments :</strong> 10h ou 18h</span>
                 </li>
               </ul>
               <button
@@ -421,7 +443,7 @@ export default function MarketingPushPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center">
-              <Bell className="w-7 h-7 text-amber-600" />
+              <Users className="w-7 h-7 text-amber-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Abonnés aux notifications</p>
@@ -474,54 +496,31 @@ export default function MarketingPushPage() {
         </AnimatePresence>
       </div>
 
-      {/* Filter Section */}
-      {subscriberCount !== null && subscriberCount > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-400" />
-            Ciblage
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {marketingFilters.map((filter) => {
-              const count = getFilteredSubscribers(subscribers, filter.id).length;
-              const isSelected = selectedFilter === filter.id;
-              const colorClasses: Record<string, { bg: string; text: string; border: string; selectedBg: string }> = {
-                gray: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', selectedBg: 'bg-gray-600' },
-                emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', selectedBg: 'bg-emerald-600' },
-                amber: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', selectedBg: 'bg-amber-600' },
-                blue: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', selectedBg: 'bg-blue-600' },
-                violet: { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', selectedBg: 'bg-violet-600' },
-                yellow: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', selectedBg: 'bg-yellow-600' },
-              };
-              const colors = colorClasses[filter.color] || colorClasses.gray;
-
-              return (
+      {/* Scheduled Pushes */}
+      {!loadingScheduled && scheduledPushes.length > 0 && (
+        <div className="bg-blue-50 rounded-2xl border border-blue-100 p-4 mb-6">
+          <h3 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-blue-600" />
+            Programmés
+          </h3>
+          <div className="space-y-2">
+            {scheduledPushes.map((push) => (
+              <div key={push.id} className="flex items-center justify-between bg-white rounded-xl p-3 border border-blue-100">
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 truncate">{push.title}</p>
+                  <p className="text-sm text-gray-500">
+                    {formatDate(push.scheduled_date)} à {push.scheduled_time === '10:00' ? '10h' : '18h'}
+                  </p>
+                </div>
                 <button
-                  key={filter.id}
-                  onClick={() => setSelectedFilter(filter.id)}
-                  className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
-                    isSelected
-                      ? `${colors.selectedBg} text-white border-transparent shadow-lg`
-                      : `${colors.bg} ${colors.text} ${colors.border} hover:shadow-md`
-                  }`}
+                  onClick={() => handleCancelScheduled(push.id)}
+                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                 >
-                  <filter.icon className="w-4 h-4" />
-                  <span className="text-sm font-semibold">{filter.label}</span>
-                  <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-black/5'
-                  }`}>
-                    {count}
-                  </span>
+                  <Trash2 className="w-4 h-4" />
                 </button>
-              );
-            })}
+              </div>
+            ))}
           </div>
-          {selectedFilter !== 'all' && (
-            <p className="text-sm text-gray-500 mt-3 flex items-center gap-2">
-              <Target className="w-4 h-4" />
-              {filteredCount} client{filteredCount > 1 ? 's' : ''} ciblé{filteredCount > 1 ? 's' : ''}
-            </p>
-          )}
         </div>
       )}
 
@@ -532,13 +531,11 @@ export default function MarketingPushPage() {
           Composer une notification
         </h2>
 
-        {/* Templates - Contextual */}
+        {/* Templates */}
         <div className="mb-6">
-          <p className="text-sm font-medium text-gray-500 mb-3">
-            Modèles suggérés {selectedFilter !== 'all' && <span className="text-amber-600">(pour {marketingFilters.find(f => f.id === selectedFilter)?.label})</span>}
-          </p>
+          <p className="text-sm font-medium text-gray-500 mb-3">Modèles</p>
           <div className="flex flex-wrap gap-2">
-            {relevantTemplates.map((template) => {
+            {templates.map((template) => {
               const colorMap: Record<string, string> = {
                 blue: 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
                 orange: 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100',
@@ -546,6 +543,10 @@ export default function MarketingPushPage() {
                 violet: 'bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100',
                 amber: 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100',
                 yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100',
+                pink: 'bg-pink-50 border-pink-200 text-pink-700 hover:bg-pink-100',
+                red: 'bg-red-50 border-red-200 text-red-700 hover:bg-red-100',
+                purple: 'bg-purple-50 border-purple-200 text-purple-700 hover:bg-purple-100',
+                indigo: 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100',
               };
 
               return (
@@ -642,78 +643,115 @@ export default function MarketingPushPage() {
             )}
           </AnimatePresence>
 
-          {/* Send Button */}
-          <div className="relative">
+          {/* Schedule Section */}
+          <AnimatePresence>
+            {showSchedule && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                  <p className="text-sm font-bold text-blue-900 mb-3">Programmer l'envoi</p>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="block text-xs text-blue-700 mb-1">Date</label>
+                      <input
+                        type="date"
+                        value={scheduleDate}
+                        onChange={(e) => setScheduleDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-3 py-2 rounded-lg border border-blue-200 text-sm"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs text-blue-700 mb-1">Heure</label>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setScheduleTime('10:00')}
+                          className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                            scheduleTime === '10:00'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-blue-700 border border-blue-200'
+                          }`}
+                        >
+                          10h
+                        </button>
+                        <button
+                          onClick={() => setScheduleTime('18:00')}
+                          className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                            scheduleTime === '18:00'
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-blue-700 border border-blue-200'
+                          }`}
+                        >
+                          18h
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            {/* Schedule Toggle */}
             <button
-              onClick={handleSend}
-              disabled={!title.trim() || !body.trim() || sending || filteredCount === 0}
-              className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-lg shadow-lg shadow-amber-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+              onClick={() => setShowSchedule(!showSchedule)}
+              className={`px-4 py-4 rounded-xl font-bold transition-all flex items-center gap-2 ${
+                showSchedule
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+              }`}
             >
-              {sending ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Envoi...
-                </>
-              ) : (
-                <>
-                  <Send className="w-5 h-5" />
-                  Envoyer à {filteredCount} client{filteredCount > 1 ? 's' : ''}
-                </>
-              )}
+              <Calendar className="w-5 h-5" />
             </button>
 
-            {/* Tips icon */}
-            <div className="absolute -right-2 -top-2">
+            {/* Main Send/Schedule Button */}
+            <div className="flex-1 relative">
               <button
-                onClick={() => setShowTipsTooltip(!showTipsTooltip)}
-                onMouseEnter={() => setShowTipsTooltip(true)}
-                onMouseLeave={() => setShowTipsTooltip(false)}
-                className="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+                onClick={showSchedule ? handleSchedule : handleSend}
+                disabled={!title.trim() || !body.trim() || sending || scheduling || (subscriberCount === 0 && !showSchedule)}
+                className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-lg shadow-lg shadow-amber-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
-                <AlertTriangle className="w-3.5 h-3.5" />
-              </button>
-              <AnimatePresence>
-                {showTipsTooltip && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 5 }}
-                    className="absolute right-0 top-8 w-64 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-xl z-10"
-                  >
-                    <p className="font-bold mb-1">Attention !</p>
-                    <p>N'envoyez pas plus de 1-2 notifications par semaine pour éviter les désabonnements.</p>
-                  </motion.div>
+                {sending || scheduling ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    {showSchedule ? 'Programmation...' : 'Envoi...'}
+                  </>
+                ) : showSchedule ? (
+                  <>
+                    <Calendar className="w-5 h-5" />
+                    Programmer
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Envoyer à {subscriberCount} client{(subscriberCount || 0) > 1 ? 's' : ''}
+                  </>
                 )}
-              </AnimatePresence>
+              </button>
+
+              {/* Big Danger Icon */}
+              {!showSchedule && (
+                <div className="absolute -right-3 -top-3">
+                  <div className="relative group">
+                    <div className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg animate-pulse cursor-help">
+                      <AlertTriangle className="w-6 h-6" />
+                    </div>
+                    <div className="absolute right-0 top-12 w-64 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                      <p className="font-bold mb-1 text-red-400">Attention !</p>
+                      <p>N'envoyez pas plus de 1-2 notifications par semaine pour éviter les désabonnements.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Tips */}
-      <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100 mb-6">
-        <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-amber-600" />
-          Conseils
-        </h3>
-        <ul className="space-y-2 text-sm text-amber-800">
-          <li className="flex items-start gap-2">
-            <span className="text-amber-500 mt-0.5">•</span>
-            <span>Soyez concis - les gens lisent vite</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-amber-500 mt-0.5">•</span>
-            <span>Ajoutez un sentiment d'urgence ou d'exclusivité</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-amber-500 mt-0.5">•</span>
-            <span><strong className="text-red-600">N'envoyez pas trop souvent</strong> (1-2 fois/semaine max)</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-amber-500 mt-0.5">•</span>
-            <span><strong>Meilleurs moments :</strong> 10h-12h ou 17h-19h</span>
-          </li>
-        </ul>
       </div>
 
       {/* Push History */}
@@ -735,8 +773,6 @@ export default function MarketingPushPage() {
         ) : (
           <div className="space-y-3">
             {pushHistory.map((item) => {
-              const filterInfo = marketingFilters.find(f => f.id === item.filter_type);
-              const FilterIcon = filterInfo?.icon || Users;
               const date = new Date(item.created_at);
 
               return (
@@ -747,8 +783,8 @@ export default function MarketingPushPage() {
                       <p className="text-sm text-gray-600 line-clamp-1">{item.body}</p>
                       <div className="flex items-center gap-3 mt-2">
                         <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-lg text-xs font-medium text-gray-600 border">
-                          <FilterIcon className="w-3 h-3" />
-                          {filterInfo?.label || 'Tous'}
+                          <Users className="w-3 h-3" />
+                          Tous
                         </span>
                         <span className="text-xs text-gray-400">
                           {date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
