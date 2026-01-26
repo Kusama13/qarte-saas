@@ -44,7 +44,6 @@ interface Merchant {
   offer_description: string | null;
   offer_expires_at: string | null;
   offer_created_at: string | null;
-  pwa_offer_text: string | null;
 }
 
 interface Customer {
@@ -371,18 +370,6 @@ export default function MerchantDetailPage() {
             </div>
           </div>
 
-          {/* PWA Offer */}
-          <div className="p-4 bg-blue-50 rounded-xl">
-            <div className="flex items-center gap-2 mb-2">
-              <ShoppingBag className="w-5 h-5 text-blue-600" />
-              <span className="font-medium text-blue-900">Offre PWA exclusive</span>
-            </div>
-            {merchant.pwa_offer_text ? (
-              <p className="text-blue-700">{merchant.pwa_offer_text}</p>
-            ) : (
-              <p className="text-blue-500 italic">Non configurée</p>
-            )}
-          </div>
         </div>
 
         {/* Current Temporary Offer */}

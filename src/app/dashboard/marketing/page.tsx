@@ -165,11 +165,6 @@ export default function MarketingPushPage() {
   const [currentOfferImageUrl, setCurrentOfferImageUrl] = useState<string | null>(null);
   const [showOfferModal, setShowOfferModal] = useState(false);
 
-  // PWA-exclusive offer (permanent offer for customers who install the app)
-  const [pwaOfferText, setPwaOfferText] = useState('');
-  const [pwaOfferSaved, setPwaOfferSaved] = useState('');
-  const [savingPwaOffer, setSavingPwaOffer] = useState(false);
-
   // History visibility
   const [showHistory, setShowHistory] = useState(false);
 
@@ -293,11 +288,6 @@ export default function MarketingPushPage() {
           setCurrentOfferTitle(data.offer.title || '');
           setCurrentOfferDescription(data.offer.description || '');
           setCurrentOfferImageUrl(data.offer.imageUrl || null);
-        }
-        // Also fetch PWA offer
-        if (response.ok && data.pwaOffer !== undefined) {
-          setPwaOfferText(data.pwaOffer || '');
-          setPwaOfferSaved(data.pwaOffer || '');
         }
       } catch (err) {
         console.error('Error fetching offer:', err);
@@ -450,30 +440,6 @@ export default function MarketingPushPage() {
       }
     } catch (err) {
       console.error('Error deactivating offer:', err);
-    }
-  };
-
-  const handleSavePwaOffer = async () => {
-    if (!merchant?.id) return;
-
-    setSavingPwaOffer(true);
-    try {
-      const response = await fetch('/api/offers', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          merchantId: merchant.id,
-          pwaOfferText: pwaOfferText.trim(),
-        }),
-      });
-
-      if (response.ok) {
-        setPwaOfferSaved(pwaOfferText.trim());
-      }
-    } catch (err) {
-      console.error('Error saving PWA offer:', err);
-    } finally {
-      setSavingPwaOffer(false);
     }
   };
 
@@ -1305,74 +1271,6 @@ export default function MarketingPushPage() {
           </div>
         </div>
       )}
-
-      {/* PWA-Exclusive Offer Section */}
-      <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 shadow-sm">
-        <div className="flex items-start gap-3 mb-3">
-          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
-            <Bell className="w-5 h-5 text-indigo-600" />
-          </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-gray-900 text-sm">Offre pour vos clients fidèles</h3>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Récompensez les clients qui acceptent de recevoir vos notifications
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-gray-50 rounded-lg p-3 mb-3">
-          <p className="text-xs text-gray-600 mb-2 flex items-center gap-1">
-            <Sparkles className="w-3 h-3 text-indigo-500" />
-            <strong>Pourquoi c&apos;est important ?</strong>
-          </p>
-          <ul className="text-xs text-gray-500 space-y-1 ml-4">
-            <li>• Les clients ajoutent votre carte à leur téléphone</li>
-            <li>• Vous pouvez leur envoyer des promos directement</li>
-            <li>• <span className="font-medium text-indigo-600">+30% de visites en moyenne</span></li>
-          </ul>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-xs font-medium text-gray-700">
-            Quelle offre proposez-vous ?
-          </label>
-          <input
-            type="text"
-            value={pwaOfferText}
-            onChange={(e) => setPwaOfferText(e.target.value)}
-            placeholder="Ex: Un café offert, -10% sur la prochaine commande..."
-            className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-          />
-          <p className="text-[10px] text-gray-400">
-            Cette offre sera visible uniquement aux clients qui ajoutent leur carte à l&apos;écran d&apos;accueil
-          </p>
-        </div>
-
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-          <div className="flex items-center gap-2">
-            {pwaOfferSaved ? (
-              <span className="text-xs text-emerald-600 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" />
-                Offre active
-              </span>
-            ) : (
-              <span className="text-xs text-gray-400">Pas encore configuré</span>
-            )}
-          </div>
-          <button
-            onClick={handleSavePwaOffer}
-            disabled={savingPwaOffer || pwaOfferText.trim() === pwaOfferSaved}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-          >
-            {savingPwaOffer ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="w-4 h-4" />
-            )}
-            {pwaOfferSaved ? 'Mettre à jour' : 'Activer'}
-          </button>
-        </div>
-      </div>
 
       {/* Current Offer Modal */}
       <AnimatePresence>

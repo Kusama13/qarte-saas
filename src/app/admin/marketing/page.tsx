@@ -15,17 +15,12 @@ import {
   ChevronDown,
   ChevronUp,
   Megaphone,
-  QrCode,
-  TrendingUp,
-  Star,
   Clock,
   Award,
   Users,
-  Percent,
-  BadgeCheck,
-  Smartphone,
-  Bell,
-  Heart,
+  Star,
+  Wand2,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -45,28 +40,65 @@ interface EmailTemplate {
   body: string;
 }
 
-interface FlyerDesign {
+interface FlyerPrompt {
   id: string;
   title: string;
-  format: string;
-  style: 'stats' | 'benefits' | 'testimonial';
-  headline: string;
-  subline: string;
-  stats?: { value: string; label: string }[];
-  benefits?: string[];
-  cta: string;
-  colors: { primary: string; secondary: string; accent: string; bg: string };
+  prompt: string;
+  tips: string[];
 }
 
-interface VitrophanieDesign {
+interface VitrophaniePrompt {
   id: string;
   title: string;
-  format: string;
-  style: 'network' | 'badge' | 'minimal';
-  mainMessage: string;
-  subMessage?: string;
-  colors: { primary: string; secondary: string; bg: string; text: string };
+  prompt: string;
+  tips: string[];
 }
+
+// AI Image Generators recommendations
+const aiGenerators = [
+  {
+    name: 'Midjourney',
+    description: 'Meilleure qualité, style professionnel',
+    url: 'https://midjourney.com',
+    badge: 'Recommandé',
+    color: 'emerald',
+  },
+  {
+    name: 'DALL-E 3',
+    description: 'Via ChatGPT Plus, bon pour le texte',
+    url: 'https://chat.openai.com',
+    badge: null,
+    color: 'blue',
+  },
+  {
+    name: 'Ideogram',
+    description: 'Excellent pour le texte dans les images',
+    url: 'https://ideogram.ai',
+    badge: 'Texte',
+    color: 'violet',
+  },
+  {
+    name: 'Leonardo.ai',
+    description: 'Gratuit, licence commerciale',
+    url: 'https://leonardo.ai',
+    badge: 'Gratuit',
+    color: 'amber',
+  },
+  {
+    name: 'Adobe Firefly',
+    description: 'Commercial safe, intégré à Creative Cloud',
+    url: 'https://firefly.adobe.com',
+    badge: null,
+    color: 'red',
+  },
+  {
+    name: 'Canva AI',
+    description: 'Simple, templates inclus',
+    url: 'https://canva.com',
+    badge: 'Facile',
+    color: 'cyan',
+  },
+];
 
 const emailTemplates: Record<CommerceType, EmailTemplate[]> = {
   bakery: [
@@ -208,323 +240,272 @@ Démo gratuite de 10 minutes ?
   ],
 };
 
-// Flyers B2B - Prospection commerciale par type de commerce
-const flyerDesigns: Record<CommerceType, FlyerDesign[]> = {
-  bakery: [
-    {
-      id: 'bakery-1',
-      title: 'Flyer Stats',
-      format: 'A5',
-      style: 'stats',
-      headline: 'Augmentez votre CA',
-      subline: 'La fidélisation digitale pour les boulangeries',
-      stats: [
-        { value: '+23%', label: 'de fréquence' },
-        { value: '85%', label: 'de rétention' },
-        { value: '0€', label: 'de carte papier' },
-      ],
-      cta: '14 jours gratuits',
-      colors: { primary: '#D97706', secondary: '#FCD34D', accent: '#92400E', bg: '#FFFBEB' },
-    },
-    {
-      id: 'bakery-2',
-      title: 'Flyer Avantages',
-      format: 'A5',
-      style: 'benefits',
-      headline: 'Fini les cartes perdues',
-      subline: 'Vos clients fidèles ne vous oublient plus',
-      benefits: [
-        'Carte 100% digitale',
-        'Notifications push',
-        'Stats en temps réel',
-        'Setup en 5 minutes',
-      ],
-      cta: 'Essai gratuit',
-      colors: { primary: '#78350F', secondary: '#F59E0B', accent: '#FDE68A', bg: '#FEF3C7' },
-    },
-    {
-      id: 'bakery-3',
-      title: 'Flyer Témoignage',
-      format: 'A5',
-      style: 'testimonial',
-      headline: '"Mes clients reviennent plus souvent"',
-      subline: 'Comme 100+ boulangeries en France',
-      cta: 'Rejoignez-les',
-      colors: { primary: '#1F2937', secondary: '#D97706', accent: '#FCD34D', bg: '#F9FAFB' },
-    },
-  ],
-  restaurant: [
-    {
-      id: 'resto-1',
-      title: 'Flyer Stats',
-      format: 'A5',
-      style: 'stats',
-      headline: 'Remplissez vos tables',
-      subline: 'La fidélisation qui booste votre CA',
-      stats: [
-        { value: '+30%', label: 'de retours' },
-        { value: '2min', label: 'par jour' },
-        { value: '∞', label: 'clients fidèles' },
-      ],
-      cta: 'Testez gratuitement',
-      colors: { primary: '#DC2626', secondary: '#FCA5A5', accent: '#7F1D1D', bg: '#FEF2F2' },
-    },
-    {
-      id: 'resto-2',
-      title: 'Flyer Avantages',
-      format: 'A5',
-      style: 'benefits',
-      headline: 'Vos habitués méritent mieux',
-      subline: 'Récompensez-les automatiquement',
-      benefits: [
-        'Offres du jour en push',
-        'Heures creuses remplies',
-        'Zéro app côté client',
-        'Avis Google boostés',
-      ],
-      cta: '14 jours offerts',
-      colors: { primary: '#0F172A', secondary: '#475569', accent: '#F59E0B', bg: '#F8FAFC' },
-    },
-    {
-      id: 'resto-3',
-      title: 'Flyer Témoignage',
-      format: 'A5',
-      style: 'testimonial',
-      headline: '"Mon mardi est maintenant plein"',
-      subline: 'Grâce aux offres ciblées Qarte',
-      cta: 'Découvrez comment',
-      colors: { primary: '#059669', secondary: '#A7F3D0', accent: '#047857', bg: '#ECFDF5' },
-    },
-  ],
-  hairdresser: [
-    {
-      id: 'hair-1',
-      title: 'Flyer Stats',
-      format: 'A5',
-      style: 'stats',
-      headline: 'Réduisez les no-shows',
-      subline: 'Fidélisez vos clients automatiquement',
-      stats: [
-        { value: '-40%', label: 'de no-shows' },
-        { value: '6 sem', label: 'entre visites' },
-        { value: '100%', label: 'digital' },
-      ],
-      cta: 'Essayez Qarte',
-      colors: { primary: '#7C3AED', secondary: '#C4B5FD', accent: '#5B21B6', bg: '#F5F3FF' },
-    },
-    {
-      id: 'hair-2',
-      title: 'Flyer Avantages',
-      format: 'A5',
-      style: 'benefits',
-      headline: 'Le digital au service du salon',
-      subline: 'Moderne et efficace',
-      benefits: [
-        'Rappels automatiques',
-        'Fidélité sans carte',
-        'Gestion smartphone',
-        'Image premium',
-      ],
-      cta: 'Démo gratuite',
-      colors: { primary: '#1F2937', secondary: '#9CA3AF', accent: '#F472B6', bg: '#FFFFFF' },
-    },
-    {
-      id: 'hair-3',
-      title: 'Flyer Témoignage',
-      format: 'A5',
-      style: 'testimonial',
-      headline: '"Mes clientes adorent"',
-      subline: 'Simple, moderne, efficace',
-      cta: 'Rejoignez 50+ salons',
-      colors: { primary: '#0F172A', secondary: '#C084FC', accent: '#E879F9', bg: '#FAF5FF' },
-    },
-  ],
-  boutique: [
-    {
-      id: 'boutique-1',
-      title: 'Flyer Stats',
-      format: 'A5',
-      style: 'stats',
-      headline: 'Boostez vos ventes',
-      subline: 'La fidélité qui fait revenir',
-      stats: [
-        { value: '+25%', label: 'panier moyen' },
-        { value: '3x', label: 'plus de visites' },
-        { value: '0', label: 'carte plastique' },
-      ],
-      cta: '14 jours gratuits',
-      colors: { primary: '#DB2777', secondary: '#FBCFE8', accent: '#9D174D', bg: '#FDF2F8' },
-    },
-    {
-      id: 'boutique-2',
-      title: 'Flyer Avantages',
-      format: 'A5',
-      style: 'benefits',
-      headline: 'Ventes privées faciles',
-      subline: 'Ciblez vos meilleurs clients',
-      benefits: [
-        'Liste VIP automatique',
-        'Push ventes privées',
-        'Stats détaillées',
-        'Setup immédiat',
-      ],
-      cta: 'Essai offert',
-      colors: { primary: '#374151', secondary: '#9CA3AF', accent: '#F59E0B', bg: '#F9FAFB' },
-    },
-    {
-      id: 'boutique-3',
-      title: 'Flyer Témoignage',
-      format: 'A5',
-      style: 'testimonial',
-      headline: '"Mes clientes sont fans"',
-      subline: 'Du programme fidélité digital',
-      cta: 'Testez aussi',
-      colors: { primary: '#0F172A', secondary: '#1E293B', accent: '#EAB308', bg: '#FEFCE8' },
-    },
-  ],
-  cafe: [
-    {
-      id: 'cafe-1',
-      title: 'Flyer Stats',
-      format: 'A5',
-      style: 'stats',
-      headline: 'Fidélisez vos habitués',
-      subline: 'Le digital au service du café',
-      stats: [
-        { value: '+35%', label: 'de réguliers' },
-        { value: '10sec', label: 'par scan' },
-        { value: '∞', label: 'tampons digitaux' },
-      ],
-      cta: 'Essayez Qarte',
-      colors: { primary: '#78350F', secondary: '#FDE68A', accent: '#451A03', bg: '#FEF3C7' },
-    },
-    {
-      id: 'cafe-2',
-      title: 'Flyer Avantages',
-      format: 'A5',
-      style: 'benefits',
-      headline: 'Plus de cartes oubliées',
-      subline: 'La fidélité moderne',
-      benefits: [
-        '10ème café offert auto',
-        'Notifs personnalisées',
-        'Aucune app requise',
-        'QR code unique',
-      ],
-      cta: '14 jours offerts',
-      colors: { primary: '#1C1917', secondary: '#78716C', accent: '#CA8A04', bg: '#FAFAF9' },
-    },
-    {
-      id: 'cafe-3',
-      title: 'Flyer Témoignage',
-      format: 'A5',
-      style: 'testimonial',
-      headline: '"Simple et efficace"',
-      subline: 'Mes clients adorent',
-      cta: 'Rejoignez le réseau',
-      colors: { primary: '#166534', secondary: '#BBF7D0', accent: '#15803D', bg: '#F0FDF4' },
-    },
-  ],
-  beauty: [
-    {
-      id: 'beauty-1',
-      title: 'Flyer Stats',
-      format: 'A5',
-      style: 'stats',
-      headline: 'Fidélisez avec élégance',
-      subline: 'Le digital au service de la beauté',
-      stats: [
-        { value: '+28%', label: 'de retours' },
-        { value: 'Premium', label: 'image' },
-        { value: '5min', label: 'setup' },
-      ],
-      cta: 'Découvrez Qarte',
-      colors: { primary: '#BE185D', secondary: '#FBCFE8', accent: '#9D174D', bg: '#FDF2F8' },
-    },
-    {
-      id: 'beauty-2',
-      title: 'Flyer Avantages',
-      format: 'A5',
-      style: 'benefits',
-      headline: 'Soignez votre image',
-      subline: 'Avec une fidélité moderne',
-      benefits: [
-        'Rappels soins',
-        'Offres exclusives',
-        'Liste clientes VIP',
-        'Zéro papier',
-      ],
-      cta: 'Essai gratuit',
-      colors: { primary: '#831843', secondary: '#F9A8D4', accent: '#F472B6', bg: '#FFF1F2' },
-    },
-    {
-      id: 'beauty-3',
-      title: 'Flyer Témoignage',
-      format: 'A5',
-      style: 'testimonial',
-      headline: '"Mes clientes sont ravies"',
-      subline: 'Du programme fidélité',
-      cta: 'Rejoignez-nous',
-      colors: { primary: '#0F172A', secondary: '#A855F7', accent: '#C084FC', bg: '#FAF5FF' },
-    },
-  ],
+// Flyers B2B - Un prompt optimisé par type de commerce
+const flyerPrompts: Record<CommerceType, FlyerPrompt> = {
+  bakery: {
+    id: 'bakery-flyer',
+    title: 'Flyer Boulangerie',
+    prompt: `Create a professional A5 flyer for "Qarte" digital loyalty card solution targeting bakeries.
+
+HEADLINE: "Fini les cartes à tampons perdues"
+SUBLINE: "La fidélisation digitale pour les boulangeries"
+
+KEY STATS to display prominently:
+• +23% de fréquence client
+• 85% de rétention
+• 0€ de carte papier
+
+VISUAL ELEMENTS:
+- Warm bakery colors (golden, brown, cream)
+- QR code mockup on a smartphone screen
+- Croissants/baguettes in background (subtle, blurred)
+- Clean, modern design
+- "Qarte" logo with purple/indigo branding
+
+BENEFITS LIST:
+✓ Carte 100% digitale
+✓ Aucune app à télécharger
+✓ Setup en 5 minutes
+✓ Notifications push
+
+CTA BUTTON: "14 jours gratuits" or "Essai gratuit"
+FOOTER: "qarte.fr | La fidélité simplifiée"
+
+Style: Professional, trustworthy, modern SaaS marketing. Clean typography. High contrast. Print-ready A5 format.`,
+    tips: [
+      'Ajoutez --ar 2:3 pour le ratio A5 portrait',
+      'Utilisez --style raw pour moins de stylisation artistique',
+      'Demandez "print-ready, CMYK colors" pour l\'impression',
+    ],
+  },
+  restaurant: {
+    id: 'restaurant-flyer',
+    title: 'Flyer Restaurant',
+    prompt: `Create a professional A5 flyer for "Qarte" digital loyalty solution targeting restaurants.
+
+HEADLINE: "Remplissez vos tables creuses"
+SUBLINE: "La fidélisation qui booste votre CA"
+
+KEY STATS to display:
+• +30% de clients réguliers
+• 2 min/jour de gestion
+• -40% de no-shows
+
+VISUAL ELEMENTS:
+- Restaurant ambiance (warm lighting, elegant)
+- Smartphone showing loyalty card interface
+- Subtle food elements (not too prominent)
+- Modern, clean design
+- "Qarte" branding (purple/indigo)
+
+BENEFITS:
+✓ Offres du jour en notification push
+✓ Heures creuses remplies
+✓ Zéro app côté client
+✓ Avis Google boostés
+
+CTA: "Testez gratuitement 14 jours"
+FOOTER: "qarte.fr"
+
+Style: Upscale restaurant marketing, professional, clean lines, appetizing but not food-focused. B2B tone, convincing stats layout.`,
+    tips: [
+      'Précisez "no text" si vous voulez ajouter le texte après dans Canva',
+      'Utilisez des couleurs chaudes pour l\'ambiance restaurant',
+      'Évitez trop de détails food pour rester B2B',
+    ],
+  },
+  hairdresser: {
+    id: 'hairdresser-flyer',
+    title: 'Flyer Coiffeur',
+    prompt: `Create a professional A5 flyer for "Qarte" digital loyalty system targeting hair salons.
+
+HEADLINE: "Réduisez vos no-shows de 40%"
+SUBLINE: "La fidélisation digitale pour les salons de coiffure"
+
+KEY STATS:
+• -40% de rendez-vous manqués
+• 6 semaines entre visites (vs 10 sans fidélité)
+• 100% digital, 0 carte plastique
+
+VISUAL ELEMENTS:
+- Modern salon aesthetic (clean, minimalist)
+- Smartphone with QR code scan
+- Subtle scissors/salon elements
+- Premium, elegant feel
+- Purple/violet tones matching "Qarte" brand
+
+BENEFITS:
+✓ Rappels automatiques
+✓ Fidélité sans carte physique
+✓ Gestion depuis smartphone
+✓ Image premium
+
+CTA: "Démo gratuite de 5 min"
+FOOTER: "qarte.fr | Rejoignez 50+ salons"
+
+Style: Clean, premium, modern salon marketing. Elegant typography. Professional B2B pitch targeting salon owners.`,
+    tips: [
+      'Tons violets/roses pour l\'univers coiffure',
+      'Style épuré et premium',
+      'Évitez les images de personnes pour plus de flexibilité',
+    ],
+  },
+  boutique: {
+    id: 'boutique-flyer',
+    title: 'Flyer Boutique',
+    prompt: `Create a professional A5 flyer for "Qarte" digital loyalty card targeting retail boutiques.
+
+HEADLINE: "Transformez vos visiteurs en clients fidèles"
+SUBLINE: "La fidélisation digitale pour les boutiques"
+
+KEY STATS:
+• +25% de panier moyen
+• 3x plus de visites répétées
+• 0 carte plastique à gérer
+
+VISUAL ELEMENTS:
+- Chic boutique aesthetic
+- Shopping bags (subtle)
+- Smartphone with loyalty app
+- Modern, fashionable design
+- "Qarte" purple branding
+
+BENEFITS:
+✓ Liste VIP automatique
+✓ Push ventes privées
+✓ Stats détaillées
+✓ Setup immédiat
+
+CTA: "Essai gratuit 14 jours"
+FOOTER: "qarte.fr | La fidélité simplifiée"
+
+Style: Fashion-forward, chic, boutique marketing. Clean and sophisticated. Appeals to boutique owners who care about brand image.`,
+    tips: [
+      'Couleurs neutres + touches dorées pour le luxe',
+      'Style magazine mode',
+      'Mise en avant du côté "VIP" et exclusif',
+    ],
+  },
+  cafe: {
+    id: 'cafe-flyer',
+    title: 'Flyer Café',
+    prompt: `Create a professional A5 flyer for "Qarte" digital loyalty program targeting cafés and coffee shops.
+
+HEADLINE: "Le 10ème café offert, automatiquement"
+SUBLINE: "La fidélisation digitale pour les cafés"
+
+KEY STATS:
+• +35% de clients réguliers
+• 10 secondes par scan
+• Tampons digitaux illimités
+
+VISUAL ELEMENTS:
+- Coffee shop warmth (brown, cream tones)
+- Smartphone scanning QR code
+- Coffee cup silhouette (subtle)
+- Cozy but professional feel
+- "Qarte" branding
+
+BENEFITS:
+✓ Plus de cartes oubliées
+✓ Notifications personnalisées
+✓ Aucune app requise
+✓ QR code unique
+
+CTA: "14 jours offerts"
+FOOTER: "qarte.fr"
+
+Style: Warm, inviting, coffee shop aesthetic but professional B2B marketing. Stats-driven, convincing.`,
+    tips: [
+      'Tons café (marron, crème, beige)',
+      'Ambiance chaleureuse mais pro',
+      'QR code bien visible',
+    ],
+  },
+  beauty: {
+    id: 'beauty-flyer',
+    title: 'Flyer Institut Beauté',
+    prompt: `Create a professional A5 flyer for "Qarte" digital loyalty solution targeting beauty salons and spas.
+
+HEADLINE: "Fidélisez vos clientes avec élégance"
+SUBLINE: "La solution digitale premium pour instituts de beauté"
+
+KEY STATS:
+• +28% de retours clients
+• Image premium garantie
+• Setup en 5 minutes
+
+VISUAL ELEMENTS:
+- Elegant spa/beauty aesthetic
+- Soft pink, rose gold, white palette
+- Smartphone with sleek interface
+- Luxurious, feminine feel
+- "Qarte" subtle branding
+
+BENEFITS:
+✓ Rappels soins automatiques
+✓ Offres exclusives
+✓ Liste clientes VIP
+✓ Zéro papier
+
+CTA: "Essai gratuit"
+FOOTER: "qarte.fr | La beauté de la fidélité"
+
+Style: Luxurious, feminine, spa marketing. Clean, soft colors. Premium feel that matches high-end beauty institutes.`,
+    tips: [
+      'Rose gold + blanc pour le luxe féminin',
+      'Style épuré et élégant',
+      'Évitez les photos de visages (droit à l\'image)',
+    ],
+  },
 };
 
-// Vitrophanie B2C - Communication réseau pour les clients finaux
-const vitrophanieDesigns: VitrophanieDesign[] = [
-  {
-    id: 'vit-network-1',
-    title: 'Sticker Réseau',
-    format: '20x15cm',
-    style: 'network',
-    mainMessage: 'Réseau Qarte',
-    subMessage: 'Demandez notre carte de fidélité !',
-    colors: { primary: '#6366F1', secondary: '#A5B4FC', bg: '#FFFFFF', text: '#1E1B4B' },
-  },
-  {
-    id: 'vit-network-2',
-    title: 'Sticker Multi-commerces',
-    format: '25x20cm',
-    style: 'network',
-    mainMessage: '1 carte, tous les commerces',
-    subMessage: 'Réseau Qarte - Fidélité partagée',
-    colors: { primary: '#0F172A', secondary: '#6366F1', bg: '#F8FAFC', text: '#0F172A' },
-  },
-  {
-    id: 'vit-badge-1',
-    title: 'Badge Vitrine',
-    format: '12x12cm',
-    style: 'badge',
-    mainMessage: 'Qarte',
-    subMessage: 'Membre du réseau',
-    colors: { primary: '#FFFFFF', secondary: '#6366F1', bg: '#6366F1', text: '#FFFFFF' },
-  },
-  {
-    id: 'vit-badge-2',
-    title: 'Badge Premium',
-    format: '15x15cm',
-    style: 'badge',
-    mainMessage: 'Q',
-    subMessage: 'Fidélité acceptée',
-    colors: { primary: '#0F172A', secondary: '#EAB308', bg: '#EAB308', text: '#0F172A' },
-  },
-  {
-    id: 'vit-minimal-1',
-    title: 'Bandeau Porte',
-    format: '60x8cm',
-    style: 'minimal',
-    mainMessage: 'RÉSEAU QARTE | CARTE DE FIDÉLITÉ ACCEPTÉE',
-    colors: { primary: '#FFFFFF', secondary: '#6366F1', bg: '#0F172A', text: '#FFFFFF' },
-  },
-  {
-    id: 'vit-minimal-2',
-    title: 'Bandeau Vitrine',
-    format: '80x10cm',
-    style: 'minimal',
-    mainMessage: 'DEMANDEZ VOTRE CARTE QARTE | VALABLE PARTOUT',
-    colors: { primary: '#6366F1', secondary: '#A5B4FC', bg: '#FFFFFF', text: '#0F172A' },
-  },
-];
+// Vitrophanie B2C - Un prompt unique pour tous les commerces
+const vitrophaniePrompt: VitrophaniePrompt = {
+  id: 'vitrophanie-network',
+  title: 'Vitrophanie Réseau Qarte',
+  prompt: `Create a professional window sticker design for "Qarte" loyalty network.
+
+FORMAT: Multiple sizes needed:
+1. Square badge (15x15cm) - for shop windows
+2. Horizontal banner (60x10cm) - for doors
+3. Main sticker (25x20cm) - primary window display
+
+MAIN MESSAGE: "Réseau Qarte"
+SECONDARY: "1 carte, tous les commerces" or "Demandez notre carte de fidélité !"
+
+VISUAL ELEMENTS:
+- "Q" logo prominent (stylized, italic, bold)
+- Purple/indigo primary color (#6366F1)
+- Clean white background option
+- Dark navy option (#0F172A)
+- Gold accent option for premium look
+- Small commerce icons (store, coffee, scissors, fork) in a row
+
+TEXT OPTIONS:
+• "MEMBRE DU RÉSEAU QARTE"
+• "FIDÉLITÉ ACCEPTÉE ICI"
+• "CARTE DIGITALE ACCEPTÉE"
+• "1 CARTE POUR TOUS LES COMMERCES"
+
+BADGE STYLE:
+- Round seal/stamp aesthetic
+- "Certified member" feel
+- Trust badge design
+
+BANNER STYLE:
+- Horizontal strip
+- Bold text, high contrast
+- Readable from distance
+
+Style: Professional storefront signage. High contrast for visibility. Must work on glass (transparent/white options). Trust-building, network membership feel.`,
+  tips: [
+    'Générez plusieurs variations (badge, bandeau, sticker)',
+    'Demandez "transparent background" pour usage sur vitrine',
+    'Couleurs: violet Qarte (#6366F1) + blanc ou noir',
+    'Texte lisible de loin = gros et gras',
+  ],
+};
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -607,232 +588,32 @@ function CollapsibleSection({
   );
 }
 
-// Flyer Preview Component - B2B Prospection
-function FlyerPreview({ design, emoji }: { design: FlyerDesign; emoji: string }) {
+// Prompt Card Component
+function PromptCard({ prompt, tips, title }: { prompt: string; tips: string[]; title: string }) {
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div
-        className="relative w-44 h-60 rounded-2xl shadow-xl overflow-hidden transition-transform hover:scale-105 cursor-pointer"
-        style={{ backgroundColor: design.colors.bg }}
-      >
-        {/* Header band */}
-        <div
-          className="absolute top-0 left-0 right-0 h-16 flex items-center justify-center"
-          style={{ backgroundColor: design.colors.primary }}
-        >
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1">
-              <div className="w-5 h-5 bg-white/20 rounded flex items-center justify-center">
-                <span className="text-white text-[10px] font-black italic">Q</span>
-              </div>
-              <span className="text-white/90 text-[10px] font-bold tracking-wide">QARTE</span>
-            </div>
-          </div>
+    <div className="border border-gray-200 rounded-xl overflow-hidden">
+      <div className="bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Wand2 className="w-4 h-4 text-white" />
+          <h3 className="font-semibold text-white">{title}</h3>
         </div>
-
-        {/* Content */}
-        <div className="absolute top-16 inset-x-0 bottom-0 p-3 flex flex-col">
-          {/* Emoji & Headline */}
-          <div className="text-center mb-2">
-            <span className="text-2xl">{emoji}</span>
-            <h3
-              className="font-black text-sm leading-tight mt-1"
-              style={{ color: design.colors.primary }}
-            >
-              {design.headline}
-            </h3>
-            <p className="text-[9px] text-gray-600 mt-0.5">{design.subline}</p>
-          </div>
-
-          {/* Stats */}
-          {design.style === 'stats' && design.stats && (
-            <div className="flex justify-center gap-2 my-2">
-              {design.stats.map((stat, i) => (
-                <div
-                  key={i}
-                  className="text-center px-2 py-1.5 rounded-lg"
-                  style={{ backgroundColor: design.colors.primary + '10' }}
-                >
-                  <p
-                    className="text-sm font-black"
-                    style={{ color: design.colors.primary }}
-                  >
-                    {stat.value}
-                  </p>
-                  <p className="text-[7px] text-gray-500">{stat.label}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Benefits */}
-          {design.style === 'benefits' && design.benefits && (
-            <div className="space-y-1 my-2">
-              {design.benefits.map((benefit, i) => (
-                <div key={i} className="flex items-center gap-1.5">
-                  <Check
-                    className="w-3 h-3 flex-shrink-0"
-                    style={{ color: design.colors.primary }}
-                  />
-                  <span className="text-[8px] text-gray-700">{benefit}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Testimonial */}
-          {design.style === 'testimonial' && (
-            <div className="my-2 text-center">
-              <div className="flex justify-center gap-0.5 mb-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star
-                    key={i}
-                    className="w-3 h-3 fill-amber-400 text-amber-400"
-                  />
-                ))}
-              </div>
-              <p className="text-[8px] text-gray-500 italic">Commerçant satisfait</p>
-            </div>
-          )}
-
-          {/* CTA */}
-          <div className="mt-auto">
-            <div
-              className="w-full py-1.5 rounded-lg text-center font-bold text-[10px]"
-              style={{
-                backgroundColor: design.colors.primary,
-                color: '#FFFFFF',
-              }}
-            >
-              {design.cta}
-            </div>
-            <p className="text-[7px] text-gray-400 text-center mt-1">qarte.fr</p>
-          </div>
-        </div>
+        <CopyButton text={prompt} />
       </div>
-
-      {/* Label */}
-      <div className="text-center">
-        <p className="font-semibold text-gray-900 text-sm">{design.title}</p>
-        <p className="text-xs text-gray-500">{design.format}</p>
+      <div className="p-4 bg-gray-900">
+        <pre className="whitespace-pre-wrap text-sm text-gray-300 font-mono leading-relaxed">
+          {prompt}
+        </pre>
       </div>
-    </div>
-  );
-}
-
-// Vitrophanie Preview Component - B2C Réseau
-function VitrophaniePreview({ design }: { design: VitrophanieDesign }) {
-  if (design.style === 'minimal') {
-    return (
-      <div className="flex flex-col items-center gap-3">
-        <div
-          className="relative w-72 h-14 rounded-lg shadow-lg overflow-hidden transition-transform hover:scale-105 cursor-pointer flex items-center justify-center px-4"
-          style={{ backgroundColor: design.colors.bg }}
-        >
-          <p
-            className="text-[10px] font-black tracking-wider text-center"
-            style={{ color: design.colors.text }}
-          >
-            {design.mainMessage}
-          </p>
-          {/* Shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+      {tips.length > 0 && (
+        <div className="p-4 bg-amber-50 border-t border-amber-100">
+          <p className="text-xs font-semibold text-amber-800 mb-2">💡 Conseils :</p>
+          <ul className="space-y-1">
+            {tips.map((tip, i) => (
+              <li key={i} className="text-xs text-amber-700">• {tip}</li>
+            ))}
+          </ul>
         </div>
-        <div className="text-center">
-          <p className="font-semibold text-gray-900 text-sm">{design.title}</p>
-          <p className="text-xs text-gray-500">{design.format}</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (design.style === 'badge') {
-    return (
-      <div className="flex flex-col items-center gap-3">
-        <div
-          className="relative w-24 h-24 rounded-2xl shadow-lg overflow-hidden transition-transform hover:scale-105 cursor-pointer flex flex-col items-center justify-center"
-          style={{ backgroundColor: design.colors.bg }}
-        >
-          {/* Logo */}
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center mb-1"
-            style={{ backgroundColor: design.colors.primary === '#FFFFFF' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.2)' }}
-          >
-            <span
-              className="text-lg font-black italic"
-              style={{ color: design.colors.text }}
-            >
-              {design.mainMessage}
-            </span>
-          </div>
-          {design.subMessage && (
-            <p
-              className="text-[8px] font-bold"
-              style={{ color: design.colors.text }}
-            >
-              {design.subMessage}
-            </p>
-          )}
-        </div>
-        <div className="text-center">
-          <p className="font-semibold text-gray-900 text-sm">{design.title}</p>
-          <p className="text-xs text-gray-500">{design.format}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Network style - Main sticker
-  return (
-    <div className="flex flex-col items-center gap-3">
-      <div
-        className="relative w-52 h-36 rounded-2xl shadow-lg overflow-hidden transition-transform hover:scale-105 cursor-pointer"
-        style={{ backgroundColor: design.colors.bg }}
-      >
-        {/* Border */}
-        <div
-          className="absolute inset-2 rounded-xl border-2"
-          style={{ borderColor: design.colors.primary }}
-        />
-
-        {/* Content */}
-        <div className="relative h-full flex flex-col items-center justify-center p-4 text-center">
-          {/* Logo */}
-          <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center mb-2"
-            style={{ backgroundColor: design.colors.primary }}
-          >
-            <span className="text-white text-xl font-black italic">Q</span>
-          </div>
-
-          <h3
-            className="font-black text-sm leading-tight"
-            style={{ color: design.colors.text }}
-          >
-            {design.mainMessage}
-          </h3>
-          {design.subMessage && (
-            <p
-              className="text-[10px] font-medium mt-1"
-              style={{ color: design.colors.primary }}
-            >
-              {design.subMessage}
-            </p>
-          )}
-
-          {/* Icons row */}
-          <div className="flex items-center gap-2 mt-2 opacity-60">
-            <Store className="w-3 h-3" style={{ color: design.colors.text }} />
-            <Coffee className="w-3 h-3" style={{ color: design.colors.text }} />
-            <Scissors className="w-3 h-3" style={{ color: design.colors.text }} />
-            <UtensilsCrossed className="w-3 h-3" style={{ color: design.colors.text }} />
-          </div>
-        </div>
-      </div>
-      <div className="text-center">
-        <p className="font-semibold text-gray-900 text-sm">{design.title}</p>
-        <p className="text-xs text-gray-500">{design.format}</p>
-      </div>
+      )}
     </div>
   );
 }
@@ -842,7 +623,7 @@ export default function MarketingPage() {
 
   const selectedCommerce = commerceTypes.find((c) => c.id === selectedType)!;
   const emails = emailTemplates[selectedType] || [];
-  const flyers = flyerDesigns[selectedType] || [];
+  const flyerPrompt = flyerPrompts[selectedType];
 
   return (
     <div className="space-y-8">
@@ -853,6 +634,49 @@ export default function MarketingPage() {
         <p className="mt-1 text-gray-600">
           Ressources de prospection et communication
         </p>
+      </div>
+
+      {/* AI Generators */}
+      <div className="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl p-6 border border-violet-100">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center">
+            <Wand2 className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900">Générateurs d&apos;images IA</h2>
+            <p className="text-sm text-gray-600">Utilisez ces outils avec les prompts ci-dessous</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {aiGenerators.map((gen) => (
+            <a
+              key={gen.name}
+              href={gen.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-col items-center gap-2 p-3 bg-white rounded-xl border border-gray-200 hover:border-violet-300 hover:shadow-md transition-all group"
+            >
+              <div className="flex items-center gap-1">
+                <span className="font-semibold text-gray-900 text-sm">{gen.name}</span>
+                <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-violet-500" />
+              </div>
+              <p className="text-[10px] text-gray-500 text-center leading-tight">{gen.description}</p>
+              {gen.badge && (
+                <span className={cn(
+                  "px-2 py-0.5 text-[10px] font-bold rounded-full",
+                  gen.color === 'emerald' && "bg-emerald-100 text-emerald-700",
+                  gen.color === 'blue' && "bg-blue-100 text-blue-700",
+                  gen.color === 'violet' && "bg-violet-100 text-violet-700",
+                  gen.color === 'amber' && "bg-amber-100 text-amber-700",
+                  gen.color === 'red' && "bg-red-100 text-red-700",
+                  gen.color === 'cyan' && "bg-cyan-100 text-cyan-700",
+                )}>
+                  {gen.badge}
+                </span>
+              )}
+            </a>
+          ))}
+        </div>
       </div>
 
       {/* Type de commerce selector */}
@@ -879,46 +703,56 @@ export default function MarketingPage() {
         </div>
       </div>
 
-      {/* Flyers B2B avec aperçus */}
+      {/* Flyers B2B - Prompts IA */}
       <CollapsibleSection
         title="Flyers Prospection"
         icon={FileText}
         badge="B2B"
-        description="À distribuer aux commerçants pour présenter Qarte"
+        description="Prompts pour générer des flyers avec l'IA"
         defaultOpen={true}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-4">
-          {flyers.map((flyer) => (
-            <FlyerPreview key={flyer.id} design={flyer} emoji={selectedCommerce.emoji} />
-          ))}
-        </div>
-        <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-          <p className="text-sm text-amber-800">
-            <strong>Usage :</strong> Ces flyers servent à prospecter les commerçants.
-            Présentez les stats, les avantages et les témoignages pour convaincre.
-            Format A5 recommandé pour une bonne lisibilité.
-          </p>
+        <div className="space-y-4 pt-4">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-2xl">{selectedCommerce.emoji}</span>
+            <h3 className="font-semibold text-gray-900">Prompt pour {selectedCommerce.label}</h3>
+          </div>
+
+          <PromptCard
+            title={flyerPrompt.title}
+            prompt={flyerPrompt.prompt}
+            tips={flyerPrompt.tips}
+          />
+
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+            <p className="text-sm text-amber-800">
+              <strong>Usage :</strong> Copiez ce prompt et collez-le dans Midjourney, DALL-E ou autre.
+              Ajustez les stats et messages selon vos besoins. Format A5 recommandé pour impression.
+            </p>
+          </div>
         </div>
       </CollapsibleSection>
 
-      {/* Vitrophanie B2C avec aperçus */}
+      {/* Vitrophanie B2C - Prompt IA */}
       <CollapsibleSection
         title="Vitrophanie Réseau"
         icon={Megaphone}
         badge="B2C"
-        description="Pour les vitrines des commerçants membres du réseau"
+        description="Prompt pour générer les stickers vitrine"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-4">
-          {vitrophanieDesigns.map((vitrine) => (
-            <VitrophaniePreview key={vitrine.id} design={vitrine} />
-          ))}
-        </div>
-        <div className="mt-6 p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
-          <p className="text-sm text-indigo-800">
-            <strong>Message clé :</strong> Ces visuels communiquent aux clients finaux que le commerce
-            fait partie du réseau Qarte et que la carte de fidélité est commune à tous les commerces partenaires.
-            À placer en vitrine ou près de la caisse.
-          </p>
+        <div className="space-y-4 pt-4">
+          <PromptCard
+            title={vitrophaniePrompt.title}
+            prompt={vitrophaniePrompt.prompt}
+            tips={vitrophaniePrompt.tips}
+          />
+
+          <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+            <p className="text-sm text-indigo-800">
+              <strong>Message clé :</strong> Ces visuels communiquent aux clients finaux que le commerce
+              fait partie du réseau Qarte. La carte de fidélité est commune à tous les commerces partenaires.
+              Générez plusieurs formats : badge carré, bandeau horizontal, sticker principal.
+            </p>
+          </div>
         </div>
       </CollapsibleSection>
 

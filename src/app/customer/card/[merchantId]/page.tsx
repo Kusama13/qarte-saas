@@ -141,9 +141,6 @@ export default function CustomerCardPage({
   }
   const [offer, setOffer] = useState<MerchantOffer | null>(null);
   const [offerExpanded, setOfferExpanded] = useState(false);
-  const [pwaOfferText, setPwaOfferText] = useState<string | null>(null);
-  const [pwaOfferRedeemed, setPwaOfferRedeemed] = useState(false);
-  const [showPwaOfferModal, setShowPwaOfferModal] = useState(false);
 
   // QR Scanner state
   const [showScanner, setShowScanner] = useState(false);
@@ -186,9 +183,6 @@ export default function CustomerCardPage({
           if (offerResponse.ok) {
             if (offerData.offer && offerData.offer.active) {
               setOffer(offerData.offer);
-            }
-            if (offerData.pwaOffer) {
-              setPwaOfferText(offerData.pwaOffer);
             }
           }
         } catch (offerError) {
@@ -250,12 +244,6 @@ export default function CustomerCardPage({
     const reviewHidden = localStorage.getItem(`qarte_review_hidden_${merchantId}`);
     if (reviewHidden === 'true') {
       setReviewPermanentlyHidden(true);
-    }
-
-    // Check if PWA offer has been redeemed
-    const pwaOfferRedeemedStatus = localStorage.getItem(`qarte_pwa_offer_redeemed_${merchantId}`);
-    if (pwaOfferRedeemedStatus === 'true') {
-      setPwaOfferRedeemed(true);
     }
   }, [merchantId, router]);
 
@@ -744,73 +732,10 @@ export default function CustomerCardPage({
               )}
             </div>
 
-            {/* PWA - Notifications NOT enabled: Show prompt to enable */}
-            {pwaOfferText && isStandalone && isMobile && !pushSubscribed && (
-              <motion.button
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={handlePushSubscribe}
-                disabled={pushSubscribing}
-                className="w-full mt-3 flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg transition-all hover:shadow-sm"
-                style={{ backgroundColor: `${merchant.primary_color}10` }}
-              >
-                <div className="flex items-center gap-2">
-                  <motion.div
-                    animate={{ rotate: [0, -10, 10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                  >
-                    <Bell className="w-4 h-4" style={{ color: merchant.primary_color }} />
-                  </motion.div>
-                  <span className="text-xs font-semibold text-gray-800">
-                    Activer les notifs pour voir votre offre
-                  </span>
-                </div>
-                {pushSubscribing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: merchant.primary_color }} />
-                ) : (
-                  <ChevronRight className="w-4 h-4" style={{ color: merchant.primary_color }} />
-                )}
-              </motion.button>
-            )}
-
-            {/* PWA Loyalty Gift - Show ONLY when notifications are enabled */}
-            {pwaOfferText && isStandalone && isMobile && pushSubscribed && !pwaOfferRedeemed && (
-              <motion.button
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowPwaOfferModal(true)}
-                className="w-full mt-3 flex items-center justify-between gap-2 px-3 py-2 rounded-lg transition-all hover:shadow-sm"
-                style={{ backgroundColor: `${merchant.primary_color}08` }}
-              >
-                <div className="flex items-center gap-2">
-                  <Gift className="w-4 h-4" style={{ color: merchant.primary_color }} />
-                  <span className="text-xs font-semibold text-gray-800">
-                    {pwaOfferText}
-                  </span>
-                </div>
-                <span
-                  className="text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
-                  style={{ backgroundColor: merchant.primary_color, color: 'white' }}
-                >
-                  Utiliser cette offre
-                </span>
-              </motion.button>
-            )}
-
-            {/* PWA Loyalty Gift - Already redeemed */}
-            {pwaOfferText && isStandalone && isMobile && pushSubscribed && pwaOfferRedeemed && (
-              <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50">
-                <Check className="w-4 h-4 text-emerald-500" />
-                <span className="text-xs text-gray-400 line-through">{pwaOfferText}</span>
-                <span className="text-xs text-emerald-600 font-medium">Utilisé</span>
-              </div>
-            )}
           </div>
 
-          {/* Current Offer - Visible in PWA mode OR on desktop */}
-          {offer && offer.active && (isStandalone || !isMobile) && (
+          {/* Current Offer - Visible for everyone */}
+          {offer && offer.active && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -950,8 +875,8 @@ export default function CustomerCardPage({
             </motion.div>
           )}
 
-          {/* Add to Home Screen Prompt - Show on MOBILE only when NOT in PWA and (offer exists OR pwa offer configured) */}
-          {((offer && offer.active) || pwaOfferText) && !isStandalone && isMobile && (
+          {/* Add to Home Screen Banner - Show on MOBILE only when NOT in PWA */}
+          {!isStandalone && isMobile && (
             <motion.button
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -960,74 +885,63 @@ export default function CustomerCardPage({
               className="w-full mb-5"
             >
               <div
-                className="relative overflow-hidden rounded-xl border-2 border-dashed p-4 transition-all hover:border-solid hover:shadow-md"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all hover:shadow-sm"
                 style={{
-                  borderColor: `${merchant.primary_color}40`,
+                  borderColor: `${merchant.primary_color}30`,
                   backgroundColor: `${merchant.primary_color}05`
                 }}
               >
-                <div className="flex items-center gap-3">
-                  <motion.div
-                    animate={{ scale: [1, 1.15, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${merchant.primary_color}15` }}
-                  >
-                    <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
-                  </motion.div>
-                  <div className="flex-1 text-left">
-                    <p className="font-bold text-gray-900 text-sm">
-                      🎁 Offre exclusive disponible pour vous
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Cliquez pour en savoir plus
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-gray-400" />
+                <div className="shrink-0">
+                  {isIOS && !isIOSChrome ? (
+                    <ChevronDown className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                  ) : (
+                    <ChevronUp className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                  )}
                 </div>
+                <span className="flex-1 text-xs font-medium text-gray-700 text-left">
+                  Ajouter à l&apos;écran d&apos;accueil pour recevoir les offres exclusives
+                </span>
+                <PlusSquare className="w-4 h-4 shrink-0" style={{ color: merchant.primary_color }} />
               </div>
             </motion.button>
           )}
 
-          {/* Subscribe to Updates - Only when NO offer exists and not subscribed */}
-          {(!offer || !offer.active) && !pushSubscribed && pushPermission !== 'denied' && !isStandalone && (
+          {/* PWA Notification Banner - Show in PWA when NOT subscribed */}
+          {isStandalone && isMobile && !pushSubscribed && pushPermission !== 'denied' && (
             <motion.button
-              whileHover={{ scale: 1.02, y: -2 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               whileTap={{ scale: 0.98 }}
               onClick={handlePushSubscribe}
               disabled={pushSubscribing}
-              className="group w-full relative overflow-hidden rounded-xl border-2 border-dashed p-4 flex items-center gap-3 transition-all duration-300 hover:border-solid hover:shadow-lg disabled:opacity-50"
-              style={{
-                borderColor: `${merchant.primary_color}40`,
-                backgroundColor: `${merchant.primary_color}05`
-              }}
+              className="w-full mb-5"
             >
-              <motion.div
-                animate={{ rotate: [0, -10, 10, 0] }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                style={{ backgroundColor: `${merchant.primary_color}15` }}
+              <div
+                className="flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all hover:shadow-sm"
+                style={{
+                  borderColor: `${merchant.primary_color}30`,
+                  backgroundColor: `${merchant.primary_color}05`
+                }}
               >
+                <motion.div
+                  animate={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  className="shrink-0"
+                >
+                  <Bell className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                </motion.div>
+                <span className="flex-1 text-xs font-medium text-gray-700 text-left">
+                  Activer les notifications pour ne rater aucune offre
+                </span>
                 {pushSubscribing ? (
-                  <Loader2 className="w-5 h-5 animate-spin" style={{ color: merchant.primary_color }} />
+                  <Loader2 className="w-4 h-4 animate-spin shrink-0" style={{ color: merchant.primary_color }} />
                 ) : (
-                  <Bell className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                  <ChevronRight className="w-4 h-4 shrink-0" style={{ color: merchant.primary_color }} />
                 )}
-              </motion.div>
-              <div className="flex-1 text-left">
-                <p className="font-bold text-gray-900 text-sm">
-                  🎁 Ne ratez rien !
-                </p>
-                <p className="text-xs text-gray-500">
-                  Promos flash, récompenses, alertes
-                </p>
               </div>
-              <ChevronRight
-                className="w-4 h-4 transition-transform group-hover:translate-x-1"
-                style={{ color: merchant.primary_color }}
-              />
             </motion.button>
           )}
+
 
           {/* Subscribed confirmation - Small bell icon */}
           {pushSubscribed && (
@@ -1114,77 +1028,16 @@ export default function CustomerCardPage({
             </div>
           )}
 
-          {/* PWA Offer Redemption Modal */}
-          {showPwaOfferModal && (
-            <div
-              className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-              onClick={() => setShowPwaOfferModal(false)}
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 50, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 50, scale: 0.95 }}
-                className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Header */}
-                <div
-                  className="p-6 text-center"
-                  style={{ background: `linear-gradient(135deg, ${merchant.primary_color}20, ${merchant.primary_color}05)` }}
-                >
-                  <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                    style={{ backgroundColor: `${merchant.primary_color}20` }}
-                  >
-                    <Gift className="w-8 h-8" style={{ color: merchant.primary_color }} />
-                  </div>
-                  <h3 className="text-xl font-black text-gray-900">Cadeau fidélité</h3>
-                  <p className="text-lg font-semibold mt-2" style={{ color: merchant.primary_color }}>
-                    {pwaOfferText}
-                  </p>
-                </div>
-
-                {/* Content */}
-                <div className="p-6 text-center">
-                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
-                    <p className="text-sm text-amber-800 font-medium">
-                      📱 Montrez cet écran au commerçant pour valider votre cadeau
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      localStorage.setItem(`qarte_pwa_offer_redeemed_${merchantId}`, 'true');
-                      setPwaOfferRedeemed(true);
-                      setShowPwaOfferModal(false);
-                    }}
-                    className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90"
-                    style={{ backgroundColor: merchant.primary_color }}
-                  >
-                    ✓ Marquer comme utilisé
-                  </button>
-
-                  <button
-                    onClick={() => setShowPwaOfferModal(false)}
-                    className="w-full py-3 mt-2 text-gray-500 font-medium text-sm"
-                  >
-                    Fermer
-                  </button>
-                </div>
-              </motion.div>
-            </div>
-          )}
-
           {/* iOS Instructions Modal */}
           {showIOSInstructions && (
             <>
-              {/* Animated Arrow for Safari iOS - Points DOWN to bottom "..." */}
+              {/* Animated Arrow for Safari iOS - Points DOWN to bottom-right "..." */}
               {isIOS && !isIOSChrome && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1, y: [0, 8, 0] }}
                   transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
-                  className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center"
+                  className="fixed bottom-3 right-3 z-[60] flex flex-col items-center"
                 >
                   <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
                     <ChevronDown className="w-6 h-6 text-blue-500" />
@@ -1192,13 +1045,13 @@ export default function CustomerCardPage({
                 </motion.div>
               )}
 
-              {/* Animated Arrow for Chrome iOS - Points UP to URL bar share */}
+              {/* Animated Arrow for Chrome iOS - Points UP to top-right share */}
               {isIOS && isIOSChrome && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1, y: [0, -8, 0] }}
                   transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
-                  className="fixed top-3 right-14 z-[60] flex flex-col items-center"
+                  className="fixed top-3 right-3 z-[60] flex flex-col items-center"
                 >
                   <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
                     <ChevronUp className="w-6 h-6 text-blue-500" />
@@ -1240,10 +1093,10 @@ export default function CustomerCardPage({
                       <X className="w-4 h-4 text-gray-500" />
                     </button>
                     <div className="flex items-center justify-center gap-2">
-                      <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
-                      <h3 className="text-base font-bold text-gray-900">{pwaOfferText || 'Offre exclusive'}</h3>
+                      <PlusSquare className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                      <h3 className="text-base font-bold text-gray-900">Ajouter à l&apos;écran d&apos;accueil</h3>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">Ajoutez à l&apos;écran d&apos;accueil</p>
+                    <p className="text-xs text-gray-500 mt-1">Pour recevoir les offres exclusives</p>
                   </div>
 
                   {/* Compact Steps */}
