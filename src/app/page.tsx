@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   QrCode,
@@ -28,7 +29,6 @@ import {
   UtensilsCrossed,
   Flower2,
   Croissant,
-  CheckCircle2,
   Play,
   X,
   Zap,
@@ -42,6 +42,7 @@ import {
   FileX,
   Banknote,
   EyeOff,
+  ArrowRight,
 } from 'lucide-react';
 
 // ============================================
@@ -1401,234 +1402,53 @@ function FooterSection() {
   );
 }
 
-// Use Cases Section
+// Use Cases Section - Simple CTA to Demo
 function UseCasesSection() {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const useCases = [
-    {
-      id: 0,
-      label: "Coiffure & Barber",
-      description: "Fidélisez vos clients avec un programme premium et élégant.",
-      icon: Scissors,
-      title: "Barber King",
-      reward: "Coupe offerte",
-      points: 7,
-      maxPoints: 10,
-      color: "bg-slate-900",
-      accent: "text-slate-400",
-      glow: "shadow-slate-500/20",
-      gradient: "from-slate-800 to-slate-950",
-      textColor: "text-white",
-      glowColor: '#0f172a'
-    },
-    {
-      id: 1,
-      label: "Onglerie & Esthétique",
-      description: "Une expérience douce et raffinée pour vos clientes régulières.",
-      icon: Sparkles,
-      title: "L'Instant Poudré",
-      reward: "Remplissage offert",
-      points: 4,
-      maxPoints: 8,
-      color: "bg-rose-400",
-      accent: "text-rose-100",
-      glow: "shadow-rose-400/30",
-      gradient: "from-pink-400 to-rose-300",
-      textColor: "text-white",
-      glowColor: '#fb7185'
-    },
-    {
-      id: 2,
-      label: "Restauration",
-      description: "Boostez la fréquence de visite de vos gourmets.",
-      icon: Coffee,
-      title: "Le Petit Fournil",
-      reward: "Menu Midi Offert",
-      points: 9,
-      maxPoints: 12,
-      color: "bg-orange-500",
-      accent: "text-orange-100",
-      glow: "shadow-orange-500/30",
-      gradient: "from-orange-500 to-amber-400",
-      textColor: "text-white",
-      glowColor: '#f97316'
-    },
-    {
-      id: 3,
-      label: "Commerce de détail",
-      description: "Récompensez chaque achat pour créer un lien durable.",
-      icon: ShoppingBag,
-      title: "Green House",
-      reward: "-20% sur tout",
-      points: 150,
-      maxPoints: 200,
-      color: "bg-emerald-500",
-      accent: "text-emerald-100",
-      glow: "shadow-emerald-500/30",
-      gradient: "from-emerald-500 to-teal-400",
-      textColor: "text-white",
-      glowColor: '#10b981'
-    }
+  const sectors = [
+    { icon: Scissors, label: 'Coiffure', color: 'bg-slate-800' },
+    { icon: Sparkles, label: 'Esthétique', color: 'bg-rose-400' },
+    { icon: Coffee, label: 'Restaurant', color: 'bg-orange-500' },
+    { icon: ShoppingBag, label: 'Commerce', color: 'bg-emerald-500' },
   ];
 
-  const active = useCases[activeIndex];
-
   return (
-    <section className="py-24 bg-white overflow-hidden">
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            S'adapte à <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">votre métier</span>
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Personnalisez votre programme de fidélité en quelques clics pour qu'il reflète parfaitement l'image de votre marque.
-          </p>
-        </div>
+    <section className="py-20 bg-gradient-to-br from-indigo-50 via-white to-violet-50 overflow-hidden">
+      <div className="max-w-4xl mx-auto px-6 text-center">
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          S&apos;adapte à <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">votre métier</span>
+        </h2>
+        <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
+          Coiffeur, restaurateur, commerçant... Qarte s&apos;adapte à votre activité en quelques clics.
+        </p>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          {/* Left Column: Selectors */}
-          <div className="space-y-4">
-            {useCases.map((useCase, idx) => {
-              const IconComponent = useCase.icon;
-              return (
-                <button
-                  key={useCase.id}
-                  onClick={() => setActiveIndex(idx)}
-                  className={`w-full text-left p-6 rounded-2xl transition-all duration-300 flex items-start gap-5 border-2 group ${
-                    activeIndex === idx
-                      ? `bg-white border-indigo-500 shadow-xl shadow-indigo-500/10 ring-1 ring-indigo-500/10`
-                      : "bg-transparent border-gray-100 hover:bg-white hover:shadow-lg hover:border-gray-200"
-                  }`}
-                >
-                  <div className={`p-3 rounded-xl transition-colors ${
-                    activeIndex === idx ? "bg-indigo-500 text-white" : "bg-gray-100 text-gray-400 group-hover:bg-gray-200"
-                  }`}>
-                    <IconComponent className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className={`font-semibold text-lg transition-colors ${
-                      activeIndex === idx ? "text-gray-900" : "text-gray-600"
-                    }`}>
-                      {useCase.label}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                      {useCase.description}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Right Column: Interactive Phone Mockup */}
-          <div className="relative flex justify-center items-center py-10">
-            {/* Dynamic Glow Background */}
-            <motion.div
-              animate={{ backgroundColor: active.glowColor }}
-              transition={{ duration: 0.5 }}
-              className="absolute w-64 h-96 blur-[100px] opacity-30 rounded-full"
-            />
-
-            {/* Phone Frame */}
-            <div className="relative z-10 w-[280px] h-[580px] bg-gray-900 rounded-[3rem] p-3 shadow-2xl border-[8px] border-gray-800">
-              {/* Speaker/Camera Notch */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-800 rounded-b-2xl z-20" />
-
-              {/* Screen Content */}
-              <div className="relative w-full h-full bg-white rounded-[2.2rem] overflow-hidden flex flex-col">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={activeIndex}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    className="flex flex-col h-full"
-                  >
-                    {/* App Header Area */}
-                    <div className={`pt-12 pb-8 px-6 bg-gradient-to-br ${active.gradient} ${active.textColor} relative`}>
-                      <div className="flex justify-between items-center mb-6">
-                        <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-                          {(() => {
-                            const IconComp = active.icon;
-                            return <IconComp className="w-4 h-4" />;
-                          })()}
-                        </div>
-                        <Star className="w-5 h-5 opacity-50" />
-                      </div>
-                      <h4 className="text-2xl font-bold tracking-tight">{active.title}</h4>
-                      <p className="text-sm opacity-80 mt-1">Client Privilège</p>
-                    </div>
-
-                    {/* Loyalty Card Body */}
-                    <div className="flex-1 px-5 -mt-6">
-                      <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 backdrop-blur-xl">
-                        <div className="flex justify-between items-end mb-4">
-                          <div>
-                            <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Votre Progression</p>
-                            <p className="text-2xl font-black text-gray-900 mt-1">
-                              {active.points} <span className="text-sm font-normal text-gray-400">/ {active.maxPoints}</span>
-                            </p>
-                          </div>
-                          <div className={`p-2 rounded-lg ${active.color} text-white`}>
-                            <CheckCircle2 className="w-5 h-5" />
-                          </div>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(active.points / active.maxPoints) * 100}%` }}
-                            transition={{ duration: 1, delay: 0.2 }}
-                            className={`h-full ${active.color}`}
-                          />
-                        </div>
-
-                        {/* Reward Preview Card */}
-                        <div className="p-4 rounded-xl border border-dashed border-gray-200 bg-gray-50 flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${active.color} text-white`}>
-                            <Star className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-bold text-gray-400 uppercase">Prochain cadeau</p>
-                            <p className="text-sm font-semibold text-gray-800">{active.reward}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Mock UI Elements */}
-                      <div className="mt-8 space-y-4">
-                        <div className="h-12 w-full bg-gray-50 rounded-xl border border-gray-100 flex items-center px-4 justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 rounded bg-gray-200" />
-                            <div className="w-24 h-2 bg-gray-200 rounded" />
-                          </div>
-                          <div className="w-4 h-4 bg-gray-200 rounded-full" />
-                        </div>
-                        <div className="h-12 w-full bg-gray-50 rounded-xl border border-gray-100 flex items-center px-4 justify-between opacity-50">
-                          <div className="flex items-center gap-3">
-                            <div className="w-6 h-6 rounded bg-gray-200" />
-                            <div className="w-16 h-2 bg-gray-200 rounded" />
-                          </div>
-                          <div className="w-4 h-4 bg-gray-200 rounded-full" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Bottom Nav Mockup */}
-                    <div className="h-16 border-t border-gray-100 flex items-center justify-around px-6">
-                      <div className="w-5 h-5 bg-indigo-500 rounded-sm" />
-                      <div className="w-5 h-5 bg-gray-200 rounded-sm" />
-                      <div className="w-5 h-5 bg-gray-200 rounded-sm" />
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+        {/* Sector Icons */}
+        <div className="flex items-center justify-center gap-4 md:gap-6 mb-10">
+          {sectors.map((sector, idx) => {
+            const Icon = sector.icon;
+            return (
+              <div key={idx} className="flex flex-col items-center gap-2">
+                <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl ${sector.color} text-white flex items-center justify-center shadow-lg`}>
+                  <Icon className="w-7 h-7 md:w-8 md:h-8" />
+                </div>
+                <span className="text-xs md:text-sm font-medium text-gray-600">{sector.label}</span>
               </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
+
+        {/* CTA to Demo */}
+        <Link
+          href="/demo"
+          className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-lg rounded-2xl shadow-xl shadow-indigo-500/25 hover:shadow-2xl hover:scale-105 transition-all duration-300"
+        >
+          <Play className="w-5 h-5" />
+          Tester la démo interactive
+          <ArrowRight className="w-5 h-5" />
+        </Link>
+
+        <p className="mt-4 text-sm text-gray-500">
+          Découvrez l&apos;expérience de vos futurs clients
+        </p>
       </div>
     </section>
   );
