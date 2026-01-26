@@ -22,9 +22,11 @@ import {
   Crown,
   Clock,
   Gift,
-  Image,
+  ImageIcon,
   Eye,
   EyeOff,
+  Upload,
+  CalendarDays,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -149,9 +151,12 @@ export default function MarketingPushPage() {
   // Offer management (integrated with push)
   const [offerDescription, setOfferDescription] = useState('');
   const [offerImageUrl, setOfferImageUrl] = useState('');
-  const [offerDuration, setOfferDuration] = useState<1 | 2 | 3>(1);
+  const [offerDurationType, setOfferDurationType] = useState<'today' | 'tomorrow' | 'custom'>('today');
+  const [offerCustomDate, setOfferCustomDate] = useState('');
   const [offerActive, setOfferActive] = useState(false);
   const [offerExpiresAt, setOfferExpiresAt] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [showImageOption, setShowImageOption] = useState(false);
 
   // Check if first visit
   useEffect(() => {
@@ -291,7 +296,7 @@ export default function MarketingPushPage() {
               title: title.trim(),
               description: offerDescription.trim(),
               imageUrl: offerImageUrl.trim() || null,
-              durationDays: offerDuration,
+              durationDays: getDurationDays(),
             }),
           });
           setOfferActive(true);
@@ -402,6 +407,117 @@ export default function MarketingPushPage() {
     if (dateStr === today.toISOString().split('T')[0]) return "Aujourd'hui";
     if (dateStr === tomorrow.toISOString().split('T')[0]) return 'Demain';
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  };
+
+  // Generate offer description based on keywords in title/body
+  const generateOfferDescription = (notifTitle: string, notifBody: string): string => {
+    const text = `${notifTitle} ${notifBody}`.toLowerCase();
+
+    // Detect percentage discounts
+    const percentMatch = text.match(/(\d+)\s*%/);
+    if (percentMatch) {
+      return `Profitez de ${percentMatch[1]}% de réduction sur l'ensemble de nos produits et services. Offre exceptionnelle à ne pas manquer !`;
+    }
+
+    // Detect euro discounts
+    const euroMatch = text.match(/(\d+)\s*€/);
+    if (euroMatch) {
+      return `Économisez ${euroMatch[1]}€ sur votre prochain achat ! Une offre exclusive réservée à nos clients fidèles.`;
+    }
+
+    // Detect flash sale keywords
+    if (text.includes('flash') || text.includes('2h') || text.includes('limité')) {
+      return `Vente flash exceptionnelle ! Cette offre est limitée dans le temps, ne tardez pas pour en profiter. Stocks limités !`;
+    }
+
+    // Detect free/gratuit keywords
+    if (text.includes('gratuit') || text.includes('offert') || text.includes('cadeau')) {
+      return `Profitez de cette offre exceptionnelle, c'est cadeau ! Une attention spéciale pour vous remercier de votre fidélité.`;
+    }
+
+    // Detect new product keywords
+    if (text.includes('nouveau') || text.includes('nouveauté') || text.includes('découvr')) {
+      return `Découvrez notre nouveauté en avant-première ! Soyez parmi les premiers à en profiter avec une offre de lancement exclusive.`;
+    }
+
+    // Detect exclusive keywords
+    if (text.includes('exclusi') || text.includes('fidèle') || text.includes('réservé')) {
+      return `En tant que client fidèle, vous bénéficiez d'une offre exclusive ! Cette promotion est réservée uniquement à nos meilleurs clients.`;
+    }
+
+    // Detect happy hour keywords
+    if (text.includes('happy') || text.includes('17h') || text.includes('18h') || text.includes('19h')) {
+      return `C'est l'heure des bonnes affaires ! Profitez d'offres spéciales sur une sélection de produits. L'occasion parfaite pour vous faire plaisir !`;
+    }
+
+    // Default: use notification content as base
+    return `${notifTitle}: ${notifBody}. Rendez-vous vite en boutique pour profiter de cette offre !`;
+  };
+
+  // Auto-fill offer description when body changes (if not from template)
+  const handleBodyChange = (newBody: string) => {
+    setBody(newBody);
+    // Only auto-generate if offer description is empty or was auto-generated
+    if (!offerDescription || offerDescription === generateOfferDescription(title, body)) {
+      const generated = generateOfferDescription(title, newBody);
+      setOfferDescription(generated);
+    }
+  };
+
+  // Auto-fill offer description when title changes
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+    if (!offerDescription || offerDescription === generateOfferDescription(title, body)) {
+      const generated = generateOfferDescription(newTitle, body);
+      setOfferDescription(generated);
+    }
+  };
+
+  // Handle image upload
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !merchant?.id) return;
+
+    setUploadingImage(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('merchantId', merchant.id);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.url) {
+        setOfferImageUrl(data.url);
+      } else {
+        alert(data.error || 'Erreur lors de l\'upload');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Erreur lors de l\'upload');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Calculate duration days based on type
+  const getDurationDays = (): number => {
+    if (offerDurationType === 'today') return 1;
+    if (offerDurationType === 'tomorrow') return 2;
+    if (offerDurationType === 'custom' && offerCustomDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const customDate = new Date(offerCustomDate);
+      const diffTime = customDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      return Math.max(1, diffDays);
+    }
+    return 1;
   };
 
   return (
@@ -598,95 +714,47 @@ export default function MarketingPushPage() {
 
         {/* Form */}
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1.5">Titre</label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Offre spéciale !"
-              maxLength={50}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
-            />
-            <p className={`text-xs mt-1 text-right ${title.length > 40 ? 'text-amber-600' : 'text-gray-400'}`}>
-              {title.length}/50 {title.length <= 30 && title.length > 0 && '(optimal)'}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1.5">Message</label>
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="Ex: -20% sur tout aujourd'hui seulement !"
-              maxLength={150}
-              rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none"
-            />
-            <p className={`text-xs mt-1 text-right ${body.length > 100 ? 'text-amber-600' : 'text-gray-400'}`}>
-              {body.length}/150 {body.length <= 80 && body.length > 0 && '(optimal)'}
-            </p>
-          </div>
-
-          {/* Offer Description - Détails pour le client */}
-          <div className="pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-2 mb-3">
-              <Gift className="w-5 h-5 text-pink-500" />
-              <label className="text-sm font-bold text-gray-700">Détails de l'offre (visible par le client)</label>
-            </div>
-            <textarea
-              value={offerDescription}
-              onChange={(e) => setOfferDescription(e.target.value)}
-              placeholder="Décrivez votre offre en détail... (automatiquement rempli par les modèles)"
-              maxLength={300}
-              rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none resize-none"
-            />
-            <p className={`text-xs mt-1 text-right ${offerDescription.length > 250 ? 'text-pink-600' : 'text-gray-400'}`}>
-              {offerDescription.length}/300
-            </p>
-
-            {/* Duration Selection */}
-            <div className="mt-3">
-              <label className="block text-xs font-medium text-gray-500 mb-2">Durée de l'offre</label>
-              <div className="flex gap-2">
-                {([1, 2, 3] as const).map((days) => (
-                  <button
-                    key={days}
-                    type="button"
-                    onClick={() => setOfferDuration(days)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
-                      offerDuration === days
-                        ? 'bg-pink-500 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {days === 1 ? "Aujourd'hui" : days === 2 ? 'Demain' : '3 jours'}
-                  </button>
-                ))}
-              </div>
+          {/* SECTION 1: Notification */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Titre de la notification</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="Ex: Offre spéciale !"
+                maxLength={50}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
+              />
+              <p className={`text-xs mt-1 text-right ${title.length > 40 ? 'text-amber-600' : 'text-gray-400'}`}>
+                {title.length}/50 {title.length <= 30 && title.length > 0 && '(optimal)'}
+              </p>
             </div>
 
-            {/* Image URL (optional) */}
-            <div className="mt-3">
-              <div className="relative">
-                <Image className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="url"
-                  value={offerImageUrl}
-                  onChange={(e) => setOfferImageUrl(e.target.value)}
-                  placeholder="URL image (optionnel)"
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none text-sm"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Message court</label>
+              <textarea
+                value={body}
+                onChange={(e) => handleBodyChange(e.target.value)}
+                placeholder="Ex: -20% sur tout aujourd'hui seulement !"
+                maxLength={150}
+                rows={2}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none"
+              />
+              <p className={`text-xs mt-1 text-right ${body.length > 100 ? 'text-amber-600' : 'text-gray-400'}`}>
+                {body.length}/150 {body.length <= 80 && body.length > 0 && '(optimal)'}
+              </p>
             </div>
           </div>
 
-          {/* Preview */}
+          {/* APERÇU NOTIFICATION - Entre notification et offre */}
           {(title || body) && (
-            <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Aperçu notification</p>
-              <div className="bg-white rounded-xl shadow-lg p-3 flex gap-3 max-w-sm">
+            <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
+              <p className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <Bell className="w-3.5 h-3.5" />
+                Aperçu notification (ce que reçoit le client)
+              </p>
+              <div className="bg-white rounded-xl shadow-lg p-3 flex gap-3 max-w-sm mx-auto">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-sm font-black italic">Q</span>
                 </div>
@@ -701,6 +769,139 @@ export default function MarketingPushPage() {
               </div>
             </div>
           )}
+
+          {/* SECTION 2: Détails de l'offre */}
+          <div className="pt-4 border-t border-gray-100">
+            <div className="flex items-center gap-2 mb-2">
+              <Gift className="w-5 h-5 text-pink-500" />
+              <label className="text-sm font-bold text-gray-700">Détails de l'offre</label>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Ce texte apparaît sur la carte fidélité quand le client clique sur "Offre en cours"
+            </p>
+            <textarea
+              value={offerDescription}
+              onChange={(e) => setOfferDescription(e.target.value)}
+              placeholder="Décrivez votre offre en détail... (généré automatiquement depuis le message)"
+              maxLength={300}
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none resize-none"
+            />
+            <p className={`text-xs mt-1 text-right ${offerDescription.length > 250 ? 'text-pink-600' : 'text-gray-400'}`}>
+              {offerDescription.length}/300
+            </p>
+
+            {/* Duration Selection - Aujourd'hui / Demain / Calendrier */}
+            <div className="mt-4">
+              <label className="block text-xs font-medium text-gray-500 mb-2">Durée de l'offre</label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setOfferDurationType('today')}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                    offerDurationType === 'today'
+                      ? 'bg-pink-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Aujourd'hui
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOfferDurationType('tomorrow')}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
+                    offerDurationType === 'tomorrow'
+                      ? 'bg-pink-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Demain
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOfferDurationType('custom')}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    offerDurationType === 'custom'
+                      ? 'bg-pink-500 text-white shadow-md'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <CalendarDays className="w-4 h-4" />
+                  Date
+                </button>
+              </div>
+
+              {/* Custom date picker */}
+              {offerDurationType === 'custom' && (
+                <div className="mt-2">
+                  <input
+                    type="date"
+                    value={offerCustomDate}
+                    onChange={(e) => setOfferCustomDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 rounded-lg border border-pink-200 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Image Upload (collapsible) */}
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={() => setShowImageOption(!showImageOption)}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <ImageIcon className="w-4 h-4" />
+                <span>Ajouter une image (optionnel)</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showImageOption ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showImageOption && (
+                <div className="mt-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                  {offerImageUrl ? (
+                    <div className="relative">
+                      <img
+                        src={offerImageUrl}
+                        alt="Aperçu"
+                        className="w-full h-32 object-cover rounded-lg"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '';
+                          setOfferImageUrl('');
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setOfferImageUrl('')}
+                        className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-pink-300 hover:bg-pink-50/50 transition-all">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                        disabled={uploadingImage}
+                      />
+                      {uploadingImage ? (
+                        <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
+                      ) : (
+                        <>
+                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                          <span className="text-sm text-gray-500">Cliquer pour uploader</span>
+                          <span className="text-xs text-gray-400 mt-1">JPG, PNG, WebP (max 2 Mo)</span>
+                        </>
+                      )}
+                    </label>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Result message */}
           <AnimatePresence>
