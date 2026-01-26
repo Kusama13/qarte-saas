@@ -247,6 +247,38 @@ export default function CustomerCardPage({
     }
   }, [merchantId, router]);
 
+  // Auto-subscribe to push notifications when PWA is first opened
+  useEffect(() => {
+    // Only auto-subscribe if:
+    // - Card data is loaded
+    // - Running in standalone PWA mode
+    // - Not already subscribed
+    // - Permission not denied
+    // - Push is supported (iOS 16.4+ or standard push)
+    if (
+      card &&
+      isStandalone &&
+      !pushSubscribed &&
+      pushPermission !== 'denied' &&
+      pushSupported &&
+      !pushSubscribing
+    ) {
+      // Check if we've already tried auto-subscribe in this session
+      const autoSubscribeAttempted = sessionStorage.getItem('qarte_auto_subscribe_attempted');
+      if (autoSubscribeAttempted) return;
+
+      // Mark as attempted for this session
+      sessionStorage.setItem('qarte_auto_subscribe_attempted', 'true');
+
+      // Small delay to let the app settle before requesting permission
+      const timer = setTimeout(() => {
+        handlePushSubscribe();
+      }, 1500);
+
+      return () => clearTimeout(timer);
+    }
+  }, [card, isStandalone, pushSubscribed, pushPermission, pushSupported, pushSubscribing]);
+
   // Format reward text based on type
   const formatRewardText = (reward: string, remaining: number, loyaltyMode: string, productName: string | null) => {
     const lowerReward = reward.toLowerCase();
@@ -734,126 +766,97 @@ export default function CustomerCardPage({
 
           </div>
 
-          {/* Current Offer - Visible for everyone */}
+          {/* Current Offer - Premium Gradient Banner */}
           {offer && offer.active && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-5"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-6 overflow-hidden rounded-2xl shadow-lg shadow-black/5 border border-white/20"
             >
               <button
                 onClick={() => setOfferExpanded(!offerExpanded)}
-                className="w-full group"
+                className="w-full text-left transition-transform active:scale-[0.99]"
               >
                 <div
-                  className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 ${
-                    offerExpanded
-                      ? 'border-solid shadow-lg'
-                      : 'border-dashed hover:border-solid hover:shadow-md'
-                  }`}
+                  className="relative p-4 text-white overflow-hidden"
                   style={{
-                    borderColor: offerExpanded ? merchant.primary_color : `${merchant.primary_color}40`,
-                    backgroundColor: offerExpanded ? `${merchant.primary_color}08` : `${merchant.primary_color}03`
+                    background: `linear-gradient(135deg, ${merchant.primary_color} 0%, ${merchant.primary_color}dd 100%)`
                   }}
                 >
-                  {/* Closed State Header - Always visible */}
-                  <div className="flex items-center justify-between p-3">
-                    <div className="flex items-center gap-2.5">
-                      <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="w-9 h-9 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: `${merchant.primary_color}15` }}
-                      >
-                        <Gift className="w-4.5 h-4.5" style={{ color: merchant.primary_color }} />
-                      </motion.div>
-                      <div className="text-left">
-                        <p className="font-bold text-gray-900 text-sm flex items-center gap-1.5">
-                          <Sparkles className="w-3 h-3" style={{ color: merchant.primary_color }} />
-                          Offre exclusive
-                        </p>
-                        {!offerExpanded && offer.expiresAt && (
-                          <p className="text-xs text-gray-500">
-                            {(() => {
-                              const expires = new Date(offer.expiresAt);
-                              const now = new Date();
-                              const hoursLeft = Math.max(0, Math.floor((expires.getTime() - now.getTime()) / (1000 * 60 * 60)));
-                              if (hoursLeft < 24) {
-                                return `⏰ Expire dans ${hoursLeft}h`;
-                              }
-                              const daysLeft = Math.floor(hoursLeft / 24);
-                              return `📅 Encore ${daysLeft} jour${daysLeft > 1 ? 's' : ''}`;
-                            })()}
-                          </p>
-                        )}
+                  {/* Decorative Glass Circle */}
+                  <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
+
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/20 flex items-center gap-1.5">
+                          <Sparkles className="w-3 h-3 text-white" />
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-white">Offre Exclusive</span>
+                        </div>
                       </div>
+                      <h3 className="text-base font-extrabold leading-tight mb-1 drop-shadow-sm">
+                        {offer.title}
+                      </h3>
+                      {offer.expiresAt && (
+                        <div className="flex items-center gap-1.5 text-white/90 text-xs font-medium">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span>
+                            Valable jusqu&apos;au {(() => {
+                              const expires = new Date(offer.expiresAt);
+                              const today = new Date();
+                              const tomorrow = new Date(today);
+                              tomorrow.setDate(tomorrow.getDate() + 1);
+                              if (expires.toDateString() === today.toDateString()) {
+                                return "ce soir";
+                              } else if (expires.toDateString() === tomorrow.toDateString()) {
+                                return "demain soir";
+                              } else {
+                                return expires.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+                              }
+                            })()}
+                          </span>
+                        </div>
+                      )}
                     </div>
+
                     <motion.div
                       animate={{ rotate: offerExpanded ? 180 : 0 }}
-                      className="p-1.5 rounded-lg"
-                      style={{ backgroundColor: `${merchant.primary_color}10` }}
+                      className="ml-3 w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30"
                     >
-                      <ChevronDown className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                      <ChevronDown className="w-4 h-4 text-white" />
                     </motion.div>
                   </div>
-
-                  {/* Expanded Content */}
-                  <AnimatePresence>
-                    {offerExpanded && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="px-3 pb-3 text-left">
-                          <div className="pt-3 border-t border-gray-100">
-                            <h3 className="font-bold text-gray-900 mb-1.5">{offer.title}</h3>
-                            <p className="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed">{offer.description}</p>
-
-                            {offer.imageUrl && (
-                              <div className="mt-3 rounded-lg overflow-hidden">
-                                <img
-                                  src={offer.imageUrl}
-                                  alt={offer.title}
-                                  className="w-full h-32 object-cover"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).style.display = 'none';
-                                  }}
-                                />
-                              </div>
-                            )}
-
-                            <div className="mt-3 flex items-center justify-between">
-                              {offer.expiresAt && (
-                                <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                                  <Clock className="w-3.5 h-3.5" />
-                                  <span>
-                                    Jusqu&apos;au {(() => {
-                                      const expires = new Date(offer.expiresAt);
-                                      const today = new Date();
-                                      const tomorrow = new Date(today);
-                                      tomorrow.setDate(tomorrow.getDate() + 1);
-
-                                      if (expires.toDateString() === today.toDateString()) {
-                                        return "ce soir";
-                                      } else if (expires.toDateString() === tomorrow.toDateString()) {
-                                        return "demain soir";
-                                      } else {
-                                        return expires.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-                                      }
-                                    })()}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
               </button>
+
+              <AnimatePresence>
+                {offerExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="bg-white overflow-hidden"
+                  >
+                    <div className="p-4 border-t border-gray-100">
+                      <p className="text-sm text-gray-600 leading-relaxed">
+                        {offer.description}
+                      </p>
+                      {offer.imageUrl && (
+                        <div className="mt-3 rounded-xl overflow-hidden border border-gray-100">
+                          <img
+                            src={offer.imageUrl}
+                            alt={offer.title}
+                            className="w-full h-32 object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
 
@@ -1500,47 +1503,51 @@ export default function CustomerCardPage({
         )}
       </Modal>
 
-      {/* Sticky Add to Home Screen Banner - Fixed at bottom */}
-      {!isStandalone && isMobile && (
-        <motion.button
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowIOSInstructions(true)}
-          className="fixed bottom-4 left-4 right-4 z-40"
-        >
-          <motion.div
-            animate={{
-              boxShadow: [
-                `0 0 0 0 ${merchant.primary_color}40`,
-                `0 0 0 8px ${merchant.primary_color}00`,
-                `0 0 0 0 ${merchant.primary_color}40`
-              ]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg"
-            style={{
-              backgroundColor: merchant.primary_color,
-            }}
+      {/* Sticky Add to Home Screen Banner - Fixed at bottom, hidden when modal is open */}
+      <AnimatePresence>
+        {!isStandalone && isMobile && !showIOSInstructions && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowIOSInstructions(true)}
+            className="fixed bottom-4 left-4 right-4 z-40"
           >
             <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="shrink-0"
+              animate={{
+                boxShadow: [
+                  `0 0 0 0 ${merchant.primary_color}30`,
+                  `0 0 0 6px ${merchant.primary_color}00`,
+                  `0 0 0 0 ${merchant.primary_color}30`
+                ]
+              }}
+              transition={{ duration: 2.5, repeat: Infinity }}
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-md border"
+              style={{
+                backgroundColor: `${merchant.primary_color}15`,
+                borderColor: `${merchant.primary_color}30`,
+              }}
             >
-              {isIOS && !isIOSChrome ? (
-                <ChevronDown className="w-5 h-5 text-white" />
-              ) : (
-                <ChevronUp className="w-5 h-5 text-white" />
-              )}
+              <motion.div
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="shrink-0"
+              >
+                {isIOS && !isIOSChrome ? (
+                  <ChevronDown className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                ) : (
+                  <ChevronUp className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                )}
+              </motion.div>
+              <span className="flex-1 text-sm font-semibold text-left" style={{ color: merchant.primary_color }}>
+                Ajouter à l&apos;écran d&apos;accueil
+              </span>
+              <PlusSquare className="w-5 h-5 shrink-0" style={{ color: merchant.primary_color }} />
             </motion.div>
-            <span className="flex-1 text-sm font-semibold text-white text-left">
-              Ajouter à l&apos;écran d&apos;accueil
-            </span>
-            <PlusSquare className="w-5 h-5 text-white shrink-0" />
-          </motion.div>
-        </motion.button>
-      )}
+          </motion.button>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
