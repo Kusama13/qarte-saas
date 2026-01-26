@@ -159,6 +159,12 @@ export default function MarketingPushPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showImageOption, setShowImageOption] = useState(false);
 
+  // Current offer details for viewing
+  const [currentOfferTitle, setCurrentOfferTitle] = useState('');
+  const [currentOfferDescription, setCurrentOfferDescription] = useState('');
+  const [currentOfferImageUrl, setCurrentOfferImageUrl] = useState<string | null>(null);
+  const [showOfferModal, setShowOfferModal] = useState(false);
+
   // History visibility
   const [showHistory, setShowHistory] = useState(false);
 
@@ -267,7 +273,7 @@ export default function MarketingPushPage() {
     fetchScheduled();
   }, [merchant?.id]);
 
-  // Fetch current offer status
+  // Fetch current offer status and details
   useEffect(() => {
     const fetchOffer = async () => {
       if (!merchant?.id) return;
@@ -279,6 +285,9 @@ export default function MarketingPushPage() {
         if (response.ok && data.offer) {
           setOfferActive(data.offer.active || false);
           setOfferExpiresAt(data.offer.expiresAt || null);
+          setCurrentOfferTitle(data.offer.title || '');
+          setCurrentOfferDescription(data.offer.description || '');
+          setCurrentOfferImageUrl(data.offer.imageUrl || null);
         }
       } catch (err) {
         console.error('Error fetching offer:', err);
@@ -906,6 +915,29 @@ export default function MarketingPushPage() {
             <p className="text-[10px] text-gray-500 mb-2">
               Visible sur la carte fidélité du client
             </p>
+
+            {/* Warning if offer already active */}
+            {offerActive && offerExpiresAt && (
+              <div className="mb-3 p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-amber-800">
+                    Une offre est déjà active
+                  </p>
+                  <p className="text-[10px] text-amber-700 mt-0.5">
+                    "{currentOfferTitle}" expire {(() => {
+                      const expires = new Date(offerExpiresAt);
+                      const today = new Date();
+                      const tomorrow = new Date(today);
+                      tomorrow.setDate(tomorrow.getDate() + 1);
+                      if (expires.toDateString() === today.toDateString()) return "ce soir";
+                      if (expires.toDateString() === tomorrow.toDateString()) return "demain soir";
+                      return expires.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+                    })()}. Envoyer remplacera l'offre actuelle.
+                  </p>
+                </div>
+              </div>
+            )}
             <textarea
               value={offerDescription}
               onChange={(e) => setOfferDescription(e.target.value)}
@@ -1201,9 +1233,9 @@ export default function MarketingPushPage() {
                 <Gift className="w-4 h-4 text-emerald-600" />
               </div>
               <div>
-                <p className="font-bold text-emerald-900 text-sm">Offre en cours</p>
+                <p className="font-bold text-emerald-900 text-sm">{currentOfferTitle || 'Offre en cours'}</p>
                 <p className="text-xs text-emerald-700">
-                  Valable jusqu'à {(() => {
+                  Jusqu'à {(() => {
                     const expires = new Date(offerExpiresAt);
                     const today = new Date();
                     const tomorrow = new Date(today);
@@ -1214,22 +1246,117 @@ export default function MarketingPushPage() {
                     } else if (expires.toDateString() === tomorrow.toDateString()) {
                       return "demain soir";
                     } else {
-                      return expires.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                      return expires.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
                     }
                   })()}
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleDeactivateOffer}
-              className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1"
-            >
-              <EyeOff className="w-4 h-4" />
-              Désactiver
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowOfferModal(true)}
+                className="px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-100 rounded-lg hover:bg-emerald-200 transition-colors flex items-center gap-1"
+              >
+                <Eye className="w-4 h-4" />
+                Voir
+              </button>
+              <button
+                onClick={handleDeactivateOffer}
+                className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1"
+              >
+                <EyeOff className="w-4 h-4" />
+                Désactiver
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* Current Offer Modal */}
+      <AnimatePresence>
+        {showOfferModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setShowOfferModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-5 max-w-md w-full shadow-2xl max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-emerald-500" />
+                  Offre en cours
+                </h2>
+                <button onClick={() => setShowOfferModal(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1">Titre</p>
+                  <p className="font-bold text-gray-900">{currentOfferTitle || '-'}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1">Description</p>
+                  <p className="text-gray-700 whitespace-pre-wrap">{currentOfferDescription || '-'}</p>
+                </div>
+
+                {currentOfferImageUrl && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500 mb-1">Image</p>
+                    <img
+                      src={currentOfferImageUrl}
+                      alt="Offre"
+                      className="w-full h-40 object-cover rounded-xl"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs font-medium text-gray-500 mb-1">Expiration</p>
+                  <p className="text-gray-700">
+                    {offerExpiresAt ? new Date(offerExpiresAt).toLocaleDateString('fr-FR', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) : '-'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-6">
+                <button
+                  onClick={() => setShowOfferModal(false)}
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Fermer
+                </button>
+                <button
+                  onClick={() => {
+                    setShowOfferModal(false);
+                    handleDeactivateOffer();
+                  }}
+                  className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  <EyeOff className="w-4 h-4" />
+                  Désactiver
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Push History - Collapsed by default */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
