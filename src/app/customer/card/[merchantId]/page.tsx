@@ -846,24 +846,6 @@ export default function CustomerCardPage({
                                   </span>
                                 </div>
                               )}
-                              {/* Share button */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (navigator.share) {
-                                    navigator.share({
-                                      title: `${offer.title} - ${merchant.shop_name}`,
-                                      text: `${offer.description}\n\nDécouvre cette offre chez ${merchant.shop_name} !`,
-                                      url: window.location.href,
-                                    });
-                                  }
-                                }}
-                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                                style={{ backgroundColor: `${merchant.primary_color}10`, color: merchant.primary_color }}
-                              >
-                                <Share2 className="w-3.5 h-3.5" />
-                                Partager
-                              </button>
                             </div>
                           </div>
                         </div>
