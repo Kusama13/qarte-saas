@@ -14,6 +14,13 @@ import {
   CreditCard,
   TrendingUp,
   MapPin,
+  Bell,
+  Send,
+  Tag,
+  Zap,
+  Settings,
+  Repeat,
+  ShoppingBag,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui';
@@ -30,6 +37,14 @@ interface Merchant {
   created_at: string;
   stamps_required: number;
   reward_description: string;
+  loyalty_mode: 'visit' | 'article';
+  // Offer fields
+  offer_active: boolean;
+  offer_title: string | null;
+  offer_description: string | null;
+  offer_expires_at: string | null;
+  offer_created_at: string | null;
+  pwa_offer_text: string | null;
 }
 
 interface Customer {
@@ -49,6 +64,9 @@ interface Stats {
   activeCustomers: number;
   totalVisits: number;
   totalRedemptions: number;
+  pushSubscribers: number;
+  pushSent: number;
+  automationsEnabled: number;
 }
 
 export default function MerchantDetailPage() {
@@ -64,6 +82,9 @@ export default function MerchantDetailPage() {
     activeCustomers: 0,
     totalVisits: 0,
     totalRedemptions: 0,
+    pushSubscribers: 0,
+    pushSent: 0,
+    automationsEnabled: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -105,11 +126,52 @@ export default function MerchantDetailPage() {
           .select('*', { count: 'exact', head: true })
           .eq('merchant_id', merchantId);
 
+        // Get push subscribers count via loyalty cards
+        const { data: loyaltyCards } = await supabase
+          .from('loyalty_cards')
+          .select('customer_id')
+          .eq('merchant_id', merchantId);
+
+        let pushSubscribers = 0;
+        if (loyaltyCards && loyaltyCards.length > 0) {
+          const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
+          const { count: subCount } = await supabase
+            .from('push_subscriptions')
+            .select('*', { count: 'exact', head: true })
+            .in('customer_id', customerIds);
+          pushSubscribers = subCount || 0;
+        }
+
+        // Get push history count (notifications sent)
+        const { count: pushSentCount } = await supabase
+          .from('push_history')
+          .select('*', { count: 'exact', head: true })
+          .eq('merchant_id', merchantId);
+
+        // Get automations enabled count
+        const { data: automationsData } = await supabase
+          .from('push_automations')
+          .select('*')
+          .eq('merchant_id', merchantId)
+          .single();
+
+        let automationsEnabled = 0;
+        if (automationsData) {
+          if (automationsData.welcome_enabled) automationsEnabled++;
+          if (automationsData.close_to_reward_enabled) automationsEnabled++;
+          if (automationsData.reward_ready_enabled) automationsEnabled++;
+          if (automationsData.inactive_reminder_enabled) automationsEnabled++;
+          if (automationsData.reward_reminder_enabled) automationsEnabled++;
+        }
+
         setStats({
           totalCustomers: totalCustomers || 0,
           activeCustomers: activeCustomers || 0,
           totalVisits: totalVisits || 0,
           totalRedemptions: totalRedemptions || 0,
+          pushSubscribers,
+          pushSent: pushSentCount || 0,
+          automationsEnabled,
         });
 
         // Récupérer les clients directement (ils ont maintenant un merchant_id)
@@ -293,18 +355,66 @@ export default function MerchantDetailPage() {
         </div>
 
         {/* Programme de fidélité */}
-        <div className="mt-6 p-4 bg-emerald-50 rounded-xl">
-          <div className="flex items-center gap-2 mb-2">
-            <Gift className="w-5 h-5 text-emerald-600" />
-            <span className="font-medium text-emerald-900">Programme de fidélité</span>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <div className="p-4 bg-emerald-50 rounded-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <Gift className="w-5 h-5 text-emerald-600" />
+              <span className="font-medium text-emerald-900">Programme de fidélité</span>
+            </div>
+            <p className="text-emerald-700">
+              <span className="font-semibold">{merchant.stamps_required} {merchant.loyalty_mode === 'article' ? 'articles' : 'passages'}</span> pour obtenir : {merchant.reward_description || 'Non configuré'}
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-200 text-emerald-800">
+                Mode: {merchant.loyalty_mode === 'article' ? 'Par article' : 'Par visite'}
+              </span>
+            </div>
           </div>
-          <p className="text-emerald-700">
-            <span className="font-semibold">{merchant.stamps_required} passages</span> pour obtenir : {merchant.reward_description || 'Non configuré'}
-          </p>
+
+          {/* PWA Offer */}
+          <div className="p-4 bg-blue-50 rounded-xl">
+            <div className="flex items-center gap-2 mb-2">
+              <ShoppingBag className="w-5 h-5 text-blue-600" />
+              <span className="font-medium text-blue-900">Offre PWA exclusive</span>
+            </div>
+            {merchant.pwa_offer_text ? (
+              <p className="text-blue-700">{merchant.pwa_offer_text}</p>
+            ) : (
+              <p className="text-blue-500 italic">Non configurée</p>
+            )}
+          </div>
         </div>
+
+        {/* Current Temporary Offer */}
+        {merchant.offer_active && merchant.offer_title && (
+          <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Tag className="w-5 h-5 text-amber-600" />
+                <span className="font-medium text-amber-900">Offre temporaire en cours</span>
+              </div>
+              {merchant.offer_expires_at && (
+                <span className={cn(
+                  "text-xs font-medium px-2 py-0.5 rounded-full",
+                  new Date(merchant.offer_expires_at) < new Date()
+                    ? "bg-red-100 text-red-700"
+                    : "bg-green-100 text-green-700"
+                )}>
+                  {new Date(merchant.offer_expires_at) < new Date()
+                    ? "Expirée"
+                    : `Expire le ${formatDate(merchant.offer_expires_at)}`}
+                </span>
+              )}
+            </div>
+            <p className="font-semibold text-amber-800">{merchant.offer_title}</p>
+            {merchant.offer_description && (
+              <p className="text-amber-700 text-sm mt-1">{merchant.offer_description}</p>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* Stats */}
+      {/* Stats - Row 1 */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="p-5 bg-white rounded-xl shadow-sm">
           <div className="flex items-center gap-3">
@@ -347,6 +457,43 @@ export default function MerchantDetailPage() {
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.totalRedemptions}</p>
               <p className="text-sm text-gray-500">Récompenses</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats - Row 2: Push & Marketing */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="p-5 bg-white rounded-xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-100">
+              <Bell className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.pushSubscribers}</p>
+              <p className="text-sm text-gray-500">Abonnés push</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 bg-white rounded-xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-100">
+              <Send className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.pushSent}</p>
+              <p className="text-sm text-gray-500">Notifs envoyées</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 bg-white rounded-xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-100">
+              <Zap className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.automationsEnabled}/5</p>
+              <p className="text-sm text-gray-500">Automations actives</p>
             </div>
           </div>
         </div>
