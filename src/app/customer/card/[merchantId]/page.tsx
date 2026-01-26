@@ -32,6 +32,7 @@ import {
   Sparkles,
   Zap,
   Trophy,
+  ScanLine,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
@@ -553,55 +554,41 @@ export default function CustomerCardPage({
           )}
         </AnimatePresence>
 
-        {/* Review Section - Above Card */}
-        {merchant.review_link && !reviewDismissed && !reviewPermanentlyHidden && (
-          <div className="relative group p-3 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-100 rounded-2xl shadow-md mb-4 hover:shadow-lg transition-all duration-300">
-            {/* Close button with dropdown */}
-            <div className="absolute -top-2 -right-2 z-20">
-              <div className="relative group/menu">
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setReviewDismissed(true);
-                  }}
-                  className="p-1.5 rounded-full bg-white/90 backdrop-blur-sm shadow-md hover:bg-amber-50 transition-colors border border-amber-100/50"
-                  aria-label="Fermer"
-                >
-                  <X className="w-3.5 h-3.5 text-amber-500" />
-                </button>
-                {/* Dropdown menu on hover */}
-                <div className="absolute right-0 top-full mt-1 opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all duration-200">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      localStorage.setItem(`qarte_review_hidden_${merchantId}`, 'true');
-                      setReviewPermanentlyHidden(true);
-                    }}
-                    className="whitespace-nowrap px-3 py-2 text-xs font-medium bg-white rounded-lg shadow-lg border border-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors"
-                  >
-                    Ne plus afficher
-                  </button>
-                </div>
-              </div>
-            </div>
+        {/* Review Section - Only show if review_link exists and is not empty */}
+        {merchant.review_link && merchant.review_link.trim() !== '' && !reviewDismissed && !reviewPermanentlyHidden && (
+          <div className="relative group mb-3">
             <a
               href={merchant.review_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-3"
+              className="flex items-center gap-3 p-3 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
             >
-              <div className="flex items-center justify-center w-10 h-10 bg-amber-100 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+              <div className="flex items-center justify-center w-9 h-9 bg-amber-100 rounded-lg group-hover:scale-105 transition-transform">
+                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
               </div>
-              <div className="flex-1">
-                <p className="font-semibold text-gray-900 text-sm">Laisser un avis à {merchant.shop_name}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 text-sm truncate">Laisser un avis à {merchant.shop_name}</p>
               </div>
-              <div className="p-2 rounded-lg bg-amber-500 text-white shadow-sm group-hover:scale-105 transition-all">
-                <ExternalLink className="w-4 h-4" />
+              <div className="p-1.5 rounded-lg bg-amber-500 text-white">
+                <ExternalLink className="w-3.5 h-3.5" />
               </div>
             </a>
+            {/* Close buttons - Outside the link, positioned on the right */}
+            <div className="absolute -top-1.5 -right-1.5 flex gap-1 z-20">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  localStorage.setItem(`qarte_review_hidden_${merchantId}`, 'true');
+                  setReviewPermanentlyHidden(true);
+                }}
+                className="p-1 rounded-full bg-gray-100 hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
+                aria-label="Ne plus afficher"
+                title="Ne plus afficher"
+              >
+                <XCircle className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
 
@@ -694,53 +681,38 @@ export default function CustomerCardPage({
             })}
           </div>
 
-          {/* Integrated Status & Progress Card */}
-          <motion.div
-            animate={isRewardReady ? { scale: [1, 1.02, 1] } : {}}
-            transition={{ duration: 0.5, repeat: isRewardReady ? Infinity : 0, repeatDelay: 2 }}
-            className={`relative rounded-xl p-4 border mb-6 overflow-hidden transition-all duration-700 ${isRewardReady ? 'shadow-lg' : ''}`}
-            style={{
-              backgroundColor: isRewardReady ? `${merchant.primary_color}15` : `${merchant.primary_color}05`,
-              borderColor: isRewardReady ? merchant.primary_color : `${merchant.primary_color}20`,
-            }}
-          >
-            {/* Background Progress Fill */}
-            {!isRewardReady && (
+          {/* Compact Progress Bar */}
+          <div className="mb-5">
+            {/* Progress bar */}
+            <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${(card.current_stamps / merchant.stamps_required) * 100}%` }}
                 transition={{ duration: 1, ease: "easeOut" }}
-                className="absolute inset-y-0 left-0 rounded-l-xl"
+                className="absolute inset-y-0 left-0 rounded-full"
                 style={{
                   background: `linear-gradient(90deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
-                  opacity: 0.15
                 }}
               />
-            )}
-
-            {/* Content Overlay */}
-            <div className="relative z-10 flex items-center justify-between gap-3">
-              <div className="flex-1">
-                <p className={`font-bold text-sm transition-colors duration-500 ${isRewardReady ? 'text-gray-900' : 'text-gray-700'}`}>
-                  {isRewardReady
-                    ? `🎉 ${merchant.reward_description}`
-                    : formatRewardText(merchant.reward_description || 'votre récompense', merchant.stamps_required - card.current_stamps, merchant.loyalty_mode, merchant.product_name)
-                  }
-                </p>
-              </div>
-              <motion.div
-                animate={isRewardReady ? { rotate: [0, 10, -10, 0] } : {}}
-                transition={{ duration: 0.5, repeat: isRewardReady ? Infinity : 0, repeatDelay: 2 }}
-                className={`p-2 rounded-lg transition-all duration-500 ${isRewardReady ? 'shadow-md' : 'opacity-40'}`}
-                style={{
-                  backgroundColor: isRewardReady ? merchant.primary_color : 'transparent',
-                  color: isRewardReady ? '#fff' : merchant.primary_color
-                }}
-              >
-                <Gift className="w-5 h-5" />
-              </motion.div>
             </div>
-          </motion.div>
+            {/* Reward text */}
+            <div className="flex items-center justify-between gap-2">
+              <p className={`text-xs font-medium ${isRewardReady ? 'text-gray-900' : 'text-gray-600'}`}>
+                {isRewardReady
+                  ? `🎉 ${merchant.reward_description}`
+                  : formatRewardText(merchant.reward_description || 'votre récompense', merchant.stamps_required - card.current_stamps, merchant.loyalty_mode, merchant.product_name)
+                }
+              </p>
+              {isRewardReady && (
+                <motion.div
+                  animate={{ rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+                >
+                  <Gift className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                </motion.div>
+              )}
+            </div>
+          </div>
 
           {/* Current Offer - Non-invasive, clickable */}
           {offer && offer.active && (
@@ -931,7 +903,7 @@ export default function CustomerCardPage({
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="flex justify-center"
+              className="flex justify-center mb-4"
             >
               <div
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full"
@@ -942,6 +914,21 @@ export default function CustomerCardPage({
               </div>
             </motion.div>
           )}
+
+          {/* Scan QR Code Button */}
+          <Link
+            href="/customer/dashboard"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed transition-all hover:border-solid hover:shadow-md active:scale-[0.98]"
+            style={{
+              borderColor: `${merchant.primary_color}30`,
+              backgroundColor: `${merchant.primary_color}03`
+            }}
+          >
+            <ScanLine className="w-5 h-5" style={{ color: merchant.primary_color }} />
+            <span className="font-semibold text-sm" style={{ color: merchant.primary_color }}>
+              Scanner le QR code
+            </span>
+          </Link>
 
           {/* Push Error Display (for debugging) */}
           {pushError && (
