@@ -44,6 +44,8 @@ import {
   EyeOff,
   ArrowRight,
 } from 'lucide-react';
+import { LandingAnalytics } from '@/components/analytics/LandingAnalytics';
+import { trackCtaClick, trackWhatsAppClicked, trackVideoPlayed, trackFaqOpened } from '@/lib/analytics';
 
 // ============================================
 // CUSTOM HOOKS
@@ -1470,6 +1472,7 @@ function FloatingWhatsAppButton() {
       href="https://wa.me/33607447420"
       target="_blank"
       rel="noopener noreferrer"
+      onClick={() => trackWhatsAppClicked('floating_button')}
       className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-lg shadow-[#25D366]/40 hover:scale-110 transition-transform duration-300 animate-pulse-glow"
       aria-label="Contacter sur WhatsApp"
     >
@@ -1591,6 +1594,7 @@ function TrustBanner() {
 export default function LandingPageV4() {
   return (
     <>
+      <LandingAnalytics />
       <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
 
       <main className="overflow-hidden">

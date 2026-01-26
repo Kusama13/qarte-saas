@@ -37,6 +37,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
 import { Button, Modal } from '@/components/ui';
+import { trackPwaInstalled, trackPushEnabled, trackCardCreated } from '@/lib/analytics';
 import dynamic from 'next/dynamic';
 
 // Dynamic import for QR Scanner (client-side only)
@@ -211,6 +212,15 @@ export default function CustomerCardPage({
     setIsStandalone(standalone);
     setIOSVersion(iosVersion);
 
+    // Track PWA installation (only once per device)
+    if (standalone) {
+      const pwaTracked = localStorage.getItem('qarte_pwa_tracked');
+      if (!pwaTracked) {
+        localStorage.setItem('qarte_pwa_tracked', 'true');
+        trackPwaInstalled(merchantId);
+      }
+    }
+
     // Check if scanner should be shown (PWA mode on mobile only)
     const isAndroid = /android/i.test(navigator.userAgent);
     const mobileDevice = iOS || isAndroid;
@@ -338,6 +348,8 @@ export default function CustomerCardPage({
         setPushSubscribed(true);
         setPushPermission('granted');
         localStorage.setItem('qarte_push_subscribed', 'true');
+        // Track push enabled
+        trackPushEnabled(card.customer.id);
         // Show success toast
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 4000);

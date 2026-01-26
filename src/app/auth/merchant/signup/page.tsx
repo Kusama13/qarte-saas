@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -19,6 +19,7 @@ import { Button, Input, Select } from '@/components/ui';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { generateSlug, validateFrenchPhone, validateEmail } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType } from '@/types';
+import { trackPageView, trackSignupStarted, trackSignupCompleted, trackSetupCompleted } from '@/lib/analytics';
 
 const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
   value,
@@ -40,10 +41,18 @@ export default function MerchantSignupPage() {
     shopAddress: '',
   });
 
+  // Track page view
+  useEffect(() => {
+    trackPageView('signup_page');
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Track signup started
+    trackSignupStarted('email');
 
     if (!validateEmail(formData.email)) {
       setError('Veuillez entrer une adresse email valide');
@@ -127,6 +136,10 @@ export default function MerchantSignupPage() {
           setError('Erreur lors de la création du profil: ' + result.error);
           return;
         }
+
+        // Track successful signup and merchant creation
+        trackSignupCompleted(authData.user.id, 'email');
+        trackSetupCompleted(result.merchant?.id || authData.user.id, formData.shopType || undefined);
 
         // Redirection vers la page de vérification email
         window.location.href = `/auth/merchant/verify-email?email=${encodeURIComponent(formData.email)}`;

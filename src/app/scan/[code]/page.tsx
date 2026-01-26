@@ -35,6 +35,7 @@ import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validateFrenchPhone, getTodayInParis } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
 import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
+import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
 
 type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'article-select' | 'pending' | 'banned';
 
@@ -94,6 +95,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       if (data) {
         setMerchant(data);
+        // Track QR scan
+        trackQrScanned(data.id);
       }
       setLoading(false);
     };
