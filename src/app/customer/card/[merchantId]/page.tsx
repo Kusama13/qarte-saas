@@ -1182,16 +1182,13 @@ export default function CustomerCardPage({
               {isIOS && !isIOSChrome && (
                 <motion.div
                   initial={{ opacity: 0 }}
-                  animate={{ opacity: 1, y: [0, 10, 0] }}
-                  transition={{ y: { duration: 1, repeat: Infinity }, opacity: { duration: 0.3 } }}
-                  className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center"
+                  animate={{ opacity: 1, y: [0, 8, 0] }}
+                  transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
+                  className="fixed bottom-3 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center"
                 >
-                  <div className="bg-white rounded-full p-3 shadow-2xl border-2 border-blue-500">
-                    <ChevronDown className="w-8 h-8 text-blue-500" />
+                  <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
+                    <ChevronDown className="w-6 h-6 text-blue-500" />
                   </div>
-                  <span className="mt-2 text-white text-sm font-bold bg-blue-500 px-3 py-1 rounded-full shadow-lg">
-                    Appuyez sur ⋯
-                  </span>
                 </motion.div>
               )}
 
@@ -1199,15 +1196,12 @@ export default function CustomerCardPage({
               {isIOS && isIOSChrome && (
                 <motion.div
                   initial={{ opacity: 0 }}
-                  animate={{ opacity: 1, y: [0, -10, 0] }}
-                  transition={{ y: { duration: 1, repeat: Infinity }, opacity: { duration: 0.3 } }}
-                  className="fixed top-4 right-16 z-[60] flex flex-col items-center"
+                  animate={{ opacity: 1, y: [0, -8, 0] }}
+                  transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
+                  className="fixed top-3 right-14 z-[60] flex flex-col items-center"
                 >
-                  <span className="mb-2 text-white text-sm font-bold bg-blue-500 px-3 py-1 rounded-full shadow-lg">
-                    Appuyez sur Partager
-                  </span>
-                  <div className="bg-white rounded-full p-3 shadow-2xl border-2 border-blue-500">
-                    <ChevronUp className="w-8 h-8 text-blue-500" />
+                  <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
+                    <ChevronUp className="w-6 h-6 text-blue-500" />
                   </div>
                 </motion.div>
               )}
@@ -1216,169 +1210,124 @@ export default function CustomerCardPage({
               {!isIOS && isMobile && (
                 <motion.div
                   initial={{ opacity: 0 }}
-                  animate={{ opacity: 1, y: [0, -10, 0] }}
-                  transition={{ y: { duration: 1, repeat: Infinity }, opacity: { duration: 0.3 } }}
-                  className="fixed top-4 right-4 z-[60] flex flex-col items-center"
+                  animate={{ opacity: 1, y: [0, -8, 0] }}
+                  transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
+                  className="fixed top-3 right-3 z-[60] flex flex-col items-center"
                 >
-                  <span className="mb-2 text-white text-sm font-bold bg-blue-500 px-3 py-1 rounded-full shadow-lg">
-                    Appuyez sur ⋮
-                  </span>
-                  <div className="bg-white rounded-full p-3 shadow-2xl border-2 border-blue-500">
-                    <ChevronUp className="w-8 h-8 text-blue-500" />
+                  <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
+                    <ChevronUp className="w-6 h-6 text-blue-500" />
                   </div>
                 </motion.div>
               )}
 
               <div
-                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 bg-black/50 backdrop-blur-sm"
                 onClick={() => setShowIOSInstructions(false)}
               >
                 <div
-                  className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
+                  className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-up"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Header */}
+                  {/* Compact Header */}
                   <div
-                    className="relative p-6 pb-4 text-center"
-                    style={{ background: `linear-gradient(135deg, ${merchant.primary_color}15, ${merchant.primary_color}05)` }}
+                    className="relative px-4 py-4 text-center"
+                    style={{ background: `linear-gradient(135deg, ${merchant.primary_color}10, white)` }}
                   >
                     <button
                       onClick={() => setShowIOSInstructions(false)}
-                      className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
+                      className="absolute top-3 right-3 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
                     >
-                      <X className="w-5 h-5 text-gray-500" />
+                      <X className="w-4 h-4 text-gray-500" />
                     </button>
-                    <div
-                      className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
-                      style={{ backgroundColor: `${merchant.primary_color}20` }}
-                    >
-                      <Gift className="w-8 h-8" style={{ color: merchant.primary_color }} />
+                    <div className="flex items-center justify-center gap-2">
+                      <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                      <h3 className="text-base font-bold text-gray-900">{pwaOfferText || 'Offre exclusive'}</h3>
                     </div>
-                    <h3 className="text-xl font-black text-gray-900">🎁 {pwaOfferText || 'Offre exclusive'}</h3>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {isIOS
-                        ? (isIOSChrome ? 'Ajoutez votre carte via Chrome' : 'Ajoutez votre carte en 3 étapes')
-                        : 'Installez l\'app pour en profiter'
-                      }
-                    </p>
+                    <p className="text-xs text-gray-500 mt-1">Ajoutez à l&apos;écran d&apos;accueil</p>
                   </div>
 
-                  {/* Steps */}
-                  <div className="p-6 space-y-4">
+                  {/* Compact Steps */}
+                  <div className="px-4 py-3 space-y-2">
                     {isIOS && !isIOSChrome ? (
                       <>
-                        {/* Safari iOS */}
-                        <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
-                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                            <span className="text-white font-bold text-lg">⋯</span>
+                        {/* Safari iOS: ⋯ → Partager → Écran d'accueil */}
+                        <div className="flex items-center gap-3 p-2.5 bg-blue-50 rounded-xl border border-blue-200">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <span className="text-white font-bold">⋯</span>
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900">1. Menu</p>
-                            <p className="text-sm text-gray-500">Appuyez sur <strong>⋯</strong> en bas de l&apos;écran</p>
-                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>⋯</strong> en bas</p>
                         </div>
 
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                            <PlusSquare className="w-5 h-5 text-white" />
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <Share className="w-4 h-4 text-white" />
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900">2. Ajouter à l&apos;écran</p>
-                            <p className="text-sm text-gray-500">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
-                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> Puis <strong>Partager</strong></p>
                         </div>
 
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
-                            <Check className="w-5 h-5 text-white" />
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                            <PlusSquare className="w-4 h-4 text-white" />
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
-                            <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
-                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">3.</span> <strong>Sur l&apos;écran d&apos;accueil</strong></p>
                         </div>
                       </>
                     ) : isIOS && isIOSChrome ? (
                       <>
-                        {/* Chrome iOS */}
-                        <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
-                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                            <Share className="w-5 h-5 text-white" />
+                        {/* Chrome iOS: Partager → ⋯ → Écran d'accueil */}
+                        <div className="flex items-center gap-3 p-2.5 bg-blue-50 rounded-xl border border-blue-200">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <Share className="w-4 h-4 text-white" />
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900">1. Partager</p>
-                            <p className="text-sm text-gray-500">Appuyez sur l&apos;icône partager dans la barre URL</p>
-                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>Partager</strong> ↑</p>
                         </div>
 
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                            <PlusSquare className="w-5 h-5 text-white" />
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <span className="text-white font-bold text-sm">⋯</span>
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900">2. Ajouter à l&apos;écran</p>
-                            <p className="text-sm text-gray-500">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
-                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> Puis <strong>Plus...</strong></p>
                         </div>
 
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
-                            <Check className="w-5 h-5 text-white" />
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                            <PlusSquare className="w-4 h-4 text-white" />
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
-                            <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
-                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">3.</span> <strong>Sur l&apos;écran d&apos;accueil</strong></p>
                         </div>
                       </>
                     ) : (
                       <>
                         {/* Android */}
-                        <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
-                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                            <span className="text-white font-bold text-lg">⋮</span>
+                        <div className="flex items-center gap-3 p-2.5 bg-blue-50 rounded-xl border border-blue-200">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <span className="text-white font-bold">⋮</span>
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900">1. Menu</p>
-                            <p className="text-sm text-gray-500">Appuyez sur <strong>⋮</strong> en haut à droite</p>
-                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>⋮</strong> en haut</p>
                         </div>
 
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                            <PlusSquare className="w-5 h-5 text-white" />
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                            <PlusSquare className="w-4 h-4 text-white" />
                           </div>
-                          <div>
-                            <p className="font-bold text-gray-900">2. Installer</p>
-                            <p className="text-sm text-gray-500">&quot;Installer l&apos;application&quot;</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
-                            <Check className="w-5 h-5 text-white" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
-                            <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
-                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> <strong>Installer l&apos;application</strong></p>
                         </div>
                       </>
                     )}
                   </div>
 
-                  {/* Footer */}
-                  <div className="p-6 pt-0">
+                  {/* Compact Footer */}
+                  <div className="px-4 pb-4 pt-2">
                     <button
                       onClick={() => setShowIOSInstructions(false)}
-                      className="w-full py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+                      className="w-full py-3 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90"
                       style={{ backgroundColor: merchant.primary_color }}
                     >
-                    J&apos;ai compris
-                  </button>
+                      J&apos;ai compris
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
             </>
           )}
 
