@@ -106,26 +106,30 @@ export default function PricingPage() {
               </Button>
 
               {/* Features */}
-              <div className="space-y-4 mb-8">
+              <div className="mb-8">
                 <p className="font-semibold text-gray-900 text-center mb-4">
                   Tout ce dont vous avez besoin :
                 </p>
 
-                {[
-                  'Clients illimites',
-                  'Cartes de fidelite digitales',
-                  'QR codes personnalises',
-                  'Statistiques en temps reel',
-                  'Support prioritaire par email',
-                  'Mises a jour gratuites',
-                ].map((feature) => (
-                  <div key={feature} className="flex items-center gap-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Check className="w-4 h-4 text-primary" />
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    'Clients illimites',
+                    'Cartes digitales',
+                    'QR codes perso',
+                    'Statistiques',
+                    'Notifications push',
+                    'Programmation envois',
+                    'Support prioritaire',
+                    'Mises a jour',
+                  ].map((feature) => (
+                    <div key={feature} className="flex items-center gap-2">
+                      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Check className="w-3 h-3 text-primary" />
+                      </div>
+                      <span className="text-gray-700 text-sm">{feature}</span>
                     </div>
-                    <span className="text-gray-700">{feature}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
               {/* Trust badges */}

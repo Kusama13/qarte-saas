@@ -727,9 +727,9 @@ function PushNotificationTeaser() {
         <div className={`grid lg:grid-cols-2 gap-12 items-center ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           {/* Content */}
           <div className="order-2 lg:order-1">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-100 rounded-full mb-6">
-              <Sparkles className="w-4 h-4 text-amber-600" />
-              <span className="font-semibold text-amber-700 text-sm">Bientôt disponible</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 rounded-full mb-6">
+              <Sparkles className="w-4 h-4 text-emerald-600" />
+              <span className="font-semibold text-emerald-700 text-sm">Inclus</span>
             </div>
 
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -983,12 +983,12 @@ function PricingSection() {
 
   const features = [
     'Clients illimités',
-    'QR Code personnalisé',
+    'QR Code perso',
+    'Notifications push',
+    'Programmation envois',
     'Dashboard analytics',
-    'Avis Google incentivés',
+    'Avis Google',
     'Support prioritaire',
-    'Mises à jour gratuites',
-    'Export des données',
     'Zéro commission'
   ];
 
@@ -1032,13 +1032,13 @@ function PricingSection() {
 
             <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-10" />
 
-            <ul className="space-y-5 mb-10 relative">
+            <ul className="grid grid-cols-2 gap-3 mb-10 relative">
               {features.map((feature, index) => (
-                <li key={index} className="flex items-center gap-4 group/item">
-                  <div className="w-6 h-6 bg-emerald-500/10 rounded-full flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 group-hover/item:bg-emerald-500/20 transition-all duration-300">
-                    <Check className="w-4 h-4 text-emerald-600" />
+                <li key={index} className="flex items-center gap-2 group/item">
+                  <div className="w-5 h-5 bg-emerald-500/10 rounded-full flex items-center justify-center flex-shrink-0 group-hover/item:scale-110 group-hover/item:bg-emerald-500/20 transition-all duration-300">
+                    <Check className="w-3 h-3 text-emerald-600" />
                   </div>
-                  <span className="text-gray-600 font-medium group-hover/item:text-gray-900 transition-colors">{feature}</span>
+                  <span className="text-gray-600 text-sm font-medium group-hover/item:text-gray-900 transition-colors">{feature}</span>
                 </li>
               ))}
             </ul>
