@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight } from 'lucide-react';
@@ -27,37 +27,51 @@ interface StatsCardProps {
   color: string;
 }
 
-function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
+const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
   return (
-    <div className="group relative p-6 bg-white/80 backdrop-blur-xl border border-white/40 rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50 hover:-translate-y-1 overflow-hidden">
-      <div className="relative flex items-start justify-between">
-        <div className="flex flex-col gap-1">
-          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] leading-none">{title}</p>
-          <h3 className="text-3xl font-extrabold text-slate-900 tracking-tight mt-1">{value}</h3>
-          {trend && (
-            <div className="flex items-center gap-1 mt-3 px-2 py-1 w-fit rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/10">
-              <TrendingUp className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span className="text-xs font-bold">{trend}</span>
-            </div>
-          )}
+    <div className="group relative p-6 bg-white/70 backdrop-blur-2xl border border-white/50 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(79,70,229,0.1)] hover:-translate-y-1.5 overflow-hidden">
+      {/* Premium Gradient Border Effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+      <div className="relative flex items-center justify-between">
+        <div className="flex flex-col">
+          <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-1.5">{title}</p>
+          <div className="flex items-baseline gap-2.5">
+            <h3 className="text-3xl font-bold text-slate-900 tracking-[-0.03em] tabular-nums">{value}</h3>
+            {trend && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50/80 text-emerald-600 border border-emerald-100/50 shadow-sm">
+                <TrendingUp className="w-3 h-3 stroke-[3]" />
+                <span className="text-[10px] font-black">{trend}</span>
+              </div>
+            )}
+          </div>
         </div>
-        <div
-          className="relative flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6"
-          style={{
-            background: `linear-gradient(135deg, ${color}15 0%, ${color}30 100%)`,
-            boxShadow: `0 8px 20px -6px ${color}60`
-          }}
-        >
+
+        <div className="relative group/icon">
           <div
-            className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-40 transition-opacity blur-md"
+            className="absolute inset-0 rounded-2xl blur-xl opacity-20 group-hover/icon:opacity-40 transition-all duration-500 scale-75 group-hover/icon:scale-110"
             style={{ backgroundColor: color }}
           />
-          <Icon className="relative w-6 h-6 transition-transform duration-500" style={{ color }} />
+          <div
+            className="relative flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-500 ease-out border border-white/50 shadow-inner group-hover:shadow-lg"
+            style={{
+              background: `linear-gradient(145deg, ${color}10, ${color}25)`
+            }}
+          >
+            <Icon
+              className="w-7 h-7 transition-all duration-500 ease-out group-hover:-rotate-12 group-hover:scale-110"
+              style={{ color }}
+            />
+            {/* Animated Highlight */}
+            <div className="absolute top-0 left-0 w-full h-full rounded-2xl overflow-hidden pointer-events-none">
+              <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-}
+});
 
 export default function DashboardPage() {
   const router = useRouter();

@@ -471,7 +471,7 @@ export default function CustomerCardPage({
   const isRewardReady = card.current_stamps >= merchant.stamps_required;
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${merchant.primary_color}10)` }}>
+    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white 0%, ${merchant.primary_color}20 50%, ${merchant.primary_color}30 100%)` }}>
       {/* Header with premium glassmorphism design - Compact */}
       <header className="relative w-full overflow-hidden">
         <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-2xl overflow-hidden bg-slate-50/50">
@@ -548,11 +548,10 @@ export default function CustomerCardPage({
                     </h1>
                   </div>
 
-                  {/* Progress Badge */}
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-white shadow-sm">
-                    <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
-                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">
-                      {card.current_stamps} / {merchant.stamps_required} {merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}
+                  {/* Program Label */}
+                  <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-white shadow-sm">
+                    <span className="text-[11px] font-semibold text-slate-500 tracking-wide">
+                      Votre programme de fidélité
                     </span>
                   </div>
                 </div>
@@ -746,9 +745,9 @@ export default function CustomerCardPage({
                 }}
               />
             </div>
-            {/* Reward text */}
-            <div className="flex items-center justify-between gap-2">
-              <p className={`text-xs font-medium ${isRewardReady ? 'text-gray-900' : 'text-gray-600'}`}>
+            {/* Reward text - Centered and larger */}
+            <div className="flex flex-col items-center justify-center text-center">
+              <p className={`text-sm font-semibold ${isRewardReady ? 'text-gray-900' : 'text-gray-600'}`}>
                 {isRewardReady
                   ? `🎉 ${merchant.reward_description}`
                   : formatRewardText(merchant.reward_description || 'votre récompense', merchant.stamps_required - card.current_stamps, merchant.loyalty_mode, merchant.product_name)
@@ -758,8 +757,9 @@ export default function CustomerCardPage({
                 <motion.div
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
+                  className="mt-1"
                 >
-                  <Gift className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                  <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
                 </motion.div>
               )}
             </div>
@@ -1517,12 +1517,13 @@ export default function CustomerCardPage({
             <motion.div
               animate={{
                 boxShadow: [
-                  `0 0 0 0 ${merchant.primary_color}30`,
-                  `0 0 0 6px ${merchant.primary_color}00`,
-                  `0 0 0 0 ${merchant.primary_color}30`
-                ]
+                  `0 0 0 0 ${merchant.primary_color}40`,
+                  `0 0 0 8px ${merchant.primary_color}00`,
+                  `0 0 0 0 ${merchant.primary_color}40`
+                ],
+                opacity: [1, 0.85, 1]
               }}
-              transition={{ duration: 2.5, repeat: Infinity }}
+              transition={{ duration: 2, repeat: Infinity }}
               className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg border-2"
               style={{
                 backgroundColor: '#ffffff',
