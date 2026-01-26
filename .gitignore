@@ -7,3 +7,5 @@ node_modules
 *.log
 .turbo
 .env.vercel
+# Demo page (kept local only)
+src/app/demo/

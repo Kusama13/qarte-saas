@@ -326,7 +326,7 @@ function HeroSection() {
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </a>
             <a
-              href="/demo"
+              href="#demo"
               className="px-8 py-4 border border-gray-300 text-gray-900 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 text-center shadow-sm"
             >
               Voir la Démo
@@ -675,12 +675,12 @@ function FeatureRow({ feature }: { feature: any }) {
         {/* Feature Mockups */}
         {feature.mockupType === 'qr' && (
           <div className="relative">
-            <a href="/demo" className="block w-full max-w-md mx-auto p-8 bg-white rounded-3xl shadow-2xl hover:shadow-3xl transition-all cursor-pointer group">
+            <a href="#demo" className="block w-full max-w-md mx-auto p-8 bg-white rounded-3xl shadow-2xl hover:shadow-3xl transition-all cursor-pointer group">
               <div className="w-48 h-48 mx-auto bg-gradient-to-br from-indigo-100 to-violet-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
                 <QrCode className="w-32 h-32 text-indigo-500" />
               </div>
               <div className="text-center">
-                <p className="text-indigo-600 text-sm font-medium group-hover:text-indigo-700">Cliquez pour tester la démo</p>
+                <p className="text-indigo-600 text-sm font-medium group-hover:text-indigo-700">Découvrir ci-dessous</p>
                 <div className="mt-4 flex items-center justify-center gap-2 text-emerald-500">
                   <Check className="w-5 h-5" />
                   <span className="font-medium">Carte créée instantanément</span>
@@ -1464,53 +1464,281 @@ function FooterSection() {
   );
 }
 
-// Use Cases Section - Simple CTA to Demo
+// Interactive Demo Section
 function UseCasesSection() {
-  const sectors = [
-    { icon: Scissors, label: 'Coiffure', color: 'bg-slate-800' },
-    { icon: Sparkles, label: 'Esthétique', color: 'bg-rose-400' },
-    { icon: Coffee, label: 'Restaurant', color: 'bg-orange-500' },
-    { icon: ShoppingBag, label: 'Commerce', color: 'bg-emerald-500' },
+  const [activeBusiness, setActiveBusiness] = useState('Coiffure');
+  const [points, setPoints] = useState(7);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+
+  const businessTypes = [
+    { id: 'Coiffure', icon: Scissors, color: 'bg-slate-800', accent: 'text-slate-800', gradient: 'from-slate-700 to-slate-900', label: 'Salon de Coiffure', reward: 'Coupe offerte' },
+    { id: 'Esthétique', icon: Sparkles, color: 'bg-rose-400', accent: 'text-rose-400', gradient: 'from-rose-400 to-rose-500', label: 'Institut de Beauté', reward: 'Soin du visage offert' },
+    { id: 'Restaurant', icon: Coffee, color: 'bg-orange-500', accent: 'text-orange-500', gradient: 'from-orange-400 to-orange-600', label: 'Café & Restaurant', reward: 'Menu du jour offert' },
+    { id: 'Commerce', icon: ShoppingBag, color: 'bg-emerald-500', accent: 'text-emerald-500', gradient: 'from-emerald-400 to-emerald-600', label: 'Boutique Locale', reward: 'Bon d\'achat 15€' },
   ];
 
-  return (
-    <section className="py-20 bg-gradient-to-br from-indigo-50 via-white to-violet-50 overflow-hidden">
-      <div className="max-w-4xl mx-auto px-6 text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-          S&apos;adapte à <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">votre métier</span>
-        </h2>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-10">
-          Coiffeur, restaurateur, commerçant... Qarte s&apos;adapte à votre activité en quelques clics.
-        </p>
+  const currentBusiness = businessTypes.find(b => b.id === activeBusiness) || businessTypes[0];
+  const CurrentIcon = currentBusiness.icon;
 
-        {/* Sector Icons */}
-        <div className="flex items-center justify-center gap-4 md:gap-6 mb-10">
-          {sectors.map((sector, idx) => {
-            const Icon = sector.icon;
-            return (
-              <div key={idx} className="flex flex-col items-center gap-2">
-                <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl ${sector.color} text-white flex items-center justify-center shadow-lg`}>
-                  <Icon className="w-7 h-7 md:w-8 md:h-8" />
-                </div>
-                <span className="text-xs md:text-sm font-medium text-gray-600">{sector.label}</span>
-              </div>
-            );
-          })}
+  const handleAddPoint = () => {
+    if (points < 10) {
+      const newPoints = points + 1;
+      setPoints(newPoints);
+
+      if (newPoints === 10) {
+        import('canvas-confetti').then(confetti => {
+          confetti.default({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#4f46e5', '#7c3aed', '#10b981', '#fbbf24']
+          });
+        });
+      }
+    }
+  };
+
+  const handleReset = () => {
+    setIsRedeeming(true);
+    setTimeout(() => {
+      setPoints(0);
+      setIsRedeeming(false);
+    }, 1000);
+  };
+
+  return (
+    <section id="demo" className="py-24 px-4 bg-slate-50 overflow-hidden scroll-mt-20">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-bold text-slate-900 mb-4 tracking-tight"
+          >
+            Testez l&apos;expérience <span className="text-indigo-600">client</span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-lg text-slate-600 max-w-2xl mx-auto"
+          >
+            Découvrez comment vos clients interagissent avec leur carte de fidélité numérique.
+            Simple, addictif et 100% personnalisé à votre image.
+          </motion.p>
         </div>
 
-        {/* CTA to Demo */}
-        <Link
-          href="/demo"
-          className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-lg rounded-2xl shadow-xl shadow-indigo-500/25 hover:shadow-2xl hover:scale-105 transition-all duration-300"
-        >
-          <Play className="w-5 h-5" />
-          Tester la démo interactive
-          <ArrowRight className="w-5 h-5" />
-        </Link>
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Controls - Left Side */}
+          <div className="space-y-8 order-2 lg:order-1">
+            <div className="grid grid-cols-2 gap-4">
+              {businessTypes.map((biz) => {
+                const BizIcon = biz.icon;
+                return (
+                  <button
+                    key={biz.id}
+                    onClick={() => {
+                      setActiveBusiness(biz.id);
+                      setPoints(7);
+                    }}
+                    className={`flex items-center gap-4 p-4 rounded-2xl transition-all duration-300 border-2 text-left group
+                      ${activeBusiness === biz.id
+                        ? 'bg-white border-indigo-600 shadow-lg ring-1 ring-indigo-100'
+                        : 'bg-white/50 border-transparent hover:border-slate-200 hover:bg-white shadow-sm'}`}
+                  >
+                    <div className={`p-3 rounded-xl transition-colors duration-300 ${activeBusiness === biz.id ? biz.color + ' text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`}>
+                      <BizIcon size={24} />
+                    </div>
+                    <div>
+                      <span className={`block font-bold ${activeBusiness === biz.id ? 'text-slate-900' : 'text-slate-500'}`}>{biz.id}</span>
+                      <span className="text-xs text-slate-400">Voir la démo</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
 
-        <p className="mt-4 text-sm text-gray-500">
-          Découvrez l&apos;expérience de vos futurs clients
-        </p>
+            <div className="bg-indigo-50/50 border border-indigo-100 rounded-3xl p-8 backdrop-blur-sm">
+              <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <Star className="text-indigo-600 fill-indigo-600" size={20} />
+                L&apos;engagement réinventé
+              </h3>
+              <ul className="space-y-4">
+                {[
+                  "Zéro application à télécharger",
+                  "Notifications push automatiques",
+                  "Collecte de données RGPD",
+                  "Statistiques en temps réel"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3 text-slate-700 font-medium">
+                    <div className="bg-emerald-100 text-emerald-600 rounded-full p-1">
+                      <Check size={14} strokeWidth={3} />
+                    </div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* CTA */}
+            <a
+              href="/auth/merchant"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-lg rounded-2xl shadow-xl shadow-indigo-500/25 hover:shadow-2xl hover:scale-105 transition-all duration-300"
+            >
+              Démarrer Gratuitement
+              <ArrowRight className="w-5 h-5" />
+            </a>
+          </div>
+
+          {/* Phone Mockup - Right Side */}
+          <div className="flex justify-center order-1 lg:order-2">
+            <div className="relative group">
+              {/* Phone Frame */}
+              <div className="w-[300px] h-[600px] bg-slate-900 rounded-[3rem] p-3 shadow-2xl relative z-10 border-[6px] border-slate-800">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-28 h-6 bg-slate-900 rounded-b-2xl z-20"></div>
+
+                <div className="w-full h-full bg-slate-50 rounded-[2.2rem] overflow-hidden flex flex-col relative">
+                  {/* Status Bar */}
+                  <div className="h-10 w-full bg-transparent flex items-center justify-between px-8 pt-2">
+                    <span className="text-[10px] font-bold text-slate-900">9:41</span>
+                    <div className="flex gap-1">
+                      <div className="w-4 h-2 bg-slate-300 rounded-sm"></div>
+                      <div className="w-2 h-2 bg-slate-300 rounded-full"></div>
+                    </div>
+                  </div>
+
+                  {/* App Header */}
+                  <div className="px-5 pt-3 pb-2">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentBusiness.color}`}>
+                        <CurrentIcon className="text-white" size={18} />
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400">Votre programme</span>
+                      </div>
+                    </div>
+                    <h4 className="text-xl font-black text-slate-900 mb-0.5">{currentBusiness.label}</h4>
+                    <p className="text-slate-500 text-xs font-medium">Votre programme de fidélité</p>
+                  </div>
+
+                  {/* Loyalty Card Content */}
+                  <div className="flex-1 px-4 py-3 overflow-auto">
+                    <motion.div
+                      key={activeBusiness}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className={`relative w-full rounded-2xl p-5 text-white shadow-xl overflow-hidden bg-gradient-to-br ${currentBusiness.gradient}`}
+                    >
+                      {/* Decorative elements */}
+                      <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+                      <div className="absolute -left-6 -bottom-6 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
+
+                      <div className="relative z-10">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="bg-white/20 p-2 rounded-lg backdrop-blur-md">
+                            <CurrentIcon size={20} />
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[9px] uppercase tracking-widest opacity-80 mb-0.5">Votre Fidélité</p>
+                            <p className="font-bold text-lg">{points}/10</p>
+                          </div>
+                        </div>
+
+                        {/* Stamps Grid */}
+                        <div className="grid grid-cols-5 gap-2 mb-4">
+                          {Array.from({ length: 10 }).map((_, i) => (
+                            <motion.div
+                              key={i}
+                              initial={false}
+                              animate={{
+                                scale: i < points ? [1, 1.15, 1] : 1,
+                              }}
+                              transition={{ duration: 0.3 }}
+                              className={`aspect-square rounded-full flex items-center justify-center border border-white/30 ${i < points ? 'bg-white shadow-md' : 'bg-white/10'}`}
+                            >
+                              {i < points && (
+                                <Check size={12} className={currentBusiness.accent} strokeWidth={4} />
+                              )}
+                              {i === points && points < 10 && (
+                                <div className="absolute inset-0 rounded-full animate-pulse border border-white/50"></div>
+                              )}
+                            </motion.div>
+                          ))}
+                        </div>
+
+                        {/* Progress */}
+                        <div>
+                          <div className="h-1.5 w-full bg-black/10 rounded-full overflow-hidden mb-1.5">
+                            <motion.div
+                              className="h-full bg-white"
+                              initial={{ width: '0%' }}
+                              animate={{ width: `${(points / 10) * 100}%` }}
+                              transition={{ type: "spring", stiffness: 60 }}
+                            />
+                          </div>
+                          <p className="text-[10px] text-white/80 font-medium">
+                            {points === 10 ? '🎉 Récompense débloquée !' : `Plus que ${10 - points} passages !`}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    {/* Reward Section */}
+                    <AnimatePresence>
+                      {points === 10 && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          className="mt-4 bg-white rounded-2xl p-4 shadow-lg border border-indigo-100 text-center"
+                        >
+                          <div className="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <Gift size={20} />
+                          </div>
+                          <h5 className="font-bold text-slate-900 text-sm mb-0.5">Félicitations !</h5>
+                          <p className="text-slate-500 text-[10px] mb-3">{currentBusiness.reward}</p>
+                          <button
+                            onClick={handleReset}
+                            disabled={isRedeeming}
+                            className={`w-full py-2.5 rounded-xl font-bold text-white text-sm transition-all shadow-md active:scale-95 ${currentBusiness.color}`}
+                          >
+                            {isRedeeming ? 'Traitement...' : 'Réclamer mon cadeau'}
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Action Button */}
+                  <AnimatePresence>
+                    {points < 10 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 10 }}
+                        className="p-4 bg-white border-t border-slate-100"
+                      >
+                        <button
+                          onClick={handleAddPoint}
+                          className="w-full bg-slate-900 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-lg text-sm"
+                        >
+                          Valider mon passage
+                          <ChevronRight size={16} />
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Decorative Background Glow */}
+              <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] blur-[100px] rounded-full opacity-20 -z-0 transition-colors duration-1000 ${currentBusiness.color}`}></div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
