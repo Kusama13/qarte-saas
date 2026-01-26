@@ -876,19 +876,21 @@ export default function CustomerCardPage({
 
           {/* Add to Home Screen Prompt - Show when NOT in PWA and (offer exists OR pwa offer configured) */}
           {((offer && offer.active) || pwaOfferText) && !isStandalone && (
-            <motion.div
+            <motion.button
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-5"
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setShowIOSInstructions(true)}
+              className="w-full mb-5"
             >
               <div
-                className="relative overflow-hidden rounded-xl border-2 border-dashed p-4 transition-all"
+                className="relative overflow-hidden rounded-xl border-2 border-dashed p-4 transition-all hover:border-solid hover:shadow-md"
                 style={{
                   borderColor: `${merchant.primary_color}40`,
                   backgroundColor: `${merchant.primary_color}05`
                 }}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <motion.div
                     animate={{ scale: [1, 1.15, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
@@ -897,39 +899,18 @@ export default function CustomerCardPage({
                   >
                     <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
                   </motion.div>
-                  <div className="flex-1">
-                    <p className="font-bold text-gray-900 text-sm mb-1">
-                      🎁 {pwaOfferText || 'Offre exclusive disponible'}
+                  <div className="flex-1 text-left">
+                    <p className="font-bold text-gray-900 text-sm">
+                      🎁 Offre exclusive disponible pour vous
                     </p>
-                    <p className="text-xs text-gray-600 mb-3">
-                      Ajoutez votre carte à l&apos;écran d&apos;accueil pour en profiter
+                    <p className="text-xs text-gray-500">
+                      Cliquez pour en savoir plus
                     </p>
-
-                    {/* iOS Instructions */}
-                    {isIOS ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <div className="w-5 h-5 rounded bg-gray-100 flex items-center justify-center">
-                            <Share className="w-3 h-3 text-blue-500" />
-                          </div>
-                          <span>Appuyez sur <strong>Partager</strong></span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-500">
-                          <div className="w-5 h-5 rounded bg-gray-100 flex items-center justify-center">
-                            <PlusSquare className="w-3 h-3 text-gray-600" />
-                          </div>
-                          <span>Puis <strong>Sur l&apos;écran d&apos;accueil</strong></span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-xs text-gray-500">
-                        <span>Menu ⋮ → <strong>Installer l&apos;application</strong></span>
-                      </div>
-                    )}
                   </div>
+                  <ChevronRight className="w-5 h-5 text-gray-400" />
                 </div>
               </div>
-            </motion.div>
+            </motion.button>
           )}
 
           {/* Subscribe to Updates - Only when NO offer exists and not subscribed */}
@@ -1059,7 +1040,10 @@ export default function CustomerCardPage({
 
           {/* iOS Instructions Modal */}
           {showIOSInstructions && (
-            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <div
+              className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+              onClick={() => setShowIOSInstructions(false)}
+            >
               <div
                 className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
                 onClick={(e) => e.stopPropagation()}
@@ -1079,43 +1063,81 @@ export default function CustomerCardPage({
                     className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
                     style={{ backgroundColor: `${merchant.primary_color}20` }}
                   >
-                    <Bell className="w-8 h-8" style={{ color: merchant.primary_color }} />
+                    <Gift className="w-8 h-8" style={{ color: merchant.primary_color }} />
                   </div>
-                  <h3 className="text-xl font-black text-gray-900">Activer les notifications</h3>
-                  <p className="text-sm text-gray-500 mt-1">Sur iPhone, suivez ces 3 étapes</p>
+                  <h3 className="text-xl font-black text-gray-900">🎁 {pwaOfferText || 'Offre exclusive'}</h3>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {isIOS ? 'Ajoutez votre carte en 3 étapes' : 'Installez l\'app pour en profiter'}
+                  </p>
                 </div>
 
                 {/* Steps */}
                 <div className="p-6 space-y-4">
-                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                      <Share className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900">1. Partager</p>
-                      <p className="text-sm text-gray-500">Appuyez sur le bouton partager en bas</p>
-                    </div>
-                  </div>
+                  {isIOS ? (
+                    <>
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                          <Share className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">1. Partager</p>
+                          <p className="text-sm text-gray-500">Appuyez sur le bouton partager en bas</p>
+                        </div>
+                      </div>
 
-                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                      <PlusSquare className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900">2. Ajouter à l&apos;écran</p>
-                      <p className="text-sm text-gray-500">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
-                    </div>
-                  </div>
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                          <PlusSquare className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">2. Ajouter à l&apos;écran</p>
+                          <p className="text-sm text-gray-500">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
+                        </div>
+                      </div>
 
-                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
-                      <Check className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
-                      <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
-                    </div>
-                  </div>
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
+                          <Check className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
+                          <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                          <SlidersHorizontal className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">1. Menu</p>
+                          <p className="text-sm text-gray-500">Appuyez sur ⋮ en haut à droite</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                          <PlusSquare className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">2. Installer</p>
+                          <p className="text-sm text-gray-500">&quot;Installer l&apos;application&quot;</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
+                          <Check className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
+                          <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Footer */}
