@@ -39,6 +39,9 @@ import {
   Gift,
   Tag,
   MessageSquare,
+  FileX,
+  Banknote,
+  EyeOff,
 } from 'lucide-react';
 
 // ============================================
@@ -417,7 +420,7 @@ function PainPointsSection() {
       number: '1',
       title: 'Le papier, c\'est fini',
       description: '30% des cartes papier sont perdues ou jetées. Résultat : vos clients oublient votre programme.',
-      icon: '📄',
+      icon: FileX,
       stat: '30%',
       statLabel: 'de cartes perdues'
     },
@@ -425,7 +428,7 @@ function PainPointsSection() {
       number: '2',
       title: 'Les apps custom coûtent cher',
       description: 'Une app de fidélité sur-mesure ? Comptez 10 000€ minimum. Et vos clients doivent la télécharger...',
-      icon: '💸',
+      icon: Banknote,
       stat: '10k€',
       statLabel: 'coût moyen'
     },
@@ -433,7 +436,7 @@ function PainPointsSection() {
       number: '3',
       title: 'Sans data, vous êtes aveugle',
       description: 'Qui sont vos meilleurs clients ? Combien de fois reviennent-ils ? Sans données, impossible de relancer.',
-      icon: '🔇',
+      icon: EyeOff,
       stat: '0',
       statLabel: 'visibilité'
     }
@@ -449,21 +452,26 @@ function PainPointsSection() {
           <p className="text-xl text-gray-600">Et comment Qarte les résout simplement.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          {painPoints.map((point, index) => (
+        {/* Mobile: Stacked cards effect | Desktop: Grid */}
+        <div className="relative md:grid md:grid-cols-3 md:gap-8 flex flex-col gap-4">
+          {painPoints.map((point, index) => {
+            const IconComponent = point.icon;
+            return (
             <div
               key={index}
-              className={`group relative p-10 bg-white/70 backdrop-blur-md rounded-[2.5rem] border border-slate-200/60 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-2 hover:border-indigo-100 transition-all duration-500 overflow-hidden ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}
-              style={{ animationDelay: `${(index + 1) * 0.15}s` }}
+              className={`group relative p-8 md:p-10 bg-white/80 backdrop-blur-md rounded-3xl md:rounded-[2.5rem] border border-slate-200/60 shadow-lg md:shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 md:hover:-translate-y-2 hover:border-indigo-100 transition-all duration-500 overflow-hidden ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}
+              style={{
+                animationDelay: `${(index + 1) * 0.15}s`,
+              }}
             >
               {/* Subtle Brand Gradient Overlay */}
               <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
               <div className="relative z-10 h-full flex flex-col">
                 {/* Modern Indicator & Icon */}
-                <div className="flex items-start justify-between mb-8">
-                  <div className="w-14 h-14 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-                    <AlertCircle size={28} strokeWidth={1.5} />
+                <div className="flex items-start justify-between mb-6 md:mb-8">
+                  <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-xl md:rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                    <IconComponent size={24} strokeWidth={1.5} className="md:w-7 md:h-7" />
                   </div>
                   <span className="text-sm font-bold text-slate-300 group-hover:text-indigo-400 transition-colors">
                     0{point.number}
@@ -508,7 +516,8 @@ function PainPointsSection() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

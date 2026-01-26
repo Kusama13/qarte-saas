@@ -11,6 +11,8 @@ import {
   ArrowRight,
   TrendingUp,
   MapPin,
+  Phone,
+  UserPlus,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui';
@@ -59,6 +61,13 @@ interface Merchant {
   created_at: string;
 }
 
+interface DemoLead {
+  id: string;
+  phone_number: string;
+  created_at: string;
+  converted: boolean;
+}
+
 export default function AdminDashboardPage() {
   const supabase = createClientComponentClient();
   const [stats, setStats] = useState({
@@ -69,6 +78,7 @@ export default function AdminDashboardPage() {
   });
   const [trialEndingMerchants, setTrialEndingMerchants] = useState<Merchant[]>([]);
   const [recentMerchants, setRecentMerchants] = useState<Merchant[]>([]);
+  const [demoLeads, setDemoLeads] = useState<DemoLead[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -126,6 +136,15 @@ export default function AdminDashboardPage() {
           .limit(5);
 
         setRecentMerchants(recent || []);
+
+        // Demo leads (prospects)
+        const { data: leads } = await supabase
+          .from('demo_leads')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        setDemoLeads(leads || []);
       } catch (error) {
         console.error('Error fetching admin data:', error);
       } finally {
@@ -227,7 +246,7 @@ export default function AdminDashboardPage() {
         />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-3">
         {/* Alertes - Essais se terminant */}
         <div className="p-6 bg-white rounded-2xl shadow-sm">
           <div className="flex items-center gap-2 mb-6">
@@ -326,6 +345,67 @@ export default function AdminDashboardPage() {
             <div className="flex flex-col items-center justify-center py-8 text-gray-500">
               <Store className="w-12 h-12 mb-4 text-gray-300" />
               <p>Aucun commerçant inscrit</p>
+            </div>
+          )}
+        </div>
+
+        {/* Demo Leads - Prospects à rappeler */}
+        <div className="p-6 bg-white rounded-2xl shadow-sm">
+          <div className="flex items-center gap-2 mb-6">
+            <UserPlus className="w-5 h-5 text-indigo-500" />
+            <h2 className="text-lg font-semibold text-gray-900">
+              Leads démo ({demoLeads.length})
+            </h2>
+          </div>
+
+          {demoLeads.length > 0 ? (
+            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              {demoLeads.map((lead) => (
+                <div
+                  key={lead.id}
+                  className={cn(
+                    "flex items-center justify-between p-3 rounded-xl transition-colors",
+                    lead.converted
+                      ? "bg-green-50"
+                      : "bg-indigo-50 hover:bg-indigo-100"
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "flex items-center justify-center w-9 h-9 rounded-full",
+                      lead.converted ? "bg-green-100" : "bg-indigo-100"
+                    )}>
+                      <Phone className={cn(
+                        "w-4 h-4",
+                        lead.converted ? "text-green-600" : "text-indigo-600"
+                      )} />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900 text-sm">{lead.phone_number}</p>
+                      <p className="text-xs text-gray-500">
+                        {formatDate(lead.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                  {lead.converted ? (
+                    <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
+                      Converti
+                    </span>
+                  ) : (
+                    <a
+                      href={`tel:${lead.phone_number}`}
+                      className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full hover:bg-indigo-200 transition-colors"
+                    >
+                      Appeler
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+              <Phone className="w-12 h-12 mb-4 text-gray-300" />
+              <p>Aucun lead pour le moment</p>
             </div>
           )}
         </div>
