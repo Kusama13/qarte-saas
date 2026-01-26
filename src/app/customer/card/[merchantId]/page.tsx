@@ -122,6 +122,7 @@ export default function CustomerCardPage({
   const [pushSubscribing, setPushSubscribing] = useState(false);
   const [pushSubscribed, setPushSubscribed] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [isIOSChrome, setIsIOSChrome] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
   const [iOSVersion, setIOSVersion] = useState(0);
@@ -141,10 +142,13 @@ export default function CustomerCardPage({
   const [offer, setOffer] = useState<MerchantOffer | null>(null);
   const [offerExpanded, setOfferExpanded] = useState(false);
   const [pwaOfferText, setPwaOfferText] = useState<string | null>(null);
+  const [pwaOfferRedeemed, setPwaOfferRedeemed] = useState(false);
+  const [showPwaOfferModal, setShowPwaOfferModal] = useState(false);
 
   // QR Scanner state
   const [showScanner, setShowScanner] = useState(false);
   const [canShowScanner, setCanShowScanner] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -209,13 +213,15 @@ export default function CustomerCardPage({
     const iosPushSupported = isIOSPushSupported();
 
     setIsIOS(iOS);
+    setIsIOSChrome(iOS && /CriOS/i.test(navigator.userAgent));
     setIsStandalone(standalone);
     setIOSVersion(iosVersion);
 
     // Check if scanner should be shown (PWA mode on mobile only)
     const isAndroid = /android/i.test(navigator.userAgent);
-    const isMobile = iOS || isAndroid;
-    setCanShowScanner(standalone && isMobile);
+    const mobileDevice = iOS || isAndroid;
+    setIsMobile(mobileDevice);
+    setCanShowScanner(standalone && mobileDevice);
 
     // Show Safari share arrow for iOS users not in PWA mode
     // Only show if they haven't dismissed it before
@@ -244,6 +250,12 @@ export default function CustomerCardPage({
     const reviewHidden = localStorage.getItem(`qarte_review_hidden_${merchantId}`);
     if (reviewHidden === 'true') {
       setReviewPermanentlyHidden(true);
+    }
+
+    // Check if PWA offer has been redeemed
+    const pwaOfferRedeemedStatus = localStorage.getItem(`qarte_pwa_offer_redeemed_${merchantId}`);
+    if (pwaOfferRedeemedStatus === 'true') {
+      setPwaOfferRedeemed(true);
     }
   }, [merchantId, router]);
 
@@ -731,10 +743,74 @@ export default function CustomerCardPage({
                 </motion.div>
               )}
             </div>
+
+            {/* PWA - Notifications NOT enabled: Show prompt to enable */}
+            {pwaOfferText && isStandalone && isMobile && !pushSubscribed && (
+              <motion.button
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handlePushSubscribe}
+                disabled={pushSubscribing}
+                className="w-full mt-3 flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg transition-all hover:shadow-sm"
+                style={{ backgroundColor: `${merchant.primary_color}10` }}
+              >
+                <div className="flex items-center gap-2">
+                  <motion.div
+                    animate={{ rotate: [0, -10, 10, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  >
+                    <Bell className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                  </motion.div>
+                  <span className="text-xs font-semibold text-gray-800">
+                    Activer les notifs pour voir votre offre
+                  </span>
+                </div>
+                {pushSubscribing ? (
+                  <Loader2 className="w-4 h-4 animate-spin" style={{ color: merchant.primary_color }} />
+                ) : (
+                  <ChevronRight className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                )}
+              </motion.button>
+            )}
+
+            {/* PWA Loyalty Gift - Show ONLY when notifications are enabled */}
+            {pwaOfferText && isStandalone && isMobile && pushSubscribed && !pwaOfferRedeemed && (
+              <motion.button
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowPwaOfferModal(true)}
+                className="w-full mt-3 flex items-center justify-between gap-2 px-3 py-2 rounded-lg transition-all hover:shadow-sm"
+                style={{ backgroundColor: `${merchant.primary_color}08` }}
+              >
+                <div className="flex items-center gap-2">
+                  <Gift className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                  <span className="text-xs font-semibold text-gray-800">
+                    {pwaOfferText}
+                  </span>
+                </div>
+                <span
+                  className="text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap"
+                  style={{ backgroundColor: merchant.primary_color, color: 'white' }}
+                >
+                  Utiliser cette offre
+                </span>
+              </motion.button>
+            )}
+
+            {/* PWA Loyalty Gift - Already redeemed */}
+            {pwaOfferText && isStandalone && isMobile && pushSubscribed && pwaOfferRedeemed && (
+              <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50">
+                <Check className="w-4 h-4 text-emerald-500" />
+                <span className="text-xs text-gray-400 line-through">{pwaOfferText}</span>
+                <span className="text-xs text-emerald-600 font-medium">Utilisé</span>
+              </div>
+            )}
           </div>
 
-          {/* Current Offer - Only visible in PWA mode */}
-          {offer && offer.active && isStandalone && (
+          {/* Current Offer - Visible in PWA mode OR on desktop */}
+          {offer && offer.active && (isStandalone || !isMobile) && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -874,8 +950,8 @@ export default function CustomerCardPage({
             </motion.div>
           )}
 
-          {/* Add to Home Screen Prompt - Show when NOT in PWA and (offer exists OR pwa offer configured) */}
-          {((offer && offer.active) || pwaOfferText) && !isStandalone && (
+          {/* Add to Home Screen Prompt - Show on MOBILE only when NOT in PWA and (offer exists OR pwa offer configured) */}
+          {((offer && offer.active) || pwaOfferText) && !isStandalone && isMobile && (
             <motion.button
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1038,120 +1114,272 @@ export default function CustomerCardPage({
             </div>
           )}
 
-          {/* iOS Instructions Modal */}
-          {showIOSInstructions && (
+          {/* PWA Offer Redemption Modal */}
+          {showPwaOfferModal && (
             <div
               className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-              onClick={() => setShowIOSInstructions(false)}
+              onClick={() => setShowPwaOfferModal(false)}
             >
-              <div
-                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
+              <motion.div
+                initial={{ opacity: 0, y: 50, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 50, scale: 0.95 }}
+                className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
                 <div
-                  className="relative p-6 pb-4 text-center"
-                  style={{ background: `linear-gradient(135deg, ${merchant.primary_color}15, ${merchant.primary_color}05)` }}
+                  className="p-6 text-center"
+                  style={{ background: `linear-gradient(135deg, ${merchant.primary_color}20, ${merchant.primary_color}05)` }}
                 >
-                  <button
-                    onClick={() => setShowIOSInstructions(false)}
-                    className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
-                  >
-                    <X className="w-5 h-5 text-gray-500" />
-                  </button>
                   <div
                     className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
                     style={{ backgroundColor: `${merchant.primary_color}20` }}
                   >
                     <Gift className="w-8 h-8" style={{ color: merchant.primary_color }} />
                   </div>
-                  <h3 className="text-xl font-black text-gray-900">🎁 {pwaOfferText || 'Offre exclusive'}</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {isIOS ? 'Ajoutez votre carte en 3 étapes' : 'Installez l\'app pour en profiter'}
+                  <h3 className="text-xl font-black text-gray-900">Cadeau fidélité</h3>
+                  <p className="text-lg font-semibold mt-2" style={{ color: merchant.primary_color }}>
+                    {pwaOfferText}
                   </p>
                 </div>
 
-                {/* Steps */}
-                <div className="p-6 space-y-4">
-                  {isIOS ? (
-                    <>
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                          <Share className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">1. Partager</p>
-                          <p className="text-sm text-gray-500">Appuyez sur le bouton partager en bas</p>
-                        </div>
-                      </div>
+                {/* Content */}
+                <div className="p-6 text-center">
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                    <p className="text-sm text-amber-800 font-medium">
+                      📱 Montrez cet écran au commerçant pour valider votre cadeau
+                    </p>
+                  </div>
 
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                          <PlusSquare className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">2. Ajouter à l&apos;écran</p>
-                          <p className="text-sm text-gray-500">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
-                          <Check className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
-                          <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                          <SlidersHorizontal className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">1. Menu</p>
-                          <p className="text-sm text-gray-500">Appuyez sur ⋮ en haut à droite</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                        <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
-                          <PlusSquare className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">2. Installer</p>
-                          <p className="text-sm text-gray-500">&quot;Installer l&apos;application&quot;</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
-                          <Check className="w-5 h-5 text-white" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
-                          <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Footer */}
-                <div className="p-6 pt-0">
                   <button
-                    onClick={() => setShowIOSInstructions(false)}
-                    className="w-full py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+                    onClick={() => {
+                      localStorage.setItem(`qarte_pwa_offer_redeemed_${merchantId}`, 'true');
+                      setPwaOfferRedeemed(true);
+                      setShowPwaOfferModal(false);
+                    }}
+                    className="w-full py-4 rounded-xl font-bold text-white transition-all hover:opacity-90"
                     style={{ backgroundColor: merchant.primary_color }}
                   >
+                    ✓ Marquer comme utilisé
+                  </button>
+
+                  <button
+                    onClick={() => setShowPwaOfferModal(false)}
+                    className="w-full py-3 mt-2 text-gray-500 font-medium text-sm"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* iOS Instructions Modal */}
+          {showIOSInstructions && (
+            <>
+              {/* Animated Arrow for Safari iOS - Points DOWN to bottom "..." */}
+              {isIOS && !isIOSChrome && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, y: [0, 10, 0] }}
+                  transition={{ y: { duration: 1, repeat: Infinity }, opacity: { duration: 0.3 } }}
+                  className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center"
+                >
+                  <div className="bg-white rounded-full p-3 shadow-2xl border-2 border-blue-500">
+                    <ChevronDown className="w-8 h-8 text-blue-500" />
+                  </div>
+                  <span className="mt-2 text-white text-sm font-bold bg-blue-500 px-3 py-1 rounded-full shadow-lg">
+                    Appuyez sur ⋯
+                  </span>
+                </motion.div>
+              )}
+
+              {/* Animated Arrow for Chrome iOS - Points UP to URL bar share */}
+              {isIOS && isIOSChrome && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, y: [0, -10, 0] }}
+                  transition={{ y: { duration: 1, repeat: Infinity }, opacity: { duration: 0.3 } }}
+                  className="fixed top-4 right-16 z-[60] flex flex-col items-center"
+                >
+                  <span className="mb-2 text-white text-sm font-bold bg-blue-500 px-3 py-1 rounded-full shadow-lg">
+                    Appuyez sur Partager
+                  </span>
+                  <div className="bg-white rounded-full p-3 shadow-2xl border-2 border-blue-500">
+                    <ChevronUp className="w-8 h-8 text-blue-500" />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Android Arrow - Points UP to ⋮ menu */}
+              {!isIOS && isMobile && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, y: [0, -10, 0] }}
+                  transition={{ y: { duration: 1, repeat: Infinity }, opacity: { duration: 0.3 } }}
+                  className="fixed top-4 right-4 z-[60] flex flex-col items-center"
+                >
+                  <span className="mb-2 text-white text-sm font-bold bg-blue-500 px-3 py-1 rounded-full shadow-lg">
+                    Appuyez sur ⋮
+                  </span>
+                  <div className="bg-white rounded-full p-3 shadow-2xl border-2 border-blue-500">
+                    <ChevronUp className="w-8 h-8 text-blue-500" />
+                  </div>
+                </motion.div>
+              )}
+
+              <div
+                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                onClick={() => setShowIOSInstructions(false)}
+              >
+                <div
+                  className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Header */}
+                  <div
+                    className="relative p-6 pb-4 text-center"
+                    style={{ background: `linear-gradient(135deg, ${merchant.primary_color}15, ${merchant.primary_color}05)` }}
+                  >
+                    <button
+                      onClick={() => setShowIOSInstructions(false)}
+                      className="absolute top-4 right-4 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
+                    >
+                      <X className="w-5 h-5 text-gray-500" />
+                    </button>
+                    <div
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                      style={{ backgroundColor: `${merchant.primary_color}20` }}
+                    >
+                      <Gift className="w-8 h-8" style={{ color: merchant.primary_color }} />
+                    </div>
+                    <h3 className="text-xl font-black text-gray-900">🎁 {pwaOfferText || 'Offre exclusive'}</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {isIOS
+                        ? (isIOSChrome ? 'Ajoutez votre carte via Chrome' : 'Ajoutez votre carte en 3 étapes')
+                        : 'Installez l\'app pour en profiter'
+                      }
+                    </p>
+                  </div>
+
+                  {/* Steps */}
+                  <div className="p-6 space-y-4">
+                    {isIOS && !isIOSChrome ? (
+                      <>
+                        {/* Safari iOS */}
+                        <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                            <span className="text-white font-bold text-lg">⋯</span>
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">1. Menu</p>
+                            <p className="text-sm text-gray-500">Appuyez sur <strong>⋯</strong> en bas de l&apos;écran</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                            <PlusSquare className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">2. Ajouter à l&apos;écran</p>
+                            <p className="text-sm text-gray-500">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
+                            <Check className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
+                            <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
+                          </div>
+                        </div>
+                      </>
+                    ) : isIOS && isIOSChrome ? (
+                      <>
+                        {/* Chrome iOS */}
+                        <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                            <Share className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">1. Partager</p>
+                            <p className="text-sm text-gray-500">Appuyez sur l&apos;icône partager dans la barre URL</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                            <PlusSquare className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">2. Ajouter à l&apos;écran</p>
+                            <p className="text-sm text-gray-500">&quot;Sur l&apos;écran d&apos;accueil&quot;</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
+                            <Check className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
+                            <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Android */}
+                        <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl border-2 border-blue-200">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                            <span className="text-white font-bold text-lg">⋮</span>
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">1. Menu</p>
+                            <p className="text-sm text-gray-500">Appuyez sur <strong>⋮</strong> en haut à droite</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500 flex items-center justify-center shrink-0">
+                            <PlusSquare className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">2. Installer</p>
+                            <p className="text-sm text-gray-500">&quot;Installer l&apos;application&quot;</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center shrink-0">
+                            <Check className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">3. Ouvrir l&apos;app</p>
+                            <p className="text-sm text-gray-500">Depuis votre écran d&apos;accueil</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="p-6 pt-0">
+                    <button
+                      onClick={() => setShowIOSInstructions(false)}
+                      className="w-full py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+                      style={{ backgroundColor: merchant.primary_color }}
+                    >
                     J&apos;ai compris
                   </button>
                 </div>
               </div>
             </div>
+            </>
           )}
 
           {/* iOS Version Warning Modal */}
