@@ -81,6 +81,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
+  // Track if auto-login has been attempted
+  const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
+
   useEffect(() => {
     const fetchMerchant = async () => {
       const { data } = await supabase
@@ -97,7 +100,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
     fetchMerchant();
 
-    const savedPhone = localStorage.getItem(`qarte_phone_${code}`);
+    // Try to get saved phone from multiple sources (specific code, global, or cookie)
+    const savedPhoneByCode = localStorage.getItem(`qarte_phone_${code}`);
+    const savedPhoneGlobal = localStorage.getItem('qarte_customer_phone');
+    const savedPhone = savedPhoneByCode || savedPhoneGlobal;
+
     if (savedPhone) {
       setPhoneNumber(savedPhone);
     }
@@ -126,6 +133,62 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       setPushSubscribed(true);
     }
   }, [code]);
+
+  // Auto-login effect: if we have a saved phone and merchant is loaded, auto-submit
+  useEffect(() => {
+    const autoLogin = async () => {
+      if (autoLoginAttempted || loading || !merchant || submitting) return;
+
+      const savedPhoneByCode = localStorage.getItem(`qarte_phone_${code}`);
+      const savedPhoneGlobal = localStorage.getItem('qarte_customer_phone');
+      const savedPhone = savedPhoneByCode || savedPhoneGlobal;
+
+      if (savedPhone && step === 'phone') {
+        setAutoLoginAttempted(true);
+        const formattedPhone = formatPhoneNumber(savedPhone);
+
+        if (validateFrenchPhone(formattedPhone)) {
+          setSubmitting(true);
+          try {
+            const response = await fetch(`/api/customers/register?phone=${encodeURIComponent(formattedPhone)}&merchant_id=${merchant.id}`);
+            const data = await response.json();
+
+            if (data.exists && data.customer) {
+              if (data.existsForMerchant) {
+                // Customer exists for this merchant → direct checkin
+                setCustomer(data.customer);
+                await processCheckin(data.customer);
+              } else if (data.existsGlobally) {
+                // Customer exists globally → create for this merchant
+                const createResponse = await fetch('/api/customers/register', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    phone_number: formattedPhone,
+                    first_name: data.customer.first_name,
+                    last_name: data.customer.last_name,
+                    merchant_id: merchant.id,
+                  }),
+                });
+
+                const createData = await createResponse.json();
+                if (createResponse.ok && createData.customer) {
+                  setCustomer(createData.customer);
+                  await processCheckin(createData.customer);
+                }
+              }
+            }
+          } catch (err) {
+            console.error('Auto-login failed:', err);
+          } finally {
+            setSubmitting(false);
+          }
+        }
+      }
+    };
+
+    autoLogin();
+  }, [loading, merchant, step, autoLoginAttempted, code, submitting]);
 
   // Undo timer countdown
   useEffect(() => {

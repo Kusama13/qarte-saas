@@ -143,6 +143,7 @@ export default function CustomerCardPage({
 
   // QR Scanner state
   const [showScanner, setShowScanner] = useState(false);
+  const [canShowScanner, setCanShowScanner] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -204,6 +205,11 @@ export default function CustomerCardPage({
     setIsIOS(iOS);
     setIsStandalone(standalone);
     setIOSVersion(iosVersion);
+
+    // Check if scanner should be shown (PWA mode on mobile only)
+    const isAndroid = /android/i.test(navigator.userAgent);
+    const isMobile = iOS || isAndroid;
+    setCanShowScanner(standalone && isMobile);
 
     // Show Safari share arrow for iOS users not in PWA mode
     // Only show if they haven't dismissed it before
@@ -721,8 +727,8 @@ export default function CustomerCardPage({
             </div>
           </div>
 
-          {/* Current Offer - Non-invasive, clickable */}
-          {offer && offer.active && (
+          {/* Current Offer - Only visible in PWA mode */}
+          {offer && offer.active && isStandalone && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -816,7 +822,7 @@ export default function CustomerCardPage({
                                 <div className="flex items-center gap-1.5 text-xs text-gray-500">
                                   <Clock className="w-3.5 h-3.5" />
                                   <span>
-                                    Jusqu'à {(() => {
+                                    Jusqu&apos;au {(() => {
                                       const expires = new Date(offer.expiresAt);
                                       const today = new Date();
                                       const tomorrow = new Date(today);
@@ -862,8 +868,66 @@ export default function CustomerCardPage({
             </motion.div>
           )}
 
-          {/* Subscribe to Updates Button */}
-          {!pushSubscribed && pushPermission !== 'denied' && (
+          {/* Add to Home Screen Prompt - Show when NOT in PWA and offer exists */}
+          {offer && offer.active && !isStandalone && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-5"
+            >
+              <div
+                className="relative overflow-hidden rounded-xl border-2 border-dashed p-4 transition-all"
+                style={{
+                  borderColor: `${merchant.primary_color}40`,
+                  backgroundColor: `${merchant.primary_color}05`
+                }}
+              >
+                <div className="flex items-start gap-3">
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: `${merchant.primary_color}15` }}
+                  >
+                    <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                  </motion.div>
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-900 text-sm mb-1">
+                      🎁 Offre exclusive disponible
+                    </p>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Ajoutez votre carte à l&apos;écran d&apos;accueil pour voir votre offre exclusive
+                    </p>
+
+                    {/* iOS Instructions */}
+                    {isIOS ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <div className="w-5 h-5 rounded bg-gray-100 flex items-center justify-center">
+                            <Share className="w-3 h-3 text-blue-500" />
+                          </div>
+                          <span>Appuyez sur <strong>Partager</strong></span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-gray-500">
+                          <div className="w-5 h-5 rounded bg-gray-100 flex items-center justify-center">
+                            <PlusSquare className="w-3 h-3 text-gray-600" />
+                          </div>
+                          <span>Puis <strong>Sur l&apos;écran d&apos;accueil</strong></span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-500">
+                        <span>Menu ⋮ → <strong>Installer l&apos;application</strong></span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Subscribe to Updates - Only when NO offer exists and not subscribed */}
+          {(!offer || !offer.active) && !pushSubscribed && pushPermission !== 'denied' && !isStandalone && (
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
@@ -889,10 +953,7 @@ export default function CustomerCardPage({
               </motion.div>
               <div className="flex-1 text-left">
                 <p className="font-bold text-gray-900 text-sm">
-                  {isIOS && !isStandalone
-                    ? "🎁 Offres exclusives"
-                    : "🎁 Ne ratez rien !"
-                  }
+                  🎁 Ne ratez rien !
                 </p>
                 <p className="text-xs text-gray-500">
                   Promos flash, récompenses, alertes
@@ -922,33 +983,39 @@ export default function CustomerCardPage({
             </motion.div>
           )}
 
-          {/* Scan QR Code Button */}
-          <motion.button
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowScanner(true)}
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed transition-all hover:border-solid hover:shadow-md"
-            style={{
-              borderColor: `${merchant.primary_color}30`,
-              backgroundColor: `${merchant.primary_color}03`
-            }}
-          >
-            <ScanLine className="w-5 h-5" style={{ color: merchant.primary_color }} />
-            <span className="font-semibold text-sm" style={{ color: merchant.primary_color }}>
-              Scanner le QR code
-            </span>
-          </motion.button>
+          {/* Scan QR Code Button - Only visible in PWA mode on mobile */}
+          {canShowScanner && (
+            <>
+              <div className="flex justify-center mt-4">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  onClick={() => setShowScanner(true)}
+                  className="flex items-center justify-center gap-2 w-1/2 py-3.5 rounded-2xl shadow-md transition-all"
+                  style={{
+                    backgroundColor: merchant.primary_color,
+                  }}
+                >
+                  <ScanLine className="w-5 h-5 text-white" />
+                  <span className="font-bold text-sm text-white">
+                    Scanner
+                  </span>
+                </motion.button>
+              </div>
 
-          {/* QR Scanner Modal */}
-          <QRScanner
-            isOpen={showScanner}
-            onClose={() => setShowScanner(false)}
-            onScan={(code) => {
-              setShowScanner(false);
-              // Navigate to scan page with the code
-              router.push(`/scan/${code}`);
-            }}
-            primaryColor={merchant.primary_color}
-          />
+              {/* QR Scanner Modal */}
+              <QRScanner
+                isOpen={showScanner}
+                onClose={() => setShowScanner(false)}
+                onScan={(code) => {
+                  setShowScanner(false);
+                  // Navigate to scan page with the code
+                  router.push(`/scan/${code}`);
+                }}
+                primaryColor={merchant.primary_color}
+              />
+            </>
+          )}
 
           {/* Push Error Display (for debugging) */}
           {pushError && (
