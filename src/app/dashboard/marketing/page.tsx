@@ -16,12 +16,12 @@ import {
   ChevronDown,
   ChevronUp,
   Target,
-  Zap,
   UserPlus,
   Crown,
   Moon,
   Filter,
   History,
+  AlertTriangle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -32,6 +32,7 @@ interface NotificationTemplate {
   body: string;
   icon: React.ElementType;
   color: string;
+  filters?: FilterType[];
 }
 
 interface Subscriber {
@@ -67,13 +68,15 @@ interface PushHistoryItem {
   created_at: string;
 }
 
-const templates: NotificationTemplate[] = [
+// Templates with filter relevance
+const allTemplates: NotificationTemplate[] = [
   {
     id: 'reminder',
     title: 'On vous attend !',
     body: 'Cela fait un moment... Passez nous voir !',
     icon: Clock,
     color: 'blue',
+    filters: ['all', 'inactive'],
   },
   {
     id: 'promo',
@@ -81,13 +84,39 @@ const templates: NotificationTemplate[] = [
     body: '-20% sur tout aujourd\'hui seulement !',
     icon: Megaphone,
     color: 'orange',
+    filters: ['all', 'inactive', 'vip'],
   },
   {
-    id: 'reward',
-    title: 'Récompense proche !',
+    id: 'reward_close',
+    title: 'Presque !',
     body: 'Plus que quelques points avant votre cadeau !',
-    icon: Gift,
+    icon: Target,
     color: 'emerald',
+    filters: ['close_to_reward'],
+  },
+  {
+    id: 'reward_ready',
+    title: 'Cadeau disponible !',
+    body: 'Votre récompense vous attend. Venez la chercher !',
+    icon: Gift,
+    color: 'amber',
+    filters: ['reward_ready'],
+  },
+  {
+    id: 'welcome',
+    title: 'Bienvenue !',
+    body: 'Merci de votre confiance. À très bientôt !',
+    icon: UserPlus,
+    color: 'violet',
+    filters: ['new'],
+  },
+  {
+    id: 'vip',
+    title: 'Merci !',
+    body: 'Vous êtes un client fidèle, on vous adore !',
+    icon: Crown,
+    color: 'yellow',
+    filters: ['vip'],
   },
   {
     id: 'news',
@@ -95,6 +124,7 @@ const templates: NotificationTemplate[] = [
     body: 'Découvrez notre nouvelle carte !',
     icon: Sparkles,
     color: 'violet',
+    filters: ['all'],
   },
 ];
 
@@ -143,6 +173,8 @@ const marketingFilters: MarketingFilter[] = [
   },
 ];
 
+const TIPS_SHOWN_KEY = 'qarte_marketing_tips_shown';
+
 export default function MarketingPushPage() {
   const { merchant } = useMerchant();
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
@@ -163,7 +195,22 @@ export default function MarketingPushPage() {
   const [pushHistory, setPushHistory] = useState<PushHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
-  // Fetch subscriber count and list via API (uses service role to bypass RLS)
+  // Tips popup
+  const [showTipsPopup, setShowTipsPopup] = useState(false);
+  const [showTipsTooltip, setShowTipsTooltip] = useState(false);
+
+  // Check if first visit
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const tipsShown = localStorage.getItem(TIPS_SHOWN_KEY);
+      if (!tipsShown) {
+        setShowTipsPopup(true);
+        localStorage.setItem(TIPS_SHOWN_KEY, 'true');
+      }
+    }
+  }, []);
+
+  // Fetch subscriber count and list
   useEffect(() => {
     const fetchSubscribers = async () => {
       if (!merchant?.id) return;
@@ -175,8 +222,6 @@ export default function MarketingPushPage() {
         if (response.ok) {
           setSubscriberCount(data.count || 0);
           setSubscribers(data.subscribers || []);
-        } else {
-          console.error('Error fetching subscribers:', data.error);
         }
       } catch (err) {
         console.error('Error fetching subscribers:', err);
@@ -198,8 +243,6 @@ export default function MarketingPushPage() {
 
         if (response.ok) {
           setPushHistory(data.history || []);
-        } else {
-          console.error('Error fetching push history:', data.error);
         }
       } catch (err) {
         console.error('Error fetching push history:', err);
@@ -210,45 +253,37 @@ export default function MarketingPushPage() {
     fetchHistory();
   }, [merchant?.id]);
 
+  // Get templates relevant to current filter
+  const getRelevantTemplates = () => {
+    return allTemplates.filter(t => !t.filters || t.filters.includes(selectedFilter));
+  };
+
   // Filter subscribers based on selected filter
-  const getFilteredSubscribers = (subs: Subscriber[]): Subscriber[] => {
+  const getFilteredSubscribers = (subs: Subscriber[], filter: FilterType = selectedFilter): Subscriber[] => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    switch (selectedFilter) {
+    switch (filter) {
       case 'close_to_reward':
-        // Customers with 1-2 stamps remaining
         return subs.filter(s =>
           s.stamps_required - s.current_stamps <= 2 &&
           s.stamps_required - s.current_stamps > 0
         );
-
       case 'reward_ready':
-        // Customers who can redeem
         return subs.filter(s => s.current_stamps >= s.stamps_required);
-
       case 'inactive':
-        // No visit in last 30 days
         return subs.filter(s => {
-          if (!s.last_visit) return true; // Never visited = inactive
-          const lastVisitDate = new Date(s.last_visit);
-          return lastVisitDate < thirtyDaysAgo;
+          if (!s.last_visit) return true;
+          return new Date(s.last_visit) < thirtyDaysAgo;
         });
-
       case 'new':
-        // Card created within last 7 days
         return subs.filter(s => {
           if (!s.card_created_at) return false;
-          const createdDate = new Date(s.card_created_at);
-          return createdDate >= sevenDaysAgo;
+          return new Date(s.card_created_at) >= sevenDaysAgo;
         });
-
       case 'vip':
-        // 10+ visits total
         return subs.filter(s => s.total_visits >= 10);
-
-      case 'all':
       default:
         return subs;
     }
@@ -265,7 +300,6 @@ export default function MarketingPushPage() {
     setSendResult(null);
 
     try {
-      // Get customer IDs to send to (filtered)
       const targetCustomerIds = filteredSubscribers.map(s => s.id);
 
       const response = await fetch('/api/push/send', {
@@ -273,7 +307,7 @@ export default function MarketingPushPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           merchantId: merchant.id,
-          customerIds: targetCustomerIds.length < subscribers.length ? targetCustomerIds : undefined, // Only pass if filtered
+          customerIds: targetCustomerIds.length < subscribers.length ? targetCustomerIds : undefined,
           filterType: selectedFilter,
           payload: {
             title: merchant.shop_name || 'Qarte',
@@ -286,37 +320,22 @@ export default function MarketingPushPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setSendResult({
-          success: true,
-          sent: data.sent,
-          failed: data.failed,
-        });
-        // Clear form on success
+        setSendResult({ success: true, sent: data.sent, failed: data.failed });
         if (data.sent > 0) {
           setTitle('');
           setBody('');
           // Refresh history
-          try {
-            const historyResponse = await fetch(`/api/push/history?merchantId=${merchant.id}&limit=10`);
-            const historyData = await historyResponse.json();
-            if (historyResponse.ok) {
-              setPushHistory(historyData.history || []);
-            }
-          } catch (e) {
-            console.error('Error refreshing history:', e);
+          const historyResponse = await fetch(`/api/push/history?merchantId=${merchant.id}&limit=10`);
+          const historyData = await historyResponse.json();
+          if (historyResponse.ok) {
+            setPushHistory(historyData.history || []);
           }
         }
       } else {
-        setSendResult({
-          success: false,
-          message: data.error || 'Erreur lors de l\'envoi',
-        });
+        setSendResult({ success: false, message: data.error || 'Erreur lors de l\'envoi' });
       }
-    } catch (error) {
-      setSendResult({
-        success: false,
-        message: 'Erreur de connexion',
-      });
+    } catch {
+      setSendResult({ success: false, message: 'Erreur de connexion' });
     } finally {
       setSending(false);
     }
@@ -328,8 +347,62 @@ export default function MarketingPushPage() {
     setSendResult(null);
   };
 
+  const relevantTemplates = getRelevantTemplates();
+
   return (
     <div className="max-w-4xl mx-auto">
+      {/* First time tips popup */}
+      <AnimatePresence>
+        {showTipsPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setShowTipsPopup(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-amber-600" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Conseils importants</h2>
+              </div>
+              <ul className="space-y-3 text-sm text-gray-700 mb-6">
+                <li className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <span><strong>N'envoyez pas trop souvent</strong> (1-2 fois par semaine max)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <span>Soyez <strong>concis et direct</strong> - les gens lisent vite</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <span>Ajoutez un sentiment d'<strong>urgence ou d'exclusivité</strong></span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                  <span>Utilisez les <strong>filtres</strong> pour cibler les bons clients</span>
+                </li>
+              </ul>
+              <button
+                onClick={() => setShowTipsPopup(false)}
+                className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition-all"
+              >
+                J'ai compris !
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -364,25 +437,9 @@ export default function MarketingPushPage() {
               onClick={() => setShowSubscriberList(!showSubscriberList)}
               className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-amber-700 bg-amber-50 rounded-xl hover:bg-amber-100 transition-colors"
             >
-              {showSubscriberList ? (
-                <>
-                  <ChevronUp className="w-4 h-4" />
-                  Masquer la liste
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="w-4 h-4" />
-                  Voir la liste
-                </>
-              )}
+              {showSubscriberList ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {showSubscriberList ? 'Masquer' : 'Voir la liste'}
             </button>
-          )}
-          {subscriberCount === 0 && !loadingCount && (
-            <div className="text-right">
-              <p className="text-sm text-gray-400">
-                Les clients s'abonnent après leur premier passage
-              </p>
-            </div>
           )}
         </div>
 
@@ -396,15 +453,9 @@ export default function MarketingPushPage() {
               className="overflow-hidden"
             >
               <div className="mt-6 pt-6 border-t border-gray-100">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-                  Liste des abonnés ({subscribers.length})
-                </p>
                 <div className="grid gap-2 max-h-64 overflow-y-auto">
                   {subscribers.map((subscriber) => (
-                    <div
-                      key={subscriber.id}
-                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl"
-                    >
+                    <div key={subscriber.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-bold text-sm">
                         {subscriber.first_name?.charAt(0) || '?'}
                       </div>
@@ -412,9 +463,6 @@ export default function MarketingPushPage() {
                         <p className="font-medium text-gray-900 truncate">
                           {subscriber.first_name} {subscriber.last_name}
                         </p>
-                        {subscriber.phone_number && (
-                          <p className="text-xs text-gray-500">{subscriber.phone_number}</p>
-                        )}
                       </div>
                       <Bell className="w-4 h-4 text-amber-500 flex-shrink-0" />
                     </div>
@@ -435,34 +483,7 @@ export default function MarketingPushPage() {
           </h2>
           <div className="flex flex-wrap gap-2">
             {marketingFilters.map((filter) => {
-              const count = filter.id === 'all'
-                ? subscribers.length
-                : getFilteredSubscribers(subscribers).length === filteredCount && filter.id === selectedFilter
-                  ? filteredCount
-                  : filter.id === selectedFilter
-                    ? filteredCount
-                    : (() => {
-                        const tempFilter = selectedFilter;
-                        // Quick count for this filter
-                        const now = new Date();
-                        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                        switch (filter.id) {
-                          case 'close_to_reward':
-                            return subscribers.filter(s => s.stamps_required - s.current_stamps <= 2 && s.stamps_required - s.current_stamps > 0).length;
-                          case 'reward_ready':
-                            return subscribers.filter(s => s.current_stamps >= s.stamps_required).length;
-                          case 'inactive':
-                            return subscribers.filter(s => !s.last_visit || new Date(s.last_visit) < thirtyDaysAgo).length;
-                          case 'new':
-                            return subscribers.filter(s => s.card_created_at && new Date(s.card_created_at) >= sevenDaysAgo).length;
-                          case 'vip':
-                            return subscribers.filter(s => s.total_visits >= 10).length;
-                          default:
-                            return subscribers.length;
-                        }
-                      })();
-
+              const count = getFilteredSubscribers(subscribers, filter.id).length;
               const isSelected = selectedFilter === filter.id;
               const colorClasses: Record<string, { bg: string; text: string; border: string; selectedBg: string }> = {
                 gray: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', selectedBg: 'bg-gray-600' },
@@ -498,7 +519,7 @@ export default function MarketingPushPage() {
           {selectedFilter !== 'all' && (
             <p className="text-sm text-gray-500 mt-3 flex items-center gap-2">
               <Target className="w-4 h-4" />
-              {filteredCount} client{filteredCount > 1 ? 's' : ''} ciblé{filteredCount > 1 ? 's' : ''} • {marketingFilters.find(f => f.id === selectedFilter)?.description}
+              {filteredCount} client{filteredCount > 1 ? 's' : ''} ciblé{filteredCount > 1 ? 's' : ''}
             </p>
           )}
         </div>
@@ -511,37 +532,40 @@ export default function MarketingPushPage() {
           Composer une notification
         </h2>
 
-        {/* Templates */}
+        {/* Templates - Contextual */}
         <div className="mb-6">
-          <p className="text-sm font-medium text-gray-500 mb-3">Modèles rapides</p>
+          <p className="text-sm font-medium text-gray-500 mb-3">
+            Modèles suggérés {selectedFilter !== 'all' && <span className="text-amber-600">(pour {marketingFilters.find(f => f.id === selectedFilter)?.label})</span>}
+          </p>
           <div className="flex flex-wrap gap-2">
-            {templates.map((template) => (
-              <button
-                key={template.id}
-                onClick={() => applyTemplate(template)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
-                  template.color === 'blue'
-                    ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
-                    : template.color === 'orange'
-                    ? 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100'
-                    : template.color === 'emerald'
-                    ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
-                    : 'bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100'
-                }`}
-              >
-                <template.icon className="w-4 h-4" />
-                <span className="text-sm font-medium">{template.title}</span>
-              </button>
-            ))}
+            {relevantTemplates.map((template) => {
+              const colorMap: Record<string, string> = {
+                blue: 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100',
+                orange: 'bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100',
+                emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100',
+                violet: 'bg-violet-50 border-violet-200 text-violet-700 hover:bg-violet-100',
+                amber: 'bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100',
+                yellow: 'bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100',
+              };
+
+              return (
+                <button
+                  key={template.id}
+                  onClick={() => applyTemplate(template)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all hover:scale-105 active:scale-95 ${colorMap[template.color] || colorMap.blue}`}
+                >
+                  <template.icon className="w-4 h-4" />
+                  <span className="text-sm font-medium">{template.title}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         {/* Form */}
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1.5">
-              Titre de la notification
-            </label>
+            <label className="block text-sm font-bold text-gray-700 mb-1.5">Titre</label>
             <input
               type="text"
               value={title}
@@ -550,47 +574,41 @@ export default function MarketingPushPage() {
               maxLength={50}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
             />
-            <p className="text-xs text-gray-400 mt-1 text-right">{title.length}/50</p>
+            <p className={`text-xs mt-1 text-right ${title.length > 40 ? 'text-amber-600' : 'text-gray-400'}`}>
+              {title.length}/50 {title.length <= 30 && title.length > 0 && '(optimal)'}
+            </p>
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1.5">
-              Message
-            </label>
+            <label className="block text-sm font-bold text-gray-700 mb-1.5">Message</label>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Ex: -20% sur tout aujourd'hui seulement ! Passez nous voir."
+              placeholder="Ex: -20% sur tout aujourd'hui seulement !"
               maxLength={150}
               rows={3}
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none"
             />
-            <p className="text-xs text-gray-400 mt-1 text-right">{body.length}/150</p>
+            <p className={`text-xs mt-1 text-right ${body.length > 100 ? 'text-amber-600' : 'text-gray-400'}`}>
+              {body.length}/150 {body.length <= 80 && body.length > 0 && '(optimal)'}
+            </p>
           </div>
 
           {/* Preview */}
           {(title || body) && (
             <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-                Aperçu
-              </p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Aperçu</p>
               <div className="bg-white rounded-xl shadow-lg p-3 flex gap-3 max-w-sm">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-sm font-black italic">Q</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-xs font-bold text-gray-900">
-                      {merchant?.shop_name || 'Votre commerce'}
-                    </span>
+                    <span className="text-xs font-bold text-gray-900">{merchant?.shop_name || 'Votre commerce'}</span>
                     <span className="text-[10px] text-gray-400">Maintenant</span>
                   </div>
-                  <p className="text-xs font-semibold text-gray-800 truncate">
-                    {title || 'Titre...'}
-                  </p>
-                  <p className="text-xs text-gray-600 line-clamp-2">
-                    {body || 'Message...'}
-                  </p>
+                  <p className="text-xs font-semibold text-gray-800 truncate">{title || 'Titre...'}</p>
+                  <p className="text-xs text-gray-600 line-clamp-2">{body || 'Message...'}</p>
                 </div>
               </div>
             </div>
@@ -604,37 +622,20 @@ export default function MarketingPushPage() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 className={`flex items-center gap-3 p-4 rounded-xl ${
-                  sendResult.success
-                    ? 'bg-emerald-50 text-emerald-800'
-                    : 'bg-red-50 text-red-800'
+                  sendResult.success ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
                 }`}
               >
                 {sendResult.success ? (
-                  <>
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="font-semibold">
-                        {sendResult.sent === 0
-                          ? 'Aucun abonné à notifier'
-                          : `${sendResult.sent} notification${sendResult.sent! > 1 ? 's' : ''} envoyée${sendResult.sent! > 1 ? 's' : ''} !`}
-                      </p>
-                      {sendResult.failed && sendResult.failed > 0 && (
-                        <p className="text-sm opacity-75">
-                          {sendResult.failed} échec(s)
-                        </p>
-                      )}
-                    </div>
-                  </>
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                 ) : (
-                  <>
-                    <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    <p className="font-semibold">{sendResult.message}</p>
-                  </>
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
                 )}
-                <button
-                  onClick={() => setSendResult(null)}
-                  className="p-1 hover:bg-black/10 rounded-lg transition-colors"
-                >
+                <p className="flex-1 font-semibold">
+                  {sendResult.message || (sendResult.sent === 0
+                    ? 'Aucun abonné à notifier'
+                    : `${sendResult.sent} notification${sendResult.sent! > 1 ? 's' : ''} envoyée${sendResult.sent! > 1 ? 's' : ''} !`)}
+                </p>
+                <button onClick={() => setSendResult(null)} className="p-1 hover:bg-black/10 rounded-lg">
                   <X className="w-4 h-4" />
                 </button>
               </motion.div>
@@ -642,38 +643,50 @@ export default function MarketingPushPage() {
           </AnimatePresence>
 
           {/* Send Button */}
-          <button
-            onClick={handleSend}
-            disabled={!title.trim() || !body.trim() || sending || filteredCount === 0}
-            className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-lg shadow-lg shadow-amber-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
-          >
-            {sending ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Envoi en cours...
-              </>
-            ) : (
-              <>
-                <Send className="w-5 h-5" />
-                Envoyer à {filteredCount} {selectedFilter !== 'all' ? 'client' : 'abonné'}{filteredCount > 1 ? 's' : ''}
-                {selectedFilter !== 'all' && (
-                  <span className="text-sm opacity-75">({marketingFilters.find(f => f.id === selectedFilter)?.label})</span>
+          <div className="relative">
+            <button
+              onClick={handleSend}
+              disabled={!title.trim() || !body.trim() || sending || filteredCount === 0}
+              className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-lg shadow-lg shadow-amber-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+            >
+              {sending ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Envoi...
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5" />
+                  Envoyer à {filteredCount} client{filteredCount > 1 ? 's' : ''}
+                </>
+              )}
+            </button>
+
+            {/* Tips icon */}
+            <div className="absolute -right-2 -top-2">
+              <button
+                onClick={() => setShowTipsTooltip(!showTipsTooltip)}
+                onMouseEnter={() => setShowTipsTooltip(true)}
+                onMouseLeave={() => setShowTipsTooltip(false)}
+                className="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+              >
+                <AlertTriangle className="w-3.5 h-3.5" />
+              </button>
+              <AnimatePresence>
+                {showTipsTooltip && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute right-0 top-8 w-64 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-xl z-10"
+                  >
+                    <p className="font-bold mb-1">Attention !</p>
+                    <p>N'envoyez pas plus de 1-2 notifications par semaine pour éviter les désabonnements.</p>
+                  </motion.div>
                 )}
-              </>
-            )}
-          </button>
-
-          {subscriberCount === 0 && !loadingCount && (
-            <p className="text-center text-sm text-gray-400">
-              Vous pourrez envoyer des notifications quand des clients s'abonneront
-            </p>
-          )}
-
-          {subscriberCount !== null && subscriberCount > 0 && filteredCount === 0 && selectedFilter !== 'all' && (
-            <p className="text-center text-sm text-gray-400">
-              Aucun client ne correspond à ce filtre
-            </p>
-          )}
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -681,12 +694,12 @@ export default function MarketingPushPage() {
       <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100 mb-6">
         <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-amber-600" />
-          Conseils pour des notifications efficaces
+          Conseils
         </h3>
         <ul className="space-y-2 text-sm text-amber-800">
           <li className="flex items-start gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            <span>Soyez concis et direct - les gens lisent vite</span>
+            <span>Soyez concis - les gens lisent vite</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
@@ -694,11 +707,11 @@ export default function MarketingPushPage() {
           </li>
           <li className="flex items-start gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            <span>N'envoyez pas trop souvent (1-2 fois par semaine max)</span>
+            <span><strong className="text-red-600">N'envoyez pas trop souvent</strong> (1-2 fois/semaine max)</span>
           </li>
           <li className="flex items-start gap-2">
             <span className="text-amber-500 mt-0.5">•</span>
-            <span>Personnalisez avec le nom de votre commerce</span>
+            <span><strong>Meilleurs moments :</strong> 10h-12h ou 17h-19h</span>
           </li>
         </ul>
       </div>
@@ -707,7 +720,7 @@ export default function MarketingPushPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
           <History className="w-5 h-5 text-gray-400" />
-          Historique des envois
+          Historique
         </h2>
 
         {loadingHistory ? (
@@ -725,43 +738,26 @@ export default function MarketingPushPage() {
               const filterInfo = marketingFilters.find(f => f.id === item.filter_type);
               const FilterIcon = filterInfo?.icon || Users;
               const date = new Date(item.created_at);
-              const formattedDate = date.toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit'
-              });
 
               return (
-                <div
-                  key={item.id}
-                  className="p-4 bg-gray-50 rounded-xl border border-gray-100"
-                >
+                <div key={item.id} className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 truncate">{item.title}</p>
-                      <p className="text-sm text-gray-600 line-clamp-2">{item.body}</p>
-                      <div className="flex items-center gap-3 mt-2 flex-wrap">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-lg text-xs font-medium text-gray-600 border border-gray-200">
+                      <p className="text-sm text-gray-600 line-clamp-1">{item.body}</p>
+                      <div className="flex items-center gap-3 mt-2">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-lg text-xs font-medium text-gray-600 border">
                           <FilterIcon className="w-3 h-3" />
                           {filterInfo?.label || 'Tous'}
                         </span>
                         <span className="text-xs text-gray-400">
-                          {formattedDate}
+                          {date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="flex items-center gap-1 text-emerald-600">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span className="font-bold">{item.sent_count}</span>
-                      </div>
-                      {item.failed_count > 0 && (
-                        <div className="flex items-center gap-1 text-red-500 text-sm">
-                          <AlertCircle className="w-3 h-3" />
-                          <span>{item.failed_count}</span>
-                        </div>
-                      )}
+                    <div className="flex items-center gap-1 text-emerald-600">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="font-bold">{item.sent_count}</span>
                     </div>
                   </div>
                 </div>
