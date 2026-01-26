@@ -1517,9 +1517,33 @@ function ScrollToTopButton() {
 }
 
 // Trust Banner - Scrolling Businesses
+// Calculate trust count with 10% monthly growth
+function getTrustData() {
+  const baseCount = 150; // Starting count
+  const baseDate = new Date('2025-01-01'); // Start date
+  const now = new Date();
+
+  // Calculate months since base date
+  const monthsDiff = (now.getFullYear() - baseDate.getFullYear()) * 12 + (now.getMonth() - baseDate.getMonth());
+
+  // Apply 10% growth per month (compound)
+  const currentCount = Math.floor(baseCount * Math.pow(1.10, monthsDiff));
+
+  // Last update is 1st of current month
+  const lastUpdate = new Date(now.getFullYear(), now.getMonth(), 1);
+  const formattedDate = lastUpdate.toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+
+  return { count: currentCount, updatedAt: formattedDate };
+}
+
 function TrustBanner() {
   const { ref, isInView } = useInView({ threshold: 0.3 });
-  const { count, startCounting } = useCounter(198, 2500);
+  const trustData = getTrustData();
+  const { count, startCounting } = useCounter(trustData.count, 2500);
   const [hasStarted, setHasStarted] = useState(false);
 
   useEffect(() => {
@@ -1595,6 +1619,27 @@ function TrustBanner() {
               Rejoignez une communauté grandissante de professionnels qui digitalisent leur fidélité client.
             </p>
           </div>
+
+          {/* Update badge */}
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.4, delay: 0.6, ease: "easeOut" }}
+            className="inline-flex items-center gap-1.5 px-3 py-1 mt-5 rounded-full border border-gray-200/60 bg-gray-50/50 backdrop-blur-sm"
+          >
+            <div className="relative flex h-1.5 w-1.5">
+              <motion.span
+                animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inline-flex h-full w-full rounded-full bg-emerald-500/50"
+              />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+            </div>
+            <Clock className="w-3 h-3 text-gray-400" />
+            <span className="text-[10px] uppercase tracking-wider font-medium text-gray-500">
+              Mis à jour le <span className="text-gray-700">{trustData.updatedAt}</span>
+            </span>
+          </motion.div>
         </motion.div>
 
         {/* Bottom indicator line */}
