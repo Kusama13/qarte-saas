@@ -1518,70 +1518,92 @@ function ScrollToTopButton() {
 
 // Trust Banner - Scrolling Businesses
 function TrustBanner() {
-  const businesses = [
-    { name: "Café du Marché", icon: Coffee },
-    { name: "Bistrot Martin", icon: UtensilsCrossed },
-    { name: "Institut Beauté", icon: Scissors },
-    { name: "Fleurs & Jardins", icon: Flower2 },
-    { name: "Boulangerie Tradition", icon: Croissant },
-    { name: "Le Petit Noir", icon: Coffee },
-    { name: "La Table d'Or", icon: UtensilsCrossed },
-    { name: "Salon Élégance", icon: Scissors },
-    { name: "La Rose Blanche", icon: Flower2 },
-    { name: "Au Pain Doré", icon: Croissant },
-    { name: "Café Lumière", icon: Coffee },
-    { name: "Chez Marcel", icon: UtensilsCrossed },
-    { name: "L'Atelier Coiffure", icon: Scissors },
-    { name: "Pétales d'Amour", icon: Flower2 },
+  const { ref, isInView } = useInView({ threshold: 0.3 });
+  const { count, startCounting } = useCounter(198, 2500);
+  const [hasStarted, setHasStarted] = useState(false);
+
+  useEffect(() => {
+    if (isInView && !hasStarted) {
+      startCounting();
+      setHasStarted(true);
+    }
+  }, [isInView, hasStarted, startCounting]);
+
+  const floatingIcons = [
+    { Icon: Coffee, top: '15%', left: '8%', delay: 0 },
+    { Icon: Scissors, top: '20%', right: '10%', delay: 0.8 },
+    { Icon: ShoppingBag, bottom: '25%', left: '12%', delay: 1.2 },
+    { Icon: UtensilsCrossed, bottom: '20%', right: '15%', delay: 0.4 },
   ];
 
-  const firstRow = businesses.slice(0, Math.ceil(businesses.length / 2));
-  const secondRow = businesses.slice(Math.ceil(businesses.length / 2));
-
-  const MarqueeRow = ({ items, direction = 1 }: { items: typeof businesses; direction?: number }) => (
-    <div className="flex overflow-hidden select-none">
-      <motion.div
-        initial={{ x: direction > 0 ? 0 : "-50%" }}
-        animate={{ x: direction > 0 ? "-50%" : "0%" }}
-        transition={{
-          duration: 35,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        className="flex flex-nowrap gap-4 py-3"
-      >
-        {[...items, ...items].map((item, idx) => (
-          <div
-            key={idx}
-            className="flex items-center gap-2.5 px-4 py-2 bg-white border border-gray-100 rounded-full shadow-sm hover:border-indigo-200 hover:shadow-md transition-all duration-300"
-          >
-            <item.icon className="w-4 h-4 text-indigo-500" />
-            <span className="text-sm font-medium text-gray-600 whitespace-nowrap">
-              {item.name}
-            </span>
-          </div>
-        ))}
-      </motion.div>
-    </div>
-  );
-
   return (
-    <section className="relative py-12 bg-gradient-to-b from-white to-gray-50/80 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-6 mb-8 text-center">
-        <p className="text-xs font-semibold tracking-widest text-gray-400 uppercase">
-          Ils nous font confiance
-        </p>
-      </div>
+    <section ref={ref} className="relative py-20 bg-white overflow-hidden">
+      {/* Background radial glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-50/50 rounded-full blur-[100px] -z-10" />
 
-      <div className="relative">
-        {/* Gradient Overlays */}
-        <div className="absolute inset-y-0 left-0 w-24 md:w-40 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-        <div className="absolute inset-y-0 right-0 w-24 md:w-40 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+      {/* Floating Decorative Icons */}
+      {floatingIcons.map((item, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={isInView ? {
+            opacity: 1,
+            scale: 1,
+            y: [0, -15, 0],
+          } : {}}
+          transition={{
+            opacity: { duration: 0.8, delay: item.delay },
+            scale: { duration: 0.8, delay: item.delay },
+            y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: item.delay }
+          }}
+          className="hidden lg:flex absolute items-center justify-center p-3.5 bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 text-indigo-500"
+          style={{ top: item.top, bottom: item.bottom, left: item.left, right: item.right }}
+        >
+          <item.Icon className="w-5 h-5" />
+        </motion.div>
+      ))}
 
-        <div className="space-y-3">
-          <MarqueeRow items={firstRow} direction={1} />
-          <MarqueeRow items={secondRow} direction={-1} />
-        </div>
+      <div className="relative max-w-4xl mx-auto px-6 text-center">
+        {/* Label */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={isInView ? { opacity: 1, scale: 1 } : {}}
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center gap-2 mb-6"
+        >
+          <Sparkles className="w-4 h-4 text-indigo-500" />
+          <span className="text-xs font-bold tracking-widest text-indigo-600/70 uppercase">
+            Notre Impact
+          </span>
+          <Sparkles className="w-4 h-4 text-indigo-500" />
+        </motion.div>
+
+        {/* Counter */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <h2 className="text-7xl md:text-8xl font-black text-indigo-600 tracking-tighter mb-3 tabular-nums">
+            +{count}
+          </h2>
+          <div className="space-y-3">
+            <h3 className="text-xl md:text-2xl font-semibold text-gray-900 tracking-tight">
+              commerces nous font déjà confiance
+            </h3>
+            <p className="text-base text-gray-500 max-w-md mx-auto">
+              Rejoignez une communauté grandissante de professionnels qui digitalisent leur fidélité client.
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Bottom indicator line */}
+        <motion.div
+          initial={{ width: 0 }}
+          animate={isInView ? { width: 60 } : {}}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="h-1 bg-indigo-600/20 rounded-full mx-auto mt-10"
+        />
       </div>
     </section>
   );
