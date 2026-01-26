@@ -4,12 +4,112 @@ import { createHash } from 'crypto';
 import { formatPhoneNumber, validateFrenchPhone, getTodayInParis, getTrialStatus } from '@/lib/utils';
 import { z } from 'zod';
 import type { VisitStatus } from '@/types';
+import webpush from 'web-push';
 
 // Use admin client for server-side operations
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// Automation messages
+const AUTOMATION_MESSAGES = {
+  welcome: {
+    body: 'Bienvenue dans notre programme de fidélité ! 🎉',
+  },
+  close_to_reward: {
+    body: 'Plus que quelques tampons avant votre récompense ! 💪',
+  },
+  reward_ready: {
+    body: 'Félicitations ! Votre récompense vous attend ! 🎁',
+  },
+};
+
+// Helper to send automation push
+async function sendAutomationPush(
+  customerId: string,
+  merchantId: string,
+  shopName: string,
+  automationType: 'welcome' | 'close_to_reward' | 'reward_ready',
+  automationSettings: any
+): Promise<void> {
+  // Check if this automation is enabled
+  const enabledKey = `${automationType}_enabled` as keyof typeof automationSettings;
+  if (!automationSettings || !automationSettings[enabledKey]) return;
+
+  // Configure web-push
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+  if (!vapidPublicKey || !vapidPrivateKey) return;
+
+  webpush.setVapidDetails('mailto:contact@qarte.fr', vapidPublicKey, vapidPrivateKey);
+
+  // Get customer's push subscriptions
+  const { data: subscriptions } = await supabaseAdmin
+    .from('push_subscriptions')
+    .select('endpoint, p256dh, auth')
+    .eq('customer_id', customerId);
+
+  if (!subscriptions || subscriptions.length === 0) return;
+
+  // Check if already sent today (for welcome) or recently
+  const today = new Date().toISOString().split('T')[0];
+  const { data: existingLog } = await supabaseAdmin
+    .from('push_automation_logs')
+    .select('id')
+    .eq('merchant_id', merchantId)
+    .eq('customer_id', customerId)
+    .eq('automation_type', automationType)
+    .gte('sent_at', today)
+    .single();
+
+  if (existingLog) return; // Already sent today
+
+  // Send to all subscriptions
+  let sent = 0;
+  const message = AUTOMATION_MESSAGES[automationType];
+
+  for (const sub of subscriptions) {
+    try {
+      await webpush.sendNotification(
+        {
+          endpoint: sub.endpoint,
+          keys: { p256dh: sub.p256dh, auth: sub.auth },
+        },
+        JSON.stringify({
+          title: shopName,
+          body: message.body,
+          icon: '/icon-192.png',
+          url: `/customer/card/${merchantId}`,
+          tag: `qarte-${automationType}`,
+        })
+      );
+      sent++;
+    } catch (err: any) {
+      console.error('Automation push error:', err.statusCode, err.message);
+      if (err.statusCode === 404 || err.statusCode === 410) {
+        await supabaseAdmin.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+      }
+    }
+  }
+
+  if (sent > 0) {
+    // Log the send
+    await supabaseAdmin.from('push_automation_logs').insert({
+      merchant_id: merchantId,
+      customer_id: customerId,
+      automation_type: automationType,
+    });
+
+    // Update counter
+    const sentKey = `${automationType}_sent` as keyof typeof automationSettings;
+    const currentCount = automationSettings[sentKey] || 0;
+    await supabaseAdmin
+      .from('push_automations')
+      .update({ [sentKey]: currentCount + 1 })
+      .eq('merchant_id', merchantId);
+  }
+}
 
 const checkinSchema = z.object({
   scan_code: z.string().min(1),
@@ -343,6 +443,68 @@ export async function POST(request: NextRequest) {
       .eq('status', 'pending');
 
     const rewardUnlocked = newStamps >= merchant.stamps_required;
+    const previousStamps = loyaltyCard.current_stamps;
+    const wasRewardUnlocked = previousStamps >= merchant.stamps_required;
+
+    // =============================================
+    // PUSH AUTOMATIONS (async, don't block response)
+    // =============================================
+    (async () => {
+      try {
+        // Get automation settings for this merchant
+        const { data: automationSettings } = await supabaseAdmin
+          .from('push_automations')
+          .select('*')
+          .eq('merchant_id', merchant.id)
+          .single();
+
+        if (!automationSettings) return;
+
+        const isNewCustomer = !existingCustomer;
+        const stampsLeft = merchant.stamps_required - newStamps;
+
+        // Welcome automation - new customer
+        if (isNewCustomer) {
+          await sendAutomationPush(
+            customer.id,
+            merchant.id,
+            merchant.shop_name,
+            'welcome',
+            automationSettings
+          );
+        }
+
+        // Only trigger stamp-based automations if visit was confirmed
+        if (visitStatus === 'confirmed') {
+          // Close to reward - 1 or 2 stamps left (and wasn't already close)
+          const wasClose = (merchant.stamps_required - previousStamps) <= 2 && (merchant.stamps_required - previousStamps) > 0;
+          const isClose = stampsLeft > 0 && stampsLeft <= 2;
+
+          if (isClose && !wasClose) {
+            await sendAutomationPush(
+              customer.id,
+              merchant.id,
+              merchant.shop_name,
+              'close_to_reward',
+              automationSettings
+            );
+          }
+
+          // Reward ready - just reached the goal
+          if (rewardUnlocked && !wasRewardUnlocked) {
+            await sendAutomationPush(
+              customer.id,
+              merchant.id,
+              merchant.shop_name,
+              'reward_ready',
+              automationSettings
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Automation error:', err);
+      }
+    })();
 
     // Build response
     const response = {
