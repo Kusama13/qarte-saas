@@ -37,6 +37,10 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
 import { Button, Modal } from '@/components/ui';
+import dynamic from 'next/dynamic';
+
+// Dynamic import for QR Scanner (client-side only)
+const QRScanner = dynamic(() => import('@/components/QRScanner'), { ssr: false });
 import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus } from '@/types';
 
@@ -136,6 +140,9 @@ export default function CustomerCardPage({
   }
   const [offer, setOffer] = useState<MerchantOffer | null>(null);
   const [offerExpanded, setOfferExpanded] = useState(false);
+
+  // QR Scanner state
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -916,9 +923,10 @@ export default function CustomerCardPage({
           )}
 
           {/* Scan QR Code Button */}
-          <Link
-            href="/customer/dashboard"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed transition-all hover:border-solid hover:shadow-md active:scale-[0.98]"
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowScanner(true)}
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-dashed transition-all hover:border-solid hover:shadow-md"
             style={{
               borderColor: `${merchant.primary_color}30`,
               backgroundColor: `${merchant.primary_color}03`
@@ -928,7 +936,19 @@ export default function CustomerCardPage({
             <span className="font-semibold text-sm" style={{ color: merchant.primary_color }}>
               Scanner le QR code
             </span>
-          </Link>
+          </motion.button>
+
+          {/* QR Scanner Modal */}
+          <QRScanner
+            isOpen={showScanner}
+            onClose={() => setShowScanner(false)}
+            onScan={(code) => {
+              setShowScanner(false);
+              // Navigate to scan page with the code
+              router.push(`/scan/${code}`);
+            }}
+            primaryColor={merchant.primary_color}
+          />
 
           {/* Push Error Display (for debugging) */}
           {pushError && (
