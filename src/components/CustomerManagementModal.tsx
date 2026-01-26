@@ -74,7 +74,7 @@ export function CustomerManagementModal({
   const [historyExpanded, setHistoryExpanded] = useState(true);
 
   // Danger zone state
-  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [banConfirm, setBanConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [banning, setBanning] = useState(false);
@@ -160,8 +160,8 @@ export function CustomerManagementModal({
   };
 
   const handleDeleteCustomer = async () => {
-    if (deleteConfirm !== 'SUPPRIMER') {
-      setError('Veuillez taper SUPPRIMER pour confirmer');
+    if (!deleteConfirm) {
+      setError('Veuillez confirmer la suppression');
       return;
     }
 
@@ -239,7 +239,7 @@ export function CustomerManagementModal({
     setReason('');
     setError('');
     setSuccess(false);
-    setDeleteConfirm('');
+    setDeleteConfirm(false);
     setBanConfirm(false);
     setActiveTab('adjust');
     onClose();
@@ -531,17 +531,22 @@ export function CustomerManagementModal({
                       </div>
                     </div>
 
-                    <Input
-                      placeholder='Tapez "SUPPRIMER" pour confirmer'
-                      value={deleteConfirm}
-                      onChange={(e) => setDeleteConfirm(e.target.value)}
-                      className="text-center"
-                    />
+                    <label className="flex items-center gap-3 p-3 bg-red-50 rounded-xl cursor-pointer hover:bg-red-100 transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={deleteConfirm}
+                        onChange={(e) => setDeleteConfirm(e.target.checked)}
+                        className="w-5 h-5 rounded border-red-300 text-red-600 focus:ring-red-500"
+                      />
+                      <span className="text-sm text-red-700 font-medium">
+                        Je confirme vouloir supprimer ce client
+                      </span>
+                    </label>
 
                     <Button
                       onClick={handleDeleteCustomer}
                       loading={deleting}
-                      disabled={deleteConfirm !== 'SUPPRIMER'}
+                      disabled={!deleteConfirm}
                       className="w-full bg-red-600 hover:bg-red-700"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />

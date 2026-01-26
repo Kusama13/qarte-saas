@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Qarte',
     short_name: 'Qarte',
     description: 'Votre carte de fidélité digitale',
-    start_url: '/',
+    start_url: '/customer/cards',
     display: 'standalone',
     background_color: '#ffffff',
     theme_color: '#4f46e5',

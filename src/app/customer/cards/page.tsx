@@ -2,18 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   CreditCard,
-  Phone,
-  Search,
   Gift,
   ChevronRight,
   Loader2,
   RefreshCw,
-  Wallet,
 } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
-import { formatPhoneNumber, validateFrenchPhone } from '@/lib/utils';
+import { formatPhoneNumber } from '@/lib/utils';
 
 interface LoyaltyCardWithMerchant {
   merchant_id: string;
@@ -27,10 +24,10 @@ interface LoyaltyCardWithMerchant {
 }
 
 export default function CustomerCardsPage() {
-  const [step, setStep] = useState<'loading' | 'phone' | 'cards'>('loading');
+  const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [cards, setCards] = useState<LoyaltyCardWithMerchant[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -39,9 +36,10 @@ export default function CustomerCardsPage() {
       setPhoneNumber(savedPhone);
       fetchCards(savedPhone);
     } else {
-      setStep('phone');
+      // No phone saved, redirect to login page
+      router.replace('/customer');
     }
-  }, []);
+  }, [router]);
 
   const getCookie = (name: string): string | null => {
     if (typeof document === 'undefined') return null;
@@ -78,8 +76,6 @@ export default function CustomerCardsPage() {
       if (!data.found || data.cards.length === 0) {
         console.log('No cards found, debug:', data.debug);
         setCards([]);
-        setError(data.debug ? `Aucun compte trouvé (téléphone: ${data.debug.phone})` : '');
-        setStep('cards');
         setLoading(false);
         return;
       }
@@ -98,7 +94,6 @@ export default function CustomerCardsPage() {
 
       setCards(formattedCards);
       setCookie('customer_phone', formattedPhone, 30);
-      setStep('cards');
     } catch (err) {
       console.error('Error fetching cards:', err);
       setError('Erreur lors de la recherche');
@@ -107,29 +102,15 @@ export default function CustomerCardsPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!validateFrenchPhone(phoneNumber)) {
-      setError('Veuillez entrer un numéro de téléphone valide');
-      return;
-    }
-
-    await fetchCards(phoneNumber);
-  };
-
   const handleChangeNumber = () => {
     deleteCookie('customer_phone');
-    setPhoneNumber('');
-    setCards([]);
-    setStep('phone');
+    router.push('/customer');
   };
 
-  if (step === 'loading') {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
       </div>
     );
   }
@@ -142,86 +123,27 @@ export default function CustomerCardsPage() {
 
       <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-gray-100/50">
         <div className="flex items-center justify-between px-6 py-4 mx-auto max-w-4xl">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200 group-hover:scale-105 transition-transform">
-              <CreditCard className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200">
+              <span className="text-white font-black italic text-lg">Q</span>
             </div>
             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Qarte</span>
-          </Link>
-          {step === 'cards' && (
-            <div className="text-right">
-              <button
-                onClick={handleChangeNumber}
-                className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-                Changer de numéro
-              </button>
-              <p className="text-xs font-medium text-gray-400 mt-0.5">{phoneNumber}</p>
-            </div>
-          )}
+          </div>
+          <div className="text-right">
+            <button
+              onClick={handleChangeNumber}
+              className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Changer de numéro
+            </button>
+            <p className="text-xs font-medium text-gray-400 mt-0.5">{phoneNumber}</p>
+          </div>
         </div>
       </header>
 
-      <main className="relative z-10 px-4 py-16 mx-auto max-w-4xl">
-        {step === 'phone' && (
-          <div className="max-w-md mx-auto animate-fade-in">
-            <div className="text-center mb-10">
-              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-[2rem] bg-white shadow-2xl shadow-indigo-100 text-indigo-600 ring-1 ring-gray-100">
-                <Wallet className="w-10 h-10" />
-              </div>
-              <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                Mes cartes de fidélité
-              </h1>
-              <p className="mt-3 text-lg text-gray-500 font-medium">
-                Entrez votre numéro pour accéder à votre espace
-              </p>
-            </div>
-
-            <div className="p-8 bg-white/80 backdrop-blur-2xl border border-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[2.5rem]">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                  <div className="p-4 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl">
-                    {error}
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1">Numéro de mobile</label>
-                  <div className="relative group">
-                    <Input
-                      type="tel"
-                      placeholder="06 12 34 56 78"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      required
-                      className="h-14 text-lg pl-12 bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-2xl transition-all shadow-sm"
-                    />
-                    <Phone className="absolute w-5 h-5 text-gray-400 left-4 top-1/2 transform -translate-y-1/2 group-focus-within:text-indigo-600 transition-colors" />
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  loading={loading}
-                  className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <Search className="w-5 h-5 mr-2" />
-                  Retrouver mes cartes
-                </Button>
-              </form>
-            </div>
-
-            <div className="mt-12 p-6 rounded-3xl bg-emerald-50/50 border border-emerald-100/50 text-center">
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Nouveau ici ? <span className="font-bold text-emerald-600">Scannez un QR code</span> chez un commerçant partenaire pour générer votre carte de fidélité instantanément.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {step === 'cards' && (
-          <div className="animate-fade-in space-y-8">
+      <main className="relative z-10 px-4 py-8 mx-auto max-w-4xl">
+        <div className="animate-fade-in space-y-8">
             <div className="flex items-end justify-between">
               <div>
                 <h1 className="text-3xl font-black tracking-tight text-gray-900">
@@ -337,15 +259,15 @@ export default function CustomerCardsPage() {
               </div>
             )}
           </div>
-        )}
       </main>
 
-      <footer className="py-12 text-center text-sm font-medium text-gray-400">
-        <Link href="/" className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent font-bold hover:opacity-80 transition-opacity">
-          Qarte
-        </Link>
-        <span className="mx-3 opacity-30">•</span>
-        Fidélisez mieux, dépensez moins
+      <footer className="py-8 text-center">
+        <div className="flex items-center justify-center gap-1.5 mb-2">
+          <span className="text-[11px] font-medium text-gray-400">Créé avec</span>
+          <span className="text-sm">❤️</span>
+          <span className="text-[11px] font-medium text-gray-400">en France</span>
+        </div>
+        <span className="text-xs font-medium text-gray-300">Qarte • Fidélisez mieux</span>
       </footer>
     </div>
   );
