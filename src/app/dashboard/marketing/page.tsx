@@ -27,6 +27,7 @@ import {
   EyeOff,
   Upload,
   CalendarDays,
+  HelpCircle,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -158,6 +159,33 @@ export default function MarketingPushPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showImageOption, setShowImageOption] = useState(false);
 
+  // History visibility
+  const [showHistory, setShowHistory] = useState(false);
+
+  // How it works modal
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
+
+  // Forbidden words list
+  const FORBIDDEN_WORDS = [
+    'sexe', 'sexuel', 'porno', 'xxx', 'nude', 'nu', 'nue',
+    'arme', 'armes', 'fusil', 'pistolet', 'couteau', 'munition',
+    'drogue', 'cannabis', 'cocaine', 'heroïne', 'crack',
+    'violence', 'meurtre', 'tuer', 'mort',
+    'nazi', 'hitler', 'raciste', 'racisme',
+    'escroquerie', 'arnaque', 'fraude'
+  ];
+
+  // Check for forbidden words
+  const containsForbiddenWords = (text: string): string | null => {
+    const lowerText = text.toLowerCase();
+    for (const word of FORBIDDEN_WORDS) {
+      if (lowerText.includes(word)) {
+        return word;
+      }
+    }
+    return null;
+  };
+
   // Check if first visit
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -263,6 +291,14 @@ export default function MarketingPushPage() {
   const handleSend = async () => {
     if (!title.trim() || !body.trim() || !merchant?.id) return;
     if (subscriberCount === 0) return;
+
+    // Check for forbidden words
+    const allText = `${title} ${body} ${offerDescription}`;
+    const forbiddenWord = containsForbiddenWords(allText);
+    if (forbiddenWord) {
+      setSendResult({ success: false, message: `Contenu interdit détecté: "${forbiddenWord}". Veuillez modifier votre message.` });
+      return;
+    }
 
     setSending(true);
     setSendResult(null);
@@ -575,31 +611,31 @@ export default function MarketingPushPage() {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-200">
-            <Bell className="w-6 h-6 text-white" />
+      <div className="mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md shadow-amber-200">
+            <Bell className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-black text-gray-900">Notifications Push</h1>
-            <p className="text-gray-500 text-sm">Envoyez des messages à vos clients</p>
+            <h1 className="text-xl font-black text-gray-900">Notifications Push</h1>
+            <p className="text-gray-500 text-xs">Envoyez des messages à vos clients</p>
           </div>
         </div>
       </div>
 
       {/* Stats Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center">
-              <Users className="w-7 h-7 text-amber-600" />
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center">
+              <Users className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Abonnés aux notifications</p>
+              <p className="text-xs font-medium text-gray-500">Abonnés aux notifications</p>
               {loadingCount ? (
-                <div className="h-8 w-16 bg-gray-100 rounded animate-pulse mt-1" />
+                <div className="h-6 w-12 bg-gray-100 rounded animate-pulse mt-0.5" />
               ) : (
-                <p className="text-3xl font-black text-gray-900">{subscriberCount}</p>
+                <p className="text-2xl font-black text-gray-900">{subscriberCount}</p>
               )}
             </div>
           </div>
@@ -647,9 +683,9 @@ export default function MarketingPushPage() {
 
       {/* Scheduled Pushes */}
       {!loadingScheduled && scheduledPushes.length > 0 && (
-        <div className="bg-blue-50 rounded-2xl border border-blue-100 p-4 mb-6">
-          <h3 className="font-bold text-blue-900 mb-3 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-600" />
+        <div className="bg-blue-50 rounded-xl border border-blue-100 p-3 mb-4">
+          <h3 className="font-bold text-blue-900 mb-2 flex items-center gap-2 text-sm">
+            <Calendar className="w-4 h-4 text-blue-600" />
             Programmés
           </h3>
           <div className="space-y-2">
@@ -673,16 +709,107 @@ export default function MarketingPushPage() {
         </div>
       )}
 
+      {/* How it works Modal */}
+      <AnimatePresence>
+        {showHowItWorks && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setShowHowItWorks(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-5 max-w-md w-full shadow-2xl max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <HelpCircle className="w-5 h-5 text-amber-500" />
+                  Comment ça marche ?
+                </h2>
+                <button onClick={() => setShowHowItWorks(false)} className="p-1 hover:bg-gray-100 rounded-lg">
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-sm text-gray-700">
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold flex-shrink-0">1</div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Rédigez votre notification</p>
+                    <p className="text-gray-500">Titre court et accrocheur + message clair</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold flex-shrink-0">2</div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Ajoutez les détails de l'offre</p>
+                    <p className="text-gray-500">Description visible sur la carte fidélité du client</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold flex-shrink-0">3</div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Choisissez la durée</p>
+                    <p className="text-gray-500">L'offre disparaît automatiquement après expiration</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold flex-shrink-0">4</div>
+                  <div>
+                    <p className="font-semibold text-gray-900">Envoyez !</p>
+                    <p className="text-gray-500">Immédiatement ou programmez pour plus tard</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 bg-red-50 rounded-xl border border-red-100">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                    <span className="font-bold text-red-700">Important</span>
+                  </div>
+                  <p className="text-red-600 text-xs">
+                    N'envoyez pas plus de 1-2 notifications par semaine. Trop de messages = désabonnements !
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowHowItWorks(false)}
+                className="w-full mt-5 py-2.5 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition-colors"
+              >
+                J'ai compris
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Composer */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Send className="w-5 h-5 text-gray-400" />
-          Composer une notification
-        </h2>
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <Send className="w-5 h-5 text-gray-400" />
+            Composer une notification
+          </h2>
+          <button
+            onClick={() => setShowHowItWorks(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Comment ça marche ?
+          </button>
+        </div>
 
         {/* Templates */}
-        <div className="mb-6">
-          <p className="text-sm font-medium text-gray-500 mb-3">Modèles</p>
+        <div className="mb-4">
+          <p className="text-sm font-medium text-gray-500 mb-2">Modèles</p>
           <div className="flex flex-wrap gap-2">
             {templates.map((template) => {
               const colorMap: Record<string, string> = {
@@ -713,140 +840,86 @@ export default function MarketingPushPage() {
         </div>
 
         {/* Form */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* SECTION 1: Notification */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1.5">Titre de la notification</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1">Titre de la notification</label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => handleTitleChange(e.target.value)}
                 placeholder="Ex: Offre spéciale !"
                 maxLength={50}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none text-sm"
               />
-              <p className={`text-xs mt-1 text-right ${title.length > 40 ? 'text-amber-600' : 'text-gray-400'}`}>
-                {title.length}/50 {title.length <= 30 && title.length > 0 && '(optimal)'}
+              <p className={`text-[10px] mt-0.5 text-right ${title.length > 40 ? 'text-amber-600' : 'text-gray-400'}`}>
+                {title.length}/50 {title.length <= 30 && title.length > 0 && '✓'}
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1.5">Message court</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1">Message court</label>
               <textarea
                 value={body}
                 onChange={(e) => handleBodyChange(e.target.value)}
                 placeholder="Ex: -20% sur tout aujourd'hui seulement !"
                 maxLength={150}
                 rows={2}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none"
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all outline-none resize-none text-sm"
               />
-              <p className={`text-xs mt-1 text-right ${body.length > 100 ? 'text-amber-600' : 'text-gray-400'}`}>
-                {body.length}/150 {body.length <= 80 && body.length > 0 && '(optimal)'}
+              <p className={`text-[10px] mt-0.5 text-right ${body.length > 100 ? 'text-amber-600' : 'text-gray-400'}`}>
+                {body.length}/150 {body.length <= 80 && body.length > 0 && '✓'}
               </p>
             </div>
           </div>
 
           {/* APERÇU NOTIFICATION - Entre notification et offre */}
           {(title || body) && (
-            <div className="bg-amber-50 rounded-xl p-4 border border-amber-100">
-              <p className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-3 flex items-center gap-2">
-                <Bell className="w-3.5 h-3.5" />
-                Aperçu notification (ce que reçoit le client)
+            <div className="bg-amber-50 rounded-lg p-3 border border-amber-100">
+              <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Bell className="w-3 h-3" />
+                Aperçu notification
               </p>
-              <div className="bg-white rounded-xl shadow-lg p-3 flex gap-3 max-w-sm mx-auto">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center flex-shrink-0">
-                  <span className="text-white text-sm font-black italic">Q</span>
+              <div className="bg-white rounded-lg shadow-md p-2.5 flex gap-2.5 max-w-xs mx-auto">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-xs font-black italic">Q</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className="text-xs font-bold text-gray-900">{merchant?.shop_name || 'Votre commerce'}</span>
-                    <span className="text-[10px] text-gray-400">Maintenant</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-gray-900">{merchant?.shop_name || 'Votre commerce'}</span>
+                    <span className="text-[9px] text-gray-400">Maintenant</span>
                   </div>
-                  <p className="text-xs font-semibold text-gray-800 truncate">{title || 'Titre...'}</p>
-                  <p className="text-xs text-gray-600 line-clamp-2">{body || 'Message...'}</p>
+                  <p className="text-[10px] font-semibold text-gray-800 truncate">{title || 'Titre...'}</p>
+                  <p className="text-[10px] text-gray-600 line-clamp-1">{body || 'Message...'}</p>
                 </div>
               </div>
             </div>
           )}
 
           {/* SECTION 2: Détails de l'offre */}
-          <div className="pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Gift className="w-5 h-5 text-pink-500" />
-              <label className="text-sm font-bold text-gray-700">Détails de l'offre</label>
+          <div className="pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Gift className="w-4 h-4 text-pink-500" />
+              <label className="text-xs font-bold text-gray-700">Détails de l'offre</label>
             </div>
-            <p className="text-xs text-gray-500 mb-3">
-              Ce texte apparaît sur la carte fidélité quand le client clique sur "Offre en cours"
+            <p className="text-[10px] text-gray-500 mb-2">
+              Visible sur la carte fidélité du client
             </p>
             <textarea
               value={offerDescription}
               onChange={(e) => setOfferDescription(e.target.value)}
               placeholder="Décrivez votre offre en détail... (généré automatiquement depuis le message)"
               maxLength={300}
-              rows={3}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none resize-none"
+              rows={2}
+              className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none resize-none text-sm"
             />
             <p className={`text-xs mt-1 text-right ${offerDescription.length > 250 ? 'text-pink-600' : 'text-gray-400'}`}>
               {offerDescription.length}/300
             </p>
 
-            {/* Duration Selection - Aujourd'hui / Demain / Calendrier */}
-            <div className="mt-4">
-              <label className="block text-xs font-medium text-gray-500 mb-2">Durée de l'offre</label>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOfferDurationType('today')}
-                  className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                    offerDurationType === 'today'
-                      ? 'bg-pink-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Aujourd'hui
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOfferDurationType('tomorrow')}
-                  className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                    offerDurationType === 'tomorrow'
-                      ? 'bg-pink-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  Demain
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOfferDurationType('custom')}
-                  className={`flex-1 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    offerDurationType === 'custom'
-                      ? 'bg-pink-500 text-white shadow-md'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                >
-                  <CalendarDays className="w-4 h-4" />
-                  Date
-                </button>
-              </div>
-
-              {/* Custom date picker */}
-              {offerDurationType === 'custom' && (
-                <div className="mt-2">
-                  <input
-                    type="date"
-                    value={offerCustomDate}
-                    onChange={(e) => setOfferCustomDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full px-3 py-2 rounded-lg border border-pink-200 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none"
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Image Upload (collapsible) */}
-            <div className="mt-4">
+            {/* Image Upload - Below description */}
+            <div className="mt-3">
               <button
                 type="button"
                 onClick={() => setShowImageOption(!showImageOption)}
@@ -858,13 +931,13 @@ export default function MarketingPushPage() {
               </button>
 
               {showImageOption && (
-                <div className="mt-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <div className="mt-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
                   {offerImageUrl ? (
                     <div className="relative">
                       <img
                         src={offerImageUrl}
                         alt="Aperçu"
-                        className="w-full h-32 object-cover rounded-lg"
+                        className="w-full h-28 object-cover rounded-lg"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = '';
                           setOfferImageUrl('');
@@ -879,7 +952,7 @@ export default function MarketingPushPage() {
                       </button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center py-6 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-pink-300 hover:bg-pink-50/50 transition-all">
+                    <label className="flex flex-col items-center justify-center py-4 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-pink-300 hover:bg-pink-50/50 transition-all">
                       <input
                         type="file"
                         accept="image/*"
@@ -888,16 +961,70 @@ export default function MarketingPushPage() {
                         disabled={uploadingImage}
                       />
                       {uploadingImage ? (
-                        <Loader2 className="w-8 h-8 text-pink-500 animate-spin" />
+                        <Loader2 className="w-6 h-6 text-pink-500 animate-spin" />
                       ) : (
                         <>
-                          <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                          <span className="text-sm text-gray-500">Cliquer pour uploader</span>
-                          <span className="text-xs text-gray-400 mt-1">JPG, PNG, WebP (max 2 Mo)</span>
+                          <Upload className="w-6 h-6 text-gray-400 mb-1" />
+                          <span className="text-xs text-gray-500">Cliquer pour uploader</span>
+                          <span className="text-[10px] text-gray-400 mt-0.5">JPG, PNG, WebP (max 2 Mo)</span>
                         </>
                       )}
                     </label>
                   )}
+                </div>
+              )}
+            </div>
+
+            {/* Duration Selection - Aujourd'hui / Demain / Calendrier */}
+            <div className="mt-3">
+              <label className="block text-[10px] font-medium text-gray-500 mb-1.5">Durée de l'offre</label>
+              <div className="flex gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setOfferDurationType('today')}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                    offerDurationType === 'today'
+                      ? 'bg-pink-500 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Aujourd'hui
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOfferDurationType('tomorrow')}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                    offerDurationType === 'tomorrow'
+                      ? 'bg-pink-500 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  Demain
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOfferDurationType('custom')}
+                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+                    offerDurationType === 'custom'
+                      ? 'bg-pink-500 text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  Date
+                </button>
+              </div>
+
+              {/* Custom date picker */}
+              {offerDurationType === 'custom' && (
+                <div className="mt-2">
+                  <input
+                    type="date"
+                    value={offerCustomDate}
+                    onChange={(e) => setOfferCustomDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 rounded-lg border border-pink-200 text-sm focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none"
+                  />
                 </div>
               )}
             </div>
@@ -984,75 +1111,98 @@ export default function MarketingPushPage() {
             )}
           </AnimatePresence>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            {/* Schedule Toggle */}
-            <button
-              onClick={() => setShowSchedule(!showSchedule)}
-              className={`px-4 py-4 rounded-xl font-bold transition-all flex items-center gap-2 ${
-                showSchedule
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
-              }`}
-            >
-              <Calendar className="w-5 h-5" />
-            </button>
-
-            {/* Main Send/Schedule Button */}
+          {/* Action Buttons - Two buttons side by side */}
+          <div className="flex gap-2">
+            {/* Envoyer maintenant */}
             <div className="flex-1 relative">
               <button
-                onClick={showSchedule ? handleSchedule : handleSend}
-                disabled={!title.trim() || !body.trim() || sending || scheduling || (subscriberCount === 0 && !showSchedule)}
-                className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-lg shadow-lg shadow-amber-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
+                onClick={handleSend}
+                disabled={!title.trim() || !body.trim() || sending || subscriberCount === 0}
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
-                {sending || scheduling ? (
+                {sending ? (
                   <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    {showSchedule ? 'Programmation...' : 'Envoi...'}
-                  </>
-                ) : showSchedule ? (
-                  <>
-                    <Calendar className="w-5 h-5" />
-                    Programmer
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Envoi...
                   </>
                 ) : (
                   <>
-                    <Send className="w-5 h-5" />
-                    {offerDescription.trim() ? 'Envoyer + Publier l\'offre' : 'Envoyer maintenant'}
+                    <Send className="w-4 h-4" />
+                    Envoyer maintenant
                   </>
                 )}
               </button>
-
-              {/* Big Danger Icon */}
-              {!showSchedule && (
-                <div className="absolute -right-3 -top-3">
-                  <div className="relative group">
-                    <div className="w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center shadow-lg animate-pulse cursor-help">
-                      <AlertTriangle className="w-6 h-6" />
-                    </div>
-                    <div className="absolute right-0 top-12 w-64 p-3 bg-gray-900 text-white text-xs rounded-xl shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                      <p className="font-bold mb-1 text-red-400">Attention !</p>
-                      <p>N'envoyez pas plus de 1-2 notifications par semaine pour éviter les désabonnements.</p>
-                    </div>
+              {/* Warning tooltip */}
+              <div className="absolute -right-2 -top-2">
+                <div className="relative group">
+                  <div className="w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center shadow cursor-help">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                  </div>
+                  <div className="absolute right-0 top-8 w-52 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    <p className="font-bold text-red-400">Attention !</p>
+                    <p>Max 1-2 notifs/semaine</p>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
+
+            {/* Envoyer plus tard */}
+            <button
+              onClick={() => setShowSchedule(!showSchedule)}
+              disabled={!title.trim() || !body.trim()}
+              className={`flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                showSchedule
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100'
+              }`}
+            >
+              <Clock className="w-4 h-4" />
+              {showSchedule ? 'Annuler' : 'Envoyer plus tard'}
+            </button>
           </div>
+
+          {/* Schedule Confirm Button */}
+          <AnimatePresence>
+            {showSchedule && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+              >
+                <button
+                  onClick={handleSchedule}
+                  disabled={!title.trim() || !body.trim() || scheduling}
+                  className="w-full mt-2 py-3 rounded-xl bg-blue-600 text-white font-bold shadow-md hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {scheduling ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Programmation...
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="w-4 h-4" />
+                      Confirmer la programmation
+                    </>
+                  )}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
       {/* Active Offer Indicator */}
       {offerActive && offerExpiresAt && (
-        <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-4 mb-6">
+        <div className="bg-emerald-50 rounded-xl border border-emerald-100 p-3 mb-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <Gift className="w-5 h-5 text-emerald-600" />
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                <Gift className="w-4 h-4 text-emerald-600" />
               </div>
               <div>
-                <p className="font-bold text-emerald-900">Offre en cours</p>
-                <p className="text-sm text-emerald-700">
+                <p className="font-bold text-emerald-900 text-sm">Offre en cours</p>
+                <p className="text-xs text-emerald-700">
                   Valable jusqu'à {(() => {
                     const expires = new Date(offerExpiresAt);
                     const today = new Date();
@@ -1081,53 +1231,69 @@ export default function MarketingPushPage() {
         </div>
       )}
 
-      {/* Push History */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <History className="w-5 h-5 text-gray-400" />
-          Historique
-        </h2>
+      {/* Push History - Collapsed by default */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <button
+          onClick={() => setShowHistory(!showHistory)}
+          className="w-full p-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        >
+          <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <History className="w-5 h-5 text-gray-400" />
+            Historique
+            {pushHistory.length > 0 && (
+              <span className="text-xs font-medium text-gray-400">({pushHistory.length})</span>
+            )}
+          </h2>
+          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showHistory ? 'rotate-180' : ''}`} />
+        </button>
 
-        {loadingHistory ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-          </div>
-        ) : pushHistory.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
-            <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>Aucune notification envoyée</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {pushHistory.map((item) => {
-              const date = new Date(item.created_at);
-
-              return (
-                <div key={item.id} className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{item.title}</p>
-                      <p className="text-sm text-gray-600 line-clamp-1">{item.body}</p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-lg text-xs font-medium text-gray-600 border">
-                          <Users className="w-3 h-3" />
-                          Tous
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-emerald-600">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span className="font-bold">{item.sent_count}</span>
-                    </div>
+        <AnimatePresence>
+          {showHistory && (
+            <motion.div
+              initial={{ height: 0 }}
+              animate={{ height: 'auto' }}
+              exit={{ height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="px-4 pb-4">
+                {loadingHistory ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                ) : pushHistory.length === 0 ? (
+                  <div className="text-center py-6 text-gray-400">
+                    <History className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Aucune notification envoyée</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {pushHistory.map((item) => {
+                      const date = new Date(item.created_at);
+
+                      return (
+                        <div key={item.id} className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-gray-900 truncate text-sm">{item.title}</p>
+                              <p className="text-xs text-gray-600 line-clamp-1">{item.body}</p>
+                              <span className="text-xs text-gray-400 mt-1 block">
+                                {date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-emerald-600">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span className="font-bold text-sm">{item.sent_count}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
