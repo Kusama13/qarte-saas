@@ -28,6 +28,7 @@ import {
   Bell,
   Share,
   PlusSquare,
+  Sparkles,
 } from 'lucide-react';
 import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
 import { Button, Modal } from '@/components/ui';
@@ -119,6 +120,17 @@ export default function CustomerCardPage({
   const [pushError, setPushError] = useState<string | null>(null);
   const [showSafariArrow, setShowSafariArrow] = useState(false);
 
+  // Offer state
+  interface MerchantOffer {
+    active: boolean;
+    title: string;
+    description: string;
+    imageUrl: string | null;
+    expiresAt: string | null;
+  }
+  const [offer, setOffer] = useState<MerchantOffer | null>(null);
+  const [offerExpanded, setOfferExpanded] = useState(false);
+
   useEffect(() => {
     const fetchData = async () => {
       const savedPhone = getCookie('customer_phone');
@@ -147,6 +159,17 @@ export default function CustomerCardPage({
         // Count pending visits
         const pending = visitsData.filter((v: VisitWithStatus) => v.status === 'pending').length;
         setPendingCount(pending);
+
+        // Fetch current offer
+        try {
+          const offerResponse = await fetch(`/api/offers?merchantId=${merchantId}`);
+          const offerData = await offerResponse.json();
+          if (offerResponse.ok && offerData.offer && offerData.offer.active) {
+            setOffer(offerData.offer);
+          }
+        } catch (offerError) {
+          console.error('Error fetching offer:', offerError);
+        }
       } catch (error) {
         console.error('Error fetching card:', error);
         router.push('/customer/cards');
@@ -616,6 +639,92 @@ export default function CustomerCardPage({
               </div>
             </div>
           </div>
+
+          {/* Current Offer - Non-invasive, clickable */}
+          {offer && offer.active && (
+            <div className="mb-6">
+              <button
+                onClick={() => setOfferExpanded(!offerExpanded)}
+                className="w-full group"
+              >
+                <div
+                  className={`relative overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-300 ${
+                    offerExpanded
+                      ? 'border-solid shadow-lg'
+                      : 'hover:border-solid hover:shadow-md'
+                  }`}
+                  style={{
+                    borderColor: offerExpanded ? merchant.primary_color : `${merchant.primary_color}40`,
+                    backgroundColor: offerExpanded ? `${merchant.primary_color}08` : `${merchant.primary_color}03`
+                  }}
+                >
+                  {/* Closed State Header - Always visible */}
+                  <div className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
+                        style={{ backgroundColor: `${merchant.primary_color}15` }}
+                      >
+                        <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-gray-900 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5" style={{ color: merchant.primary_color }} />
+                          Offre client fidèle
+                        </p>
+                        {!offerExpanded && (
+                          <p className="text-sm text-gray-500">Appuyez pour voir les détails</p>
+                        )}
+                      </div>
+                    </div>
+                    <div
+                      className={`p-2 rounded-lg transition-all ${offerExpanded ? 'rotate-180' : ''}`}
+                      style={{ backgroundColor: `${merchant.primary_color}10` }}
+                    >
+                      <ChevronDown className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                    </div>
+                  </div>
+
+                  {/* Expanded Content */}
+                  {offerExpanded && (
+                    <div className="px-4 pb-4 text-left">
+                      <div className="pt-3 border-t border-gray-100">
+                        <h3 className="font-bold text-gray-900 text-lg mb-2">{offer.title}</h3>
+                        <p className="text-gray-600 whitespace-pre-wrap leading-relaxed">{offer.description}</p>
+
+                        {offer.imageUrl && (
+                          <div className="mt-4 rounded-xl overflow-hidden">
+                            <img
+                              src={offer.imageUrl}
+                              alt={offer.title}
+                              className="w-full h-40 object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+
+                        {offer.expiresAt && (
+                          <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+                            <Clock className="w-4 h-4" />
+                            <span>
+                              Valable jusqu'au {new Date(offer.expiresAt).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'long',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </button>
+            </div>
+          )}
 
           {/* Subscribe to Updates Button */}
           {!pushSubscribed && pushPermission !== 'denied' && (

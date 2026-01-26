@@ -1,0 +1,117 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
+
+// GET current offer for a merchant
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const merchantId = searchParams.get('merchantId');
+
+  if (!merchantId) {
+    return NextResponse.json({ error: 'merchantId required' }, { status: 400 });
+  }
+
+  const supabase = createRouteHandlerClient({ cookies });
+
+  const { data: merchant, error } = await supabase
+    .from('merchants')
+    .select('offer_active, offer_title, offer_description, offer_image_url, offer_expires_at, offer_duration_days, offer_created_at')
+    .eq('id', merchantId)
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Check if offer is expired
+  const isExpired = merchant.offer_expires_at && new Date(merchant.offer_expires_at) < new Date();
+
+  return NextResponse.json({
+    offer: {
+      active: merchant.offer_active && !isExpired,
+      title: merchant.offer_title,
+      description: merchant.offer_description,
+      imageUrl: merchant.offer_image_url,
+      expiresAt: merchant.offer_expires_at,
+      durationDays: merchant.offer_duration_days,
+      createdAt: merchant.offer_created_at,
+      isExpired,
+    }
+  });
+}
+
+// POST/PUT to create or update offer
+export async function POST(request: NextRequest) {
+  const supabase = createRouteHandlerClient({ cookies });
+
+  try {
+    const body = await request.json();
+    const { merchantId, title, description, imageUrl, durationDays } = body;
+
+    if (!merchantId) {
+      return NextResponse.json({ error: 'merchantId required' }, { status: 400 });
+    }
+
+    if (!title || !description) {
+      return NextResponse.json({ error: 'title and description required' }, { status: 400 });
+    }
+
+    // Validate duration
+    const duration = Math.min(3, Math.max(1, durationDays || 1));
+
+    // Calculate expiration date
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + duration);
+    expiresAt.setHours(23, 59, 59, 999); // End of day
+
+    const { error } = await supabase
+      .from('merchants')
+      .update({
+        offer_active: true,
+        offer_title: title.trim(),
+        offer_description: description.trim(),
+        offer_image_url: imageUrl?.trim() || null,
+        offer_duration_days: duration,
+        offer_expires_at: expiresAt.toISOString(),
+        offer_created_at: new Date().toISOString(),
+      })
+      .eq('id', merchantId);
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      expiresAt: expiresAt.toISOString(),
+    });
+  } catch (error) {
+    console.error('Error saving offer:', error);
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+}
+
+// DELETE to deactivate offer
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const merchantId = searchParams.get('merchantId');
+
+  if (!merchantId) {
+    return NextResponse.json({ error: 'merchantId required' }, { status: 400 });
+  }
+
+  const supabase = createRouteHandlerClient({ cookies });
+
+  const { error } = await supabase
+    .from('merchants')
+    .update({
+      offer_active: false,
+    })
+    .eq('id', merchantId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ success: true });
+}
