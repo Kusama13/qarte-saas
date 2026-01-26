@@ -9,8 +9,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Sparkles,
-  Gift,
-  Clock,
   Megaphone,
   X,
   ChevronDown,
@@ -19,12 +17,10 @@ import {
   AlertTriangle,
   Calendar,
   Trash2,
-  Star,
   PartyPopper,
-  Heart,
   Zap,
-  Sun,
-  Moon,
+  Crown,
+  Clock,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -69,35 +65,21 @@ interface ScheduledPush {
   status: string;
 }
 
-// More diverse templates
+// 5 templates d'offres
 const templates: NotificationTemplate[] = [
   {
-    id: 'reminder',
-    title: 'On vous attend !',
-    body: 'Cela fait un moment... Passez nous voir !',
-    icon: Clock,
-    color: 'blue',
-  },
-  {
     id: 'promo',
-    title: 'Offre spéciale',
-    body: '-20% sur tout aujourd\'hui seulement !',
+    title: 'Promo du jour',
+    body: '-20% aujourd\'hui seulement !',
     icon: Megaphone,
     color: 'orange',
   },
   {
     id: 'flash',
     title: 'Vente flash',
-    body: '2h pour en profiter ! -30% sur votre commande',
+    body: '2h pour en profiter ! Offre limitée',
     icon: Zap,
     color: 'yellow',
-  },
-  {
-    id: 'happy_hour',
-    title: 'Happy Hour',
-    body: 'De 17h à 19h, boissons à moitié prix !',
-    icon: PartyPopper,
-    color: 'pink',
   },
   {
     id: 'new_product',
@@ -107,39 +89,18 @@ const templates: NotificationTemplate[] = [
     color: 'violet',
   },
   {
-    id: 'loyalty',
-    title: 'Points doublés',
-    body: 'Aujourd\'hui vos points sont doublés !',
-    icon: Star,
+    id: 'happy_hour',
+    title: 'Happy Hour',
+    body: 'De 17h à 19h, offres spéciales !',
+    icon: PartyPopper,
+    color: 'pink',
+  },
+  {
+    id: 'exclusive',
+    title: 'Exclusivité',
+    body: 'Offre réservée à nos fidèles clients',
+    icon: Crown,
     color: 'amber',
-  },
-  {
-    id: 'weekend',
-    title: 'Bon weekend !',
-    body: 'Venez profiter de nos offres du weekend',
-    icon: Sun,
-    color: 'emerald',
-  },
-  {
-    id: 'thanks',
-    title: 'Merci !',
-    body: 'Merci de votre fidélité, on vous adore !',
-    icon: Heart,
-    color: 'red',
-  },
-  {
-    id: 'gift',
-    title: 'Surprise !',
-    body: 'Un cadeau vous attend en boutique',
-    icon: Gift,
-    color: 'purple',
-  },
-  {
-    id: 'evening',
-    title: 'Ce soir',
-    body: 'Soirée spéciale ce soir, on vous attend !',
-    icon: Moon,
-    color: 'indigo',
   },
 ];
 
@@ -730,7 +691,7 @@ export default function MarketingPushPage() {
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    Envoyer à {subscriberCount} client{(subscriberCount || 0) > 1 ? 's' : ''}
+                    Envoyer maintenant
                   </>
                 )}
               </button>
