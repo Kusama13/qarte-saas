@@ -709,12 +709,20 @@ export default function CustomerCardPage({
                           <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
                             <Clock className="w-4 h-4" />
                             <span>
-                              Valable jusqu'au {new Date(offer.expiresAt).toLocaleDateString('fr-FR', {
-                                day: 'numeric',
-                                month: 'long',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
+                              Valable jusqu'à {(() => {
+                                const expires = new Date(offer.expiresAt);
+                                const today = new Date();
+                                const tomorrow = new Date(today);
+                                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                                if (expires.toDateString() === today.toDateString()) {
+                                  return "ce soir";
+                                } else if (expires.toDateString() === tomorrow.toDateString()) {
+                                  return "demain soir";
+                                } else {
+                                  return expires.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                                }
+                              })()}
                             </span>
                           </div>
                         )}
@@ -768,21 +776,15 @@ export default function CustomerCardPage({
             </button>
           )}
 
-          {/* Subscribed confirmation */}
+          {/* Subscribed confirmation - Small bell icon */}
           {pushSubscribed && (
-            <div
-              className="w-full rounded-2xl p-4 flex items-center gap-3"
-              style={{ backgroundColor: `${merchant.primary_color}10` }}
-            >
+            <div className="flex justify-center">
               <div
-                className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: `${merchant.primary_color}20` }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+                style={{ backgroundColor: `${merchant.primary_color}10` }}
               >
-                <Check className="w-5 h-5" style={{ color: merchant.primary_color }} />
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 text-sm">🎉 Notifications activées !</p>
-                <p className="text-xs text-gray-500">Vous recevrez nos meilleures offres en avant-première</p>
+                <Bell className="w-3.5 h-3.5" style={{ color: merchant.primary_color }} />
+                <span className="text-xs font-medium" style={{ color: merchant.primary_color }}>Notifications actives</span>
               </div>
             </div>
           )}

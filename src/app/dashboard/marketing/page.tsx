@@ -146,16 +146,12 @@ export default function MarketingPushPage() {
   // Tips popup
   const [showTipsPopup, setShowTipsPopup] = useState(false);
 
-  // Offer management
-  const [offerTitle, setOfferTitle] = useState('');
+  // Offer management (integrated with push)
   const [offerDescription, setOfferDescription] = useState('');
   const [offerImageUrl, setOfferImageUrl] = useState('');
   const [offerDuration, setOfferDuration] = useState<1 | 2 | 3>(1);
   const [offerActive, setOfferActive] = useState(false);
   const [offerExpiresAt, setOfferExpiresAt] = useState<string | null>(null);
-  const [savingOffer, setSavingOffer] = useState(false);
-  const [offerSaved, setOfferSaved] = useState(false);
-  const [showOfferSection, setShowOfferSection] = useState(true);
 
   // Check if first visit
   useEffect(() => {
@@ -238,7 +234,7 @@ export default function MarketingPushPage() {
     fetchScheduled();
   }, [merchant?.id]);
 
-  // Fetch current offer
+  // Fetch current offer status
   useEffect(() => {
     const fetchOffer = async () => {
       if (!merchant?.id) return;
@@ -249,10 +245,6 @@ export default function MarketingPushPage() {
 
         if (response.ok && data.offer) {
           setOfferActive(data.offer.active || false);
-          setOfferTitle(data.offer.title || '');
-          setOfferDescription(data.offer.description || '');
-          setOfferImageUrl(data.offer.imageUrl || '');
-          setOfferDuration(data.offer.durationDays || 1);
           setOfferExpiresAt(data.offer.expiresAt || null);
         }
       } catch (err) {
@@ -271,6 +263,7 @@ export default function MarketingPushPage() {
     setSendResult(null);
 
     try {
+      // Send push notification
       const response = await fetch('/api/push/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -288,10 +281,28 @@ export default function MarketingPushPage() {
       const data = await response.json();
 
       if (response.ok) {
+        // Also save the offer if description is provided
+        if (offerDescription.trim()) {
+          await fetch('/api/offers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              merchantId: merchant.id,
+              title: title.trim(),
+              description: offerDescription.trim(),
+              imageUrl: offerImageUrl.trim() || null,
+              durationDays: offerDuration,
+            }),
+          });
+          setOfferActive(true);
+        }
+
         setSendResult({ success: true, sent: data.sent, failed: data.failed });
         if (data.sent > 0) {
           setTitle('');
           setBody('');
+          setOfferDescription('');
+          setOfferImageUrl('');
           // Refresh history
           const historyResponse = await fetch(`/api/push/history?merchantId=${merchant.id}&limit=10`);
           const historyData = await historyResponse.json();
@@ -365,43 +376,8 @@ export default function MarketingPushPage() {
     setTitle(template.title);
     setBody(template.body);
     // Also fill offer description with longer text
-    setOfferTitle(template.title);
     setOfferDescription(template.offerDescription);
     setSendResult(null);
-  };
-
-  const handleSaveOffer = async () => {
-    if (!merchant?.id || !offerTitle.trim() || !offerDescription.trim()) return;
-
-    setSavingOffer(true);
-    setOfferSaved(false);
-
-    try {
-      const response = await fetch('/api/offers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          merchantId: merchant.id,
-          title: offerTitle.trim(),
-          description: offerDescription.trim(),
-          imageUrl: offerImageUrl.trim() || null,
-          durationDays: offerDuration,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setOfferActive(true);
-        setOfferExpiresAt(data.expiresAt);
-        setOfferSaved(true);
-        setTimeout(() => setOfferSaved(false), 3000);
-      }
-    } catch (err) {
-      console.error('Error saving offer:', err);
-    } finally {
-      setSavingOffer(false);
-    }
   };
 
   const handleDeactivateOffer = async () => {
@@ -652,10 +628,64 @@ export default function MarketingPushPage() {
             </p>
           </div>
 
+          {/* Offer Description - Détails pour le client */}
+          <div className="pt-4 border-t border-gray-100">
+            <div className="flex items-center gap-2 mb-3">
+              <Gift className="w-5 h-5 text-pink-500" />
+              <label className="text-sm font-bold text-gray-700">Détails de l'offre (visible par le client)</label>
+            </div>
+            <textarea
+              value={offerDescription}
+              onChange={(e) => setOfferDescription(e.target.value)}
+              placeholder="Décrivez votre offre en détail... (automatiquement rempli par les modèles)"
+              maxLength={300}
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none resize-none"
+            />
+            <p className={`text-xs mt-1 text-right ${offerDescription.length > 250 ? 'text-pink-600' : 'text-gray-400'}`}>
+              {offerDescription.length}/300
+            </p>
+
+            {/* Duration Selection */}
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-gray-500 mb-2">Durée de l'offre</label>
+              <div className="flex gap-2">
+                {([1, 2, 3] as const).map((days) => (
+                  <button
+                    key={days}
+                    type="button"
+                    onClick={() => setOfferDuration(days)}
+                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${
+                      offerDuration === days
+                        ? 'bg-pink-500 text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    {days === 1 ? "Aujourd'hui" : days === 2 ? 'Demain' : '3 jours'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Image URL (optional) */}
+            <div className="mt-3">
+              <div className="relative">
+                <Image className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="url"
+                  value={offerImageUrl}
+                  onChange={(e) => setOfferImageUrl(e.target.value)}
+                  placeholder="URL image (optionnel)"
+                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Preview */}
           {(title || body) && (
             <div className="bg-gray-50 rounded-xl p-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Aperçu</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Aperçu notification</p>
               <div className="bg-white rounded-xl shadow-lg p-3 flex gap-3 max-w-sm">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-sm font-black italic">Q</span>
@@ -787,7 +817,7 @@ export default function MarketingPushPage() {
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
-                    Envoyer maintenant
+                    {offerDescription.trim() ? 'Envoyer + Publier l\'offre' : 'Envoyer maintenant'}
                   </>
                 )}
               </button>
@@ -811,195 +841,44 @@ export default function MarketingPushPage() {
         </div>
       </div>
 
-      {/* Offer Management Section */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <Gift className="w-5 h-5 text-pink-500" />
-            Offre en cours
-          </h2>
-          <button
-            onClick={() => setShowOfferSection(!showOfferSection)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            {showOfferSection ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-          </button>
-        </div>
-
-        <AnimatePresence>
-          {showOfferSection && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
-            >
-              {/* Active Offer Status */}
-              {offerActive && offerExpiresAt && (
-                <div className="mb-4 p-4 bg-emerald-50 border border-emerald-100 rounded-xl">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                        <Eye className="w-5 h-5 text-emerald-600" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-emerald-900">Offre active</p>
-                        <p className="text-sm text-emerald-700">
-                          Expire le {new Date(offerExpiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleDeactivateOffer}
-                      className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1"
-                    >
-                      <EyeOff className="w-4 h-4" />
-                      Désactiver
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <p className="text-sm text-gray-500 mb-4">
-                Créez une offre spéciale visible par vos clients fidèles. Les modèles ci-dessus remplissent automatiquement le titre et la description.
-              </p>
-
-              <div className="space-y-4">
-                {/* Offer Title */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Titre de l'offre</label>
-                  <input
-                    type="text"
-                    value={offerTitle}
-                    onChange={(e) => setOfferTitle(e.target.value)}
-                    placeholder="Ex: Promo du jour"
-                    maxLength={50}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none"
-                  />
-                </div>
-
-                {/* Offer Description */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Description détaillée</label>
-                  <textarea
-                    value={offerDescription}
-                    onChange={(e) => setOfferDescription(e.target.value)}
-                    placeholder="Décrivez votre offre en détail pour vos clients..."
-                    maxLength={300}
-                    rows={4}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none resize-none"
-                  />
-                  <p className={`text-xs mt-1 text-right ${offerDescription.length > 250 ? 'text-pink-600' : 'text-gray-400'}`}>
-                    {offerDescription.length}/300
-                  </p>
-                </div>
-
-                {/* Image URL */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                    Image (optionnel)
-                    <span className="font-normal text-gray-400 ml-2">URL de l'image</span>
-                  </label>
-                  <div className="relative">
-                    <Image className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      type="url"
-                      value={offerImageUrl}
-                      onChange={(e) => setOfferImageUrl(e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                      className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none"
-                    />
-                  </div>
-                </div>
-
-                {/* Duration Selection */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Durée de l'offre</label>
-                  <div className="flex gap-2">
-                    {([1, 2, 3] as const).map((days) => (
-                      <button
-                        key={days}
-                        onClick={() => setOfferDuration(days)}
-                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
-                          offerDuration === days
-                            ? 'bg-pink-500 text-white shadow-lg shadow-pink-200'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {days} jour{days > 1 ? 's' : ''}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Preview */}
-                {(offerTitle || offerDescription) && (
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Aperçu client</p>
-                    <div className="bg-white rounded-2xl shadow-lg p-4 border border-gray-100">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center flex-shrink-0">
-                          <Gift className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900">{offerTitle || 'Titre de l\'offre'}</p>
-                          <p className="text-sm text-gray-600 mt-1 whitespace-pre-wrap">{offerDescription || 'Description de l\'offre...'}</p>
-                          {offerImageUrl && (
-                            <div className="mt-3 rounded-xl overflow-hidden bg-gray-100">
-                              <img
-                                src={offerImageUrl}
-                                alt="Aperçu"
-                                className="w-full h-32 object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Save Success Message */}
-                <AnimatePresence>
-                  {offerSaved && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 text-emerald-800"
-                    >
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-                      <p className="flex-1 font-semibold">Offre enregistrée et visible par vos clients !</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* Save Button */}
-                <button
-                  onClick={handleSaveOffer}
-                  disabled={!offerTitle.trim() || !offerDescription.trim() || savingOffer}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white font-bold text-lg shadow-lg shadow-pink-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
-                >
-                  {savingOffer ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Enregistrement...
-                    </>
-                  ) : (
-                    <>
-                      <Gift className="w-5 h-5" />
-                      {offerActive ? 'Mettre à jour l\'offre' : 'Publier l\'offre'}
-                    </>
-                  )}
-                </button>
+      {/* Active Offer Indicator */}
+      {offerActive && offerExpiresAt && (
+        <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <Gift className="w-5 h-5 text-emerald-600" />
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+              <div>
+                <p className="font-bold text-emerald-900">Offre en cours</p>
+                <p className="text-sm text-emerald-700">
+                  Valable jusqu'à {(() => {
+                    const expires = new Date(offerExpiresAt);
+                    const today = new Date();
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+
+                    if (expires.toDateString() === today.toDateString()) {
+                      return "ce soir";
+                    } else if (expires.toDateString() === tomorrow.toDateString()) {
+                      return "demain soir";
+                    } else {
+                      return expires.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                    }
+                  })()}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleDeactivateOffer}
+              className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors flex items-center gap-1"
+            >
+              <EyeOff className="w-4 h-4" />
+              Désactiver
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Push History */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
