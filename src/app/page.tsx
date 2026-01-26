@@ -186,6 +186,7 @@ const animationStyles = `
 // Hero Section
 function HeroSection() {
   const { ref, isInView } = useInView();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-white to-gray-50">
@@ -212,13 +213,74 @@ function HeroSection() {
             </div>
             <span className="text-xl font-bold text-gray-900 tracking-tight">Qarte</span>
           </div>
+
+          {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
             <a href="#features" className="hover:text-indigo-600 transition-colors">Solutions</a>
             <a href="#pricing" className="hover:text-indigo-600 transition-colors">Tarifs</a>
             <a href="/contact" className="hover:text-indigo-600 transition-colors">Contact</a>
             <a href="/auth/merchant" className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all shadow-sm">Espace Commerçant</a>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+            aria-label="Menu"
+          >
+            {mobileMenuOpen ? (
+              <X className="w-6 h-6" />
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden bg-white border-t border-gray-100 overflow-hidden"
+            >
+              <div className="px-6 py-4 space-y-3">
+                <a
+                  href="#features"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-gray-600 hover:text-indigo-600 font-medium transition-colors"
+                >
+                  Solutions
+                </a>
+                <a
+                  href="#pricing"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-gray-600 hover:text-indigo-600 font-medium transition-colors"
+                >
+                  Tarifs
+                </a>
+                <a
+                  href="/contact"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block py-2 text-gray-600 hover:text-indigo-600 font-medium transition-colors"
+                >
+                  Contact
+                </a>
+                <a
+                  href="/auth/merchant"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full py-3 mt-2 text-center bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold rounded-lg transition-all shadow-sm"
+                >
+                  Espace Commerçant
+                </a>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Animated Background & Particles - Light */}
