@@ -875,36 +875,6 @@ export default function CustomerCardPage({
             </motion.div>
           )}
 
-          {/* Add to Home Screen Banner - Show on MOBILE only when NOT in PWA */}
-          {!isStandalone && isMobile && (
-            <motion.button
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setShowIOSInstructions(true)}
-              className="w-full mb-5"
-            >
-              <div
-                className="flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all hover:shadow-sm"
-                style={{
-                  borderColor: `${merchant.primary_color}30`,
-                  backgroundColor: `${merchant.primary_color}05`
-                }}
-              >
-                <div className="shrink-0">
-                  {isIOS && !isIOSChrome ? (
-                    <ChevronDown className="w-4 h-4" style={{ color: merchant.primary_color }} />
-                  ) : (
-                    <ChevronUp className="w-4 h-4" style={{ color: merchant.primary_color }} />
-                  )}
-                </div>
-                <span className="flex-1 text-xs font-medium text-gray-700 text-left">
-                  Ajouter à l&apos;écran d&apos;accueil pour recevoir les offres exclusives
-                </span>
-                <PlusSquare className="w-4 h-4 shrink-0" style={{ color: merchant.primary_color }} />
-              </div>
-            </motion.button>
-          )}
 
           {/* PWA Notification Banner - Show in PWA when NOT subscribed */}
           {isStandalone && isMobile && !pushSubscribed && pushPermission !== 'denied' && (
@@ -1389,18 +1359,7 @@ export default function CustomerCardPage({
                       );
                     })}
                 </motion.ul>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="p-4 text-center text-gray-500"
-                >
-                  <p className="text-xs">
-                    {visits.length + adjustments.length} enregistrement{visits.length + adjustments.length > 1 ? 's' : ''}
-                  </p>
-                </motion.div>
-              )
+              ) : null
             ) : (
               <motion.div
                 initial={{ opacity: 0 }}
@@ -1558,6 +1517,48 @@ export default function CustomerCardPage({
           </div>
         )}
       </Modal>
+
+      {/* Sticky Add to Home Screen Banner - Fixed at bottom */}
+      {!isStandalone && isMobile && (
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => setShowIOSInstructions(true)}
+          className="fixed bottom-4 left-4 right-4 z-40"
+        >
+          <motion.div
+            animate={{
+              boxShadow: [
+                `0 0 0 0 ${merchant.primary_color}40`,
+                `0 0 0 8px ${merchant.primary_color}00`,
+                `0 0 0 0 ${merchant.primary_color}40`
+              ]
+            }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg"
+            style={{
+              backgroundColor: merchant.primary_color,
+            }}
+          >
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="shrink-0"
+            >
+              {isIOS && !isIOSChrome ? (
+                <ChevronDown className="w-5 h-5 text-white" />
+              ) : (
+                <ChevronUp className="w-5 h-5 text-white" />
+              )}
+            </motion.div>
+            <span className="flex-1 text-sm font-semibold text-white text-left">
+              Ajouter à l&apos;écran d&apos;accueil
+            </span>
+            <PlusSquare className="w-5 h-5 text-white shrink-0" />
+          </motion.div>
+        </motion.button>
+      )}
     </div>
   );
 }
