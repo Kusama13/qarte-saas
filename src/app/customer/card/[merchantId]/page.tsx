@@ -1523,10 +1523,10 @@ export default function CustomerCardPage({
                 ]
               }}
               transition={{ duration: 2.5, repeat: Infinity }}
-              className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-md border"
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg border-2"
               style={{
-                backgroundColor: `${merchant.primary_color}15`,
-                borderColor: `${merchant.primary_color}30`,
+                backgroundColor: '#ffffff',
+                borderColor: merchant.primary_color,
               }}
             >
               <motion.div
