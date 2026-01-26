@@ -271,10 +271,8 @@ function HeroSection() {
         {/* iPhone Mockup */}
         <div className={`flex justify-center ${isInView ? 'animate-fade-in-up delay-300' : 'opacity-0'}`} style={{ animationDelay: '0.3s' }}>
           <div className="animate-float relative">
-            {/* Phone Frame */}
+            {/* Phone Frame - Sans encoche */}
             <div className="relative w-[280px] h-[570px] bg-gray-900 rounded-[3rem] p-2 shadow-2xl shadow-gray-900/30">
-              {/* Dynamic Island */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-28 h-7 bg-black rounded-full z-10" />
               {/* Screen */}
               <div className="w-full h-full rounded-[2.5rem] overflow-hidden">
                 <img
@@ -442,69 +440,70 @@ function PainPointsSection() {
   ];
 
   return (
-    <section className="py-24 bg-white relative overflow-hidden">
-      {/* Background Numbers */}
-      <div className="absolute inset-0 flex justify-around items-center opacity-5 pointer-events-none">
-        <span className="text-[300px] font-bold text-gray-900">1</span>
-        <span className="text-[300px] font-bold text-gray-900">2</span>
-        <span className="text-[300px] font-bold text-gray-900">3</span>
-      </div>
-
+    <section className="py-24 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
       <div ref={ref} className="max-w-6xl mx-auto px-6 relative z-10">
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Les <span className="text-rose-500">3 erreurs</span> qui tuent la fidélisation
+            Les <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">3 défis</span> de la fidélisation
           </h2>
-          <p className="text-xl text-gray-600">Et comment Qarte les résout définitivement.</p>
+          <p className="text-xl text-gray-600">Et comment Qarte les résout simplement.</p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
           {painPoints.map((point, index) => (
             <div
               key={index}
-              className={`group relative p-8 bg-white rounded-3xl border border-gray-200 shadow-xl hover:shadow-2xl hover:border-rose-200 transition-all duration-500 overflow-hidden ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}
+              className={`group relative p-10 bg-white/70 backdrop-blur-md rounded-[2.5rem] border border-slate-200/60 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-2 hover:border-indigo-100 transition-all duration-500 overflow-hidden ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}
               style={{ animationDelay: `${(index + 1) * 0.15}s` }}
             >
-              {/* Alarming Background Gradient Overlay */}
-              <div className="absolute top-0 right-0 -mr-12 -mt-12 w-48 h-48 bg-rose-500/5 rounded-full blur-3xl group-hover:bg-rose-500/10 transition-colors duration-500" />
+              {/* Subtle Brand Gradient Overlay */}
+              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
 
-              {/* Prominent Number Badge with Animation */}
-              <div className="absolute -top-2 -left-2 w-14 h-14 bg-rose-600 text-white rounded-2xl flex items-center justify-center font-black text-2xl shadow-xl z-20 transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 ring-4 ring-white">
-                {point.number}
-              </div>
-
-              <div className="relative z-10">
-                {/* Replaced Emoji with High-Impact Icon */}
-                <div className="mb-6 inline-flex items-center justify-center w-14 h-14 bg-rose-50 text-rose-500 rounded-2xl group-hover:bg-rose-500 group-hover:text-white transition-all duration-300 transform group-hover:-translate-y-1">
-                  <AlertCircle size={28} strokeWidth={2.5} />
+              <div className="relative z-10 h-full flex flex-col">
+                {/* Modern Indicator & Icon */}
+                <div className="flex items-start justify-between mb-8">
+                  <div className="w-14 h-14 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                    <AlertCircle size={28} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-sm font-bold text-slate-300 group-hover:text-indigo-400 transition-colors">
+                    0{point.number}
+                  </span>
                 </div>
 
-                <h3 className="text-2xl font-black text-gray-900 mb-3 tracking-tight group-hover:text-rose-600 transition-colors">
+                <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">
                   {point.title}
                 </h3>
 
-                <p className="text-gray-600 mb-8 leading-relaxed font-medium">
+                <p className="text-slate-600 mb-10 leading-relaxed font-medium">
                   {point.description}
                 </p>
 
-                {/* Dramatic Visual Hierarchy for Stats */}
-                <div className="relative p-5 bg-rose-50/50 rounded-2xl border border-rose-100 group-hover:bg-rose-50 group-hover:border-rose-200 transition-all duration-300">
+                {/* Premium Stat Footer */}
+                <div className="mt-auto pt-8 border-t border-slate-100/80">
                   <div className="flex flex-col">
-                    <span className="text-xs font-black text-rose-400 uppercase tracking-widest mb-1">Impact critique</span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-4xl font-black text-rose-600 group-hover:scale-105 transition-transform duration-300 origin-left">{point.stat}</span>
-                      <span className="text-gray-500 font-bold text-sm">{point.statLabel}</span>
+                    <span className="text-[10px] font-bold text-indigo-400/80 uppercase tracking-[0.2em] mb-2">Impact</span>
+                    <div className="flex items-end justify-between">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-4xl font-extrabold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors duration-300">
+                          {point.stat}
+                        </span>
+                        <span className="text-slate-400 font-semibold text-sm mb-1">{point.statLabel}</span>
+                      </div>
+
+                      {/* Modern Wave Visualizer */}
+                      <div className="flex items-end gap-1.5 h-10 mb-1">
+                        {[0.4, 0.7, 1, 0.6].map((opacity, i) => (
+                          <div
+                            key={i}
+                            className="w-1.5 rounded-full bg-indigo-500 transition-all duration-500 ease-out group-hover:scale-y-110"
+                            style={{
+                              height: `${(i + 1) * 20 + 20}%`,
+                              opacity: opacity * 0.3
+                            }}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                  {/* Visual Indicator Bar */}
-                  <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center gap-1">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className={`w-1.5 h-6 rounded-full bg-rose-200 ${i === 3 ? 'group-hover:bg-rose-500 animate-pulse' : 'group-hover:bg-rose-400'}`}
-                        style={{ height: `${i * 8 + 12}px` }}
-                      />
-                    ))}
                   </div>
                 </div>
               </div>
