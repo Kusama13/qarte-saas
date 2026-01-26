@@ -44,9 +44,11 @@ export async function POST(request: NextRequest) {
       vapidPrivateKey
     );
 
-    const { merchantId, customerId, payload } = await request.json() as {
+    const { merchantId, customerId, customerIds, filterType, payload } = await request.json() as {
       merchantId?: string;
       customerId?: string;
+      customerIds?: string[]; // Optional: filter to specific customer IDs
+      filterType?: string; // Optional: filter type for history tracking
       payload: PushPayload;
     };
 
@@ -91,13 +93,26 @@ export async function POST(request: NextRequest) {
       }
 
       if (loyaltyCards && loyaltyCards.length > 0) {
-        const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
+        let targetCustomerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
+
+        // If customerIds filter is provided, only send to those customers
+        if (customerIds && customerIds.length > 0) {
+          targetCustomerIds = targetCustomerIds.filter(id => customerIds.includes(id));
+        }
+
+        if (targetCustomerIds.length === 0) {
+          return NextResponse.json({
+            success: true,
+            sent: 0,
+            message: 'Aucun client correspondant aux critères',
+          });
+        }
 
         // Get push subscriptions for these customers
         const { data, error } = await supabase
           .from('push_subscriptions')
           .select('*')
-          .in('customer_id', customerIds);
+          .in('customer_id', targetCustomerIds);
 
         if (error) {
           console.error('Error fetching subscriptions:', error);
@@ -169,6 +184,23 @@ export async function POST(request: NextRequest) {
       (r) => r.status === 'fulfilled' && r.value.success
     ).length;
     const failed = results.length - successful;
+
+    // Save to push history (only for merchant sends, not individual customer sends)
+    if (merchantId && successful > 0) {
+      try {
+        await supabase.from('push_history').insert({
+          merchant_id: merchantId,
+          title: payload.title,
+          body: payload.body,
+          filter_type: filterType || 'all',
+          sent_count: successful,
+          failed_count: failed,
+        });
+      } catch (historyError) {
+        console.error('Error saving push history:', historyError);
+        // Don't fail the request if history save fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

@@ -15,6 +15,13 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  Target,
+  Zap,
+  UserPlus,
+  Crown,
+  Moon,
+  Filter,
+  History,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -32,6 +39,32 @@ interface Subscriber {
   first_name: string | null;
   last_name: string | null;
   phone_number: string | null;
+  loyalty_card_id: string | null;
+  current_stamps: number;
+  stamps_required: number;
+  last_visit: string | null;
+  total_visits: number;
+  card_created_at: string | null;
+}
+
+type FilterType = 'all' | 'close_to_reward' | 'inactive' | 'new' | 'vip' | 'reward_ready';
+
+interface MarketingFilter {
+  id: FilterType;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+  color: string;
+}
+
+interface PushHistoryItem {
+  id: string;
+  title: string;
+  body: string;
+  filter_type: string;
+  sent_count: number;
+  failed_count: number;
+  created_at: string;
 }
 
 const templates: NotificationTemplate[] = [
@@ -65,6 +98,51 @@ const templates: NotificationTemplate[] = [
   },
 ];
 
+const marketingFilters: MarketingFilter[] = [
+  {
+    id: 'all',
+    label: 'Tous',
+    description: 'Tous les abonnés',
+    icon: Users,
+    color: 'gray',
+  },
+  {
+    id: 'close_to_reward',
+    label: 'Presque récompensés',
+    description: 'Plus que 1-2 points',
+    icon: Target,
+    color: 'emerald',
+  },
+  {
+    id: 'reward_ready',
+    label: 'Récompense prête',
+    description: 'Peuvent utiliser leur récompense',
+    icon: Gift,
+    color: 'amber',
+  },
+  {
+    id: 'inactive',
+    label: 'Inactifs',
+    description: 'Pas de visite depuis 30+ jours',
+    icon: Moon,
+    color: 'blue',
+  },
+  {
+    id: 'new',
+    label: 'Nouveaux',
+    description: 'Inscrits depuis moins de 7 jours',
+    icon: UserPlus,
+    color: 'violet',
+  },
+  {
+    id: 'vip',
+    label: 'VIP',
+    description: '10+ visites au total',
+    icon: Crown,
+    color: 'yellow',
+  },
+];
+
 export default function MarketingPushPage() {
   const { merchant } = useMerchant();
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
@@ -75,12 +153,15 @@ export default function MarketingPushPage() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<FilterType>('all');
   const [sendResult, setSendResult] = useState<{
     success: boolean;
     sent?: number;
     failed?: number;
     message?: string;
   } | null>(null);
+  const [pushHistory, setPushHistory] = useState<PushHistoryItem[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
 
   // Fetch subscriber count and list via API (uses service role to bypass RLS)
   useEffect(() => {
@@ -106,22 +187,98 @@ export default function MarketingPushPage() {
     fetchSubscribers();
   }, [merchant?.id]);
 
+  // Fetch push history
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!merchant?.id) return;
+
+      try {
+        const response = await fetch(`/api/push/history?merchantId=${merchant.id}&limit=10`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setPushHistory(data.history || []);
+        } else {
+          console.error('Error fetching push history:', data.error);
+        }
+      } catch (err) {
+        console.error('Error fetching push history:', err);
+      }
+      setLoadingHistory(false);
+    };
+
+    fetchHistory();
+  }, [merchant?.id]);
+
+  // Filter subscribers based on selected filter
+  const getFilteredSubscribers = (subs: Subscriber[]): Subscriber[] => {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    switch (selectedFilter) {
+      case 'close_to_reward':
+        // Customers with 1-2 stamps remaining
+        return subs.filter(s =>
+          s.stamps_required - s.current_stamps <= 2 &&
+          s.stamps_required - s.current_stamps > 0
+        );
+
+      case 'reward_ready':
+        // Customers who can redeem
+        return subs.filter(s => s.current_stamps >= s.stamps_required);
+
+      case 'inactive':
+        // No visit in last 30 days
+        return subs.filter(s => {
+          if (!s.last_visit) return true; // Never visited = inactive
+          const lastVisitDate = new Date(s.last_visit);
+          return lastVisitDate < thirtyDaysAgo;
+        });
+
+      case 'new':
+        // Card created within last 7 days
+        return subs.filter(s => {
+          if (!s.card_created_at) return false;
+          const createdDate = new Date(s.card_created_at);
+          return createdDate >= sevenDaysAgo;
+        });
+
+      case 'vip':
+        // 10+ visits total
+        return subs.filter(s => s.total_visits >= 10);
+
+      case 'all':
+      default:
+        return subs;
+    }
+  };
+
+  const filteredSubscribers = getFilteredSubscribers(subscribers);
+  const filteredCount = filteredSubscribers.length;
+
   const handleSend = async () => {
     if (!title.trim() || !body.trim() || !merchant?.id) return;
+    if (filteredCount === 0) return;
 
     setSending(true);
     setSendResult(null);
 
     try {
+      // Get customer IDs to send to (filtered)
+      const targetCustomerIds = filteredSubscribers.map(s => s.id);
+
       const response = await fetch('/api/push/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           merchantId: merchant.id,
+          customerIds: targetCustomerIds.length < subscribers.length ? targetCustomerIds : undefined, // Only pass if filtered
+          filterType: selectedFilter,
           payload: {
-            title: title.trim(),
-            body: body.trim(),
-            url: `/scan/${merchant.scan_code}`,
+            title: merchant.shop_name || 'Qarte',
+            body: `${title.trim()}: ${body.trim()}`,
+            url: `/customer/card/${merchant.id}`,
           },
         }),
       });
@@ -138,6 +295,16 @@ export default function MarketingPushPage() {
         if (data.sent > 0) {
           setTitle('');
           setBody('');
+          // Refresh history
+          try {
+            const historyResponse = await fetch(`/api/push/history?merchantId=${merchant.id}&limit=10`);
+            const historyData = await historyResponse.json();
+            if (historyResponse.ok) {
+              setPushHistory(historyData.history || []);
+            }
+          } catch (e) {
+            console.error('Error refreshing history:', e);
+          }
         }
       } else {
         setSendResult({
@@ -258,6 +425,84 @@ export default function MarketingPushPage() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Filter Section */}
+      {subscriberCount !== null && subscriberCount > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Filter className="w-5 h-5 text-gray-400" />
+            Ciblage
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {marketingFilters.map((filter) => {
+              const count = filter.id === 'all'
+                ? subscribers.length
+                : getFilteredSubscribers(subscribers).length === filteredCount && filter.id === selectedFilter
+                  ? filteredCount
+                  : filter.id === selectedFilter
+                    ? filteredCount
+                    : (() => {
+                        const tempFilter = selectedFilter;
+                        // Quick count for this filter
+                        const now = new Date();
+                        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        switch (filter.id) {
+                          case 'close_to_reward':
+                            return subscribers.filter(s => s.stamps_required - s.current_stamps <= 2 && s.stamps_required - s.current_stamps > 0).length;
+                          case 'reward_ready':
+                            return subscribers.filter(s => s.current_stamps >= s.stamps_required).length;
+                          case 'inactive':
+                            return subscribers.filter(s => !s.last_visit || new Date(s.last_visit) < thirtyDaysAgo).length;
+                          case 'new':
+                            return subscribers.filter(s => s.card_created_at && new Date(s.card_created_at) >= sevenDaysAgo).length;
+                          case 'vip':
+                            return subscribers.filter(s => s.total_visits >= 10).length;
+                          default:
+                            return subscribers.length;
+                        }
+                      })();
+
+              const isSelected = selectedFilter === filter.id;
+              const colorClasses: Record<string, { bg: string; text: string; border: string; selectedBg: string }> = {
+                gray: { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200', selectedBg: 'bg-gray-600' },
+                emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', selectedBg: 'bg-emerald-600' },
+                amber: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', selectedBg: 'bg-amber-600' },
+                blue: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', selectedBg: 'bg-blue-600' },
+                violet: { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', selectedBg: 'bg-violet-600' },
+                yellow: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200', selectedBg: 'bg-yellow-600' },
+              };
+              const colors = colorClasses[filter.color] || colorClasses.gray;
+
+              return (
+                <button
+                  key={filter.id}
+                  onClick={() => setSelectedFilter(filter.id)}
+                  className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl border transition-all hover:scale-105 active:scale-95 ${
+                    isSelected
+                      ? `${colors.selectedBg} text-white border-transparent shadow-lg`
+                      : `${colors.bg} ${colors.text} ${colors.border} hover:shadow-md`
+                  }`}
+                >
+                  <filter.icon className="w-4 h-4" />
+                  <span className="text-sm font-semibold">{filter.label}</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-xs font-bold ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-black/5'
+                  }`}>
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {selectedFilter !== 'all' && (
+            <p className="text-sm text-gray-500 mt-3 flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              {filteredCount} client{filteredCount > 1 ? 's' : ''} ciblé{filteredCount > 1 ? 's' : ''} • {marketingFilters.find(f => f.id === selectedFilter)?.description}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Composer */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
@@ -399,7 +644,7 @@ export default function MarketingPushPage() {
           {/* Send Button */}
           <button
             onClick={handleSend}
-            disabled={!title.trim() || !body.trim() || sending || subscriberCount === 0}
+            disabled={!title.trim() || !body.trim() || sending || filteredCount === 0}
             className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-lg shadow-lg shadow-amber-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
           >
             {sending ? (
@@ -410,7 +655,10 @@ export default function MarketingPushPage() {
             ) : (
               <>
                 <Send className="w-5 h-5" />
-                Envoyer à {subscriberCount || 0} abonné{(subscriberCount || 0) > 1 ? 's' : ''}
+                Envoyer à {filteredCount} {selectedFilter !== 'all' ? 'client' : 'abonné'}{filteredCount > 1 ? 's' : ''}
+                {selectedFilter !== 'all' && (
+                  <span className="text-sm opacity-75">({marketingFilters.find(f => f.id === selectedFilter)?.label})</span>
+                )}
               </>
             )}
           </button>
@@ -420,11 +668,17 @@ export default function MarketingPushPage() {
               Vous pourrez envoyer des notifications quand des clients s'abonneront
             </p>
           )}
+
+          {subscriberCount !== null && subscriberCount > 0 && filteredCount === 0 && selectedFilter !== 'all' && (
+            <p className="text-center text-sm text-gray-400">
+              Aucun client ne correspond à ce filtre
+            </p>
+          )}
         </div>
       </div>
 
       {/* Tips */}
-      <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100">
+      <div className="bg-amber-50 rounded-2xl p-6 border border-amber-100 mb-6">
         <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-amber-600" />
           Conseils pour des notifications efficaces
@@ -447,6 +701,74 @@ export default function MarketingPushPage() {
             <span>Personnalisez avec le nom de votre commerce</span>
           </li>
         </ul>
+      </div>
+
+      {/* Push History */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <History className="w-5 h-5 text-gray-400" />
+          Historique des envois
+        </h2>
+
+        {loadingHistory ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          </div>
+        ) : pushHistory.length === 0 ? (
+          <div className="text-center py-8 text-gray-400">
+            <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p>Aucune notification envoyée</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pushHistory.map((item) => {
+              const filterInfo = marketingFilters.find(f => f.id === item.filter_type);
+              const FilterIcon = filterInfo?.icon || Users;
+              const date = new Date(item.created_at);
+              const formattedDate = date.toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+              });
+
+              return (
+                <div
+                  key={item.id}
+                  className="p-4 bg-gray-50 rounded-xl border border-gray-100"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{item.title}</p>
+                      <p className="text-sm text-gray-600 line-clamp-2">{item.body}</p>
+                      <div className="flex items-center gap-3 mt-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-white rounded-lg text-xs font-medium text-gray-600 border border-gray-200">
+                          <FilterIcon className="w-3 h-3" />
+                          {filterInfo?.label || 'Tous'}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {formattedDate}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <div className="flex items-center gap-1 text-emerald-600">
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span className="font-bold">{item.sent_count}</span>
+                      </div>
+                      {item.failed_count > 0 && (
+                        <div className="flex items-center gap-1 text-red-500 text-sm">
+                          <AlertCircle className="w-3 h-3" />
+                          <span>{item.failed_count}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

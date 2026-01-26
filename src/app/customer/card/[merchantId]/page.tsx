@@ -117,6 +117,7 @@ export default function CustomerCardPage({
   const [showIOSVersionWarning, setShowIOSVersionWarning] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [pushError, setPushError] = useState<string | null>(null);
+  const [showSafariArrow, setShowSafariArrow] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -167,6 +168,14 @@ export default function CustomerCardPage({
     setIsIOS(iOS);
     setIsStandalone(standalone);
     setIOSVersion(iosVersion);
+
+    // Show Safari share arrow for iOS users not in PWA mode
+    // Only show if they haven't dismissed it before
+    const arrowDismissed = localStorage.getItem('qarte_safari_arrow_dismissed');
+    if (iOS && !standalone && !arrowDismissed) {
+      // Small delay to let the page load first
+      setTimeout(() => setShowSafariArrow(true), 1500);
+    }
 
     // On iOS in standalone mode, check if iOS version supports push
     if (iOS && standalone) {
@@ -1007,6 +1016,66 @@ export default function CustomerCardPage({
           </div>
         </footer>
       </main>
+
+      {/* Safari Share Arrow for iOS users not in PWA */}
+      {showSafariArrow && (
+        <div className="fixed inset-0 z-40 pointer-events-none">
+          {/* Semi-transparent overlay */}
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm pointer-events-auto animate-fade-in"
+            onClick={() => {
+              setShowSafariArrow(false);
+              localStorage.setItem('qarte_safari_arrow_dismissed', 'true');
+            }}
+          />
+
+          {/* Arrow and message container */}
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-auto animate-slide-up">
+            {/* Message bubble */}
+            <div
+              className="bg-white rounded-2xl shadow-2xl p-4 mb-4 max-w-[280px] text-center"
+              onClick={() => {
+                setShowSafariArrow(false);
+                localStorage.setItem('qarte_safari_arrow_dismissed', 'true');
+              }}
+            >
+              <p className="font-bold text-gray-900 mb-1">📲 Ajoutez Qarte à votre écran</p>
+              <p className="text-sm text-gray-600 mb-2">
+                Pour recevoir vos offres exclusives et accéder à vos cartes en 1 clic
+              </p>
+              <p className="text-xs text-gray-400">Appuyez sur le bouton ci-dessous</p>
+            </div>
+
+            {/* Bouncing arrow pointing to share button */}
+            <div className="animate-bounce-slow">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
+                style={{ backgroundColor: merchant.primary_color }}
+              >
+                <Share className="w-7 h-7 text-white" />
+              </div>
+              {/* Arrow pointing down */}
+              <div className="flex justify-center -mt-1">
+                <div
+                  className="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[16px] border-l-transparent border-r-transparent"
+                  style={{ borderTopColor: merchant.primary_color }}
+                />
+              </div>
+            </div>
+
+            {/* Dismiss button */}
+            <button
+              onClick={() => {
+                setShowSafariArrow(false);
+                localStorage.setItem('qarte_safari_arrow_dismissed', 'true');
+              }}
+              className="mt-4 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-sm font-medium text-gray-600 shadow-lg"
+            >
+              Plus tard
+            </button>
+          </div>
+        </div>
+      )}
 
       <Modal
         isOpen={showRedeemModal}
