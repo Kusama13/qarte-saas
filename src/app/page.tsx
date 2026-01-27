@@ -578,12 +578,6 @@ function FeaturesSection() {
   const mobileTabsRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Play notification sound when Push feature becomes active
-  const playNotificationSound = useCallback(() => {
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2AgICBgH53bmdmaW1zdHZ3eHl6e3x9fn+AgYKDhIWGh4iJiouMjY6PkJGSk5SVlpeYmZqbnJ2en6ChoqOkpaanqKmqq6ytrq+wsbKztLW2t7i5uru8vb6/wMHCw8TFxsfIycrLzM3Oz9DR0tPU1dbX2Nna29zd3t/g4eLj5OXm5+jp6uvs7e7v8PHy8/T19vf4+fr7/P3+/w==');
-    audio.volume = 0.3;
-    audio.play().catch(() => {});
-  }, []);
 
   const features = [
     {
@@ -764,7 +758,6 @@ function FeaturesSection() {
       keywords: ["messages ciblés", "Promos flash", "alertes récompenses"],
       color: "from-rose-500 to-red-500",
       bgColor: "bg-rose-50",
-      hasSound: true,
       visual: (
         <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl overflow-hidden">
           {/* Phone mockup */}
@@ -851,14 +844,10 @@ function FeaturesSection() {
   const nextTab = useCallback(() => {
     setActiveIndex((prev) => {
       const nextIndex = (prev + 1) % features.length;
-      // Play sound if next feature is Push
-      if (features[nextIndex].hasSound) {
-        playNotificationSound();
-      }
       return nextIndex;
     });
     setProgress(0);
-  }, [features.length, playNotificationSound]);
+  }, [features.length]);
 
   // Auto-scroll mobile tabs to keep active tab visible
   useEffect(() => {
@@ -891,10 +880,6 @@ function FeaturesSection() {
   const handleTabClick = (index: number) => {
     setActiveIndex(index);
     setProgress(0);
-    // Play sound if selected feature is Push
-    if (features[index].hasSound) {
-      playNotificationSound();
-    }
   };
 
   // Highlight keywords in description
