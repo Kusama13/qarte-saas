@@ -1825,75 +1825,119 @@ export default function CustomerCardPage({
       <Modal
         isOpen={showRedeemModal}
         onClose={() => !redeemSuccess && setShowRedeemModal(false)}
-        title={redeemSuccess ? "Félicitations !" : `Utiliser ma récompense${tier2Enabled ? ` - Palier ${redeemTier}` : ''}`}
+        title={redeemSuccess ? "Félicitations !" : `Récompense ${tier2Enabled ? `Palier ${redeemTier}` : ''}`}
       >
-        {redeemSuccess ? (
-          <div className="text-center">
-            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${redeemTier === 2 ? 'bg-violet-100' : 'bg-green-100'}`}>
-              <Check className={`w-10 h-10 ${redeemTier === 2 ? 'text-violet-600' : 'text-green-600'}`} />
-            </div>
-
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {redeemTier === 2 ? 'Palier 2 débloqué !' : 'Récompense utilisée !'}
-            </h3>
-
-            <p className="text-gray-600 mb-6">
-              {redeemTier === 2 || !tier2Enabled
-                ? 'Votre compteur a été remis à zéro. Merci de votre fidélité !'
-                : 'Vos points sont conservés. Continuez vers le palier 2 !'}
-            </p>
-
-            <Button
-              onClick={() => {
-                setShowRedeemModal(false);
-                setRedeemSuccess(false);
-              }}
-              className="w-full"
-              size="lg"
-              style={{ backgroundColor: redeemTier === 2 ? '#8B5CF6' : merchant.primary_color }}
-            >
-              Retour à ma carte
-            </Button>
+        <div className="relative overflow-hidden rounded-2xl p-1">
+          {/* Ambient Background Particles */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            {[...Array(6)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-2 h-2 rounded-full bg-white/40"
+                animate={{
+                  y: [0, -100],
+                  x: [0, Math.sin(i) * 50],
+                  opacity: [0, 1, 0],
+                  scale: [0, 1.5, 0],
+                }}
+                transition={{
+                  duration: 3 + i,
+                  repeat: Infinity,
+                  delay: i * 0.5,
+                  ease: "easeOut"
+                }}
+                style={{
+                  left: `${15 + i * 15}%`,
+                  bottom: "-10%",
+                }}
+              />
+            ))}
           </div>
-        ) : (
-          <div className="text-center">
-            <div
-              className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
-              style={{ backgroundColor: redeemTier === 2 ? '#EDE9FE' : `${merchant.primary_color}20` }}
-            >
-              {redeemTier === 2 ? (
-                <Trophy className="w-10 h-10 text-violet-600" />
-              ) : (
-                <Gift className="w-10 h-10" style={{ color: merchant.primary_color }} />
-              )}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`relative z-10 p-6 rounded-xl border border-white/40 backdrop-blur-xl shadow-2xl overflow-hidden
+              ${redeemTier === 2
+                ? 'bg-gradient-to-br from-violet-500/10 via-white/80 to-amber-500/10'
+                : 'bg-white/80'
+              }`}
+          >
+            {/* Animated Shine Effect */}
+            <motion.div
+              initial={{ x: "-150%" }}
+              animate={{ x: "200%" }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 2 }}
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 pointer-events-none"
+            />
+
+            <div className="text-center">
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: [0.8, 1.1, 1], rotate: [0, -5, 5, 0] }}
+                transition={{ duration: 0.5, type: "spring" }}
+                className="relative inline-block mb-6"
+              >
+                {/* Glow Ring */}
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className={`absolute inset-0 rounded-full blur-xl ${redeemTier === 2 ? 'bg-violet-400' : ''}`}
+                  style={{ backgroundColor: redeemTier !== 2 ? `${merchant.primary_color}40` : undefined }}
+                />
+
+                <div className={`relative flex items-center justify-center w-20 h-20 rounded-2xl shadow-lg
+                  ${redeemTier === 2 ? 'bg-gradient-to-br from-violet-600 to-indigo-600' : 'border border-white/20'}`}
+                  style={{ backgroundColor: redeemTier !== 2 ? merchant.primary_color : undefined }}
+                >
+                  {redeemSuccess ? (
+                    <Check className="w-10 h-10 text-white" />
+                  ) : (
+                    redeemTier === 2 ? <Trophy className="w-10 h-10 text-white" /> : <Gift className="w-10 h-10 text-white" />
+                  )}
+                </div>
+              </motion.div>
+
+              <div className="space-y-2 mb-8">
+                <h3 className={`text-2xl font-black tracking-tight ${redeemTier === 2 ? 'text-violet-900' : 'text-gray-900'}`}>
+                  {redeemSuccess
+                    ? (redeemTier === 2 ? 'Privilège Débloqué !' : 'Cadeau Validé !')
+                    : (redeemTier === 2 ? tier2Reward : merchant.reward_description)
+                  }
+                </h3>
+                <p className="text-gray-600 font-medium px-4 leading-relaxed">
+                  {redeemSuccess
+                    ? (redeemTier === 2 || !tier2Enabled
+                        ? 'Votre fidélité a été récompensée. À très bientôt !'
+                        : 'Vos points sont préservés. Le palier 2 vous attend !')
+                    : 'Présentez ce coupon digital au commerçant pour profiter de votre offre.'
+                  }
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <Button
+                  onClick={() => redeemSuccess ? (setShowRedeemModal(false), setRedeemSuccess(false)) : handleRedeem(redeemTier)}
+                  loading={redeeming}
+                  className={`w-full h-14 text-lg font-bold rounded-xl transition-all duration-300 transform active:scale-95 shadow-xl hover:shadow-2xl hover:-translate-y-0.5
+                    ${redeemTier === 2 ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-none' : ''}`}
+                  style={{ backgroundColor: redeemTier !== 2 ? merchant.primary_color : undefined }}
+                >
+                  {redeemSuccess ? 'Fermer' : 'Valider maintenant'}
+                </Button>
+
+                {!redeemSuccess && (
+                  <button
+                    onClick={() => setShowRedeemModal(false)}
+                    className="w-full py-2 text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    Plus tard
+                  </button>
+                )}
+              </div>
             </div>
-
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {redeemTier === 2 ? tier2Reward : merchant.reward_description}
-            </h3>
-
-            <p className="text-gray-600 mb-6">
-              Montrez cet écran au commerçant pour valider votre récompense.
-            </p>
-
-            <Button
-              onClick={() => handleRedeem(redeemTier)}
-              loading={redeeming}
-              className="w-full"
-              size="lg"
-              style={{ backgroundColor: redeemTier === 2 ? '#8B5CF6' : merchant.primary_color }}
-            >
-              Confirmer l&apos;utilisation
-            </Button>
-
-            <button
-              onClick={() => setShowRedeemModal(false)}
-              className="mt-4 text-gray-500 hover:text-gray-700"
-            >
-              Annuler
-            </button>
-          </div>
-        )}
+          </motion.div>
+        </div>
       </Modal>
 
       {/* Member Card Modal - Credit Card Style */}

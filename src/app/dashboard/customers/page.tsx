@@ -39,6 +39,7 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithCard | null>(null);
   const [subscriberIds, setSubscriberIds] = useState<string[]>([]);
   const [filterPushOnly, setFilterPushOnly] = useState(false);
+  const [tier1RedeemedCards, setTier1RedeemedCards] = useState<Set<string>>(new Set());
 
   // Create customer modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -75,6 +76,48 @@ export default function CustomersPage() {
     if (cardsData) {
       setCustomers(cardsData as CustomerWithCard[]);
       setFilteredCustomers(cardsData as CustomerWithCard[]);
+
+      // Fetch tier 1 redemptions for tier2 merchants to show "Palier 1 utilisé"
+      if (merchantData.tier2_enabled) {
+        const cardIds = cardsData.map((c: CustomerWithCard) => c.id);
+        const { data: redemptionsData } = await supabase
+          .from('redemptions')
+          .select('loyalty_card_id, tier, redeemed_at')
+          .in('loyalty_card_id', cardIds)
+          .order('redeemed_at', { ascending: false });
+
+        if (redemptionsData) {
+          // For each card, check if tier 1 was redeemed after last tier 2
+          const tier1Redeemed = new Set<string>();
+          const cardRedemptions = new Map<string, Array<{ tier: number; redeemed_at: string }>>();
+
+          // Group redemptions by card
+          redemptionsData.forEach((r: { loyalty_card_id: string; tier: number; redeemed_at: string }) => {
+            if (!cardRedemptions.has(r.loyalty_card_id)) {
+              cardRedemptions.set(r.loyalty_card_id, []);
+            }
+            cardRedemptions.get(r.loyalty_card_id)!.push({ tier: r.tier, redeemed_at: r.redeemed_at });
+          });
+
+          // Check each card
+          cardRedemptions.forEach((redemptions, cardId) => {
+            const tier2Redemptions = redemptions.filter(r => r.tier === 2);
+            const lastTier2Date = tier2Redemptions.length > 0
+              ? new Date(tier2Redemptions[0].redeemed_at).getTime()
+              : 0;
+
+            const tier1AfterTier2 = redemptions.some(
+              r => r.tier === 1 && new Date(r.redeemed_at).getTime() > lastTier2Date
+            );
+
+            if (tier1AfterTier2) {
+              tier1Redeemed.add(cardId);
+            }
+          });
+
+          setTier1RedeemedCards(tier1Redeemed);
+        }
+      }
     }
 
     // Fetch push subscriber IDs
@@ -331,6 +374,10 @@ export default function CustomersPage() {
                         return { text: 'Palier 2 prêt', color: 'text-violet-700 bg-violet-100' };
                       }
                       if (isTier1Ready) {
+                        // Check if tier 1 was already redeemed in this cycle
+                        if (tier1RedeemedCards.has(card.id)) {
+                          return { text: 'Palier 1 utilisé', color: 'text-gray-500 bg-gray-100' };
+                        }
                         return { text: 'Palier 1 prêt', color: 'text-emerald-700 bg-emerald-100' };
                       }
                     } else if (isTier1Ready) {
