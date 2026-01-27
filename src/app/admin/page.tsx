@@ -486,18 +486,24 @@ export default function AdminDashboardPage() {
         {/* Column 1: Notes + Tasks */}
         <div className="space-y-6">
           {/* Notes */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-amber-200/50 transition-all duration-500 overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100/50 flex items-center justify-between bg-gradient-to-r from-amber-500/[0.08] to-orange-500/[0.08] backdrop-blur-xl">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-50 rounded-xl">
-                  <StickyNote className="w-5 h-5 text-amber-600" />
+                <div className="relative">
+                  <div className="absolute inset-0 bg-amber-400/20 rounded-xl blur-md animate-pulse" />
+                  <div className="relative p-2 bg-white rounded-xl shadow-sm border border-amber-100/50">
+                    <StickyNote className="w-5 h-5 text-amber-600" />
+                  </div>
                 </div>
-                <h2 className="font-bold text-gray-900">Notes</h2>
+                <h2 className="text-lg font-semibold tracking-tight text-gray-800">Notes</h2>
               </div>
-              <div className="flex items-center gap-2 text-xs text-gray-400">
-                {notesSaving && <Loader2 className="w-3 h-3 animate-spin" />}
+              <div className="flex items-center gap-2 text-[10px] font-bold tracking-wider uppercase text-gray-400">
+                {notesSaving && <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-500" />}
                 {notesLastSaved && !notesSaving && (
-                  <span>Sauvé {notesLastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="flex items-center gap-1.5 bg-white/50 px-2 py-1 rounded-full border border-gray-100/50">
+                    <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+                    Sauvé {notesLastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 )}
               </div>
             </div>
@@ -505,74 +511,103 @@ export default function AdminDashboardPage() {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Écrivez vos notes, idées, rappels..."
-              className="w-full h-48 p-4 text-sm resize-none focus:outline-none"
+              className="w-full h-48 p-5 text-[15px] leading-relaxed text-gray-600 placeholder:text-gray-300 bg-white/40 resize-none focus:outline-none transition-colors"
             />
           </div>
 
           {/* Tasks */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div className="relative group bg-white/60 backdrop-blur-xl rounded-3xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all duration-300 hover:shadow-[0_20px_40px_rgba(139,92,246,0.08)]">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-violet-500 opacity-70" />
+
+            <div className="px-6 py-5 border-b border-gray-100/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-violet-50 rounded-xl">
-                  <Check className="w-5 h-5 text-violet-600" />
+                <div className="relative">
+                  <div className="absolute inset-0 bg-violet-200 blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
+                  <div className="relative p-2.5 bg-gradient-to-br from-violet-50 to-white border border-violet-100 rounded-xl shadow-sm">
+                    <Check className="w-5 h-5 text-violet-600" />
+                  </div>
                 </div>
-                <h2 className="font-bold text-gray-900">Tâches</h2>
+                <div>
+                  <h2 className="font-bold text-gray-900 tracking-tight">Tâches</h2>
+                  <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Gestion quotidienne</p>
+                </div>
                 {pendingTasks > 0 && (
-                  <span className="px-2 py-0.5 bg-violet-100 text-violet-700 text-xs font-bold rounded-full">
+                  <span className="px-2.5 py-0.5 bg-violet-600 text-white text-[10px] font-bold rounded-full shadow-lg shadow-violet-200 animate-pulse">
                     {pendingTasks}
                   </span>
                 )}
               </div>
             </div>
-            <div className="p-4">
+
+            <div className="p-5">
               {/* Add task */}
-              <div className="flex gap-2 mb-4">
-                <input
-                  type="text"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && addTask()}
-                  placeholder="Nouvelle tâche..."
-                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-violet-400"
-                />
+              <div className="flex gap-2.5 mb-6 group/input">
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={newTaskTitle}
+                    onChange={(e) => setNewTaskTitle(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                    placeholder="Qu'y a-t-il à faire ?"
+                    className="w-full pl-4 pr-4 py-2.5 text-sm bg-white border border-gray-100 rounded-2xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-violet-500/10 focus:border-violet-400 shadow-sm"
+                  />
+                </div>
                 <button
                   onClick={addTask}
                   disabled={addingTask || !newTaskTitle.trim()}
-                  className="px-3 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-50"
+                  className="px-4 py-2.5 bg-gray-900 text-white rounded-2xl hover:bg-violet-600 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:grayscale flex items-center justify-center min-w-[48px] shadow-lg shadow-gray-200 hover:shadow-violet-200"
                 >
-                  {addingTask ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                  {addingTask ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
                 </button>
               </div>
+
               {/* Task list */}
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-gray-200">
                 {tasks.length === 0 ? (
-                  <p className="text-center text-gray-400 text-sm py-4">Aucune tâche</p>
+                  <div className="flex flex-col items-center justify-center py-8 opacity-40">
+                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center mb-2">
+                      <Check className="w-6 h-6 text-gray-300" />
+                    </div>
+                    <p className="text-gray-500 text-xs font-medium">Aucune tâche en attente</p>
+                  </div>
                 ) : (
                   tasks.map((task) => (
                     <div
                       key={task.id}
                       className={cn(
-                        "flex items-center gap-3 p-3 rounded-xl group transition-colors",
-                        task.completed ? "bg-gray-50" : "bg-violet-50/50 hover:bg-violet-50"
+                        "group/item flex items-center gap-3 p-3.5 rounded-2xl transition-all duration-300 border border-transparent",
+                        task.completed
+                          ? "bg-gray-50/50 opacity-60"
+                          : "bg-white hover:bg-violet-50/30 hover:shadow-xl hover:shadow-violet-500/5 hover:-translate-y-0.5 hover:border-violet-100"
                       )}
                     >
                       <button
                         onClick={() => toggleTask(task)}
                         className={cn(
-                          "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                          "relative w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-300",
                           task.completed
-                            ? "bg-emerald-500 border-emerald-500 text-white"
-                            : "border-gray-300 hover:border-violet-500"
+                            ? "bg-emerald-500 border-emerald-500 scale-110 shadow-lg shadow-emerald-100"
+                            : "border-gray-200 bg-white hover:border-violet-400 group-hover/item:border-violet-400"
                         )}
                       >
-                        {task.completed && <Check className="w-3 h-3" />}
+                        <Check className={cn(
+                          "w-3.5 h-3.5 text-white transition-all duration-300 scale-0",
+                          task.completed && "scale-100"
+                        )} />
                       </button>
-                      <span className={cn("flex-1 text-sm", task.completed && "line-through text-gray-400")}>
-                        {task.title}
-                      </span>
+
+                      <div className="flex-1 flex flex-col min-w-0">
+                        <span className={cn(
+                          "text-sm font-medium transition-all duration-500 truncate",
+                          task.completed ? "line-through text-gray-400 translate-x-1" : "text-gray-700"
+                        )}>
+                          {task.title}
+                        </span>
+                      </div>
+
                       <button
                         onClick={() => deleteTask(task.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                        className="opacity-0 group-hover/item:opacity-100 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all duration-200"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -585,46 +620,76 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Column 2: Prospects CRM */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-50 rounded-xl">
-                  <Target className="w-5 h-5 text-emerald-600" />
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden transition-all duration-500">
+          <div className="relative border-b border-gray-100 bg-white/60 backdrop-blur-xl">
+            {/* Emerald gradient accent top bar */}
+            <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-emerald-400 via-emerald-600 to-teal-500 opacity-90" />
+
+            <div className="px-6 py-5">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-emerald-400/20 blur-lg rounded-full animate-pulse" />
+                    <div className="relative p-2.5 bg-white rounded-xl border border-emerald-100 shadow-sm">
+                      <Target className="w-5 h-5 text-emerald-600" />
+                    </div>
+                  </div>
+                  <div>
+                    <h2 className="font-extrabold text-gray-900 tracking-tight text-lg">Pipeline Prospects</h2>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Temps Réel</p>
+                    </div>
+                  </div>
                 </div>
-                <h2 className="font-bold text-gray-900">Pipeline Prospects</h2>
-                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
-                  {totalProspects}
-                </span>
+                <div className="flex flex-col items-end">
+                  <span className="px-3 py-1 bg-emerald-600 text-white text-xs font-black rounded-lg shadow-lg shadow-emerald-200 ring-2 ring-emerald-50">
+                    {totalProspects}
+                  </span>
+                </div>
               </div>
-            </div>
-            {/* Status filters */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setProspectFilter('all')}
-                className={cn(
-                  "px-3 py-1.5 text-xs font-medium rounded-full transition-colors",
-                  prospectFilter === 'all'
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                )}
-              >
-                Tous ({totalProspects})
-              </button>
-              {PROSPECT_STATUSES.slice(0, 5).map((status) => (
+
+              {/* Status filters */}
+              <div className="flex flex-wrap gap-2.5">
                 <button
-                  key={status.value}
-                  onClick={() => setProspectFilter(status.value)}
+                  onClick={() => setProspectFilter('all')}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-medium rounded-full transition-colors",
-                    prospectFilter === status.value
-                      ? status.color
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    "px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 border shadow-sm",
+                    prospectFilter === 'all'
+                      ? "bg-gray-900 border-gray-900 text-white shadow-gray-300 scale-105"
+                      : "bg-white border-gray-100 text-gray-500 hover:border-gray-300 hover:bg-gray-50 hover:-translate-y-0.5"
                   )}
                 >
-                  {status.label} ({prospectCounts[status.value] || 0})
+                  Tous ({totalProspects})
                 </button>
-              ))}
+                {PROSPECT_STATUSES.slice(0, 5).map((status) => {
+                  const isActive = prospectFilter === status.value;
+                  return (
+                    <button
+                      key={status.value}
+                      onClick={() => setProspectFilter(status.value)}
+                      className={cn(
+                        "px-4 py-2 text-xs font-bold rounded-full transition-all duration-300 border flex items-center gap-2 group",
+                        isActive
+                          ? `${status.color} border-transparent shadow-[0_0_15px_-3px_rgba(16,185,129,0.4)] scale-105 ring-2 ring-emerald-50/50`
+                          : "bg-white border-gray-100 text-gray-500 hover:border-gray-200 hover:bg-gray-50 hover:-translate-y-0.5"
+                      )}
+                    >
+                      <span className={cn(
+                        "w-1.5 h-1.5 rounded-full transition-all duration-300",
+                        isActive ? "bg-current scale-125 ring-2 ring-white/50" : "bg-gray-300 group-hover:bg-gray-400"
+                      )} />
+                      {status.label}
+                      <span className={cn(
+                        "text-[10px] opacity-60 font-medium",
+                        isActive ? "text-current" : "text-gray-400"
+                      )}>
+                        ({prospectCounts[status.value] || 0})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -710,19 +775,20 @@ export default function AdminDashboardPage() {
       {/* Bottom Row: Alerts */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Trial Ending */}
-        <div className="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-amber-100 flex items-center gap-3">
-            <div className="p-2 bg-amber-50 rounded-xl">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
+        <div className="group relative bg-white/70 backdrop-blur-xl rounded-2xl border border-amber-200/50 shadow-lg shadow-amber-900/5 overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-amber-500/10">
+          <div className="absolute inset-0 border-2 border-amber-400/20 rounded-2xl animate-pulse pointer-events-none" />
+          <div className="px-5 py-4 border-b border-amber-100/50 bg-gradient-to-r from-amber-50/80 to-transparent flex items-center gap-3 relative z-10">
+            <div className="p-2 bg-amber-500/10 rounded-xl shadow-inner">
+              <AlertTriangle className="w-5 h-5 text-amber-600 animate-bounce [animation-duration:3s]" />
             </div>
             <div>
-              <h2 className="font-bold text-gray-900">Essais se terminant</h2>
-              <p className="text-xs text-amber-600">À contacter en priorité</p>
+              <h2 className="font-bold text-gray-900 tracking-tight">Essais se terminant</h2>
+              <p className="text-[10px] uppercase tracking-wider font-bold text-amber-600/80">Action prioritaire requise</p>
             </div>
           </div>
-          <div className="divide-y divide-amber-50">
+          <div className="divide-y divide-amber-100/30 relative z-10">
             {trialEndingMerchants.length === 0 ? (
-              <p className="p-4 text-center text-gray-400 text-sm">Aucun essai urgent</p>
+              <p className="p-8 text-center text-gray-400 text-sm font-medium italic">Aucun essai urgent pour le moment</p>
             ) : (
               trialEndingMerchants.map((merchant) => {
                 const daysLeft = getDaysRemaining(merchant.trial_ends_at!);
@@ -730,22 +796,29 @@ export default function AdminDashboardPage() {
                   <Link
                     key={merchant.id}
                     href={`/admin/merchants/${merchant.id}`}
-                    className="flex items-center justify-between p-4 hover:bg-amber-50 transition-colors"
+                    className="group/item flex items-center justify-between p-4 hover:bg-amber-50/50 transition-all duration-300 ease-out active:scale-[0.99]"
                   >
-                    <div>
-                      <p className="font-medium text-gray-900">{merchant.shop_name}</p>
-                      {merchant.shop_address && (
-                        <p className="text-xs text-gray-500 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {merchant.shop_address}
-                        </p>
-                      )}
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-white border border-amber-100 flex items-center justify-center shadow-sm group-hover/item:border-amber-300 group-hover/item:shadow-md transition-all">
+                        <span className="text-amber-700 font-bold text-sm">{merchant.shop_name.charAt(0)}</span>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 group-hover/item:text-amber-900 transition-colors">{merchant.shop_name}</p>
+                        {merchant.shop_address && (
+                          <p className="text-xs text-gray-500 flex items-center gap-1">
+                            <MapPin className="w-3 h-3 text-amber-400" />
+                            {merchant.shop_address}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <span className={cn(
-                      "px-2 py-1 rounded-full text-xs font-bold",
-                      daysLeft <= 1 ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                      "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm transition-transform group-hover/item:scale-110",
+                      daysLeft <= 1
+                        ? "bg-red-500 text-white animate-pulse"
+                        : "bg-amber-100 text-amber-700 border border-amber-200"
                     )}>
-                      {daysLeft <= 0 ? "Aujourd'hui" : `${daysLeft}j`}
+                      {daysLeft <= 0 ? "Urgent" : `${daysLeft}j restant`}
                     </span>
                   </Link>
                 );
@@ -755,38 +828,51 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Recent Signups */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="group relative bg-white/70 backdrop-blur-xl rounded-2xl border border-emerald-200/50 shadow-lg shadow-emerald-900/5 overflow-hidden transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/10">
+          <div className="px-5 py-4 border-b border-emerald-100/50 bg-gradient-to-r from-emerald-50/80 to-transparent flex items-center justify-between relative z-10">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-50 rounded-xl">
+              <div className="p-2 bg-emerald-500/10 rounded-xl shadow-inner">
                 <Store className="w-5 h-5 text-emerald-600" />
               </div>
-              <h2 className="font-bold text-gray-900">Dernières inscriptions</h2>
+              <div>
+                <h2 className="font-bold text-gray-900 tracking-tight">Dernières inscriptions</h2>
+                <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-600/80">Croissance en temps réel</p>
+              </div>
             </div>
-            <Link href="/admin/merchants" className="text-emerald-600 text-sm font-medium hover:underline">
+            <Link
+              href="/admin/merchants"
+              className="px-3 py-1 rounded-lg text-emerald-600 text-xs font-bold hover:bg-emerald-50 transition-colors border border-emerald-100/50"
+            >
               Voir tout
             </Link>
           </div>
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-emerald-100/30 relative z-10">
             {recentMerchants.length === 0 ? (
-              <p className="p-4 text-center text-gray-400 text-sm">Aucune inscription</p>
+              <p className="p-8 text-center text-gray-400 text-sm font-medium italic">En attente de nouvelles inscriptions</p>
             ) : (
               recentMerchants.map((merchant) => (
                 <Link
                   key={merchant.id}
                   href={`/admin/merchants/${merchant.id}`}
-                  className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                  className="group/item flex items-center justify-between p-4 hover:bg-emerald-50/50 transition-all duration-300 ease-out active:scale-[0.99]"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm">
-                      {merchant.shop_name.charAt(0)}
+                    <div className="relative">
+                      <div className="w-10 h-10 rounded-full bg-emerald-600 flex items-center justify-center text-white font-black text-sm shadow-md group-hover/item:scale-110 transition-transform">
+                        {merchant.shop_name.charAt(0)}
+                      </div>
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">{merchant.shop_name}</p>
-                      <p className="text-xs text-gray-400">{formatDate(merchant.created_at)}</p>
+                      <p className="font-semibold text-gray-900 text-sm group-hover/item:text-emerald-700 transition-colors">{merchant.shop_name}</p>
+                      <p className="text-[10px] font-medium text-gray-400 flex items-center gap-1">
+                        Inscrit le {formatDate(merchant.created_at)}
+                      </p>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-gray-400" />
+                  <div className="p-1.5 rounded-full bg-gray-50 text-gray-400 group-hover/item:bg-emerald-100 group-hover/item:text-emerald-600 transition-all">
+                    <ChevronRight className="w-4 h-4" />
+                  </div>
                 </Link>
               ))
             )}
@@ -917,20 +1003,35 @@ function StatCard({
   icon: React.ElementType;
   color: 'emerald' | 'amber' | 'indigo' | 'pink';
 }) {
-  const colors = {
-    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-    amber: 'bg-amber-50 text-amber-600 border-amber-100',
-    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    pink: 'bg-pink-50 text-pink-600 border-pink-100',
+  const themes = {
+    emerald: 'from-emerald-50/60 via-emerald-50/40 to-white/40 border-emerald-500/10 text-emerald-700 hover:shadow-emerald-500/20',
+    amber: 'from-amber-50/60 via-amber-50/40 to-white/40 border-amber-500/10 text-amber-700 hover:shadow-amber-500/20',
+    indigo: 'from-indigo-50/60 via-indigo-50/40 to-white/40 border-indigo-500/10 text-indigo-700 hover:shadow-indigo-500/20',
+    pink: 'from-pink-50/60 via-pink-50/40 to-white/40 border-pink-500/10 text-pink-700 hover:shadow-pink-500/20',
+  };
+
+  const iconGradients = {
+    emerald: 'bg-gradient-to-br from-emerald-100 to-emerald-50 text-emerald-600',
+    amber: 'bg-gradient-to-br from-amber-100 to-amber-50 text-amber-600',
+    indigo: 'bg-gradient-to-br from-indigo-100 to-indigo-50 text-indigo-600',
+    pink: 'bg-gradient-to-br from-pink-100 to-pink-50 text-pink-600',
   };
 
   return (
-    <div className={cn("p-4 rounded-2xl border", colors[color])}>
-      <div className="flex items-center gap-3">
-        <Icon className="w-5 h-5" />
+    <div className={cn(
+      "group relative p-5 rounded-2xl border backdrop-blur-sm bg-gradient-to-br transition-all duration-300 hover:scale-[1.02] shadow-lg hover:shadow-xl",
+      themes[color]
+    )}>
+      <div className="flex items-center gap-4">
+        <div className={cn(
+          "flex items-center justify-center w-11 h-11 rounded-full shadow-sm ring-4 ring-white/60 transition-transform duration-500 group-hover:rotate-12",
+          iconGradients[color]
+        )}>
+          <Icon className="w-5 h-5" />
+        </div>
         <div>
-          <p className="text-2xl font-bold">{value}</p>
-          <p className="text-xs opacity-80">{label}</p>
+          <p className="text-2xl font-bold tracking-tight">{value}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wider opacity-60">{label}</p>
         </div>
       </div>
     </div>
