@@ -53,6 +53,13 @@ interface PointAdjustment {
   reason: string | null;
 }
 
+interface RedemptionHistory {
+  id: string;
+  redeemed_at: string;
+  stamps_used: number;
+  tier: number;
+}
+
 interface VisitWithStatus extends Visit {
   status: VisitStatus;
   flagged_reason: string | null;
@@ -115,6 +122,7 @@ export default function CustomerCardPage({
   const [card, setCard] = useState<CardWithDetails | null>(null);
   const [visits, setVisits] = useState<VisitWithStatus[]>([]);
   const [adjustments, setAdjustments] = useState<PointAdjustment[]>([]);
+  const [redemptions, setRedemptions] = useState<RedemptionHistory[]>([]);
   const [visitsExpanded, setVisitsExpanded] = useState(false);
   const [reviewDismissed, setReviewDismissed] = useState(false);
   const [reviewPermanentlyHidden, setReviewPermanentlyHidden] = useState(false);
@@ -182,6 +190,11 @@ export default function CustomerCardPage({
         setVisits(visitsData);
         setAdjustments(data.adjustments || []);
 
+        // Store redemptions for history display
+        if (data.redemptions) {
+          setRedemptions(data.redemptions as RedemptionHistory[]);
+        }
+
         // Count pending visits
         const pending = visitsData.filter((v: VisitWithStatus) => v.status === 'pending').length;
         setPendingCount(pending);
@@ -198,15 +211,15 @@ export default function CustomerCardPage({
 
         // Check if tier 1 has been redeemed in current cycle (for tier 2 enabled merchants)
         if (data.card.merchant.tier2_enabled && data.redemptions) {
-          const redemptions = data.redemptions as Array<{ tier: number; redeemed_at: string }>;
+          const redemptionsData = data.redemptions as Array<{ tier: number; redeemed_at: string }>;
           // Find last tier 2 redemption
-          const tier2Redemptions = redemptions.filter((r) => r.tier === 2);
+          const tier2Redemptions = redemptionsData.filter((r) => r.tier === 2);
           const lastTier2Date = tier2Redemptions.length > 0
             ? new Date(tier2Redemptions[0].redeemed_at).getTime()
             : 0;
 
           // Check if tier 1 was redeemed after last tier 2
-          const tier1RedemptionsAfterTier2 = redemptions.filter(
+          const tier1RedemptionsAfterTier2 = redemptionsData.filter(
             (r) => r.tier === 1 && new Date(r.redeemed_at).getTime() > lastTier2Date
           );
 
@@ -1520,7 +1533,7 @@ export default function CustomerCardPage({
               </div>
               Historique
             </h2>
-            {(visits.length > 0 || adjustments.length > 0) && (
+            {(visits.length > 0 || adjustments.length > 0 || redemptions.length > 0) && (
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setVisitsExpanded(!visitsExpanded)}
@@ -1535,7 +1548,7 @@ export default function CustomerCardPage({
                 ) : (
                   <>
                     <ChevronDown className="w-3.5 h-3.5" />
-                    Voir ({visits.length + adjustments.length})
+                    Voir ({visits.length + adjustments.length + redemptions.length})
                   </>
                 )}
               </motion.button>
@@ -1543,7 +1556,7 @@ export default function CustomerCardPage({
           </div>
 
           <AnimatePresence mode="wait">
-            {(visits.length > 0 || adjustments.length > 0) ? (
+            {(visits.length > 0 || adjustments.length > 0 || redemptions.length > 0) ? (
               visitsExpanded ? (
                 <motion.ul
                   initial={{ opacity: 0 }}
@@ -1551,7 +1564,7 @@ export default function CustomerCardPage({
                   exit={{ opacity: 0 }}
                   className="divide-y divide-gray-50"
                 >
-                  {/* Combine visits and adjustments, sort by date */}
+                  {/* Combine visits, adjustments, and redemptions, sort by date */}
                   {[
                     ...visits.map((v) => ({
                       type: 'visit' as const,
@@ -1559,7 +1572,8 @@ export default function CustomerCardPage({
                       points: v.points_earned || 1,
                       id: v.id,
                       status: v.status || 'confirmed',
-                      flagged_reason: v.flagged_reason
+                      flagged_reason: v.flagged_reason,
+                      tier: undefined as number | undefined
                     })),
                     ...adjustments.map((a) => ({
                       type: 'adjustment' as const,
@@ -1568,7 +1582,17 @@ export default function CustomerCardPage({
                       reason: a.reason,
                       id: a.id,
                       status: 'confirmed' as const,
-                      flagged_reason: null
+                      flagged_reason: null,
+                      tier: undefined as number | undefined
+                    })),
+                    ...redemptions.map((r) => ({
+                      type: 'redemption' as const,
+                      date: r.redeemed_at,
+                      points: r.stamps_used,
+                      id: r.id,
+                      status: 'confirmed' as const,
+                      flagged_reason: null,
+                      tier: r.tier
                     })),
                   ]
                     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -1576,10 +1600,16 @@ export default function CustomerCardPage({
                     .map((item, index) => {
                       const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
                       const isAdjustment = item.type === 'adjustment';
+                      const isRedemption = item.type === 'redemption';
                       const isPending = item.status === 'pending';
                       const isRejected = item.status === 'rejected';
 
                       const getStatusIcon = () => {
+                        if (isRedemption) {
+                          return item.tier === 2
+                            ? <Trophy className="w-4 h-4 text-violet-500" />
+                            : <Gift className="w-4 h-4 text-emerald-500" />;
+                        }
                         if (isAdjustment) return <SlidersHorizontal className="w-4 h-4 text-amber-600" />;
                         if (isPending) return <Hourglass className="w-4 h-4 text-amber-600 animate-pulse" />;
                         if (isRejected) return <XCircle className="w-4 h-4 text-red-500" />;
@@ -1587,10 +1617,23 @@ export default function CustomerCardPage({
                       };
 
                       const getIconBgColor = () => {
+                        if (isRedemption) return item.tier === 2 ? '#ede9fe' : '#d1fae5';
                         if (isAdjustment) return '#fef3c7';
                         if (isPending) return '#fef3c7';
                         if (isRejected) return '#fee2e2';
                         return `${merchant.primary_color}10`;
+                      };
+
+                      const getLabel = () => {
+                        if (isRedemption) {
+                          const tierLabel = merchant.tier2_enabled ? ` palier ${item.tier}` : '';
+                          return `🎁 Cadeau${tierLabel} utilisé`;
+                        }
+                        if (isAdjustment) return 'Ajustement';
+                        if (isPending) return 'En attente';
+                        if (isRejected) return 'Refusé';
+                        if (merchant.loyalty_mode === 'visit') return 'Passage validé';
+                        return `${item.points} ${merchant.product_name || 'article'}${item.points > 1 ? 's' : ''}`;
                       };
 
                       return (
@@ -1608,42 +1651,41 @@ export default function CustomerCardPage({
                             {getStatusIcon()}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className={`font-semibold text-sm truncate ${isRejected ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
-                              {isAdjustment
-                                ? 'Ajustement'
-                                : isPending
-                                ? 'En attente'
-                                : isRejected
-                                ? 'Refusé'
-                                : merchant.loyalty_mode === 'visit'
-                                ? 'Passage validé'
-                                : `${item.points} ${merchant.product_name || 'article'}${item.points > 1 ? 's' : ''}`}
+                            <p className={`font-semibold text-sm truncate ${isRejected ? 'text-gray-500 line-through' : isRedemption ? 'text-emerald-700' : 'text-gray-900'}`}>
+                              {getLabel()}
                             </p>
                             <p className="text-[10px] text-gray-400 flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {formatDateTime(item.date)}
                             </p>
                           </div>
-                          <div
-                            className={`px-2 py-1 rounded-lg text-xs font-bold ${
-                              isPending
-                                ? 'bg-amber-100 text-amber-700'
-                                : isRejected
-                                ? 'bg-red-100 text-red-500 line-through'
-                                : item.points > 0
-                                ? isAdjustment
-                                  ? 'bg-green-100 text-green-700'
-                                  : ''
-                                : 'bg-red-100 text-red-700'
-                            }`}
-                            style={
-                              item.points > 0 && !isAdjustment && !isPending && !isRejected
-                                ? { backgroundColor: `${merchant.primary_color}10`, color: merchant.primary_color }
-                                : {}
-                            }
-                          >
-                            {isPending ? '⏳' : isRejected ? '❌' : item.points > 0 ? '+' : ''}{!isPending && !isRejected ? item.points : item.points}
-                          </div>
+                          {!isRedemption && (
+                            <div
+                              className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                                isPending
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : isRejected
+                                  ? 'bg-red-100 text-red-500 line-through'
+                                  : item.points > 0
+                                  ? isAdjustment
+                                    ? 'bg-green-100 text-green-700'
+                                    : ''
+                                  : 'bg-red-100 text-red-700'
+                              }`}
+                              style={
+                                item.points > 0 && !isAdjustment && !isPending && !isRejected
+                                  ? { backgroundColor: `${merchant.primary_color}10`, color: merchant.primary_color }
+                                  : {}
+                              }
+                            >
+                              {isPending ? '⏳' : isRejected ? '❌' : item.points > 0 ? '+' : ''}{!isPending && !isRejected ? item.points : item.points}
+                            </div>
+                          )}
+                          {isRedemption && (
+                            <div className={`px-2 py-1 rounded-lg text-xs font-bold ${item.tier === 2 ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                              ✓
+                            </div>
+                          )}
                         </motion.li>
                       );
                     })}

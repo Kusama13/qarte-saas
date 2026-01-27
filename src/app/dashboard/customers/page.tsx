@@ -15,6 +15,7 @@ import {
   BellOff,
   Plus,
   UserPlus,
+  Trophy,
 } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/CustomerManagementModal';
@@ -362,17 +363,58 @@ export default function CustomersPage() {
                         {card.customer?.phone_number}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex-1 w-28 h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500 ease-out"
-                              style={{ width: `${progress}%` }}
-                            />
+                        {merchant?.tier2_enabled && merchant?.tier2_stamps_required ? (
+                          /* Dual Tier Progress */
+                          <div className="space-y-2">
+                            {/* Tier 1 */}
+                            <div className="flex items-center gap-2">
+                              <Gift className={`w-3.5 h-3.5 shrink-0 ${card.current_stamps >= (merchant.stamps_required || 10) ? 'text-emerald-500' : 'text-indigo-400'}`} />
+                              <div className="flex-1 w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ease-out ${
+                                    card.current_stamps >= (merchant.stamps_required || 10)
+                                      ? 'bg-emerald-500'
+                                      : 'bg-gradient-to-r from-indigo-500 to-violet-500'
+                                  }`}
+                                  style={{ width: `${Math.min((card.current_stamps / (merchant.stamps_required || 10)) * 100, 100)}%` }}
+                                />
+                              </div>
+                              <span className={`text-[10px] font-bold tabular-nums ${card.current_stamps >= (merchant.stamps_required || 10) ? 'text-emerald-600' : 'text-gray-500'}`}>
+                                {Math.min(card.current_stamps, merchant.stamps_required || 10)}/{merchant.stamps_required}
+                              </span>
+                            </div>
+                            {/* Tier 2 */}
+                            <div className="flex items-center gap-2">
+                              <Trophy className={`w-3.5 h-3.5 shrink-0 ${card.current_stamps >= (merchant.tier2_stamps_required || 20) ? 'text-violet-500' : 'text-gray-300'}`} />
+                              <div className="flex-1 w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all duration-500 ease-out ${
+                                    card.current_stamps >= (merchant.tier2_stamps_required || 20)
+                                      ? 'bg-violet-500'
+                                      : 'bg-gradient-to-r from-gray-300 to-gray-400'
+                                  }`}
+                                  style={{ width: `${Math.min((card.current_stamps / (merchant.tier2_stamps_required || 20)) * 100, 100)}%` }}
+                                />
+                              </div>
+                              <span className={`text-[10px] font-bold tabular-nums ${card.current_stamps >= (merchant.tier2_stamps_required || 20) ? 'text-violet-600' : 'text-gray-400'}`}>
+                                {card.current_stamps}/{merchant.tier2_stamps_required}
+                              </span>
+                            </div>
                           </div>
-                          <span className="text-xs font-bold text-gray-700 tabular-nums">
-                            {card.current_stamps}/{merchant?.stamps_required}
-                          </span>
-                        </div>
+                        ) : (
+                          /* Single Tier Progress */
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 w-28 h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500 ease-out"
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-bold text-gray-700 tabular-nums">
+                              {card.current_stamps}/{merchant?.stamps_required}
+                            </span>
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {card.last_visit_date ? formatDate(card.last_visit_date) : '-'}
