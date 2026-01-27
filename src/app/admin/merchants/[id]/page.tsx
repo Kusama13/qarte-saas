@@ -17,7 +17,6 @@ import {
   Bell,
   Send,
   Tag,
-  Zap,
   Settings,
   Repeat,
   ShoppingBag,
@@ -65,7 +64,6 @@ interface Stats {
   totalRedemptions: number;
   pushSubscribers: number;
   pushSent: number;
-  automationsEnabled: number;
 }
 
 export default function MerchantDetailPage() {
@@ -83,7 +81,6 @@ export default function MerchantDetailPage() {
     totalRedemptions: 0,
     pushSubscribers: 0,
     pushSent: 0,
-    automationsEnabled: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -147,22 +144,6 @@ export default function MerchantDetailPage() {
           .select('*', { count: 'exact', head: true })
           .eq('merchant_id', merchantId);
 
-        // Get automations enabled count
-        const { data: automationsData } = await supabase
-          .from('push_automations')
-          .select('*')
-          .eq('merchant_id', merchantId)
-          .single();
-
-        let automationsEnabled = 0;
-        if (automationsData) {
-          if (automationsData.welcome_enabled) automationsEnabled++;
-          if (automationsData.close_to_reward_enabled) automationsEnabled++;
-          if (automationsData.reward_ready_enabled) automationsEnabled++;
-          if (automationsData.inactive_reminder_enabled) automationsEnabled++;
-          if (automationsData.reward_reminder_enabled) automationsEnabled++;
-        }
-
         setStats({
           totalCustomers: totalCustomers || 0,
           activeCustomers: activeCustomers || 0,
@@ -170,7 +151,6 @@ export default function MerchantDetailPage() {
           totalRedemptions: totalRedemptions || 0,
           pushSubscribers,
           pushSent: pushSentCount || 0,
-          automationsEnabled,
         });
 
         // Récupérer les clients directement (ils ont maintenant un merchant_id)
@@ -470,17 +450,6 @@ export default function MerchantDetailPage() {
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.pushSent}</p>
               <p className="text-sm text-gray-500">Notifs envoyées</p>
-            </div>
-          </div>
-        </div>
-        <div className="p-5 bg-white rounded-xl shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-100">
-              <Zap className="w-5 h-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.automationsEnabled}/5</p>
-              <p className="text-sm text-gray-500">Automations actives</p>
             </div>
           </div>
         </div>

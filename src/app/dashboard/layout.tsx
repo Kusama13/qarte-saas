@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   MessageCircle,
   Megaphone,
-  Zap,
   Crown,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -32,7 +31,6 @@ const navItems = [
   { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
   { href: '/dashboard/members', icon: Crown, label: 'Membres', color: 'text-amber-500', bg: 'bg-amber-50' },
   { href: '/dashboard/marketing', icon: Megaphone, label: 'Marketing', color: 'text-orange-500', bg: 'bg-orange-50' },
-  // { href: '/dashboard/automations', icon: Zap, label: 'Automatisations', color: 'text-yellow-500', bg: 'bg-yellow-50' },
   { href: '/dashboard/subscription', icon: CardIcon, label: 'Abonnement', color: 'text-amber-500', bg: 'bg-amber-50' },
   { href: '/dashboard/settings', icon: Settings, label: 'Paramètres', color: 'text-slate-500', bg: 'bg-slate-50' },
 ];

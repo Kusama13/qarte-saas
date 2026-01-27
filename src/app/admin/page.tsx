@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Store,
@@ -11,65 +11,29 @@ import {
   ArrowRight,
   TrendingUp,
   MapPin,
-  Phone,
-  UserPlus,
   Calendar,
   ArrowUpRight,
-  ArrowDownRight,
   Percent,
+  Plus,
+  Check,
+  Trash2,
+  StickyNote,
+  Target,
+  Phone,
+  Mail,
+  Building,
+  ChevronRight,
+  Save,
+  Loader2,
+  X,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Button } from '@/components/ui';
+import { Button, Input, Modal } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
-interface StatsCardProps {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  trend?: string;
-  color: string;
-}
-
-function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
-  return (
-    <div className="group relative p-6 bg-white/80 backdrop-blur-xl rounded-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1.5">
-      <div className="flex items-start justify-between relative z-10">
-        <div className="flex-1">
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.15em] leading-none mb-2">{title}</p>
-          <div className="flex flex-col gap-1.5">
-            <h3 className="text-3xl font-extrabold text-gray-900 tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">{value}</h3>
-            {trend && (
-              <div className="flex items-center gap-2">
-                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100/50">
-                  <TrendingUp className="w-3 h-3" />
-                  {trend}
-                </span>
-                <span className="text-[10px] text-gray-400 font-medium tracking-wide">vs mois dernier</span>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="relative shrink-0">
-          <div
-            className="absolute inset-0 blur-2xl opacity-10 transition-opacity duration-500 group-hover:opacity-30"
-            style={{ backgroundColor: color }}
-          />
-          <div
-            className="relative flex items-center justify-center w-12 h-12 rounded-2xl shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-6"
-            style={{
-              background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
-              boxShadow: `0 10px 15px -3px ${color}30`
-            }}
-          >
-            <Icon className="w-6 h-6 text-white drop-shadow-md" />
-          </div>
-        </div>
-      </div>
-      <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-all duration-700 group-hover:w-full" style={{ backgroundColor: `${color}10` }} />
-    </div>
-  );
-}
-
+// ============================================
+// TYPES
+// ============================================
 interface Merchant {
   id: string;
   shop_name: string;
@@ -80,15 +44,55 @@ interface Merchant {
   created_at: string;
 }
 
-interface DemoLead {
+interface Task {
   id: string;
-  phone_number: string;
+  title: string;
+  completed: boolean;
+  priority: 'low' | 'normal' | 'high';
+  due_date: string | null;
   created_at: string;
-  converted: boolean;
 }
 
+interface Prospect {
+  id: string;
+  business_name: string;
+  contact_name: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  source: string;
+  status: string;
+  notes: string | null;
+  next_followup: string | null;
+  created_at: string;
+}
+
+// ============================================
+// STATUS CONFIG
+// ============================================
+const PROSPECT_STATUSES = [
+  { value: 'new', label: 'Nouveau', color: 'bg-gray-100 text-gray-700' },
+  { value: 'contacted', label: 'Contacté', color: 'bg-blue-100 text-blue-700' },
+  { value: 'demo_scheduled', label: 'Démo prévue', color: 'bg-purple-100 text-purple-700' },
+  { value: 'demo_done', label: 'Démo faite', color: 'bg-indigo-100 text-indigo-700' },
+  { value: 'trial', label: 'En essai', color: 'bg-amber-100 text-amber-700' },
+  { value: 'converted', label: 'Converti', color: 'bg-emerald-100 text-emerald-700' },
+  { value: 'lost', label: 'Perdu', color: 'bg-red-100 text-red-700' },
+];
+
+const PRIORITY_CONFIG = {
+  high: { label: 'Haute', color: 'text-red-600 bg-red-50' },
+  normal: { label: 'Normal', color: 'text-gray-600 bg-gray-50' },
+  low: { label: 'Basse', color: 'text-blue-600 bg-blue-50' },
+};
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 export default function AdminDashboardPage() {
   const supabase = createClientComponentClient();
+
+  // Stats
   const [stats, setStats] = useState({
     totalMerchants: 0,
     trialMerchants: 0,
@@ -97,136 +101,293 @@ export default function AdminDashboardPage() {
   });
   const [trialEndingMerchants, setTrialEndingMerchants] = useState<Merchant[]>([]);
   const [recentMerchants, setRecentMerchants] = useState<Merchant[]>([]);
-  const [demoLeads, setDemoLeads] = useState<DemoLead[]>([]);
+
+  // Notes
+  const [notes, setNotes] = useState('');
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesLastSaved, setNotesLastSaved] = useState<Date | null>(null);
+
+  // Tasks
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [addingTask, setAddingTask] = useState(false);
+
+  // Prospects
+  const [prospects, setProspects] = useState<Prospect[]>([]);
+  const [prospectCounts, setProspectCounts] = useState<Record<string, number>>({});
+  const [prospectFilter, setProspectFilter] = useState('all');
+  const [prospectModalOpen, setProspectModalOpen] = useState(false);
+  const [editingProspect, setEditingProspect] = useState<Prospect | null>(null);
+  const [prospectForm, setProspectForm] = useState({
+    business_name: '',
+    contact_name: '',
+    phone: '',
+    email: '',
+    address: '',
+    source: 'other',
+    status: 'new',
+    notes: '',
+    next_followup: '',
+  });
+  const [savingProspect, setSavingProspect] = useState(false);
+
   const [loading, setLoading] = useState(true);
 
+  // ============================================
+  // DATA FETCHING
+  // ============================================
+  const fetchStats = useCallback(async () => {
+    const [
+      { count: totalMerchants },
+      { count: trialMerchants },
+      { count: activeMerchants },
+      { count: totalCustomers },
+    ] = await Promise.all([
+      supabase.from('merchants').select('*', { count: 'exact', head: true }),
+      supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'trial'),
+      supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active'),
+      supabase.from('customers').select('*', { count: 'exact', head: true }),
+    ]);
+
+    setStats({
+      totalMerchants: totalMerchants || 0,
+      trialMerchants: trialMerchants || 0,
+      activeMerchants: activeMerchants || 0,
+      totalCustomers: totalCustomers || 0,
+    });
+  }, [supabase]);
+
+  const fetchMerchants = useCallback(async () => {
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+
+    const [{ data: endingTrials }, { data: recent }] = await Promise.all([
+      supabase
+        .from('merchants')
+        .select('*')
+        .eq('subscription_status', 'trial')
+        .lte('trial_ends_at', threeDaysFromNow.toISOString())
+        .gte('trial_ends_at', new Date().toISOString())
+        .order('trial_ends_at', { ascending: true })
+        .limit(5),
+      supabase
+        .from('merchants')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(5),
+    ]);
+
+    setTrialEndingMerchants(endingTrials || []);
+    setRecentMerchants(recent || []);
+  }, [supabase]);
+
+  const fetchNotes = useCallback(async () => {
+    const res = await fetch('/api/admin/notes');
+    const data = await res.json();
+    if (data.notes !== undefined) {
+      setNotes(data.notes);
+    }
+  }, []);
+
+  const fetchTasks = useCallback(async () => {
+    const res = await fetch('/api/admin/tasks');
+    const data = await res.json();
+    if (data.tasks) {
+      setTasks(data.tasks);
+    }
+  }, []);
+
+  const fetchProspects = useCallback(async () => {
+    const res = await fetch(`/api/admin/prospects?status=${prospectFilter}`);
+    const data = await res.json();
+    if (data.prospects) {
+      setProspects(data.prospects);
+    }
+    if (data.counts) {
+      setProspectCounts(data.counts);
+    }
+  }, [prospectFilter]);
+
   useEffect(() => {
-    const fetchData = async () => {
+    const loadAll = async () => {
       try {
-        // Total commerçants
-        const { count: totalMerchants } = await supabase
-          .from('merchants')
-          .select('*', { count: 'exact', head: true });
-
-        // Commerçants en essai
-        const { count: trialMerchants } = await supabase
-          .from('merchants')
-          .select('*', { count: 'exact', head: true })
-          .eq('subscription_status', 'trial');
-
-        // Commerçants abonnés
-        const { count: activeMerchants } = await supabase
-          .from('merchants')
-          .select('*', { count: 'exact', head: true })
-          .eq('subscription_status', 'active');
-
-        // Total clients
-        const { count: totalCustomers } = await supabase
-          .from('customers')
-          .select('*', { count: 'exact', head: true });
-
-        setStats({
-          totalMerchants: totalMerchants || 0,
-          trialMerchants: trialMerchants || 0,
-          activeMerchants: activeMerchants || 0,
-          totalCustomers: totalCustomers || 0,
-        });
-
-        // Commerçants dont l'essai se termine bientôt (dans les 3 jours)
-        const threeDaysFromNow = new Date();
-        threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
-
-        const { data: endingTrials } = await supabase
-          .from('merchants')
-          .select('*')
-          .eq('subscription_status', 'trial')
-          .lte('trial_ends_at', threeDaysFromNow.toISOString())
-          .gte('trial_ends_at', new Date().toISOString())
-          .order('trial_ends_at', { ascending: true })
-          .limit(10);
-
-        setTrialEndingMerchants(endingTrials || []);
-
-        // 5 dernières inscriptions
-        const { data: recent } = await supabase
-          .from('merchants')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(5);
-
-        setRecentMerchants(recent || []);
-
-        // Demo leads (prospects)
-        const { data: leads } = await supabase
-          .from('demo_leads')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(20);
-
-        setDemoLeads(leads || []);
+        await Promise.all([
+          fetchStats(),
+          fetchMerchants(),
+          fetchNotes(),
+          fetchTasks(),
+          fetchProspects(),
+        ]);
       } catch (error) {
-        console.error('Error fetching admin data:', error);
+        console.error('Error loading admin data:', error);
       } finally {
         setLoading(false);
       }
     };
+    loadAll();
+  }, [fetchStats, fetchMerchants, fetchNotes, fetchTasks, fetchProspects]);
 
-    fetchData();
-  }, [supabase]);
+  useEffect(() => {
+    fetchProspects();
+  }, [prospectFilter, fetchProspects]);
 
-  const getDaysRemaining = (trialEndsAt: string) => {
-    const end = new Date(trialEndsAt);
-    const now = new Date();
-    const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return diff;
+  // ============================================
+  // NOTES HANDLERS
+  // ============================================
+  const saveNotes = useCallback(async () => {
+    setNotesSaving(true);
+    try {
+      await fetch('/api/admin/notes', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: notes }),
+      });
+      setNotesLastSaved(new Date());
+    } catch (error) {
+      console.error('Error saving notes:', error);
+    }
+    setNotesSaving(false);
+  }, [notes]);
+
+  // Auto-save notes after 2 seconds of inactivity
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (notes && !loading) {
+        saveNotes();
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [notes, loading, saveNotes]);
+
+  // ============================================
+  // TASKS HANDLERS
+  // ============================================
+  const addTask = async () => {
+    if (!newTaskTitle.trim()) return;
+    setAddingTask(true);
+    try {
+      const res = await fetch('/api/admin/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTaskTitle.trim() }),
+      });
+      if (res.ok) {
+        setNewTaskTitle('');
+        fetchTasks();
+      }
+    } catch (error) {
+      console.error('Error adding task:', error);
+    }
+    setAddingTask(false);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'trial':
-        return (
-          <span className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full">
-            Essai
-          </span>
-        );
-      case 'active':
-        return (
-          <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
-            Actif
-          </span>
-        );
-      case 'cancelled':
-        return (
-          <span className="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
-            Annulé
-          </span>
-        );
-      default:
-        return (
-          <span className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full">
-            {status}
-          </span>
-        );
+  const toggleTask = async (task: Task) => {
+    try {
+      await fetch('/api/admin/tasks', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: task.id, completed: !task.completed }),
+      });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error toggling task:', error);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
-      </div>
-    );
-  }
+  const deleteTask = async (taskId: string) => {
+    try {
+      await fetch(`/api/admin/tasks?id=${taskId}`, { method: 'DELETE' });
+      fetchTasks();
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
+  };
 
-  // Calculate greeting based on time
+  // ============================================
+  // PROSPECTS HANDLERS
+  // ============================================
+  const openProspectModal = (prospect?: Prospect) => {
+    if (prospect) {
+      setEditingProspect(prospect);
+      setProspectForm({
+        business_name: prospect.business_name,
+        contact_name: prospect.contact_name || '',
+        phone: prospect.phone || '',
+        email: prospect.email || '',
+        address: prospect.address || '',
+        source: prospect.source,
+        status: prospect.status,
+        notes: prospect.notes || '',
+        next_followup: prospect.next_followup || '',
+      });
+    } else {
+      setEditingProspect(null);
+      setProspectForm({
+        business_name: '',
+        contact_name: '',
+        phone: '',
+        email: '',
+        address: '',
+        source: 'other',
+        status: 'new',
+        notes: '',
+        next_followup: '',
+      });
+    }
+    setProspectModalOpen(true);
+  };
+
+  const saveProspect = async () => {
+    if (!prospectForm.business_name.trim()) return;
+    setSavingProspect(true);
+    try {
+      const method = editingProspect ? 'PATCH' : 'POST';
+      const body = editingProspect
+        ? { id: editingProspect.id, ...prospectForm }
+        : prospectForm;
+
+      const res = await fetch('/api/admin/prospects', {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (res.ok) {
+        setProspectModalOpen(false);
+        fetchProspects();
+      }
+    } catch (error) {
+      console.error('Error saving prospect:', error);
+    }
+    setSavingProspect(false);
+  };
+
+  const updateProspectStatus = async (prospectId: string, newStatus: string) => {
+    try {
+      await fetch('/api/admin/prospects', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: prospectId, status: newStatus }),
+      });
+      fetchProspects();
+    } catch (error) {
+      console.error('Error updating prospect:', error);
+    }
+  };
+
+  const deleteProspect = async (prospectId: string) => {
+    if (!confirm('Supprimer ce prospect ?')) return;
+    try {
+      await fetch(`/api/admin/prospects?id=${prospectId}`, { method: 'DELETE' });
+      fetchProspects();
+    } catch (error) {
+      console.error('Error deleting prospect:', error);
+    }
+  };
+
+  // ============================================
+  // HELPERS
+  // ============================================
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Bonjour';
@@ -234,306 +395,542 @@ export default function AdminDashboardPage() {
     return 'Bonsoir';
   };
 
-  // Format today's date in French
   const formattedDate = new Intl.DateTimeFormat('fr-FR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
-    year: 'numeric'
   }).format(new Date());
 
-  // Calculate conversion rate (trial to active)
   const conversionRate = stats.totalMerchants > 0
     ? ((stats.activeMerchants / stats.totalMerchants) * 100).toFixed(1)
     : '0';
 
+  const getDaysRemaining = (trialEndsAt: string) => {
+    const end = new Date(trialEndsAt);
+    const now = new Date();
+    return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+    });
+  };
+
+  const getStatusBadge = (status: string) => {
+    const config = PROSPECT_STATUSES.find(s => s.value === status);
+    return config || PROSPECT_STATUSES[0];
+  };
+
+  const totalProspects = Object.values(prospectCounts).reduce((a, b) => a + b, 0);
+  const pendingTasks = tasks.filter(t => !t.completed).length;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-8">
-      {/* Premium Header */}
+    <div className="space-y-6 pb-8">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
-            {getGreeting()}, <span className="text-gray-500 font-medium">Admin</span> 👋
+            {getGreeting()} 👋
           </h1>
           <div className="flex items-center gap-2 mt-1 text-gray-500 text-sm">
             <Calendar className="w-4 h-4" />
             <span className="capitalize">{formattedDate}</span>
           </div>
         </div>
+        <Button onClick={() => openProspectModal()} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+          <Plus className="w-4 h-4 mr-2" />
+          Nouveau prospect
+        </Button>
       </div>
 
-      {/* Quick Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="group relative bg-white/80 backdrop-blur-xl border border-emerald-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
-          <div className="flex items-start justify-between">
-            <div className="p-2.5 rounded-xl bg-emerald-50">
-              <Percent className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-emerald-600 bg-emerald-50">
-              <ArrowUpRight className="w-3 h-3" />
-              Actif
-            </div>
-          </div>
-          <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Taux de conversion</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{conversionRate}%</h3>
-          </div>
-          <div className="absolute bottom-0 left-6 right-6 h-0.5 rounded-full bg-emerald-500/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        </div>
-
-        <div className="group relative bg-white/80 backdrop-blur-xl border border-indigo-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
-          <div className="flex items-start justify-between">
-            <div className="p-2.5 rounded-xl bg-indigo-50">
-              <CreditCard className="w-5 h-5 text-indigo-600" />
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-indigo-600 bg-indigo-50">
-              <ArrowUpRight className="w-3 h-3" />
-              MRR
-            </div>
-          </div>
-          <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Revenu mensuel</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.activeMerchants * 29}€</h3>
-          </div>
-          <div className="absolute bottom-0 left-6 right-6 h-0.5 rounded-full bg-indigo-500/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        </div>
-
-        <div className="group relative bg-white/80 backdrop-blur-xl border border-amber-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
-          <div className="flex items-start justify-between">
-            <div className="p-2.5 rounded-xl bg-amber-50">
-              <UserPlus className="w-5 h-5 text-amber-600" />
-            </div>
-            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-amber-600 bg-amber-50">
-              <TrendingUp className="w-3 h-3" />
-              Leads
-            </div>
-          </div>
-          <div className="mt-4">
-            <p className="text-sm font-medium text-gray-500">Leads démo</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{demoLeads.length}</h3>
-          </div>
-          <div className="absolute bottom-0 left-6 right-6 h-0.5 rounded-full bg-amber-500/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Total commerçants"
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Commerçants"
           value={stats.totalMerchants}
           icon={Store}
-          color="#10B981"
+          color="emerald"
         />
-        <StatsCard
-          title="En essai"
+        <StatCard
+          label="En essai"
           value={stats.trialMerchants}
           icon={Clock}
-          color="#F59E0B"
+          color="amber"
         />
-        <StatsCard
-          title="Abonnés"
-          value={stats.activeMerchants}
+        <StatCard
+          label="Conversion"
+          value={`${conversionRate}%`}
+          icon={Percent}
+          color="indigo"
+        />
+        <StatCard
+          label="MRR"
+          value={`${stats.activeMerchants * 29}€`}
           icon={CreditCard}
-          color="#10B981"
-        />
-        <StatsCard
-          title="Total clients"
-          value={stats.totalCustomers}
-          icon={Users}
-          color="#EC4899"
+          color="pink"
         />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Alertes - Essais se terminant */}
-        <div className="group relative p-6 bg-white/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-amber-500/10 hover:border-amber-200/50 overflow-hidden">
-          {/* Subtle animated glow effect */}
-          <div className="absolute -right-12 -top-12 w-48 h-48 bg-amber-500/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-
-          <div className="relative flex items-center gap-4 mb-6">
-            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-              <AlertTriangle className="w-5 h-5" />
+      {/* Main Grid */}
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Column 1: Notes + Tasks */}
+        <div className="space-y-6">
+          {/* Notes */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-50 rounded-xl">
+                  <StickyNote className="w-5 h-5 text-amber-600" />
+                </div>
+                <h2 className="font-bold text-gray-900">Notes</h2>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-gray-400">
+                {notesSaving && <Loader2 className="w-3 h-3 animate-spin" />}
+                {notesLastSaved && !notesSaving && (
+                  <span>Sauvé {notesLastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>
+                )}
+              </div>
             </div>
-            <div className="flex flex-col">
-              <h2 className="text-lg font-bold text-gray-900 tracking-tight">
-                Essais se terminant bientôt
-              </h2>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
-                </span>
-                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Action requise</p>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Écrivez vos notes, idées, rappels..."
+              className="w-full h-48 p-4 text-sm resize-none focus:outline-none"
+            />
+          </div>
+
+          {/* Tasks */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-violet-50 rounded-xl">
+                  <Check className="w-5 h-5 text-violet-600" />
+                </div>
+                <h2 className="font-bold text-gray-900">Tâches</h2>
+                {pendingTasks > 0 && (
+                  <span className="px-2 py-0.5 bg-violet-100 text-violet-700 text-xs font-bold rounded-full">
+                    {pendingTasks}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="p-4">
+              {/* Add task */}
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addTask()}
+                  placeholder="Nouvelle tâche..."
+                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-violet-400"
+                />
+                <button
+                  onClick={addTask}
+                  disabled={addingTask || !newTaskTitle.trim()}
+                  className="px-3 py-2 bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {addingTask ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                </button>
+              </div>
+              {/* Task list */}
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {tasks.length === 0 ? (
+                  <p className="text-center text-gray-400 text-sm py-4">Aucune tâche</p>
+                ) : (
+                  tasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-xl group transition-colors",
+                        task.completed ? "bg-gray-50" : "bg-violet-50/50 hover:bg-violet-50"
+                      )}
+                    >
+                      <button
+                        onClick={() => toggleTask(task)}
+                        className={cn(
+                          "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors",
+                          task.completed
+                            ? "bg-emerald-500 border-emerald-500 text-white"
+                            : "border-gray-300 hover:border-violet-500"
+                        )}
+                      >
+                        {task.completed && <Check className="w-3 h-3" />}
+                      </button>
+                      <span className={cn("flex-1 text-sm", task.completed && "line-through text-gray-400")}>
+                        {task.title}
+                      </span>
+                      <button
+                        onClick={() => deleteTask(task.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
+        </div>
 
-          {trialEndingMerchants.length > 0 ? (
-            <div className="space-y-3">
-              {trialEndingMerchants.map((merchant) => {
+        {/* Column 2: Prospects CRM */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-50 rounded-xl">
+                  <Target className="w-5 h-5 text-emerald-600" />
+                </div>
+                <h2 className="font-bold text-gray-900">Pipeline Prospects</h2>
+                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+                  {totalProspects}
+                </span>
+              </div>
+            </div>
+            {/* Status filters */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setProspectFilter('all')}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-full transition-colors",
+                  prospectFilter === 'all'
+                    ? "bg-gray-900 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                )}
+              >
+                Tous ({totalProspects})
+              </button>
+              {PROSPECT_STATUSES.slice(0, 5).map((status) => (
+                <button
+                  key={status.value}
+                  onClick={() => setProspectFilter(status.value)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-medium rounded-full transition-colors",
+                    prospectFilter === status.value
+                      ? status.color
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  )}
+                >
+                  {status.label} ({prospectCounts[status.value] || 0})
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Prospects list */}
+          <div className="divide-y divide-gray-100 max-h-[500px] overflow-y-auto">
+            {prospects.length === 0 ? (
+              <div className="py-12 text-center">
+                <Target className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">Aucun prospect</p>
+                <button
+                  onClick={() => openProspectModal()}
+                  className="mt-3 text-emerald-600 font-medium text-sm hover:underline"
+                >
+                  Ajouter un prospect
+                </button>
+              </div>
+            ) : (
+              prospects.map((prospect) => (
+                <div
+                  key={prospect.id}
+                  className="p-4 hover:bg-gray-50 transition-colors group"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <button
+                          onClick={() => openProspectModal(prospect)}
+                          className="font-semibold text-gray-900 hover:text-emerald-600 truncate"
+                        >
+                          {prospect.business_name}
+                        </button>
+                        <span className={cn("px-2 py-0.5 text-[10px] font-bold rounded-full", getStatusBadge(prospect.status).color)}>
+                          {getStatusBadge(prospect.status).label}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                        {prospect.contact_name && (
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3 h-3" />
+                            {prospect.contact_name}
+                          </span>
+                        )}
+                        {prospect.phone && (
+                          <a href={`tel:${prospect.phone}`} className="flex items-center gap-1 hover:text-emerald-600">
+                            <Phone className="w-3 h-3" />
+                            {prospect.phone}
+                          </a>
+                        )}
+                        {prospect.next_followup && (
+                          <span className="flex items-center gap-1 text-amber-600">
+                            <Calendar className="w-3 h-3" />
+                            Relance: {formatDate(prospect.next_followup)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* Quick status change */}
+                      <select
+                        value={prospect.status}
+                        onChange={(e) => updateProspectStatus(prospect.id, e.target.value)}
+                        className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-emerald-400"
+                      >
+                        {PROSPECT_STATUSES.map((s) => (
+                          <option key={s.value} value={s.value}>{s.label}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => deleteProspect(prospect.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Row: Alerts */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Trial Ending */}
+        <div className="bg-white rounded-2xl border border-amber-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-amber-100 flex items-center gap-3">
+            <div className="p-2 bg-amber-50 rounded-xl">
+              <AlertTriangle className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="font-bold text-gray-900">Essais se terminant</h2>
+              <p className="text-xs text-amber-600">À contacter en priorité</p>
+            </div>
+          </div>
+          <div className="divide-y divide-amber-50">
+            {trialEndingMerchants.length === 0 ? (
+              <p className="p-4 text-center text-gray-400 text-sm">Aucun essai urgent</p>
+            ) : (
+              trialEndingMerchants.map((merchant) => {
                 const daysLeft = getDaysRemaining(merchant.trial_ends_at!);
                 return (
                   <Link
                     key={merchant.id}
                     href={`/admin/merchants/${merchant.id}`}
-                    className="flex items-center justify-between p-4 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors"
+                    className="flex items-center justify-between p-4 hover:bg-amber-50 transition-colors"
                   >
                     <div>
                       <p className="font-medium text-gray-900">{merchant.shop_name}</p>
                       {merchant.shop_address && (
-                        <p className="text-sm text-gray-500 flex items-center gap-1">
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
                           <MapPin className="w-3 h-3" />
                           {merchant.shop_address}
                         </p>
                       )}
                     </div>
-                    <div className={cn(
-                      "px-3 py-1 rounded-full text-sm font-medium",
-                      daysLeft <= 1
-                        ? "bg-red-100 text-red-700"
-                        : "bg-amber-100 text-amber-700"
+                    <span className={cn(
+                      "px-2 py-1 rounded-full text-xs font-bold",
+                      daysLeft <= 1 ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
                     )}>
-                      {daysLeft <= 0
-                        ? "Expire aujourd'hui"
-                        : `${daysLeft} jour${daysLeft > 1 ? 's' : ''} restant${daysLeft > 1 ? 's' : ''}`
-                      }
-                    </div>
+                      {daysLeft <= 0 ? "Aujourd'hui" : `${daysLeft}j`}
+                    </span>
                   </Link>
                 );
-              })}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-              <Clock className="w-12 h-12 mb-4 text-gray-300" />
-              <p>Aucun essai ne se termine prochainement</p>
-            </div>
-          )}
+              })
+            )}
+          </div>
         </div>
 
-        {/* Dernières inscriptions */}
-        <div className="group relative p-6 bg-white/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-200/50 overflow-hidden">
-          <div className="absolute -right-12 -top-12 w-48 h-48 bg-emerald-500/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-
-          <div className="relative flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                <Store className="w-5 h-5" />
+        {/* Recent Signups */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-50 rounded-xl">
+                <Store className="w-5 h-5 text-emerald-600" />
               </div>
-              <h2 className="text-lg font-bold text-gray-900 tracking-tight">
-                Dernières inscriptions
-              </h2>
+              <h2 className="font-bold text-gray-900">Dernières inscriptions</h2>
             </div>
-            <Link href="/admin/merchants">
-              <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
-                Voir tout
-                <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
+            <Link href="/admin/merchants" className="text-emerald-600 text-sm font-medium hover:underline">
+              Voir tout
             </Link>
           </div>
-
-          {recentMerchants.length > 0 ? (
-            <div className="space-y-3">
-              {recentMerchants.map((merchant) => (
+          <div className="divide-y divide-gray-50">
+            {recentMerchants.length === 0 ? (
+              <p className="p-4 text-center text-gray-400 text-sm">Aucune inscription</p>
+            ) : (
+              recentMerchants.map((merchant) => (
                 <Link
                   key={merchant.id}
                   href={`/admin/merchants/${merchant.id}`}
-                  className="flex items-center justify-between p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+                  className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 font-medium text-white rounded-full bg-emerald-600">
+                    <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-sm">
                       {merchant.shop_name.charAt(0)}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{merchant.shop_name}</p>
-                      {merchant.shop_address && (
-                        <p className="text-sm text-gray-500 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {merchant.shop_address}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-400">
-                        Inscrit le {formatDate(merchant.created_at)}
-                      </p>
+                      <p className="font-medium text-gray-900 text-sm">{merchant.shop_name}</p>
+                      <p className="text-xs text-gray-400">{formatDate(merchant.created_at)}</p>
                     </div>
                   </div>
-                  {getStatusBadge(merchant.subscription_status)}
+                  <ChevronRight className="w-4 h-4 text-gray-400" />
                 </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-              <Store className="w-12 h-12 mb-4 text-gray-300" />
-              <p>Aucun commerçant inscrit</p>
-            </div>
-          )}
+              ))
+            )}
+          </div>
         </div>
+      </div>
 
-        {/* Demo Leads - Prospects à rappeler */}
-        <div className="group relative p-6 bg-white/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-200/50 overflow-hidden">
-          <div className="absolute -right-12 -top-12 w-48 h-48 bg-indigo-500/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
-
-          <div className="relative flex items-center gap-4 mb-6">
-            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-              <UserPlus className="w-5 h-5" />
-            </div>
-            <div className="flex flex-col">
-              <h2 className="text-lg font-bold text-gray-900 tracking-tight">
-                Leads démo
-              </h2>
-              <p className="text-xs text-indigo-600 font-semibold">{demoLeads.length} prospects</p>
+      {/* Prospect Modal */}
+      <Modal
+        isOpen={prospectModalOpen}
+        onClose={() => setProspectModalOpen(false)}
+        title={editingProspect ? 'Modifier prospect' : 'Nouveau prospect'}
+        size="lg"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Nom du commerce *"
+            placeholder="Ex: Boulangerie Martin"
+            value={prospectForm.business_name}
+            onChange={(e) => setProspectForm({ ...prospectForm, business_name: e.target.value })}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Contact"
+              placeholder="Nom du contact"
+              value={prospectForm.contact_name}
+              onChange={(e) => setProspectForm({ ...prospectForm, contact_name: e.target.value })}
+            />
+            <Input
+              label="Téléphone"
+              placeholder="06 12 34 56 78"
+              value={prospectForm.phone}
+              onChange={(e) => setProspectForm({ ...prospectForm, phone: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Email"
+              type="email"
+              placeholder="contact@example.com"
+              value={prospectForm.email}
+              onChange={(e) => setProspectForm({ ...prospectForm, email: e.target.value })}
+            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+              <select
+                value={prospectForm.status}
+                onChange={(e) => setProspectForm({ ...prospectForm, status: e.target.value })}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-emerald-500"
+              >
+                {PROSPECT_STATUSES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
             </div>
           </div>
+          <Input
+            label="Adresse"
+            placeholder="Adresse du commerce"
+            value={prospectForm.address}
+            onChange={(e) => setProspectForm({ ...prospectForm, address: e.target.value })}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Source</label>
+              <select
+                value={prospectForm.source}
+                onChange={(e) => setProspectForm({ ...prospectForm, source: e.target.value })}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-emerald-500"
+              >
+                <option value="cold_call">Appel froid</option>
+                <option value="referral">Recommandation</option>
+                <option value="website">Site web</option>
+                <option value="social">Réseaux sociaux</option>
+                <option value="other">Autre</option>
+              </select>
+            </div>
+            <Input
+              label="Date de relance"
+              type="date"
+              value={prospectForm.next_followup}
+              onChange={(e) => setProspectForm({ ...prospectForm, next_followup: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+            <textarea
+              value={prospectForm.notes}
+              onChange={(e) => setProspectForm({ ...prospectForm, notes: e.target.value })}
+              placeholder="Notes sur ce prospect..."
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-emerald-500 h-24 resize-none"
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setProspectModalOpen(false)}
+              className="flex-1"
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={saveProspect}
+              disabled={savingProspect || !prospectForm.business_name.trim()}
+              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {savingProspect ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              {editingProspect ? 'Modifier' : 'Créer'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
 
-          {demoLeads.length > 0 ? (
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {demoLeads.map((lead) => (
-                <div
-                  key={lead.id}
-                  className={cn(
-                    "flex items-center justify-between p-3 rounded-xl transition-colors",
-                    lead.converted
-                      ? "bg-green-50"
-                      : "bg-indigo-50 hover:bg-indigo-100"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      "flex items-center justify-center w-9 h-9 rounded-full",
-                      lead.converted ? "bg-green-100" : "bg-indigo-100"
-                    )}>
-                      <Phone className={cn(
-                        "w-4 h-4",
-                        lead.converted ? "text-green-600" : "text-indigo-600"
-                      )} />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900 text-sm">{lead.phone_number}</p>
-                      <p className="text-xs text-gray-500">
-                        {formatDate(lead.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                  {lead.converted ? (
-                    <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
-                      Converti
-                    </span>
-                  ) : (
-                    <a
-                      href={`tel:${lead.phone_number}`}
-                      className="px-3 py-1.5 text-xs font-medium text-indigo-700 bg-indigo-100 rounded-full hover:bg-indigo-200 transition-colors"
-                    >
-                      Appeler
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-              <Phone className="w-12 h-12 mb-4 text-gray-300" />
-              <p>Aucun lead pour le moment</p>
-            </div>
-          )}
+// ============================================
+// STAT CARD COMPONENT (Optimized - no heavy charts)
+// ============================================
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  color: 'emerald' | 'amber' | 'indigo' | 'pink';
+}) {
+  const colors = {
+    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    amber: 'bg-amber-50 text-amber-600 border-amber-100',
+    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    pink: 'bg-pink-50 text-pink-600 border-pink-100',
+  };
+
+  return (
+    <div className={cn("p-4 rounded-2xl border", colors[color])}>
+      <div className="flex items-center gap-3">
+        <Icon className="w-5 h-5" />
+        <div>
+          <p className="text-2xl font-bold">{value}</p>
+          <p className="text-xs opacity-80">{label}</p>
         </div>
       </div>
     </div>
