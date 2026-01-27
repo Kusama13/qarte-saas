@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   ShieldAlert,
+  Shield,
+  ShieldOff,
   Check,
   X,
   Clock,
@@ -21,6 +23,8 @@ interface PendingPointsWidgetProps {
   merchantId: string;
   loyaltyMode: LoyaltyMode;
   productName?: string | null;
+  shieldEnabled: boolean;
+  onShieldToggle: (enabled: boolean) => void;
 }
 
 interface ToastState {
@@ -29,7 +33,7 @@ interface ToastState {
   type: 'success' | 'error';
 }
 
-export default function PendingPointsWidget({ merchantId, loyaltyMode, productName }: PendingPointsWidgetProps) {
+export default function PendingPointsWidget({ merchantId, loyaltyMode, productName, shieldEnabled, onShieldToggle }: PendingPointsWidgetProps) {
   const [visits, setVisits] = useState<PendingVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -228,8 +232,8 @@ export default function PendingPointsWidget({ merchantId, loyaltyMode, productNa
         <div className="relative p-6 border-b border-gray-100 bg-gradient-to-r from-white to-indigo-50/30">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-200">
-                <ShieldAlert className="w-6 h-6" />
+              <div className={`flex items-center justify-center w-12 h-12 rounded-2xl text-white shadow-lg transition-all duration-300 ${shieldEnabled ? 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-indigo-200' : 'bg-gradient-to-br from-gray-400 to-gray-500 shadow-gray-200'}`}>
+                {shieldEnabled ? <Shield className="w-6 h-6" /> : <ShieldOff className="w-6 h-6" />}
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
@@ -244,34 +248,58 @@ export default function PendingPointsWidget({ merchantId, loyaltyMode, productNa
                   <p className="text-sm text-gray-500">Qarte Shield - Modération anti-fraude</p>
                   <button
                     onClick={() => setShowHelp(true)}
-                    className="flex items-center gap-1 px-2 py-0.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
+                    className="p-1.5 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
+                    title="Comment ça fonctionne ?"
                   >
-                    <HelpCircle className="w-3.5 h-3.5" />
-                    Comment ça fonctionne ?
+                    <HelpCircle className="w-5 h-5" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {visits.length > 3 && (
-              <div className="hidden sm:flex items-center gap-2">
+            <div className="flex items-center gap-4">
+              {/* Shield Toggle */}
+              <div className="flex items-center gap-3">
+                <span className={`text-sm font-semibold transition-colors ${shieldEnabled ? 'text-emerald-600' : 'text-gray-400'}`}>
+                  {shieldEnabled ? 'Actif' : 'Inactif'}
+                </span>
                 <button
-                  onClick={() => handleBulkAction('reject')}
-                  disabled={bulkProcessing}
-                  className="px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-50"
+                  type="button"
+                  onClick={() => onShieldToggle(!shieldEnabled)}
+                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                    shieldEnabled
+                      ? 'bg-emerald-500 focus:ring-emerald-500'
+                      : 'bg-gray-300 focus:ring-gray-400'
+                  }`}
                 >
-                  Tout refuser
-                </button>
-                <button
-                  onClick={() => handleBulkAction('confirm')}
-                  disabled={bulkProcessing}
-                  className="px-4 py-2 text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-100 disabled:opacity-50 flex items-center gap-2"
-                >
-                  {bulkProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
-                  Tout valider
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+                      shieldEnabled ? 'translate-x-7' : 'translate-x-1'
+                    }`}
+                  />
                 </button>
               </div>
-            )}
+
+              {visits.length > 3 && (
+                <div className="hidden sm:flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
+                  <button
+                    onClick={() => handleBulkAction('reject')}
+                    disabled={bulkProcessing}
+                    className="px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-50"
+                  >
+                    Tout refuser
+                  </button>
+                  <button
+                    onClick={() => handleBulkAction('confirm')}
+                    disabled={bulkProcessing}
+                    className="px-4 py-2 text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-100 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {bulkProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
+                    Tout valider
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

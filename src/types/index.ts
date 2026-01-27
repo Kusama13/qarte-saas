@@ -53,6 +53,7 @@ export interface Merchant {
   stripe_customer_id: string | null;
   subscription_status: SubscriptionStatus;
   onboarding_completed: boolean;
+  shield_enabled: boolean;
   created_at: string;
   updated_at: string;
 }

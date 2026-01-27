@@ -10,7 +10,6 @@ import {
   Image as ImageIcon,
   Check,
   Star,
-  ChevronRight,
   X,
   Gift,
   Footprints,
@@ -21,10 +20,6 @@ import {
   Sparkles,
   ExternalLink,
   Trophy,
-  ToggleLeft,
-  ToggleRight,
-  Shield,
-  ShieldOff,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -97,12 +92,7 @@ export default function ProgramPage() {
     tier2Enabled: false,
     tier2StampsRequired: 20,
     tier2RewardDescription: '',
-    // Qarte Shield (anti-fraud)
-    shieldEnabled: true,
   });
-
-  // Shield disable confirmation
-  const [showShieldWarning, setShowShieldWarning] = useState(false);
 
   // Preview data for mockup (updated in real-time, not saved until save button)
   const [previewData, setPreviewData] = useState({
@@ -149,7 +139,6 @@ export default function ProgramPage() {
           tier2Enabled: data.tier2_enabled || false,
           tier2StampsRequired: data.tier2_stamps_required || (data.stamps_required || 10) * 2,
           tier2RewardDescription: data.tier2_reward_description || '',
-          shieldEnabled: data.shield_enabled !== false, // Default to true
         });
         setPreviewData({
           stampsRequired: data.stamps_required || 10,
@@ -225,7 +214,6 @@ export default function ProgramPage() {
           tier2_enabled: formData.tier2Enabled,
           tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
           tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription : null,
-          shield_enabled: formData.shieldEnabled,
         })
         .eq('id', merchant.id);
 
@@ -647,115 +635,6 @@ export default function ProgramPage() {
             </div>
           </div>
 
-          {/* Qarte Shield Section */}
-          <div className="p-6 bg-gradient-to-br from-white via-white to-emerald-50/30 rounded-2xl shadow-lg shadow-emerald-200/20 border border-emerald-100/50 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className={`p-2.5 rounded-xl shadow-lg transition-all duration-300 ${formData.shieldEnabled ? 'bg-gradient-to-br from-emerald-600 to-teal-600 shadow-emerald-200' : 'bg-gradient-to-br from-gray-400 to-gray-500 shadow-gray-200'}`}>
-                  {formData.shieldEnabled ? (
-                    <Shield className="w-5 h-5 text-white" />
-                  ) : (
-                    <ShieldOff className="w-5 h-5 text-white" />
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">Qarte Shield</h3>
-                  <p className="text-xs text-gray-500">Protection anti-fraude automatique</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (formData.shieldEnabled) {
-                    // Trying to disable - show warning
-                    setShowShieldWarning(true);
-                  } else {
-                    // Enabling - no warning needed
-                    setFormData({ ...formData, shieldEnabled: true });
-                  }
-                }}
-                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
-                  formData.shieldEnabled ? 'bg-emerald-600' : 'bg-gray-200'
-                }`}
-              >
-                <span
-                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-                    formData.shieldEnabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-
-            <div className={`p-4 rounded-xl border transition-all duration-300 ${formData.shieldEnabled ? 'bg-emerald-50/50 border-emerald-100' : 'bg-gray-50/50 border-gray-100'}`}>
-              <p className="text-sm text-gray-600 flex items-start gap-2">
-                <Shield className={`w-4 h-4 mt-0.5 flex-shrink-0 ${formData.shieldEnabled ? 'text-emerald-600' : 'text-gray-400'}`} />
-                <span>
-                  {formData.shieldEnabled ? (
-                    <>Les passages suspects (scans multiples le même jour) sont automatiquement mis en <strong>quarantaine</strong> pour votre validation.</>
-                  ) : (
-                    <>Protection désactivée. Tous les passages sont validés automatiquement sans vérification.</>
-                  )}
-                </span>
-              </p>
-            </div>
-
-            {/* Shield Warning Modal */}
-            {showShieldWarning && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-3 rounded-xl bg-red-100">
-                      <AlertTriangle className="w-6 h-6 text-red-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-gray-900">Désactiver la protection ?</h4>
-                      <p className="text-sm text-gray-500">Cette action expose votre programme à des risques</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 mb-6">
-                    <div className="p-4 rounded-xl bg-red-50 border border-red-100">
-                      <p className="text-sm text-red-800 font-medium mb-2">Risques potentiels :</p>
-                      <ul className="text-sm text-red-700 space-y-1.5">
-                        <li className="flex items-start gap-2">
-                          <span className="text-red-400 mt-1">•</span>
-                          <span>Scans multiples frauduleux le même jour</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-red-400 mt-1">•</span>
-                          <span>Accumulation rapide de points non légitimes</span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <span className="text-red-400 mt-1">•</span>
-                          <span>Récompenses obtenues de manière abusive</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowShieldWarning(false)}
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
-                    >
-                      Annuler
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData({ ...formData, shieldEnabled: false });
-                        setShowShieldWarning(false);
-                      }}
-                      className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors"
-                    >
-                      Désactiver quand même
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
 
         <div className="hidden lg:block">

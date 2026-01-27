@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight } from 'lucide-react';
+import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, AlertTriangle, X } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
@@ -94,6 +94,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showShieldWarning, setShowShieldWarning] = useState(false);
+  const [shieldEnabled, setShieldEnabled] = useState(true);
 
   // Show onboarding guide if merchant hasn't completed it yet
   useEffect(() => {
@@ -101,6 +103,53 @@ export default function DashboardPage() {
       setShowOnboarding(true);
     }
   }, [merchant]);
+
+  // Sync shield status with merchant data
+  useEffect(() => {
+    if (merchant) {
+      setShieldEnabled(merchant.shield_enabled !== false);
+    }
+  }, [merchant]);
+
+  // Handle shield toggle
+  const handleShieldToggle = useCallback(async (enabled: boolean) => {
+    if (!merchant) return;
+
+    if (!enabled) {
+      // Show warning before disabling
+      setShowShieldWarning(true);
+      return;
+    }
+
+    // Enable shield directly
+    try {
+      await supabase
+        .from('merchants')
+        .update({ shield_enabled: true })
+        .eq('id', merchant.id);
+      setShieldEnabled(true);
+      refetch();
+    } catch (err) {
+      console.error('Error enabling shield:', err);
+    }
+  }, [merchant, supabase, refetch]);
+
+  // Confirm disable shield
+  const confirmDisableShield = useCallback(async () => {
+    if (!merchant) return;
+
+    try {
+      await supabase
+        .from('merchants')
+        .update({ shield_enabled: false })
+        .eq('id', merchant.id);
+      setShieldEnabled(false);
+      setShowShieldWarning(false);
+      refetch();
+    } catch (err) {
+      console.error('Error disabling shield:', err);
+    }
+  }, [merchant, supabase, refetch]);
 
   const handleOnboardingComplete = useCallback(async () => {
     if (!merchant) return;
@@ -365,7 +414,67 @@ export default function DashboardPage() {
         merchantId={merchant.id}
         loyaltyMode={merchant.loyalty_mode}
         productName={merchant.product_name}
+        shieldEnabled={shieldEnabled}
+        onShieldToggle={handleShieldToggle}
       />
+
+      {/* Shield Disable Warning Modal */}
+      {showShieldWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 rounded-xl bg-red-100">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h4 className="text-lg font-bold text-gray-900">Désactiver Qarte Shield ?</h4>
+                <p className="text-sm text-gray-500">Cette action expose votre programme</p>
+              </div>
+              <button
+                onClick={() => setShowShieldWarning(false)}
+                className="ml-auto p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-xl bg-red-50 border border-red-100 mb-6">
+              <p className="text-sm text-red-800 font-medium mb-2">Risques potentiels :</p>
+              <ul className="text-sm text-red-700 space-y-1.5">
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-1">•</span>
+                  <span>Scans multiples frauduleux le même jour</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-1">•</span>
+                  <span>Accumulation rapide de points non légitimes</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-red-400 mt-1">•</span>
+                  <span>Récompenses obtenues de manière abusive</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowShieldWarning(false)}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={confirmDisableShield}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors"
+              >
+                Désactiver
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatsCard
