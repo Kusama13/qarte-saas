@@ -43,6 +43,7 @@ import {
   Banknote,
   EyeOff,
   ArrowRight,
+  Crown,
 } from 'lucide-react';
 import { LandingAnalytics } from '@/components/analytics/LandingAnalytics';
 import { trackCtaClick, trackWhatsAppClicked, trackVideoPlayed, trackFaqOpened } from '@/lib/analytics';
@@ -495,9 +496,9 @@ function ComparisonSection() {
     "Boostez votre chiffre d'affaires",
     "Collectez des avis Google facilement",
     "Notifications push pour réengager",
+    "Programmes VIP pour vos meilleurs clients",
     "Dashboard et statistiques en temps réel",
-    "100% écologique, zéro papier",
-    "Prêt en 5 minutes, sans engagement"
+    "100% écologique, zéro papier"
   ];
 
   return (
@@ -623,6 +624,15 @@ function FeaturesSection() {
       reverse: false,
       color: 'rose',
       mockupType: 'dashboard'
+    },
+    {
+      title: 'Programmes Membres VIP',
+      subtitle: 'Créez l\'exclusivité',
+      description: 'Créez des programmes VIP avec avantages exclusifs. Vos meilleurs clients deviennent des membres privilégiés avec des réductions permanentes.',
+      icon: Crown,
+      reverse: true,
+      color: 'amber',
+      mockupType: 'vip'
     }
   ];
 
@@ -656,7 +666,8 @@ function FeatureRow({ feature }: { feature: any }) {
   const colorClasses: Record<string, { bg: string; text: string; gradient: string }> = {
     indigo: { bg: 'bg-indigo-500/10', text: 'text-indigo-500', gradient: 'from-indigo-500 to-indigo-600' },
     violet: { bg: 'bg-violet-500/10', text: 'text-violet-500', gradient: 'from-violet-500 to-violet-600' },
-    rose: { bg: 'bg-rose-500/10', text: 'text-rose-500', gradient: 'from-rose-500 to-rose-600' }
+    rose: { bg: 'bg-rose-500/10', text: 'text-rose-500', gradient: 'from-rose-500 to-rose-600' },
+    amber: { bg: 'bg-amber-500/10', text: 'text-amber-500', gradient: 'from-amber-500 to-amber-600' }
   };
 
   const colors = colorClasses[feature.color];
@@ -758,6 +769,106 @@ function FeatureRow({ feature }: { feature: any }) {
               </div>
               <div className="flex justify-between mt-2 text-xs text-gray-400">
                 <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {feature.mockupType === 'vip' && (
+          <div className="relative w-full max-w-sm mx-auto group">
+            {/* Ambient background glow */}
+            <div className="absolute -inset-4 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-[2.5rem] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000"></div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <div className="relative overflow-hidden rounded-2xl border border-amber-200/30 bg-gradient-to-br from-zinc-900 via-amber-950/40 to-zinc-950 p-6 shadow-2xl backdrop-blur-sm">
+
+                {/* Animated Shine Effect */}
+                <motion.div
+                  animate={{
+                    x: ['-100%', '200%'],
+                    opacity: [0, 0.3, 0]
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "linear",
+                    repeatDelay: 2
+                  }}
+                  className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-amber-100/20 to-transparent skew-x-12"
+                />
+
+                {/* Card Content */}
+                <div className="relative z-10 flex flex-col h-48 justify-between">
+
+                  {/* Header: Brand & Status */}
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1.5 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-600 shadow-lg shadow-amber-900/20">
+                        <Crown className="w-5 h-5 text-amber-950" strokeWidth={2.5} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-500/80 leading-none mb-1">Status</p>
+                        <h4 className="text-sm font-bold text-white tracking-tight">VIP GOLD</h4>
+                      </div>
+                    </div>
+                    <div className="flex -space-x-1">
+                      <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+                    </div>
+                  </div>
+
+                  {/* Center: Main Benefit */}
+                  <div className="py-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 backdrop-blur-md">
+                      <Check className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-sm font-semibold text-amber-100">-10% sur tout</span>
+                    </div>
+                  </div>
+
+                  {/* Footer: Member Info */}
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-500 mb-0.5">Membre Privilège</p>
+                      <p className="text-lg font-semibold text-zinc-100">Marie D.</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] font-medium uppercase tracking-widest text-zinc-500 mb-0.5">Valide jusqu&apos;au</p>
+                      <p className="text-xs font-mono text-zinc-300">12 / 26</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Holographic "Chip" pattern */}
+                <div className="absolute top-1/2 right-6 -translate-y-1/2 opacity-10">
+                  <div className="grid grid-cols-3 gap-1">
+                    {[...Array(9)].map((_, i) => (
+                      <div key={i} className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Decorative radial gradients */}
+                <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl"></div>
+                <div className="absolute -top-20 -left-20 w-40 h-40 bg-yellow-500/10 rounded-full blur-3xl"></div>
+              </div>
+
+              {/* Reflection detail */}
+              <div className="absolute inset-0 rounded-2xl border border-white/5 pointer-events-none"></div>
+            </motion.div>
+
+            {/* Legend / Caption for the mockup */}
+            <div className="mt-6 flex items-center justify-center gap-4 text-sm font-medium text-zinc-400">
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                Offres exclusives
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                Accès prioritaire
               </div>
             </div>
           </div>
