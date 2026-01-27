@@ -329,10 +329,14 @@ function HeroSection() {
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </a>
             <a
-              href="#pricing"
-              className="px-8 py-4 border border-gray-300 text-gray-900 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 text-center shadow-sm"
+              href="https://wa.me/33745953842?text=Bonjour%2C%20je%20souhaite%20une%20d%C3%A9mo%20de%20Qarte"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackWhatsAppClicked('hero_demo')}
+              className="px-8 py-4 border border-gray-300 text-gray-900 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 text-center shadow-sm flex items-center justify-center gap-2"
             >
-              Voir les Tarifs
+              <MessageCircle className="w-5 h-5" />
+              Demander une Démo
             </a>
           </div>
         </div>
@@ -343,11 +347,15 @@ function HeroSection() {
             {/* Phone Frame - Sans encoche */}
             <div className="relative w-[280px] h-[570px] bg-gray-900 rounded-[3rem] p-2 shadow-2xl shadow-gray-900/30">
               {/* Screen */}
-              <div className="w-full h-full rounded-[2.5rem] overflow-hidden">
-                <img
-                  src="/images/mockup-card.jpg"
-                  alt="Carte de fidélité Qarte"
+              <div className="w-full h-full rounded-[2.5rem] overflow-hidden bg-gradient-to-b from-rose-100 to-rose-200">
+                <Image
+                  src="/images/mockup-app.jpg"
+                  alt="Application Qarte - Carte de fidélité digitale"
+                  width={280}
+                  height={560}
                   className="w-full h-full object-cover object-top"
+                  priority
+                  quality={95}
                 />
               </div>
             </div>
