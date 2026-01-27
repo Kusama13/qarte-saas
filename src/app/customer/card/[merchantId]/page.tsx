@@ -835,43 +835,6 @@ export default function CustomerCardPage({
           </motion.button>
         )}
 
-        {/* Review Section - Only show if review_link exists and is not empty */}
-        {merchant.review_link && merchant.review_link.trim() !== '' && !reviewDismissed && !reviewPermanentlyHidden && (
-          <div className="relative group mb-3">
-            <a
-              href={merchant.review_link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-3 p-3 bg-gradient-to-br from-amber-50 via-white to-amber-50/30 border border-amber-100 rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
-            >
-              <div className="flex items-center justify-center w-9 h-9 bg-amber-100 rounded-lg group-hover:scale-105 transition-transform">
-                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 text-sm truncate">Laisser un avis à {merchant.shop_name}</p>
-              </div>
-              <div className="p-1.5 rounded-lg bg-amber-500 text-white">
-                <ExternalLink className="w-3.5 h-3.5" />
-              </div>
-            </a>
-            {/* Close buttons - Outside the link, positioned on the right */}
-            <div className="absolute -top-1.5 -right-1.5 flex gap-1 z-20">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  localStorage.setItem(`qarte_review_hidden_${merchantId}`, 'true');
-                  setReviewPermanentlyHidden(true);
-                }}
-                className="p-1 rounded-full bg-gray-100 hover:bg-red-100 transition-colors text-gray-400 hover:text-red-500"
-                aria-label="Ne plus afficher"
-                title="Ne plus afficher"
-              >
-                <XCircle className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        )}
 
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -881,88 +844,189 @@ export default function CustomerCardPage({
         >
           {/* Progression Section with Stamp Icons */}
           <div className="mb-8 px-2 space-y-6">
-            {/* PALIER 1 SECTION */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`p-5 rounded-2xl border transition-all duration-500 ${
-                isRewardReady && !effectiveTier1Redeemed
-                  ? 'bg-white border-amber-200 shadow-[0_8px_30px_rgb(245,158,11,0.1)]'
-                  : effectiveTier1Redeemed
-                    ? 'bg-gray-50/50 border-gray-100 opacity-60'
-                    : 'bg-white border-gray-100'
-              }`}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2">
-                  <Gift className={`w-4 h-4 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-500' : 'text-gray-400'}`} />
-                  <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-400'}`}>
-                    Palier 1
-                  </span>
-                </div>
-                {effectiveTier1Redeemed ? (
-                  <span className="px-2.5 py-1 rounded-full bg-gray-200 text-[10px] font-bold text-gray-500 uppercase">
-                    Réclamé
-                  </span>
-                ) : isRewardReady ? (
-                  <motion.span
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-black text-white uppercase shadow-lg shadow-amber-200"
-                  >
-                    Prêt !
-                  </motion.span>
-                ) : (
-                  <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
-                    {Math.max(0, tier1Required - currentStamps)} restant{tier1Required - currentStamps > 1 ? 's' : ''}
-                  </span>
-                )}
-              </div>
+            {tier2Enabled ? (
+              /* ═══════════════════════════════════════════════════════════════
+                 DUAL TIER DESIGN - Palier 1 et Palier 2
+                 ═══════════════════════════════════════════════════════════════ */
+              <>
+                {/* PALIER 1 SECTION */}
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`p-5 rounded-2xl border transition-all duration-500 ${
+                    isRewardReady && !effectiveTier1Redeemed
+                      ? 'bg-white border-amber-200 shadow-[0_8px_30px_rgb(245,158,11,0.1)]'
+                      : effectiveTier1Redeemed
+                        ? 'bg-gray-50/50 border-gray-100 opacity-60'
+                        : 'bg-white border-gray-100'
+                  }`}
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <div className="flex items-center gap-2">
+                      <Gift className={`w-4 h-4 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-500' : 'text-gray-400'}`} />
+                      <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-400'}`}>
+                        Palier 1
+                      </span>
+                    </div>
+                    {effectiveTier1Redeemed ? (
+                      <span className="px-2.5 py-1 rounded-full bg-gray-200 text-[10px] font-bold text-gray-500 uppercase">
+                        Réclamé
+                      </span>
+                    ) : isRewardReady ? (
+                      <motion.span
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                        className="px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-black text-white uppercase shadow-lg shadow-amber-200"
+                      >
+                        Prêt !
+                      </motion.span>
+                    ) : tier1Required - currentStamps <= 2 ? (
+                      <motion.span
+                        animate={{ x: [0, -2, 2, 0] }}
+                        transition={{ repeat: Infinity, duration: 0.5, repeatDelay: 1 }}
+                        className="px-2.5 py-1 rounded-full bg-amber-100 text-[10px] font-black text-amber-700 border border-amber-200"
+                      >
+                        Plus que {tier1Required - currentStamps} !
+                      </motion.span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
+                        {tier1Required - currentStamps} restants
+                      </span>
+                    )}
+                  </div>
 
-              {/* Stamps Grid Tier 1 */}
-              <div className="flex flex-wrap gap-2.5 mb-4">
-                {Array.from({ length: tier1Required }).map((_, i) => {
-                  const isEarned = i < currentStamps;
-                  const isGreyed = effectiveTier1Redeemed;
-                  return (
+                  {/* Stamps Grid Tier 1 */}
+                  <div className="flex flex-wrap gap-2.5 mb-4">
+                    {Array.from({ length: tier1Required }).map((_, i) => {
+                      const isEarned = i < currentStamps;
+                      const isGreyed = effectiveTier1Redeemed;
+                      return (
+                        <motion.div
+                          key={i}
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: i * 0.05 }}
+                          className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
+                            isEarned && !isGreyed
+                              ? 'text-white shadow-md'
+                              : isEarned && isGreyed
+                                ? 'bg-gray-300 text-gray-400'
+                                : 'bg-gray-50 text-gray-300 border border-gray-100'
+                          }`}
+                          style={{
+                            backgroundColor: isEarned && !isGreyed ? merchant.primary_color : undefined,
+                          }}
+                        >
+                          <LoyaltyIcon className="w-4 h-4" />
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Bottom Progress & Desc - CENTERED */}
+                  <div className="space-y-3">
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((currentStamps / tier1Required) * 100, 100)}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className="h-full rounded-full"
+                        style={{ backgroundColor: effectiveTier1Redeemed ? '#9ca3af' : (isRewardReady ? '#f59e0b' : merchant.primary_color) }}
+                      />
+                    </div>
+                    <p className={`text-center text-sm font-bold ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-900' : 'text-gray-600'}`}>
+                      {merchant.reward_description || 'Cadeau de fidélité'}
+                    </p>
+                  </div>
+                </motion.div>
+              </>
+            ) : (
+              /* ═══════════════════════════════════════════════════════════════
+                 SINGLE TIER DESIGN - Plus gros, sans label "Palier 1"
+                 ═══════════════════════════════════════════════════════════════ */
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                {/* Header with count and status */}
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Progression</p>
+                    <p className="text-4xl font-black tracking-tight" style={{ color: merchant.primary_color }}>
+                      {currentStamps}<span className="text-gray-300 text-2xl mx-1">/</span><span className="text-gray-400 text-2xl">{tier1Required}</span>
+                    </p>
+                  </div>
+                  {isRewardReady ? (
                     <motion.div
-                      key={i}
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: i * 0.05 }}
-                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
-                        isEarned && !isGreyed
-                          ? 'text-white shadow-md'
-                          : isEarned && isGreyed
-                            ? 'bg-gray-300 text-gray-400'
-                            : 'bg-gray-50 text-gray-300 border border-gray-100'
-                      }`}
-                      style={{
-                        backgroundColor: isEarned && !isGreyed ? merchant.primary_color : undefined,
-                      }}
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200"
                     >
-                      <LoyaltyIcon className="w-4 h-4" />
+                      <Gift className="w-5 h-5" />
+                      <span className="text-sm font-black uppercase">Prêt !</span>
                     </motion.div>
-                  );
-                })}
-              </div>
+                  ) : tier1Required - currentStamps <= 2 ? (
+                    <motion.div
+                      animate={{ x: [0, -3, 3, 0], scale: [1, 1.02, 1] }}
+                      transition={{ repeat: Infinity, duration: 0.6, repeatDelay: 1.5 }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-200"
+                    >
+                      <Zap className="w-4 h-4" />
+                      <span className="text-sm font-black">Plus que {tier1Required - currentStamps} !</span>
+                    </motion.div>
+                  ) : null}
+                </div>
 
-              {/* Bottom Progress & Desc */}
-              <div className="space-y-2">
-                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                {/* Large Stamps Grid - Centered */}
+                <div className="flex flex-wrap justify-center gap-3">
+                  {Array.from({ length: tier1Required }).map((_, i) => {
+                    const isEarned = i < currentStamps;
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${
+                          isEarned
+                            ? 'text-white shadow-lg'
+                            : 'bg-gray-100 text-gray-300 border-2 border-dashed border-gray-200'
+                        }`}
+                        style={{
+                          backgroundColor: isEarned ? merchant.primary_color : undefined,
+                          transform: isEarned ? 'scale(1.05)' : 'scale(1)',
+                        }}
+                      >
+                        <LoyaltyIcon className="w-6 h-6" />
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Large Progress Bar */}
+                <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${Math.min((currentStamps / tier1Required) * 100, 100)}%` }}
                     transition={{ duration: 1, ease: "easeOut" }}
                     className="h-full rounded-full"
-                    style={{ backgroundColor: effectiveTier1Redeemed ? '#9ca3af' : (isRewardReady ? '#f59e0b' : merchant.primary_color) }}
+                    style={{
+                      background: isRewardReady
+                        ? 'linear-gradient(90deg, #10B981, #059669)'
+                        : `linear-gradient(90deg, ${merchant.primary_color}, ${merchant.primary_color}cc)`
+                    }}
                   />
                 </div>
-                <p className={`text-xs font-bold ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-900' : 'text-gray-500'}`}>
-                  {merchant.reward_description || 'Cadeau de fidélité'}
-                </p>
-              </div>
-            </motion.div>
+
+                {/* Centered Reward Description */}
+                <div className="text-center py-4 px-6 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p className={`text-base font-bold ${isRewardReady ? 'text-emerald-700' : 'text-gray-700'}`}>
+                    {merchant.reward_description || 'Votre récompense fidélité'}
+                  </p>
+                </div>
+              </motion.div>
+            )}
 
             {/* PALIER 2 SECTION */}
             {tier2Enabled && (
@@ -993,9 +1057,17 @@ export default function CustomerCardPage({
                     >
                       Débloqué !
                     </motion.span>
+                  ) : tier2Required - currentStamps <= 2 ? (
+                    <motion.span
+                      animate={{ x: [0, -2, 2, 0] }}
+                      transition={{ repeat: Infinity, duration: 0.5, repeatDelay: 1 }}
+                      className="px-2.5 py-1 rounded-full bg-violet-100 text-[10px] font-black text-violet-700 border border-violet-200"
+                    >
+                      Plus que {tier2Required - currentStamps} !
+                    </motion.span>
                   ) : (
                     <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
-                      {Math.max(0, tier2Required - currentStamps)} restant{tier2Required - currentStamps > 1 ? 's' : ''}
+                      {tier2Required - currentStamps} restants
                     </span>
                   )}
                 </div>
@@ -1022,8 +1094,8 @@ export default function CustomerCardPage({
                   })}
                 </div>
 
-                {/* Bottom Progress & Desc */}
-                <div className="space-y-2">
+                {/* Bottom Progress & Desc - CENTERED */}
+                <div className="space-y-3">
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
@@ -1032,7 +1104,7 @@ export default function CustomerCardPage({
                       className="h-full bg-violet-600 rounded-full"
                     />
                   </div>
-                  <p className={`text-xs font-bold ${isTier2Ready ? 'text-violet-900' : 'text-gray-500'}`}>
+                  <p className={`text-center text-sm font-bold ${isTier2Ready ? 'text-violet-900' : 'text-gray-600'}`}>
                     {tier2Reward || 'Récompense Premium'}
                   </p>
                 </div>
@@ -1567,6 +1639,47 @@ export default function CustomerCardPage({
             )}
           </AnimatePresence>
         </motion.div>
+
+        {/* Review Section - Integrated Footer Card */}
+        {merchant.review_link && merchant.review_link.trim() !== '' && !reviewDismissed && !reviewPermanentlyHidden && (
+          <div className="mt-8 pt-6 border-t border-slate-100 px-4">
+            <div className="relative group bg-slate-50/40 rounded-2xl p-6 border border-slate-100/80 transition-all duration-500 hover:bg-white hover:shadow-lg hover:shadow-slate-200/40 hover:-translate-y-0.5">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  localStorage.setItem(`qarte_review_hidden_${merchantId}`, 'true');
+                  setReviewPermanentlyHidden(true);
+                }}
+                className="absolute top-3 right-3 p-1.5 rounded-full text-slate-300 hover:text-slate-500 hover:bg-slate-100 opacity-0 group-hover:opacity-100 transition-all duration-200"
+                aria-label="Fermer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="flex flex-col items-center text-center">
+                <div className="flex gap-0.5 mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  ))}
+                </div>
+
+                <div className="space-y-1 mb-4">
+                  <p className="text-xs text-slate-500 font-medium">Vous avez aimé votre expérience ?</p>
+                </div>
+
+                <a
+                  href={merchant.review_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-semibold hover:bg-slate-800 transition-all duration-200 shadow-lg shadow-slate-200 active:scale-95"
+                >
+                  Laisser un avis
+                  <ExternalLink className="w-3.5 h-3.5 opacity-60" />
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         <footer className="py-6 text-center">
           <div className="inline-flex items-center gap-1.5 group cursor-default transition-all duration-300 hover:opacity-70">

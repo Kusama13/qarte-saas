@@ -25,6 +25,8 @@ interface LoyaltyCardWithMerchant {
   tier2_enabled?: boolean;
   tier2_stamps_required?: number;
   tier1_redeemed?: boolean;
+  reward_description?: string;
+  tier2_reward_description?: string;
 }
 
 export default function CustomerCardsPage() {
@@ -223,91 +225,123 @@ export default function CustomerCardsPage() {
                           </div>
                         </div>
 
-                        {/* Reward Badge - only shows if unclaimed reward available */}
-                        {hasUnclaimedReward && (
-                          <div className={`mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-xs font-bold shadow-lg animate-pulse ${
-                            isTier2Ready
-                              ? 'bg-gradient-to-r from-violet-500 to-purple-600 shadow-violet-200'
-                              : 'bg-emerald-500 shadow-emerald-200'
-                          }`}>
-                            {isTier2Ready ? <Trophy className="w-3.5 h-3.5" /> : <Gift className="w-3.5 h-3.5" />}
-                            {isTier2Ready ? 'Palier 2 prêt !' : 'Cadeau disponible !'}
-                          </div>
-                        )}
-
-                        {/* Tier 1 redeemed but working toward tier 2 */}
-                        {tier2Enabled && effectiveTier1Redeemed && !isTier2Ready && (
-                          <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">
-                            <Trophy className="w-3.5 h-3.5" />
-                            Vers palier 2 : {tier2Required - card.current_stamps} restants
-                          </div>
-                        )}
-
                         <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Progression</span>
-                            <span className="text-sm font-black" style={{ color: card.primary_color }}>
-                              {card.current_stamps} / {maxRequired}
-                            </span>
-                          </div>
+                          {tier2Enabled ? (
+                            /* DUAL TIER DESIGN */
+                            <div className="space-y-4">
+                              {/* Tier 1 Section */}
+                              <div className={`space-y-2 p-3 rounded-xl border transition-all ${isTier1Ready && !effectiveTier1Redeemed ? 'bg-emerald-50/50 border-emerald-100 ring-1 ring-emerald-500/20' : effectiveTier1Redeemed ? 'bg-gray-50/30 border-gray-100 opacity-60' : 'bg-gray-50/30 border-gray-100'}`}>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Palier 1</span>
+                                  {isTier1Ready && !effectiveTier1Redeemed && (
+                                    <span className="flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 px-2 py-0.5 bg-white rounded-full shadow-sm animate-pulse">
+                                      <Gift className="w-2.5 h-2.5" /> Prêt !
+                                    </span>
+                                  )}
+                                  {effectiveTier1Redeemed && <span className="text-[10px] font-bold text-gray-400 italic">Validé</span>}
+                                  {!isTier1Ready && (
+                                    <span className="text-[10px] font-bold text-gray-400">
+                                      {card.current_stamps}/{tier1Required}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="relative w-full h-2 bg-gray-200/60 rounded-full overflow-hidden">
+                                  <div
+                                    className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+                                    style={{
+                                      width: `${Math.min((card.current_stamps / tier1Required) * 100, 100)}%`,
+                                      backgroundColor: effectiveTier1Redeemed ? '#D1D5DB' : isTier1Ready ? '#10B981' : card.primary_color
+                                    }}
+                                  />
+                                </div>
+                                <p className="text-center text-[11px] font-medium text-gray-500 truncate">{card.reward_description || 'Cadeau fidélité'}</p>
+                              </div>
 
-                          {/* Progress bar with tier markers */}
-                          <div className="relative">
-                            <div className="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                              <div
-                                className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
-                                style={{
-                                  width: `${Math.min(progress, 100)}%`,
-                                  background: `linear-gradient(90deg, ${card.primary_color}, ${card.primary_color}cc)`
-                                }}
-                              />
+                              {/* Tier 2 Section */}
+                              <div className={`space-y-2 p-3 rounded-xl border transition-all ${isTier2Ready ? 'bg-violet-50/50 border-violet-100 ring-1 ring-violet-500/20' : !effectiveTier1Redeemed ? 'bg-gray-50/10 border-gray-50 opacity-40' : 'bg-gray-50/30 border-gray-100'}`}>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                                    <Trophy className="w-2.5 h-2.5" /> Palier 2
+                                  </span>
+                                  {isTier2Ready && (
+                                    <span className="flex items-center gap-1 text-[10px] font-extrabold text-violet-600 px-2 py-0.5 bg-white rounded-full shadow-sm animate-pulse">
+                                      <Trophy className="w-2.5 h-2.5" /> Prêt !
+                                    </span>
+                                  )}
+                                  {!isTier2Ready && effectiveTier1Redeemed && (
+                                    <span className="text-[10px] font-bold text-gray-400">
+                                      {Math.max(0, card.current_stamps - tier1Required)}/{tier2Required - tier1Required}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="relative w-full h-2 bg-gray-200/60 rounded-full overflow-hidden">
+                                  <div
+                                    className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+                                    style={{
+                                      width: `${Math.min((Math.max(0, card.current_stamps - tier1Required) / (tier2Required - tier1Required)) * 100, 100)}%`,
+                                      backgroundColor: isTier2Ready ? '#8B5CF6' : '#A78BFA'
+                                    }}
+                                  />
+                                </div>
+                                <p className="text-center text-[11px] font-medium text-gray-500 truncate">{card.tier2_reward_description || 'Récompense premium'}</p>
+                              </div>
                             </div>
-                            {/* Tier 1 marker when tier 2 is enabled */}
-                            {tier2Enabled && (
-                              <div
-                                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white shadow-sm"
-                                style={{
-                                  left: `${(tier1Required / tier2Required) * 100}%`,
-                                  transform: 'translate(-50%, -50%)',
-                                  backgroundColor: isTier1Ready ? '#F59E0B' : '#E5E7EB'
-                                }}
-                              />
-                            )}
-                          </div>
+                          ) : (
+                            /* SINGLE TIER DESIGN - Larger, no "Palier 1" label */
+                            <div className="space-y-4">
+                              <div className="flex items-end justify-between">
+                                <span className="text-2xl font-black tracking-tight" style={{ color: card.primary_color }}>
+                                  {card.current_stamps}<span className="text-gray-300 text-base mx-0.5">/</span><span className="text-gray-400 text-lg">{tier1Required}</span>
+                                </span>
+                                {tier1Required - card.current_stamps <= 2 && tier1Required - card.current_stamps > 0 && (
+                                  <span className="bg-amber-500 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-lg shadow-amber-200 animate-bounce">
+                                    PRESQUE !
+                                  </span>
+                                )}
+                                {isTier1Ready && (
+                                  <span className="bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-lg shadow-emerald-200 animate-pulse flex items-center gap-1">
+                                    <Gift className="w-3 h-3" /> PRÊT !
+                                  </span>
+                                )}
+                              </div>
 
-                          {/* Stamp dots - show up to max required */}
-                          <div className="flex flex-wrap gap-1.5 pt-2">
-                            {[...Array(Math.min(maxRequired, 15))].map((_, i) => {
-                              const isFilled = i < card.current_stamps;
-                              const isTier1Zone = i < tier1Required;
-                              const isGreyedTier1 = tier2Enabled && isTier1Zone && effectiveTier1Redeemed;
-
-                              return (
+                              {/* Larger progress bar */}
+                              <div className="relative w-full h-3.5 bg-gray-100 rounded-full overflow-hidden">
                                 <div
-                                  key={i}
-                                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                                    isFilled
-                                      ? isGreyedTier1
-                                        ? 'bg-gray-300'
-                                        : i >= tier1Required
-                                          ? 'bg-violet-500 shadow-[0_0_6px_rgba(139,92,246,0.3)]'
-                                          : 'shadow-[0_0_6px_rgba(0,0,0,0.15)]'
-                                      : 'bg-gray-200'
-                                  }`}
+                                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
                                   style={{
-                                    backgroundColor: isFilled && !isGreyedTier1 && i < tier1Required
-                                      ? card.primary_color
-                                      : undefined
+                                    width: `${progress}%`,
+                                    background: `linear-gradient(90deg, ${card.primary_color}, ${card.primary_color}cc)`
                                   }}
                                 />
-                              );
-                            })}
-                            {maxRequired > 15 && (
-                              <div className="w-2 h-2 flex items-center justify-center">
-                                <span className="text-[8px] font-bold text-gray-400">+{maxRequired - 15}</span>
                               </div>
-                            )}
-                          </div>
+
+                              {/* Larger stamp dots centered */}
+                              <div className="flex flex-wrap justify-center gap-2">
+                                {[...Array(Math.min(tier1Required, 12))].map((_, i) => (
+                                  <div
+                                    key={i}
+                                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                                      i < card.current_stamps
+                                        ? 'shadow-[0_0_8px_rgba(0,0,0,0.12)]'
+                                        : 'bg-gray-200'
+                                    }`}
+                                    style={{
+                                      backgroundColor: i < card.current_stamps ? card.primary_color : undefined
+                                    }}
+                                  />
+                                ))}
+                                {tier1Required > 12 && (
+                                  <span className="text-[9px] font-bold text-gray-400">+{tier1Required - 12}</span>
+                                )}
+                              </div>
+
+                              {/* Centered reward description */}
+                              <p className="text-center text-xs font-semibold text-gray-600 bg-gray-50 py-2.5 px-3 rounded-xl border border-gray-100">
+                                {card.reward_description || 'Votre récompense fidélité'}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </Link>

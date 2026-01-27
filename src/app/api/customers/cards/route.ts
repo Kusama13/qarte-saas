@@ -50,8 +50,10 @@ export async function GET(request: NextRequest) {
           logo_url,
           primary_color,
           stamps_required,
+          reward_description,
           tier2_enabled,
-          tier2_stamps_required
+          tier2_stamps_required,
+          tier2_reward_description
         )
       `)
       .in('customer_id', customerIds);
@@ -98,10 +100,12 @@ export async function GET(request: NextRequest) {
           logo_url: card.merchant.logo_url,
           primary_color: card.merchant.primary_color,
           stamps_required: card.merchant.stamps_required,
+          reward_description: card.merchant.reward_description,
           current_stamps: card.current_stamps,
           last_visit_date: card.last_visit_date,
           tier2_enabled: tier2Enabled,
           tier2_stamps_required: tier2Required,
+          tier2_reward_description: card.merchant.tier2_reward_description,
           tier1_redeemed: tier1Redeemed,
         };
       });
