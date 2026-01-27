@@ -103,6 +103,10 @@ export default function ProgramPage() {
     rewardDescription: '',
     loyaltyMode: 'visit' as LoyaltyMode,
     productName: '',
+    // Tier 2 preview
+    tier2Enabled: false,
+    tier2StampsRequired: 20,
+    tier2RewardDescription: '',
   });
 
   // Track original stamps required for warning
@@ -144,6 +148,9 @@ export default function ProgramPage() {
           rewardDescription: data.reward_description || '',
           loyaltyMode: data.loyalty_mode || 'visit',
           productName: data.product_name || '',
+          tier2Enabled: data.tier2_enabled || false,
+          tier2StampsRequired: data.tier2_stamps_required || (data.stamps_required || 10) * 2,
+          tier2RewardDescription: data.tier2_reward_description || '',
         });
         setOriginalStampsRequired(data.stamps_required || 10);
       }
@@ -152,6 +159,16 @@ export default function ProgramPage() {
 
     fetchMerchant();
   }, [router]);
+
+  // Sync tier2 changes to preview
+  useEffect(() => {
+    setPreviewData(prev => ({
+      ...prev,
+      tier2Enabled: formData.tier2Enabled,
+      tier2StampsRequired: formData.tier2StampsRequired,
+      tier2RewardDescription: formData.tier2RewardDescription,
+    }));
+  }, [formData.tier2Enabled, formData.tier2StampsRequired, formData.tier2RewardDescription]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -216,13 +233,14 @@ export default function ProgramPage() {
 
   // Real-time preview updates AND formData (so main save button works)
   const handleLoyaltySettingsChange = (settings: LoyaltySettings) => {
-    // Update preview
-    setPreviewData({
+    // Update preview (preserve tier2 fields)
+    setPreviewData(prev => ({
+      ...prev,
       loyaltyMode: settings.loyalty_mode,
       productName: settings.product_name || '',
       stampsRequired: settings.stamps_required,
       rewardDescription: settings.reward_description,
-    });
+    }));
 
     // Also update formData so the main save button uses current values
     setFormData(prev => ({
@@ -627,163 +645,147 @@ export default function ProgramPage() {
               Aperçu en temps réel
             </p>
             <div className="flex justify-center">
-              <div className="relative w-[280px] h-[560px] bg-white rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-200">
-                <div className="h-full flex flex-col bg-slate-50/50">
-                  {/* Header: Premium glassmorphism design */}
-                  <div className="relative h-28 w-full overflow-hidden">
-                    {/* Animated decorative elements */}
-                    <div
-                      className="absolute -top-6 -left-6 w-20 h-20 rounded-full blur-2xl opacity-20 animate-pulse"
-                      style={{ background: formData.primaryColor }}
-                    />
-                    <div
-                      className="absolute -bottom-6 -right-6 w-20 h-20 rounded-full blur-2xl opacity-20 animate-pulse"
-                      style={{ background: formData.secondaryColor, animationDelay: '1s' }}
-                    />
-                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, black 1px, transparent 0)', backgroundSize: '12px 12px' }} />
+              <div className="relative w-[280px] h-[560px] bg-slate-50 rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-200">
+                <div className="h-full flex flex-col">
+                  {/* Header */}
+                  <div className="pt-10 pb-6 px-6 text-center">
+                    <div className="mx-auto w-12 h-12 rounded-2xl mb-3 shadow-lg flex items-center justify-center overflow-hidden bg-white border border-slate-100">
+                      {formData.logoUrl ? (
+                        <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+                      ) : (
+                        <div
+                          className="w-full h-full flex items-center justify-center text-white text-base font-black"
+                          style={{ background: `linear-gradient(135deg, ${formData.primaryColor}, ${formData.secondaryColor})` }}
+                        >
+                          {merchant?.shop_name?.[0] || 'Q'}
+                        </div>
+                      )}
+                    </div>
+                    <h3 className="text-slate-900 font-bold text-xs tracking-tight">{merchant?.shop_name}</h3>
+                  </div>
 
-                    {/* Centered gradient glow */}
-                    <div
-                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 rounded-full blur-xl opacity-40 pointer-events-none"
-                      style={{ background: `radial-gradient(circle, ${formData.primaryColor}60, transparent 70%)` }}
-                    />
+                  {/* Main Card Area */}
+                  <div className="flex-1 px-4 space-y-4">
+                    <div className="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white">
+                      {/* Points Counter */}
+                      <div className="text-center mb-6">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Total Points</p>
+                        <div className="flex items-baseline justify-center gap-1">
+                          <span className="text-4xl font-black tracking-tighter" style={{ color: formData.primaryColor }}>12</span>
+                          <span className="text-slate-300 text-lg font-bold">
+                            / {formData.tier2Enabled ? (previewData.tier2StampsRequired || 20) : previewData.stampsRequired}
+                          </span>
+                        </div>
+                      </div>
 
-                    {/* Logo Container with Glassmorphism */}
-                    <div className="relative z-10 h-full flex flex-col items-center justify-center">
-                      <div className="relative w-12 h-12 rounded-full p-0.5 bg-white/40 backdrop-blur-xl border border-white shadow-lg flex items-center justify-center overflow-hidden mb-2">
-                        {formData.logoUrl ? (
-                          <img
-                            src={formData.logoUrl}
-                            alt="Logo"
-                            className="w-full h-full object-cover rounded-full ring-1 ring-black/5"
-                          />
-                        ) : (
+                      {/* Tiered Progress Bar */}
+                      <div className="relative pt-6 pb-2">
+                        <div className="relative h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                          {/* Shimmering Fill */}
                           <div
-                            className="w-full h-full rounded-full flex items-center justify-center text-white text-sm font-black"
-                            style={{ background: `linear-gradient(135deg, ${formData.primaryColor}, ${formData.secondaryColor})` }}
+                            className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out flex"
+                            style={{
+                              width: `${(12 / (formData.tier2Enabled ? (previewData.tier2StampsRequired || 20) : previewData.stampsRequired)) * 100}%`,
+                              background: `linear-gradient(90deg, ${formData.primaryColor}, ${formData.secondaryColor})`
+                            }}
                           >
-                            {merchant?.shop_name?.[0] || 'Q'}
+                            <div className="w-full h-full animate-pulse opacity-30 bg-white" />
+                          </div>
+                        </div>
+
+                        {/* Tier 1 Marker */}
+                        {(() => {
+                          const max = formData.tier2Enabled ? (previewData.tier2StampsRequired || 20) : previewData.stampsRequired;
+                          const t1Pos = (previewData.stampsRequired / max) * 100;
+                          const reached = 12 >= previewData.stampsRequired;
+                          return (
+                            <div className="absolute top-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: `${t1Pos}%` }}>
+                              <div className={`w-7 h-7 rounded-full flex items-center justify-center -mt-1 shadow-md transition-transform duration-300 border-2 ${reached ? 'bg-white scale-110' : 'bg-slate-50 scale-100 opacity-80'}`}
+                                   style={{ borderColor: reached ? '#F59E0B' : '#E2E8F0' }}>
+                                <Gift size={12} className={reached ? 'text-amber-500' : 'text-slate-300'} />
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Tier 2 Marker */}
+                        {formData.tier2Enabled && (
+                          <div className="absolute top-1/2 -translate-y-1/2 right-0 flex flex-col items-center">
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center -mt-1 shadow-md border-2 transition-transform duration-300 ${12 >= (previewData.tier2StampsRequired || 20) ? 'bg-white scale-110' : 'bg-slate-50 scale-100 opacity-80'}`}
+                                 style={{ borderColor: 12 >= (previewData.tier2StampsRequired || 20) ? formData.secondaryColor : '#E2E8F0' }}>
+                              <Trophy size={12} className={12 >= (previewData.tier2StampsRequired || 20) ? 'text-violet-600' : 'text-slate-300'} />
+                            </div>
                           </div>
                         )}
                       </div>
-                      {/* Shop name in highlighted container */}
-                      <div className="px-4 py-1.5 bg-white/50 backdrop-blur-xl border border-white/70 rounded-xl shadow-sm mb-1">
-                        <h3 className="text-slate-900 font-bold text-[11px] tracking-tight">{merchant?.shop_name}</h3>
-                      </div>
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/80 border border-white shadow-sm">
-                        <Star size={7} className="text-amber-500 fill-amber-500" />
-                        <span className="text-[7px] font-bold text-slate-600">4 / {previewData.stampsRequired} pts</span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Main Content */}
-                  <div className="flex-1 px-3 -mt-4 z-10">
-                    {/* Review Banner (compact) */}
-                    {formData.reviewLink && (
-                      <div className="mb-2 bg-amber-50 rounded-xl px-3 py-2 border border-amber-100 flex items-center gap-2">
-                        <Star size={14} className="text-amber-500 fill-amber-500 flex-shrink-0" />
-                        <p className="text-[10px] font-semibold text-amber-700 flex-1">Votre avis compte !</p>
-                        <button className="p-0.5 hover:bg-amber-100 rounded transition-colors">
-                          <X size={12} className="text-amber-400" />
-                        </button>
+                      {/* Milestone Labels */}
+                      <div className="flex justify-between mt-1 px-1">
+                        <span className="text-[8px] font-semibold text-slate-400">0</span>
+                        {formData.tier2Enabled && (
+                          <span className="text-[8px] font-semibold text-amber-500">{previewData.stampsRequired}</span>
+                        )}
+                        <span className="text-[8px] font-semibold text-slate-400">
+                          {formData.tier2Enabled ? previewData.tier2StampsRequired : previewData.stampsRequired}
+                        </span>
                       </div>
-                    )}
 
-                    {/* Points Card */}
-                    <div className="bg-white rounded-[1.5rem] p-4 shadow-sm border border-slate-100/50 flex flex-col items-center">
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1">
-                        {(() => {
-                          const LoyaltyIcon = getLoyaltyIcon(previewData.loyaltyMode, previewData.productName);
-                          return <LoyaltyIcon className="w-3 h-3" />;
-                        })()}
-                        {previewData.loyaltyMode === 'visit' ? 'Passages cumulés' : `${previewData.productName || 'Articles'} cumulés`}
+                      {/* Progress Text */}
+                      <p className="mt-4 text-center text-[10px] font-medium text-slate-500">
+                        {12 >= previewData.stampsRequired
+                          ? (formData.tier2Enabled
+                              ? `Palier 1 débloqué ! Encore ${(previewData.tier2StampsRequired || 20) - 12} pts`
+                              : 'Récompense débloquée !')
+                          : `Plus que ${previewData.stampsRequired - 12} pts pour le palier 1`
+                        }
                       </p>
-
-                      <div className="flex items-baseline gap-1 mb-3">
-                        <span className="text-3xl font-black tracking-tighter" style={{ color: formData.primaryColor }}>4</span>
-                        <span className="text-slate-300 text-base font-bold">/{previewData.stampsRequired}</span>
-                      </div>
-
-                      {/* Stamp Circles - Flex Wrap */}
-                      <div className="flex flex-wrap justify-center gap-1.5 mb-3">
-                        {Array.from({ length: Math.min(previewData.stampsRequired, 10) }).map((_, i) => {
-                          const isFilled = i < 4;
-                          const LoyaltyIcon = getLoyaltyIcon(previewData.loyaltyMode, previewData.productName);
-                          return (
-                            <div
-                              key={i}
-                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                                isFilled ? 'shadow-sm' : 'border border-dashed border-slate-200'
-                              }`}
-                              style={{
-                                backgroundColor: isFilled ? formData.primaryColor : 'transparent',
-                              }}
-                            >
-                              <LoyaltyIcon
-                                className="w-4 h-4"
-                                style={{ color: isFilled ? '#fff' : '#D1D5DB' }}
-                              />
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Integrated Progress Card */}
-                      <div
-                        className="relative w-full px-3 py-2 rounded-xl overflow-hidden border"
-                        style={{
-                          backgroundColor: `${formData.primaryColor}08`,
-                          borderColor: `${formData.primaryColor}20`
-                        }}
-                      >
-                        {/* Background Progress */}
-                        <div
-                          className="absolute inset-y-0 left-0 rounded-l-xl"
-                          style={{
-                            width: `${Math.min((4 / previewData.stampsRequired) * 100, 100)}%`,
-                            background: `linear-gradient(to right, ${formData.primaryColor}, ${formData.secondaryColor})`,
-                            opacity: 0.2
-                          }}
-                        />
-                        <div className="relative flex items-center justify-between gap-2">
-                          <span className="text-[9px] font-semibold text-slate-700">
-                            Plus que {Math.max(previewData.stampsRequired - 4, 0)} pour la récompense !
-                          </span>
-                          <Gift size={12} className="opacity-40" style={{ color: formData.primaryColor }} />
-                        </div>
-                      </div>
                     </div>
 
-                    {/* Reward Card */}
-                    <div className="mt-2 bg-white rounded-xl p-2.5 shadow-sm border border-slate-100 flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: `${formData.secondaryColor}15` }}>
-                        <Gift size={14} style={{ color: formData.secondaryColor }} />
+                    {/* Reward Cards */}
+                    <div className="space-y-2">
+                      {/* Tier 1 Reward */}
+                      <div className={`bg-white/70 backdrop-blur-md rounded-2xl p-3 border flex items-center gap-3 ${12 >= previewData.stampsRequired ? 'border-amber-200 bg-amber-50/50' : 'border-white'}`}>
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${12 >= previewData.stampsRequired ? 'bg-amber-100' : 'bg-slate-100'}`}>
+                          <Gift size={14} className={12 >= previewData.stampsRequired ? 'text-amber-500' : 'text-slate-400'} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Palier 1</p>
+                          <p className="text-[10px] font-bold text-slate-800 truncate">
+                            {previewData.rewardDescription || 'Votre récompense'}
+                          </p>
+                        </div>
+                        {12 >= previewData.stampsRequired && (
+                          <span className="text-[8px] font-bold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">Prêt</span>
+                        )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Récompense</p>
-                        <p className="text-[10px] font-bold text-slate-800 truncate leading-tight">
-                          {previewData.rewardDescription || 'Chargement...'}
-                        </p>
-                      </div>
-                      <ChevronRight size={12} className="text-slate-300" />
+
+                      {/* Tier 2 Reward (if enabled) */}
+                      {formData.tier2Enabled && (
+                        <div className={`bg-white/70 backdrop-blur-md rounded-2xl p-3 border flex items-center gap-3 ${12 >= (previewData.tier2StampsRequired || 20) ? 'border-violet-200 bg-violet-50/50' : 'border-white'}`}>
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${12 >= (previewData.tier2StampsRequired || 20) ? 'bg-violet-100' : 'bg-slate-100'}`}>
+                            <Trophy size={14} className={12 >= (previewData.tier2StampsRequired || 20) ? 'text-violet-600' : 'text-slate-400'} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Palier 2</p>
+                            <p className="text-[10px] font-bold text-slate-800 truncate">
+                              {previewData.tier2RewardDescription || 'Récompense premium'}
+                            </p>
+                          </div>
+                          {12 >= (previewData.tier2StampsRequired || 20) && (
+                            <span className="text-[8px] font-bold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">Prêt</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Footer */}
-                  <div className="py-2 flex flex-col items-center gap-1 opacity-60">
-                    <div className="flex items-center gap-1">
-                      <span className="text-[8px] font-medium text-slate-500">Créé avec</span>
-                      <span className="text-[8px]">❤️</span>
-                      <span className="text-[8px] font-medium text-slate-500">en France</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-4 h-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded flex items-center justify-center">
-                        <span className="text-white text-[6px] font-black italic">Q</span>
+                  {/* Footer Branding */}
+                  <div className="py-4 flex flex-col items-center gap-1 opacity-40">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-3.5 h-3.5 bg-indigo-600 rounded flex items-center justify-center">
+                        <span className="text-white text-[5px] font-black italic">Q</span>
                       </div>
-                      <span className="text-[10px] font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-                        QARTE
-                      </span>
+                      <span className="text-[9px] font-black tracking-tighter text-indigo-900">QARTE</span>
                     </div>
                   </div>
                 </div>
