@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -11,15 +11,11 @@ import {
   Gift,
   Users,
   Clock,
-  CreditCard,
   TrendingUp,
   MapPin,
   Bell,
   Send,
   Tag,
-  Settings,
-  Repeat,
-  ShoppingBag,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui';
@@ -45,17 +41,6 @@ interface Merchant {
   offer_created_at: string | null;
 }
 
-interface Customer {
-  id: string;
-  first_name: string;
-  last_name: string | null;
-  phone: string;
-  loyalty_card: {
-    current_stamps: number;
-    last_visit_date: string | null;
-    created_at: string;
-  };
-}
 
 interface Stats {
   totalCustomers: number;
@@ -73,7 +58,6 @@ export default function MerchantDetailPage() {
   const merchantId = params.id as string;
 
   const [merchant, setMerchant] = useState<Merchant | null>(null);
-  const [customers, setCustomers] = useState<Customer[]>([]);
   const [stats, setStats] = useState<Stats>({
     totalCustomers: 0,
     activeCustomers: 0,
@@ -152,43 +136,6 @@ export default function MerchantDetailPage() {
           pushSubscribers,
           pushSent: pushSentCount || 0,
         });
-
-        // Récupérer les clients directement (ils ont maintenant un merchant_id)
-        const { data: customersData } = await supabase
-          .from('customers')
-          .select(`
-            id,
-            first_name,
-            last_name,
-            phone_number,
-            created_at,
-            loyalty_cards!inner (
-              current_stamps,
-              last_visit_date,
-              created_at
-            )
-          `)
-          .eq('merchant_id', merchantId)
-          .order('created_at', { ascending: false })
-          .limit(20);
-
-        if (customersData) {
-          const formattedCustomers = customersData.map((customer) => {
-            const card = Array.isArray(customer.loyalty_cards) ? customer.loyalty_cards[0] : customer.loyalty_cards;
-            return {
-              id: customer.id,
-              first_name: customer.first_name || '',
-              last_name: customer.last_name || '',
-              phone: customer.phone_number || '',
-              loyalty_card: {
-                current_stamps: card?.current_stamps || 0,
-                last_visit_date: card?.last_visit_date || null,
-                created_at: card?.created_at || customer.created_at,
-              },
-            };
-          });
-          setCustomers(formattedCustomers);
-        }
       } catch (error) {
         console.error('Error fetching merchant data:', error);
       } finally {
@@ -205,19 +152,6 @@ export default function MerchantDetailPage() {
       month: 'long',
       year: 'numeric',
     });
-  };
-
-  const formatRelativeDate = (dateString: string | null) => {
-    if (!dateString) return 'Jamais';
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diff === 0) return "Aujourd'hui";
-    if (diff === 1) return 'Hier';
-    if (diff < 7) return `Il y a ${diff} jours`;
-    if (diff < 30) return `Il y a ${Math.floor(diff / 7)} semaine${Math.floor(diff / 7) > 1 ? 's' : ''}`;
-    return formatDate(dateString);
   };
 
   const getDaysRemaining = (trialEndsAt: string | null) => {
@@ -455,50 +389,6 @@ export default function MerchantDetailPage() {
         </div>
       </div>
 
-      {/* Liste des clients */}
-      <div className="bg-white rounded-2xl shadow-sm">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Clients ({stats.totalCustomers})
-          </h2>
-        </div>
-
-        {customers.length > 0 ? (
-          <div className="divide-y divide-gray-100">
-            {customers.map((customer) => (
-              <div
-                key={customer.id}
-                className="flex items-center justify-between p-4"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 font-medium text-white rounded-full bg-gray-400">
-                    {customer.first_name?.charAt(0) || customer.last_name?.charAt(0) || '?'}
-                  </div>
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {customer.first_name} {customer.last_name || ''}
-                    </p>
-                    <p className="text-sm text-gray-500">{customer.phone}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-emerald-600">
-                    {customer.loyalty_card.current_stamps}/{merchant.stamps_required}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Dernière visite: {formatRelativeDate(customer.loyalty_card.last_visit_date)}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-            <Users className="w-12 h-12 mb-4 text-gray-300" />
-            <p>Aucun client pour ce commerçant</p>
-          </div>
-        )}
-      </div>
     </div>
   );
 }

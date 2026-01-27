@@ -41,19 +41,19 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-[#f8fafc]">
       {/* Mobile menu button */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="fixed z-40 p-3 bg-white border border-gray-200 rounded-xl shadow-lg top-4 left-4 lg:hidden"
+        className="fixed z-40 p-2.5 bg-white border border-gray-100 rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95 top-4 left-4 lg:hidden"
       >
-        <Menu className="w-6 h-6 text-gray-700" />
+        <Menu className="w-6 h-6 text-[#5167fc]" />
       </button>
 
       {/* Backdrop mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-gray-900/20 backdrop-blur-[2px] lg:hidden transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -61,32 +61,32 @@ export default function AdminLayout({
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-50 w-72 h-full bg-gradient-to-b from-emerald-600 to-teal-700 transition-transform duration-300 lg:translate-x-0',
+          'fixed top-0 left-0 z-50 w-72 h-full bg-[#0a0a0a] border-r border-gray-800/50 transition-transform duration-300 lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-white/10">
+          <div className="flex items-center justify-between p-6 border-b border-gray-800/50">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-xl">
-                <Shield className="w-5 h-5 text-white" />
+              <div className="flex items-center justify-center w-10 h-10 bg-gray-900 border border-gray-800 rounded-lg">
+                <Shield className="w-5 h-5 text-[#5167fc]" />
               </div>
               <div>
-                <span className="text-xl font-bold text-white">Qarte</span>
-                <span className="block text-xs text-white/60">Admin Panel</span>
+                <span className="text-xl font-bold text-gray-100 tracking-tight">Qarte</span>
+                <span className="block text-xs text-gray-500 font-medium">Admin Panel</span>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="p-2 lg:hidden"
+              className="p-2 lg:hidden text-gray-500 hover:text-white"
             >
-              <X className="w-5 h-5 text-white/60" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 p-4 space-y-1.5">
             {navItems.map((item) => {
               const isActive = pathname === item.href ||
                 (item.href !== '/admin' && pathname.startsWith(item.href));
@@ -96,34 +96,34 @@ export default function AdminLayout({
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+                    'flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 group',
                     isActive
-                      ? 'bg-white/20 text-white shadow-lg'
-                      : 'text-white/70 hover:bg-white/10 hover:text-white'
+                      ? 'bg-[#5167fc] text-white shadow-md shadow-[#5167fc]/10'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
                   )}
                 >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
+                  <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-white" : "text-gray-500 group-hover:text-[#5167fc]")} />
+                  <span className="font-medium text-sm">{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-white/10 space-y-2">
+          <div className="p-4 border-t border-gray-800/50 space-y-1.5">
             <Link
               href="/dashboard"
-              className="flex items-center gap-3 px-4 py-3 text-white/70 hover:bg-white/10 hover:text-white rounded-xl transition-all duration-200"
+              className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 group"
             >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-medium">Retour commerçant</span>
+              <ArrowLeft className="w-5 h-5 transition-colors group-hover:text-[#5167fc]" />
+              <span className="font-medium text-sm">Retour commerçant</span>
             </Link>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 text-white/70 hover:bg-red-500/20 hover:text-red-200 rounded-xl transition-all duration-200"
+              className="flex items-center gap-3 w-full px-4 py-2.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200 group"
             >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Déconnexion</span>
+              <LogOut className="w-5 h-5 transition-colors group-hover:text-red-500" />
+              <span className="font-medium text-sm">Déconnexion</span>
             </button>
           </div>
         </div>
