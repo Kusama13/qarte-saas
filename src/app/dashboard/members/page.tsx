@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   Phone,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Modal, Select } from '@/components/ui';
@@ -727,21 +728,36 @@ export default function MembersPage() {
 
       {/* Programs grid */}
       {programs.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
-          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center">
-            <Crown className="w-10 h-10 text-amber-500" />
+        <div className="relative overflow-hidden text-center py-20 bg-gradient-to-b from-white to-amber-50/40 rounded-[2rem] border border-amber-100/60 shadow-xl shadow-amber-900/5">
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-300 to-transparent opacity-50" />
+
+          <div className="relative mx-auto mb-10 group inline-block">
+            <div className="absolute inset-0 bg-amber-400 opacity-20 blur-3xl rounded-full animate-pulse group-hover:opacity-30 transition-opacity" />
+            <div className="relative w-24 h-24 rounded-[2rem] bg-gradient-to-tr from-amber-500 via-amber-400 to-yellow-300 p-1 shadow-[0_10px_40px_-10px_rgba(245,158,11,0.5)] rotate-3 group-hover:rotate-0 transition-transform duration-700 ease-out">
+              <div className="w-full h-full rounded-[1.75rem] bg-white flex items-center justify-center overflow-hidden">
+                <Crown className="w-12 h-12 text-amber-500 drop-shadow-sm group-hover:scale-110 transition-transform duration-500" />
+              </div>
+            </div>
+            <Sparkles className="absolute -top-2 -right-4 w-8 h-8 text-amber-400 animate-pulse" />
+            <Sparkles className="absolute -bottom-2 -left-4 w-6 h-6 text-amber-300 opacity-60 animate-bounce" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun programme</h3>
-          <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-            Créez votre premier programme membre pour offrir des avantages exclusifs à vos meilleurs clients
-          </p>
-          <Button
-            onClick={() => setCreateProgramOpen(true)}
-            className="bg-amber-500 hover:bg-amber-600 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Créer un programme
-          </Button>
+
+          <div className="relative z-10 px-8">
+            <h3 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">
+              Inaugurez votre <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">Expérience Elite</span>
+            </h3>
+            <p className="text-gray-500 mb-10 max-w-md mx-auto text-lg leading-relaxed">
+              Transformez vos clients fidèles en membres privilégiés. Commencez par créer votre premier programme d&apos;exception.
+            </p>
+            <Button
+              onClick={() => setCreateProgramOpen(true)}
+              className="relative h-14 px-10 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl shadow-lg shadow-amber-500/25 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shimmer" />
+              <Plus className="w-5 h-5 mr-3 group-hover:rotate-90 transition-transform duration-500" />
+              Démarrez maintenant
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
@@ -803,7 +819,7 @@ export default function MembersPage() {
   );
 }
 
-// Program Card Component
+// Program Card Component - Premium VIP Design
 function ProgramCard({
   program,
   onClick,
@@ -815,31 +831,53 @@ function ProgramCard({
 
   return (
     <motion.button
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
+      whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="group relative p-6 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:border-amber-200 transition-all text-left w-full"
+      className="group relative overflow-hidden p-6 bg-white/70 backdrop-blur-xl rounded-2xl border border-amber-100 shadow-md hover:shadow-2xl hover:shadow-amber-200/30 hover:border-amber-400 transition-all text-left w-full"
     >
-      <div className="absolute top-4 right-4">
-        <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-amber-500 group-hover:translate-x-1 transition-all" />
-      </div>
+      {/* Golden Shine & Glass Effects */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent -translate-x-full group-hover:animate-shimmer pointer-events-none" />
+      <div className="absolute -top-12 -right-12 w-32 h-32 bg-amber-400/10 rounded-full blur-3xl group-hover:bg-amber-400/20 transition-colors duration-500" />
 
-      <div className="flex items-start gap-4">
-        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-200/50">
-          <Crown className="w-7 h-7 text-white" />
+      {/* Decorative Particles */}
+      <div className="absolute top-4 left-1/4 w-1 h-1 bg-amber-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+      <div className="absolute bottom-6 right-1/3 w-1.5 h-1.5 bg-amber-300 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+
+      <div className="relative flex items-center gap-5">
+        <div className="relative shrink-0">
+          {/* Prestigious Crown Badge */}
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-[0_8px_16px_-4px_rgba(245,158,11,0.5)] group-hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all duration-500">
+            <Crown className="w-8 h-8 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.2)]" />
+          </div>
+          <div className="absolute -inset-1 border border-amber-200/50 rounded-[1.25rem] scale-100 group-hover:scale-110 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none" />
         </div>
+
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-bold text-gray-900 mb-1">{program.name}</h3>
-          <p className="text-amber-600 font-semibold text-sm mb-3">{program.benefit_label}</p>
-          <div className="flex items-center gap-4 text-xs text-gray-500">
-            <span className="flex items-center gap-1">
-              <Users className="w-3.5 h-3.5" />
-              {memberCount} membre{memberCount > 1 ? 's' : ''}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5" />
-              {program.duration_months} mois
-            </span>
+          <div className="flex items-center justify-between mb-0.5">
+            <h3 className="text-xl font-extrabold text-gray-900 tracking-tight group-hover:text-amber-900 transition-colors">
+              {program.name}
+            </h3>
+            <ChevronRight className="w-5 h-5 text-amber-300 group-hover:text-amber-600 group-hover:translate-x-1 transition-all" />
+          </div>
+
+          <div className="inline-flex px-2 py-0.5 rounded bg-amber-50 border border-amber-100 text-amber-700 text-[10px] font-bold uppercase tracking-widest mb-3">
+            {program.benefit_label}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5 text-gray-500 group-hover:text-amber-800 transition-colors">
+              <div className="p-1 rounded bg-gray-50 group-hover:bg-amber-50 transition-colors">
+                <Users className="w-3.5 h-3.5 text-amber-600" />
+              </div>
+              <span className="text-xs font-semibold">{memberCount} membre{memberCount > 1 ? 's' : ''}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-gray-500 group-hover:text-amber-800 transition-colors">
+              <div className="p-1 rounded bg-gray-50 group-hover:bg-amber-50 transition-colors">
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+              </div>
+              <span className="text-xs font-semibold">{program.duration_months} mois</span>
+            </div>
           </div>
         </div>
       </div>
@@ -847,7 +885,7 @@ function ProgramCard({
   );
 }
 
-// Member Item Component
+// Member Item Component - Premium VIP Design
 function MemberItem({
   member,
   onExtend,
@@ -863,53 +901,70 @@ function MemberItem({
   );
 
   return (
-    <div className={`flex items-center gap-4 p-4 bg-white rounded-xl border transition-all ${
-      isValid ? 'border-gray-100 hover:border-amber-200' : 'border-gray-100 opacity-60'
+    <div className={`group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 ${
+      isValid
+        ? 'bg-white/70 backdrop-blur-md border-amber-100 shadow-sm hover:shadow-xl hover:shadow-amber-900/5 hover:border-amber-300 hover:-translate-y-0.5'
+        : 'bg-gray-50/50 border-gray-100 opacity-60 grayscale-[0.5]'
     }`}>
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold ${
-        isValid
-          ? 'bg-gradient-to-br from-amber-400 to-orange-500'
-          : 'bg-gray-300'
-      }`}>
-        {member.customer?.first_name?.charAt(0) || '?'}
+      {/* Premium Avatar with Glow */}
+      <div className="relative">
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold relative z-10 overflow-hidden ${
+          isValid
+            ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-200'
+            : 'bg-gray-400'
+        }`}>
+          {isValid && <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent animate-shimmer" />}
+          {member.customer?.first_name?.charAt(0) || '?'}
+        </div>
+        {isValid && (
+          <div className="absolute -inset-1 bg-amber-400/20 blur-lg rounded-xl transition-opacity opacity-0 group-hover:opacity-100" />
+        )}
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-gray-900">
+        <p className="font-bold text-gray-900 tracking-tight flex items-center gap-2">
           {member.customer?.first_name} {member.customer?.last_name}
+          {isValid && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />}
         </p>
-        <div className="flex items-center gap-3 text-sm text-gray-500">
-          <span>{member.customer?.phone_number}</span>
+        <div className="flex items-center gap-2.5 text-[13px] text-gray-500">
+          <span className="font-medium">{member.customer?.phone_number}</span>
           <span className="w-1 h-1 rounded-full bg-gray-300" />
-          <span>Jusqu&apos;au {formatDate(member.valid_until)}</span>
+          <span className="flex items-center gap-1">
+            <span className="opacity-60">Expire le</span>
+            <span className={isValid ? 'text-amber-700 font-medium' : ''}>{formatDate(member.valid_until)}</span>
+          </span>
         </div>
       </div>
 
-      {isValid && daysRemaining <= 7 && (
-        <span className="px-2 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full">
-          {daysRemaining}j
-        </span>
-      )}
+      {/* Dynamic Status Badges */}
+      <div className="flex items-center gap-3">
+        {isValid && daysRemaining <= 7 && (
+          <span className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm">
+            {daysRemaining} jours
+          </span>
+        )}
 
-      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-        isValid
-          ? 'bg-emerald-50 text-emerald-600'
-          : 'bg-gray-100 text-gray-500'
-      }`}>
-        {isValid ? 'Actif' : 'Expiré'}
-      </span>
+        <div className={`px-3 py-1 text-[11px] font-bold uppercase tracking-widest rounded-full transition-all border ${
+          isValid
+            ? 'bg-emerald-50/50 border-emerald-100 text-emerald-600'
+            : 'bg-gray-100 border-gray-200 text-gray-500'
+        }`}>
+          {isValid ? 'Actif' : 'Expiré'}
+        </div>
+      </div>
 
-      <div className="flex gap-1">
+      {/* Premium Actions */}
+      <div className="flex items-center gap-1.5 ml-2">
         <button
           onClick={onExtend}
-          className="p-2 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-          title="Prolonger"
+          className="p-2.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all active:scale-95 border border-transparent hover:border-amber-100"
+          title="Renouveler"
         >
           <RefreshCw className="w-4 h-4" />
         </button>
         <button
           onClick={onRemove}
-          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-95 border border-transparent hover:border-red-100"
           title="Retirer"
         >
           <Trash2 className="w-4 h-4" />
