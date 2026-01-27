@@ -349,13 +349,13 @@ function HeroSection() {
               {/* Screen */}
               <div className="w-full h-full rounded-[2.5rem] overflow-hidden bg-gradient-to-b from-rose-100 to-rose-200">
                 <Image
-                  src="/images/mockup-app.jpg"
+                  src="/images/mockup-app.png"
                   alt="Application Qarte - Carte de fidélité digitale"
-                  width={280}
-                  height={560}
+                  width={860}
+                  height={2080}
                   className="w-full h-full object-cover object-top"
                   priority
-                  quality={95}
+                  unoptimized
                 />
               </div>
             </div>

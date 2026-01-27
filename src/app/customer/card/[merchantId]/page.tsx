@@ -1657,24 +1657,8 @@ export default function CustomerCardPage({
                   </div>
                 </div>
 
-                {/* Middle Section: Chip Pattern + Benefit */}
-                <div className="flex items-center gap-4">
-                  {/* Holographic Chip */}
-                  <div className="w-12 h-9 rounded-md bg-gradient-to-br from-amber-200 via-amber-100 to-amber-300 shadow-inner flex items-center justify-center overflow-hidden">
-                    <div className="w-full h-full opacity-60" style={{
-                      backgroundImage: `
-                        linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.1) 50%, transparent 100%),
-                        linear-gradient(0deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)
-                      `
-                    }}>
-                      <div className="grid grid-cols-3 gap-px h-full p-1.5">
-                        {[...Array(6)].map((_, i) => (
-                          <div key={i} className="bg-amber-400/50 rounded-sm" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
+                {/* Middle Section: Benefit + Logo Watermark */}
+                <div className="flex items-center justify-between">
                   {/* Benefit Pill */}
                   <div className="flex-1">
                     <p className="text-amber-400/70 text-[8px] font-semibold uppercase tracking-wider mb-1">Avantage</p>
@@ -1683,6 +1667,12 @@ export default function CustomerCardPage({
                         {memberCard.program?.benefit_label}
                       </p>
                     </div>
+                  </div>
+
+                  {/* Qarte Logo Watermark (Middle-Right) */}
+                  <div className="w-11 h-11 rounded-xl border border-amber-500/20 flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-white/5 to-transparent shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]">
+                    <span className="text-2xl font-bold text-amber-500/20 select-none">Q</span>
+                    <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 via-transparent to-amber-200/5 pointer-events-none" />
                   </div>
                 </div>
 
@@ -1695,12 +1685,13 @@ export default function CustomerCardPage({
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-white/40 text-[8px] font-medium uppercase tracking-wider mb-1">Expire</p>
+                    <p className="text-white/40 text-[8px] font-medium uppercase tracking-wider mb-1">Valable jusqu&apos;au</p>
                     <p className="text-white text-sm font-bold tracking-wider font-mono">
                       {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
                         month: '2-digit',
                         year: '2-digit',
-                      }).replace('/', '/')}
+                      })}
                     </p>
                   </div>
                 </div>
