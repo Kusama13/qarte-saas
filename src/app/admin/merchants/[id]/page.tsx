@@ -205,7 +205,7 @@ export default function MerchantDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5167fc]"></div>
       </div>
     );
   }
@@ -237,10 +237,10 @@ export default function MerchantDetailPage() {
       </div>
 
       {/* Info commerçant */}
-      <div className="bg-white rounded-2xl shadow-sm p-6">
+      <div className="bg-white rounded-lg shadow-md border border-gray-100 p-6">
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-16 h-16 font-bold text-2xl text-white rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600">
+            <div className="flex items-center justify-center w-16 h-16 font-bold text-2xl text-white rounded-lg bg-[#5167fc]">
               {merchant.shop_name.charAt(0)}
             </div>
             <div>
@@ -268,16 +268,16 @@ export default function MerchantDetailPage() {
 
         {/* Programme de fidélité */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <div className="p-4 bg-emerald-50 rounded-xl">
+          <div className="p-4 bg-[#5167fc]/5 rounded-lg border border-[#5167fc]/10">
             <div className="flex items-center gap-2 mb-2">
-              <Gift className="w-5 h-5 text-emerald-600" />
-              <span className="font-medium text-emerald-900">Programme de fidélité</span>
+              <Gift className="w-5 h-5 text-[#5167fc]" />
+              <span className="font-medium text-gray-900">Programme de fidélité</span>
             </div>
-            <p className="text-emerald-700">
+            <p className="text-gray-700">
               <span className="font-semibold">{merchant.stamps_required} {merchant.loyalty_mode === 'article' ? 'articles' : 'passages'}</span> pour obtenir : {merchant.reward_description || 'Non configuré'}
             </p>
             <div className="mt-2 flex items-center gap-2">
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-emerald-200 text-emerald-800">
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#5167fc]/10 text-[#5167fc]">
                 Mode: {merchant.loyalty_mode === 'article' ? 'Par article' : 'Par visite'}
               </span>
             </div>
@@ -287,7 +287,7 @@ export default function MerchantDetailPage() {
 
         {/* Current Temporary Offer */}
         {merchant.offer_active && merchant.offer_title && (
-          <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-200">
+          <div className="mt-4 p-4 bg-amber-50 rounded-lg border border-amber-200">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Tag className="w-5 h-5 text-amber-600" />
@@ -316,10 +316,10 @@ export default function MerchantDetailPage() {
 
       {/* Stats - Row 1 */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="p-5 bg-white rounded-xl shadow-sm">
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-100">
-              <Users className="w-5 h-5 text-emerald-600" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#5167fc]/10">
+              <Users className="w-5 h-5 text-[#5167fc]" />
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.totalCustomers}</p>
@@ -327,9 +327,9 @@ export default function MerchantDetailPage() {
             </div>
           </div>
         </div>
-        <div className="p-5 bg-white rounded-xl shadow-sm">
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-100">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-green-50">
               <TrendingUp className="w-5 h-5 text-green-600" />
             </div>
             <div>
@@ -338,9 +338,9 @@ export default function MerchantDetailPage() {
             </div>
           </div>
         </div>
-        <div className="p-5 bg-white rounded-xl shadow-sm">
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-100">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-50">
               <Clock className="w-5 h-5 text-amber-600" />
             </div>
             <div>
@@ -349,9 +349,9 @@ export default function MerchantDetailPage() {
             </div>
           </div>
         </div>
-        <div className="p-5 bg-white rounded-xl shadow-sm">
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-pink-100">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-pink-50">
               <Gift className="w-5 h-5 text-pink-600" />
             </div>
             <div>
@@ -364,9 +364,9 @@ export default function MerchantDetailPage() {
 
       {/* Stats - Row 2: Push & Marketing */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="p-5 bg-white rounded-xl shadow-sm">
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-100">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
               <Bell className="w-5 h-5 text-blue-600" />
             </div>
             <div>
@@ -375,9 +375,9 @@ export default function MerchantDetailPage() {
             </div>
           </div>
         </div>
-        <div className="p-5 bg-white rounded-xl shadow-sm">
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-100">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-50">
               <Send className="w-5 h-5 text-purple-600" />
             </div>
             <div>

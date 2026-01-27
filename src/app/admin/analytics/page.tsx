@@ -161,7 +161,7 @@ export default function AdminAnalyticsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5167fc]"></div>
       </div>
     );
   }
@@ -179,10 +179,10 @@ export default function AdminAnalyticsPage() {
 
       {/* Stats Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100">
-              <Store className="w-6 h-6 text-emerald-600" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[#5167fc]/10">
+              <Store className="w-6 h-6 text-[#5167fc]" />
             </div>
             <div>
               <p className="text-3xl font-bold text-gray-900">{stats.totalMerchants}</p>
@@ -190,9 +190,9 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
         </div>
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-blue-50">
               <Users className="w-6 h-6 text-blue-600" />
             </div>
             <div>
@@ -201,9 +201,9 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
         </div>
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-green-100">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-green-50">
               <Calendar className="w-6 h-6 text-green-600" />
             </div>
             <div>
@@ -212,9 +212,9 @@ export default function AdminAnalyticsPage() {
             </div>
           </div>
         </div>
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-amber-50">
               <TrendingUp className="w-6 h-6 text-amber-600" />
             </div>
             <div>
@@ -228,7 +228,7 @@ export default function AdminAnalyticsPage() {
       {/* Charts Row */}
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Activité des 14 derniers jours */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100">
           <h2 className="mb-6 text-lg font-semibold text-gray-900">
             Activité (14 derniers jours)
           </h2>
@@ -249,24 +249,24 @@ export default function AdminAnalyticsPage() {
                 type="monotone"
                 dataKey="inscriptions"
                 name="Inscriptions"
-                stroke="#10B981"
+                stroke="#5167fc"
                 strokeWidth={2}
-                dot={{ fill: '#10B981', strokeWidth: 2 }}
+                dot={{ fill: '#5167fc', strokeWidth: 2 }}
               />
               <Line
                 type="monotone"
                 dataKey="visites"
                 name="Visites"
-                stroke="#10B981"
+                stroke="#5167fc"
                 strokeWidth={2}
-                dot={{ fill: '#10B981', strokeWidth: 2 }}
+                dot={{ fill: '#5167fc', strokeWidth: 2 }}
               />
             </LineChart>
           </ResponsiveContainer>
         </div>
 
         {/* Répartition des abonnements */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100">
           <h2 className="mb-6 text-lg font-semibold text-gray-900">
             Répartition des abonnements
           </h2>
@@ -307,7 +307,7 @@ export default function AdminAnalyticsPage() {
       </div>
 
       {/* Inscriptions par mois */}
-      <div className="p-6 bg-white rounded-2xl shadow-sm">
+      <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100">
         <h2 className="mb-6 text-lg font-semibold text-gray-900">
           Inscriptions par mois (6 derniers mois)
         </h2>
@@ -326,7 +326,7 @@ export default function AdminAnalyticsPage() {
             <Bar
               dataKey="count"
               name="Inscriptions"
-              fill="#10B981"
+              fill="#5167fc"
               radius={[8, 8, 0, 0]}
             />
           </BarChart>

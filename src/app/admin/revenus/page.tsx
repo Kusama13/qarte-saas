@@ -268,7 +268,7 @@ export default function AdminRevenusPage() {
   };
 
   const pieData = [
-    { name: 'Abonnés', value: stats.activeSubscribers, color: '#10B981' },
+    { name: 'Abonnés', value: stats.activeSubscribers, color: '#5167fc' },
     { name: 'En essai', value: stats.trialUsers, color: '#F59E0B' },
     { name: 'Annulés', value: stats.cancelledUsers, color: '#EF4444' },
   ];
@@ -276,7 +276,7 @@ export default function AdminRevenusPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5167fc]"></div>
       </div>
     );
   }
@@ -295,7 +295,7 @@ export default function AdminRevenusPage() {
       {/* KPI Cards - Row 1 */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* MRR */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm border-l-4 border-emerald-500">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100 border-l-4 border-l-[#5167fc]">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">MRR</p>
@@ -306,33 +306,33 @@ export default function AdminRevenusPage() {
                 {stats.activeSubscribers} abonné{stats.activeSubscribers > 1 ? 's' : ''} × {SUBSCRIPTION_PRICE}€
               </p>
             </div>
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100">
-              <Euro className="w-6 h-6 text-emerald-600" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[#5167fc]/10">
+              <Euro className="w-6 h-6 text-[#5167fc]" />
             </div>
           </div>
         </div>
 
         {/* Revenus du mois */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm border-l-4 border-blue-500">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100 border-l-4 border-l-blue-500">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Revenus ce mois</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">
                 {formatCurrency(stats.revenueThisMonth)}
               </p>
-              <p className="mt-1 text-sm text-emerald-600 flex items-center gap-1">
+              <p className="mt-1 text-sm text-[#5167fc] flex items-center gap-1">
                 <ArrowUpRight className="w-4 h-4" />
                 Confirmés
               </p>
             </div>
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-blue-50">
               <CreditCard className="w-6 h-6 text-blue-600" />
             </div>
           </div>
         </div>
 
         {/* À encaisser mois prochain */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm border-l-4 border-amber-500">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100 border-l-4 border-l-amber-500">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Prévu mois prochain</p>
@@ -343,14 +343,14 @@ export default function AdminRevenusPage() {
                 +{stats.trialEndingSoon} essai{stats.trialEndingSoon > 1 ? 's' : ''} potentiel{stats.trialEndingSoon > 1 ? 's' : ''}
               </p>
             </div>
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-amber-50">
               <Clock className="w-6 h-6 text-amber-600" />
             </div>
           </div>
         </div>
 
         {/* Projection annuelle */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm border-l-4 border-purple-500">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100 border-l-4 border-l-purple-500">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Projection annuelle</p>
@@ -361,7 +361,7 @@ export default function AdminRevenusPage() {
                 Si pas d'annulation
               </p>
             </div>
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-purple-50">
               <Target className="w-6 h-6 text-purple-600" />
             </div>
           </div>
@@ -371,10 +371,10 @@ export default function AdminRevenusPage() {
       {/* KPI Cards - Row 2 */}
       <div className="grid gap-4 sm:grid-cols-3">
         {/* Abonnés actifs */}
-        <div className="p-5 bg-white rounded-xl shadow-sm">
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100">
-              <Users className="w-6 h-6 text-emerald-600" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[#5167fc]/10">
+              <Users className="w-6 h-6 text-[#5167fc]" />
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.activeSubscribers}</p>
@@ -384,9 +384,9 @@ export default function AdminRevenusPage() {
         </div>
 
         {/* En essai */}
-        <div className="p-5 bg-white rounded-xl shadow-sm">
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-amber-50">
               <Clock className="w-6 h-6 text-amber-600" />
             </div>
             <div>
@@ -397,9 +397,9 @@ export default function AdminRevenusPage() {
         </div>
 
         {/* Taux de conversion */}
-        <div className="p-5 bg-white rounded-xl shadow-sm">
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-blue-50">
               <TrendingUp className="w-6 h-6 text-blue-600" />
             </div>
             <div>
@@ -413,7 +413,7 @@ export default function AdminRevenusPage() {
       {/* Charts Row */}
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Évolution du MRR */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100">
           <h2 className="mb-6 text-lg font-semibold text-gray-900">
             Évolution du MRR
           </h2>
@@ -421,8 +421,8 @@ export default function AdminRevenusPage() {
             <AreaChart data={historicalData}>
               <defs>
                 <linearGradient id="colorMrr" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#5167fc" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#5167fc" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -455,7 +455,7 @@ export default function AdminRevenusPage() {
               <Area
                 type="monotone"
                 dataKey="mrr"
-                stroke="#10B981"
+                stroke="#5167fc"
                 strokeWidth={2}
                 fillOpacity={1}
                 fill="url(#colorMrr)"
@@ -465,7 +465,7 @@ export default function AdminRevenusPage() {
         </div>
 
         {/* Répartition des utilisateurs */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
+        <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100">
           <h2 className="mb-6 text-lg font-semibold text-gray-900">
             Répartition des utilisateurs
           </h2>
@@ -505,7 +505,7 @@ export default function AdminRevenusPage() {
       </div>
 
       {/* Prévision vs Réel */}
-      <div className="p-6 bg-white rounded-2xl shadow-sm">
+      <div className="p-6 bg-white rounded-lg shadow-md border border-gray-100">
         <h2 className="mb-6 text-lg font-semibold text-gray-900">
           Revenus : Réel vs Projection
         </h2>
@@ -530,7 +530,7 @@ export default function AdminRevenusPage() {
             <Bar
               dataKey="revenue"
               name="Réel"
-              fill="#10B981"
+              fill="#5167fc"
               radius={[4, 4, 0, 0]}
             />
             <Bar
@@ -544,7 +544,7 @@ export default function AdminRevenusPage() {
       </div>
 
       {/* Indicateurs de santé */}
-      <div className="p-6 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl shadow-sm text-white">
+      <div className="p-6 bg-gradient-to-r from-[#5167fc] to-[#7c3aed] rounded-lg shadow-md text-white">
         <h2 className="mb-4 text-lg font-semibold">
           Résumé financier
         </h2>

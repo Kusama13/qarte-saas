@@ -156,7 +156,7 @@ export default function AdminMerchantsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5167fc]"></div>
       </div>
     );
   }
@@ -181,7 +181,7 @@ export default function AdminMerchantsPage() {
             placeholder="Rechercher un commerçant..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5167fc] focus:border-transparent"
           />
         </div>
 
@@ -195,7 +195,7 @@ export default function AdminMerchantsPage() {
                 className={cn(
                   "px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
                   statusFilter === btn.value
-                    ? "bg-white text-emerald-600 shadow-sm"
+                    ? "bg-white text-[#5167fc] shadow-sm"
                     : "text-gray-600 hover:text-gray-900"
                 )}
               >
@@ -207,7 +207,7 @@ export default function AdminMerchantsPage() {
       </div>
 
       {/* Liste des commerçants */}
-      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
         {filteredMerchants.length > 0 ? (
           <div className="divide-y divide-gray-100">
             {filteredMerchants.map((merchant) => (
@@ -217,7 +217,7 @@ export default function AdminMerchantsPage() {
                 className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 font-bold text-white rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600">
+                  <div className="flex items-center justify-center w-12 h-12 font-bold text-white rounded-lg bg-[#5167fc]">
                     {merchant.shop_name.charAt(0)}
                   </div>
                   <div>

@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'] });
 import {
   LayoutDashboard,
   Store,
@@ -41,7 +44,7 @@ export default function AdminLayout({
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <div className={`min-h-screen bg-[#f8fafc] ${inter.className}`}>
       {/* Mobile menu button */}
       <button
         onClick={() => setSidebarOpen(true)}

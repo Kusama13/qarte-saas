@@ -519,7 +519,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-100 rounded-lg hover:bg-emerald-200 transition-colors"
+      className="flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-[#5167fc] bg-[#5167fc]/10 rounded-lg hover:bg-[#5167fc]/20 transition-colors"
     >
       {copied ? (
         <>
@@ -554,20 +554,20 @@ function CollapsibleSection({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-between w-full p-6 text-left hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100">
-            <Icon className="w-5 h-5 text-emerald-600" />
+          <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#5167fc]/10">
+            <Icon className="w-5 h-5 text-[#5167fc]" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
               {badge && (
-                <span className="px-2 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-700 rounded-full">
+                <span className="px-2 py-0.5 text-xs font-bold bg-[#5167fc]/10 text-[#5167fc] rounded-full">
                   {badge}
                 </span>
               )}
@@ -591,7 +591,7 @@ function CollapsibleSection({
 // Prompt Card Component
 function PromptCard({ prompt, tips, title }: { prompt: string; tips: string[]; title: string }) {
   return (
-    <div className="border border-gray-200 rounded-xl overflow-hidden">
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
       <div className="bg-gradient-to-r from-violet-500 to-indigo-600 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Wand2 className="w-4 h-4 text-white" />
@@ -637,9 +637,9 @@ export default function MarketingPage() {
       </div>
 
       {/* AI Generators */}
-      <div className="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl p-6 border border-violet-100">
+      <div className="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-lg p-6 border border-violet-100">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-lg flex items-center justify-center">
             <Wand2 className="w-5 h-5 text-white" />
           </div>
           <div>
@@ -654,7 +654,7 @@ export default function MarketingPage() {
               href={gen.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex flex-col items-center gap-2 p-3 bg-white rounded-xl border border-gray-200 hover:border-violet-300 hover:shadow-md transition-all group"
+              className="flex flex-col items-center gap-2 p-3 bg-white rounded-lg border border-gray-200 hover:border-violet-300 hover:shadow-md transition-all group"
             >
               <div className="flex items-center gap-1">
                 <span className="font-semibold text-gray-900 text-sm">{gen.name}</span>
@@ -664,7 +664,7 @@ export default function MarketingPage() {
               {gen.badge && (
                 <span className={cn(
                   "px-2 py-0.5 text-[10px] font-bold rounded-full",
-                  gen.color === 'emerald' && "bg-emerald-100 text-emerald-700",
+                  gen.color === 'emerald' && "bg-[#5167fc]/10 text-[#5167fc]",
                   gen.color === 'blue' && "bg-blue-100 text-blue-700",
                   gen.color === 'violet' && "bg-violet-100 text-violet-700",
                   gen.color === 'amber' && "bg-amber-100 text-amber-700",
@@ -680,7 +680,7 @@ export default function MarketingPage() {
       </div>
 
       {/* Type de commerce selector */}
-      <div className="bg-white rounded-2xl shadow-sm p-6">
+      <div className="bg-white rounded-lg shadow-md border border-gray-100 p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Type de commerce ciblé (pour flyers et emails)
         </h2>
@@ -690,9 +690,9 @@ export default function MarketingPage() {
               key={type.id}
               onClick={() => setSelectedType(type.id)}
               className={cn(
-                'flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all',
+                'flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all',
                 selectedType === type.id
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
+                  ? 'border-[#5167fc] bg-[#5167fc]/5 text-[#5167fc]'
                   : 'border-gray-200 hover:border-gray-300 text-gray-600'
               )}
             >
@@ -723,7 +723,7 @@ export default function MarketingPage() {
             tips={flyerPrompt.tips}
           />
 
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <p className="text-sm text-amber-800">
               <strong>Usage :</strong> Copiez ce prompt et collez-le dans Midjourney, DALL-E ou autre.
               Ajustez les stats et messages selon vos besoins. Format A5 recommandé pour impression.
@@ -746,7 +746,7 @@ export default function MarketingPage() {
             tips={vitrophaniePrompt.tips}
           />
 
-          <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+          <div className="p-4 bg-indigo-50 border border-indigo-200 rounded-lg">
             <p className="text-sm text-indigo-800">
               <strong>Message clé :</strong> Ces visuels communiquent aux clients finaux que le commerce
               fait partie du réseau Qarte. La carte de fidélité est commune à tous les commerces partenaires.
@@ -765,7 +765,7 @@ export default function MarketingPage() {
       >
         <div className="space-y-6">
           {emails.map((email, index) => (
-            <div key={index} className="p-4 bg-gray-50 rounded-xl">
+            <div key={index} className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div>
                   <p className="text-sm font-medium text-gray-500">Objet :</p>
@@ -784,10 +784,10 @@ export default function MarketingPage() {
       </CollapsibleSection>
 
       {/* Tips généraux */}
-      <div className="bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl p-6 text-white">
+      <div className="bg-gradient-to-br from-[#5167fc] to-[#7c3aed] rounded-lg p-6 text-white">
         <h2 className="text-lg font-semibold mb-4">Conseils de prospection</h2>
         <div className="grid gap-4 md:grid-cols-2">
-          <div className="bg-white/10 rounded-xl p-4">
+          <div className="bg-white/10 rounded-lg p-4">
             <h3 className="font-medium mb-2 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               Meilleurs moments pour appeler
@@ -798,7 +798,7 @@ export default function MarketingPage() {
               <li>• Jamais pendant le rush (12h-14h pour restos)</li>
             </ul>
           </div>
-          <div className="bg-white/10 rounded-xl p-4">
+          <div className="bg-white/10 rounded-lg p-4">
             <h3 className="font-medium mb-2 flex items-center gap-2">
               <Star className="w-4 h-4" />
               Arguments clés
@@ -810,7 +810,7 @@ export default function MarketingPage() {
               <li>• Réseau multi-commerces = plus de valeur</li>
             </ul>
           </div>
-          <div className="bg-white/10 rounded-xl p-4">
+          <div className="bg-white/10 rounded-lg p-4">
             <h3 className="font-medium mb-2 flex items-center gap-2">
               <Users className="w-4 h-4" />
               Objections fréquentes
@@ -821,7 +821,7 @@ export default function MarketingPage() {
               <li>• &quot;Ça coûte cher&quot; → 14 jours gratuits pour tester</li>
             </ul>
           </div>
-          <div className="bg-white/10 rounded-xl p-4">
+          <div className="bg-white/10 rounded-lg p-4">
             <h3 className="font-medium mb-2 flex items-center gap-2">
               <Award className="w-4 h-4" />
               Suivi

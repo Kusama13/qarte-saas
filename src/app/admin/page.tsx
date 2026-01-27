@@ -76,7 +76,7 @@ const PROSPECT_STATUSES = [
   { value: 'demo_scheduled', label: 'Démo prévue', color: 'bg-purple-100 text-purple-700' },
   { value: 'demo_done', label: 'Démo faite', color: 'bg-indigo-100 text-indigo-700' },
   { value: 'trial', label: 'En essai', color: 'bg-amber-100 text-amber-700' },
-  { value: 'converted', label: 'Converti', color: 'bg-emerald-100 text-emerald-700' },
+  { value: 'converted', label: 'Converti', color: 'bg-green-100 text-green-700' },
   { value: 'lost', label: 'Perdu', color: 'bg-red-100 text-red-700' },
 ];
 
@@ -429,7 +429,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#5167fc]" />
       </div>
     );
   }
@@ -497,7 +497,7 @@ export default function AdminDashboardPage() {
               <div className="flex items-center gap-2 text-xs text-slate-400">
                 {notesSaving && <Loader2 className="w-3.5 h-3.5 animate-spin text-[#5167fc]" />}
                 {notesLastSaved && !notesSaving && (
-                  <span className="text-emerald-600">
+                  <span className="text-[#5167fc]">
                     Sauvé {notesLastSaved.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
@@ -565,7 +565,7 @@ export default function AdminDashboardPage() {
                         className={cn(
                           "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
                           task.completed
-                            ? "bg-emerald-500 border-emerald-500 text-white"
+                            ? "bg-[#5167fc] border-[#5167fc] text-white"
                             : "border-slate-300 hover:border-[#5167fc]"
                         )}
                       >
@@ -659,7 +659,7 @@ export default function AdminDashboardPage() {
                       <div className="flex items-center gap-2 mb-1">
                         <button
                           onClick={() => openProspectModal(prospect)}
-                          className="font-semibold text-gray-900 hover:text-emerald-600 truncate"
+                          className="font-semibold text-gray-900 hover:text-[#5167fc] truncate"
                         >
                           {prospect.business_name}
                         </button>
@@ -675,7 +675,7 @@ export default function AdminDashboardPage() {
                           </span>
                         )}
                         {prospect.phone && (
-                          <a href={`tel:${prospect.phone}`} className="flex items-center gap-1 hover:text-emerald-600">
+                          <a href={`tel:${prospect.phone}`} className="flex items-center gap-1 hover:text-[#5167fc]">
                             <Phone className="w-3 h-3" />
                             {prospect.phone}
                           </a>
@@ -693,7 +693,7 @@ export default function AdminDashboardPage() {
                       <select
                         value={prospect.status}
                         onChange={(e) => updateProspectStatus(prospect.id, e.target.value)}
-                        className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-emerald-400"
+                        className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-[#5167fc]"
                       >
                         {PROSPECT_STATUSES.map((s) => (
                           <option key={s.value} value={s.value}>{s.label}</option>
