@@ -177,8 +177,12 @@ export default function CustomerCardsPage() {
                   const isTier2Ready = tier2Enabled && card.current_stamps >= tier2Required;
                   const tier1Redeemed = card.tier1_redeemed;
 
+                  // Effective tier 1 redeemed - only consider redeemed if points still support it
+                  // If points were reduced below tier1_required, treat as if not redeemed
+                  const effectiveTier1Redeemed = tier1Redeemed && card.current_stamps >= tier1Required;
+
                   // Show badge only if there's an unclaimed reward
-                  const hasUnclaimedReward = (isTier1Ready && !tier1Redeemed) || isTier2Ready;
+                  const hasUnclaimedReward = (isTier1Ready && !effectiveTier1Redeemed) || isTier2Ready;
 
                   const progress = (card.current_stamps / maxRequired) * 100;
 
@@ -232,7 +236,7 @@ export default function CustomerCardsPage() {
                         )}
 
                         {/* Tier 1 redeemed but working toward tier 2 */}
-                        {tier2Enabled && tier1Redeemed && !isTier2Ready && (
+                        {tier2Enabled && effectiveTier1Redeemed && !isTier2Ready && (
                           <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">
                             <Trophy className="w-3.5 h-3.5" />
                             Vers palier 2 : {tier2Required - card.current_stamps} restants
@@ -276,7 +280,7 @@ export default function CustomerCardsPage() {
                             {[...Array(Math.min(maxRequired, 15))].map((_, i) => {
                               const isFilled = i < card.current_stamps;
                               const isTier1Zone = i < tier1Required;
-                              const isGreyedTier1 = tier2Enabled && isTier1Zone && tier1Redeemed;
+                              const isGreyedTier1 = tier2Enabled && isTier1Zone && effectiveTier1Redeemed;
 
                               return (
                                 <div

@@ -550,6 +550,10 @@ export default function CustomerCardPage({
   const tier1Required = merchant.stamps_required;
   const currentStamps = card.current_stamps;
 
+  // Effective tier 1 redeemed status - only consider redeemed if points still support it
+  // If points were reduced below tier1_required, treat as if not redeemed
+  const effectiveTier1Redeemed = tier1RedeemedInCycle && currentStamps >= tier1Required;
+
   // Get the loyalty icon component for stamps display
   const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
 
@@ -882,21 +886,21 @@ export default function CustomerCardPage({
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               className={`p-5 rounded-2xl border transition-all duration-500 ${
-                isRewardReady && !tier1RedeemedInCycle
+                isRewardReady && !effectiveTier1Redeemed
                   ? 'bg-white border-amber-200 shadow-[0_8px_30px_rgb(245,158,11,0.1)]'
-                  : tier1RedeemedInCycle
+                  : effectiveTier1Redeemed
                     ? 'bg-gray-50/50 border-gray-100 opacity-60'
                     : 'bg-white border-gray-100'
               }`}
             >
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
-                  <Gift className={`w-4 h-4 ${isRewardReady && !tier1RedeemedInCycle ? 'text-amber-500' : 'text-gray-400'}`} />
-                  <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !tier1RedeemedInCycle ? 'text-amber-600' : 'text-gray-400'}`}>
+                  <Gift className={`w-4 h-4 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-500' : 'text-gray-400'}`} />
+                  <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-400'}`}>
                     Palier 1
                   </span>
                 </div>
-                {tier1RedeemedInCycle ? (
+                {effectiveTier1Redeemed ? (
                   <span className="px-2.5 py-1 rounded-full bg-gray-200 text-[10px] font-bold text-gray-500 uppercase">
                     Réclamé
                   </span>
@@ -919,7 +923,7 @@ export default function CustomerCardPage({
               <div className="flex flex-wrap gap-2.5 mb-4">
                 {Array.from({ length: tier1Required }).map((_, i) => {
                   const isEarned = i < currentStamps;
-                  const isGreyed = tier1RedeemedInCycle;
+                  const isGreyed = effectiveTier1Redeemed;
                   return (
                     <motion.div
                       key={i}
@@ -951,10 +955,10 @@ export default function CustomerCardPage({
                     animate={{ width: `${Math.min((currentStamps / tier1Required) * 100, 100)}%` }}
                     transition={{ duration: 1, ease: "easeOut" }}
                     className="h-full rounded-full"
-                    style={{ backgroundColor: tier1RedeemedInCycle ? '#9ca3af' : (isRewardReady ? '#f59e0b' : merchant.primary_color) }}
+                    style={{ backgroundColor: effectiveTier1Redeemed ? '#9ca3af' : (isRewardReady ? '#f59e0b' : merchant.primary_color) }}
                   />
                 </div>
-                <p className={`text-xs font-bold ${isRewardReady && !tier1RedeemedInCycle ? 'text-amber-900' : 'text-gray-500'}`}>
+                <p className={`text-xs font-bold ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-900' : 'text-gray-500'}`}>
                   {merchant.reward_description || 'Cadeau de fidélité'}
                 </p>
               </div>
@@ -1364,7 +1368,7 @@ export default function CustomerCardPage({
               className="mt-6 space-y-3"
             >
               {/* Tier 1 Button - Show if reward ready and not already redeemed in cycle */}
-              {isRewardReady && !tier1RedeemedInCycle && (
+              {isRewardReady && !effectiveTier1Redeemed && (
                 <Button
                   onClick={() => {
                     setRedeemTier(1);
@@ -1397,15 +1401,6 @@ export default function CustomerCardPage({
                 </Button>
               )}
 
-              {/* Show compact message if tier 1 already redeemed but tier 2 not reached yet */}
-              {tier2Enabled && tier1RedeemedInCycle && !isTier2Ready && (
-                <div className="flex items-center justify-center gap-2 py-2 px-3 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-100">
-                  <Trophy className="w-4 h-4 text-violet-500 flex-shrink-0" />
-                  <span className="text-sm font-semibold text-violet-700">
-                    Palier 2 : encore {tier2Required - currentStamps}
-                  </span>
-                </div>
-              )}
             </motion.div>
           )}
         </motion.div>
