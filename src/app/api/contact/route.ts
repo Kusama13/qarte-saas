@@ -6,6 +6,18 @@ import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/l
 import logger from '@/lib/logger';
 import { resend, EMAIL_FROM } from '@/lib/resend';
 
+// Escape HTML to prevent XSS in emails
+function escapeHtml(text: string): string {
+  const htmlEntities: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+  };
+  return text.replace(/[&<>"']/g, (char) => htmlEntities[char]);
+}
+
 const contactSchema = z.object({
   name: z.string().min(2, 'Le nom doit contenir au moins 2 caractères'),
   email: z.string().email('Email invalide'),
@@ -70,19 +82,23 @@ export async function POST(request: NextRequest) {
     // Envoyer l'email à contact@getqarte.com
     if (resend) {
       try {
+        const safeName = escapeHtml(name);
+        const safeEmail = escapeHtml(email);
+        const safeMessage = escapeHtml(message);
+
         await resend.emails.send({
           from: EMAIL_FROM,
           to: 'contact@getqarte.com',
           replyTo: email,
-          subject: `[Contact Qarte] ${subjectLabels[subject] || subject} - ${name}`,
+          subject: `[Contact Qarte] ${subjectLabels[subject] || subject} - ${safeName}`,
           html: `
             <h2>Nouveau message de contact</h2>
-            <p><strong>Nom :</strong> ${name}</p>
-            <p><strong>Email :</strong> <a href="mailto:${email}">${email}</a></p>
+            <p><strong>Nom :</strong> ${safeName}</p>
+            <p><strong>Email :</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
             <p><strong>Sujet :</strong> ${subjectLabels[subject] || subject}</p>
             <hr />
             <p><strong>Message :</strong></p>
-            <p style="white-space: pre-wrap;">${message}</p>
+            <p style="white-space: pre-wrap;">${safeMessage}</p>
             <hr />
             <p style="color: #666; font-size: 12px;">
               Envoyé depuis le formulaire de contact Qarte le ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}

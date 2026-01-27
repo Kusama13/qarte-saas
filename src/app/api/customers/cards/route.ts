@@ -13,8 +13,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const phone = searchParams.get('phone');
 
-    console.log('GET /api/customers/cards - phone:', phone);
-
     if (!phone) {
       return NextResponse.json(
         { error: 'Numéro de téléphone requis' },
@@ -28,10 +26,8 @@ export async function GET(request: NextRequest) {
       .select('id, phone_number, first_name, last_name, merchant_id')
       .eq('phone_number', phone);
 
-    console.log('Customers found:', customers, 'Error:', customersError);
-
     if (!customers || customers.length === 0) {
-      return NextResponse.json({ cards: [], found: false, debug: { phone, customersError } });
+      return NextResponse.json({ cards: [], found: false });
     }
 
     // Récupérer les cartes de fidélité pour TOUS ces clients
@@ -59,9 +55,8 @@ export async function GET(request: NextRequest) {
       .in('customer_id', customerIds);
 
     if (cardsError) {
-      console.error('Cards fetch error:', cardsError);
       return NextResponse.json(
-        { error: cardsError.message },
+        { error: 'Erreur lors de la récupération des cartes' },
         { status: 500 }
       );
     }

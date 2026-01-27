@@ -59,8 +59,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ customer: null, exists: false });
-  } catch (error) {
-    console.error('API error:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }
@@ -72,14 +71,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('POST /api/customers/register body:', body);
 
     const parsed = registerSchema.safeParse(body);
 
     if (!parsed.success) {
-      console.error('Validation error:', parsed.error);
       return NextResponse.json(
-        { error: 'Données invalides', details: parsed.error.errors },
+        { error: 'Données invalides' },
         { status: 400 }
       );
     }
@@ -95,7 +92,6 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existingList && existingList.length > 0) {
-      console.log('Customer already exists for merchant:', existingList[0]);
       return NextResponse.json({ customer: existingList[0] });
     }
 
@@ -112,17 +108,14 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Customer creation error:', error);
       return NextResponse.json(
-        { error: error.message },
+        { error: 'Erreur lors de la création du client' },
         { status: 500 }
       );
     }
 
-    console.log('Customer created:', newCustomer);
     return NextResponse.json({ customer: newCustomer });
   } catch (error) {
-    console.error('API error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

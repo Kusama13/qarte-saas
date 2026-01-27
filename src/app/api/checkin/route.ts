@@ -39,9 +39,10 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// Hash IP for GDPR compliance
+// Hash IP for GDPR compliance - use dedicated salt (not secret keys)
+const IP_HASH_SALT = process.env.IP_HASH_SALT || 'qarte-ip-hash-v1-default-salt';
 function hashIP(ip: string): string {
-  return createHash('sha256').update(ip + process.env.SUPABASE_SERVICE_ROLE_KEY).digest('hex');
+  return createHash('sha256').update(ip + IP_HASH_SALT).digest('hex');
 }
 
 // Get today's start timestamp in Paris timezone
