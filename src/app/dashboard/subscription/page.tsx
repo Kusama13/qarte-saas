@@ -100,12 +100,11 @@ export default function SubscriptionPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 stagger-fade-in">
-      <div className="relative overflow-hidden p-8 rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 text-white shadow-2xl">
-        <div className="relative z-10">
-          <h1 className="text-3xl font-extrabold tracking-tight">Abonnement</h1>
-          <p className="mt-2 text-indigo-100 font-medium opacity-90">Gérez votre plan et optimisez votre expérience client</p>
-        </div>
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
+      <div className="px-1">
+        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Abonnement</span>
+        </h1>
+        <p className="mt-2 text-base font-medium text-gray-500">Gérez votre plan</p>
       </div>
 
       {(trialStatus.isInGracePeriod || trialStatus.isFullyExpired) && (
@@ -139,7 +138,7 @@ export default function SubscriptionPage() {
               <Zap className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-black text-gray-900 leading-tight">Plan Pro <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest ml-1">SaaS</span></p>
+              <p className="text-2xl font-black text-gray-900 leading-tight">Plan Pro</p>
               <p className="text-xl font-bold gradient-text">19,00 € <span className="text-sm font-medium text-gray-400">/ mois</span></p>
             </div>
           </div>
