@@ -505,82 +505,78 @@ export default function CustomerCardPage({
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white 0%, ${merchant.primary_color}20 50%, ${merchant.primary_color}30 100%)` }}>
       {/* Header with premium glassmorphism horizontal design */}
       <header className="relative w-full overflow-hidden">
-        <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-2xl overflow-hidden bg-slate-50/40 backdrop-blur-sm border-b lg:border border-slate-200/60 shadow-sm">
+        <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden bg-white/40 backdrop-blur-xl border-b lg:border border-white/40 shadow-xl shadow-slate-200/50">
           {/* Animated decorative background elements */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.15 }}
-            transition={{ duration: 0.8 }}
-            className="absolute -top-10 -right-10 w-48 h-48 rounded-full blur-3xl"
+            animate={{ scale: 1, opacity: 0.18 }}
+            transition={{ duration: 1.2 }}
+            className="absolute -top-12 -right-12 w-64 h-64 rounded-full blur-3xl"
             style={{ background: merchant.primary_color }}
           />
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full blur-3xl"
+            animate={{ scale: 1, opacity: 0.12 }}
+            transition={{ duration: 1.2, delay: 0.3 }}
+            className="absolute -bottom-12 -left-12 w-64 h-64 rounded-full blur-3xl"
             style={{ background: merchant.secondary_color || merchant.primary_color }}
           />
 
-          <div className="relative w-full pt-4 pb-6 px-5 flex items-end justify-between min-h-[160px]">
-            {/* Back button */}
+          <div className="relative w-full pt-16 pb-8 px-6 flex items-end justify-between min-h-[220px]">
+            {/* Back button - Absolute Top Left */}
             <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="absolute top-4 left-4 z-20"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute top-6 left-6 z-20"
             >
               <Link
                 href="/customer/cards"
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-md border border-slate-200/60 shadow-sm transition-all hover:shadow-md active:scale-95"
+                className="flex items-center justify-center w-11 h-11 rounded-full bg-white/80 backdrop-blur-xl border border-white/60 shadow-sm transition-all hover:shadow-md hover:bg-white active:scale-90"
               >
-                <ArrowLeft className="w-4.5 h-4.5 text-slate-700" />
+                <ArrowLeft className="w-5 h-5 text-slate-800" />
               </Link>
             </motion.div>
 
-            {/* Left Section: Logo & Restaurant Name */}
+            {/* Left Section: Bigger Logo & Stacked Restaurant Name */}
             <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="flex flex-col gap-3 mt-8"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex flex-col gap-4"
             >
-              <div className="relative w-16 h-16 rounded-2xl p-0.5 bg-white shadow-lg border border-slate-100 flex items-center justify-center overflow-hidden">
+              <div className="relative w-24 h-24 rounded-[2rem] p-1 bg-white/90 shadow-2xl shadow-slate-200/80 border border-white flex items-center justify-center overflow-hidden transform hover:scale-105 transition-transform duration-300">
                 {merchant.logo_url ? (
                   <img
                     src={merchant.logo_url}
                     alt={merchant.shop_name}
-                    className="w-full h-full object-cover rounded-[14px]"
+                    className="w-full h-full object-cover rounded-[1.75rem]"
                   />
                 ) : (
                   <div
-                    className="w-full h-full rounded-[14px] flex items-center justify-center text-white text-xl font-bold"
+                    className="w-full h-full rounded-[1.75rem] flex items-center justify-center text-white text-3xl font-black"
                     style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
                   >
                     {merchant.shop_name[0]}
                   </div>
                 )}
               </div>
-              <div>
-                <h1 className="text-sm font-extrabold tracking-tight text-slate-900 line-clamp-1 max-w-[140px]">
-                  {merchant.shop_name}
-                </h1>
-              </div>
+              <h1 className="text-xl font-black tracking-tight text-slate-900 leading-tight max-w-[180px]">
+                {merchant.shop_name}
+              </h1>
             </motion.div>
 
-            {/* Right Section: Customer Info & Status */}
+            {/* Right Section: Big First Name & Stacked Status Badge */}
             <motion.div
-              initial={{ opacity: 0, x: 15 }}
+              initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-col items-end text-right pb-1"
+              className="flex flex-col items-end gap-2 text-right mb-1"
             >
-              <h2 className="text-xl font-black text-slate-900 tracking-tight leading-tight">
-                {card?.customer?.first_name}<br />{card?.customer?.last_name}
+              <h2 className="text-3xl font-black text-slate-900 tracking-tighter drop-shadow-sm">
+                {card?.customer?.first_name}
               </h2>
 
-              <div className={`mt-2 flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-sm backdrop-blur-md ${memberCard ? 'bg-amber-50/80 border-amber-200/50' : 'bg-white/80 border-slate-200/50'}`}>
-                {memberCard && <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />}
-                <span className={`text-[10px] font-bold uppercase tracking-wider ${memberCard ? 'text-amber-700' : 'text-slate-500'}`}>
+              <div className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border shadow-sm backdrop-blur-xl transition-all ${memberCard ? 'bg-amber-100/60 border-amber-200/50 ring-1 ring-amber-200/20' : 'bg-white/60 border-slate-200/40'}`}>
+                {memberCard && <Crown className="w-3.5 h-3.5 text-amber-600 fill-amber-500/30" />}
+                <span className={`text-[11px] font-bold uppercase tracking-widest ${memberCard ? 'text-amber-800' : 'text-slate-600'}`}>
                   {memberCard ? "Membre VIP" : "Client fidèle"}
                 </span>
               </div>
@@ -1586,86 +1582,139 @@ export default function CustomerCardPage({
         )}
       </Modal>
 
-      {/* Member Card Modal */}
+      {/* Member Card Modal - Credit Card Style */}
       <Modal
         isOpen={showMemberCardModal}
         onClose={() => setShowMemberCardModal(false)}
-        title="Carte Membre Privilège"
+        title=""
       >
         {memberCard && (
-          <div className="relative overflow-hidden">
-            {/* Elegant Background Accents */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(251,191,36,0.1),transparent_70%)] pointer-events-none" />
-            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-50" />
+          <div className="py-2">
+            {/* Credit Card Container */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, rotateY: -10 }}
+              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="relative w-full mx-auto overflow-hidden rounded-2xl shadow-2xl"
+              style={{ aspectRatio: '1.58/1' }}
+            >
+              {/* Card Background Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-amber-950" />
 
-            <div className="relative space-y-8 py-4">
-              {/* Header with Crown Animation */}
-              <div className="text-center">
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="relative inline-block mb-6"
-                >
-                  <div className="absolute inset-0 bg-amber-400 blur-2xl opacity-20 animate-pulse" />
-                  <div className="relative w-24 h-24 mx-auto bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 rounded-[2.5rem] flex items-center justify-center shadow-[0_20px_50px_rgba(251,191,36,0.3)] transform rotate-3">
-                    <Crown className="w-12 h-12 text-white drop-shadow-md" />
+              {/* Holographic Pattern Overlay */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(251,191,36,0.3) 2px,
+                    rgba(251,191,36,0.3) 4px
+                  )`
+                }} />
+              </div>
+
+              {/* Animated Shine Sweep */}
+              <motion.div
+                animate={{
+                  x: ['-100%', '200%'],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  repeatDelay: 2,
+                  ease: "easeInOut"
+                }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+              />
+
+              {/* Card Content */}
+              <div className="relative h-full p-5 flex flex-col justify-between">
+                {/* Top Section: Crown + Program Name */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    {/* Golden Crown Icon */}
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                      <Crown className="w-5 h-5 text-white drop-shadow-sm" />
+                    </div>
+                    <div>
+                      <p className="text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+                        {memberCard.program?.name || 'Programme VIP'}
+                      </p>
+                      <p className="text-white/60 text-[9px] font-medium mt-0.5">
+                        {merchant.shop_name}
+                      </p>
+                    </div>
                   </div>
-                </motion.div>
 
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-amber-600 mb-2 block">Membre Exclusif</span>
-                  <h3 className="text-3xl font-black text-gray-900 tracking-tight leading-none">
-                    {card?.customer?.first_name} {card?.customer?.last_name}
-                  </h3>
-                </div>
-              </div>
-
-              {/* Luxury Benefit Card */}
-              <div className="group relative">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
-                <div className="relative p-6 bg-white border border-amber-100 rounded-2xl flex flex-col items-center text-center shadow-sm overflow-hidden">
-                  <div className="absolute top-0 right-0 p-3 opacity-10">
-                    <Gift className="w-12 h-12 text-amber-500" />
-                  </div>
-                  <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mb-3">Privilège VIP</p>
-                  <p className="text-2xl font-black text-gray-900 leading-tight">
-                    {memberCard.program?.benefit_label}
-                  </p>
-                </div>
-              </div>
-
-              {/* Status & Validity Grid */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Expire le</p>
-                  <p className="font-bold text-gray-900">
-                    {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', {
-                      day: '2-digit',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col justify-center">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${
-                      new Date(memberCard.valid_until) > new Date() ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
-                    }`} />
-                    <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                      new Date(memberCard.valid_until) > new Date() ? 'text-emerald-600' : 'text-red-600'
-                    }`}>
-                      {new Date(memberCard.valid_until) > new Date() ? 'Statut Actif' : 'Expiré'}
-                    </span>
+                  {/* Status Badge */}
+                  <div className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                    new Date(memberCard.valid_until) > new Date()
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  }`}>
+                    {new Date(memberCard.valid_until) > new Date() ? 'Actif' : 'Expiré'}
                   </div>
                 </div>
+
+                {/* Middle Section: Chip Pattern + Benefit */}
+                <div className="flex items-center gap-4">
+                  {/* Holographic Chip */}
+                  <div className="w-12 h-9 rounded-md bg-gradient-to-br from-amber-200 via-amber-100 to-amber-300 shadow-inner flex items-center justify-center overflow-hidden">
+                    <div className="w-full h-full opacity-60" style={{
+                      backgroundImage: `
+                        linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.1) 50%, transparent 100%),
+                        linear-gradient(0deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)
+                      `
+                    }}>
+                      <div className="grid grid-cols-3 gap-px h-full p-1.5">
+                        {[...Array(6)].map((_, i) => (
+                          <div key={i} className="bg-amber-400/50 rounded-sm" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Benefit Pill */}
+                  <div className="flex-1">
+                    <p className="text-amber-400/70 text-[8px] font-semibold uppercase tracking-wider mb-1">Avantage</p>
+                    <div className="inline-block px-3 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-lg">
+                      <p className="text-amber-100 text-xs font-bold truncate max-w-[140px]">
+                        {memberCard.program?.benefit_label}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Section: Customer Name + Expiry */}
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-white/40 text-[8px] font-medium uppercase tracking-wider mb-1">Titulaire</p>
+                    <p className="text-white text-sm font-bold tracking-wide uppercase">
+                      {card?.customer?.first_name} {card?.customer?.last_name}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white/40 text-[8px] font-medium uppercase tracking-wider mb-1">Expire</p>
+                    <p className="text-white text-sm font-bold tracking-wider font-mono">
+                      {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', {
+                        month: '2-digit',
+                        year: '2-digit',
+                      }).replace('/', '/')}
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              {/* Fine Print */}
-              <div className="flex items-center justify-center gap-4 text-[10px] text-gray-400 font-medium">
-                <span>REF: {memberCard.id.slice(0, 8).toUpperCase()}</span>
-                <span className="w-1 h-1 bg-gray-300 rounded-full" />
-                <span>Document Officiel</span>
-              </div>
+              {/* Subtle Card Edge Glow */}
+              <div className="absolute inset-0 rounded-2xl border border-amber-500/20 pointer-events-none" />
+            </motion.div>
+
+            {/* Card Reference */}
+            <div className="mt-4 text-center">
+              <p className="text-[10px] text-gray-400 font-medium tracking-wider">
+                REF: {memberCard.id.slice(0, 8).toUpperCase()}
+              </p>
             </div>
           </div>
         )}
