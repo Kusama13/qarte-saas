@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import confetti from 'canvas-confetti';
 import {
   ArrowLeft,
   Check,
@@ -424,7 +423,10 @@ export default function CustomerCardPage({
     }
   };
 
-  const triggerConfetti = () => {
+  const triggerConfetti = useCallback(async () => {
+    // Dynamic import - only load confetti when needed
+    const confetti = (await import('canvas-confetti')).default;
+
     // Fire confetti from both sides
     const duration = 3000;
     const end = Date.now() + duration;
@@ -459,7 +461,7 @@ export default function CustomerCardPage({
     });
 
     frame();
-  };
+  }, []);
 
   const handleRedeem = async (tier: 1 | 2 = 1) => {
     if (!card) return;
@@ -521,8 +523,51 @@ export default function CustomerCardPage({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-white">
+        {/* Skeleton Header */}
+        <header className="relative w-full h-48 bg-gray-200 animate-pulse">
+          <div className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/20" />
+        </header>
+        <main className="px-4 -mt-20 relative z-10 max-w-lg mx-auto pb-10">
+          {/* Skeleton Card */}
+          <div className="bg-white rounded-[2rem] shadow-xl p-6">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-gray-200 animate-pulse" />
+              <div className="flex-1">
+                <div className="w-32 h-6 bg-gray-200 rounded animate-pulse mb-2" />
+                <div className="w-20 h-4 bg-gray-100 rounded animate-pulse" />
+              </div>
+            </div>
+            {/* Skeleton Progress */}
+            <div className="space-y-4 mb-6">
+              <div className="flex justify-between">
+                <div className="w-20 h-4 bg-gray-100 rounded animate-pulse" />
+                <div className="w-12 h-4 bg-gray-100 rounded animate-pulse" />
+              </div>
+              <div className="flex flex-wrap gap-2.5">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div key={i} className="w-9 h-9 rounded-full bg-gray-100 animate-pulse" />
+                ))}
+              </div>
+              <div className="h-1.5 bg-gray-100 rounded-full animate-pulse" />
+            </div>
+            {/* Skeleton Button */}
+            <div className="w-full h-14 bg-gray-200 rounded-xl animate-pulse" />
+          </div>
+          {/* Skeleton History */}
+          <div className="mt-6 bg-white rounded-2xl p-4">
+            <div className="w-24 h-5 bg-gray-200 rounded animate-pulse mb-4" />
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0">
+                <div className="w-8 h-8 rounded-lg bg-gray-100 animate-pulse" />
+                <div className="flex-1">
+                  <div className="w-20 h-4 bg-gray-100 rounded animate-pulse mb-1" />
+                  <div className="w-32 h-3 bg-gray-50 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
       </div>
     );
   }
@@ -1640,41 +1685,43 @@ export default function CustomerCardPage({
           </AnimatePresence>
         </motion.div>
 
-        {/* Review Section - Minimalist Footer */}
+        {/* Review Section - Minimalist Card */}
         {merchant.review_link && merchant.review_link.trim() !== '' && !reviewDismissed && !reviewPermanentlyHidden && (
-          <div className="mt-10 mb-4 px-6 relative group flex flex-col items-center text-center">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                localStorage.setItem(`qarte_review_hidden_${merchantId}`, 'true');
-                setReviewPermanentlyHidden(true);
-              }}
-              className="absolute -top-1 right-8 p-1 text-slate-300 hover:text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              aria-label="Masquer"
-            >
-              <X className="w-3 h-3" />
-            </button>
-
-            <div className="max-w-[280px] w-full">
-              <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400 font-medium mb-2.5">
-                {merchant.shop_name} vous remercie
-              </p>
-
-              <div className="flex items-center justify-center gap-3 mb-2.5">
-                <div className="h-px flex-1 bg-slate-200/60" />
-                <Star className="w-2.5 h-2.5 text-amber-400 fill-amber-300" />
-                <div className="h-px flex-1 bg-slate-200/60" />
-              </div>
-
-              <a
-                href={merchant.review_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-slate-600 transition-colors duration-200 group/link"
+          <div className="mt-8 px-4">
+            <div className="relative group bg-white/90 backdrop-blur-sm rounded-2xl py-5 px-6 shadow-sm border border-gray-100/80">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  localStorage.setItem(`qarte_review_hidden_${merchantId}`, 'true');
+                  setReviewPermanentlyHidden(true);
+                }}
+                className="absolute top-2 right-2 p-1.5 text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full hover:bg-gray-100"
+                aria-label="Masquer"
               >
-                Laisser un avis
-                <ChevronRight className="w-3 h-3 transition-transform duration-200 group-hover/link:translate-x-0.5" />
-              </a>
+                <X className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="flex flex-col items-center text-center">
+                <p className="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-semibold mb-2">
+                  {merchant.shop_name} vous remercie
+                </p>
+
+                <div className="flex items-center justify-center gap-3 mb-3 w-full max-w-[200px]">
+                  <div className="h-px flex-1 bg-gray-200" />
+                  <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                  <div className="h-px flex-1 bg-gray-200" />
+                </div>
+
+                <a
+                  href={merchant.review_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 transition-colors duration-200 group/link"
+                >
+                  Laisser un avis
+                  <ChevronRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5" />
+                </a>
+              </div>
             </div>
           </div>
         )}

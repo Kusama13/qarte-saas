@@ -119,8 +119,44 @@ export default function CustomerCardsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <div className="min-h-screen bg-slate-50">
+        {/* Skeleton Header */}
+        <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-gray-100/50">
+          <div className="flex items-center justify-between px-6 py-4 mx-auto max-w-4xl">
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600" />
+              <div className="w-16 h-5 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <div className="w-32 h-4 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </header>
+        <main className="px-4 py-8 mx-auto max-w-4xl">
+          <div className="mb-8">
+            <div className="w-32 h-8 bg-gray-200 rounded animate-pulse mb-2" />
+            <div className="w-24 h-4 bg-gray-100 rounded animate-pulse" />
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-14 h-14 rounded-2xl bg-gray-200 animate-pulse" />
+                  <div>
+                    <div className="w-24 h-5 bg-gray-200 rounded animate-pulse mb-2" />
+                    <div className="w-16 h-3 bg-gray-100 rounded animate-pulse" />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="w-full h-3 bg-gray-100 rounded-full animate-pulse" />
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4, 5].map((j) => (
+                      <div key={j} className="w-2 h-2 rounded-full bg-gray-200 animate-pulse" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
       </div>
     );
   }
