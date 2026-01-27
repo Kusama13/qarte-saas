@@ -550,6 +550,9 @@ export default function CustomerCardPage({
   const tier1Required = merchant.stamps_required;
   const currentStamps = card.current_stamps;
 
+  // Get the loyalty icon component for stamps display
+  const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white 0%, ${merchant.primary_color}20 50%, ${merchant.primary_color}30 100%)` }}>
       {/* Header with premium glassmorphism horizontal design */}
@@ -872,149 +875,165 @@ export default function CustomerCardPage({
           transition={{ duration: 0.5, delay: 0.3 }}
           className="bg-white rounded-[2rem] shadow-2xl border border-gray-100 p-6 overflow-hidden relative"
         >
-          {/* Redesigned Progression Section */}
-          <div className="mb-8 px-2">
-            {/* Total Progression Bar */}
-            <div className="relative mb-8 pt-4">
-              <div className="flex justify-between items-end mb-2">
-                <div>
-                  <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Progression</h3>
-                  <p className="text-xs text-gray-500 font-medium mt-0.5">
-                    {getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, currentStamps)} cumulés
-                  </p>
+          {/* Progression Section with Stamp Icons */}
+          <div className="mb-8 px-2 space-y-6">
+            {/* PALIER 1 SECTION */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`p-5 rounded-2xl border transition-all duration-500 ${
+                isRewardReady && !tier1RedeemedInCycle
+                  ? 'bg-white border-amber-200 shadow-[0_8px_30px_rgb(245,158,11,0.1)]'
+                  : tier1RedeemedInCycle
+                    ? 'bg-gray-50/50 border-gray-100 opacity-60'
+                    : 'bg-white border-gray-100'
+              }`}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <Gift className={`w-4 h-4 ${isRewardReady && !tier1RedeemedInCycle ? 'text-amber-500' : 'text-gray-400'}`} />
+                  <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !tier1RedeemedInCycle ? 'text-amber-600' : 'text-gray-400'}`}>
+                    Palier 1
+                  </span>
                 </div>
-                <div className="text-right">
-                  <span className="text-2xl font-black" style={{ color: merchant.primary_color }}>{currentStamps}</span>
-                  <span className="text-sm font-bold text-gray-300"> / {tier2Enabled ? tier2Required : tier1Required}</span>
-                </div>
-              </div>
-
-              <div className="relative h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{
-                    width: `${Math.min((currentStamps / (tier2Enabled ? tier2Required : tier1Required)) * 100, 100)}%`,
-                  }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className="absolute inset-y-0 left-0 rounded-full"
-                  style={{ backgroundColor: merchant.primary_color }}
-                />
-                {/* Milestone Marker on Bar for Tier 1 when Tier 2 enabled */}
-                {tier2Enabled && (
-                  <div
-                    className="absolute top-0 h-full w-0.5 bg-white/50 z-10"
-                    style={{ left: `${(tier1Required / tier2Required) * 100}%` }}
-                  />
+                {tier1RedeemedInCycle ? (
+                  <span className="px-2.5 py-1 rounded-full bg-gray-200 text-[10px] font-bold text-gray-500 uppercase">
+                    Réclamé
+                  </span>
+                ) : isRewardReady ? (
+                  <motion.span
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-black text-white uppercase shadow-lg shadow-amber-200"
+                  >
+                    Prêt !
+                  </motion.span>
+                ) : (
+                  <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
+                    {Math.max(0, tier1Required - currentStamps)} restant{tier1Required - currentStamps > 1 ? 's' : ''}
+                  </span>
                 )}
               </div>
-            </div>
 
-            {/* Tier Cards Stack */}
-            <div className="space-y-3">
-              {/* TIER 1 CARD */}
+              {/* Stamps Grid Tier 1 */}
+              <div className="flex flex-wrap gap-2.5 mb-4">
+                {Array.from({ length: tier1Required }).map((_, i) => {
+                  const isEarned = i < currentStamps;
+                  const isGreyed = tier1RedeemedInCycle;
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: i * 0.05 }}
+                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
+                        isEarned && !isGreyed
+                          ? 'text-white shadow-md'
+                          : isEarned && isGreyed
+                            ? 'bg-gray-300 text-gray-400'
+                            : 'bg-gray-50 text-gray-300 border border-gray-100'
+                      }`}
+                      style={{
+                        backgroundColor: isEarned && !isGreyed ? merchant.primary_color : undefined,
+                      }}
+                    >
+                      <LoyaltyIcon className="w-4 h-4" />
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Bottom Progress & Desc */}
+              <div className="space-y-2">
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min((currentStamps / tier1Required) * 100, 100)}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full rounded-full"
+                    style={{ backgroundColor: tier1RedeemedInCycle ? '#9ca3af' : (isRewardReady ? '#f59e0b' : merchant.primary_color) }}
+                  />
+                </div>
+                <p className={`text-xs font-bold ${isRewardReady && !tier1RedeemedInCycle ? 'text-amber-900' : 'text-gray-500'}`}>
+                  {merchant.reward_description || 'Cadeau de fidélité'}
+                </p>
+              </div>
+            </motion.div>
+
+            {/* PALIER 2 SECTION */}
+            {tier2Enabled && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className={`relative p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 ${
-                  isRewardReady
-                    ? 'bg-amber-50/50 border-amber-200 shadow-sm'
-                    : 'bg-white border-gray-100'
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: currentStamps >= tier1Required ? 1 : 0.5, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className={`p-5 rounded-2xl border transition-all duration-500 ${
+                  isTier2Ready
+                    ? 'bg-white border-violet-200 shadow-[0_8px_30px_rgb(124,58,237,0.1)]'
+                    : currentStamps >= tier1Required
+                      ? 'bg-white border-violet-100'
+                      : 'bg-gray-50/30 border-gray-100'
                 }`}
               >
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                  isRewardReady ? 'bg-amber-500 text-white shadow-lg shadow-amber-200' : 'bg-gray-50 text-gray-400'
-                }`}>
-                  <Gift className="w-6 h-6" />
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-center gap-2">
+                    <Trophy className={`w-4 h-4 ${isTier2Ready ? 'text-violet-500' : 'text-gray-400'}`} />
+                    <span className={`text-[11px] font-black uppercase tracking-widest ${isTier2Ready ? 'text-violet-600' : 'text-gray-400'}`}>
+                      Palier 2
+                    </span>
+                  </div>
+                  {isTier2Ready ? (
+                    <motion.span
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                      className="px-2.5 py-1 rounded-full bg-violet-600 text-[10px] font-black text-white uppercase shadow-lg shadow-violet-200"
+                    >
+                      Débloqué !
+                    </motion.span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
+                      {Math.max(0, tier2Required - currentStamps)} restant{tier2Required - currentStamps > 1 ? 's' : ''}
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-0.5">
-                    <span className={`text-[10px] font-black uppercase tracking-wider ${isRewardReady ? 'text-amber-600' : 'text-gray-400'}`}>
-                      Palier 1
-                    </span>
-                    {isRewardReady ? (
-                      <span className="px-2 py-0.5 rounded-full bg-amber-500 text-[10px] font-black text-white uppercase animate-pulse">
-                        Prêt !
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-gray-400">
-                        {Math.max(0, tier1Required - currentStamps)} restant{tier1Required - currentStamps > 1 ? 's' : ''}
-                      </span>
-                    )}
-                  </div>
-                  <p className={`text-sm font-bold truncate ${isRewardReady ? 'text-amber-900' : 'text-gray-600'}`}>
-                    {merchant.reward_description || 'Récompense standard'}
-                  </p>
-                  <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full transition-all duration-1000"
-                      style={{
-                        width: `${Math.min((currentStamps / tier1Required) * 100, 100)}%`,
-                        backgroundColor: isRewardReady ? '#f59e0b' : merchant.primary_color
-                      }}
+                {/* Stamps Grid Tier 2 - Only shows additional stamps needed after tier 1 */}
+                <div className="flex flex-wrap gap-2.5 mb-4">
+                  {Array.from({ length: tier2Required - tier1Required }).map((_, i) => {
+                    const isEarned = currentStamps >= (tier1Required + i + 1);
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: i * 0.05 }}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
+                          isEarned
+                            ? 'bg-violet-600 text-white shadow-md'
+                            : 'bg-gray-50 text-gray-300 border border-gray-100'
+                        }`}
+                      >
+                        <LoyaltyIcon className="w-4 h-4" />
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                {/* Bottom Progress & Desc */}
+                <div className="space-y-2">
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min((Math.max(0, currentStamps - tier1Required) / (tier2Required - tier1Required)) * 100, 100)}%` }}
+                      transition={{ duration: 1, ease: "easeOut" }}
+                      className="h-full bg-violet-600 rounded-full"
                     />
                   </div>
+                  <p className={`text-xs font-bold ${isTier2Ready ? 'text-violet-900' : 'text-gray-500'}`}>
+                    {tier2Reward || 'Récompense Premium'}
+                  </p>
                 </div>
               </motion.div>
-
-              {/* TIER 2 CARD */}
-              {tier2Enabled && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  className={`relative p-4 rounded-2xl border transition-all duration-300 flex items-center gap-4 ${
-                    isTier2Ready
-                      ? 'bg-violet-50/50 border-violet-200 shadow-sm'
-                      : currentStamps >= tier1Required
-                        ? 'bg-white border-violet-100 shadow-sm'
-                        : 'bg-gray-50/50 border-transparent opacity-60'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-                    isTier2Ready
-                      ? 'bg-violet-600 text-white shadow-lg shadow-violet-200'
-                      : currentStamps >= tier1Required
-                        ? 'bg-violet-100 text-violet-400'
-                        : 'bg-gray-200 text-gray-400'
-                  }`}>
-                    <Trophy className="w-6 h-6" />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className={`text-[10px] font-black uppercase tracking-wider ${
-                        isTier2Ready ? 'text-violet-600' : 'text-gray-400'
-                      }`}>
-                        Palier 2
-                      </span>
-                      {isTier2Ready ? (
-                        <span className="px-2 py-0.5 rounded-full bg-violet-600 text-[10px] font-black text-white uppercase">
-                          Débloqué !
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-gray-400">
-                          {Math.max(0, tier2Required - currentStamps)} restant{tier2Required - currentStamps > 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </div>
-                    <p className={`text-sm font-bold truncate ${isTier2Ready ? 'text-violet-900' : 'text-gray-500'}`}>
-                      {tier2Reward || 'Récompense Premium'}
-                    </p>
-                    <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full transition-all duration-1000"
-                        style={{
-                          width: `${Math.min((currentStamps / tier2Required) * 100, 100)}%`,
-                          backgroundColor: isTier2Ready ? '#7c3aed' : '#a78bfa'
-                        }}
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* PWA Notification Banner - Show in PWA when NOT subscribed */}
