@@ -476,113 +476,116 @@ function StorytellingSection() {
   );
 }
 
-// Pain Points Section
-function PainPointsSection() {
+// Comparison Section - Sans Carte vs Avec Qarte
+function ComparisonSection() {
   const { ref, isInView } = useInView();
 
   const painPoints = [
-    {
-      number: '1',
-      title: 'Le papier, c\'est fini',
-      description: '30% des cartes papier sont perdues ou jetées. Résultat : vos clients oublient votre programme.',
-      icon: FileX,
-      stat: '30%',
-      statLabel: 'de cartes perdues'
-    },
-    {
-      number: '2',
-      title: 'Les apps custom coûtent cher',
-      description: 'Une app de fidélité sur-mesure ? Comptez 10 000€ minimum. Et vos clients doivent la télécharger...',
-      icon: Banknote,
-      stat: '10k€',
-      statLabel: 'coût moyen'
-    },
-    {
-      number: '3',
-      title: 'Sans data, vous êtes aveugle',
-      description: 'Qui sont vos meilleurs clients ? Combien de fois reviennent-ils ? Sans données, impossible de relancer.',
-      icon: EyeOff,
-      stat: '0',
-      statLabel: 'visibilité'
-    }
+    "Cartes papier perdues ou oubliées",
+    "Clients qui ne reviennent pas",
+    "Difficulté à obtenir des avis Google",
+    "Impossible de relancer les inactifs",
+    "Aucune donnée sur vos clients",
+    "Gaspillage de papier et d'encre",
+    "Configuration longue et coûteuse"
+  ];
+
+  const benefits = [
+    "Carte digitale toujours accessible",
+    "Boostez votre chiffre d'affaires",
+    "Collectez des avis Google facilement",
+    "Notifications push pour réengager",
+    "Dashboard et statistiques en temps réel",
+    "100% écologique, zéro papier",
+    "Prêt en 5 minutes, sans engagement"
   ];
 
   return (
-    <section className="py-24 bg-gradient-to-b from-slate-50 to-white relative overflow-hidden">
-      <div ref={ref} className="max-w-6xl mx-auto px-6 relative z-10">
+    <section className="py-24 bg-white overflow-hidden">
+      <div ref={ref} className="max-w-5xl mx-auto px-6">
+        {/* Header */}
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Les <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">3 défis</span> de la fidélisation
+            Pourquoi choisir{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+              Qarte
+            </span>{' '}
+            ?
           </h2>
-          <p className="text-xl text-gray-600">Et comment Qarte les résout simplement.</p>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Comparez et faites le bon choix pour votre commerce.
+          </p>
         </div>
 
-        {/* Mobile: Stacked cards effect | Desktop: Grid */}
-        <div className="relative md:grid md:grid-cols-3 md:gap-8 flex flex-col gap-4">
-          {painPoints.map((point, index) => {
-            const IconComponent = point.icon;
-            return (
-            <div
-              key={index}
-              className={`group relative p-8 md:p-10 bg-white/80 backdrop-blur-md rounded-3xl md:rounded-[2.5rem] border border-slate-200/60 shadow-lg md:shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 md:hover:-translate-y-2 hover:border-indigo-100 transition-all duration-500 overflow-hidden ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}
-              style={{
-                animationDelay: `${(index + 1) * 0.15}s`,
-              }}
-            >
-              {/* Subtle Brand Gradient Overlay */}
-              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-
-              <div className="relative z-10 h-full flex flex-col">
-                {/* Modern Indicator & Icon */}
-                <div className="flex items-start justify-between mb-6 md:mb-8">
-                  <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-xl md:rounded-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
-                    <IconComponent size={24} strokeWidth={1.5} className="md:w-7 md:h-7" />
-                  </div>
-                  <span className="text-sm font-bold text-slate-300 group-hover:text-indigo-400 transition-colors">
-                    0{point.number}
-                  </span>
-                </div>
-
-                <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">
-                  {point.title}
-                </h3>
-
-                <p className="text-slate-600 mb-10 leading-relaxed font-medium">
-                  {point.description}
-                </p>
-
-                {/* Premium Stat Footer */}
-                <div className="mt-auto pt-8 border-t border-slate-100/80">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-indigo-400/80 uppercase tracking-[0.2em] mb-2">Impact</span>
-                    <div className="flex items-end justify-between">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-extrabold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors duration-300">
-                          {point.stat}
-                        </span>
-                        <span className="text-slate-400 font-semibold text-sm mb-1">{point.statLabel}</span>
-                      </div>
-
-                      {/* Modern Wave Visualizer */}
-                      <div className="flex items-end gap-1.5 h-10 mb-1">
-                        {[0.4, 0.7, 1, 0.6].map((opacity, i) => (
-                          <div
-                            key={i}
-                            className="w-1.5 rounded-full bg-indigo-500 transition-all duration-500 ease-out group-hover:scale-y-110"
-                            style={{
-                              height: `${(i + 1) * 20 + 20}%`,
-                              opacity: opacity * 0.3
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        {/* Comparison Cards */}
+        <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-stretch">
+          {/* LEFT CARD - Sans Carte */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="group p-8 rounded-3xl bg-gray-50 border border-gray-200 transition-all duration-300 hover:shadow-lg"
+          >
+            <div className="mb-8">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-red-600 bg-red-50 mb-4">
+                Méthode Classique
+              </span>
+              <h3 className="text-2xl font-bold text-gray-900">Sans Carte de Fidélité</h3>
             </div>
-            );
-          })}
+
+            <ul className="space-y-4">
+              {painPoints.map((point, idx) => (
+                <li key={idx} className="flex items-start gap-3">
+                  <div className="mt-0.5 bg-red-100 rounded-full p-1 flex-shrink-0">
+                    <X className="w-4 h-4 text-red-600" />
+                  </div>
+                  <span className="text-gray-600 font-medium leading-relaxed">{point}</span>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+
+          {/* RIGHT CARD - Avec Qarte (EMPHASIZED) */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={isInView ? { opacity: 1, x: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="relative p-8 rounded-3xl bg-white border-2 border-indigo-200 shadow-xl shadow-indigo-500/10 md:scale-[1.02] z-10"
+          >
+            {/* Recommendation Badge */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold px-5 py-1.5 rounded-full shadow-lg uppercase tracking-wider">
+              Recommandé
+            </div>
+
+            <div className="mb-8 pt-2">
+              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 mb-4">
+                Solution Moderne
+              </span>
+              <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+                Avec Qarte
+              </h3>
+            </div>
+
+            <ul className="space-y-4">
+              {benefits.map((benefit, idx) => (
+                <li key={idx} className="flex items-start gap-3 group/item">
+                  <div className="mt-0.5 bg-emerald-500 rounded-full p-1 flex-shrink-0 transition-transform group-hover/item:scale-110">
+                    <Check className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-gray-700 font-semibold leading-relaxed">{benefit}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-8 pt-6 border-t border-indigo-100">
+              <a
+                href="/auth/merchant/signup"
+                className="block w-full py-3.5 px-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] text-center"
+              >
+                Démarrer mon essai gratuit
+              </a>
+            </div>
+          </motion.div>
         </div>
       </div>
     </section>
@@ -1654,6 +1657,161 @@ function TrustBanner() {
   );
 }
 
+// Adaptability Showcase Section - Mode Passage vs Mode Article
+function AdaptabilityShowcase() {
+  const { ref, isInView } = useInView();
+  const [activeMode, setActiveMode] = useState<'passage' | 'article'>('passage');
+
+  const allBusinessTypes = [
+    { icon: Scissors, label: 'Coiffeurs' },
+    { icon: Coffee, label: 'Cafés' },
+    { icon: UtensilsCrossed, label: 'Restaurants' },
+    { icon: Sparkles, label: 'Instituts' },
+    { icon: Flower2, label: 'Fleuristes' },
+    { icon: ShoppingBag, label: 'Boutiques' },
+    { icon: Croissant, label: 'Boulangeries' },
+    { icon: Star, label: 'Et plus...' },
+  ];
+
+  return (
+    <section ref={ref} className="py-24 bg-gradient-to-b from-white to-gray-50 overflow-hidden">
+      <div className="max-w-6xl mx-auto px-6">
+        {/* Header */}
+        <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-full mb-6">
+            <Zap className="w-4 h-4 text-indigo-600" />
+            <span className="text-sm font-semibold text-indigo-700">Flexible par nature</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Qarte s'adapte à{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+              votre commerce
+            </span>
+          </h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Deux modes de fidélité pour répondre à tous les besoins.
+          </p>
+        </div>
+
+        <div className="max-w-2xl mx-auto">
+          {/* Mode Toggle */}
+          <div className={`flex justify-center mb-8 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
+            <div className="bg-white p-2 rounded-2xl shadow-lg border border-gray-100 inline-flex">
+              <button
+                onClick={() => setActiveMode('passage')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                  activeMode === 'passage'
+                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Mode Passage
+              </button>
+              <button
+                onClick={() => setActiveMode('article')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 ${
+                  activeMode === 'article'
+                    ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Mode Article
+              </button>
+            </div>
+          </div>
+
+          {/* Mode Description */}
+          <div className={`${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.3s' }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeMode}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-6"
+              >
+                {activeMode === 'passage' ? (
+                  <>
+                    <div className="p-6 bg-gradient-to-br from-indigo-50 to-violet-50 rounded-2xl border border-indigo-100">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
+                          <Users className="w-5 h-5 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900">1 visite = 1 point</h3>
+                      </div>
+                      <p className="text-gray-600">
+                        Idéal pour les coiffeurs, instituts de beauté, restaurants... Chaque passage compte !
+                      </p>
+                    </div>
+                    <ul className="space-y-3">
+                      {['Parfait pour les services', 'Simple et intuitif', 'Exemple: 10 coupes = 1 offerte'].map((item, i) => (
+                        <li key={i} className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <Check className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <span className="text-gray-700">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <div className="p-6 bg-gradient-to-br from-violet-50 to-rose-50 rounded-2xl border border-violet-100">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-10 h-10 bg-violet-600 rounded-xl flex items-center justify-center">
+                          <ShoppingBag className="w-5 h-5 text-white" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-900">1 article = 1 point</h3>
+                      </div>
+                      <p className="text-gray-600">
+                        Parfait pour les boulangeries, cafés, boutiques... Comptez chaque achat !
+                      </p>
+                    </div>
+                    <ul className="space-y-3">
+                      {['Idéal pour les commerces', 'Encourage les achats multiples', 'Exemple: 10 cafés = 1 offert'].map((item, i) => (
+                        <li key={i} className="flex items-center gap-3">
+                          <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center">
+                            <Check className="w-4 h-4 text-emerald-600" />
+                          </div>
+                          <span className="text-gray-700">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Business Types Grid */}
+        <div className={`mt-24 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.6s' }}>
+          <h3 className="text-center text-lg font-semibold text-gray-900 mb-8">
+            Adapté à tous les commerces de proximité
+          </h3>
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
+            {allBusinessTypes.map((business, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ delay: 0.7 + i * 0.05 }}
+                className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-gray-100 hover:border-indigo-200 hover:shadow-lg transition-all duration-300 group"
+              >
+                <div className="w-10 h-10 bg-gray-50 group-hover:bg-indigo-50 rounded-xl flex items-center justify-center transition-colors">
+                  <business.icon className="w-5 h-5 text-gray-600 group-hover:text-indigo-600 transition-colors" />
+                </div>
+                <span className="text-xs font-medium text-gray-600 text-center">{business.label}</span>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ============================================
 // MAIN PAGE COMPONENT
 // ============================================
@@ -1668,8 +1826,9 @@ export default function LandingPageV4() {
         <HeroSection />
         <TrustBanner />
         <VideoShowcaseSection />
+        <ComparisonSection />
+        <AdaptabilityShowcase />
         <StorytellingSection />
-        <PainPointsSection />
         <FeaturesSection />
         <PushNotificationTeaser />
         <ROICalculatorSection />

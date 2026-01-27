@@ -33,6 +33,8 @@ import {
   Zap,
   Trophy,
   ScanLine,
+  Crown,
+  Download,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
@@ -43,7 +45,7 @@ import dynamic from 'next/dynamic';
 // Dynamic import for QR Scanner (client-side only)
 const QRScanner = dynamic(() => import('@/components/QRScanner'), { ssr: false });
 import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
-import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus } from '@/types';
+import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard } from '@/types';
 
 interface PointAdjustment {
   id: string;
@@ -143,6 +145,10 @@ export default function CustomerCardPage({
   const [offer, setOffer] = useState<MerchantOffer | null>(null);
   const [offerExpanded, setOfferExpanded] = useState(false);
 
+  // Member card state
+  const [memberCard, setMemberCard] = useState<MemberCard | null>(null);
+  const [showMemberCardModal, setShowMemberCardModal] = useState(false);
+
   // QR Scanner state
   const [showScanner, setShowScanner] = useState(false);
   const [canShowScanner, setCanShowScanner] = useState(false);
@@ -188,6 +194,19 @@ export default function CustomerCardPage({
           }
         } catch (offerError) {
           console.error('Error fetching offer:', offerError);
+        }
+
+        // Fetch member card if exists
+        try {
+          const memberCardResponse = await fetch(
+            `/api/member-cards/customer?customer_id=${data.card.customer_id}&merchant_id=${merchantId}`
+          );
+          const memberCardData = await memberCardResponse.json();
+          if (memberCardResponse.ok && memberCardData.memberCard) {
+            setMemberCard(memberCardData.memberCard);
+          }
+        } catch (memberCardError) {
+          console.error('Error fetching member card:', memberCardError);
         }
       } catch (error) {
         console.error('Error fetching card:', error);
@@ -560,10 +579,10 @@ export default function CustomerCardPage({
                     </h1>
                   </div>
 
-                  {/* Program Label */}
+                  {/* Customer Name */}
                   <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-white shadow-sm">
                     <span className="text-[11px] font-semibold text-slate-500 tracking-wide">
-                      Votre programme de fidélité
+                      {card?.customer?.first_name} {card?.customer?.last_name}
                     </span>
                   </div>
                 </div>
@@ -615,6 +634,67 @@ export default function CustomerCardPage({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Member Card Badge - Show if customer has an active member card */}
+        {memberCard && new Date(memberCard.valid_until) > new Date() && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowMemberCardModal(true)}
+            className="relative w-full group mb-4 p-[1.5px] overflow-hidden rounded-2xl bg-gradient-to-br from-amber-200 via-amber-500 to-amber-200 shadow-xl shadow-amber-900/10"
+          >
+            <div className="relative flex items-center gap-4 p-3.5 bg-white/80 backdrop-blur-xl rounded-[14.5px] overflow-hidden">
+              {/* Internal Glass Highlight */}
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-transparent to-white/30 pointer-events-none" />
+
+              {/* Dynamic Golden Shine */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-200/40 to-transparent -translate-x-full group-hover:animate-shimmer transition-all duration-1000 ease-in-out pointer-events-none" />
+
+              {/* Animated Icon Container */}
+              <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-shadow">
+                <motion.div
+                  animate={{
+                    rotate: [0, -8, 8, -8, 0],
+                    y: [0, -2, 0]
+                  }}
+                  transition={{
+                    duration: 5,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                  }}
+                >
+                  <Crown className="w-6 h-6 text-white drop-shadow-md" />
+                </motion.div>
+                {/* Particle Dots */}
+                <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber-200 rounded-full animate-pulse opacity-60" />
+                <div className="absolute -bottom-0.5 -left-0.5 w-1.5 h-1.5 bg-amber-300 rounded-full animate-ping opacity-40" />
+              </div>
+
+              <div className="relative z-10 flex-1 min-w-0 text-left">
+                <div className="flex items-center gap-2">
+                  <p className="font-extrabold text-amber-950 text-[13px] tracking-wide uppercase">Membre Privilège</p>
+                  <div className="h-1 w-1 rounded-full bg-amber-500 animate-pulse" />
+                </div>
+                <p className="text-xs font-semibold text-amber-700/90 truncate mt-0.5">
+                  {memberCard.benefit_label}
+                </p>
+              </div>
+
+              <div className="relative z-10">
+                <div className="flex flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-amber-950 text-white font-bold text-[10px] tracking-widest shadow-lg shadow-amber-900/20 uppercase">
+                  VIP
+                </div>
+              </div>
+
+              {/* Decorative corner accents */}
+              <div className="absolute top-0 right-0 p-1">
+                <div className="w-8 h-8 border-t-2 border-r-2 border-amber-400/20 rounded-tr-xl" />
+              </div>
+            </div>
+          </motion.button>
+        )}
 
         {/* Review Section - Only show if review_link exists and is not empty */}
         {merchant.review_link && merchant.review_link.trim() !== '' && !reviewDismissed && !reviewPermanentlyHidden && (
@@ -1511,6 +1591,105 @@ export default function CustomerCardPage({
             >
               Annuler
             </button>
+          </div>
+        )}
+      </Modal>
+
+      {/* Member Card Modal */}
+      <Modal
+        isOpen={showMemberCardModal}
+        onClose={() => setShowMemberCardModal(false)}
+        title="Carte Membre Privilège"
+      >
+        {memberCard && (
+          <div className="relative overflow-hidden">
+            {/* Elegant Background Accents */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(251,191,36,0.1),transparent_70%)] pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-50" />
+
+            <div className="relative space-y-8 py-4">
+              {/* Header with Crown Animation */}
+              <div className="text-center">
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="relative inline-block mb-6"
+                >
+                  <div className="absolute inset-0 bg-amber-400 blur-2xl opacity-20 animate-pulse" />
+                  <div className="relative w-24 h-24 mx-auto bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 rounded-[2.5rem] flex items-center justify-center shadow-[0_20px_50px_rgba(251,191,36,0.3)] transform rotate-3">
+                    <Crown className="w-12 h-12 text-white drop-shadow-md" />
+                  </div>
+                </motion.div>
+
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-amber-600 mb-2 block">Membre Exclusif</span>
+                  <h3 className="text-3xl font-black text-gray-900 tracking-tight leading-none">
+                    {card?.customer?.first_name} {card?.customer?.last_name}
+                  </h3>
+                </div>
+              </div>
+
+              {/* Luxury Benefit Card */}
+              <div className="group relative">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
+                <div className="relative p-6 bg-white border border-amber-100 rounded-2xl flex flex-col items-center text-center shadow-sm overflow-hidden">
+                  <div className="absolute top-0 right-0 p-3 opacity-10">
+                    <Gift className="w-12 h-12 text-amber-500" />
+                  </div>
+                  <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mb-3">Privilège VIP</p>
+                  <p className="text-2xl font-black text-gray-900 leading-tight">
+                    {memberCard.benefit_label}
+                  </p>
+                </div>
+              </div>
+
+              {/* Status & Validity Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Expire le</p>
+                  <p className="font-bold text-gray-900">
+                    {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col justify-center">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${
+                      new Date(memberCard.valid_until) > new Date() ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'
+                    }`} />
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                      new Date(memberCard.valid_until) > new Date() ? 'text-emerald-600' : 'text-red-600'
+                    }`}>
+                      {new Date(memberCard.valid_until) > new Date() ? 'Statut Actif' : 'Expiré'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Premium Download Action */}
+              <motion.a
+                whileHover={{ scale: 1.02, translateY: -2 }}
+                whileTap={{ scale: 0.98 }}
+                href={`/api/member-cards/${memberCard.id}/image`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative group flex items-center justify-center gap-3 w-full py-4 bg-gray-900 rounded-2xl font-bold text-white shadow-xl hover:shadow-amber-500/20 transition-all overflow-hidden"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/10 to-amber-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                <Download className="w-5 h-5 text-amber-400" />
+                <span>Télécharger le Certificat</span>
+              </motion.a>
+
+              {/* Fine Print */}
+              <div className="flex items-center justify-center gap-4 text-[10px] text-gray-400 font-medium">
+                <span>REF: {memberCard.id.slice(0, 8).toUpperCase()}</span>
+                <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                <span>Document Officiel</span>
+              </div>
+            </div>
           </div>
         )}
       </Modal>

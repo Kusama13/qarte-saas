@@ -18,6 +18,7 @@ import {
   MessageCircle,
   Megaphone,
   Zap,
+  Crown,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { getTrialStatus } from '@/lib/utils';
@@ -29,6 +30,7 @@ const navItems = [
   { href: '/dashboard/program', icon: Gift, label: 'Mon Programme', color: 'text-pink-500', bg: 'bg-pink-50' },
   { href: '/dashboard/qr-download', icon: QrCode, label: 'Télécharger QR', color: 'text-violet-500', bg: 'bg-violet-50' },
   { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+  { href: '/dashboard/members', icon: Crown, label: 'Membres', color: 'text-amber-500', bg: 'bg-amber-50' },
   { href: '/dashboard/marketing', icon: Megaphone, label: 'Marketing', color: 'text-orange-500', bg: 'bg-orange-50' },
   // { href: '/dashboard/automations', icon: Zap, label: 'Automatisations', color: 'text-yellow-500', bg: 'bg-yellow-50' },
   { href: '/dashboard/subscription', icon: CardIcon, label: 'Abonnement', color: 'text-amber-500', bg: 'bg-amber-50' },

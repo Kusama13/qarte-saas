@@ -149,3 +149,15 @@ export interface ApiError {
   error: string;
   code?: string;
 }
+
+export interface MemberCard {
+  id: string;
+  merchant_id: string;
+  customer_id: string;
+  benefit_label: string;
+  valid_from: string;
+  valid_until: string;
+  created_at: string;
+  customer?: Customer;
+  merchant?: Merchant;
+}
