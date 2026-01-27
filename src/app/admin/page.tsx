@@ -630,7 +630,7 @@ export default function AdminDashboardPage() {
                   >
                     {status.label} ({prospectCounts[status.value] || 0})
                   </button>
-                })}
+                ))}
               </div>
             </div>
           </div>
