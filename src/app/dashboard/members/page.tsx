@@ -50,6 +50,31 @@ const DURATION_UNITS = [
   { value: 'month', label: 'Mois', multiplier: 1 },
 ];
 
+// Convert decimal months to human-readable format
+const formatDuration = (durationMonths: number): string => {
+  const days = Math.round(durationMonths * 30);
+
+  if (days < 7) {
+    return `${days} jour${days > 1 ? 's' : ''}`;
+  }
+
+  if (days < 30 && days % 7 === 0) {
+    const weeks = days / 7;
+    return `${weeks} semaine${weeks > 1 ? 's' : ''}`;
+  }
+
+  if (days >= 30) {
+    const months = Math.round(durationMonths);
+    if (months === 0) {
+      // Less than 1 month but >= 7 days, show days
+      return `${days} jours`;
+    }
+    return `${months} mois`;
+  }
+
+  return `${days} jours`;
+};
+
 const PROGRAM_NAME_SUGGESTIONS = [
   'VIP Gold',
   'Club Premium',
@@ -445,7 +470,7 @@ export default function MembersPage() {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4" />
-                  {selectedProgram.duration_months} mois
+                  {formatDuration(selectedProgram.duration_months)}
                 </span>
               </div>
             </div>
@@ -1134,7 +1159,7 @@ function ProgramCard({
               <div className="p-1 rounded bg-gray-50 group-hover:bg-amber-50 transition-colors">
                 <Clock className="w-3.5 h-3.5 text-amber-600" />
               </div>
-              <span className="text-xs font-semibold">{program.duration_months} mois</span>
+              <span className="text-xs font-semibold">{formatDuration(program.duration_months)}</span>
             </div>
           </div>
         </div>

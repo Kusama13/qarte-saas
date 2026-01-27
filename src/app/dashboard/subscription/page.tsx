@@ -16,13 +16,14 @@ import { getTrialStatus, formatDate } from '@/lib/utils';
 import type { Merchant } from '@/types';
 
 const features = [
-  'Page fidélité personnalisée',
-  'QR code unique prêt à imprimer',
-  'Tableau de bord en temps réel',
-  'Gestion illimitée des clients',
-  'Export CSV des données',
-  'Support email 7j/7',
-  'Mises à jour gratuites',
+  'Clients illimités',
+  'QR Code perso',
+  'Notifications push',
+  'Programmation envois',
+  'Dashboard analytics',
+  'Avis Google',
+  'Support prioritaire',
+  'Zéro commission',
 ];
 
 export default function SubscriptionPage() {
@@ -98,227 +99,161 @@ export default function SubscriptionPage() {
   const isPaid = merchant?.subscription_status === 'active';
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Abonnement</h1>
-        <p className="mt-1 text-gray-600">
-          Gérez votre plan et vos informations de paiement
-        </p>
+    <div className="max-w-5xl mx-auto space-y-8 stagger-fade-in">
+      <div className="relative overflow-hidden p-8 rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 text-white shadow-2xl">
+        <div className="relative z-10">
+          <h1 className="text-3xl font-extrabold tracking-tight">Abonnement</h1>
+          <p className="mt-2 text-indigo-100 font-medium opacity-90">Gérez votre plan et optimisez votre expérience client</p>
+        </div>
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
       </div>
 
       {(trialStatus.isInGracePeriod || trialStatus.isFullyExpired) && (
-        <div className="p-4 mb-8 flex items-start gap-3 bg-red-100 border border-red-300 rounded-xl">
-          <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+        <div className="card border-red-100 bg-red-50/40 backdrop-blur-md p-5 flex items-start gap-4 rounded-2xl">
+          <div className="p-2.5 bg-red-100 rounded-xl">
+            <AlertTriangle className="w-6 h-6 text-red-600" />
+          </div>
           <div>
-            <p className="font-bold text-red-800">Votre essai gratuit a expiré</p>
+            <p className="font-bold text-red-900 text-lg leading-none mb-1">Attention requise</p>
             {trialStatus.isInGracePeriod ? (
-              <>
-                <p className="text-sm text-red-700 mt-1">
-                  <strong>Attention :</strong> Vos données seront définitivement supprimées dans{' '}
-                  <strong>{trialStatus.daysUntilDeletion} jour{trialStatus.daysUntilDeletion > 1 ? 's' : ''}</strong>.
-                </p>
-                <p className="text-sm text-red-600 mt-1">
-                  Les fonctionnalités sont limitées : vos clients ne peuvent plus valider leurs passages.
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-red-700 mt-1">
-                Souscrivez maintenant pour récupérer l&apos;accès à votre compte et vos données.
+              <p className="text-red-700 text-sm">
+                Votre essai a expiré. Données conservées encore <span className="font-extrabold underline">{trialStatus.daysUntilDeletion} jours</span> avant suppression définitive.
               </p>
+            ) : (
+              <p className="text-red-700 text-sm">Votre compte est inactif. Souscrivez pour débloquer vos fonctionnalités.</p>
             )}
           </div>
         </div>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">Plan actuel</h2>
-            {trialStatus.isActive && (
-              <span className="px-3 py-1 text-sm font-medium text-primary bg-primary-50 rounded-full">
-                Essai gratuit
-              </span>
-            )}
-            {trialStatus.isInGracePeriod && (
-              <span className="px-3 py-1 text-sm font-medium text-red-700 bg-red-100 rounded-full">
-                Expiré
-              </span>
-            )}
-            {isPaid && (
-              <span className="px-3 py-1 text-sm font-medium text-green-700 bg-green-100 rounded-full">
-                Actif
-              </span>
-            )}
+      <div className="grid gap-8 lg:grid-cols-5">
+        <div className="lg:col-span-3 card bg-white/80 backdrop-blur-xl border-white/40 shadow-xl rounded-3xl p-8 hover-glow transition-all duration-300">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-xl font-extrabold text-gray-900 tracking-tight">Votre offre</h2>
+            {trialStatus.isActive && <span className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary bg-primary-50 rounded-full border border-primary-100">Essai en cours</span>}
+            {isPaid && <span className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-green-700 bg-green-50 rounded-full border border-green-100">Actif</span>}
           </div>
 
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary-50">
-              <Zap className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-5 p-6 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-violet-50/50 border border-indigo-100/50 mb-8 hover-lift">
+            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white shadow-sm border border-indigo-50">
+              <Zap className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <p className="text-xl font-bold text-gray-900">Plan Pro</p>
-              <p className="text-gray-500">19€ / mois</p>
+              <p className="text-2xl font-black text-gray-900 leading-tight">Plan Pro <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest ml-1">SaaS</span></p>
+              <p className="text-xl font-bold gradient-text">19,00 € <span className="text-sm font-medium text-gray-400">/ mois</span></p>
             </div>
           </div>
 
-          {trialStatus.isActive && (
-            <div className="p-4 mb-6 rounded-xl bg-primary-50">
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="w-5 h-5 text-primary" />
-                <span className="font-medium text-primary">
-                  {trialStatus.daysRemaining} jour{trialStatus.daysRemaining > 1 ? 's' : ''} restant{trialStatus.daysRemaining > 1 ? 's' : ''}
-                </span>
-              </div>
-              <p className="text-sm text-primary-700">
-                Fin de l&apos;essai le {formatDate(merchant?.trial_ends_at || '')}
-              </p>
-            </div>
-          )}
-
-          {trialStatus.isInGracePeriod && (
-            <div className="p-4 mb-6 rounded-xl bg-red-50 border border-red-200">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertTriangle className="w-5 h-5 text-red-600" />
-                <span className="font-medium text-red-700">
-                  Suppression dans {trialStatus.daysUntilDeletion} jour{trialStatus.daysUntilDeletion > 1 ? 's' : ''}
-                </span>
-              </div>
-              <p className="text-sm text-red-600">
-                Souscrivez maintenant pour conserver vos données
-              </p>
-            </div>
-          )}
-
-          {isPaid && (
-            <div className="p-4 mb-6 rounded-xl bg-gray-50">
-              <div className="flex items-center gap-2 mb-2">
-                <CreditCard className="w-5 h-5 text-gray-600" />
-                <span className="font-medium text-gray-900">
-                  Carte se terminant par ****
-                </span>
-              </div>
-              <p className="text-sm text-gray-500">
-                Prochain prélèvement le {formatDate(new Date().toISOString())}
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3 mb-8">
             {features.map((feature, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-green-100">
+              <div key={index} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/40 border border-gray-100/80 hover:bg-white hover:shadow-md transition-all cursor-default">
+                <div className="bg-green-100 p-1 rounded-full">
                   <Check className="w-3 h-3 text-green-600" />
                 </div>
-                <span className="text-gray-600">{feature}</span>
+                <span className="text-xs font-bold text-gray-600 truncate">{feature}</span>
               </div>
             ))}
           </div>
-        </div>
 
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
-          <h2 className="mb-6 text-lg font-semibold text-gray-900">
-            Paiement
-          </h2>
-
-          {!isPaid ? (
-            <div className="text-center py-8">
-              <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full bg-primary-50">
-                <CreditCard className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">
-                Ajouter une carte bancaire
-              </h3>
-              <p className="mb-4 text-gray-600">
-                {trialStatus.isActive
-                  ? 'Sécurisez votre compte dès maintenant'
-                  : 'Ajoutez une carte pour réactiver votre compte'}
-              </p>
-              {trialStatus.isActive && (
-                <div className="p-3 mb-4 bg-green-50 border border-green-200 rounded-xl text-left">
-                  <p className="text-sm text-green-800 font-medium flex items-center gap-2">
-                    <Check className="w-4 h-4" />
-                    Aucun prélèvement avant le {formatDate(merchant?.trial_ends_at || '')}
-                  </p>
-                  <p className="text-xs text-green-700 mt-1 ml-6">
-                    Votre essai gratuit continue jusqu'à cette date
-                  </p>
+          {trialStatus.isActive && (
+            <div className="p-5 rounded-2xl bg-indigo-600 text-white shadow-xl shadow-indigo-100 flex items-center justify-between overflow-hidden relative">
+              <div className="relative z-10 flex items-center gap-4">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <Calendar className="w-5 h-5 text-white" />
                 </div>
-              )}
-              <Button 
-                className="w-full"
-                onClick={handleSubscribe}
-                loading={subscribing}
-                disabled={subscribing}
-              >
-                {subscribing ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Redirection...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-5 h-5 mr-2" />
-                    Ajouter ma carte
-                  </>
-                )}
-              </Button>
-              <p className="mt-4 text-xs text-gray-500">
-                Paiement sécurisé par Stripe
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-10 h-10 bg-white rounded-lg">
-                      <CreditCard className="w-5 h-5 text-gray-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Visa ****4242</p>
-                      <p className="text-sm text-gray-500">Expire 12/25</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    Modifier
-                  </Button>
+                <div>
+                  <p className="text-sm font-extrabold">{trialStatus.daysRemaining} jours restants</p>
+                  <p className="text-xs text-indigo-100 opacity-80">Jusqu&apos;au {formatDate(merchant?.trial_ends_at || '')}</p>
                 </div>
               </div>
-
-              <div className="pt-4 border-t border-gray-100">
-                <Button variant="outline" className="w-full text-red-600 hover:bg-red-50">
-                  Résilier l&apos;abonnement
-                </Button>
-                <p className="mt-2 text-xs text-center text-gray-500">
-                  Votre abonnement restera actif jusqu&apos;à la fin de la période payée
-                </p>
-              </div>
+              <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-white/5 skew-x-12 translate-x-10" />
             </div>
           )}
         </div>
+
+        <div className="lg:col-span-2 card bg-white/80 backdrop-blur-xl border-white/40 shadow-xl rounded-3xl p-8 flex flex-col hover-glow transition-all duration-300">
+          <h2 className="text-xl font-extrabold text-gray-900 mb-8 tracking-tight">Facturation</h2>
+
+          <div className="flex-grow flex flex-col justify-center">
+            {!isPaid ? (
+              <div className="space-y-6">
+                <div className="relative group mx-auto w-20 h-20">
+                  <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-xl group-hover:bg-primary/30 transition-all" />
+                  <div className="relative flex items-center justify-center w-full h-full rounded-3xl bg-white shadow-sm border border-primary-50">
+                    <CreditCard className="w-10 h-10 text-primary" />
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <h3 className="text-lg font-extrabold text-gray-900">Activer le plan</h3>
+                  <p className="text-sm text-gray-500 mt-1">Accès illimité à toutes les fonctions.</p>
+                </div>
+
+                <Button
+                  className="w-full h-12 rounded-2xl font-bold text-base shadow-lg shadow-primary/20 hover-lift active:scale-95"
+                  onClick={handleSubscribe}
+                  loading={subscribing}
+                >
+                  {subscribing ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    'Confirmer l\'abonnement'
+                  )}
+                </Button>
+
+                <div className="flex items-center justify-center gap-2 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Powered by</span>
+                  <span className="text-sm font-bold text-gray-500">Stripe</span>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="p-5 rounded-2xl bg-gray-50/50 border border-gray-100 shadow-inner group transition-all">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                        <CreditCard className="w-6 h-6 text-indigo-500" />
+                      </div>
+                      <div>
+                        <p className="font-extrabold text-gray-900">Visa •••• 4242</p>
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Exp 12 / 2025</p>
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" className="rounded-xl text-primary font-extrabold hover:bg-primary-50">Modifier</Button>
+                  </div>
+                </div>
+                <div className="pt-4 space-y-3">
+                  <Button variant="outline" className="w-full h-12 rounded-2xl text-red-600 border-red-100 hover:bg-red-50 font-bold transition-all">
+                    Résilier le service
+                  </Button>
+                  <p className="text-[10px] text-center text-gray-400 font-medium px-4">
+                    La résiliation prendra effet à la fin du cycle en cours. Aucune donnée ne sera perdue immédiatement.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="mt-8 p-6 bg-gray-50 rounded-2xl">
-        <h3 className="mb-4 font-semibold text-gray-900">Questions fréquentes</h3>
-        <div className="space-y-4">
-          <div>
-            <p className="font-medium text-gray-900">
-              Puis-je résilier à tout moment ?
-            </p>
-            <p className="text-sm text-gray-600">
-              Oui, vous pouvez résilier en un clic. Votre compte restera actif
-              jusqu&apos;à la fin de la période payée.
-            </p>
+      <div className="p-8 rounded-3xl bg-gray-50/50 border border-gray-100 grid md:grid-cols-2 gap-8">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary font-bold">?</div>
+            <h3 className="font-extrabold text-gray-900">Engagement & Résiliation</h3>
           </div>
-          <div>
-            <p className="font-medium text-gray-900">
-              Mes données sont-elles conservées après résiliation ?
-            </p>
-            <p className="text-sm text-gray-600">
-              Vos données sont conservées 30 jours après résiliation. Vous pouvez
-              les exporter à tout moment.
-            </p>
+          <p className="text-sm text-gray-600 leading-relaxed pl-10">
+            Sans engagement de durée. Vous pouvez résilier en un clic depuis cet interface. Votre accès reste actif jusqu&apos;à l&apos;échéance de votre mois payé.
+          </p>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary font-bold">!</div>
+            <h3 className="font-extrabold text-gray-900">Sécurité des données</h3>
           </div>
+          <p className="text-sm text-gray-600 leading-relaxed pl-10">
+            Vos données sont conservées en sécurité pendant 30 jours après la fin de votre abonnement, vous permettant de réactiver votre compte sans perte.
+          </p>
         </div>
       </div>
     </div>
