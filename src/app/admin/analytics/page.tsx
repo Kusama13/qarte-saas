@@ -52,19 +52,41 @@ export default function AdminAnalyticsPage() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        // Stats globales
-        const { count: totalMerchants } = await supabase
-          .from('merchants')
-          .select('*', { count: 'exact', head: true });
+        // Calculate date ranges
+        const now = new Date();
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(now.getDate() - 14);
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(now.getMonth() - 6);
 
-        const { count: totalCustomers } = await supabase
-          .from('customers')
-          .select('*', { count: 'exact', head: true });
+        // Run ALL queries in parallel for maximum performance
+        const [
+          { count: totalMerchants },
+          { count: totalCustomers },
+          { count: totalVisits },
+          { count: trialCount },
+          { count: activeCount },
+          { count: cancelledCount },
+          { data: recentMerchants },
+          { data: recentVisits },
+          { data: monthlyMerchantsData },
+        ] = await Promise.all([
+          // Stats globales
+          supabase.from('merchants').select('*', { count: 'exact', head: true }),
+          supabase.from('customers').select('*', { count: 'exact', head: true }),
+          supabase.from('visits').select('*', { count: 'exact', head: true }),
+          // Subscription status counts
+          supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'trial'),
+          supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active'),
+          supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'cancelled'),
+          // Raw data for last 14 days (to aggregate client-side)
+          supabase.from('merchants').select('created_at').gte('created_at', fourteenDaysAgo.toISOString()),
+          supabase.from('visits').select('visited_at').gte('visited_at', fourteenDaysAgo.toISOString()),
+          // Raw data for last 6 months
+          supabase.from('merchants').select('created_at').gte('created_at', sixMonthsAgo.toISOString()),
+        ]);
 
-        const { count: totalVisits } = await supabase
-          .from('visits')
-          .select('*', { count: 'exact', head: true });
-
+        // Set global stats
         const avgCustomersPerMerchant = totalMerchants && totalMerchants > 0
           ? Math.round((totalCustomers || 0) / totalMerchants)
           : 0;
@@ -76,74 +98,56 @@ export default function AdminAnalyticsPage() {
           avgCustomersPerMerchant,
         });
 
-        // Données par statut d'abonnement
-        const { count: trialCount } = await supabase
-          .from('merchants')
-          .select('*', { count: 'exact', head: true })
-          .eq('subscription_status', 'trial');
-
-        const { count: activeCount } = await supabase
-          .from('merchants')
-          .select('*', { count: 'exact', head: true })
-          .eq('subscription_status', 'active');
-
-        const { count: cancelledCount } = await supabase
-          .from('merchants')
-          .select('*', { count: 'exact', head: true })
-          .eq('subscription_status', 'cancelled');
-
+        // Set subscription data
         setSubscriptionData([
           { name: 'En essai', value: trialCount || 0, color: '#F59E0B' },
-          { name: 'Actifs', value: activeCount || 0, color: '#10B981' },
+          { name: 'Actifs', value: activeCount || 0, color: '#5167fc' },
           { name: 'Annulés', value: cancelledCount || 0, color: '#EF4444' },
         ]);
 
-        // Données des 14 derniers jours
+        // Process daily data (last 14 days) - aggregate client-side
+        const merchantsByDay = new Map<string, number>();
+        const visitsByDay = new Map<string, number>();
+
+        (recentMerchants || []).forEach((m) => {
+          const day = new Date(m.created_at).toISOString().split('T')[0];
+          merchantsByDay.set(day, (merchantsByDay.get(day) || 0) + 1);
+        });
+
+        (recentVisits || []).forEach((v) => {
+          const day = new Date(v.visited_at).toISOString().split('T')[0];
+          visitsByDay.set(day, (visitsByDay.get(day) || 0) + 1);
+        });
+
         const last14Days: DailyData[] = [];
         for (let i = 13; i >= 0; i--) {
           const date = new Date();
           date.setDate(date.getDate() - i);
           const dateStr = date.toISOString().split('T')[0];
-          const startOfDay = `${dateStr}T00:00:00`;
-          const endOfDay = `${dateStr}T23:59:59`;
-
-          const { count: inscriptions } = await supabase
-            .from('merchants')
-            .select('*', { count: 'exact', head: true })
-            .gte('created_at', startOfDay)
-            .lte('created_at', endOfDay);
-
-          const { count: visites } = await supabase
-            .from('visits')
-            .select('*', { count: 'exact', head: true })
-            .gte('visited_at', startOfDay)
-            .lte('visited_at', endOfDay);
-
           last14Days.push({
             date: date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }),
-            inscriptions: inscriptions || 0,
-            visites: visites || 0,
+            inscriptions: merchantsByDay.get(dateStr) || 0,
+            visites: visitsByDay.get(dateStr) || 0,
           });
         }
         setDailyData(last14Days);
 
-        // Inscriptions par mois (6 derniers mois)
+        // Process monthly data (last 6 months) - aggregate client-side
+        const merchantsByMonth = new Map<string, number>();
+        (monthlyMerchantsData || []).forEach((m) => {
+          const date = new Date(m.created_at);
+          const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+          merchantsByMonth.set(monthKey, (merchantsByMonth.get(monthKey) || 0) + 1);
+        });
+
         const monthlyData: { month: string; count: number }[] = [];
         for (let i = 5; i >= 0; i--) {
           const date = new Date();
           date.setMonth(date.getMonth() - i);
-          const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-          const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-
-          const { count } = await supabase
-            .from('merchants')
-            .select('*', { count: 'exact', head: true })
-            .gte('created_at', firstDay.toISOString())
-            .lte('created_at', lastDay.toISOString());
-
+          const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
           monthlyData.push({
             month: date.toLocaleDateString('fr-FR', { month: 'short' }),
-            count: count || 0,
+            count: merchantsByMonth.get(monthKey) || 0,
           });
         }
         setMonthlyMerchants(monthlyData);

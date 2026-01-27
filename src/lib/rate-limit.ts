@@ -103,6 +103,8 @@ export const RATE_LIMITS = {
   auth: { maxRequests: 5, windowMs: 60 * 1000 },
   // API standard: 30 requêtes par minute
   standard: { maxRequests: 30, windowMs: 60 * 1000 },
+  // API admin: 60 requêtes par minute (pour les requêtes fréquentes comme auto-save)
+  api: { maxRequests: 60, windowMs: 60 * 1000 },
   // Création de compte: 3 par heure
   signup: { maxRequests: 3, windowMs: 60 * 60 * 1000 },
   // Contact: 5 par heure
