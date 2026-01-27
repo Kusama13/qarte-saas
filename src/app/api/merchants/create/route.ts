@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 import { sendWelcomeEmail, sendNewMerchantNotification } from '@/lib/email';
 import { generateScanCode } from '@/lib/utils';
 
 // Client avec service role (bypass RLS)
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseAdmin = getSupabaseAdmin();
 
 export async function POST(request: NextRequest) {
   try {

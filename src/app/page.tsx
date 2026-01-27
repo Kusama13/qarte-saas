@@ -1362,11 +1362,11 @@ function TestimonialsSection() {
       </div>
 
       <div ref={ref} className="max-w-7xl mx-auto px-6 relative">
-        <div className={`text-center mb-16 transition-all duration-1000 transform ${isInView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+        <div className={`text-center mb-12 transition-all duration-1000 transform ${isInView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-            Confiance et Performance
+            Ils nous font confiance
           </h2>
-          <p className="text-xl text-gray-500 max-w-2xl mx-auto">Ils ont digitalisé leur fidélité avec Qarte et transforment leur quotidien de commerçant.</p>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">Découvrez ce que nos commerçants disent de Qarte</p>
         </div>
 
         <div
@@ -1391,7 +1391,7 @@ function TestimonialsSection() {
           </div>
 
           {/* Main Carousel Card */}
-          <div className="relative min-h-[460px] md:min-h-[400px]">
+          <div className="relative min-h-[580px] sm:min-h-[520px] md:min-h-[400px]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentIndex}
@@ -1401,7 +1401,7 @@ function TestimonialsSection() {
                 transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
                 className="absolute inset-0"
               >
-                <div className="h-full bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-white relative overflow-hidden flex flex-col md:flex-row gap-8 items-center md:items-stretch">
+                <div className="h-full bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-6 sm:p-8 md:p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-white relative overflow-hidden flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-stretch">
 
                   {/* Visual Background Quote */}
                   <Quote className="absolute -top-6 -left-6 w-32 h-32 text-indigo-500/5 rotate-12" />
@@ -1429,28 +1429,39 @@ function TestimonialsSection() {
                     </div>
 
                     <div className="mt-auto w-full">
-                      <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-6 rounded-3xl text-white shadow-lg shadow-indigo-200/50">
-                        <p className="text-xs font-bold uppercase tracking-widest opacity-80 mb-1">{testimonials[currentIndex].statLabel}</p>
-                        <p className="text-3xl font-black">{testimonials[currentIndex].stat}</p>
+                      <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-4 md:p-6 rounded-2xl md:rounded-3xl text-white shadow-lg shadow-indigo-200/50">
+                        <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-80 mb-1">{testimonials[currentIndex].statLabel}</p>
+                        <p className="text-2xl md:text-3xl font-black">{testimonials[currentIndex].stat}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Right Side: Quote & Content */}
                   <div className="flex-1 flex flex-col justify-center text-center md:text-left">
-                    <div className="flex justify-center md:justify-start gap-1 mb-6">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star key={s} className="w-5 h-5 fill-amber-400 text-amber-400" />
-                      ))}
+                    {/* Trustpilot-style Rating */}
+                    <div className="flex flex-col sm:flex-row items-center md:items-start gap-3 mb-6">
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <div key={s} className="w-7 h-7 bg-[#00b67a] flex items-center justify-center">
+                            <Star className="w-4 h-4 fill-white text-white" />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-gray-900">Excellent</span>
+                        <span className="text-sm text-gray-500">4.9 sur 5</span>
+                      </div>
                     </div>
 
-                    <blockquote className="text-xl md:text-2xl text-gray-800 font-medium leading-relaxed italic">
+                    <blockquote className="text-lg sm:text-xl md:text-2xl text-gray-800 font-medium leading-relaxed">
                       &quot;{testimonials[currentIndex].content}&quot;
                     </blockquote>
 
-                    <div className="mt-8 flex items-center justify-center md:justify-start gap-3">
-                      <div className="h-[2px] w-8 bg-indigo-100" />
-                      <span className="text-gray-400 text-sm font-semibold tracking-wide uppercase">Témoignage vérifié</span>
+                    <div className="mt-6 flex items-center justify-center md:justify-start gap-2">
+                      <svg className="w-4 h-4 text-[#00b67a]" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                      </svg>
+                      <span className="text-gray-500 text-sm font-medium">Avis vérifié</span>
                     </div>
                   </div>
                 </div>

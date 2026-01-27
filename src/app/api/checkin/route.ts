@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
 import { formatPhoneNumber, validateFrenchPhone, getTodayInParis, getTrialStatus } from '@/lib/utils';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import type { VisitStatus } from '@/types';
 import webpush from 'web-push';
 
-// Use admin client for server-side operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Use singleton admin client for server-side operations
+const supabaseAdmin = getSupabaseAdmin();
 
 // Automation messages
 const AUTOMATION_MESSAGES = {

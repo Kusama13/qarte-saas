@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabase';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseAdmin = getSupabaseAdmin();
 
 // GET: Récupérer les détails d'une carte de fidélité d'un client
 export async function GET(request: NextRequest) {
