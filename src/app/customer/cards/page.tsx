@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Loader2,
   RefreshCw,
+  Trophy,
 } from 'lucide-react';
 import { formatPhoneNumber } from '@/lib/utils';
 
@@ -21,6 +22,9 @@ interface LoyaltyCardWithMerchant {
   stamps_required: number;
   current_stamps: number;
   last_visit_date: string | null;
+  tier2_enabled?: boolean;
+  tier2_stamps_required?: number;
+  tier1_redeemed?: boolean;
 }
 
 export default function CustomerCardsPage() {
@@ -82,10 +86,14 @@ export default function CustomerCardsPage() {
 
       const formattedCards: LoyaltyCardWithMerchant[] = data.cards
         .sort((a: LoyaltyCardWithMerchant, b: LoyaltyCardWithMerchant) => {
-          const aRewardReady = a.current_stamps >= a.stamps_required;
-          const bRewardReady = b.current_stamps >= b.stamps_required;
-          if (aRewardReady && !bRewardReady) return -1;
-          if (!aRewardReady && bRewardReady) return 1;
+          // Check if reward is ready (considering tier 2 and if tier 1 already redeemed)
+          const aHasUnclaimedReward = (a.current_stamps >= a.stamps_required && !a.tier1_redeemed) ||
+            (a.tier2_enabled && a.current_stamps >= (a.tier2_stamps_required || a.stamps_required * 2));
+          const bHasUnclaimedReward = (b.current_stamps >= b.stamps_required && !b.tier1_redeemed) ||
+            (b.tier2_enabled && b.current_stamps >= (b.tier2_stamps_required || b.stamps_required * 2));
+
+          if (aHasUnclaimedReward && !bHasUnclaimedReward) return -1;
+          if (!aHasUnclaimedReward && bHasUnclaimedReward) return 1;
           if (!a.last_visit_date && !b.last_visit_date) return 0;
           if (!a.last_visit_date) return 1;
           if (!b.last_visit_date) return -1;
@@ -160,8 +168,19 @@ export default function CustomerCardsPage() {
             {cards.length > 0 ? (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {cards.map((card, index) => {
-                  const isRewardReady = card.current_stamps >= card.stamps_required;
-                  const progress = (card.current_stamps / card.stamps_required) * 100;
+                  const tier1Required = card.stamps_required;
+                  const tier2Enabled = card.tier2_enabled;
+                  const tier2Required = card.tier2_stamps_required || tier1Required * 2;
+                  const maxRequired = tier2Enabled ? tier2Required : tier1Required;
+
+                  const isTier1Ready = card.current_stamps >= tier1Required;
+                  const isTier2Ready = tier2Enabled && card.current_stamps >= tier2Required;
+                  const tier1Redeemed = card.tier1_redeemed;
+
+                  // Show badge only if there's an unclaimed reward
+                  const hasUnclaimedReward = (isTier1Ready && !tier1Redeemed) || isTier2Ready;
+
+                  const progress = (card.current_stamps / maxRequired) * 100;
 
                   return (
                     <Link
@@ -200,42 +219,88 @@ export default function CustomerCardsPage() {
                           </div>
                         </div>
 
-                        {isRewardReady && (
-                          <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500 text-white text-xs font-bold shadow-[0_0_15px_rgba(16,185,129,0.3)] animate-pulse">
-                            <Gift className="w-3.5 h-3.5" />
-                            Cadeau disponible !
+                        {/* Reward Badge - only shows if unclaimed reward available */}
+                        {hasUnclaimedReward && (
+                          <div className={`mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-xs font-bold shadow-lg animate-pulse ${
+                            isTier2Ready
+                              ? 'bg-gradient-to-r from-violet-500 to-purple-600 shadow-violet-200'
+                              : 'bg-emerald-500 shadow-emerald-200'
+                          }`}>
+                            {isTier2Ready ? <Trophy className="w-3.5 h-3.5" /> : <Gift className="w-3.5 h-3.5" />}
+                            {isTier2Ready ? 'Palier 2 prêt !' : 'Cadeau disponible !'}
+                          </div>
+                        )}
+
+                        {/* Tier 1 redeemed but working toward tier 2 */}
+                        {tier2Enabled && tier1Redeemed && !isTier2Ready && (
+                          <div className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">
+                            <Trophy className="w-3.5 h-3.5" />
+                            Vers palier 2 : {tier2Required - card.current_stamps} restants
                           </div>
                         )}
 
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">Progression</span>
-                            <span className="text-sm font-black text-indigo-600">
-                              {card.current_stamps} / {card.stamps_required}
+                            <span className="text-sm font-black" style={{ color: card.primary_color }}>
+                              {card.current_stamps} / {maxRequired}
                             </span>
                           </div>
 
-                          <div className="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out bg-gradient-to-r from-indigo-600 to-violet-600 shadow-[0_0_10px_rgba(79,70,229,0.2)]"
-                              style={{ width: `${Math.min(progress, 100)}%` }}
-                            />
+                          {/* Progress bar with tier markers */}
+                          <div className="relative">
+                            <div className="relative w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+                                style={{
+                                  width: `${Math.min(progress, 100)}%`,
+                                  background: `linear-gradient(90deg, ${card.primary_color}, ${card.primary_color}cc)`
+                                }}
+                              />
+                            </div>
+                            {/* Tier 1 marker when tier 2 is enabled */}
+                            {tier2Enabled && (
+                              <div
+                                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 border-white shadow-sm"
+                                style={{
+                                  left: `${(tier1Required / tier2Required) * 100}%`,
+                                  transform: 'translate(-50%, -50%)',
+                                  backgroundColor: isTier1Ready ? '#F59E0B' : '#E5E7EB'
+                                }}
+                              />
+                            )}
                           </div>
 
-                          <div className="flex flex-wrap gap-2 pt-2">
-                            {[...Array(Math.min(card.stamps_required, 12))].map((_, i) => (
-                              <div
-                                key={i}
-                                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                                  i < card.current_stamps
-                                    ? 'bg-indigo-600 scale-110 shadow-[0_0_8px_rgba(79,70,229,0.3)]'
-                                    : 'bg-gray-200'
-                                }`}
-                              />
-                            ))}
-                            {card.stamps_required > 12 && (
-                              <div className="w-2.5 h-2.5 flex items-center justify-center">
-                                <div className="w-1 h-1 rounded-full bg-gray-300" />
+                          {/* Stamp dots - show up to max required */}
+                          <div className="flex flex-wrap gap-1.5 pt-2">
+                            {[...Array(Math.min(maxRequired, 15))].map((_, i) => {
+                              const isFilled = i < card.current_stamps;
+                              const isTier1Zone = i < tier1Required;
+                              const isGreyedTier1 = tier2Enabled && isTier1Zone && tier1Redeemed;
+
+                              return (
+                                <div
+                                  key={i}
+                                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                    isFilled
+                                      ? isGreyedTier1
+                                        ? 'bg-gray-300'
+                                        : i >= tier1Required
+                                          ? 'bg-violet-500 shadow-[0_0_6px_rgba(139,92,246,0.3)]'
+                                          : 'shadow-[0_0_6px_rgba(0,0,0,0.15)]'
+                                      : 'bg-gray-200'
+                                  }`}
+                                  style={{
+                                    backgroundColor: isFilled && !isGreyedTier1 && i < tier1Required
+                                      ? card.primary_color
+                                      : undefined
+                                  }}
+                                />
+                              );
+                            })}
+                            {maxRequired > 15 && (
+                              <div className="w-2 h-2 flex items-center justify-center">
+                                <span className="text-[8px] font-bold text-gray-400">+{maxRequired - 15}</span>
                               </div>
                             )}
                           </div>

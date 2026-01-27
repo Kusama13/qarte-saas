@@ -653,7 +653,9 @@ export default function CustomerCardPage({
                   <p className="font-bold text-gray-900 text-sm">
                     {pendingCount} {merchant.loyalty_mode === 'visit'
                       ? (pendingCount > 1 ? 'passages' : 'passage')
-                      : (merchant.product_name || (pendingCount > 1 ? 'articles' : 'article'))
+                      : (merchant.product_name
+                          ? (pendingCount > 1 ? `${merchant.product_name}s` : merchant.product_name)
+                          : (pendingCount > 1 ? 'articles' : 'article'))
                     } en attente
                   </p>
                   <p className="text-xs text-gray-500">
@@ -919,34 +921,54 @@ export default function CustomerCardPage({
             )}
           </div>
 
-          {/* Stamp Circles Container */}
-          <div className="flex flex-wrap justify-center gap-2.5 mb-6">
-            {Array.from({ length: merchant.stamps_required }).map((_, i) => {
-              const isFilled = i < card.current_stamps;
-              const isNext = i === card.current_stamps;
+          {/* Stamp Circles Container - Shows up to tier2 if enabled */}
+          <div className="flex flex-wrap justify-center gap-2 mb-6">
+            {Array.from({ length: tier2Enabled ? tier2Required : tier1Required }).map((_, i) => {
+              const isFilled = i < currentStamps;
+              const isNext = i === currentStamps;
+              const isTier1Zone = i < tier1Required;
+              const isTier1Completed = currentStamps >= tier1Required;
               const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+
+              // Gray out tier 1 stamps once tier 1 is completed and customer is working on tier 2
+              const isGreyedTier1 = tier2Enabled && isTier1Zone && isTier1Completed && i < tier1Required;
+
               return (
                 <motion.div
                   key={i}
                   initial={false}
                   animate={{
                     scale: isFilled ? 1 : 0.85,
-                    opacity: isFilled ? 1 : isNext ? 0.7 : 0.4
+                    opacity: isGreyedTier1 ? 0.4 : (isFilled ? 1 : isNext ? 0.7 : 0.4)
                   }}
                   whileHover={{ scale: 1.1 }}
                   transition={{ type: "spring", stiffness: 300 }}
-                  className={`w-11 h-11 rounded-full flex items-center justify-center ${
+                  className={`w-9 h-9 rounded-full flex items-center justify-center ${
                     isFilled ? 'shadow-md' : 'border-2 border-dashed'
-                  } ${isNext ? 'animate-pulse' : ''}`}
+                  } ${isNext && !isTier1Completed ? 'animate-pulse' : ''}`}
                   style={{
-                    backgroundColor: isFilled ? merchant.primary_color : 'transparent',
-                    borderColor: isFilled ? 'transparent' : isNext ? merchant.primary_color : '#E5E7EB',
-                    boxShadow: isFilled ? `0 4px 12px ${merchant.primary_color}40` : 'none'
+                    backgroundColor: isFilled
+                      ? (isGreyedTier1 ? '#9CA3AF' : (i >= tier1Required ? '#8B5CF6' : merchant.primary_color))
+                      : 'transparent',
+                    borderColor: isFilled
+                      ? 'transparent'
+                      : isNext
+                        ? (i >= tier1Required ? '#8B5CF6' : merchant.primary_color)
+                        : '#E5E7EB',
+                    boxShadow: isFilled && !isGreyedTier1
+                      ? `0 4px 12px ${i >= tier1Required ? '#8B5CF640' : merchant.primary_color + '40'}`
+                      : 'none'
                   }}
                 >
                   <LoyaltyIcon
-                    className="w-5 h-5"
-                    style={{ color: isFilled ? '#fff' : isNext ? merchant.primary_color : '#D1D5DB' }}
+                    className="w-4 h-4"
+                    style={{
+                      color: isFilled
+                        ? '#fff'
+                        : isNext
+                          ? (i >= tier1Required ? '#8B5CF6' : merchant.primary_color)
+                          : '#D1D5DB'
+                    }}
                   />
                 </motion.div>
               );
@@ -1010,14 +1032,11 @@ export default function CustomerCardPage({
                     className={`w-5 h-5 ${isRewardReady ? 'text-white' : 'text-gray-400'}`}
                   />
                 </motion.div>
-                <div className="mt-2 text-center max-w-[80px]">
+                <div className="mt-2 text-center">
                   <p className={`text-[10px] font-bold uppercase tracking-wide ${
                     isRewardReady ? 'text-amber-600' : 'text-gray-400'
                   }`}>
                     Palier 1
-                  </p>
-                  <p className="text-[9px] text-gray-500 leading-tight mt-0.5 line-clamp-2">
-                    {merchant.reward_description}
                   </p>
                 </div>
               </div>
@@ -1047,14 +1066,11 @@ export default function CustomerCardPage({
                       className={`w-5 h-5 ${isTier2Ready ? 'text-white' : 'text-gray-400'}`}
                     />
                   </motion.div>
-                  <div className="mt-2 text-center max-w-[80px]">
+                  <div className="mt-2 text-center">
                     <p className={`text-[10px] font-bold uppercase tracking-wide ${
                       isTier2Ready ? 'text-violet-600' : 'text-gray-400'
                     }`}>
                       Palier 2
-                    </p>
-                    <p className="text-[9px] text-gray-500 leading-tight mt-0.5 line-clamp-2">
-                      {tier2Reward}
                     </p>
                   </div>
                 </div>
@@ -1485,15 +1501,13 @@ export default function CustomerCardPage({
                 </Button>
               )}
 
-              {/* Show message if tier 1 already redeemed but tier 2 not reached yet */}
+              {/* Show compact message if tier 1 already redeemed but tier 2 not reached yet */}
               {tier2Enabled && tier1RedeemedInCycle && !isTier2Ready && (
-                <div className="text-center py-4 px-4 bg-amber-50 rounded-xl border border-amber-100">
-                  <p className="text-sm font-medium text-amber-700">
-                    🎁 Palier 1 réclamé ! Continuez vers le palier 2
-                  </p>
-                  <p className="text-xs text-amber-600 mt-1">
-                    Plus que {tier2Required - currentStamps} {getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, tier2Required - currentStamps).toLowerCase()}
-                  </p>
+                <div className="flex items-center justify-center gap-2 py-2 px-3 bg-gradient-to-r from-violet-50 to-purple-50 rounded-xl border border-violet-100">
+                  <Trophy className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                  <span className="text-sm font-semibold text-violet-700">
+                    Palier 2 : encore {tier2Required - currentStamps}
+                  </span>
                 </div>
               )}
             </motion.div>

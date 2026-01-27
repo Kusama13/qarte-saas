@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
     const { data: cardsData, error: cardsError } = await supabaseAdmin
       .from('loyalty_cards')
       .select(`
+        id,
         current_stamps,
         last_visit_date,
         merchant:merchants (
@@ -48,7 +49,9 @@ export async function GET(request: NextRequest) {
           scan_code,
           logo_url,
           primary_color,
-          stamps_required
+          stamps_required,
+          tier2_enabled,
+          tier2_stamps_required
         )
       `)
       .in('customer_id', customerIds);
@@ -61,18 +64,47 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get card IDs to fetch redemptions
+    const cardIds = (cardsData || []).map((c: any) => c.id);
+
+    // Fetch redemptions for all cards to know if tier 1 was already redeemed
+    const { data: redemptionsData } = await supabaseAdmin
+      .from('redemptions')
+      .select('loyalty_card_id, tier')
+      .in('loyalty_card_id', cardIds);
+
+    // Create a map of card_id -> redeemed tiers
+    const redemptionsByCard: Record<string, number[]> = {};
+    (redemptionsData || []).forEach((r: any) => {
+      if (!redemptionsByCard[r.loyalty_card_id]) {
+        redemptionsByCard[r.loyalty_card_id] = [];
+      }
+      redemptionsByCard[r.loyalty_card_id].push(r.tier || 1);
+    });
+
     const cards = (cardsData || [])
       .filter((card: any) => card.merchant)
-      .map((card: any) => ({
-        merchant_id: card.merchant.id,
-        shop_name: card.merchant.shop_name,
-        scan_code: card.merchant.scan_code,
-        logo_url: card.merchant.logo_url,
-        primary_color: card.merchant.primary_color,
-        stamps_required: card.merchant.stamps_required,
-        current_stamps: card.current_stamps,
-        last_visit_date: card.last_visit_date,
-      }));
+      .map((card: any) => {
+        const tier2Enabled = card.merchant.tier2_enabled;
+        const tier1Required = card.merchant.stamps_required;
+        const tier2Required = card.merchant.tier2_stamps_required || tier1Required * 2;
+        const redeemedTiers = redemptionsByCard[card.id] || [];
+        const tier1Redeemed = redeemedTiers.includes(1);
+
+        return {
+          merchant_id: card.merchant.id,
+          shop_name: card.merchant.shop_name,
+          scan_code: card.merchant.scan_code,
+          logo_url: card.merchant.logo_url,
+          primary_color: card.merchant.primary_color,
+          stamps_required: card.merchant.stamps_required,
+          current_stamps: card.current_stamps,
+          last_visit_date: card.last_visit_date,
+          tier2_enabled: tier2Enabled,
+          tier2_stamps_required: tier2Required,
+          tier1_redeemed: tier1Redeemed,
+        };
+      });
 
     const response = NextResponse.json({ cards, found: true });
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
