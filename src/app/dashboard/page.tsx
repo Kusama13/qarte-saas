@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, memo } from 'react';
+import { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight } from 'lucide-react';
@@ -9,6 +9,7 @@ import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/PendingPointsWidget';
+import OnboardingGuide from '@/components/OnboardingGuide';
 import {
   LineChart,
   Line,
@@ -76,7 +77,7 @@ const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, col
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = createClientComponentClient();
-  const { merchant, loading: merchantLoading } = useMerchant();
+  const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const [stats, setStats] = useState({
     totalCustomers: 0,
     activeCustomers: 0,
@@ -92,6 +93,48 @@ export default function DashboardPage() {
   const [chartData, setChartData] = useState<Array<{ date: string; visits: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Show onboarding guide if merchant hasn't completed it yet
+  useEffect(() => {
+    if (merchant && !merchant.onboarding_completed) {
+      setShowOnboarding(true);
+    }
+  }, [merchant]);
+
+  const handleOnboardingComplete = useCallback(async () => {
+    if (!merchant) return;
+
+    try {
+      await supabase
+        .from('merchants')
+        .update({ onboarding_completed: true })
+        .eq('id', merchant.id);
+
+      setShowOnboarding(false);
+      refetch();
+    } catch (err) {
+      console.error('Error completing onboarding:', err);
+      setShowOnboarding(false);
+    }
+  }, [merchant, supabase, refetch]);
+
+  const handleOnboardingSkip = useCallback(async () => {
+    if (!merchant) return;
+
+    try {
+      await supabase
+        .from('merchants')
+        .update({ onboarding_completed: true })
+        .eq('id', merchant.id);
+
+      setShowOnboarding(false);
+      refetch();
+    } catch (err) {
+      console.error('Error skipping onboarding:', err);
+      setShowOnboarding(false);
+    }
+  }, [merchant, supabase, refetch]);
 
   useEffect(() => {
     if (merchantLoading) return;
@@ -289,10 +332,19 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="relative">
-        <div className="absolute -left-8 -top-8 -z-10 h-32 w-32 rounded-full bg-indigo-50/60 blur-3xl" />
-        <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 md:text-3xl">
+    <>
+      {/* Onboarding Guide Modal */}
+      {showOnboarding && (
+        <OnboardingGuide
+          onComplete={handleOnboardingComplete}
+          onSkip={handleOnboardingSkip}
+        />
+      )}
+
+      <div className="space-y-8">
+        <div className="relative">
+          <div className="absolute -left-8 -top-8 -z-10 h-32 w-32 rounded-full bg-indigo-50/60 blur-3xl" />
+          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 md:text-3xl">
           Bonjour, <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
             {merchant?.shop_name}
           </span>
@@ -469,6 +521,7 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
