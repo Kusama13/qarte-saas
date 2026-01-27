@@ -6,6 +6,7 @@ import {
   Store,
   Phone,
   MapPin,
+  Mail,
   Save,
   Check,
   Loader2,
@@ -35,6 +36,7 @@ export default function SettingsPage() {
     shopAddress: '',
     phone: '',
   });
+  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -43,6 +45,8 @@ export default function SettingsPage() {
         router.push('/auth/merchant');
         return;
       }
+
+      setUserEmail(user.email || '');
 
       const { data } = await supabase
         .from('merchants')
@@ -176,6 +180,20 @@ export default function SettingsPage() {
               required
               className="bg-white/50 border-gray-200 focus:border-indigo-500 transition-colors"
             />
+          </div>
+
+          <div className="relative group">
+            <Input
+              label="Adresse email"
+              type="email"
+              value={userEmail}
+              disabled
+              className="bg-gray-50 border-gray-200 text-gray-500 cursor-not-allowed"
+            />
+            <Mail className="absolute w-4 h-4 text-gray-400 right-4 top-[42px]" />
+            <p className="mt-1.5 text-xs text-gray-400">
+              L&apos;adresse email ne peut pas être modifiée pour le moment
+            </p>
           </div>
 
           <Select
