@@ -645,8 +645,25 @@ export default function ProgramPage() {
               Aperçu en temps réel
             </p>
             <div className="flex justify-center">
-              <div className="relative w-[280px] h-[560px] bg-slate-50 rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-200">
-                <div className="h-full flex flex-col">
+              <div className="relative w-[280px] h-[560px] rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden ring-1 ring-slate-200">
+                {/* Dynamic Gradient Background */}
+                <div
+                  className="absolute inset-0 transition-all duration-700"
+                  style={{
+                    background: `linear-gradient(180deg, ${formData.primaryColor}15 0%, ${formData.secondaryColor}08 50%, #f8fafc 100%)`
+                  }}
+                />
+                {/* Decorative Blobs */}
+                <div
+                  className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-30 transition-colors duration-700"
+                  style={{ backgroundColor: formData.primaryColor }}
+                />
+                <div
+                  className="absolute top-20 -left-10 w-24 h-24 rounded-full blur-2xl opacity-20 transition-colors duration-700"
+                  style={{ backgroundColor: formData.secondaryColor }}
+                />
+
+                <div className="h-full flex flex-col relative z-10">
                   {/* Header */}
                   <div className="pt-10 pb-6 px-6 text-center">
                     <div className="mx-auto w-12 h-12 rounded-2xl mb-3 shadow-lg flex items-center justify-center overflow-hidden bg-white border border-slate-100">
@@ -662,11 +679,25 @@ export default function ProgramPage() {
                       )}
                     </div>
                     <h3 className="text-slate-900 font-bold text-xs tracking-tight">{merchant?.shop_name}</h3>
+                    {/* Color Palette Indicator */}
+                    <div className="flex items-center justify-center gap-1 mt-2">
+                      <div
+                        className="w-4 h-4 rounded-full shadow-md transition-colors duration-500 ring-2 ring-white"
+                        style={{ backgroundColor: formData.primaryColor }}
+                      />
+                      <div
+                        className="w-4 h-4 rounded-full shadow-md transition-colors duration-500 ring-2 ring-white"
+                        style={{ backgroundColor: formData.secondaryColor }}
+                      />
+                    </div>
                   </div>
 
                   {/* Main Card Area */}
                   <div className="flex-1 px-4 space-y-4">
-                    <div className="bg-white rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white">
+                    <div
+                      className="bg-white/95 backdrop-blur-sm rounded-3xl p-5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] border-2 transition-colors duration-500"
+                      style={{ borderColor: `${formData.primaryColor}20` }}
+                    >
                       {/* Points Counter */}
                       <div className="text-center mb-6">
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-1">Total Points</p>
@@ -680,16 +711,17 @@ export default function ProgramPage() {
 
                       {/* Tiered Progress Bar */}
                       <div className="relative pt-6 pb-2">
-                        <div className="relative h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div className="relative h-3 w-full bg-slate-100 rounded-full overflow-hidden shadow-inner">
                           {/* Shimmering Fill */}
                           <div
-                            className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out flex"
+                            className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out"
                             style={{
                               width: `${(12 / (formData.tier2Enabled ? (previewData.tier2StampsRequired || 20) : previewData.stampsRequired)) * 100}%`,
-                              background: `linear-gradient(90deg, ${formData.primaryColor}, ${formData.secondaryColor})`
+                              background: `linear-gradient(90deg, ${formData.primaryColor}, ${formData.secondaryColor})`,
+                              boxShadow: `0 2px 8px ${formData.primaryColor}40`
                             }}
                           >
-                            <div className="w-full h-full animate-pulse opacity-30 bg-white" />
+                            <div className="w-full h-full animate-pulse opacity-40 bg-gradient-to-r from-transparent via-white to-transparent" />
                           </div>
                         </div>
 
@@ -744,9 +776,19 @@ export default function ProgramPage() {
                     {/* Reward Cards */}
                     <div className="space-y-2">
                       {/* Tier 1 Reward */}
-                      <div className={`bg-white/70 backdrop-blur-md rounded-2xl p-3 border flex items-center gap-3 ${12 >= previewData.stampsRequired ? 'border-amber-200 bg-amber-50/50' : 'border-white'}`}>
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${12 >= previewData.stampsRequired ? 'bg-amber-100' : 'bg-slate-100'}`}>
-                          <Gift size={14} className={12 >= previewData.stampsRequired ? 'text-amber-500' : 'text-slate-400'} />
+                      <div
+                        className={`backdrop-blur-md rounded-2xl p-3 border-2 flex items-center gap-3 transition-all duration-500 ${12 >= previewData.stampsRequired ? 'bg-amber-50/80' : 'bg-white/70'}`}
+                        style={{
+                          borderColor: 12 >= previewData.stampsRequired ? '#FCD34D' : `${formData.primaryColor}15`
+                        }}
+                      >
+                        <div
+                          className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-500"
+                          style={{
+                            backgroundColor: 12 >= previewData.stampsRequired ? '#FEF3C7' : `${formData.primaryColor}15`
+                          }}
+                        >
+                          <Gift size={14} className={12 >= previewData.stampsRequired ? 'text-amber-500' : 'text-slate-400'} style={{ color: 12 >= previewData.stampsRequired ? undefined : formData.primaryColor }} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Palier 1</p>
@@ -761,9 +803,19 @@ export default function ProgramPage() {
 
                       {/* Tier 2 Reward (if enabled) */}
                       {formData.tier2Enabled && (
-                        <div className={`bg-white/70 backdrop-blur-md rounded-2xl p-3 border flex items-center gap-3 ${12 >= (previewData.tier2StampsRequired || 20) ? 'border-violet-200 bg-violet-50/50' : 'border-white'}`}>
-                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${12 >= (previewData.tier2StampsRequired || 20) ? 'bg-violet-100' : 'bg-slate-100'}`}>
-                            <Trophy size={14} className={12 >= (previewData.tier2StampsRequired || 20) ? 'text-violet-600' : 'text-slate-400'} />
+                        <div
+                          className={`backdrop-blur-md rounded-2xl p-3 border-2 flex items-center gap-3 transition-all duration-500 ${12 >= (previewData.tier2StampsRequired || 20) ? 'bg-violet-50/80' : 'bg-white/70'}`}
+                          style={{
+                            borderColor: 12 >= (previewData.tier2StampsRequired || 20) ? '#C4B5FD' : `${formData.secondaryColor}15`
+                          }}
+                        >
+                          <div
+                            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-500"
+                            style={{
+                              backgroundColor: 12 >= (previewData.tier2StampsRequired || 20) ? '#EDE9FE' : `${formData.secondaryColor}15`
+                            }}
+                          >
+                            <Trophy size={14} className={12 >= (previewData.tier2StampsRequired || 20) ? 'text-violet-600' : 'text-slate-400'} style={{ color: 12 >= (previewData.tier2StampsRequired || 20) ? undefined : formData.secondaryColor }} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Palier 2</p>
