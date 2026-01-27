@@ -10,6 +10,7 @@ import {
   Send,
   Check,
   ArrowLeft,
+  MessageCircle,
 } from 'lucide-react';
 import { Button, Input, Textarea, Select } from '@/components/ui';
 import { validateEmail } from '@/lib/utils';
@@ -197,9 +198,31 @@ export default function ContactPage() {
           </form>
         </div>
 
-        <div className="mt-8 text-center text-sm text-gray-500">
+        {/* WhatsApp Quick Contact */}
+        <div className="mt-8 p-6 bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-100">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center shadow-lg shadow-green-200">
+              <MessageCircle className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="font-bold text-gray-900">Réponse plus rapide ?</p>
+              <p className="text-sm text-gray-600">Contactez-nous sur WhatsApp</p>
+            </div>
+          </div>
+          <a
+            href="https://wa.me/33612345678?text=Bonjour%2C%20je%20souhaite%20en%20savoir%20plus%20sur%20Qarte"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-md"
+          >
+            <MessageCircle className="w-5 h-5" />
+            Discuter sur WhatsApp
+          </a>
+        </div>
+
+        <div className="mt-6 text-center text-sm text-gray-500">
           <p>
-            Vous pouvez également nous contacter directement à{' '}
+            Ou contactez-nous par email :{' '}
             <a
               href="mailto:contact@getqarte.com"
               className="text-primary hover:underline"

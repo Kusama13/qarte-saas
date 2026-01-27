@@ -1,10 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
-export async function GET(request: NextRequest) {
+const supabaseAdmin = getSupabaseAdmin();
+
+export async function GET() {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = createRouteHandlerClient({ cookies });
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -15,7 +18,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { data: merchant } = await supabase
+    const { data: merchant } = await supabaseAdmin
       .from('merchants')
       .select('id')
       .eq('user_id', user.id)
@@ -28,54 +31,84 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { count: totalCustomers } = await supabase
-      .from('loyalty_cards')
-      .select('*', { count: 'exact', head: true })
-      .eq('merchant_id', merchant.id);
-
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const { count: activeCustomers } = await supabase
-      .from('loyalty_cards')
-      .select('*', { count: 'exact', head: true })
-      .eq('merchant_id', merchant.id)
-      .gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]);
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
 
     const firstDayOfMonth = new Date();
     firstDayOfMonth.setDate(1);
     firstDayOfMonth.setHours(0, 0, 0, 0);
+    const firstDayOfMonthStr = firstDayOfMonth.toISOString();
 
-    const { count: visitsThisMonth } = await supabase
-      .from('visits')
-      .select('*', { count: 'exact', head: true })
-      .eq('merchant_id', merchant.id)
-      .gte('visited_at', firstDayOfMonth.toISOString());
+    // Run all independent queries in parallel
+    const [
+      { count: totalCustomers },
+      { count: activeCustomers },
+      { count: visitsThisMonth },
+      { count: redemptionsThisMonth },
+      { data: visitsLast30Days }
+    ] = await Promise.all([
+      // Total customers
+      supabaseAdmin
+        .from('loyalty_cards')
+        .select('*', { count: 'exact', head: true })
+        .eq('merchant_id', merchant.id),
 
-    const { count: redemptionsThisMonth } = await supabase
-      .from('redemptions')
-      .select('*', { count: 'exact', head: true })
-      .eq('merchant_id', merchant.id)
-      .gte('redeemed_at', firstDayOfMonth.toISOString());
+      // Active customers (visited in last 30 days)
+      supabaseAdmin
+        .from('loyalty_cards')
+        .select('*', { count: 'exact', head: true })
+        .eq('merchant_id', merchant.id)
+        .gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
 
-    const visitsPerDay = [];
+      // Visits this month
+      supabaseAdmin
+        .from('visits')
+        .select('*', { count: 'exact', head: true })
+        .eq('merchant_id', merchant.id)
+        .gte('visited_at', firstDayOfMonthStr),
+
+      // Redemptions this month
+      supabaseAdmin
+        .from('redemptions')
+        .select('*', { count: 'exact', head: true })
+        .eq('merchant_id', merchant.id)
+        .gte('redeemed_at', firstDayOfMonthStr),
+
+      // All visits in last 30 days (single query instead of 30!)
+      supabaseAdmin
+        .from('visits')
+        .select('visited_at')
+        .eq('merchant_id', merchant.id)
+        .gte('visited_at', thirtyDaysAgoStr)
+    ]);
+
+    // Group visits by day in JavaScript (much faster than 30 DB queries)
+    const visitCountsByDate: Record<string, number> = {};
+
+    // Initialize all 30 days with 0
     for (let i = 29; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-
-      const { count } = await supabase
-        .from('visits')
-        .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchant.id)
-        .gte('visited_at', `${dateStr}T00:00:00`)
-        .lte('visited_at', `${dateStr}T23:59:59`);
-
-      visitsPerDay.push({
-        date: dateStr,
-        count: count || 0,
-      });
+      visitCountsByDate[dateStr] = 0;
     }
+
+    // Count visits per day
+    if (visitsLast30Days) {
+      for (const visit of visitsLast30Days) {
+        const dateStr = visit.visited_at.split('T')[0];
+        if (visitCountsByDate[dateStr] !== undefined) {
+          visitCountsByDate[dateStr]++;
+        }
+      }
+    }
+
+    // Convert to array format
+    const visitsPerDay = Object.entries(visitCountsByDate).map(([date, count]) => ({
+      date,
+      count,
+    }));
 
     return NextResponse.json({
       totalCustomers: totalCustomers || 0,

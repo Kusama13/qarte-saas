@@ -13,6 +13,10 @@ import {
   MapPin,
   Phone,
   UserPlus,
+  Calendar,
+  ArrowUpRight,
+  ArrowDownRight,
+  Percent,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui';
@@ -28,25 +32,40 @@ interface StatsCardProps {
 
 function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
   return (
-    <div className="p-6 bg-white rounded-2xl shadow-sm">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{value}</p>
-          {trend && (
-            <p className="flex items-center gap-1 mt-2 text-sm text-green-600">
-              <TrendingUp className="w-4 h-4" />
-              {trend}
-            </p>
-          )}
+    <div className="group relative p-6 bg-white/80 backdrop-blur-xl rounded-2xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1.5">
+      <div className="flex items-start justify-between relative z-10">
+        <div className="flex-1">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-[0.15em] leading-none mb-2">{title}</p>
+          <div className="flex flex-col gap-1.5">
+            <h3 className="text-3xl font-extrabold text-gray-900 tracking-tight transition-all duration-300 group-hover:scale-[1.02] origin-left">{value}</h3>
+            {trend && (
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-bold border border-emerald-100/50">
+                  <TrendingUp className="w-3 h-3" />
+                  {trend}
+                </span>
+                <span className="text-[10px] text-gray-400 font-medium tracking-wide">vs mois dernier</span>
+              </div>
+            )}
+          </div>
         </div>
-        <div
-          className="flex items-center justify-center w-12 h-12 rounded-xl"
-          style={{ backgroundColor: `${color}20` }}
-        >
-          <Icon className="w-6 h-6" style={{ color }} />
+        <div className="relative shrink-0">
+          <div
+            className="absolute inset-0 blur-2xl opacity-10 transition-opacity duration-500 group-hover:opacity-30"
+            style={{ backgroundColor: color }}
+          />
+          <div
+            className="relative flex items-center justify-center w-12 h-12 rounded-2xl shadow-lg transition-all duration-500 group-hover:scale-110 group-hover:rotate-6"
+            style={{
+              background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+              boxShadow: `0 10px 15px -3px ${color}30`
+            }}
+          >
+            <Icon className="w-6 h-6 text-white drop-shadow-md" />
+          </div>
         </div>
       </div>
+      <div className="absolute bottom-0 left-0 h-[3px] w-0 bg-gradient-to-r from-transparent via-white/40 to-transparent transition-all duration-700 group-hover:w-full" style={{ backgroundColor: `${color}10` }} />
     </div>
   );
 }
@@ -207,15 +226,94 @@ export default function AdminDashboardPage() {
     );
   }
 
+  // Calculate greeting based on time
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Bonjour';
+    if (hour < 18) return 'Bon après-midi';
+    return 'Bonsoir';
+  };
+
+  // Format today's date in French
+  const formattedDate = new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(new Date());
+
+  // Calculate conversion rate (trial to active)
+  const conversionRate = stats.totalMerchants > 0
+    ? ((stats.activeMerchants / stats.totalMerchants) * 100).toFixed(1)
+    : '0';
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-          Dashboard Admin
-        </h1>
-        <p className="mt-1 text-gray-600">
-          Vue d&apos;ensemble de la plateforme Qarte
-        </p>
+      {/* Premium Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">
+            {getGreeting()}, <span className="text-gray-500 font-medium">Admin</span> 👋
+          </h1>
+          <div className="flex items-center gap-2 mt-1 text-gray-500 text-sm">
+            <Calendar className="w-4 h-4" />
+            <span className="capitalize">{formattedDate}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Stats Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="group relative bg-white/80 backdrop-blur-xl border border-emerald-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="flex items-start justify-between">
+            <div className="p-2.5 rounded-xl bg-emerald-50">
+              <Percent className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-emerald-600 bg-emerald-50">
+              <ArrowUpRight className="w-3 h-3" />
+              Actif
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="text-sm font-medium text-gray-500">Taux de conversion</p>
+            <h3 className="text-2xl font-bold text-gray-900 mt-1">{conversionRate}%</h3>
+          </div>
+          <div className="absolute bottom-0 left-6 right-6 h-0.5 rounded-full bg-emerald-500/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        </div>
+
+        <div className="group relative bg-white/80 backdrop-blur-xl border border-indigo-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="flex items-start justify-between">
+            <div className="p-2.5 rounded-xl bg-indigo-50">
+              <CreditCard className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-indigo-600 bg-indigo-50">
+              <ArrowUpRight className="w-3 h-3" />
+              MRR
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="text-sm font-medium text-gray-500">Revenu mensuel</p>
+            <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.activeMerchants * 29}€</h3>
+          </div>
+          <div className="absolute bottom-0 left-6 right-6 h-0.5 rounded-full bg-indigo-500/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        </div>
+
+        <div className="group relative bg-white/80 backdrop-blur-xl border border-amber-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300">
+          <div className="flex items-start justify-between">
+            <div className="p-2.5 rounded-xl bg-amber-50">
+              <UserPlus className="w-5 h-5 text-amber-600" />
+            </div>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-amber-600 bg-amber-50">
+              <TrendingUp className="w-3 h-3" />
+              Leads
+            </div>
+          </div>
+          <div className="mt-4">
+            <p className="text-sm font-medium text-gray-500">Leads démo</p>
+            <h3 className="text-2xl font-bold text-gray-900 mt-1">{demoLeads.length}</h3>
+          </div>
+          <div className="absolute bottom-0 left-6 right-6 h-0.5 rounded-full bg-amber-500/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -248,12 +346,26 @@ export default function AdminDashboardPage() {
 
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Alertes - Essais se terminant */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              Essais se terminant bientôt
-            </h2>
+        <div className="group relative p-6 bg-white/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-amber-500/10 hover:border-amber-200/50 overflow-hidden">
+          {/* Subtle animated glow effect */}
+          <div className="absolute -right-12 -top-12 w-48 h-48 bg-amber-500/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+          <div className="relative flex items-center gap-4 mb-6">
+            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-amber-50 border border-amber-100 text-amber-600 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col">
+              <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                Essais se terminant bientôt
+              </h2>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-amber-500"></span>
+                </span>
+                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest">Action requise</p>
+              </div>
+            </div>
           </div>
 
           {trialEndingMerchants.length > 0 ? (
@@ -299,13 +411,20 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Dernières inscriptions */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Dernières inscriptions
-            </h2>
+        <div className="group relative p-6 bg-white/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-200/50 overflow-hidden">
+          <div className="absolute -right-12 -top-12 w-48 h-48 bg-emerald-500/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+          <div className="relative flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                <Store className="w-5 h-5" />
+              </div>
+              <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                Dernières inscriptions
+              </h2>
+            </div>
             <Link href="/admin/merchants">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
                 Voir tout
                 <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
@@ -350,12 +469,19 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Demo Leads - Prospects à rappeler */}
-        <div className="p-6 bg-white rounded-2xl shadow-sm">
-          <div className="flex items-center gap-2 mb-6">
-            <UserPlus className="w-5 h-5 text-indigo-500" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              Leads démo ({demoLeads.length})
-            </h2>
+        <div className="group relative p-6 bg-white/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-sm transition-all duration-500 hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-200/50 overflow-hidden">
+          <div className="absolute -right-12 -top-12 w-48 h-48 bg-indigo-500/10 blur-[80px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+
+          <div className="relative flex items-center gap-4 mb-6">
+            <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-600 shadow-sm group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+              <UserPlus className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col">
+              <h2 className="text-lg font-bold text-gray-900 tracking-tight">
+                Leads démo
+              </h2>
+              <p className="text-xs text-indigo-600 font-semibold">{demoLeads.length} prospects</p>
+            </div>
           </div>
 
           {demoLeads.length > 0 ? (

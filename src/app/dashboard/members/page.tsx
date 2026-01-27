@@ -427,35 +427,35 @@ export default function MembersPage() {
             Retour aux programmes
           </button>
 
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg">
-                  <Crown className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shrink-0">
+                  <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
-                <div>
-                  <h1 className="text-2xl font-black text-gray-900">{selectedProgram.name}</h1>
-                  <p className="text-amber-600 font-semibold">{selectedProgram.benefit_label}</p>
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl font-black text-gray-900 truncate">{selectedProgram.name}</h1>
+                  <p className="text-amber-600 font-semibold text-sm sm:text-base truncate">{selectedProgram.benefit_label}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
+              <div className="flex items-center gap-3 sm:gap-4 mt-4 text-xs sm:text-sm text-gray-500">
                 <span className="flex items-center gap-1.5">
                   <Users className="w-4 h-4" />
                   {memberCount} membre{memberCount > 1 ? 's' : ''}
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4" />
-                  Durée: {selectedProgram.duration_months} mois
+                  {selectedProgram.duration_months} mois
                 </span>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 onClick={() => setAssignModalOpen(true)}
-                className="bg-amber-500 hover:bg-amber-600 text-white"
+                className="bg-amber-500 hover:bg-amber-600 text-white flex-1 sm:flex-none text-sm sm:text-base"
               >
-                <UserPlus className="w-4 h-4 mr-2" />
-                Ajouter un membre
+                <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden xs:inline">Ajouter un</span> membre
               </Button>
               <Button
                 variant="outline"
@@ -469,14 +469,14 @@ export default function MembersPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <p className="text-sm text-gray-500 mb-1">Membres actifs</p>
-            <p className="text-3xl font-black text-emerald-600">{activeMembers}</p>
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="p-4 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm">
+            <p className="text-xs sm:text-sm text-gray-500 mb-1">Membres actifs</p>
+            <p className="text-2xl sm:text-3xl font-black text-emerald-600">{activeMembers}</p>
           </div>
-          <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <p className="text-sm text-gray-500 mb-1">Membres expirés</p>
-            <p className="text-3xl font-black text-gray-400">{memberCount - activeMembers}</p>
+          <div className="p-4 sm:p-5 bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm">
+            <p className="text-xs sm:text-sm text-gray-500 mb-1">Membres expirés</p>
+            <p className="text-2xl sm:text-3xl font-black text-gray-400">{memberCount - activeMembers}</p>
           </div>
         </div>
 
@@ -792,26 +792,27 @@ export default function MembersPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 mb-1">Programmes Membres</h1>
-          <p className="text-gray-500">Créez des programmes VIP et assignez-les à vos clients</p>
+          <h1 className="text-xl sm:text-2xl font-black text-gray-900 mb-1">Programmes Membres</h1>
+          <p className="text-sm sm:text-base text-gray-500">Créez des programmes VIP pour vos clients</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setShowHowItWorks(!showHowItWorks)}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all"
+            className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all"
           >
             <HelpCircle className="w-4 h-4" />
-            Comment ça marche ?
+            <span className="hidden sm:inline">Comment ça marche ?</span>
+            <span className="sm:hidden">Aide</span>
             <ChevronDown className={`w-4 h-4 transition-transform ${showHowItWorks ? 'rotate-180' : ''}`} />
           </button>
           <Button
             onClick={() => setCreateProgramOpen(true)}
-            className="bg-amber-500 hover:bg-amber-600 text-white"
+            className="bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm"
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau programme
+            <Plus className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Nouveau programme</span>
           </Button>
         </div>
       </div>
@@ -1158,74 +1159,98 @@ function MemberItem({
   );
 
   return (
-    <div className={`group flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 ${
+    <div className={`group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl border transition-all duration-300 ${
       isValid
         ? 'bg-white/70 backdrop-blur-md border-amber-100 shadow-sm hover:shadow-xl hover:shadow-amber-900/5 hover:border-amber-300 hover:-translate-y-0.5'
         : 'bg-gray-50/50 border-gray-100 opacity-60 grayscale-[0.5]'
     }`}>
-      {/* Premium Avatar with Glow */}
-      <div className="relative">
-        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-white font-bold relative z-10 overflow-hidden ${
-          isValid
-            ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-200'
-            : 'bg-gray-400'
-        }`}>
-          {isValid && <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent animate-shimmer" />}
-          {member.customer?.first_name?.charAt(0) || '?'}
+      {/* Top row on mobile: Avatar + Info + Status */}
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        {/* Premium Avatar with Glow */}
+        <div className="relative shrink-0">
+          <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center text-white font-bold relative z-10 overflow-hidden ${
+            isValid
+              ? 'bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 shadow-lg shadow-amber-200'
+              : 'bg-gray-400'
+          }`}>
+            {isValid && <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent animate-shimmer" />}
+            {member.customer?.first_name?.charAt(0) || '?'}
+          </div>
+          {isValid && (
+            <div className="absolute -inset-1 bg-amber-400/20 blur-lg rounded-xl transition-opacity opacity-0 group-hover:opacity-100" />
+          )}
         </div>
-        {isValid && (
-          <div className="absolute -inset-1 bg-amber-400/20 blur-lg rounded-xl transition-opacity opacity-0 group-hover:opacity-100" />
-        )}
+
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-gray-900 tracking-tight flex items-center gap-2 text-sm sm:text-base truncate">
+            {member.customer?.first_name} {member.customer?.last_name}
+            {isValid && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)] shrink-0" />}
+          </p>
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5 text-[11px] sm:text-[13px] text-gray-500">
+            <span className="font-medium">{member.customer?.phone_number}</span>
+            <span className="hidden sm:inline w-1 h-1 rounded-full bg-gray-300" />
+            <span className="flex items-center gap-1">
+              <span className="hidden sm:inline opacity-60">Expire le</span>
+              <span className={isValid ? 'text-amber-700 font-medium' : ''}>{formatDate(member.valid_until)}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Status Badge - visible on mobile in top row */}
+        <div className="sm:hidden shrink-0">
+          <div className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full border ${
+            isValid
+              ? 'bg-emerald-50/50 border-emerald-100 text-emerald-600'
+              : 'bg-gray-100 border-gray-200 text-gray-500'
+          }`}>
+            {isValid ? 'Actif' : 'Expiré'}
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-gray-900 tracking-tight flex items-center gap-2">
-          {member.customer?.first_name} {member.customer?.last_name}
-          {isValid && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />}
-        </p>
-        <div className="flex items-center gap-2.5 text-[13px] text-gray-500">
-          <span className="font-medium">{member.customer?.phone_number}</span>
-          <span className="w-1 h-1 rounded-full bg-gray-300" />
-          <span className="flex items-center gap-1">
-            <span className="opacity-60">Expire le</span>
-            <span className={isValid ? 'text-amber-700 font-medium' : ''}>{formatDate(member.valid_until)}</span>
-          </span>
-        </div>
-      </div>
+      {/* Bottom row on mobile: Badges + Actions */}
+      <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 pl-13 sm:pl-0">
+        {/* Dynamic Status Badges */}
+        <div className="hidden sm:flex items-center gap-3">
+          {isValid && daysRemaining <= 7 && (
+            <span className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm">
+              {daysRemaining} jours
+            </span>
+          )}
 
-      {/* Dynamic Status Badges */}
-      <div className="flex items-center gap-3">
+          <div className={`px-3 py-1 text-[11px] font-bold uppercase tracking-widest rounded-full transition-all border ${
+            isValid
+              ? 'bg-emerald-50/50 border-emerald-100 text-emerald-600'
+              : 'bg-gray-100 border-gray-200 text-gray-500'
+          }`}>
+            {isValid ? 'Actif' : 'Expiré'}
+          </div>
+        </div>
+
+        {/* Mobile: Days remaining badge */}
         {isValid && daysRemaining <= 7 && (
-          <span className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm">
-            {daysRemaining} jours
+          <span className="sm:hidden px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase rounded-lg">
+            {daysRemaining}j
           </span>
         )}
 
-        <div className={`px-3 py-1 text-[11px] font-bold uppercase tracking-widest rounded-full transition-all border ${
-          isValid
-            ? 'bg-emerald-50/50 border-emerald-100 text-emerald-600'
-            : 'bg-gray-100 border-gray-200 text-gray-500'
-        }`}>
-          {isValid ? 'Actif' : 'Expiré'}
+        {/* Premium Actions */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={onExtend}
+            className="p-2 sm:p-2.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg sm:rounded-xl transition-all active:scale-95 border border-transparent hover:border-amber-100"
+            title="Renouveler"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onRemove}
+            className="p-2 sm:p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg sm:rounded-xl transition-all active:scale-95 border border-transparent hover:border-red-100"
+            title="Retirer"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
-      </div>
-
-      {/* Premium Actions */}
-      <div className="flex items-center gap-1.5 ml-2">
-        <button
-          onClick={onExtend}
-          className="p-2.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all active:scale-95 border border-transparent hover:border-amber-100"
-          title="Renouveler"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
-        <button
-          onClick={onRemove}
-          className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all active:scale-95 border border-transparent hover:border-red-100"
-          title="Retirer"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
       </div>
     </div>
   );
