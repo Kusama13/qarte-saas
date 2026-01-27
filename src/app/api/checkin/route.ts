@@ -247,18 +247,6 @@ export async function POST(request: NextRequest) {
     // QARTE SHIELD: Quarantine Logic
     // =============================================
 
-    // Count today's scans (confirmed + pending) for this customer/merchant
-    const { count: todayScansCount } = await supabaseAdmin
-      .from('visits')
-      .select('*', { count: 'exact', head: true })
-      .eq('customer_id', customer.id)
-      .eq('merchant_id', merchant.id)
-      .gte('visited_at', todayStart)
-      .in('status', ['confirmed', 'pending']);
-
-    const currentScanNumber = (todayScansCount || 0) + 1;
-    const threshold = QUARANTINE_THRESHOLDS[loyaltyMode as keyof typeof QUARANTINE_THRESHOLDS] || 1;
-
     // Points to add
     const pointsEarned = loyaltyMode === 'article' ? points_to_add : 1;
 
@@ -266,19 +254,37 @@ export async function POST(request: NextRequest) {
     let visitStatus: VisitStatus = 'confirmed';
     let flaggedReason: string | null = null;
 
-    // Check 1: Too many scans today
-    if (currentScanNumber > threshold) {
-      visitStatus = 'pending';
-      flaggedReason = loyaltyMode === 'visit'
-        ? `${currentScanNumber}ème passage ce jour`
-        : `${currentScanNumber}ème scan ce jour`;
-    }
+    // Check if Qarte Shield is enabled (default to true if not set)
+    const shieldEnabled = merchant.shield_enabled !== false;
 
-    // Check 2: Too many articles at once (only for article mode)
-    if (loyaltyMode === 'article' && pointsEarned > MAX_ARTICLES_PER_SCAN) {
-      visitStatus = 'pending';
-      flaggedReason = `${pointsEarned} articles en une fois (max ${MAX_ARTICLES_PER_SCAN})`;
+    if (shieldEnabled) {
+      // Count today's scans (confirmed + pending) for this customer/merchant
+      const { count: todayScansCount } = await supabaseAdmin
+        .from('visits')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', customer.id)
+        .eq('merchant_id', merchant.id)
+        .gte('visited_at', todayStart)
+        .in('status', ['confirmed', 'pending']);
+
+      const currentScanNumber = (todayScansCount || 0) + 1;
+      const threshold = QUARANTINE_THRESHOLDS[loyaltyMode as keyof typeof QUARANTINE_THRESHOLDS] || 1;
+
+      // Check 1: Too many scans today
+      if (currentScanNumber > threshold) {
+        visitStatus = 'pending';
+        flaggedReason = loyaltyMode === 'visit'
+          ? `${currentScanNumber}ème passage ce jour`
+          : `${currentScanNumber}ème scan ce jour`;
+      }
+
+      // Check 2: Too many articles at once (only for article mode)
+      if (loyaltyMode === 'article' && pointsEarned > MAX_ARTICLES_PER_SCAN) {
+        visitStatus = 'pending';
+        flaggedReason = `${pointsEarned} articles en une fois (max ${MAX_ARTICLES_PER_SCAN})`;
+      }
     }
+    // If shield is disabled, visitStatus remains 'confirmed' and no quarantine checks
 
     // Hash IP for GDPR
     const ipHash = hashIP(ip);

@@ -7,7 +7,7 @@ export const revalidate = 0;
 
 const supabaseAdmin = getSupabaseAdmin();
 
-// GET: Récupérer les détails d'une carte de fidélité d'un client
+// GET: Récupérer les détails d'une carte de fidélité d'un client (API consolidée)
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -54,21 +54,64 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Récupérer l'historique des visites
-    const { data: visits } = await supabaseAdmin
-      .from('visits')
-      .select('*')
-      .eq('loyalty_card_id', card.id)
-      .order('visited_at', { ascending: false })
-      .limit(20);
+    // Fetch all additional data in parallel
+    const [visitsResult, adjustmentsResult, memberCardResult, redemptionsResult] = await Promise.all([
+      // Visits
+      supabaseAdmin
+        .from('visits')
+        .select('*')
+        .eq('loyalty_card_id', card.id)
+        .order('visited_at', { ascending: false })
+        .limit(20),
 
-    // Récupérer les ajustements manuels
-    const { data: adjustments } = await supabaseAdmin
-      .from('point_adjustments')
-      .select('*')
-      .eq('loyalty_card_id', card.id)
-      .order('created_at', { ascending: false })
-      .limit(20);
+      // Adjustments
+      supabaseAdmin
+        .from('point_adjustments')
+        .select('*')
+        .eq('loyalty_card_id', card.id)
+        .order('created_at', { ascending: false })
+        .limit(20),
+
+      // Member card with program info
+      supabaseAdmin
+        .from('member_cards')
+        .select(`
+          *,
+          program:member_programs!inner (
+            id,
+            name,
+            benefit_label,
+            merchant_id,
+            merchant:merchants (shop_name, logo_url, primary_color)
+          )
+        `)
+        .eq('customer_id', customer.id)
+        .eq('program.merchant_id', merchantId)
+        .maybeSingle(),
+
+      // Redemptions
+      supabaseAdmin
+        .from('redemptions')
+        .select('id, redeemed_at, stamps_used, tier')
+        .eq('loyalty_card_id', card.id)
+        .order('redeemed_at', { ascending: false }),
+    ]);
+
+    // Process offer data from merchant (already included in card.merchant)
+    const merchant = card.merchant as Record<string, unknown>;
+    const isOfferExpired = merchant.offer_expires_at &&
+      new Date(merchant.offer_expires_at as string) < new Date();
+
+    const offer = {
+      active: merchant.offer_active && !isOfferExpired,
+      title: merchant.offer_title,
+      description: merchant.offer_description,
+      imageUrl: merchant.offer_image_url,
+      expiresAt: merchant.offer_expires_at,
+      durationDays: merchant.offer_duration_days,
+      createdAt: merchant.offer_created_at,
+      isExpired: isOfferExpired,
+    };
 
     const response = NextResponse.json({
       found: true,
@@ -77,8 +120,12 @@ export async function GET(request: NextRequest) {
         ...card,
         customer,
       },
-      visits: visits || [],
-      adjustments: adjustments || [],
+      visits: visitsResult.data || [],
+      adjustments: adjustmentsResult.data || [],
+      memberCard: memberCardResult.data || null,
+      redemptions: redemptionsResult.data || [],
+      offer: offer.active ? offer : null,
+      pwaOffer: merchant.pwa_offer_text || null,
     });
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     return response;

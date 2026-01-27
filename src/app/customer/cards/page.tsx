@@ -192,10 +192,15 @@ export default function CustomerCardsPage() {
         <div className="animate-fade-in space-y-8">
             <div className="flex items-end justify-between">
               <div>
-                <h1 className="text-3xl font-black tracking-tight text-gray-900">
-                  Mes cartes
-                </h1>
-                <p className="mt-1 text-sm font-medium text-gray-500">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+                    <CreditCard className="w-5 h-5 text-white" />
+                  </div>
+                  <h1 className="text-2xl font-black tracking-tight text-gray-900">
+                    Mes cartes de fidélité
+                  </h1>
+                </div>
+                <p className="mt-2 text-sm font-medium text-gray-500 ml-[52px]">
                   {cards.length > 0
                     ? `${cards.length} programme${cards.length > 1 ? 's' : ''} actif${cards.length > 1 ? 's' : ''}`
                     : 'Aucun programme actif'}

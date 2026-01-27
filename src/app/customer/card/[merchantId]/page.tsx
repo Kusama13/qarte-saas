@@ -166,6 +166,7 @@ export default function CustomerCardPage({
       const formattedPhone = formatPhoneNumber(savedPhone);
 
       try {
+        // Single consolidated API call that returns all data
         const response = await fetch(
           `/api/customers/card?phone=${encodeURIComponent(formattedPhone)}&merchant_id=${merchantId}`
         );
@@ -180,61 +181,36 @@ export default function CustomerCardPage({
         const visitsData = (data.visits || []) as VisitWithStatus[];
         setVisits(visitsData);
         setAdjustments(data.adjustments || []);
+
         // Count pending visits
         const pending = visitsData.filter((v: VisitWithStatus) => v.status === 'pending').length;
         setPendingCount(pending);
 
-        // Fetch current offer and PWA offer
-        try {
-          const offerResponse = await fetch(`/api/offers?merchantId=${merchantId}`);
-          const offerData = await offerResponse.json();
-          if (offerResponse.ok) {
-            if (offerData.offer && offerData.offer.active) {
-              setOffer(offerData.offer);
-            }
-          }
-        } catch (offerError) {
-          console.error('Error fetching offer:', offerError);
+        // Set offer from consolidated response
+        if (data.offer) {
+          setOffer(data.offer);
         }
 
-        // Fetch member card if exists
-        try {
-          const memberCardResponse = await fetch(
-            `/api/member-cards/customer?customer_id=${data.card.customer_id}&merchant_id=${merchantId}`
-          );
-          const memberCardData = await memberCardResponse.json();
-          if (memberCardResponse.ok && memberCardData.memberCard) {
-            setMemberCard(memberCardData.memberCard);
-          }
-        } catch (memberCardError) {
-          console.error('Error fetching member card:', memberCardError);
+        // Set member card from consolidated response
+        if (data.memberCard) {
+          setMemberCard(data.memberCard);
         }
 
         // Check if tier 1 has been redeemed in current cycle (for tier 2 enabled merchants)
-        if (data.card.merchant.tier2_enabled) {
-          try {
-            const redemptionsResponse = await fetch(
-              `/api/redemptions?loyalty_card_id=${data.card.id}`
-            );
-            const redemptionsData = await redemptionsResponse.json();
-            if (redemptionsResponse.ok && redemptionsData.redemptions) {
-              // Find last tier 2 redemption
-              const tier2Redemptions = redemptionsData.redemptions.filter((r: { tier: number }) => r.tier === 2);
-              const lastTier2Date = tier2Redemptions.length > 0
-                ? new Date(tier2Redemptions[0].redeemed_at).getTime()
-                : 0;
+        if (data.card.merchant.tier2_enabled && data.redemptions) {
+          const redemptions = data.redemptions as Array<{ tier: number; redeemed_at: string }>;
+          // Find last tier 2 redemption
+          const tier2Redemptions = redemptions.filter((r) => r.tier === 2);
+          const lastTier2Date = tier2Redemptions.length > 0
+            ? new Date(tier2Redemptions[0].redeemed_at).getTime()
+            : 0;
 
-              // Check if tier 1 was redeemed after last tier 2
-              const tier1RedemptionsAfterTier2 = redemptionsData.redemptions.filter(
-                (r: { tier: number; redeemed_at: string }) =>
-                  r.tier === 1 && new Date(r.redeemed_at).getTime() > lastTier2Date
-              );
+          // Check if tier 1 was redeemed after last tier 2
+          const tier1RedemptionsAfterTier2 = redemptions.filter(
+            (r) => r.tier === 1 && new Date(r.redeemed_at).getTime() > lastTier2Date
+          );
 
-              setTier1RedeemedInCycle(tier1RedemptionsAfterTier2.length > 0);
-            }
-          } catch (redemptionError) {
-            console.error('Error fetching redemptions:', redemptionError);
-          }
+          setTier1RedeemedInCycle(tier1RedemptionsAfterTier2.length > 0);
         }
       } catch (error) {
         console.error('Error fetching card:', error);
@@ -686,8 +662,14 @@ export default function CustomerCardPage({
         </div>
       </header>
 
-      
-      <main className="flex-1 mt-4 px-4 pb-12 w-full max-w-lg mx-auto z-10">
+      {/* Programme de fidélité label */}
+      <div className="w-full max-w-lg mx-auto px-4 mt-4 mb-2">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 text-center">
+          Programme de fidélité
+        </p>
+      </div>
+
+      <main className="flex-1 px-4 pb-12 w-full max-w-lg mx-auto z-10">
         {/* Pending Points Alert - Qarte Shield */}
         <AnimatePresence>
           {pendingCount > 0 && (
