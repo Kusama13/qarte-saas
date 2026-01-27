@@ -193,7 +193,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     autoLogin();
   }, [loading, merchant, step, autoLoginAttempted, code, submitting]);
 
-  // Undo timer countdown
+  // Undo timer countdown + redirect after expiration
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (canUndo && undoTimer > 0) {
@@ -201,6 +201,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         setUndoTimer((prev) => {
           if (prev <= 1) {
             setCanUndo(false);
+            // Redirect to card page after timer expires
+            if (merchant) {
+              window.location.href = `/customer/card/${merchant.id}`;
+            }
             return 0;
           }
           return prev - 1;
@@ -208,7 +212,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [canUndo, undoTimer]);
+  }, [canUndo, undoTimer, merchant]);
 
   const handlePushSubscribe = async () => {
     if (!merchant || !customer) return;
@@ -449,7 +453,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       // Confirmed - normal flow
       setCanUndo(true);
-      setUndoTimer(30);
+      setUndoTimer(8);
 
       if (data.reward_unlocked) {
         triggerConfetti();

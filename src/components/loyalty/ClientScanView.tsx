@@ -94,7 +94,7 @@ export function ClientScanView({
 
         // Start undo timer
         setCanUndo(true);
-        setUndoTimer(30);
+        setUndoTimer(8);
 
         // Reset quantity for article mode
         setQuantity(1);
