@@ -1519,15 +1519,15 @@ function ScrollToTopButton() {
 // Trust Banner - Scrolling Businesses
 // Calculate trust count with 10% monthly growth
 function getTrustData() {
-  const baseCount = 150; // Starting count
-  const baseDate = new Date('2025-01-01'); // Start date
+  const baseCount = 170; // 170 commerces au 01/01/2026
+  const baseDate = new Date('2026-01-01'); // Date de référence
   const now = new Date();
 
   // Calculate months since base date
   const monthsDiff = (now.getFullYear() - baseDate.getFullYear()) * 12 + (now.getMonth() - baseDate.getMonth());
 
-  // Apply 10% growth per month (compound)
-  const currentCount = Math.floor(baseCount * Math.pow(1.10, monthsDiff));
+  // Apply 10% growth per month (compound) - only for future months
+  const currentCount = Math.floor(baseCount * Math.pow(1.10, Math.max(0, monthsDiff)));
 
   // Last update is 1st of current month
   const lastUpdate = new Date(now.getFullYear(), now.getMonth(), 1);
