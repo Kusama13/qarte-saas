@@ -9,7 +9,7 @@ import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/PendingPointsWidget';
-import OnboardingGuide from '@/components/OnboardingGuide';
+import GuidedTour from '@/components/GuidedTour';
 import {
   LineChart,
   Line,
@@ -333,9 +333,9 @@ export default function DashboardPage() {
 
   return (
     <>
-      {/* Onboarding Guide Modal */}
+      {/* Guided Tour */}
       {showOnboarding && (
-        <OnboardingGuide
+        <GuidedTour
           onComplete={handleOnboardingComplete}
           onSkip={handleOnboardingSkip}
         />

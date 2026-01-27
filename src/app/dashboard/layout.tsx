@@ -25,14 +25,14 @@ import { cn } from '@/lib/utils';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 
 const navItems = [
-  { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50' },
-  { href: '/dashboard/program', icon: Gift, label: 'Mon Programme', color: 'text-pink-500', bg: 'bg-pink-50' },
-  { href: '/dashboard/qr-download', icon: QrCode, label: 'Télécharger QR', color: 'text-violet-500', bg: 'bg-violet-50' },
-  { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
-  { href: '/dashboard/members', icon: Crown, label: 'Membres', color: 'text-amber-500', bg: 'bg-amber-50' },
-  { href: '/dashboard/marketing', icon: Megaphone, label: 'Marketing', color: 'text-orange-500', bg: 'bg-orange-50' },
-  { href: '/dashboard/subscription', icon: CardIcon, label: 'Abonnement', color: 'text-amber-500', bg: 'bg-amber-50' },
-  { href: '/dashboard/settings', icon: Settings, label: 'Paramètres', color: 'text-slate-500', bg: 'bg-slate-50' },
+  { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50', tourId: null },
+  { href: '/dashboard/program', icon: Gift, label: 'Mon Programme', color: 'text-pink-500', bg: 'bg-pink-50', tourId: 'program' },
+  { href: '/dashboard/qr-download', icon: QrCode, label: 'Télécharger QR', color: 'text-violet-500', bg: 'bg-violet-50', tourId: 'qr' },
+  { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50', tourId: 'customers' },
+  { href: '/dashboard/members', icon: Crown, label: 'Membres', color: 'text-amber-500', bg: 'bg-amber-50', tourId: 'members' },
+  { href: '/dashboard/marketing', icon: Megaphone, label: 'Marketing', color: 'text-orange-500', bg: 'bg-orange-50', tourId: 'marketing' },
+  { href: '/dashboard/subscription', icon: CardIcon, label: 'Abonnement', color: 'text-amber-500', bg: 'bg-amber-50', tourId: null },
+  { href: '/dashboard/settings', icon: Settings, label: 'Paramètres', color: 'text-slate-500', bg: 'bg-slate-50', tourId: 'settings' },
 ];
 
 function DashboardLayoutContent({
@@ -167,6 +167,7 @@ function DashboardLayoutContent({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
+                  data-tour={item.tourId || undefined}
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group',
                     isActive
