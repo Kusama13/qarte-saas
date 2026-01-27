@@ -111,6 +111,8 @@ export default function CustomerCardPage({
   const [redeeming, setRedeeming] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [redeemSuccess, setRedeemSuccess] = useState(false);
+  const [redeemTier, setRedeemTier] = useState<1 | 2>(1);
+  const [tier1RedeemedInCycle, setTier1RedeemedInCycle] = useState(false);
   const [card, setCard] = useState<CardWithDetails | null>(null);
   const [visits, setVisits] = useState<VisitWithStatus[]>([]);
   const [adjustments, setAdjustments] = useState<PointAdjustment[]>([]);
@@ -207,6 +209,33 @@ export default function CustomerCardPage({
           }
         } catch (memberCardError) {
           console.error('Error fetching member card:', memberCardError);
+        }
+
+        // Check if tier 1 has been redeemed in current cycle (for tier 2 enabled merchants)
+        if (data.card.merchant.tier2_enabled) {
+          try {
+            const redemptionsResponse = await fetch(
+              `/api/redemptions?loyalty_card_id=${data.card.id}`
+            );
+            const redemptionsData = await redemptionsResponse.json();
+            if (redemptionsResponse.ok && redemptionsData.redemptions) {
+              // Find last tier 2 redemption
+              const tier2Redemptions = redemptionsData.redemptions.filter((r: { tier: number }) => r.tier === 2);
+              const lastTier2Date = tier2Redemptions.length > 0
+                ? new Date(tier2Redemptions[0].redeemed_at).getTime()
+                : 0;
+
+              // Check if tier 1 was redeemed after last tier 2
+              const tier1RedemptionsAfterTier2 = redemptionsData.redemptions.filter(
+                (r: { tier: number; redeemed_at: string }) =>
+                  r.tier === 1 && new Date(r.redeemed_at).getTime() > lastTier2Date
+              );
+
+              setTier1RedeemedInCycle(tier1RedemptionsAfterTier2.length > 0);
+            }
+          } catch (redemptionError) {
+            console.error('Error fetching redemptions:', redemptionError);
+          }
         }
       } catch (error) {
         console.error('Error fetching card:', error);
@@ -432,7 +461,7 @@ export default function CustomerCardPage({
     frame();
   };
 
-  const handleRedeem = async () => {
+  const handleRedeem = async (tier: 1 | 2 = 1) => {
     if (!card) return;
 
     const savedPhone = getCookie('customer_phone');
@@ -444,7 +473,7 @@ export default function CustomerCardPage({
 
     // Format phone number before sending
     const formattedPhone = formatPhoneNumber(savedPhone);
-    console.log('Redeeming with phone:', formattedPhone);
+    console.log('Redeeming with phone:', formattedPhone, 'tier:', tier);
 
     setRedeeming(true);
 
@@ -455,13 +484,25 @@ export default function CustomerCardPage({
         body: JSON.stringify({
           loyalty_card_id: card.id,
           customer_phone: formattedPhone,
+          tier: tier,
         }),
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setCard({ ...card, current_stamps: 0 });
+        // Only reset stamps if tier 2 or if tier 2 is not enabled
+        if (data.stamps_reset) {
+          setCard({ ...card, current_stamps: 0 });
+        }
+        // Mark tier 1 as redeemed in cycle
+        if (tier === 1) {
+          setTier1RedeemedInCycle(true);
+        }
+        // Reset tier 1 redeemed status if tier 2 was redeemed (new cycle)
+        if (tier === 2) {
+          setTier1RedeemedInCycle(false);
+        }
         setRedeemSuccess(true);
         triggerConfetti();
       } else {
@@ -500,6 +541,14 @@ export default function CustomerCardPage({
 
   const { merchant } = card;
   const isRewardReady = card.current_stamps >= merchant.stamps_required;
+
+  // Tier 2 reward variables
+  const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
+  const tier2Required = merchant.tier2_stamps_required || 0;
+  const tier2Reward = merchant.tier2_reward_description || '';
+  const isTier2Ready = tier2Enabled && card.current_stamps >= tier2Required;
+  const tier1Required = merchant.stamps_required;
+  const currentStamps = card.current_stamps;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white 0%, ${merchant.primary_color}20 50%, ${merchant.primary_color}30 100%)` }}>
@@ -810,39 +859,175 @@ export default function CustomerCardPage({
             })}
           </div>
 
-          {/* Compact Progress Bar */}
-          <div className="mb-5">
-            {/* Progress bar */}
-            <div className="relative h-2 bg-gray-100 rounded-full overflow-hidden mb-2">
+          {/* Tiered Progress Bar with Milestones */}
+          <div className="mb-5 px-2">
+            {/* Points Counter */}
+            <div className="flex flex-col items-center justify-center mb-4">
               <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${(card.current_stamps / merchant.stamps_required) * 100}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                className="absolute inset-y-0 left-0 rounded-full"
-                style={{
-                  background: `linear-gradient(90deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
-                }}
-              />
-            </div>
-            {/* Reward text - Centered and larger */}
-            <div className="flex flex-col items-center justify-center text-center">
-              <p className={`text-sm font-semibold ${isRewardReady ? 'text-gray-900' : 'text-gray-600'}`}>
-                {isRewardReady
-                  ? `🎉 ${merchant.reward_description}`
-                  : formatRewardText(merchant.reward_description || 'votre récompense', merchant.stamps_required - card.current_stamps, merchant.loyalty_mode, merchant.product_name)
-                }
-              </p>
-              {isRewardReady && (
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0] }}
-                  transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
-                  className="mt-1"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
+                className="flex items-baseline gap-1"
+              >
+                <span
+                  className="text-4xl font-black tracking-tighter"
+                  style={{ color: merchant.primary_color }}
                 >
-                  <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
-                </motion.div>
-              )}
+                  {currentStamps}
+                </span>
+                <span className="text-lg font-medium text-gray-400">
+                  / {tier2Enabled ? tier2Required : tier1Required}
+                </span>
+              </motion.div>
+              <span className="text-xs text-gray-500 font-medium uppercase tracking-wider mt-1">
+                {getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, currentStamps)}
+              </span>
             </div>
 
+            {/* Progress Bar with Milestones */}
+            <div className="relative pt-8 pb-4">
+              {/* Milestone Markers */}
+              {/* Tier 1 Milestone */}
+              <div
+                className="absolute -top-1 flex flex-col items-center z-10"
+                style={{
+                  left: tier2Enabled
+                    ? `${(tier1Required / tier2Required) * 100}%`
+                    : '100%',
+                  transform: 'translateX(-50%)',
+                }}
+              >
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.4, type: "spring" }}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center border-2 shadow-lg transition-all duration-500 ${
+                    isRewardReady
+                      ? 'bg-gradient-to-br from-amber-400 to-orange-500 border-amber-300'
+                      : 'bg-white border-gray-200'
+                  }`}
+                  style={{
+                    boxShadow: isRewardReady
+                      ? `0 4px 14px ${merchant.primary_color}50`
+                      : '0 2px 8px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  <Gift
+                    className={`w-5 h-5 ${isRewardReady ? 'text-white' : 'text-gray-400'}`}
+                  />
+                </motion.div>
+                <div className="mt-2 text-center max-w-[80px]">
+                  <p className={`text-[10px] font-bold uppercase tracking-wide ${
+                    isRewardReady ? 'text-amber-600' : 'text-gray-400'
+                  }`}>
+                    Palier 1
+                  </p>
+                  <p className="text-[9px] text-gray-500 leading-tight mt-0.5 line-clamp-2">
+                    {merchant.reward_description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Tier 2 Milestone (if enabled) */}
+              {tier2Enabled && (
+                <div
+                  className="absolute -top-1 flex flex-col items-center z-10"
+                  style={{ left: '100%', transform: 'translateX(-50%)' }}
+                >
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.5, duration: 0.4, type: "spring" }}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center border-2 shadow-lg transition-all duration-500 ${
+                      isTier2Ready
+                        ? 'bg-gradient-to-br from-violet-500 to-purple-600 border-violet-300'
+                        : 'bg-white border-gray-200'
+                    }`}
+                    style={{
+                      boxShadow: isTier2Ready
+                        ? '0 4px 14px rgba(139, 92, 246, 0.4)'
+                        : '0 2px 8px rgba(0,0,0,0.08)',
+                    }}
+                  >
+                    <Trophy
+                      className={`w-5 h-5 ${isTier2Ready ? 'text-white' : 'text-gray-400'}`}
+                    />
+                  </motion.div>
+                  <div className="mt-2 text-center max-w-[80px]">
+                    <p className={`text-[10px] font-bold uppercase tracking-wide ${
+                      isTier2Ready ? 'text-violet-600' : 'text-gray-400'
+                    }`}>
+                      Palier 2
+                    </p>
+                    <p className="text-[9px] text-gray-500 leading-tight mt-0.5 line-clamp-2">
+                      {tier2Reward}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Progress Bar Track */}
+              <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{
+                    width: `${Math.min(
+                      (currentStamps / (tier2Enabled ? tier2Required : tier1Required)) * 100,
+                      100
+                    )}%`,
+                  }}
+                  transition={{ duration: 1.2, ease: "easeOut" }}
+                  className="absolute inset-y-0 left-0 rounded-full overflow-hidden"
+                  style={{
+                    background: `linear-gradient(90deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
+                  }}
+                >
+                  {/* Shimmer effect */}
+                  <motion.div
+                    animate={{ x: ['-100%', '200%'] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                    className="absolute inset-0 w-1/3 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12"
+                  />
+                </motion.div>
+              </div>
+            </div>
+
+            {/* Reward Status Text */}
+            <div className="flex flex-col items-center justify-center text-center mt-2">
+              {isTier2Ready ? (
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-sm font-bold text-violet-600"
+                >
+                  🏆 {tier2Reward}
+                </motion.p>
+              ) : isRewardReady ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex flex-col items-center"
+                >
+                  <p className="text-sm font-bold text-amber-600">
+                    🎁 {merchant.reward_description}
+                  </p>
+                  {tier2Enabled && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Encore {tier2Required - currentStamps} pour le palier 2
+                    </p>
+                  )}
+                </motion.div>
+              ) : (
+                <p className="text-sm font-semibold text-gray-600">
+                  {formatRewardText(
+                    merchant.reward_description || 'votre récompense',
+                    tier1Required - currentStamps,
+                    merchant.loyalty_mode,
+                    merchant.product_name
+                  )}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Current Offer - Premium Gradient Banner */}
@@ -1259,22 +1444,59 @@ export default function CustomerCardPage({
             </div>
           )}
 
-          {isRewardReady && !redeemSuccess && (
+          {/* Redeem Buttons - Single tier or Dual tier */}
+          {!redeemSuccess && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
+              className="mt-6 space-y-3"
             >
-              <Button
-                onClick={() => setShowRedeemModal(true)}
-                className="w-full mt-6 h-14 rounded-xl text-base font-bold shadow-lg hover:shadow-xl transition-all"
-                style={{
-                  background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`
-                }}
-              >
-                <Gift className="w-5 h-5 mr-2" />
-                Profiter de ma récompense
-              </Button>
+              {/* Tier 1 Button - Show if reward ready and not already redeemed in cycle */}
+              {isRewardReady && !tier1RedeemedInCycle && (
+                <Button
+                  onClick={() => {
+                    setRedeemTier(1);
+                    setShowRedeemModal(true);
+                  }}
+                  className="w-full h-14 rounded-xl text-base font-bold shadow-lg hover:shadow-xl transition-all"
+                  style={{
+                    background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`
+                  }}
+                >
+                  <Gift className="w-5 h-5 mr-2" />
+                  {tier2Enabled ? 'Réclamer palier 1' : 'Profiter de ma récompense'}
+                </Button>
+              )}
+
+              {/* Tier 2 Button - Show if tier 2 enabled and reward ready */}
+              {tier2Enabled && isTier2Ready && (
+                <Button
+                  onClick={() => {
+                    setRedeemTier(2);
+                    setShowRedeemModal(true);
+                  }}
+                  className="w-full h-14 rounded-xl text-base font-bold shadow-lg hover:shadow-xl transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)'
+                  }}
+                >
+                  <Trophy className="w-5 h-5 mr-2" />
+                  Réclamer palier 2
+                </Button>
+              )}
+
+              {/* Show message if tier 1 already redeemed but tier 2 not reached yet */}
+              {tier2Enabled && tier1RedeemedInCycle && !isTier2Ready && (
+                <div className="text-center py-4 px-4 bg-amber-50 rounded-xl border border-amber-100">
+                  <p className="text-sm font-medium text-amber-700">
+                    🎁 Palier 1 réclamé ! Continuez vers le palier 2
+                  </p>
+                  <p className="text-xs text-amber-600 mt-1">
+                    Plus que {tier2Required - currentStamps} {getLoyaltyLabel(merchant.loyalty_mode, merchant.product_name, tier2Required - currentStamps).toLowerCase()}
+                  </p>
+                </div>
+              )}
             </motion.div>
           )}
         </motion.div>
@@ -1517,20 +1739,22 @@ export default function CustomerCardPage({
       <Modal
         isOpen={showRedeemModal}
         onClose={() => !redeemSuccess && setShowRedeemModal(false)}
-        title={redeemSuccess ? "Félicitations !" : "Utiliser ma récompense"}
+        title={redeemSuccess ? "Félicitations !" : `Utiliser ma récompense${tier2Enabled ? ` - Palier ${redeemTier}` : ''}`}
       >
         {redeemSuccess ? (
           <div className="text-center">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 bg-green-100">
-              <Check className="w-10 h-10 text-green-600" />
+            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${redeemTier === 2 ? 'bg-violet-100' : 'bg-green-100'}`}>
+              <Check className={`w-10 h-10 ${redeemTier === 2 ? 'text-violet-600' : 'text-green-600'}`} />
             </div>
 
             <h3 className="text-xl font-bold text-gray-900 mb-2">
-              Récompense utilisée !
+              {redeemTier === 2 ? 'Palier 2 débloqué !' : 'Récompense utilisée !'}
             </h3>
 
             <p className="text-gray-600 mb-6">
-              Votre compteur a été remis à zéro. Merci de votre fidélité !
+              {redeemTier === 2 || !tier2Enabled
+                ? 'Votre compteur a été remis à zéro. Merci de votre fidélité !'
+                : 'Vos points sont conservés. Continuez vers le palier 2 !'}
             </p>
 
             <Button
@@ -1540,7 +1764,7 @@ export default function CustomerCardPage({
               }}
               className="w-full"
               size="lg"
-              style={{ backgroundColor: merchant.primary_color }}
+              style={{ backgroundColor: redeemTier === 2 ? '#8B5CF6' : merchant.primary_color }}
             >
               Retour à ma carte
             </Button>
@@ -1549,13 +1773,17 @@ export default function CustomerCardPage({
           <div className="text-center">
             <div
               className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
-              style={{ backgroundColor: `${merchant.primary_color}20` }}
+              style={{ backgroundColor: redeemTier === 2 ? '#EDE9FE' : `${merchant.primary_color}20` }}
             >
-              <Gift className="w-10 h-10" style={{ color: merchant.primary_color }} />
+              {redeemTier === 2 ? (
+                <Trophy className="w-10 h-10 text-violet-600" />
+              ) : (
+                <Gift className="w-10 h-10" style={{ color: merchant.primary_color }} />
+              )}
             </div>
 
             <h3 className="text-xl font-bold text-gray-900 mb-2">
-              {merchant.reward_description}
+              {redeemTier === 2 ? tier2Reward : merchant.reward_description}
             </h3>
 
             <p className="text-gray-600 mb-6">
@@ -1563,11 +1791,11 @@ export default function CustomerCardPage({
             </p>
 
             <Button
-              onClick={handleRedeem}
+              onClick={() => handleRedeem(redeemTier)}
               loading={redeeming}
               className="w-full"
               size="lg"
-              style={{ backgroundColor: merchant.primary_color }}
+              style={{ backgroundColor: redeemTier === 2 ? '#8B5CF6' : merchant.primary_color }}
             >
               Confirmer l&apos;utilisation
             </Button>

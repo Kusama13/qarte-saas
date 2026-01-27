@@ -18,11 +18,13 @@ import {
   MessageCircle,
   Megaphone,
   Crown,
+  HelpCircle,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { getTrialStatus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
+import GuidedTour from '@/components/GuidedTour';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50', tourId: null },
@@ -45,6 +47,16 @@ function DashboardLayoutContent({
   const supabase = createClientComponentClient();
   const { merchant, loading } = useMerchant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showGuidedTour, setShowGuidedTour] = useState(false);
+
+  const handleShowGuide = () => {
+    setSidebarOpen(false); // Close mobile sidebar first
+    setShowGuidedTour(true);
+  };
+
+  const handleCloseGuide = () => {
+    setShowGuidedTour(false);
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -201,6 +213,15 @@ function DashboardLayoutContent({
                 </p>
               </div>
             </div>
+            <button
+              onClick={handleShowGuide}
+              className="flex items-center w-full gap-3 px-4 py-2.5 text-gray-600 transition-all rounded-xl hover:bg-indigo-50 hover:shadow-sm mb-1 group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
+                <HelpCircle className="w-4 h-4 text-indigo-600" />
+              </div>
+              <span className="font-medium text-sm group-hover:text-indigo-700 transition-colors">Guide d&apos;utilisation</span>
+            </button>
             <a
               href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20avec%20Qarte"
               target="_blank"
@@ -230,6 +251,14 @@ function DashboardLayoutContent({
       <main className="lg:ml-72">
         <div className="min-h-screen p-4 md:p-8">{children}</div>
       </main>
+
+      {/* Guided Tour */}
+      {showGuidedTour && (
+        <GuidedTour
+          onComplete={handleCloseGuide}
+          onSkip={handleCloseGuide}
+        />
+      )}
     </div>
   );
 }

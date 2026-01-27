@@ -20,6 +20,9 @@ import {
   AlertTriangle,
   Sparkles,
   ExternalLink,
+  Trophy,
+  ToggleLeft,
+  ToggleRight,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -88,6 +91,10 @@ export default function ProgramPage() {
     loyaltyMode: 'visit' as LoyaltyMode,
     productName: '',
     maxQuantityPerScan: 5,
+    // 2nd tier reward
+    tier2Enabled: false,
+    tier2StampsRequired: 20,
+    tier2RewardDescription: '',
   });
 
   // Preview data for mockup (updated in real-time, not saved until save button)
@@ -128,6 +135,9 @@ export default function ProgramPage() {
           loyaltyMode: data.loyalty_mode || 'visit',
           productName: data.product_name || '',
           maxQuantityPerScan: data.max_quantity_per_scan || 5,
+          tier2Enabled: data.tier2_enabled || false,
+          tier2StampsRequired: data.tier2_stamps_required || (data.stamps_required || 10) * 2,
+          tier2RewardDescription: data.tier2_reward_description || '',
         });
         setPreviewData({
           stampsRequired: data.stamps_required || 10,
@@ -187,6 +197,9 @@ export default function ProgramPage() {
           loyalty_mode: formData.loyaltyMode,
           product_name: formData.loyaltyMode === 'article' ? formData.productName : null,
           max_quantity_per_scan: formData.loyaltyMode === 'article' ? formData.maxQuantityPerScan : 1,
+          tier2_enabled: formData.tier2Enabled,
+          tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
+          tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription : null,
         })
         .eq('id', merchant.id);
 
@@ -466,6 +479,80 @@ export default function ProgramPage() {
                     Augmenter le nombre requis ne s&apos;appliquera qu&apos;aux <strong>nouveaux clients</strong>.
                     Les clients existants garderont leur objectif actuel.
                   </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 2nd Tier Reward Section */}
+          <div className="p-6 bg-gradient-to-br from-white via-white to-violet-50/30 rounded-2xl shadow-lg shadow-violet-200/30 border border-violet-100/50 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg shadow-violet-200">
+                  <Trophy className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">2ème Palier de Récompense</h3>
+                  <p className="text-xs text-gray-500">Les points se cumulent sans remise à zéro</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, tier2Enabled: !formData.tier2Enabled })}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
+                  formData.tier2Enabled ? 'bg-violet-600' : 'bg-gray-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+                    formData.tier2Enabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {formData.tier2Enabled && (
+              <div className="space-y-5 pt-4 border-t border-violet-100">
+                <div className="p-4 rounded-xl bg-violet-50/50 border border-violet-100">
+                  <p className="text-sm text-violet-700 flex items-start gap-2">
+                    <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>
+                      <strong>Exemple :</strong> Si le 1er palier est à {formData.stampsRequired} points et le 2ème à {formData.tier2StampsRequired} points,
+                      le client débloque la 1ère récompense à {formData.stampsRequired} pts puis la 2ème à {formData.tier2StampsRequired} pts (cumul continu).
+                    </span>
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Nombre de {formData.loyaltyMode === 'visit' ? 'passages' : formData.productName || 'articles'} pour le 2ème palier
+                  </label>
+                  <Input
+                    type="number"
+                    min={formData.stampsRequired + 1}
+                    value={formData.tier2StampsRequired}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      tier2StampsRequired: Math.max(formData.stampsRequired + 1, parseInt(e.target.value) || formData.stampsRequired + 1)
+                    })}
+                    className="bg-white border-violet-200 focus:border-violet-500 focus:ring-violet-500/20"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Doit être supérieur au 1er palier ({formData.stampsRequired})
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Récompense du 2ème palier
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Ex: Un menu offert, -30% sur votre commande..."
+                    value={formData.tier2RewardDescription}
+                    onChange={(e) => setFormData({ ...formData, tier2RewardDescription: e.target.value })}
+                    className="bg-white border-violet-200 focus:border-violet-500 focus:ring-violet-500/20"
+                  />
                 </div>
               </div>
             )}

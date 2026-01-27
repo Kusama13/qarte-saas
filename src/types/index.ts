@@ -45,6 +45,10 @@ export interface Merchant {
   max_quantity_per_scan: number;
   stamps_required: number;
   reward_description: string | null;
+  // 2nd tier reward (cumulative, points don't reset)
+  tier2_enabled: boolean;
+  tier2_stamps_required: number | null;
+  tier2_reward_description: string | null;
   trial_ends_at: string;
   stripe_customer_id: string | null;
   subscription_status: SubscriptionStatus;
