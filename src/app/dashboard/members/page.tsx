@@ -796,7 +796,7 @@ export default function MembersPage() {
             onChange={(e) => setProgramBenefit(e.target.value)}
           />
           <Select
-            label="Durée par défaut"
+            label="Durée de l'adhésion"
             value={programDuration}
             onChange={(e) => setProgramDuration(e.target.value)}
             options={DURATION_OPTIONS}

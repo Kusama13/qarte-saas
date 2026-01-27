@@ -503,97 +503,88 @@ export default function CustomerCardPage({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white 0%, ${merchant.primary_color}20 50%, ${merchant.primary_color}30 100%)` }}>
-      {/* Header with premium glassmorphism design - Compact */}
+      {/* Header with premium glassmorphism horizontal design */}
       <header className="relative w-full overflow-hidden">
-        <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-2xl overflow-hidden bg-slate-50/50">
+        <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-2xl overflow-hidden bg-slate-50/40 backdrop-blur-sm border-b lg:border border-slate-200/60 shadow-sm">
           {/* Animated decorative background elements */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.2 }}
+            animate={{ scale: 1, opacity: 0.15 }}
             transition={{ duration: 0.8 }}
-            className="absolute -top-12 -left-12 w-40 h-40 rounded-full blur-3xl"
+            className="absolute -top-10 -right-10 w-48 h-48 rounded-full blur-3xl"
             style={{ background: merchant.primary_color }}
           />
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.2 }}
+            animate={{ scale: 1, opacity: 0.1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="absolute -bottom-12 -right-12 w-40 h-40 rounded-full blur-3xl"
+            className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full blur-3xl"
             style={{ background: merchant.secondary_color || merchant.primary_color }}
           />
 
-          {/* Compact height container */}
-          <div className="relative h-36 sm:h-40 w-full flex flex-col items-center justify-center">
-
-            {/* Elegant Back button */}
+          <div className="relative w-full pt-4 pb-6 px-5 flex items-end justify-between min-h-[160px]">
+            {/* Back button */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.4 }}
-              className="absolute top-3 left-3 z-20"
+              className="absolute top-4 left-4 z-20"
             >
               <Link
                 href="/customer/cards"
-                className="group flex items-center justify-center w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-slate-200 shadow-sm transition-all hover:shadow-md active:scale-95"
+                className="flex items-center justify-center w-10 h-10 rounded-full bg-white/90 backdrop-blur-md border border-slate-200/60 shadow-sm transition-all hover:shadow-md active:scale-95"
               >
-                <ArrowLeft className="w-4 h-4 text-slate-600 group-hover:text-slate-900" />
+                <ArrowLeft className="w-4.5 h-4.5 text-slate-700" />
               </Link>
             </motion.div>
 
-            {/* Logo/Image Container with Glassmorphism */}
+            {/* Left Section: Logo & Restaurant Name */}
             <motion.div
-              initial={{ scale: 0.8, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
-              className="relative z-10 flex flex-col items-center"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="flex flex-col gap-3 mt-8"
             >
-              <div className="relative w-20 h-20 sm:w-22 sm:h-22 rounded-full p-1 bg-white/40 backdrop-blur-xl border border-white shadow-xl flex items-center justify-center overflow-hidden mb-2">
+              <div className="relative w-16 h-16 rounded-2xl p-0.5 bg-white shadow-lg border border-slate-100 flex items-center justify-center overflow-hidden">
                 {merchant.logo_url ? (
                   <img
                     src={merchant.logo_url}
                     alt={merchant.shop_name}
-                    className="w-full h-full object-cover rounded-full ring-1 ring-black/5"
+                    className="w-full h-full object-cover rounded-[14px]"
                   />
                 ) : (
                   <div
-                    className="w-full h-full rounded-full flex items-center justify-center text-white text-2xl font-black shadow-inner"
+                    className="w-full h-full rounded-[14px] flex items-center justify-center text-white text-xl font-bold"
                     style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
                   >
                     {merchant.shop_name[0]}
                   </div>
                 )}
               </div>
-
-              {/* Shop Name & Progress Badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="flex flex-col items-center text-center px-4 relative"
-              >
-                <div className="relative flex flex-col items-center gap-2">
-                  {/* Shop Name */}
-                  <div className="px-5 py-2 bg-white/60 backdrop-blur-xl border border-white/70 rounded-xl shadow-md">
-                    <h1 className="text-lg font-black tracking-tight text-slate-900 leading-none">
-                      {merchant.shop_name}
-                    </h1>
-                  </div>
-
-                  {/* Customer Name */}
-                  <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-white/80 backdrop-blur-md border border-white shadow-sm">
-                    <span className="text-[11px] font-semibold text-slate-500 tracking-wide">
-                      {card?.customer?.first_name} {card?.customer?.last_name}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
+              <div>
+                <h1 className="text-sm font-extrabold tracking-tight text-slate-900 line-clamp-1 max-w-[140px]">
+                  {merchant.shop_name}
+                </h1>
+              </div>
             </motion.div>
 
-            {/* Centered gradient glow behind logo */}
-            <div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 rounded-full blur-2xl opacity-30 pointer-events-none"
-              style={{ background: `radial-gradient(circle, ${merchant.primary_color}60, transparent 70%)` }}
-            />
+            {/* Right Section: Customer Info & Status */}
+            <motion.div
+              initial={{ opacity: 0, x: 15 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex flex-col items-end text-right pb-1"
+            >
+              <h2 className="text-xl font-black text-slate-900 tracking-tight leading-tight">
+                {card?.customer?.first_name}<br />{card?.customer?.last_name}
+              </h2>
+
+              <div className={`mt-2 flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-sm backdrop-blur-md ${memberCard ? 'bg-amber-50/80 border-amber-200/50' : 'bg-white/80 border-slate-200/50'}`}>
+                {memberCard && <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />}
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${memberCard ? 'text-amber-700' : 'text-slate-500'}`}>
+                  {memberCard ? "Membre VIP" : "Client fidèle"}
+                </span>
+              </div>
+            </motion.div>
           </div>
         </div>
       </header>
