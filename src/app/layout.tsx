@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import CookieBanner from '@/components/CookieBanner';
-import { GoogleTagManager, GoogleTagManagerNoscript } from '@/components/analytics/GoogleTagManager';
+import { Analytics } from '@vercel/analytics/react';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -66,13 +66,11 @@ export default function RootLayout({
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
       </head>
       <body className="font-sans">
-        <GoogleTagManager />
-        <GoogleTagManagerNoscript />
         {children}
         <CookieBanner />
+        <Analytics />
       </body>
     </html>
   );
