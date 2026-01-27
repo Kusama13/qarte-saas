@@ -12,7 +12,8 @@ const supabaseAdmin = createClient(
 const createProgramSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
   benefit_label: z.string().min(1, "L'avantage est requis"),
-  duration_months: z.number().min(1).max(24).default(12),
+  // Allow any positive duration: days (0.033+), weeks (0.25+), months (1+)
+  duration_months: z.number().min(0.01).max(999).default(12),
 });
 
 // GET: Liste des programmes du commerçant

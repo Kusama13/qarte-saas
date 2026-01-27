@@ -14,12 +14,18 @@ import {
   Trash2,
   RefreshCw,
   ChevronRight,
+  ChevronDown,
   Users,
   Settings,
   ArrowLeft,
   Phone,
   X,
   Sparkles,
+  Lightbulb,
+  Check,
+  HelpCircle,
+  QrCode,
+  Smartphone,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Modal, Select } from '@/components/ui';
@@ -38,12 +44,22 @@ interface CustomerWithCard {
   current_stamps: number;
 }
 
-const DURATION_OPTIONS = [
-  { value: '1', label: '1 mois' },
-  { value: '3', label: '3 mois' },
-  { value: '6', label: '6 mois' },
-  { value: '12', label: '1 an' },
-  { value: '24', label: '2 ans' },
+const DURATION_UNITS = [
+  { value: 'day', label: 'Jour(s)', multiplier: 1/30 },
+  { value: 'week', label: 'Semaine(s)', multiplier: 0.25 },
+  { value: 'month', label: 'Mois', multiplier: 1 },
+];
+
+const PROGRAM_NAME_SUGGESTIONS = [
+  'VIP Gold',
+  'Club Premium',
+  'Carte Privilège',
+];
+
+const BENEFIT_SUGGESTIONS = [
+  '-10% sur tout',
+  'Café offert à chaque visite',
+  'Accès prioritaire + surprises',
 ];
 
 export default function MembersPage() {
@@ -61,7 +77,8 @@ export default function MembersPage() {
   const [createProgramOpen, setCreateProgramOpen] = useState(false);
   const [programName, setProgramName] = useState('');
   const [programBenefit, setProgramBenefit] = useState('');
-  const [programDuration, setProgramDuration] = useState('12');
+  const [durationUnit, setDurationUnit] = useState<'day' | 'week' | 'month'>('month');
+  const [durationNumber, setDurationNumber] = useState(12);
   const [creatingProgram, setCreatingProgram] = useState(false);
 
   // Assign customer modal
@@ -81,7 +98,8 @@ export default function MembersPage() {
   // Extend modal
   const [extendModalOpen, setExtendModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<MemberCard | null>(null);
-  const [extendDuration, setExtendDuration] = useState('3');
+  const [extendDurationUnit, setExtendDurationUnit] = useState<'day' | 'week' | 'month'>('month');
+  const [extendDurationNumber, setExtendDurationNumber] = useState(3);
   const [extending, setExtending] = useState(false);
 
   // Delete modal
@@ -91,6 +109,9 @@ export default function MembersPage() {
   // Delete program modal
   const [deleteProgramModalOpen, setDeleteProgramModalOpen] = useState(false);
   const [deletingProgram, setDeletingProgram] = useState(false);
+
+  // How it works
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   const fetchPrograms = async () => {
     const response = await fetch('/api/member-programs');
@@ -164,19 +185,27 @@ export default function MembersPage() {
     }
   }, [selectedProgram]);
 
+  // Calculate duration in months based on unit and number
+  const calculateDurationMonths = (unit: 'day' | 'week' | 'month', number: number): number => {
+    const unitConfig = DURATION_UNITS.find(u => u.value === unit);
+    return number * (unitConfig?.multiplier || 1);
+  };
+
   // Create program
   const handleCreateProgram = async () => {
-    if (!programName.trim() || !programBenefit.trim()) return;
+    if (!programName.trim() || !programBenefit.trim() || durationNumber < 1) return;
 
     setCreatingProgram(true);
     try {
+      const durationMonths = calculateDurationMonths(durationUnit, durationNumber);
+
       const response = await fetch('/api/member-programs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: programName.trim(),
           benefit_label: programBenefit.trim(),
-          duration_months: parseInt(programDuration),
+          duration_months: durationMonths,
         }),
       });
 
@@ -184,7 +213,8 @@ export default function MembersPage() {
         setCreateProgramOpen(false);
         setProgramName('');
         setProgramBenefit('');
-        setProgramDuration('12');
+        setDurationUnit('month');
+        setDurationNumber(12);
         await fetchPrograms();
       }
     } catch (error) {
@@ -290,19 +320,23 @@ export default function MembersPage() {
 
   // Extend membership
   const handleExtendMember = async () => {
-    if (!selectedMember) return;
+    if (!selectedMember || extendDurationNumber < 1) return;
 
     setExtending(true);
     try {
+      const durationMonths = calculateDurationMonths(extendDurationUnit, extendDurationNumber);
+
       const response = await fetch(`/api/member-cards/${selectedMember.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ duration_months: parseInt(extendDuration) }),
+        body: JSON.stringify({ duration_months: durationMonths }),
       });
 
       if (response.ok && selectedProgram) {
         setExtendModalOpen(false);
         setSelectedMember(null);
+        setExtendDurationUnit('month');
+        setExtendDurationNumber(3);
         await fetchProgramMembers(selectedProgram.id);
       }
     } catch (error) {
@@ -603,6 +637,8 @@ export default function MembersPage() {
           onClose={() => {
             setExtendModalOpen(false);
             setSelectedMember(null);
+            setExtendDurationUnit('month');
+            setExtendDurationNumber(3);
           }}
           title="Prolonger l'adhésion"
         >
@@ -613,15 +649,59 @@ export default function MembersPage() {
                 {selectedMember?.customer?.first_name} {selectedMember?.customer?.last_name}
               </strong>
             </p>
-            <Select
-              value={extendDuration}
-              onChange={(e) => setExtendDuration(e.target.value)}
-              options={DURATION_OPTIONS}
-              label="Durée de prolongation"
-            />
+
+            {/* Duration selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Durée de prolongation
+              </label>
+
+              {/* Step 1: Select unit */}
+              <div className="flex gap-2 mb-4">
+                {DURATION_UNITS.map((unit) => (
+                  <button
+                    key={unit.value}
+                    type="button"
+                    onClick={() => {
+                      setExtendDurationUnit(unit.value as 'day' | 'week' | 'month');
+                      if (unit.value === 'day') setExtendDurationNumber(7);
+                      else if (unit.value === 'week') setExtendDurationNumber(2);
+                      else setExtendDurationNumber(3);
+                    }}
+                    className={`flex-1 py-2.5 px-3 rounded-xl border-2 font-medium text-sm transition-all ${
+                      extendDurationUnit === unit.value
+                        ? 'bg-amber-50 border-amber-400 text-amber-800'
+                        : 'bg-white border-gray-100 text-gray-600 hover:border-amber-200 hover:bg-amber-50/50'
+                    }`}
+                  >
+                    {unit.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Step 2: Enter number */}
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <input
+                    type="number"
+                    min="1"
+                    max={extendDurationUnit === 'day' ? 365 : extendDurationUnit === 'week' ? 52 : 120}
+                    value={extendDurationNumber}
+                    onChange={(e) => setExtendDurationNumber(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-full h-12 px-4 text-center text-lg font-semibold border-2 border-gray-100 rounded-xl focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition-all"
+                  />
+                </div>
+                <span className="text-gray-500 font-medium min-w-[80px]">
+                  {extendDurationUnit === 'day' && (extendDurationNumber > 1 ? 'jours' : 'jour')}
+                  {extendDurationUnit === 'week' && (extendDurationNumber > 1 ? 'semaines' : 'semaine')}
+                  {extendDurationUnit === 'month' && 'mois'}
+                </span>
+              </div>
+            </div>
+
             <Button
               onClick={handleExtendMember}
-              disabled={extending}
+              disabled={extendDurationNumber < 1 || extending}
               className="w-full bg-amber-500 hover:bg-amber-600 text-white"
             >
               {extending ? (
@@ -712,19 +792,87 @@ export default function MembersPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-black text-gray-900 mb-1">Programmes Membres</h1>
           <p className="text-gray-500">Créez des programmes VIP et assignez-les à vos clients</p>
         </div>
-        <Button
-          onClick={() => setCreateProgramOpen(true)}
-          className="bg-amber-500 hover:bg-amber-600 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nouveau programme
-        </Button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowHowItWorks(!showHowItWorks)}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Comment ça marche ?
+            <ChevronDown className={`w-4 h-4 transition-transform ${showHowItWorks ? 'rotate-180' : ''}`} />
+          </button>
+          <Button
+            onClick={() => setCreateProgramOpen(true)}
+            className="bg-amber-500 hover:bg-amber-600 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nouveau programme
+          </Button>
+        </div>
       </div>
+
+      {/* How It Works Section */}
+      <AnimatePresence>
+        {showHowItWorks && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+            className="overflow-hidden mb-8"
+          >
+            <div className="p-6 bg-gradient-to-br from-indigo-50 to-violet-50 rounded-2xl border border-indigo-100">
+              <div className="flex items-start gap-3 mb-5">
+                <div className="p-2 bg-indigo-100 rounded-xl">
+                  <Lightbulb className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1">Comment fonctionnent les programmes membres ?</h3>
+                  <p className="text-sm text-gray-600">Les programmes membres permettent de créer des avantages exclusifs pour vos meilleurs clients.</p>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm">1</div>
+                    <span className="font-semibold text-gray-900">Créez un programme</span>
+                  </div>
+                  <p className="text-sm text-gray-500">Définissez un nom (ex: VIP Gold), un avantage (-10% permanent) et une durée d&apos;adhésion.</p>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center text-violet-600 font-bold text-sm">2</div>
+                    <span className="font-semibold text-gray-900">Ajoutez des membres</span>
+                  </div>
+                  <p className="text-sm text-gray-500">Sélectionnez vos clients fidèles parmi ceux qui ont déjà une carte de fidélité chez vous.</p>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 font-bold text-sm">3</div>
+                    <span className="font-semibold text-gray-900">Ils profitent des avantages</span>
+                  </div>
+                  <p className="text-sm text-gray-500">L&apos;avantage s&apos;affiche sur leur carte digitale. Vous pouvez renouveler ou retirer à tout moment.</p>
+                </div>
+              </div>
+
+              <div className="mt-5 p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-start gap-3">
+                <Sparkles className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-sm text-amber-800">
+                  <strong>Astuce :</strong> Utilisez les programmes pour récompenser vos 10 meilleurs clients avec un statut VIP permanent !
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Programs grid */}
       {programs.length === 0 ? (
@@ -778,32 +926,141 @@ export default function MembersPage() {
           setCreateProgramOpen(false);
           setProgramName('');
           setProgramBenefit('');
-          setProgramDuration('12');
+          setDurationUnit('month');
+          setDurationNumber(12);
         }}
         title="Nouveau programme membre"
+        size="lg"
       >
-        <div className="space-y-4">
-          <Input
-            label="Nom du programme"
-            placeholder="Ex: VIP Gold, Premium, Fidèle..."
-            value={programName}
-            onChange={(e) => setProgramName(e.target.value)}
-          />
-          <Input
-            label="Avantage"
-            placeholder="Ex: -10% sur tout, Café offert..."
-            value={programBenefit}
-            onChange={(e) => setProgramBenefit(e.target.value)}
-          />
-          <Select
-            label="Durée de l'adhésion"
-            value={programDuration}
-            onChange={(e) => setProgramDuration(e.target.value)}
-            options={DURATION_OPTIONS}
-          />
+        <div className="space-y-6">
+          {/* Program Name */}
+          <div>
+            <Input
+              label="Nom du programme"
+              placeholder="Ex: VIP Gold, Premium, Fidèle..."
+              value={programName}
+              onChange={(e) => setProgramName(e.target.value)}
+            />
+            <div className="mt-3">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                <span>Suggestions populaires</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {PROGRAM_NAME_SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setProgramName(suggestion)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full border transition-all ${
+                      programName === suggestion
+                        ? 'bg-amber-100 border-amber-300 text-amber-800'
+                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-amber-50 hover:border-amber-200'
+                    }`}
+                  >
+                    <span>{suggestion}</span>
+                    {programName === suggestion && <Check className="w-3.5 h-3.5" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Benefit */}
+          <div>
+            <Input
+              label="Avantage"
+              placeholder="Ex: -10% sur tout, Café offert..."
+              value={programBenefit}
+              onChange={(e) => setProgramBenefit(e.target.value)}
+            />
+            <div className="mt-3">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                <span>Avantages les plus courants</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {BENEFIT_SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setProgramBenefit(suggestion)}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-full border transition-all ${
+                      programBenefit === suggestion
+                        ? 'bg-amber-100 border-amber-300 text-amber-800'
+                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-amber-50 hover:border-amber-200'
+                    }`}
+                  >
+                    <span>{suggestion}</span>
+                    {programBenefit === suggestion && <Check className="w-3.5 h-3.5" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Duration - Two step selection */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Durée de l&apos;adhésion
+            </label>
+
+            {/* Step 1: Select unit */}
+            <div className="flex gap-2 mb-4">
+              {DURATION_UNITS.map((unit) => (
+                <button
+                  key={unit.value}
+                  type="button"
+                  onClick={() => {
+                    setDurationUnit(unit.value as 'day' | 'week' | 'month');
+                    // Reset number to sensible default based on unit
+                    if (unit.value === 'day') setDurationNumber(7);
+                    else if (unit.value === 'week') setDurationNumber(2);
+                    else setDurationNumber(12);
+                  }}
+                  className={`flex-1 py-3 px-4 rounded-xl border-2 font-medium transition-all ${
+                    durationUnit === unit.value
+                      ? 'bg-amber-50 border-amber-400 text-amber-800'
+                      : 'bg-white border-gray-100 text-gray-600 hover:border-amber-200 hover:bg-amber-50/50'
+                  }`}
+                >
+                  {unit.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Step 2: Enter number */}
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <input
+                  type="number"
+                  min="1"
+                  max={durationUnit === 'day' ? 365 : durationUnit === 'week' ? 52 : 120}
+                  value={durationNumber}
+                  onChange={(e) => setDurationNumber(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-full h-12 px-4 text-center text-lg font-semibold border-2 border-gray-100 rounded-xl focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition-all"
+                />
+              </div>
+              <span className="text-gray-500 font-medium min-w-[100px]">
+                {durationUnit === 'day' && (durationNumber > 1 ? 'jours' : 'jour')}
+                {durationUnit === 'week' && (durationNumber > 1 ? 'semaines' : 'semaine')}
+                {durationUnit === 'month' && 'mois'}
+              </span>
+            </div>
+
+            {/* Preview */}
+            <p className="mt-3 text-sm text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
+              Durée du programme : <span className="font-semibold text-amber-700">
+                {durationNumber} {durationUnit === 'day' && (durationNumber > 1 ? 'jours' : 'jour')}
+                {durationUnit === 'week' && (durationNumber > 1 ? 'semaines' : 'semaine')}
+                {durationUnit === 'month' && 'mois'}
+              </span>
+            </p>
+          </div>
+
           <Button
             onClick={handleCreateProgram}
-            disabled={!programName.trim() || !programBenefit.trim() || creatingProgram}
+            disabled={!programName.trim() || !programBenefit.trim() || durationNumber < 1 || creatingProgram}
             className="w-full bg-amber-500 hover:bg-amber-600 text-white"
           >
             {creatingProgram ? (

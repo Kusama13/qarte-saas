@@ -8,7 +8,8 @@ const supabaseAdmin = createClient(
 );
 
 const extendSchema = z.object({
-  duration_months: z.number().int().min(1).max(24),
+  // Allow any positive duration: days (0.033+), weeks (0.25+), months (1+)
+  duration_months: z.number().min(0.01).max(999),
 });
 
 // GET: Récupérer une carte membre par ID
@@ -82,7 +83,16 @@ export async function PATCH(
       : new Date();
 
     const newValidUntil = new Date(baseDate);
-    newValidUntil.setMonth(newValidUntil.getMonth() + duration_months);
+
+    // Convert duration_months to days and add to date
+    if (duration_months >= 999) {
+      // "Unlimited" = 100 years
+      newValidUntil.setFullYear(newValidUntil.getFullYear() + 100);
+    } else {
+      // Convert to days: duration_months * 30 days
+      const days = Math.round(duration_months * 30);
+      newValidUntil.setDate(newValidUntil.getDate() + days);
+    }
 
     const { data: memberCard, error } = await supabaseAdmin
       .from('member_cards')

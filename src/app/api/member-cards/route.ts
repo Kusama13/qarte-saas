@@ -96,7 +96,19 @@ export async function POST(request: NextRequest) {
     // Calculer la date de fin
     const validFrom = new Date();
     const validUntil = new Date();
-    validUntil.setMonth(validUntil.getMonth() + program.duration_months);
+
+    // Convert duration_months to days and add to date
+    // duration_months values: days = X/30, weeks = X*0.25, months = X
+    const durationMonths = program.duration_months;
+
+    if (durationMonths >= 999) {
+      // "Unlimited" = 100 years
+      validUntil.setFullYear(validUntil.getFullYear() + 100);
+    } else {
+      // Convert to days: durationMonths * 30 days
+      const days = Math.round(durationMonths * 30);
+      validUntil.setDate(validUntil.getDate() + days);
+    }
 
     const { data: memberCard, error } = await supabaseAdmin
       .from('member_cards')

@@ -13,8 +13,10 @@ import {
   SlidersHorizontal,
   Bell,
   BellOff,
+  Plus,
+  UserPlus,
 } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
+import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/CustomerManagementModal';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
@@ -36,6 +38,13 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithCard | null>(null);
   const [subscriberIds, setSubscriberIds] = useState<string[]>([]);
   const [filterPushOnly, setFilterPushOnly] = useState(false);
+
+  // Create customer modal
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [newFirstName, setNewFirstName] = useState('');
+  const [newLastName, setNewLastName] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
 
   const fetchData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -88,6 +97,56 @@ export default function CustomersPage() {
 
   const handleAdjustSuccess = () => {
     fetchData();
+  };
+
+  const handleCreateCustomer = async () => {
+    if (!newFirstName.trim() || !newPhone.trim() || !merchant) return;
+
+    setCreatingCustomer(true);
+    try {
+      // Create customer
+      const { data: newCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          first_name: newFirstName.trim(),
+          last_name: newLastName.trim() || null,
+          phone_number: newPhone.trim(),
+        })
+        .select()
+        .single();
+
+      if (customerError || !newCustomer) {
+        console.error('Error creating customer:', customerError);
+        setCreatingCustomer(false);
+        return;
+      }
+
+      // Create loyalty card for this customer
+      const { error: cardError } = await supabase
+        .from('loyalty_cards')
+        .insert({
+          customer_id: newCustomer.id,
+          merchant_id: merchant.id,
+          current_stamps: 0,
+          stamps_target: merchant.stamps_required,
+        });
+
+      if (cardError) {
+        console.error('Error creating loyalty card:', cardError);
+        setCreatingCustomer(false);
+        return;
+      }
+
+      // Close modal and refresh data
+      setCreateModalOpen(false);
+      setNewFirstName('');
+      setNewLastName('');
+      setNewPhone('');
+      await fetchData();
+    } catch (error) {
+      console.error('Error:', error);
+    }
+    setCreatingCustomer(false);
   };
 
   useEffect(() => {
@@ -168,16 +227,25 @@ export default function CustomersPage() {
             {customers.length > 1 ? 'Clients inscrits' : 'Client inscrit'} sur la plateforme
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={exportCSV}
-          loading={exporting}
-          disabled={customers.length === 0}
-          className="h-11 px-5 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 text-gray-700 rounded-xl transition-all duration-200 shadow-sm"
-        >
-          <Download className="w-4 h-4 mr-2 text-indigo-600" />
-          Exporter CSV
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={() => setCreateModalOpen(true)}
+            className="h-11 px-5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl transition-all duration-200 shadow-lg shadow-indigo-200"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Nouveau client
+          </Button>
+          <Button
+            variant="outline"
+            onClick={exportCSV}
+            loading={exporting}
+            disabled={customers.length === 0}
+            className="h-11 px-5 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 text-gray-700 rounded-xl transition-all duration-200 shadow-sm"
+          >
+            <Download className="w-4 h-4 mr-2 text-indigo-600" />
+            Exporter CSV
+          </Button>
+        </div>
       </div>
 
       <div className="p-8 bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-xl shadow-indigo-100/50 relative overflow-hidden">
@@ -364,6 +432,54 @@ export default function CustomersPage() {
           onSuccess={handleAdjustSuccess}
         />
       )}
+
+      {/* Create Customer Modal */}
+      <Modal
+        isOpen={createModalOpen}
+        onClose={() => {
+          setCreateModalOpen(false);
+          setNewFirstName('');
+          setNewLastName('');
+          setNewPhone('');
+        }}
+        title="Nouveau client"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500 mb-4">
+            Créez un nouveau client et sa carte de fidélité associée.
+          </p>
+          <Input
+            label="Prénom"
+            placeholder="Jean"
+            value={newFirstName}
+            onChange={(e) => setNewFirstName(e.target.value)}
+          />
+          <Input
+            label="Nom"
+            placeholder="Dupont"
+            value={newLastName}
+            onChange={(e) => setNewLastName(e.target.value)}
+          />
+          <Input
+            label="Téléphone"
+            placeholder="+33 6 12 34 56 78"
+            value={newPhone}
+            onChange={(e) => setNewPhone(e.target.value)}
+          />
+          <Button
+            onClick={handleCreateCustomer}
+            disabled={!newFirstName.trim() || !newPhone.trim() || creatingCustomer}
+            className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white"
+          >
+            {creatingCustomer ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <UserPlus className="w-4 h-4 mr-2" />
+            )}
+            Créer le client
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
