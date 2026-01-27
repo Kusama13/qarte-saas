@@ -103,6 +103,40 @@ export async function POST(request: NextRequest) {
       console.error('Audit log error:', auditError);
     }
 
+    // If points are reduced below tier 1 threshold, reset tier 1 redemptions in current cycle
+    // This allows re-earning tier 1 reward after a manual point reset
+    const { data: merchantData } = await supabase
+      .from('merchants')
+      .select('stamps_required, tier2_enabled')
+      .eq('id', merchant_id)
+      .single();
+
+    if (merchantData && merchantData.tier2_enabled && newStamps < merchantData.stamps_required) {
+      // Find the last tier 2 redemption date
+      const { data: lastTier2 } = await supabase
+        .from('redemptions')
+        .select('redeemed_at')
+        .eq('loyalty_card_id', loyalty_card_id)
+        .eq('tier', 2)
+        .order('redeemed_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      const lastTier2Date = lastTier2?.redeemed_at || '1970-01-01';
+
+      // Delete tier 1 redemptions after the last tier 2 (current cycle)
+      const { error: deleteError } = await supabase
+        .from('redemptions')
+        .delete()
+        .eq('loyalty_card_id', loyalty_card_id)
+        .eq('tier', 1)
+        .gt('redeemed_at', lastTier2Date);
+
+      if (deleteError) {
+        console.error('Error resetting tier 1 redemptions:', deleteError);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       previous_stamps: currentStamps,

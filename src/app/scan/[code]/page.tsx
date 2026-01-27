@@ -27,6 +27,7 @@ import {
   BellOff,
   Share,
   PlusSquare,
+  Trophy,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -194,9 +195,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   }, [loading, merchant, step, autoLoginAttempted, code, submitting]);
 
   // Undo timer countdown + redirect after expiration
+  // Don't auto-redirect when on reward screen - user needs to decide to claim or not
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (canUndo && undoTimer > 0) {
+    if (canUndo && undoTimer > 0 && step !== 'reward') {
       interval = setInterval(() => {
         setUndoTimer((prev) => {
           if (prev <= 1) {
@@ -212,7 +214,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       }, 1000);
     }
     return () => clearInterval(interval);
-  }, [canUndo, undoTimer, merchant]);
+  }, [canUndo, undoTimer, merchant, step]);
 
   const handlePushSubscribe = async () => {
     if (!merchant || !customer) return;
@@ -942,22 +944,79 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </button>
             </div>
 
-            {/* Reward Preview */}
-            <div className="mt-6 bg-white rounded-3xl shadow-lg border border-gray-100 p-5 flex items-center gap-4">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
-                style={{ backgroundColor: `${primaryColor}15` }}
-              >
-                <Gift className="w-7 h-7" style={{ color: primaryColor }} />
+            {/* Reward Preview - 3D Stacked Cards for Dual Tier */}
+            {merchant?.tier2_enabled && merchant?.tier2_stamps_required ? (
+              <div className="mt-6 relative" style={{ perspective: '1000px' }}>
+                {/* Tier 2 Card - Behind (inactive) */}
+                <div
+                  className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl border border-gray-200 p-5 flex items-center gap-4 opacity-60"
+                  style={{
+                    transform: 'translateY(-8px) translateZ(-20px) scale(0.95)',
+                    transformStyle: 'preserve-3d'
+                  }}
+                >
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-gray-200">
+                    <Trophy className="w-7 h-7 text-gray-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                      Palier 2 · {merchant.tier2_stamps_required} {merchant.product_name || 'articles'}
+                    </p>
+                    <p className="text-base font-bold text-gray-400 leading-tight truncate">{merchant.tier2_reward_description}</p>
+                  </div>
+                </div>
+
+                {/* Tier 1 Card - Front (active) */}
+                <motion.div
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="relative bg-white rounded-3xl shadow-xl border border-gray-100 p-5 flex items-center gap-4"
+                  style={{
+                    transform: 'translateZ(20px)',
+                    transformStyle: 'preserve-3d',
+                    boxShadow: `0 20px 40px -12px ${primaryColor}30, 0 8px 20px -8px rgba(0,0,0,0.1)`
+                  }}
+                >
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor: `${primaryColor}15`,
+                      boxShadow: `inset 0 2px 4px ${primaryColor}20`
+                    }}
+                  >
+                    <Gift className="w-7 h-7" style={{ color: primaryColor }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: primaryColor }}>
+                      Palier 1 · {merchant.stamps_required} {merchant.product_name || 'articles'}
+                    </p>
+                    <p className="text-base font-bold text-gray-900 leading-tight truncate">{merchant.reward_description}</p>
+                  </div>
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: `${primaryColor}10` }}
+                  >
+                    <ChevronRight className="w-5 h-5" style={{ color: primaryColor }} />
+                  </div>
+                </motion.div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                  À {merchant?.stamps_required} {merchant?.product_name || 'articles'}
-                </p>
-                <p className="text-base font-bold text-gray-900 leading-tight truncate">{merchant?.reward_description}</p>
+            ) : (
+              <div className="mt-6 bg-white rounded-3xl shadow-lg border border-gray-100 p-5 flex items-center gap-4">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
+                  style={{ backgroundColor: `${primaryColor}15` }}
+                >
+                  <Gift className="w-7 h-7" style={{ color: primaryColor }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                    À {merchant?.stamps_required} {merchant?.product_name || 'articles'}
+                  </p>
+                  <p className="text-base font-bold text-gray-900 leading-tight truncate">{merchant?.reward_description}</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-300" />
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-300" />
-            </div>
+            )}
           </div>
         )}
 
@@ -989,48 +1048,192 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </h2>
               <p className="text-gray-500 mb-8">Merci {customer?.first_name} !</p>
 
-              {/* Large Points Display */}
-              <div className="mb-8">
-                <div className="flex items-baseline justify-center gap-1">
-                  <motion.span
-                    key={loyaltyCard.current_stamps}
-                    initial={{ scale: 1.2 }}
-                    animate={{ scale: 1 }}
-                    className="text-6xl font-black"
-                    style={{ color: primaryColor }}
-                  >
-                    {loyaltyCard.current_stamps}
-                  </motion.span>
-                  <span className="text-2xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
-                </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
-                  {merchant?.loyalty_mode === 'visit' ? 'Passages cumulés' : `${merchant?.product_name || 'Articles'} cumulés`}
-                </p>
-              </div>
+              {/* Dual Tier Progress Display */}
+              {merchant?.tier2_enabled && merchant?.tier2_stamps_required ? (
+                <div className="mb-6" style={{ perspective: '800px' }}>
+                  {/* Points Counter */}
+                  <div className="flex items-baseline justify-center gap-1 mb-6">
+                    <motion.span
+                      key={loyaltyCard.current_stamps}
+                      initial={{ scale: 1.2 }}
+                      animate={{ scale: 1 }}
+                      className="text-5xl font-black"
+                      style={{ color: primaryColor }}
+                    >
+                      {loyaltyCard.current_stamps}
+                    </motion.span>
+                    <span className="text-xl font-bold text-gray-300">pts</span>
+                  </div>
 
-              {/* Progress Bar */}
-              <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant?.stamps_required || 10)) * 100)}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                  className="h-full rounded-full"
-                  style={{
-                    background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
-                  }}
-                />
-              </div>
+                  {/* 3D Stacked Tier Cards */}
+                  <div className="relative h-28 mb-4">
+                    {/* Tier 2 Card - Behind */}
+                    <div
+                      className={`absolute left-1/2 -translate-x-1/2 w-[90%] bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 p-3 transition-all duration-500 ${
+                        loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                          ? 'opacity-90 -top-2'
+                          : 'opacity-50 top-0'
+                      }`}
+                      style={{
+                        transform: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                          ? 'translateX(-50%) scale(0.98)'
+                          : 'translateX(-50%) scale(0.92) translateY(-8px)',
+                        zIndex: loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? 20 : 5
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                          loyaltyCard.current_stamps >= (merchant.tier2_stamps_required || 20)
+                            ? 'bg-violet-100'
+                            : 'bg-gray-200'
+                        }`}>
+                          <Trophy className={`w-5 h-5 ${
+                            loyaltyCard.current_stamps >= (merchant.tier2_stamps_required || 20)
+                              ? 'text-violet-500'
+                              : 'text-gray-400'
+                          }`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                            Palier 2 · {merchant.tier2_stamps_required} pts
+                          </p>
+                          <p className="text-xs font-bold text-gray-500 truncate">{merchant.tier2_reward_description}</p>
+                        </div>
+                        {loyaltyCard.current_stamps >= (merchant.stamps_required || 10) && (
+                          <span className="text-[9px] font-bold text-violet-500 bg-violet-50 px-2 py-1 rounded-full">
+                            {(merchant.tier2_stamps_required || 20) - loyaltyCard.current_stamps} restants
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-              {/* Status Message */}
-              {loyaltyCard.current_stamps < (merchant?.stamps_required || 10) && (
-                <div
-                  className="rounded-2xl p-4 mb-6"
-                  style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
-                >
-                  <p className="font-bold text-gray-700">
-                    Plus que {(merchant?.stamps_required || 10) - loyaltyCard.current_stamps} {merchant?.loyalty_mode === 'visit' ? 'passage' : (merchant?.product_name || 'article')}{(merchant?.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''} avant votre récompense !
-                  </p>
+                    {/* Tier 1 Card - Front (active when not reached) */}
+                    <motion.div
+                      initial={{ y: 10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      className={`absolute left-1/2 -translate-x-1/2 w-[95%] rounded-2xl border p-3 transition-all duration-500 ${
+                        loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                          ? 'bg-gray-50 border-gray-200 opacity-60 top-12'
+                          : 'bg-white border-gray-100 top-6'
+                      }`}
+                      style={{
+                        transform: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                          ? 'translateX(-50%) scale(0.92)'
+                          : 'translateX(-50%)',
+                        boxShadow: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                          ? 'none'
+                          : `0 12px 30px -8px ${primaryColor}25, 0 4px 12px -4px rgba(0,0,0,0.08)`,
+                        zIndex: loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? 5 : 20
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center"
+                          style={{
+                            backgroundColor: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                              ? '#e5e7eb'
+                              : `${primaryColor}15`
+                          }}
+                        >
+                          <Gift className="w-5 h-5" style={{
+                            color: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                              ? '#9ca3af'
+                              : primaryColor
+                          }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[9px] font-bold uppercase tracking-wider" style={{
+                            color: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                              ? '#9ca3af'
+                              : primaryColor
+                          }}>
+                            Palier 1 · {merchant.stamps_required} pts
+                          </p>
+                          <p className={`text-xs font-bold truncate ${
+                            loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                              ? 'text-gray-400'
+                              : 'text-gray-700'
+                          }`}>{merchant.reward_description}</p>
+                        </div>
+                        {loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? (
+                          <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Prêt
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold bg-gray-100 px-2 py-1 rounded-full" style={{ color: primaryColor }}>
+                            {(merchant.stamps_required || 10) - loyaltyCard.current_stamps} restants
+                          </span>
+                        )}
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {/* Combined Progress Bar */}
+                  <div className="relative h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant.tier2_stamps_required || 20)) * 100)}%` }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                      className="h-full rounded-full"
+                      style={{
+                        background: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                          ? 'linear-gradient(90deg, #8b5cf6, #a78bfa)'
+                          : `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
+                      }}
+                    />
+                    {/* Tier 1 marker */}
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 w-0.5 h-4 bg-gray-300"
+                      style={{ left: `${((merchant.stamps_required || 10) / (merchant.tier2_stamps_required || 20)) * 100}%` }}
+                    />
+                  </div>
                 </div>
+              ) : (
+                <>
+                  {/* Single Tier - Original Display */}
+                  <div className="mb-8">
+                    <div className="flex items-baseline justify-center gap-1">
+                      <motion.span
+                        key={loyaltyCard.current_stamps}
+                        initial={{ scale: 1.2 }}
+                        animate={{ scale: 1 }}
+                        className="text-6xl font-black"
+                        style={{ color: primaryColor }}
+                      >
+                        {loyaltyCard.current_stamps}
+                      </motion.span>
+                      <span className="text-2xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
+                    </div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
+                      {merchant?.loyalty_mode === 'visit' ? 'Passages cumulés' : `${merchant?.product_name || 'Articles'} cumulés`}
+                    </p>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant?.stamps_required || 10)) * 100)}%` }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                      className="h-full rounded-full"
+                      style={{
+                        background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
+                      }}
+                    />
+                  </div>
+
+                  {/* Status Message */}
+                  {loyaltyCard.current_stamps < (merchant?.stamps_required || 10) && (
+                    <div
+                      className="rounded-2xl p-4 mb-6"
+                      style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
+                    >
+                      <p className="font-bold text-gray-700">
+                        Plus que {(merchant?.stamps_required || 10) - loyaltyCard.current_stamps} {merchant?.loyalty_mode === 'visit' ? 'passage' : (merchant?.product_name || 'article')}{(merchant?.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''} avant votre récompense !
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Undo Button - Only in article mode */}
@@ -1244,6 +1447,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </button>
 
               <p className="mt-4 text-sm text-gray-400">Montrez cet écran au commerçant</p>
+
+              <button
+                onClick={() => window.location.href = `/customer/card/${merchant?.id}`}
+                className="mt-4 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                Plus tard →
+              </button>
             </div>
           </div>
         )}
