@@ -20,14 +20,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get member card with program info (filtered by merchant through program)
     const { data: memberCard, error } = await supabaseAdmin
       .from('member_cards')
       .select(`
         *,
-        merchant:merchants (shop_name, logo_url, primary_color)
+        program:member_programs!inner (
+          id,
+          name,
+          benefit_label,
+          merchant_id,
+          merchant:merchants (shop_name, logo_url, primary_color)
+        )
       `)
       .eq('customer_id', customerId)
-      .eq('merchant_id', merchantId)
+      .eq('program.merchant_id', merchantId)
       .single();
 
     if (error && error.code !== 'PGRST116') {

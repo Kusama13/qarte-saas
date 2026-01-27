@@ -678,7 +678,7 @@ export default function CustomerCardPage({
                   <div className="h-1 w-1 rounded-full bg-amber-500 animate-pulse" />
                 </div>
                 <p className="text-xs font-semibold text-amber-700/90 truncate mt-0.5">
-                  {memberCard.benefit_label}
+                  {memberCard.program?.benefit_label}
                 </p>
               </div>
 
@@ -1638,7 +1638,7 @@ export default function CustomerCardPage({
                   </div>
                   <p className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mb-3">Privilège VIP</p>
                   <p className="text-2xl font-black text-gray-900 leading-tight">
-                    {memberCard.benefit_label}
+                    {memberCard.program?.benefit_label}
                   </p>
                 </div>
               </div>
@@ -1668,20 +1668,6 @@ export default function CustomerCardPage({
                   </div>
                 </div>
               </div>
-
-              {/* Premium Download Action */}
-              <motion.a
-                whileHover={{ scale: 1.02, translateY: -2 }}
-                whileTap={{ scale: 0.98 }}
-                href={`/api/member-cards/${memberCard.id}/image`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative group flex items-center justify-center gap-3 w-full py-4 bg-gray-900 rounded-2xl font-bold text-white shadow-xl hover:shadow-amber-500/20 transition-all overflow-hidden"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/10 to-amber-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                <Download className="w-5 h-5 text-amber-400" />
-                <span>Télécharger le Certificat</span>
-              </motion.a>
 
               {/* Fine Print */}
               <div className="flex items-center justify-center gap-4 text-[10px] text-gray-400 font-medium">

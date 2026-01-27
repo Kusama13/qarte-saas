@@ -7,22 +7,20 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const createMemberCardSchema = z.object({
-  merchant_id: z.string().uuid(),
+const assignMemberSchema = z.object({
+  program_id: z.string().uuid(),
   customer_id: z.string().uuid(),
-  benefit_label: z.string().min(1, 'L\'avantage est requis'),
-  duration_months: z.number().int().min(1).max(12),
 });
 
-// GET: Liste des cartes membre d'un commerçant
+// GET: Liste des membres d'un programme
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const merchantId = searchParams.get('merchant_id');
+    const programId = searchParams.get('program_id');
 
-    if (!merchantId) {
+    if (!programId) {
       return NextResponse.json(
-        { error: 'merchant_id requis' },
+        { error: 'program_id requis' },
         { status: 400 }
       );
     }
@@ -33,7 +31,7 @@ export async function GET(request: NextRequest) {
         *,
         customer:customers (*)
       `)
-      .eq('merchant_id', merchantId)
+      .eq('program_id', programId)
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -48,11 +46,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: Créer une carte membre
+// POST: Assigner un client à un programme
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const parsed = createMemberCardSchema.safeParse(body);
+    const parsed = assignMemberSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -61,19 +59,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { merchant_id, customer_id, benefit_label, duration_months } = parsed.data;
+    const { program_id, customer_id } = parsed.data;
 
-    // Vérifier si le client a déjà une carte membre active pour ce commerçant
+    // Récupérer le programme pour avoir la durée et le merchant_id
+    const { data: program, error: programError } = await supabaseAdmin
+      .from('member_programs')
+      .select('id, merchant_id, duration_months')
+      .eq('id', program_id)
+      .single();
+
+    if (programError || !program) {
+      return NextResponse.json(
+        { error: 'Programme non trouvé' },
+        { status: 404 }
+      );
+    }
+
+    // Vérifier si le client a déjà un programme actif pour ce commerçant
     const { data: existingCard } = await supabaseAdmin
       .from('member_cards')
-      .select('id')
-      .eq('merchant_id', merchant_id)
+      .select(`
+        id,
+        program:member_programs!inner (merchant_id)
+      `)
       .eq('customer_id', customer_id)
+      .eq('program.merchant_id', program.merchant_id)
       .single();
 
     if (existingCard) {
       return NextResponse.json(
-        { error: 'Ce client possède déjà une carte membre' },
+        { error: 'Ce client est déjà inscrit à un programme membre' },
         { status: 400 }
       );
     }
@@ -81,14 +96,13 @@ export async function POST(request: NextRequest) {
     // Calculer la date de fin
     const validFrom = new Date();
     const validUntil = new Date();
-    validUntil.setMonth(validUntil.getMonth() + duration_months);
+    validUntil.setMonth(validUntil.getMonth() + program.duration_months);
 
     const { data: memberCard, error } = await supabaseAdmin
       .from('member_cards')
       .insert({
-        merchant_id,
+        program_id,
         customer_id,
-        benefit_label: benefit_label.trim(),
         valid_from: validFrom.toISOString(),
         valid_until: validUntil.toISOString(),
       })

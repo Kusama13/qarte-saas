@@ -8,7 +8,7 @@ const supabaseAdmin = createClient(
 );
 
 const extendSchema = z.object({
-  duration_months: z.number().int().min(1).max(12),
+  duration_months: z.number().int().min(1).max(24),
 });
 
 // GET: Récupérer une carte membre par ID
@@ -24,7 +24,7 @@ export async function GET(
       .select(`
         *,
         customer:customers (*),
-        merchant:merchants (*)
+        program:member_programs (*)
       `)
       .eq('id', id)
       .single();
@@ -77,7 +77,6 @@ export async function PATCH(
     }
 
     // Calculer la nouvelle date de fin
-    // Si la carte est expirée, partir de maintenant; sinon, partir de valid_until
     const baseDate = new Date(currentCard.valid_until) > new Date()
       ? new Date(currentCard.valid_until)
       : new Date();
@@ -91,7 +90,8 @@ export async function PATCH(
       .eq('id', id)
       .select(`
         *,
-        customer:customers (*)
+        customer:customers (*),
+        program:member_programs (*)
       `)
       .single();
 
@@ -107,7 +107,7 @@ export async function PATCH(
   }
 }
 
-// DELETE: Supprimer une carte membre
+// DELETE: Retirer un client d'un programme
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

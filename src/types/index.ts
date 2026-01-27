@@ -150,14 +150,24 @@ export interface ApiError {
   code?: string;
 }
 
-export interface MemberCard {
+export interface MemberProgram {
   id: string;
   merchant_id: string;
-  customer_id: string;
+  name: string;
   benefit_label: string;
+  duration_months: number;
+  is_active: boolean;
+  created_at: string;
+  merchant?: Merchant;
+}
+
+export interface MemberCard {
+  id: string;
+  program_id: string;
+  customer_id: string;
   valid_from: string;
   valid_until: string;
   created_at: string;
   customer?: Customer;
-  merchant?: Merchant;
+  program?: MemberProgram;
 }
