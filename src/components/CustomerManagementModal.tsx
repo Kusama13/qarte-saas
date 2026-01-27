@@ -15,6 +15,8 @@ import {
   ChevronUp,
   SlidersHorizontal,
   History,
+  Gift,
+  Trophy,
 } from 'lucide-react';
 import { Button, Input, Textarea } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -33,6 +35,13 @@ interface PointAdjustment {
   reason: string | null;
 }
 
+interface Redemption {
+  id: string;
+  redeemed_at: string;
+  stamps_used: number;
+  tier: number;
+}
+
 interface CustomerManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -44,6 +53,11 @@ interface CustomerManagementModalProps {
   stampsRequired: number;
   phoneNumber: string;
   onSuccess: () => void;
+  // Tier 2 support
+  tier2Enabled?: boolean;
+  tier2StampsRequired?: number;
+  tier2RewardDescription?: string;
+  rewardDescription?: string;
 }
 
 type Tab = 'adjust' | 'history' | 'danger';
@@ -59,6 +73,10 @@ export function CustomerManagementModal({
   stampsRequired,
   phoneNumber,
   onSuccess,
+  tier2Enabled = false,
+  tier2StampsRequired,
+  tier2RewardDescription,
+  rewardDescription,
 }: CustomerManagementModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('adjust');
   const [adjustment, setAdjustment] = useState<number>(0);
@@ -70,6 +88,7 @@ export function CustomerManagementModal({
   // History state
   const [visits, setVisits] = useState<Visit[]>([]);
   const [adjustments, setAdjustments] = useState<PointAdjustment[]>([]);
+  const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(true);
 
@@ -88,24 +107,31 @@ export function CustomerManagementModal({
   const fetchHistory = async () => {
     setHistoryLoading(true);
     try {
-      // Fetch visits
-      const { data: visitsData } = await supabase
-        .from('visits')
-        .select('id, visited_at, points_earned')
-        .eq('loyalty_card_id', loyaltyCardId)
-        .order('visited_at', { ascending: false })
-        .limit(50);
+      // Fetch visits, adjustments, and redemptions in parallel
+      const [visitsResult, adjustmentsResult, redemptionsResult] = await Promise.all([
+        supabase
+          .from('visits')
+          .select('id, visited_at, points_earned')
+          .eq('loyalty_card_id', loyaltyCardId)
+          .order('visited_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('point_adjustments')
+          .select('id, created_at, adjustment, reason')
+          .eq('loyalty_card_id', loyaltyCardId)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase
+          .from('redemptions')
+          .select('id, redeemed_at, stamps_used, tier')
+          .eq('loyalty_card_id', loyaltyCardId)
+          .order('redeemed_at', { ascending: false })
+          .limit(50),
+      ]);
 
-      // Fetch adjustments
-      const { data: adjustmentsData } = await supabase
-        .from('point_adjustments')
-        .select('id, created_at, adjustment, reason')
-        .eq('loyalty_card_id', loyaltyCardId)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      setVisits(visitsData || []);
-      setAdjustments(adjustmentsData || []);
+      setVisits(visitsResult.data || []);
+      setAdjustments(adjustmentsResult.data || []);
+      setRedemptions(redemptionsResult.data || []);
     } catch (err) {
       console.error('Error fetching history:', err);
     } finally {
@@ -249,13 +275,22 @@ export function CustomerManagementModal({
 
   // Combine and sort history items
   const historyItems = [
-    ...visits.map((v) => ({ type: 'visit' as const, date: v.visited_at, points: v.points_earned, id: v.id })),
+    ...visits.map((v) => ({ type: 'visit' as const, date: v.visited_at, points: v.points_earned, id: v.id, tier: undefined as number | undefined, reason: undefined as string | null | undefined })),
     ...adjustments.map((a) => ({
       type: 'adjustment' as const,
       date: a.created_at,
       points: a.adjustment,
       reason: a.reason,
       id: a.id,
+      tier: undefined as number | undefined,
+    })),
+    ...redemptions.map((r) => ({
+      type: 'redemption' as const,
+      date: r.redeemed_at,
+      points: r.stamps_used,
+      id: r.id,
+      tier: r.tier,
+      reason: undefined as string | null | undefined,
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -329,22 +364,84 @@ export function CustomerManagementModal({
               {/* Adjust Tab */}
               {activeTab === 'adjust' && (
                 <div className="space-y-6">
-                  <div className="p-4 rounded-xl bg-gray-50">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Actuellement</span>
-                      <span className="font-semibold text-gray-900">
-                        {currentStamps} / {stampsRequired} passages
-                      </span>
+                  {tier2Enabled && tier2StampsRequired ? (
+                    /* Dual Tier Progress Display */
+                    <div className="space-y-3">
+                      {/* Tier 1 */}
+                      <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Gift className={`w-4 h-4 ${currentStamps >= stampsRequired ? 'text-emerald-500' : 'text-indigo-500'}`} />
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Palier 1</span>
+                          {currentStamps >= stampsRequired && (
+                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">Atteint</span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 text-xs">{rewardDescription || 'Récompense'}</span>
+                          <span className={`font-semibold ${currentStamps >= stampsRequired ? 'text-emerald-600' : 'text-gray-900'}`}>
+                            {Math.min(currentStamps, stampsRequired)} / {stampsRequired}
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${currentStamps >= stampsRequired ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                            style={{ width: `${Math.min((currentStamps / stampsRequired) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      {/* Tier 2 */}
+                      <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Trophy className={`w-4 h-4 ${currentStamps >= tier2StampsRequired ? 'text-violet-500' : 'text-gray-400'}`} />
+                          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Palier 2</span>
+                          {currentStamps >= tier2StampsRequired && (
+                            <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded">Atteint</span>
+                          )}
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 text-xs">{tier2RewardDescription || 'Récompense tier 2'}</span>
+                          <span className={`font-semibold ${currentStamps >= tier2StampsRequired ? 'text-violet-600' : 'text-gray-900'}`}>
+                            {currentStamps} / {tier2StampsRequired}
+                          </span>
+                        </div>
+                        <div className="h-1.5 bg-gray-200 rounded-full mt-2 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${currentStamps >= tier2StampsRequired ? 'bg-violet-500' : 'bg-gray-300'}`}
+                            style={{ width: `${Math.min((currentStamps / tier2StampsRequired) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                      {/* After adjustment preview */}
+                      {adjustment !== 0 && (
+                        <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-indigo-700 font-medium">Après ajustement</span>
+                            <span className={`font-bold ${adjustment > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {newStamps} points ({adjustment > 0 ? '+' : ''}{adjustment})
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {adjustment !== 0 && (
-                      <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t border-gray-200">
-                        <span className="text-gray-600">Après ajustement</span>
-                        <span className={`font-semibold ${adjustment > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {newStamps} / {stampsRequired} passages
+                  ) : (
+                    /* Single Tier Progress Display */
+                    <div className="p-4 rounded-xl bg-gray-50">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">Actuellement</span>
+                        <span className="font-semibold text-gray-900">
+                          {currentStamps} / {stampsRequired} passages
                         </span>
                       </div>
-                    )}
-                  </div>
+                      {adjustment !== 0 && (
+                        <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t border-gray-200">
+                          <span className="text-gray-600">Après ajustement</span>
+                          <span className={`font-semibold ${adjustment > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                            {newStamps} / {stampsRequired} passages
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {error && (
                     <div className="p-3 text-sm text-red-700 bg-red-50 rounded-xl">
@@ -446,50 +543,83 @@ export function CustomerManagementModal({
                       </div>
 
                       <ul className="space-y-2">
-                        {(historyExpanded ? historyItems : historyItems.slice(0, 5)).map((item) => (
-                          <li
-                            key={item.id}
-                            className={`flex items-center justify-between p-3 rounded-xl ${
-                              item.type === 'visit' ? 'bg-indigo-50' : 'bg-amber-50'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                  item.type === 'visit' ? 'bg-indigo-100' : 'bg-amber-100'
-                                }`}
-                              >
-                                {item.type === 'visit' ? (
-                                  <Check className="w-4 h-4 text-indigo-600" />
-                                ) : (
-                                  <SlidersHorizontal className="w-4 h-4 text-amber-600" />
-                                )}
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {item.type === 'visit' ? 'Passage' : 'Ajustement manuel'}
-                                </p>
-                                <p className="text-xs text-gray-500 flex items-center gap-1">
-                                  <Clock className="w-3 h-3" />
-                                  {formatDateTime(item.date)}
-                                </p>
-                                {item.type === 'adjustment' && item.reason && (
-                                  <p className="text-xs text-gray-400 italic mt-0.5">{item.reason}</p>
-                                )}
-                              </div>
-                            </div>
-                            <span
-                              className={`text-sm font-bold px-2 py-1 rounded-lg ${
-                                item.points > 0
-                                  ? 'text-green-700 bg-green-100'
-                                  : 'text-red-700 bg-red-100'
-                              }`}
+                        {(historyExpanded ? historyItems : historyItems.slice(0, 5)).map((item) => {
+                          const isRedemption = item.type === 'redemption';
+                          const isAdjustment = item.type === 'adjustment';
+                          const isVisit = item.type === 'visit';
+
+                          const getBgColor = () => {
+                            if (isRedemption) return item.tier === 2 ? 'bg-violet-50' : 'bg-emerald-50';
+                            if (isAdjustment) return 'bg-amber-50';
+                            return 'bg-indigo-50';
+                          };
+
+                          const getIconBgColor = () => {
+                            if (isRedemption) return item.tier === 2 ? 'bg-violet-100' : 'bg-emerald-100';
+                            if (isAdjustment) return 'bg-amber-100';
+                            return 'bg-indigo-100';
+                          };
+
+                          const getIcon = () => {
+                            if (isRedemption) {
+                              return item.tier === 2
+                                ? <Trophy className="w-4 h-4 text-violet-600" />
+                                : <Gift className="w-4 h-4 text-emerald-600" />;
+                            }
+                            if (isAdjustment) return <SlidersHorizontal className="w-4 h-4 text-amber-600" />;
+                            return <Check className="w-4 h-4 text-indigo-600" />;
+                          };
+
+                          const getLabel = () => {
+                            if (isRedemption) {
+                              const tierLabel = tier2Enabled ? ` palier ${item.tier}` : '';
+                              return `🎁 Cadeau${tierLabel} utilisé`;
+                            }
+                            if (isAdjustment) return 'Ajustement manuel';
+                            return 'Passage';
+                          };
+
+                          return (
+                            <li
+                              key={item.id}
+                              className={`flex items-center justify-between p-3 rounded-xl ${getBgColor()}`}
                             >
-                              {item.points > 0 ? '+' : ''}
-                              {item.points}
-                            </span>
-                          </li>
-                        ))}
+                              <div className="flex items-center gap-3">
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getIconBgColor()}`}>
+                                  {getIcon()}
+                                </div>
+                                <div>
+                                  <p className={`text-sm font-medium ${isRedemption ? 'text-emerald-700' : 'text-gray-900'}`}>
+                                    {getLabel()}
+                                  </p>
+                                  <p className="text-xs text-gray-500 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {formatDateTime(item.date)}
+                                  </p>
+                                  {isAdjustment && item.reason && (
+                                    <p className="text-xs text-gray-400 italic mt-0.5">{item.reason}</p>
+                                  )}
+                                </div>
+                              </div>
+                              {!isRedemption ? (
+                                <span
+                                  className={`text-sm font-bold px-2 py-1 rounded-lg ${
+                                    item.points > 0
+                                      ? 'text-green-700 bg-green-100'
+                                      : 'text-red-700 bg-red-100'
+                                  }`}
+                                >
+                                  {item.points > 0 ? '+' : ''}
+                                  {item.points}
+                                </span>
+                              ) : (
+                                <span className={`text-sm font-bold px-2 py-1 rounded-lg ${item.tier === 2 ? 'text-violet-700 bg-violet-100' : 'text-emerald-700 bg-emerald-100'}`}>
+                                  ✓
+                                </span>
+                              )}
+                            </li>
+                          );
+                        })}
                       </ul>
                     </>
                   )}

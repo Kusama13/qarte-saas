@@ -319,9 +319,26 @@ export default function CustomersPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredCustomers.map((card) => {
-                  const isRewardReady = card.current_stamps >= (merchant?.stamps_required || 10);
+                  const isTier1Ready = card.current_stamps >= (merchant?.stamps_required || 10);
+                  const isTier2Ready = merchant?.tier2_enabled && merchant?.tier2_stamps_required && card.current_stamps >= merchant.tier2_stamps_required;
                   const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
                   const isPushSubscriber = subscriberIds.includes(card.customer_id);
+
+                  // Determine badge to show
+                  const getBadge = () => {
+                    if (merchant?.tier2_enabled) {
+                      if (isTier2Ready) {
+                        return { text: 'Palier 2 prêt', color: 'text-violet-700 bg-violet-100' };
+                      }
+                      if (isTier1Ready) {
+                        return { text: 'Palier 1 prêt', color: 'text-emerald-700 bg-emerald-100' };
+                      }
+                    } else if (isTier1Ready) {
+                      return { text: 'Récompense prête', color: 'text-green-700 bg-green-100' };
+                    }
+                    return null;
+                  };
+                  const badge = getBadge();
 
                   return (
                     <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200">
@@ -333,10 +350,10 @@ export default function CustomersPage() {
                               : 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-indigo-100'
                           }`}>
                             {card.customer?.first_name?.charAt(0) || 'C'}
-                            {isRewardReady && (
-                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 border-2 border-white rounded-full animate-pulse" />
+                            {badge && (
+                              <div className={`absolute -top-1 -right-1 w-3 h-3 border-2 border-white rounded-full animate-pulse ${isTier2Ready ? 'bg-violet-500' : 'bg-green-500'}`} />
                             )}
-                            {isPushSubscriber && !isRewardReady && (
+                            {isPushSubscriber && !badge && (
                               <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow">
                                 <Bell className="w-2.5 h-2.5 text-amber-500" />
                               </div>
@@ -351,9 +368,9 @@ export default function CustomersPage() {
                                 <Bell className="w-3.5 h-3.5 text-amber-500" />
                               )}
                             </div>
-                            {isRewardReady && (
-                              <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-green-700 bg-green-100 rounded-md">
-                                Prêt
+                            {badge && (
+                              <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md ${badge.color}`}>
+                                {badge.text}
                               </span>
                             )}
                           </div>
@@ -472,6 +489,10 @@ export default function CustomersPage() {
           stampsRequired={merchant.stamps_required}
           phoneNumber={selectedCustomer.customer?.phone_number || ''}
           onSuccess={handleAdjustSuccess}
+          tier2Enabled={merchant.tier2_enabled}
+          tier2StampsRequired={merchant.tier2_stamps_required || undefined}
+          tier2RewardDescription={merchant.tier2_reward_description || undefined}
+          rewardDescription={merchant.reward_description || undefined}
         />
       )}
 
