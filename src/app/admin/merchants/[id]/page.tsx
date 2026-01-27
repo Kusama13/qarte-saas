@@ -53,7 +53,6 @@ interface Stats {
 
 export default function MerchantDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const supabase = createClientComponentClient();
   const merchantId = params.id as string;
 
