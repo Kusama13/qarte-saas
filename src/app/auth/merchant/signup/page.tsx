@@ -20,6 +20,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { generateSlug, validateFrenchPhone, validateEmail } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType } from '@/types';
 import { trackPageView, trackSignupStarted, trackSignupCompleted, trackSetupCompleted } from '@/lib/analytics';
+import { FacebookPixel, fbEvents } from '@/components/FacebookPixel';
 
 const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
   value,
@@ -140,6 +141,7 @@ export default function MerchantSignupPage() {
         // Track successful signup and merchant creation
         trackSignupCompleted(authData.user.id, 'email');
         trackSetupCompleted(result.merchant?.id || authData.user.id, formData.shopType || undefined);
+        fbEvents.completeRegistration();
 
         // Redirection vers la page de vérification email
         window.location.href = `/auth/merchant/verify-email?email=${encodeURIComponent(formData.email)}`;
@@ -155,6 +157,7 @@ export default function MerchantSignupPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+      <FacebookPixel />
       <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12">
         <Link href="/" className="flex items-center gap-2 mb-8">
           <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary">

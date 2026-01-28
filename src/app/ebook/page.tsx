@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { FacebookPixel, fbEvents } from "@/components/FacebookPixel";
 import {
   CheckCircle2,
   Lock,
@@ -96,7 +97,7 @@ const EbookTeaser = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent flex flex-col items-center justify-end pb-4">
               <div className="bg-primary/10 backdrop-blur-md border border-primary/20 p-4 rounded-xl flex items-center gap-3 animate-bounce-slow">
                 <Lock className="w-5 h-5 text-primary" />
-                <span className="font-semibold text-primary">Débloquez la suite immédiatement</span>
+                <span className="font-semibold text-primary">Votre ebook est disponible</span>
               </div>
             </div>
           </div>
@@ -126,6 +127,7 @@ const LeadForm = () => {
 
       if (response.ok) {
         setStatus("success");
+        fbEvents.lead();
       } else {
         setStatus("error");
       }
@@ -146,22 +148,18 @@ const LeadForm = () => {
           <a
             href="/ebooks/guide-fidelisation.pdf"
             download="Guide-Fidelisation-Qarte.pdf"
+            onClick={() => {
+              setTimeout(() => {
+                window.location.href = "https://getqarte.com";
+              }, 5000);
+            }}
             className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors"
           >
             <ArrowRight className="w-5 h-5" />
             Télécharger le guide PDF
           </a>
-          <p className="mt-4 text-sm text-gray-600">
-            Découvrez aussi{" "}
-            <a
-              href="https://getqarte.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary font-semibold hover:underline"
-            >
-              getqarte.com
-            </a>
-            {" "}- La solution de fidélisation digitale
+          <p className="mt-4 text-sm text-gray-500">
+            Redirection vers getqarte.com dans 5 secondes...
           </p>
         </div>
       </div>
@@ -212,6 +210,7 @@ const LeadForm = () => {
 export default function EbookLandingPage() {
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-primary-100 selection:text-primary">
+      <FacebookPixel />
       <UrgencyBanner />
 
       {/* Header */}

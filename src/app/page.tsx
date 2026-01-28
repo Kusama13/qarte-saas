@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { LandingAnalytics } from '@/components/analytics/LandingAnalytics';
 import { trackCtaClick, trackWhatsAppClicked, trackVideoPlayed, trackFaqOpened } from '@/lib/analytics';
+import { FacebookPixel, FacebookScrollTracker, fbEvents } from '@/components/FacebookPixel';
 
 // ============================================
 // CUSTOM HOOKS
@@ -324,7 +325,7 @@ function HeroSection() {
           <div className="flex flex-col sm:flex-row gap-5">
             <a
               href="/auth/merchant/signup"
-              onClick={() => trackCtaClick('hero_primary', 'hero_section')}
+              onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); }}
               className="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 text-center shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
             >
               <span className="relative z-10">Créer ma carte gratuite</span>
@@ -558,6 +559,7 @@ function ComparisonSection() {
             <div className="mt-8 pt-6 border-t border-indigo-100">
               <a
                 href="/auth/merchant/signup"
+                onClick={() => { trackCtaClick('pricing_cta', 'pricing_section'); fbEvents.initiateCheckout(); }}
                 className="block w-full py-3.5 px-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all hover:shadow-lg hover:shadow-indigo-500/25 hover:scale-[1.02] active:scale-[0.98] text-center"
               >
                 Démarrer mon essai gratuit
@@ -1263,6 +1265,7 @@ function PricingSection() {
               <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-2xl blur-md opacity-20 group-hover/btn:opacity-40 transition-opacity duration-500" />
               <a
                 href="/auth/merchant/signup"
+                onClick={() => { trackCtaClick('pricing_cta_2', 'pricing_section_2'); fbEvents.initiateCheckout(); }}
                 className="relative block w-full py-5 bg-gradient-to-r from-indigo-600 via-violet-600 to-rose-600 text-white font-bold rounded-2xl hover:shadow-2xl hover:shadow-indigo-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 text-center uppercase tracking-wider text-sm shadow-xl shadow-indigo-500/20"
               >
                 Démarrer maintenant
@@ -1760,7 +1763,7 @@ function FooterSection() {
           </h2>
           <a
             href="/auth/merchant/signup"
-            onClick={() => trackCtaClick('footer_cta', 'footer_section')}
+            onClick={() => { trackCtaClick('footer_cta', 'footer_section'); fbEvents.initiateCheckout(); }}
             className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
           >
             Créer ma carte gratuite
@@ -2118,7 +2121,7 @@ function HowItWorksSection() {
         <div className={`text-center mt-12 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.5s' }}>
           <a
             href="/auth/merchant/signup"
-            onClick={() => trackCtaClick('how_it_works', 'how_it_works_section')}
+            onClick={() => { trackCtaClick('how_it_works', 'how_it_works_section'); fbEvents.initiateCheckout(); }}
             className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
           >
             Commencer maintenant
@@ -2150,7 +2153,7 @@ function MobileStickyCta() {
     <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/95 backdrop-blur-lg border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
       <a
         href="/auth/merchant/signup"
-        onClick={() => trackCtaClick('mobile_sticky', 'mobile_sticky_cta')}
+        onClick={() => { trackCtaClick('mobile_sticky', 'mobile_sticky_cta'); fbEvents.initiateCheckout(); }}
         className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 active:scale-[0.98] transition-transform"
       >
         Créer ma carte gratuite
@@ -2182,6 +2185,8 @@ export default function LandingPageV4() {
   return (
     <LazyMotion features={domAnimation}>
       <LandingAnalytics />
+      <FacebookPixel />
+      <FacebookScrollTracker />
       <style dangerouslySetInnerHTML={{ __html: animationStyles }} />
 
       <main className="overflow-hidden pb-24 md:pb-0">
