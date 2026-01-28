@@ -19,13 +19,14 @@ import {
   Trash2,
   StickyNote,
   Target,
-  Phone,
+  MessageCircle,
   Mail,
   Building,
   ChevronRight,
   Save,
   Loader2,
   X,
+  BookOpen,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button, Input, Modal } from '@/components/ui';
@@ -131,6 +132,9 @@ export default function AdminDashboardPage() {
   });
   const [savingProspect, setSavingProspect] = useState(false);
 
+  // Ebook Leads
+  const [ebookLeads, setEbookLeads] = useState<{ id: string; phone_number: string; created_at: string; converted: boolean }[]>([]);
+
   const [loading, setLoading] = useState(true);
 
   // ============================================
@@ -208,6 +212,18 @@ export default function AdminDashboardPage() {
     }
   }, [prospectFilter]);
 
+  const fetchEbookLeads = useCallback(async () => {
+    const { data } = await supabase
+      .from('demo_leads')
+      .select('*')
+      .eq('converted', false)
+      .order('created_at', { ascending: false })
+      .limit(5);
+    if (data) {
+      setEbookLeads(data);
+    }
+  }, [supabase]);
+
   useEffect(() => {
     const loadAll = async () => {
       try {
@@ -217,6 +233,7 @@ export default function AdminDashboardPage() {
           fetchNotes(),
           fetchTasks(),
           fetchProspects(),
+          fetchEbookLeads(),
         ]);
       } catch (error) {
         console.error('Error loading admin data:', error);
@@ -225,7 +242,7 @@ export default function AdminDashboardPage() {
       }
     };
     loadAll();
-  }, [fetchStats, fetchMerchants, fetchNotes, fetchTasks, fetchProspects]);
+  }, [fetchStats, fetchMerchants, fetchNotes, fetchTasks, fetchProspects, fetchEbookLeads]);
 
   useEffect(() => {
     fetchProspects();
@@ -421,6 +438,19 @@ export default function AdminDashboardPage() {
   const getStatusBadge = (status: string) => {
     const config = PROSPECT_STATUSES.find(s => s.value === status);
     return config || PROSPECT_STATUSES[0];
+  };
+
+  const formatPhoneForWhatsApp = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
+    if (cleaned.startsWith('33')) return cleaned;
+    return '33' + cleaned;
+  };
+
+  const openWhatsApp = (phone: string, name?: string) => {
+    const formattedPhone = formatPhoneForWhatsApp(phone);
+    const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');
+    window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
   };
 
   const totalProspects = Object.values(prospectCounts).reduce((a, b) => a + b, 0);
@@ -675,10 +705,13 @@ export default function AdminDashboardPage() {
                           </span>
                         )}
                         {prospect.phone && (
-                          <a href={`tel:${prospect.phone}`} className="flex items-center gap-1 hover:text-[#5167fc]">
-                            <Phone className="w-3 h-3" />
+                          <button
+                            onClick={() => openWhatsApp(prospect.phone!, prospect.contact_name || undefined)}
+                            className="flex items-center gap-1 hover:text-green-600 transition-colors"
+                          >
+                            <MessageCircle className="w-3 h-3" />
                             {prospect.phone}
-                          </a>
+                          </button>
                         )}
                         {prospect.next_followup && (
                           <span className="flex items-center gap-1 text-amber-600">
@@ -715,7 +748,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Bottom Row: Alerts */}
-      <div className="grid lg:grid-cols-2 gap-6">
+      <div className="grid lg:grid-cols-3 gap-6">
         {/* Trial Ending */}
         <div className="bg-white rounded-lg border border-slate-100 shadow-md overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
@@ -795,6 +828,48 @@ export default function AdminDashboardPage() {
                   </div>
                   <ChevronRight className="w-4 h-4 text-slate-400" />
                 </Link>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Ebook Leads */}
+        <div className="bg-white rounded-lg border border-slate-100 shadow-md overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-green-50 rounded-lg">
+                <BookOpen className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-slate-900">Leads Ebook</h2>
+                <p className="text-xs text-green-600">À contacter</p>
+              </div>
+            </div>
+            <Link href="/admin/metriques" className="text-[#5167fc] text-sm font-medium hover:underline">
+              Voir tout
+            </Link>
+          </div>
+          <div className="divide-y divide-slate-100">
+            {ebookLeads.length === 0 ? (
+              <p className="p-6 text-center text-slate-400 text-sm">Aucun lead en attente</p>
+            ) : (
+              ebookLeads.map((lead) => (
+                <div
+                  key={lead.id}
+                  className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+                >
+                  <div>
+                    <p className="font-medium text-slate-900">{lead.phone_number}</p>
+                    <p className="text-xs text-slate-400">{formatDate(lead.created_at)}</p>
+                  </div>
+                  <button
+                    onClick={() => openWhatsApp(lead.phone_number)}
+                    className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Contacter
+                  </button>
+                </div>
               ))
             )}
           </div>

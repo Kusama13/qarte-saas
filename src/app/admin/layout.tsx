@@ -9,14 +9,13 @@ const inter = Inter({ subsets: ['latin'] });
 import {
   LayoutDashboard,
   Store,
-  BarChart3,
-  Euro,
+  TrendingUp,
   ArrowLeft,
   Menu,
   X,
   Shield,
   LogOut,
-  Megaphone,
+  Wallet,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cn } from '@/lib/utils';
@@ -24,9 +23,8 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/merchants', icon: Store, label: 'Commerçants' },
-  { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
-  { href: '/admin/revenus', icon: Euro, label: 'Revenus' },
-  { href: '/admin/marketing', icon: Megaphone, label: 'Marketing' },
+  { href: '/admin/metriques', icon: TrendingUp, label: 'Métriques' },
+  { href: '/admin/depenses', icon: Wallet, label: 'Dépenses' },
 ];
 
 export default function AdminLayout({
