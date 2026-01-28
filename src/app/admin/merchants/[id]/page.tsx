@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -16,6 +16,8 @@ import {
   Bell,
   Send,
   Tag,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui';
@@ -53,6 +55,7 @@ interface Stats {
 
 export default function MerchantDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const supabase = createClientComponentClient();
   const merchantId = params.id as string;
 
@@ -66,6 +69,32 @@ export default function MerchantDetailPage() {
     pushSent: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  const handleDelete = async () => {
+    if (deleteConfirmText !== 'SUPPRIMER') return;
+
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/admin/merchants/${merchantId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Erreur lors de la suppression');
+      }
+
+      router.push('/admin/merchants');
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert(error instanceof Error ? error.message : 'Erreur lors de la suppression');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -387,6 +416,97 @@ export default function MerchantDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Zone Danger */}
+      <div className="p-6 bg-red-50 rounded-lg border border-red-200">
+        <h3 className="text-lg font-semibold text-red-800 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5" />
+          Zone Danger
+        </h3>
+        <p className="text-red-700 mt-2 mb-4">
+          Supprimer ce commerçant effacera définitivement toutes ses données : clients, visites, récompenses, notifications push, etc.
+        </p>
+        <Button
+          variant="outline"
+          className="border-red-300 text-red-700 hover:bg-red-100"
+          onClick={() => setShowDeleteModal(true)}
+        >
+          <Trash2 className="w-4 h-4 mr-2" />
+          Supprimer ce commerçant
+        </Button>
+      </div>
+
+      {/* Modal de confirmation */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-100">
+                <AlertTriangle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Supprimer {merchant.shop_name} ?</h3>
+                <p className="text-sm text-gray-500">Cette action est irréversible</p>
+              </div>
+            </div>
+
+            <div className="mb-4 p-3 bg-red-50 rounded-lg text-sm text-red-800">
+              <p className="font-medium mb-1">Données qui seront supprimées :</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                <li>{stats.totalCustomers} clients</li>
+                <li>{stats.totalVisits} visites</li>
+                <li>{stats.totalRedemptions} récompenses</li>
+                <li>{stats.pushSubscribers} abonnés push</li>
+                <li>Toutes les notifications et historiques</li>
+              </ul>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tapez <span className="font-bold text-red-600">SUPPRIMER</span> pour confirmer
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                placeholder="SUPPRIMER"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText('');
+                }}
+                disabled={deleting}
+              >
+                Annuler
+              </Button>
+              <Button
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleDelete}
+                disabled={deleteConfirmText !== 'SUPPRIMER' || deleting}
+              >
+                {deleting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Suppression...
+                  </span>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Supprimer
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
