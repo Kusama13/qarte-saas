@@ -1,19 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Admin-only endpoint - uses service role key
-function getSupabaseAdmin() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { verifyAdminAuth } from '@/lib/admin-auth';
 
 // DELETE - Supprimer un merchant et toutes ses données
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Vérifier que l'utilisateur est super admin
+  const auth = await verifyAdminAuth(request);
+  if (!auth.authorized) return auth.error!;
+
   const supabase = getSupabaseAdmin();
   const { id: merchantId } = await params;
 
