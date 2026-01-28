@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import {
   CheckCircle2,
-  Download,
   Lock,
   ArrowRight,
   Users,
@@ -12,24 +11,37 @@ import {
   Zap,
   Phone,
   Clock,
-  ChevronRight
 } from "lucide-react";
 
 // --- Components ---
 
 const UrgencyBanner = () => {
-  const [timeLeft, setTimeLeft] = useState({ min: 14, sec: 59 });
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, min: 0, sec: 0 });
 
   useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      const diff = midnight.getTime() - now.getTime();
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const min = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const sec = Math.floor((diff % (1000 * 60)) / 1000);
+
+      return { hours, min, sec };
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.sec > 0) return { ...prev, sec: prev.sec - 1 };
-        if (prev.min > 0) return { min: prev.min - 1, sec: 59 };
-        return prev;
-      });
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
+
     return () => clearInterval(timer);
   }, []);
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
 
   return (
     <div className="bg-primary-900 text-white py-2 text-center text-sm font-medium flex items-center justify-center gap-3 px-4">
@@ -37,9 +49,9 @@ const UrgencyBanner = () => {
         <Clock className="w-4 h-4 text-secondary" />
         OFFRE LIMITÉE :
       </span>
-      <span>Le guide devient payant dans {timeLeft.min}:{timeLeft.sec < 10 ? `0${timeLeft.sec}` : timeLeft.sec}</span>
+      <span>Le guide devient payant dans {pad(timeLeft.hours)}h {pad(timeLeft.min)}m {pad(timeLeft.sec)}s</span>
       <span className="hidden md:inline text-primary-200">|</span>
-      <span className="hidden md:inline">Plus que 12 exemplaires gratuits disponibles</span>
+      <span className="hidden md:inline">Plus de 120 commerçants ont déjà lu</span>
     </div>
   );
 };
@@ -52,7 +64,7 @@ const EbookTeaser = () => {
         <div className="mb-8 border-b border-gray-100 pb-6">
           <span className="text-primary font-bold text-xs uppercase tracking-widest mb-2 block">Extrait Exclusif</span>
           <h3 className="text-2xl font-bold text-gray-900 leading-tight">
-            Les 7 secrets des commerçants qui doublent leur CA grâce à la fidélisation
+            Comment Augmenter Votre CA de 35% grâce à la Fidélisation Client
           </h3>
         </div>
 
@@ -99,12 +111,27 @@ const EbookTeaser = () => {
 
 const LeadForm = () => {
   const [phone, setPhone] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus("loading");
-    setTimeout(() => setStatus("success"), 1500);
+
+    try {
+      const response = await fetch("/api/demo-leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone_number: phone }),
+      });
+
+      if (response.ok) {
+        setStatus("success");
+      } else {
+        setStatus("error");
+      }
+    } catch {
+      setStatus("error");
+    }
   };
 
   if (status === "success") {
@@ -114,8 +141,28 @@ const LeadForm = () => {
           <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-xl font-bold text-green-900 mb-2">C&apos;est en route !</h3>
-          <p className="text-green-700">Vérifiez vos messages, le lien de téléchargement vient de vous être envoyé.</p>
+          <h3 className="text-xl font-bold text-green-900 mb-2">Votre guide est prêt !</h3>
+          <p className="text-green-700 mb-6">Cliquez ci-dessous pour télécharger votre guide gratuit.</p>
+          <a
+            href="/ebooks/guide-fidelisation.pdf"
+            download="Guide-Fidelisation-Qarte.pdf"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors"
+          >
+            <ArrowRight className="w-5 h-5" />
+            Télécharger le guide PDF
+          </a>
+          <p className="mt-4 text-sm text-gray-600">
+            Découvrez aussi{" "}
+            <a
+              href="https://getqarte.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary font-semibold hover:underline"
+            >
+              getqarte.com
+            </a>
+            {" "}- La solution de fidélisation digitale
+          </p>
         </div>
       </div>
     );
@@ -178,7 +225,7 @@ export default function EbookLandingPage() {
         <div className="hidden md:flex items-center gap-6">
           <div className="flex items-center gap-1 text-sm font-medium text-gray-600">
             <Users className="w-4 h-4 text-primary" />
-            <span>+2,500 commerçants l&apos;ont déjà lu</span>
+            <span>+120 commerçants l&apos;ont déjà lu</span>
           </div>
         </div>
       </nav>
@@ -196,7 +243,7 @@ export default function EbookLandingPage() {
               <div className="animate-slide-up">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 border border-primary-100 text-primary text-xs font-bold mb-6">
                   <Zap className="w-3.5 h-3.5 fill-current" />
-                  GUIDE DE FIDÉLISATION 2024
+                  GUIDE DE FIDÉLISATION 2026
                 </div>
 
                 <h1 className="text-4xl lg:text-6xl font-extrabold text-gray-900 leading-[1.1] mb-6">
@@ -250,7 +297,7 @@ export default function EbookLandingPage() {
                   </div>
                   <div>
                     <div className="text-lg font-bold text-gray-900">4.9/5</div>
-                    <div className="text-xs text-gray-500">Basé sur 840 avis</div>
+                    <div className="text-xs text-gray-500">Basé sur 97 avis</div>
                   </div>
                 </div>
               </div>
@@ -262,7 +309,7 @@ export default function EbookLandingPage() {
         <section className="bg-gray-50 py-16 border-y border-gray-100">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-12">
-              <h2 className="text-2xl font-bold text-gray-900">Pourquoi +2,500 commerçants nous font confiance</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Pourquoi +120 commerçants nous font confiance</h2>
             </div>
             <div className="grid md:grid-cols-3 gap-8">
               <div className="card-hover bg-white p-8 rounded-2xl shadow-sm">
@@ -274,93 +321,35 @@ export default function EbookLandingPage() {
                 <p className="text-gray-600">D&apos;augmentation moyenne du revenu par client après lecture.</p>
               </div>
               <div className="card-hover bg-white p-8 rounded-2xl shadow-sm">
-                <div className="text-primary font-bold text-4xl mb-2">15 min</div>
+                <div className="text-primary font-bold text-4xl mb-2">5 min</div>
                 <p className="text-gray-600">C&apos;est le temps de lecture nécessaire pour maîtriser les bases.</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Benefits Detail */}
-        <section className="py-24">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row gap-12 items-center">
-              <div className="md:w-1/2">
-                <h2 className="section-title mb-6">Ce que vous allez apprendre concrètement</h2>
-                <div className="space-y-6">
-                  {[
-                    { title: "La Psychologie de l'Achat", desc: "Pourquoi vos clients achètent-ils vraiment ?" },
-                    { title: "Le Système Anti-Désabonnement", desc: "Comment rattraper un client qui s'éloigne." },
-                    { title: "KPIs de Fidélisation", desc: "Les 3 seuls chiffres que vous devez surveiller." },
-                    { title: "Scripts & Modèles", desc: "Des modèles de SMS et emails prêts à l'emploi." }
-                  ].map((benefit, i) => (
-                    <div key={i} className="flex gap-4">
-                      <div className="mt-1 flex-shrink-0 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                        <ChevronRight className="w-3.5 h-3.5 text-white" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-gray-900">{benefit.title}</h4>
-                        <p className="text-gray-600">{benefit.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="md:w-1/2 bg-primary-900 rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl">
-                <div className="absolute top-0 right-0 opacity-10">
-                   <Download className="w-64 h-64 -translate-y-1/4 translate-x-1/4" />
-                </div>
-                <h3 className="text-2xl font-bold mb-6">Garanti 100% Actionnable</h3>
-                <p className="text-primary-100 mb-8 leading-relaxed">
-                  Pas de théorie marketing complexe. Juste des actions concrètes que vous pouvez mettre en place dès cet après-midi pour voir des résultats cette semaine.
-                </p>
-                <div className="flex items-center gap-3 p-4 bg-white/10 rounded-xl border border-white/10">
-                  <Star className="w-5 h-5 text-secondary" />
-                  <span className="font-medium text-sm">Élu &quot;Ressource de l&apos;Année&quot; par Retail Weekly</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Bottom CTA */}
-        <section className="bg-primary py-20 relative overflow-hidden">
-          <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-            <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-8">
-              Reprenez le contrôle de votre croissance dès maintenant.
-            </h2>
-            <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20">
-               <LeadForm />
-               <p className="mt-6 text-primary-100 text-sm">
-                En téléchargeant ce guide, vous acceptez de recevoir nos conseils par SMS. <br className="hidden md:block"/>
-                Désinscription facile en un clic.
-               </p>
-            </div>
-          </div>
-
-          {/* Animated background elements */}
-          <div className="absolute top-0 left-0 w-full h-full pointer-events-none overflow-hidden opacity-20">
-            <div className="absolute w-[500px] h-[500px] bg-white rounded-full -top-64 -left-64 blur-[100px]" />
-            <div className="absolute w-[300px] h-[300px] bg-secondary rounded-full bottom-0 right-0 translate-y-1/2 blur-[80px]" />
-          </div>
-        </section>
       </main>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-gray-200 rounded flex items-center justify-center">
-              <TrendingUp className="text-gray-400 w-3.5 h-3.5" />
+      <footer className="bg-gray-50 border-t border-gray-200 py-8">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">Q</span>
+              </div>
+              <span className="text-gray-900 font-semibold">Qarte</span>
             </div>
-            <span className="font-bold text-gray-400">Qarte</span>
+
+            <p className="text-gray-500 text-sm">
+              © 2025 Qarte - Fidélisez mieux, dépensez moins
+            </p>
+
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+              <a href="/mentions-legales" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">Mentions légales</a>
+              <a href="/politique-confidentialite" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">Confidentialité</a>
+            </div>
           </div>
-          <div className="text-gray-400 text-sm flex gap-8">
-            <a href="#" className="hover:text-primary transition-colors">Confidentialité</a>
-            <a href="#" className="hover:text-primary transition-colors">CGU</a>
-            <a href="#" className="hover:text-primary transition-colors">Qarte SaaS</a>
-          </div>
-          <p className="text-gray-400 text-sm">© 2024 Qarte. Tous droits réservés.</p>
         </div>
       </footer>
     </div>
