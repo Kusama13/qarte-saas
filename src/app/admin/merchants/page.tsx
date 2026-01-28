@@ -38,7 +38,7 @@ interface Merchant {
   };
 }
 
-type FilterStatus = 'all' | 'trial' | 'active' | 'cancelled';
+type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'cancelled';
 
 // Icons for shop types
 const SHOP_TYPE_ICONS: Record<ShopType, React.ElementType> = {
@@ -104,10 +104,18 @@ export default function AdminMerchantsPage() {
     fetchMerchants();
   }, [supabase]);
 
+  // Helper to check if trial is expired
+  const isTrialExpired = (merchant: Merchant) => {
+    if (merchant.subscription_status !== 'trial') return false;
+    if (!merchant.trial_ends_at) return false;
+    return new Date(merchant.trial_ends_at) < new Date();
+  };
+
   // Stats
   const stats = useMemo(() => {
     const total = merchants.length;
-    const trial = merchants.filter(m => m.subscription_status === 'trial').length;
+    const trialActive = merchants.filter(m => m.subscription_status === 'trial' && !isTrialExpired(m)).length;
+    const trialExpired = merchants.filter(m => isTrialExpired(m)).length;
     const active = merchants.filter(m => m.subscription_status === 'active').length;
     const cancelled = merchants.filter(m => m.subscription_status === 'cancelled').length;
 
@@ -117,14 +125,20 @@ export default function AdminMerchantsPage() {
       byType[type] = (byType[type] || 0) + 1;
     });
 
-    return { total, trial, active, cancelled, byType };
+    return { total, trial: trialActive, trialExpired, active, cancelled, byType };
   }, [merchants]);
 
   // Filtered merchants
   const filteredMerchants = useMemo(() => {
     let filtered = merchants;
 
-    if (statusFilter !== 'all') {
+    if (statusFilter === 'trial') {
+      // Only active trials (not expired)
+      filtered = filtered.filter(m => m.subscription_status === 'trial' && !isTrialExpired(m));
+    } else if (statusFilter === 'trial_expired') {
+      // Expired trials
+      filtered = filtered.filter(m => isTrialExpired(m));
+    } else if (statusFilter !== 'all') {
       filtered = filtered.filter(m => m.subscription_status === statusFilter);
     }
 
@@ -172,16 +186,21 @@ export default function AdminMerchantsPage() {
   };
 
   const getStatusBadge = (merchant: Merchant) => {
+    // Check for expired trial first
+    if (isTrialExpired(merchant)) {
+      return (
+        <span className="px-2 py-1 text-xs font-medium text-orange-700 bg-orange-100 rounded-full">
+          Essai expiré
+        </span>
+      );
+    }
+
     switch (merchant.subscription_status) {
       case 'trial': {
         const daysLeft = getDaysRemaining(merchant.trial_ends_at);
-        const isExpired = daysLeft !== null && daysLeft <= 0;
         return (
-          <span className={cn(
-            "px-2 py-1 text-xs font-medium rounded-full",
-            isExpired ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
-          )}>
-            {isExpired ? 'Expiré' : `Essai · ${daysLeft}j`}
+          <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
+            Essai · {daysLeft}j
           </span>
         );
       }
@@ -223,7 +242,7 @@ export default function AdminMerchantsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#5167fc]/10 flex items-center justify-center">
@@ -243,6 +262,17 @@ export default function AdminMerchantsPage() {
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.trial}</p>
               <p className="text-xs text-gray-500">En essai</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
+              <XCircle className="w-5 h-5 text-orange-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.trialExpired}</p>
+              <p className="text-xs text-gray-500">Essais expirés</p>
             </div>
           </div>
         </div>
@@ -308,10 +338,11 @@ export default function AdminMerchantsPage() {
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {[
             { label: 'Tous', value: 'all' as FilterStatus, count: stats.total },
             { label: 'En essai', value: 'trial' as FilterStatus, count: stats.trial },
+            { label: 'Expirés', value: 'trial_expired' as FilterStatus, count: stats.trialExpired },
             { label: 'Actifs', value: 'active' as FilterStatus, count: stats.active },
             { label: 'Churned', value: 'cancelled' as FilterStatus, count: stats.cancelled },
           ].map((btn) => (

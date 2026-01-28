@@ -31,7 +31,7 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 
-const SUBSCRIPTION_PRICE = 29;
+const SUBSCRIPTION_PRICE = 19;
 const WHATSAPP_PREFIX = 'https://wa.me/33';
 
 interface DemoLead {
