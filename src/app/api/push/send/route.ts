@@ -78,10 +78,13 @@ export async function POST(request: NextRequest) {
       subscriptions = data || [];
     } else if (merchantId) {
       // Send to all customers who have a loyalty card with this merchant
-      // First, get all customer IDs with loyalty cards for this merchant
-      const { data: loyaltyCards, error: cardsError } = await supabase
+      // Note: Push subscriptions might be linked to customer_id from ANY merchant
+      // So we need to find all customers by phone number
+
+      // Step 1: Get all customers with loyalty cards for this merchant (with phone numbers)
+      const { data: merchantCustomers, error: cardsError } = await supabase
         .from('loyalty_cards')
-        .select('customer_id')
+        .select('customer_id, customers!inner(id, phone_number)')
         .eq('merchant_id', merchantId);
 
       if (cardsError) {
@@ -92,15 +95,26 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      if (loyaltyCards && loyaltyCards.length > 0) {
-        let targetCustomerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
+      if (merchantCustomers && merchantCustomers.length > 0) {
+        // Build phone -> merchant customer_id map
+        const phoneToMerchantCustomerId = new Map<string, string>();
+        for (const card of merchantCustomers) {
+          const customer = card.customers as any;
+          if (customer?.phone_number) {
+            phoneToMerchantCustomerId.set(customer.phone_number, card.customer_id);
+          }
+        }
+
+        let targetPhones = [...phoneToMerchantCustomerId.keys()];
 
         // If customerIds filter is provided, only send to those customers
         if (customerIds && customerIds.length > 0) {
-          targetCustomerIds = targetCustomerIds.filter(id => customerIds.includes(id));
+          targetPhones = targetPhones.filter(phone =>
+            customerIds.includes(phoneToMerchantCustomerId.get(phone)!)
+          );
         }
 
-        if (targetCustomerIds.length === 0) {
+        if (targetPhones.length === 0) {
           return NextResponse.json({
             success: true,
             sent: 0,
@@ -108,11 +122,35 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        // Get push subscriptions for these customers
+        // Step 2: Find ALL customer IDs (from any merchant) with these phone numbers
+        const { data: allCustomersWithPhone, error: phoneError } = await supabase
+          .from('customers')
+          .select('id, phone_number')
+          .in('phone_number', targetPhones);
+
+        if (phoneError) {
+          console.error('Error fetching customers by phone:', phoneError);
+          return NextResponse.json(
+            { error: 'Erreur lors de la récupération des clients' },
+            { status: 500 }
+          );
+        }
+
+        const allCustomerIds = (allCustomersWithPhone || []).map(c => c.id);
+
+        if (allCustomerIds.length === 0) {
+          return NextResponse.json({
+            success: true,
+            sent: 0,
+            message: 'Aucun client trouvé',
+          });
+        }
+
+        // Step 3: Get push subscriptions for ANY of these customer IDs
         const { data, error } = await supabase
           .from('push_subscriptions')
           .select('*')
-          .in('customer_id', targetCustomerIds);
+          .in('customer_id', allCustomerIds);
 
         if (error) {
           console.error('Error fetching subscriptions:', error);

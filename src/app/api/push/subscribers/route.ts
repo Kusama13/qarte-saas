@@ -10,6 +10,9 @@ function getSupabase() {
 }
 
 // GET - Get subscriber count for a merchant
+// Note: A customer is considered a "subscriber" if they have push enabled
+// The push subscription might be linked to a customer_id from ANY merchant
+// (same phone number = same person, so they can receive push from all merchants)
 export async function GET(request: NextRequest) {
   const supabase = getSupabase();
 
@@ -24,10 +27,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get all customer IDs with loyalty cards for this merchant
-    const { data: loyaltyCards, error: cardsError } = await supabase
+    // Step 1: Get all customers with loyalty cards for this merchant (with their phone numbers)
+    const { data: merchantCustomers, error: cardsError } = await supabase
       .from('loyalty_cards')
-      .select('customer_id')
+      .select('customer_id, customers!inner(id, phone_number, first_name, last_name)')
       .eq('merchant_id', merchantId);
 
     if (cardsError) {
@@ -38,18 +41,61 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!loyaltyCards || loyaltyCards.length === 0) {
-      return NextResponse.json({ count: 0 });
+    if (!merchantCustomers || merchantCustomers.length === 0) {
+      return NextResponse.json({ count: 0, subscriberIds: [], subscribers: [] });
     }
 
-    // Get unique customer IDs
-    const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
+    // Build a map of phone -> this merchant's customer data
+    const phoneToMerchantCustomer = new Map<string, any>();
+    for (const card of merchantCustomers) {
+      const customer = card.customers as any;
+      if (customer?.phone_number) {
+        phoneToMerchantCustomer.set(customer.phone_number, {
+          id: customer.id,
+          phone_number: customer.phone_number,
+          first_name: customer.first_name,
+          last_name: customer.last_name,
+        });
+      }
+    }
 
-    // Get push subscriptions for these customers
+    const phoneNumbers = [...phoneToMerchantCustomer.keys()];
+
+    if (phoneNumbers.length === 0) {
+      return NextResponse.json({ count: 0, subscriberIds: [], subscribers: [] });
+    }
+
+    // Step 2: Find ALL customer IDs (from any merchant) that have these phone numbers
+    const { data: allCustomersWithPhone, error: phoneError } = await supabase
+      .from('customers')
+      .select('id, phone_number')
+      .in('phone_number', phoneNumbers);
+
+    if (phoneError) {
+      console.error('Error fetching customers by phone:', phoneError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la récupération des clients' },
+        { status: 500 }
+      );
+    }
+
+    // Build a map of customer_id -> phone_number (for all merchants)
+    const customerIdToPhone = new Map<string, string>();
+    for (const c of allCustomersWithPhone || []) {
+      customerIdToPhone.set(c.id, c.phone_number);
+    }
+
+    const allCustomerIds = [...customerIdToPhone.keys()];
+
+    if (allCustomerIds.length === 0) {
+      return NextResponse.json({ count: 0, subscriberIds: [], subscribers: [] });
+    }
+
+    // Step 3: Get push subscriptions for ANY of these customer IDs
     const { data: subscriptions, error } = await supabase
       .from('push_subscriptions')
       .select('customer_id')
-      .in('customer_id', customerIds);
+      .in('customer_id', allCustomerIds);
 
     if (error) {
       console.error('Error fetching subscriptions:', error);
@@ -59,23 +105,31 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get unique subscriber customer IDs
-    const subscriberIds = [...new Set((subscriptions || []).map(s => s.customer_id))];
+    // Step 4: Find which phone numbers have push subscriptions
+    const phonesWithPush = new Set<string>();
+    for (const sub of subscriptions || []) {
+      const phone = customerIdToPhone.get(sub.customer_id);
+      if (phone) {
+        phonesWithPush.add(phone);
+      }
+    }
+
+    // Step 5: Get THIS merchant's customer IDs for phones with push
+    const subscriberCustomerIds: string[] = [];
+    const subscribersData: any[] = [];
+
+    for (const phone of phonesWithPush) {
+      const merchantCustomer = phoneToMerchantCustomer.get(phone);
+      if (merchantCustomer) {
+        subscriberCustomerIds.push(merchantCustomer.id);
+        subscribersData.push(merchantCustomer);
+      }
+    }
 
     // Check if we need full subscriber info
     const includeDetails = searchParams.get('details') === 'true';
 
-    if (includeDetails && subscriberIds.length > 0) {
-      // Fetch customer details for subscribers
-      const { data: customers, error: customersError } = await supabase
-        .from('customers')
-        .select('id, first_name, last_name, phone_number')
-        .in('id', subscriberIds);
-
-      if (customersError) {
-        console.error('Error fetching customer details:', customersError);
-      }
-
+    if (includeDetails && subscriberCustomerIds.length > 0) {
       // Fetch loyalty cards with visits for marketing filters
       const { data: loyaltyCardsWithDetails, error: cardsDetailError } = await supabase
         .from('loyalty_cards')
@@ -86,7 +140,7 @@ export async function GET(request: NextRequest) {
           created_at
         `)
         .eq('merchant_id', merchantId)
-        .in('customer_id', subscriberIds);
+        .in('customer_id', subscriberCustomerIds);
 
       if (cardsDetailError) {
         console.error('Error fetching loyalty card details:', cardsDetailError);
@@ -132,7 +186,7 @@ export async function GET(request: NextRequest) {
       }
 
       // Merge customer info with loyalty card data
-      const subscribersWithDetails = (customers || []).map(customer => {
+      const subscribersWithDetails = subscribersData.map(customer => {
         const card = (loyaltyCardsWithDetails || []).find(c => c.customer_id === customer.id);
         return {
           ...customer,
@@ -146,15 +200,15 @@ export async function GET(request: NextRequest) {
       });
 
       return NextResponse.json({
-        count: subscriberIds.length,
-        subscriberIds,
+        count: subscriberCustomerIds.length,
+        subscriberIds: subscriberCustomerIds,
         subscribers: subscribersWithDetails
       });
     }
 
     return NextResponse.json({
-      count: subscriberIds.length,
-      subscriberIds
+      count: subscriberCustomerIds.length,
+      subscriberIds: subscriberCustomerIds
     });
   } catch (error) {
     console.error('Subscribers count error:', error);
