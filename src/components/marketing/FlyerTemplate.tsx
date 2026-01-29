@@ -14,6 +14,10 @@ interface FlyerTemplateProps {
   loyaltyMode?: 'visit' | 'article';
   productName?: string;
   scale?: number;
+  // Tier 2
+  tier2Enabled?: boolean;
+  tier2StampsRequired?: number | null;
+  tier2RewardDescription?: string | null;
 }
 
 export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
@@ -29,18 +33,22 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
       loyaltyMode = 'visit',
       productName,
       scale = 1,
+      tier2Enabled = false,
+      tier2StampsRequired,
+      tier2RewardDescription,
     },
     ref
   ) => {
     const width = 397 * scale;
     const height = 559 * scale;
+    const hasTwoTiers = tier2Enabled && tier2StampsRequired && tier2RewardDescription;
 
     // Get the appropriate text for stamps
-    const getStampsText = () => {
+    const getStampsText = (stamps: number) => {
       if (loyaltyMode === 'article' && productName) {
-        return `Après ${stampsRequired} ${productName}${stampsRequired > 1 ? 's' : ''}`;
+        return `${stamps} ${productName}${stamps > 1 ? 's' : ''}`;
       }
-      return `Après ${stampsRequired} passage${stampsRequired > 1 ? 's' : ''}`;
+      return `${stamps} passage${stamps > 1 ? 's' : ''}`;
     };
 
     return (
@@ -156,53 +164,133 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
             </h1>
           </div>
 
-          {/* REWARD SECTION - Now at TOP (more visible) */}
+          {/* REWARD SECTION */}
           <div
             className="w-full text-center"
             style={{
-              padding: `${16 * scale}px ${18 * scale}px`,
+              padding: `${(hasTwoTiers ? 12 : 16) * scale}px ${(hasTwoTiers ? 12 : 18) * scale}px`,
               borderRadius: `${18 * scale}px`,
               backgroundColor: 'rgba(255,255,255,0.95)',
               boxShadow: '0 15px 40px -10px rgba(0,0,0,0.2)',
             }}
           >
-            <div
-              className="flex items-center justify-center gap-2 mb-2"
-            >
+            <div className="flex items-center justify-center gap-2 mb-2">
               <Gift
                 style={{
-                  width: `${20 * scale}px`,
-                  height: `${20 * scale}px`,
+                  width: `${(hasTwoTiers ? 16 : 20) * scale}px`,
+                  height: `${(hasTwoTiers ? 16 : 20) * scale}px`,
                   color: primaryColor,
                 }}
               />
               <span
                 className="font-bold uppercase tracking-wider"
-                style={{ fontSize: `${10 * scale}px`, color: primaryColor }}
+                style={{ fontSize: `${(hasTwoTiers ? 9 : 10) * scale}px`, color: primaryColor }}
               >
-                Votre récompense
+                {hasTwoTiers ? 'Vos récompenses' : 'Votre récompense'}
               </span>
             </div>
-            <p
-              className="font-black leading-tight"
-              style={{
-                fontSize: `${18 * scale}px`,
-                color: '#1a1a2e',
-                maxWidth: `${280 * scale}px`,
-                margin: '0 auto',
-              }}
-            >
-              {rewardDescription}
-            </p>
-            <p
-              className="font-bold mt-2"
-              style={{
-                fontSize: `${12 * scale}px`,
-                color: primaryColor,
-              }}
-            >
-              {getStampsText()}
-            </p>
+
+            {hasTwoTiers ? (
+              /* TWO TIERS - Side by side */
+              <div className="flex gap-2" style={{ gap: `${8 * scale}px` }}>
+                {/* Tier 1 */}
+                <div
+                  className="flex-1 text-center"
+                  style={{
+                    padding: `${10 * scale}px ${8 * scale}px`,
+                    borderRadius: `${12 * scale}px`,
+                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    border: `2px solid ${primaryColor}`,
+                  }}
+                >
+                  <span
+                    className="font-bold uppercase tracking-wide"
+                    style={{ fontSize: `${7 * scale}px`, color: primaryColor }}
+                  >
+                    Palier 1
+                  </span>
+                  <p
+                    className="font-black leading-tight"
+                    style={{
+                      fontSize: `${12 * scale}px`,
+                      color: '#1a1a2e',
+                      marginTop: `${4 * scale}px`,
+                      marginBottom: `${4 * scale}px`,
+                    }}
+                  >
+                    {rewardDescription}
+                  </p>
+                  <p
+                    className="font-bold"
+                    style={{ fontSize: `${9 * scale}px`, color: primaryColor }}
+                  >
+                    {getStampsText(stampsRequired)}
+                  </p>
+                </div>
+
+                {/* Tier 2 */}
+                <div
+                  className="flex-1 text-center"
+                  style={{
+                    padding: `${10 * scale}px ${8 * scale}px`,
+                    borderRadius: `${12 * scale}px`,
+                    backgroundColor: 'rgba(255,255,255,0.8)',
+                    border: `2px solid #f59e0b`,
+                  }}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    <span
+                      className="font-bold uppercase tracking-wide"
+                      style={{ fontSize: `${7 * scale}px`, color: '#f59e0b' }}
+                    >
+                      Palier 2
+                    </span>
+                    <span style={{ fontSize: `${8 * scale}px` }}>⭐</span>
+                  </div>
+                  <p
+                    className="font-black leading-tight"
+                    style={{
+                      fontSize: `${12 * scale}px`,
+                      color: '#1a1a2e',
+                      marginTop: `${4 * scale}px`,
+                      marginBottom: `${4 * scale}px`,
+                    }}
+                  >
+                    {tier2RewardDescription}
+                  </p>
+                  <p
+                    className="font-bold"
+                    style={{ fontSize: `${9 * scale}px`, color: '#f59e0b' }}
+                  >
+                    {getStampsText(tier2StampsRequired!)}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* SINGLE TIER */
+              <>
+                <p
+                  className="font-black leading-tight"
+                  style={{
+                    fontSize: `${18 * scale}px`,
+                    color: '#1a1a2e',
+                    maxWidth: `${280 * scale}px`,
+                    margin: '0 auto',
+                  }}
+                >
+                  {rewardDescription}
+                </p>
+                <p
+                  className="font-bold mt-2"
+                  style={{
+                    fontSize: `${12 * scale}px`,
+                    color: primaryColor,
+                  }}
+                >
+                  Après {getStampsText(stampsRequired)}
+                </p>
+              </>
+            )}
           </div>
 
           {/* QR Code Card - Now BELOW reward */}

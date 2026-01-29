@@ -253,6 +253,9 @@ Généré par Qarte - La fidélité simplifiée
                   loyaltyMode={merchant.loyalty_mode as 'visit' | 'article'}
                   productName={merchant.product_name || undefined}
                   scale={0.65}
+                  tier2Enabled={merchant.tier2_enabled}
+                  tier2StampsRequired={merchant.tier2_stamps_required}
+                  tier2RewardDescription={merchant.tier2_reward_description}
                 />
               )}
             </div>
@@ -412,6 +415,9 @@ Généré par Qarte - La fidélité simplifiée
             loyaltyMode={merchant.loyalty_mode as 'visit' | 'article'}
             productName={merchant.product_name || undefined}
             scale={1}
+            tier2Enabled={merchant.tier2_enabled}
+            tier2StampsRequired={merchant.tier2_stamps_required}
+            tier2RewardDescription={merchant.tier2_reward_description}
           />
         )}
       </div>
