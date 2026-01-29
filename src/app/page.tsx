@@ -1840,6 +1840,8 @@ function FooterSection() {
           </p>
 
           <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+            <a href="/outils-gratuits/qr-menu" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">QR Code Menu</a>
+            <a href="/outils-gratuits/lien-avis" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">Lien Avis Google</a>
             <a href="/contact" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">Contact</a>
             <a href="/mentions-legales" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">Mentions légales</a>
             <a href="/cgv" className="text-gray-500 hover:text-indigo-600 text-sm transition-colors">CGV</a>

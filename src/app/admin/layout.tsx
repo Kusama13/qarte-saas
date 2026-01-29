@@ -16,6 +16,7 @@ import {
   Shield,
   LogOut,
   Wallet,
+  UserPlus,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/merchants', icon: Store, label: 'Commerçants' },
+  { href: '/admin/leads', icon: UserPlus, label: 'Leads' },
   { href: '/admin/metriques', icon: TrendingUp, label: 'Métriques' },
   { href: '/admin/depenses', icon: Wallet, label: 'Dépenses' },
 ];

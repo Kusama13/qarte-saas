@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
+import { compressOfferImage } from '@/lib/image-compression';
 
 interface NotificationTemplate {
   id: string;
@@ -526,8 +527,11 @@ export default function MarketingPushPage() {
     setUploadingImage(true);
 
     try {
+      // Compress image before upload
+      const compressedFile = await compressOfferImage(file);
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', compressedFile);
       formData.append('merchantId', merchant.id);
 
       const response = await fetch('/api/upload', {

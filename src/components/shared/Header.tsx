@@ -5,7 +5,11 @@ import Link from 'next/link';
 import { Menu, X, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui';
 
-export function Header() {
+interface HeaderProps {
+  minimal?: boolean;
+}
+
+export function Header({ minimal = false }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -19,40 +23,44 @@ export function Header() {
             <span className="text-2xl font-bold text-gray-900">Qarte</span>
           </Link>
 
-          <div className="hidden md:flex md:items-center md:gap-8">
-            <a
-              href="#pricing"
-              className="text-gray-600 transition-colors hover:text-primary"
-            >
-              Tarifs
-            </a>
-            <Link
-              href="/contact"
-              className="text-gray-600 transition-colors hover:text-primary"
-            >
-              Contact
-            </Link>
-            <Link href="/auth/merchant">
-              <Button variant="outline" size="sm">
-                Espace Commerçant
-              </Button>
-            </Link>
-          </div>
+          {!minimal && (
+            <>
+              <div className="hidden md:flex md:items-center md:gap-8">
+                <a
+                  href="#pricing"
+                  className="text-gray-600 transition-colors hover:text-primary"
+                >
+                  Tarifs
+                </a>
+                <Link
+                  href="/contact"
+                  className="text-gray-600 transition-colors hover:text-primary"
+                >
+                  Contact
+                </Link>
+                <Link href="/auth/merchant">
+                  <Button variant="outline" size="sm">
+                    Espace Commerçant
+                  </Button>
+                </Link>
+              </div>
 
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 md:hidden"
-            aria-label="Toggle menu"
-          >
-            {isMenuOpen ? (
-              <X className="w-6 h-6 text-gray-900" />
-            ) : (
-              <Menu className="w-6 h-6 text-gray-900" />
-            )}
-          </button>
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 md:hidden"
+                aria-label="Toggle menu"
+              >
+                {isMenuOpen ? (
+                  <X className="w-6 h-6 text-gray-900" />
+                ) : (
+                  <Menu className="w-6 h-6 text-gray-900" />
+                )}
+              </button>
+            </>
+          )}
         </div>
 
-        {isMenuOpen && (
+        {!minimal && isMenuOpen && (
           <div className="py-4 border-t border-gray-100 md:hidden">
             <div className="flex flex-col gap-4">
               <a

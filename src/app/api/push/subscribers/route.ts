@@ -92,9 +92,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 3: Get push subscriptions for ANY of these customer IDs
+    // Use inner join to ensure the customer still exists (filter orphaned subscriptions)
     const { data: subscriptions, error } = await supabase
       .from('push_subscriptions')
-      .select('customer_id')
+      .select('customer_id, customers!inner(id)')
       .in('customer_id', allCustomerIds);
 
     if (error) {

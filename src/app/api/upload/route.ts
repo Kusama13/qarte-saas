@@ -24,10 +24,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Type de fichier non supporté. Utilisez JPG, PNG, WebP ou GIF.' }, { status: 400 });
     }
 
-    // Validate file size (max 2MB)
-    const maxSize = 2 * 1024 * 1024; // 2MB
+    // Validate file size (max 10MB - images are compressed client-side)
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      return NextResponse.json({ error: 'Fichier trop volumineux. Maximum 2 Mo.' }, { status: 400 });
+      return NextResponse.json({ error: 'Fichier trop volumineux. Maximum 10 Mo.' }, { status: 400 });
     }
 
     // Generate unique filename

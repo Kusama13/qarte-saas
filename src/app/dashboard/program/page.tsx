@@ -24,6 +24,7 @@ import {
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { MerchantSettingsForm, ProgramGuide, type LoyaltySettings } from '@/components/loyalty';
+import { compressLogo } from '@/lib/image-compression';
 import type { Merchant, LoyaltyMode } from '@/types';
 
 // Images par type de commerce
@@ -173,12 +174,15 @@ export default function ProgramPage() {
 
     setUploading(true);
     try {
+      // Compress logo before upload
+      const compressedFile = await compressLogo(file);
+
       const fileExt = file.name.split('.').pop();
       const fileName = `${merchant?.id}-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(fileName, file);
+        .upload(fileName, compressedFile);
 
       if (uploadError) throw uploadError;
 

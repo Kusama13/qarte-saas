@@ -10,8 +10,9 @@ import {
   TrendingUp,
   Star,
   Zap,
-  Phone,
+  Mail,
   Clock,
+  Loader2,
 } from "lucide-react";
 
 // --- Components ---
@@ -111,7 +112,7 @@ const EbookTeaser = () => {
 };
 
 const LeadForm = () => {
-  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -119,13 +120,24 @@ const LeadForm = () => {
     setStatus("loading");
 
     try {
-      const response = await fetch("/api/demo-leads", {
+      // Save lead
+      const leadResponse = await fetch("/api/leads/tools", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone_number: phone }),
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          source: "ebook",
+        }),
       });
 
-      if (response.ok) {
+      if (leadResponse.ok) {
+        // Send email with ebook
+        await fetch("/api/emails/ebook", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.toLowerCase().trim() }),
+        });
+
         setStatus("success");
         fbEvents.lead();
       } else {
@@ -143,24 +155,19 @@ const LeadForm = () => {
           <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle2 className="w-10 h-10 text-white" />
           </div>
-          <h3 className="text-xl font-bold text-green-900 mb-2">Votre guide est prêt !</h3>
-          <p className="text-green-700 mb-6">Cliquez ci-dessous pour télécharger votre guide gratuit.</p>
+          <h3 className="text-xl font-bold text-green-900 mb-2">Votre guide est en route !</h3>
+          <p className="text-green-700 mb-6">Consultez votre boite mail pour telecharger le guide.</p>
+          <p className="text-sm text-gray-600 mb-4">
+            Vous pouvez aussi le telecharger directement :
+          </p>
           <a
             href="/ebooks/guide-fidelisation.pdf"
             download="Guide-Fidelisation-Qarte.pdf"
-            onClick={() => {
-              setTimeout(() => {
-                window.location.href = "https://getqarte.com";
-              }, 5000);
-            }}
             className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-colors"
           >
             <ArrowRight className="w-5 h-5" />
-            Télécharger le guide PDF
+            Telecharger le guide PDF
           </a>
-          <p className="mt-4 text-sm text-gray-500">
-            Redirection vers getqarte.com dans 5 secondes...
-          </p>
         </div>
       </div>
     );
@@ -171,14 +178,14 @@ const LeadForm = () => {
       <form onSubmit={handleSubmit} className="space-y-4 animate-fade-in">
         <div className="relative group">
           <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-            <Phone className="w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
+            <Mail className="w-5 h-5 text-gray-400 group-focus-within:text-primary transition-colors" />
           </div>
           <input
-            type="tel"
+            type="email"
             required
-            placeholder="Votre numéro de mobile (ex: 06 12 34 56 78)"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Votre adresse email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-100 focus:border-primary transition-all duration-300 rounded-xl outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
@@ -189,7 +196,7 @@ const LeadForm = () => {
           className="btn-primary w-full h-14 text-lg font-bold shadow-xl shadow-primary/20 flex items-center justify-center gap-2 group hover-lift"
         >
           {status === "loading" ? (
-            <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <Loader2 className="w-6 h-6 animate-spin" />
           ) : (
             <>
               RECEVOIR LE GUIDE GRATUITEMENT
@@ -200,7 +207,7 @@ const LeadForm = () => {
 
         <p className="text-xs text-gray-500 text-center flex items-center justify-center gap-1.5">
           <Lock className="w-3 h-3" />
-          Accès instantané par SMS • Vos données restent privées
+          Acces instantane par email • Vos donnees restent privees
         </p>
       </form>
     </div>

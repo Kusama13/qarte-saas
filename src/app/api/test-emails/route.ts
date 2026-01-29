@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { render } from '@react-email/render';
+import { EbookEmail, QRCodeEmail } from '@/emails';
 import {
   sendWelcomeEmail,
   sendTrialEndingEmail,
@@ -6,7 +8,35 @@ import {
   sendSubscriptionConfirmedEmail,
 } from '@/lib/email';
 
-// Route de test - À SUPPRIMER EN PRODUCTION
+// GET - Preview emails in browser (dev only)
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const type = searchParams.get('type');
+
+  try {
+    let html: string;
+
+    if (type === 'ebook') {
+      html = await render(EbookEmail({
+        downloadUrl: 'https://getqarte.com/ebooks/guide-fidelisation.pdf',
+      }));
+    } else if (type === 'qrcode') {
+      html = await render(QRCodeEmail({
+        menuUrl: 'https://menu.getqarte.com/restaurant-demo',
+        businessName: 'Restaurant Demo',
+      }));
+    } else {
+      return NextResponse.json({ error: 'Invalid email type. Use ?type=ebook or ?type=qrcode' }, { status: 400 });
+    }
+
+    return NextResponse.json({ html });
+  } catch (error) {
+    console.error('Error rendering email:', error);
+    return NextResponse.json({ error: 'Failed to render email' }, { status: 500 });
+  }
+}
+
+// POST - Send test emails (requires admin token)
 export async function POST(request: NextRequest) {
   // Vérifier l'authentification admin (obligatoire)
   const authHeader = request.headers.get('authorization');
