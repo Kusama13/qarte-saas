@@ -11,7 +11,8 @@ import {
   Wrench,
   MoreHorizontal,
   Calendar,
-  X,
+  Settings,
+  Pencil,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cn } from '@/lib/utils';
@@ -28,14 +29,14 @@ const CATEGORIES = {
 
 type Category = keyof typeof CATEGORIES;
 
-// Fixed costs (SaaS subscriptions)
-const FIXED_COSTS: { name: string; category: Category; monthly: number }[] = [
-  { name: 'Vercel', category: 'infra', monthly: 0 },
-  { name: 'Supabase', category: 'infra', monthly: 0 },
-  { name: 'Domaine (getqarte.com)', category: 'infra', monthly: 1 },
-  { name: 'Resend (emails)', category: 'outils', monthly: 0 },
-  // Add more fixed costs here as needed
-];
+interface FixedCost {
+  id: string;
+  name: string;
+  category: Category;
+  monthly_amount: number;
+  is_active: boolean;
+  created_at: string;
+}
 
 interface Expense {
   id: string;
@@ -49,88 +50,181 @@ interface Expense {
 
 export default function DepensesPage() {
   const supabase = createClientComponentClient();
+  const [fixedCosts, setFixedCosts] = useState<FixedCost[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
+
+  // Expense modal
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [savingExpense, setSavingExpense] = useState(false);
+  const [expenseForm, setExpenseForm] = useState({
     name: '',
     category: 'autre' as Category,
     amount: '',
-    month: new Date().toISOString().slice(0, 7),
+    month: '2026-01',
     is_recurring: false,
   });
 
-  // Generate months for the last 6 months + current
+  // Fixed cost modal
+  const [fixedCostModalOpen, setFixedCostModalOpen] = useState(false);
+  const [savingFixedCost, setSavingFixedCost] = useState(false);
+  const [editingFixedCost, setEditingFixedCost] = useState<FixedCost | null>(null);
+  const [fixedCostForm, setFixedCostForm] = useState({
+    name: '',
+    category: 'infra' as Category,
+    monthly_amount: '',
+  });
+
+  // Generate 12 months starting from January 2026
   const months = useMemo(() => {
     const result: string[] = [];
-    const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(2026, i, 1);
       result.push(date.toISOString().slice(0, 7));
     }
     return result;
   }, []);
 
-  const fetchExpenses = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('admin_expenses')
-        .select('*')
-        .order('month', { ascending: false });
+      const [{ data: fixedData }, { data: expensesData }] = await Promise.all([
+        supabase.from('admin_fixed_costs').select('*').eq('is_active', true).order('name'),
+        supabase.from('admin_expenses').select('*').order('month', { ascending: false }),
+      ]);
 
-      if (error) throw error;
-      setExpenses(data || []);
+      setFixedCosts(fixedData || []);
+      setExpenses(expensesData || []);
     } catch (error) {
-      console.error('Error fetching expenses:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
   }, [supabase]);
 
   useEffect(() => {
-    fetchExpenses();
-  }, [fetchExpenses]);
+    fetchData();
+  }, [fetchData]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Handle expense submission
+  const handleExpenseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.amount) return;
+    if (!expenseForm.name || !expenseForm.amount) return;
 
-    setSaving(true);
+    setSavingExpense(true);
     try {
       const { error } = await supabase.from('admin_expenses').insert({
-        name: formData.name,
-        category: formData.category,
-        amount: parseFloat(formData.amount),
-        month: formData.month,
-        is_recurring: formData.is_recurring,
+        name: expenseForm.name,
+        category: expenseForm.category,
+        amount: parseFloat(expenseForm.amount),
+        month: expenseForm.month,
+        is_recurring: expenseForm.is_recurring,
       });
 
       if (error) throw error;
 
-      setModalOpen(false);
-      setFormData({
+      setExpenseModalOpen(false);
+      setExpenseForm({
         name: '',
         category: 'autre',
         amount: '',
-        month: new Date().toISOString().slice(0, 7),
+        month: '2026-01',
         is_recurring: false,
       });
-      fetchExpenses();
+      fetchData();
     } catch (error) {
       console.error('Error saving expense:', error);
     } finally {
-      setSaving(false);
+      setSavingExpense(false);
     }
+  };
+
+  // Handle fixed cost submission
+  const handleFixedCostSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fixedCostForm.name || !fixedCostForm.monthly_amount) return;
+
+    setSavingFixedCost(true);
+    try {
+      if (editingFixedCost) {
+        // Update existing
+        const { error } = await supabase
+          .from('admin_fixed_costs')
+          .update({
+            name: fixedCostForm.name,
+            category: fixedCostForm.category,
+            monthly_amount: parseFloat(fixedCostForm.monthly_amount),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editingFixedCost.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new
+        const { error } = await supabase.from('admin_fixed_costs').insert({
+          name: fixedCostForm.name,
+          category: fixedCostForm.category,
+          monthly_amount: parseFloat(fixedCostForm.monthly_amount),
+          is_active: true,
+        });
+
+        if (error) throw error;
+      }
+
+      closeFixedCostModal();
+      fetchData();
+    } catch (error) {
+      console.error('Error saving fixed cost:', error);
+    } finally {
+      setSavingFixedCost(false);
+    }
+  };
+
+  const openFixedCostModal = (cost?: FixedCost) => {
+    if (cost) {
+      setEditingFixedCost(cost);
+      setFixedCostForm({
+        name: cost.name,
+        category: cost.category,
+        monthly_amount: cost.monthly_amount.toString(),
+      });
+    } else {
+      setEditingFixedCost(null);
+      setFixedCostForm({
+        name: '',
+        category: 'infra',
+        monthly_amount: '',
+      });
+    }
+    setFixedCostModalOpen(true);
+  };
+
+  const closeFixedCostModal = () => {
+    setFixedCostModalOpen(false);
+    setEditingFixedCost(null);
+    setFixedCostForm({
+      name: '',
+      category: 'infra',
+      monthly_amount: '',
+    });
   };
 
   const deleteExpense = async (id: string) => {
     if (!confirm('Supprimer cette dépense ?')) return;
     try {
       await supabase.from('admin_expenses').delete().eq('id', id);
-      fetchExpenses();
+      fetchData();
     } catch (error) {
       console.error('Error deleting expense:', error);
+    }
+  };
+
+  const deleteFixedCost = async (id: string) => {
+    if (!confirm('Supprimer ce coût fixe ?')) return;
+    try {
+      await supabase.from('admin_fixed_costs').delete().eq('id', id);
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting fixed cost:', error);
     }
   };
 
@@ -140,23 +234,25 @@ export default function DepensesPage() {
       name: string;
       category: Category;
       isFixed: boolean;
+      fixedCostId?: string;
       expenseId?: string;
       values: Record<string, number>;
       total: number;
     }[] = [];
 
     // Add fixed costs (repeat for each month)
-    FIXED_COSTS.forEach((cost) => {
+    fixedCosts.forEach((cost) => {
       const values: Record<string, number> = {};
       months.forEach((month) => {
-        values[month] = cost.monthly;
+        values[month] = cost.monthly_amount;
       });
       rows.push({
         name: cost.name,
         category: cost.category,
         isFixed: true,
+        fixedCostId: cost.id,
         values,
-        total: cost.monthly * months.length,
+        total: cost.monthly_amount * months.length,
       });
     });
 
@@ -190,7 +286,7 @@ export default function DepensesPage() {
     });
 
     return rows;
-  }, [expenses, months]);
+  }, [fixedCosts, expenses, months]);
 
   // Calculate totals by category and month
   const totals = useMemo(() => {
@@ -260,14 +356,66 @@ export default function DepensesPage() {
           <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Dépenses</h1>
           <p className="mt-1 text-gray-600">Suivi des coûts mensuels</p>
         </div>
-        <Button
-          onClick={() => setModalOpen(true)}
-          className="bg-[#5167fc] hover:bg-[#4154d4] text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Ajouter
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => openFixedCostModal()}
+            variant="outline"
+            className="border-gray-200"
+          >
+            <Settings className="w-4 h-4 mr-2" />
+            Coût fixe
+          </Button>
+          <Button
+            onClick={() => setExpenseModalOpen(true)}
+            className="bg-[#5167fc] hover:bg-[#4154d4] text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Dépense
+          </Button>
+        </div>
       </div>
+
+      {/* Fixed Costs Section */}
+      {fixedCosts.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              <Settings className="w-4 h-4 text-gray-500" />
+              Coûts fixes mensuels
+            </h2>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {fixedCosts.map((cost) => {
+              const catConfig = CATEGORIES[cost.category];
+              return (
+                <div key={cost.id} className="px-5 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className={cn("px-2 py-1 text-xs font-medium rounded-full", catConfig.color)}>
+                      {catConfig.label}
+                    </span>
+                    <span className="font-medium text-gray-900">{cost.name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-gray-900">{cost.monthly_amount}€/mois</span>
+                    <button
+                      onClick={() => openFixedCostModal(cost)}
+                      className="p-1.5 text-gray-400 hover:text-[#5167fc] hover:bg-[#5167fc]/10 rounded-lg transition-colors"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteFixedCost(cost.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -333,98 +481,107 @@ export default function DepensesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {tableData.map((row, idx) => {
-                const catConfig = CATEGORIES[row.category];
-                return (
-                  <tr key={idx} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-900">
-                      {row.name}
-                      {row.isFixed && (
-                        <span className="ml-2 text-xs text-gray-400">(fixe)</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={cn("px-2 py-1 text-xs font-medium rounded-full", catConfig.color)}>
-                        {catConfig.label}
-                      </span>
-                    </td>
-                    {months.map((month) => (
-                      <td key={month} className="text-center px-3 py-3 text-gray-600">
-                        {row.values[month] > 0 ? `${row.values[month]}€` : '-'}
+              {tableData.length === 0 ? (
+                <tr>
+                  <td colSpan={15} className="px-4 py-8 text-center text-gray-500">
+                    Aucune dépense. Ajoutez des coûts fixes ou des dépenses ponctuelles.
+                  </td>
+                </tr>
+              ) : (
+                tableData.map((row, idx) => {
+                  const catConfig = CATEGORIES[row.category];
+                  return (
+                    <tr key={idx} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 font-medium text-gray-900">
+                        {row.name}
+                        {row.isFixed && (
+                          <span className="ml-2 text-xs text-gray-400">(fixe)</span>
+                        )}
                       </td>
-                    ))}
-                    <td className="text-center px-4 py-3 font-semibold text-gray-900 bg-gray-50">
-                      {row.total}€
-                    </td>
-                    <td className="px-2 py-3">
-                      {!row.isFixed && row.expenseId && (
-                        <button
-                          onClick={() => deleteExpense(row.expenseId!)}
-                          className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
+                      <td className="px-4 py-3">
+                        <span className={cn("px-2 py-1 text-xs font-medium rounded-full", catConfig.color)}>
+                          {catConfig.label}
+                        </span>
+                      </td>
+                      {months.map((month) => (
+                        <td key={month} className="text-center px-3 py-3 text-gray-600">
+                          {row.values[month] > 0 ? `${row.values[month]}€` : '-'}
+                        </td>
+                      ))}
+                      <td className="text-center px-4 py-3 font-semibold text-gray-900 bg-gray-50">
+                        {row.total}€
+                      </td>
+                      <td className="px-2 py-3">
+                        {!row.isFixed && row.expenseId && (
+                          <button
+                            onClick={() => deleteExpense(row.expenseId!)}
+                            className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
 
-            {/* Category Totals */}
-            <tfoot className="bg-gray-50 border-t-2 border-gray-200">
-              {(Object.entries(CATEGORIES) as [Category, typeof CATEGORIES[Category]][]).map(([cat, config]) => {
-                if (totals.categoryTotals[cat] === 0) return null;
-                return (
-                  <tr key={cat} className="border-b border-gray-100">
-                    <td colSpan={2} className="px-4 py-2 text-sm font-medium text-gray-600">
-                      Total {config.label}
-                    </td>
-                    {months.map((month) => (
-                      <td key={month} className="text-center px-3 py-2 text-sm text-gray-600">
-                        {totals.byCategory[cat]?.[month] > 0 ? `${totals.byCategory[cat][month]}€` : '-'}
+            {tableData.length > 0 && (
+              <tfoot className="bg-gray-50 border-t-2 border-gray-200">
+                {(Object.entries(CATEGORIES) as [Category, typeof CATEGORIES[Category]][]).map(([cat, config]) => {
+                  if (totals.categoryTotals[cat] === 0) return null;
+                  return (
+                    <tr key={cat} className="border-b border-gray-100">
+                      <td colSpan={2} className="px-4 py-2 text-sm font-medium text-gray-600">
+                        Total {config.label}
                       </td>
-                    ))}
-                    <td className="text-center px-4 py-2 font-semibold text-gray-700 bg-gray-100">
-                      {totals.categoryTotals[cat]}€
-                    </td>
-                    <td></td>
-                  </tr>
-                );
-              })}
+                      {months.map((month) => (
+                        <td key={month} className="text-center px-3 py-2 text-sm text-gray-600">
+                          {totals.byCategory[cat]?.[month] > 0 ? `${totals.byCategory[cat][month]}€` : '-'}
+                        </td>
+                      ))}
+                      <td className="text-center px-4 py-2 font-semibold text-gray-700 bg-gray-100">
+                        {totals.categoryTotals[cat]}€
+                      </td>
+                      <td></td>
+                    </tr>
+                  );
+                })}
 
-              {/* Grand Total Row */}
-              <tr className="bg-[#5167fc]/5">
-                <td colSpan={2} className="px-4 py-3 text-sm font-bold text-[#5167fc]">
-                  TOTAL GÉNÉRAL
-                </td>
-                {months.map((month) => (
-                  <td key={month} className="text-center px-3 py-3 font-bold text-[#5167fc]">
-                    {totals.byMonth[month]}€
+                {/* Grand Total Row */}
+                <tr className="bg-[#5167fc]/5">
+                  <td colSpan={2} className="px-4 py-3 text-sm font-bold text-[#5167fc]">
+                    TOTAL GÉNÉRAL
                   </td>
-                ))}
-                <td className="text-center px-4 py-3 font-bold text-white bg-[#5167fc]">
-                  {totals.grandTotal}€
-                </td>
-                <td></td>
-              </tr>
-            </tfoot>
+                  {months.map((month) => (
+                    <td key={month} className="text-center px-3 py-3 font-bold text-[#5167fc]">
+                      {totals.byMonth[month]}€
+                    </td>
+                  ))}
+                  <td className="text-center px-4 py-3 font-bold text-white bg-[#5167fc]">
+                    {totals.grandTotal}€
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
       </div>
 
       {/* Add Expense Modal */}
       <Modal
-        isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        title="Ajouter une dépense"
+        isOpen={expenseModalOpen}
+        onClose={() => setExpenseModalOpen(false)}
+        title="Ajouter une dépense ponctuelle"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleExpenseSubmit} className="space-y-4">
           <Input
             label="Nom de la dépense"
             placeholder="Ex: Freelance design, Flyers..."
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            value={expenseForm.name}
+            onChange={(e) => setExpenseForm({ ...expenseForm, name: e.target.value })}
             required
           />
 
@@ -432,8 +589,8 @@ export default function DepensesPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
               <select
-                value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value as Category })}
+                value={expenseForm.category}
+                onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value as Category })}
                 className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-[#5167fc]"
               >
                 {(Object.entries(CATEGORIES) as [Category, typeof CATEGORIES[Category]][]).map(([key, cat]) => (
@@ -446,52 +603,108 @@ export default function DepensesPage() {
               label="Montant (€)"
               type="number"
               placeholder="0"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+              value={expenseForm.amount}
+              onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
               required
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Mois</label>
-              <input
-                type="month"
-                value={formData.month}
-                onChange={(e) => setFormData({ ...formData, month: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-[#5167fc]"
-              />
-            </div>
-
-            <div className="flex items-end pb-2">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={formData.is_recurring}
-                  onChange={(e) => setFormData({ ...formData, is_recurring: e.target.checked })}
-                  className="w-4 h-4 text-[#5167fc] rounded focus:ring-[#5167fc]"
-                />
-                <span className="text-sm text-gray-700">Récurrent chaque mois</span>
-              </label>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Mois</label>
+            <input
+              type="month"
+              value={expenseForm.month}
+              onChange={(e) => setExpenseForm({ ...expenseForm, month: e.target.value })}
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-[#5167fc]"
+            />
           </div>
 
           <div className="flex gap-3 pt-2">
             <Button
               type="button"
               variant="outline"
-              onClick={() => setModalOpen(false)}
+              onClick={() => setExpenseModalOpen(false)}
               className="flex-1"
             >
               Annuler
             </Button>
             <Button
               type="submit"
-              disabled={saving || !formData.name || !formData.amount}
+              disabled={savingExpense || !expenseForm.name || !expenseForm.amount}
               className="flex-1 bg-[#5167fc] hover:bg-[#4154d4] text-white"
             >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+              {savingExpense ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
               Ajouter
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Add/Edit Fixed Cost Modal */}
+      <Modal
+        isOpen={fixedCostModalOpen}
+        onClose={closeFixedCostModal}
+        title={editingFixedCost ? "Modifier le coût fixe" : "Ajouter un coût fixe"}
+      >
+        <form onSubmit={handleFixedCostSubmit} className="space-y-4">
+          <Input
+            label="Nom"
+            placeholder="Ex: Vercel, Supabase, Domaine..."
+            value={fixedCostForm.name}
+            onChange={(e) => setFixedCostForm({ ...fixedCostForm, name: e.target.value })}
+            required
+          />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+              <select
+                value={fixedCostForm.category}
+                onChange={(e) => setFixedCostForm({ ...fixedCostForm, category: e.target.value as Category })}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:outline-none focus:border-[#5167fc]"
+              >
+                {(Object.entries(CATEGORIES) as [Category, typeof CATEGORIES[Category]][]).map(([key, cat]) => (
+                  <option key={key} value={key}>{cat.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <Input
+              label="Montant mensuel (€)"
+              type="number"
+              placeholder="0"
+              value={fixedCostForm.monthly_amount}
+              onChange={(e) => setFixedCostForm({ ...fixedCostForm, monthly_amount: e.target.value })}
+              required
+            />
+          </div>
+
+          <p className="text-xs text-gray-500">
+            Ce montant sera appliqué automatiquement à chaque mois de l'année.
+          </p>
+
+          <div className="flex gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeFixedCostModal}
+              className="flex-1"
+            >
+              Annuler
+            </Button>
+            <Button
+              type="submit"
+              disabled={savingFixedCost || !fixedCostForm.name || !fixedCostForm.monthly_amount}
+              className="flex-1 bg-[#5167fc] hover:bg-[#4154d4] text-white"
+            >
+              {savingFixedCost ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : editingFixedCost ? (
+                <Pencil className="w-4 h-4 mr-2" />
+              ) : (
+                <Plus className="w-4 h-4 mr-2" />
+              )}
+              {editingFixedCost ? 'Modifier' : 'Ajouter'}
             </Button>
           </div>
         </form>

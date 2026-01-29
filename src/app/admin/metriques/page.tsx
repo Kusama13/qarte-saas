@@ -83,7 +83,8 @@ export default function MetriquesPage() {
       const sixMonthsAgo = new Date(now);
       sixMonthsAgo.setMonth(now.getMonth() - 6);
 
-      // Fetch all data in parallel
+      // Fetch all data in parallel (exclude admin accounts from merchant stats)
+      const notAdmin = 'is_admin.is.null,is_admin.eq.false';
       const [
         { count: totalMerchants },
         { count: totalCustomers },
@@ -96,15 +97,15 @@ export default function MetriquesPage() {
         { data: sixMonthMerchants },
         { data: leadsData },
       ] = await Promise.all([
-        supabase.from('merchants').select('*', { count: 'exact', head: true }),
+        supabase.from('merchants').select('*', { count: 'exact', head: true }).or(notAdmin),
         supabase.from('customers').select('*', { count: 'exact', head: true }),
         supabase.from('visits').select('*', { count: 'exact', head: true }),
-        supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active'),
-        supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'trial'),
-        supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'cancelled'),
-        supabase.from('merchants').select('created_at').gte('created_at', oneWeekAgo.toISOString()),
-        supabase.from('merchants').select('created_at').gte('created_at', oneMonthAgo.toISOString()),
-        supabase.from('merchants').select('created_at, subscription_status').gte('created_at', sixMonthsAgo.toISOString()),
+        supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active').or(notAdmin),
+        supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'trial').or(notAdmin),
+        supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'cancelled').or(notAdmin),
+        supabase.from('merchants').select('created_at').gte('created_at', oneWeekAgo.toISOString()).or(notAdmin),
+        supabase.from('merchants').select('created_at').gte('created_at', oneMonthAgo.toISOString()).or(notAdmin),
+        supabase.from('merchants').select('created_at, subscription_status').gte('created_at', sixMonthsAgo.toISOString()).or(notAdmin),
         supabase.from('demo_leads').select('*').order('created_at', { ascending: false }),
       ]);
 

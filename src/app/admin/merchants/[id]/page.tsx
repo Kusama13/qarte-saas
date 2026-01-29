@@ -35,6 +35,10 @@ interface Merchant {
   stamps_required: number;
   reward_description: string;
   loyalty_mode: 'visit' | 'article';
+  // Tier 2 fields
+  tier2_enabled: boolean;
+  tier2_stamps_required: number | null;
+  tier2_reward_description: string | null;
   // Offer fields
   offer_active: boolean;
   offer_title: string | null;
@@ -297,10 +301,11 @@ export default function MerchantDetailPage() {
 
         {/* Programme de fidélité */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          {/* Palier 1 */}
           <div className="p-4 bg-[#5167fc]/5 rounded-lg border border-[#5167fc]/10">
             <div className="flex items-center gap-2 mb-2">
               <Gift className="w-5 h-5 text-[#5167fc]" />
-              <span className="font-medium text-gray-900">Programme de fidélité</span>
+              <span className="font-medium text-gray-900">Palier 1</span>
             </div>
             <p className="text-gray-700">
               <span className="font-semibold">{merchant.stamps_required} {merchant.loyalty_mode === 'article' ? 'articles' : 'passages'}</span> pour obtenir : {merchant.reward_description || 'Non configuré'}
@@ -312,6 +317,37 @@ export default function MerchantDetailPage() {
             </div>
           </div>
 
+          {/* Palier 2 */}
+          {merchant.tier2_enabled && merchant.tier2_stamps_required && (
+            <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Gift className="w-5 h-5 text-amber-600" />
+                <span className="font-medium text-gray-900">Palier 2</span>
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
+                  Actif
+                </span>
+              </div>
+              <p className="text-gray-700">
+                <span className="font-semibold">{merchant.tier2_stamps_required} {merchant.loyalty_mode === 'article' ? 'articles' : 'passages'}</span> pour obtenir : {merchant.tier2_reward_description || 'Non configuré'}
+              </p>
+            </div>
+          )}
+
+          {/* Palier 2 non activé */}
+          {!merchant.tier2_enabled && (
+            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-2 mb-2">
+                <Gift className="w-5 h-5 text-gray-400" />
+                <span className="font-medium text-gray-500">Palier 2</span>
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-500">
+                  Non activé
+                </span>
+              </div>
+              <p className="text-gray-500 text-sm">
+                Le commerçant n'a pas activé le second palier de récompense.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Current Temporary Offer */}

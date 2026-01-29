@@ -62,25 +62,25 @@ export default function AdminLayout({
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-50 w-72 h-full bg-[#0a0a0a] border-r border-gray-800/50 transition-transform duration-300 lg:translate-x-0',
+          'fixed top-0 left-0 z-50 w-72 h-full bg-white border-r border-gray-200 transition-transform duration-300 lg:translate-x-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-800/50">
+          <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-gray-900 border border-gray-800 rounded-lg">
+              <div className="flex items-center justify-center w-10 h-10 bg-[#5167fc]/10 rounded-lg">
                 <Shield className="w-5 h-5 text-[#5167fc]" />
               </div>
               <div>
-                <span className="text-xl font-bold text-gray-100 tracking-tight">Qarte</span>
+                <span className="text-xl font-bold text-gray-900 tracking-tight">Qarte</span>
                 <span className="block text-xs text-gray-500 font-medium">Admin Panel</span>
               </div>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
-              className="p-2 lg:hidden text-gray-500 hover:text-white"
+              className="p-2 lg:hidden text-gray-400 hover:text-gray-600"
             >
               <X className="w-5 h-5" />
             </button>
@@ -99,11 +99,11 @@ export default function AdminLayout({
                   className={cn(
                     'flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 group',
                     isActive
-                      ? 'bg-[#5167fc] text-white shadow-md shadow-[#5167fc]/10'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-[#5167fc] text-white shadow-md shadow-[#5167fc]/20'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   )}
                 >
-                  <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-white" : "text-gray-500 group-hover:text-[#5167fc]")} />
+                  <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-white" : "text-gray-400 group-hover:text-[#5167fc]")} />
                   <span className="font-medium text-sm">{item.label}</span>
                 </Link>
               );
@@ -111,19 +111,19 @@ export default function AdminLayout({
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-800/50 space-y-1.5">
+          <div className="p-4 border-t border-gray-100 space-y-1.5">
             <Link
               href="/dashboard"
-              className="flex items-center gap-3 px-4 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-all duration-200 group"
+              className="flex items-center gap-3 px-4 py-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200 group"
             >
-              <ArrowLeft className="w-5 h-5 transition-colors group-hover:text-[#5167fc]" />
+              <ArrowLeft className="w-5 h-5 transition-colors text-gray-400 group-hover:text-[#5167fc]" />
               <span className="font-medium text-sm">Retour commerçant</span>
             </Link>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-2.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200 group"
+              className="flex items-center gap-3 w-full px-4 py-2.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 group"
             >
-              <LogOut className="w-5 h-5 transition-colors group-hover:text-red-500" />
+              <LogOut className="w-5 h-5 transition-colors text-gray-400 group-hover:text-red-500" />
               <span className="font-medium text-sm">Déconnexion</span>
             </button>
           </div>

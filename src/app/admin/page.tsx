@@ -141,15 +141,17 @@ export default function AdminDashboardPage() {
   // DATA FETCHING
   // ============================================
   const fetchStats = useCallback(async () => {
+    // Exclude admin accounts from stats
+    const notAdmin = 'is_admin.is.null,is_admin.eq.false';
     const [
       { count: totalMerchants },
       { count: trialMerchants },
       { count: activeMerchants },
       { count: totalCustomers },
     ] = await Promise.all([
-      supabase.from('merchants').select('*', { count: 'exact', head: true }),
-      supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'trial'),
-      supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active'),
+      supabase.from('merchants').select('*', { count: 'exact', head: true }).or(notAdmin),
+      supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'trial').or(notAdmin),
+      supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active').or(notAdmin),
       supabase.from('customers').select('*', { count: 'exact', head: true }),
     ]);
 
@@ -165,11 +167,13 @@ export default function AdminDashboardPage() {
     const threeDaysFromNow = new Date();
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
 
+    // Exclude admin accounts
     const [{ data: endingTrials }, { data: recent }] = await Promise.all([
       supabase
         .from('merchants')
         .select('*')
         .eq('subscription_status', 'trial')
+        .or('is_admin.is.null,is_admin.eq.false')
         .lte('trial_ends_at', threeDaysFromNow.toISOString())
         .gte('trial_ends_at', new Date().toISOString())
         .order('trial_ends_at', { ascending: true })
@@ -177,6 +181,7 @@ export default function AdminDashboardPage() {
       supabase
         .from('merchants')
         .select('*')
+        .or('is_admin.is.null,is_admin.eq.false')
         .order('created_at', { ascending: false })
         .limit(5),
     ]);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Search,
@@ -33,6 +33,7 @@ interface Merchant {
   subscription_status: string;
   trial_ends_at: string | null;
   created_at: string;
+  is_admin?: boolean;
   _count?: {
     customers: number;
   };
@@ -68,41 +69,59 @@ export default function AdminMerchantsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
 
-  useEffect(() => {
-    const fetchMerchants = async () => {
-      try {
-        const { data: merchantsData, error } = await supabase
-          .from('merchants')
-          .select('*')
-          .order('created_at', { ascending: false });
+  const fetchMerchants = useCallback(async () => {
+    try {
+      // Fetch ALL merchants (including admins) for the list
+      const { data: merchantsData, error } = await supabase
+        .from('merchants')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        if (error) throw error;
+      if (error) throw error;
 
-        // Count customers for each merchant
-        const merchantsWithCounts = await Promise.all(
-          (merchantsData || []).map(async (merchant) => {
-            const { count } = await supabase
-              .from('loyalty_cards')
-              .select('*', { count: 'exact', head: true })
-              .eq('merchant_id', merchant.id);
+      // Count customers for each merchant
+      const merchantsWithCounts = await Promise.all(
+        (merchantsData || []).map(async (merchant) => {
+          const { count } = await supabase
+            .from('loyalty_cards')
+            .select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id);
 
-            return {
-              ...merchant,
-              _count: { customers: count || 0 },
-            };
-          })
-        );
+          return {
+            ...merchant,
+            _count: { customers: count || 0 },
+          };
+        })
+      );
 
-        setMerchants(merchantsWithCounts);
-      } catch (error) {
-        console.error('Error fetching merchants:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMerchants();
+      setMerchants(merchantsWithCounts);
+    } catch (error) {
+      console.error('Error fetching merchants:', error);
+    } finally {
+      setLoading(false);
+    }
   }, [supabase]);
+
+  useEffect(() => {
+    fetchMerchants();
+
+    // Subscribe to realtime changes on loyalty_cards
+    const channel = supabase
+      .channel('loyalty_cards_changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'loyalty_cards' },
+        () => {
+          // Refetch when any loyalty_card is added or deleted
+          fetchMerchants();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, fetchMerchants]);
 
   // Helper to check if trial is expired
   const isTrialExpired = (merchant: Merchant) => {
@@ -111,21 +130,24 @@ export default function AdminMerchantsPage() {
     return new Date(merchant.trial_ends_at) < new Date();
   };
 
-  // Stats
+  // Stats (exclude admin accounts from counts)
   const stats = useMemo(() => {
-    const total = merchants.length;
-    const trialActive = merchants.filter(m => m.subscription_status === 'trial' && !isTrialExpired(m)).length;
-    const trialExpired = merchants.filter(m => isTrialExpired(m)).length;
-    const active = merchants.filter(m => m.subscription_status === 'active').length;
-    const cancelled = merchants.filter(m => m.subscription_status === 'cancelled').length;
+    const nonAdminMerchants = merchants.filter(m => !m.is_admin);
+    const adminCount = merchants.filter(m => m.is_admin).length;
+
+    const total = nonAdminMerchants.length;
+    const trialActive = nonAdminMerchants.filter(m => m.subscription_status === 'trial' && !isTrialExpired(m)).length;
+    const trialExpired = nonAdminMerchants.filter(m => isTrialExpired(m)).length;
+    const active = nonAdminMerchants.filter(m => m.subscription_status === 'active').length;
+    const cancelled = nonAdminMerchants.filter(m => m.subscription_status === 'cancelled').length;
 
     const byType: Record<string, number> = {};
-    merchants.forEach(m => {
+    nonAdminMerchants.forEach(m => {
       const type = m.shop_type || 'autre';
       byType[type] = (byType[type] || 0) + 1;
     });
 
-    return { total, trial: trialActive, trialExpired, active, cancelled, byType };
+    return { total, trial: trialActive, trialExpired, active, cancelled, byType, adminCount };
   }, [merchants]);
 
   // Filtered merchants
@@ -251,6 +273,9 @@ export default function AdminMerchantsPage() {
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
               <p className="text-xs text-gray-500">Total</p>
+              {stats.adminCount > 0 && (
+                <p className="text-[10px] text-purple-600 mt-0.5">+ {stats.adminCount} admin{stats.adminCount > 1 ? 's' : ''}</p>
+              )}
             </div>
           </div>
         </div>
@@ -401,7 +426,14 @@ export default function AdminMerchantsPage() {
                           {merchant.shop_name.charAt(0)}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{merchant.shop_name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-gray-900 truncate">{merchant.shop_name}</p>
+                            {merchant.is_admin && (
+                              <span className="px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
+                                Admin
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
                             {merchant.shop_address && (
                               <span className="flex items-center gap-1 truncate">
