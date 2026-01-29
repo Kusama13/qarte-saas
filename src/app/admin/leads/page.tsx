@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Phone,
   Mail,
   UserPlus,
   Calendar,
@@ -13,25 +12,15 @@ import {
   QrCode,
   Star,
   BookOpen,
-  Smartphone,
   Wrench,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cn } from '@/lib/utils';
 
-interface DemoLead {
-  id: string;
-  phone_number: string;
-  created_at: string;
-  converted: boolean;
-  converted_at: string | null;
-  notes: string | null;
-}
-
 interface ToolLead {
   id: string;
   email: string;
-  source: 'qr-menu' | 'google-review' | 'ebook';
+  source: 'qr-menu' | 'google-review';
   business_name: string | null;
   generated_value: string | null;
   created_at: string;
@@ -40,19 +29,30 @@ interface ToolLead {
   notes: string | null;
 }
 
-type Tab = 'demo' | 'tools';
+interface EbookLead {
+  id: string;
+  email: string;
+  source: 'ebook';
+  business_name: string | null;
+  generated_value: string | null;
+  created_at: string;
+  converted: boolean;
+  converted_at: string | null;
+  notes: string | null;
+}
+
+type Tab = 'tools' | 'ebook';
 
 const SOURCE_CONFIG = {
   'qr-menu': { label: 'QR Menu', icon: QrCode, color: 'indigo' },
   'google-review': { label: 'Avis Google', icon: Star, color: 'amber' },
-  'ebook': { label: 'Ebook', icon: BookOpen, color: 'emerald' },
 };
 
 export default function LeadsPage() {
   const supabase = createClientComponentClient();
   const [activeTab, setActiveTab] = useState<Tab>('tools');
-  const [demoLeads, setDemoLeads] = useState<DemoLead[]>([]);
   const [toolLeads, setToolLeads] = useState<ToolLead[]>([]);
+  const [ebookLeads, setEbookLeads] = useState<EbookLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'converted'>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
@@ -63,65 +63,37 @@ export default function LeadsPage() {
   }, []);
 
   const fetchLeads = async () => {
-    // Fetch demo leads
-    const { data: demoData } = await supabase
-      .from('demo_leads')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (demoData) {
-      setDemoLeads(demoData);
-    }
-
-    // Fetch tool leads
-    const { data: toolData } = await supabase
+    // Fetch all leads from tool_leads
+    const { data: allData } = await supabase
       .from('tool_leads')
       .select('*')
       .order('created_at', { ascending: false });
 
-    if (toolData) {
-      setToolLeads(toolData);
+    if (allData) {
+      // Separate ebook leads from tool leads
+      setToolLeads(allData.filter(l => l.source !== 'ebook') as ToolLead[]);
+      setEbookLeads(allData.filter(l => l.source === 'ebook') as EbookLead[]);
     }
 
     setLoading(false);
   };
 
-  const markDemoAsConverted = async (id: string) => {
-    const { error } = await supabase
-      .from('demo_leads')
-      .update({ converted: true, converted_at: new Date().toISOString() })
-      .eq('id', id);
-
-    if (!error) {
-      setDemoLeads(demoLeads.map(l => l.id === id ? { ...l, converted: true, converted_at: new Date().toISOString() } : l));
-    }
-  };
-
-  const markToolAsConverted = async (id: string) => {
+  const markAsConverted = async (id: string, isEbook: boolean) => {
     const { error } = await supabase
       .from('tool_leads')
       .update({ converted: true, converted_at: new Date().toISOString() })
       .eq('id', id);
 
     if (!error) {
-      setToolLeads(toolLeads.map(l => l.id === id ? { ...l, converted: true, converted_at: new Date().toISOString() } : l));
+      if (isEbook) {
+        setEbookLeads(ebookLeads.map(l => l.id === id ? { ...l, converted: true, converted_at: new Date().toISOString() } : l));
+      } else {
+        setToolLeads(toolLeads.map(l => l.id === id ? { ...l, converted: true, converted_at: new Date().toISOString() } : l));
+      }
     }
   };
 
-  const deleteDemoLead = async (id: string) => {
-    if (!confirm('Supprimer ce lead ?')) return;
-
-    const { error } = await supabase
-      .from('demo_leads')
-      .delete()
-      .eq('id', id);
-
-    if (!error) {
-      setDemoLeads(demoLeads.filter(l => l.id !== id));
-    }
-  };
-
-  const deleteToolLead = async (id: string) => {
+  const deleteLead = async (id: string, isEbook: boolean) => {
     if (!confirm('Supprimer ce lead ?')) return;
 
     const { error } = await supabase
@@ -130,7 +102,11 @@ export default function LeadsPage() {
       .eq('id', id);
 
     if (!error) {
-      setToolLeads(toolLeads.filter(l => l.id !== id));
+      if (isEbook) {
+        setEbookLeads(ebookLeads.filter(l => l.id !== id));
+      } else {
+        setToolLeads(toolLeads.filter(l => l.id !== id));
+      }
     }
   };
 
@@ -143,17 +119,6 @@ export default function LeadsPage() {
       minute: '2-digit',
     });
   };
-
-  const filteredDemoLeads = demoLeads.filter(lead => {
-    const matchesFilter = filter === 'all' ||
-      (filter === 'pending' && !lead.converted) ||
-      (filter === 'converted' && lead.converted);
-
-    const matchesSearch = !search ||
-      lead.phone_number.includes(search);
-
-    return matchesFilter && matchesSearch;
-  });
 
   const filteredToolLeads = toolLeads.filter(lead => {
     const matchesFilter = filter === 'all' ||
@@ -169,11 +134,17 @@ export default function LeadsPage() {
     return matchesFilter && matchesSource && matchesSearch;
   });
 
-  const demoStats = {
-    total: demoLeads.length,
-    pending: demoLeads.filter(l => !l.converted).length,
-    converted: demoLeads.filter(l => l.converted).length,
-  };
+  const filteredEbookLeads = ebookLeads.filter(lead => {
+    const matchesFilter = filter === 'all' ||
+      (filter === 'pending' && !lead.converted) ||
+      (filter === 'converted' && lead.converted);
+
+    const matchesSearch = !search ||
+      lead.email.toLowerCase().includes(search.toLowerCase()) ||
+      (lead.business_name && lead.business_name.toLowerCase().includes(search.toLowerCase()));
+
+    return matchesFilter && matchesSearch;
+  });
 
   const toolStats = {
     total: toolLeads.length,
@@ -182,8 +153,13 @@ export default function LeadsPage() {
     bySource: {
       'qr-menu': toolLeads.filter(l => l.source === 'qr-menu').length,
       'google-review': toolLeads.filter(l => l.source === 'google-review').length,
-      'ebook': toolLeads.filter(l => l.source === 'ebook').length,
     },
+  };
+
+  const ebookStats = {
+    total: ebookLeads.length,
+    pending: ebookLeads.filter(l => !l.converted).length,
+    converted: ebookLeads.filter(l => l.converted).length,
   };
 
   if (loading) {
@@ -226,21 +202,21 @@ export default function LeadsPage() {
           </span>
         </button>
         <button
-          onClick={() => setActiveTab('demo')}
+          onClick={() => setActiveTab('ebook')}
           className={cn(
             'px-6 py-3 font-semibold text-sm border-b-2 transition-colors flex items-center gap-2',
-            activeTab === 'demo'
+            activeTab === 'ebook'
               ? 'border-[#5167fc] text-[#5167fc]'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           )}
         >
-          <Smartphone className="w-4 h-4" />
-          Demo
+          <BookOpen className="w-4 h-4" />
+          Ebook
           <span className={cn(
             'px-2 py-0.5 rounded-full text-xs font-bold',
-            activeTab === 'demo' ? 'bg-[#5167fc] text-white' : 'bg-gray-100 text-gray-600'
+            activeTab === 'ebook' ? 'bg-[#5167fc] text-white' : 'bg-gray-100 text-gray-600'
           )}>
-            {demoStats.total}
+            {ebookStats.total}
           </span>
         </button>
       </div>
@@ -255,7 +231,7 @@ export default function LeadsPage() {
             <div>
               <p className="text-sm font-medium text-gray-500">Total leads</p>
               <p className="text-2xl font-bold text-gray-900">
-                {activeTab === 'tools' ? toolStats.total : demoStats.total}
+                {activeTab === 'tools' ? toolStats.total : ebookStats.total}
               </p>
             </div>
           </div>
@@ -269,7 +245,7 @@ export default function LeadsPage() {
             <div>
               <p className="text-sm font-medium text-gray-500">A contacter</p>
               <p className="text-2xl font-bold text-gray-900">
-                {activeTab === 'tools' ? toolStats.pending : demoStats.pending}
+                {activeTab === 'tools' ? toolStats.pending : ebookStats.pending}
               </p>
             </div>
           </div>
@@ -283,7 +259,7 @@ export default function LeadsPage() {
             <div>
               <p className="text-sm font-medium text-gray-500">Convertis</p>
               <p className="text-2xl font-bold text-gray-900">
-                {activeTab === 'tools' ? toolStats.converted : demoStats.converted}
+                {activeTab === 'tools' ? toolStats.converted : ebookStats.converted}
               </p>
             </div>
           </div>
@@ -425,7 +401,7 @@ export default function LeadsPage() {
                             Email
                           </a>
                           <button
-                            onClick={() => markToolAsConverted(lead.id)}
+                            onClick={() => markAsConverted(lead.id, false)}
                             className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-100 rounded-xl hover:bg-emerald-200 transition-colors"
                           >
                             Converti
@@ -433,7 +409,7 @@ export default function LeadsPage() {
                         </>
                       )}
                       <button
-                        onClick={() => deleteToolLead(lead.id)}
+                        onClick={() => deleteLead(lead.id, false)}
                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -453,10 +429,10 @@ export default function LeadsPage() {
             </div>
           )
         ) : (
-          // Demo Leads List
-          filteredDemoLeads.length > 0 ? (
+          // Ebook Leads List
+          filteredEbookLeads.length > 0 ? (
             <div className="divide-y divide-gray-100">
-              {filteredDemoLeads.map((lead) => (
+              {filteredEbookLeads.map((lead) => (
                 <div
                   key={lead.id}
                   className={cn(
@@ -467,21 +443,28 @@ export default function LeadsPage() {
                   <div className="flex items-center gap-4 flex-1">
                     <div className={cn(
                       'flex items-center justify-center w-12 h-12 rounded-full',
-                      lead.converted ? 'bg-emerald-100' : 'bg-indigo-100'
+                      lead.converted ? 'bg-emerald-100' : 'bg-emerald-100'
                     )}>
-                      <Phone className={cn(
+                      <BookOpen className={cn(
                         'w-5 h-5',
-                        lead.converted ? 'text-emerald-600' : 'text-indigo-600'
+                        lead.converted ? 'text-emerald-600' : 'text-emerald-600'
                       )} />
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-lg">
-                        {lead.phone_number}
+                        {lead.email}
                       </p>
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <Calendar className="w-4 h-4" />
-                        <span>{formatDate(lead.created_at)}</span>
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        {lead.business_name && (
+                          <span className="text-sm text-gray-600">
+                            {lead.business_name}
+                          </span>
+                        )}
+                        <span className="text-sm text-gray-400 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatDate(lead.created_at)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -495,14 +478,14 @@ export default function LeadsPage() {
                     ) : (
                       <>
                         <a
-                          href={`tel:${lead.phone_number}`}
-                          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                          href={`mailto:${lead.email}`}
+                          className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2"
                         >
-                          <Phone className="w-4 h-4" />
-                          Appeler
+                          <Mail className="w-4 h-4" />
+                          Email
                         </a>
                         <button
-                          onClick={() => markDemoAsConverted(lead.id)}
+                          onClick={() => markAsConverted(lead.id, true)}
                           className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-100 rounded-xl hover:bg-emerald-200 transition-colors"
                         >
                           Converti
@@ -510,7 +493,7 @@ export default function LeadsPage() {
                       </>
                     )}
                     <button
-                      onClick={() => deleteDemoLead(lead.id)}
+                      onClick={() => deleteLead(lead.id, true)}
                       className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -521,10 +504,10 @@ export default function LeadsPage() {
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-              <UserPlus className="w-16 h-16 mb-4 text-gray-300" />
-              <p className="text-lg font-medium">Aucun lead demo</p>
+              <BookOpen className="w-16 h-16 mb-4 text-gray-300" />
+              <p className="text-lg font-medium">Aucun lead ebook</p>
               <p className="text-sm text-gray-400 mt-1">
-                Les visiteurs qui testent la demo apparaitront ici
+                Les visiteurs qui telechargent l&apos;ebook apparaitront ici
               </p>
             </div>
           )
