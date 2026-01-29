@@ -26,6 +26,7 @@ import { SHOP_TYPES, type ShopType } from '@/types';
 
 interface Merchant {
   id: string;
+  user_id: string;
   shop_name: string;
   shop_type: ShopType;
   shop_address: string | null;
@@ -33,7 +34,7 @@ interface Merchant {
   subscription_status: string;
   trial_ends_at: string | null;
   created_at: string;
-  is_admin?: boolean;
+  _isSuperAdmin?: boolean;
   _count?: {
     customers: number;
   };
@@ -71,15 +72,21 @@ export default function AdminMerchantsPage() {
 
   const fetchMerchants = useCallback(async () => {
     try {
-      // Fetch ALL merchants (including admins) for the list
-      const { data: merchantsData, error } = await supabase
-        .from('merchants')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Fetch ALL merchants and super_admins in parallel
+      const [{ data: merchantsData, error }, { data: superAdmins }] = await Promise.all([
+        supabase
+          .from('merchants')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase.from('super_admins').select('user_id'),
+      ]);
 
       if (error) throw error;
 
-      // Count customers for each merchant
+      // Get super admin user_ids
+      const superAdminUserIds = new Set((superAdmins || []).map(sa => sa.user_id));
+
+      // Count customers for each merchant and mark super admins
       const merchantsWithCounts = await Promise.all(
         (merchantsData || []).map(async (merchant) => {
           const { count } = await supabase
@@ -89,6 +96,7 @@ export default function AdminMerchantsPage() {
 
           return {
             ...merchant,
+            _isSuperAdmin: superAdminUserIds.has(merchant.user_id),
             _count: { customers: count || 0 },
           };
         })
@@ -130,10 +138,10 @@ export default function AdminMerchantsPage() {
     return new Date(merchant.trial_ends_at) < new Date();
   };
 
-  // Stats (exclude admin accounts from counts)
+  // Stats (exclude super admin accounts from counts)
   const stats = useMemo(() => {
-    const nonAdminMerchants = merchants.filter(m => !m.is_admin);
-    const adminCount = merchants.filter(m => m.is_admin).length;
+    const nonAdminMerchants = merchants.filter(m => !m._isSuperAdmin);
+    const adminCount = merchants.filter(m => m._isSuperAdmin).length;
 
     const total = nonAdminMerchants.length;
     const trialActive = nonAdminMerchants.filter(m => m.subscription_status === 'trial' && !isTrialExpired(m)).length;
@@ -428,7 +436,7 @@ export default function AdminMerchantsPage() {
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium text-gray-900 truncate">{merchant.shop_name}</p>
-                            {merchant.is_admin && (
+                            {merchant._isSuperAdmin && (
                               <span className="px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
                                 Admin
                               </span>

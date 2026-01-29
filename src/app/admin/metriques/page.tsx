@@ -89,15 +89,20 @@ export default function MetriquesPage() {
         { count: totalCustomers },
         { count: totalVisits },
         { data: leadsData },
+        { data: superAdmins },
       ] = await Promise.all([
-        supabase.from('merchants').select('id, subscription_status, is_admin, created_at'),
+        supabase.from('merchants').select('id, user_id, subscription_status, created_at'),
         supabase.from('customers').select('*', { count: 'exact', head: true }),
         supabase.from('visits').select('*', { count: 'exact', head: true }),
         supabase.from('demo_leads').select('*').order('created_at', { ascending: false }),
+        supabase.from('super_admins').select('user_id'),
       ]);
 
-      // Filter out admin accounts in JavaScript
-      const merchants = (allMerchants || []).filter(m => !m.is_admin);
+      // Get super admin user_ids
+      const superAdminUserIds = new Set((superAdmins || []).map(sa => sa.user_id));
+
+      // Filter out super admin merchants
+      const merchants = (allMerchants || []).filter(m => !superAdminUserIds.has(m.user_id));
 
       // Revenue calculations
       const active = merchants.filter(m => m.subscription_status === 'active').length;

@@ -144,13 +144,18 @@ export default function AdminDashboardPage() {
     const [
       { data: allMerchants },
       { count: totalCustomers },
+      { data: superAdmins },
     ] = await Promise.all([
-      supabase.from('merchants').select('id, subscription_status, is_admin'),
+      supabase.from('merchants').select('id, user_id, subscription_status'),
       supabase.from('customers').select('*', { count: 'exact', head: true }),
+      supabase.from('super_admins').select('user_id'),
     ]);
 
-    // Filter out admin accounts in JavaScript
-    const merchants = (allMerchants || []).filter(m => !m.is_admin);
+    // Get super admin user_ids
+    const superAdminUserIds = new Set((superAdmins || []).map(sa => sa.user_id));
+
+    // Filter out super admin merchants
+    const merchants = (allMerchants || []).filter(m => !superAdminUserIds.has(m.user_id));
 
     setStats({
       totalMerchants: merchants.length,
@@ -164,7 +169,7 @@ export default function AdminDashboardPage() {
     const threeDaysFromNow = new Date();
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
 
-    const [{ data: endingTrials }, { data: recent }] = await Promise.all([
+    const [{ data: endingTrials }, { data: recent }, { data: superAdmins }] = await Promise.all([
       supabase
         .from('merchants')
         .select('*')
@@ -178,11 +183,15 @@ export default function AdminDashboardPage() {
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10),
+      supabase.from('super_admins').select('user_id'),
     ]);
 
-    // Filter out admin accounts in JavaScript
-    setTrialEndingMerchants((endingTrials || []).filter(m => !m.is_admin).slice(0, 5));
-    setRecentMerchants((recent || []).filter(m => !m.is_admin).slice(0, 5));
+    // Get super admin user_ids
+    const superAdminUserIds = new Set((superAdmins || []).map(sa => sa.user_id));
+
+    // Filter out super admin merchants
+    setTrialEndingMerchants((endingTrials || []).filter(m => !superAdminUserIds.has(m.user_id)).slice(0, 5));
+    setRecentMerchants((recent || []).filter(m => !superAdminUserIds.has(m.user_id)).slice(0, 5));
   }, [supabase]);
 
   const fetchNotes = useCallback(async () => {
