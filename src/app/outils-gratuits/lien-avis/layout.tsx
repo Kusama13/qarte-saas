@@ -1,28 +1,32 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Generateur Lien Avis Google Gratuit | Obtenez Plus d\'Avis',
-  description: 'Generez gratuitement votre lien direct pour recevoir des avis Google. Partagez-le avec vos clients pour booster votre reputation en ligne.',
+  title: 'Lien Avis Google Gratuit Sans Inscription | Generateur',
+  description: 'Generez gratuitement votre lien direct avis Google. Sans inscription. Partagez-le avec vos clients pour obtenir plus d\'avis 5 etoiles.',
   keywords: [
+    'lien avis google gratuit',
+    'lien avis google sans inscription',
+    'generateur lien avis google',
     'lien avis google',
-    'generateur lien avis',
     'demander avis google',
     'lien review google',
     'avis google restaurant',
     'obtenir avis google',
     'lien direct avis google',
     'google review link',
+    'comment avoir plus d\'avis google',
+    'augmenter avis google',
   ],
   openGraph: {
-    title: 'Generateur Lien Avis Google Gratuit | Qarte',
-    description: 'Obtenez votre lien direct pour recevoir des avis Google. Boostez votre reputation en ligne gratuitement.',
+    title: 'Lien Avis Google Gratuit Sans Inscription | Qarte',
+    description: 'Generez votre lien direct avis Google. Sans inscription, 100% gratuit. Obtenez plus d\'avis 5 etoiles.',
     type: 'website',
     url: 'https://getqarte.com/outils-gratuits/lien-avis',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Generateur Lien Avis Google Gratuit',
-    description: 'Lien direct pour recevoir des avis Google. 100% gratuit.',
+    title: 'Lien Avis Google Gratuit Sans Inscription',
+    description: 'Lien direct pour recevoir des avis Google. Gratuit, sans compte.',
   },
   alternates: {
     canonical: 'https://getqarte.com/outils-gratuits/lien-avis',
