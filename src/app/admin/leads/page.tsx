@@ -13,6 +13,7 @@ import {
   Star,
   BookOpen,
   Wrench,
+  Wifi,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cn } from '@/lib/utils';
@@ -20,7 +21,7 @@ import { cn } from '@/lib/utils';
 interface ToolLead {
   id: string;
   email: string;
-  source: 'qr-menu' | 'google-review';
+  source: 'qr-menu' | 'google-review' | 'qr-wifi';
   business_name: string | null;
   generated_value: string | null;
   created_at: string;
@@ -45,6 +46,7 @@ type Tab = 'tools' | 'ebook';
 
 const SOURCE_CONFIG = {
   'qr-menu': { label: 'QR Menu', icon: QrCode, color: 'indigo' },
+  'qr-wifi': { label: 'QR WiFi', icon: Wifi, color: 'cyan' },
   'google-review': { label: 'Avis Google', icon: Star, color: 'amber' },
 };
 
@@ -152,6 +154,7 @@ export default function LeadsPage() {
     converted: toolLeads.filter(l => l.converted).length,
     bySource: {
       'qr-menu': toolLeads.filter(l => l.source === 'qr-menu').length,
+      'qr-wifi': toolLeads.filter(l => l.source === 'qr-wifi').length,
       'google-review': toolLeads.filter(l => l.source === 'google-review').length,
     },
   };
