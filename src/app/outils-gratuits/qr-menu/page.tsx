@@ -410,6 +410,9 @@ export default function QRMenuPage() {
                 )}
                 Generer mon QR Code
               </Button>
+              <p className="text-center text-sm text-gray-500 mt-2">
+                Vous recevrez le QR code simple et le QR code design par email
+              </p>
 
               {/* Qarte CTA */}
               <div className="mt-6 pt-6 border-t border-gray-100">
