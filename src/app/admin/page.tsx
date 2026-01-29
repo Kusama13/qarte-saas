@@ -141,24 +141,21 @@ export default function AdminDashboardPage() {
   // DATA FETCHING
   // ============================================
   const fetchStats = useCallback(async () => {
-    // Exclude admin accounts from stats
-    const notAdmin = 'is_admin.is.null,is_admin.eq.false';
     const [
-      { count: totalMerchants },
-      { count: trialMerchants },
-      { count: activeMerchants },
+      { data: allMerchants },
       { count: totalCustomers },
     ] = await Promise.all([
-      supabase.from('merchants').select('*', { count: 'exact', head: true }).or(notAdmin),
-      supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'trial').or(notAdmin),
-      supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active').or(notAdmin),
+      supabase.from('merchants').select('id, subscription_status, is_admin'),
       supabase.from('customers').select('*', { count: 'exact', head: true }),
     ]);
 
+    // Filter out admin accounts in JavaScript
+    const merchants = (allMerchants || []).filter(m => !m.is_admin);
+
     setStats({
-      totalMerchants: totalMerchants || 0,
-      trialMerchants: trialMerchants || 0,
-      activeMerchants: activeMerchants || 0,
+      totalMerchants: merchants.length,
+      trialMerchants: merchants.filter(m => m.subscription_status === 'trial').length,
+      activeMerchants: merchants.filter(m => m.subscription_status === 'active').length,
       totalCustomers: totalCustomers || 0,
     });
   }, [supabase]);
@@ -167,27 +164,25 @@ export default function AdminDashboardPage() {
     const threeDaysFromNow = new Date();
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
 
-    // Exclude admin accounts
     const [{ data: endingTrials }, { data: recent }] = await Promise.all([
       supabase
         .from('merchants')
         .select('*')
         .eq('subscription_status', 'trial')
-        .or('is_admin.is.null,is_admin.eq.false')
         .lte('trial_ends_at', threeDaysFromNow.toISOString())
         .gte('trial_ends_at', new Date().toISOString())
         .order('trial_ends_at', { ascending: true })
-        .limit(5),
+        .limit(10),
       supabase
         .from('merchants')
         .select('*')
-        .or('is_admin.is.null,is_admin.eq.false')
         .order('created_at', { ascending: false })
-        .limit(5),
+        .limit(10),
     ]);
 
-    setTrialEndingMerchants(endingTrials || []);
-    setRecentMerchants(recent || []);
+    // Filter out admin accounts in JavaScript
+    setTrialEndingMerchants((endingTrials || []).filter(m => !m.is_admin).slice(0, 5));
+    setRecentMerchants((recent || []).filter(m => !m.is_admin).slice(0, 5));
   }, [supabase]);
 
   const fetchNotes = useCallback(async () => {
