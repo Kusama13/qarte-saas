@@ -188,6 +188,61 @@ const animationStyles = `
 // COMPONENTS
 // ============================================
 
+// Mockup Carousel for Hero
+const MOCKUP_IMAGES = [
+  { src: "/images/mockup-app.png", alt: "Application Qarte - Carte de fidélité digitale" },
+  { src: "/images/mockup-beaute.jpg", alt: "Qarte - Institut de beauté" },
+];
+
+function MockupCarousel() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % MOCKUP_IMAGES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="w-full h-full rounded-[2.5rem] overflow-hidden bg-gradient-to-b from-rose-100 to-rose-200 relative">
+      {MOCKUP_IMAGES.map((mockup, index) => (
+        <div
+          key={mockup.src}
+          className={`absolute inset-0 transition-opacity duration-700 ${
+            index === currentIndex ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          <Image
+            src={mockup.src}
+            alt={mockup.alt}
+            width={860}
+            height={2080}
+            className="w-full h-full object-cover object-top"
+            priority={index === 0}
+            unoptimized
+          />
+        </div>
+      ))}
+      {/* Dots indicator */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+        {MOCKUP_IMAGES.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-2 h-2 rounded-full transition-all ${
+              index === currentIndex
+                ? 'bg-indigo-600 w-4'
+                : 'bg-gray-400/50 hover:bg-gray-400'
+            }`}
+            aria-label={`Voir mockup ${index + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Hero Section
 function HeroSection() {
   const { ref, isInView } = useInView();
@@ -311,9 +366,9 @@ function HeroSection() {
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
             <h1 className="relative text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
-              La fidélité client,{' '}
+              La fidélité client{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-rose-500">
-                enfin simple.
+                qui s'adapte à votre commerce.
               </span>
             </h1>
           </div>
@@ -371,23 +426,13 @@ function HeroSection() {
           </div>
         </div>
 
-        {/* iPhone Mockup */}
+        {/* iPhone Mockup Carousel */}
         <div className={`flex justify-center ${isInView ? 'animate-fade-in-up delay-300' : 'opacity-0'}`} style={{ animationDelay: '0.3s' }}>
           <div className="animate-float relative">
             {/* Phone Frame - Sans encoche */}
             <div className="relative w-[280px] h-[570px] bg-gray-900 rounded-[3rem] p-2 shadow-2xl shadow-gray-900/30">
-              {/* Screen */}
-              <div className="w-full h-full rounded-[2.5rem] overflow-hidden bg-gradient-to-b from-rose-100 to-rose-200">
-                <Image
-                  src="/images/mockup-app.png"
-                  alt="Application Qarte - Carte de fidélité digitale"
-                  width={860}
-                  height={2080}
-                  className="w-full h-full object-cover object-top"
-                  priority
-                  unoptimized
-                />
-              </div>
+              {/* Screen with Carousel */}
+              <MockupCarousel />
             </div>
           </div>
         </div>
