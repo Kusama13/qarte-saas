@@ -121,7 +121,7 @@ function ExitIntentPopup({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed left-1/2 top-1/2 z-[101] w-[90%] max-w-md -translate-x-1/2 -translate-y-1/2"
+            className="fixed left-1/2 top-1/2 z-[101] w-[90%] max-w-md max-h-[90vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto"
           >
             <div className="relative overflow-hidden bg-white shadow-2xl rounded-3xl">
               {/* Close button */}
