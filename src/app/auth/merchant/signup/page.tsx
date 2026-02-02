@@ -86,16 +86,9 @@ export default function MerchantSignupPage() {
     }
 
     try {
-      const redirectUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}/auth/callback`
-        : '/auth/callback';
-
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
-        options: {
-          emailRedirectTo: redirectUrl,
-        },
       });
 
       if (signUpError) {
@@ -143,8 +136,8 @@ export default function MerchantSignupPage() {
         trackSetupCompleted(result.merchant?.id || authData.user.id, formData.shopType || undefined);
         fbEvents.completeRegistration();
 
-        // Redirection vers la page de vérification email
-        window.location.href = `/auth/merchant/verify-email?email=${encodeURIComponent(formData.email)}`;
+        // Redirection directe vers le dashboard
+        window.location.href = '/dashboard';
       } else {
         setError('Erreur lors de la création du compte. Veuillez réessayer.');
       }
