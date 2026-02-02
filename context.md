@@ -48,6 +48,7 @@ src/
 │   ├── admin/             # Dashboard admin
 │   ├── customer/          # Pages client
 │   ├── outils-gratuits/   # Outils gratuits (QR menu, wifi, avis)
+│   ├── offre-speciale/    # Landing retargeting (exit popup)
 │   ├── scan/[code]/       # Scan QR dynamique
 │   └── page.tsx           # Landing page principale
 │
@@ -78,7 +79,7 @@ src/
 └── middleware.ts         # Auth middleware
 
 supabase/
-└── migrations/           # 22 migrations SQL
+└── migrations/           # 23 migrations SQL
 
 public/
 ├── images/              # Images statiques
@@ -118,11 +119,19 @@ public/
 - `reward_description`, `is_used`, `used_at`, `expires_at`
 
 ### Autres tables
-- `redemptions`, `point_adjustments`, `banned_phone_numbers`
-- `push_subscriptions`, `push_notifications`, `scheduled_pushes`
-- `merchant_offers`, `demo_leads`, `tool_leads`
+- `redemptions`, `point_adjustments`, `banned_numbers`
+- `push_subscriptions`, `push_history`, `scheduled_push`
+- `demo_leads`, `tool_leads`, `pending_email_tracking`
 - `member_programs`, `member_cards`
 - `super_admins`, `admin_expenses`, `admin_fixed_costs`
+- `admin_notes`, `admin_tasks`, `prospects`
+
+### Securite RLS
+Toutes les tables ont **Row Level Security (RLS)** active avec policies appropriees :
+- Tables publiques : `customers`, `loyalty_cards`, `visits` (lecture/ecriture via scan)
+- Tables merchants : acces filtre par `user_id`
+- Tables admin : acces via `super_admins` ou `service_role` uniquement
+- Tables internes : `service_role` uniquement (cron jobs, API)
 
 ---
 
@@ -295,9 +304,12 @@ npm run email
 | Fichier | Description |
 |---------|-------------|
 | `src/app/page.tsx` | Landing page principale (~2200 lignes) |
+| `src/app/offre-speciale/page.tsx` | Landing retargeting avec exit popup |
 | `src/middleware.ts` | Protection routes authentifiees |
 | `src/lib/supabase.ts` | Client Supabase |
+| `src/lib/email.ts` | Envoi emails (Resend) |
 | `src/types/index.ts` | Definitions TypeScript |
 | `src/components/FacebookPixel.tsx` | Tracking FB |
 | `tailwind.config.ts` | Config Tailwind (couleurs, fonts) |
 | `next.config.mjs` | Config Next.js (securite, images) |
+| `supabase/migrations/` | 23 migrations SQL |
