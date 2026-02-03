@@ -28,7 +28,7 @@ import {
   X,
   BookOpen,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import { Button, Input, Modal } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
@@ -91,7 +91,7 @@ const PRIORITY_CONFIG = {
 // MAIN COMPONENT
 // ============================================
 export default function AdminDashboardPage() {
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
 
   // Stats
   const [stats, setStats] = useState({
@@ -152,15 +152,15 @@ export default function AdminDashboardPage() {
     ]);
 
     // Get super admin user_ids
-    const superAdminUserIds = new Set((superAdmins || []).map(sa => sa.user_id));
+    const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
 
     // Filter out super admin merchants
-    const merchants = (allMerchants || []).filter(m => !superAdminUserIds.has(m.user_id));
+    const merchants = (allMerchants || []).filter((m: { user_id: string }) => !superAdminUserIds.has(m.user_id));
 
     setStats({
       totalMerchants: merchants.length,
-      trialMerchants: merchants.filter(m => m.subscription_status === 'trial').length,
-      activeMerchants: merchants.filter(m => m.subscription_status === 'active').length,
+      trialMerchants: merchants.filter((m: { subscription_status?: string }) => m.subscription_status === 'trial').length,
+      activeMerchants: merchants.filter((m: { subscription_status?: string }) => m.subscription_status === 'active').length,
       totalCustomers: totalCustomers || 0,
     });
   }, [supabase]);
@@ -187,11 +187,11 @@ export default function AdminDashboardPage() {
     ]);
 
     // Get super admin user_ids
-    const superAdminUserIds = new Set((superAdmins || []).map(sa => sa.user_id));
+    const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
 
     // Filter out super admin merchants
-    setTrialEndingMerchants((endingTrials || []).filter(m => !superAdminUserIds.has(m.user_id)).slice(0, 5));
-    setRecentMerchants((recent || []).filter(m => !superAdminUserIds.has(m.user_id)).slice(0, 5));
+    setTrialEndingMerchants((endingTrials || []).filter((m: { user_id: string }) => !superAdminUserIds.has(m.user_id)).slice(0, 5));
+    setRecentMerchants((recent || []).filter((m: { user_id: string }) => !superAdminUserIds.has(m.user_id)).slice(0, 5));
   }, [supabase]);
 
   const fetchNotes = useCallback(async () => {
@@ -462,8 +462,8 @@ export default function AdminDashboardPage() {
     window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
   };
 
-  const totalProspects = Object.values(prospectCounts).reduce((a, b) => a + b, 0);
-  const pendingTasks = tasks.filter(t => !t.completed).length;
+  const totalProspects = Object.values(prospectCounts).reduce((a: number, b: number) => a + b, 0);
+  const pendingTasks = tasks.filter((t: { completed?: boolean }) => !t.completed).length;
 
   if (loading) {
     return (

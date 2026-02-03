@@ -18,7 +18,7 @@ import {
   Wallet,
   UserPlus,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -35,7 +35,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = async () => {

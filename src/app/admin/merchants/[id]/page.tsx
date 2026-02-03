@@ -23,7 +23,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl } from '@/lib/utils';
 
@@ -75,7 +75,7 @@ interface MemberProgram {
 export default function MerchantDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const merchantId = params.id as string;
 
   const [merchant, setMerchant] = useState<Merchant | null>(null);

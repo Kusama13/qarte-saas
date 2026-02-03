@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import { CreditCard, ArrowLeft, Mail, CheckCircle2 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { validateEmail } from '@/lib/utils';
 
 export default function ForgotPasswordPage() {
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

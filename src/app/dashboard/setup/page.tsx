@@ -15,7 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Button, Input, Textarea } from '@/components/ui';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import type { Merchant } from '@/types';
 
 const UNSPLASH_IMAGES = [
@@ -29,7 +29,7 @@ const UNSPLASH_IMAGES = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);

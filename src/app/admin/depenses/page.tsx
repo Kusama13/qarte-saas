@@ -14,7 +14,7 @@ import {
   Settings,
   Pencil,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { Button, Input, Modal } from '@/components/ui';
 
@@ -49,7 +49,7 @@ interface Expense {
 }
 
 export default function DepensesPage() {
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [fixedCosts, setFixedCosts] = useState<FixedCost[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -328,7 +328,7 @@ export default function DepensesPage() {
     };
 
     Object.entries(byCategory).forEach(([cat, monthValues]) => {
-      categoryTotals[cat as Category] = Object.values(monthValues).reduce((a, b) => a + b, 0);
+      categoryTotals[cat as Category] = Object.values(monthValues).reduce((a: number, b: number) => a + b, 0);
     });
 
     return { byCategory, byMonth, categoryTotals, grandTotal };

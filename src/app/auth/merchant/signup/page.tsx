@@ -16,7 +16,7 @@ import {
   Check,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import { generateSlug, validateFrenchPhone, validateEmail } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType } from '@/types';
 import { trackPageView, trackSignupStarted, trackSignupCompleted, trackSetupCompleted } from '@/lib/analytics';
@@ -29,7 +29,7 @@ const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
 
 export default function MerchantSignupPage() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

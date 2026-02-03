@@ -20,7 +20,7 @@ import {
   Crown,
   HelpCircle,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import { getTrialStatus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
@@ -44,7 +44,7 @@ function DashboardLayoutContent({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const { merchant, loading } = useMerchant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showGuidedTour, setShowGuidedTour] = useState(false);

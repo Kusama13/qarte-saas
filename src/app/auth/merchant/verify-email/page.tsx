@@ -5,11 +5,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CreditCard, Mail, CheckCircle2, RefreshCw, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 
 export default function VerifyEmailPage() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [email, setEmail] = useState<string | null>(null);
@@ -31,7 +31,7 @@ export default function VerifyEmailPage() {
     checkSession();
 
     // Écouter les changements d'état d'authentification
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string, session: { user?: { id: string } } | null) => {
       if (event === 'SIGNED_IN' && session) {
         router.push('/dashboard');
       }

@@ -15,7 +15,7 @@ import {
   Wrench,
   Wifi,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
 interface ToolLead {
@@ -51,7 +51,7 @@ const SOURCE_CONFIG = {
 };
 
 export default function LeadsPage() {
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [activeTab, setActiveTab] = useState<Tab>('tools');
   const [toolLeads, setToolLeads] = useState<ToolLead[]>([]);
   const [ebookLeads, setEbookLeads] = useState<EbookLead[]>([]);
@@ -73,8 +73,8 @@ export default function LeadsPage() {
 
     if (allData) {
       // Separate ebook leads from tool leads
-      setToolLeads(allData.filter(l => l.source !== 'ebook') as ToolLead[]);
-      setEbookLeads(allData.filter(l => l.source === 'ebook') as EbookLead[]);
+      setToolLeads(allData.filter((l: { source?: string }) => l.source !== 'ebook') as ToolLead[]);
+      setEbookLeads(allData.filter((l: { source?: string }) => l.source === 'ebook') as EbookLead[]);
     }
 
     setLoading(false);
@@ -88,9 +88,9 @@ export default function LeadsPage() {
 
     if (!error) {
       if (isEbook) {
-        setEbookLeads(ebookLeads.map(l => l.id === id ? { ...l, converted: true, converted_at: new Date().toISOString() } : l));
+        setEbookLeads(ebookLeads.map((l: EbookLead) => l.id === id ? { ...l, converted: true, converted_at: new Date().toISOString() } : l));
       } else {
-        setToolLeads(toolLeads.map(l => l.id === id ? { ...l, converted: true, converted_at: new Date().toISOString() } : l));
+        setToolLeads(toolLeads.map((l: ToolLead) => l.id === id ? { ...l, converted: true, converted_at: new Date().toISOString() } : l));
       }
     }
   };
@@ -105,9 +105,9 @@ export default function LeadsPage() {
 
     if (!error) {
       if (isEbook) {
-        setEbookLeads(ebookLeads.filter(l => l.id !== id));
+        setEbookLeads(ebookLeads.filter((l: EbookLead) => l.id !== id));
       } else {
-        setToolLeads(toolLeads.filter(l => l.id !== id));
+        setToolLeads(toolLeads.filter((l: ToolLead) => l.id !== id));
       }
     }
   };
@@ -150,19 +150,19 @@ export default function LeadsPage() {
 
   const toolStats = {
     total: toolLeads.length,
-    pending: toolLeads.filter(l => !l.converted).length,
-    converted: toolLeads.filter(l => l.converted).length,
+    pending: toolLeads.filter((l: ToolLead) => !l.converted).length,
+    converted: toolLeads.filter((l: ToolLead) => l.converted).length,
     bySource: {
-      'qr-menu': toolLeads.filter(l => l.source === 'qr-menu').length,
-      'qr-wifi': toolLeads.filter(l => l.source === 'qr-wifi').length,
-      'google-review': toolLeads.filter(l => l.source === 'google-review').length,
+      'qr-menu': toolLeads.filter((l: ToolLead) => l.source === 'qr-menu').length,
+      'qr-wifi': toolLeads.filter((l: ToolLead) => l.source === 'qr-wifi').length,
+      'google-review': toolLeads.filter((l: ToolLead) => l.source === 'google-review').length,
     },
   };
 
   const ebookStats = {
     total: ebookLeads.length,
-    pending: ebookLeads.filter(l => !l.converted).length,
-    converted: ebookLeads.filter(l => l.converted).length,
+    pending: ebookLeads.filter((l: EbookLead) => !l.converted).length,
+    converted: ebookLeads.filter((l: EbookLead) => l.converted).length,
   };
 
   if (loading) {

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import type { Merchant } from '@/types';
 
 interface MerchantContextType {
@@ -18,7 +18,7 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function MerchantProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [merchant, setMerchant] = useState<Merchant | null>(() => {
     // Try to load from cache on initial render for faster display
     if (typeof window !== 'undefined') {
@@ -90,7 +90,7 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
     }
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event: string) => {
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem(CACHE_KEY);
         setMerchant(null);

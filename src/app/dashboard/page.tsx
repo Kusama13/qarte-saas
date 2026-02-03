@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, AlertTriangle, X } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -76,7 +76,7 @@ const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, col
 
 export default function DashboardPage() {
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const [stats, setStats] = useState({
     totalCustomers: 0,
@@ -273,7 +273,7 @@ export default function DashboardPage() {
         // Set recent customers
         if (recentCardsResult.data) {
           setRecentCustomers(
-            recentCardsResult.data.map((card) => {
+            recentCardsResult.data.map((card: { id: string; customer: { first_name?: string; last_name?: string } | { first_name?: string; last_name?: string }[]; current_stamps: number; last_visit_date?: string }) => {
               const customer = Array.isArray(card.customer) ? card.customer[0] : card.customer;
               return {
                 id: card.id,
@@ -290,7 +290,7 @@ export default function DashboardPage() {
         last7Days.forEach(day => { visitCounts[day.date] = 0; });
 
         if (last7DaysVisitsResult.data) {
-          last7DaysVisitsResult.data.forEach((visit) => {
+          last7DaysVisitsResult.data.forEach((visit: { visited_at: string }) => {
             const visitDate = visit.visited_at.split('T')[0];
             if (visitCounts[visitDate] !== undefined) {
               visitCounts[visitDate]++;

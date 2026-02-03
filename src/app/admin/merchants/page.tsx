@@ -20,7 +20,7 @@ import {
   MoreHorizontal,
   Loader2,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType } from '@/types';
 
@@ -64,7 +64,7 @@ const SHOP_TYPE_COLORS: Record<ShopType, string> = {
 };
 
 export default function AdminMerchantsPage() {
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [merchants, setMerchants] = useState<Merchant[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,11 +84,11 @@ export default function AdminMerchantsPage() {
       if (error) throw error;
 
       // Get super admin user_ids
-      const superAdminUserIds = new Set((superAdmins || []).map(sa => sa.user_id));
+      const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
 
       // Count customers for each merchant and mark super admins
       const merchantsWithCounts = await Promise.all(
-        (merchantsData || []).map(async (merchant) => {
+        (merchantsData || []).map(async (merchant: Merchant) => {
           const { count } = await supabase
             .from('loyalty_cards')
             .select('*', { count: 'exact', head: true })
@@ -140,17 +140,17 @@ export default function AdminMerchantsPage() {
 
   // Stats (exclude super admin accounts from counts)
   const stats = useMemo(() => {
-    const nonAdminMerchants = merchants.filter(m => !m._isSuperAdmin);
-    const adminCount = merchants.filter(m => m._isSuperAdmin).length;
+    const nonAdminMerchants = merchants.filter((m: Merchant) => !m._isSuperAdmin);
+    const adminCount = merchants.filter((m: Merchant) => m._isSuperAdmin).length;
 
     const total = nonAdminMerchants.length;
-    const trialActive = nonAdminMerchants.filter(m => m.subscription_status === 'trial' && !isTrialExpired(m)).length;
-    const trialExpired = nonAdminMerchants.filter(m => isTrialExpired(m)).length;
-    const active = nonAdminMerchants.filter(m => m.subscription_status === 'active').length;
-    const cancelled = nonAdminMerchants.filter(m => m.subscription_status === 'cancelled').length;
+    const trialActive = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'trial' && !isTrialExpired(m)).length;
+    const trialExpired = nonAdminMerchants.filter((m: Merchant) => isTrialExpired(m)).length;
+    const active = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'active').length;
+    const cancelled = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'cancelled').length;
 
     const byType: Record<string, number> = {};
-    nonAdminMerchants.forEach(m => {
+    nonAdminMerchants.forEach((m: Merchant) => {
       const type = m.shop_type || 'autre';
       byType[type] = (byType[type] || 0) + 1;
     });
@@ -164,18 +164,18 @@ export default function AdminMerchantsPage() {
 
     if (statusFilter === 'trial') {
       // Only active trials (not expired)
-      filtered = filtered.filter(m => m.subscription_status === 'trial' && !isTrialExpired(m));
+      filtered = filtered.filter((m: Merchant) => m.subscription_status === 'trial' && !isTrialExpired(m));
     } else if (statusFilter === 'trial_expired') {
       // Expired trials
-      filtered = filtered.filter(m => isTrialExpired(m));
+      filtered = filtered.filter((m: Merchant) => isTrialExpired(m));
     } else if (statusFilter !== 'all') {
-      filtered = filtered.filter(m => m.subscription_status === statusFilter);
+      filtered = filtered.filter((m: Merchant) => m.subscription_status === statusFilter);
     }
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        m =>
+        (m: Merchant) =>
           m.shop_name.toLowerCase().includes(query) ||
           m.phone.includes(query) ||
           (m.shop_address && m.shop_address.toLowerCase().includes(query))
@@ -189,7 +189,7 @@ export default function AdminMerchantsPage() {
   const groupedMerchants = useMemo(() => {
     const groups: Record<string, Merchant[]> = {};
 
-    filteredMerchants.forEach(merchant => {
+    filteredMerchants.forEach((merchant: Merchant) => {
       const type = merchant.shop_type || 'autre';
       if (!groups[type]) {
         groups[type] = [];

@@ -7,7 +7,7 @@ import {
   TrendingUp,
   Calendar,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import {
   LineChart,
   Line,
@@ -37,7 +37,7 @@ interface SubscriptionData {
 }
 
 export default function AdminAnalyticsPage() {
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [loading, setLoading] = useState(true);
   const [dailyData, setDailyData] = useState<DailyData[]>([]);
   const [subscriptionData, setSubscriptionData] = useState<SubscriptionData[]>([]);
@@ -109,12 +109,12 @@ export default function AdminAnalyticsPage() {
         const merchantsByDay = new Map<string, number>();
         const visitsByDay = new Map<string, number>();
 
-        (recentMerchants || []).forEach((m) => {
+        (recentMerchants || []).forEach((m: { created_at: string }) => {
           const day = new Date(m.created_at).toISOString().split('T')[0];
           merchantsByDay.set(day, (merchantsByDay.get(day) || 0) + 1);
         });
 
-        (recentVisits || []).forEach((v) => {
+        (recentVisits || []).forEach((v: { visited_at: string }) => {
           const day = new Date(v.visited_at).toISOString().split('T')[0];
           visitsByDay.set(day, (visitsByDay.get(day) || 0) + 1);
         });
@@ -134,7 +134,7 @@ export default function AdminAnalyticsPage() {
 
         // Process monthly data (last 6 months) - aggregate client-side
         const merchantsByMonth = new Map<string, number>();
-        (monthlyMerchantsData || []).forEach((m) => {
+        (monthlyMerchantsData || []).forEach((m: { created_at: string }) => {
           const date = new Date(m.created_at);
           const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
           merchantsByMonth.set(monthKey, (merchantsByMonth.get(monthKey) || 0) + 1);
@@ -274,7 +274,7 @@ export default function AdminAnalyticsPage() {
           <h2 className="mb-6 text-lg font-semibold text-gray-900">
             Répartition des abonnements
           </h2>
-          {subscriptionData.some(d => d.value > 0) ? (
+          {subscriptionData.some((d: { value: number }) => d.value > 0) ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie

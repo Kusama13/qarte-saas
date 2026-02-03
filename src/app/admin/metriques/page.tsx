@@ -17,7 +17,7 @@ import {
   UserPlus,
   Loader2,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import {
   AreaChart,
   Area,
@@ -42,7 +42,7 @@ interface DemoLead {
 }
 
 export default function MetriquesPage() {
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [loading, setLoading] = useState(true);
 
   // Revenue metrics
@@ -99,24 +99,25 @@ export default function MetriquesPage() {
       ]);
 
       // Get super admin user_ids
-      const superAdminUserIds = new Set((superAdmins || []).map(sa => sa.user_id));
+      const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
 
       // Filter out super admin merchants
-      const merchants = (allMerchants || []).filter(m => !superAdminUserIds.has(m.user_id));
+      type MerchantData = { user_id: string; subscription_status: string; created_at: string };
+      const merchants = (allMerchants || []).filter((m: MerchantData) => !superAdminUserIds.has(m.user_id));
 
       // Revenue calculations
-      const active = merchants.filter(m => m.subscription_status === 'active').length;
-      const trial = merchants.filter(m => m.subscription_status === 'trial').length;
-      const churned = merchants.filter(m => m.subscription_status === 'cancelled').length;
+      const active = merchants.filter((m: MerchantData) => m.subscription_status === 'active').length;
+      const trial = merchants.filter((m: MerchantData) => m.subscription_status === 'trial').length;
+      const churned = merchants.filter((m: MerchantData) => m.subscription_status === 'cancelled').length;
       const total = merchants.length;
       const mrr = active * SUBSCRIPTION_PRICE;
       const conversionRate = total > 0 ? Math.round((active / total) * 100) : 0;
       const churnRate = (active + churned) > 0 ? Math.round((churned / (active + churned)) * 100) : 0;
 
       // Time-based stats
-      const weekMerchants = merchants.filter(m => new Date(m.created_at) >= oneWeekAgo);
-      const monthMerchants = merchants.filter(m => new Date(m.created_at) >= oneMonthAgo);
-      const sixMonthMerchants = merchants.filter(m => new Date(m.created_at) >= sixMonthsAgo);
+      const weekMerchants = merchants.filter((m: MerchantData) => new Date(m.created_at) >= oneWeekAgo);
+      const monthMerchants = merchants.filter((m: MerchantData) => new Date(m.created_at) >= oneMonthAgo);
+      const sixMonthMerchants = merchants.filter((m: MerchantData) => new Date(m.created_at) >= sixMonthsAgo);
 
       setRevenue({
         mrr,
@@ -142,15 +143,15 @@ export default function MetriquesPage() {
       setLeads(allLeads);
       setLeadsStats({
         total: allLeads.length,
-        pending: allLeads.filter(l => !l.converted).length,
-        converted: allLeads.filter(l => l.converted).length,
+        pending: allLeads.filter((l: { converted?: boolean }) => !l.converted).length,
+        converted: allLeads.filter((l: { converted?: boolean }) => l.converted).length,
       });
 
       // MRR History (last 6 months) - simplified calculation
       const mrrData: { month: string; mrr: number }[] = [];
       const merchantsByMonth = new Map<string, number>();
 
-      sixMonthMerchants.forEach((m) => {
+      sixMonthMerchants.forEach((m: { subscription_status: string; created_at: string }) => {
         if (m.subscription_status === 'active') {
           const date = new Date(m.created_at);
           const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
@@ -158,7 +159,7 @@ export default function MetriquesPage() {
         }
       });
 
-      let cumulativeActive = active - sixMonthMerchants.filter(m => m.subscription_status === 'active').length;
+      let cumulativeActive = active - sixMonthMerchants.filter((m: { subscription_status: string }) => m.subscription_status === 'active').length;
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
@@ -181,7 +182,7 @@ export default function MetriquesPage() {
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 7);
 
-        const count = sixMonthMerchants.filter(m => {
+        const count = sixMonthMerchants.filter((m: MerchantData) => {
           const created = new Date(m.created_at);
           return created >= weekStart && created < weekEnd;
         }).length;
@@ -229,7 +230,7 @@ export default function MetriquesPage() {
       .eq('id', id);
 
     if (!error) {
-      setLeads(leads.map(l => l.id === id ? { ...l, converted: true } : l));
+      setLeads(leads.map((l: DemoLead) => l.id === id ? { ...l, converted: true } : l));
       setLeadsStats(prev => ({ ...prev, pending: prev.pending - 1, converted: prev.converted + 1 }));
     }
   };
@@ -238,8 +239,8 @@ export default function MetriquesPage() {
     if (!confirm('Supprimer ce lead ?')) return;
     const { error } = await supabase.from('demo_leads').delete().eq('id', id);
     if (!error) {
-      const lead = leads.find(l => l.id === id);
-      setLeads(leads.filter(l => l.id !== id));
+      const lead = leads.find((l: DemoLead) => l.id === id);
+      setLeads(leads.filter((l: DemoLead) => l.id !== id));
       setLeadsStats(prev => ({
         total: prev.total - 1,
         pending: lead?.converted ? prev.pending : prev.pending - 1,

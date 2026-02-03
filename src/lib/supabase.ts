@@ -1,25 +1,43 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
+import { createServerClient as createSupabaseServerClient, createBrowserClient } from '@supabase/ssr';
 
-// Client pour les composants (avec gestion des cookies de session)
-// Utilise un singleton pour éviter de créer plusieurs instances
-let supabaseInstance: ReturnType<typeof createClientComponentClient> | null = null;
+// ============================================
+// BROWSER CLIENT (for client components)
+// Uses @supabase/ssr for consistency with middleware
+// ============================================
+let browserClientInstance: ReturnType<typeof createBrowserClient> | null = null;
 
 export const getSupabase = () => {
-  if (!supabaseInstance) {
-    supabaseInstance = createClientComponentClient();
+  if (typeof window === 'undefined') {
+    // Server-side: return a basic client (won't have session)
+    return createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+    );
   }
-  return supabaseInstance;
+
+  if (!browserClientInstance) {
+    browserClientInstance = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+  }
+  return browserClientInstance;
 };
 
-// Export pour compatibilité (sera le même client)
+// Export pour compatibilité avec l'ancien code
 export const supabase = typeof window !== 'undefined'
-  ? createClientComponentClient()
+  ? createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
   : createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL || '',
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
     );
+
+// Alias for createClientComponentClient compatibility
+export const createClientComponentClient = () => getSupabase();
 
 // ============================================
 // SINGLETON ADMIN CLIENT (Server-side only)

@@ -13,7 +13,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabase } from '@/lib/supabase';
 import {
   LineChart,
   Line,
@@ -55,7 +55,7 @@ interface Snapshot {
 }
 
 export default function AdminRevenusPage() {
-  const supabase = createClientComponentClient();
+  const supabase = getSupabase();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<RevenueStats>({
     activeSubscribers: 0,
@@ -469,7 +469,7 @@ export default function AdminRevenusPage() {
           <h2 className="mb-6 text-lg font-semibold text-gray-900">
             Répartition des utilisateurs
           </h2>
-          {pieData.some(d => d.value > 0) ? (
+          {pieData.some((d: { value: number }) => d.value > 0) ? (
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
