@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 // Helper to get Supabase client with service role (bypasses RLS)
 function getSupabase() {
@@ -7,6 +9,31 @@ function getSupabase() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+}
+
+// Helper to verify merchant ownership
+async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean }> {
+  const supabaseAuth = createRouteHandlerClient({ cookies });
+  const supabase = getSupabase();
+
+  const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+
+  if (authError || !user) {
+    return { authorized: false };
+  }
+
+  const { data: merchant } = await supabase
+    .from('merchants')
+    .select('id')
+    .eq('id', merchantId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!merchant) {
+    return { authorized: false };
+  }
+
+  return { authorized: true };
 }
 
 // GET - Get subscriber count for a merchant
@@ -25,6 +52,12 @@ export async function GET(request: NextRequest) {
         { error: 'merchantId requis' },
         { status: 400 }
       );
+    }
+
+    // SECURITY: Verify user owns this merchant
+    const authCheck = await verifyMerchantOwnership(merchantId);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     // Step 1: Get all customers with loyalty cards for this merchant (with their phone numbers)

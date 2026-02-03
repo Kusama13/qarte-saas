@@ -1,9 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 import type { VisitStatus } from '@/types';
 
 const supabaseAdmin = getSupabaseAdmin();
+
+// Helper to verify merchant ownership
+async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean; userId?: string }> {
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { authorized: false };
+  }
+
+  const { data: merchant } = await supabaseAdmin
+    .from('merchants')
+    .select('id')
+    .eq('id', merchantId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!merchant) {
+    return { authorized: false };
+  }
+
+  return { authorized: true, userId: user.id };
+}
 
 // GET: Fetch pending visits for a merchant
 export async function GET(request: NextRequest) {
@@ -16,6 +41,12 @@ export async function GET(request: NextRequest) {
         { error: 'merchant_id requis' },
         { status: 400 }
       );
+    }
+
+    // SECURITY: Verify user owns this merchant
+    const authCheck = await verifyMerchantOwnership(merchantId);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     // Get pending visits with customer and loyalty card info
@@ -78,6 +109,12 @@ export async function POST(request: NextRequest) {
     }
 
     const { visit_id, action, merchant_id } = parsed.data;
+
+    // SECURITY: Verify user owns this merchant
+    const authCheck = await verifyMerchantOwnership(merchant_id);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
 
     // Get the visit
     const { data: visit, error: visitError } = await supabaseAdmin
@@ -173,6 +210,13 @@ export async function PUT(request: NextRequest) {
     }
 
     const { visit_ids, action, merchant_id } = parsed.data;
+
+    // SECURITY: Verify user owns this merchant
+    const authCheck = await verifyMerchantOwnership(merchant_id);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
     const newStatus: VisitStatus = action === 'confirm' ? 'confirmed' : 'rejected';
 
     let successCount = 0;

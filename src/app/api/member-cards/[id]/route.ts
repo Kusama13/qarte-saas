@@ -1,8 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 
 const supabaseAdmin = getSupabaseAdmin();
+
+// Helper to verify user owns the program's merchant
+async function verifyProgramOwnership(programId: string): Promise<{ authorized: boolean }> {
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { authorized: false };
+  }
+
+  // Get program with merchant info
+  const { data: program } = await supabaseAdmin
+    .from('member_programs')
+    .select('merchant_id, merchants!inner(user_id)')
+    .eq('id', programId)
+    .single();
+
+  if (!program || (program.merchants as any)?.user_id !== user.id) {
+    return { authorized: false };
+  }
+
+  return { authorized: true };
+}
+
+// Helper to verify user owns the card's program
+async function verifyCardOwnership(cardId: string): Promise<{ authorized: boolean; programId?: string }> {
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { authorized: false };
+  }
+
+  // Get card with program and merchant info
+  const { data: card } = await supabaseAdmin
+    .from('member_cards')
+    .select('program_id, program:member_programs!inner(merchant_id, merchants!inner(user_id))')
+    .eq('id', cardId)
+    .single();
+
+  if (!card) {
+    return { authorized: false };
+  }
+
+  const merchants = (card.program as any)?.merchants;
+  if (!merchants || merchants.user_id !== user.id) {
+    return { authorized: false };
+  }
+
+  return { authorized: true, programId: card.program_id };
+}
 
 const extendSchema = z.object({
   // Allow any positive duration: days (0.033+), weeks (0.25+), months (1+)
@@ -16,6 +69,12 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
+    // SECURITY: Verify user owns this card's program
+    const authCheck = await verifyCardOwnership(id);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
 
     const { data: memberCard, error } = await supabaseAdmin
       .from('member_cards')
@@ -48,6 +107,13 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
+
+    // SECURITY: Verify user owns this card's program
+    const authCheck = await verifyCardOwnership(id);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
     const body = await request.json();
     const parsed = extendSchema.safeParse(body);
 
@@ -121,6 +187,12 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
+
+    // SECURITY: Verify user owns this card's program
+    const authCheck = await verifyCardOwnership(id);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
 
     const { error } = await supabaseAdmin
       .from('member_cards')

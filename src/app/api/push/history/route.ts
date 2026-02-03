@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 
 // Helper to get Supabase client with service role (bypasses RLS)
 function getSupabase() {
@@ -12,8 +14,15 @@ function getSupabase() {
 // GET - Get push history for a merchant
 export async function GET(request: NextRequest) {
   const supabase = getSupabase();
+  const supabaseAuth = createRouteHandlerClient({ cookies });
 
   try {
+    // SECURITY: Verify user is authenticated
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const merchantId = searchParams.get('merchantId');
     const limit = parseInt(searchParams.get('limit') || '10', 10);
@@ -23,6 +32,18 @@ export async function GET(request: NextRequest) {
         { error: 'merchantId requis' },
         { status: 400 }
       );
+    }
+
+    // SECURITY: Verify user owns this merchant
+    const { data: merchant } = await supabase
+      .from('merchants')
+      .select('id')
+      .eq('id', merchantId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!merchant) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
     const { data: history, error } = await supabase

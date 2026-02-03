@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { verifyAdminAuth } from '@/lib/admin-auth';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,6 +53,10 @@ export async function POST(request: NextRequest) {
 
 // GET - Get all tool leads (admin only)
 export async function GET(request: NextRequest) {
+  // SECURITY: Verify admin authorization
+  const auth = await verifyAdminAuth(request);
+  if (!auth.authorized) return auth.error!;
+
   try {
     const { searchParams } = new URL(request.url);
     const source = searchParams.get('source');
