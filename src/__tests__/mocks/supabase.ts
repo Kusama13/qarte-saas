@@ -92,8 +92,8 @@ function parseRelations(selectFields: string): Array<{ alias: string; table: str
 
 // Mock Supabase query builder
 function createQueryBuilder(table: keyof typeof testDb) {
-  let data = [...testDb[table]];
-  let filters: Array<{ field: string; op: string; value: any }> = [];
+  const data = [...testDb[table]];
+  const filters: Array<{ field: string; op: string; value: any }> = [];
   let selectFields = '*';
   let isSingle = false;
   let isMaybeSingle = false;

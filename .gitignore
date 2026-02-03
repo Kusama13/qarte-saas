@@ -7,3 +7,10 @@ node_modules
 *.log
 .turbo
 .env.vercel
+
+# Code-simplifier
+.code-simplifier/
+quality-history/
+reports/
+quality-report-*.md
+.code-simplifier.json
