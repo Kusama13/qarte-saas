@@ -424,7 +424,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
 
       // Insert redemption with tier info
-      await supabase.from('redemptions').insert({
+      const { error: redemptionError } = await supabase.from('redemptions').insert({
         loyalty_card_id: loyaltyCard.id,
         merchant_id: merchant.id,
         customer_id: customer.id,
@@ -432,16 +432,28 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         tier: tierToRedeem,
       });
 
+      if (redemptionError) {
+        console.error('Redemption insert error:', redemptionError);
+        setError('Erreur lors de l\'enregistrement de la récompense. Veuillez réessayer.');
+        setStep('error');
+        return;
+      }
+
       // Only reset stamps to 0 when:
       // - Redeeming tier 2 (always reset after tier 2)
       // - Redeeming tier 1 AND tier 2 is NOT enabled (classic single-tier flow)
       const shouldResetStamps = tierToRedeem === 2 || !tier2Enabled;
 
       if (shouldResetStamps) {
-        await supabase
+        const { error: updateError } = await supabase
           .from('loyalty_cards')
           .update({ current_stamps: 0 })
           .eq('id', loyaltyCard.id);
+
+        if (updateError) {
+          console.error('Stamps update error:', updateError);
+          // Continue anyway, redemption was recorded
+        }
         setLoyaltyCard({ ...loyaltyCard, current_stamps: 0 });
       }
 
@@ -457,8 +469,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       setRewardTier(null);
       setStep('success');
     } catch (err) {
-      console.error(err);
+      console.error('Redeem error:', err);
       setError('Erreur lors de l\'utilisation de la récompense');
+      setStep('error');
     } finally {
       setSubmitting(false);
     }

@@ -302,13 +302,36 @@ export async function POST(request: NextRequest) {
       .eq('status', 'pending');
 
     // Check for existing redemptions to determine which tier rewards are available
-    const { data: existingRedemptions } = await supabaseAdmin
-      .from('redemptions')
-      .select('tier')
-      .eq('loyalty_card_id', loyaltyCard.id);
+    // We need to check redemptions within the current CYCLE
+    // A cycle resets after tier 2 is redeemed
 
-    const tier1Redeemed = existingRedemptions?.some(r => r.tier === 1) || false;
-    const tier2Redeemed = existingRedemptions?.some(r => r.tier === 2) || false;
+    // First, get the last tier 2 redemption (which marks the start of the current cycle)
+    const { data: lastTier2Redemption } = await supabaseAdmin
+      .from('redemptions')
+      .select('redeemed_at')
+      .eq('loyalty_card_id', loyaltyCard.id)
+      .eq('tier', 2)
+      .order('redeemed_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Check if tier 1 was redeemed in the CURRENT cycle (after the last tier 2, or ever if no tier 2)
+    let tier1Query = supabaseAdmin
+      .from('redemptions')
+      .select('id')
+      .eq('loyalty_card_id', loyaltyCard.id)
+      .eq('tier', 1);
+
+    if (lastTier2Redemption) {
+      tier1Query = tier1Query.gt('redeemed_at', lastTier2Redemption.redeemed_at);
+    }
+
+    const { data: tier1InCycle } = await tier1Query.limit(1).single();
+    const tier1Redeemed = !!tier1InCycle;
+
+    // Tier 2 redeemed status: check if current stamps warrant showing tier 2
+    // If tier 2 was just redeemed (last redemption), we're in a new cycle
+    const tier2Redeemed = false; // Tier 2 is never "redeemed" in terms of blocking - it just resets the cycle
 
     // Calculate tier reward unlocks
     const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
