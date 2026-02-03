@@ -138,18 +138,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get or create customer (customers are global, not per-merchant)
+    // Get or create customer for THIS merchant
     let customer;
     const { data: existingCustomer } = await supabaseAdmin
       .from('customers')
       .select('*')
       .eq('phone_number', formattedPhone)
-      .single();
+      .eq('merchant_id', merchant.id)
+      .maybeSingle();
 
     if (existingCustomer) {
       customer = existingCustomer;
     } else {
-      // New customer - need first_name
+      // New customer for this merchant - need first_name
       if (!first_name) {
         return NextResponse.json(
           { error: 'Le prénom est requis pour créer un compte', needs_registration: true },
@@ -163,6 +164,7 @@ export async function POST(request: NextRequest) {
           phone_number: formattedPhone,
           first_name: first_name.trim(),
           last_name: last_name?.trim() || null,
+          merchant_id: merchant.id,
         })
         .select()
         .single();
