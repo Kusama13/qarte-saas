@@ -1463,13 +1463,13 @@ export default function CustomerCardPage({
                     setRedeemTier(1);
                     setShowRedeemModal(true);
                   }}
-                  className="w-full h-14 rounded-xl text-base font-bold shadow-lg hover:shadow-xl transition-all"
+                  className="w-full h-12 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all"
                   style={{
                     background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`
                   }}
                 >
-                  <Gift className="w-5 h-5 mr-2" />
-                  {tier2Enabled ? 'Réclamer palier 1' : 'Profiter de ma récompense'}
+                  <Gift className="w-4 h-4 mr-2" />
+                  Profiter de ma récompense
                 </Button>
               )}
 
@@ -1480,13 +1480,13 @@ export default function CustomerCardPage({
                     setRedeemTier(2);
                     setShowRedeemModal(true);
                   }}
-                  className="w-full h-14 rounded-xl text-base font-bold shadow-lg hover:shadow-xl transition-all"
+                  className="w-full h-12 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all"
                   style={{
                     background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)'
                   }}
                 >
-                  <Trophy className="w-5 h-5 mr-2" />
-                  Réclamer palier 2
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Profiter de ma récompense palier 2
                 </Button>
               )}
 

@@ -86,6 +86,7 @@ export default function ProgramPage() {
   // Track original stamps required for warning
   const [originalStampsRequired, setOriginalStampsRequired] = useState(10);
   const [showStampsWarning, setShowStampsWarning] = useState(false);
+  const [tier2Error, setTier2Error] = useState('');
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -171,6 +172,13 @@ export default function ProgramPage() {
 
   const handleSave = async () => {
     if (!merchant) return;
+
+    // Validate tier 2 stamps
+    if (formData.tier2Enabled && formData.tier2StampsRequired <= formData.stampsRequired) {
+      setTier2Error(`Le palier 2 doit être supérieur au palier 1 (${formData.stampsRequired})`);
+      return;
+    }
+    setTier2Error('');
 
     setSaving(true);
     try {
@@ -511,17 +519,24 @@ export default function ProgramPage() {
                   </label>
                   <Input
                     type="number"
-                    min={formData.stampsRequired + 1}
+                    min={1}
                     value={formData.tier2StampsRequired}
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      tier2StampsRequired: Math.max(formData.stampsRequired + 1, parseInt(e.target.value) || formData.stampsRequired + 1)
-                    })}
-                    className="bg-white border-violet-200 focus:border-violet-500 focus:ring-violet-500/20"
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        tier2StampsRequired: parseInt(e.target.value) || 1
+                      });
+                      setTier2Error('');
+                    }}
+                    className={`bg-white ${tier2Error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-violet-200 focus:border-violet-500 focus:ring-violet-500/20'}`}
                   />
-                  <p className="text-xs text-gray-500">
-                    Doit être supérieur au 1er palier ({formData.stampsRequired})
-                  </p>
+                  {tier2Error ? (
+                    <p className="text-xs text-red-500 font-medium">{tier2Error}</p>
+                  ) : (
+                    <p className="text-xs text-gray-500">
+                      Doit être supérieur au 1er palier ({formData.stampsRequired})
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
