@@ -15,6 +15,13 @@ import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
 import type { Merchant } from '@/types';
 
+interface PaymentMethod {
+  brand: string;
+  last4: string;
+  exp_month: number;
+  exp_year: number;
+}
+
 const features = [
   'Clients illimités',
   'QR Code perso',
@@ -30,7 +37,9 @@ export default function SubscriptionPage() {
   const router = useRouter();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
-  const [subscribing, setSubscribing] = useState(false); // AJOUTÉ
+  const [subscribing, setSubscribing] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [loadingPayment, setLoadingPayment] = useState(false);
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -48,12 +57,32 @@ export default function SubscriptionPage() {
 
       if (data) {
         setMerchant(data);
+
+        // Fetch payment method if subscribed
+        if (data.subscription_status === 'active') {
+          fetchPaymentMethod();
+        }
       }
       setLoading(false);
     };
 
     fetchMerchant();
   }, [router]);
+
+  const fetchPaymentMethod = async () => {
+    setLoadingPayment(true);
+    try {
+      const res = await fetch('/api/stripe/payment-method');
+      const data = await res.json();
+      if (data.paymentMethod) {
+        setPaymentMethod(data.paymentMethod);
+      }
+    } catch (error) {
+      console.error('Error fetching payment method:', error);
+    } finally {
+      setLoadingPayment(false);
+    }
+  };
 
   // FONCTION AJOUTÉE
   const handleSubscribe = async () => {
@@ -214,8 +243,23 @@ export default function SubscriptionPage() {
                         <CreditCard className="w-6 h-6 text-indigo-500" />
                       </div>
                       <div>
-                        <p className="font-extrabold text-gray-900">Visa •••• 4242</p>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Exp 12 / 2025</p>
+                        {loadingPayment ? (
+                          <div className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                            <span className="text-sm text-gray-400">Chargement...</span>
+                          </div>
+                        ) : paymentMethod ? (
+                          <>
+                            <p className="font-extrabold text-gray-900 capitalize">
+                              {paymentMethod.brand} •••• {paymentMethod.last4}
+                            </p>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">
+                              Exp {String(paymentMethod.exp_month).padStart(2, '0')} / {paymentMethod.exp_year}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500">Aucune carte enregistrée</p>
+                        )}
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" className="rounded-xl text-primary font-extrabold hover:bg-primary-50">Modifier</Button>

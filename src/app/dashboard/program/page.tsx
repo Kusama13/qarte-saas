@@ -69,7 +69,7 @@ export default function ProgramPage() {
     rewardDescription: '',
     // 2nd tier reward
     tier2Enabled: false,
-    tier2StampsRequired: 20,
+    tier2StampsRequired: 0,
     tier2RewardDescription: '',
   });
 
@@ -79,7 +79,7 @@ export default function ProgramPage() {
     rewardDescription: '',
     // Tier 2 preview
     tier2Enabled: false,
-    tier2StampsRequired: 20,
+    tier2StampsRequired: 0,
     tier2RewardDescription: '',
   });
 
@@ -112,14 +112,14 @@ export default function ProgramPage() {
           stampsRequired: data.stamps_required || 10,
           rewardDescription: data.reward_description || '',
           tier2Enabled: data.tier2_enabled || false,
-          tier2StampsRequired: data.tier2_stamps_required || (data.stamps_required || 10) * 2,
+          tier2StampsRequired: data.tier2_stamps_required || 0,
           tier2RewardDescription: data.tier2_reward_description || '',
         });
         setPreviewData({
           stampsRequired: data.stamps_required || 10,
           rewardDescription: data.reward_description || '',
           tier2Enabled: data.tier2_enabled || false,
-          tier2StampsRequired: data.tier2_stamps_required || (data.stamps_required || 10) * 2,
+          tier2StampsRequired: data.tier2_stamps_required || 0,
           tier2RewardDescription: data.tier2_reward_description || '',
         });
         setOriginalStampsRequired(data.stamps_required || 10);
@@ -174,9 +174,15 @@ export default function ProgramPage() {
     if (!merchant) return;
 
     // Validate tier 2 stamps
-    if (formData.tier2Enabled && formData.tier2StampsRequired <= formData.stampsRequired) {
-      setTier2Error(`Le palier 2 doit être supérieur au palier 1 (${formData.stampsRequired})`);
-      return;
+    if (formData.tier2Enabled) {
+      if (!formData.tier2StampsRequired || formData.tier2StampsRequired <= 0) {
+        setTier2Error('Veuillez entrer le nombre de passages requis pour le palier 2');
+        return;
+      }
+      if (formData.tier2StampsRequired <= formData.stampsRequired) {
+        setTier2Error(`Le palier 2 doit être supérieur au palier 1 (${formData.stampsRequired})`);
+        return;
+      }
     }
     setTier2Error('');
 
@@ -507,8 +513,8 @@ export default function ProgramPage() {
                   <p className="text-sm text-violet-700 flex items-start gap-2">
                     <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <span>
-                      <strong>Exemple :</strong> Si le 1er palier est à {formData.stampsRequired} points et le 2ème à {formData.tier2StampsRequired} points,
-                      le client débloque la 1ère récompense à {formData.stampsRequired} pts puis la 2ème à {formData.tier2StampsRequired} pts (cumul continu).
+                      <strong>Exemple :</strong> Si le 1er palier est à {formData.stampsRequired} points et le 2ème à {formData.tier2StampsRequired || '?'} points,
+                      le client débloque la 1ère récompense à {formData.stampsRequired} pts puis la 2ème à {formData.tier2StampsRequired || '?'} pts (cumul continu).
                     </span>
                   </p>
                 </div>
@@ -520,11 +526,12 @@ export default function ProgramPage() {
                   <Input
                     type="number"
                     min={1}
-                    value={formData.tier2StampsRequired}
+                    placeholder={`Ex: ${formData.stampsRequired * 2}`}
+                    value={formData.tier2StampsRequired || ''}
                     onChange={(e) => {
                       setFormData({
                         ...formData,
-                        tier2StampsRequired: parseInt(e.target.value) || 1
+                        tier2StampsRequired: parseInt(e.target.value) || 0
                       });
                       setTier2Error('');
                     }}
@@ -684,7 +691,7 @@ export default function ProgramPage() {
                         <div className="flex items-baseline justify-center gap-1">
                           <span className="text-4xl font-black tracking-tighter" style={{ color: formData.primaryColor }}>12</span>
                           <span className="text-slate-300 text-lg font-bold">
-                            / {formData.tier2Enabled ? (previewData.tier2StampsRequired || 20) : previewData.stampsRequired}
+                            / {formData.tier2Enabled ? (previewData.tier2StampsRequired || previewData.stampsRequired * 2) : previewData.stampsRequired}
                           </span>
                         </div>
                       </div>
@@ -696,7 +703,7 @@ export default function ProgramPage() {
                           <div
                             className="absolute inset-y-0 left-0 rounded-full transition-all duration-1000 ease-out"
                             style={{
-                              width: `${(12 / (formData.tier2Enabled ? (previewData.tier2StampsRequired || 20) : previewData.stampsRequired)) * 100}%`,
+                              width: `${(12 / (formData.tier2Enabled ? (previewData.tier2StampsRequired || previewData.stampsRequired * 2) : previewData.stampsRequired)) * 100}%`,
                               background: `linear-gradient(90deg, ${formData.primaryColor}, ${formData.secondaryColor})`,
                               boxShadow: `0 2px 8px ${formData.primaryColor}40`
                             }}
@@ -707,7 +714,7 @@ export default function ProgramPage() {
 
                         {/* Tier 1 Marker */}
                         {(() => {
-                          const max = formData.tier2Enabled ? (previewData.tier2StampsRequired || 20) : previewData.stampsRequired;
+                          const max = formData.tier2Enabled ? (previewData.tier2StampsRequired || previewData.stampsRequired * 2) : previewData.stampsRequired;
                           const t1Pos = (previewData.stampsRequired / max) * 100;
                           const reached = 12 >= previewData.stampsRequired;
                           return (
@@ -723,9 +730,9 @@ export default function ProgramPage() {
                         {/* Tier 2 Marker */}
                         {formData.tier2Enabled && (
                           <div className="absolute top-1/2 -translate-y-1/2 right-0 flex flex-col items-center">
-                            <div className={`w-7 h-7 rounded-full flex items-center justify-center -mt-1 shadow-md border-2 transition-transform duration-300 ${12 >= (previewData.tier2StampsRequired || 20) ? 'bg-white scale-110' : 'bg-slate-50 scale-100 opacity-80'}`}
-                                 style={{ borderColor: 12 >= (previewData.tier2StampsRequired || 20) ? formData.secondaryColor : '#E2E8F0' }}>
-                              <Trophy size={12} className={12 >= (previewData.tier2StampsRequired || 20) ? 'text-violet-600' : 'text-slate-300'} />
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center -mt-1 shadow-md border-2 transition-transform duration-300 ${12 >= (previewData.tier2StampsRequired || previewData.stampsRequired * 2) ? 'bg-white scale-110' : 'bg-slate-50 scale-100 opacity-80'}`}
+                                 style={{ borderColor: 12 >= (previewData.tier2StampsRequired || previewData.stampsRequired * 2) ? formData.secondaryColor : '#E2E8F0' }}>
+                              <Trophy size={12} className={12 >= (previewData.tier2StampsRequired || previewData.stampsRequired * 2) ? 'text-violet-600' : 'text-slate-300'} />
                             </div>
                           </div>
                         )}
@@ -746,7 +753,7 @@ export default function ProgramPage() {
                       <p className="mt-4 text-center text-[10px] font-medium text-slate-500">
                         {12 >= previewData.stampsRequired
                           ? (formData.tier2Enabled
-                              ? `Palier 1 débloqué ! Encore ${(previewData.tier2StampsRequired || 20) - 12} pts`
+                              ? `Palier 1 débloqué ! Encore ${(previewData.tier2StampsRequired || previewData.stampsRequired * 2) - 12} pts`
                               : 'Récompense débloquée !')
                           : `Plus que ${previewData.stampsRequired - 12} pts pour le palier 1`
                         }
@@ -784,18 +791,18 @@ export default function ProgramPage() {
                       {/* Tier 2 Reward (if enabled) */}
                       {formData.tier2Enabled && (
                         <div
-                          className={`backdrop-blur-md rounded-2xl p-3 border-2 flex items-center gap-3 transition-all duration-500 ${12 >= (previewData.tier2StampsRequired || 20) ? 'bg-violet-50/80' : 'bg-white/70'}`}
+                          className={`backdrop-blur-md rounded-2xl p-3 border-2 flex items-center gap-3 transition-all duration-500 ${12 >= (previewData.tier2StampsRequired || previewData.stampsRequired * 2) ? 'bg-violet-50/80' : 'bg-white/70'}`}
                           style={{
-                            borderColor: 12 >= (previewData.tier2StampsRequired || 20) ? '#C4B5FD' : `${formData.secondaryColor}15`
+                            borderColor: 12 >= (previewData.tier2StampsRequired || previewData.stampsRequired * 2) ? '#C4B5FD' : `${formData.secondaryColor}15`
                           }}
                         >
                           <div
                             className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors duration-500"
                             style={{
-                              backgroundColor: 12 >= (previewData.tier2StampsRequired || 20) ? '#EDE9FE' : `${formData.secondaryColor}15`
+                              backgroundColor: 12 >= (previewData.tier2StampsRequired || previewData.stampsRequired * 2) ? '#EDE9FE' : `${formData.secondaryColor}15`
                             }}
                           >
-                            <Trophy size={14} className={12 >= (previewData.tier2StampsRequired || 20) ? 'text-violet-600' : 'text-slate-400'} style={{ color: 12 >= (previewData.tier2StampsRequired || 20) ? undefined : formData.secondaryColor }} />
+                            <Trophy size={14} className={12 >= (previewData.tier2StampsRequired || previewData.stampsRequired * 2) ? 'text-violet-600' : 'text-slate-400'} style={{ color: 12 >= (previewData.tier2StampsRequired || previewData.stampsRequired * 2) ? undefined : formData.secondaryColor }} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[8px] font-bold text-slate-400 uppercase tracking-wider">Palier 2</p>
@@ -803,7 +810,7 @@ export default function ProgramPage() {
                               {previewData.tier2RewardDescription || 'Récompense premium'}
                             </p>
                           </div>
-                          {12 >= (previewData.tier2StampsRequired || 20) && (
+                          {12 >= (previewData.tier2StampsRequired || previewData.stampsRequired * 2) && (
                             <span className="text-[8px] font-bold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">Prêt</span>
                           )}
                         </div>
