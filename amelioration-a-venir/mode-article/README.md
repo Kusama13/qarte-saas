@@ -80,13 +80,29 @@ ADD COLUMN IF NOT EXISTS product_name TEXT,
 ADD COLUMN IF NOT EXISTS max_quantity_per_scan INTEGER DEFAULT 5;
 ```
 
+## Fichiers sauvegardés dans ce dossier
+
+- `MerchantSettingsForm.backup.tsx` - Formulaire complet avec mode article
+- `scan-page.backup.tsx` - Page scan avec sélecteur de quantité
+- `ProgramGuide.backup.tsx` - Guide avec choix du mode (visite/article)
+
+## Fichiers modifiés (sans backup complet)
+
+- `src/components/marketing/FlyerTemplate.tsx` - Suppression props loyaltyMode/productName
+- `src/components/PendingPointsWidget.tsx` - Suppression mode article dans Qarte Shield
+- `src/app/dashboard/qr-download/page.tsx` - Suppression props loyaltyMode
+- `src/app/dashboard/page.tsx` - Suppression props loyaltyMode sur PendingPointsWidget
+- `src/app/customer/card/[merchantId]/page.tsx` - Simplification pour mode visite uniquement
+
 ## Pour restaurer le mode article
 
 1. Remettre le type `LoyaltyMode` dans `src/types/index.ts`
 2. Restaurer les champs dans l'interface `Merchant`
-3. Restaurer le step `article-select` dans `/scan`
-4. Restaurer le composant `MerchantSettingsForm` complet
-5. Adapter les API et dashboard
+3. Restaurer le step `article-select` dans `/scan` (voir `scan-page.backup.tsx`)
+4. Restaurer le composant `MerchantSettingsForm` (voir `MerchantSettingsForm.backup.tsx`)
+5. Restaurer `ProgramGuide.tsx` (voir `ProgramGuide.backup.tsx`)
+6. Remettre les props `loyaltyMode` dans FlyerTemplate, PendingPointsWidget, etc.
+7. Adapter les API et dashboard
 
 ## Cas d'usage typiques (non beauty/wellness)
 - Boulangeries: 10 croissants = 1 offert

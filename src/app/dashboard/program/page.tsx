@@ -22,17 +22,17 @@ import { MerchantSettingsForm, ProgramGuide, type LoyaltySettings } from '@/comp
 import { compressLogo } from '@/lib/image-compression';
 import type { Merchant } from '@/types';
 
-// Images par type de commerce
+// Images par type de commerce (beauté / bien-être)
 const BUSINESS_IMAGES = [
-  { url: 'https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=200', label: 'Coiffeur' },
-  { url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200', label: 'Restaurant' },
-  { url: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200', label: 'Café' },
-  { url: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=200', label: 'Boulangerie' },
-  { url: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=200', label: 'Fleuriste' },
+  { url: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200', label: 'Coiffeur' },
+  { url: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=200', label: 'Barbier' },
+  { url: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=200', label: 'Institut' },
   { url: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=200', label: 'Onglerie' },
-  { url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=200', label: 'Épicerie' },
-  { url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=200', label: 'Boutique' },
   { url: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200', label: 'Spa' },
+  { url: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=200', label: 'Massage' },
+  { url: 'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=200', label: 'Épilation' },
+  { url: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=200', label: 'Soins' },
+  { url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=200', label: 'Maquillage' },
 ];
 
 

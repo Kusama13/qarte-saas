@@ -250,8 +250,6 @@ Généré par Qarte - La fidélité simplifiée
                   qrCodeUrl={qrCodeUrl}
                   rewardDescription={merchant.reward_description || 'Récompense fidélité'}
                   stampsRequired={merchant.stamps_required}
-                  loyaltyMode={merchant.loyalty_mode as 'visit' | 'article'}
-                  productName={merchant.product_name || undefined}
                   scale={0.65}
                   tier2Enabled={merchant.tier2_enabled}
                   tier2StampsRequired={merchant.tier2_stamps_required}
@@ -412,8 +410,6 @@ Généré par Qarte - La fidélité simplifiée
             qrCodeUrl={qrCodeUrl}
             rewardDescription={merchant.reward_description || 'Récompense fidélité'}
             stampsRequired={merchant.stamps_required}
-            loyaltyMode={merchant.loyalty_mode as 'visit' | 'article'}
-            productName={merchant.product_name || undefined}
             scale={1}
             tier2Enabled={merchant.tier2_enabled}
             tier2StampsRequired={merchant.tier2_stamps_required}

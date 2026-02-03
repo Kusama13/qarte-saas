@@ -412,8 +412,6 @@ export default function DashboardPage() {
       {/* Qarte Shield - Points en attente */}
       <PendingPointsWidget
         merchantId={merchant.id}
-        loyaltyMode={merchant.loyalty_mode}
-        productName={merchant.product_name}
         shieldEnabled={shieldEnabled}
         onShieldToggle={handleShieldToggle}
       />

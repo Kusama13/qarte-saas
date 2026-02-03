@@ -11,12 +11,11 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Coffee,
-  Croissant,
-  UtensilsCrossed,
   Scissors,
-  Dumbbell,
-  ShoppingBag,
+  Sparkles,
+  Heart,
+  Hand,
+  Flower2,
   MoreHorizontal,
   Loader2,
 } from 'lucide-react';
@@ -42,24 +41,28 @@ interface Merchant {
 
 type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'cancelled';
 
-// Icons for shop types
+// Icons for shop types (beauté / bien-être)
 const SHOP_TYPE_ICONS: Record<ShopType, React.ElementType> = {
-  cafe: Coffee,
-  boulangerie: Croissant,
-  restaurant: UtensilsCrossed,
-  salon_beaute: Scissors,
-  salle_sport: Dumbbell,
-  commerce_detail: ShoppingBag,
+  coiffeur: Scissors,
+  barbier: Scissors,
+  institut_beaute: Sparkles,
+  onglerie: Hand,
+  spa: Flower2,
+  estheticienne: Heart,
+  massage: Heart,
+  epilation: Sparkles,
   autre: MoreHorizontal,
 };
 
 const SHOP_TYPE_COLORS: Record<ShopType, string> = {
-  cafe: 'bg-amber-100 text-amber-700',
-  boulangerie: 'bg-orange-100 text-orange-700',
-  restaurant: 'bg-red-100 text-red-700',
-  salon_beaute: 'bg-pink-100 text-pink-700',
-  salle_sport: 'bg-blue-100 text-blue-700',
-  commerce_detail: 'bg-purple-100 text-purple-700',
+  coiffeur: 'bg-slate-100 text-slate-700',
+  barbier: 'bg-amber-100 text-amber-700',
+  institut_beaute: 'bg-pink-100 text-pink-700',
+  onglerie: 'bg-rose-100 text-rose-700',
+  spa: 'bg-emerald-100 text-emerald-700',
+  estheticienne: 'bg-purple-100 text-purple-700',
+  massage: 'bg-teal-100 text-teal-700',
+  epilation: 'bg-indigo-100 text-indigo-700',
   autre: 'bg-gray-100 text-gray-700',
 };
 

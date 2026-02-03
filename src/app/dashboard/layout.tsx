@@ -88,7 +88,7 @@ function DashboardLayoutContent({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <button
         onClick={() => setSidebarOpen(true)}
         className="fixed z-40 p-3 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-xl shadow-indigo-100/50 top-4 left-4 lg:hidden hover:scale-105 active:scale-95 transition-all duration-200"
@@ -248,8 +248,8 @@ function DashboardLayoutContent({
         </div>
       </aside>
 
-      <main className="lg:ml-72">
-        <div className="min-h-screen p-4 md:p-8">{children}</div>
+      <main className="lg:ml-72 min-h-screen">
+        <div className="p-4 md:p-8 pb-20">{children}</div>
       </main>
 
       {/* Guided Tour */}

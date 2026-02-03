@@ -17,9 +17,6 @@ import {
   ChevronUp,
   X,
   Footprints,
-  Coffee,
-  Pizza,
-  ShoppingBag,
   SlidersHorizontal,
   Hourglass,
   Shield,
@@ -82,28 +79,13 @@ const getCookie = (name: string): string | null => {
   return null;
 };
 
-// Get icon based on loyalty mode and product name
-const getLoyaltyIcon = (loyaltyMode: string, productName: string | null) => {
-  if (loyaltyMode === 'visit') {
-    return Footprints; // Walking person for visits
-  }
-
-  // For article mode, try to match product name
-  const name = (productName || '').toLowerCase();
-  if (name.includes('café') || name.includes('cafe') || name.includes('coffee')) {
-    return Coffee;
-  }
-  if (name.includes('pizza') || name.includes('burger') || name.includes('sandwich')) {
-    return Pizza;
-  }
-  return ShoppingBag; // Default for articles
+// Get icon for visits
+const getLoyaltyIcon = () => {
+  return Footprints;
 };
 
-const getLoyaltyLabel = (loyaltyMode: string, productName: string | null, count: number) => {
-  if (loyaltyMode === 'visit') {
-    return count === 1 ? 'Passage' : 'Passages';
-  }
-  return productName || (count === 1 ? 'Article' : 'Articles');
+const getLoyaltyLabel = (count: number) => {
+  return count === 1 ? 'Passage' : 'Passages';
 };
 
 export default function CustomerCardPage({
@@ -326,11 +308,9 @@ export default function CustomerCardPage({
   }, [card, isStandalone, pushSubscribed, pushPermission, pushSupported, pushSubscribing]);
 
   // Format reward text based on type
-  const formatRewardText = (reward: string, remaining: number, loyaltyMode: string, productName: string | null) => {
+  const formatRewardText = (reward: string, remaining: number) => {
     const lowerReward = reward.toLowerCase();
-    const unit = loyaltyMode === 'visit'
-      ? (remaining === 1 ? 'passage' : 'passages')
-      : (productName || (remaining === 1 ? 'article' : 'articles'));
+    const unit = remaining === 1 ? 'passage' : 'passages';
 
     // Percentage discount: "-20%", "20% de réduction", etc.
     const percentMatch = reward.match(/(\d+)\s*%/);
@@ -589,7 +569,7 @@ export default function CustomerCardPage({
   const effectiveTier1Redeemed = tier1RedeemedInCycle && currentStamps >= tier1Required;
 
   // Get the loyalty icon component for stamps display
-  const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+  const LoyaltyIcon = getLoyaltyIcon();
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white 0%, ${merchant.primary_color}20 50%, ${merchant.primary_color}30 100%)` }}>
@@ -1527,7 +1507,7 @@ export default function CustomerCardPage({
             <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
               <div className="p-1.5 bg-gray-50 rounded-lg">
                 {(() => {
-                  const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+                  const LoyaltyIcon = getLoyaltyIcon();
                   return <LoyaltyIcon className="w-4 h-4 text-gray-500" />;
                 })()}
               </div>
@@ -1598,7 +1578,7 @@ export default function CustomerCardPage({
                     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                     .slice(0, 10) // Limit to 10 items for performance
                     .map((item, index) => {
-                      const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+                      const LoyaltyIcon = getLoyaltyIcon();
                       const isAdjustment = item.type === 'adjustment';
                       const isRedemption = item.type === 'redemption';
                       const isPending = item.status === 'pending';
@@ -1699,7 +1679,7 @@ export default function CustomerCardPage({
               >
                 <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                   {(() => {
-                    const LoyaltyIcon = getLoyaltyIcon(merchant.loyalty_mode, merchant.product_name);
+                    const LoyaltyIcon = getLoyaltyIcon();
                     return <LoyaltyIcon className="w-6 h-6 text-gray-300" />;
                   })()}
                 </div>

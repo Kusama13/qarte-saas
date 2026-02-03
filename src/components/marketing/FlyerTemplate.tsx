@@ -11,8 +11,6 @@ interface FlyerTemplateProps {
   qrCodeUrl: string;
   rewardDescription: string;
   stampsRequired: number;
-  loyaltyMode?: 'visit' | 'article';
-  productName?: string;
   scale?: number;
   // Tier 2
   tier2Enabled?: boolean;
@@ -30,8 +28,6 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
       qrCodeUrl,
       rewardDescription,
       stampsRequired,
-      loyaltyMode = 'visit',
-      productName,
       scale = 1,
       tier2Enabled = false,
       tier2StampsRequired,
@@ -45,9 +41,6 @@ export const FlyerTemplate = forwardRef<HTMLDivElement, FlyerTemplateProps>(
 
     // Get the appropriate text for stamps
     const getStampsText = (stamps: number) => {
-      if (loyaltyMode === 'article' && productName) {
-        return `${stamps} ${productName}${stamps > 1 ? 's' : ''}`;
-      }
       return `${stamps} passage${stamps > 1 ? 's' : ''}`;
     };
 

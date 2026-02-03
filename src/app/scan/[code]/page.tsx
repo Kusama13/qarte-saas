@@ -560,23 +560,47 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     <Sparkles className="w-4 h-4" style={{ color: primaryColor }} />
                   </div>
 
-                  {/* Reward Badge - Compact & Refined */}
-                  <div
-                    className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full border shadow-sm transition-transform active:scale-95"
-                    style={{ backgroundColor: `${primaryColor}05`, borderColor: `${primaryColor}15` }}
-                  >
-                    <Gift className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-                    <span className="text-[13px] font-bold text-gray-800">
-                      {merchant.reward_description}
-                    </span>
-                    <div className="flex items-center gap-1.5 pl-2 border-l border-gray-200">
-                      <span className="text-[10px] font-black px-1.5 py-0.5 rounded text-white shadow-sm" style={{ backgroundColor: primaryColor }}>
-                        {merchant.stamps_required}
+                  {/* Reward Badges */}
+                  <div className="flex flex-col gap-2">
+                    {/* Tier 1 - Primary Reward */}
+                    <div
+                      className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full border shadow-sm transition-transform active:scale-95"
+                      style={{ backgroundColor: `${primaryColor}05`, borderColor: `${primaryColor}15` }}
+                    >
+                      <Gift className="w-3.5 h-3.5" style={{ color: primaryColor }} />
+                      <span className="text-[13px] font-bold text-gray-800">
+                        {merchant.reward_description}
                       </span>
-                      <span className="text-[9px] font-bold uppercase tracking-tighter text-gray-400">
-                        Visites
-                      </span>
+                      <div className="flex items-center gap-1.5 pl-2 border-l border-gray-200">
+                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded text-white shadow-sm" style={{ backgroundColor: primaryColor }}>
+                          {merchant.stamps_required}
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-tighter text-gray-400">
+                          Visites
+                        </span>
+                      </div>
                     </div>
+
+                    {/* Tier 2 - Premium Reward (if enabled) */}
+                    {merchant.tier2_enabled && merchant.tier2_stamps_required && merchant.tier2_reward_description && (
+                      <div
+                        className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full border shadow-sm transition-transform active:scale-95"
+                        style={{ backgroundColor: '#fef3c705', borderColor: '#fbbf2415' }}
+                      >
+                        <Trophy className="w-3.5 h-3.5 text-amber-500" />
+                        <span className="text-[13px] font-bold text-gray-800">
+                          {merchant.tier2_reward_description}
+                        </span>
+                        <div className="flex items-center gap-1.5 pl-2 border-l border-gray-200">
+                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded text-white shadow-sm bg-gradient-to-r from-amber-500 to-orange-500">
+                            {merchant.tier2_stamps_required}
+                          </span>
+                          <span className="text-[9px] font-bold uppercase tracking-tighter text-gray-400">
+                            Visites
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -9,10 +9,17 @@
 
   html {
     scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
   }
 
   body {
     @apply antialiased text-gray-900 bg-white;
+    overscroll-behavior-y: none;
+  }
+
+  /* Ensure smooth scrolling on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

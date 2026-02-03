@@ -18,13 +18,14 @@ import { Button, Input, Textarea } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
 import type { Merchant } from '@/types';
 
+// Images beauté / bien-être
 const UNSPLASH_IMAGES = [
-  'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=200',
-  'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200',
-  'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200',
-  'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=200',
-  'https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=200',
-  'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=200',
+  'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200', // Coiffeur
+  'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=200', // Institut
+  'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=200', // Onglerie
+  'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200', // Spa
+  'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=200', // Massage
+  'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=200', // Barbier
 ];
 
 export default function OnboardingPage() {

@@ -27,9 +27,16 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = '';
     };
   }, [isOpen, onClose]);
+
+  // Extra cleanup on unmount to ensure scroll is always restored
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, []);
 
   if (!isOpen) return null;
 

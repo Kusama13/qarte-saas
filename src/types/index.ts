@@ -1,19 +1,23 @@
 export type ShopType =
-  | 'cafe'
-  | 'boulangerie'
-  | 'restaurant'
-  | 'salon_beaute'
-  | 'salle_sport'
-  | 'commerce_detail'
+  | 'coiffeur'
+  | 'barbier'
+  | 'institut_beaute'
+  | 'onglerie'
+  | 'spa'
+  | 'estheticienne'
+  | 'massage'
+  | 'epilation'
   | 'autre';
 
 export const SHOP_TYPES: Record<ShopType, string> = {
-  cafe: 'Café',
-  boulangerie: 'Boulangerie',
-  restaurant: 'Restaurant',
-  salon_beaute: 'Salon de beauté',
-  salle_sport: 'Salle de sport',
-  commerce_detail: 'Commerce de détail',
+  coiffeur: 'Salon de coiffure',
+  barbier: 'Barbier',
+  institut_beaute: 'Institut de beauté',
+  onglerie: 'Onglerie / Nail bar',
+  spa: 'Spa & Bien-être',
+  estheticienne: 'Esthéticienne',
+  massage: 'Salon de massage',
+  epilation: 'Centre d\'épilation',
   autre: 'Autre',
 };
 

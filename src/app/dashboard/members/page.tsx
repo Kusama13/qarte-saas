@@ -438,7 +438,7 @@ export default function MembersPage() {
     const activeMembers = programMembers.filter(m => new Date(m.valid_until) > new Date()).length;
 
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto pb-8">
         {/* Header */}
         <div className="mb-8">
           <button
@@ -815,7 +815,7 @@ export default function MembersPage() {
 
   // Programs list view
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto pb-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>

@@ -14,15 +14,12 @@ import {
   Loader2,
   Phone,
   Footprints,
-  ShoppingBag,
   HelpCircle,
 } from 'lucide-react';
-import type { PendingVisit, LoyaltyMode } from '@/types';
+import type { PendingVisit } from '@/types';
 
 interface PendingPointsWidgetProps {
   merchantId: string;
-  loyaltyMode: LoyaltyMode;
-  productName?: string | null;
   shieldEnabled: boolean;
   onShieldToggle: (enabled: boolean) => void;
 }
@@ -33,7 +30,7 @@ interface ToastState {
   type: 'success' | 'error';
 }
 
-export default function PendingPointsWidget({ merchantId, loyaltyMode, productName, shieldEnabled, onShieldToggle }: PendingPointsWidgetProps) {
+export default function PendingPointsWidget({ merchantId, shieldEnabled, onShieldToggle }: PendingPointsWidgetProps) {
   const [visits, setVisits] = useState<PendingVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -189,24 +186,10 @@ export default function PendingPointsWidget({ merchantId, loyaltyMode, productNa
               <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
                 <div className="flex items-center gap-2 mb-2">
                   <Footprints className="w-5 h-5 text-indigo-600" />
-                  <h4 className="font-bold text-indigo-900">Mode Passage</h4>
+                  <h4 className="font-bold text-indigo-900">Protection anti-fraude</h4>
                 </div>
                 <p className="text-sm text-indigo-700">
-                  Un client ne peut valider qu&apos;<strong>1 passage par jour</strong>. Toute tentative supplémentaire sera mise en quarantaine.
-                </p>
-              </div>
-
-              <div className="p-4 bg-orange-50 rounded-2xl border border-orange-100">
-                <div className="flex items-center gap-2 mb-2">
-                  <ShoppingBag className="w-5 h-5 text-orange-600" />
-                  <h4 className="font-bold text-orange-900">Mode Article</h4>
-                </div>
-                <ul className="text-sm text-orange-700 space-y-1">
-                  <li>• Maximum <strong>2 scans par jour</strong> par client</li>
-                  <li>• Maximum <strong>3 articles par scan</strong></li>
-                </ul>
-                <p className="text-sm text-orange-700 mt-2">
-                  Tout dépassement sera mis en quarantaine pour validation manuelle.
+                  Un client ne peut valider qu&apos;<strong>1 passage par jour</strong>. Toute tentative supplémentaire sera mise en quarantaine pour validation manuelle.
                 </p>
               </div>
 
@@ -341,19 +324,8 @@ export default function PendingPointsWidget({ merchantId, loyaltyMode, productNa
                       </h3>
 
                       <div className="flex items-center gap-2 text-indigo-600 font-semibold text-sm mb-3">
-                        {loyaltyMode === 'visit' ? (
-                          <>
-                            <Footprints className="w-4 h-4" />
-                            <span>A tenté de valider un passage</span>
-                          </>
-                        ) : (
-                          <>
-                            <ShoppingBag className="w-4 h-4" />
-                            <span>
-                              A tenté de valider {visit.points_earned} {visit.points_earned > 1 ? (productName || 'articles') : (productName?.replace(/s$/, '') || 'article')}
-                            </span>
-                          </>
-                        )}
+                        <Footprints className="w-4 h-4" />
+                        <span>A tenté de valider un passage</span>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-500">
