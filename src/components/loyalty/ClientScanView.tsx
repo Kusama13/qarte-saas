@@ -77,7 +77,7 @@ export function ClientScanView({
     setIsProcessing(true);
     setError(null);
 
-    const pointsToAdd = merchant.loyalty_mode === 'visit' ? 1 : quantity;
+    const pointsToAdd = 1;
 
     try {
       const result = await onCheckin(pointsToAdd);
@@ -166,7 +166,7 @@ export function ClientScanView({
             <span className="text-2xl font-bold text-gray-300">/{stampsTarget}</span>
           </div>
           <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-2">
-            {merchant.loyalty_mode === 'visit' ? 'Passages' : merchant.product_name || 'Articles'}
+            Passages
           </p>
         </div>
 
@@ -188,10 +188,7 @@ export function ClientScanView({
           {remaining > 0 ? (
             <>
               Plus que <span className="font-bold" style={{ color: merchant.primary_color }}>{remaining}</span>{' '}
-              {merchant.loyalty_mode === 'visit'
-                ? `passage${remaining > 1 ? 's' : ''}`
-                : `${merchant.product_name || 'article'}${remaining > 1 ? 's' : ''}`
-              } pour votre cadeau !
+              passage{remaining > 1 ? 's' : ''} pour votre cadeau !
             </>
           ) : (
             <span className="font-bold text-green-600">Cadeau disponible !</span>
@@ -227,39 +224,6 @@ export function ClientScanView({
 
       {/* Checkin Section */}
       <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6">
-        {merchant.loyalty_mode === 'article' && !checkinSuccess && (
-          <div className="mb-6">
-            <p className="text-sm font-medium text-gray-600 mb-3 text-center">
-              Nombre de {merchant.product_name || 'articles'}
-            </p>
-            <div className="flex items-center justify-center gap-4">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                disabled={quantity <= 1}
-                className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Minus className="w-6 h-6 text-gray-600" />
-              </button>
-              <div
-                className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black text-white"
-                style={{ backgroundColor: merchant.primary_color }}
-              >
-                {quantity}
-              </div>
-              <button
-                onClick={() => setQuantity(Math.min(merchant.max_quantity_per_scan, quantity + 1))}
-                disabled={quantity >= merchant.max_quantity_per_scan}
-                className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <Plus className="w-6 h-6 text-gray-600" />
-              </button>
-            </div>
-            <p className="text-xs text-gray-400 text-center mt-2">
-              Max: {merchant.max_quantity_per_scan} par scan
-            </p>
-          </div>
-        )}
-
         {/* Error Message */}
         <AnimatePresence>
           {error && (
@@ -290,10 +254,7 @@ export function ClientScanView({
             ) : (
               <>
                 <Plus className="w-6 h-6 mr-2" />
-                {merchant.loyalty_mode === 'visit'
-                  ? 'Valider le passage'
-                  : `Ajouter ${quantity} ${merchant.product_name || 'article'}${quantity > 1 ? 's' : ''}`
-                }
+                Valider le passage
               </>
             )}
           </Button>
@@ -346,7 +307,7 @@ export function ClientScanView({
         </div>
         <div>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
-            À {stampsTarget} {merchant.loyalty_mode === 'visit' ? 'passages' : merchant.product_name || 'articles'}
+            À {stampsTarget} passages
           </p>
           <p className="font-bold text-gray-900">{merchant.reward_description}</p>
         </div>

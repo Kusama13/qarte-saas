@@ -10,12 +10,7 @@ import {
   Image as ImageIcon,
   Check,
   Star,
-  X,
   Gift,
-  Footprints,
-  Coffee,
-  Pizza,
-  ShoppingBag,
   AlertTriangle,
   Sparkles,
   ExternalLink,
@@ -25,7 +20,7 @@ import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { MerchantSettingsForm, ProgramGuide, type LoyaltySettings } from '@/components/loyalty';
 import { compressLogo } from '@/lib/image-compression';
-import type { Merchant, LoyaltyMode } from '@/types';
+import type { Merchant } from '@/types';
 
 // Images par type de commerce
 const BUSINESS_IMAGES = [
@@ -40,20 +35,6 @@ const BUSINESS_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200', label: 'Spa' },
 ];
 
-// Get icon based on loyalty mode and product name
-const getLoyaltyIcon = (loyaltyMode: string, productName: string) => {
-  if (loyaltyMode === 'visit') {
-    return Footprints; // Walking person for visits
-  }
-  const name = (productName || '').toLowerCase();
-  if (name.includes('café') || name.includes('cafe') || name.includes('coffee')) {
-    return Coffee;
-  }
-  if (name.includes('pizza') || name.includes('burger') || name.includes('sandwich')) {
-    return Pizza;
-  }
-  return ShoppingBag;
-};
 
 // 10 palettes de couleurs inspirées des commerces
 const COLOR_PALETTES = [
@@ -86,9 +67,6 @@ export default function ProgramPage() {
     reviewLink: '',
     stampsRequired: 10,
     rewardDescription: '',
-    loyaltyMode: 'visit' as LoyaltyMode,
-    productName: '',
-    maxQuantityPerScan: 5,
     // 2nd tier reward
     tier2Enabled: false,
     tier2StampsRequired: 20,
@@ -99,8 +77,6 @@ export default function ProgramPage() {
   const [previewData, setPreviewData] = useState({
     stampsRequired: 10,
     rewardDescription: '',
-    loyaltyMode: 'visit' as LoyaltyMode,
-    productName: '',
     // Tier 2 preview
     tier2Enabled: false,
     tier2StampsRequired: 20,
@@ -134,9 +110,6 @@ export default function ProgramPage() {
           reviewLink: data.review_link || '',
           stampsRequired: data.stamps_required || 10,
           rewardDescription: data.reward_description || '',
-          loyaltyMode: data.loyalty_mode || 'visit',
-          productName: data.product_name || '',
-          maxQuantityPerScan: data.max_quantity_per_scan || 5,
           tier2Enabled: data.tier2_enabled || false,
           tier2StampsRequired: data.tier2_stamps_required || (data.stamps_required || 10) * 2,
           tier2RewardDescription: data.tier2_reward_description || '',
@@ -144,8 +117,6 @@ export default function ProgramPage() {
         setPreviewData({
           stampsRequired: data.stamps_required || 10,
           rewardDescription: data.reward_description || '',
-          loyaltyMode: data.loyalty_mode || 'visit',
-          productName: data.product_name || '',
           tier2Enabled: data.tier2_enabled || false,
           tier2StampsRequired: data.tier2_stamps_required || (data.stamps_required || 10) * 2,
           tier2RewardDescription: data.tier2_reward_description || '',
@@ -212,9 +183,9 @@ export default function ProgramPage() {
           review_link: formData.reviewLink || null,
           stamps_required: formData.stampsRequired,
           reward_description: formData.rewardDescription,
-          loyalty_mode: formData.loyaltyMode,
-          product_name: formData.loyaltyMode === 'article' ? formData.productName : null,
-          max_quantity_per_scan: formData.loyaltyMode === 'article' ? formData.maxQuantityPerScan : 1,
+          loyalty_mode: 'visit',
+          product_name: null,
+          max_quantity_per_scan: 1,
           tier2_enabled: formData.tier2Enabled,
           tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
           tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription : null,
@@ -237,8 +208,6 @@ export default function ProgramPage() {
     // Update preview (preserve tier2 fields)
     setPreviewData(prev => ({
       ...prev,
-      loyaltyMode: settings.loyalty_mode,
-      productName: settings.product_name || '',
       stampsRequired: settings.stamps_required,
       rewardDescription: settings.reward_description,
     }));
@@ -246,9 +215,6 @@ export default function ProgramPage() {
     // Also update formData so the main save button uses current values
     setFormData(prev => ({
       ...prev,
-      loyaltyMode: settings.loyalty_mode,
-      productName: settings.product_name || '',
-      maxQuantityPerScan: settings.max_quantity_per_scan,
       stampsRequired: settings.stamps_required,
       rewardDescription: settings.reward_description,
     }));
@@ -479,9 +445,6 @@ export default function ProgramPage() {
 
           <div className="p-8 bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl shadow-lg shadow-indigo-200/50 border border-white/60 backdrop-blur-xl transition-all duration-300">
             <MerchantSettingsForm
-              initialMode={formData.loyaltyMode}
-              initialProductName={formData.productName}
-              initialMaxQuantity={formData.maxQuantityPerScan}
               initialStampsRequired={formData.stampsRequired}
               initialRewardDescription={formData.rewardDescription}
               onOpenGuide={() => setShowGuide(true)}
@@ -544,7 +507,7 @@ export default function ProgramPage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">
-                    Nombre de {formData.loyaltyMode === 'visit' ? 'passages' : formData.productName || 'articles'} pour le 2ème palier
+                    Nombre de passages pour le 2ème palier
                   </label>
                   <Input
                     type="number"

@@ -14,12 +14,16 @@ import {
   CreditCard,
   ChevronRight,
   ChevronDown,
+  Minus,
+  Plus,
+  Undo2,
   Hourglass,
   Shield,
   Ban,
   Star,
   HelpCircle,
   Bell,
+  BellOff,
   Share,
   PlusSquare,
   Trophy,
@@ -33,7 +37,7 @@ import type { Merchant, Customer, LoyaltyCard } from '@/types';
 import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
 
-type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'pending' | 'banned';
+type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'article-select' | 'pending' | 'banned';
 
 const setCookie = (name: string, value: string, days: number) => {
   const expires = new Date();
@@ -56,8 +60,12 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loyaltyCard, setLoyaltyCard] = useState<LoyaltyCard | null>(null);
 
-  // Checkin state
+  // Article mode state
+  const [quantity, setQuantity] = useState(1);
+  const [canUndo, setCanUndo] = useState(false);
+  const [undoTimer, setUndoTimer] = useState(0);
   const [lastCheckinPoints, setLastCheckinPoints] = useState(0);
+  const [lastVisitId, setLastVisitId] = useState<string | null>(null);
 
   // Qarte Shield: Pending state
   const [pendingStamps, setPendingStamps] = useState(0);
@@ -189,6 +197,28 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
     autoLogin();
   }, [loading, merchant, step, autoLoginAttempted, code, submitting]);
+
+  // Undo timer countdown + redirect after expiration
+  // Don't auto-redirect when on reward screen - user needs to decide to claim or not
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (canUndo && undoTimer > 0 && step !== 'reward') {
+      interval = setInterval(() => {
+        setUndoTimer((prev) => {
+          if (prev <= 1) {
+            setCanUndo(false);
+            // Redirect to card page after timer expires
+            if (merchant) {
+              window.location.href = `/customer/card/${merchant.id}`;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [canUndo, undoTimer, merchant, step]);
 
   const handlePushSubscribe = async () => {
     if (!merchant || !customer) return;
@@ -339,15 +369,47 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     }
   };
 
-  const processCheckin = async (cust: Customer) => {
+  const processCheckin = async (cust: Customer, pointsToAdd?: number) => {
     if (!merchant) return;
+
+    // For article mode, show quantity selector first
+    if (merchant.loyalty_mode === 'article' && pointsToAdd === undefined) {
+      // Get or create the card first
+      let { data: card } = await supabase
+        .from('loyalty_cards')
+        .select('*')
+        .eq('customer_id', cust.id)
+        .eq('merchant_id', merchant.id)
+        .single();
+
+      if (!card) {
+        const { data: newCard, error: cardError } = await supabase
+          .from('loyalty_cards')
+          .insert({
+            customer_id: cust.id,
+            merchant_id: merchant.id,
+            current_stamps: 0,
+            stamps_target: merchant.stamps_required,
+          })
+          .select()
+          .single();
+
+        if (cardError) throw cardError;
+        card = newCard;
+      }
+
+      setLoyaltyCard(card);
+      setStep('article-select');
+      return;
+    }
 
     setStep('checkin');
 
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber);
+      const points = pointsToAdd || 1;
 
-      // Use the /api/checkin endpoint with Qarte Shield
+      // Use the new /api/checkin endpoint with Qarte Shield
       const response = await fetch('/api/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -356,7 +418,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           phone_number: formattedPhone,
           first_name: cust.first_name,
           last_name: cust.last_name,
-          points_to_add: 1,
+          points_to_add: points,
         }),
       });
 
@@ -371,7 +433,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       }
 
       // Update state with response data
-      setLastCheckinPoints(data.points_earned || 1);
+      setLastVisitId(data.visit_id);
+      setLastCheckinPoints(data.points_earned || points);
 
       // Create updated card object
       const updatedCard = {
@@ -393,13 +456,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       // Handle different statuses from Qarte Shield
       if (data.status === 'pending') {
-        setPendingStamps(data.pending_stamps || 1);
+        setPendingStamps(data.pending_stamps || points);
         setPendingCount(data.pending_count || 1);
         setStep('pending');
         return;
       }
 
       // Confirmed - normal flow
+      setCanUndo(true);
+      setUndoTimer(8);
+
       if (data.reward_unlocked) {
         triggerConfetti();
         setStep('reward');
@@ -410,6 +476,45 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       console.error(err);
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement du passage');
       setStep('error');
+    }
+  };
+
+  const handleArticleCheckin = async () => {
+    if (!customer) return;
+    await processCheckin(customer, quantity);
+    setQuantity(1); // Reset quantity
+  };
+
+  const handleUndo = async () => {
+    if (!canUndo || !loyaltyCard || !lastVisitId) return;
+
+    setSubmitting(true);
+    try {
+      // Delete the visit
+      await supabase.from('visits').delete().eq('id', lastVisitId);
+
+      // Update the card
+      const newStamps = Math.max(0, loyaltyCard.current_stamps - lastCheckinPoints);
+      await supabase
+        .from('loyalty_cards')
+        .update({ current_stamps: newStamps })
+        .eq('id', loyaltyCard.id);
+
+      setLoyaltyCard({ ...loyaltyCard, current_stamps: newStamps });
+      setCanUndo(false);
+      setUndoTimer(0);
+      setLastVisitId(null);
+
+      // Go back to article select if in article mode
+      if (merchant?.loyalty_mode === 'article') {
+        setStep('article-select');
+      } else {
+        setStep('phone');
+      }
+    } catch (err) {
+      console.error('Undo error:', err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -574,7 +679,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                         {merchant.stamps_required}
                       </span>
                       <span className="text-[9px] font-bold uppercase tracking-tighter text-gray-400">
-                        Visites
+                        {merchant.loyalty_mode === 'visit' ? 'Visites' : (merchant.product_name || 'Articles')}
                       </span>
                     </div>
                   </div>
@@ -618,14 +723,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                           {
                             icon: <Star className="w-4 h-4" />,
                             title: "Cumulez vos points",
-                            description: "Chaque passage validé vous rapproche de votre récompense."
+                            description: merchant.loyalty_mode === 'visit'
+                              ? "Chaque passage validé vous rapproche de votre récompense."
+                              : `Chaque ${merchant.product_name || 'article'} acheté = 1 point sur votre carte.`
                           },
                           {
                             icon: <Gift className="w-4 h-4" />,
                             title: "Recevez vos cadeaux",
                             description: merchant.tier2_enabled && merchant.tier2_stamps_required
                               ? `Palier 1 (${merchant.stamps_required} pts) : ${merchant.reward_description} • Palier 2 (${merchant.tier2_stamps_required} pts) : ${merchant.tier2_reward_description}`
-                              : `Après ${merchant.stamps_required} passages, obtenez : ${merchant.reward_description}`
+                              : `Après ${merchant.stamps_required} ${merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}, obtenez : ${merchant.reward_description}`
                           }
                         ].map((step, idx) => (
                           <motion.div
@@ -761,6 +868,185 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           </div>
         )}
 
+        {step === 'article-select' && loyaltyCard && (
+          <div className="animate-fade-in">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
+              {/* Customer Info */}
+              <div className="flex items-center gap-4 mb-6">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center text-white font-bold text-xl"
+                  style={{ backgroundColor: primaryColor }}
+                >
+                  {customer?.first_name[0]}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-lg">
+                    {customer?.first_name} {customer?.last_name || ''}
+                  </p>
+                  <p className="text-sm text-gray-500">{customer?.phone_number}</p>
+                </div>
+              </div>
+
+              {/* Current Points */}
+              <div className="text-center mb-6">
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-4xl font-black" style={{ color: primaryColor }}>
+                    {loyaltyCard.current_stamps}
+                  </span>
+                  <span className="text-xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
+                </div>
+                <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-2">
+                  {merchant?.product_name || 'Articles'} cumulés
+                </p>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant?.stamps_required || 10)) * 100)}%`,
+                    background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
+                  }}
+                />
+              </div>
+
+              {/* Quantity Selector */}
+              <div className="mb-6">
+                <p className="text-sm font-medium text-gray-600 mb-3 text-center">
+                  Nombre de {merchant?.product_name || 'articles'}
+                </p>
+                <div className="flex items-center justify-center gap-4">
+                  <button
+                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                    disabled={quantity <= 1}
+                    className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Minus className="w-6 h-6 text-gray-600" />
+                  </button>
+                  <div
+                    className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-black text-white shadow-lg"
+                    style={{ backgroundColor: primaryColor }}
+                  >
+                    {quantity}
+                  </div>
+                  <button
+                    onClick={() => setQuantity(Math.min(merchant?.max_quantity_per_scan || 5, quantity + 1))}
+                    disabled={quantity >= (merchant?.max_quantity_per_scan || 5)}
+                    className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="w-6 h-6 text-gray-600" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 text-center mt-2">
+                  Max: {merchant?.max_quantity_per_scan || 5} par scan
+                </p>
+              </div>
+
+              {/* Confirmation Message */}
+              <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-4">
+                <p className="text-sm font-medium text-indigo-900 text-center">
+                  Vous ajoutez <span className="font-bold">{quantity} {merchant?.product_name || 'article'}{quantity > 1 ? 's' : ''}</span> à votre carte
+                </p>
+                <p className="text-xs text-indigo-600/70 text-center mt-1">
+                  Merci de valider uniquement vos achats du jour
+                </p>
+              </div>
+
+              {/* Checkin Button */}
+              <button
+                onClick={handleArticleCheckin}
+                disabled={submitting}
+                className="w-full h-16 rounded-2xl text-xl font-bold text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
+              >
+                {submitting ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : (
+                  <>
+                    <Plus className="w-6 h-6" />
+                    Valider {quantity} {merchant?.product_name || 'article'}{quantity > 1 ? 's' : ''}
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Reward Preview - 3D Stacked Cards for Dual Tier */}
+            {merchant?.tier2_enabled && merchant?.tier2_stamps_required ? (
+              <div className="mt-6 relative" style={{ perspective: '1000px' }}>
+                {/* Tier 2 Card - Behind (inactive) */}
+                <div
+                  className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100 rounded-3xl border border-gray-200 p-5 flex items-center gap-4 opacity-60"
+                  style={{
+                    transform: 'translateY(-8px) translateZ(-20px) scale(0.95)',
+                    transformStyle: 'preserve-3d'
+                  }}
+                >
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-gray-200">
+                    <Trophy className="w-7 h-7 text-gray-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                      Palier 2 · {merchant.tier2_stamps_required} {merchant.product_name || 'articles'}
+                    </p>
+                    <p className="text-base font-bold text-gray-400 leading-tight truncate">{merchant.tier2_reward_description}</p>
+                  </div>
+                </div>
+
+                {/* Tier 1 Card - Front (active) */}
+                <motion.div
+                  initial={{ y: 10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  className="relative bg-white rounded-3xl shadow-xl border border-gray-100 p-5 flex items-center gap-4"
+                  style={{
+                    transform: 'translateZ(20px)',
+                    transformStyle: 'preserve-3d',
+                    boxShadow: `0 20px 40px -12px ${primaryColor}30, 0 8px 20px -8px rgba(0,0,0,0.1)`
+                  }}
+                >
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
+                    style={{
+                      backgroundColor: `${primaryColor}15`,
+                      boxShadow: `inset 0 2px 4px ${primaryColor}20`
+                    }}
+                  >
+                    <Gift className="w-7 h-7" style={{ color: primaryColor }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: primaryColor }}>
+                      Palier 1 · {merchant.stamps_required} {merchant.product_name || 'articles'}
+                    </p>
+                    <p className="text-base font-bold text-gray-900 leading-tight truncate">{merchant.reward_description}</p>
+                  </div>
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: `${primaryColor}10` }}
+                  >
+                    <ChevronRight className="w-5 h-5" style={{ color: primaryColor }} />
+                  </div>
+                </motion.div>
+              </div>
+            ) : (
+              <div className="mt-6 bg-white rounded-3xl shadow-lg border border-gray-100 p-5 flex items-center gap-4">
+                <div
+                  className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner"
+                  style={{ backgroundColor: `${primaryColor}15` }}
+                >
+                  <Gift className="w-7 h-7" style={{ color: primaryColor }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                    À {merchant?.stamps_required} {merchant?.product_name || 'articles'}
+                  </p>
+                  <p className="text-base font-bold text-gray-900 leading-tight truncate">{merchant?.reward_description}</p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-300" />
+              </div>
+            )}
+          </div>
+        )}
+
         {step === 'checkin' && (
           <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
             <Loader2
@@ -782,7 +1068,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </div>
 
               <h2 className="text-2xl font-black text-gray-900 mb-1">
-                Passage validé !
+                {merchant?.loyalty_mode === 'article'
+                  ? `+${lastCheckinPoints} ${merchant?.product_name || 'article'}${lastCheckinPoints > 1 ? 's' : ''} !`
+                  : 'Passage validé !'
+                }
               </h2>
               <p className="text-gray-500 mb-8">Merci {customer?.first_name} !</p>
 
@@ -961,7 +1250,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                       <span className="text-2xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
                     </div>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
-                      Passages cumulés
+                      {merchant?.loyalty_mode === 'visit' ? 'Passages cumulés' : `${merchant?.product_name || 'Articles'} cumulés`}
                     </p>
                   </div>
 
@@ -985,13 +1274,29 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                       style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
                     >
                       <p className="font-bold text-gray-700">
-                        Plus que {(merchant?.stamps_required || 10) - loyaltyCard.current_stamps} passage{(merchant?.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''} avant votre récompense !
+                        Plus que {(merchant?.stamps_required || 10) - loyaltyCard.current_stamps} {merchant?.loyalty_mode === 'visit' ? 'passage' : (merchant?.product_name || 'article')}{(merchant?.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''} avant votre récompense !
                       </p>
                     </div>
                   )}
                 </>
               )}
 
+              {/* Undo Button - Only in article mode */}
+              <AnimatePresence>
+                {canUndo && merchant?.loyalty_mode === 'article' && (
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    onClick={handleUndo}
+                    disabled={submitting}
+                    className="w-full flex items-center justify-center gap-3 py-4 mb-4 rounded-2xl bg-gray-100 hover:bg-gray-200 transition-colors text-gray-700 font-medium"
+                  >
+                    <Undo2 className="w-5 h-5" />
+                    Annuler ({undoTimer}s)
+                  </motion.button>
+                )}
+              </AnimatePresence>
 
               <Link href={`/customer/card/${merchant.id}`}>
                 <button className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2">
@@ -1161,7 +1466,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
               <h2 className="text-2xl font-black text-gray-900 mb-2">🎉 Félicitations !</h2>
               <p className="text-gray-500 mb-6">
-                Vous avez atteint {rewardTier === 2 ? merchant?.tier2_stamps_required : merchant?.stamps_required} passages !
+                Vous avez atteint {rewardTier === 2 ? merchant?.tier2_stamps_required : merchant?.stamps_required} {merchant?.loyalty_mode === 'visit' ? 'passages' : (merchant?.product_name || 'articles')} !
               </p>
 
               {/* Reward Card */}
@@ -1221,7 +1526,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   <span className="text-xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
                 </div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
-                  Passages cumulés
+                  {merchant?.loyalty_mode === 'visit' ? 'Passages cumulés' : `${merchant?.product_name || 'Articles'} cumulés`}
                 </p>
               </div>
 
@@ -1264,7 +1569,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               {/* Info Card */}
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8 text-left">
                 <p className="text-sm text-amber-900 leading-relaxed">
-                  Notre système a détecté plusieurs passages aujourd&apos;hui. Cette mesure protège votre compte contre les utilisations frauduleuses. Votre passage sera validé dès confirmation par le commerçant.
+                  {merchant?.loyalty_mode === 'visit'
+                    ? "Notre système a détecté plusieurs passages aujourd'hui. Cette mesure protège votre compte contre les utilisations frauduleuses. Votre passage sera validé dès confirmation par le commerçant."
+                    : `Notre système a détecté une activité inhabituelle. Cette mesure protège votre compte contre les utilisations frauduleuses. Vos ${merchant?.product_name || 'articles'} seront ajoutés dès validation.`
+                  }
                 </p>
               </div>
 
@@ -1277,7 +1585,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   <span className="text-xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
                 </div>
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
-                  Passages confirmés
+                  {merchant?.loyalty_mode === 'visit' ? 'Passages confirmés' : `${merchant?.product_name || 'Articles'} confirmés`}
                 </p>
                 <div className="mt-3 inline-flex px-3 py-1.5 bg-amber-100 rounded-full">
                   <span className="text-sm font-bold text-amber-700">

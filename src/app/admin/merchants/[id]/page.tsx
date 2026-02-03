@@ -343,11 +343,11 @@ export default function MerchantDetailPage() {
               <span className="font-medium text-gray-900">Palier 1</span>
             </div>
             <p className="text-gray-700">
-              <span className="font-semibold">{merchant.stamps_required} {merchant.loyalty_mode === 'article' ? 'articles' : 'passages'}</span> pour obtenir : {merchant.reward_description || 'Non configuré'}
+              <span className="font-semibold">{merchant.stamps_required} passages</span> pour obtenir : {merchant.reward_description || 'Non configuré'}
             </p>
             <div className="mt-2 flex items-center gap-2">
               <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#5167fc]/10 text-[#5167fc]">
-                Mode: {merchant.loyalty_mode === 'article' ? 'Par article' : 'Par visite'}
+                Mode: Par visite
               </span>
             </div>
           </div>
@@ -363,7 +363,7 @@ export default function MerchantDetailPage() {
                 </span>
               </div>
               <p className="text-gray-700">
-                <span className="font-semibold">{merchant.tier2_stamps_required} {merchant.loyalty_mode === 'article' ? 'articles' : 'passages'}</span> pour obtenir : {merchant.tier2_reward_description || 'Non configuré'}
+                <span className="font-semibold">{merchant.tier2_stamps_required} passages</span> pour obtenir : {merchant.tier2_reward_description || 'Non configuré'}
               </p>
             </div>
           )}
