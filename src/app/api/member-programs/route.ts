@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -16,8 +14,8 @@ const createProgramSchema = z.object({
 // GET: Liste des programmes du commerçant
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+    const supabase = await createRouteHandlerSupabaseClient();
+    
 
     const {
       data: { user },
@@ -63,8 +61,8 @@ export async function GET(request: NextRequest) {
 // POST: Créer un nouveau programme
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+    const supabase = await createRouteHandlerSupabaseClient();
+    
 
     const {
       data: { user },

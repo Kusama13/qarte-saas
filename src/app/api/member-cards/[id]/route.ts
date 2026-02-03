@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
 
 const supabaseAdmin = getSupabaseAdmin();
 
 // Helper to verify user owns the program's merchant
 async function verifyProgramOwnership(programId: string): Promise<{ authorized: boolean }> {
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+  const supabase = await createRouteHandlerSupabaseClient();
+  
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
@@ -32,8 +30,8 @@ async function verifyProgramOwnership(programId: string): Promise<{ authorized: 
 
 // Helper to verify user owns the card's program
 async function verifyCardOwnership(cardId: string): Promise<{ authorized: boolean; programId?: string }> {
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+  const supabase = await createRouteHandlerSupabaseClient();
+  
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {

@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -12,8 +10,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+    const supabase = await createRouteHandlerSupabaseClient();
+    
 
     const {
       data: { user },
@@ -57,8 +55,8 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+    const supabase = await createRouteHandlerSupabaseClient();
+    
 
     const {
       data: { user },
@@ -102,8 +100,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+    const supabase = await createRouteHandlerSupabaseClient();
+    
 
     const {
       data: { user },

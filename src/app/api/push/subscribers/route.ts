@@ -1,21 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-
-// Helper to get Supabase client with service role (bypasses RLS)
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
-}
+import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 
 // Helper to verify merchant ownership
 async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean }> {
-  const cookieStore = await cookies();
-  const supabaseAuth = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
-  const supabase = getSupabase();
+  const supabaseAuth = await createRouteHandlerSupabaseClient();
+  const supabase = getSupabaseAdmin();
 
   const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
 
@@ -42,7 +31,7 @@ async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized
 // The push subscription might be linked to a customer_id from ANY merchant
 // (same phone number = same person, so they can receive push from all merchants)
 export async function GET(request: NextRequest) {
-  const supabase = getSupabase();
+  const supabase = getSupabaseAdmin();
 
   try {
     const { searchParams } = new URL(request.url);

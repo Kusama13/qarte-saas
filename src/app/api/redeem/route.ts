@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
 
 const redeemSchema = z.object({
@@ -22,8 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { loyalty_card_id, tier } = parsed.data;
-    const cookieStore = await cookies();
-    const supabaseAuth = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+    const supabaseAuth = await createRouteHandlerSupabaseClient();
     const supabase = getSupabaseAdmin();
 
     // SECURITY: Verify user is authenticated

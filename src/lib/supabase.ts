@@ -1,5 +1,7 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 // Client pour les composants (avec gestion des cookies de session)
 // Utilise un singleton pour éviter de créer plusieurs instances
@@ -52,4 +54,34 @@ export const supabaseAdmin = getSupabaseAdmin;
 export const createServerClient = () => {
   console.warn('createServerClient is deprecated, use getSupabaseAdmin() instead');
   return getSupabaseAdmin();
+};
+
+// ============================================
+// ROUTE HANDLER CLIENT (for authentication in API routes)
+// Uses @supabase/ssr for Next.js 15 compatibility
+// ============================================
+export const createRouteHandlerSupabaseClient = async () => {
+  const cookieStore = await cookies();
+
+  return createSupabaseServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing user sessions.
+          }
+        },
+      },
+    }
+  );
 };

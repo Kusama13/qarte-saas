@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 
 // Helper to verify merchant ownership
 async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean; error?: string; status?: number }> {
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+  const supabase = await createRouteHandlerSupabaseClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
@@ -35,8 +33,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'merchantId required' }, { status: 400 });
   }
 
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+  const supabase = await createRouteHandlerSupabaseClient();
 
   const { data: merchant, error } = await supabase
     .from('merchants')
@@ -68,8 +65,7 @@ export async function GET(request: NextRequest) {
 
 // POST/PUT to create or update offer
 export async function POST(request: NextRequest) {
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+  const supabase = await createRouteHandlerSupabaseClient();
 
   try {
     const body = await request.json();
@@ -126,8 +122,7 @@ export async function POST(request: NextRequest) {
 
 // PATCH to update PWA offer
 export async function PATCH(request: NextRequest) {
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+  const supabase = await createRouteHandlerSupabaseClient();
 
   try {
     const body = await request.json();
@@ -176,8 +171,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: authCheck.error }, { status: authCheck.status || 403 });
   }
 
-  const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
+  const supabase = await createRouteHandlerSupabaseClient();
 
   const { error } = await supabase
     .from('merchants')
