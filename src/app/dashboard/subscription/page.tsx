@@ -40,6 +40,7 @@ export default function SubscriptionPage() {
   const [subscribing, setSubscribing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [loadingPayment, setLoadingPayment] = useState(false);
+  const [loadingPortal, setLoadingPortal] = useState(false);
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -58,8 +59,8 @@ export default function SubscriptionPage() {
       if (data) {
         setMerchant(data);
 
-        // Fetch payment method if subscribed
-        if (data.subscription_status === 'active') {
+        // Fetch payment method if subscribed or has stripe customer
+        if (data.subscription_status === 'active' || data.stripe_customer_id) {
           fetchPaymentMethod();
         }
       }
@@ -84,7 +85,30 @@ export default function SubscriptionPage() {
     }
   };
 
-  // FONCTION AJOUTÉE
+  const handleOpenPortal = async () => {
+    setLoadingPortal(true);
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+      });
+      const data = await res.json();
+
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (error) {
+      console.error('Error opening portal:', error);
+      alert('Erreur lors de l\'ouverture du portail');
+    } finally {
+      setLoadingPortal(false);
+    }
+  };
+
   const handleSubscribe = async () => {
     setSubscribing(true);
     
@@ -262,12 +286,25 @@ export default function SubscriptionPage() {
                         )}
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" className="rounded-xl text-primary font-extrabold hover:bg-primary-50">Modifier</Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-xl text-primary font-extrabold hover:bg-primary-50"
+                      onClick={handleOpenPortal}
+                      disabled={loadingPortal}
+                    >
+                      {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Modifier'}
+                    </Button>
                   </div>
                 </div>
                 <div className="pt-4 space-y-3">
-                  <Button variant="outline" className="w-full h-12 rounded-2xl text-red-600 border-red-100 hover:bg-red-50 font-bold transition-all">
-                    Résilier le service
+                  <Button
+                    variant="outline"
+                    className="w-full h-12 rounded-2xl text-red-600 border-red-100 hover:bg-red-50 font-bold transition-all"
+                    onClick={handleOpenPortal}
+                    disabled={loadingPortal}
+                  >
+                    {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Résilier le service'}
                   </Button>
                   <p className="text-[10px] text-center text-gray-400 font-medium px-4">
                     La résiliation prendra effet à la fin du cycle en cours. Aucune donnée ne sera perdue immédiatement.
