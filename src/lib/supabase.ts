@@ -1,7 +1,6 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { createServerClient as createSupabaseServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 
 // Client pour les composants (avec gestion des cookies de session)
 // Utilise un singleton pour éviter de créer plusieurs instances
@@ -59,8 +58,10 @@ export const createServerClient = () => {
 // ============================================
 // ROUTE HANDLER CLIENT (for authentication in API routes)
 // Uses @supabase/ssr for Next.js 15 compatibility
+// Dynamic import to avoid "next/headers" error in client components
 // ============================================
 export const createRouteHandlerSupabaseClient = async () => {
+  const { cookies } = await import('next/headers');
   const cookieStore = await cookies();
 
   return createSupabaseServerClient(

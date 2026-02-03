@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 
 const supabaseAdmin = getSupabaseAdmin();
