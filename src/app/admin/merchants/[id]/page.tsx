@@ -18,10 +18,14 @@ import {
   Tag,
   Trash2,
   AlertTriangle,
+  QrCode,
+  ExternalLink,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Button } from '@/components/ui';
-import { cn } from '@/lib/utils';
+import { cn, generateQRCode, getScanUrl } from '@/lib/utils';
 
 interface Merchant {
   id: string;
@@ -35,6 +39,7 @@ interface Merchant {
   stamps_required: number;
   reward_description: string;
   loyalty_mode: 'visit' | 'article';
+  scan_code: string;
   // Tier 2 fields
   tier2_enabled: boolean;
   tier2_stamps_required: number | null;
@@ -87,6 +92,8 @@ export default function MerchantDetailPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [copied, setCopied] = useState(false);
 
   const handleDelete = async () => {
     if (deleteConfirmText !== 'SUPPRIMER') return;
@@ -197,6 +204,22 @@ export default function MerchantDetailPage() {
 
     fetchData();
   }, [merchantId, supabase]);
+
+  // Generate QR code when merchant is loaded
+  useEffect(() => {
+    if (merchant?.scan_code) {
+      const scanUrl = getScanUrl(merchant.scan_code);
+      generateQRCode(scanUrl).then(setQrCodeUrl);
+    }
+  }, [merchant?.scan_code]);
+
+  const handleCopyLink = async () => {
+    if (!merchant) return;
+    const scanUrl = getScanUrl(merchant.scan_code);
+    await navigator.clipboard.writeText(scanUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -443,6 +466,67 @@ export default function MerchantDetailPage() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* QR Code Section */}
+      <div className="bg-white rounded-lg shadow-md border border-gray-100 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <QrCode className="w-5 h-5 text-[#5167fc]" />
+          QR Code de scan
+        </h3>
+        <div className="flex flex-col sm:flex-row gap-6 items-start">
+          {/* QR Code */}
+          <div className="flex-shrink-0">
+            {qrCodeUrl ? (
+              <div className="p-3 bg-white border-2 border-gray-200 rounded-xl">
+                <img
+                  src={qrCodeUrl}
+                  alt={`QR Code pour ${merchant.shop_name}`}
+                  className="w-40 h-40"
+                />
+              </div>
+            ) : (
+              <div className="w-40 h-40 bg-gray-100 rounded-xl flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#5167fc]" />
+              </div>
+            )}
+          </div>
+
+          {/* Link Info */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm text-gray-600 mb-3">
+              Lien de scan client pour ce commerce :
+            </p>
+            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <code className="text-sm text-[#5167fc] font-mono truncate flex-1">
+                {getScanUrl(merchant.scan_code)}
+              </code>
+              <button
+                onClick={handleCopyLink}
+                className="flex-shrink-0 p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                title="Copier le lien"
+              >
+                {copied ? (
+                  <Check className="w-4 h-4 text-green-600" />
+                ) : (
+                  <Copy className="w-4 h-4 text-gray-600" />
+                )}
+              </button>
+              <a
+                href={getScanUrl(merchant.scan_code)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-shrink-0 p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                title="Ouvrir le lien"
+              >
+                <ExternalLink className="w-4 h-4 text-gray-600" />
+              </a>
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              Code de scan : <span className="font-mono font-medium">{merchant.scan_code}</span>
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Stats - Row 1 */}
