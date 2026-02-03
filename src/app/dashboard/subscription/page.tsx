@@ -149,7 +149,11 @@ export default function SubscriptionPage() {
     merchant?.trial_ends_at || null,
     merchant?.subscription_status || 'trial'
   );
-  const isPaid = merchant?.subscription_status === 'active';
+  const subscriptionStatus = merchant?.subscription_status;
+  const isPaid = subscriptionStatus === 'active';
+  const isCanceling = subscriptionStatus === 'canceling';
+  const isCanceled = subscriptionStatus === 'canceled';
+  const isPastDue = subscriptionStatus === 'past_due';
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 stagger-fade-in">
@@ -178,12 +182,43 @@ export default function SubscriptionPage() {
         </div>
       )}
 
+      {isCanceling && (
+        <div className="card border-orange-100 bg-orange-50/40 backdrop-blur-md p-5 flex items-start gap-4 rounded-2xl">
+          <div className="p-2.5 bg-orange-100 rounded-xl">
+            <AlertTriangle className="w-6 h-6 text-orange-600" />
+          </div>
+          <div>
+            <p className="font-bold text-orange-900 text-lg leading-none mb-1">Annulation programmée</p>
+            <p className="text-orange-700 text-sm">
+              Votre abonnement sera annulé à la fin de la période en cours. Vous pouvez annuler cette résiliation depuis le portail Stripe.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isPastDue && (
+        <div className="card border-red-100 bg-red-50/40 backdrop-blur-md p-5 flex items-start gap-4 rounded-2xl">
+          <div className="p-2.5 bg-red-100 rounded-xl">
+            <AlertTriangle className="w-6 h-6 text-red-600" />
+          </div>
+          <div>
+            <p className="font-bold text-red-900 text-lg leading-none mb-1">Paiement échoué</p>
+            <p className="text-red-700 text-sm">
+              Votre dernier paiement a échoué. Veuillez mettre à jour votre moyen de paiement pour continuer à utiliser le service.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-8 lg:grid-cols-5">
         <div className="lg:col-span-3 card bg-white/80 backdrop-blur-xl border-white/40 shadow-xl rounded-3xl p-8 hover-glow transition-all duration-300">
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-extrabold text-gray-900 tracking-tight">Votre offre</h2>
             {trialStatus.isActive && <span className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-primary bg-primary-50 rounded-full border border-primary-100">Essai en cours</span>}
             {isPaid && <span className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-green-700 bg-green-50 rounded-full border border-green-100">Actif</span>}
+            {isCanceling && <span className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-orange-700 bg-orange-50 rounded-full border border-orange-100">Annulation en cours</span>}
+            {isCanceled && <span className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-red-700 bg-red-50 rounded-full border border-red-100">Annulé</span>}
+            {isPastDue && <span className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-red-700 bg-red-50 rounded-full border border-red-100">Paiement en échec</span>}
           </div>
 
           <div className="flex items-center gap-5 p-6 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-violet-50/50 border border-indigo-100/50 mb-8 hover-lift">
@@ -227,7 +262,7 @@ export default function SubscriptionPage() {
           <h2 className="text-xl font-extrabold text-gray-900 mb-8 tracking-tight">Facturation</h2>
 
           <div className="flex-grow flex flex-col justify-center">
-            {!isPaid ? (
+            {!merchant?.stripe_customer_id ? (
               <div className="space-y-6">
                 <div className="relative group mx-auto w-20 h-20">
                   <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-xl group-hover:bg-primary/30 transition-all" />
@@ -298,17 +333,61 @@ export default function SubscriptionPage() {
                   </div>
                 </div>
                 <div className="pt-4 space-y-3">
-                  <Button
-                    variant="outline"
-                    className="w-full h-12 rounded-2xl text-red-600 border-red-100 hover:bg-red-50 font-bold transition-all"
-                    onClick={handleOpenPortal}
-                    disabled={loadingPortal}
-                  >
-                    {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Résilier le service'}
-                  </Button>
-                  <p className="text-[10px] text-center text-gray-400 font-medium px-4">
-                    La résiliation prendra effet à la fin du cycle en cours. Aucune donnée ne sera perdue immédiatement.
-                  </p>
+                  {isCanceled ? (
+                    <>
+                      <Button
+                        className="w-full h-12 rounded-2xl font-bold transition-all"
+                        onClick={handleSubscribe}
+                        loading={subscribing}
+                      >
+                        {subscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Réactiver mon abonnement'}
+                      </Button>
+                      <p className="text-[10px] text-center text-gray-400 font-medium px-4">
+                        Reprenez votre abonnement pour accéder à toutes les fonctionnalités.
+                      </p>
+                    </>
+                  ) : isCanceling ? (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full h-12 rounded-2xl text-orange-600 border-orange-100 hover:bg-orange-50 font-bold transition-all"
+                        onClick={handleOpenPortal}
+                        disabled={loadingPortal}
+                      >
+                        {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Annuler la résiliation'}
+                      </Button>
+                      <p className="text-[10px] text-center text-gray-400 font-medium px-4">
+                        Vous pouvez annuler la résiliation avant la fin de votre période en cours.
+                      </p>
+                    </>
+                  ) : isPastDue ? (
+                    <>
+                      <Button
+                        className="w-full h-12 rounded-2xl font-bold transition-all"
+                        onClick={handleOpenPortal}
+                        disabled={loadingPortal}
+                      >
+                        {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Mettre à jour le paiement'}
+                      </Button>
+                      <p className="text-[10px] text-center text-red-400 font-medium px-4">
+                        Mettez à jour votre moyen de paiement pour éviter la suspension du service.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="w-full h-12 rounded-2xl text-red-600 border-red-100 hover:bg-red-50 font-bold transition-all"
+                        onClick={handleOpenPortal}
+                        disabled={loadingPortal}
+                      >
+                        {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Résilier le service'}
+                      </Button>
+                      <p className="text-[10px] text-center text-gray-400 font-medium px-4">
+                        La résiliation prendra effet à la fin du cycle en cours. Aucune donnée ne sera perdue immédiatement.
+                      </p>
+                    </>
+                  )}
                 </div>
               </div>
             )}

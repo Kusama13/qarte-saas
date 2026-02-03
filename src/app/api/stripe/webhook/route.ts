@@ -94,6 +94,47 @@ export async function POST(request: Request) {
 
       break;
     }
+
+    case 'invoice.payment_succeeded': {
+      const invoice = event.data.object;
+
+      logger.debug('Payment succeeded for customer:', invoice.customer);
+
+      // Restore to active if was past_due
+      await supabase
+        .from('merchants')
+        .update({
+          subscription_status: 'active',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('stripe_customer_id', invoice.customer as string)
+        .eq('subscription_status', 'past_due');
+
+      break;
+    }
+
+    case 'customer.subscription.updated': {
+      const subscription = event.data.object;
+
+      logger.debug('Subscription updated:', subscription.id, 'status:', subscription.status);
+
+      let newStatus = subscription.status;
+
+      // Map Stripe status to our status
+      if (subscription.status === 'active' && subscription.cancel_at_period_end) {
+        newStatus = 'canceling'; // Will cancel at end of period
+      }
+
+      await supabase
+        .from('merchants')
+        .update({
+          subscription_status: newStatus,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('stripe_subscription_id', subscription.id);
+
+      break;
+    }
   }
 
   return NextResponse.json({ received: true });

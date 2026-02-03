@@ -21,7 +21,7 @@ export const SHOP_TYPES: Record<ShopType, string> = {
   autre: 'Autre',
 };
 
-export type SubscriptionStatus = 'trial' | 'active' | 'cancelled' | 'past_due';
+export type SubscriptionStatus = 'trial' | 'active' | 'canceled' | 'canceling' | 'past_due';
 
 export type LoyaltyMode = 'visit' | 'article';
 
