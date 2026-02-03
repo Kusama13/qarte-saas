@@ -33,10 +33,9 @@ export async function GET() {
     const defaultPaymentMethod = customer.invoice_settings?.default_payment_method;
 
     if (!defaultPaymentMethod || typeof defaultPaymentMethod === 'string') {
-      // Try to get from subscriptions
+      // Try to get from any subscription (active, trialing, etc.)
       const subscriptions = await stripe.subscriptions.list({
         customer: merchant.stripe_customer_id,
-        status: 'active',
         limit: 1,
         expand: ['data.default_payment_method'],
       });
@@ -55,6 +54,27 @@ export async function GET() {
               },
             });
           }
+        }
+      }
+
+      // Try to get from customer's payment methods directly
+      const paymentMethods = await stripe.paymentMethods.list({
+        customer: merchant.stripe_customer_id,
+        type: 'card',
+        limit: 1,
+      });
+
+      if (paymentMethods.data.length > 0) {
+        const card = paymentMethods.data[0].card;
+        if (card) {
+          return NextResponse.json({
+            paymentMethod: {
+              brand: card.brand,
+              last4: card.last4,
+              exp_month: card.exp_month,
+              exp_year: card.exp_year,
+            },
+          });
         }
       }
 
