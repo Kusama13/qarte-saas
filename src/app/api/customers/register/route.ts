@@ -1,33 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { z } from 'zod';
 
 const supabaseAdmin = getSupabaseAdmin();
-
-// Helper to verify merchant ownership
-async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean; error?: string }> {
-  const supabase = createRouteHandlerClient({ cookies });
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { authorized: false, error: 'Non autorisé - connexion requise' };
-  }
-
-  const { data: merchant } = await supabaseAdmin
-    .from('merchants')
-    .select('id')
-    .eq('id', merchantId)
-    .eq('user_id', user.id)
-    .single();
-
-  if (!merchant) {
-    return { authorized: false, error: 'Non autorisé - vous ne pouvez pas gérer les clients de ce commerce' };
-  }
-
-  return { authorized: true };
-}
 
 const registerSchema = z.object({
   phone_number: z.string().min(10),
@@ -50,10 +25,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // SECURITY: Verify merchant ownership
-    const authCheck = await verifyMerchantOwnership(merchantId);
-    if (!authCheck.authorized) {
-      return NextResponse.json({ error: authCheck.error }, { status: 403 });
+    // NOTE: This is a PUBLIC endpoint used by customers scanning QR codes
+    // No auth required - customers are not logged in when scanning
+
+    // Verify merchant exists
+    const { data: merchant } = await supabaseAdmin
+      .from('merchants')
+      .select('id')
+      .eq('id', merchantId)
+      .single();
+
+    if (!merchant) {
+      return NextResponse.json(
+        { error: 'Commerce introuvable' },
+        { status: 404 }
+      );
     }
 
     // 1. Vérifier si le client existe déjà pour CE commerçant
@@ -114,10 +100,21 @@ export async function POST(request: NextRequest) {
 
     const { phone_number, first_name, last_name, merchant_id } = parsed.data;
 
-    // SECURITY: Verify merchant ownership
-    const authCheck = await verifyMerchantOwnership(merchant_id);
-    if (!authCheck.authorized) {
-      return NextResponse.json({ error: authCheck.error }, { status: 403 });
+    // NOTE: This is a PUBLIC endpoint used by customers scanning QR codes
+    // No auth required - customers are not logged in when scanning
+
+    // Verify merchant exists
+    const { data: merchant } = await supabaseAdmin
+      .from('merchants')
+      .select('id')
+      .eq('id', merchant_id)
+      .single();
+
+    if (!merchant) {
+      return NextResponse.json(
+        { error: 'Commerce introuvable' },
+        { status: 404 }
+      );
     }
 
     // Vérifier si le client existe déjà pour ce marchand

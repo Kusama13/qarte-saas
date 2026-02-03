@@ -8,9 +8,6 @@ import {
   generateUUID,
 } from '../mocks/supabase';
 
-// Mock auth user
-let mockUser: any = null;
-
 // Mock supabase
 vi.mock('@/lib/supabase', async () => {
   const { mockSupabaseAdmin } = await import('../mocks/supabase');
@@ -19,26 +16,6 @@ vi.mock('@/lib/supabase', async () => {
     supabase: mockSupabaseAdmin,
   };
 });
-
-// Mock auth helpers
-vi.mock('@supabase/auth-helpers-nextjs', () => ({
-  createRouteHandlerClient: () => ({
-    auth: {
-      getUser: async () => ({
-        data: { user: mockUser },
-        error: mockUser ? null : { message: 'Not authenticated' },
-      }),
-    },
-    from: (table: string) => {
-      const { mockSupabaseAdmin } = require('../mocks/supabase');
-      return mockSupabaseAdmin.from(table);
-    },
-  }),
-}));
-
-vi.mock('next/headers', () => ({
-  cookies: () => ({}),
-}));
 
 // Import after mocks
 import { GET, POST } from '@/app/api/customers/register/route';
@@ -67,26 +44,19 @@ describe('/api/customers/register', () => {
     vi.clearAllMocks();
   });
 
-  describe('GET - Search customer by phone', () => {
-    it('should require authentication', async () => {
-      mockUser = null;
-
-      const merchant = createTestMerchant();
+  describe('GET - Search customer by phone (PUBLIC endpoint)', () => {
+    it('should return 404 for unknown merchant', async () => {
       const request = createMockRequest(undefined, {
         phone: '0612345678',
-        merchant_id: merchant.id,
+        merchant_id: generateUUID(),
       });
 
       const response = await GET(request);
-      const data = await response.json();
-
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(404);
     });
 
     it('should find customer for specific merchant only', async () => {
       const merchantA = createTestMerchant();
-      const merchantB = createTestMerchant();
-      mockUser = { id: merchantA.user_id };
 
       // Create customer for merchant A
       createTestCustomer({
@@ -112,7 +82,6 @@ describe('/api/customers/register', () => {
     it('should return existsGlobally if customer exists for another merchant', async () => {
       const merchantA = createTestMerchant();
       const merchantB = createTestMerchant();
-      mockUser = { id: merchantB.user_id };
 
       // Create customer for merchant A
       createTestCustomer({
@@ -137,7 +106,6 @@ describe('/api/customers/register', () => {
 
     it('should return exists=false for unknown phone', async () => {
       const merchant = createTestMerchant();
-      mockUser = { id: merchant.user_id };
 
       const request = createMockRequest(undefined, {
         phone: '0699999999',
@@ -152,24 +120,20 @@ describe('/api/customers/register', () => {
     });
   });
 
-  describe('POST - Create customer', () => {
-    it('should require authentication', async () => {
-      mockUser = null;
-
-      const merchant = createTestMerchant();
+  describe('POST - Create customer (PUBLIC endpoint)', () => {
+    it('should return 404 for unknown merchant', async () => {
       const request = createMockRequest({
         phone_number: '0612345678',
         first_name: 'Jean',
-        merchant_id: merchant.id,
+        merchant_id: generateUUID(),
       });
 
       const response = await POST(request);
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(404);
     });
 
     it('should create customer for specific merchant', async () => {
       const merchant = createTestMerchant();
-      mockUser = { id: merchant.user_id };
 
       const request = createMockRequest({
         phone_number: '0612345678',
@@ -189,7 +153,6 @@ describe('/api/customers/register', () => {
 
     it('should return existing customer if already exists for merchant', async () => {
       const merchant = createTestMerchant();
-      mockUser = { id: merchant.user_id };
 
       // Create existing customer
       const existingCustomer = createTestCustomer({
@@ -217,7 +180,6 @@ describe('/api/customers/register', () => {
       const merchantB = createTestMerchant();
 
       // Create customer for merchant A
-      mockUser = { id: merchantA.user_id };
       const requestA = createMockRequest({
         phone_number: '0612345678',
         first_name: 'Jean',
@@ -226,7 +188,6 @@ describe('/api/customers/register', () => {
       await POST(requestA);
 
       // Create customer for merchant B
-      mockUser = { id: merchantB.user_id };
       const requestB = createMockRequest({
         phone_number: '0612345678',
         first_name: 'Jean',
@@ -242,20 +203,6 @@ describe('/api/customers/register', () => {
 
       const merchantIds = new Set(customersWithPhone.map((c) => c.merchant_id));
       expect(merchantIds.size).toBe(2);
-    });
-
-    it('should reject if user does not own the merchant', async () => {
-      const merchant = createTestMerchant();
-      mockUser = { id: 'different-user-id' }; // Wrong user
-
-      const request = createMockRequest({
-        phone_number: '0612345678',
-        first_name: 'Jean',
-        merchant_id: merchant.id,
-      });
-
-      const response = await POST(request);
-      expect(response.status).toBe(403);
     });
   });
 });
