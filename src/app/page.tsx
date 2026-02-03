@@ -45,6 +45,7 @@ import {
   EyeOff,
   ArrowRight,
   Crown,
+  Heart,
 } from 'lucide-react';
 import { LandingAnalytics } from '@/components/analytics/LandingAnalytics';
 import { trackCtaClick, trackWhatsAppClicked, trackVideoPlayed, trackFaqOpened } from '@/lib/analytics';
@@ -151,6 +152,15 @@ const animationStyles = `
     to { clip-path: inset(0 0 0 0); }
   }
 
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .animate-marquee {
+    animation: marquee 25s linear infinite;
+  }
+
   .animate-blob {
     animation: blob 8s ease-in-out infinite;
   }
@@ -188,9 +198,48 @@ const animationStyles = `
 // COMPONENTS
 // ============================================
 
+// Joined Today Marquee Banner
+const JOINED_TODAY_ESTABLISHMENTS = [
+  'Lunzia Studio',
+  'La Canopée des Sens',
+  'Lylabella',
+  'Doux Regard',
+  'Nour Beauté',
+  'Autres Regards',
+  'Le Comptoir du Visage',
+];
+
+function JoinedTodayMarquee() {
+  return (
+    <div className="relative bg-gradient-to-r from-rose-50 via-pink-50 to-rose-50 border-y border-rose-100 py-3 overflow-hidden">
+      <div className="flex items-center">
+        {/* Fixed label on the left with opaque background */}
+        <div className="absolute left-0 top-0 bottom-0 flex items-center px-4 pr-6 bg-rose-50 z-10 border-r border-rose-200">
+          <span className="text-xs font-semibold uppercase tracking-wider text-rose-500">
+            Ils nous ont rejoint
+          </span>
+        </div>
+
+        {/* Scrolling names - with left padding to not overlap label */}
+        <div className="animate-marquee flex items-center whitespace-nowrap pl-44">
+          {[...JOINED_TODAY_ESTABLISHMENTS, ...JOINED_TODAY_ESTABLISHMENTS].map((name, i) => (
+            <div key={i} className="flex items-center mx-6">
+              <span
+                className="font-playfair text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600"
+              >
+                {name}
+              </span>
+              <span className="mx-6 text-rose-300">✦</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Mockup Carousel for Hero
 const MOCKUP_IMAGES = [
-  { src: "/images/mockup-app.png", alt: "Application Qarte - Carte de fidélité digitale" },
   { src: "/images/mockup-beaute.jpg", alt: "Qarte - Institut de beauté" },
 ];
 
@@ -279,7 +328,7 @@ function HeroSection() {
             <a href="#features" className="hover:text-indigo-600 transition-colors link-underline">Solutions</a>
             <a href="#pricing" className="hover:text-indigo-600 transition-colors link-underline">Tarifs</a>
             <a href="/contact" className="hover:text-indigo-600 transition-colors link-underline">Contact</a>
-            <a href="/auth/merchant" className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg">Espace Commerçant</a>
+            <a href="/auth/merchant" className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg">Espace Pro</a>
           </div>
 
           {/* Mobile Menu Button */}
@@ -335,7 +384,7 @@ function HeroSection() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="block w-full py-3 mt-2 text-center bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold rounded-lg transition-all shadow-sm"
                 >
-                  Espace Commerçant
+                  Espace Pro
                 </a>
               </div>
             </motion.div>
@@ -345,14 +394,14 @@ function HeroSection() {
 
       {/* Animated Background & Particles - Light */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="animate-blob absolute top-20 left-20 w-96 h-96 bg-indigo-200/50 rounded-full blur-3xl" />
-        <div className="animate-blob absolute bottom-20 right-20 w-96 h-96 bg-violet-200/50 rounded-full blur-3xl delay-200" style={{ animationDelay: '2s' }} />
-        <div className="animate-blob absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-rose-200/30 rounded-full blur-3xl" style={{ animationDelay: '4s' }} />
+        <div className="animate-blob absolute top-20 left-20 w-96 h-96 bg-rose-200/50 rounded-full blur-3xl" />
+        <div className="animate-blob absolute bottom-20 right-20 w-96 h-96 bg-pink-200/50 rounded-full blur-3xl delay-200" style={{ animationDelay: '2s' }} />
+        <div className="animate-blob absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-200/30 rounded-full blur-3xl" style={{ animationDelay: '4s' }} />
 
         {/* Particles */}
-        <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-indigo-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.8)]" />
-        <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse delay-700 shadow-[0_0_8px_rgba(236,72,153,0.8)]" />
-        <div className="absolute bottom-1/4 left-1/2 w-1 h-1 bg-emerald-500 rounded-full animate-pulse delay-1000 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+        <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-rose-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+        <div className="absolute top-1/3 right-1/3 w-1.5 h-1.5 bg-pink-500 rounded-full animate-pulse delay-700 shadow-[0_0_8px_rgba(236,72,153,0.8)]" />
+        <div className="absolute bottom-1/4 left-1/2 w-1 h-1 bg-purple-500 rounded-full animate-pulse delay-1000 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
       </div>
 
       <div ref={ref} className="relative z-10 max-w-7xl mx-auto px-6 py-20 pt-36 grid lg:grid-cols-2 gap-12 items-center">
@@ -366,15 +415,15 @@ function HeroSection() {
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
             <h1 className="relative text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
-              La fidélité client{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-violet-600 to-rose-500">
-                qui s'adapte à votre commerce.
+              La beauté passe au digital.{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
+                Votre fidélité aussi.
               </span>
             </h1>
           </div>
 
           <p className="text-xl text-gray-600 max-w-xl leading-relaxed">
-            Un QR code. Un navigateur. <span className="text-gray-900 font-medium">Zéro téléchargement.</span> Zéro friction pour vos clients et votre équipe.
+            <span className="text-gray-900 font-medium">+35% de clientes régulières</span> en moyenne. La carte de fidélité digitale pour salons de coiffure, instituts de beauté, spas, ongleries et centres de bien-être.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5">
@@ -394,7 +443,7 @@ function HeroSection() {
               className="px-8 py-4 border border-gray-300 text-gray-900 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 text-center shadow-sm flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] icon-bounce"
             >
               <MessageCircle className="w-5 h-5" />
-              Voir une démo
+              Demander une démo
             </a>
           </div>
 
@@ -403,12 +452,12 @@ function HeroSection() {
             <div className="flex items-center gap-2">
               <div className="flex -space-x-2">
                 {[1,2,3,4].map((i) => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-400 to-violet-400 border-2 border-white flex items-center justify-center text-white text-xs font-bold">
-                    {['M', 'T', 'S', 'L'][i-1]}
+                  <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-rose-400 to-pink-400 border-2 border-white flex items-center justify-center text-white text-xs font-bold">
+                    {['S', 'C', 'M', 'L'][i-1]}
                   </div>
                 ))}
               </div>
-              <span className="text-sm text-gray-600"><span className="font-semibold text-gray-900">150+</span> commerçants</span>
+              <span className="text-sm text-gray-600"><span className="font-semibold text-gray-900">150+</span> instituts en France</span>
             </div>
             <div className="hidden sm:block w-px h-6 bg-gray-200" />
             <div className="flex items-center gap-1.5">
@@ -421,7 +470,7 @@ function HeroSection() {
             </div>
             <div className="hidden sm:block w-px h-6 bg-gray-200" />
             <div className="text-sm text-gray-600">
-              <span className="font-semibold text-gray-900">12,000+</span> cartes créées
+              <span className="font-semibold text-gray-900">12,000+</span> clientes fidélisées
             </div>
           </div>
         </div>
@@ -509,7 +558,7 @@ function ComparisonSection() {
     "Clients qui ne reviennent pas",
     "Difficulté à obtenir des avis Google",
     "Impossible de relancer les inactifs",
-    "Aucune donnée sur vos clients",
+    "Aucune donnée sur vos clientes",
     "Gaspillage de papier et d'encre",
     "Configuration longue et coûteuse"
   ];
@@ -519,7 +568,7 @@ function ComparisonSection() {
     "Boostez votre chiffre d'affaires",
     "Collectez des avis Google facilement",
     "Notifications push pour réengager",
-    "Programmes VIP pour vos meilleurs clients",
+    "Programmes VIP pour vos meilleures clientes",
     "Dashboard et statistiques en temps réel",
     "100% écologique, zéro papier"
   ];
@@ -537,7 +586,7 @@ function ComparisonSection() {
             ?
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Comparez et faites le bon choix pour votre commerce.
+            Comparez et faites le bon choix pour votre institut.
           </p>
         </div>
 
@@ -632,7 +681,7 @@ function FeaturesSection() {
       icon: QrCode,
       title: "Installation Instantanée",
       subtitle: "Prêt en 30 secondes",
-      description: "Transformez vos clients en membres digitaux instantanément. Scannez, validez, fidélisez. Aucune application à télécharger.",
+      description: "Transformez vos clientes en membres digitaux instantanément. Scannez, validez, fidélisez. Aucune application à télécharger.",
       keywords: ["Scannez", "validez", "fidélisez"],
       color: "from-indigo-500 to-violet-600",
       bgColor: "bg-indigo-50",
@@ -716,7 +765,7 @@ function FeaturesSection() {
       icon: BarChart3,
       title: "Dashboard & Analytics",
       subtitle: "Pilotez par la donnée",
-      description: "Analysez le comportement de vos clients en temps réel. Fréquence de visite, panier moyen et segments les plus rentables.",
+      description: "Analysez le comportement de vos clientes en temps réel. Fréquence de visite, soins préférés et segments les plus fidèles.",
       keywords: ["temps réel", "panier moyen", "segments"],
       color: "from-emerald-500 to-teal-600",
       bgColor: "bg-emerald-50",
@@ -758,7 +807,7 @@ function FeaturesSection() {
       id: 'vip',
       icon: Crown,
       title: "Programmes VIP",
-      subtitle: "Fidélisez vos meilleurs clients",
+      subtitle: "Fidélisez vos meilleures clientes",
       description: "Créez des paliers de fidélité. Offrez des remises permanentes et des cadeaux exclusifs à vos membres privilégiés.",
       keywords: ["paliers", "remises permanentes", "cadeaux exclusifs"],
       color: "from-purple-500 to-pink-500",
@@ -801,7 +850,7 @@ function FeaturesSection() {
       icon: Bell,
       title: "Notifications Push",
       subtitle: "Restez dans leur poche",
-      description: "Envoyez des messages ciblés directement sur le smartphone de vos clients. Promos flash, rappels et alertes récompenses.",
+      description: "Envoyez des messages ciblés directement sur le smartphone de vos clientes. Promos flash, rappels et alertes récompenses.",
       keywords: ["messages ciblés", "Promos flash", "alertes récompenses"],
       color: "from-rose-500 to-red-500",
       bgColor: "bg-rose-50",
@@ -832,7 +881,7 @@ function FeaturesSection() {
                       <Bell className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs font-bold text-slate-900">Café du Commerce</p>
+                      <p className="text-xs font-bold text-slate-900">Institut Éclat</p>
                       <p className="text-[11px] text-slate-600 mt-0.5">🎉 -20% ce weekend uniquement !</p>
                     </div>
                   </div>
@@ -850,7 +899,7 @@ function FeaturesSection() {
                     </div>
                     <div className="flex-1">
                       <p className="text-xs font-bold text-slate-900">Votre récompense</p>
-                      <p className="text-[11px] text-slate-600 mt-0.5">☕ Votre café offert expire dans 3j</p>
+                      <p className="text-[11px] text-slate-600 mt-0.5">💅 Votre soin offert expire dans 3j</p>
                     </div>
                   </div>
                 </motion.div>
@@ -1132,9 +1181,9 @@ function CaseStudySection() {
             Étude de cas
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Comment le Café des Artistes a{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
-              doublé ses clients réguliers
+            Comment L&apos;Institut Éclat a{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500">
+              doublé ses clientes régulières
             </span>
           </h2>
         </div>
@@ -1149,26 +1198,26 @@ function CaseStudySection() {
             {/* Left: Story */}
             <div className="p-8 md:p-10">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                  CA
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                  IE
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">Café des Artistes</h3>
-                  <p className="text-gray-500 text-sm">Lyon 6ème • Coffee shop</p>
+                  <h3 className="text-xl font-bold text-gray-900">L&apos;Institut Éclat</h3>
+                  <p className="text-gray-500 text-sm">Paris 16ème • Institut de beauté</p>
                 </div>
               </div>
 
-              <blockquote className="text-lg text-gray-700 leading-relaxed mb-6 italic border-l-4 border-indigo-200 pl-4">
-                "Avant Qarte, je tamponnais des cartes papier que les clients perdaient systématiquement. Aujourd&apos;hui, 80% de mes clients ont leur carte digitale et reviennent 2x plus souvent."
+              <blockquote className="text-lg text-gray-700 leading-relaxed mb-6 italic border-l-4 border-rose-200 pl-4">
+                "Mes clientes perdaient toujours leurs cartes tampons. Avec Qarte, tout est sur leur téléphone. Elles adorent recevoir une notif quand leur soin gratuit est disponible !"
               </blockquote>
 
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                  <Coffee className="w-6 h-6 text-amber-600" />
+                  <Sparkles className="w-6 h-6 text-rose-500" />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">Marc Dubois</p>
-                  <p className="text-sm text-gray-500">Gérant depuis 2019</p>
+                  <p className="font-semibold text-gray-900">Sophie Martin</p>
+                  <p className="text-sm text-gray-500">Gérante depuis 2018</p>
                 </div>
               </div>
 
@@ -1176,9 +1225,9 @@ function CaseStudySection() {
                 <h4 className="font-semibold text-gray-900 text-sm uppercase tracking-wider">Ce qui a changé :</h4>
                 {[
                   'Mise en place en 10 minutes',
-                  'QR code sur chaque table + comptoir',
-                  'Récompense : 10ème café offert',
-                  'Notification push le vendredi matin'
+                  'QR code à l\'accueil + cabines',
+                  'Récompense : 10ème soin offert',
+                  'Notification push avant les fêtes'
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <div className="w-5 h-5 bg-emerald-100 rounded-full flex items-center justify-center">
@@ -1202,7 +1251,7 @@ function CaseStudySection() {
                     <span className="text-5xl font-black">+127%</span>
                     <TrendingUp className="w-6 h-6 text-emerald-300" />
                   </div>
-                  <p className="text-indigo-200 mt-1">de clients réguliers</p>
+                  <p className="text-indigo-200 mt-1">de clientes régulières</p>
                 </div>
 
                 <div>
@@ -1245,7 +1294,7 @@ function PricingSection() {
   const { ref, isInView } = useInView();
 
   const features = [
-    'Clients illimités',
+    'Clientes illimitées',
     'QR Code perso',
     'Notifications push',
     'Programmation envois',
@@ -1353,24 +1402,24 @@ function TestimonialsSection() {
     {
       name: 'Marie L.',
       role: 'Gérante de salon de coiffure',
-      content: 'Depuis Qarte, +40% de mes clientes reviennent plus régulièrement. Et surtout : fini les cartes perdues !',
-      image: '/images/temoignages/marie.webp',
-      stat: '+40%',
+      content: 'Depuis Qarte, +35% de mes clientes reviennent plus régulièrement. Et surtout : fini les cartes tampons perdues !',
+      image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face',
+      stat: '+35%',
       statLabel: 'fidélisation'
     },
     {
-      name: 'Thomas D.',
-      role: 'Propriétaire de café',
-      content: 'La mise en place a pris 5 minutes. Mes clients adorent scanner le QR, c\'est devenu un jeu pour eux.',
-      image: '/images/temoignages/thomas.webp',
+      name: 'Jessica P.',
+      role: 'Nail Artist - Onglerie',
+      content: 'Mes clientes adorent recevoir une notification quand leur pose offerte est disponible. Ça les motive à revenir !',
+      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face',
       stat: '5 min',
       statLabel: 'installation'
     },
     {
-      name: 'Sophie M.',
-      role: 'Fleuriste',
-      content: 'J\'ai enfin des données sur mes clients. Et le côté écologique, ça correspond à mes valeurs.',
-      image: '/images/temoignages/sophie.webp',
+      name: 'Laura D.',
+      role: 'Masseuse - Centre bien-être',
+      content: 'J\'ai enfin des données sur mes clientes. Et le côté écologique, ça correspond parfaitement à l\'image de mon centre.',
+      image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&h=200&fit=crop&crop=face',
       stat: '0',
       statLabel: 'papier utilisé'
     }
@@ -1399,7 +1448,7 @@ function TestimonialsSection() {
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
             Ils nous font confiance
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">Découvrez ce que nos commerçants disent de Qarte</p>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">Découvrez ce que nos professionnels de la beauté disent de Qarte</p>
         </div>
 
         <div
@@ -1556,20 +1605,24 @@ function FAQSection() {
 
   const faqs = [
     {
-      question: "Et si mes clients n'ont pas de smartphone ?",
-      answer: "99% de vos clients ont un smartphone. Pour les rares exceptions, vous pouvez noter leurs points manuellement et les ajouter plus tard. Aucun client n'est laissé de côté."
+      question: "Et si mes clientes n'ont pas de smartphone ?",
+      answer: "99% de vos clientes ont un smartphone. Pour les rares exceptions, vous pouvez noter leurs points manuellement et les ajouter plus tard. Aucune cliente n'est laissée de côté."
     },
     {
       question: "Combien de temps pour être opérationnel ?",
       answer: "5 minutes chrono. Créez votre compte, ajoutez votre logo, définissez votre récompense, imprimez le QR code. C'est prêt. Aucune formation nécessaire."
     },
     {
-      question: "Mes clients vont trouver ça compliqué ?",
-      answer: "Au contraire ! Ils scannent le QR code avec leur appareil photo, c'est tout. Pas d'application à télécharger, pas de compte à créer. Plus simple qu'une carte papier."
+      question: "Ça marche pour les prestations à domicile ?",
+      answer: "Absolument ! Montrez simplement le QR code sur votre téléphone à votre cliente. Elle scanne, et son point est validé. Parfait pour les coiffeuses, esthéticiennes et masseuses à domicile."
+    },
+    {
+      question: "Mes clientes vont trouver ça compliqué ?",
+      answer: "Au contraire ! Elles scannent le QR code avec leur appareil photo, c'est tout. Pas d'application à télécharger, pas de compte à créer. Plus simple qu'une carte papier."
     },
     {
       question: "Que se passe-t-il si j'arrête Qarte ?",
-      answer: "Vous exportez vos données clients en CSV quand vous voulez. Pas de piège, pas d'engagement. Vos données vous appartiennent."
+      answer: "Vous exportez vos données clientes en CSV quand vous voulez. Pas de piège, pas d'engagement. Vos données vous appartiennent."
     }
   ];
 
@@ -1959,7 +2012,7 @@ function ScrollToTopButton() {
 // Trust Banner - Scrolling Businesses
 // Calculate trust count with 10% monthly growth
 function getTrustData() {
-  const baseCount = 170; // 170 commerces au 01/01/2026
+  const baseCount = 170; // 170 instituts au 01/01/2026
   const baseDate = new Date('2026-01-01'); // Date de référence
   const now = new Date();
 
@@ -1994,10 +2047,10 @@ function TrustBanner() {
   }, [isInView, hasStarted, startCounting]);
 
   const floatingIcons = [
-    { Icon: Coffee, top: '15%', left: '8%', delay: 0 },
+    { Icon: Sparkles, top: '15%', left: '8%', delay: 0 },
     { Icon: Scissors, top: '20%', right: '10%', delay: 0.8 },
-    { Icon: ShoppingBag, bottom: '25%', left: '12%', delay: 1.2 },
-    { Icon: UtensilsCrossed, bottom: '20%', right: '15%', delay: 0.4 },
+    { Icon: Flower2, bottom: '25%', left: '12%', delay: 1.2 },
+    { Icon: Heart, bottom: '20%', right: '15%', delay: 0.4 },
   ];
 
   return (
@@ -2053,7 +2106,7 @@ function TrustBanner() {
           </h2>
           <div className="space-y-3">
             <h3 className="text-xl md:text-2xl font-semibold text-gray-900 tracking-tight">
-              commerces nous font déjà confiance
+              instituts nous font déjà confiance
             </h3>
             <p className="text-base text-gray-500 max-w-md mx-auto">
               Rejoignez une communauté grandissante de professionnels qui digitalisent leur fidélité client.
@@ -2101,24 +2154,17 @@ function HowItWorksSection() {
   const steps = [
     {
       number: '01',
-      title: 'Créez votre compte',
-      description: 'En 2 minutes, configurez votre programme de fidélité personnalisé.',
-      icon: Smartphone,
-      color: 'from-indigo-500 to-violet-500'
+      title: 'Créez votre programme',
+      description: 'Inscription gratuite, personnalisez vos récompenses et votre design en quelques clics.',
+      icon: Sparkles,
+      color: 'from-rose-400 to-pink-500'
     },
     {
       number: '02',
-      title: 'Imprimez le QR Code',
-      description: 'Placez-le en caisse. Vos clients scannent avec leur téléphone.',
+      title: 'Affichez le QR Code',
+      description: 'Imprimez-le à l\'accueil. Vos clientes scannent, cumulent leurs points et reviennent.',
       icon: QrCode,
-      color: 'from-violet-500 to-purple-500'
-    },
-    {
-      number: '03',
-      title: 'Fidélisez automatiquement',
-      description: 'Les points s\'ajoutent, les notifications partent, vous analysez.',
-      icon: TrendingUp,
-      color: 'from-purple-500 to-rose-500'
+      color: 'from-pink-500 to-rose-600'
     }
   ];
 
@@ -2128,14 +2174,14 @@ function HowItWorksSection() {
         <div className={`text-center mb-14 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">
             Lancez-vous en{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
-              3 étapes
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500">
+              2 minutes
             </span>
           </h2>
           <p className="text-lg text-gray-600">Aucune compétence technique requise.</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
           {steps.map((step, index) => (
             <motion.div
               key={step.number}
@@ -2149,13 +2195,42 @@ function HowItWorksSection() {
                 <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-px bg-gradient-to-r from-gray-200 to-transparent z-0" />
               )}
 
-              <div className="relative bg-white rounded-2xl p-6 border border-gray-100 hover:border-indigo-100 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 z-10 hover:-translate-y-1">
-                {/* Step number badge */}
-                <div className={`inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br ${step.color} text-white font-bold text-lg mb-5 shadow-lg`}>
-                  <step.icon className="w-6 h-6" />
+              <div className="relative bg-white rounded-2xl p-6 border border-gray-100 hover:border-rose-100 hover:shadow-xl hover:shadow-rose-500/5 transition-all duration-300 z-10 hover:-translate-y-1">
+                {/* Visual illustration */}
+                <div className="mb-5 h-32 rounded-xl bg-gradient-to-br from-rose-50 to-pink-50 flex items-center justify-center overflow-hidden">
+                  {index === 0 ? (
+                    /* Step 1: Phone with form */
+                    <div className="relative w-16 h-28 bg-white rounded-xl shadow-lg border border-gray-200 p-2">
+                      <div className="w-full h-2 bg-rose-200 rounded mb-1.5"></div>
+                      <div className="w-3/4 h-2 bg-gray-100 rounded mb-1.5"></div>
+                      <div className="w-full h-2 bg-rose-200 rounded mb-1.5"></div>
+                      <div className="w-3/4 h-2 bg-gray-100 rounded mb-1.5"></div>
+                      <div className="w-full h-3 bg-gradient-to-r from-rose-400 to-pink-400 rounded mt-2"></div>
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-6 h-1 bg-gray-300 rounded-full"></div>
+                    </div>
+                  ) : (
+                    /* Step 2: QR Code */
+                    <div className="relative">
+                      <div className="w-20 h-20 bg-white rounded-lg shadow-lg p-2 border border-gray-200">
+                        <div className="w-full h-full grid grid-cols-4 gap-0.5">
+                          {[...Array(16)].map((_, i) => (
+                            <div key={i} className={`rounded-sm ${[0,1,3,4,5,7,8,10,12,13,15].includes(i) ? 'bg-gray-800' : 'bg-white'}`}></div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-8 h-14 bg-white rounded-lg shadow border border-gray-200 flex items-center justify-center">
+                        <div className="w-1 h-1 bg-rose-400 rounded-full animate-ping"></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                <div className="text-xs font-bold text-indigo-600 tracking-widest mb-2">
+                {/* Step number badge */}
+                <div className={`inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br ${step.color} text-white font-bold text-sm mb-3 shadow-lg`}>
+                  <step.icon className="w-5 h-5" />
+                </div>
+
+                <div className="text-xs font-bold text-rose-500 tracking-widest mb-2">
                   ÉTAPE {step.number}
                 </div>
 
@@ -2163,7 +2238,7 @@ function HowItWorksSection() {
                   {step.title}
                 </h3>
 
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 leading-relaxed text-sm">
                   {step.description}
                 </p>
               </div>
@@ -2176,11 +2251,12 @@ function HowItWorksSection() {
           <a
             href="/auth/merchant/signup"
             onClick={() => { trackCtaClick('how_it_works', 'how_it_works_section'); fbEvents.initiateCheckout(); }}
-            className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+            className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-rose-500 to-pink-500 text-white font-bold rounded-xl hover:from-rose-600 hover:to-pink-600 transition-all shadow-lg shadow-rose-500/25 hover:shadow-xl hover:shadow-rose-500/40 hover:scale-[1.02] active:scale-[0.98]"
           >
             Commencer maintenant
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </a>
+          <p className="text-sm text-gray-500 mt-3">15 jours gratuits pour essayer</p>
         </div>
       </div>
     </section>
@@ -2245,6 +2321,7 @@ export default function LandingPageV4() {
 
       <main className="overflow-hidden pb-24 md:pb-0">
         <MemoizedHeroSection />
+        <JoinedTodayMarquee />
         <MemoizedHowItWorksSection />
         <MemoizedComparisonSection />
         <MemoizedFeaturesSection />
