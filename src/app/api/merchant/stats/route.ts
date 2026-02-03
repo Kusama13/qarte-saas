@@ -8,7 +8,7 @@ const supabaseAdmin = getSupabaseAdmin();
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 

@@ -5,7 +5,7 @@ import { cookies } from 'next/headers';
 // Helper to verify merchant ownership
 async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean; error?: string; status?: number }> {
   const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   }
 
   const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
 
   const { data: merchant, error } = await supabase
     .from('merchants')
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
 // POST/PUT to create or update offer
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
 
   try {
     const body = await request.json();
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 // PATCH to update PWA offer
 export async function PATCH(request: NextRequest) {
   const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
 
   try {
     const body = await request.json();
@@ -177,7 +177,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
 
   const { error } = await supabase
     .from('merchants')

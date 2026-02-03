@@ -15,7 +15,7 @@ function getSupabase() {
 export async function GET(request: NextRequest) {
   const supabase = getSupabase();
   const cookieStore = await cookies();
-  const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabaseAuth = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
 
   try {
     // SECURITY: Verify user is authenticated

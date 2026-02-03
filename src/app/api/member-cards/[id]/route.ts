@@ -9,7 +9,7 @@ const supabaseAdmin = getSupabaseAdmin();
 // Helper to verify user owns the program's merchant
 async function verifyProgramOwnership(programId: string): Promise<{ authorized: boolean }> {
   const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
@@ -33,7 +33,7 @@ async function verifyProgramOwnership(programId: string): Promise<{ authorized: 
 // Helper to verify user owns the card's program
 async function verifyCardOwnership(cardId: string): Promise<{ authorized: boolean; programId?: string }> {
   const cookieStore = await cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {

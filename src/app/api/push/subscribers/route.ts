@@ -14,7 +14,7 @@ function getSupabase() {
 // Helper to verify merchant ownership
 async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean }> {
   const cookieStore = await cookies();
-  const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabaseAuth = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
   const supabase = getSupabase();
 
   const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();

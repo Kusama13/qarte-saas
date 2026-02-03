@@ -17,7 +17,7 @@ const createProgramSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
 
     const {
       data: { user },
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies();
-    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+    const supabase = createRouteHandlerClient({ cookies: () => Promise.resolve(cookieStore) });
 
     const {
       data: { user },
