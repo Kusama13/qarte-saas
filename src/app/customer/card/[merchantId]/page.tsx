@@ -572,7 +572,7 @@ export default function CustomerCardPage({
   const LoyaltyIcon = getLoyaltyIcon();
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white 0%, ${merchant.primary_color}20 50%, ${merchant.primary_color}30 100%)` }}>
+    <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${merchant.primary_color}15 0%, ${merchant.primary_color}40 40%, ${merchant.primary_color}60 70%, ${merchant.primary_color}35 100%)` }}>
       {/* Header with premium glassmorphism horizontal design */}
       <header className="relative w-full overflow-hidden">
         <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden bg-white/40 backdrop-blur-xl border-b lg:border border-white/40 shadow-xl shadow-slate-200/50">
@@ -860,7 +860,7 @@ export default function CustomerCardPage({
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-white rounded-[2rem] shadow-2xl border border-gray-100 p-6 overflow-hidden relative"
+          className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/50 p-6 overflow-hidden relative"
         >
           {/* Progression Section with Stamp Icons */}
           <div className="mb-8 px-2 space-y-6">
@@ -954,7 +954,10 @@ export default function CustomerCardPage({
                         style={{ backgroundColor: effectiveTier1Redeemed ? '#9ca3af' : (isRewardReady ? '#f59e0b' : merchant.primary_color) }}
                       />
                     </div>
-                    <p className={`text-center text-sm font-bold ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-900' : 'text-gray-600'}`}>
+                    <p
+                      className={`text-center text-base font-medium italic ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-900' : 'text-gray-600'}`}
+                      style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}
+                    >
                       {merchant.reward_description || 'Cadeau de fidélité'}
                     </p>
                   </div>
@@ -1040,8 +1043,11 @@ export default function CustomerCardPage({
                 </div>
 
                 {/* Centered Reward Description */}
-                <div className="text-center py-4 px-6 bg-gray-50 rounded-2xl border border-gray-100">
-                  <p className={`text-base font-bold ${isRewardReady ? 'text-emerald-700' : 'text-gray-700'}`}>
+                <div className="text-center py-5 px-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/60">
+                  <p
+                    className={`text-lg font-medium italic ${isRewardReady ? 'text-emerald-700' : 'text-gray-700'}`}
+                    style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}
+                  >
                     {merchant.reward_description || 'Votre récompense fidélité'}
                   </p>
                 </div>
@@ -1124,7 +1130,10 @@ export default function CustomerCardPage({
                       className="h-full bg-violet-600 rounded-full"
                     />
                   </div>
-                  <p className={`text-center text-sm font-bold ${isTier2Ready ? 'text-violet-900' : 'text-gray-600'}`}>
+                  <p
+                    className={`text-center text-base font-medium italic ${isTier2Ready ? 'text-violet-900' : 'text-gray-600'}`}
+                    style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}
+                  >
                     {tier2Reward || 'Récompense Premium'}
                   </p>
                 </div>
