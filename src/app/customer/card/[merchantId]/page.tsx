@@ -435,26 +435,14 @@ export default function CustomerCardPage({
   const handleRedeem = async (tier: 1 | 2 = 1) => {
     if (!card) return;
 
-    const savedPhone = getCookie('customer_phone');
-    if (!savedPhone) {
-      console.error('No phone found in cookies');
-      alert('Session expirée. Veuillez vous reconnecter.');
-      return;
-    }
-
-    // Format phone number before sending
-    const formattedPhone = formatPhoneNumber(savedPhone);
-    console.log('Redeeming with phone:', formattedPhone, 'tier:', tier);
-
     setRedeeming(true);
 
     try {
-      const response = await fetch('/api/redeem', {
+      const response = await fetch('/api/redeem-public', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           loyalty_card_id: card.id,
-          customer_phone: formattedPhone,
           tier: tier,
         }),
       });
