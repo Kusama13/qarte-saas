@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -9,7 +9,7 @@ const supabaseAdmin = getSupabaseAdmin();
 export async function POST(request: NextRequest) {
   try {
     // Get authenticated user
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = createRouteHandlerClient({ cookies });
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
@@ -44,22 +44,22 @@ export async function POST(request: NextRequest) {
 
     const phoneFormatted = phone_number.trim();
 
-    // Check if customer already exists with this phone number
-    const { data: existingCustomers } = await supabaseAdmin
+    // Check if customer already exists for THIS merchant with this phone number
+    const { data: existingCustomerForMerchant } = await supabaseAdmin
       .from('customers')
       .select('id')
-      .eq('phone_number', phoneFormatted);
+      .eq('phone_number', phoneFormatted)
+      .eq('merchant_id', merchant.id)
+      .maybeSingle();
 
     let customerId: string;
 
-    if (existingCustomers && existingCustomers.length > 0) {
-      // Customer exists - check if they already have a loyalty card for this merchant
-      const existingCustomer = existingCustomers[0];
-
+    if (existingCustomerForMerchant) {
+      // Customer already exists for this merchant - check loyalty card
       const { data: existingCards } = await supabaseAdmin
         .from('loyalty_cards')
         .select('id')
-        .eq('customer_id', existingCustomer.id)
+        .eq('customer_id', existingCustomerForMerchant.id)
         .eq('merchant_id', merchant.id);
 
       if (existingCards && existingCards.length > 0) {
@@ -69,15 +69,17 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      customerId = existingCustomer.id;
+      // Customer exists but no loyalty card - will create one below
+      customerId = existingCustomerForMerchant.id;
     } else {
-      // Create new customer
+      // Create new customer for this merchant
       const { data: newCustomer, error: customerError } = await supabaseAdmin
         .from('customers')
         .insert({
           first_name: first_name.trim(),
           last_name: last_name?.trim() || null,
           phone_number: phoneFormatted,
+          merchant_id: merchant.id,
         })
         .select()
         .single();
