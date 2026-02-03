@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-import { getSupabaseAdmin } from './supabase';
+import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from './supabase';
 
 export interface AdminAuthResult {
   authorized: boolean;
@@ -15,11 +13,11 @@ export interface AdminAuthResult {
  */
 export async function verifyAdminAuth(request: NextRequest): Promise<AdminAuthResult> {
   try {
-    // Get the session from cookies
-    const supabase = createServerComponentClient({ cookies });
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Get the user from cookies (using getUser for proper JWT validation)
+    const supabase = await createRouteHandlerSupabaseClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-    if (sessionError || !session?.user) {
+    if (userError || !user) {
       return {
         authorized: false,
         error: NextResponse.json(
@@ -34,7 +32,7 @@ export async function verifyAdminAuth(request: NextRequest): Promise<AdminAuthRe
     const { data: superAdmin, error: adminError } = await supabaseAdmin
       .from('super_admins')
       .select('id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (adminError || !superAdmin) {
@@ -49,7 +47,7 @@ export async function verifyAdminAuth(request: NextRequest): Promise<AdminAuthRe
 
     return {
       authorized: true,
-      userId: session.user.id,
+      userId: user.id,
     };
   } catch (error) {
     console.error('Admin auth error:', error);

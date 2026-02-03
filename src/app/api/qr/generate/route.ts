@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { generateQRCode, getScanUrl } from '@/lib/utils';
 import { z } from 'zod';
 
@@ -10,7 +9,7 @@ const generateSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = await createRouteHandlerSupabaseClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 

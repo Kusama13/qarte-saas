@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import webpush from 'web-push';
 
 interface PushPayload {
@@ -38,7 +37,7 @@ export async function POST(request: NextRequest) {
 
     // Initialize Supabase clients
     const supabase = createClient(supabaseUrl, supabaseKey);
-    const supabaseAuth = createServerComponentClient({ cookies });
+    const supabaseAuth = await createRouteHandlerSupabaseClient();
 
     // Configure web-push with VAPID keys at runtime
     webpush.setVapidDetails(

@@ -1,6 +1,3 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
-
-export const createServerSupabaseClient = () => {
-  return createServerComponentClient({ cookies });
-};
+// This file is deprecated - use createRouteHandlerSupabaseClient from @/lib/supabase instead
+// Keeping for backward compatibility
+export { createRouteHandlerSupabaseClient as createServerSupabaseClient } from './supabase';
