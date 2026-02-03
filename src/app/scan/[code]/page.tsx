@@ -20,7 +20,6 @@ import {
   Hourglass,
   Shield,
   Ban,
-  QrCode,
   Star,
   HelpCircle,
   Bell,
@@ -722,13 +721,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
                         {[
                           {
-                            icon: <QrCode className="w-4 h-4" />,
-                            title: "Scannez le QR code",
-                            description: merchant.loyalty_mode === 'visit'
-                              ? "Présentez ce code à chaque visite pour valider votre passage."
-                              : `Scannez à chaque achat de ${merchant.product_name || 'produit'}.`
-                          },
-                          {
                             icon: <Star className="w-4 h-4" />,
                             title: "Cumulez vos points",
                             description: merchant.loyalty_mode === 'visit'
@@ -737,8 +729,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                           },
                           {
                             icon: <Gift className="w-4 h-4" />,
-                            title: "Recevez votre cadeau",
-                            description: `Après ${merchant.stamps_required} ${merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}, obtenez : ${merchant.reward_description}`
+                            title: "Recevez vos cadeaux",
+                            description: merchant.tier2_enabled && merchant.tier2_stamps_required
+                              ? `Palier 1 (${merchant.stamps_required} pts) : ${merchant.reward_description} • Palier 2 (${merchant.tier2_stamps_required} pts) : ${merchant.tier2_reward_description}`
+                              : `Après ${merchant.stamps_required} ${merchant.loyalty_mode === 'visit' ? 'passages' : (merchant.product_name || 'articles')}, obtenez : ${merchant.reward_description}`
                           }
                         ].map((step, idx) => (
                           <motion.div
