@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, AlertTriangle, X } from 'lucide-react';
+import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, AlertTriangle, X, Shield, ShieldOff } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
@@ -407,6 +407,44 @@ export default function DashboardPage() {
             Voici un aperçu de votre programme de fidélité
           </p>
         </div>
+      </div>
+
+      {/* Qarte Shield Status Bar */}
+      <div className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
+        shieldEnabled
+          ? 'bg-emerald-50/50 border-emerald-100'
+          : 'bg-gray-50 border-gray-200'
+      }`}>
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg ${shieldEnabled ? 'bg-emerald-100' : 'bg-gray-200'}`}>
+            {shieldEnabled ? (
+              <Shield className="w-4 h-4 text-emerald-600" />
+            ) : (
+              <ShieldOff className="w-4 h-4 text-gray-400" />
+            )}
+          </div>
+          <div>
+            <p className={`text-sm font-semibold ${shieldEnabled ? 'text-emerald-800' : 'text-gray-600'}`}>
+              Qarte Shield {shieldEnabled ? 'actif' : 'inactif'}
+            </p>
+            <p className="text-xs text-gray-500">
+              {shieldEnabled ? 'Protection anti-fraude activée' : 'Protection désactivée'}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => handleShieldToggle(!shieldEnabled)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+            shieldEnabled ? 'bg-emerald-500' : 'bg-gray-300'
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+              shieldEnabled ? 'translate-x-6' : 'translate-x-1'
+            }`}
+          />
+        </button>
       </div>
 
       {/* Qarte Shield - Points en attente */}
