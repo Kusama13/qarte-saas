@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import webpush from 'web-push';
 
 interface PushPayload {
@@ -34,8 +36,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize Supabase client at runtime
+    // Initialize Supabase clients
     const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAuth = createServerComponentClient({ cookies });
 
     // Configure web-push with VAPID keys at runtime
     webpush.setVapidDetails(
@@ -57,6 +60,33 @@ export async function POST(request: NextRequest) {
         { error: 'Payload invalide (title et body requis)' },
         { status: 400 }
       );
+    }
+
+    // SECURITY: Verify merchant ownership if sending to merchant's customers
+    if (merchantId) {
+      const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+
+      if (authError || !user) {
+        return NextResponse.json(
+          { error: 'Non autorisé - connexion requise' },
+          { status: 401 }
+        );
+      }
+
+      // Verify the user owns this merchant
+      const { data: merchant, error: merchantError } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('id', merchantId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (merchantError || !merchant) {
+        return NextResponse.json(
+          { error: 'Non autorisé - vous ne pouvez pas envoyer de notifications pour ce commerce' },
+          { status: 403 }
+        );
+      }
     }
 
     let subscriptions: any[] = [];

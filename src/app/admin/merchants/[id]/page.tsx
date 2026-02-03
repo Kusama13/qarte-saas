@@ -57,6 +57,16 @@ interface Stats {
   pushSent: number;
 }
 
+interface MemberProgram {
+  id: string;
+  name: string;
+  benefit_label: string;
+  duration_months: number;
+  is_active: boolean;
+  created_at: string;
+  member_cards: { count: number }[];
+}
+
 export default function MerchantDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -72,6 +82,7 @@ export default function MerchantDetailPage() {
     pushSubscribers: 0,
     pushSent: 0,
   });
+  const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -113,9 +124,9 @@ export default function MerchantDetailPage() {
         if (merchantError) throw merchantError;
         setMerchant(merchantData);
 
-        // Récupérer les stats
+        // Récupérer les stats - count loyalty cards (customers is global, no merchant_id)
         const { count: totalCustomers } = await supabase
-          .from('customers')
+          .from('loyalty_cards')
           .select('*', { count: 'exact', head: true })
           .eq('merchant_id', merchantId);
 
@@ -159,6 +170,15 @@ export default function MerchantDetailPage() {
           .from('push_history')
           .select('*', { count: 'exact', head: true })
           .eq('merchant_id', merchantId);
+
+        // Get member programs for this merchant
+        const { data: programs } = await supabase
+          .from('member_programs')
+          .select('*, member_cards(count)')
+          .eq('merchant_id', merchantId)
+          .order('created_at', { ascending: false });
+
+        setMemberPrograms(programs || []);
 
         setStats({
           totalCustomers: totalCustomers || 0,
@@ -375,6 +395,52 @@ export default function MerchantDetailPage() {
             {merchant.offer_description && (
               <p className="text-amber-700 text-sm mt-1">{merchant.offer_description}</p>
             )}
+          </div>
+        )}
+
+        {/* Programmes d'adhésion */}
+        {memberPrograms.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#5167fc]" />
+              Programmes d&apos;adhésion ({memberPrograms.length})
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {memberPrograms.map((program) => {
+                const memberCount = program.member_cards?.[0]?.count || 0;
+                return (
+                  <div
+                    key={program.id}
+                    className={cn(
+                      "p-4 rounded-lg border",
+                      program.is_active
+                        ? "bg-[#5167fc]/5 border-[#5167fc]/20"
+                        : "bg-gray-50 border-gray-200"
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-gray-900">{program.name}</span>
+                      <span className={cn(
+                        "px-2 py-0.5 text-xs font-medium rounded-full",
+                        program.is_active
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-200 text-gray-600"
+                      )}>
+                        {program.is_active ? 'Actif' : 'Inactif'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">{program.benefit_label}</p>
+                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <span>Durée: {program.duration_months >= 1 ? `${program.duration_months} mois` : `${Math.round(program.duration_months * 30)} jours`}</span>
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        {memberCount} membre{memberCount > 1 ? 's' : ''}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>

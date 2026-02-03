@@ -86,6 +86,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   // Track if auto-login has been attempted
   const [autoLoginAttempted, setAutoLoginAttempted] = useState(false);
 
+  // Tier rewards state
+  const [rewardTier, setRewardTier] = useState<number | null>(null);
+  const [tier1Redeemed, setTier1Redeemed] = useState(false);
+  const [tier2Redeemed, setTier2Redeemed] = useState(false);
+
   useEffect(() => {
     const fetchMerchant = async () => {
       const { data } = await supabase
@@ -445,6 +450,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       };
       setLoyaltyCard(updatedCard as LoyaltyCard);
 
+      // Update tier redemption state from API response
+      if (data.tier1_redeemed !== undefined) setTier1Redeemed(data.tier1_redeemed);
+      if (data.tier2_redeemed !== undefined) setTier2Redeemed(data.tier2_redeemed);
+      if (data.reward_tier !== undefined) setRewardTier(data.reward_tier);
+
       // Handle different statuses from Qarte Shield
       if (data.status === 'pending') {
         setPendingStamps(data.pending_stamps || points);
@@ -515,19 +525,42 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setSubmitting(true);
 
     try {
+      // Determine which tier is being redeemed
+      const tierToRedeem = rewardTier || 1;
+      const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
+
+      // Insert redemption with tier info
       await supabase.from('redemptions').insert({
         loyalty_card_id: loyaltyCard.id,
         merchant_id: merchant.id,
         customer_id: customer.id,
-        stamps_used: loyaltyCard.current_stamps,
+        stamps_used: tierToRedeem === 1 ? merchant.stamps_required : merchant.tier2_stamps_required,
+        tier: tierToRedeem,
       });
 
-      await supabase
-        .from('loyalty_cards')
-        .update({ current_stamps: 0 })
-        .eq('id', loyaltyCard.id);
+      // Only reset stamps to 0 when:
+      // - Redeeming tier 2 (always reset after tier 2)
+      // - Redeeming tier 1 AND tier 2 is NOT enabled (classic single-tier flow)
+      const shouldResetStamps = tierToRedeem === 2 || !tier2Enabled;
 
-      setLoyaltyCard({ ...loyaltyCard, current_stamps: 0 });
+      if (shouldResetStamps) {
+        await supabase
+          .from('loyalty_cards')
+          .update({ current_stamps: 0 })
+          .eq('id', loyaltyCard.id);
+        setLoyaltyCard({ ...loyaltyCard, current_stamps: 0 });
+      }
+
+      // Update local tier redeemed state
+      if (tierToRedeem === 1) {
+        setTier1Redeemed(true);
+      } else if (tierToRedeem === 2) {
+        setTier2Redeemed(true);
+        // After tier 2, reset tier 1 redeemed as well (new cycle)
+        setTier1Redeemed(false);
+      }
+
+      setRewardTier(null);
       setStep('success');
     } catch (err) {
       console.error(err);
@@ -1067,95 +1100,113 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
                   {/* 3D Stacked Tier Cards */}
                   <div className="relative h-28 mb-4">
-                    {/* Tier 2 Card - Behind */}
+                    {/* Tier 2 Card - In front when tier1 is redeemed */}
                     <div
                       className={`absolute left-1/2 -translate-x-1/2 w-[90%] bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border border-gray-200 p-3 transition-all duration-500 ${
-                        loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                        tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
                           ? 'opacity-90 -top-2'
                           : 'opacity-50 top-0'
                       }`}
                       style={{
-                        transform: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                        transform: tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
                           ? 'translateX(-50%) scale(0.98)'
                           : 'translateX(-50%) scale(0.92) translateY(-8px)',
-                        zIndex: loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? 20 : 5
+                        zIndex: tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? 20 : 5
                       }}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
                           loyaltyCard.current_stamps >= (merchant.tier2_stamps_required || 20)
                             ? 'bg-violet-100'
-                            : 'bg-gray-200'
+                            : tier1Redeemed
+                              ? 'bg-violet-50'
+                              : 'bg-gray-200'
                         }`}>
                           <Trophy className={`w-5 h-5 ${
                             loyaltyCard.current_stamps >= (merchant.tier2_stamps_required || 20)
                               ? 'text-violet-500'
-                              : 'text-gray-400'
+                              : tier1Redeemed
+                                ? 'text-violet-400'
+                                : 'text-gray-400'
                           }`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+                          <p className={`text-[9px] font-bold uppercase tracking-wider ${
+                            tier1Redeemed ? 'text-violet-500' : 'text-gray-400'
+                          }`}>
                             Palier 2 · {merchant.tier2_stamps_required} pts
                           </p>
-                          <p className="text-xs font-bold text-gray-500 truncate">{merchant.tier2_reward_description}</p>
+                          <p className={`text-xs font-bold truncate ${
+                            tier1Redeemed ? 'text-gray-700' : 'text-gray-500'
+                          }`}>{merchant.tier2_reward_description}</p>
                         </div>
-                        {loyaltyCard.current_stamps >= (merchant.stamps_required || 10) && (
-                          <span className="text-[9px] font-bold text-violet-500 bg-violet-50 px-2 py-1 rounded-full">
-                            {(merchant.tier2_stamps_required || 20) - loyaltyCard.current_stamps} restants
-                          </span>
-                        )}
+                        {tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? (
+                          loyaltyCard.current_stamps >= (merchant.tier2_stamps_required || 20) ? (
+                            <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
+                              <Check className="w-3 h-3" /> Prêt
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-bold text-violet-500 bg-violet-50 px-2 py-1 rounded-full">
+                              {(merchant.tier2_stamps_required || 20) - loyaltyCard.current_stamps} restants
+                            </span>
+                          )
+                        ) : null}
                       </div>
                     </div>
 
-                    {/* Tier 1 Card - Front (active when not reached) */}
+                    {/* Tier 1 Card - Front (active when not reached, behind when reached/redeemed) */}
                     <motion.div
                       initial={{ y: 10, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       className={`absolute left-1/2 -translate-x-1/2 w-[95%] rounded-2xl border p-3 transition-all duration-500 ${
-                        loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                        tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
                           ? 'bg-gray-50 border-gray-200 opacity-60 top-12'
                           : 'bg-white border-gray-100 top-6'
                       }`}
                       style={{
-                        transform: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                        transform: tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
                           ? 'translateX(-50%) scale(0.92)'
                           : 'translateX(-50%)',
-                        boxShadow: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                        boxShadow: tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
                           ? 'none'
                           : `0 12px 30px -8px ${primaryColor}25, 0 4px 12px -4px rgba(0,0,0,0.08)`,
-                        zIndex: loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? 5 : 20
+                        zIndex: tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? 5 : 20
                       }}
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center"
                           style={{
-                            backgroundColor: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                            backgroundColor: tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
                               ? '#e5e7eb'
                               : `${primaryColor}15`
                           }}
                         >
                           <Gift className="w-5 h-5" style={{
-                            color: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                            color: tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
                               ? '#9ca3af'
                               : primaryColor
                           }} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[9px] font-bold uppercase tracking-wider" style={{
-                            color: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                            color: tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
                               ? '#9ca3af'
                               : primaryColor
                           }}>
                             Palier 1 · {merchant.stamps_required} pts
                           </p>
                           <p className={`text-xs font-bold truncate ${
-                            loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                            tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
                               ? 'text-gray-400'
                               : 'text-gray-700'
                           }`}>{merchant.reward_description}</p>
                         </div>
-                        {loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? (
+                        {tier1Redeemed ? (
+                          <span className="text-[9px] font-bold text-gray-500 bg-gray-200 px-2 py-1 rounded-full flex items-center gap-1">
+                            <Check className="w-3 h-3" /> Utilisé
+                          </span>
+                        ) : loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? (
                           <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center gap-1">
                             <Check className="w-3 h-3" /> Prêt
                           </span>
@@ -1176,14 +1227,14 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                       transition={{ duration: 0.5, ease: 'easeOut' }}
                       className="h-full rounded-full"
                       style={{
-                        background: loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
+                        background: tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
                           ? 'linear-gradient(90deg, #8b5cf6, #a78bfa)'
                           : `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
                       }}
                     />
                     {/* Tier 1 marker */}
                     <div
-                      className="absolute top-1/2 -translate-y-1/2 w-0.5 h-4 bg-gray-300"
+                      className={`absolute top-1/2 -translate-y-1/2 w-0.5 h-4 ${tier1Redeemed ? 'bg-gray-400' : 'bg-gray-300'}`}
                       style={{ left: `${((merchant.stamps_required || 10) / (merchant.tier2_stamps_required || 20)) * 100}%` }}
                     />
                   </div>
@@ -1412,12 +1463,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           <div className="animate-fade-in">
             <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-emerald-100">
-                <Gift className="w-10 h-10 text-emerald-600" />
+                {rewardTier === 2 ? (
+                  <Trophy className="w-10 h-10 text-emerald-600" />
+                ) : (
+                  <Gift className="w-10 h-10 text-emerald-600" />
+                )}
               </div>
 
               <h2 className="text-2xl font-black text-gray-900 mb-2">🎉 Félicitations !</h2>
               <p className="text-gray-500 mb-6">
-                Vous avez atteint {merchant?.stamps_required} {merchant?.loyalty_mode === 'visit' ? 'passages' : (merchant?.product_name || 'articles')} !
+                Vous avez atteint {rewardTier === 2 ? merchant?.tier2_stamps_required : merchant?.stamps_required} {merchant?.loyalty_mode === 'visit' ? 'passages' : (merchant?.product_name || 'articles')} !
               </p>
 
               {/* Reward Card */}
@@ -1425,9 +1480,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 className="rounded-3xl p-6 mb-8 border"
                 style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}20` }}
               >
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Votre récompense</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                  {rewardTier === 2 ? 'Palier 2 - Votre récompense' : (merchant?.tier2_enabled ? 'Palier 1 - Votre récompense' : 'Votre récompense')}
+                </p>
                 <p className="text-xl font-black" style={{ color: primaryColor }}>
-                  {merchant?.reward_description}
+                  {rewardTier === 2 ? merchant?.tier2_reward_description : merchant?.reward_description}
                 </p>
               </div>
 

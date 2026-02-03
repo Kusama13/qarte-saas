@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
-import { formatPhoneNumber, validateFrenchPhone } from '@/lib/utils';
+import { getSupabaseAdmin } from '@/lib/supabase';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 
 const redeemSchema = z.object({
@@ -21,7 +22,17 @@ export async function POST(request: NextRequest) {
     }
 
     const { loyalty_card_id, tier } = parsed.data;
-    const supabase = createServerClient();
+    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const supabase = getSupabaseAdmin();
+
+    // SECURITY: Verify user is authenticated
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Non autorisé - connexion requise' },
+        { status: 401 }
+      );
+    }
 
     // Get the loyalty card with merchant info - the card already has customer_id
     const { data: loyaltyCard } = await supabase
@@ -38,6 +49,14 @@ export async function POST(request: NextRequest) {
     }
 
     const merchant = loyaltyCard.merchant;
+
+    // SECURITY: Verify user owns this merchant
+    if (merchant.user_id !== user.id) {
+      return NextResponse.json(
+        { error: 'Non autorisé - vous ne pouvez pas gérer les récompenses de ce commerce' },
+        { status: 403 }
+      );
+    }
     const stampsRequired = tier === 2 ? merchant.tier2_stamps_required : merchant.stamps_required;
     const rewardDescription = tier === 2 ? merchant.tier2_reward_description : merchant.reward_description;
 

@@ -195,17 +195,20 @@ export function CustomerManagementModal({
     setError('');
 
     try {
-      // Delete visits first
-      await supabase.from('visits').delete().eq('loyalty_card_id', loyaltyCardId);
+      const response = await fetch('/api/customers/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          loyalty_card_id: loyaltyCardId,
+          ban_number: false,
+        }),
+      });
 
-      // Delete adjustments
-      await supabase.from('point_adjustments').delete().eq('loyalty_card_id', loyaltyCardId);
+      const data = await response.json();
 
-      // Delete redemptions
-      await supabase.from('redemptions').delete().eq('loyalty_card_id', loyaltyCardId);
-
-      // Delete loyalty card
-      await supabase.from('loyalty_cards').delete().eq('id', loyaltyCardId);
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors de la suppression');
+      }
 
       setSuccess(true);
       setTimeout(() => {
@@ -214,7 +217,7 @@ export function CustomerManagementModal({
       }, 1500);
     } catch (err) {
       console.error('Delete error:', err);
-      setError('Erreur lors de la suppression');
+      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression');
     } finally {
       setDeleting(false);
     }
@@ -230,22 +233,22 @@ export function CustomerManagementModal({
     setError('');
 
     try {
-      // Add to banned_numbers table
-      const { error: banError } = await supabase.from('banned_numbers').insert({
-        phone_number: phoneNumber,
-        merchant_id: merchantId,
-        reason: `Banni par le commerçant - Client: ${customerName}`,
+      const response = await fetch('/api/customers/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          loyalty_card_id: loyaltyCardId,
+          ban_number: true,
+          phone_number: phoneNumber,
+          customer_name: customerName,
+        }),
       });
 
-      if (banError && !banError.message.includes('duplicate')) {
-        throw banError;
-      }
+      const data = await response.json();
 
-      // Delete the loyalty card and related data
-      await supabase.from('visits').delete().eq('loyalty_card_id', loyaltyCardId);
-      await supabase.from('point_adjustments').delete().eq('loyalty_card_id', loyaltyCardId);
-      await supabase.from('redemptions').delete().eq('loyalty_card_id', loyaltyCardId);
-      await supabase.from('loyalty_cards').delete().eq('id', loyaltyCardId);
+      if (!response.ok) {
+        throw new Error(data.error || 'Erreur lors du bannissement');
+      }
 
       setSuccess(true);
       setTimeout(() => {
@@ -254,7 +257,7 @@ export function CustomerManagementModal({
       }, 1500);
     } catch (err) {
       console.error('Ban error:', err);
-      setError('Erreur lors du bannissement');
+      setError(err instanceof Error ? err.message : 'Erreur lors du bannissement');
     } finally {
       setBanning(false);
     }

@@ -29,6 +29,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // SECURITY: Validate that customerId exists in the database
+    const { data: customer, error: customerError } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('id', customerId)
+      .single();
+
+    if (customerError || !customer) {
+      return NextResponse.json(
+        { error: 'Client introuvable' },
+        { status: 404 }
+      );
+    }
+
     // Extract keys from subscription
     const keys = subscription.keys || {};
 

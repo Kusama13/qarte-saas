@@ -138,74 +138,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get or create customer
+    // Get or create customer (customers are global, not per-merchant)
     let customer;
     const { data: existingCustomer } = await supabaseAdmin
       .from('customers')
       .select('*')
       .eq('phone_number', formattedPhone)
-      .eq('merchant_id', merchant.id)
       .single();
 
     if (existingCustomer) {
       customer = existingCustomer;
     } else {
-      // Check if customer exists globally (for another merchant)
-      const { data: globalCustomer } = await supabaseAdmin
+      // New customer - need first_name
+      if (!first_name) {
+        return NextResponse.json(
+          { error: 'Le prénom est requis pour créer un compte', needs_registration: true },
+          { status: 400 }
+        );
+      }
+
+      const { data: newCustomer, error: customerError } = await supabaseAdmin
         .from('customers')
-        .select('*')
-        .eq('phone_number', formattedPhone)
-        .limit(1)
+        .insert({
+          phone_number: formattedPhone,
+          first_name: first_name.trim(),
+          last_name: last_name?.trim() || null,
+        })
+        .select()
         .single();
 
-      if (globalCustomer) {
-        // Create customer for this merchant with same info
-        const { data: newCustomer, error: customerError } = await supabaseAdmin
-          .from('customers')
-          .insert({
-            phone_number: formattedPhone,
-            first_name: globalCustomer.first_name,
-            last_name: globalCustomer.last_name,
-            merchant_id: merchant.id,
-          })
-          .select()
-          .single();
-
-        if (customerError) {
-          return NextResponse.json(
-            { error: 'Erreur lors de la création du compte' },
-            { status: 500 }
-          );
-        }
-        customer = newCustomer;
-      } else {
-        // New customer - need first_name
-        if (!first_name) {
-          return NextResponse.json(
-            { error: 'Le prénom est requis pour créer un compte', needs_registration: true },
-            { status: 400 }
-          );
-        }
-
-        const { data: newCustomer, error: customerError } = await supabaseAdmin
-          .from('customers')
-          .insert({
-            phone_number: formattedPhone,
-            first_name: first_name.trim(),
-            last_name: last_name?.trim() || null,
-            merchant_id: merchant.id,
-          })
-          .select()
-          .single();
-
-        if (customerError) {
-          return NextResponse.json(
-            { error: 'Erreur lors de la création du compte' },
-            { status: 500 }
-          );
-        }
-        customer = newCustomer;
+      if (customerError) {
+        console.error('Customer creation error:', customerError);
+        return NextResponse.json(
+          { error: 'Erreur lors de la création du compte' },
+          { status: 500 }
+        );
       }
+      customer = newCustomer;
     }
 
     // Get or create loyalty card
@@ -346,7 +315,36 @@ export async function POST(request: NextRequest) {
       .eq('merchant_id', merchant.id)
       .eq('status', 'pending');
 
-    const rewardUnlocked = newStamps >= merchant.stamps_required;
+    // Check for existing redemptions to determine which tier rewards are available
+    const { data: existingRedemptions } = await supabaseAdmin
+      .from('redemptions')
+      .select('tier')
+      .eq('loyalty_card_id', loyaltyCard.id);
+
+    const tier1Redeemed = existingRedemptions?.some(r => r.tier === 1) || false;
+    const tier2Redeemed = existingRedemptions?.some(r => r.tier === 2) || false;
+
+    // Calculate tier reward unlocks
+    const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
+    const tier1Threshold = merchant.stamps_required;
+    const tier2Threshold = merchant.tier2_stamps_required || 0;
+
+    // Tier 1: unlocked if stamps >= tier1 threshold AND not already redeemed
+    const tier1RewardUnlocked = newStamps >= tier1Threshold && !tier1Redeemed;
+    // Tier 2: unlocked if tier2 enabled AND stamps >= tier2 threshold AND not already redeemed
+    const tier2RewardUnlocked = tier2Enabled && newStamps >= tier2Threshold && !tier2Redeemed;
+
+    // Determine which reward to show (prioritize tier 2 if both unlocked)
+    let rewardUnlocked = false;
+    let rewardTier: number | null = null;
+
+    if (tier2RewardUnlocked) {
+      rewardUnlocked = true;
+      rewardTier = 2;
+    } else if (tier1RewardUnlocked) {
+      rewardUnlocked = true;
+      rewardTier = 1;
+    }
 
     // Build response
     const response = {
@@ -363,6 +361,12 @@ export async function POST(request: NextRequest) {
       pending_count: pendingCount || 0,
       required_stamps: merchant.stamps_required,
       reward_unlocked: rewardUnlocked && visitStatus === 'confirmed',
+      reward_tier: rewardTier,
+      tier1_redeemed: tier1Redeemed,
+      tier2_redeemed: tier2Redeemed,
+      tier2_enabled: tier2Enabled,
+      tier2_stamps_required: tier2Threshold,
+      tier2_reward_description: merchant.tier2_reward_description,
       customer_name: customer.first_name,
       flagged_reason: flaggedReason,
       loyalty_mode: loyaltyMode,

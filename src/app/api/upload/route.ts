@@ -18,6 +18,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'merchantId required' }, { status: 400 });
     }
 
+    // SECURITY: Verify user is authenticated and owns the merchant
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Non autorisé - connexion requise' }, { status: 401 });
+    }
+
+    const { data: merchant } = await supabase
+      .from('merchants')
+      .select('id')
+      .eq('id', merchantId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!merchant) {
+      return NextResponse.json({ error: 'Non autorisé - vous ne pouvez pas uploader pour ce commerce' }, { status: 403 });
+    }
+
     // Validate file type
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) {

@@ -47,6 +47,7 @@ export default function CustomersPage() {
   const [newLastName, setNewLastName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const fetchData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -147,36 +148,23 @@ export default function CustomersPage() {
     if (!newFirstName.trim() || !newPhone.trim() || !merchant) return;
 
     setCreatingCustomer(true);
+    setCreateError(null);
+
     try {
-      // Create customer
-      const { data: newCustomer, error: customerError } = await supabase
-        .from('customers')
-        .insert({
+      const response = await fetch('/api/customers/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           first_name: newFirstName.trim(),
           last_name: newLastName.trim() || null,
           phone_number: newPhone.trim(),
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (customerError || !newCustomer) {
-        console.error('Error creating customer:', customerError);
-        setCreatingCustomer(false);
-        return;
-      }
+      const data = await response.json();
 
-      // Create loyalty card for this customer
-      const { error: cardError } = await supabase
-        .from('loyalty_cards')
-        .insert({
-          customer_id: newCustomer.id,
-          merchant_id: merchant.id,
-          current_stamps: 0,
-          stamps_target: merchant.stamps_required,
-        });
-
-      if (cardError) {
-        console.error('Error creating loyalty card:', cardError);
+      if (!response.ok) {
+        setCreateError(data.error || 'Erreur lors de la création');
         setCreatingCustomer(false);
         return;
       }
@@ -186,9 +174,11 @@ export default function CustomersPage() {
       setNewFirstName('');
       setNewLastName('');
       setNewPhone('');
+      setCreateError(null);
       await fetchData();
     } catch (error) {
       console.error('Error:', error);
+      setCreateError('Une erreur est survenue. Veuillez réessayer.');
     }
     setCreatingCustomer(false);
   };
@@ -551,6 +541,7 @@ export default function CustomersPage() {
           setNewFirstName('');
           setNewLastName('');
           setNewPhone('');
+          setCreateError(null);
         }}
         title="Nouveau client"
       >
@@ -558,6 +549,13 @@ export default function CustomersPage() {
           <p className="text-sm text-gray-500 mb-4">
             Créez un nouveau client et sa carte de fidélité associée.
           </p>
+
+          {createError && (
+            <div className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
+              {createError}
+            </div>
+          )}
+
           <Input
             label="Prénom"
             placeholder="Jean"

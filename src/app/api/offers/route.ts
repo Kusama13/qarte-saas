@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 
+// Helper to verify merchant ownership
+async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean; error?: string; status?: number }> {
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { authorized: false, error: 'Non autorisé - connexion requise', status: 401 };
+  }
+
+  const { data: merchant } = await supabase
+    .from('merchants')
+    .select('id')
+    .eq('id', merchantId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!merchant) {
+    return { authorized: false, error: 'Non autorisé - vous ne pouvez pas gérer les offres de ce commerce', status: 403 };
+  }
+
+  return { authorized: true };
+}
+
 // GET current offer for a merchant
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -57,6 +80,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'title and description required' }, { status: 400 });
     }
 
+    // SECURITY: Verify merchant ownership
+    const authCheck = await verifyMerchantOwnership(merchantId);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: authCheck.error }, { status: authCheck.status || 403 });
+    }
+
     // Validate duration
     const duration = Math.min(3, Math.max(1, durationDays || 1));
 
@@ -104,6 +133,12 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'merchantId required' }, { status: 400 });
     }
 
+    // SECURITY: Verify merchant ownership
+    const authCheck = await verifyMerchantOwnership(merchantId);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: authCheck.error }, { status: authCheck.status || 403 });
+    }
+
     const { error } = await supabase
       .from('merchants')
       .update({
@@ -129,6 +164,12 @@ export async function DELETE(request: NextRequest) {
 
   if (!merchantId) {
     return NextResponse.json({ error: 'merchantId required' }, { status: 400 });
+  }
+
+  // SECURITY: Verify merchant ownership
+  const authCheck = await verifyMerchantOwnership(merchantId);
+  if (!authCheck.authorized) {
+    return NextResponse.json({ error: authCheck.error }, { status: authCheck.status || 403 });
   }
 
   const supabase = createRouteHandlerClient({ cookies });

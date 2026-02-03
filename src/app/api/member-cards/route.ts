@@ -1,8 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 
 const supabaseAdmin = getSupabaseAdmin();
+
+// Helper to verify user owns the program's merchant
+async function verifyProgramOwnership(programId: string): Promise<{ authorized: boolean; error?: string; merchantId?: string }> {
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { authorized: false, error: 'Non autorisé - connexion requise' };
+  }
+
+  // Get the program and verify the merchant belongs to the user
+  const { data: program } = await supabaseAdmin
+    .from('member_programs')
+    .select('id, merchant_id, merchants!inner(user_id)')
+    .eq('id', programId)
+    .single();
+
+  if (!program) {
+    return { authorized: false, error: 'Programme non trouvé' };
+  }
+
+  const merchantUserId = (program.merchants as any)?.user_id;
+  if (merchantUserId !== user.id) {
+    return { authorized: false, error: 'Non autorisé - vous ne pouvez pas gérer ce programme' };
+  }
+
+  return { authorized: true, merchantId: program.merchant_id };
+}
 
 const assignMemberSchema = z.object({
   program_id: z.string().uuid(),
@@ -20,6 +50,12 @@ export async function GET(request: NextRequest) {
         { error: 'program_id requis' },
         { status: 400 }
       );
+    }
+
+    // SECURITY: Verify user owns the program's merchant
+    const authCheck = await verifyProgramOwnership(programId);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: authCheck.error }, { status: 403 });
     }
 
     const { data: memberCards, error } = await supabaseAdmin
@@ -57,6 +93,12 @@ export async function POST(request: NextRequest) {
     }
 
     const { program_id, customer_id } = parsed.data;
+
+    // SECURITY: Verify user owns the program's merchant
+    const authCheck = await verifyProgramOwnership(program_id);
+    if (!authCheck.authorized) {
+      return NextResponse.json({ error: authCheck.error }, { status: 403 });
+    }
 
     // Récupérer le programme pour avoir la durée et le merchant_id
     const { data: program, error: programError } = await supabaseAdmin
