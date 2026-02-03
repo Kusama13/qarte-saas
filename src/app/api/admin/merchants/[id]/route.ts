@@ -2,6 +2,102 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyAdminAuth } from '@/lib/admin-auth';
 
+// GET - Récupérer les stats d'un merchant (incluant push subscribers)
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  // Vérifier que l'utilisateur est super admin
+  const auth = await verifyAdminAuth(request);
+  if (!auth.authorized) return auth.error!;
+
+  const supabase = getSupabaseAdmin();
+  const { id: merchantId } = await params;
+
+  if (!merchantId) {
+    return NextResponse.json(
+      { error: 'ID merchant requis' },
+      { status: 400 }
+    );
+  }
+
+  try {
+    // Get loyalty cards with customer phone numbers
+    const { data: loyaltyCards } = await supabase
+      .from('loyalty_cards')
+      .select('customer_id, customers!inner(id, phone_number)')
+      .eq('merchant_id', merchantId);
+
+    let pushSubscribers = 0;
+
+    if (loyaltyCards && loyaltyCards.length > 0) {
+      // Build a map of phone numbers to merchant customer IDs
+      const phoneToCustomerId = new Map<string, string>();
+      for (const card of loyaltyCards) {
+        const customer = card.customers as any;
+        if (customer?.phone_number) {
+          phoneToCustomerId.set(customer.phone_number, customer.id);
+        }
+      }
+
+      const phoneNumbers = [...phoneToCustomerId.keys()];
+
+      if (phoneNumbers.length > 0) {
+        // Find ALL customer IDs with these phone numbers (cross-merchant)
+        const { data: allCustomersWithPhone } = await supabase
+          .from('customers')
+          .select('id, phone_number')
+          .in('phone_number', phoneNumbers);
+
+        if (allCustomersWithPhone && allCustomersWithPhone.length > 0) {
+          const allCustomerIds = allCustomersWithPhone.map(c => c.id);
+
+          // Get push subscriptions for any of these customer IDs
+          const { data: subscriptions } = await supabase
+            .from('push_subscriptions')
+            .select('customer_id')
+            .in('customer_id', allCustomerIds);
+
+          if (subscriptions) {
+            // Build map of customer_id -> phone
+            const customerIdToPhone = new Map<string, string>();
+            for (const c of allCustomersWithPhone) {
+              customerIdToPhone.set(c.id, c.phone_number);
+            }
+
+            // Count unique phones with push subscriptions
+            const phonesWithPush = new Set<string>();
+            for (const sub of subscriptions) {
+              const phone = customerIdToPhone.get(sub.customer_id);
+              if (phone && phoneToCustomerId.has(phone)) {
+                phonesWithPush.add(phone);
+              }
+            }
+            pushSubscribers = phonesWithPush.size;
+          }
+        }
+      }
+    }
+
+    // Get push history count
+    const { count: pushSent } = await supabase
+      .from('push_history')
+      .select('*', { count: 'exact', head: true })
+      .eq('merchant_id', merchantId);
+
+    return NextResponse.json({
+      pushSubscribers,
+      pushSent: pushSent || 0,
+    });
+  } catch (error) {
+    console.error('Admin merchant stats error:', error);
+    return NextResponse.json(
+      { error: 'Erreur serveur' },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE - Supprimer un merchant et toutes ses données
 export async function DELETE(
   request: NextRequest,

@@ -14,7 +14,8 @@ function getSupabase() {
 // GET - Get push history for a merchant
 export async function GET(request: NextRequest) {
   const supabase = getSupabase();
-  const supabaseAuth = createRouteHandlerClient({ cookies });
+  const cookieStore = await cookies();
+  const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
 
   try {
     // SECURITY: Verify user is authenticated

@@ -16,7 +16,8 @@ const createProgramSchema = z.object({
 // GET: Liste des programmes du commerçant
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     const {
       data: { user },
@@ -62,7 +63,8 @@ export async function GET(request: NextRequest) {
 // POST: Créer un nouveau programme
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     const {
       data: { user },

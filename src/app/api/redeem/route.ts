@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { loyalty_card_id, tier } = parsed.data;
-    const supabaseAuth = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabaseAuth = createRouteHandlerClient({ cookies: () => cookieStore });
     const supabase = getSupabaseAdmin();
 
     // SECURITY: Verify user is authenticated

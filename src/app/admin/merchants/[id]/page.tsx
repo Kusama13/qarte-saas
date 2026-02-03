@@ -156,27 +156,19 @@ export default function MerchantDetailPage() {
           .select('*', { count: 'exact', head: true })
           .eq('merchant_id', merchantId);
 
-        // Get push subscribers count via loyalty cards
-        const { data: loyaltyCards } = await supabase
-          .from('loyalty_cards')
-          .select('customer_id')
-          .eq('merchant_id', merchantId);
-
+        // Get push stats via admin API (uses service role to bypass RLS)
         let pushSubscribers = 0;
-        if (loyaltyCards && loyaltyCards.length > 0) {
-          const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
-          const { count: subCount } = await supabase
-            .from('push_subscriptions')
-            .select('*', { count: 'exact', head: true })
-            .in('customer_id', customerIds);
-          pushSubscribers = subCount || 0;
+        let pushSentCount = 0;
+        try {
+          const pushStatsRes = await fetch(`/api/admin/merchants/${merchantId}`);
+          if (pushStatsRes.ok) {
+            const pushStats = await pushStatsRes.json();
+            pushSubscribers = pushStats.pushSubscribers || 0;
+            pushSentCount = pushStats.pushSent || 0;
+          }
+        } catch (e) {
+          console.error('Error fetching push stats:', e);
         }
-
-        // Get push history count (notifications sent)
-        const { count: pushSentCount } = await supabase
-          .from('push_history')
-          .select('*', { count: 'exact', head: true })
-          .eq('merchant_id', merchantId);
 
         // Get member programs for this merchant
         const { data: programs } = await supabase

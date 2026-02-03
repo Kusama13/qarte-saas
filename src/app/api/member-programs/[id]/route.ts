@@ -12,7 +12,8 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     const {
       data: { user },
@@ -56,7 +57,8 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params;
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     const {
       data: { user },
@@ -100,7 +102,8 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const supabase = createRouteHandlerClient({ cookies });
+    const cookieStore = await cookies();
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
     const {
       data: { user },
