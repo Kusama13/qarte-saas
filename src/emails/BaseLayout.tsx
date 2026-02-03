@@ -45,6 +45,11 @@ export function BaseLayout({ preview, children }: BaseLayoutProps) {
               {' • '}
               <Link href="https://getqarte.com/politique-confidentialite" style={link}>Confidentialité</Link>
             </Text>
+            <Text style={unsubscribeText}>
+              <Link href="mailto:contact@getqarte.com?subject=Désinscription" style={unsubscribeLink}>
+                Se désinscrire des emails
+              </Link>
+            </Text>
           </Section>
         </Container>
       </Body>
@@ -105,6 +110,17 @@ const footerLinks = {
 const link = {
   color: '#654EDA',
   textDecoration: 'none',
+};
+
+const unsubscribeText = {
+  color: '#8898aa',
+  fontSize: '11px',
+  marginTop: '16px',
+};
+
+const unsubscribeLink = {
+  color: '#8898aa',
+  textDecoration: 'underline',
 };
 
 export default BaseLayout;

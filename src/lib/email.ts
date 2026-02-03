@@ -64,7 +64,7 @@ export async function sendTrialEndingEmail(
 
   try {
     const subject = daysRemaining <= 1
-      ? `⏰ Dernier jour d'essai, ${shopName} !`
+      ? `Dernier jour d'essai, ${shopName} !`
       : `Votre essai Qarte se termine dans ${daysRemaining} jours`;
 
     const html = await render(TrialEndingEmail({ shopName, daysRemaining }));
@@ -106,7 +106,7 @@ export async function sendTrialExpiredEmail(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `⚠️ Urgent : Vos données seront supprimées dans ${daysUntilDeletion} jours`,
+      subject: `Urgent : Vos données seront supprimées dans ${daysUntilDeletion} jours`,
       html,
     });
 
@@ -138,7 +138,7 @@ export async function sendNewMerchantNotification(
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to: 'sales@getqarte.com',
-      subject: `🎉 Nouveau commerçant : ${shopName}`,
+      subject: `Nouveau commerçant : ${shopName}`,
       html: `
         <h2>Nouveau commerçant inscrit sur Qarte !</h2>
         <p><strong>Commerce :</strong> ${shopName}</p>
@@ -178,7 +178,7 @@ export async function sendSubscriptionConfirmedEmail(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: '🎉 Votre abonnement Qarte est activé !',
+      subject: 'Votre abonnement Qarte est activé !',
       html,
     });
 
@@ -208,8 +208,8 @@ export async function sendPendingPointsEmail(
 
   try {
     const subject = isReminder
-      ? `📋 Rappel : ${pendingCount} point${pendingCount > 1 ? 's' : ''} en attente de validation`
-      : `🛡️ Qarte Shield : ${pendingCount} point${pendingCount > 1 ? 's' : ''} à modérer`;
+      ? `Rappel : ${pendingCount} point${pendingCount > 1 ? 's' : ''} en attente de validation`
+      : `Qarte Shield : ${pendingCount} point${pendingCount > 1 ? 's' : ''} a moderer`;
 
     const html = await render(
       PendingPointsEmail({
