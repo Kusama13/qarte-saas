@@ -53,14 +53,8 @@ function getTodayStartParis(): string {
   return parisTime.toISOString();
 }
 
-// Quarantine thresholds
-const QUARANTINE_THRESHOLDS = {
-  visit: 1,   // 1st scan confirmed, 2nd+ pending
-  article: 2, // 1-2 scans confirmed, 3rd+ pending
-};
-
-// Max articles per scan before quarantine
-const MAX_ARTICLES_PER_SCAN = 3;
+// Quarantine threshold: 1 visit per day confirmed, 2nd+ pending
+const QUARANTINE_THRESHOLD = 1;
 
 export async function POST(request: NextRequest) {
   try {
@@ -213,14 +207,13 @@ export async function POST(request: NextRequest) {
 
     const today = getTodayInParis();
     const todayStart = getTodayStartParis();
-    const loyaltyMode = merchant.loyalty_mode || 'visit';
 
     // =============================================
     // QARTE SHIELD: Quarantine Logic
     // =============================================
 
-    // Points to add
-    const pointsEarned = loyaltyMode === 'article' ? points_to_add : 1;
+    // Visit mode: 1 point per visit
+    const pointsEarned = 1;
 
     // Determine status based on threshold
     let visitStatus: VisitStatus = 'confirmed';
@@ -240,20 +233,11 @@ export async function POST(request: NextRequest) {
         .in('status', ['confirmed', 'pending']);
 
       const currentScanNumber = (todayScansCount || 0) + 1;
-      const threshold = QUARANTINE_THRESHOLDS[loyaltyMode as keyof typeof QUARANTINE_THRESHOLDS] || 1;
 
-      // Check 1: Too many scans today
-      if (currentScanNumber > threshold) {
+      // If more than 1 visit today, flag as pending
+      if (currentScanNumber > QUARANTINE_THRESHOLD) {
         visitStatus = 'pending';
-        flaggedReason = loyaltyMode === 'visit'
-          ? `${currentScanNumber}ème passage ce jour`
-          : `${currentScanNumber}ème scan ce jour`;
-      }
-
-      // Check 2: Too many articles at once (only for article mode)
-      if (loyaltyMode === 'article' && pointsEarned > MAX_ARTICLES_PER_SCAN) {
-        visitStatus = 'pending';
-        flaggedReason = `${pointsEarned} articles en une fois (max ${MAX_ARTICLES_PER_SCAN})`;
+        flaggedReason = `${currentScanNumber}ème passage ce jour`;
       }
     }
     // If shield is disabled, visitStatus remains 'confirmed' and no quarantine checks
@@ -371,7 +355,6 @@ export async function POST(request: NextRequest) {
       tier2_reward_description: merchant.tier2_reward_description,
       customer_name: customer.first_name,
       flagged_reason: flaggedReason,
-      loyalty_mode: loyaltyMode,
       points_earned: pointsEarned,
     };
 

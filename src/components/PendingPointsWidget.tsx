@@ -10,7 +10,6 @@ import {
   Clock,
   AlertCircle,
   CheckCircle2,
-  ThumbsUp,
   Loader2,
   Phone,
   Footprints,
@@ -77,7 +76,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
       if (!response.ok) throw new Error('Action failed');
 
       setVisits(prev => prev.filter(v => v.id !== visitId));
-      showToast(action === 'confirm' ? 'Point validé avec succès' : 'Visite refusée');
+      showToast(action === 'confirm' ? 'Point validé' : 'Visite refusée');
     } catch (error) {
       showToast('Une erreur est survenue', 'error');
     } finally {
@@ -105,7 +104,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
       setVisits([]);
       showToast(result.message || (action === 'confirm' ? 'Tous les points validés' : 'Toutes les visites refusées'));
     } catch (error) {
-      showToast('Erreur lors du traitement groupé', 'error');
+      showToast('Erreur lors du traitement', 'error');
     } finally {
       setBulkProcessing(false);
     }
@@ -129,6 +128,15 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
     const last = lastName?.[0]?.toUpperCase() || '';
     return first + last || '?';
   };
+
+  // Don't render anything while loading or if no pending visits
+  if (loading) {
+    return null;
+  }
+
+  if (visits.length === 0) {
+    return null;
+  }
 
   return (
     <div className="relative w-full">
@@ -210,215 +218,131 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
         </div>
       )}
 
-      <div className="overflow-hidden bg-white border border-gray-200 rounded-3xl shadow-xl shadow-gray-100/50">
-        {/* Header Section */}
-        <div className="relative p-6 border-b border-gray-100 bg-gradient-to-r from-white to-indigo-50/30">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`flex items-center justify-center w-12 h-12 rounded-2xl text-white shadow-lg transition-all duration-300 ${shieldEnabled ? 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-indigo-200' : 'bg-gradient-to-br from-gray-400 to-gray-500 shadow-gray-200'}`}>
-                {shieldEnabled ? <Shield className="w-6 h-6" /> : <ShieldOff className="w-6 h-6" />}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                  Points en attente
-                  {visits.length > 0 && (
-                    <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-500 text-white animate-pulse">
-                      {visits.length}
-                    </span>
-                  )}
-                </h2>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-gray-500">Qarte Shield - Modération anti-fraude</p>
-                  <button
-                    onClick={() => setShowHelp(true)}
-                    className="p-1.5 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-lg transition-colors"
-                    title="Comment ça fonctionne ?"
-                  >
-                    <HelpCircle className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
+      <div className="overflow-hidden bg-white border border-gray-200 rounded-2xl shadow-lg">
+        {/* Compact Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gradient-to-r from-rose-50 to-orange-50">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 text-white shadow-md">
+              <ShieldAlert className="w-5 h-5" />
             </div>
-
-            <div className="flex items-center gap-4">
-              {/* Shield Toggle */}
-              <div className="flex items-center gap-3">
-                <span className={`text-sm font-semibold transition-colors ${shieldEnabled ? 'text-emerald-600' : 'text-gray-400'}`}>
-                  {shieldEnabled ? 'Actif' : 'Inactif'}
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                Points en attente
+                <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-500 text-white">
+                  {visits.length}
                 </span>
+              </h2>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowHelp(true)}
+              className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+              title="Comment ça fonctionne ?"
+            >
+              <HelpCircle className="w-5 h-5" />
+            </button>
+
+            {visits.length > 2 && (
+              <div className="hidden sm:flex items-center gap-2">
                 <button
-                  type="button"
-                  onClick={() => onShieldToggle(!shieldEnabled)}
-                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                    shieldEnabled
-                      ? 'bg-emerald-500 focus:ring-emerald-500'
-                      : 'bg-gray-300 focus:ring-gray-400'
-                  }`}
+                  onClick={() => handleBulkAction('reject')}
+                  disabled={bulkProcessing}
+                  className="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  <span
-                    className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-                      shieldEnabled ? 'translate-x-7' : 'translate-x-1'
-                    }`}
-                  />
+                  Tout refuser
+                </button>
+                <button
+                  onClick={() => handleBulkAction('confirm')}
+                  disabled={bulkProcessing}
+                  className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1"
+                >
+                  {bulkProcessing && <Loader2 className="w-3 h-3 animate-spin" />}
+                  Tout valider
                 </button>
               </div>
-
-              {visits.length > 3 && (
-                <div className="hidden sm:flex items-center gap-2 ml-4 pl-4 border-l border-gray-200">
-                  <button
-                    onClick={() => handleBulkAction('reject')}
-                    disabled={bulkProcessing}
-                    className="px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-50"
-                  >
-                    Tout refuser
-                  </button>
-                  <button
-                    onClick={() => handleBulkAction('confirm')}
-                    disabled={bulkProcessing}
-                    className="px-4 py-2 text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 rounded-xl transition-all shadow-md shadow-indigo-100 disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {bulkProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Tout valider
-                  </button>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Content Section */}
-        <div className="min-h-[200px]">
-          {loading ? (
-            <div className="p-6 space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex gap-4 animate-pulse">
-                  <div className="w-12 h-12 rounded-full bg-gray-100" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-gray-100 rounded w-1/4" />
-                    <div className="h-3 bg-gray-50 rounded w-1/2" />
+        {/* Visits List - Compact */}
+        <div className="divide-y divide-gray-100">
+          {visits.map((visit) => (
+            <div
+              key={visit.id}
+              className={`flex items-center justify-between p-4 hover:bg-gray-50 transition-colors ${
+                processingId === visit.id ? 'opacity-50 pointer-events-none' : ''
+              }`}
+            >
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {/* Avatar */}
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-sm font-bold shrink-0">
+                  {getInitials(visit.customer?.first_name, visit.customer?.last_name)}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-gray-900 truncate">
+                    {visit.customer?.first_name} {visit.customer?.last_name || ''}
+                  </p>
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {formatRelativeTime(visit.visited_at)}
+                    </span>
+                    {visit.flagged_reason && (
+                      <span className="flex items-center gap-1 text-amber-600 font-medium">
+                        <AlertCircle className="w-3 h-3" />
+                        {visit.flagged_reason}
+                      </span>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : visits.length > 0 ? (
-            <div className="p-4 space-y-0">
-              {visits.map((visit) => (
-                <div
-                  key={visit.id}
-                  className={`group relative flex flex-col lg:flex-row lg:items-center justify-between p-6 mb-4 bg-white border border-gray-100 rounded-2xl transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:border-indigo-100 ${
-                    processingId === visit.id ? 'opacity-50 pointer-events-none scale-[0.98]' : ''
-                  }`}
-                >
-                  <div className="flex items-start md:items-center gap-5">
-                    {/* Customer Avatar */}
-                    <div className="shrink-0">
-                      <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-indigo-500 to-violet-600 text-white text-xl font-bold shadow-indigo-200 shadow-lg group-hover:scale-110 transition-transform duration-500">
-                        {getInitials(visit.customer?.first_name, visit.customer?.last_name)}
-                      </div>
-                    </div>
-
-                    {/* Information Grid */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-extrabold text-gray-900 text-xl leading-none mb-1.5">
-                        {visit.customer?.first_name} {visit.customer?.last_name || ''}
-                      </h3>
-
-                      <div className="flex items-center gap-2 text-indigo-600 font-semibold text-sm mb-3">
-                        <Footprints className="w-4 h-4" />
-                        <span>A tenté de valider un passage</span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-gray-500">
-                        <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-                          <Phone className="w-3.5 h-3.5 text-gray-400" />
-                          <span className="tracking-wide">
-                            {visit.customer?.phone_number?.replace(/(\d{2})(?=\d)/g, '$1 ') || '-- -- -- -- --'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-                          <Clock className="w-3.5 h-3.5 text-gray-400" />
-                          <span>{formatRelativeTime(visit.visited_at)}</span>
-                        </div>
-                      </div>
-
-                      {visit.flagged_reason && (
-                        <div className="mt-3 flex items-start gap-3 p-3 bg-amber-50/80 border-l-4 border-amber-400 rounded-r-xl">
-                          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                          <div className="text-xs leading-relaxed">
-                            <span className="block font-bold text-amber-800 uppercase tracking-tight mb-0.5">Alerte sécurité</span>
-                            <span className="text-amber-900 font-medium">{visit.flagged_reason}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Actions Section */}
-                  <div className="flex items-center gap-3 mt-6 lg:mt-0 lg:ml-6 shrink-0">
-                    <button
-                      onClick={() => handleAction(visit.id, 'reject')}
-                      className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 text-sm font-bold text-gray-600 hover:text-rose-600 hover:bg-rose-50 border border-gray-200 hover:border-rose-200 rounded-xl transition-all active:scale-95"
-                    >
-                      <X className="w-4 h-4" />
-                      Refuser
-                    </button>
-                    <button
-                      onClick={() => handleAction(visit.id, 'confirm')}
-                      className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-8 py-3 text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-500/30 rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-500/10"
-                    >
-                      <Check className="w-4 h-4" />
-                      Valider
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-6">
-                <CheckCircle2 className="w-10 h-10 text-emerald-500" />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Tout est en ordre !</h3>
-              <p className="text-gray-500 max-w-xs mx-auto">
-                Aucune visite suspecte en attente. Votre programme de fidélité est protégé par Qarte Shield.
-              </p>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2 shrink-0 ml-3">
+                <button
+                  onClick={() => handleAction(visit.id, 'reject')}
+                  className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                  title="Refuser"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => handleAction(visit.id, 'confirm')}
+                  className="p-2 text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-all shadow-sm"
+                  title="Valider"
+                >
+                  <Check className="w-5 h-5" />
+                </button>
+              </div>
             </div>
-          )}
+          ))}
         </div>
 
-        {/* Footer Section */}
-        <div className="p-4 bg-gray-50/50 border-t border-gray-100">
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center">
-              <ThumbsUp className="w-4 h-4 text-indigo-500" />
-            </div>
-            <p>
-              <span className="font-bold text-gray-700">Conseil :</span> Validez si le client était bien présent. Refusez en cas de doute ou de fraude suspectée.
-            </p>
+        {/* Mobile Bulk Actions */}
+        {visits.length > 2 && (
+          <div className="sm:hidden flex items-center gap-2 p-3 border-t border-gray-100 bg-gray-50">
+            <button
+              onClick={() => handleBulkAction('reject')}
+              disabled={bulkProcessing}
+              className="flex-1 py-2 text-sm font-semibold text-rose-600 bg-white border border-rose-200 rounded-lg disabled:opacity-50"
+            >
+              Tout refuser
+            </button>
+            <button
+              onClick={() => handleBulkAction('confirm')}
+              disabled={bulkProcessing}
+              className="flex-1 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-lg disabled:opacity-50 flex items-center justify-center gap-1"
+            >
+              {bulkProcessing && <Loader2 className="w-3 h-3 animate-spin" />}
+              Tout valider
+            </button>
           </div>
-        </div>
+        )}
       </div>
-
-      {/* Mobile Bulk Actions */}
-      {visits.length > 3 && (
-        <div className="sm:hidden mt-4 flex items-center gap-2">
-          <button
-            onClick={() => handleBulkAction('reject')}
-            disabled={bulkProcessing}
-            className="flex-1 py-3 text-sm font-bold text-rose-600 bg-rose-50 rounded-2xl disabled:opacity-50"
-          >
-            Tout refuser
-          </button>
-          <button
-            onClick={() => handleBulkAction('confirm')}
-            disabled={bulkProcessing}
-            className="flex-1 py-3 text-sm font-bold bg-indigo-600 text-white rounded-2xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {bulkProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
-            Tout valider
-          </button>
-        </div>
-      )}
     </div>
   );
 }
