@@ -15,26 +15,23 @@ import {
   Menu,
   X,
   AlertTriangle,
-  MessageCircle,
   Megaphone,
   Crown,
-  HelpCircle,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { getTrialStatus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
-import GuidedTour from '@/components/GuidedTour';
 
 const navItems = [
-  { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50', tourId: null },
-  { href: '/dashboard/program', icon: Gift, label: 'Mon Programme', color: 'text-pink-500', bg: 'bg-pink-50', tourId: 'program' },
-  { href: '/dashboard/qr-download', icon: QrCode, label: 'Télécharger QR', color: 'text-violet-500', bg: 'bg-violet-50', tourId: 'qr' },
-  { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50', tourId: 'customers' },
-  { href: '/dashboard/members', icon: Crown, label: 'Membres', color: 'text-amber-500', bg: 'bg-amber-50', tourId: 'members' },
-  { href: '/dashboard/marketing', icon: Megaphone, label: 'Marketing', color: 'text-orange-500', bg: 'bg-orange-50', tourId: 'marketing' },
-  { href: '/dashboard/subscription', icon: CardIcon, label: 'Abonnement', color: 'text-amber-500', bg: 'bg-amber-50', tourId: null },
-  { href: '/dashboard/settings', icon: Settings, label: 'Paramètres', color: 'text-slate-500', bg: 'bg-slate-50', tourId: 'settings' },
+  { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50' },
+  { href: '/dashboard/program', icon: Gift, label: 'Mon Programme', color: 'text-pink-500', bg: 'bg-pink-50' },
+  { href: '/dashboard/qr-download', icon: QrCode, label: 'Télécharger QR', color: 'text-violet-500', bg: 'bg-violet-50' },
+  { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+  { href: '/dashboard/members', icon: Crown, label: 'Membres', color: 'text-amber-500', bg: 'bg-amber-50' },
+  { href: '/dashboard/marketing', icon: Megaphone, label: 'Marketing', color: 'text-orange-500', bg: 'bg-orange-50' },
+  { href: '/dashboard/subscription', icon: CardIcon, label: 'Abonnement', color: 'text-amber-500', bg: 'bg-amber-50' },
+  { href: '/dashboard/settings', icon: Settings, label: 'Paramètres', color: 'text-slate-500', bg: 'bg-slate-50' },
 ];
 
 function DashboardLayoutContent({
@@ -47,16 +44,6 @@ function DashboardLayoutContent({
   const supabase = getSupabase();
   const { merchant, loading } = useMerchant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [showGuidedTour, setShowGuidedTour] = useState(false);
-
-  const handleShowGuide = () => {
-    setSidebarOpen(false); // Close mobile sidebar first
-    setShowGuidedTour(true);
-  };
-
-  const handleCloseGuide = () => {
-    setShowGuidedTour(false);
-  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -179,7 +166,6 @@ function DashboardLayoutContent({
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  data-tour={item.tourId || undefined}
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group',
                     isActive
@@ -213,15 +199,6 @@ function DashboardLayoutContent({
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleShowGuide}
-              className="flex items-center w-full gap-3 px-4 py-2.5 text-gray-600 transition-all rounded-xl hover:bg-indigo-50 hover:shadow-sm mb-1 group"
-            >
-              <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center group-hover:bg-indigo-200 transition-colors">
-                <HelpCircle className="w-4 h-4 text-indigo-600" />
-              </div>
-              <span className="font-medium text-sm group-hover:text-indigo-700 transition-colors">Guide d&apos;utilisation</span>
-            </button>
             <a
               href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20avec%20Qarte"
               target="_blank"
@@ -251,14 +228,6 @@ function DashboardLayoutContent({
       <main className="lg:ml-72 min-h-screen">
         <div className="p-4 md:p-8 pb-20">{children}</div>
       </main>
-
-      {/* Guided Tour */}
-      {showGuidedTour && (
-        <GuidedTour
-          onComplete={handleCloseGuide}
-          onSkip={handleCloseGuide}
-        />
-      )}
     </div>
   );
 }

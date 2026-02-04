@@ -881,7 +881,7 @@ function FeaturesSection() {
                       <Bell className="w-5 h-5 text-white" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs font-bold text-slate-900">Institut Éclat</p>
+                      <p className="text-xs font-bold text-slate-900">Nail Salon by Elodie</p>
                       <p className="text-[11px] text-slate-600 mt-0.5">🎉 -20% ce weekend uniquement !</p>
                     </div>
                   </div>
@@ -1181,7 +1181,7 @@ function CaseStudySection() {
             Étude de cas
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Comment L&apos;Institut Éclat a{' '}
+            Comment Nail Salon by Elodie a{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500">
               doublé ses clientes régulières
             </span>
@@ -1198,26 +1198,33 @@ function CaseStudySection() {
             {/* Left: Story */}
             <div className="p-8 md:p-10">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                  IE
+                <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-lg">
+                  <img
+                    src="/images/testimonial-nail-salon.png"
+                    alt="Nail Salon by Elodie"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900">L&apos;Institut Éclat</h3>
-                  <p className="text-gray-500 text-sm">Paris 16ème • Institut de beauté</p>
+                  <h3 className="text-xl font-bold text-gray-900">Nail Salon by Elodie</h3>
+                  <p className="text-gray-500 text-sm">Onglerie professionnelle</p>
                 </div>
               </div>
 
               <blockquote className="text-lg text-gray-700 leading-relaxed mb-6 italic border-l-4 border-rose-200 pl-4">
-                "Mes clientes perdaient toujours leurs cartes tampons. Avec Qarte, tout est sur leur téléphone. Elles adorent recevoir une notif quand leur soin gratuit est disponible !"
+                "Mes clientes perdaient toujours leurs cartes tampons. Avec Qarte, tout est sur leur téléphone. Elles adorent recevoir une notif quand leur pose gratuite est disponible !"
               </blockquote>
 
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                  <Sparkles className="w-6 h-6 text-rose-500" />
+                <div className="w-12 h-12 rounded-full overflow-hidden">
+                  <img
+                    src="/images/testimonial-nail-salon.png"
+                    alt="Elodie H."
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div>
-                  <p className="font-semibold text-gray-900">Sophie Martin</p>
-                  <p className="text-sm text-gray-500">Gérante depuis 2018</p>
+                  <p className="font-semibold text-gray-900">Elodie H.</p>
                 </div>
               </div>
 
@@ -1225,8 +1232,8 @@ function CaseStudySection() {
                 <h4 className="font-semibold text-gray-900 text-sm uppercase tracking-wider">Ce qui a changé :</h4>
                 {[
                   'Mise en place en 10 minutes',
-                  'QR code à l\'accueil + cabines',
-                  'Récompense : 10ème soin offert',
+                  'QR code à l\'accueil',
+                  'Récompense : 10ème pose offerte',
                   'Notification push avant les fêtes'
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-3">
@@ -2162,7 +2169,7 @@ function HowItWorksSection() {
     {
       number: '02',
       title: 'Affichez le QR Code',
-      description: 'Imprimez-le à l\'accueil. Vos clientes scannent, cumulent leurs points et reviennent.',
+      description: 'Imprimez-le ou gardez-le sur votre téléphone. Vos clientes scannent et cumulent leurs points.',
       icon: QrCode,
       color: 'from-pink-500 to-rose-600'
     }

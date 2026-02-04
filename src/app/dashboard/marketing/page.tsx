@@ -118,8 +118,6 @@ const templates: NotificationTemplate[] = [
   },
 ];
 
-const TIPS_SHOWN_KEY = 'qarte_marketing_tips_shown';
-
 export default function MarketingPushPage() {
   const { merchant } = useMerchant();
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
@@ -146,9 +144,6 @@ export default function MarketingPushPage() {
   const [scheduling, setScheduling] = useState(false);
   const [scheduledPushes, setScheduledPushes] = useState<ScheduledPush[]>([]);
   const [loadingScheduled, setLoadingScheduled] = useState(true);
-
-  // Tips popup
-  const [showTipsPopup, setShowTipsPopup] = useState(false);
 
   // Offer management (integrated with push)
   const [offerDescription, setOfferDescription] = useState('');
@@ -192,17 +187,6 @@ export default function MarketingPushPage() {
     }
     return null;
   };
-
-  // Check if first visit
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const tipsShown = localStorage.getItem(TIPS_SHOWN_KEY);
-      if (!tipsShown) {
-        setShowTipsPopup(true);
-        localStorage.setItem(TIPS_SHOWN_KEY, 'true');
-      }
-    }
-  }, []);
 
   // Set default schedule date to today
   useEffect(() => {
@@ -571,58 +555,6 @@ export default function MarketingPushPage() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* First time tips popup */}
-      <AnimatePresence>
-        {showTipsPopup && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            onClick={() => setShowTipsPopup(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-amber-600" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">Conseils importants</h2>
-              </div>
-              <ul className="space-y-3 text-sm text-gray-700 mb-6">
-                <li className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <span><strong className="text-red-600">N'envoyez pas trop souvent</strong> (1-2 fois par semaine max)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                  <span>Soyez <strong>concis et direct</strong> - les gens lisent vite</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                  <span>Ajoutez un sentiment d'<strong>urgence ou d'exclusivité</strong></span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                  <span><strong>Meilleurs moments :</strong> 10h ou 18h</span>
-                </li>
-              </ul>
-              <button
-                onClick={() => setShowTipsPopup(false)}
-                className="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition-all"
-              >
-                J'ai compris !
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Header */}
       <div className="mb-4">
         <div className="flex items-center gap-3">

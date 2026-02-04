@@ -10,15 +10,9 @@ import {
   ArrowLeft,
   Check,
   Loader2,
-  Printer,
-  Lightbulb,
   Palette,
   Sparkles,
-  ChevronDown,
-  ChevronUp,
-  Scissors,
-  MapPin,
-  BookOpen,
+  Smartphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -28,24 +22,6 @@ import { toPng } from 'html-to-image';
 import { FlyerTemplate } from '@/components/marketing/FlyerTemplate';
 import type { Merchant } from '@/types';
 
-const PRINTING_INSTRUCTIONS = [
-  {
-    icon: Printer,
-    title: 'Type de papier',
-    description: 'Imprimez sur du papier cartonné (200-250g) pour un meilleur rendu et une meilleure durabilité.',
-  },
-  {
-    icon: Scissors,
-    title: 'Découpe',
-    description: 'Le PDF contient 4 flyers A6 sur une page A4. Découpez le long des pointillés gris.',
-  },
-  {
-    icon: MapPin,
-    title: 'Placement',
-    description: 'Placez les flyers près de la caisse, sur les tables ou à l\'entrée de votre établissement.',
-  },
-];
-
 export default function QRDownloadPage() {
   const router = useRouter();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
@@ -53,7 +29,6 @@ export default function QRDownloadPage() {
   const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
-  const [instructionsOpen, setInstructionsOpen] = useState(false);
   const flyerPreviewRef = useRef<HTMLDivElement>(null);
   const flyerExportRef = useRef<HTMLDivElement>(null);
 
@@ -158,41 +133,6 @@ export default function QRDownloadPage() {
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const downloadInstructions = () => {
-    const instructions = `
-INSTRUCTIONS D'IMPRESSION - Kit Marketing ${merchant?.shop_name}
-================================================================
-
-1. TYPE DE PAPIER
-   Imprimez sur du papier cartonné (200-250g) pour un meilleur rendu
-   et une meilleure durabilité.
-
-2. DÉCOUPE
-   Le PDF contient 4 flyers A6 sur une page A4.
-   Découpez le long des pointillés gris.
-
-3. PLACEMENT
-   Placez les flyers près de la caisse, sur les tables
-   ou à l'entrée de votre établissement.
-
-4. CONSEILS SUPPLÉMENTAIRES
-   - Utilisez une imprimante couleur pour un meilleur rendu
-   - Plastifiez les flyers pour une meilleure résistance
-   - Renouvelez régulièrement les flyers abîmés
-
-================================================================
-Généré par Qarte - La fidélité simplifiée
-    `.trim();
-
-    const blob = new Blob([instructions], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `instructions-impression-${merchant?.slug}.txt`;
-    link.click();
-    URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -335,54 +275,16 @@ Généré par Qarte - La fidélité simplifiée
             </Button>
           </div>
 
-          {/* Instructions Section with Dropdown */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <button
-              onClick={() => setInstructionsOpen(!instructionsOpen)}
-              className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
-                  <Lightbulb className="w-5 h-5 text-amber-600" />
-                </div>
-                <div className="text-left">
-                  <h3 className="font-bold text-gray-900">Instructions d&apos;impression</h3>
-                  <p className="text-sm text-gray-500">Conseils pour un résultat optimal</p>
-                </div>
+          {/* Info Message */}
+          <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                <Smartphone className="w-5 h-5 text-indigo-600" />
               </div>
-              {instructionsOpen ? (
-                <ChevronUp className="w-5 h-5 text-gray-400" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              )}
-            </button>
-
-            {instructionsOpen && (
-              <div className="px-6 pb-6 border-t border-gray-100">
-                <ul className="space-y-4 mt-4">
-                  {PRINTING_INSTRUCTIONS.map((instruction, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
-                        <instruction.icon className="w-4 h-4 text-amber-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">{instruction.title}</p>
-                        <p className="text-sm text-gray-600">{instruction.description}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-
-                <Button
-                  onClick={downloadInstructions}
-                  variant="outline"
-                  className="w-full mt-4 h-10 border-amber-200 text-amber-700 hover:bg-amber-50 rounded-xl"
-                >
-                  <BookOpen className="w-4 h-4 mr-2" />
-                  Télécharger les instructions
-                </Button>
-              </div>
-            )}
+              <p className="text-sm text-indigo-800">
+                Vous pouvez imprimer ce flyer ou le présenter directement sur votre téléphone, ça marche aussi !
+              </p>
+            </div>
           </div>
         </div>
       </div>
