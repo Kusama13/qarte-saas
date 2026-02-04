@@ -74,6 +74,9 @@ src/
 │   ├── WelcomeEmail.tsx
 │   ├── QRCodeEmail.tsx
 │   ├── TrialEndingEmail.tsx
+│   ├── PaymentFailedEmail.tsx    # Echec paiement Stripe
+│   ├── SubscriptionCanceledEmail.tsx # Annulation abonnement
+│   ├── ReactivationEmail.tsx     # Win-back J+7/14/30
 │   └── ...
 │
 ├── types/index.ts        # Types TypeScript
@@ -81,7 +84,11 @@ src/
 └── middleware.ts         # Auth middleware
 
 supabase/
-└── migrations/           # 23 migrations SQL
+└── migrations/           # 28 migrations SQL
+    ├── 001-025           # Schema initial + fixes
+    ├── 026               # Trial period 15 jours
+    ├── 027               # Spelling cancelled→canceled
+    └── 028               # Reactivation email tracking
 
 public/
 ├── images/              # Images statiques
@@ -291,7 +298,8 @@ npm run email
 ### Statuts Abonnement
 - `trial` - periode d'essai
 - `active` - abonnement actif
-- `cancelled` - annule
+- `canceled` - annule (orthographe US)
+- `canceling` - annulation en cours (fin de periode)
 - `past_due` - paiement en retard
 
 ### Statuts Visites (Qarte Shield)
@@ -433,3 +441,60 @@ import type { Merchant } from '@/types';
 - Tailwind CSS classes directement dans JSX
 - `cn()` pour classes conditionnelles
 - Variables CSS pour couleurs theme dans `globals.css`
+
+---
+
+## 18. Cron Jobs
+
+| Cron | Horaire | Description |
+|------|---------|-------------|
+| `/api/cron/morning` | 05:00 UTC | Rappels passages en attente |
+| `/api/cron/evening` | 18:00 UTC | Push notifications programmees |
+| `/api/cron/reactivation` | 10:00 UTC | Emails win-back J+7/14/30 |
+
+---
+
+## 19. Emails Transactionnels
+
+| Email | Declencheur |
+|-------|-------------|
+| WelcomeEmail | Inscription commercant |
+| QRCodeEmail | Demande QR par email |
+| TrialEndingEmail | J-3 avant fin essai |
+| EbookEmail | Telechargement ebook |
+| PendingPointsEmail | Passages en attente (cron) |
+| PaymentFailedEmail | Echec paiement Stripe |
+| SubscriptionCanceledEmail | Annulation abonnement |
+| ReactivationEmail | Win-back J+7/14/30 apres annulation |
+
+### Headers Anti-spam
+```typescript
+export const EMAIL_HEADERS = {
+  'List-Unsubscribe': '<mailto:unsubscribe@getqarte.com?subject=unsubscribe>',
+  'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+};
+```
+
+---
+
+## 20. Documentation
+
+| Fichier | Description |
+|---------|-------------|
+| `context.md` | Contexte projet (ce fichier) |
+| `AUDIT_COMPLET.md` | Audit securite/qualite |
+| `docs/AUDIT_SCALABILITE.md` | Audit performance/scalabilite |
+| `docs/CHANGELOG.md` | Historique deploiements |
+
+---
+
+## 21. Capacite Actuelle
+
+| Metrique | Capacite |
+|----------|----------|
+| Marchands | ~300-500 |
+| Checkins/jour | ~20,000 |
+| Push/envoi | ~100 (non optimise) |
+| Clients/marchand | ~2,000 |
+
+*Pour plus de details, voir `docs/AUDIT_SCALABILITE.md`*
