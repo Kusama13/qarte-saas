@@ -2,11 +2,13 @@
 
 ## 1. Overview
 
-**Qarte** est une plateforme SaaS de digitalisation des cartes de fidelite. Elle permet aux commercants de creer et gerer des programmes de fidelite digitaux via QR codes.
+**Qarte** est une plateforme SaaS de digitalisation des cartes de fidelite. Elle permet aux commercants (instituts de beaute, ongleries, salons de coiffure, restaurants...) de creer et gerer des programmes de fidelite digitaux via QR codes.
 
 - **URL:** getqarte.com
 - **Version:** 0.1.0
 - **Langue:** Francais
+- **Essai:** 15 jours gratuits
+- **Prix:** 29€/mois
 
 ---
 
@@ -313,3 +315,121 @@ npm run email
 | `tailwind.config.ts` | Config Tailwind (couleurs, fonts) |
 | `next.config.mjs` | Config Next.js (securite, images) |
 | `supabase/migrations/` | 23 migrations SQL |
+
+---
+
+## 13. Design & UX
+
+### Palette de Couleurs
+- **Primaire:** `#654EDA` (violet)
+- **Secondaire:** `#9D8FE8` (violet clair)
+- **Accent:** Rose/Pink pour les CTAs
+- **Fond:** Gradients violet vers rose
+
+### Style Visuel
+- **Glassmorphism:** Utilise sur les pages auth et offre-speciale
+  - `backdrop-blur-xl`, `bg-white/80`, bordures transparentes
+  - Blobs decoratifs animes en arriere-plan
+- **Cartes:** `rounded-2xl` ou `rounded-3xl`, ombres douces
+- **Boutons:** Gradients, hover effects, transitions fluides
+- **Animations:** Framer Motion pour les entrees/sorties
+
+### Composants UI Reutilisables (`src/components/ui/`)
+- Button, Input, Select, Modal, Badge
+- Toast notifications
+- Skeleton loaders
+
+---
+
+## 14. Business Model
+
+### Tarification
+- **Essai gratuit:** 15 jours
+- **Abonnement:** 29€/mois
+- **Periode de grace:** 7 jours apres expiration (lecture seule)
+- **Suppression:** Donnees supprimees 7 jours apres expiration
+
+### Cible
+- Instituts de beaute, salons de coiffure
+- Ongleries, spas
+- Restaurants, cafes, boulangeries
+- Petits commerces de proximite
+
+---
+
+## 15. Terminologie
+
+| Terme | Signification |
+|-------|---------------|
+| passage | Visite client validee (scan QR) |
+| tampon | Synonyme de passage (reference cartes papier) |
+| palier | Niveau de recompense (tier1, tier2) |
+| scan_code | Code unique du commercant pour le QR |
+| slug | URL-friendly du nom de commerce |
+| shield | Systeme anti-fraude Qarte Shield |
+
+---
+
+## 16. Pages Principales
+
+### Landing (`/`)
+- Hero avec demo interactive
+- Section "Comment ca marche" (3 etapes)
+- Temoignage client (Nail Salon by Elodie)
+- Pricing, FAQ, CTA
+
+### Offre Speciale (`/offre-speciale`)
+- Page retargeting avec urgence
+- Glassmorphism design
+- Temoignage integre
+- 15 jours gratuits
+
+### Dashboard (`/dashboard`)
+- Sidebar navigation
+- Statistiques temps reel
+- Gestion programme fidelite
+- Telechargement QR/flyers
+- Gestion clients
+- Marketing (push notifications)
+
+### Scan (`/scan/[code]`)
+- Page publique pour clients
+- Inscription rapide (nom + telephone)
+- Validation passage
+- Affichage progression fidelite
+- Utilisation recompense
+
+---
+
+## 17. Conventions de Code
+
+### Imports
+```typescript
+// 1. React/Next
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+
+// 2. Composants externes
+import { motion } from 'framer-motion';
+
+// 3. Composants internes
+import { Button } from '@/components/ui';
+
+// 4. Libs/Utils
+import { supabase } from '@/lib/supabase';
+import { cn } from '@/lib/utils';
+
+// 5. Types
+import type { Merchant } from '@/types';
+```
+
+### Nommage
+- Composants: PascalCase (`FlyerTemplate.tsx`)
+- Utilitaires: camelCase (`generateQRCode`)
+- Types: PascalCase (`Merchant`, `LoyaltyCard`)
+- Routes API: kebab-case (`/api/adjust-points`)
+
+### Styles
+- Tailwind CSS classes directement dans JSX
+- `cn()` pour classes conditionnelles
+- Variables CSS pour couleurs theme dans `globals.css`
