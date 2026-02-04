@@ -149,24 +149,30 @@ export default function MerchantSignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 relative overflow-hidden">
       <FacebookPixel />
-      <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12">
-        <Link href="/" className="flex items-center gap-2 mb-8">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary">
+
+      {/* Background decorative blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+      <div className="absolute top-1/3 right-0 w-80 h-80 bg-gradient-to-br from-secondary/15 to-primary/15 rounded-full blur-3xl translate-x-1/2" />
+      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-gradient-to-br from-primary/10 to-secondary/20 rounded-full blur-3xl" />
+
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
+        <Link href="/" className="flex items-center gap-2 mb-8 group">
+          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25 group-hover:scale-110 transition-transform duration-300">
             <CreditCard className="w-6 h-6 text-white" />
           </div>
           <span className="text-3xl font-bold text-gray-900">Qarte</span>
         </Link>
 
         <div className="w-full max-w-md">
-          <div className="p-8 bg-white shadow-xl rounded-3xl">
+          <div className="p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-gray-900">
                 Créer votre compte
               </h1>
               <p className="mt-2 text-gray-600">
-                Commencez votre essai gratuit de 14 jours
+                Commencez votre essai gratuit de 15 jours
               </p>
             </div>
 
@@ -278,7 +284,7 @@ export default function MerchantSignupPage() {
             <div className="mt-6 space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Check className="w-4 h-4 text-green-500" />
-                <span>Essai gratuit 14 jours</span>
+                <span>Essai gratuit 15 jours</span>
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Check className="w-4 h-4 text-green-500" />

@@ -59,24 +59,24 @@ function MerchantLoginContent() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-slate-50/50">
-      {/* Animated Background Blobs */}
-      <div className="absolute top-0 -left-4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-0 -right-4 w-96 h-96 bg-violet-600/10 rounded-full blur-3xl animate-pulse delay-700" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-3xl" />
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+      {/* Background decorative blobs */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
+      <div className="absolute top-1/3 right-0 w-80 h-80 bg-gradient-to-br from-secondary/15 to-primary/15 rounded-full blur-3xl translate-x-1/2" />
+      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-gradient-to-br from-primary/10 to-secondary/20 rounded-full blur-3xl" />
 
       <div className="max-w-md w-full mx-4 z-10">
         {/* Logo */}
         <div className="text-center mb-10">
           <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform duration-300">
+            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25 group-hover:scale-110 transition-transform duration-300">
               <CreditCard className="w-6 h-6 text-white" />
             </div>
-            <span className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Qarte</span>
+            <span className="text-3xl font-bold text-gray-900">Qarte</span>
           </Link>
         </div>
 
-        <div className="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl shadow-indigo-100/50 p-8 border border-white/40">
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-primary/10 p-8 border border-white/40">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -97,7 +97,7 @@ function MerchantLoginContent() {
 
           {/* Info Message - Coming from verification page */}
           {fromVerification && !verified && (
-            <div className="mb-6 bg-indigo-50/50 backdrop-blur-sm border border-indigo-200 text-indigo-700 px-4 py-3 rounded-2xl flex items-center gap-3">
+            <div className="mb-6 bg-primary-50/50 backdrop-blur-sm border border-primary-200 text-primary-700 px-4 py-3 rounded-2xl flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm font-medium">Entrez votre mot de passe pour accéder à votre compte.</span>
             </div>
@@ -121,7 +121,7 @@ function MerchantLoginContent() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3.5 bg-white/50 border border-gray-200/80 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400"
+                className="w-full px-4 py-3.5 bg-white/50 border border-gray-200/80 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-gray-400"
                 placeholder="contact@boutique.fr"
                 required
                 disabled={loading}
@@ -135,7 +135,7 @@ function MerchantLoginContent() {
                 </label>
                 <Link
                   href="/auth/merchant/forgot-password"
-                  className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+                  className="text-xs font-semibold text-primary hover:text-primary-600 transition-colors"
                 >
                   Oublié ?
                 </Link>
@@ -145,7 +145,7 @@ function MerchantLoginContent() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3.5 bg-white/50 border border-gray-200/80 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 outline-none transition-all placeholder:text-gray-400"
+                className="w-full px-4 py-3.5 bg-white/50 border border-gray-200/80 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-gray-400"
                 placeholder="••••••••"
                 required
                 disabled={loading}
@@ -155,7 +155,7 @@ function MerchantLoginContent() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-4 px-4 rounded-2xl font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-300/50 hover:translate-y-[-1px] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="w-full bg-gradient-to-r from-primary via-primary to-secondary text-white py-4 px-4 rounded-2xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/30 hover:translate-y-[-1px] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -169,8 +169,8 @@ function MerchantLoginContent() {
           {/* Link to Signup */}
           <div className="mt-8 text-center text-sm font-medium text-gray-500">
             Nouveau sur Qarte ?{' '}
-            <Link href="/auth/merchant/signup" className="text-indigo-600 font-bold hover:text-indigo-700 transition-colors">
-              Inscrivez votre boutique
+            <Link href="/auth/merchant/signup" className="text-primary font-bold hover:text-primary-600 transition-colors">
+              Inscrivez votre établissement
             </Link>
           </div>
         </div>

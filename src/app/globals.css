@@ -167,7 +167,7 @@
     @apply transition-all duration-300;
   }
   .hover-glow:hover {
-    @apply shadow-[0_0_30px_rgba(225,29,72,0.3)];
+    @apply shadow-[0_0_30px_rgba(101,78,218,0.3)];
   }
 
   .hover-scale {
