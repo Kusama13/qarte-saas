@@ -8,7 +8,7 @@
 - **Version:** 0.1.0
 - **Langue:** Francais
 - **Essai:** 15 jours gratuits
-- **Prix:** 29€/mois
+- **Prix:** 19€/mois
 
 ---
 
@@ -345,7 +345,7 @@ npm run email
 
 ### Tarification
 - **Essai gratuit:** 15 jours
-- **Abonnement:** 29€/mois
+- **Abonnement:** 19€/mois
 - **Periode de grace:** 7 jours apres expiration (lecture seule)
 - **Suppression:** Donnees supprimees 7 jours apres expiration
 
