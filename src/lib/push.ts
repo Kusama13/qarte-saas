@@ -64,7 +64,7 @@ export function isIOSDevice(): boolean {
 export function isStandalonePWA(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone === true;
+    navigator.standalone === true;
 }
 
 // Check iOS version (returns 0 if not iOS or can't detect)
@@ -95,7 +95,6 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 
   try {
     const registration = await navigator.serviceWorker.register('/sw.js');
-    console.log('Service Worker registered:', registration);
     return registration;
   } catch (error) {
     console.error('Service Worker registration failed:', error);

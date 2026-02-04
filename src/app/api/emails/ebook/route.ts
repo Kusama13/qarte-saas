@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import { EbookEmail } from '@/emails';
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+import { resend, EMAIL_FROM, EMAIL_REPLY_TO, EMAIL_HEADERS } from '@/lib/resend';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,18 +12,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (!resend) {
-      console.log('Resend not configured, skipping email send');
       return NextResponse.json({ success: true, skipped: true });
     }
 
     const html = await render(EbookEmail({}));
+    const text = await render(EbookEmail({}), { plainText: true });
 
     const { error } = await resend.emails.send({
-      from: 'Qarte <noreply@getqarte.com>',
+      from: EMAIL_FROM,
       to: email,
-      replyTo: 'contact@getqarte.com',
-      subject: '📚 Votre guide de fidelisation est pret !',
+      replyTo: EMAIL_REPLY_TO,
+      subject: 'Votre guide de fidélisation est prêt',
       html,
+      text,
+      headers: EMAIL_HEADERS,
     });
 
     if (error) {

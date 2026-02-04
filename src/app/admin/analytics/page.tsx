@@ -78,7 +78,7 @@ export default function AdminAnalyticsPage() {
           // Subscription status counts
           supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'trial'),
           supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'active'),
-          supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'cancelled'),
+          supabase.from('merchants').select('*', { count: 'exact', head: true }).eq('subscription_status', 'canceled'),
           // Raw data for last 14 days (to aggregate client-side)
           supabase.from('merchants').select('created_at').gte('created_at', fourteenDaysAgo.toISOString()),
           supabase.from('visits').select('visited_at').gte('visited_at', fourteenDaysAgo.toISOString()),

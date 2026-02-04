@@ -43,10 +43,6 @@ export async function compressImage(
       useWebWorker: mergedOptions.useWebWorker,
     });
 
-    console.log(
-      `Image compressed: ${(file.size / 1024).toFixed(1)}KB → ${(compressedFile.size / 1024).toFixed(1)}KB`
-    );
-
     return compressedFile;
   } catch (error) {
     console.error('Image compression failed, using original:', error);

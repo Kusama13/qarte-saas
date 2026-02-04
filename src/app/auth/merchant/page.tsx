@@ -48,11 +48,12 @@ function MerchantLoginContent() {
         // Redirection vers le dashboard (qui redirigera vers setup si nécessaire)
         window.location.href = '/dashboard';
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Erreur de connexion:', err);
-      setError(err.message === 'Invalid login credentials' 
-        ? 'Email ou mot de passe incorrect' 
-        : err.message);
+      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      setError(errorMessage === 'Invalid login credentials'
+        ? 'Email ou mot de passe incorrect'
+        : errorMessage);
     } finally {
       setLoading(false);
     }

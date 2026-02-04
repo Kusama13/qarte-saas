@@ -22,6 +22,23 @@ export async function GET(
   }
 
   try {
+    // Get merchant with user_id to fetch email
+    const { data: merchant } = await supabase
+      .from('merchants')
+      .select('user_id')
+      .eq('id', merchantId)
+      .single();
+
+    let userEmail: string | null = null;
+    if (merchant?.user_id) {
+      try {
+        const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+        userEmail = userData?.user?.email || null;
+      } catch {
+        // Ignore auth errors
+      }
+    }
+
     // Get loyalty cards with customer phone numbers
     const { data: loyaltyCards } = await supabase
       .from('loyalty_cards')
@@ -34,7 +51,8 @@ export async function GET(
       // Build a map of phone numbers to merchant customer IDs
       const phoneToCustomerId = new Map<string, string>();
       for (const card of loyaltyCards) {
-        const customer = card.customers as any;
+        // Supabase returns customers as object (not array) with !inner join
+        const customer = card.customers as unknown as { id: string; phone_number: string };
         if (customer?.phone_number) {
           phoneToCustomerId.set(customer.phone_number, customer.id);
         }
@@ -88,6 +106,7 @@ export async function GET(
     return NextResponse.json({
       pushSubscribers,
       pushSent: pushSent || 0,
+      userEmail,
     });
   } catch (error) {
     console.error('Admin merchant stats error:', error);

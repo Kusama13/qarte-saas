@@ -102,9 +102,10 @@ export async function GET(request: NextRequest) {
               })
             );
             sentCount++;
-          } catch (err: any) {
+          } catch (err) {
             failedCount++;
-            if (err.statusCode === 404 || err.statusCode === 410) {
+            const webPushError = err as { statusCode?: number };
+            if (webPushError.statusCode === 404 || webPushError.statusCode === 410) {
               await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
             }
           }

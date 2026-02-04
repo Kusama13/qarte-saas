@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get card IDs to fetch redemptions
-    const cardIds = (cardsData || []).map((c: any) => c.id);
+    const cardIds = (cardsData || []).map((c) => c.id);
 
     // Fetch redemptions for all cards to know if tier 1 was already redeemed
     const { data: redemptionsData } = await supabaseAdmin
@@ -72,35 +72,51 @@ export async function GET(request: NextRequest) {
 
     // Create a map of card_id -> redeemed tiers
     const redemptionsByCard: Record<string, number[]> = {};
-    (redemptionsData || []).forEach((r: any) => {
+    (redemptionsData || []).forEach((r) => {
       if (!redemptionsByCard[r.loyalty_card_id]) {
         redemptionsByCard[r.loyalty_card_id] = [];
       }
       redemptionsByCard[r.loyalty_card_id].push(r.tier || 1);
     });
 
+    // Define merchant type for the select query result
+    interface MerchantData {
+      id: string;
+      shop_name: string;
+      scan_code: string;
+      logo_url: string | null;
+      primary_color: string;
+      stamps_required: number;
+      reward_description: string | null;
+      tier2_enabled: boolean;
+      tier2_stamps_required: number | null;
+      tier2_reward_description: string | null;
+    }
+
     const cards = (cardsData || [])
-      .filter((card: any) => card.merchant)
-      .map((card: any) => {
-        const tier2Enabled = card.merchant.tier2_enabled;
-        const tier1Required = card.merchant.stamps_required;
-        const tier2Required = card.merchant.tier2_stamps_required || tier1Required * 2;
+      .filter((card) => card.merchant)
+      .map((card) => {
+        // Supabase returns merchant as object (not array) with alias syntax
+        const merchant = card.merchant as unknown as MerchantData;
+        const tier2Enabled = merchant.tier2_enabled;
+        const tier1Required = merchant.stamps_required;
+        const tier2Required = merchant.tier2_stamps_required || tier1Required * 2;
         const redeemedTiers = redemptionsByCard[card.id] || [];
         const tier1Redeemed = redeemedTiers.includes(1);
 
         return {
-          merchant_id: card.merchant.id,
-          shop_name: card.merchant.shop_name,
-          scan_code: card.merchant.scan_code,
-          logo_url: card.merchant.logo_url,
-          primary_color: card.merchant.primary_color,
-          stamps_required: card.merchant.stamps_required,
-          reward_description: card.merchant.reward_description,
+          merchant_id: merchant.id,
+          shop_name: merchant.shop_name,
+          scan_code: merchant.scan_code,
+          logo_url: merchant.logo_url,
+          primary_color: merchant.primary_color,
+          stamps_required: merchant.stamps_required,
+          reward_description: merchant.reward_description,
           current_stamps: card.current_stamps,
           last_visit_date: card.last_visit_date,
           tier2_enabled: tier2Enabled,
           tier2_stamps_required: tier2Required,
-          tier2_reward_description: card.merchant.tier2_reward_description,
+          tier2_reward_description: merchant.tier2_reward_description,
           tier1_redeemed: tier1Redeemed,
         };
       });

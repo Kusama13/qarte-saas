@@ -39,7 +39,7 @@ interface Merchant {
   };
 }
 
-type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'cancelled';
+type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'canceled';
 
 // Icons for shop types (beauté / bien-être)
 const SHOP_TYPE_ICONS: Record<ShopType, React.ElementType> = {
@@ -150,7 +150,7 @@ export default function AdminMerchantsPage() {
     const trialActive = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'trial' && !isTrialExpired(m)).length;
     const trialExpired = nonAdminMerchants.filter((m: Merchant) => isTrialExpired(m)).length;
     const active = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'active').length;
-    const cancelled = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'cancelled').length;
+    const cancelled = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'canceled').length;
 
     const byType: Record<string, number> = {};
     nonAdminMerchants.forEach((m: Merchant) => {
@@ -243,7 +243,7 @@ export default function AdminMerchantsPage() {
             Actif
           </span>
         );
-      case 'cancelled':
+      case 'canceled':
         return (
           <span className="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
             Churned
@@ -380,7 +380,7 @@ export default function AdminMerchantsPage() {
             { label: 'En essai', value: 'trial' as FilterStatus, count: stats.trial },
             { label: 'Expirés', value: 'trial_expired' as FilterStatus, count: stats.trialExpired },
             { label: 'Actifs', value: 'active' as FilterStatus, count: stats.active },
-            { label: 'Churned', value: 'cancelled' as FilterStatus, count: stats.cancelled },
+            { label: 'Churned', value: 'canceled' as FilterStatus, count: stats.cancelled },
           ].map((btn) => (
             <button
               key={btn.value}

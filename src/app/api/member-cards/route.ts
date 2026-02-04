@@ -25,8 +25,9 @@ async function verifyProgramOwnership(programId: string): Promise<{ authorized: 
     return { authorized: false, error: 'Programme non trouvé' };
   }
 
-  const merchantUserId = (program.merchants as any)?.user_id;
-  if (merchantUserId !== user.id) {
+  // Supabase returns merchants as object (not array) with !inner join
+  const merchants = program.merchants as unknown as { user_id: string };
+  if (merchants?.user_id !== user.id) {
     return { authorized: false, error: 'Non autorisé - vous ne pouvez pas gérer ce programme' };
   }
 

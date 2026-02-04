@@ -257,8 +257,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           await processCheckin(data.customer);
         } else if (data.existsGlobally) {
           // Client existe chez un autre commerçant → créer pour ce commerçant avec les mêmes infos
-          console.log('Customer exists globally:', data.customer);
-
           const createResponse = await fetch('/api/customers/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -271,7 +269,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           });
 
           const createData = await createResponse.json();
-          console.log('Create response:', createData);
 
           if (createResponse.ok && createData.customer) {
             setCustomer(createData.customer);

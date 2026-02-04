@@ -80,7 +80,6 @@ export default function CustomerCardsPage() {
       }
 
       if (!data.found || data.cards.length === 0) {
-        console.log('No cards found, debug:', data.debug);
         setCards([]);
         setLoading(false);
         return;

@@ -90,7 +90,7 @@ export default function AdminRevenusPage() {
         const { count: cancelledCount } = await supabase
           .from('merchants')
           .select('*', { count: 'exact', head: true })
-          .eq('subscription_status', 'cancelled');
+          .eq('subscription_status', 'canceled');
 
         // Essais se terminant dans les 7 prochains jours
         const sevenDaysFromNow = new Date();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, memo, useCallback } from 'react';
+import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, AlertTriangle, X, Shield, ShieldOff } from 'lucide-react';
@@ -19,6 +19,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+
+// Cache for dashboard stats
+const STATS_CACHE_KEY = 'qarte_dashboard_stats';
+const STATS_CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
 interface StatsCardProps {
   title: string;
@@ -74,24 +78,92 @@ const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, col
   );
 });
 
+// Try to load cached stats for instant display
+function getCachedStats(merchantId: string) {
+  if (typeof window === 'undefined') return null;
+  try {
+    const cached = localStorage.getItem(`${STATS_CACHE_KEY}_${merchantId}`);
+    if (cached) {
+      const { data, timestamp } = JSON.parse(cached);
+      if (Date.now() - timestamp < STATS_CACHE_DURATION) {
+        return data;
+      }
+    }
+  } catch {
+    // Ignore cache errors
+  }
+  return null;
+}
+
+function setCachedStats(merchantId: string, data: { stats: typeof initialStats; recentCustomers: typeof initialRecentCustomers; chartData: typeof initialChartData }) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(`${STATS_CACHE_KEY}_${merchantId}`, JSON.stringify({
+      data,
+      timestamp: Date.now()
+    }));
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+const initialStats = {
+  totalCustomers: 0,
+  activeCustomers: 0,
+  visitsThisMonth: 0,
+  redemptionsThisMonth: 0,
+};
+
+const initialRecentCustomers: Array<{
+  id: string;
+  name: string;
+  stamps: number;
+  lastVisit: string;
+}> = [];
+
+const initialChartData: Array<{ date: string; visits: number }> = [];
+
 export default function DashboardPage() {
   const router = useRouter();
   const supabase = getSupabase();
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
-  const [stats, setStats] = useState({
-    totalCustomers: 0,
-    activeCustomers: 0,
-    visitsThisMonth: 0,
-    redemptionsThisMonth: 0,
+
+  // Initialize from cache if available for instant display
+  const [stats, setStats] = useState(() => {
+    if (merchant?.id) {
+      const cached = getCachedStats(merchant.id);
+      return cached?.stats || initialStats;
+    }
+    return initialStats;
   });
   const [recentCustomers, setRecentCustomers] = useState<Array<{
     id: string;
     name: string;
     stamps: number;
     lastVisit: string;
-  }>>([]);
-  const [chartData, setChartData] = useState<Array<{ date: string; visits: number }>>([]);
-  const [loading, setLoading] = useState(true);
+  }>>(() => {
+    if (merchant?.id) {
+      const cached = getCachedStats(merchant.id);
+      return cached?.recentCustomers || initialRecentCustomers;
+    }
+    return initialRecentCustomers;
+  });
+  const [chartData, setChartData] = useState<Array<{ date: string; visits: number }>>(() => {
+    if (merchant?.id) {
+      const cached = getCachedStats(merchant.id);
+      return cached?.chartData || initialChartData;
+    }
+    return initialChartData;
+  });
+
+  // If we have cached data, don't show loading state
+  const [loading, setLoading] = useState(() => {
+    if (merchant?.id) {
+      const cached = getCachedStats(merchant.id);
+      return !cached;
+    }
+    return true;
+  });
   const [error, setError] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showShieldWarning, setShowShieldWarning] = useState(false);
@@ -298,10 +370,36 @@ export default function DashboardPage() {
           });
         }
 
-        setChartData(last7Days.map(day => ({
+        const newChartData = last7Days.map(day => ({
           date: day.label,
           visits: visitCounts[day.date] || 0,
-        })));
+        }));
+        setChartData(newChartData);
+
+        // Cache the data for instant display on next visit
+        const newStats = {
+          totalCustomers: totalCustomersResult.count || 0,
+          activeCustomers: activeCustomersResult.count || 0,
+          visitsThisMonth: visitsThisMonthResult.count || 0,
+          redemptionsThisMonth: redemptionsThisMonthResult.count || 0,
+        };
+        const newRecentCustomers = recentCardsResult.data
+          ? recentCardsResult.data.map((card: { id: string; customer: { first_name?: string; last_name?: string } | { first_name?: string; last_name?: string }[]; current_stamps: number; last_visit_date?: string }) => {
+              const customer = Array.isArray(card.customer) ? card.customer[0] : card.customer;
+              return {
+                id: card.id,
+                name: `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Client',
+                stamps: card.current_stamps,
+                lastVisit: card.last_visit_date || '',
+              };
+            })
+          : [];
+
+        setCachedStats(merchant.id, {
+          stats: newStats,
+          recentCustomers: newRecentCustomers,
+          chartData: newChartData,
+        });
 
       } catch (err) {
         console.error('Dashboard error:', err);

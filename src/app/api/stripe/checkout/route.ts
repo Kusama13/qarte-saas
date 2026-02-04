@@ -4,10 +4,6 @@ import { stripe, PLAN } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
-    // Debug: log config
-    console.log('Checkout - STRIPE_PRICE_ID:', process.env.STRIPE_PRICE_ID ? 'SET' : 'NOT SET');
-    console.log('Checkout - PLAN.priceId:', PLAN.priceId || 'EMPTY');
-
     const supabase = await createRouteHandlerSupabaseClient();
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();

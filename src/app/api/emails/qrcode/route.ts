@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Resend } from 'resend';
 import { render } from '@react-email/render';
 import { QRCodeEmail } from '@/emails';
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+import { resend, EMAIL_FROM, EMAIL_REPLY_TO, EMAIL_HEADERS } from '@/lib/resend';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +12,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!resend) {
-      console.log('Resend not configured, skipping email send');
       return NextResponse.json({ success: true, skipped: true });
     }
 
@@ -22,13 +19,19 @@ export async function POST(request: NextRequest) {
       menuUrl: menuUrl || undefined,
       businessName: businessName || undefined,
     }));
+    const text = await render(QRCodeEmail({
+      menuUrl: menuUrl || undefined,
+      businessName: businessName || undefined,
+    }), { plainText: true });
 
     const { error } = await resend.emails.send({
-      from: 'Qarte <noreply@getqarte.com>',
+      from: EMAIL_FROM,
       to: email,
-      replyTo: 'contact@getqarte.com',
-      subject: '📱 Votre QR code menu est pret !',
+      replyTo: EMAIL_REPLY_TO,
+      subject: 'Votre QR code menu est prêt',
       html,
+      text,
+      headers: EMAIL_HEADERS,
     });
 
     if (error) {

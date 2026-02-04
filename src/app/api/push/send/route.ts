@@ -3,6 +3,14 @@ import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import webpush from 'web-push';
 
+interface PushSubscriptionRecord {
+  id: string;
+  customer_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
 interface PushPayload {
   title: string;
   body: string;
@@ -88,7 +96,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    let subscriptions: any[] = [];
+    let subscriptions: PushSubscriptionRecord[] = [];
 
     if (customerId) {
       // Send to specific customer
@@ -128,7 +136,8 @@ export async function POST(request: NextRequest) {
         // Build phone -> merchant customer_id map
         const phoneToMerchantCustomerId = new Map<string, string>();
         for (const card of merchantCustomers) {
-          const customer = card.customers as any;
+          // Supabase returns customers as object (not array) with !inner join
+          const customer = card.customers as unknown as { id: string; phone_number: string };
           if (customer?.phone_number) {
             phoneToMerchantCustomerId.set(customer.phone_number, card.customer_id);
           }
@@ -205,8 +214,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    console.log('Sending to', subscriptions.length, 'subscriptions');
-
     // Send notifications to all subscriptions
     const results = await Promise.allSettled(
       subscriptions.map(async (sub) => {
@@ -217,8 +224,6 @@ export async function POST(request: NextRequest) {
             auth: sub.auth,
           },
         };
-
-        console.log('Sending to endpoint:', sub.endpoint?.substring(0, 50) + '...');
 
         try {
           await webpush.sendNotification(
@@ -232,17 +237,18 @@ export async function POST(request: NextRequest) {
             })
           );
           return { success: true, endpoint: sub.endpoint };
-        } catch (err: any) {
+        } catch (err) {
+          const webPushError = err as { statusCode?: number; message?: string; body?: string };
           console.error('Push send error for endpoint:', sub.endpoint?.substring(0, 50));
-          console.error('Error details:', err.statusCode, err.message, err.body);
+          console.error('Error details:', webPushError.statusCode, webPushError.message, webPushError.body);
           // If subscription is expired/invalid, delete it
-          if (err.statusCode === 404 || err.statusCode === 410) {
+          if (webPushError.statusCode === 404 || webPushError.statusCode === 410) {
             await supabase
               .from('push_subscriptions')
               .delete()
               .eq('endpoint', sub.endpoint);
           }
-          return { success: false, endpoint: sub.endpoint, error: err.message };
+          return { success: false, endpoint: sub.endpoint, error: webPushError.message };
         }
       })
     );
@@ -275,12 +281,13 @@ export async function POST(request: NextRequest) {
       failed,
       total: subscriptions.length,
     });
-  } catch (error: any) {
+  } catch (error) {
+    const err = error as Error;
     console.error('Send push error:', error);
-    console.error('Error stack:', error?.stack);
-    console.error('Error message:', error?.message);
+    console.error('Error stack:', err?.stack);
+    console.error('Error message:', err?.message);
     return NextResponse.json(
-      { error: 'Erreur serveur', details: error?.message || 'Unknown error' },
+      { error: 'Erreur serveur', details: err?.message || 'Unknown error' },
       { status: 500 }
     );
   }

@@ -1,4 +1,4 @@
-import { resend, EMAIL_FROM, EMAIL_REPLY_TO } from './resend';
+import { resend, EMAIL_FROM, EMAIL_REPLY_TO, EMAIL_HEADERS } from './resend';
 import { render } from '@react-email/render';
 import {
   WelcomeEmail,
@@ -6,6 +6,9 @@ import {
   TrialExpiredEmail,
   SubscriptionConfirmedEmail,
   PendingPointsEmail,
+  PaymentFailedEmail,
+  SubscriptionCanceledEmail,
+  ReactivationEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -31,13 +34,16 @@ export async function sendWelcomeEmail(
 
   try {
     const html = await render(WelcomeEmail({ shopName }));
+    const text = await render(WelcomeEmail({ shopName }), { plainText: true });
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `Bienvenue sur Qarte, ${shopName} !`,
+      subject: `Bienvenue sur Qarte, ${shopName}`,
       html,
+      text,
+      headers: EMAIL_HEADERS,
     });
 
     if (error) {
@@ -64,10 +70,11 @@ export async function sendTrialEndingEmail(
 
   try {
     const subject = daysRemaining <= 1
-      ? `Dernier jour d'essai, ${shopName} !`
-      : `Votre essai Qarte se termine dans ${daysRemaining} jours`;
+      ? `${shopName} - Dernier jour de votre essai Qarte`
+      : `${shopName} - Votre essai Qarte se termine dans ${daysRemaining} jours`;
 
     const html = await render(TrialEndingEmail({ shopName, daysRemaining }));
+    const text = await render(TrialEndingEmail({ shopName, daysRemaining }), { plainText: true });
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
@@ -75,6 +82,8 @@ export async function sendTrialEndingEmail(
       replyTo: EMAIL_REPLY_TO,
       subject,
       html,
+      text,
+      headers: EMAIL_HEADERS,
     });
 
     if (error) {
@@ -101,13 +110,16 @@ export async function sendTrialExpiredEmail(
 
   try {
     const html = await render(TrialExpiredEmail({ shopName, daysUntilDeletion }));
+    const text = await render(TrialExpiredEmail({ shopName, daysUntilDeletion }), { plainText: true });
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `Urgent : Vos données seront supprimées dans ${daysUntilDeletion} jours`,
+      subject: `${shopName} - Action requise : votre compte expire dans ${daysUntilDeletion} jours`,
       html,
+      text,
+      headers: EMAIL_HEADERS,
     });
 
     if (error) {
@@ -135,19 +147,23 @@ export async function sendNewMerchantNotification(
   if (check) return check;
 
   try {
+    const htmlContent = `
+      <h2>Nouveau commerçant inscrit sur Qarte</h2>
+      <p><strong>Commerce :</strong> ${shopName}</p>
+      <p><strong>Type :</strong> ${shopType}</p>
+      <p><strong>Adresse :</strong> ${shopAddress}</p>
+      <p><strong>Téléphone :</strong> ${phone}</p>
+      <p><strong>Email :</strong> ${email}</p>
+      <p><strong>Date :</strong> ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
+    `;
+    const textContent = `Nouveau commerçant inscrit sur Qarte\n\nCommerce : ${shopName}\nType : ${shopType}\nAdresse : ${shopAddress}\nTéléphone : ${phone}\nEmail : ${email}\nDate : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;
+
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to: 'sales@getqarte.com',
-      subject: `Nouveau commerçant : ${shopName}`,
-      html: `
-        <h2>Nouveau commerçant inscrit sur Qarte !</h2>
-        <p><strong>Commerce :</strong> ${shopName}</p>
-        <p><strong>Type :</strong> ${shopType}</p>
-        <p><strong>Adresse :</strong> ${shopAddress}</p>
-        <p><strong>Téléphone :</strong> ${phone}</p>
-        <p><strong>Email :</strong> ${email}</p>
-        <p><strong>Date :</strong> ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
-      `,
+      subject: `Nouveau commerçant inscrit : ${shopName}`,
+      html: htmlContent,
+      text: textContent,
     });
 
     if (error) {
@@ -173,13 +189,16 @@ export async function sendSubscriptionConfirmedEmail(
 
   try {
     const html = await render(SubscriptionConfirmedEmail({ shopName }));
+    const text = await render(SubscriptionConfirmedEmail({ shopName }), { plainText: true });
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: 'Votre abonnement Qarte est activé !',
+      subject: `${shopName} - Votre abonnement Qarte est actif`,
       html,
+      text,
+      headers: EMAIL_HEADERS,
     });
 
     if (error) {
@@ -208,8 +227,8 @@ export async function sendPendingPointsEmail(
 
   try {
     const subject = isReminder
-      ? `Rappel : ${pendingCount} point${pendingCount > 1 ? 's' : ''} en attente de validation`
-      : `Qarte Shield : ${pendingCount} point${pendingCount > 1 ? 's' : ''} a moderer`;
+      ? `${shopName} - Rappel : ${pendingCount} point${pendingCount > 1 ? 's' : ''} en attente`
+      : `${shopName} - ${pendingCount} point${pendingCount > 1 ? 's' : ''} à modérer`;
 
     const html = await render(
       PendingPointsEmail({
@@ -219,6 +238,15 @@ export async function sendPendingPointsEmail(
         daysSinceFirst,
       })
     );
+    const text = await render(
+      PendingPointsEmail({
+        shopName,
+        pendingCount,
+        isReminder,
+        daysSinceFirst,
+      }),
+      { plainText: true }
+    );
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
@@ -226,6 +254,8 @@ export async function sendPendingPointsEmail(
       replyTo: EMAIL_REPLY_TO,
       subject,
       html,
+      text,
+      headers: EMAIL_HEADERS,
     });
 
     if (error) {
@@ -237,6 +267,114 @@ export async function sendPendingPointsEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending pending points email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email paiement échoué
+export async function sendPaymentFailedEmail(
+  to: string,
+  shopName: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(PaymentFailedEmail({ shopName }));
+    const text = await render(PaymentFailedEmail({ shopName }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} - Action requise : problème de paiement`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send payment failed email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Payment failed email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending payment failed email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email confirmation de résiliation
+export async function sendSubscriptionCanceledEmail(
+  to: string,
+  shopName: string,
+  endDate: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(SubscriptionCanceledEmail({ shopName, endDate }));
+    const text = await render(SubscriptionCanceledEmail({ shopName, endDate }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} - Confirmation de résiliation`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send subscription canceled email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Subscription canceled email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending subscription canceled email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email de réactivation (win-back)
+export async function sendReactivationEmail(
+  to: string,
+  shopName: string,
+  daysSinceCancellation: number,
+  totalCustomers?: number
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(ReactivationEmail({ shopName, daysSinceCancellation, totalCustomers }));
+    const text = await render(ReactivationEmail({ shopName, daysSinceCancellation, totalCustomers }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} - Vos clients vous attendent`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send reactivation email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Reactivation email sent to ${to} (${daysSinceCancellation} days since cancellation)`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending reactivation email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 
+interface SubscriberCustomer {
+  id: string;
+  phone_number: string;
+  first_name: string;
+  last_name: string | null;
+}
+
 // Helper to verify merchant ownership
 async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean }> {
   const supabaseAuth = await createRouteHandlerSupabaseClient();
@@ -69,9 +76,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Build a map of phone -> this merchant's customer data
-    const phoneToMerchantCustomer = new Map<string, any>();
+    const phoneToMerchantCustomer = new Map<string, SubscriberCustomer>();
     for (const card of merchantCustomers) {
-      const customer = card.customers as any;
+      // Supabase returns customers as object (not array) with !inner join
+      const customer = card.customers as unknown as SubscriberCustomer;
       if (customer?.phone_number) {
         phoneToMerchantCustomer.set(customer.phone_number, {
           id: customer.id,
@@ -140,7 +148,7 @@ export async function GET(request: NextRequest) {
 
     // Step 5: Get THIS merchant's customer IDs for phones with push
     const subscriberCustomerIds: string[] = [];
-    const subscribersData: any[] = [];
+    const subscribersData: SubscriberCustomer[] = [];
 
     for (const phone of phonesWithPush) {
       const merchantCustomer = phoneToMerchantCustomer.get(phone);

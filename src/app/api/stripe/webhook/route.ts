@@ -3,7 +3,7 @@ import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
-import { sendSubscriptionConfirmedEmail } from '@/lib/email';
+import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail } from '@/lib/email';
 import type { SubscriptionStatus } from '@/types';
 
 const supabase = createClient(
@@ -69,13 +69,30 @@ export async function POST(request: Request) {
 
       logger.debug('Canceling subscription:', subscription.id);
 
-      await supabase
+      const { data: merchant } = await supabase
         .from('merchants')
         .update({
           subscription_status: 'canceled',
           updated_at: new Date().toISOString(),
         })
-        .eq('stripe_subscription_id', subscription.id);
+        .eq('stripe_subscription_id', subscription.id)
+        .select('shop_name, user_id')
+        .single();
+
+      // Envoyer l'email de confirmation de résiliation
+      if (merchant) {
+        const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+        if (userData?.user?.email) {
+          const endDate = new Date().toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          });
+          sendSubscriptionCanceledEmail(userData.user.email, merchant.shop_name, endDate).catch((err) => {
+            logger.error('Failed to send subscription canceled email', err);
+          });
+        }
+      }
 
       break;
     }
@@ -85,13 +102,25 @@ export async function POST(request: Request) {
 
       logger.debug('Payment failed for customer:', invoice.customer);
 
-      await supabase
+      const { data: merchant } = await supabase
         .from('merchants')
         .update({
           subscription_status: 'past_due',
           updated_at: new Date().toISOString(),
         })
-        .eq('stripe_customer_id', invoice.customer as string);
+        .eq('stripe_customer_id', invoice.customer as string)
+        .select('shop_name, user_id')
+        .single();
+
+      // Envoyer l'email de paiement échoué
+      if (merchant) {
+        const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+        if (userData?.user?.email) {
+          sendPaymentFailedEmail(userData.user.email, merchant.shop_name).catch((err) => {
+            logger.error('Failed to send payment failed email', err);
+          });
+        }
+      }
 
       break;
     }

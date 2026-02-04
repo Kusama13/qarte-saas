@@ -108,7 +108,7 @@ export default function MetriquesPage() {
       // Revenue calculations
       const active = merchants.filter((m: MerchantData) => m.subscription_status === 'active').length;
       const trial = merchants.filter((m: MerchantData) => m.subscription_status === 'trial').length;
-      const churned = merchants.filter((m: MerchantData) => m.subscription_status === 'cancelled').length;
+      const churned = merchants.filter((m: MerchantData) => m.subscription_status === 'canceled').length;
       const total = merchants.length;
       const mrr = active * SUBSCRIPTION_PRICE;
       const conversionRate = total > 0 ? Math.round((active / total) * 100) : 0;

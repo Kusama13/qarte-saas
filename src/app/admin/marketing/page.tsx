@@ -115,7 +115,7 @@ Avec Qarte, offrez-leur une carte de fidélité 100% digitale :
 • Un simple QR code à scanner
 • 10 passages = 1 croissant offert (ou ce que vous voulez !)
 
-Je vous propose 14 jours d'essai gratuit, sans engagement.
+Je vous propose 15 jours d'essai gratuit, sans engagement.
 
 Seriez-vous disponible pour un appel de 10 minutes cette semaine ?
 
@@ -158,7 +158,7 @@ Qarte vous aide à les faire revenir :
 
 Le tout géré depuis votre téléphone en 2 minutes par jour.
 
-Essai gratuit 14 jours. Je peux vous faire une démo ?
+Essai gratuit 15 jours. Je peux vous faire une démo ?
 
 Cordialement,
 [Votre Nom]`,
@@ -178,7 +178,7 @@ Avec Qarte :
 
 Le tout sans application, juste un QR code élégant au comptoir.
 
-Intéressé(e) par 14 jours d'essai gratuit ?
+Intéressé(e) par 15 jours d'essai gratuit ?
 
 [Votre Nom]`,
     },
@@ -197,7 +197,7 @@ Avec Qarte :
 
 Le tout géré en 2 clics depuis votre téléphone.
 
-14 jours d'essai gratuit, ça vous dit ?
+15 jours d'essai gratuit, ça vous dit ?
 
 [Votre Nom]`,
     },
@@ -214,7 +214,7 @@ Qarte = la carte de fidélité digitale :
 • Au 10ème, il est notifié : "Votre café est offert !"
 • Vous le fidélisez sans effort
 
-Essai gratuit 14 jours. Intéressé(e) ?
+Essai gratuit 15 jours. Intéressé(e) ?
 
 [Votre Nom]`,
     },
@@ -268,7 +268,7 @@ BENEFITS LIST:
 ✓ Setup en 5 minutes
 ✓ Notifications push
 
-CTA BUTTON: "14 jours gratuits" or "Essai gratuit"
+CTA BUTTON: "15 jours gratuits" or "Essai gratuit"
 FOOTER: "qarte.fr | La fidélité simplifiée"
 
 Style: Professional, trustworthy, modern SaaS marketing. Clean typography. High contrast. Print-ready A5 format.`,
@@ -304,7 +304,7 @@ BENEFITS:
 ✓ Zéro app côté client
 ✓ Avis Google boostés
 
-CTA: "Testez gratuitement 14 jours"
+CTA: "Testez gratuitement 15 jours"
 FOOTER: "qarte.fr"
 
 Style: Upscale restaurant marketing, professional, clean lines, appetizing but not food-focused. B2B tone, convincing stats layout.`,
@@ -376,7 +376,7 @@ BENEFITS:
 ✓ Stats détaillées
 ✓ Setup immédiat
 
-CTA: "Essai gratuit 14 jours"
+CTA: "Essai gratuit 15 jours"
 FOOTER: "qarte.fr | La fidélité simplifiée"
 
 Style: Fashion-forward, chic, boutique marketing. Clean and sophisticated. Appeals to boutique owners who care about brand image.`,
@@ -412,7 +412,7 @@ BENEFITS:
 ✓ Aucune app requise
 ✓ QR code unique
 
-CTA: "14 jours offerts"
+CTA: "15 jours offerts"
 FOOTER: "qarte.fr"
 
 Style: Warm, inviting, coffee shop aesthetic but professional B2B marketing. Stats-driven, convincing.`,
@@ -804,7 +804,7 @@ export default function MarketingPage() {
               Arguments clés
             </h3>
             <ul className="text-sm text-white/80 space-y-1">
-              <li>• 14 jours gratuits, sans engagement</li>
+              <li>• 15 jours gratuits, sans engagement</li>
               <li>• Pas d&apos;app à télécharger pour les clients</li>
               <li>• Setup en 5 minutes</li>
               <li>• Réseau multi-commerces = plus de valeur</li>
@@ -818,7 +818,7 @@ export default function MarketingPage() {
             <ul className="text-sm text-white/80 space-y-1">
               <li>• &quot;J&apos;ai déjà des cartes&quot; → Vos clients les perdent</li>
               <li>• &quot;C&apos;est compliqué&quot; → Démo en 5 min, je vous montre</li>
-              <li>• &quot;Ça coûte cher&quot; → 14 jours gratuits pour tester</li>
+              <li>• &quot;Ça coûte cher&quot; → 15 jours gratuits pour tester</li>
             </ul>
           </div>
           <div className="bg-white/10 rounded-lg p-4">

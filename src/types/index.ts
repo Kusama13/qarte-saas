@@ -122,6 +122,7 @@ export interface Redemption {
   customer_id: string;
   redeemed_at: string;
   stamps_used: number;
+  tier: 1 | 2;
 }
 
 export interface ContactMessage {
@@ -179,4 +180,48 @@ export interface MemberCard {
   created_at: string;
   customer?: Customer;
   program?: MemberProgram;
+}
+
+// ============================================
+// Extended types for Supabase JOIN queries
+// ============================================
+
+/** LoyaltyCard with customer relation from .select('*, customers(*)') */
+export interface LoyaltyCardWithCustomer extends LoyaltyCard {
+  customers: Customer;
+}
+
+/** LoyaltyCard with merchant relation */
+export interface LoyaltyCardWithMerchant extends LoyaltyCard {
+  merchants: Merchant;
+}
+
+/** LoyaltyCard with both customer and merchant */
+export interface LoyaltyCardFull extends LoyaltyCard {
+  customers: Customer;
+  merchants: Merchant;
+}
+
+/** MemberProgram with merchant relation from .select('*, merchants(user_id)') */
+export interface MemberProgramWithMerchant extends MemberProgram {
+  merchants: { user_id: string };
+}
+
+/** MemberCard with program and nested merchant */
+export interface MemberCardWithProgramAndMerchant extends MemberCard {
+  program: MemberProgramWithMerchant;
+}
+
+// ============================================
+// Global type declarations
+// ============================================
+
+declare global {
+  interface Window {
+    fbq?: (action: string, event: string, params?: Record<string, unknown>) => void;
+    standalone?: boolean;
+  }
+  interface Navigator {
+    standalone?: boolean;
+  }
 }

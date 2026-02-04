@@ -21,7 +21,13 @@ async function verifyProgramOwnership(programId: string): Promise<{ authorized: 
     .eq('id', programId)
     .single();
 
-  if (!program || (program.merchants as any)?.user_id !== user.id) {
+  if (!program) {
+    return { authorized: false };
+  }
+
+  // Supabase returns merchants as object (not array) with !inner join
+  const merchants = program.merchants as unknown as { user_id: string };
+  if (!merchants || merchants.user_id !== user.id) {
     return { authorized: false };
   }
 
@@ -49,8 +55,9 @@ async function verifyCardOwnership(cardId: string): Promise<{ authorized: boolea
     return { authorized: false };
   }
 
-  const merchants = (card.program as any)?.merchants;
-  if (!merchants || merchants.user_id !== user.id) {
+  // Supabase returns nested objects (not arrays) with !inner joins
+  const program = card.program as unknown as { merchants: { user_id: string } };
+  if (!program?.merchants || program.merchants.user_id !== user.id) {
     return { authorized: false };
   }
 
