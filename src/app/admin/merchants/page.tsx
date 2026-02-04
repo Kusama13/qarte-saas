@@ -89,21 +89,27 @@ export default function AdminMerchantsPage() {
       // Get super admin user_ids
       const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
 
-      // Count customers for each merchant and mark super admins
-      const merchantsWithCounts = await Promise.all(
-        (merchantsData || []).map(async (merchant: Merchant) => {
-          const { count } = await supabase
-            .from('loyalty_cards')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id);
+      // Get all merchant IDs
+      const merchantIds = (merchantsData || []).map((m: Merchant) => m.id);
 
-          return {
-            ...merchant,
-            _isSuperAdmin: superAdminUserIds.has(merchant.user_id),
-            _count: { customers: count || 0 },
-          };
-        })
-      );
+      // Single query to count customers for ALL merchants (instead of N queries)
+      const { data: loyaltyCards } = await supabase
+        .from('loyalty_cards')
+        .select('merchant_id')
+        .in('merchant_id', merchantIds);
+
+      // Group counts in memory
+      const countMap = new Map<string, number>();
+      (loyaltyCards || []).forEach((card: { merchant_id: string }) => {
+        countMap.set(card.merchant_id, (countMap.get(card.merchant_id) || 0) + 1);
+      });
+
+      // Merge counts with merchants
+      const merchantsWithCounts = (merchantsData || []).map((merchant: Merchant) => ({
+        ...merchant,
+        _isSuperAdmin: superAdminUserIds.has(merchant.user_id),
+        _count: { customers: countMap.get(merchant.id) || 0 },
+      }));
 
       setMerchants(merchantsWithCounts);
     } catch (error) {
