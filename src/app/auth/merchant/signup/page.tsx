@@ -233,8 +233,8 @@ export default function MerchantSignupPage() {
               <div className="relative">
                 <Input
                   type="text"
-                  label="Nom de votre commerce"
-                  placeholder="Ex: Boulangerie Martin"
+                  label="Votre établissement"
+                  placeholder="Ex: Institut Beauté Marie"
                   value={formData.shopName}
                   onChange={(e) =>
                     setFormData({ ...formData, shopName: e.target.value })
@@ -245,7 +245,7 @@ export default function MerchantSignupPage() {
               </div>
 
               <Select
-                label="Type de commerce"
+                label="Activité"
                 placeholder="Sélectionnez..."
                 options={shopTypeOptions}
                 value={formData.shopType}
@@ -258,7 +258,7 @@ export default function MerchantSignupPage() {
               <div className="relative">
                 <Input
                   type="text"
-                  label="Adresse du commerce"
+                  label="Adresse"
                   placeholder="123 rue du Commerce, 75001 Paris"
                   value={formData.shopAddress}
                   onChange={(e) =>

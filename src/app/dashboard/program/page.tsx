@@ -13,7 +13,6 @@ import {
   Gift,
   AlertTriangle,
   Sparkles,
-  ExternalLink,
   Trophy,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
@@ -30,9 +29,6 @@ const BUSINESS_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=200', label: 'Onglerie' },
   { url: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200', label: 'Spa' },
   { url: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=200', label: 'Massage' },
-  { url: 'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=200', label: 'Épilation' },
-  { url: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=200', label: 'Soins' },
-  { url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=200', label: 'Maquillage' },
 ];
 
 
@@ -414,47 +410,6 @@ export default function ProgramPage() {
               </div>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 pt-4 border-t border-gray-100">
-              <div className="space-y-2.5">
-                <label className="label text-sm font-medium ml-1">Couleur principale</label>
-                <div className="flex items-center gap-3 p-1.5 bg-white/50 rounded-xl border border-gray-200 focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all duration-300">
-                  <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-gray-200/50 shadow-sm shrink-0">
-                    <input
-                      type="color"
-                      value={formData.primaryColor}
-                      onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
-                      className="absolute -inset-2 w-[150%] h-[150%] cursor-pointer border-none bg-transparent"
-                    />
-                  </div>
-                  <Input
-                    type="text"
-                    value={formData.primaryColor}
-                    onChange={(e) => setFormData({ ...formData, primaryColor: e.target.value })}
-                    className="border-none bg-transparent focus-visible:ring-0 shadow-none font-mono text-sm uppercase h-auto py-0"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2.5">
-                <label className="label text-sm font-medium ml-1">Couleur secondaire</label>
-                <div className="flex items-center gap-3 p-1.5 bg-white/50 rounded-xl border border-gray-200 focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all duration-300">
-                  <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-gray-200/50 shadow-sm shrink-0">
-                    <input
-                      type="color"
-                      value={formData.secondaryColor}
-                      onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
-                      className="absolute -inset-2 w-[150%] h-[150%] cursor-pointer border-none bg-transparent"
-                    />
-                  </div>
-                  <Input
-                    type="text"
-                    value={formData.secondaryColor}
-                    onChange={(e) => setFormData({ ...formData, secondaryColor: e.target.value })}
-                    className="border-none bg-transparent focus-visible:ring-0 shadow-none font-mono text-sm uppercase h-auto py-0"
-                  />
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="p-8 bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl shadow-lg shadow-indigo-200/50 border border-white/60 backdrop-blur-xl transition-all duration-300">
@@ -563,64 +518,27 @@ export default function ProgramPage() {
           </div>
 
           {/* Review Link Section */}
-          <div className="relative overflow-hidden p-6 md:p-8 bg-gradient-to-br from-white via-amber-50/30 to-yellow-50/40 border border-amber-200/60 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-500 group">
-            {/* Decorative background element */}
-            <div className="absolute -right-16 -top-16 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none group-hover:bg-amber-400/20 transition-all duration-700" />
-
-            <div className="relative space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-white shadow-lg shadow-amber-200 group-hover:scale-105 transition-all duration-300 shrink-0">
-                  <Star className="w-6 h-6 fill-white" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-xl font-bold text-slate-900 tracking-tight">
-                    Boostez votre E-réputation
-                  </h3>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                    <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Impact Prioritaire</span>
-                  </div>
-                </div>
+          <div className="p-5 bg-white/80 backdrop-blur-xl border border-amber-100 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-400 flex items-center justify-center shadow-md">
+                <Star className="w-5 h-5 text-white fill-white" />
               </div>
+              <h3 className="text-lg font-bold text-gray-900">Avis Google</h3>
+            </div>
 
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 px-1">
-                  <label className="text-sm font-bold text-slate-700">Lien Google ou TripAdvisor</label>
-                  <a href="https://support.google.com/business/answer/7035772" target="_blank" rel="noreferrer" className="text-[11px] text-slate-400 hover:text-amber-600 flex items-center gap-1 transition-colors font-medium">
-                    Comment trouver mon lien ? <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-
-                <div className="relative">
-                  <Input
-                    type="url"
-                    className="bg-white border-2 border-amber-100/80 focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10 transition-all h-12 text-sm shadow-sm pr-10 rounded-xl w-full"
-                    placeholder="https://g.page/r/votre-commerce/review"
-                    value={formData.reviewLink}
-                    onChange={(e) =>
-                      setFormData({ ...formData, reviewLink: e.target.value })
-                    }
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-amber-400">
-                    <Star className="w-4 h-4 fill-current opacity-20" />
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed px-1 font-medium">
-                  Une fois configuré, vos clients recevront automatiquement une invitation à noter leur expérience.
-                </p>
-              </div>
-
-              {/* Tips */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-amber-100/60">
-                <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                  <span>Répondez à chaque avis</span>
-                </div>
-                <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                  <span>Demandez l&apos;avis oralement</span>
-                </div>
-              </div>
+            <div className="space-y-3">
+              <Input
+                type="url"
+                className="bg-white border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 h-11 text-sm rounded-xl w-full"
+                placeholder="https://g.page/r/votre-commerce/review"
+                value={formData.reviewLink}
+                onChange={(e) =>
+                  setFormData({ ...formData, reviewLink: e.target.value })
+                }
+              />
+              <p className="text-xs text-gray-500">
+                Ce lien apparaîtra sur la carte de fidélité de vos clients.
+              </p>
             </div>
           </div>
 

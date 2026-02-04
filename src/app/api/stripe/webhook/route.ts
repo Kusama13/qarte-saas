@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
 import { sendSubscriptionConfirmedEmail } from '@/lib/email';
+import type { SubscriptionStatus } from '@/types';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -118,7 +119,7 @@ export async function POST(request: Request) {
 
       logger.debug('Subscription updated:', subscription.id, 'status:', subscription.status);
 
-      let newStatus = subscription.status;
+      let newStatus: SubscriptionStatus = subscription.status as SubscriptionStatus;
 
       // Map Stripe status to our status
       if (subscription.status === 'active' && subscription.cancel_at_period_end) {

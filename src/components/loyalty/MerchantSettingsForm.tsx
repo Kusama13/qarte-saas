@@ -6,7 +6,6 @@ import {
   HelpCircle,
   Gift,
   Target,
-  Footprints,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 
@@ -73,19 +72,6 @@ export function MerchantSettingsForm({
             Comment ça fonctionne ?
           </button>
         )}
-      </div>
-
-      {/* Mode Display - Visit Only */}
-      <div className="p-5 rounded-2xl border-2 border-indigo-500 bg-indigo-50/50 shadow-lg shadow-indigo-100">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-lg shadow-slate-200">
-            <Footprints className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h4 className="font-bold text-gray-900">Mode Visite</h4>
-            <p className="text-sm text-gray-500">1 passage = 1 point</p>
-          </div>
-        </div>
       </div>
 
       {/* Reward Configuration */}
