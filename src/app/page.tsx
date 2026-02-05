@@ -1944,14 +1944,6 @@ function FooterSection() {
             © 2025 Qarte - Fidélisez mieux, dépensez moins
           </p>
 
-          {/* Outils gratuits */}
-          <div className="flex flex-wrap justify-center gap-4 md:gap-6 mb-4">
-            <span className="text-gray-400 text-sm font-medium">Outils gratuits :</span>
-            <a href="/outils-gratuits/qr-menu" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors">QR Code Menu</a>
-            <a href="/outils-gratuits/qr-wifi" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors">QR Code WiFi</a>
-            <a href="/outils-gratuits/lien-avis" className="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition-colors">Lien Avis Google</a>
-          </div>
-
           {/* Pages légales */}
           <div className="flex flex-wrap justify-center gap-4 md:gap-6">
             <a href="/contact" className="text-gray-500 hover:text-gray-700 text-sm transition-colors">Contact</a>

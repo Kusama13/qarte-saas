@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate source
-    const validSources = ['qr-menu', 'qr-wifi', 'google-review', 'ebook'];
+    const validSources = ['ebook'];
     if (!validSources.includes(source)) {
       return NextResponse.json({ error: 'Invalid source' }, { status: 400 });
     }

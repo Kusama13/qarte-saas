@@ -18,8 +18,6 @@ import {
   Flower2,
   MoreHorizontal,
   Loader2,
-  AlertTriangle,
-  Mail,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -41,13 +39,7 @@ interface Merchant {
   };
 }
 
-interface IncompleteSignup {
-  id: string;
-  email: string;
-  created_at: string;
-}
-
-type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'canceled' | 'incomplete';
+type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'canceled';
 
 // Icons for shop types (beauté / bien-être)
 const SHOP_TYPE_ICONS: Record<ShopType, React.ElementType> = {
@@ -77,30 +69,9 @@ const SHOP_TYPE_COLORS: Record<ShopType, string> = {
 export default function AdminMerchantsPage() {
   const supabase = getSupabase();
   const [merchants, setMerchants] = useState<Merchant[]>([]);
-  const [incompleteSignups, setIncompleteSignups] = useState<IncompleteSignup[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
-
-  const fetchIncompleteSignups = useCallback(async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await fetch('/api/admin/incomplete-signups', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setIncompleteSignups(data.incompleteSignups || []);
-      }
-    } catch (error) {
-      console.error('Error fetching incomplete signups:', error);
-    }
-  }, [supabase]);
 
   const fetchMerchants = useCallback(async () => {
     try {
@@ -150,7 +121,6 @@ export default function AdminMerchantsPage() {
 
   useEffect(() => {
     fetchMerchants();
-    fetchIncompleteSignups();
 
     // Subscribe to realtime changes on loyalty_cards
     const channel = supabase
@@ -168,7 +138,7 @@ export default function AdminMerchantsPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, fetchMerchants, fetchIncompleteSignups]);
+  }, [supabase, fetchMerchants]);
 
   // Helper to check if trial is expired
   const isTrialExpired = (merchant: Merchant) => {
@@ -187,7 +157,6 @@ export default function AdminMerchantsPage() {
     const trialExpired = nonAdminMerchants.filter((m: Merchant) => isTrialExpired(m)).length;
     const active = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'active').length;
     const cancelled = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'canceled').length;
-    const incomplete = incompleteSignups.length;
 
     const byType: Record<string, number> = {};
     nonAdminMerchants.forEach((m: Merchant) => {
@@ -195,13 +164,11 @@ export default function AdminMerchantsPage() {
       byType[type] = (byType[type] || 0) + 1;
     });
 
-    return { total, trial: trialActive, trialExpired, active, cancelled, incomplete, byType, adminCount };
-  }, [merchants, incompleteSignups]);
+    return { total, trial: trialActive, trialExpired, active, cancelled, byType, adminCount };
+  }, [merchants]);
 
   // Filtered merchants
   const filteredMerchants = useMemo(() => {
-    if (statusFilter === 'incomplete') return [];
-
     let filtered = merchants;
 
     if (statusFilter === 'trial') {
@@ -248,18 +215,6 @@ export default function AdminMerchantsPage() {
       day: 'numeric',
       month: 'short',
     });
-  };
-
-  const getTimeSince = (dateString: string) => {
-    const now = new Date();
-    const created = new Date(dateString);
-    const diffMs = now.getTime() - created.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) return `il y a ${diffDays}j`;
-    if (diffHours > 0) return `il y a ${diffHours}h`;
-    return 'à l\'instant';
   };
 
   const getDaysRemaining = (trialEndsAt: string | null) => {
@@ -326,7 +281,7 @@ export default function AdminMerchantsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#5167fc]/10 flex items-center justify-center">
@@ -385,17 +340,6 @@ export default function AdminMerchantsPage() {
             </div>
           </div>
         </div>
-        <div className="bg-white p-4 rounded-xl border border-yellow-200 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-yellow-50 flex items-center justify-center">
-              <AlertTriangle className="w-5 h-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.incomplete}</p>
-              <p className="text-xs text-gray-500">Incomplets</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Stats by Type */}
@@ -443,7 +387,6 @@ export default function AdminMerchantsPage() {
             { label: 'Expirés', value: 'trial_expired' as FilterStatus, count: stats.trialExpired },
             { label: 'Actifs', value: 'active' as FilterStatus, count: stats.active },
             { label: 'Churned', value: 'canceled' as FilterStatus, count: stats.cancelled },
-            { label: 'Incomplets', value: 'incomplete' as FilterStatus, count: stats.incomplete },
           ].map((btn) => (
             <button
               key={btn.value}
@@ -451,7 +394,7 @@ export default function AdminMerchantsPage() {
               className={cn(
                 "px-4 py-2 text-sm font-medium rounded-xl transition-colors whitespace-nowrap",
                 statusFilter === btn.value
-                  ? btn.value === 'incomplete' ? "bg-yellow-500 text-white" : "bg-[#5167fc] text-white"
+                  ? "bg-[#5167fc] text-white"
                   : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
               )}
             >
@@ -461,54 +404,8 @@ export default function AdminMerchantsPage() {
         </div>
       </div>
 
-      {/* Incomplete Signups List */}
-      {statusFilter === 'incomplete' ? (
-        incompleteSignups.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
-            <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-300" />
-            <p className="font-medium text-gray-900">Aucune inscription incomplète</p>
-            <p className="text-sm text-gray-500 mt-1">Tous les utilisateurs ont finalisé leur inscription</p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl border border-yellow-200 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-yellow-100 bg-yellow-50/50 flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-yellow-100 flex items-center justify-center">
-                <AlertTriangle className="w-4 h-4 text-yellow-600" />
-              </div>
-              <h3 className="font-semibold text-gray-900">
-                Inscriptions incomplètes
-              </h3>
-              <span className="text-sm text-gray-500">({incompleteSignups.length})</span>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {incompleteSignups.map((signup) => (
-                <div
-                  key={signup.id}
-                  className="flex items-center justify-between p-4"
-                >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-700 font-bold text-sm flex-shrink-0">
-                      <Mail className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{signup.email}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        Inscrit {getTimeSince(signup.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="px-2 py-1 text-xs font-medium text-yellow-700 bg-yellow-100 rounded-full flex-shrink-0">
-                    Phase 1 uniquement
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-      ) : (
-        <>
-          {/* Merchants grouped by type */}
-          {filteredMerchants.length === 0 ? (
+      {/* Merchants grouped by type */}
+      {filteredMerchants.length === 0 ? (
             <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
               <Store className="w-12 h-12 mx-auto mb-4 text-gray-300" />
               <p className="font-medium text-gray-900">Aucun commerçant trouvé</p>
@@ -581,8 +478,6 @@ export default function AdminMerchantsPage() {
               })}
             </div>
           )}
-        </>
-      )}
     </div>
   );
 }
