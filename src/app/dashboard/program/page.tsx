@@ -54,6 +54,7 @@ export default function ProgramPage() {
   const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+  const [isFirstSetup, setIsFirstSetup] = useState(false);
 
   // Main form data (saved to DB)
   const [formData, setFormData] = useState({
@@ -83,6 +84,11 @@ export default function ProgramPage() {
   const [originalStampsRequired, setOriginalStampsRequired] = useState(10);
   const [showStampsWarning, setShowStampsWarning] = useState(false);
   const [tier2Error, setTier2Error] = useState('');
+
+  // Prefetch QR page for faster navigation after first save
+  useEffect(() => {
+    router.prefetch('/dashboard/qr-download');
+  }, [router]);
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -119,6 +125,9 @@ export default function ProgramPage() {
           tier2RewardDescription: data.tier2_reward_description || '',
         });
         setOriginalStampsRequired(data.stamps_required || 10);
+        if (!data.reward_description) {
+          setIsFirstSetup(true);
+        }
       }
       setLoading(false);
     };
@@ -203,6 +212,31 @@ export default function ProgramPage() {
         .eq('id', merchant.id);
 
       if (error) throw error;
+
+      if (isFirstSetup) {
+        // Update merchant cache so QR page loads instantly with fresh data
+        try {
+          const updatedMerchant = {
+            ...merchant,
+            logo_url: formData.logoUrl || null,
+            primary_color: formData.primaryColor,
+            secondary_color: formData.secondaryColor,
+            review_link: formData.reviewLink || null,
+            stamps_required: formData.stampsRequired,
+            reward_description: formData.rewardDescription,
+            loyalty_mode: 'visit',
+            tier2_enabled: formData.tier2Enabled,
+            tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
+            tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription : null,
+          };
+          localStorage.setItem('qarte_merchant_cache', JSON.stringify({
+            data: updatedMerchant,
+            timestamp: Date.now(),
+          }));
+        } catch {}
+        router.push('/dashboard/qr-download');
+        return;
+      }
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);

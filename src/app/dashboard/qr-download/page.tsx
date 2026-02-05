@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Download,
@@ -15,48 +14,26 @@ import {
   Smartphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { supabase } from '@/lib/supabase';
 import { generateQRCode, getScanUrl } from '@/lib/utils';
 import { jsPDF } from 'jspdf';
 import { toPng } from 'html-to-image';
 import { FlyerTemplate } from '@/components/marketing/FlyerTemplate';
-import type { Merchant } from '@/types';
+import { useMerchant } from '@/contexts/MerchantContext';
 
 export default function QRDownloadPage() {
-  const router = useRouter();
-  const [merchant, setMerchant] = useState<Merchant | null>(null);
+  const { merchant, loading } = useMerchant();
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-  const [loading, setLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const flyerPreviewRef = useRef<HTMLDivElement>(null);
   const flyerExportRef = useRef<HTMLDivElement>(null);
 
+  // Generate QR code when merchant data is available
   useEffect(() => {
-    const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push('/auth/merchant');
-        return;
-      }
-
-      const { data } = await supabase
-        .from('merchants')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (data) {
-        setMerchant(data);
-        const scanUrl = getScanUrl(data.scan_code);
-        const qr = await generateQRCode(scanUrl);
-        setQrCodeUrl(qr);
-      }
-      setLoading(false);
-    };
-
-    fetchData();
-  }, [router]);
+    if (!merchant?.scan_code) return;
+    const scanUrl = getScanUrl(merchant.scan_code);
+    generateQRCode(scanUrl).then(setQrCodeUrl);
+  }, [merchant?.scan_code]);
 
   const generatePdf = async () => {
     if (!flyerExportRef.current || !merchant) return;
