@@ -6,6 +6,32 @@ Historique des deploiements et modifications.
 
 ## [2026-02-05] - Inscription 2 phases, suppression outils gratuits
 
+### Deploiement #6 - Email relance via Resend scheduledAt
+**Commit:** `e7a4a46`
+
+#### Changements
+- **feat:** Email relance inscription incomplete programme via Resend `scheduledAt` (1h apres Phase 1)
+  - Remplace le cron morning qui ne couvrait qu'une fenetre horaire fixe
+  - Nouvel endpoint `POST /api/emails/schedule-incomplete`
+  - Email ID stocke dans `user_metadata.scheduled_incomplete_email_id`
+  - Annulation automatique si Phase 2 completee avant 1h
+- **refactor:** Cron morning passe de 5 a 4 taches (section incomplete signups supprimee)
+
+#### Nouveaux fichiers (1)
+```
+src/app/api/emails/schedule-incomplete/route.ts
+```
+
+#### Fichiers modifies (4)
+| Fichier | Modification |
+|---------|--------------|
+| `src/lib/email.ts` | +scheduleIncompleteSignupEmail(), +cancelScheduledEmail() |
+| `src/app/auth/merchant/signup/page.tsx` | Appel API schedule apres signUp reussi |
+| `src/app/api/merchants/create/route.ts` | Cancel email programme + import cancelScheduledEmail |
+| `src/app/api/cron/morning/route.ts` | Retrait section incomplete signups, import, results |
+
+---
+
 ### Deploiement #5 - Optimisation flux onboarding
 **Commit:** `2d8fc0d`
 

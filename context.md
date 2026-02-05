@@ -204,7 +204,9 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
   - Prefetch de la route QR au chargement de la page programme
   - Cache merchant mis a jour avant redirect (chargement QR instantane)
   - Page QR utilise `useMerchant()` (contexte partage, pas de fetch duplique)
-- Email de relance automatique si Phase 2 non completee (2-3h, via cron morning)
+- **Email relance inscription incomplete:** Programme via Resend `scheduledAt` (+1h apres Phase 1)
+  - Endpoint `/api/emails/schedule-incomplete` appele apres signUp
+  - Email ID stocke dans `user_metadata`, annule si Phase 2 completee
 - Admin : suivi des inscriptions incompletes dans `/admin/leads`
 
 ### Marketing
@@ -334,7 +336,7 @@ npm run email
 | `src/components/FacebookPixel.tsx` | Tracking FB |
 | `tailwind.config.ts` | Config Tailwind (couleurs, fonts) |
 | `next.config.mjs` | Config Next.js (securite, images) |
-| `src/app/api/cron/morning/route.ts` | Cron principal (5 taches) |
+| `src/app/api/cron/morning/route.ts` | Cron principal (4 taches) |
 | `supabase/migrations/` | 28+ migrations SQL |
 
 ---
@@ -467,7 +469,7 @@ import type { Merchant } from '@/types';
 
 | Cron | Horaire | Description |
 |------|---------|-------------|
-| `/api/cron/morning` | 05:00 UTC | Inscriptions incompletes (2-3h), emails essai, rappel programme J+1, rappels pending, push 10h |
+| `/api/cron/morning` | 09:00 UTC | Emails essai, rappel programme J+1, rappels pending, push 10h |
 | `/api/cron/evening` | 18:00 UTC | Push notifications programmees 18h |
 | `/api/cron/reactivation` | 10:00 UTC | Emails win-back J+7/14/30 |
 
@@ -478,7 +480,7 @@ import type { Merchant } from '@/types';
 | Email | Declencheur |
 |-------|-------------|
 | WelcomeEmail | Inscription commercant (Phase 2 completee) |
-| IncompleteSignupEmail | Phase 1 sans Phase 2 (2-3h, cron morning) |
+| IncompleteSignupEmail | Phase 1 sans Phase 2 (+1h via Resend scheduledAt) |
 | ProgramReminderEmail | Programme non configure J+1 (cron morning) |
 | TrialEndingEmail | J-3 et J-1 avant fin essai (cron morning) |
 | TrialExpiredEmail | Essai expire J+1/3/5 (cron morning) |
