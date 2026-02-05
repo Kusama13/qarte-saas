@@ -9,6 +9,8 @@ import {
   PaymentFailedEmail,
   SubscriptionCanceledEmail,
   ReactivationEmail,
+  ProgramReminderEmail,
+  IncompleteSignupEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -338,6 +340,75 @@ export async function sendSubscriptionCanceledEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending subscription canceled email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email relance inscription incomplète (auth sans merchant, +2h)
+export async function sendIncompleteSignupEmail(
+  to: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(IncompleteSignupEmail({ email: to }));
+    const text = await render(IncompleteSignupEmail({ email: to }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: 'Votre compte Qarte est presque prêt — il ne reste que 30 secondes',
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send incomplete signup email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Incomplete signup email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending incomplete signup email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email relance programme non configuré (J+1)
+export async function sendProgramReminderEmail(
+  to: string,
+  shopName: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(ProgramReminderEmail({ shopName }));
+    const text = await render(ProgramReminderEmail({ shopName }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName}, votre programme de fidélité n'attend plus que vous`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send program reminder email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Program reminder email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending program reminder email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

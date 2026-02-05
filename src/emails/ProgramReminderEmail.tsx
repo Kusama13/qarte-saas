@@ -8,16 +8,15 @@ import {
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
 
-interface WelcomeEmailProps {
+interface ProgramReminderEmailProps {
   shopName: string;
-  trialDays?: number;
 }
 
-export function WelcomeEmail({ shopName, trialDays = 15 }: WelcomeEmailProps) {
+export function ProgramReminderEmail({ shopName }: ProgramReminderEmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, votre programme de fidélité est prêt en 3 minutes`}>
+    <BaseLayout preview={`${shopName}, votre programme de fidélité n'attend plus que vous`}>
       <Heading style={heading}>
-        {shopName}, vos clients n&apos;attendent que vous
+        Votre programme n&apos;est pas encore configuré
       </Heading>
 
       <Text style={paragraph}>
@@ -25,65 +24,62 @@ export function WelcomeEmail({ shopName, trialDays = 15 }: WelcomeEmailProps) {
       </Text>
 
       <Text style={paragraph}>
-        Votre compte Qarte est créé. Vous avez <strong>{trialDays} jours gratuits</strong> pour
-        lancer votre programme de fidélité — et ça prend <strong>3 minutes</strong>.
+        Vous avez créé votre compte Qarte hier, mais votre programme de
+        fidélité n&apos;est pas encore en place. Vos clients passent chez vous
+        aujourd&apos;hui — et chaque passage sans fidélisation, c&apos;est une
+        occasion manquée.
       </Text>
 
       <Text style={highlightBox}>
-        Chaque jour sans programme, c&apos;est des clients qui passent chez vous
-        sans être fidélisés. Ne laissez pas passer cette opportunité.
+        En <strong>3 minutes</strong>, vous pouvez avoir un programme
+        opérationnel. Il suffit de choisir votre récompense et d&apos;afficher
+        votre QR code.
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/program">
-          Créer mon programme en 3 minutes
+          Configurer mon programme maintenant
         </Button>
       </Section>
 
       <Hr style={divider} />
 
       <Heading as="h2" style={subheading}>
-        3 étapes et c&apos;est parti :
+        Vous ne savez pas quoi offrir ? Voici des idées :
       </Heading>
 
-      <Section style={stepsBox}>
-        <Text style={stepItem}>
-          <strong>1.</strong> Choisissez votre récompense (ex: &quot;1 soin offert après 10 passages&quot;)
+      <Section style={ideasBox}>
+        <Text style={ideaItem}>
+          💅 <strong>Onglerie :</strong> &quot;1 pose offerte après 10 passages&quot;
         </Text>
-        <Text style={stepItem}>
-          <strong>2.</strong> Imprimez votre QR code et affichez-le en caisse
+        <Text style={ideaItem}>
+          💇 <strong>Coiffeur :</strong> &quot;1 brushing offert après 8 visites&quot;
         </Text>
-        <Text style={stepItem}>
-          <strong>3.</strong> Vos clients scannent à chaque visite — c&apos;est tout
+        <Text style={ideaItem}>
+          💆 <strong>Institut :</strong> &quot;1 soin visage offert après 10 passages&quot;
+        </Text>
+        <Text style={ideaItem}>
+          🍕 <strong>Restaurant :</strong> &quot;1 dessert offert après 5 repas&quot;
         </Text>
       </Section>
 
-      <Hr style={divider} />
-
-      <Section style={benefitsBox}>
-        <Text style={benefitsTitle}>Pourquoi les commerçants adorent Qarte :</Text>
-        <Text style={benefitItem}>+40% de clients réguliers en moyenne</Text>
-        <Text style={benefitItem}>Aucune app à télécharger pour vos clients</Text>
-        <Text style={benefitItem}>Tableau de bord pour suivre vos visites</Text>
-        <Text style={benefitItem}>Fonctionne dès le premier scan</Text>
-      </Section>
+      <Text style={paragraph}>
+        Pas besoin d&apos;être parfait du premier coup — vous pourrez modifier
+        votre récompense à tout moment.
+      </Text>
 
       <Hr style={divider} />
 
       <Section style={testimonialBox}>
         <Text style={testimonialQuote}>
-          &quot;J&apos;ai configuré mon programme en 5 minutes. Dès le lendemain, mes
-          clientes scannaient le QR code. Maintenant elles reviennent toutes les
-          3 semaines.&quot;
+          &quot;J&apos;ai hésité 2 jours, puis j&apos;ai configuré mon
+          programme en 5 minutes. Dès le lendemain, mes clientes scannaient
+          le QR code.&quot;
         </Text>
         <Text style={testimonialAuthor}>
           — Élodie, Nail Salon by Elodie
         </Text>
       </Section>
-
-      <Text style={urgencyText}>
-        Vos {trialDays} jours d&apos;essai ont commencé — profitez-en maintenant.
-      </Text>
 
       <Section style={buttonContainer}>
         <Button style={buttonSecondary} href="https://getqarte.com/dashboard/program">
@@ -175,38 +171,17 @@ const buttonSecondary = {
   padding: '12px 28px',
 };
 
-const stepsBox = {
+const ideasBox = {
   backgroundColor: '#f8f9fa',
   borderRadius: '12px',
   padding: '20px 24px',
-  margin: '0 0 8px 0',
+  margin: '0 0 24px 0',
 };
 
-const stepItem = {
+const ideaItem = {
   color: '#4a5568',
   fontSize: '15px',
   lineHeight: '2',
-  margin: '0',
-};
-
-const benefitsBox = {
-  backgroundColor: '#f0edfc',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '0 0 8px 0',
-};
-
-const benefitsTitle = {
-  color: '#1a1a1a',
-  fontSize: '15px',
-  fontWeight: '600',
-  margin: '0 0 12px 0',
-};
-
-const benefitItem = {
-  color: '#4a5568',
-  fontSize: '14px',
-  lineHeight: '1.8',
   margin: '0',
 };
 
@@ -231,15 +206,6 @@ const testimonialAuthor = {
   margin: '0',
 };
 
-const urgencyText = {
-  color: '#1a1a1a',
-  fontSize: '16px',
-  fontWeight: '600',
-  lineHeight: '1.6',
-  margin: '0 0 8px 0',
-  textAlign: 'center' as const,
-};
-
 const whatsappButton = {
   backgroundColor: '#25D366',
   borderRadius: '8px',
@@ -258,4 +224,4 @@ const signature = {
   margin: '24px 0 0 0',
 };
 
-export default WelcomeEmail;
+export default ProgramReminderEmail;

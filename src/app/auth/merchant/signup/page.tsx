@@ -10,22 +10,13 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  Phone,
-  Store,
-  MapPin,
   Check,
 } from 'lucide-react';
-import { Button, Input, Select } from '@/components/ui';
+import { Button, Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
-import { generateSlug, validateFrenchPhone, validateEmail } from '@/lib/utils';
-import { SHOP_TYPES, type ShopType } from '@/types';
-import { trackPageView, trackSignupStarted, trackSignupCompleted, trackSetupCompleted } from '@/lib/analytics';
+import { validateEmail } from '@/lib/utils';
+import { trackPageView, trackSignupStarted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/FacebookPixel';
-
-const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
-  value,
-  label,
-}));
 
 export default function MerchantSignupPage() {
   const router = useRouter();
@@ -36,10 +27,6 @@ export default function MerchantSignupPage() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    phone: '',
-    shopName: '',
-    shopType: '' as ShopType | '',
-    shopAddress: '',
   });
 
   // Track page view
@@ -67,24 +54,6 @@ export default function MerchantSignupPage() {
       return;
     }
 
-    if (!validateFrenchPhone(formData.phone)) {
-      setError('Veuillez entrer un numéro de téléphone français valide');
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.shopType) {
-      setError('Veuillez sélectionner un type de commerce');
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.shopAddress || formData.shopAddress.trim().length < 10) {
-      setError('Veuillez entrer une adresse complète');
-      setLoading(false);
-      return;
-    }
-
     try {
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email: formData.email,
@@ -102,42 +71,11 @@ export default function MerchantSignupPage() {
       }
 
       if (authData.user) {
-        const slug = generateSlug(formData.shopName);
+        // Track Facebook Pixel Lead event (Phase 1 completed)
+        fbEvents.lead();
 
-        // Utiliser l'API route pour créer le marchand (bypass RLS)
-        const response = await fetch('/api/merchants/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(authData.session && {
-              'Authorization': `Bearer ${authData.session.access_token}`,
-            }),
-          },
-          body: JSON.stringify({
-            user_id: authData.user.id,
-            slug,
-            shop_name: formData.shopName,
-            shop_type: formData.shopType,
-            shop_address: formData.shopAddress || null,
-            phone: formData.phone,
-          }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          console.error('Merchant creation error:', result.error);
-          setError('Erreur lors de la création du profil: ' + result.error);
-          return;
-        }
-
-        // Track successful signup and merchant creation
-        trackSignupCompleted(authData.user.id, 'email');
-        trackSetupCompleted(result.merchant?.id || authData.user.id, formData.shopType || undefined);
-        fbEvents.completeRegistration();
-
-        // Redirection directe vers le dashboard
-        window.location.href = '/dashboard';
+        // Redirect to Phase 2 (complete profile)
+        router.push('/auth/merchant/signup/complete');
       } else {
         setError('Erreur lors de la création du compte. Veuillez réessayer.');
       }
@@ -168,6 +106,9 @@ export default function MerchantSignupPage() {
         <div className="w-full max-w-md">
           <div className="p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
             <div className="text-center mb-8">
+              <span className="inline-block px-3 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full mb-3">
+                Étape 1 sur 2
+              </span>
               <h1 className="text-2xl font-bold text-gray-900">
                 Créer votre compte
               </h1>
@@ -222,61 +163,8 @@ export default function MerchantSignupPage() {
                 </button>
               </div>
 
-              <div className="relative">
-                <Input
-                  type="tel"
-                  label="Téléphone"
-                  placeholder="06 12 34 56 78"
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  required
-                />
-                <Phone className="absolute w-5 h-5 text-gray-400 right-4 top-10" />
-              </div>
-
-              <div className="relative">
-                <Input
-                  type="text"
-                  label="Votre établissement"
-                  placeholder="Ex: Institut Beauté Marie"
-                  value={formData.shopName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, shopName: e.target.value })
-                  }
-                  required
-                />
-                <Store className="absolute w-5 h-5 text-gray-400 right-4 top-10" />
-              </div>
-
-              <Select
-                label="Activité"
-                placeholder="Sélectionnez..."
-                options={shopTypeOptions}
-                value={formData.shopType}
-                onChange={(e) =>
-                  setFormData({ ...formData, shopType: e.target.value as ShopType })
-                }
-                required
-              />
-
-              <div className="relative">
-                <Input
-                  type="text"
-                  label="Adresse"
-                  placeholder="123 rue du Commerce, 75001 Paris"
-                  value={formData.shopAddress}
-                  onChange={(e) =>
-                    setFormData({ ...formData, shopAddress: e.target.value })
-                  }
-                  required
-                />
-                <MapPin className="absolute w-5 h-5 text-gray-400 right-4 top-10" />
-              </div>
-
               <Button type="submit" loading={loading} className="w-full">
-                Créer mon compte
+                Continuer
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </form>

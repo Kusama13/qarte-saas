@@ -5,6 +5,7 @@ import type { NextRequest } from 'next/server';
 const protectedRoutes = ['/dashboard'];
 const adminRoutes = ['/admin'];
 const authRoutes = ['/auth/merchant', '/auth/merchant/signup'];
+const completeProfileRoute = '/auth/merchant/signup/complete';
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -44,19 +45,54 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Handle complete profile route (Phase 2 of signup)
+  if (pathname === completeProfileRoute) {
+    if (!session) {
+      // Not logged in → redirect to signup
+      return NextResponse.redirect(new URL('/auth/merchant/signup', request.url));
+    }
+    // Check if merchant already exists
+    const { data: merchant } = await supabase
+      .from('merchants')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (merchant) {
+      // Already has merchant → redirect to dashboard
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    // Logged in but no merchant → allow access to complete profile
+    return supabaseResponse;
+  }
+
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   );
 
   const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
 
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
+  const isAuthRoute = authRoutes.some((route) => pathname === route);
 
   // Protection des routes dashboard
   if (isProtectedRoute && !session) {
     const redirectUrl = new URL('/auth/merchant', request.url);
     redirectUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(redirectUrl);
+  }
+
+  // If user is authenticated and accessing dashboard, check if merchant exists
+  if (isProtectedRoute && session) {
+    const { data: merchant } = await supabase
+      .from('merchants')
+      .select('id')
+      .eq('user_id', session.user.id)
+      .single();
+
+    if (!merchant) {
+      // Logged in but no merchant → redirect to complete profile
+      return NextResponse.redirect(new URL(completeProfileRoute, request.url));
+    }
   }
 
   // Protection des routes admin
@@ -92,5 +128,6 @@ export const config = {
     '/admin/:path*',
     '/auth/merchant',
     '/auth/merchant/signup',
+    '/auth/merchant/signup/complete',
   ],
 };

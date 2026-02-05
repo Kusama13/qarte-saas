@@ -8,3 +8,5 @@ export { QRCodeEmail } from './QRCodeEmail';
 export { PaymentFailedEmail } from './PaymentFailedEmail';
 export { SubscriptionCanceledEmail } from './SubscriptionCanceledEmail';
 export { ReactivationEmail } from './ReactivationEmail';
+export { ProgramReminderEmail } from './ProgramReminderEmail';
+export { IncompleteSignupEmail } from './IncompleteSignupEmail';

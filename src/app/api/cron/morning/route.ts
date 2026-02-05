@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
-import { sendPendingPointsEmail, sendTrialEndingEmail, sendTrialExpiredEmail } from '@/lib/email';
+import { sendPendingPointsEmail, sendTrialEndingEmail, sendTrialExpiredEmail, sendProgramReminderEmail, sendIncompleteSignupEmail } from '@/lib/email';
 import { getTrialStatus } from '@/lib/utils';
 import logger from '@/lib/logger';
 
@@ -31,12 +31,59 @@ export async function GET(request: NextRequest) {
   }
 
   const results = {
+    incompleteSignups: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     trialEmails: { processed: 0, ending: 0, expired: 0, errors: 0 },
+    programReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     pendingReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     scheduledPush: { processed: 0, sent: 0, errors: 0 },
   };
 
   try {
+    // ==================== 0. INCOMPLETE SIGNUPS (auth sans merchant, 2-3h) ====================
+    // Récupérer les utilisateurs auth créés il y a 2-3h sans merchant
+    const threeHoursAgo = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+    const twoHoursAgo = new Date(new Date().getTime() - 2 * 60 * 60 * 1000);
+
+    // Lister les users récents via Supabase Auth Admin
+    const { data: { users: recentUsers } } = await supabase.auth.admin.listUsers({
+      perPage: 100,
+    });
+
+    if (recentUsers) {
+      for (const authUser of recentUsers) {
+        const createdAt = new Date(authUser.created_at);
+        // Only users created between 3h and 2h ago
+        if (createdAt < threeHoursAgo || createdAt > twoHoursAgo) continue;
+        if (!authUser.email) continue;
+
+        results.incompleteSignups.processed++;
+
+        // Check if merchant exists for this user
+        const { data: merchant } = await supabase
+          .from('merchants')
+          .select('id')
+          .eq('user_id', authUser.id)
+          .single();
+
+        if (merchant) {
+          results.incompleteSignups.skipped++;
+          continue;
+        }
+
+        // No merchant → send incomplete signup email
+        try {
+          const result = await sendIncompleteSignupEmail(authUser.email);
+          if (result.success) {
+            results.incompleteSignups.sent++;
+          } else {
+            results.incompleteSignups.errors++;
+          }
+        } catch {
+          results.incompleteSignups.errors++;
+        }
+      }
+    }
+
     // ==================== 1. TRIAL EMAILS ====================
     const { data: merchants } = await supabase
       .from('merchants')
@@ -68,7 +115,44 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ==================== 2. PENDING REMINDERS ====================
+    // ==================== 2. PROGRAM REMINDER (J+1) ====================
+    // Merchants inscrits il y a ~24h qui n'ont pas configuré leur programme
+    const now = new Date();
+    const twentyFiveHoursAgo = new Date(now.getTime() - 25 * 60 * 60 * 1000);
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    const { data: unconfiguredMerchants } = await supabase
+      .from('merchants')
+      .select('id, shop_name, user_id')
+      .is('reward_description', null)
+      .in('subscription_status', ['trial', 'active'])
+      .lte('created_at', twentyFourHoursAgo.toISOString())
+      .gte('created_at', twentyFiveHoursAgo.toISOString());
+
+    for (const merchant of unconfiguredMerchants || []) {
+      results.programReminders.processed++;
+
+      const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+      const email = userData?.user?.email;
+
+      if (!email) {
+        results.programReminders.skipped++;
+        continue;
+      }
+
+      try {
+        const result = await sendProgramReminderEmail(email, merchant.shop_name);
+        if (result.success) {
+          results.programReminders.sent++;
+        } else {
+          results.programReminders.errors++;
+        }
+      } catch {
+        results.programReminders.errors++;
+      }
+    }
+
+    // ==================== 3. PENDING REMINDERS ====================
     const { data: merchantsWithPending } = await supabase
       .from('visits')
       .select('merchant_id')
@@ -158,7 +242,7 @@ export async function GET(request: NextRequest) {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     await supabase.from('pending_email_tracking').delete().lt('sent_at', sevenDaysAgo.toISOString());
 
-    // ==================== 3. SCHEDULED PUSH 10:00 ====================
+    // ==================== 4. SCHEDULED PUSH 10:00 ====================
     const today = new Date().toISOString().split('T')[0];
 
     const { data: scheduledPushes } = await supabase
