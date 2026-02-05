@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import {
   CreditCard,
   Mail,
-  Lock,
   Eye,
   EyeOff,
   ArrowRight,

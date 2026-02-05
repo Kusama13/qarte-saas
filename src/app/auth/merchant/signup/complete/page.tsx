@@ -15,7 +15,7 @@ import { Button, Input, Select } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
 import { generateSlug, validateFrenchPhone } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType } from '@/types';
-import { trackPageView, trackSetupCompleted } from '@/lib/analytics';
+import { trackPageView, trackSetupCompleted, trackSignupCompleted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/FacebookPixel';
 
 const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
@@ -46,31 +46,34 @@ export default function CompleteProfilePage() {
   // Check auth state - user must be logged in
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        // No auth user, redirect back to signup
+      // getUser() validates the JWT server-side (more secure than getSession)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         router.replace('/auth/merchant/signup');
         return;
       }
 
+      // Get session for access token (needed for API calls)
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
       // Check if merchant already exists (in case user refreshes after completing)
       const response = await fetch('/api/merchants/check', {
-        headers: session.access_token
-          ? { 'Authorization': `Bearer ${session.access_token}` }
+        headers: token
+          ? { 'Authorization': `Bearer ${token}` }
           : {},
       });
 
       if (response.ok) {
         const data = await response.json();
         if (data.exists) {
-          // Merchant already created, go to dashboard
           router.replace('/dashboard');
           return;
         }
       }
 
-      setUserId(session.user.id);
-      setAccessToken(session.access_token);
+      setUserId(user.id);
+      setAccessToken(token || null);
       setCheckingAuth(false);
     };
 
@@ -129,7 +132,8 @@ export default function CompleteProfilePage() {
         return;
       }
 
-      // Track merchant creation + FB CompleteRegistration
+      // Track signup completed + merchant creation + FB CompleteRegistration
+      trackSignupCompleted(userId!, 'email');
       trackSetupCompleted(result.merchant?.id || userId!, formData.shopType || undefined);
       fbEvents.completeRegistration();
 

@@ -41,46 +41,64 @@ export async function GET(request: NextRequest) {
   try {
     // ==================== 0. INCOMPLETE SIGNUPS (auth sans merchant, 2-3h) ====================
     // Récupérer les utilisateurs auth créés il y a 2-3h sans merchant
+    // Dedup naturelle : cron 1x/jour à 05:00 UTC, fenêtre 1h → pas de chevauchement entre exécutions
     const threeHoursAgo = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
     const twoHoursAgo = new Date(new Date().getTime() - 2 * 60 * 60 * 1000);
 
-    // Lister les users récents via Supabase Auth Admin
-    const { data: { users: recentUsers } } = await supabase.auth.admin.listUsers({
-      perPage: 100,
-    });
+    // Paginer tous les users via Supabase Auth Admin (listUsers retourne les plus récents en premier)
+    let page = 1;
+    let allUsersInWindow: Array<{ id: string; email?: string; created_at: string }> = [];
+    let hasMore = true;
+    while (hasMore) {
+      const { data: { users: usersPage } } = await supabase.auth.admin.listUsers({
+        page,
+        perPage: 100,
+      });
+      if (!usersPage || usersPage.length === 0) {
+        hasMore = false;
+      } else {
+        const filtered = usersPage.filter(u => {
+          const createdAt = new Date(u.created_at);
+          return createdAt >= threeHoursAgo && createdAt <= twoHoursAgo;
+        });
+        allUsersInWindow = allUsersInWindow.concat(filtered);
 
-    if (recentUsers) {
-      for (const authUser of recentUsers) {
-        const createdAt = new Date(authUser.created_at);
-        // Only users created between 3h and 2h ago
-        if (createdAt < threeHoursAgo || createdAt > twoHoursAgo) continue;
-        if (!authUser.email) continue;
-
-        results.incompleteSignups.processed++;
-
-        // Check if merchant exists for this user
-        const { data: merchant } = await supabase
-          .from('merchants')
-          .select('id')
-          .eq('user_id', authUser.id)
-          .single();
-
-        if (merchant) {
-          results.incompleteSignups.skipped++;
-          continue;
+        // Stop if oldest user in page is before our window or page not full
+        const oldestInPage = new Date(usersPage[usersPage.length - 1].created_at);
+        if (oldestInPage < threeHoursAgo || usersPage.length < 100) {
+          hasMore = false;
         }
+        page++;
+      }
+    }
 
-        // No merchant → send incomplete signup email
-        try {
-          const result = await sendIncompleteSignupEmail(authUser.email);
-          if (result.success) {
-            results.incompleteSignups.sent++;
-          } else {
-            results.incompleteSignups.errors++;
-          }
-        } catch {
+    for (const authUser of allUsersInWindow) {
+      if (!authUser.email) continue;
+
+      results.incompleteSignups.processed++;
+
+      // Check if merchant exists for this user
+      const { data: merchant } = await supabase
+        .from('merchants')
+        .select('id')
+        .eq('user_id', authUser.id)
+        .single();
+
+      if (merchant) {
+        results.incompleteSignups.skipped++;
+        continue;
+      }
+
+      // No merchant → send incomplete signup email
+      try {
+        const result = await sendIncompleteSignupEmail(authUser.email);
+        if (result.success) {
+          results.incompleteSignups.sent++;
+        } else {
           results.incompleteSignups.errors++;
         }
+      } catch {
+        results.incompleteSignups.errors++;
       }
     }
 
