@@ -6,6 +6,45 @@ Historique des deploiements et modifications.
 
 ## [2026-02-05] - Inscription 2 phases, suppression outils gratuits
 
+### Deploiement #5 - Optimisation flux onboarding
+**Commit:** `2d8fc0d`
+
+#### Changements
+- **perf:** Page QR utilise `useMerchant()` au lieu d'un fetch duplique (supprime `getUser()` + query merchants)
+- **feat:** Premiere sauvegarde programme redirige vers `/dashboard/qr-download`
+  - Detection `isFirstSetup` via `reward_description` null
+  - Mise a jour cache localStorage avant redirect (chargement QR instantane)
+- **perf:** `router.prefetch('/dashboard/qr-download')` au mount de la page programme
+
+#### Fichiers modifies (2)
+| Fichier | Modification |
+|---------|--------------|
+| `src/app/dashboard/program/page.tsx` | +isFirstSetup, +prefetch, +cache update avant redirect |
+| `src/app/dashboard/qr-download/page.tsx` | Remplace fetch propre par `useMerchant()` contexte |
+
+---
+
+### Deploiement #4 - Suppression GuidedTour + redirect signup
+**Commit:** `26b3b91`
+
+#### Changements
+- **fix:** Suppression complete de `GuidedTour.tsx` (bloquait tous les clics sur nouveaux comptes)
+  - Overlay `fixed inset-0 z-[9999]` sans `data-tour` attributes = interface bloquee
+- **feat:** Redirect post-inscription Phase 2 vers `/dashboard/program` (au lieu de `/dashboard`)
+
+#### Fichiers supprimes (1)
+```
+src/components/GuidedTour.tsx
+```
+
+#### Fichiers modifies (2)
+| Fichier | Modification |
+|---------|--------------|
+| `src/app/dashboard/page.tsx` | Retrait GuidedTour import, state, callbacks, JSX (-370 lignes) |
+| `src/app/auth/merchant/signup/complete/page.tsx` | Redirect `/dashboard` → `/dashboard/program` |
+
+---
+
 ### Deploiement #3 - Leads & Nettoyage
 **Commit:** `075b715`
 

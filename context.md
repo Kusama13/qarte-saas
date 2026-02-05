@@ -196,9 +196,14 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Moderation manuelle
 - Bannissement numeros
 
-### Inscription 2 Phases
+### Inscription 2 Phases & Onboarding
 - **Phase 1:** Email + mot de passe (page `/auth/merchant/signup`)
 - **Phase 2:** Infos commerce (page `/auth/merchant/signup/complete`)
+- **Flux post-inscription:** Phase 2 → `/dashboard/program` → sauvegarde → `/dashboard/qr-download`
+  - Premiere config programme redirige automatiquement vers la page QR
+  - Prefetch de la route QR au chargement de la page programme
+  - Cache merchant mis a jour avant redirect (chargement QR instantane)
+  - Page QR utilise `useMerchant()` (contexte partage, pas de fetch duplique)
 - Email de relance automatique si Phase 2 non completee (2-3h, via cron morning)
 - Admin : suivi des inscriptions incompletes dans `/admin/leads`
 
