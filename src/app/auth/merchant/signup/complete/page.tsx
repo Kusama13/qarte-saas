@@ -137,8 +137,8 @@ export default function CompleteProfilePage() {
       trackSetupCompleted(result.merchant?.id || userId!, formData.shopType || undefined);
       fbEvents.completeRegistration();
 
-      // Redirect to dashboard
-      window.location.href = '/dashboard';
+      // Redirect to program config
+      window.location.href = '/dashboard/program';
     } catch {
       setError('Une erreur est survenue. Veuillez réessayer.');
     } finally {

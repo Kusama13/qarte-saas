@@ -4,6 +4,90 @@ Historique des deploiements et modifications.
 
 ---
 
+## [2026-02-05] - Inscription 2 phases, suppression outils gratuits
+
+### Deploiement #3 - Leads & Nettoyage
+**Commit:** `075b715`
+
+#### Changements
+- **refactor:** Inscriptions incompletes deplacees de `/admin/merchants` vers `/admin/leads`
+  - Nouvel onglet "Inscriptions incompletes" a cote de "Ebook"
+  - Stats : total (48h) + info relance auto
+  - Bouton mailto pour contacter directement
+- **delete:** Suppression complete des outils gratuits
+  - Pages : `/outils-gratuits/` (qr-menu, qr-wifi, lien-avis) — 8 fichiers
+  - API : `/api/emails/qrcode`
+  - Nettoyage : sitemap, footer landing, `/api/leads/tools` (garde ebook uniquement)
+- **fix:** Filtre 48h sur l'API `/api/admin/incomplete-signups`
+
+#### Fichiers supprimes (10)
+```
+src/app/outils-gratuits/          # Tout le dossier (8 fichiers)
+src/app/api/emails/qrcode/route.ts
+```
+
+#### Fichiers modifies (7)
+| Fichier | Modification |
+|---------|--------------|
+| `src/app/admin/leads/page.tsx` | Remplacement onglet outils par inscriptions incompletes |
+| `src/app/admin/merchants/page.tsx` | Retrait section incompletes (interface, state, UI) |
+| `src/app/api/admin/incomplete-signups/route.ts` | Ajout filtre 48h |
+| `src/app/api/leads/tools/route.ts` | validSources reduit a ['ebook'] |
+| `src/app/sitemap.ts` | Retrait 3 URLs outils-gratuits |
+| `src/app/page.tsx` | Retrait liens outils-gratuits du footer |
+
+#### Impact
+- 84 pages (vs 89 avant) — 5 pages outils supprimees
+- -2744 lignes de code
+- Admin leads unifie (incompletes + ebook)
+
+---
+
+### Deploiement #2 - Corrections audit
+**Commit:** `8979fd7`
+
+#### Changements
+- **security:** `getUser()` au lieu de `getSession()` dans signup/complete (validation JWT server-side)
+- **security:** Rate limiting sur `/api/merchants/check`
+- **perf:** Pagination `listUsers` dans cron morning (stop condition par date)
+- **analytics:** `trackSignupCompleted` ajoute en Phase 2
+- **cleanup:** Import `Lock` inutilise retire de signup
+
+---
+
+### Deploiement #1 - Inscription 2 phases & emails
+**Commit:** `9da1cc3`
+
+#### Nouveaux fichiers
+```
+src/app/auth/merchant/signup/page.tsx          # Phase 1 (email + mdp)
+src/app/auth/merchant/signup/complete/page.tsx  # Phase 2 (infos commerce)
+src/emails/IncompleteSignupEmail.tsx            # Relance inscription incomplete
+src/emails/ProgramReminderEmail.tsx             # Rappel config programme J+1
+src/app/api/admin/incomplete-signups/route.ts   # API admin inscriptions incompletes
+```
+
+#### Changements majeurs
+- **feat:** Inscription commercant en 2 phases
+  - Phase 1 : email + mot de passe (page simplifiee)
+  - Phase 2 : nom commerce, type, adresse, telephone (apres verification email)
+  - Verification email avec code a 6 chiffres entre les 2 phases
+- **feat:** Email de relance inscription incomplete (2-3h apres Phase 1 sans Phase 2)
+- **feat:** Email rappel configuration programme (J+1 apres inscription)
+- **feat:** Redesign email de bienvenue (urgence, temoignage, bouton WhatsApp)
+- **feat:** Vue admin inscriptions incompletes
+- **feat:** Cron morning etendu (5 taches : incompletes, trial, programme, pending, push)
+
+#### Fichiers modifies
+| Fichier | Modification |
+|---------|--------------|
+| `src/emails/WelcomeEmail.tsx` | Redesign complet (urgence, temoignage, WhatsApp) |
+| `src/lib/email.ts` | +sendIncompleteSignupEmail, +sendProgramReminderEmail |
+| `src/app/api/cron/morning/route.ts` | +section incompletes, +section programme J+1, pagination listUsers |
+| `src/app/admin/merchants/page.tsx` | +section inscriptions incompletes |
+
+---
+
 ## [2026-02-04] - Mise a jour majeure
 
 ### Deploiement #2 - Performance
@@ -161,4 +245,4 @@ vercel logs
 
 ---
 
-*Derniere mise a jour: 4 fevrier 2026*
+*Derniere mise a jour: 5 fevrier 2026*

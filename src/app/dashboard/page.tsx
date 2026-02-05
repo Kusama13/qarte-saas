@@ -9,7 +9,6 @@ import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/PendingPointsWidget';
-import GuidedTour from '@/components/GuidedTour';
 import {
   LineChart,
   Line,
@@ -165,16 +164,9 @@ export default function DashboardPage() {
     return true;
   });
   const [error, setError] = useState<string | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [showShieldWarning, setShowShieldWarning] = useState(false);
   const [shieldEnabled, setShieldEnabled] = useState(true);
 
-  // Show onboarding guide if merchant hasn't completed it yet
-  useEffect(() => {
-    if (merchant && !merchant.onboarding_completed) {
-      setShowOnboarding(true);
-    }
-  }, [merchant]);
 
   // Sync shield status with merchant data
   useEffect(() => {
@@ -220,40 +212,6 @@ export default function DashboardPage() {
       refetch();
     } catch (err) {
       console.error('Error disabling shield:', err);
-    }
-  }, [merchant, supabase, refetch]);
-
-  const handleOnboardingComplete = useCallback(async () => {
-    if (!merchant) return;
-
-    try {
-      await supabase
-        .from('merchants')
-        .update({ onboarding_completed: true })
-        .eq('id', merchant.id);
-
-      setShowOnboarding(false);
-      refetch();
-    } catch (err) {
-      console.error('Error completing onboarding:', err);
-      setShowOnboarding(false);
-    }
-  }, [merchant, supabase, refetch]);
-
-  const handleOnboardingSkip = useCallback(async () => {
-    if (!merchant) return;
-
-    try {
-      await supabase
-        .from('merchants')
-        .update({ onboarding_completed: true })
-        .eq('id', merchant.id);
-
-      setShowOnboarding(false);
-      refetch();
-    } catch (err) {
-      console.error('Error skipping onboarding:', err);
-      setShowOnboarding(false);
     }
   }, [merchant, supabase, refetch]);
 
@@ -479,15 +437,6 @@ export default function DashboardPage() {
   }
 
   return (
-    <>
-      {/* Guided Tour */}
-      {showOnboarding && (
-        <GuidedTour
-          onComplete={handleOnboardingComplete}
-          onSkip={handleOnboardingSkip}
-        />
-      )}
-
       <div className="space-y-8">
         <div className="relative">
           <div className="absolute -left-8 -top-8 -z-10 h-32 w-32 rounded-full bg-indigo-50/60 blur-3xl" />
@@ -765,6 +714,5 @@ export default function DashboardPage() {
         </div>
       </div>
       </div>
-    </>
   );
 }

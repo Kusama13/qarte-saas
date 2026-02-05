@@ -49,7 +49,6 @@ src/
 │   ├── dashboard/         # Dashboard commercant
 │   ├── admin/             # Dashboard admin
 │   ├── customer/          # Pages client
-│   ├── outils-gratuits/   # Outils gratuits (QR menu, wifi, avis)
 │   ├── offre-speciale/    # Landing retargeting (exit popup)
 │   ├── scan/[code]/       # Scan QR dynamique
 │   └── page.tsx           # Landing page principale
@@ -71,24 +70,28 @@ src/
 │   └── utils.ts          # Helpers generaux
 │
 ├── emails/               # Templates React Email
-│   ├── WelcomeEmail.tsx
-│   ├── QRCodeEmail.tsx
-│   ├── TrialEndingEmail.tsx
-│   ├── PaymentFailedEmail.tsx    # Echec paiement Stripe
+│   ├── WelcomeEmail.tsx           # Email bienvenue (urgence + temoignage)
+│   ├── TrialEndingEmail.tsx       # Rappel fin essai
+│   ├── TrialExpiredEmail.tsx      # Essai expire
+│   ├── PendingPointsEmail.tsx     # Passages en attente
+│   ├── ProgramReminderEmail.tsx   # Rappel config programme (J+1)
+│   ├── IncompleteSignupEmail.tsx  # Relance inscription incomplete (2-3h)
+│   ├── PaymentFailedEmail.tsx     # Echec paiement Stripe
 │   ├── SubscriptionCanceledEmail.tsx # Annulation abonnement
-│   ├── ReactivationEmail.tsx     # Win-back J+7/14/30
-│   └── ...
+│   ├── ReactivationEmail.tsx      # Win-back J+7/14/30
+│   └── EbookEmail.tsx             # Telechargement ebook
 │
 ├── types/index.ts        # Types TypeScript
 ├── contexts/             # React contexts
 └── middleware.ts         # Auth middleware
 
 supabase/
-└── migrations/           # 28 migrations SQL
+└── migrations/           # 28+ migrations SQL
     ├── 001-025           # Schema initial + fixes
     ├── 026               # Trial period 15 jours
     ├── 027               # Spelling cancelled→canceled
-    └── 028               # Reactivation email tracking
+    ├── 028               # Reactivation email tracking
+    └── 011               # tool_leads table (ebook leads)
 
 public/
 ├── images/              # Images statiques
@@ -171,8 +174,10 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 
 ### Admin
 - `/api/admin/merchants/[id]` - Gestion commercants
+- `/api/admin/incomplete-signups` - Inscriptions incompletes (auth sans merchant, 48h)
 - `/api/admin/prospects` - Leads/prospects
 - `/api/admin/tasks` - Taches admin
+- `/api/leads/tools` - Leads ebook (POST public, GET admin)
 
 ---
 
@@ -191,12 +196,16 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Moderation manuelle
 - Bannissement numeros
 
+### Inscription 2 Phases
+- **Phase 1:** Email + mot de passe (page `/auth/merchant/signup`)
+- **Phase 2:** Infos commerce (page `/auth/merchant/signup/complete`)
+- Email de relance automatique si Phase 2 non completee (2-3h, via cron morning)
+- Admin : suivi des inscriptions incompletes dans `/admin/leads`
+
 ### Marketing
-- Generateur QR menu gratuit
-- Generateur QR WiFi
-- Generateur lien avis Google
-- Notifications push programmees
-- Templates flyers/cartes
+- Notifications push programmees (10h et 18h)
+- Templates flyers/cartes (PDF)
+- Ebook telechargeable (lead generation)
 
 ### Programmes Membres
 - Cartes de membre avec validite
@@ -288,12 +297,10 @@ npm run email
 ## 11. Notes de Developpement
 
 ### Types de Commerce (SHOP_TYPES)
-- cafe, restaurant, boulangerie, coiffeur
-- institut_beaute, fleuriste, epicerie
-- bar, pizzeria, salon_the, glacier
-- pressing, bijouterie, boutique_vetements
-- cave_vin, fromagerie, chocolaterie
-- pharmacie, librairie, autre
+- coiffeur, barbier
+- institut_beaute, onglerie, spa
+- estheticienne, massage, epilation
+- autre
 
 ### Statuts Abonnement
 - `trial` - periode d'essai
@@ -322,17 +329,18 @@ npm run email
 | `src/components/FacebookPixel.tsx` | Tracking FB |
 | `tailwind.config.ts` | Config Tailwind (couleurs, fonts) |
 | `next.config.mjs` | Config Next.js (securite, images) |
-| `supabase/migrations/` | 23 migrations SQL |
+| `src/app/api/cron/morning/route.ts` | Cron principal (5 taches) |
+| `supabase/migrations/` | 28+ migrations SQL |
 
 ---
 
 ## 13. Design & UX
 
 ### Palette de Couleurs
-- **Primaire:** `#654EDA` (violet)
-- **Secondaire:** `#9D8FE8` (violet clair)
+- **Primaire:** `#5167fc` (indigo/bleu)
+- **Secondaire:** `#654EDA` (violet)
 - **Accent:** Rose/Pink pour les CTAs
-- **Fond:** Gradients violet vers rose
+- **Fond:** Gradients violet vers rose (landing)
 
 ### Style Visuel
 - **Glassmorphism:** Utilise sur les pages auth et offre-speciale
@@ -358,10 +366,10 @@ npm run email
 - **Suppression:** Donnees supprimees 7 jours apres expiration
 
 ### Cible
-- Instituts de beaute, salons de coiffure
-- Ongleries, spas
-- Restaurants, cafes, boulangeries
-- Petits commerces de proximite
+- Salons de coiffure, barbiers
+- Instituts de beaute, ongleries
+- Spas, estheticiennes
+- Salons de massage, centres d'epilation
 
 ---
 
@@ -391,6 +399,12 @@ npm run email
 - Glassmorphism design
 - Temoignage integre
 - 15 jours gratuits
+
+### Admin (`/admin`)
+- Merchants : liste, filtres par statut, detail par commercant
+- Leads : onglet Inscriptions incompletes (48h) + onglet Ebook
+- Analytics, Metriques, Revenus, Depenses
+- Marketing, Prospects, Notes, Taches
 
 ### Dashboard (`/dashboard`)
 - Sidebar navigation
@@ -448,8 +462,8 @@ import type { Merchant } from '@/types';
 
 | Cron | Horaire | Description |
 |------|---------|-------------|
-| `/api/cron/morning` | 05:00 UTC | Rappels passages en attente |
-| `/api/cron/evening` | 18:00 UTC | Push notifications programmees |
+| `/api/cron/morning` | 05:00 UTC | Inscriptions incompletes (2-3h), emails essai, rappel programme J+1, rappels pending, push 10h |
+| `/api/cron/evening` | 18:00 UTC | Push notifications programmees 18h |
 | `/api/cron/reactivation` | 10:00 UTC | Emails win-back J+7/14/30 |
 
 ---
@@ -458,14 +472,16 @@ import type { Merchant } from '@/types';
 
 | Email | Declencheur |
 |-------|-------------|
-| WelcomeEmail | Inscription commercant |
-| QRCodeEmail | Demande QR par email |
-| TrialEndingEmail | J-3 avant fin essai |
+| WelcomeEmail | Inscription commercant (Phase 2 completee) |
+| IncompleteSignupEmail | Phase 1 sans Phase 2 (2-3h, cron morning) |
+| ProgramReminderEmail | Programme non configure J+1 (cron morning) |
+| TrialEndingEmail | J-3 et J-1 avant fin essai (cron morning) |
+| TrialExpiredEmail | Essai expire J+1/3/5 (cron morning) |
+| PendingPointsEmail | Passages en attente J+0/1/2/3 (cron morning) |
 | EbookEmail | Telechargement ebook |
-| PendingPointsEmail | Passages en attente (cron) |
-| PaymentFailedEmail | Echec paiement Stripe |
-| SubscriptionCanceledEmail | Annulation abonnement |
-| ReactivationEmail | Win-back J+7/14/30 apres annulation |
+| PaymentFailedEmail | Echec paiement Stripe (webhook) |
+| SubscriptionCanceledEmail | Annulation abonnement (webhook) |
+| ReactivationEmail | Win-back J+7/14/30 apres annulation (cron reactivation) |
 
 ### Headers Anti-spam
 ```typescript
