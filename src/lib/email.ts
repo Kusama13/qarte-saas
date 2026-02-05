@@ -344,18 +344,28 @@ export async function sendSubscriptionCanceledEmail(
   }
 }
 
-// Email relance inscription incomplète (auth sans merchant, +2h)
-export async function sendIncompleteSignupEmail(
-  to: string
-): Promise<SendEmailResult> {
+// Email relance inscription incomplète - PROGRAMMÉ via Resend scheduledAt
+interface ScheduleEmailResult {
+  success: boolean;
+  emailId?: string;
+  error?: string;
+}
+
+export async function scheduleIncompleteSignupEmail(
+  to: string,
+  delayMinutes: number = 60
+): Promise<ScheduleEmailResult> {
   const check = checkResend();
-  if (check) return check;
+  if (check) return { success: false, error: check.error };
 
   try {
     const html = await render(IncompleteSignupEmail({ email: to }));
     const text = await render(IncompleteSignupEmail({ email: to }), { plainText: true });
 
-    const { error } = await resend!.emails.send({
+    // Schedule for X minutes in the future
+    const scheduledAt = new Date(Date.now() + delayMinutes * 60 * 1000).toISOString();
+
+    const { data, error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
@@ -363,18 +373,45 @@ export async function sendIncompleteSignupEmail(
       html,
       text,
       headers: EMAIL_HEADERS,
+      scheduledAt,
     });
 
     if (error) {
-      logger.error('Failed to send incomplete signup email', error);
+      logger.error('Failed to schedule incomplete signup email', error);
       return { success: false, error: error.message };
     }
 
-    logger.info(`Incomplete signup email sent to ${to}`);
+    logger.info(`Incomplete signup email scheduled for ${to} in ${delayMinutes} minutes (id: ${data?.id})`);
+    return { success: true, emailId: data?.id };
+  } catch (error) {
+    logger.error('Error scheduling incomplete signup email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to schedule email' };
+  }
+}
+
+// Annuler un email programmé via Resend
+export async function cancelScheduledEmail(emailId: string): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const { error } = await resend!.emails.cancel(emailId);
+
+    if (error) {
+      // Ignore "already sent" errors - email might have been sent already
+      if (error.message?.includes('already sent') || error.message?.includes('not found')) {
+        logger.info(`Email ${emailId} was already sent or not found, skipping cancel`);
+        return { success: true };
+      }
+      logger.error('Failed to cancel scheduled email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Scheduled email ${emailId} canceled`);
     return { success: true };
   } catch (error) {
-    logger.error('Error sending incomplete signup email', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+    logger.error('Error canceling scheduled email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to cancel email' };
   }
 }
 

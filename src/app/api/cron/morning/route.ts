@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
-import { sendPendingPointsEmail, sendTrialEndingEmail, sendTrialExpiredEmail, sendProgramReminderEmail, sendIncompleteSignupEmail } from '@/lib/email';
+import { sendPendingPointsEmail, sendTrialEndingEmail, sendTrialExpiredEmail, sendProgramReminderEmail } from '@/lib/email';
 import { getTrialStatus } from '@/lib/utils';
 import logger from '@/lib/logger';
 
@@ -31,7 +31,6 @@ export async function GET(request: NextRequest) {
   }
 
   const results = {
-    incompleteSignups: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     trialEmails: { processed: 0, ending: 0, expired: 0, errors: 0 },
     programReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     pendingReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -39,70 +38,8 @@ export async function GET(request: NextRequest) {
   };
 
   try {
-    // ==================== 0. INCOMPLETE SIGNUPS (auth sans merchant, 2-3h) ====================
-    // Récupérer les utilisateurs auth créés il y a 2-3h sans merchant
-    // Dedup naturelle : cron 1x/jour à 05:00 UTC, fenêtre 1h → pas de chevauchement entre exécutions
-    const threeHoursAgo = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
-    const twoHoursAgo = new Date(new Date().getTime() - 2 * 60 * 60 * 1000);
-
-    // Paginer tous les users via Supabase Auth Admin (listUsers retourne les plus récents en premier)
-    let page = 1;
-    let allUsersInWindow: Array<{ id: string; email?: string; created_at: string }> = [];
-    let hasMore = true;
-    while (hasMore) {
-      const { data: { users: usersPage } } = await supabase.auth.admin.listUsers({
-        page,
-        perPage: 100,
-      });
-      if (!usersPage || usersPage.length === 0) {
-        hasMore = false;
-      } else {
-        const filtered = usersPage.filter(u => {
-          const createdAt = new Date(u.created_at);
-          return createdAt >= threeHoursAgo && createdAt <= twoHoursAgo;
-        });
-        allUsersInWindow = allUsersInWindow.concat(filtered);
-
-        // Stop if oldest user in page is before our window or page not full
-        const oldestInPage = new Date(usersPage[usersPage.length - 1].created_at);
-        if (oldestInPage < threeHoursAgo || usersPage.length < 100) {
-          hasMore = false;
-        }
-        page++;
-      }
-    }
-
-    for (const authUser of allUsersInWindow) {
-      if (!authUser.email) continue;
-
-      results.incompleteSignups.processed++;
-
-      // Check if merchant exists for this user
-      const { data: merchant } = await supabase
-        .from('merchants')
-        .select('id')
-        .eq('user_id', authUser.id)
-        .single();
-
-      if (merchant) {
-        results.incompleteSignups.skipped++;
-        continue;
-      }
-
-      // No merchant → send incomplete signup email
-      try {
-        const result = await sendIncompleteSignupEmail(authUser.email);
-        if (result.success) {
-          results.incompleteSignups.sent++;
-        } else {
-          results.incompleteSignups.errors++;
-        }
-      } catch {
-        results.incompleteSignups.errors++;
-      }
-    }
-
     // ==================== 1. TRIAL EMAILS ====================
+    // Note: Incomplete signup emails are now handled via Resend scheduledAt (1h after Phase 1)
     const { data: merchants } = await supabase
       .from('merchants')
       .select('id, shop_name, user_id, trial_ends_at, subscription_status')

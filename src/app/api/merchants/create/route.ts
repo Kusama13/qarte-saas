@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
-import { sendWelcomeEmail, sendNewMerchantNotification } from '@/lib/email';
+import { sendWelcomeEmail, sendNewMerchantNotification, cancelScheduledEmail } from '@/lib/email';
 import { generateScanCode } from '@/lib/utils';
 
 // Client avec service role (bypass RLS)
@@ -123,6 +123,23 @@ export async function POST(request: NextRequest) {
     // Récupérer l'email de l'utilisateur et envoyer les emails
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(user_id);
     if (userData?.user?.email) {
+      // Cancel scheduled incomplete signup email if one exists
+      const scheduledEmailId = userData.user.user_metadata?.scheduled_incomplete_email_id;
+      if (scheduledEmailId) {
+        cancelScheduledEmail(scheduledEmailId).catch((err) => {
+          logger.error('Failed to cancel scheduled incomplete email', err);
+        });
+        // Clear the metadata
+        supabaseAdmin.auth.admin.updateUserById(user_id, {
+          user_metadata: {
+            ...userData.user.user_metadata,
+            scheduled_incomplete_email_id: null,
+          },
+        }).catch((err) => {
+          logger.error('Failed to clear scheduled email metadata', err);
+        });
+      }
+
       // Email de bienvenue au commerçant
       sendWelcomeEmail(userData.user.email, shop_name).catch((err) => {
         logger.error('Failed to send welcome email', err);
