@@ -19,28 +19,15 @@ export async function GET(request: NextRequest) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Fetch merchants created today
+    // Fetch merchants created today (include reward_description to check if program is configured)
     const { data: merchants, error: merchantsError } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, shop_type, created_at, subscription_status')
+      .select('id, user_id, shop_name, shop_type, created_at, subscription_status, reward_description')
       .gte('created_at', today.toISOString())
       .order('created_at', { ascending: false });
 
     if (merchantsError) {
       return NextResponse.json({ error: 'Erreur récupération commerçants' }, { status: 500 });
-    }
-
-    // Fetch loyalty programs for these merchants
-    const merchantIds = (merchants || []).map((m) => m.id);
-    let merchantsWithProgram = new Set<string>();
-
-    if (merchantIds.length > 0) {
-      const { data: programs } = await supabaseAdmin
-        .from('loyalty_programs')
-        .select('merchant_id')
-        .in('merchant_id', merchantIds);
-
-      merchantsWithProgram = new Set((programs || []).map((p: { merchant_id: string }) => p.merchant_id));
     }
 
     // Fetch user emails for each merchant
@@ -61,7 +48,7 @@ export async function GET(request: NextRequest) {
       created_at: m.created_at,
       subscription_status: m.subscription_status,
       user_email: emailMap[m.user_id] || null,
-      has_program: merchantsWithProgram.has(m.id),
+      has_program: m.reward_description !== null,
     }));
 
     return NextResponse.json({ signups, count: signups.length });
