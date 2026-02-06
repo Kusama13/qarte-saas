@@ -76,7 +76,7 @@ export default function QRDownloadPage() {
       pdf.line(pageWidth / 2, 0, pageWidth / 2, pageHeight);
       pdf.line(0, pageHeight / 2, pageWidth, pageHeight / 2);
 
-      pdf.save(`kit-marketing-${merchant.slug}.pdf`);
+      pdf.save(`qr-flyer-${merchant.slug}.pdf`);
 
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 3000);
@@ -136,10 +136,10 @@ export default function QRDownloadPage() {
             Retour au tableau de bord
           </Link>
           <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-            Votre Kit Marketing
+            Prêt à scanner
           </h1>
           <p className="mt-2 text-white/80 font-medium">
-            Imprimez vos flyers pour vos clients
+            Sur place ou en déplacement
           </p>
         </div>
       </div>
