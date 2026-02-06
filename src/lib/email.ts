@@ -16,6 +16,7 @@ import logger from './logger';
 
 function checkResend() {
   if (!resend) {
+    logger.error('[EMAIL] RESEND_API_KEY not configured - resend client is null');
     return { success: false, error: 'RESEND_API_KEY not configured' };
   }
   return null;

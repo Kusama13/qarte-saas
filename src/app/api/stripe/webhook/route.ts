@@ -51,11 +51,11 @@ export async function POST(request: Request) {
         .select('shop_name, user_id')
         .single();
 
-      // Envoyer l'email de confirmation
+      // Envoyer l'email de confirmation (await pour serverless)
       if (merchant) {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         if (userData?.user?.email) {
-          sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name).catch((err) => {
+          await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name).catch((err) => {
             logger.error('Failed to send subscription email', err);
           });
         }
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         .select('shop_name, user_id')
         .single();
 
-      // Envoyer l'email de confirmation de résiliation
+      // Envoyer l'email de confirmation de résiliation (await pour serverless)
       if (merchant) {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         if (userData?.user?.email) {
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
             month: 'long',
             year: 'numeric',
           });
-          sendSubscriptionCanceledEmail(userData.user.email, merchant.shop_name, endDate).catch((err) => {
+          await sendSubscriptionCanceledEmail(userData.user.email, merchant.shop_name, endDate).catch((err) => {
             logger.error('Failed to send subscription canceled email', err);
           });
         }
@@ -112,11 +112,11 @@ export async function POST(request: Request) {
         .select('shop_name, user_id')
         .single();
 
-      // Envoyer l'email de paiement échoué
+      // Envoyer l'email de paiement échoué (await pour serverless)
       if (merchant) {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         if (userData?.user?.email) {
-          sendPaymentFailedEmail(userData.user.email, merchant.shop_name).catch((err) => {
+          await sendPaymentFailedEmail(userData.user.email, merchant.shop_name).catch((err) => {
             logger.error('Failed to send payment failed email', err);
           });
         }

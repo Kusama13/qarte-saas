@@ -122,39 +122,42 @@ export async function POST(request: NextRequest) {
 
     // Récupérer l'email de l'utilisateur et envoyer les emails
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(user_id);
+
     if (userData?.user?.email) {
       // Cancel scheduled incomplete signup email if one exists
       const scheduledEmailId = userData.user.user_metadata?.scheduled_incomplete_email_id;
       if (scheduledEmailId) {
-        cancelScheduledEmail(scheduledEmailId).catch((err) => {
-          logger.error('Failed to cancel scheduled incomplete email', err);
-        });
-        // Clear the metadata
-        supabaseAdmin.auth.admin.updateUserById(user_id, {
-          user_metadata: {
-            ...userData.user.user_metadata,
-            scheduled_incomplete_email_id: null,
-          },
-        }).catch((err) => {
-          logger.error('Failed to clear scheduled email metadata', err);
-        });
+        // Await pour éviter que serverless tue les promises
+        await Promise.all([
+          cancelScheduledEmail(scheduledEmailId).catch((err) => {
+            logger.error('Failed to cancel scheduled incomplete email', err);
+          }),
+          supabaseAdmin.auth.admin.updateUserById(user_id, {
+            user_metadata: {
+              ...userData.user.user_metadata,
+              scheduled_incomplete_email_id: null,
+            },
+          }).catch((err) => {
+            logger.error('Failed to clear scheduled email metadata', err);
+          }),
+        ]);
       }
 
-      // Email de bienvenue au commerçant
-      sendWelcomeEmail(userData.user.email, shop_name).catch((err) => {
-        logger.error('Failed to send welcome email', err);
-      });
-
-      // Notification interne à sales@getqarte.com
-      sendNewMerchantNotification(
-        shop_name,
-        shop_type,
-        shop_address,
-        phone,
-        userData.user.email
-      ).catch((err) => {
-        logger.error('Failed to send new merchant notification', err);
-      });
+      // Envoyer les emails avec await (sinon serverless tue les promises avant envoi)
+      await Promise.all([
+        sendWelcomeEmail(userData.user.email, shop_name).catch((err) => {
+          logger.error('Failed to send welcome email', err);
+        }),
+        sendNewMerchantNotification(
+          shop_name,
+          shop_type,
+          shop_address,
+          phone,
+          userData.user.email
+        ).catch((err) => {
+          logger.error('Failed to send new merchant notification', err);
+        }),
+      ]);
     }
 
     return NextResponse.json({ merchant: data });
