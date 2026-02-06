@@ -73,17 +73,20 @@ export default function MerchantSignupPage() {
         // Track Facebook Pixel Lead event (Phase 1 completed)
         fbEvents.lead();
 
-        // Schedule reminder email in 1h if Phase 2 not completed
-        fetch('/api/emails/schedule-incomplete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: authData.user.id,
-            email: formData.email,
-          }),
-        }).catch(() => {
-          // Non-blocking - don't fail signup if email scheduling fails
-        });
+        // Schedule reminder email (await to ensure emailId is stored before Phase 2)
+        // This prevents race condition where Phase 2 completes before emailId is saved
+        try {
+          await fetch('/api/emails/schedule-incomplete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: authData.user.id,
+              email: formData.email,
+            }),
+          });
+        } catch {
+          // Don't block signup if email scheduling fails
+        }
 
         // Redirect to Phase 2 (complete profile)
         router.push('/auth/merchant/signup/complete');
