@@ -95,26 +95,32 @@ export default function AdminMerchantsPage() {
       // Get all merchant IDs
       const merchantIds = (merchantsData || []).map((m: Merchant) => m.id);
 
-      // Fetch loyalty cards and loyalty programs in parallel
-      const [{ data: loyaltyCards }, { data: loyaltyPrograms }] = await Promise.all([
-        supabase
-          .from('loyalty_cards')
-          .select('merchant_id')
-          .in('merchant_id', merchantIds),
-        supabase
-          .from('loyalty_programs')
-          .select('merchant_id')
-          .in('merchant_id', merchantIds),
-      ]);
-
-      // Group counts in memory
+      // Initialize maps
       const countMap = new Map<string, number>();
-      (loyaltyCards || []).forEach((card: { merchant_id: string }) => {
-        countMap.set(card.merchant_id, (countMap.get(card.merchant_id) || 0) + 1);
-      });
+      let merchantsWithProgram = new Set<string>();
 
-      // Set of merchants with program
-      const merchantsWithProgram = new Set((loyaltyPrograms || []).map((p: { merchant_id: string }) => p.merchant_id));
+      // Only query if we have merchants
+      if (merchantIds.length > 0) {
+        // Fetch loyalty cards and loyalty programs in parallel
+        const [{ data: loyaltyCards }, { data: loyaltyPrograms }] = await Promise.all([
+          supabase
+            .from('loyalty_cards')
+            .select('merchant_id')
+            .in('merchant_id', merchantIds),
+          supabase
+            .from('loyalty_programs')
+            .select('merchant_id')
+            .in('merchant_id', merchantIds),
+        ]);
+
+        // Group counts in memory
+        (loyaltyCards || []).forEach((card: { merchant_id: string }) => {
+          countMap.set(card.merchant_id, (countMap.get(card.merchant_id) || 0) + 1);
+        });
+
+        // Set of merchants with program
+        merchantsWithProgram = new Set((loyaltyPrograms || []).map((p: { merchant_id: string }) => p.merchant_id));
+      }
 
       // Merge counts and program status with merchants
       const merchantsWithCounts = (merchantsData || []).map((merchant: Merchant) => ({

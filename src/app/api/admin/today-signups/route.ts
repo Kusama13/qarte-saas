@@ -32,12 +32,16 @@ export async function GET(request: NextRequest) {
 
     // Fetch loyalty programs for these merchants
     const merchantIds = (merchants || []).map((m) => m.id);
-    const { data: programs } = await supabaseAdmin
-      .from('loyalty_programs')
-      .select('merchant_id')
-      .in('merchant_id', merchantIds);
+    let merchantsWithProgram = new Set<string>();
 
-    const merchantsWithProgram = new Set((programs || []).map((p: { merchant_id: string }) => p.merchant_id));
+    if (merchantIds.length > 0) {
+      const { data: programs } = await supabaseAdmin
+        .from('loyalty_programs')
+        .select('merchant_id')
+        .in('merchant_id', merchantIds);
+
+      merchantsWithProgram = new Set((programs || []).map((p: { merchant_id: string }) => p.merchant_id));
+    }
 
     // Fetch user emails for each merchant
     const userIds = (merchants || []).map((m) => m.user_id);
