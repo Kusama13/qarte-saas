@@ -40,8 +40,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, skipped: true });
     }
 
-    // Schedule the email for 1 hour from now
-    const result = await scheduleIncompleteSignupEmail(email, 60);
+    // Schedule the email for 15 minutes from now
+    const result = await scheduleIncompleteSignupEmail(email, 15);
 
     if (!result.success) {
       logger.error(`Failed to schedule incomplete email for ${email}`, result.error);

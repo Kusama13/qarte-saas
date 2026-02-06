@@ -18,6 +18,8 @@ import {
   Flower2,
   MoreHorizontal,
   Loader2,
+  Gift,
+  AlertCircle,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -34,6 +36,7 @@ interface Merchant {
   trial_ends_at: string | null;
   created_at: string;
   _isSuperAdmin?: boolean;
+  _hasProgram?: boolean;
   _count?: {
     customers: number;
   };
@@ -92,11 +95,17 @@ export default function AdminMerchantsPage() {
       // Get all merchant IDs
       const merchantIds = (merchantsData || []).map((m: Merchant) => m.id);
 
-      // Single query to count customers for ALL merchants (instead of N queries)
-      const { data: loyaltyCards } = await supabase
-        .from('loyalty_cards')
-        .select('merchant_id')
-        .in('merchant_id', merchantIds);
+      // Fetch loyalty cards and loyalty programs in parallel
+      const [{ data: loyaltyCards }, { data: loyaltyPrograms }] = await Promise.all([
+        supabase
+          .from('loyalty_cards')
+          .select('merchant_id')
+          .in('merchant_id', merchantIds),
+        supabase
+          .from('loyalty_programs')
+          .select('merchant_id')
+          .in('merchant_id', merchantIds),
+      ]);
 
       // Group counts in memory
       const countMap = new Map<string, number>();
@@ -104,10 +113,14 @@ export default function AdminMerchantsPage() {
         countMap.set(card.merchant_id, (countMap.get(card.merchant_id) || 0) + 1);
       });
 
-      // Merge counts with merchants
+      // Set of merchants with program
+      const merchantsWithProgram = new Set((loyaltyPrograms || []).map((p: { merchant_id: string }) => p.merchant_id));
+
+      // Merge counts and program status with merchants
       const merchantsWithCounts = (merchantsData || []).map((merchant: Merchant) => ({
         ...merchant,
         _isSuperAdmin: superAdminUserIds.has(merchant.user_id),
+        _hasProgram: merchantsWithProgram.has(merchant.id),
         _count: { customers: countMap.get(merchant.id) || 0 },
       }));
 
@@ -157,6 +170,9 @@ export default function AdminMerchantsPage() {
     const trialExpired = nonAdminMerchants.filter((m: Merchant) => isTrialExpired(m)).length;
     const active = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'active').length;
     const cancelled = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'canceled').length;
+    const withProgram = nonAdminMerchants.filter((m: Merchant) => m._hasProgram).length;
+    const withoutProgram = nonAdminMerchants.filter((m: Merchant) => !m._hasProgram).length;
+    const totalCustomers = nonAdminMerchants.reduce((acc, m) => acc + (m._count?.customers || 0), 0);
 
     const byType: Record<string, number> = {};
     nonAdminMerchants.forEach((m: Merchant) => {
@@ -164,7 +180,7 @@ export default function AdminMerchantsPage() {
       byType[type] = (byType[type] || 0) + 1;
     });
 
-    return { total, trial: trialActive, trialExpired, active, cancelled, byType, adminCount };
+    return { total, trial: trialActive, trialExpired, active, cancelled, byType, adminCount, withProgram, withoutProgram, totalCustomers };
   }, [merchants]);
 
   // Filtered merchants
@@ -280,7 +296,7 @@ export default function AdminMerchantsPage() {
         <p className="mt-1 text-gray-600">Gestion et suivi des commerçants</p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Row 1: Subscription status */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
           <div className="flex items-center gap-3">
@@ -337,6 +353,43 @@ export default function AdminMerchantsPage() {
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.cancelled}</p>
               <p className="text-xs text-gray-500">Churned</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Cards - Row 2: Programs & Customers */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
+              <Gift className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.withProgram}</p>
+              <p className="text-xs text-gray-500">Avec programme</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.withoutProgram}</p>
+              <p className="text-xs text-gray-500">Sans programme</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Users className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.totalCustomers}</p>
+              <p className="text-xs text-gray-500">Clients total</p>
             </div>
           </div>
         </div>
@@ -443,30 +496,48 @@ export default function AdminMerchantsPage() {
                               {merchant.shop_name.charAt(0)}
                             </div>
                             <div className="min-w-0">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 flex-wrap">
                                 <p className="font-medium text-gray-900 truncate">{merchant.shop_name}</p>
                                 {merchant._isSuperAdmin && (
                                   <span className="px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
                                     Admin
                                   </span>
                                 )}
+                                {/* Program Badge */}
+                                {merchant._hasProgram ? (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full flex-shrink-0">
+                                    <Gift className="w-3 h-3" />
+                                    Programme
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0">
+                                    <AlertCircle className="w-3 h-3" />
+                                    Sans programme
+                                  </span>
+                                )}
                               </div>
-                              <div className="flex items-center gap-3 text-xs text-gray-500 mt-0.5">
+                              <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
                                 {merchant.shop_address && (
                                   <span className="flex items-center gap-1 truncate">
                                     <MapPin className="w-3 h-3 flex-shrink-0" />
                                     <span className="truncate">{merchant.shop_address}</span>
                                   </span>
                                 )}
-                                <span className="flex items-center gap-1 flex-shrink-0">
-                                  <Users className="w-3 h-3" />
-                                  {merchant._count?.customers || 0}
-                                </span>
                                 <span className="flex-shrink-0">{formatDate(merchant.created_at)}</span>
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center gap-3 flex-shrink-0">
+                            {/* Customer count - more visual */}
+                            <div className={cn(
+                              "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold",
+                              (merchant._count?.customers || 0) > 0
+                                ? "bg-blue-100 text-blue-700"
+                                : "bg-gray-100 text-gray-500"
+                            )}>
+                              <Users className="w-3.5 h-3.5" />
+                              <span>{merchant._count?.customers || 0}</span>
+                            </div>
                             {getStatusBadge(merchant)}
                             <ChevronRight className="w-5 h-5 text-gray-400" />
                           </div>

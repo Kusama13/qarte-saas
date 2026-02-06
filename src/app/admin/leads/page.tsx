@@ -6,10 +6,8 @@ import {
   UserPlus,
   Calendar,
   CheckCircle,
-  Clock,
-  Trash2,
   Search,
-  BookOpen,
+  Store,
   AlertTriangle,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
@@ -21,27 +19,24 @@ interface IncompleteSignup {
   created_at: string;
 }
 
-interface EbookLead {
+interface TodaySignup {
   id: string;
-  email: string;
-  source: 'ebook';
-  business_name: string | null;
-  generated_value: string | null;
+  shop_name: string;
+  shop_type: string;
   created_at: string;
-  converted: boolean;
-  converted_at: string | null;
-  notes: string | null;
+  subscription_status: string;
+  user_email?: string;
+  has_program: boolean;
 }
 
-type Tab = 'incomplete' | 'ebook';
+type Tab = 'incomplete' | 'today';
 
 export default function LeadsPage() {
   const supabase = getSupabase();
   const [activeTab, setActiveTab] = useState<Tab>('incomplete');
   const [incompleteSignups, setIncompleteSignups] = useState<IncompleteSignup[]>([]);
-  const [ebookLeads, setEbookLeads] = useState<EbookLead[]>([]);
+  const [todaySignups, setTodaySignups] = useState<TodaySignup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'converted'>('all');
   const [search, setSearch] = useState('');
 
   const fetchIncompleteSignups = useCallback(async () => {
@@ -64,53 +59,34 @@ export default function LeadsPage() {
     }
   }, [supabase]);
 
-  const fetchEbookLeads = useCallback(async () => {
-    const { data } = await supabase
-      .from('tool_leads')
-      .select('*')
-      .eq('source', 'ebook')
-      .order('created_at', { ascending: false });
+  const fetchTodaySignups = useCallback(async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
 
-    if (data) {
-      setEbookLeads(data as EbookLead[]);
+      const response = await fetch('/api/admin/today-signups', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTodaySignups(data.signups || []);
+      }
+    } catch (error) {
+      console.error('Error fetching today signups:', error);
     }
   }, [supabase]);
 
   useEffect(() => {
-    Promise.all([fetchIncompleteSignups(), fetchEbookLeads()]).finally(() => {
+    Promise.all([fetchIncompleteSignups(), fetchTodaySignups()]).finally(() => {
       setLoading(false);
     });
-  }, [fetchIncompleteSignups, fetchEbookLeads]);
+  }, [fetchIncompleteSignups, fetchTodaySignups]);
 
-  const markAsConverted = async (id: string) => {
-    const { error } = await supabase
-      .from('tool_leads')
-      .update({ converted: true, converted_at: new Date().toISOString() })
-      .eq('id', id);
-
-    if (!error) {
-      setEbookLeads(ebookLeads.map((l: EbookLead) => l.id === id ? { ...l, converted: true, converted_at: new Date().toISOString() } : l));
-    }
-  };
-
-  const deleteLead = async (id: string) => {
-    if (!confirm('Supprimer ce lead ?')) return;
-
-    const { error } = await supabase
-      .from('tool_leads')
-      .delete()
-      .eq('id', id);
-
-    if (!error) {
-      setEbookLeads(ebookLeads.filter((l: EbookLead) => l.id !== id));
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('fr-FR', {
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -128,16 +104,10 @@ export default function LeadsPage() {
     return 'à l\'instant';
   };
 
-  const filteredEbookLeads = ebookLeads.filter(lead => {
-    const matchesFilter = filter === 'all' ||
-      (filter === 'pending' && !lead.converted) ||
-      (filter === 'converted' && lead.converted);
-
-    const matchesSearch = !search ||
-      lead.email.toLowerCase().includes(search.toLowerCase()) ||
-      (lead.business_name && lead.business_name.toLowerCase().includes(search.toLowerCase()));
-
-    return matchesFilter && matchesSearch;
+  const filteredTodaySignups = todaySignups.filter(signup => {
+    if (!search) return true;
+    return signup.shop_name.toLowerCase().includes(search.toLowerCase()) ||
+      (signup.user_email && signup.user_email.toLowerCase().includes(search.toLowerCase()));
   });
 
   const filteredIncomplete = incompleteSignups.filter(signup => {
@@ -149,10 +119,10 @@ export default function LeadsPage() {
     total: incompleteSignups.length,
   };
 
-  const ebookStats = {
-    total: ebookLeads.length,
-    pending: ebookLeads.filter((l: EbookLead) => !l.converted).length,
-    converted: ebookLeads.filter((l: EbookLead) => l.converted).length,
+  const todayStats = {
+    total: todaySignups.length,
+    withProgram: todaySignups.filter(s => s.has_program).length,
+    withoutProgram: todaySignups.filter(s => !s.has_program).length,
   };
 
   if (loading) {
@@ -195,21 +165,21 @@ export default function LeadsPage() {
           </span>
         </button>
         <button
-          onClick={() => setActiveTab('ebook')}
+          onClick={() => setActiveTab('today')}
           className={cn(
             'px-6 py-3 font-semibold text-sm border-b-2 transition-colors flex items-center gap-2',
-            activeTab === 'ebook'
+            activeTab === 'today'
               ? 'border-[#5167fc] text-[#5167fc]'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           )}
         >
-          <BookOpen className="w-4 h-4" />
-          Ebook
+          <Store className="w-4 h-4" />
+          Inscriptions du jour
           <span className={cn(
             'px-2 py-0.5 rounded-full text-xs font-bold',
-            activeTab === 'ebook' ? 'bg-[#5167fc] text-white' : 'bg-gray-100 text-gray-600'
+            activeTab === 'today' ? 'bg-[#5167fc] text-white' : 'bg-gray-100 text-gray-600'
           )}>
-            {ebookStats.total}
+            {todayStats.total}
           </span>
         </button>
       </div>
@@ -250,20 +220,8 @@ export default function LeadsPage() {
                 <UserPlus className="w-6 h-6 text-indigo-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Total leads</p>
-                <p className="text-2xl font-bold text-gray-900">{ebookStats.total}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100">
-                <Clock className="w-6 h-6 text-amber-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">A contacter</p>
-                <p className="text-2xl font-bold text-gray-900">{ebookStats.pending}</p>
+                <p className="text-sm font-medium text-gray-500">Inscriptions aujourd&apos;hui</p>
+                <p className="text-2xl font-bold text-gray-900">{todayStats.total}</p>
               </div>
             </div>
           </div>
@@ -274,8 +232,20 @@ export default function LeadsPage() {
                 <CheckCircle className="w-6 h-6 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Convertis</p>
-                <p className="text-2xl font-bold text-gray-900">{ebookStats.converted}</p>
+                <p className="text-sm font-medium text-gray-500">Programme créé</p>
+                <p className="text-2xl font-bold text-gray-900">{todayStats.withProgram}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 bg-white rounded-2xl shadow-sm">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100">
+                <AlertTriangle className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Sans programme</p>
+                <p className="text-2xl font-bold text-gray-900">{todayStats.withoutProgram}</p>
               </div>
             </div>
           </div>
@@ -288,35 +258,12 @@ export default function LeadsPage() {
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Rechercher par email..."
+            placeholder={activeTab === 'incomplete' ? "Rechercher par email..." : "Rechercher par nom ou email..."}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5167fc]"
           />
         </div>
-
-        {activeTab === 'ebook' && (
-          <div className="flex gap-2">
-            {[
-              { key: 'all', label: 'Tous' },
-              { key: 'pending', label: 'A contacter' },
-              { key: 'converted', label: 'Convertis' },
-            ].map((f) => (
-              <button
-                key={f.key}
-                onClick={() => setFilter(f.key as typeof filter)}
-                className={cn(
-                  'px-4 py-2 rounded-xl font-medium transition-colors',
-                  filter === f.key
-                    ? 'bg-[#5167fc] text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Leads List */}
@@ -373,85 +320,72 @@ export default function LeadsPage() {
             </div>
           )
         ) : (
-          // Ebook Leads List
-          filteredEbookLeads.length > 0 ? (
+          // Today's Signups List
+          filteredTodaySignups.length > 0 ? (
             <div className="divide-y divide-gray-100">
-              {filteredEbookLeads.map((lead) => (
+              {filteredTodaySignups.map((signup) => (
                 <div
-                  key={lead.id}
-                  className={cn(
-                    'p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4',
-                    lead.converted ? 'bg-emerald-50/50' : 'hover:bg-gray-50'
-                  )}
+                  key={signup.id}
+                  className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-gray-50"
                 >
                   <div className="flex items-center gap-4 flex-1">
                     <div className={cn(
                       'flex items-center justify-center w-12 h-12 rounded-full',
-                      lead.converted ? 'bg-emerald-100' : 'bg-emerald-100'
+                      signup.has_program ? 'bg-emerald-100' : 'bg-amber-100'
                     )}>
-                      <BookOpen className={cn(
+                      <Store className={cn(
                         'w-5 h-5',
-                        lead.converted ? 'text-emerald-600' : 'text-emerald-600'
+                        signup.has_program ? 'text-emerald-600' : 'text-amber-600'
                       )} />
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-lg">
-                        {lead.email}
+                        {signup.shop_name}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
-                        {lead.business_name && (
-                          <span className="text-sm text-gray-600">
-                            {lead.business_name}
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                          {signup.shop_type}
+                        </span>
+                        {signup.has_program ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                            <CheckCircle className="w-3 h-3" />
+                            Programme créé
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                            <AlertTriangle className="w-3 h-3" />
+                            Sans programme
                           </span>
                         )}
                         <span className="text-sm text-gray-400 flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
-                          {formatDate(lead.created_at)}
+                          {formatTime(signup.created_at)}
                         </span>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 sm:gap-3">
-                    {lead.converted ? (
-                      <span className="px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-100 rounded-full flex items-center gap-1.5">
-                        <CheckCircle className="w-4 h-4" />
-                        Converti
-                      </span>
-                    ) : (
-                      <>
-                        <a
-                          href={`mailto:${lead.email}`}
-                          className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors flex items-center gap-2"
-                        >
-                          <Mail className="w-4 h-4" />
-                          Email
-                        </a>
-                        <button
-                          onClick={() => markAsConverted(lead.id)}
-                          className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-100 rounded-xl hover:bg-emerald-200 transition-colors"
-                        >
-                          Converti
-                        </button>
-                      </>
+                    {signup.user_email && (
+                      <a
+                        href={`mailto:${signup.user_email}`}
+                        className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                      >
+                        <Mail className="w-4 h-4" />
+                        Email
+                      </a>
                     )}
-                    <button
-                      onClick={() => deleteLead(lead.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-              <BookOpen className="w-16 h-16 mb-4 text-gray-300" />
-              <p className="text-lg font-medium">Aucun lead ebook</p>
+              <Store className="w-16 h-16 mb-4 text-gray-300" />
+              <p className="text-lg font-medium">Aucune inscription aujourd&apos;hui</p>
               <p className="text-sm text-gray-400 mt-1">
-                Les visiteurs qui telechargent l&apos;ebook apparaitront ici
+                Les nouveaux commerçants inscrits aujourd&apos;hui apparaîtront ici
               </p>
             </div>
           )
