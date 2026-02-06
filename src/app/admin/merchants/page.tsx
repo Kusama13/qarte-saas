@@ -20,6 +20,7 @@ import {
   Loader2,
   Gift,
   AlertCircle,
+  Shield,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -75,6 +76,7 @@ export default function AdminMerchantsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
+  const [showAdmins, setShowAdmins] = useState(false);
 
   const fetchMerchants = useCallback(async () => {
     try {
@@ -193,6 +195,11 @@ export default function AdminMerchantsPage() {
   const filteredMerchants = useMemo(() => {
     let filtered = merchants;
 
+    // Hide admins by default
+    if (!showAdmins) {
+      filtered = filtered.filter((m: Merchant) => !m._isSuperAdmin);
+    }
+
     if (statusFilter === 'trial') {
       // Only active trials (not expired)
       filtered = filtered.filter((m: Merchant) => m.subscription_status === 'trial' && !isTrialExpired(m));
@@ -214,7 +221,7 @@ export default function AdminMerchantsPage() {
     }
 
     return filtered;
-  }, [merchants, searchQuery, statusFilter]);
+  }, [merchants, searchQuery, statusFilter, showAdmins]);
 
   // Group by shop type
   const groupedMerchants = useMemo(() => {
@@ -460,6 +467,21 @@ export default function AdminMerchantsPage() {
               {btn.label} ({btn.count})
             </button>
           ))}
+          {/* Admin toggle */}
+          {stats.adminCount > 0 && (
+            <button
+              onClick={() => setShowAdmins(!showAdmins)}
+              className={cn(
+                "px-4 py-2 text-sm font-medium rounded-xl transition-colors whitespace-nowrap flex items-center gap-2",
+                showAdmins
+                  ? "bg-purple-600 text-white"
+                  : "bg-white text-purple-600 border border-purple-200 hover:bg-purple-50"
+              )}
+            >
+              <Shield className="w-4 h-4" />
+              Admin ({stats.adminCount})
+            </button>
+          )}
         </div>
       </div>
 
