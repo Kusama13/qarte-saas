@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
-import { sendPendingPointsEmail, sendTrialEndingEmail, sendTrialExpiredEmail, sendProgramReminderEmail } from '@/lib/email';
+import {
+  sendPendingPointsEmail,
+  sendTrialEndingEmail,
+  sendTrialExpiredEmail,
+  sendProgramReminderEmail,
+  sendProgramReminderDay2Email,
+  sendProgramReminderDay3Email,
+  sendInactiveMerchantDay7Email,
+  sendInactiveMerchantDay14Email,
+  sendInactiveMerchantDay30Email,
+} from '@/lib/email';
 import { getTrialStatus } from '@/lib/utils';
 import logger from '@/lib/logger';
 
@@ -33,6 +43,9 @@ export async function GET(request: NextRequest) {
   const results = {
     trialEmails: { processed: 0, ending: 0, expired: 0, errors: 0 },
     programReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    programRemindersDay2: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    programRemindersDay3: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    inactiveMerchants: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     pendingReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     scheduledPush: { processed: 0, sent: 0, errors: 0 },
   };
@@ -104,6 +117,172 @@ export async function GET(request: NextRequest) {
         }
       } catch {
         results.programReminders.errors++;
+      }
+    }
+
+    // ==================== 2b. PROGRAM REMINDER (J+2) ====================
+    const fortyNineHoursAgo = new Date(now.getTime() - 49 * 60 * 60 * 1000);
+    const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+
+    const { data: unconfiguredDay2 } = await supabase
+      .from('merchants')
+      .select('id, shop_name, shop_type, user_id')
+      .is('reward_description', null)
+      .in('subscription_status', ['trial', 'active'])
+      .lte('created_at', fortyEightHoursAgo.toISOString())
+      .gte('created_at', fortyNineHoursAgo.toISOString());
+
+    for (const merchant of unconfiguredDay2 || []) {
+      results.programRemindersDay2.processed++;
+      const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+      const email = userData?.user?.email;
+
+      if (!email) {
+        results.programRemindersDay2.skipped++;
+        continue;
+      }
+
+      try {
+        const result = await sendProgramReminderDay2Email(email, merchant.shop_name, merchant.shop_type || '');
+        if (result.success) {
+          results.programRemindersDay2.sent++;
+        } else {
+          results.programRemindersDay2.errors++;
+        }
+      } catch {
+        results.programRemindersDay2.errors++;
+      }
+    }
+
+    // ==================== 2c. PROGRAM REMINDER (J+3) ====================
+    const seventyThreeHoursAgo = new Date(now.getTime() - 73 * 60 * 60 * 1000);
+    const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+
+    const { data: unconfiguredDay3 } = await supabase
+      .from('merchants')
+      .select('id, shop_name, user_id, trial_ends_at, subscription_status')
+      .is('reward_description', null)
+      .in('subscription_status', ['trial', 'active'])
+      .lte('created_at', seventyTwoHoursAgo.toISOString())
+      .gte('created_at', seventyThreeHoursAgo.toISOString());
+
+    for (const merchant of unconfiguredDay3 || []) {
+      results.programRemindersDay3.processed++;
+      const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+      const email = userData?.user?.email;
+
+      if (!email) {
+        results.programRemindersDay3.skipped++;
+        continue;
+      }
+
+      try {
+        const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
+        const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
+        const result = await sendProgramReminderDay3Email(email, merchant.shop_name, daysRemaining);
+        if (result.success) {
+          results.programRemindersDay3.sent++;
+        } else {
+          results.programRemindersDay3.errors++;
+        }
+      } catch {
+        results.programRemindersDay3.errors++;
+      }
+    }
+
+    // ==================== 2d. INACTIVE MERCHANTS (programme configuré, 0 check-in) ====================
+    const INACTIVE_DAYS = [7, 14, 30];
+
+    const { data: activeMerchants } = await supabase
+      .from('merchants')
+      .select('id, shop_name, user_id, reward_description, stamps_required')
+      .not('reward_description', 'is', null)
+      .in('subscription_status', ['trial', 'active']);
+
+    for (const merchant of activeMerchants || []) {
+      results.inactiveMerchants.processed++;
+
+      // Trouver la dernière visite validée
+      const { data: lastVisit } = await supabase
+        .from('visits')
+        .select('visited_at')
+        .eq('merchant_id', merchant.id)
+        .eq('status', 'validated')
+        .order('visited_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      // Calculer les jours d'inactivité
+      let daysInactive: number;
+      if (!lastVisit) {
+        // Aucune visite validée — compter depuis la date de création du merchant
+        const { data: merchantData } = await supabase
+          .from('merchants')
+          .select('created_at')
+          .eq('id', merchant.id)
+          .single();
+        if (!merchantData) {
+          results.inactiveMerchants.skipped++;
+          continue;
+        }
+        daysInactive = Math.floor((now.getTime() - new Date(merchantData.created_at).getTime()) / (1000 * 60 * 60 * 24));
+      } else {
+        daysInactive = Math.floor((now.getTime() - new Date(lastVisit.visited_at).getTime()) / (1000 * 60 * 60 * 24));
+      }
+
+      if (!INACTIVE_DAYS.includes(daysInactive)) {
+        results.inactiveMerchants.skipped++;
+        continue;
+      }
+
+      // Vérifier si déjà envoyé via pending_email_tracking (réutilise la même table)
+      const { data: existingTracking } = await supabase
+        .from('pending_email_tracking')
+        .select('id')
+        .eq('merchant_id', merchant.id)
+        .eq('reminder_day', -daysInactive) // Valeurs négatives pour les distinguer des pending reminders
+        .single();
+
+      if (existingTracking) {
+        results.inactiveMerchants.skipped++;
+        continue;
+      }
+
+      const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+      const email = userData?.user?.email;
+
+      if (!email) {
+        results.inactiveMerchants.skipped++;
+        continue;
+      }
+
+      try {
+        let result;
+        if (daysInactive === 7) {
+          result = await sendInactiveMerchantDay7Email(email, merchant.shop_name);
+        } else if (daysInactive === 14) {
+          result = await sendInactiveMerchantDay14Email(
+            email,
+            merchant.shop_name,
+            merchant.reward_description || undefined,
+            merchant.stamps_required || undefined
+          );
+        } else {
+          result = await sendInactiveMerchantDay30Email(email, merchant.shop_name);
+        }
+
+        if (result.success) {
+          await supabase.from('pending_email_tracking').insert({
+            merchant_id: merchant.id,
+            reminder_day: -daysInactive, // Valeurs négatives pour distinguer
+            pending_count: 0,
+          });
+          results.inactiveMerchants.sent++;
+        } else {
+          results.inactiveMerchants.errors++;
+        }
+      } catch {
+        results.inactiveMerchants.errors++;
       }
     }
 

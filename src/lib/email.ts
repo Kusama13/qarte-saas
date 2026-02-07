@@ -11,6 +11,11 @@ import {
   ReactivationEmail,
   ProgramReminderEmail,
   IncompleteSignupEmail,
+  ProgramReminderDay2Email,
+  ProgramReminderDay3Email,
+  InactiveMerchantDay7Email,
+  InactiveMerchantDay14Email,
+  InactiveMerchantDay30Email,
 } from '@/emails';
 import logger from './logger';
 
@@ -432,7 +437,7 @@ export async function sendProgramReminderEmail(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName}, votre programme de fidélité n'attend plus que vous`,
+      subject: `${shopName}, vos clientes d'aujourd'hui repartent sans carte de fidélité`,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -465,11 +470,23 @@ export async function sendReactivationEmail(
     const html = await render(ReactivationEmail({ shopName, daysSinceCancellation, totalCustomers }));
     const text = await render(ReactivationEmail({ shopName, daysSinceCancellation, totalCustomers }), { plainText: true });
 
+    // Sujets différenciés selon le timing
+    let subject: string;
+    if (daysSinceCancellation <= 7) {
+      subject = totalCustomers
+        ? `${shopName} - Vos ${totalCustomers} clients n'ont plus accès à leur carte`
+        : `${shopName} - Vos clients n'ont plus accès à leur carte`;
+    } else if (daysSinceCancellation <= 14) {
+      subject = `${shopName} - Revenez, vos données sont encore là`;
+    } else {
+      subject = `${shopName} - Dernière chance avant suppression de vos données`;
+    }
+
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName} - Vos clients vous attendent`,
+      subject,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -484,6 +501,185 @@ export async function sendReactivationEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending reactivation email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email relance programme non configuré J+2 (personnalisé par shop_type)
+export async function sendProgramReminderDay2Email(
+  to: string,
+  shopName: string,
+  shopType: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(ProgramReminderDay2Email({ shopName, shopType }));
+    const text = await render(ProgramReminderDay2Email({ shopName, shopType }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} - Quelle récompense choisir ? On a la réponse`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send program reminder day 2 email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Program reminder day 2 email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending program reminder day 2 email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email relance programme non configuré J+3 (urgence + done-for-you)
+export async function sendProgramReminderDay3Email(
+  to: string,
+  shopName: string,
+  daysRemaining: number
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(ProgramReminderDay3Email({ shopName, daysRemaining }));
+    const text = await render(ProgramReminderDay3Email({ shopName, daysRemaining }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} - Dernier rappel : vos jours d'essai passent vite`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send program reminder day 3 email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Program reminder day 3 email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending program reminder day 3 email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email commerçant inactif J+7 (diagnostic)
+export async function sendInactiveMerchantDay7Email(
+  to: string,
+  shopName: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(InactiveMerchantDay7Email({ shopName }));
+    const text = await render(InactiveMerchantDay7Email({ shopName }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} - Aucun passage depuis 7 jours, tout va bien ?`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send inactive merchant day 7 email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Inactive merchant day 7 email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending inactive merchant day 7 email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email commerçant inactif J+14 (pression concurrentielle)
+export async function sendInactiveMerchantDay14Email(
+  to: string,
+  shopName: string,
+  rewardDescription?: string,
+  stampsRequired?: number
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(InactiveMerchantDay14Email({ shopName, rewardDescription, stampsRequired }));
+    const text = await render(InactiveMerchantDay14Email({ shopName, rewardDescription, stampsRequired }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} - Comment vos concurrents fidélisent leurs clients`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send inactive merchant day 14 email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Inactive merchant day 14 email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending inactive merchant day 14 email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email commerçant inactif J+30 (check-in personnel)
+export async function sendInactiveMerchantDay30Email(
+  to: string,
+  shopName: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(InactiveMerchantDay30Email({ shopName }));
+    const text = await render(InactiveMerchantDay30Email({ shopName }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} - Un mois sans utiliser Qarte : on peut vous aider ?`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send inactive merchant day 30 email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Inactive merchant day 30 email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending inactive merchant day 30 email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

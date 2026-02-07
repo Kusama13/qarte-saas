@@ -18,7 +18,7 @@ interface BaseLayoutProps {
 
 export function BaseLayout({ preview, children }: BaseLayoutProps) {
   return (
-    <Html>
+    <Html lang="fr">
       <Head />
       <Preview>{preview}</Preview>
       <Body style={main}>
@@ -37,6 +37,9 @@ export function BaseLayout({ preview, children }: BaseLayoutProps) {
           <Section style={footer}>
             <Text style={footerText}>
               © {new Date().getFullYear()} Qarte. Tous droits réservés.
+            </Text>
+            <Text style={footerAddress}>
+              Qarte — 128 Rue la Boétie, 75008 Paris, France
             </Text>
             <Text style={footerLinks}>
               <Link href="https://getqarte.com" style={link}>Site web</Link>
@@ -98,6 +101,12 @@ const footer = {
 const footerText = {
   color: '#8898aa',
   fontSize: '12px',
+  margin: '0 0 8px 0',
+};
+
+const footerAddress = {
+  color: '#8898aa',
+  fontSize: '11px',
   margin: '0 0 8px 0',
 };
 

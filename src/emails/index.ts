@@ -10,3 +10,8 @@ export { SubscriptionCanceledEmail } from './SubscriptionCanceledEmail';
 export { ReactivationEmail } from './ReactivationEmail';
 export { ProgramReminderEmail } from './ProgramReminderEmail';
 export { IncompleteSignupEmail } from './IncompleteSignupEmail';
+export { ProgramReminderDay2Email } from './ProgramReminderDay2Email';
+export { ProgramReminderDay3Email } from './ProgramReminderDay3Email';
+export { InactiveMerchantDay7Email } from './InactiveMerchantDay7Email';
+export { InactiveMerchantDay14Email } from './InactiveMerchantDay14Email';
+export { InactiveMerchantDay30Email } from './InactiveMerchantDay30Email';

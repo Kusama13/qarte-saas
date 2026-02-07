@@ -14,7 +14,7 @@ interface TrialExpiredEmailProps {
 
 export function TrialExpiredEmail({ shopName, daysUntilDeletion }: TrialExpiredEmailProps) {
   return (
-    <BaseLayout preview={`Urgent : Vos données seront supprimées dans ${daysUntilDeletion} jours`}>
+    <BaseLayout preview={`${shopName}, votre essai Qarte est terminé — action nécessaire sous ${daysUntilDeletion} jours`}>
       <Heading style={heading}>
         ⚠️ Votre essai a expiré
       </Heading>

@@ -17,16 +17,16 @@ interface QRCodeEmailProps {
 
 export function QRCodeEmail({ menuUrl, businessName, qrCodeUrl, designedQrCodeUrl }: QRCodeEmailProps) {
   return (
-    <BaseLayout preview="Votre QR code menu est pret !">
+    <BaseLayout preview="Votre QR code menu est prêt">
       {/* Qarte Header */}
       <Section style={headerSection}>
         <Text style={headerText}>
-          Fidelisez vos clients avec Qarte
+          Fidélisez vos clients avec Qarte
         </Text>
       </Section>
 
       <Heading style={heading}>
-        Votre QR code est pret !
+        Votre QR code est prêt
       </Heading>
 
       <Text style={paragraph}>
@@ -34,34 +34,34 @@ export function QRCodeEmail({ menuUrl, businessName, qrCodeUrl, designedQrCodeUr
       </Text>
 
       <Text style={paragraph}>
-        Merci d&apos;avoir utilise notre generateur de QR code menu. Vous trouverez ci-dessous vos liens de telechargement.
+        Merci d&apos;avoir utilisé notre générateur de QR code menu. Vous trouverez ci-dessous vos liens de téléchargement.
       </Text>
 
       {/* Download Links */}
       <Section style={linksSection}>
-        <Text style={linksSectionTitle}>Vos QR codes a telecharger :</Text>
+        <Text style={linksSectionTitle}>Vos QR codes à télécharger :</Text>
 
         <Section style={linkBox}>
           <Text style={linkLabel}>QR Code Simple</Text>
-          <Text style={linkDescription}>Format standard, ideal pour une utilisation rapide</Text>
+          <Text style={linkDescription}>Format standard, idéal pour une utilisation rapide</Text>
           {qrCodeUrl ? (
             <Link href={qrCodeUrl} style={downloadLink}>
-              Telecharger le QR code simple
+              Télécharger le QR code simple
             </Link>
           ) : (
-            <Text style={linkNote}>Disponible sur la page de telechargement</Text>
+            <Text style={linkNote}>Disponible sur la page de téléchargement</Text>
           )}
         </Section>
 
         <Section style={linkBox}>
           <Text style={linkLabel}>QR Code Design</Text>
-          <Text style={linkDescription}>Avec votre logo et couleurs personnalisees</Text>
+          <Text style={linkDescription}>Avec votre logo et couleurs personnalisées</Text>
           {designedQrCodeUrl ? (
             <Link href={designedQrCodeUrl} style={downloadLink}>
-              Telecharger le QR code design
+              Télécharger le QR code design
             </Link>
           ) : (
-            <Text style={linkNote}>Disponible sur la page de telechargement</Text>
+            <Text style={linkNote}>Disponible sur la page de téléchargement</Text>
           )}
         </Section>
       </Section>
@@ -74,22 +74,22 @@ export function QRCodeEmail({ menuUrl, businessName, qrCodeUrl, designedQrCodeUr
       )}
 
       <Text style={tipText}>
-        Conseil : Testez votre QR code avec votre telephone avant de l&apos;imprimer.
+        Conseil : Testez votre QR code avec votre téléphone avant de l&apos;imprimer.
       </Text>
 
       {/* Qarte CTA */}
       <Section style={ctaBox}>
         <Text style={ctaTitle}>Envie d&apos;aller plus loin ?</Text>
         <Text style={ctaText}>
-          Creez votre carte de fidelite digitale et augmentez la frequence de visite de vos clients.
+          Créez votre carte de fidélité digitale et augmentez la fréquence de visite de vos clients.
         </Text>
         <Button style={ctaButton} href="https://getqarte.com">
-          Decouvrir Qarte - 15 jours gratuits
+          Découvrir Qarte — essai 15 jours
         </Button>
       </Section>
 
       <Text style={signature}>
-        L&apos;equipe Qarte
+        L&apos;équipe Qarte
       </Text>
     </BaseLayout>
   );

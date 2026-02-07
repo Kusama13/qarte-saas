@@ -19,12 +19,11 @@ export function IncompleteSignupEmail({ email }: IncompleteSignupEmailProps) {
       </Heading>
 
       <Text style={paragraph}>
-        Bonjour,
+        Bonjour ({email}),
       </Text>
 
       <Text style={paragraph}>
-        Vous avez créé votre compte Qarte avec l&apos;adresse{' '}
-        <strong>{email}</strong>, mais vous n&apos;avez pas terminé la
+        Vous avez créé votre compte Qarte, mais vous n&apos;avez pas terminé la
         configuration de votre commerce.
       </Text>
 

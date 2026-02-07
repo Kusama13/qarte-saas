@@ -10,55 +10,56 @@ import { BaseLayout } from './BaseLayout';
 
 interface EbookEmailProps {
   downloadUrl?: string;
+  shopName?: string;
 }
 
-export function EbookEmail({ downloadUrl = 'https://getqarte.com/ebooks/guide-fidelisation.pdf' }: EbookEmailProps) {
+export function EbookEmail({ downloadUrl = 'https://getqarte.com/ebooks/guide-fidelisation.pdf', shopName }: EbookEmailProps) {
   return (
-    <BaseLayout preview="Votre guide de fidelisation est pret !">
+    <BaseLayout preview="Votre guide de fidélisation est prêt">
       <Heading style={heading}>
-        Votre guide est pret ! 📚
+        Votre guide est prêt
       </Heading>
 
       <Text style={paragraph}>
-        Bonjour,
+        {shopName ? `Bonjour ${shopName},` : 'Bonjour,'}
       </Text>
 
       <Text style={paragraph}>
-        Merci pour votre interet ! Voici votre guide gratuit :{' '}
-        <strong>&quot;Comment Augmenter Votre CA de 35% grace a la Fidelisation Client&quot;</strong>
+        Merci pour votre intérêt ! Voici votre guide :{' '}
+        <strong>&quot;Comment fidéliser vos clients et augmenter votre chiffre d&apos;affaires&quot;</strong>
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href={downloadUrl}>
-          Telecharger le guide PDF
+          Télécharger le guide PDF
         </Button>
       </Section>
 
       <Section style={contentBox}>
-        <Text style={contentTitle}>Dans ce guide, vous decouvrirez :</Text>
-        <Text style={contentItem}>- La regle des 20% qui genere 80% de vos revenus</Text>
-        <Text style={contentItem}>- L&apos;architecture de la recompense psychologique</Text>
-        <Text style={contentItem}>- Le calcul du LTV (Life Time Value) predictif</Text>
-        <Text style={contentItem}>- 3 strategies pour fideliser sans reduire vos marges</Text>
+        <Text style={contentTitle}>Dans ce guide, vous découvrirez :</Text>
+        <Text style={contentItem}>- La règle des 20% qui génère 80% de vos revenus</Text>
+        <Text style={contentItem}>- L&apos;architecture de la récompense psychologique</Text>
+        <Text style={contentItem}>- Le calcul du LTV (Life Time Value) prédictif</Text>
+        <Text style={contentItem}>- 3 stratégies pour fidéliser sans réduire vos marges</Text>
       </Section>
 
       <Section style={ctaBox}>
-        <Text style={ctaTitle}>Augmentez votre CA de 35%</Text>
+        <Text style={ctaTitle}>Fidélisez vos clients dès aujourd&apos;hui</Text>
         <Text style={ctaText}>
-          Les commerces qui fidelisent leurs clients voient leur chiffre d&apos;affaires augmenter de 35% en moyenne.
-          Testez Qarte gratuitement pendant 14 jours.
+          Les commerces qui fidélisent leurs clients voient leur chiffre d&apos;affaires augmenter de 35% en moyenne.
+          Testez Qarte pendant 14 jours.
         </Text>
         <Button style={ctaButton} href="https://getqarte.com/auth/merchant">
-          Essayer Qarte gratuitement
+          Découvrir Qarte
         </Button>
       </Section>
 
       <Text style={paragraph}>
-        Des questions ? Repondez simplement a cet email.
+        Des questions ? Répondez simplement à cet email.
       </Text>
 
       <Text style={signature}>
-        L&apos;equipe Qarte
+        L&apos;équipe Qarte
       </Text>
     </BaseLayout>
   );
