@@ -143,21 +143,22 @@ export async function POST(request: NextRequest) {
         ]);
       }
 
-      // Envoyer les emails avec await (sinon serverless tue les promises avant envoi)
-      await Promise.all([
-        sendWelcomeEmail(userData.user.email, shop_name).catch((err) => {
-          logger.error('Failed to send welcome email', err);
-        }),
-        sendNewMerchantNotification(
-          shop_name,
-          shop_type,
-          shop_address,
-          phone,
-          userData.user.email
-        ).catch((err) => {
-          logger.error('Failed to send new merchant notification', err);
-        }),
-      ]);
+      // Envoyer les emails en séquentiel (Resend limite à 2 req/s)
+      // Welcome email en priorité (celui que le commerçant attend)
+      await sendWelcomeEmail(userData.user.email, shop_name).catch((err) => {
+        logger.error('Failed to send welcome email', err);
+      });
+
+      // Notification interne ensuite
+      await sendNewMerchantNotification(
+        shop_name,
+        shop_type,
+        shop_address,
+        phone,
+        userData.user.email
+      ).catch((err) => {
+        logger.error('Failed to send new merchant notification', err);
+      });
     }
 
     return NextResponse.json({ merchant: data });

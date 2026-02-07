@@ -407,23 +407,23 @@ function HeroSection() {
       <div ref={ref} className="relative z-10 max-w-7xl mx-auto px-6 py-20 pt-36 grid lg:grid-cols-2 gap-12 items-center">
         {/* Text Content */}
         <div className={`space-y-8 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 backdrop-blur-md rounded-full border border-emerald-200 shadow-sm">
-            <Leaf className="w-4 h-4 text-emerald-600" />
-            <span className="text-sm text-emerald-700 font-semibold tracking-wide uppercase">100% Zéro Papier</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 backdrop-blur-md rounded-full border border-indigo-200 shadow-sm">
+            <Clock className="w-4 h-4 text-indigo-600" />
+            <span className="text-sm text-indigo-700 font-semibold tracking-wide uppercase">Prêt en 3 minutes</span>
           </div>
 
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
             <h1 className="relative text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight">
-              La beauté passe au digital.{' '}
+              Vos clientes passent une fois et ne reviennent jamais.{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
-                Votre fidélité aussi.
+                Changez ça aujourd&apos;hui.
               </span>
             </h1>
           </div>
 
           <p className="text-xl text-gray-600 max-w-xl leading-relaxed">
-            <span className="text-gray-900 font-medium">+35% de clientes régulières</span> en moyenne. La carte de fidélité digitale pour salons de coiffure, instituts de beauté, spas, ongleries et centres de bien-être.
+            <span className="text-gray-900 font-medium">+40% de clientes régulières</span> en moyenne. Vos clientes scannent un QR code, cumulent des points, reviennent. Sans app, sans carte papier.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-5">
@@ -432,7 +432,7 @@ function HeroSection() {
               onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); }}
               className="group relative px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 text-center shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <span className="relative z-10">Créer ma carte gratuite</span>
+              <span className="relative z-10">Lancer mon programme gratuit</span>
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </a>
             <a
@@ -679,10 +679,10 @@ function FeaturesSection() {
     {
       id: 'instantanee',
       icon: QrCode,
-      title: "Installation Instantanée",
-      subtitle: "Prêt en 30 secondes",
-      description: "Transformez vos clientes en membres digitaux instantanément. Scannez, validez, fidélisez. Aucune application à télécharger.",
-      keywords: ["Scannez", "validez", "fidélisez"],
+      title: "Des clientes fidèles dès le premier passage",
+      subtitle: "En 30 secondes, sans rien installer",
+      description: "Votre cliente scanne le QR code en caisse, sa carte se crée instantanément. Elle revient pour cumuler ses points. Vous n'avez rien à gérer.",
+      keywords: ["scanne", "instantanément", "rien à gérer"],
       color: "from-indigo-500 to-violet-600",
       bgColor: "bg-indigo-50",
       visual: (
@@ -722,10 +722,10 @@ function FeaturesSection() {
     {
       id: 'avis',
       icon: Star,
-      title: "Avis Google Incentivés",
-      subtitle: "Boostez votre e-réputation",
-      description: "Automatisez la récolte d'avis positifs. Proposez des points bonus en échange d'un avis Google authentique.",
-      keywords: ["avis positifs", "points bonus", "avis Google"],
+      title: "Plus d'avis 5 étoiles, plus de nouvelles clientes",
+      subtitle: "Vos clientes parlent de vous sur Google",
+      description: "Après chaque visite, Qarte propose à vos clientes de laisser un avis en échange de points bonus. Votre note Google monte, votre institut remonte dans les recherches.",
+      keywords: ["avis", "note Google", "points bonus"],
       color: "from-amber-400 to-orange-500",
       bgColor: "bg-amber-50",
       visual: (
@@ -763,10 +763,10 @@ function FeaturesSection() {
     {
       id: 'analytics',
       icon: BarChart3,
-      title: "Dashboard & Analytics",
-      subtitle: "Pilotez par la donnée",
-      description: "Analysez le comportement de vos clientes en temps réel. Fréquence de visite, soins préférés et segments les plus fidèles.",
-      keywords: ["temps réel", "panier moyen", "segments"],
+      title: "Sachez exactement qui revient et qui vous oublie",
+      subtitle: "Votre activité, en un coup d'œil",
+      description: "Voyez en temps réel combien de clientes reviennent, lesquelles vous oublient, et quel jour est le plus rentable. Sans tableur, sans prise de tête.",
+      keywords: ["temps réel", "qui revient", "plus rentable"],
       color: "from-emerald-500 to-teal-600",
       bgColor: "bg-emerald-50",
       visual: (
@@ -806,10 +806,10 @@ function FeaturesSection() {
     {
       id: 'vip',
       icon: Crown,
-      title: "Programmes VIP",
-      subtitle: "Fidélisez vos meilleures clientes",
-      description: "Créez des paliers de fidélité. Offrez des remises permanentes et des cadeaux exclusifs à vos membres privilégiés.",
-      keywords: ["paliers", "remises permanentes", "cadeaux exclusifs"],
+      title: "Vos meilleures clientes méritent un traitement spécial",
+      subtitle: "Elles dépensent plus, récompensez-les plus",
+      description: "Créez des paliers de fidélité automatiques. Vos clientes les plus fidèles débloquent des remises permanentes et des avantages exclusifs. Elles se sentent privilégiées, elles reviennent encore plus.",
+      keywords: ["paliers", "remises permanentes", "privilégiées"],
       color: "from-purple-500 to-pink-500",
       bgColor: "bg-purple-50",
       visual: (
@@ -848,10 +848,10 @@ function FeaturesSection() {
     {
       id: 'push',
       icon: Bell,
-      title: "Notifications Push",
-      subtitle: "Restez dans leur poche",
-      description: "Envoyez des messages ciblés directement sur le smartphone de vos clientes. Promos flash, rappels et alertes récompenses.",
-      keywords: ["messages ciblés", "Promos flash", "alertes récompenses"],
+      title: "Remplissez vos créneaux vides en un message",
+      subtitle: "98% de taux d'ouverture",
+      description: "Mardi calme ? Envoyez une promo flash à vos clientes en 2 clics. Directement sur leur téléphone, sans pub, sans algorithme. Elles voient, elles viennent.",
+      keywords: ["promo flash", "2 clics", "elles viennent"],
       color: "from-rose-500 to-red-500",
       bgColor: "bg-rose-50",
       visual: (
@@ -930,7 +930,7 @@ function FeaturesSection() {
             transition={{ repeat: Infinity, duration: 2 }}
             className="absolute top-6 right-6 bg-rose-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg shadow-rose-500/30"
           >
-            98% de taux d&apos;ouverture
+            Sans app à télécharger
           </motion.div>
         </div>
       )
