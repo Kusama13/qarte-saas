@@ -47,7 +47,7 @@ export function EbookEmail({ downloadUrl = 'https://getqarte.com/ebooks/guide-fi
         <Text style={ctaTitle}>Fidélisez vos clients dès aujourd&apos;hui</Text>
         <Text style={ctaText}>
           Les commerces qui fidélisent leurs clients voient leur chiffre d&apos;affaires augmenter de 35% en moyenne.
-          Testez Qarte pendant 14 jours.
+          Testez Qarte pendant 15 jours.
         </Text>
         <Button style={ctaButton} href="https://getqarte.com/auth/merchant">
           Découvrir Qarte

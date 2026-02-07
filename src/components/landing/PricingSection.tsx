@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui';
-import { Check, Zap } from 'lucide-react';
+import { Check, Zap, ShieldCheck, Clock, CreditCard } from 'lucide-react';
 
 const features = [
   'Page fidélité personnalisée',
@@ -51,7 +51,7 @@ export function PricingSection() {
               </Link>
 
               <p className="mt-4 text-sm text-gray-500">
-                14 jours d&apos;essai gratuit • Sans carte bancaire
+                15 jours d&apos;essai gratuit • Sans carte bancaire
               </p>
             </div>
 
@@ -69,6 +69,37 @@ export function PricingSection() {
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
+
+          {/* Objection handling */}
+          <div className="grid gap-4 mt-12 sm:grid-cols-3 max-w-2xl mx-auto">
+            <div className="flex flex-col items-center text-center p-4">
+              <div className="flex items-center justify-center w-10 h-10 mb-3 rounded-full bg-green-100">
+                <ShieldCheck className="w-5 h-5 text-green-600" />
+              </div>
+              <p className="text-sm font-medium text-gray-900">Sans engagement</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Résiliez en 1 clic depuis votre tableau de bord, sans justification
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center p-4">
+              <div className="flex items-center justify-center w-10 h-10 mb-3 rounded-full bg-blue-100">
+                <CreditCard className="w-5 h-5 text-blue-600" />
+              </div>
+              <p className="text-sm font-medium text-gray-900">Sans carte bancaire</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Testez 15 jours gratuitement, aucun moyen de paiement demandé
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center p-4">
+              <div className="flex items-center justify-center w-10 h-10 mb-3 rounded-full bg-purple-100">
+                <Clock className="w-5 h-5 text-purple-600" />
+              </div>
+              <p className="text-sm font-medium text-gray-900">Prêt en 2 minutes</p>
+              <p className="mt-1 text-xs text-gray-500">
+                Créez votre programme, imprimez le QR code et commencez à fidéliser
+              </p>
             </div>
           </div>
         </div>

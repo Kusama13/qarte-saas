@@ -18,7 +18,7 @@ const faqs = [
   {
     question: 'Comment fonctionne l\'essai gratuit ?',
     answer:
-      'Vous avez 14 jours pour tester toutes les fonctionnalités gratuitement, sans fournir de carte bancaire. Si vous êtes satisfait, vous passez au plan payant. Sinon, votre compte est simplement désactivé.',
+      'Vous avez 15 jours pour tester toutes les fonctionnalités gratuitement, sans fournir de carte bancaire. Si vous êtes satisfait, vous passez au plan payant. Sinon, votre compte est simplement désactivé.',
   },
   {
     question: 'Puis-je résilier à tout moment ?',

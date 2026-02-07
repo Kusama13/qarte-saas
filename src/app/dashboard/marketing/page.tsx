@@ -162,7 +162,7 @@ export default function MarketingPushPage() {
   const [showOfferModal, setShowOfferModal] = useState(false);
 
   // History visibility
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
 
   // How it works modal
   const [showHowItWorks, setShowHowItWorks] = useState(false);

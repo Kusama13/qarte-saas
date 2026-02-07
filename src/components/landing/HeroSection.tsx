@@ -22,7 +22,7 @@ export function HeroSection() {
             <div className="flex flex-col gap-4 mt-8 sm:flex-row sm:justify-center lg:justify-start">
               <Link href="/auth/merchant/signup">
                 <Button size="lg" className="w-full sm:w-auto">
-                  Essai gratuit 14 jours
+                  Essai gratuit 15 jours
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
