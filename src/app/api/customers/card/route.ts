@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -10,6 +11,13 @@ const supabaseAdmin = getSupabaseAdmin();
 // GET: Récupérer les détails d'une carte de fidélité d'un client (API consolidée)
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 10 req/min par IP pour bloquer le bruteforce
+    const ip = getClientIP(request);
+    const rateLimit = checkRateLimit(`customer-card:${ip}`, { maxRequests: 10, windowMs: 60 * 1000 });
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const { searchParams } = new URL(request.url);
     const phone = searchParams.get('phone');
     const merchantId = searchParams.get('merchant_id');

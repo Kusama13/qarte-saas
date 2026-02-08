@@ -33,6 +33,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'merchantId required' }, { status: 400 });
   }
 
+  // SECURITY: Verify merchant ownership
+  const authCheck = await verifyMerchantOwnership(merchantId);
+  if (!authCheck.authorized) {
+    return NextResponse.json({ error: authCheck.error }, { status: authCheck.status || 403 });
+  }
+
   const supabase = await createRouteHandlerSupabaseClient();
 
   const { data: merchant, error } = await supabase

@@ -2,9 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { render } from '@react-email/render';
 import { EbookEmail } from '@/emails';
 import { resend, EMAIL_FROM, EMAIL_REPLY_TO, EMAIL_HEADERS } from '@/lib/resend';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 3 emails par heure par IP
+    const ip = getClientIP(request);
+    const rateLimit = checkRateLimit(`ebook:${ip}`, { maxRequests: 3, windowMs: 60 * 60 * 1000 });
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const { email } = await request.json();
 
     if (!email) {

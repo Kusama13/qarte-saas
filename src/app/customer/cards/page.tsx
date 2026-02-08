@@ -405,12 +405,15 @@ export default function CustomerCardsPage() {
       </main>
 
       <footer className="py-8 text-center">
-        <div className="flex items-center justify-center gap-1.5 mb-2">
-          <span className="text-[11px] font-medium text-gray-400">Créé avec</span>
-          <span className="text-sm">❤️</span>
-          <span className="text-[11px] font-medium text-gray-400">en France</span>
-        </div>
-        <span className="text-xs font-medium text-gray-300">Qarte • Fidélisez mieux</span>
+        <a href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
+          <span className="text-xs text-gray-400 group-hover:text-gray-500">Créé avec ❤️ par</span>
+          <div className="w-4 h-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-sm flex items-center justify-center">
+            <span className="text-white text-[8px] font-black italic">Q</span>
+          </div>
+          <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+            Qarte
+          </span>
+        </a>
       </footer>
     </div>
   );

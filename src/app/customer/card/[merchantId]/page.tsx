@@ -1262,14 +1262,15 @@ export default function CustomerCardPage({
         )}
 
         <footer className="py-6 text-center">
-          <div className="inline-flex items-center gap-1.5 group cursor-default transition-all duration-300 hover:opacity-70">
-            <div className="w-5 h-5 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-md flex items-center justify-center">
-              <span className="text-white text-[10px] font-black italic">Q</span>
+          <a href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
+            <span className="text-xs text-gray-400 group-hover:text-gray-500">Créé avec ❤️ par</span>
+            <div className="w-4 h-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-sm flex items-center justify-center">
+              <span className="text-white text-[8px] font-black italic">Q</span>
             </div>
-            <span className="text-sm font-black tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-              QARTE
+            <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+              Qarte
             </span>
-          </div>
+          </a>
         </footer>
       </main>
 

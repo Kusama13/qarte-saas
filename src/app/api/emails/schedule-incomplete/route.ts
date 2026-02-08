@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { scheduleIncompleteSignupEmail } from '@/lib/email';
 import logger from '@/lib/logger';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -9,6 +10,13 @@ const supabaseAdmin = getSupabaseAdmin();
 // Called from Phase 1 signup page after successful auth.signUp()
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 3 par heure par IP (aligne avec signup)
+    const ip = getClientIP(request);
+    const rateLimit = checkRateLimit(`schedule-incomplete:${ip}`, { maxRequests: 3, windowMs: 60 * 60 * 1000 });
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const { userId, email } = await request.json();
 
     if (!userId || !email) {
