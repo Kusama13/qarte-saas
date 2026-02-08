@@ -212,7 +212,7 @@ export function HeroSection() {
             <a
               href="/customer/card/demo-onglerie?preview=true&demo=true"
               onClick={() => trackCtaClick('hero_demo', 'hero_section')}
-              className="flex items-center justify-center gap-2 px-8 py-4 border-2 border-indigo-200 hover:border-indigo-300 text-indigo-700 font-bold rounded-xl transition-all duration-300 text-center hover:bg-indigo-50 hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-bold rounded-xl transition-all duration-300 text-center shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:from-pink-600 hover:to-indigo-600 hover:scale-[1.02] active:scale-[0.98]"
             >
               <Eye className="w-5 h-5" />
               Voir une démo
