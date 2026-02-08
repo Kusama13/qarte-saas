@@ -77,21 +77,25 @@ export default function SocialKitPage() {
 
   if (!merchant) return null;
 
+  const tier2Text = merchant.tier2_enabled && merchant.tier2_reward_description
+    ? ` Et ce n'est pas tout : après ${merchant.tier2_stamps_required} passages, recevez ${merchant.tier2_reward_description} !`
+    : '';
+
   const captions = [
     {
       label: 'Simple et efficace',
       icon: '✨',
-      text: `Votre fidélité mérite d'être récompensée ! 🎁 Après ${merchant.stamps_required} passages chez ${merchant.shop_name}, recevez ${merchant.reward_description}. Demandez à scanner le QR code lors de votre prochain rendez-vous ! #fidélité #${merchant.shop_name.replace(/\s+/g, '')}`,
+      text: `Votre fidélité mérite d'être récompensée ! 🎁 Après ${merchant.stamps_required} passages chez ${merchant.shop_name}, recevez ${merchant.reward_description}.${tier2Text} Demandez à scanner le QR code lors de votre prochain rendez-vous ! #fidélité #${merchant.shop_name.replace(/\s+/g, '')}`,
     },
     {
       label: 'Engageante',
       icon: '💬',
-      text: `NOUVEAU chez ${merchant.shop_name} ! ✨ On lance notre carte de fidélité digitale. Pas d'application, pas de carte à perdre — juste un scan rapide à chaque visite. Votre récompense ? ${merchant.reward_description} ! À bientôt 💜`,
+      text: `NOUVEAU chez ${merchant.shop_name} ! ✨ On lance notre carte de fidélité digitale. Pas d'application, pas de carte à perdre — juste un scan rapide à chaque visite. Votre récompense ? ${merchant.reward_description} !${tier2Text} À bientôt 💜`,
     },
     {
       label: 'Story Instagram',
       icon: '📱',
-      text: `La fidélité, ça se récompense ! 💅 Demandez à scanner le QR code en caisse. ${merchant.reward_description} après ${merchant.stamps_required} passages. C'est cadeau !`,
+      text: `La fidélité, ça se récompense ! 💅 Demandez à scanner le QR code en caisse. ${merchant.reward_description} après ${merchant.stamps_required} passages.${tier2Text} C'est cadeau !`,
     },
   ];
 

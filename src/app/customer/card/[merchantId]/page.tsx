@@ -639,6 +639,9 @@ export default function CustomerCardPage({
   // If points were reduced below tier1_required, treat as if not redeemed
   const effectiveTier1Redeemed = tier1RedeemedInCycle && currentStamps >= tier1Required;
 
+  // Whether the sticky redeem bar is visible (used for z-index priority over PWA install bar)
+  const isRewardSticky = !redeemSuccess && ((isRewardReady && !effectiveTier1Redeemed) || (tier2Enabled && isTier2Ready));
+
   // Get the loyalty icon component for stamps display
   const LoyaltyIcon = getLoyaltyIcon();
 
@@ -1279,18 +1282,18 @@ export default function CustomerCardPage({
         </footer>
 
         {/* Spacer for sticky redeem button */}
-        {!redeemSuccess && ((isRewardReady && !effectiveTier1Redeemed) || (tier2Enabled && isTier2Ready)) && (
+        {isRewardSticky && (
           <div className="h-20" />
         )}
       </main>
 
-      {/* Sticky Redeem Buttons */}
-      {!redeemSuccess && ((isRewardReady && !effectiveTier1Redeemed) || (tier2Enabled && isTier2Ready)) && (
+      {/* Sticky Redeem Buttons — z-50 to stay above PWA install bar */}
+      {isRewardSticky && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="fixed bottom-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-xl border-t border-gray-100 px-4 py-3 space-y-2 safe-bottom"
+          className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-t border-gray-100 px-4 py-3 space-y-2 safe-bottom"
           style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
         >
           {isRewardReady && !effectiveTier1Redeemed && (
@@ -1463,7 +1466,7 @@ export default function CustomerCardPage({
         isIOSChrome={push.isIOSChrome}
         isMobile={isMobile}
         isStandalone={push.isStandalone}
-        showInstallBar={showInstallBar}
+        showInstallBar={showInstallBar && !isRewardSticky}
         onDismissInstallBar={handleDismissInstallBar}
         deferredPrompt={deferredPrompt}
         onClearDeferredPrompt={() => setDeferredPrompt(null)}

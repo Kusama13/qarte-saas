@@ -71,7 +71,11 @@ export async function POST(request: NextRequest) {
         '1 brushing offert',
         10,
         '#654EDA',
-        'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200'
+        'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200',
+        undefined,
+        true,
+        15,
+        '1 soin complet offert'
       );
       return NextResponse.json({
         success: result.success,

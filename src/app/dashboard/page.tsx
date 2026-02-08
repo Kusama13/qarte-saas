@@ -3,21 +3,12 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle } from 'lucide-react';
+import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
 
 // Cache for dashboard stats
 const STATS_CACHE_KEY = 'qarte_dashboard_stats';
@@ -94,7 +85,7 @@ function getCachedStats(merchantId: string) {
   return null;
 }
 
-function setCachedStats(merchantId: string, data: { stats: typeof initialStats; recentCustomers: typeof initialRecentCustomers; chartData: typeof initialChartData }) {
+function setCachedStats(merchantId: string, data: { stats: typeof initialStats; recentCustomers: typeof initialRecentCustomers; weeklyData: typeof initialWeeklyData }) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(`${STATS_CACHE_KEY}_${merchantId}`, JSON.stringify({
@@ -120,7 +111,7 @@ const initialRecentCustomers: Array<{
   lastVisit: string;
 }> = [];
 
-const initialChartData: Array<{ date: string; visits: number }> = [];
+const initialWeeklyData = { thisWeek: 0, lastWeek: 0 };
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -147,12 +138,12 @@ export default function DashboardPage() {
     }
     return initialRecentCustomers;
   });
-  const [chartData, setChartData] = useState<Array<{ date: string; visits: number }>>(() => {
+  const [weeklyData, setWeeklyData] = useState(() => {
     if (merchant?.id) {
       const cached = getCachedStats(merchant.id);
-      return cached?.chartData || initialChartData;
+      return cached?.weeklyData || initialWeeklyData;
     }
-    return initialChartData;
+    return initialWeeklyData;
   });
 
   // If we have cached data, don't show loading state
@@ -229,17 +220,14 @@ export default function DashboardPage() {
         firstDayOfMonth.setDate(1);
         firstDayOfMonth.setHours(0, 0, 0, 0);
 
-        // Prepare chart date range
-        const last7Days = [];
-        for (let i = 6; i >= 0; i--) {
-          const date = new Date();
-          date.setDate(date.getDate() - i);
-          last7Days.push({
-            date: date.toISOString().split('T')[0],
-            label: date.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }),
-          });
-        }
-        const sevenDaysAgo = last7Days[0].date;
+        // Week comparison date ranges
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+        fourteenDaysAgo.setHours(0, 0, 0, 0);
 
         // Execute ALL queries in parallel for maximum speed
         const [
@@ -248,7 +236,8 @@ export default function DashboardPage() {
           visitsThisMonthResult,
           redemptionsThisMonthResult,
           recentCardsResult,
-          last7DaysVisitsResult,
+          thisWeekVisitsResult,
+          lastWeekVisitsResult,
         ] = await Promise.all([
           // Stats queries
           supabase
@@ -285,12 +274,19 @@ export default function DashboardPage() {
             .eq('merchant_id', merchant.id)
             .order('updated_at', { ascending: false })
             .limit(5),
-          // Chart data - single query for all 7 days
+          // This week visits (last 7 days)
           supabase
             .from('visits')
-            .select('visited_at')
+            .select('*', { count: 'exact', head: true })
             .eq('merchant_id', merchant.id)
-            .gte('visited_at', `${sevenDaysAgo}T00:00:00`),
+            .gte('visited_at', sevenDaysAgo.toISOString()),
+          // Previous week visits (7-14 days ago)
+          supabase
+            .from('visits')
+            .select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id)
+            .gte('visited_at', fourteenDaysAgo.toISOString())
+            .lt('visited_at', sevenDaysAgo.toISOString()),
         ]);
 
         // Set stats
@@ -316,24 +312,12 @@ export default function DashboardPage() {
           );
         }
 
-        // Process chart data - count visits per day
-        const visitCounts: Record<string, number> = {};
-        last7Days.forEach(day => { visitCounts[day.date] = 0; });
-
-        if (last7DaysVisitsResult.data) {
-          last7DaysVisitsResult.data.forEach((visit: { visited_at: string }) => {
-            const visitDate = visit.visited_at.split('T')[0];
-            if (visitCounts[visitDate] !== undefined) {
-              visitCounts[visitDate]++;
-            }
-          });
-        }
-
-        const newChartData = last7Days.map(day => ({
-          date: day.label,
-          visits: visitCounts[day.date] || 0,
-        }));
-        setChartData(newChartData);
+        // Process weekly comparison
+        const newWeeklyData = {
+          thisWeek: thisWeekVisitsResult.count || 0,
+          lastWeek: lastWeekVisitsResult.count || 0,
+        };
+        setWeeklyData(newWeeklyData);
 
         // Cache the data for instant display on next visit
         const newStats = {
@@ -357,7 +341,7 @@ export default function DashboardPage() {
         setCachedStats(merchant.id, {
           stats: newStats,
           recentCustomers: newRecentCustomers,
-          chartData: newChartData,
+          weeklyData: newWeeklyData,
         });
 
       } catch (err) {
@@ -624,60 +608,78 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        {/* Analytics Card */}
+        {/* Weekly Comparison Card */}
         <div className="group relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/20 rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-600 to-violet-600" />
           <div className="p-8">
-            <h2 className="mb-8 text-xl font-bold tracking-tight text-gray-900">
-              Visites des 7 derniers jours
-            </h2>
-            {chartData.some((d) => d.visits > 0) ? (
-              <div className="h-[250px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#654EDA" />
-                        <stop offset="100%" stopColor="#7C3AED" />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
-                    <XAxis
-                      dataKey="date"
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#9CA3AF', fontSize: 12 }}
-                      dy={10}
-                    />
-                    <YAxis
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#9CA3AF', fontSize: 12 }}
-                      allowDecimals={false}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                        backdropFilter: 'blur(8px)',
-                        border: '1px solid #E5E7EB',
-                        borderRadius: '16px',
-                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                      }}
-                      itemStyle={{ color: '#654EDA', fontWeight: 600 }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="visits"
-                      stroke="url(#lineGradient)"
-                      strokeWidth={4}
-                      dot={{ fill: '#654EDA', strokeWidth: 2, r: 4, stroke: '#fff' }}
-                      activeDot={{ r: 7, fill: '#654EDA', stroke: '#fff', strokeWidth: 3 }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+            <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-6">
+              7 derniers jours
+            </p>
+            {weeklyData.thisWeek > 0 || weeklyData.lastWeek > 0 ? (
+              <div>
+                <div className="flex items-baseline gap-2.5">
+                  <span className="text-5xl font-black tracking-[-0.03em] text-slate-900">
+                    {weeklyData.thisWeek}
+                  </span>
+                  <span className="text-base font-semibold text-slate-400">
+                    visite{weeklyData.thisWeek !== 1 ? 's' : ''}
+                  </span>
+                </div>
+
+                {weeklyData.lastWeek > 0 ? (() => {
+                  const change = Math.round(((weeklyData.thisWeek - weeklyData.lastWeek) / weeklyData.lastWeek) * 100);
+                  const isPositive = change >= 0;
+                  return (
+                    <div className="flex items-center gap-2.5 mt-3">
+                      <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black ${
+                        isPositive
+                          ? 'bg-emerald-50/80 text-emerald-600 border border-emerald-100/50'
+                          : 'bg-red-50/80 text-red-600 border border-red-100/50'
+                      }`}>
+                        {isPositive ? (
+                          <ArrowUpRight className="w-3.5 h-3.5 stroke-[3]" />
+                        ) : (
+                          <ArrowDownRight className="w-3.5 h-3.5 stroke-[3]" />
+                        )}
+                        {change > 0 ? '+' : ''}{change}%
+                      </div>
+                      <span className="text-sm text-slate-500">
+                        vs {weeklyData.lastWeek} les 7 jours précédents
+                      </span>
+                    </div>
+                  );
+                })() : (
+                  <p className="text-sm text-slate-400 mt-3">
+                    Pas de données la semaine précédente
+                  </p>
+                )}
+
+                {/* Visual comparison bars */}
+                <div className="mt-8 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">Cette sem.</span>
+                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
+                        style={{ width: `${Math.min((weeklyData.thisWeek / Math.max(weeklyData.thisWeek, weeklyData.lastWeek, 1)) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-slate-700 w-8 text-right tabular-nums">{weeklyData.thisWeek}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-20 shrink-0">Sem. préc.</span>
+                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-slate-300 rounded-full transition-all duration-700"
+                        style={{ width: `${Math.min((weeklyData.lastWeek / Math.max(weeklyData.thisWeek, weeklyData.lastWeek, 1)) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-slate-400 w-8 text-right tabular-nums">{weeklyData.lastWeek}</span>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center h-[250px] text-gray-500">
+              <div className="flex flex-col items-center justify-center h-[200px] text-gray-500">
                 <div className="p-4 mb-4 rounded-2xl bg-indigo-50/50">
                   <Calendar className="w-10 h-10 text-indigo-200" />
                 </div>

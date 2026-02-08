@@ -693,33 +693,28 @@ export async function sendSocialKitEmail(
   stampsRequired: number,
   primaryColor: string,
   logoUrl?: string,
-  socialImageUrl?: string
+  socialImageUrl?: string,
+  tier2Enabled?: boolean,
+  tier2StampsRequired?: number | null,
+  tier2RewardDescription?: string | null
 ): Promise<SendEmailResult> {
   const check = checkResend();
   if (check) return check;
 
   try {
-    const html = await render(
-      SocialKitEmail({
-        shopName,
-        rewardDescription,
-        stampsRequired,
-        primaryColor,
-        logoUrl,
-        socialImageUrl,
-      })
-    );
-    const text = await render(
-      SocialKitEmail({
-        shopName,
-        rewardDescription,
-        stampsRequired,
-        primaryColor,
-        logoUrl,
-        socialImageUrl,
-      }),
-      { plainText: true }
-    );
+    const emailProps = {
+      shopName,
+      rewardDescription,
+      stampsRequired,
+      primaryColor,
+      logoUrl,
+      socialImageUrl,
+      tier2Enabled,
+      tier2StampsRequired,
+      tier2RewardDescription,
+    };
+    const html = await render(SocialKitEmail(emailProps));
+    const text = await render(SocialKitEmail(emailProps), { plainText: true });
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,

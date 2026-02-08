@@ -16,6 +16,9 @@ interface SocialKitEmailProps {
   primaryColor: string;
   logoUrl?: string;
   socialImageUrl?: string;
+  tier2Enabled?: boolean;
+  tier2StampsRequired?: number | null;
+  tier2RewardDescription?: string | null;
 }
 
 export function SocialKitEmail({
@@ -25,6 +28,9 @@ export function SocialKitEmail({
   primaryColor,
   logoUrl,
   socialImageUrl,
+  tier2Enabled,
+  tier2StampsRequired,
+  tier2RewardDescription,
 }: SocialKitEmailProps) {
   const dashboardUrl = 'https://getqarte.com/dashboard/social-kit';
 
@@ -75,6 +81,15 @@ export function SocialKitEmail({
                 Après {stampsRequired} passage{stampsRequired > 1 ? 's' : ''}
               </Text>
             </Section>
+            {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
+              <Section style={{ ...cardRewardBox, marginTop: '8px', backgroundColor: 'rgba(255,255,255,0.8)' }}>
+                <Text style={{ ...cardRewardLabel, color: '#7C3AED' }}>Palier 2</Text>
+                <Text style={{ ...cardRewardText, fontSize: '16px' }}>{tier2RewardDescription}</Text>
+                <Text style={{ ...cardRewardStamps, color: '#7C3AED' }}>
+                  Après {tier2StampsRequired} passage{tier2StampsRequired > 1 ? 's' : ''}
+                </Text>
+              </Section>
+            )}
           </div>
         </Section>
       )}
@@ -99,7 +114,11 @@ export function SocialKitEmail({
         <Text style={captionLabel}>Option 1 — Simple et efficace</Text>
         <Text style={captionText}>
           Votre fidélité mérite d&apos;être récompensée ! 🎁 Après {stampsRequired} passages chez {shopName},
-          recevez {rewardDescription}. Demandez à scanner le QR code lors de votre prochain rendez-vous !
+          recevez {rewardDescription}.
+          {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
+            <> Et ce n&apos;est pas tout : après {tier2StampsRequired} passages, recevez {tier2RewardDescription} !</>
+          )}
+          {' '}Demandez à scanner le QR code lors de votre prochain rendez-vous !
           #fidélité #{shopName.replace(/\s+/g, '')}
         </Text>
       </Section>
@@ -109,7 +128,11 @@ export function SocialKitEmail({
         <Text style={captionText}>
           NOUVEAU chez {shopName} ! ✨ On lance notre carte de fidélité digitale.
           Pas d&apos;application, pas de carte à perdre — juste un scan rapide à chaque visite.
-          Votre récompense ? {rewardDescription} ! À bientôt 💜
+          Votre récompense ? {rewardDescription} !
+          {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
+            <> Et après {tier2StampsRequired} passages : {tier2RewardDescription} !</>
+          )}
+          {' '}À bientôt 💜
         </Text>
       </Section>
 
@@ -117,7 +140,11 @@ export function SocialKitEmail({
         <Text style={captionLabel}>Option 3 — Story Instagram</Text>
         <Text style={captionText}>
           La fidélité, ça se récompense ! 💅 Demandez à scanner le QR code en caisse.
-          {rewardDescription} après {stampsRequired} passages. C&apos;est cadeau !
+          {rewardDescription} après {stampsRequired} passages.
+          {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
+            <> Et {tier2RewardDescription} après {tier2StampsRequired} passages !</>
+          )}
+          {' '}C&apos;est cadeau !
         </Text>
       </Section>
 
