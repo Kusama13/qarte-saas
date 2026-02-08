@@ -16,6 +16,7 @@ import {
   InactiveMerchantDay7Email,
   InactiveMerchantDay14Email,
   InactiveMerchantDay30Email,
+  SocialKitEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -680,6 +681,65 @@ export async function sendInactiveMerchantDay30Email(
     return { success: true };
   } catch (error) {
     logger.error('Error sending inactive merchant day 30 email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email kit réseaux sociaux (après configuration du programme)
+export async function sendSocialKitEmail(
+  to: string,
+  shopName: string,
+  rewardDescription: string,
+  stampsRequired: number,
+  primaryColor: string,
+  logoUrl?: string,
+  socialImageUrl?: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(
+      SocialKitEmail({
+        shopName,
+        rewardDescription,
+        stampsRequired,
+        primaryColor,
+        logoUrl,
+        socialImageUrl,
+      })
+    );
+    const text = await render(
+      SocialKitEmail({
+        shopName,
+        rewardDescription,
+        stampsRequired,
+        primaryColor,
+        logoUrl,
+        socialImageUrl,
+      }),
+      { plainText: true }
+    );
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} — Votre visuel réseaux sociaux est prêt !`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send social kit email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Social kit email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending social kit email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

@@ -70,7 +70,7 @@ function DashboardLayoutContent({
     return null;
   }
 
-  if (pathname === '/dashboard/setup' || pathname === '/dashboard/qr-download') {
+  if (pathname === '/dashboard/setup' || pathname === '/dashboard/qr-download' || pathname === '/dashboard/social-kit') {
     return <>{children}</>;
   }
 

@@ -12,6 +12,7 @@ import {
   Palette,
   Sparkles,
   Smartphone,
+  Share2,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { generateQRCode, getScanUrl } from '@/lib/utils';
@@ -266,8 +267,27 @@ export default function QRDownloadPage() {
         </div>
       </div>
 
+      {/* Social Kit Banner */}
+      <div className="mt-8 p-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl border border-purple-100">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-200">
+            <Share2 className="w-6 h-6 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-gray-900">Partagez sur vos réseaux</h3>
+            <p className="text-sm text-gray-600">Téléchargez un visuel prêt à poster sur Instagram, Facebook...</p>
+          </div>
+          <Link
+            href="/dashboard/social-kit"
+            className="px-5 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all text-sm whitespace-nowrap"
+          >
+            Voir le kit
+          </Link>
+        </div>
+      </div>
+
       {/* Bottom CTA - Return to Dashboard */}
-      <div className="mt-12 mb-8">
+      <div className="mt-8 mb-8">
         <Link
           href="/dashboard"
           className="flex items-center justify-center gap-3 w-full py-5 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-bold text-lg rounded-2xl shadow-xl shadow-slate-200 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"

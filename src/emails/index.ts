@@ -15,3 +15,4 @@ export { ProgramReminderDay3Email } from './ProgramReminderDay3Email';
 export { InactiveMerchantDay7Email } from './InactiveMerchantDay7Email';
 export { InactiveMerchantDay14Email } from './InactiveMerchantDay14Email';
 export { InactiveMerchantDay30Email } from './InactiveMerchantDay30Email';
+export { SocialKitEmail } from './SocialKitEmail';

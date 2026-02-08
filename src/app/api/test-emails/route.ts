@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { render } from '@react-email/render';
-import { EbookEmail, QRCodeEmail } from '@/emails';
+import { EbookEmail, QRCodeEmail, SocialKitEmail } from '@/emails';
 import {
   sendWelcomeEmail,
   sendTrialEndingEmail,
   sendTrialExpiredEmail,
   sendSubscriptionConfirmedEmail,
+  sendSocialKitEmail,
 } from '@/lib/email';
 
 // GET - Preview emails in browser (dev only)
@@ -25,8 +26,16 @@ export async function GET(request: NextRequest) {
         menuUrl: 'https://menu.getqarte.com/restaurant-demo',
         businessName: 'Restaurant Demo',
       }));
+    } else if (type === 'social-kit') {
+      html = await render(SocialKitEmail({
+        shopName: 'Le Salon de Clara',
+        rewardDescription: '1 brushing offert',
+        stampsRequired: 10,
+        primaryColor: '#654EDA',
+        logoUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200',
+      }));
     } else {
-      return NextResponse.json({ error: 'Invalid email type. Use ?type=ebook or ?type=qrcode' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid email type. Use ?type=ebook, ?type=qrcode, or ?type=social-kit' }, { status: 400 });
     }
 
     return NextResponse.json({ html });
@@ -48,10 +57,26 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { email } = await request.json();
+    const { email, type } = await request.json();
 
     if (!email) {
       return NextResponse.json({ error: 'Email requis' }, { status: 400 });
+    }
+
+    // Single email type test
+    if (type === 'social-kit') {
+      const result = await sendSocialKitEmail(
+        email,
+        'Le Salon de Clara',
+        '1 brushing offert',
+        10,
+        '#654EDA',
+        'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200'
+      );
+      return NextResponse.json({
+        success: result.success,
+        message: result.success ? `Social kit email envoyé à ${email}` : result.error,
+      });
     }
 
     const results = [];

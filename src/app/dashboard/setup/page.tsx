@@ -125,6 +125,11 @@ export default function OnboardingPage() {
 
       if (error) throw error;
 
+      // Send social kit email if logo is set (fire and forget)
+      if (formData.logoUrl && formData.rewardDescription) {
+        fetch('/api/emails/social-kit', { method: 'POST' }).catch(() => {});
+      }
+
       router.push('/dashboard/qr-download');
     } catch (error) {
       console.error('Error saving:', error);
