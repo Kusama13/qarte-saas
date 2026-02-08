@@ -38,6 +38,7 @@ export default function SubscriptionPage() {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState(false);
+  const [billingPlan, setBillingPlan] = useState<'monthly' | 'annual'>('monthly');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [loadingPortal, setLoadingPortal] = useState(false);
@@ -116,6 +117,7 @@ export default function SubscriptionPage() {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: billingPlan }),
       });
 
       const data = await res.json();
@@ -221,15 +223,47 @@ export default function SubscriptionPage() {
             {isPastDue && <span className="px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-red-700 bg-red-50 rounded-full border border-red-100">Paiement en échec</span>}
           </div>
 
-          <div className="flex items-center gap-5 p-6 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-violet-50/50 border border-indigo-100/50 mb-8 hover-lift">
+          <div className="flex items-center gap-5 p-6 rounded-2xl bg-gradient-to-br from-indigo-50/50 to-violet-50/50 border border-indigo-100/50 mb-4 hover-lift">
             <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white shadow-sm border border-indigo-50">
               <Zap className="w-8 h-8 text-primary" />
             </div>
             <div>
               <p className="text-2xl font-black text-gray-900 leading-tight">Plan Pro</p>
-              <p className="text-xl font-bold gradient-text">19,00 € <span className="text-sm font-medium text-gray-400">/ mois</span></p>
+              <p className="text-xl font-bold gradient-text">
+                {billingPlan === 'annual' ? '15,83 €' : '19,00 €'} <span className="text-sm font-medium text-gray-400">/ mois</span>
+              </p>
+              {billingPlan === 'annual' && (
+                <p className="text-xs text-gray-400">190€ facturé annuellement</p>
+              )}
             </div>
           </div>
+
+          {/* Billing Toggle */}
+          {!isPaid && !isCanceling && (
+            <div className="flex items-center justify-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100 mb-8">
+              <button
+                onClick={() => setBillingPlan('monthly')}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                  billingPlan === 'monthly'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Mensuel
+              </button>
+              <button
+                onClick={() => setBillingPlan('annual')}
+                className={`px-4 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${
+                  billingPlan === 'annual'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Annuel
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">-17%</span>
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3 mb-8">
             {features.map((feature, index) => (

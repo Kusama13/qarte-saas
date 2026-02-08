@@ -82,17 +82,11 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        // Send notifications
-        let sentCount = 0;
-        let failedCount = 0;
-
-        for (const sub of subscriptions) {
-          try {
+        // Send notifications in parallel with Promise.allSettled (was sequential)
+        const pushResults = await Promise.allSettled(
+          subscriptions.map(async (sub) => {
             await webpush.sendNotification(
-              {
-                endpoint: sub.endpoint,
-                keys: { p256dh: sub.p256dh, auth: sub.auth }
-              },
+              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
               JSON.stringify({
                 title: merchant?.shop_name || 'Qarte',
                 body: `${push.title}: ${push.body}`,
@@ -101,14 +95,28 @@ export async function GET(request: NextRequest) {
                 tag: 'qarte-scheduled',
               })
             );
+          })
+        );
+
+        let sentCount = 0;
+        let failedCount = 0;
+        const failedEndpoints: string[] = [];
+
+        pushResults.forEach((result, idx) => {
+          if (result.status === 'fulfilled') {
             sentCount++;
-          } catch (err) {
+          } else {
             failedCount++;
-            const webPushError = err as { statusCode?: number };
-            if (webPushError.statusCode === 404 || webPushError.statusCode === 410) {
-              await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+            const webPushError = result.reason as { statusCode?: number };
+            if (webPushError?.statusCode === 404 || webPushError?.statusCode === 410) {
+              failedEndpoints.push(subscriptions[idx].endpoint);
             }
           }
+        });
+
+        // Batch delete expired subscriptions
+        if (failedEndpoints.length > 0) {
+          await supabase.from('push_subscriptions').delete().in('endpoint', failedEndpoints);
         }
 
         // Update scheduled push status

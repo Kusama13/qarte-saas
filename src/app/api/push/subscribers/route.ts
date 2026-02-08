@@ -58,10 +58,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Step 1: Get all customers with loyalty cards for this merchant (with their phone numbers)
+    // Limit to 5000 to prevent memory spikes
     const { data: merchantCustomers, error: cardsError } = await supabase
       .from('loyalty_cards')
       .select('customer_id, customers!inner(id, phone_number, first_name, last_name)')
-      .eq('merchant_id', merchantId);
+      .eq('merchant_id', merchantId)
+      .limit(5000);
 
     if (cardsError) {
       console.error('Error fetching loyalty cards:', cardsError);
@@ -100,7 +102,8 @@ export async function GET(request: NextRequest) {
     const { data: allCustomersWithPhone, error: phoneError } = await supabase
       .from('customers')
       .select('id, phone_number')
-      .in('phone_number', phoneNumbers);
+      .in('phone_number', phoneNumbers)
+      .limit(10000);
 
     if (phoneError) {
       console.error('Error fetching customers by phone:', phoneError);
@@ -127,7 +130,8 @@ export async function GET(request: NextRequest) {
     const { data: subscriptions, error } = await supabase
       .from('push_subscriptions')
       .select('customer_id, customers!inner(id)')
-      .in('customer_id', allCustomerIds);
+      .in('customer_id', allCustomerIds)
+      .limit(10000);
 
     if (error) {
       console.error('Error fetching subscriptions:', error);

@@ -39,96 +39,103 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
-    for (const merchant of canceledMerchants || []) {
-      results.processed++;
-
-      // Calculer le nombre de jours depuis l'annulation
-      const canceledAt = new Date(merchant.updated_at);
+    if (canceledMerchants && canceledMerchants.length > 0) {
       const now = new Date();
-      const daysSinceCancellation = Math.floor(
-        (now.getTime() - canceledAt.getTime()) / (1000 * 60 * 60 * 24)
-      );
 
-      // Vérifier si c'est un jour d'envoi
-      if (!REACTIVATION_DAYS.includes(daysSinceCancellation)) {
-        results.skipped++;
-        continue;
-      }
+      // Pre-filter to only merchants matching reactivation days
+      const candidateMerchants = canceledMerchants.filter(merchant => {
+        const canceledAt = new Date(merchant.updated_at);
+        const daysSince = Math.floor((now.getTime() - canceledAt.getTime()) / (1000 * 60 * 60 * 24));
+        return REACTIVATION_DAYS.includes(daysSince);
+      });
 
-      // Récupérer l'email du user
-      const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
-      const email = userData?.user?.email;
+      results.processed = canceledMerchants.length;
+      results.skipped = canceledMerchants.length - candidateMerchants.length;
 
-      if (!email) {
-        results.skipped++;
-        results.details.push({
-          shopName: merchant.shop_name,
-          daysSince: daysSinceCancellation,
-          status: 'no_email',
-        });
-        continue;
-      }
+      if (candidateMerchants.length > 0) {
+        // Batch fetch existing tracking
+        const { data: existingTrackings } = await supabase
+          .from('reactivation_email_tracking')
+          .select('merchant_id, day_sent')
+          .in('merchant_id', candidateMerchants.map(m => m.id));
 
-      // Vérifier si on a déjà envoyé cet email (tracking)
-      const { data: existingTracking } = await supabase
-        .from('reactivation_email_tracking')
-        .select('id')
-        .eq('merchant_id', merchant.id)
-        .eq('day_sent', daysSinceCancellation)
-        .single();
-
-      if (existingTracking) {
-        results.skipped++;
-        results.details.push({
-          shopName: merchant.shop_name,
-          daysSince: daysSinceCancellation,
-          status: 'already_sent',
-        });
-        continue;
-      }
-
-      // Récupérer le nombre de clients pour personnaliser l'email
-      const { count: totalCustomers } = await supabase
-        .from('loyalty_cards')
-        .select('*', { count: 'exact', head: true })
-        .eq('merchant_id', merchant.id);
-
-      try {
-        const result = await sendReactivationEmail(
-          email,
-          merchant.shop_name,
-          daysSinceCancellation,
-          totalCustomers || undefined
+        const trackingSet = new Set(
+          (existingTrackings || []).map(t => `${t.merchant_id}:${t.day_sent}`)
         );
 
-        if (result.success) {
-          // Enregistrer l'envoi
-          await supabase.from('reactivation_email_tracking').insert({
-            merchant_id: merchant.id,
-            day_sent: daysSinceCancellation,
-          });
-
-          results.sent++;
-          results.details.push({
-            shopName: merchant.shop_name,
-            daysSince: daysSinceCancellation,
-            status: 'sent',
-          });
-        } else {
-          results.errors++;
-          results.details.push({
-            shopName: merchant.shop_name,
-            daysSince: daysSinceCancellation,
-            status: `error: ${result.error}`,
-          });
+        // Batch fetch user emails
+        const userIds = [...new Set(candidateMerchants.map(m => m.user_id))];
+        const emailMap = new Map<string, string>();
+        // Process getUserById in parallel batches of 10
+        for (let i = 0; i < userIds.length; i += 10) {
+          const batch = userIds.slice(i, i + 10);
+          await Promise.allSettled(batch.map(async (userId) => {
+            const { data: userData } = await supabase.auth.admin.getUserById(userId);
+            if (userData?.user?.email) emailMap.set(userId, userData.user.email);
+          }));
         }
-      } catch (err) {
-        results.errors++;
-        results.details.push({
-          shopName: merchant.shop_name,
-          daysSince: daysSinceCancellation,
-          status: 'exception',
-        });
+
+        // Batch fetch customer counts for all candidates
+        const { data: loyaltyCardCounts } = await supabase
+          .from('loyalty_cards')
+          .select('merchant_id')
+          .in('merchant_id', candidateMerchants.map(m => m.id));
+
+        const countMap = new Map<string, number>();
+        for (const card of loyaltyCardCounts || []) {
+          countMap.set(card.merchant_id, (countMap.get(card.merchant_id) || 0) + 1);
+        }
+
+        // Process in parallel batches of 5
+        for (let i = 0; i < candidateMerchants.length; i += 5) {
+          const batch = candidateMerchants.slice(i, i + 5);
+          await Promise.allSettled(batch.map(async (merchant) => {
+            const canceledAt = new Date(merchant.updated_at);
+            const daysSinceCancellation = Math.floor(
+              (now.getTime() - canceledAt.getTime()) / (1000 * 60 * 60 * 24)
+            );
+
+            // Check tracking
+            if (trackingSet.has(`${merchant.id}:${daysSinceCancellation}`)) {
+              results.skipped++;
+              results.details.push({ shopName: merchant.shop_name, daysSince: daysSinceCancellation, status: 'already_sent' });
+              return;
+            }
+
+            const email = emailMap.get(merchant.user_id);
+            if (!email) {
+              results.skipped++;
+              results.details.push({ shopName: merchant.shop_name, daysSince: daysSinceCancellation, status: 'no_email' });
+              return;
+            }
+
+            const totalCustomers = countMap.get(merchant.id) || 0;
+
+            try {
+              const result = await sendReactivationEmail(
+                email,
+                merchant.shop_name,
+                daysSinceCancellation,
+                totalCustomers || undefined
+              );
+
+              if (result.success) {
+                await supabase.from('reactivation_email_tracking').insert({
+                  merchant_id: merchant.id,
+                  day_sent: daysSinceCancellation,
+                });
+                results.sent++;
+                results.details.push({ shopName: merchant.shop_name, daysSince: daysSinceCancellation, status: 'sent' });
+              } else {
+                results.errors++;
+                results.details.push({ shopName: merchant.shop_name, daysSince: daysSinceCancellation, status: `error: ${result.error}` });
+              }
+            } catch {
+              results.errors++;
+              results.details.push({ shopName: merchant.shop_name, daysSince: daysSinceCancellation, status: 'exception' });
+            }
+          }));
+        }
       }
     }
 

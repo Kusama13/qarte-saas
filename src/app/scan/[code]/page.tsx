@@ -1392,7 +1392,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       {/* Qarte Footer - Compact */}
       <footer className="py-3 text-center">
-        <Link href="/" className="inline-flex items-center gap-1 group transition-all duration-300 hover:opacity-70">
+        <Link href="/auth/merchant/signup?utm_source=scan_page&utm_medium=footer" className="inline-flex items-center gap-1 group transition-all duration-300 hover:opacity-70">
           <div className="w-4 h-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded flex items-center justify-center">
             <span className="text-white text-[6px] font-black italic">Q</span>
           </div>

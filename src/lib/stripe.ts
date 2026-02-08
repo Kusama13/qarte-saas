@@ -24,3 +24,11 @@ export const PLAN = {
   ],
 };
 
+export const PLAN_ANNUAL = {
+  name: 'Pro Annuel',
+  price: 190,
+  monthlyEquivalent: 15.83,
+  priceId: process.env.STRIPE_PRICE_ID_ANNUAL || '',
+  interval: 'year' as const,
+};
+

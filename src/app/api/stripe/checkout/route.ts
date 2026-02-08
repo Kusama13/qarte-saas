@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { stripe, PLAN } from '@/lib/stripe';
+import { stripe, PLAN, PLAN_ANNUAL } from '@/lib/stripe';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,7 +15,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!PLAN.priceId) {
+    // Determine plan (monthly or annual)
+    let selectedPriceId = PLAN.priceId;
+    try {
+      const body = await request.json();
+      if (body.plan === 'annual' && PLAN_ANNUAL.priceId) {
+        selectedPriceId = PLAN_ANNUAL.priceId;
+      }
+    } catch {
+      // No body or invalid JSON = default to monthly
+    }
+
+    if (!selectedPriceId) {
       return NextResponse.json(
         { error: 'Configuration Stripe incomplete - STRIPE_PRICE_ID manquant' },
         { status: 500 }
@@ -76,7 +87,7 @@ export async function POST(request: NextRequest) {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: PLAN.priceId,
+          price: selectedPriceId,
           quantity: 1,
         },
       ],
