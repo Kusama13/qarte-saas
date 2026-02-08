@@ -86,9 +86,9 @@ export async function GET(request: NextRequest) {
           countMap.set(card.merchant_id, (countMap.get(card.merchant_id) || 0) + 1);
         }
 
-        // Process in parallel batches of 5
-        for (let i = 0; i < candidateMerchants.length; i += 5) {
-          const batch = candidateMerchants.slice(i, i + 5);
+        // Process in batches of 2 (Resend rate limit: 2 req/s)
+        for (let i = 0; i < candidateMerchants.length; i += 2) {
+          const batch = candidateMerchants.slice(i, i + 2);
           await Promise.allSettled(batch.map(async (merchant) => {
             const canceledAt = new Date(merchant.updated_at);
             const daysSinceCancellation = Math.floor(
@@ -135,6 +135,10 @@ export async function GET(request: NextRequest) {
               results.details.push({ shopName: merchant.shop_name, daysSince: daysSinceCancellation, status: 'exception' });
             }
           }));
+          // Resend rate limit: 2 req/s — pause entre les batches
+          if (i + 2 < candidateMerchants.length) {
+            await new Promise(resolve => setTimeout(resolve, 600));
+          }
         }
       }
     }

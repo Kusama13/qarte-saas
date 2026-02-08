@@ -34,15 +34,19 @@ if (vapidPublicKey && vapidPrivateKey) {
 const INITIAL_ALERT_DAYS = [0, 1];
 const REMINDER_DAYS = [2, 3];
 
-// Helper: process items in parallel batches
+// Helper: process items in parallel batches (max 2 pour respecter Resend 2 req/s)
 async function batchProcess<T>(
   items: T[],
   fn: (item: T) => Promise<void>,
-  batchSize = 5
+  batchSize = 2
 ) {
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
     await Promise.allSettled(batch.map(fn));
+    // Resend rate limit: 2 req/s — pause entre les batches
+    if (i + batchSize < items.length) {
+      await new Promise(resolve => setTimeout(resolve, 600));
+    }
   }
 }
 

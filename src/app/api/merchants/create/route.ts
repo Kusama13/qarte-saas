@@ -140,32 +140,39 @@ export async function POST(request: NextRequest) {
     const { data: userData } = await supabaseAdmin.auth.admin.getUserById(user_id);
 
     if (userData?.user?.email) {
+      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
       // Cancel scheduled incomplete signup email if one exists
       const scheduledEmailId = userData.user.user_metadata?.scheduled_incomplete_email_id;
       if (scheduledEmailId) {
-        // Await pour éviter que serverless tue les promises
-        await Promise.all([
-          cancelScheduledEmail(scheduledEmailId).catch((err) => {
-            logger.error('Failed to cancel scheduled incomplete email', err);
-          }),
-          supabaseAdmin.auth.admin.updateUserById(user_id, {
-            user_metadata: {
-              ...userData.user.user_metadata,
-              scheduled_incomplete_email_id: null,
-            },
-          }).catch((err) => {
-            logger.error('Failed to clear scheduled email metadata', err);
-          }),
-        ]);
+        // Cancel email (Resend API call #1)
+        await cancelScheduledEmail(scheduledEmailId).catch((err) => {
+          logger.error('Failed to cancel scheduled incomplete email', err);
+        });
+
+        // Clear metadata (Supabase, pas Resend - pas besoin de delay)
+        await supabaseAdmin.auth.admin.updateUserById(user_id, {
+          user_metadata: {
+            ...userData.user.user_metadata,
+            scheduled_incomplete_email_id: null,
+          },
+        }).catch((err) => {
+          logger.error('Failed to clear scheduled email metadata', err);
+        });
+
+        // Resend rate limit: 2 req/s - attendre avant le prochain appel
+        await delay(600);
       }
 
-      // Envoyer les emails en séquentiel (Resend limite à 2 req/s)
-      // Welcome email en priorité (celui que le commerçant attend)
+      // Welcome email en priorité (Resend API call #2)
       await sendWelcomeEmail(userData.user.email, shop_name).catch((err) => {
         logger.error('Failed to send welcome email', err);
       });
 
-      // Notification interne ensuite
+      // Resend rate limit: attendre avant le prochain appel
+      await delay(600);
+
+      // Notification interne (Resend API call #3)
       await sendNewMerchantNotification(
         shop_name,
         shop_type,
