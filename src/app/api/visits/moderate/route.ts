@@ -220,47 +220,94 @@ export async function PUT(request: NextRequest) {
     let successCount = 0;
     let errorCount = 0;
 
-    for (const visit_id of visit_ids) {
-      // Get the visit
-      const { data: visit, error: visitError } = await supabaseAdmin
-        .from('visits')
-        .select('*, loyalty_card:loyalty_cards (*)')
-        .eq('id', visit_id)
-        .eq('merchant_id', merchant_id)
-        .eq('status', 'pending')
-        .single();
+    // Fetch all pending visits in one query
+    const { data: pendingVisits, error: fetchError } = await supabaseAdmin
+      .from('visits')
+      .select('*, loyalty_card:loyalty_cards (*)')
+      .in('id', visit_ids)
+      .eq('merchant_id', merchant_id)
+      .eq('status', 'pending');
 
-      if (visitError || !visit) {
-        errorCount++;
-        continue;
-      }
+    if (fetchError || !pendingVisits) {
+      return NextResponse.json(
+        { error: 'Erreur lors de la récupération des visites' },
+        { status: 500 }
+      );
+    }
 
-      // Update visit status
+    // Update all visit statuses in one query
+    const validIds = pendingVisits.map(v => v.id);
+    if (validIds.length > 0) {
       const { error: updateVisitError } = await supabaseAdmin
         .from('visits')
         .update({ status: newStatus })
-        .eq('id', visit_id);
+        .in('id', validIds);
 
       if (updateVisitError) {
-        errorCount++;
-        continue;
+        return NextResponse.json(
+          { error: 'Erreur lors de la mise à jour des visites' },
+          { status: 500 }
+        );
+      }
+    }
+
+    const notFoundCount = visit_ids.length - validIds.length;
+    let cardErrorCount = 0;
+
+    // If confirmed, group points by loyalty card to avoid stale reads
+    if (action === 'confirm') {
+      const pointsByCard = new Map<string, number>();
+      for (const visit of pendingVisits) {
+        if (visit.loyalty_card) {
+          const cardId = visit.loyalty_card_id;
+          pointsByCard.set(cardId, (pointsByCard.get(cardId) || 0) + (visit.points_earned || 1));
+        }
       }
 
-      // If confirmed, add points to loyalty card
-      if (action === 'confirm' && visit.loyalty_card) {
-        const newStamps = (visit.loyalty_card.current_stamps || 0) + (visit.points_earned || 1);
+      for (const [cardId, totalPoints] of pointsByCard) {
+        // Fresh read of current stamps to avoid stale data
+        const { data: freshCard, error: readError } = await supabaseAdmin
+          .from('loyalty_cards')
+          .select('current_stamps')
+          .eq('id', cardId)
+          .single();
 
-        await supabaseAdmin
+        if (readError || !freshCard) {
+          // Rollback visit statuses for this card's visits
+          const cardVisitIds = pendingVisits.filter(v => v.loyalty_card_id === cardId).map(v => v.id);
+          await supabaseAdmin
+            .from('visits')
+            .update({ status: 'pending' })
+            .in('id', cardVisitIds);
+          cardErrorCount += cardVisitIds.length;
+          continue;
+        }
+
+        const newStamps = (freshCard.current_stamps || 0) + totalPoints;
+
+        const { error: updateCardError } = await supabaseAdmin
           .from('loyalty_cards')
           .update({
             current_stamps: newStamps,
             last_visit_date: new Date().toISOString().split('T')[0],
           })
-          .eq('id', visit.loyalty_card_id);
-      }
+          .eq('id', cardId);
 
-      successCount++;
+        if (updateCardError) {
+          // Rollback visit statuses for this card's visits
+          const cardVisitIds = pendingVisits.filter(v => v.loyalty_card_id === cardId).map(v => v.id);
+          await supabaseAdmin
+            .from('visits')
+            .update({ status: 'pending' })
+            .in('id', cardVisitIds);
+          cardErrorCount += cardVisitIds.length;
+          continue;
+        }
+      }
     }
+
+    successCount = validIds.length - cardErrorCount;
+    errorCount = notFoundCount + cardErrorCount;
 
     return NextResponse.json({
       success: true,

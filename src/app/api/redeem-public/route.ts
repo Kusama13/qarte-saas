@@ -4,6 +4,7 @@ import { z } from 'zod';
 
 const redeemSchema = z.object({
   loyalty_card_id: z.string().uuid(),
+  customer_id: z.string().uuid(),
   tier: z.number().min(1).max(2).optional().default(1),
 });
 
@@ -19,14 +20,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { loyalty_card_id, tier } = parsed.data;
+    const { loyalty_card_id, customer_id, tier } = parsed.data;
     const supabase = getSupabaseAdmin();
 
-    // Get the loyalty card with merchant info
+    // Get the loyalty card with merchant info — verify customer_id matches
     const { data: loyaltyCard, error: cardError } = await supabase
       .from('loyalty_cards')
       .select('*, merchant:merchants(*)')
       .eq('id', loyalty_card_id)
+      .eq('customer_id', customer_id)
       .single();
 
     if (cardError || !loyaltyCard) {

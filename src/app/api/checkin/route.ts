@@ -13,7 +13,6 @@ const checkinSchema = z.object({
   phone_number: z.string().min(1),
   first_name: z.string().optional(),
   last_name: z.string().optional(),
-  points_to_add: z.number().min(1).max(20).optional().default(1),
 });
 
 // Rate limiting
@@ -77,7 +76,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { scan_code, phone_number, first_name, last_name, points_to_add } = parsed.data;
+    const { scan_code, phone_number, first_name, last_name } = parsed.data;
     const formattedPhone = formatPhoneNumber(phone_number);
 
     if (!validateFrenchPhone(formattedPhone)) {
@@ -252,7 +251,6 @@ export async function POST(request: NextRequest) {
         loyalty_card_id: loyaltyCard.id,
         merchant_id: merchant.id,
         customer_id: customer.id,
-        ip_address: ip,
         ip_hash: ipHash,
         points_earned: pointsEarned,
         status: visitStatus,

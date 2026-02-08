@@ -244,7 +244,7 @@ export async function GET(request: NextRequest) {
         .from('visits')
         .select('merchant_id, visited_at')
         .in('merchant_id', merchantIds)
-        .eq('status', 'validated')
+        .eq('status', 'confirmed')
         .order('visited_at', { ascending: false });
 
       // Build map: merchant_id -> last visit date

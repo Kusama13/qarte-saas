@@ -501,6 +501,7 @@ export default function CustomerCardPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           loyalty_card_id: card.id,
+          customer_id: card.customer_id,
           tier: tier,
         }),
       });
