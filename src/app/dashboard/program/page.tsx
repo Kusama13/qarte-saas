@@ -46,6 +46,64 @@ const COLOR_PALETTES = [
   { primary: '#0f172a', secondary: '#334155', name: 'Luxe', icon: '🖤' },
 ];
 
+// Suggestions récompenses palier 2 (plus premium que palier 1)
+const TIER2_REWARD_SUGGESTIONS: Record<string, string[]> = {
+  coiffeur: [
+    '1 couleur complète offerte',
+    '1 soin + coupe offerts',
+    '1 balayage offert',
+    '-30% sur une prestation au choix',
+  ],
+  barbier: [
+    '1 forfait complet offert',
+    '1 soin barbe + coupe offerts',
+    '1 coloration barbe offerte',
+    '-30% sur une prestation',
+  ],
+  institut_beaute: [
+    '1 soin complet offert',
+    '1 forfait visage + corps',
+    '1 soin anti-âge offert',
+    '-30% sur une prestation au choix',
+  ],
+  onglerie: [
+    '1 pose + nail art offerts',
+    '1 manucure + pédicure offertes',
+    '1 forfait spa mains + pieds',
+    '-30% sur le prochain rdv',
+  ],
+  spa: [
+    '1 massage 1h offert',
+    '1 forfait détente complet',
+    '1 rituel duo offert',
+    '-30% sur un soin premium',
+  ],
+  estheticienne: [
+    '1 soin complet offert',
+    '1 forfait visage premium',
+    '1 soin anti-âge offert',
+    '-30% sur une prestation au choix',
+  ],
+  massage: [
+    '1 massage 1h offert',
+    '1 massage duo offert',
+    '1 séance shiatsu offerte',
+    '-30% sur un forfait',
+  ],
+  epilation: [
+    '1 forfait demi-jambes offert',
+    '1 zone au choix offerte',
+    '1 séance laser offerte',
+    '-30% sur un forfait intégral',
+  ],
+  autre: [
+    '1 prestation premium offerte',
+    '1 forfait complet offert',
+    'Un cadeau VIP',
+    '-30% sur le prochain passage',
+  ],
+};
+
 export default function ProgramPage() {
   const router = useRouter();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
@@ -484,6 +542,30 @@ export default function ProgramPage() {
                     onChange={(e) => setFormData({ ...formData, tier2RewardDescription: e.target.value })}
                     className="bg-white border-violet-200 focus:border-violet-500 focus:ring-violet-500/20"
                   />
+                </div>
+
+                {/* Tier 2 Reward Suggestions */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-violet-500" />
+                    <span className="text-sm font-semibold text-gray-600">Suggestions palier 2</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(TIER2_REWARD_SUGGESTIONS[merchant?.shop_type || 'autre'] || TIER2_REWARD_SUGGESTIONS.autre).map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, tier2RewardDescription: suggestion })}
+                        className={`px-4 py-2 text-sm font-medium rounded-xl border transition-all duration-200 ${
+                          formData.tier2RewardDescription === suggestion
+                            ? 'bg-violet-100 border-violet-300 text-violet-700 shadow-sm'
+                            : 'bg-white border-gray-200 text-gray-600 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600 hover:shadow-sm'
+                        }`}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}

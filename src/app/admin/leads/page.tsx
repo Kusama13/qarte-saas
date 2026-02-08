@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   Mail,
   UserPlus,
@@ -9,6 +10,7 @@ import {
   Search,
   Store,
   AlertTriangle,
+  ChevronRight,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -324,9 +326,10 @@ export default function LeadsPage() {
           filteredTodaySignups.length > 0 ? (
             <div className="divide-y divide-gray-100">
               {filteredTodaySignups.map((signup) => (
-                <div
+                <Link
                   key={signup.id}
-                  className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-gray-50"
+                  href={`/admin/merchants/${signup.id}`}
+                  className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-indigo-50/50 transition-colors cursor-pointer group block"
                 >
                   <div className="flex items-center gap-4 flex-1">
                     <div className={cn(
@@ -340,7 +343,7 @@ export default function LeadsPage() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-lg">
+                      <p className="font-semibold text-gray-900 text-lg group-hover:text-indigo-600 transition-colors">
                         {signup.shop_name}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -368,16 +371,17 @@ export default function LeadsPage() {
 
                   <div className="flex items-center gap-2 sm:gap-3">
                     {signup.user_email && (
-                      <a
-                        href={`mailto:${signup.user_email}`}
+                      <span
+                        onClick={(e) => { e.preventDefault(); window.location.href = `mailto:${signup.user_email}`; }}
                         className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2"
                       >
                         <Mail className="w-4 h-4" />
                         Email
-                      </a>
+                      </span>
                     )}
+                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-400 transition-colors" />
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (

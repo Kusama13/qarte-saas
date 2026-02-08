@@ -528,44 +528,41 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   </div>
 
                   {/* Reward Badges */}
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-2.5">
                     {/* Tier 1 - Primary Reward */}
                     <div
-                      className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full border shadow-sm transition-transform active:scale-95"
-                      style={{ backgroundColor: `${primaryColor}05`, borderColor: `${primaryColor}15` }}
+                      className="rounded-2xl p-3.5 border-2 shadow-md"
+                      style={{ backgroundColor: `${primaryColor}10`, borderColor: `${primaryColor}25` }}
                     >
-                      <Gift className="w-3.5 h-3.5" style={{ color: primaryColor }} />
-                      <span className="text-[13px] font-bold text-gray-800">
-                        {merchant.reward_description}
-                      </span>
-                      <div className="flex items-center gap-1.5 pl-2 border-l border-gray-200">
-                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded text-white shadow-sm" style={{ backgroundColor: primaryColor }}>
-                          {merchant.stamps_required}
-                        </span>
-                        <span className="text-[9px] font-bold uppercase tracking-tighter text-gray-400">
-                          Visites
+                      <div className="flex items-center justify-center gap-2 mb-1">
+                        <Gift className="w-4 h-4" style={{ color: primaryColor }} />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                          Votre récompense
                         </span>
                       </div>
+                      <p className="text-base font-extrabold text-gray-900 text-center">
+                        {merchant.reward_description}
+                      </p>
+                      <p className="text-xs font-bold text-center mt-1" style={{ color: primaryColor }}>
+                        Après {merchant.stamps_required} passage{merchant.stamps_required > 1 ? 's' : ''}
+                      </p>
                     </div>
 
                     {/* Tier 2 - Premium Reward (if enabled) */}
                     {merchant.tier2_enabled && merchant.tier2_stamps_required && merchant.tier2_reward_description && (
-                      <div
-                        className="inline-flex items-center gap-2.5 px-3 py-2 rounded-full border shadow-sm transition-transform active:scale-95"
-                        style={{ backgroundColor: '#fef3c705', borderColor: '#fbbf2415' }}
-                      >
-                        <Trophy className="w-3.5 h-3.5 text-amber-500" />
-                        <span className="text-[13px] font-bold text-gray-800">
-                          {merchant.tier2_reward_description}
-                        </span>
-                        <div className="flex items-center gap-1.5 pl-2 border-l border-gray-200">
-                          <span className="text-[10px] font-black px-1.5 py-0.5 rounded text-white shadow-sm bg-gradient-to-r from-amber-500 to-orange-500">
-                            {merchant.tier2_stamps_required}
-                          </span>
-                          <span className="text-[9px] font-bold uppercase tracking-tighter text-gray-400">
-                            Visites
+                      <div className="rounded-2xl p-3.5 border-2 border-amber-200 bg-amber-50/60 shadow-md">
+                        <div className="flex items-center justify-center gap-2 mb-1">
+                          <Trophy className="w-4 h-4 text-amber-500" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
+                            Palier 2 — Récompense
                           </span>
                         </div>
+                        <p className="text-base font-extrabold text-gray-900 text-center">
+                          {merchant.tier2_reward_description}
+                        </p>
+                        <p className="text-xs font-bold text-center mt-1 text-amber-600">
+                          Après {merchant.tier2_stamps_required} passage{merchant.tier2_stamps_required > 1 ? 's' : ''}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -654,7 +651,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-600 ml-1">Numéro de téléphone</label>
+                  <label className="text-xs font-bold text-gray-600 ml-1">Votre numéro de téléphone</label>
                   <div className="relative group">
                     <Input
                       type="tel"
