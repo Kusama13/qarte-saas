@@ -7,7 +7,7 @@ Historique des deploiements et modifications.
 ## [2026-02-08] - Preview carte + onboarding ameliore
 
 ### Deploiement #11 - Preview carte client, suggestions programme, countdown
-**Commit:** *(a venir)*
+**Commit:** `b2bf092`
 
 #### Changements
 - **feat:** Preview carte client (`?preview=true`) avec donnees simulees
