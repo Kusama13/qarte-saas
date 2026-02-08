@@ -8,7 +8,7 @@
 - **Version:** 0.1.0
 - **Langue:** Francais
 - **Essai:** 15 jours gratuits
-- **Prix:** 19€/mois
+- **Prix:** 19€/mois ou 190€/an
 
 ---
 
@@ -51,16 +51,17 @@ src/
 │   ├── customer/          # Pages client
 │   ├── offre-speciale/    # Landing retargeting (exit popup)
 │   ├── scan/[code]/       # Scan QR dynamique
-│   └── page.tsx           # Landing page principale
+│   ├── ebook/             # Landing ebook (lead generation)
+│   └── page.tsx           # Landing page (composition de composants)
 │
 ├── components/
-│   ├── landing/           # Composants landing (Hero, Features, Pricing...)
+│   ├── landing/           # 12 composants landing (Hero, Features, Pricing, FAQ...)
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
-│   ├── shared/            # Header, Footer
+│   ├── shared/            # Header, Footer, CookieBanner, QRScanner
+│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingGuide
 │   ├── loyalty/           # Composants fidelite
 │   ├── marketing/         # QRCardTemplate, FlyerTemplate
-│   ├── analytics/         # GTM, tracking
-│   └── FacebookPixel.tsx  # Pixel Facebook
+│   └── analytics/         # GTM, tracking, FacebookPixel
 │
 ├── lib/                   # Utilitaires
 │   ├── supabase.ts       # Client Supabase
@@ -81,17 +82,27 @@ src/
 │   ├── ReactivationEmail.tsx      # Win-back J+7/14/30
 │   └── EbookEmail.tsx             # Telechargement ebook
 │
+├── hooks/
+│   └── useInView.ts     # Hook IntersectionObserver (landing)
+│
 ├── types/index.ts        # Types TypeScript
 ├── contexts/             # React contexts
 └── middleware.ts         # Auth middleware
 
+docs/
+├── context.md            # Contexte projet (ce fichier)
+├── AUDIT_COMPLET.md      # Audit securite/qualite
+├── AUDIT_SCALABILITE.md  # Audit performance/scalabilite
+├── CHANGELOG.md          # Historique deploiements
+└── roadmap/              # Fonctionnalites a venir (mode article, scheduled push)
+
 supabase/
-└── migrations/           # 28+ migrations SQL
+└── migrations/           # 30 migrations SQL
     ├── 001-025           # Schema initial + fixes
     ├── 026               # Trial period 15 jours
     ├── 027               # Spelling cancelled→canceled
     ├── 028               # Reactivation email tracking
-    └── 011               # tool_leads table (ebook leads)
+    └── 030               # Derniere migration
 
 public/
 ├── images/              # Images statiques
@@ -233,6 +244,7 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_ID=
+STRIPE_PRICE_ID_ANNUAL=
 
 # Email (Resend)
 RESEND_API_KEY=
@@ -327,17 +339,19 @@ npm run email
 
 | Fichier | Description |
 |---------|-------------|
-| `src/app/page.tsx` | Landing page principale (~2200 lignes) |
+| `src/app/page.tsx` | Landing page (composition de 12 composants) |
+| `src/components/landing/` | 12 composants landing (Hero, FAQ, Pricing...) |
 | `src/app/offre-speciale/page.tsx` | Landing retargeting avec exit popup |
 | `src/middleware.ts` | Protection routes authentifiees |
 | `src/lib/supabase.ts` | Client Supabase |
+| `src/lib/stripe.ts` | Client Stripe (mensuel + annuel) |
 | `src/lib/email.ts` | Envoi emails (Resend) |
 | `src/types/index.ts` | Definitions TypeScript |
-| `src/components/FacebookPixel.tsx` | Tracking FB |
+| `src/components/analytics/FacebookPixel.tsx` | Tracking FB |
 | `tailwind.config.ts` | Config Tailwind (couleurs, fonts) |
 | `next.config.mjs` | Config Next.js (securite, images) |
 | `src/app/api/cron/morning/route.ts` | Cron principal (4 taches) |
-| `supabase/migrations/` | 28+ migrations SQL |
+| `supabase/migrations/` | 30 migrations SQL |
 
 ---
 
@@ -368,7 +382,8 @@ npm run email
 
 ### Tarification
 - **Essai gratuit:** 15 jours
-- **Abonnement:** 19€/mois
+- **Abonnement mensuel:** 19€/mois
+- **Abonnement annuel:** 190€/an (equivalent ~15,83€/mois, -17%)
 - **Periode de grace:** 7 jours apres expiration (lecture seule)
 - **Suppression:** Donnees supprimees 7 jours apres expiration
 
@@ -504,10 +519,11 @@ export const EMAIL_HEADERS = {
 
 | Fichier | Description |
 |---------|-------------|
-| `context.md` | Contexte projet (ce fichier) |
-| `AUDIT_COMPLET.md` | Audit securite/qualite |
+| `docs/context.md` | Contexte projet (ce fichier) |
+| `docs/AUDIT_COMPLET.md` | Audit securite/qualite |
 | `docs/AUDIT_SCALABILITE.md` | Audit performance/scalabilite |
 | `docs/CHANGELOG.md` | Historique deploiements |
+| `docs/roadmap/` | Fonctionnalites a venir (mode article, scheduled push) |
 
 ---
 

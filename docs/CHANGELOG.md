@@ -4,6 +4,126 @@ Historique des deploiements et modifications.
 
 ---
 
+## [2026-02-08] - Refactor structure + tarif annuel
+
+### Deploiement #10 - Tarif annuel + cron email sequences
+**Commit:** `3e96385`
+
+#### Changements
+- **feat:** Ajout tarif annuel Stripe (`STRIPE_PRICE_ID_ANNUAL`, 190€/an)
+  - Page subscription : toggle mensuel/annuel
+  - Checkout route : support `plan=annual` param
+  - `src/lib/stripe.ts` : helper `getStripePriceId()`
+- **refactor:** Cron morning/evening/reactivation refactores pour sequences email
+- **fix:** Scan page shield cooldown
+- **style:** CSS animations pour la landing
+
+#### Fichiers modifies (10)
+| Fichier | Modification |
+|---------|--------------|
+| `src/lib/stripe.ts` | +getStripePriceId(), +STRIPE_PRICE_ID_ANNUAL |
+| `src/app/api/stripe/checkout/route.ts` | Support plan annuel |
+| `src/app/dashboard/subscription/page.tsx` | Toggle mensuel/annuel |
+| `src/app/api/cron/morning/route.ts` | Refactor sequences email |
+| `src/app/api/cron/evening/route.ts` | Refactor push evening |
+| `src/app/api/cron/reactivation/route.ts` | Refactor sequences win-back |
+| `src/app/scan/[code]/page.tsx` | Fix shield cooldown |
+| `src/app/globals.css` | +animations CSS landing |
+| `.env.local.example` | +STRIPE_PRICE_ID_ANNUAL |
+
+---
+
+### Deploiement #9 - Reorganisation structure projet
+**Commit:** `9359c83`
+
+#### Changements
+- **refactor:** Split `page.tsx` (2000 lignes) en 12 composants landing separes
+  - HeroSection, JoinedTodayMarquee, HowItWorksSection, ComparisonSection
+  - FeaturesSection, TestimonialsSection, CaseStudySection, PricingSection
+  - FAQSection, FooterSection, ScrollToTopButton, MobileStickyCta
+  - Barrel export via `index.ts`, memo wrappers dans page.tsx (58 lignes)
+- **refactor:** Reorganisation `src/components/` — plus de fichiers loose a la racine
+  - `FacebookPixel.tsx` → `analytics/`
+  - `CookieBanner.tsx`, `QRScanner.tsx` → `shared/`
+  - `CustomerManagementModal.tsx`, `PendingPointsWidget.tsx`, `OnboardingGuide.tsx`, `AdjustPointsModal.tsx` → `dashboard/` (nouveau)
+- **refactor:** Fusion `amelioration-a-venir/` + `ameliorations-a-venir/` → `docs/roadmap/`
+- **refactor:** `AUDIT_COMPLET.md`, `context.md` → `docs/`
+- **chore:** `tsconfig.tsbuildinfo` ajoute au `.gitignore`
+- **feat:** Hook `useInView` partage (`src/hooks/useInView.ts`)
+
+#### Fichiers crees (14)
+```
+src/components/landing/HeroSection.tsx       (270 lignes)
+src/components/landing/FeaturesSection.tsx   (514 lignes)
+src/components/landing/FAQSection.tsx        (257 lignes)
+src/components/landing/TestimonialsSection.tsx (211 lignes)
+src/components/landing/CaseStudySection.tsx  (132 lignes)
+src/components/landing/ComparisonSection.tsx (123 lignes)
+src/components/landing/HowItWorksSection.tsx (122 lignes)
+src/components/landing/PricingSection.tsx    (109 lignes)
+src/components/landing/FooterSection.tsx     (105 lignes)
+src/components/landing/JoinedTodayMarquee.tsx (40 lignes)
+src/components/landing/MobileStickyCta.tsx   (38 lignes)
+src/components/landing/ScrollToTopButton.tsx (36 lignes)
+src/components/landing/index.ts             (barrel export)
+src/hooks/useInView.ts
+```
+
+#### Fichiers supprimes (5 anciens composants landing)
+```
+src/components/landing/CTABanner.tsx
+src/components/landing/FloatingButton.tsx
+src/components/landing/HowItWorks.tsx
+src/components/landing/IndustriesSection.tsx
+src/components/landing/ProblemSection.tsx
+```
+
+#### Impact
+- `page.tsx` : 2000 → 58 lignes
+- `src/components/` : 0 fichiers loose (7 → 0)
+- Imports mis a jour dans 15 fichiers
+- TypeScript : 0 erreurs
+
+---
+
+### Deploiement #8 - Copy 15 jours + objections pricing
+**Commit:** `38d16fb`
+
+#### Changements
+- **copy:** 14→15 jours essai aligne partout (landing, pricing, FAQ)
+- **copy:** Objections repondues dans section pricing
+- **feat:** Historique marketing visible dans admin
+
+---
+
+### Deploiement #7 - Anti-spam + sequences email onboarding
+**Commit:** `bfcbed3`
+
+#### Changements
+- **feat:** Sequences email onboarding et marchands inactifs
+- **fix:** Anti-spam headers sur tous les emails
+- **fix:** Appels Resend sequentiels (pas paralleles) pour eviter rate limit
+- **copy:** Hero headline et features rewrite (benefit-first)
+
+---
+
+## [2026-02-06] - Admin improvements + fixes
+
+### Deploiement - Admin & fixes divers
+**Commits:** `486014c` → `ed27d59`
+
+#### Changements
+- **feat:** Inscriptions du jour sur accueil admin + badges programme
+- **feat:** Masquer comptes admin par defaut + bouton afficher
+- **fix:** Detection programme via `reward_description` au lieu de `loyalty_programs`
+- **fix:** Await email sending dans serverless functions
+- **fix:** Race condition `schedule-incomplete` signup
+- **copy:** QR download : "Pret a scanner / Sur place ou en deplacement"
+- **chore:** Suppression migration `social_images` inutilisee
+- **feat:** Delai email incomplet passe a 15mn
+
+---
+
 ## [2026-02-05] - Inscription 2 phases, suppression outils gratuits
 
 ### Deploiement #6 - Email relance via Resend scheduledAt
@@ -310,4 +430,4 @@ vercel logs
 
 ---
 
-*Derniere mise a jour: 5 fevrier 2026*
+*Derniere mise a jour: 8 fevrier 2026*
