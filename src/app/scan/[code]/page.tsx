@@ -106,6 +106,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     const autoLogin = async () => {
       if (autoLoginAttempted || loading || !merchant || submitting) return;
 
+      // Guard: skip auto-login if already auto-checked-in today for this scan code
+      const lastAutoCheckin = localStorage.getItem(`qarte_checkin_${code}`);
+      const today = new Date().toDateString();
+      if (lastAutoCheckin === today) return;
+
       const savedPhoneByCode = localStorage.getItem(`qarte_phone_${code}`);
       const savedPhoneGlobal = localStorage.getItem('qarte_customer_phone');
       const savedPhone = savedPhoneByCode || savedPhoneGlobal;
@@ -125,6 +130,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 // Customer exists for this merchant → direct checkin
                 setCustomer(data.customer);
                 await processCheckin(data.customer);
+                localStorage.setItem(`qarte_checkin_${code}`, today);
               } else if (data.existsGlobally) {
                 // Customer exists globally → create for this merchant
                 const createResponse = await fetch('/api/customers/register', {
@@ -142,6 +148,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 if (createResponse.ok && createData.customer) {
                   setCustomer(createData.customer);
                   await processCheckin(createData.customer);
+                  localStorage.setItem(`qarte_checkin_${code}`, today);
                 }
               }
             }

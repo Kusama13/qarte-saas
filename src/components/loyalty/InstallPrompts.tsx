@@ -29,7 +29,6 @@ interface InstallPromptsProps {
   showIOSVersionWarning: boolean;
   setShowIOSVersionWarning: (v: boolean) => void;
   iOSVersion: number;
-  pushError: string | null;
   showSuccessToast: boolean;
 }
 
@@ -48,7 +47,6 @@ export default function InstallPrompts({
   showIOSVersionWarning,
   setShowIOSVersionWarning,
   iOSVersion,
-  pushError,
   showSuccessToast,
 }: InstallPromptsProps) {
 
@@ -73,22 +71,6 @@ export default function InstallPrompts({
 
   return (
     <>
-      {/* Push Error Display */}
-      {pushError && (
-        <div className="w-full rounded-2xl p-4 bg-red-50 border border-red-200 flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
-          <div>
-            <p className="font-semibold text-red-800 text-sm">Erreur d&apos;activation</p>
-            <p className="text-xs text-red-600 mt-1">{pushError}</p>
-            {isIOS && (
-              <p className="text-xs text-red-500 mt-2">
-                iOS {iOSVersion || '?'} • {isStandalone ? 'Mode PWA' : 'Navigateur'}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Success Toast */}
       {showSuccessToast && (
         <div className="fixed bottom-6 left-4 right-4 z-50 animate-slide-up">

@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
               title: payload.title,
               body: payload.body,
               icon: payload.icon || '/icon-192.svg',
-              url: payload.url || '/',
+              url: payload.url || '/customer/cards',
               tag: payload.tag || 'qarte-notification',
             })
           );

@@ -23,7 +23,7 @@ self.addEventListener('push', (event) => {
     body: 'Vous avez une nouvelle notification',
     icon: '/icon-192.svg',
     badge: '/icon-192.svg',
-    url: '/',
+    url: '/customer/cards',
   };
 
   // Parse the push data if available

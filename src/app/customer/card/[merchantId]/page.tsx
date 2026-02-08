@@ -371,7 +371,7 @@ export default function CustomerCardPage({
     }
   }, [merchantId, router, isPreview]);
 
-  // Auto-subscribe to push notifications when PWA is first opened
+  // Auto-subscribe to push notifications when PWA is first opened (once per 24h)
   useEffect(() => {
     if (
       card &&
@@ -381,10 +381,10 @@ export default function CustomerCardPage({
       push.pushSupported &&
       !push.pushSubscribing
     ) {
-      const autoSubscribeAttempted = sessionStorage.getItem('qarte_auto_subscribe_attempted');
-      if (autoSubscribeAttempted) return;
+      const lastAttempt = localStorage.getItem('qarte_auto_subscribe_attempted');
+      if (lastAttempt && Date.now() - parseInt(lastAttempt, 10) < 24 * 60 * 60 * 1000) return;
 
-      sessionStorage.setItem('qarte_auto_subscribe_attempted', 'true');
+      localStorage.setItem('qarte_auto_subscribe_attempted', Date.now().toString());
 
       const timer = setTimeout(() => {
         push.handlePushSubscribe();
@@ -743,7 +743,7 @@ export default function CustomerCardPage({
         </p>
       </div>
 
-      <main className="flex-1 px-4 pb-12 w-full max-w-lg mx-auto z-10">
+      <main className={`flex-1 px-4 w-full max-w-lg mx-auto z-10 ${showInstallBar ? 'pb-28' : 'pb-12'}`}>
         {/* Pending Points Alert - Qarte Shield */}
         <AnimatePresence>
           {pendingCount > 0 && (
@@ -1173,6 +1173,22 @@ export default function CustomerCardPage({
           )}
 
 
+          {/* Push Error Display — inline in card flow */}
+          {push.pushError && (
+            <div className="w-full rounded-2xl p-4 bg-red-50 border border-red-200 flex items-start gap-3 mb-4">
+              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-red-800 text-sm">Erreur d&apos;activation</p>
+                <p className="text-xs text-red-600 mt-1">{push.pushError}</p>
+                {push.isIOS && (
+                  <p className="text-xs text-red-500 mt-2">
+                    iOS {push.iOSVersion || '?'} &bull; {push.isStandalone ? 'Mode PWA' : 'Navigateur'}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Subscribed confirmation - Small bell icon */}
           {push.pushSubscribed && (
             <motion.div
@@ -1189,26 +1205,6 @@ export default function CustomerCardPage({
               </div>
             </motion.div>
           )}
-
-          {/* Push modals, toasts, and install prompts */}
-          <InstallPrompts
-            merchant={merchant}
-            isIOS={push.isIOS}
-            isIOSChrome={push.isIOSChrome}
-            isMobile={isMobile}
-            isStandalone={push.isStandalone}
-            showInstallBar={showInstallBar}
-            onDismissInstallBar={handleDismissInstallBar}
-            deferredPrompt={deferredPrompt}
-            onClearDeferredPrompt={() => setDeferredPrompt(null)}
-            showIOSInstructions={push.showIOSInstructions}
-            setShowIOSInstructions={push.setShowIOSInstructions}
-            showIOSVersionWarning={push.showIOSVersionWarning}
-            setShowIOSVersionWarning={push.setShowIOSVersionWarning}
-            iOSVersion={push.iOSVersion}
-            pushError={push.pushError}
-            showSuccessToast={push.showSuccessToast}
-          />
 
           {/* Redeem Buttons - Single tier or Dual tier */}
           {!redeemSuccess && (
@@ -1405,6 +1401,25 @@ export default function CustomerCardPage({
           customerLastName={card?.customer?.last_name}
         />
       )}
+
+      {/* Push modals, toasts, and install prompts — at root level for correct fixed positioning */}
+      <InstallPrompts
+        merchant={merchant}
+        isIOS={push.isIOS}
+        isIOSChrome={push.isIOSChrome}
+        isMobile={isMobile}
+        isStandalone={push.isStandalone}
+        showInstallBar={showInstallBar}
+        onDismissInstallBar={handleDismissInstallBar}
+        deferredPrompt={deferredPrompt}
+        onClearDeferredPrompt={() => setDeferredPrompt(null)}
+        showIOSInstructions={push.showIOSInstructions}
+        setShowIOSInstructions={push.setShowIOSInstructions}
+        showIOSVersionWarning={push.showIOSVersionWarning}
+        setShowIOSVersionWarning={push.setShowIOSVersionWarning}
+        iOSVersion={push.iOSVersion}
+        showSuccessToast={push.showSuccessToast}
+      />
 
       {/* Onboarding CTA - Sticky bottom button to generate QR code */}
       {isPreview && isOnboarding && !isDemo && (
