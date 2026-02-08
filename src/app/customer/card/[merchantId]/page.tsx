@@ -185,7 +185,7 @@ export default function CustomerCardPage({
           let m;
           if (merchantId.startsWith('demo-')) {
             m = demoMerchants[merchantId];
-            if (!m) { router.push('/demo'); return; }
+            if (!m) { router.push('/'); return; }
           } else {
             const response = await fetch(`/api/merchants/preview?id=${merchantId}`);
             const data = await response.json();
@@ -679,7 +679,7 @@ export default function CustomerCardPage({
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
         <AlertCircle className="w-16 h-16 mb-4 text-red-500" />
         <p className="text-gray-600">Carte introuvable</p>
-        <Link href="/customer/cards" className="mt-4">
+        <Link href={isDemo ? '/' : isPreview ? '/dashboard/program' : '/customer/cards'} className="mt-4">
           <Button variant="outline">Retour</Button>
         </Link>
       </div>
@@ -717,6 +717,30 @@ export default function CustomerCardPage({
               : 'Mode prévisualisation — Vos clients verront cette carte'}
         </div>
       )}
+      {/* Demo type selector */}
+      {isPreview && isDemo && (
+        <div className="sticky top-[42px] z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 py-2 px-4">
+          <div className="flex items-center justify-center gap-2">
+            {[
+              { id: 'demo-coiffeur', label: 'Coiffeur', emoji: '💇‍♀️' },
+              { id: 'demo-onglerie', label: 'Onglerie', emoji: '💅' },
+              { id: 'demo-institut', label: 'Institut', emoji: '✨' },
+            ].map((demo) => (
+              <Link
+                key={demo.id}
+                href={`/customer/card/${demo.id}?preview=true&demo=true`}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                  merchantId === demo.id
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {demo.emoji} {demo.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
       {/* Header with premium glassmorphism horizontal design */}
       <header className="relative w-full overflow-hidden">
         <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden bg-white/40 backdrop-blur-xl border-b lg:border border-white/40 shadow-xl shadow-slate-200/50">
@@ -744,7 +768,7 @@ export default function CustomerCardPage({
               className="absolute top-6 left-6 z-20"
             >
               <Link
-                href="/customer/cards"
+                href={isDemo ? '/' : isPreview ? '/dashboard/program' : '/customer/cards'}
                 className="flex items-center justify-center w-11 h-11 rounded-full bg-white/80 backdrop-blur-xl border border-white/60 shadow-sm transition-all hover:shadow-md hover:bg-white active:scale-90"
               >
                 <ArrowLeft className="w-5 h-5 text-slate-800" />
