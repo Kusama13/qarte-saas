@@ -8,7 +8,7 @@ import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
-import PendingPointsWidget from '@/components/PendingPointsWidget';
+import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
 import {
   LineChart,
   Line,

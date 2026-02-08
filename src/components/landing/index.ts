@@ -1,10 +1,12 @@
 export { HeroSection } from './HeroSection';
-export { ProblemSection } from './ProblemSection';
-export { HowItWorks } from './HowItWorks';
+export { JoinedTodayMarquee } from './JoinedTodayMarquee';
+export { HowItWorksSection } from './HowItWorksSection';
+export { ComparisonSection } from './ComparisonSection';
 export { FeaturesSection } from './FeaturesSection';
-export { IndustriesSection } from './IndustriesSection';
 export { TestimonialsSection } from './TestimonialsSection';
+export { CaseStudySection } from './CaseStudySection';
 export { PricingSection } from './PricingSection';
 export { FAQSection } from './FAQSection';
-export { CTABanner } from './CTABanner';
-export { FloatingButton } from './FloatingButton';
+export { FooterSection } from './FooterSection';
+export { ScrollToTopButton } from './ScrollToTopButton';
+export { MobileStickyCta } from './MobileStickyCta';

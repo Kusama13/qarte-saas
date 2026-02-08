@@ -16,7 +16,7 @@ import { getSupabase } from '@/lib/supabase';
 import { generateSlug, validateFrenchPhone } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType } from '@/types';
 import { trackPageView, trackSetupCompleted, trackSignupCompleted } from '@/lib/analytics';
-import { FacebookPixel, fbEvents } from '@/components/FacebookPixel';
+import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
 
 const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
   value,

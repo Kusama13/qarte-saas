@@ -18,7 +18,7 @@ import {
   Trophy,
 } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
-import { CustomerManagementModal } from '@/components/CustomerManagementModal';
+import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
 import { supabase } from '@/lib/supabase';
 import { formatDate } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer } from '@/types';

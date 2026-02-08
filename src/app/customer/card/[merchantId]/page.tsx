@@ -39,7 +39,7 @@ import { trackPwaInstalled, trackPushEnabled, trackCardCreated } from '@/lib/ana
 import dynamic from 'next/dynamic';
 
 // Dynamic import for QR Scanner (client-side only)
-const QRScanner = dynamic(() => import('@/components/QRScanner'), { ssr: false });
+const QRScanner = dynamic(() => import('@/components/shared/QRScanner'), { ssr: false });
 import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard } from '@/types';
 

@@ -15,7 +15,7 @@ import { Button, Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
 import { validateEmail } from '@/lib/utils';
 import { trackPageView, trackSignupStarted } from '@/lib/analytics';
-import { FacebookPixel, fbEvents } from '@/components/FacebookPixel';
+import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
 
 export default function MerchantSignupPage() {
   const router = useRouter();

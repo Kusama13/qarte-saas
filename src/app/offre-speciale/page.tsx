@@ -14,7 +14,7 @@ import {
   Heart,
   Gift,
 } from 'lucide-react';
-import { FacebookPixel, fbEvents } from '@/components/FacebookPixel';
+import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
 
 // Animation variants
 const fadeInUp = {

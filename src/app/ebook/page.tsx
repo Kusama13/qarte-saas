@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FacebookPixel, fbEvents } from "@/components/FacebookPixel";
+import { FacebookPixel, fbEvents } from "@/components/analytics/FacebookPixel";
 import {
   CheckCircle2,
   Lock,
