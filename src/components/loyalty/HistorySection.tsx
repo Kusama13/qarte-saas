@@ -128,7 +128,7 @@ export default function HistorySection({
                 })),
               ]
                 .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .slice(0, 10)
+                .slice(0, 30)
                 .map((item, index) => {
                   const isAdjustment = item.type === 'adjustment';
                   const isRedemption = item.type === 'redemption';

@@ -8,9 +8,11 @@ import {
   PlusSquare,
   AlertCircle,
   Check,
-  Bell,
+  Download,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface InstallPromptsProps {
   merchant: { primary_color: string; secondary_color?: string | null; shop_name: string };
@@ -18,6 +20,10 @@ interface InstallPromptsProps {
   isIOSChrome: boolean;
   isMobile: boolean;
   isStandalone: boolean;
+  showInstallBar: boolean;
+  onDismissInstallBar: () => void;
+  deferredPrompt: any | null;
+  onClearDeferredPrompt: () => void;
   showIOSInstructions: boolean;
   setShowIOSInstructions: (v: boolean) => void;
   showIOSVersionWarning: boolean;
@@ -33,6 +39,10 @@ export default function InstallPrompts({
   isIOSChrome,
   isMobile,
   isStandalone,
+  showInstallBar,
+  onDismissInstallBar,
+  deferredPrompt,
+  onClearDeferredPrompt,
   showIOSInstructions,
   setShowIOSInstructions,
   showIOSVersionWarning,
@@ -41,6 +51,26 @@ export default function InstallPrompts({
   pushError,
   showSuccessToast,
 }: InstallPromptsProps) {
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      // Android: native install prompt
+      try {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          onDismissInstallBar();
+        }
+      } catch (err) {
+        console.error('Install prompt error:', err);
+      }
+      onClearDeferredPrompt();
+    } else {
+      // iOS or other: show manual instructions
+      setShowIOSInstructions(true);
+    }
+  };
+
   return (
     <>
       {/* Push Error Display */}
@@ -261,55 +291,45 @@ export default function InstallPrompts({
         </div>
       )}
 
-      {/* Sticky Add to Home Screen Banner */}
+      {/* Smart Install Bar - Sticky bottom with safe area */}
       <AnimatePresence>
-        {!isStandalone && isMobile && !showIOSInstructions && (
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowIOSInstructions(true)}
-            className="fixed bottom-4 left-4 right-4 z-40"
+        {showInstallBar && !showIOSInstructions && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
           >
-            <motion.div
-              animate={{
-                boxShadow: [
-                  `0 0 0 0 ${merchant.primary_color}40`,
-                  `0 0 0 8px ${merchant.primary_color}00`,
-                  `0 0 0 0 ${merchant.primary_color}40`
-                ],
-                opacity: [1, 0.85, 1]
-              }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg border-2"
-              style={{
-                backgroundColor: '#ffffff',
-                borderColor: merchant.primary_color,
-              }}
-            >
-              <motion.div
-                animate={{ scale: [1, 1.15, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                className="shrink-0"
+            <div className="flex items-center gap-3 px-4 py-3 max-w-lg mx-auto">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
+                style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
               >
-                {isIOS && !isIOSChrome ? (
-                  <ChevronDown className="w-5 h-5" style={{ color: merchant.primary_color }} />
-                ) : (
-                  <ChevronUp className="w-5 h-5" style={{ color: merchant.primary_color }} />
-                )}
-              </motion.div>
-              <span className="flex-1 text-sm font-semibold text-left" style={{ color: merchant.primary_color }}>
-                Ajouter à l&apos;écran d&apos;accueil
-              </span>
-              <PlusSquare className="w-5 h-5 shrink-0" style={{ color: merchant.primary_color }} />
-            </motion.div>
-          </motion.button>
+                <Download className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate">{merchant.shop_name}</p>
+                <p className="text-xs text-gray-500">Retrouvez votre carte en 1 tap</p>
+              </div>
+              <button
+                onClick={handleInstallClick}
+                className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
+                style={{ backgroundColor: merchant.primary_color }}
+              >
+                Installer
+              </button>
+              <button
+                onClick={onDismissInstallBar}
+                className="shrink-0 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-400" />
+              </button>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Safari Share Arrow */}
-      {/* (Note: Safari arrow state managed by parent) */}
     </>
   );
 }

@@ -138,7 +138,7 @@ export function HeroSection() {
             <h1 className="relative text-3xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
               Le programme de fidélité qui fait{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
-                revenir vos clientes.
+                revenir vos client(e)s.
               </span>
             </h1>
           </div>
@@ -189,7 +189,7 @@ export function HeroSection() {
             </div>
             <div className="hidden sm:block w-px h-4 bg-gray-200" />
             <div className="text-gray-600">
-              <span className="font-semibold text-gray-900">12,000+</span> clientes fidélisées
+              <span className="font-semibold text-gray-900">12,000+</span> client(e)s fidélisé(e)s
             </div>
           </div>
         </div>

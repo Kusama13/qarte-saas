@@ -16,11 +16,9 @@ import {
   Hourglass,
   Shield,
   Bell,
-  Share,
   Sparkles,
   Zap,
   Trophy,
-  ScanLine,
   Crown,
   Eye,
   QrCode,
@@ -30,10 +28,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
 import { Button, Modal } from '@/components/ui';
 import { trackPwaInstalled } from '@/lib/analytics';
-import dynamic from 'next/dynamic';
-
-// Dynamic import for QR Scanner (client-side only)
-const QRScanner = dynamic(() => import('@/components/shared/QRScanner'), { ssr: false });
 import { formatPhoneNumber } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard } from '@/types';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -106,7 +100,9 @@ export default function CustomerCardPage({
   const [adjustments, setAdjustments] = useState<PointAdjustment[]>([]);
   const [redemptions, setRedemptions] = useState<RedemptionHistory[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
-  const [showSafariArrow, setShowSafariArrow] = useState(false);
+  const [showInstallBar, setShowInstallBar] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   // Offer state
   interface MerchantOffer {
@@ -123,9 +119,6 @@ export default function CustomerCardPage({
   const [memberCard, setMemberCard] = useState<MemberCard | null>(null);
   const [showMemberCardModal, setShowMemberCardModal] = useState(false);
 
-  // QR Scanner state
-  const [showScanner, setShowScanner] = useState(false);
-  const [canShowScanner, setCanShowScanner] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   // Push notifications (shared hook)
@@ -357,16 +350,24 @@ export default function CustomerCardPage({
       }
     }
 
-    // Check if scanner should be shown (PWA mode on mobile only)
+    // Detect mobile device for install bar and push notifications
     const isAndroid = /android/i.test(navigator.userAgent);
     const mobileDevice = iOS || isAndroid;
     setIsMobile(mobileDevice);
-    setCanShowScanner(standalone && mobileDevice);
 
-    // Show Safari share arrow for iOS users not in PWA mode
-    const arrowDismissed = localStorage.getItem('qarte_safari_arrow_dismissed');
-    if (iOS && !standalone && !arrowDismissed) {
-      setTimeout(() => setShowSafariArrow(true), 1500);
+    // Smart install bar timing (show after 3s if not dismissed in last 7 days)
+    if (!standalone && mobileDevice) {
+      const dismissed = localStorage.getItem('qarte_install_dismissed');
+      let shouldShow = true;
+      if (dismissed) {
+        const sevenDays = 7 * 24 * 60 * 60 * 1000;
+        if (Date.now() - parseInt(dismissed, 10) < sevenDays) {
+          shouldShow = false;
+        }
+      }
+      if (shouldShow) {
+        setTimeout(() => setShowInstallBar(true), 3000);
+      }
     }
   }, [merchantId, router, isPreview]);
 
@@ -392,6 +393,31 @@ export default function CustomerCardPage({
       return () => clearTimeout(timer);
     }
   }, [card, push]);
+
+  // Capture Android beforeinstallprompt event for native install
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+
+    const installedHandler = () => {
+      setShowInstallBar(false);
+      setDeferredPrompt(null);
+    };
+    window.addEventListener('appinstalled', installedHandler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
+  }, []);
+
+  const handleDismissInstallBar = useCallback(() => {
+    setShowInstallBar(false);
+    localStorage.setItem('qarte_install_dismissed', Date.now().toString());
+  }, []);
 
   // Format reward text based on type
   const formatRewardText = (reward: string, remaining: number) => {
@@ -1164,40 +1190,6 @@ export default function CustomerCardPage({
             </motion.div>
           )}
 
-          {/* Scan QR Code Button - Only visible in PWA mode on mobile */}
-          {canShowScanner && (
-            <>
-              <div className="flex justify-center mt-4">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  whileHover={{ scale: 1.02 }}
-                  onClick={() => setShowScanner(true)}
-                  className="flex items-center justify-center gap-2 w-1/2 py-3.5 rounded-2xl shadow-md transition-all"
-                  style={{
-                    backgroundColor: merchant.primary_color,
-                  }}
-                >
-                  <ScanLine className="w-5 h-5 text-white" />
-                  <span className="font-bold text-sm text-white">
-                    Scanner
-                  </span>
-                </motion.button>
-              </div>
-
-              {/* QR Scanner Modal */}
-              <QRScanner
-                isOpen={showScanner}
-                onClose={() => setShowScanner(false)}
-                onScan={(code) => {
-                  setShowScanner(false);
-                  // Navigate to scan page with the code
-                  router.push(`/scan/${code}`);
-                }}
-                primaryColor={merchant.primary_color}
-              />
-            </>
-          )}
-
           {/* Push modals, toasts, and install prompts */}
           <InstallPrompts
             merchant={merchant}
@@ -1205,6 +1197,10 @@ export default function CustomerCardPage({
             isIOSChrome={push.isIOSChrome}
             isMobile={isMobile}
             isStandalone={push.isStandalone}
+            showInstallBar={showInstallBar}
+            onDismissInstallBar={handleDismissInstallBar}
+            deferredPrompt={deferredPrompt}
+            onClearDeferredPrompt={() => setDeferredPrompt(null)}
             showIOSInstructions={push.showIOSInstructions}
             setShowIOSInstructions={push.setShowIOSInstructions}
             showIOSVersionWarning={push.showIOSVersionWarning}
@@ -1279,66 +1275,6 @@ export default function CustomerCardPage({
           </div>
         </footer>
       </main>
-
-      {/* Safari Share Arrow for iOS users not in PWA */}
-      {showSafariArrow && (
-        <div className="fixed inset-0 z-40 pointer-events-none">
-          {/* Semi-transparent overlay */}
-          <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-sm pointer-events-auto animate-fade-in"
-            onClick={() => {
-              setShowSafariArrow(false);
-              localStorage.setItem('qarte_safari_arrow_dismissed', 'true');
-            }}
-          />
-
-          {/* Arrow and message container */}
-          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 flex flex-col items-center pointer-events-auto animate-slide-up">
-            {/* Message bubble */}
-            <div
-              className="bg-white rounded-2xl shadow-2xl p-4 mb-4 max-w-[280px] text-center"
-              onClick={() => {
-                setShowSafariArrow(false);
-                localStorage.setItem('qarte_safari_arrow_dismissed', 'true');
-              }}
-            >
-              <p className="font-bold text-gray-900 mb-1">📲 Ajoutez Qarte à votre écran</p>
-              <p className="text-sm text-gray-600 mb-2">
-                Pour recevoir vos offres exclusives et accéder à vos cartes en 1 clic
-              </p>
-              <p className="text-xs text-gray-400">Appuyez sur le bouton ci-dessous</p>
-            </div>
-
-            {/* Bouncing arrow pointing to share button */}
-            <div className="animate-bounce-slow">
-              <div
-                className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
-                style={{ backgroundColor: merchant.primary_color }}
-              >
-                <Share className="w-7 h-7 text-white" />
-              </div>
-              {/* Arrow pointing down */}
-              <div className="flex justify-center -mt-1">
-                <div
-                  className="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[16px] border-l-transparent border-r-transparent"
-                  style={{ borderTopColor: merchant.primary_color }}
-                />
-              </div>
-            </div>
-
-            {/* Dismiss button */}
-            <button
-              onClick={() => {
-                setShowSafariArrow(false);
-                localStorage.setItem('qarte_safari_arrow_dismissed', 'true');
-              }}
-              className="mt-4 px-4 py-2 bg-white/90 backdrop-blur-sm rounded-full text-sm font-medium text-gray-600 shadow-lg"
-            >
-              Plus tard
-            </button>
-          </div>
-        </div>
-      )}
 
       <Modal
         isOpen={showRedeemModal}
