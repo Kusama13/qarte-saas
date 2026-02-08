@@ -270,9 +270,12 @@ export default function SettingsPage() {
           La suppression du compte est irréversible. Toutes vos données,
           points de fidélité clients et historiques seront définitivement supprimés.
         </p>
-        <Button variant="danger" className="rounded-xl px-6 py-2 bg-red-600 hover:bg-red-700 transition-colors shadow-md shadow-red-200">
-          Supprimer mon compte
-        </Button>
+        <a
+          href="/contact"
+          className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm transition-colors shadow-md shadow-red-200"
+        >
+          Demander la suppression de mon compte
+        </a>
       </div>
     </div>
   );
