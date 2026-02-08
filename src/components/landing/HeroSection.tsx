@@ -136,15 +136,15 @@ export function HeroSection() {
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
             <h1 className="relative text-3xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Transformez vos clientes en{' '}
+              Le programme de fidélité qui fait{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
-                revenu récurrent.
+                revenir vos clientes.
               </span>
             </h1>
           </div>
 
           <p className="text-base lg:text-lg text-gray-600 max-w-lg leading-relaxed">
-            <span className="text-gray-900 font-medium">+40% de clientes régulières</span> en moyenne. QR code, points, récompenses. Sans app, sans carte papier.
+            Conçu pour les <span className="text-gray-900 font-medium">instituts de beauté, ongleries et salons</span>. QR code, points, récompenses. <span className="text-gray-900 font-medium">+40% de récurrence</span> en moyenne.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
