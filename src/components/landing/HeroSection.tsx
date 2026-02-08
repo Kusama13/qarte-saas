@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star,
@@ -8,151 +9,10 @@ import {
   X,
   Clock,
   Eye,
-  Footprints,
-  Gift,
-  Trophy,
-  ArrowLeft,
 } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
-
-function PhoneCardMockup() {
-  const PRIMARY = '#EC4899';
-  const SECONDARY = '#F472B6';
-  const STAMPS_REQUIRED = 8;
-  const CURRENT_STAMPS = 6;
-  const TIER2_STAMPS = 15;
-  const TIER2_ADDITIONAL = TIER2_STAMPS - STAMPS_REQUIRED;
-
-  return (
-    <div className="w-full h-full rounded-[2.5rem] overflow-hidden overflow-y-auto relative" style={{ background: `linear-gradient(160deg, ${PRIMARY}15 0%, ${PRIMARY}40 40%, ${PRIMARY}60 70%, ${PRIMARY}35 100%)` }}>
-      {/* Header */}
-      <div className="relative overflow-hidden bg-white/40 backdrop-blur-xl border-b border-white/40 shadow-sm">
-        {/* Decorative blobs */}
-        <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full blur-2xl opacity-20" style={{ background: PRIMARY }} />
-        <div className="absolute -bottom-8 -left-8 w-32 h-32 rounded-full blur-2xl opacity-20" style={{ background: SECONDARY }} />
-
-        <div className="relative z-10 px-4 pt-4 pb-3">
-          {/* Back button */}
-          <div className="w-7 h-7 rounded-full bg-white/80 border border-white/60 shadow-sm flex items-center justify-center mb-3">
-            <ArrowLeft className="w-3 h-3 text-slate-800" />
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Logo */}
-            <div className="w-12 h-12 rounded-xl p-0.5 bg-white/90 shadow-lg border border-white shrink-0">
-              <div className="w-full h-full rounded-[10px] flex items-center justify-center text-white text-lg font-black" style={{ background: `linear-gradient(135deg, ${PRIMARY}, ${SECONDARY})` }}>
-                N
-              </div>
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-sm font-black tracking-tight text-slate-900">Nails &amp; Beauty</h1>
-              <span className="text-[9px] text-slate-500 font-medium">Onglerie</span>
-            </div>
-          </div>
-
-          {/* Customer */}
-          <div className="mt-3 flex items-center justify-between">
-            <h2 className="text-xl font-black text-slate-900">Marie</h2>
-            <div className="px-2.5 py-1 rounded-full border bg-white/60 border-slate-200/40">
-              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-600">Client fidèle</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Card Content */}
-      <div className="px-3 py-3 space-y-2.5">
-        {/* Tier 1 */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-3.5">
-          <div className="flex justify-between items-center mb-2.5">
-            <div className="flex items-center gap-1.5">
-              <Gift className="w-3 h-3 text-gray-400" />
-              <span className="text-[8px] font-black uppercase tracking-widest text-gray-500">Palier 1</span>
-            </div>
-            <span className="text-[8px] font-bold text-pink-500">Plus que 2 !</span>
-          </div>
-
-          {/* Stamps Grid */}
-          <div className="flex flex-wrap gap-1.5 mb-2.5">
-            {Array.from({ length: STAMPS_REQUIRED }).map((_, i) => (
-              <div
-                key={i}
-                className={`w-7 h-7 rounded-full flex items-center justify-center ${
-                  i < CURRENT_STAMPS
-                    ? 'text-white shadow-md'
-                    : 'bg-gray-50 text-gray-300 border border-gray-100 border-dashed'
-                }`}
-                style={{
-                  backgroundColor: i < CURRENT_STAMPS ? PRIMARY : undefined,
-                }}
-              >
-                <Footprints className="w-3 h-3" />
-              </div>
-            ))}
-          </div>
-
-          {/* Progress Bar */}
-          <div className="h-1 bg-gray-100 rounded-full overflow-hidden mb-2">
-            <div className="h-full rounded-full transition-all" style={{ backgroundColor: PRIMARY, width: `${(CURRENT_STAMPS / STAMPS_REQUIRED) * 100}%` }} />
-          </div>
-
-          <p className="text-center text-[10px] font-medium italic text-gray-500">
-            🎁 Une pose gel offerte
-          </p>
-        </div>
-
-        {/* Tier 2 */}
-        <div className="bg-white/70 backdrop-blur-xl rounded-2xl shadow-lg border border-white/50 p-3.5">
-          <div className="flex justify-between items-center mb-2.5">
-            <div className="flex items-center gap-1.5">
-              <Trophy className="w-3 h-3 text-gray-400" />
-              <span className="text-[8px] font-black uppercase tracking-widest text-gray-400">Palier 2</span>
-            </div>
-            <span className="text-[8px] font-bold text-gray-400">{TIER2_ADDITIONAL} restants</span>
-          </div>
-
-          {/* Stamps Grid Tier 2 */}
-          <div className="flex flex-wrap gap-1.5 mb-2.5">
-            {Array.from({ length: TIER2_ADDITIONAL }).map((_, i) => (
-              <div
-                key={i}
-                className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-50 text-gray-300 border border-gray-100 border-dashed"
-              >
-                <Footprints className="w-3 h-3" />
-              </div>
-            ))}
-          </div>
-
-          {/* Progress Bar */}
-          <div className="h-1 bg-gray-100 rounded-full overflow-hidden mb-2">
-            <div className="h-full bg-violet-600 rounded-full" style={{ width: '0%' }} />
-          </div>
-
-          <p className="text-center text-[10px] font-medium italic text-gray-400">
-            ✨ Un soin complet des mains offert
-          </p>
-        </div>
-
-        {/* VIP Card */}
-        <div className="relative overflow-hidden rounded-2xl p-3.5 text-white" style={{ background: `linear-gradient(135deg, ${PRIMARY}, ${SECONDARY})` }}>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.15),transparent_60%)]" />
-          <div className="relative z-10 flex items-center justify-between">
-            <div>
-              <span className="text-[8px] font-bold uppercase tracking-widest opacity-70">Carte VIP</span>
-              <p className="text-sm font-black">Marie</p>
-            </div>
-            <div className="text-right">
-              <span className="text-[8px] font-bold uppercase tracking-widest opacity-70">Points</span>
-              <p className="text-sm font-black">6 / 8</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function HeroSection() {
   const { ref, isInView } = useInView();
@@ -339,8 +199,17 @@ export function HeroSection() {
           <div className="animate-float relative">
             {/* Phone Frame - Sans encoche */}
             <div className="relative w-[280px] h-[570px] bg-gray-900 rounded-[3rem] p-2 shadow-2xl shadow-gray-900/30">
-              {/* Screen with Card Mockup */}
-              <PhoneCardMockup />
+              {/* Screen */}
+              <div className="w-full h-full rounded-[2.5rem] overflow-hidden bg-gradient-to-b from-rose-100 to-rose-200">
+                <Image
+                  src="/images/mockup-beaute.jpg"
+                  alt="Qarte - Carte de fidélité client"
+                  width={860}
+                  height={2080}
+                  className="w-full h-full object-cover object-top"
+                  priority
+                />
+              </div>
             </div>
           </div>
         </div>
