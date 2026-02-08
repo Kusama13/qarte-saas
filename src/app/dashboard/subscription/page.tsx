@@ -11,7 +11,11 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  HelpCircle,
+  ShieldCheck,
+  ArrowLeft,
 } from 'lucide-react';
+import Link from 'next/link';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
@@ -205,7 +209,7 @@ export default function SubscriptionPage() {
     <div className="max-w-5xl mx-auto space-y-8 stagger-fade-in">
       {/* Toast notification */}
       {toast && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-fade-in-up ${
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-fade-in-up ${
           toast.type === 'success'
             ? 'bg-green-50/90 border-green-200 text-green-800'
             : 'bg-red-50/90 border-red-200 text-red-800'
@@ -223,7 +227,14 @@ export default function SubscriptionPage() {
       )}
 
       <div className="px-1">
-        <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors mb-3"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Tableau de bord
+        </Link>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900">
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Abonnement</span>
         </h1>
         <p className="mt-2 text-base font-medium text-gray-500">Gérez votre plan</p>
@@ -296,7 +307,7 @@ export default function SubscriptionPage() {
                 {billingPlan === 'annual' ? '15,83 €' : '19,00 €'} <span className="text-sm font-medium text-gray-400">/ mois</span>
               </p>
               {billingPlan === 'annual' && (
-                <p className="text-xs text-gray-400">190€ facturé annuellement</p>
+                <p className="text-xs text-gray-400"><span className="line-through text-gray-300">228 €</span> 190 € facturé annuellement</p>
               )}
             </div>
           </div>
@@ -328,13 +339,13 @@ export default function SubscriptionPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
             {features.map((feature, index) => (
               <div key={index} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/40 border border-gray-100/80 hover:bg-white hover:shadow-md transition-all cursor-default">
-                <div className="bg-green-100 p-1 rounded-full">
+                <div className="bg-green-100 p-1 rounded-full shrink-0">
                   <Check className="w-3 h-3 text-green-600" />
                 </div>
-                <span className="text-xs font-bold text-gray-600 truncate">{feature}</span>
+                <span className="text-xs font-bold text-gray-600">{feature}</span>
               </div>
             ))}
           </div>
@@ -376,6 +387,17 @@ export default function SubscriptionPage() {
               </div>
               <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-white/5 skew-x-12 translate-x-10" />
             </div>
+          )}
+
+          {/* Subscribe CTA in left column (near countdown) */}
+          {!isPaid && !isCanceling && (
+            <Button
+              className="w-full h-12 rounded-2xl font-bold text-base shadow-lg shadow-primary/20 mt-6"
+              onClick={handleSubscribe}
+              loading={subscribing}
+            >
+              {billingPlan === 'annual' ? 'S\'abonner — 190 €/an' : 'S\'abonner — 19 €/mois'}
+            </Button>
           )}
         </div>
 
@@ -512,19 +534,23 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
-      <div className="p-8 rounded-3xl bg-gray-50/50 border border-gray-100 grid md:grid-cols-2 gap-8">
+      <div className="p-5 sm:p-8 rounded-3xl bg-gray-50/50 border border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary font-bold">?</div>
+            <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center">
+              <HelpCircle className="w-4 h-4 text-primary" />
+            </div>
             <h3 className="font-extrabold text-gray-900">Engagement & Résiliation</h3>
           </div>
           <p className="text-sm text-gray-600 leading-relaxed pl-10">
-            Sans engagement de durée. Vous pouvez résilier en un clic depuis cet interface. Votre accès reste actif jusqu&apos;à l&apos;échéance de votre mois payé.
+            Sans engagement de durée. Vous pouvez résilier en un clic depuis cette interface. Votre accès reste actif jusqu&apos;à l&apos;échéance de votre mois payé.
           </p>
         </div>
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary font-bold">!</div>
+            <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center">
+              <ShieldCheck className="w-4 h-4 text-primary" />
+            </div>
             <h3 className="font-extrabold text-gray-900">Sécurité des données</h3>
           </div>
           <p className="text-sm text-gray-600 leading-relaxed pl-10">

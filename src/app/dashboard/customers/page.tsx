@@ -251,7 +251,7 @@ export default function CustomersPage() {
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between px-1">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900">
             Gestion <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Clients</span>
           </h1>
           <p className="mt-2 text-base font-medium text-gray-500">

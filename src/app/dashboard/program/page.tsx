@@ -350,7 +350,7 @@ export default function ProgramPage() {
 
             <div className="space-y-4">
               <label className="text-sm font-semibold tracking-wide text-gray-700 uppercase">Palettes suggérées</label>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                 {COLOR_PALETTES.map((palette, index) => (
                   <button
                     key={index}

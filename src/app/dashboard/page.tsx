@@ -492,7 +492,7 @@ export default function DashboardPage() {
 
         {/* Shield Help Tooltip */}
         {showShieldHelp && (
-          <div className="absolute right-0 top-full mt-2 z-20 w-80 rounded-xl border border-gray-200 bg-white p-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="absolute right-0 top-full mt-2 z-20 w-[calc(100vw-3rem)] sm:w-80 rounded-xl border border-gray-200 bg-white p-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-indigo-600" />

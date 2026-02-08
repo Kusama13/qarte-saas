@@ -114,7 +114,7 @@ export default function SocialKitPage() {
             <ArrowLeft className="w-4 h-4" />
             Retour au tableau de bord
           </Link>
-          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight flex items-center gap-3">
             <Share2 className="w-8 h-8" />
             Kit Réseaux Sociaux
           </h1>
@@ -247,7 +247,7 @@ export default function SocialKitPage() {
       </div>
 
       {/* Bottom CTA */}
-      <div className="mt-12 mb-8 flex gap-4">
+      <div className="mt-12 mb-8 flex flex-col sm:flex-row gap-4">
         <Link
           href="/dashboard/qr-download"
           className="flex-1 flex items-center justify-center gap-3 py-5 bg-white hover:bg-gray-50 text-gray-700 font-bold text-base rounded-2xl border-2 border-gray-200 hover:border-gray-300 shadow-sm transition-all"
@@ -256,7 +256,7 @@ export default function SocialKitPage() {
         </Link>
         <Link
           href="/dashboard"
-          className="flex-1 flex items-center justify-center gap-3 py-5 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-bold text-base rounded-2xl shadow-xl shadow-slate-200 transition-all"
+          className="flex-1 flex items-center justify-center gap-3 py-5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-base rounded-2xl shadow-xl shadow-indigo-200 transition-all"
         >
           <ArrowLeft className="w-5 h-5" />
           Tableau de bord

@@ -136,7 +136,7 @@ export default function QRDownloadPage() {
             <ArrowLeft className="w-4 h-4" />
             Retour au tableau de bord
           </Link>
-          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
             Prêt à scanner
           </h1>
           <p className="mt-2 text-white/80 font-medium">
@@ -290,7 +290,7 @@ export default function QRDownloadPage() {
       <div className="mt-8 mb-8">
         <Link
           href="/dashboard"
-          className="flex items-center justify-center gap-3 w-full py-5 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-bold text-lg rounded-2xl shadow-xl shadow-slate-200 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
+          className="flex items-center justify-center gap-3 w-full py-5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-lg rounded-2xl shadow-xl shadow-indigo-200 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
         >
           <ArrowLeft className="w-5 h-5" />
           Retour au tableau de bord
