@@ -7,37 +7,44 @@ import {
   ArrowLeft,
   Check,
   Gift,
+  Clock,
   Loader2,
   AlertCircle,
+  Star,
+  ExternalLink,
   ChevronRight,
   ChevronDown,
   ChevronUp,
+  X,
   Footprints,
+  SlidersHorizontal,
   Hourglass,
   Shield,
+  XCircle,
   Bell,
   Share,
+  Share2,
+  PlusSquare,
   Sparkles,
   Zap,
   Trophy,
   ScanLine,
   Crown,
+  Download,
   Eye,
   QrCode,
   ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { isIOSDevice, isStandalonePWA } from '@/lib/push';
+import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
 import { Button, Modal } from '@/components/ui';
-import { trackPwaInstalled } from '@/lib/analytics';
+import { trackPwaInstalled, trackPushEnabled, trackCardCreated } from '@/lib/analytics';
 import dynamic from 'next/dynamic';
 
 // Dynamic import for QR Scanner (client-side only)
 const QRScanner = dynamic(() => import('@/components/shared/QRScanner'), { ssr: false });
-import { formatPhoneNumber } from '@/lib/utils';
+import { formatDateTime, formatPhoneNumber } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard } from '@/types';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { HistorySection, ExclusiveOffer, MemberCardModal, InstallPrompts, ReviewPrompt } from '@/components/loyalty';
 
 interface PointAdjustment {
   id: string;
@@ -105,7 +112,24 @@ export default function CustomerCardPage({
   const [visits, setVisits] = useState<VisitWithStatus[]>([]);
   const [adjustments, setAdjustments] = useState<PointAdjustment[]>([]);
   const [redemptions, setRedemptions] = useState<RedemptionHistory[]>([]);
+  const [visitsExpanded, setVisitsExpanded] = useState(false);
+  const [reviewDismissed, setReviewDismissed] = useState(false);
+  const [reviewPermanentlyHidden, setReviewPermanentlyHidden] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+
+  // Push notifications state
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>('default');
+  const [pushSubscribing, setPushSubscribing] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+  const [isIOSChrome, setIsIOSChrome] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const [iOSVersion, setIOSVersion] = useState(0);
+  const [showIOSVersionWarning, setShowIOSVersionWarning] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [pushError, setPushError] = useState<string | null>(null);
   const [showSafariArrow, setShowSafariArrow] = useState(false);
 
   // Offer state
@@ -127,12 +151,6 @@ export default function CustomerCardPage({
   const [showScanner, setShowScanner] = useState(false);
   const [canShowScanner, setCanShowScanner] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-
-  // Push notifications (shared hook)
-  const push = usePushNotifications({
-    customerId: card?.customer?.id,
-    skip: isPreview,
-  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -342,11 +360,20 @@ export default function CustomerCardPage({
 
     fetchData();
 
-    // Skip PWA/tracking in preview mode
+    // Skip push/PWA/tracking in preview mode
     if (isPreview) return;
 
+    // Check push support
+    const standardPushSupported = isPushSupported();
     const iOS = isIOSDevice();
     const standalone = isStandalonePWA();
+    const iosVersion = getIOSVersion();
+    const iosPushSupported = isIOSPushSupported();
+
+    setIsIOS(iOS);
+    setIsIOSChrome(iOS && /CriOS/i.test(navigator.userAgent));
+    setIsStandalone(standalone);
+    setIOSVersion(iosVersion);
 
     // Track PWA installation (only once per device)
     if (standalone) {
@@ -364,34 +391,66 @@ export default function CustomerCardPage({
     setCanShowScanner(standalone && mobileDevice);
 
     // Show Safari share arrow for iOS users not in PWA mode
+    // Only show if they haven't dismissed it before
     const arrowDismissed = localStorage.getItem('qarte_safari_arrow_dismissed');
     if (iOS && !standalone && !arrowDismissed) {
+      // Small delay to let the page load first
       setTimeout(() => setShowSafariArrow(true), 1500);
+    }
+
+    // On iOS in standalone mode, check if iOS version supports push
+    if (iOS && standalone) {
+      setPushSupported(iosPushSupported || standardPushSupported);
+    } else {
+      setPushSupported(standardPushSupported);
+    }
+
+    setPushPermission(getPermissionStatus());
+
+    // Check if already subscribed (global key - works for all merchants)
+    const checkPushSubscription = localStorage.getItem('qarte_push_subscribed');
+    if (checkPushSubscription === 'true') {
+      setPushSubscribed(true);
+    }
+
+    // Check if review card is permanently hidden
+    const reviewHidden = localStorage.getItem(`qarte_review_hidden_${merchantId}`);
+    if (reviewHidden === 'true') {
+      setReviewPermanentlyHidden(true);
     }
   }, [merchantId, router, isPreview]);
 
   // Auto-subscribe to push notifications when PWA is first opened
   useEffect(() => {
+    // Only auto-subscribe if:
+    // - Card data is loaded
+    // - Running in standalone PWA mode
+    // - Not already subscribed
+    // - Permission not denied
+    // - Push is supported (iOS 16.4+ or standard push)
     if (
       card &&
-      push.isStandalone &&
-      !push.pushSubscribed &&
-      push.pushPermission !== 'denied' &&
-      push.pushSupported &&
-      !push.pushSubscribing
+      isStandalone &&
+      !pushSubscribed &&
+      pushPermission !== 'denied' &&
+      pushSupported &&
+      !pushSubscribing
     ) {
+      // Check if we've already tried auto-subscribe in this session
       const autoSubscribeAttempted = sessionStorage.getItem('qarte_auto_subscribe_attempted');
       if (autoSubscribeAttempted) return;
 
+      // Mark as attempted for this session
       sessionStorage.setItem('qarte_auto_subscribe_attempted', 'true');
 
+      // Small delay to let the app settle before requesting permission
       const timer = setTimeout(() => {
-        push.handlePushSubscribe();
+        handlePushSubscribe();
       }, 1500);
 
       return () => clearTimeout(timer);
     }
-  }, [card, push]);
+  }, [card, isStandalone, pushSubscribed, pushPermission, pushSupported, pushSubscribing]);
 
   // Format reward text based on type
   const formatRewardText = (reward: string, remaining: number) => {
@@ -422,6 +481,60 @@ export default function CustomerCardPage({
 
     // Default: show full reward
     return `Plus que ${remaining} ${unit} pour : ${reward}`;
+  };
+
+  const handlePushSubscribe = async () => {
+    if (!card) return;
+
+    // Clear previous error
+    setPushError(null);
+
+    // For iOS not in standalone mode, show instructions
+    if (isIOS && !isStandalone) {
+      setShowIOSInstructions(true);
+      return;
+    }
+
+    // For iOS in standalone mode with old version, show warning
+    if (isIOS && isStandalone && iOSVersion > 0 && iOSVersion < 16) {
+      setShowIOSVersionWarning(true);
+      return;
+    }
+
+    setPushSubscribing(true);
+    try {
+      // Only pass customerId - subscription is linked to customer, not merchant
+      const result = await subscribeToPush(card.customer.id);
+      if (result.success) {
+        setPushSubscribed(true);
+        setPushPermission('granted');
+        localStorage.setItem('qarte_push_subscribed', 'true');
+        // Track push enabled
+        trackPushEnabled(card.customer.id);
+        // Show success toast
+        setShowSuccessToast(true);
+        setTimeout(() => setShowSuccessToast(false), 4000);
+      } else {
+        console.error('Push subscribe failed:', result.error);
+        setPushError(result.error || 'Erreur inconnue');
+        if (result.error === 'Permission refusée') {
+          setPushPermission('denied');
+        }
+        // Show iOS version warning if push failed on iOS standalone
+        if (isIOS && isStandalone && result.error === 'Push non supporté sur ce navigateur') {
+          setShowIOSVersionWarning(true);
+        }
+      }
+    } catch (error) {
+      console.error('Push subscribe error:', error);
+      setPushError(error instanceof Error ? error.message : 'Erreur inconnue');
+      // Show iOS version warning on error
+      if (isIOS && isStandalone) {
+        setShowIOSVersionWarning(true);
+      }
+    } finally {
+      setPushSubscribing(false);
+    }
   };
 
   const triggerConfetti = useCallback(async () => {
@@ -755,8 +868,104 @@ export default function CustomerCardPage({
           )}
         </AnimatePresence>
 
-        {/* Offre Exclusive */}
-        {offer && <ExclusiveOffer offer={offer} merchantColor={merchant.primary_color} isPreview={isPreview} />}
+        {/* Offre Exclusive - Moved to top of main content */}
+        {offer && offer.active && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="mb-4 overflow-hidden rounded-2xl shadow-lg shadow-black/5 border border-white/20 relative"
+          >
+            {isPreview && (
+              <div className="absolute top-2 right-2 z-20 bg-white/90 backdrop-blur-sm text-[10px] font-bold text-gray-500 px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
+                Exemple — Personnalisable
+              </div>
+            )}
+            <button
+              onClick={() => setOfferExpanded(!offerExpanded)}
+              className="w-full text-left transition-transform active:scale-[0.99]"
+            >
+              <div
+                className="relative p-4 text-white overflow-hidden"
+                style={{
+                  background: `linear-gradient(135deg, ${merchant.primary_color} 0%, ${merchant.primary_color}dd 100%)`
+                }}
+              >
+                {/* Decorative Glass Circle */}
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl" />
+
+                <div className="relative flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/20 flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3 text-white" />
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-white">Offre Exclusive</span>
+                      </div>
+                    </div>
+                    <h3 className="text-base font-extrabold leading-tight mb-1 drop-shadow-sm">
+                      {offer.title}
+                    </h3>
+                    {offer.expiresAt && (
+                      <div className="flex items-center gap-1.5 text-white/90 text-xs font-medium">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>
+                          Valable jusqu&apos;au {(() => {
+                            const expires = new Date(offer.expiresAt);
+                            const today = new Date();
+                            const tomorrow = new Date(today);
+                            tomorrow.setDate(tomorrow.getDate() + 1);
+                            if (expires.toDateString() === today.toDateString()) {
+                              return "ce soir";
+                            } else if (expires.toDateString() === tomorrow.toDateString()) {
+                              return "demain soir";
+                            } else {
+                              return expires.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+                            }
+                          })()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <motion.div
+                    animate={{ rotate: offerExpanded ? 180 : 0 }}
+                    className="ml-3 w-9 h-9 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30"
+                  >
+                    <ChevronDown className="w-4 h-4 text-white" />
+                  </motion.div>
+                </div>
+              </div>
+            </button>
+
+            <AnimatePresence>
+              {offerExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="bg-white overflow-hidden"
+                >
+                  <div className="p-4 border-t border-gray-100">
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      {offer.description}
+                    </p>
+                    {offer.imageUrl && (
+                      <div className="mt-3 rounded-xl overflow-hidden border border-gray-100">
+                        <img
+                          src={offer.imageUrl}
+                          alt={offer.title}
+                          className="w-full h-32 object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
 
         {/* Member Card Badge - Show if customer has an active member card */}
         {memberCard && new Date(memberCard.valid_until) > new Date() && (
@@ -1111,13 +1320,13 @@ export default function CustomerCardPage({
           </div>
 
           {/* PWA Notification Banner - Show in PWA when NOT subscribed */}
-          {push.isStandalone && isMobile && !push.pushSubscribed && push.pushPermission !== 'denied' && (
+          {isStandalone && isMobile && !pushSubscribed && pushPermission !== 'denied' && (
             <motion.button
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               whileTap={{ scale: 0.98 }}
-              onClick={push.handlePushSubscribe}
-              disabled={push.pushSubscribing}
+              onClick={handlePushSubscribe}
+              disabled={pushSubscribing}
               className="w-full mb-5"
             >
               <div
@@ -1137,7 +1346,7 @@ export default function CustomerCardPage({
                 <span className="flex-1 text-xs font-medium text-gray-700 text-left">
                   Activer les notifications pour ne rater aucune offre
                 </span>
-                {push.pushSubscribing ? (
+                {pushSubscribing ? (
                   <Loader2 className="w-4 h-4 animate-spin shrink-0" style={{ color: merchant.primary_color }} />
                 ) : (
                   <ChevronRight className="w-4 h-4 shrink-0" style={{ color: merchant.primary_color }} />
@@ -1148,7 +1357,7 @@ export default function CustomerCardPage({
 
 
           {/* Subscribed confirmation - Small bell icon */}
-          {push.pushSubscribed && (
+          {pushSubscribed && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
@@ -1198,21 +1407,236 @@ export default function CustomerCardPage({
             </>
           )}
 
-          {/* Push modals, toasts, and install prompts */}
-          <InstallPrompts
-            merchant={merchant}
-            isIOS={push.isIOS}
-            isIOSChrome={push.isIOSChrome}
-            isMobile={isMobile}
-            isStandalone={push.isStandalone}
-            showIOSInstructions={push.showIOSInstructions}
-            setShowIOSInstructions={push.setShowIOSInstructions}
-            showIOSVersionWarning={push.showIOSVersionWarning}
-            setShowIOSVersionWarning={push.setShowIOSVersionWarning}
-            iOSVersion={push.iOSVersion}
-            pushError={push.pushError}
-            showSuccessToast={push.showSuccessToast}
-          />
+          {/* Push Error Display (for debugging) */}
+          {pushError && (
+            <div className="w-full rounded-2xl p-4 bg-red-50 border border-red-200 flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-red-800 text-sm">Erreur d&apos;activation</p>
+                <p className="text-xs text-red-600 mt-1">{pushError}</p>
+                {isIOS && (
+                  <p className="text-xs text-red-500 mt-2">
+                    iOS {iOSVersion || '?'} • {isStandalone ? 'Mode PWA' : 'Navigateur'}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Success Toast */}
+          {showSuccessToast && (
+            <div className="fixed bottom-6 left-4 right-4 z-50 animate-slide-up">
+              <div
+                className="max-w-md mx-auto rounded-2xl p-4 shadow-2xl flex items-center gap-3"
+                style={{ backgroundColor: merchant.primary_color }}
+              >
+                <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                  <Check className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-white">C&apos;est fait ! 🎉</p>
+                  <p className="text-sm text-white/80">Vous recevrez nos offres exclusives</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* iOS Instructions Modal */}
+          {showIOSInstructions && (
+            <>
+              {/* Animated Arrow for Safari iOS - Points DOWN to bottom-right "..." */}
+              {isIOS && !isIOSChrome && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, y: [0, 8, 0] }}
+                  transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
+                  className="fixed bottom-3 right-3 z-[60] flex flex-col items-center"
+                >
+                  <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
+                    <ChevronDown className="w-6 h-6 text-blue-500" />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Animated Arrow for Chrome iOS - Points UP to top-right share */}
+              {isIOS && isIOSChrome && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, y: [0, -8, 0] }}
+                  transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
+                  className="fixed top-3 right-3 z-[60] flex flex-col items-center"
+                >
+                  <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
+                    <ChevronUp className="w-6 h-6 text-blue-500" />
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Android Arrow - Points UP to ⋮ menu */}
+              {!isIOS && isMobile && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, y: [0, -8, 0] }}
+                  transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
+                  className="fixed top-3 right-3 z-[60] flex flex-col items-center"
+                >
+                  <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
+                    <ChevronUp className="w-6 h-6 text-blue-500" />
+                  </div>
+                </motion.div>
+              )}
+
+              <div
+                className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 bg-black/50 backdrop-blur-sm"
+                onClick={() => setShowIOSInstructions(false)}
+              >
+                <div
+                  className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-up"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Compact Header */}
+                  <div
+                    className="relative px-4 py-4 text-center"
+                    style={{ background: `linear-gradient(135deg, ${merchant.primary_color}10, white)` }}
+                  >
+                    <button
+                      onClick={() => setShowIOSInstructions(false)}
+                      className="absolute top-3 right-3 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                    >
+                      <X className="w-4 h-4 text-gray-500" />
+                    </button>
+                    <div className="flex items-center justify-center gap-2">
+                      <PlusSquare className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                      <h3 className="text-base font-bold text-gray-900">Ajouter à l&apos;écran d&apos;accueil</h3>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">Pour recevoir les offres exclusives</p>
+                  </div>
+
+                  {/* Compact Steps */}
+                  <div className="px-4 py-3 space-y-2">
+                    {isIOS && !isIOSChrome ? (
+                      <>
+                        {/* Safari iOS: ⋯ → Partager → Écran d'accueil */}
+                        <div className="flex items-center gap-3 p-2.5 bg-blue-50 rounded-xl border border-blue-200">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <span className="text-white font-bold">⋯</span>
+                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>⋯</strong> en bas</p>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <Share className="w-4 h-4 text-white" />
+                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> Puis <strong>Partager</strong></p>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                            <PlusSquare className="w-4 h-4 text-white" />
+                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">3.</span> <strong>Sur l&apos;écran d&apos;accueil</strong></p>
+                        </div>
+                      </>
+                    ) : isIOS && isIOSChrome ? (
+                      <>
+                        {/* Chrome iOS: Partager → ⋯ → Écran d'accueil */}
+                        <div className="flex items-center gap-3 p-2.5 bg-blue-50 rounded-xl border border-blue-200">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <Share className="w-4 h-4 text-white" />
+                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>Partager</strong> ↑</p>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <span className="text-white font-bold text-sm">⋯</span>
+                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> Puis <strong>Plus...</strong></p>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                            <PlusSquare className="w-4 h-4 text-white" />
+                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">3.</span> <strong>Sur l&apos;écran d&apos;accueil</strong></p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Android */}
+                        <div className="flex items-center gap-3 p-2.5 bg-blue-50 rounded-xl border border-blue-200">
+                          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
+                            <span className="text-white font-bold">⋮</span>
+                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>⋮</strong> en haut</p>
+                        </div>
+
+                        <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
+                            <PlusSquare className="w-4 h-4 text-white" />
+                          </div>
+                          <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> <strong>Installer l&apos;application</strong></p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Compact Footer */}
+                  <div className="px-4 pb-4 pt-2">
+                    <button
+                      onClick={() => setShowIOSInstructions(false)}
+                      className="w-full py-3 rounded-xl font-semibold text-white text-sm transition-all hover:opacity-90"
+                      style={{ backgroundColor: merchant.primary_color }}
+                    >
+                      J&apos;ai compris
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* iOS Version Warning Modal */}
+          {showIOSVersionWarning && (
+            <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <div
+                className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-slide-up"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-6 text-center">
+                  <button
+                    onClick={() => setShowIOSVersionWarning(false)}
+                    className="absolute top-4 right-4 p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+
+                  <div className="w-16 h-16 rounded-2xl bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                    <AlertCircle className="w-8 h-8 text-amber-600" />
+                  </div>
+
+                  <h3 className="text-xl font-black text-gray-900 mb-2">Mise à jour requise</h3>
+                  <p className="text-gray-600 mb-4">
+                    Les notifications push nécessitent iOS 16.4 ou plus récent.
+                  </p>
+                  <p className="text-sm text-gray-500 mb-6">
+                    Votre version actuelle : iOS {iOSVersion || '?'}
+                    <br />
+                    Allez dans <span className="font-semibold">Réglages → Général → Mise à jour</span> pour mettre à jour votre iPhone.
+                  </p>
+
+                  <button
+                    onClick={() => setShowIOSVersionWarning(false)}
+                    className="w-full py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90"
+                    style={{ backgroundColor: merchant.primary_color }}
+                  >
+                    Compris
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Redeem Buttons - Single tier or Dual tier */}
           {!redeemSuccess && (
@@ -1260,12 +1684,237 @@ export default function CustomerCardPage({
           )}
         </motion.div>
 
-        {/* Historique */}
-        <HistorySection visits={visits} adjustments={adjustments} redemptions={redemptions} merchant={merchant} />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/50 overflow-hidden mb-10"
+        >
+          <div className="p-4 border-b border-gray-50 flex items-center justify-between">
+            <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">
+              <div className="p-1.5 bg-gray-50 rounded-lg">
+                {(() => {
+                  const LoyaltyIcon = getLoyaltyIcon();
+                  return <LoyaltyIcon className="w-4 h-4 text-gray-500" />;
+                })()}
+              </div>
+              Historique
+            </h2>
+            {(visits.length > 0 || adjustments.length > 0 || redemptions.length > 0) && (
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setVisitsExpanded(!visitsExpanded)}
+                className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-lg transition-all"
+                style={{ color: merchant.primary_color, backgroundColor: `${merchant.primary_color}10` }}
+              >
+                {visitsExpanded ? (
+                  <>
+                    <ChevronUp className="w-3.5 h-3.5" />
+                    Réduire
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-3.5 h-3.5" />
+                    Voir ({visits.length + adjustments.length + redemptions.length})
+                  </>
+                )}
+              </motion.button>
+            )}
+          </div>
 
-        {/* Avis Google */}
-        {merchant.review_link && merchant.review_link.trim() !== '' && (
-          <ReviewPrompt merchantId={merchantId} shopName={merchant.shop_name} reviewLink={merchant.review_link} />
+          <AnimatePresence mode="wait">
+            {(visits.length > 0 || adjustments.length > 0 || redemptions.length > 0) ? (
+              visitsExpanded ? (
+                <motion.ul
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="divide-y divide-gray-50"
+                >
+                  {/* Combine visits, adjustments, and redemptions, sort by date */}
+                  {[
+                    ...visits.map((v) => ({
+                      type: 'visit' as const,
+                      date: v.visited_at,
+                      points: v.points_earned || 1,
+                      id: v.id,
+                      status: v.status || 'confirmed',
+                      flagged_reason: v.flagged_reason,
+                      tier: undefined as number | undefined
+                    })),
+                    ...adjustments.map((a) => ({
+                      type: 'adjustment' as const,
+                      date: a.created_at,
+                      points: a.adjustment,
+                      reason: a.reason,
+                      id: a.id,
+                      status: 'confirmed' as const,
+                      flagged_reason: null,
+                      tier: undefined as number | undefined
+                    })),
+                    ...redemptions.map((r) => ({
+                      type: 'redemption' as const,
+                      date: r.redeemed_at,
+                      points: r.stamps_used,
+                      id: r.id,
+                      status: 'confirmed' as const,
+                      flagged_reason: null,
+                      tier: r.tier
+                    })),
+                  ]
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                    .slice(0, 10) // Limit to 10 items for performance
+                    .map((item, index) => {
+                      const LoyaltyIcon = getLoyaltyIcon();
+                      const isAdjustment = item.type === 'adjustment';
+                      const isRedemption = item.type === 'redemption';
+                      const isPending = item.status === 'pending';
+                      const isRejected = item.status === 'rejected';
+
+                      const getStatusIcon = () => {
+                        if (isRedemption) {
+                          return item.tier === 2
+                            ? <Trophy className="w-4 h-4 text-violet-500" />
+                            : <Gift className="w-4 h-4 text-emerald-500" />;
+                        }
+                        if (isAdjustment) return <SlidersHorizontal className="w-4 h-4 text-amber-600" />;
+                        if (isPending) return <Hourglass className="w-4 h-4 text-amber-600 animate-pulse" />;
+                        if (isRejected) return <XCircle className="w-4 h-4 text-red-500" />;
+                        return <LoyaltyIcon className="w-4 h-4" style={{ color: merchant.primary_color }} />;
+                      };
+
+                      const getIconBgColor = () => {
+                        if (isRedemption) return item.tier === 2 ? '#ede9fe' : '#d1fae5';
+                        if (isAdjustment) return '#fef3c7';
+                        if (isPending) return '#fef3c7';
+                        if (isRejected) return '#fee2e2';
+                        return `${merchant.primary_color}10`;
+                      };
+
+                      const getLabel = () => {
+                        if (isRedemption) {
+                          const tierLabel = merchant.tier2_enabled ? ` palier ${item.tier}` : '';
+                          return `🎁 Cadeau${tierLabel} utilisé`;
+                        }
+                        if (isAdjustment) return 'Ajustement';
+                        if (isPending) return 'En attente';
+                        if (isRejected) return 'Refusé';
+                        if (merchant.loyalty_mode === 'visit') return 'Passage validé';
+                        return `${item.points} ${merchant.product_name || 'article'}${item.points > 1 ? 's' : ''}`;
+                      };
+
+                      return (
+                        <motion.li
+                          key={item.id}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className={`flex items-center gap-3 px-4 py-3 hover:bg-gray-50/40 transition-colors ${isRejected ? 'opacity-60' : ''}`}
+                        >
+                          <div
+                            className="flex items-center justify-center w-9 h-9 rounded-xl"
+                            style={{ backgroundColor: getIconBgColor() }}
+                          >
+                            {getStatusIcon()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-semibold text-sm truncate ${isRejected ? 'text-gray-500 line-through' : isRedemption ? 'text-emerald-700' : 'text-gray-900'}`}>
+                              {getLabel()}
+                            </p>
+                            <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {formatDateTime(item.date)}
+                            </p>
+                          </div>
+                          {!isRedemption && (
+                            <div
+                              className={`px-2 py-1 rounded-lg text-xs font-bold ${
+                                isPending
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : isRejected
+                                  ? 'bg-red-100 text-red-500 line-through'
+                                  : item.points > 0
+                                  ? isAdjustment
+                                    ? 'bg-green-100 text-green-700'
+                                    : ''
+                                  : 'bg-red-100 text-red-700'
+                              }`}
+                              style={
+                                item.points > 0 && !isAdjustment && !isPending && !isRejected
+                                  ? { backgroundColor: `${merchant.primary_color}10`, color: merchant.primary_color }
+                                  : {}
+                              }
+                            >
+                              {isPending ? '⏳' : isRejected ? '❌' : item.points > 0 ? '+' : ''}{!isPending && !isRejected ? item.points : item.points}
+                            </div>
+                          )}
+                          {isRedemption && (
+                            <div className={`px-2 py-1 rounded-lg text-xs font-bold ${item.tier === 2 ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                              ✓
+                            </div>
+                          )}
+                        </motion.li>
+                      );
+                    })}
+                </motion.ul>
+              ) : null
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="p-8 text-center"
+              >
+                <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                  {(() => {
+                    const LoyaltyIcon = getLoyaltyIcon();
+                    return <LoyaltyIcon className="w-6 h-6 text-gray-300" />;
+                  })()}
+                </div>
+                <p className="text-gray-500 font-medium text-sm">Aucun historique</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Review Section - Minimalist Card */}
+        {merchant.review_link && merchant.review_link.trim() !== '' && !reviewDismissed && !reviewPermanentlyHidden && (
+          <div className="mt-8 px-4">
+            <div className="relative group bg-white/90 backdrop-blur-sm rounded-2xl py-5 px-6 shadow-sm border border-gray-100/80">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  localStorage.setItem(`qarte_review_hidden_${merchantId}`, 'true');
+                  setReviewPermanentlyHidden(true);
+                }}
+                className="absolute top-2 right-2 p-1.5 text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full hover:bg-gray-100"
+                aria-label="Masquer"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="flex flex-col items-center text-center">
+                <p className="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-semibold mb-2">
+                  {merchant.shop_name} vous remercie
+                </p>
+
+                <div className="flex items-center justify-center gap-3 mb-3 w-full max-w-[200px]">
+                  <div className="h-px flex-1 bg-gray-200" />
+                  <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+                  <div className="h-px flex-1 bg-gray-200" />
+                </div>
+
+                <a
+                  href={merchant.review_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 transition-colors duration-200 group/link"
+                >
+                  Laisser un avis
+                  <ChevronRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5" />
+                </a>
+              </div>
+            </div>
+          </div>
         )}
 
         <footer className="py-6 text-center">
@@ -1458,17 +2107,181 @@ export default function CustomerCardPage({
         </div>
       </Modal>
 
-      {/* Member Card Modal */}
-      {memberCard && (
-        <MemberCardModal
-          isOpen={showMemberCardModal}
-          onClose={() => setShowMemberCardModal(false)}
-          memberCard={memberCard}
-          merchant={merchant}
-          customerFirstName={card?.customer?.first_name}
-          customerLastName={card?.customer?.last_name}
-        />
-      )}
+      {/* Member Card Modal - Credit Card Style */}
+      <Modal
+        isOpen={showMemberCardModal}
+        onClose={() => setShowMemberCardModal(false)}
+        title=""
+      >
+        {memberCard && (
+          <div className="py-2">
+            {/* Credit Card Container */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, rotateY: -10 }}
+              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="relative w-full mx-auto overflow-hidden rounded-2xl shadow-2xl"
+              style={{ aspectRatio: '1.58/1' }}
+            >
+              {/* Card Background Gradient */}
+              <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-amber-950" />
+
+              {/* Holographic Pattern Overlay */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `repeating-linear-gradient(
+                    45deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(251,191,36,0.3) 2px,
+                    rgba(251,191,36,0.3) 4px
+                  )`
+                }} />
+              </div>
+
+              {/* Animated Shine Sweep */}
+              <motion.div
+                animate={{
+                  x: ['-100%', '200%'],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  repeatDelay: 2,
+                  ease: "easeInOut"
+                }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+              />
+
+              {/* Card Content */}
+              <div className="relative h-full p-5 flex flex-col justify-between">
+                {/* Top Section: Crown + Program Name */}
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    {/* Golden Crown Icon */}
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                      <Crown className="w-5 h-5 text-white drop-shadow-sm" />
+                    </div>
+                    <div>
+                      <p className="text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+                        {memberCard.program?.name || 'Programme VIP'}
+                      </p>
+                      <p className="text-white/60 text-[9px] font-medium mt-0.5">
+                        {merchant.shop_name}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                    new Date(memberCard.valid_until) > new Date()
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  }`}>
+                    {new Date(memberCard.valid_until) > new Date() ? 'Actif' : 'Expiré'}
+                  </div>
+                </div>
+
+                {/* Middle Section: Benefit + Logo Watermark */}
+                <div className="flex items-center justify-between">
+                  {/* Benefit Pill */}
+                  <div className="flex-1">
+                    <p className="text-amber-400/70 text-[8px] font-semibold uppercase tracking-wider mb-1">Avantage</p>
+                    <div className="inline-block px-3 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-lg">
+                      <p className="text-amber-100 text-xs font-bold truncate max-w-[140px]">
+                        {memberCard.program?.benefit_label}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Qarte Logo Watermark (Middle-Right) */}
+                  <div className="w-11 h-11 rounded-xl border border-amber-500/20 flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-white/5 to-transparent shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]">
+                    <span className="text-2xl font-bold text-amber-500/20 select-none">Q</span>
+                    <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 via-transparent to-amber-200/5 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Bottom Section: Customer Name + Expiry */}
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-white/40 text-[8px] font-medium uppercase tracking-wider mb-1">Titulaire</p>
+                    <p className="text-white text-sm font-bold tracking-wide uppercase">
+                      {card?.customer?.first_name} {card?.customer?.last_name}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white/40 text-[8px] font-medium uppercase tracking-wider mb-1">Valable jusqu&apos;au</p>
+                    <p className="text-white text-sm font-bold tracking-wider font-mono">
+                      {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Subtle Card Edge Glow */}
+              <div className="absolute inset-0 rounded-2xl border border-amber-500/20 pointer-events-none" />
+            </motion.div>
+
+            {/* Card Reference */}
+            <div className="mt-4 text-center">
+              <p className="text-[10px] text-gray-400 font-medium tracking-wider">
+                REF: {memberCard.id.slice(0, 8).toUpperCase()}
+              </p>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Sticky Add to Home Screen Banner - Fixed at bottom, hidden when modal is open */}
+      <AnimatePresence>
+        {!isStandalone && isMobile && !showIOSInstructions && (
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowIOSInstructions(true)}
+            className="fixed bottom-4 left-4 right-4 z-40"
+          >
+            <motion.div
+              animate={{
+                boxShadow: [
+                  `0 0 0 0 ${merchant.primary_color}40`,
+                  `0 0 0 8px ${merchant.primary_color}00`,
+                  `0 0 0 0 ${merchant.primary_color}40`
+                ],
+                opacity: [1, 0.85, 1]
+              }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg border-2"
+              style={{
+                backgroundColor: '#ffffff',
+                borderColor: merchant.primary_color,
+              }}
+            >
+              <motion.div
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="shrink-0"
+              >
+                {isIOS && !isIOSChrome ? (
+                  <ChevronDown className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                ) : (
+                  <ChevronUp className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                )}
+              </motion.div>
+              <span className="flex-1 text-sm font-semibold text-left" style={{ color: merchant.primary_color }}>
+                Ajouter à l&apos;écran d&apos;accueil
+              </span>
+              <PlusSquare className="w-5 h-5 shrink-0" style={{ color: merchant.primary_color }} />
+            </motion.div>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Onboarding CTA - Sticky bottom button to generate QR code */}
       {isPreview && isOnboarding && !isDemo && (
