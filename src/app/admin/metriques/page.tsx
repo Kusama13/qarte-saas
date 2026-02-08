@@ -16,6 +16,8 @@ import {
   Eye,
   UserPlus,
   Loader2,
+  Zap,
+  ArrowRight,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import {
@@ -69,6 +71,17 @@ export default function MetriquesPage() {
   const [leads, setLeads] = useState<DemoLead[]>([]);
   const [leadsStats, setLeadsStats] = useState({ total: 0, pending: 0, converted: 0 });
 
+  // Activation metrics
+  const [activation, setActivation] = useState({
+    activationRate: 0,
+    avgTimeToFirstScan: 0,
+    avgTimeTo10Customers: 0,
+    recentMerchantCount: 0,
+  });
+
+  // Funnel
+  const [funnel, setFunnel] = useState({ total: 0, withProgram: 0, withFirstScan: 0, paid: 0 });
+
   // Charts data
   const [mrrHistory, setMrrHistory] = useState<{ month: string; mrr: number }[]>([]);
   const [weeklySignups, setWeeklySignups] = useState<{ week: string; count: number }[]>([]);
@@ -90,19 +103,23 @@ export default function MetriquesPage() {
         { count: totalVisits },
         { data: leadsData },
         { data: superAdmins },
+        { data: allVisitsData },
+        { data: allLoyaltyCards },
       ] = await Promise.all([
-        supabase.from('merchants').select('id, user_id, subscription_status, created_at'),
+        supabase.from('merchants').select('id, user_id, subscription_status, created_at, reward_description'),
         supabase.from('customers').select('*', { count: 'exact', head: true }),
         supabase.from('visits').select('*', { count: 'exact', head: true }),
         supabase.from('demo_leads').select('*').order('created_at', { ascending: false }),
         supabase.from('super_admins').select('user_id'),
+        supabase.from('visits').select('merchant_id, visited_at'),
+        supabase.from('loyalty_cards').select('merchant_id, created_at'),
       ]);
 
       // Get super admin user_ids
       const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
 
       // Filter out super admin merchants
-      type MerchantData = { user_id: string; subscription_status: string; created_at: string };
+      type MerchantData = { id: string; user_id: string; subscription_status: string; created_at: string; reward_description: string | null };
       const merchants = (allMerchants || []).filter((m: MerchantData) => !superAdminUserIds.has(m.user_id));
 
       // Revenue calculations
@@ -173,6 +190,79 @@ export default function MetriquesPage() {
         });
       }
       setMrrHistory(mrrData);
+
+      // ====== ACTIVATION + FUNNEL ======
+      // Build visits maps
+      const merchantsWithAnyVisit = new Set<string>();
+      const firstVisitPerMerchant = new Map<string, Date>();
+
+      (allVisitsData || []).forEach((v: { merchant_id: string; visited_at: string }) => {
+        merchantsWithAnyVisit.add(v.merchant_id);
+        const vDate = new Date(v.visited_at);
+        const existing = firstVisitPerMerchant.get(v.merchant_id);
+        if (!existing || vDate < existing) {
+          firstVisitPerMerchant.set(v.merchant_id, vDate);
+        }
+      });
+
+      // Build loyalty cards count per merchant (for time to 10 customers)
+      const cardDatesPerMerchant = new Map<string, Date[]>();
+      (allLoyaltyCards || []).forEach((c: { merchant_id: string; created_at: string }) => {
+        if (!cardDatesPerMerchant.has(c.merchant_id)) {
+          cardDatesPerMerchant.set(c.merchant_id, []);
+        }
+        cardDatesPerMerchant.get(c.merchant_id)!.push(new Date(c.created_at));
+      });
+      // Sort each merchant's card dates
+      cardDatesPerMerchant.forEach((dates) => dates.sort((a, b) => a.getTime() - b.getTime()));
+
+      // Activation rate: % of merchants created in last 30 days with ≥1 scan
+      const recentCreated = merchants.filter((m: MerchantData) => new Date(m.created_at) >= oneMonthAgo);
+      const recentActivated = recentCreated.filter((m: MerchantData) => merchantsWithAnyVisit.has(m.id));
+      const activationRate = recentCreated.length > 0 ? Math.round((recentActivated.length / recentCreated.length) * 100) : 0;
+
+      // Avg time to first scan (for all merchants with a first visit)
+      let totalDaysToFirst = 0;
+      let countWithFirst = 0;
+      firstVisitPerMerchant.forEach((firstDate, merchantId) => {
+        const merchant = merchants.find((m: MerchantData) => m.id === merchantId);
+        if (merchant) {
+          const days = (firstDate.getTime() - new Date(merchant.created_at).getTime()) / (1000 * 60 * 60 * 24);
+          totalDaysToFirst += Math.max(0, days);
+          countWithFirst++;
+        }
+      });
+      const avgTimeToFirstScan = countWithFirst > 0 ? Math.round((totalDaysToFirst / countWithFirst) * 10) / 10 : 0;
+
+      // Avg time to 10 customers
+      let totalDaysTo10 = 0;
+      let countWith10 = 0;
+      cardDatesPerMerchant.forEach((dates, merchantId) => {
+        if (dates.length >= 10) {
+          const merchant = merchants.find((m: MerchantData) => m.id === merchantId);
+          if (merchant) {
+            const days = (dates[9].getTime() - new Date(merchant.created_at).getTime()) / (1000 * 60 * 60 * 24);
+            totalDaysTo10 += Math.max(0, days);
+            countWith10++;
+          }
+        }
+      });
+      const avgTimeTo10 = countWith10 > 0 ? Math.round((totalDaysTo10 / countWith10) * 10) / 10 : 0;
+
+      setActivation({
+        activationRate,
+        avgTimeToFirstScan: avgTimeToFirstScan,
+        avgTimeTo10Customers: avgTimeTo10,
+        recentMerchantCount: recentCreated.length,
+      });
+
+      // Funnel
+      setFunnel({
+        total: merchants.length,
+        withProgram: merchants.filter((m: MerchantData) => m.reward_description !== null).length,
+        withFirstScan: merchants.filter((m: MerchantData) => merchantsWithAnyVisit.has(m.id)).length,
+        paid: active,
+      });
 
       // Weekly signups (last 8 weeks)
       const weeklyData: { week: string; count: number }[] = [];
@@ -369,6 +459,60 @@ export default function MetriquesPage() {
         </div>
       </section>
 
+      {/* ACTIVATION */}
+      <section>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Zap className="w-5 h-5 text-[#5167fc]" />
+          Activation (30 derniers jours)
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            label="Taux activation"
+            value={`${activation.activationRate}%`}
+            sub={`${activation.recentMerchantCount} inscrits 30j`}
+            icon={Zap}
+            color="green"
+          />
+          <MetricCard
+            label="Temps 1er scan"
+            value={activation.avgTimeToFirstScan > 0 ? `${activation.avgTimeToFirstScan}j` : '-'}
+            sub="Création → 1er scan"
+            icon={Clock}
+            color="blue"
+          />
+          <MetricCard
+            label="Temps 10 clients"
+            value={activation.avgTimeTo10Customers > 0 ? `${activation.avgTimeTo10Customers}j` : '-'}
+            sub="Création → 10e client"
+            icon={Users}
+            color="purple"
+          />
+          <MetricCard
+            label="Inscrits récents"
+            value={activation.recentMerchantCount}
+            sub="Derniers 30 jours"
+            icon={UserPlus}
+            color="amber"
+          />
+        </div>
+      </section>
+
+      {/* FUNNEL DE CONVERSION */}
+      {funnel.total > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <ArrowRight className="w-5 h-5 text-[#5167fc]" />
+            Funnel de conversion
+          </h2>
+          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-4">
+            <FunnelBarMetric label="Inscrits" count={funnel.total} total={funnel.total} color="#5167fc" />
+            <FunnelBarMetric label="Programme configuré" count={funnel.withProgram} total={funnel.total} color="#7c8afc" prevCount={funnel.total} />
+            <FunnelBarMetric label="1er scan reçu" count={funnel.withFirstScan} total={funnel.total} color="#a3adfd" prevCount={funnel.withProgram} />
+            <FunnelBarMetric label="Abonnés payants" count={funnel.paid} total={funnel.total} color="#10B981" prevCount={funnel.withFirstScan} />
+          </div>
+        </section>
+      )}
+
       {/* GRAPHIQUES */}
       <section className="grid lg:grid-cols-2 gap-6">
         {/* MRR Evolution */}
@@ -533,6 +677,47 @@ function MetricCard({
           <p className="text-xl font-bold text-gray-900">{value}</p>
           {sub && <p className="text-xs text-gray-400">{sub}</p>}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Funnel Bar Component
+function FunnelBarMetric({
+  label,
+  count,
+  total,
+  color,
+  prevCount,
+}: {
+  label: string;
+  count: number;
+  total: number;
+  color: string;
+  prevCount?: number;
+}) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+  const dropOff = prevCount !== undefined && prevCount > 0
+    ? Math.round(((prevCount - count) / prevCount) * 100)
+    : null;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-gray-900">{count}</span>
+          <span className="text-xs text-gray-400">({pct}%)</span>
+          {dropOff !== null && dropOff > 0 && (
+            <span className="text-xs font-medium text-red-500">-{dropOff}%</span>
+          )}
+        </div>
+      </div>
+      <div className="w-full bg-gray-100 rounded-full h-7 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${Math.max(pct, 3)}%`, backgroundColor: color }}
+        />
       </div>
     </div>
   );

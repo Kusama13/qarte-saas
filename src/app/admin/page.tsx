@@ -10,9 +10,7 @@ import {
   AlertTriangle,
   ArrowRight,
   TrendingUp,
-  MapPin,
   Calendar,
-  ArrowUpRight,
   Percent,
   Plus,
   Check,
@@ -21,7 +19,6 @@ import {
   Target,
   MessageCircle,
   Mail,
-  Building,
   ChevronRight,
   Save,
   Loader2,
@@ -37,12 +34,25 @@ import { cn } from '@/lib/utils';
 // ============================================
 interface Merchant {
   id: string;
+  user_id: string;
   shop_name: string;
+  shop_type: string;
   shop_address: string | null;
   phone: string;
   subscription_status: string;
   trial_ends_at: string | null;
   created_at: string;
+  reward_description: string | null;
+  logo_url: string | null;
+}
+
+interface ActionMerchant extends Merchant {
+  email?: string;
+  lastScanDate?: string | null;
+  scansLast7Days?: number;
+  daysSinceCreation?: number;
+  daysUntilTrialEnd?: number;
+  daysSinceLastScan?: number | null;
 }
 
 interface Task {
@@ -108,9 +118,19 @@ export default function AdminDashboardPage() {
     trialMerchants: 0,
     activeMerchants: 0,
     totalCustomers: 0,
+    weeklyActiveMerchants: 0,
+    activationRate: 0,
   });
-  const [trialEndingMerchants, setTrialEndingMerchants] = useState<Merchant[]>([]);
   const [recentMerchants, setRecentMerchants] = useState<Merchant[]>([]);
+
+  // Action segments
+  const [trialsNoScan, setTrialsNoScan] = useState<ActionMerchant[]>([]);
+  const [trialsExpiring, setTrialsExpiring] = useState<ActionMerchant[]>([]);
+  const [noProgram, setNoProgram] = useState<ActionMerchant[]>([]);
+  const [inactive7Days, setInactive7Days] = useState<ActionMerchant[]>([]);
+
+  // Funnel
+  const [funnel, setFunnel] = useState({ total: 0, withProgram: 0, withFirstScan: 0, paid: 0 });
 
   // Notes
   const [notes, setNotes] = useState('');
@@ -149,58 +169,162 @@ export default function AdminDashboardPage() {
   // ============================================
   // DATA FETCHING
   // ============================================
-  const fetchStats = useCallback(async () => {
+  const fetchStatsAndActions = useCallback(async () => {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+    // Fetch all data in parallel
     const [
       { data: allMerchants },
       { count: totalCustomers },
       { data: superAdmins },
+      { data: allVisits },
+      { data: recentMerchantsList },
     ] = await Promise.all([
-      supabase.from('merchants').select('id, user_id, subscription_status'),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, trial_ends_at, created_at, reward_description, logo_url'),
       supabase.from('customers').select('*', { count: 'exact', head: true }),
       supabase.from('super_admins').select('user_id'),
+      supabase.from('visits').select('merchant_id, visited_at'),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, trial_ends_at, created_at, reward_description, logo_url').order('created_at', { ascending: false }).limit(10),
     ]);
 
-    // Get super admin user_ids
-    const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
+    // Fetch merchant emails via API
+    let emailMap: Record<string, string> = {};
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const emailRes = await fetch('/api/admin/merchant-emails', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` },
+        });
+        if (emailRes.ok) {
+          const emailData = await emailRes.json();
+          emailMap = emailData.emails || {};
+        }
+      }
+    } catch { /* silent */ }
 
-    // Filter out super admin merchants
-    const merchants = (allMerchants || []).filter((m: { user_id: string }) => !superAdminUserIds.has(m.user_id));
+    const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
+    const merchants = (allMerchants || []).filter((m: Merchant) => !superAdminUserIds.has(m.user_id));
+
+    // Build visits maps
+    const merchantsWithAnyVisit = new Set<string>();
+    const lastVisitMap = new Map<string, string>();
+    const scans7dMap = new Map<string, number>();
+    const scans30dSet = new Set<string>();
+
+    (allVisits || []).forEach((v: { merchant_id: string; visited_at: string }) => {
+      merchantsWithAnyVisit.add(v.merchant_id);
+      const visitDate = new Date(v.visited_at);
+
+      // Last visit per merchant
+      const existing = lastVisitMap.get(v.merchant_id);
+      if (!existing || visitDate > new Date(existing)) {
+        lastVisitMap.set(v.merchant_id, v.visited_at);
+      }
+
+      // Scans last 7 days
+      if (visitDate >= sevenDaysAgo) {
+        scans7dMap.set(v.merchant_id, (scans7dMap.get(v.merchant_id) || 0) + 1);
+      }
+
+      // Scans last 30 days (for activation rate)
+      if (visitDate >= thirtyDaysAgo) {
+        scans30dSet.add(v.merchant_id);
+      }
+    });
+
+    // Stats
+    const trial = merchants.filter((m: Merchant) => m.subscription_status === 'trial');
+    const active = merchants.filter((m: Merchant) => m.subscription_status === 'active');
+    const canceled = merchants.filter((m: Merchant) => m.subscription_status === 'canceled');
+    const weeklyActive = new Set([...scans7dMap.keys()].filter(id => merchants.some((m: Merchant) => m.id === id)));
+
+    // Activation rate: % of merchants created in last 30 days who have ≥1 scan
+    const recentCreated = merchants.filter((m: Merchant) => new Date(m.created_at) >= thirtyDaysAgo);
+    const recentActivated = recentCreated.filter((m: Merchant) => scans30dSet.has(m.id));
+    const activationRate = recentCreated.length > 0 ? Math.round((recentActivated.length / recentCreated.length) * 100) : 0;
+
+    const convRate = (active.length + canceled.length + trial.length) > 0
+      ? Math.round((active.length / (active.length + canceled.length + trial.length)) * 100)
+      : 0;
 
     setStats({
       totalMerchants: merchants.length,
-      trialMerchants: merchants.filter((m: { subscription_status?: string }) => m.subscription_status === 'trial').length,
-      activeMerchants: merchants.filter((m: { subscription_status?: string }) => m.subscription_status === 'active').length,
+      trialMerchants: trial.length,
+      activeMerchants: active.length,
       totalCustomers: totalCustomers || 0,
+      weeklyActiveMerchants: weeklyActive.size,
+      activationRate,
     });
-  }, [supabase]);
 
-  const fetchMerchants = useCallback(async () => {
-    const threeDaysFromNow = new Date();
-    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+    // Funnel
+    setFunnel({
+      total: merchants.length,
+      withProgram: merchants.filter((m: Merchant) => m.reward_description !== null).length,
+      withFirstScan: merchants.filter((m: Merchant) => merchantsWithAnyVisit.has(m.id)).length,
+      paid: active.length,
+    });
 
-    const [{ data: endingTrials }, { data: recent }, { data: superAdmins }] = await Promise.all([
-      supabase
-        .from('merchants')
-        .select('*')
-        .eq('subscription_status', 'trial')
-        .lte('trial_ends_at', threeDaysFromNow.toISOString())
-        .gte('trial_ends_at', new Date().toISOString())
-        .order('trial_ends_at', { ascending: true })
-        .limit(10),
-      supabase
-        .from('merchants')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(10),
-      supabase.from('super_admins').select('user_id'),
-    ]);
+    // Helper to enrich merchant for action segments
+    const enrichMerchant = (m: Merchant): ActionMerchant => {
+      const lastScan = lastVisitMap.get(m.id) || null;
+      const daysSinceLastScan = lastScan ? Math.floor((now.getTime() - new Date(lastScan).getTime()) / (1000 * 60 * 60 * 24)) : null;
+      const daysUntilTrialEnd = m.trial_ends_at ? Math.ceil((new Date(m.trial_ends_at).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : undefined;
+      return {
+        ...m,
+        email: emailMap[m.user_id],
+        lastScanDate: lastScan,
+        scansLast7Days: scans7dMap.get(m.id) || 0,
+        daysSinceCreation: Math.floor((now.getTime() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24)),
+        daysUntilTrialEnd,
+        daysSinceLastScan,
+      };
+    };
 
-    // Get super admin user_ids
-    const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
+    // Segment 1: Trials without any scan
+    setTrialsNoScan(
+      trial.filter((m: Merchant) => !merchantsWithAnyVisit.has(m.id))
+        .map(enrichMerchant)
+        .sort((a: ActionMerchant, b: ActionMerchant) => (a.daysSinceCreation || 0) - (b.daysSinceCreation || 0))
+    );
 
-    // Filter out super admin merchants
-    setTrialEndingMerchants((endingTrials || []).filter((m: { user_id: string }) => !superAdminUserIds.has(m.user_id)).slice(0, 5));
-    setRecentMerchants((recent || []).filter((m: { user_id: string }) => !superAdminUserIds.has(m.user_id)).slice(0, 5));
+    // Segment 2: Trials expiring in ≤3 days
+    setTrialsExpiring(
+      trial.filter((m: Merchant) => {
+        if (!m.trial_ends_at) return false;
+        const daysLeft = Math.ceil((new Date(m.trial_ends_at).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        return daysLeft >= 0 && daysLeft <= 3;
+      })
+        .map(enrichMerchant)
+        .sort((a: ActionMerchant, b: ActionMerchant) => (a.daysUntilTrialEnd || 0) - (b.daysUntilTrialEnd || 0))
+    );
+
+    // Segment 3: No program configured (no reward_description)
+    setNoProgram(
+      merchants.filter((m: Merchant) => m.reward_description === null && (m.subscription_status === 'trial' || m.subscription_status === 'active'))
+        .map(enrichMerchant)
+    );
+
+    // Segment 4: Inactive 7+ days (trial or active merchants with last scan > 7 days ago, excluding those with no scan at all)
+    setInactive7Days(
+      merchants.filter((m: Merchant) => {
+        if (m.subscription_status !== 'trial' && m.subscription_status !== 'active') return false;
+        if (!merchantsWithAnyVisit.has(m.id)) return false;
+        const lastScan = lastVisitMap.get(m.id);
+        if (!lastScan) return false;
+        const daysSince = Math.floor((now.getTime() - new Date(lastScan).getTime()) / (1000 * 60 * 60 * 24));
+        return daysSince >= 7;
+      })
+        .map(enrichMerchant)
+        .sort((a: ActionMerchant, b: ActionMerchant) => (b.daysSinceLastScan || 0) - (a.daysSinceLastScan || 0))
+    );
+
+    // Recent merchants (for bottom row)
+    setRecentMerchants(
+      (recentMerchantsList || []).filter((m: Merchant) => !superAdminUserIds.has(m.user_id)).slice(0, 5)
+    );
   }, [supabase]);
 
   const fetchNotes = useCallback(async () => {
@@ -254,8 +378,7 @@ export default function AdminDashboardPage() {
     const loadAll = async () => {
       try {
         await Promise.all([
-          fetchStats(),
-          fetchMerchants(),
+          fetchStatsAndActions(),
           fetchNotes(),
           fetchTasks(),
           fetchProspects(),
@@ -268,7 +391,7 @@ export default function AdminDashboardPage() {
       }
     };
     loadAll();
-  }, [fetchStats, fetchMerchants, fetchNotes, fetchTasks, fetchProspects, fetchTodaySignups]);
+  }, [fetchStatsAndActions, fetchNotes, fetchTasks, fetchProspects, fetchTodaySignups]);
 
   useEffect(() => {
     fetchProspects();
@@ -445,14 +568,10 @@ export default function AdminDashboardPage() {
   }).format(new Date());
 
   const conversionRate = stats.totalMerchants > 0
-    ? ((stats.activeMerchants / stats.totalMerchants) * 100).toFixed(1)
-    : '0';
+    ? Math.round((stats.activeMerchants / stats.totalMerchants) * 100)
+    : 0;
 
-  const getDaysRemaining = (trialEndsAt: string) => {
-    const end = new Date(trialEndsAt);
-    const now = new Date();
-    return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  };
+  const totalActions = trialsNoScan.length + trialsExpiring.length + noProgram.length + inactive7Days.length;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -510,32 +629,101 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          label="Commerçants"
-          value={stats.totalMerchants}
-          icon={Store}
-          color="emerald"
-        />
-        <StatCard
-          label="En essai"
-          value={stats.trialMerchants}
-          icon={Clock}
-          color="amber"
-        />
-        <StatCard
-          label="Conversion"
-          value={`${conversionRate}%`}
-          icon={Percent}
-          color="indigo"
-        />
-        <StatCard
-          label="MRR"
-          value={`${stats.activeMerchants * 29}€`}
-          icon={CreditCard}
-          color="pink"
-        />
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <StatCard label="Commerçants" value={stats.totalMerchants} icon={Store} color="emerald" />
+        <StatCard label="MRR" value={`${stats.activeMerchants * 19}€`} icon={CreditCard} color="pink" />
+        <StatCard label="Activation 30j" value={`${stats.activationRate}%`} icon={TrendingUp} color="indigo" />
+        <StatCard label="Actifs 7j" value={stats.weeklyActiveMerchants} icon={Users} color="blue" />
+        <StatCard label="En essai" value={stats.trialMerchants} icon={Clock} color="amber" />
+        <StatCard label="Conversion" value={`${conversionRate}%`} icon={Percent} color="green" />
       </div>
+
+      {/* Actions du jour */}
+      {totalActions > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-red-50 rounded-lg">
+              <Target className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-slate-900">Actions du jour</h2>
+              <p className="text-xs text-slate-500">{totalActions} commerçant{totalActions > 1 ? 's' : ''} à contacter</p>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-4">
+            {/* Segment 1: Essais sans scan */}
+            {trialsNoScan.length > 0 && (
+              <ActionSegment
+                title="Essais SANS scan"
+                subtitle="N'ont jamais testé le produit"
+                count={trialsNoScan.length}
+                color="red"
+                merchants={trialsNoScan}
+                contextLabel={(m) => `Inscrit il y a ${m.daysSinceCreation}j`}
+                openWhatsApp={openWhatsApp}
+              />
+            )}
+
+            {/* Segment 2: Essais expirant */}
+            {trialsExpiring.length > 0 && (
+              <ActionSegment
+                title="Essais expirant"
+                subtitle="≤ 3 jours restants"
+                count={trialsExpiring.length}
+                color="orange"
+                merchants={trialsExpiring}
+                contextLabel={(m) => m.daysUntilTrialEnd === 0 ? "Expire aujourd'hui" : `Expire dans ${m.daysUntilTrialEnd}j`}
+                openWhatsApp={openWhatsApp}
+              />
+            )}
+
+            {/* Segment 3: Sans programme */}
+            {noProgram.length > 0 && (
+              <ActionSegment
+                title="Sans programme"
+                subtitle="Récompense non configurée"
+                count={noProgram.length}
+                color="amber"
+                merchants={noProgram}
+                contextLabel={(m) => `Inscrit il y a ${m.daysSinceCreation}j`}
+                openWhatsApp={openWhatsApp}
+              />
+            )}
+
+            {/* Segment 4: Inactifs 7+ jours */}
+            {inactive7Days.length > 0 && (
+              <ActionSegment
+                title="Inactifs 7+ jours"
+                subtitle="Aucun scan récent"
+                count={inactive7Days.length}
+                color="gray"
+                merchants={inactive7Days}
+                contextLabel={(m) => m.daysSinceLastScan !== null ? `Dernier scan il y a ${m.daysSinceLastScan}j` : 'Jamais scanné'}
+                openWhatsApp={openWhatsApp}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Funnel de conversion */}
+      {funnel.total > 0 && (
+        <div className="bg-white rounded-lg border border-slate-100 shadow-md p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-[#5167fc]/10 rounded-lg">
+              <ArrowRight className="w-5 h-5 text-[#5167fc]" />
+            </div>
+            <h2 className="font-semibold text-slate-900">Funnel de conversion</h2>
+          </div>
+          <div className="space-y-3">
+            <FunnelBar label="Inscrits" count={funnel.total} total={funnel.total} color="#5167fc" />
+            <FunnelBar label="Programme configuré" count={funnel.withProgram} total={funnel.total} color="#7c8afc" prevCount={funnel.total} />
+            <FunnelBar label="1er scan reçu" count={funnel.withFirstScan} total={funnel.total} color="#a3adfd" prevCount={funnel.withProgram} />
+            <FunnelBar label="Abonnés payants" count={funnel.paid} total={funnel.total} color="#10B981" prevCount={funnel.withFirstScan} />
+          </div>
+        </div>
+      )}
 
       {/* Main Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
@@ -773,53 +961,8 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Bottom Row: Alerts */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Trial Ending */}
-        <div className="bg-white rounded-lg border border-slate-100 shadow-md overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div className="p-2 bg-amber-50 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-slate-900">Essais se terminant</h2>
-              <p className="text-xs text-amber-600">À contacter en priorité</p>
-            </div>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {trialEndingMerchants.length === 0 ? (
-              <p className="p-6 text-center text-slate-400 text-sm">Aucun essai urgent</p>
-            ) : (
-              trialEndingMerchants.map((merchant) => {
-                const daysLeft = getDaysRemaining(merchant.trial_ends_at!);
-                return (
-                  <Link
-                    key={merchant.id}
-                    href={`/admin/merchants/${merchant.id}`}
-                    className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
-                  >
-                    <div>
-                      <p className="font-medium text-slate-900">{merchant.shop_name}</p>
-                      {merchant.shop_address && (
-                        <p className="text-xs text-slate-500 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {merchant.shop_address}
-                        </p>
-                      )}
-                    </div>
-                    <span className={cn(
-                      "px-2 py-1 rounded-lg text-xs font-medium",
-                      daysLeft <= 1 ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
-                    )}>
-                      {daysLeft <= 0 ? "Aujourd'hui" : `${daysLeft}j`}
-                    </span>
-                  </Link>
-                );
-              })
-            )}
-          </div>
-        </div>
-
+      {/* Bottom Row */}
+      <div className="grid lg:grid-cols-2 gap-6">
         {/* Recent Signups */}
         <div className="bg-white rounded-lg border border-slate-100 shadow-md overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
@@ -1024,7 +1167,7 @@ export default function AdminDashboardPage() {
 }
 
 // ============================================
-// STAT CARD COMPONENT (Optimized - no heavy charts)
+// STAT CARD COMPONENT
 // ============================================
 function StatCard({
   label,
@@ -1035,28 +1178,148 @@ function StatCard({
   label: string;
   value: string | number;
   icon: React.ElementType;
-  color: 'emerald' | 'amber' | 'indigo' | 'pink';
+  color: 'emerald' | 'amber' | 'indigo' | 'pink' | 'blue' | 'green';
 }) {
   const colorMap = {
     emerald: 'bg-emerald-50 text-emerald-600',
     amber: 'bg-amber-50 text-amber-600',
     indigo: 'bg-[#5167fc]/10 text-[#5167fc]',
     pink: 'bg-pink-50 text-pink-600',
+    blue: 'bg-blue-50 text-blue-600',
+    green: 'bg-green-50 text-green-600',
   };
 
   return (
-    <div className="bg-white p-5 rounded-lg border border-slate-100 shadow-md transition-shadow duration-200 hover:shadow-lg">
-      <div className="flex items-center gap-4">
-        <div className={cn(
-          "flex items-center justify-center w-12 h-12 rounded-full shrink-0",
-          colorMap[color]
-        )}>
-          <Icon className="w-6 h-6" />
+    <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-md">
+      <div className="flex items-center gap-3">
+        <div className={cn("flex items-center justify-center w-10 h-10 rounded-full shrink-0", colorMap[color])}>
+          <Icon className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">{label}</p>
-          <p className="text-2xl font-bold text-slate-900 tracking-tight leading-none">{value}</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+          <p className="text-xl font-bold text-slate-900 tracking-tight leading-none">{value}</p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// ACTION SEGMENT COMPONENT
+// ============================================
+function ActionSegment({
+  title,
+  subtitle,
+  count,
+  color,
+  merchants,
+  contextLabel,
+  openWhatsApp,
+}: {
+  title: string;
+  subtitle: string;
+  count: number;
+  color: 'red' | 'orange' | 'amber' | 'gray';
+  merchants: ActionMerchant[];
+  contextLabel: (m: ActionMerchant) => string;
+  openWhatsApp: (phone: string, name?: string) => void;
+}) {
+  const colorConfig = {
+    red: { bg: 'bg-red-50', border: 'border-red-100', badge: 'bg-red-100 text-red-700', icon: 'text-red-600', iconBg: 'bg-red-50' },
+    orange: { bg: 'bg-orange-50', border: 'border-orange-100', badge: 'bg-orange-100 text-orange-700', icon: 'text-orange-600', iconBg: 'bg-orange-50' },
+    amber: { bg: 'bg-amber-50', border: 'border-amber-100', badge: 'bg-amber-100 text-amber-700', icon: 'text-amber-600', iconBg: 'bg-amber-50' },
+    gray: { bg: 'bg-slate-50', border: 'border-slate-100', badge: 'bg-slate-100 text-slate-700', icon: 'text-slate-500', iconBg: 'bg-slate-50' },
+  };
+  const c = colorConfig[color];
+
+  return (
+    <div className={cn("rounded-lg border shadow-sm overflow-hidden", c.border)}>
+      <div className={cn("px-4 py-3 flex items-center justify-between", c.bg)}>
+        <div className="flex items-center gap-2">
+          <AlertTriangle className={cn("w-4 h-4", c.icon)} />
+          <div>
+            <span className="text-sm font-semibold text-slate-900">{title}</span>
+            <span className="text-xs text-slate-500 ml-2">{subtitle}</span>
+          </div>
+        </div>
+        <span className={cn("px-2 py-0.5 text-xs font-bold rounded-full", c.badge)}>{count}</span>
+      </div>
+      <div className="divide-y divide-slate-100 max-h-[200px] overflow-y-auto bg-white">
+        {merchants.map((m) => (
+          <div key={m.id} className="px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-slate-50 transition-colors">
+            <Link href={`/admin/merchants/${m.id}`} className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-900 truncate">{m.shop_name}</p>
+              <p className="text-xs text-slate-400">{contextLabel(m)}</p>
+            </Link>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {m.phone && (
+                <button
+                  onClick={(e) => { e.preventDefault(); openWhatsApp(m.phone, m.shop_name); }}
+                  className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                  title="WhatsApp"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                </button>
+              )}
+              {m.email && (
+                <a
+                  href={`mailto:${m.email}`}
+                  className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Email"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Mail className="w-4 h-4" />
+                </a>
+              )}
+              <Link href={`/admin/merchants/${m.id}`}>
+                <ChevronRight className="w-4 h-4 text-slate-300" />
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// FUNNEL BAR COMPONENT
+// ============================================
+function FunnelBar({
+  label,
+  count,
+  total,
+  color,
+  prevCount,
+}: {
+  label: string;
+  count: number;
+  total: number;
+  color: string;
+  prevCount?: number;
+}) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+  const dropOff = prevCount !== undefined && prevCount > 0
+    ? Math.round(((prevCount - count) / prevCount) * 100)
+    : null;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-slate-900">{count}</span>
+          <span className="text-xs text-slate-400">({pct}%)</span>
+          {dropOff !== null && dropOff > 0 && (
+            <span className="text-xs font-medium text-red-500">-{dropOff}%</span>
+          )}
+        </div>
+      </div>
+      <div className="w-full bg-slate-100 rounded-full h-6 overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-700"
+          style={{ width: `${Math.max(pct, 3)}%`, backgroundColor: color }}
+        />
       </div>
     </div>
   );
