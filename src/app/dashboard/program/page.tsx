@@ -15,7 +15,7 @@ import {
   Trophy,
   ExternalLink,
 } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
+import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { MerchantSettingsForm, type LoyaltySettings } from '@/components/loyalty';
 import { compressLogo } from '@/lib/image-compression';
@@ -249,38 +249,13 @@ export default function ProgramPage() {
         <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-violet-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
 
-        <div className="relative flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-              Mon Programme
-            </h1>
-            <p className="mt-2 text-gray-500 font-medium">
-              Personnalisez votre programme de fidélité
-            </p>
-          </div>
-          <Button
-            onClick={handleSave}
-            loading={saving}
-            disabled={saved}
-            className={`
-              transition-all duration-300 px-6 py-2.5 rounded-2xl font-bold flex items-center gap-2
-              ${saved
-                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-600'
-                : 'bg-white/60 backdrop-blur-md border border-white/40 text-indigo-600 shadow-lg shadow-indigo-200/40 hover:bg-white hover:scale-[1.02] active:scale-95'}
-            `}
-          >
-            {saved ? (
-              <>
-                <Check className="w-5 h-5" />
-                <span>Enregistré</span>
-              </>
-            ) : (
-              <>
-                <Save className="w-5 h-5" />
-                <span>Enregistrer</span>
-              </>
-            )}
-          </Button>
+        <div className="relative">
+          <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+            Mon Programme
+          </h1>
+          <p className="mt-2 text-gray-500 font-medium">
+            Personnalisez votre programme de fidélité
+          </p>
         </div>
       </div>
 
@@ -542,16 +517,16 @@ export default function ProgramPage() {
         </div>
 
         {merchant && (
-          <div className="hidden lg:block">
+          <div className="lg:block">
             <div className="sticky top-8">
               <a
                 href={`/customer/card/${merchant.id}?preview=true`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 p-6 bg-white/80 backdrop-blur-xl border border-indigo-100 rounded-2xl shadow-lg shadow-indigo-100/40 hover:shadow-xl hover:border-indigo-200 transition-all duration-300 group"
+                className="flex items-center justify-center gap-3 p-4 lg:p-6 bg-white/80 backdrop-blur-xl border border-indigo-100 rounded-2xl shadow-lg shadow-indigo-100/40 hover:shadow-xl hover:border-indigo-200 transition-all duration-300 group"
               >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
-                  <ExternalLink className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                  <ExternalLink className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-gray-900">Voir la carte client</p>
@@ -566,18 +541,19 @@ export default function ProgramPage() {
       {/* Sticky Save Button (All Screens) */}
       <div className="fixed bottom-0 left-0 right-0 lg:left-72 z-50 p-3 lg:p-4 bg-white/70 backdrop-blur-xl border-t border-gray-100/50 shadow-lg shadow-gray-900/5">
         <div className="max-w-6xl mx-auto flex justify-center lg:justify-end">
-          <Button
+          <button
             onClick={handleSave}
-            loading={saving}
-            disabled={saved}
+            disabled={saving || saved}
             className={`
-              w-full lg:w-auto h-12 lg:h-10 px-6 rounded-xl font-semibold text-base lg:text-sm flex items-center justify-center gap-2 transition-all duration-300
+              w-full lg:w-auto h-12 lg:h-10 px-6 rounded-xl font-semibold text-base lg:text-sm inline-flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed
               ${saved
                 ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200/50'
                 : 'bg-slate-800 text-white shadow-md hover:bg-slate-700 hover:shadow-lg lg:bg-slate-100 lg:text-slate-700 lg:border lg:border-slate-200 lg:hover:bg-slate-200 lg:hover:border-slate-300'}
             `}
           >
-            {saved ? (
+            {saving ? (
+              <Loader2 className="w-5 h-5 lg:w-4 lg:h-4 animate-spin" />
+            ) : saved ? (
               <>
                 <Check className="w-5 h-5 lg:w-4 lg:h-4" />
                 <span>Enregistré !</span>
@@ -588,7 +564,7 @@ export default function ProgramPage() {
                 <span>Enregistrer</span>
               </>
             )}
-          </Button>
+          </button>
         </div>
       </div>
 

@@ -101,6 +101,7 @@ export default function CustomerCardPage({
   const searchParams = useSearchParams();
   const isPreview = searchParams.get('preview') === 'true';
   const isOnboarding = searchParams.get('onboarding') === 'true';
+  const isDemo = searchParams.get('demo') === 'true';
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
@@ -156,13 +157,44 @@ export default function CustomerCardPage({
       // Preview mode: fetch merchant data only and create mock card
       if (isPreview) {
         try {
-          const response = await fetch(`/api/merchants/preview?id=${merchantId}`);
-          const data = await response.json();
-          if (!response.ok || !data.merchant) {
-            router.push('/customer/cards');
-            return;
+          // Demo merchants: hardcoded data, no API call
+          const demoMerchants: Record<string, { id: string; shop_name: string; shop_type: string; logo_url: string | null; primary_color: string; secondary_color: string; stamps_required: number; reward_description: string; tier2_enabled: boolean; tier2_stamps_required: number | null; tier2_reward_description: string | null; loyalty_mode: string; product_name: string | null; review_link: string | null }> = {
+            'demo-coiffeur': {
+              id: 'demo-coiffeur', shop_name: 'Le Salon de Clara', shop_type: 'coiffeur',
+              logo_url: null, primary_color: '#D97706', secondary_color: '#F59E0B',
+              stamps_required: 10, reward_description: 'Un brushing offert',
+              tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
+              loyalty_mode: 'visit', product_name: null, review_link: 'https://g.page/example',
+            },
+            'demo-onglerie': {
+              id: 'demo-onglerie', shop_name: 'Nails & Beauty', shop_type: 'onglerie',
+              logo_url: null, primary_color: '#EC4899', secondary_color: '#F472B6',
+              stamps_required: 8, reward_description: 'Une pose gel offerte',
+              tier2_enabled: true, tier2_stamps_required: 15, tier2_reward_description: 'Un soin complet des mains offert',
+              loyalty_mode: 'visit', product_name: null, review_link: null,
+            },
+            'demo-institut': {
+              id: 'demo-institut', shop_name: 'Institut Éclat', shop_type: 'institut_beaute',
+              logo_url: null, primary_color: '#8B5CF6', secondary_color: '#A78BFA',
+              stamps_required: 8, reward_description: 'Un soin visage offert',
+              tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
+              loyalty_mode: 'visit', product_name: null, review_link: 'https://g.page/example-institut',
+            },
+          };
+
+          let m;
+          if (merchantId.startsWith('demo-')) {
+            m = demoMerchants[merchantId];
+            if (!m) { router.push('/demo'); return; }
+          } else {
+            const response = await fetch(`/api/merchants/preview?id=${merchantId}`);
+            const data = await response.json();
+            if (!response.ok || !data.merchant) {
+              router.push('/customer/cards');
+              return;
+            }
+            m = data.merchant;
           }
-          const m = data.merchant;
           // Simulate ~80% progress on tier 1 (shows "almost there" state)
           const tier1 = m.stamps_required || 10;
           const demoStamps = Math.max(1, tier1 - 2);
@@ -676,11 +708,13 @@ export default function CustomerCardPage({
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${merchant.primary_color}15 0%, ${merchant.primary_color}40 40%, ${merchant.primary_color}60 70%, ${merchant.primary_color}35 100%)` }}>
       {/* Preview Mode Banner */}
       {isPreview && (
-        <div className="sticky top-0 z-50 bg-indigo-600 text-white text-center py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg">
+        <div className={`sticky top-0 z-50 ${isDemo ? 'bg-gradient-to-r from-indigo-600 to-violet-600' : 'bg-indigo-600'} text-white text-center py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg`}>
           <Eye className="w-4 h-4" />
-          {isOnboarding
-            ? 'Voici ce que verront vos clients !'
-            : 'Mode prévisualisation — Vos clients verront cette carte'}
+          {isDemo
+            ? 'Exemple de carte de fidélité — Essayez gratuitement !'
+            : isOnboarding
+              ? 'Voici ce que verront vos clients !'
+              : 'Mode prévisualisation — Vos clients verront cette carte'}
         </div>
       )}
       {/* Header with premium glassmorphism horizontal design */}
@@ -815,8 +849,13 @@ export default function CustomerCardPage({
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mb-4 overflow-hidden rounded-2xl shadow-lg shadow-black/5 border border-white/20"
+            className="mb-4 overflow-hidden rounded-2xl shadow-lg shadow-black/5 border border-white/20 relative"
           >
+            {isPreview && (
+              <div className="absolute top-2 right-2 z-20 bg-white/90 backdrop-blur-sm text-[10px] font-bold text-gray-500 px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
+                Exemple — Personnalisable
+              </div>
+            )}
             <button
               onClick={() => setOfferExpanded(!offerExpanded)}
               className="w-full text-left transition-transform active:scale-[0.99]"
@@ -914,6 +953,11 @@ export default function CustomerCardPage({
             onClick={() => setShowMemberCardModal(true)}
             className="relative w-full group mb-4 p-[1.5px] overflow-hidden rounded-2xl bg-gradient-to-br from-amber-200 via-amber-500 to-amber-200 shadow-xl shadow-amber-900/10"
           >
+            {isPreview && (
+              <div className="absolute top-2 right-2 z-20 bg-white/90 backdrop-blur-sm text-[10px] font-bold text-gray-500 px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
+                Exemple — Personnalisable
+              </div>
+            )}
             <div className="relative flex items-center gap-4 p-3.5 bg-white/80 backdrop-blur-xl rounded-[14.5px] overflow-hidden">
               {/* Internal Glass Highlight */}
               <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-transparent to-white/30 pointer-events-none" />
@@ -2216,7 +2260,7 @@ export default function CustomerCardPage({
       </AnimatePresence>
 
       {/* Onboarding CTA - Sticky bottom button to generate QR code */}
-      {isPreview && isOnboarding && (
+      {isPreview && isOnboarding && !isDemo && (
         <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-2xl shadow-gray-900/10">
           <div className="max-w-lg mx-auto">
             <Link href="/dashboard/qr-download">
@@ -2228,6 +2272,26 @@ export default function CustomerCardPage({
               >
                 <QrCode className="w-5 h-5" />
                 Valider et générer mon QR code
+                <ArrowRight className="w-5 h-5" />
+              </motion.button>
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Demo CTA - Sticky bottom button to sign up */}
+      {isPreview && isDemo && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-2xl shadow-gray-900/10">
+          <div className="max-w-lg mx-auto">
+            <Link href="/auth/merchant/signup">
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98]"
+              >
+                <Sparkles className="w-5 h-5" />
+                Créer mon programme gratuit
                 <ArrowRight className="w-5 h-5" />
               </motion.button>
             </Link>

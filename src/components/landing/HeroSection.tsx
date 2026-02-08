@@ -8,6 +8,7 @@ import {
   ChevronDown,
   X,
   Clock,
+  Eye,
 } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -199,7 +200,7 @@ export function HeroSection() {
             <span className="text-gray-900 font-medium">+40% de clientes régulières</span> en moyenne. Vos clientes scannent un QR code, cumulent des points, reviennent. Sans app, sans carte papier.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-5">
+          <div className="flex flex-col sm:flex-row gap-4">
             <a
               href="/auth/merchant/signup"
               onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); }}
@@ -207,6 +208,14 @@ export function HeroSection() {
             >
               <span className="relative z-10">Lancer mon programme gratuit</span>
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </a>
+            <a
+              href="/customer/card/demo-onglerie?preview=true&demo=true"
+              onClick={() => trackCtaClick('hero_demo', 'hero_section')}
+              className="flex items-center justify-center gap-2 px-8 py-4 border-2 border-indigo-200 hover:border-indigo-300 text-indigo-700 font-bold rounded-xl transition-all duration-300 text-center hover:bg-indigo-50 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Eye className="w-5 h-5" />
+              Voir une démo
             </a>
           </div>
 
