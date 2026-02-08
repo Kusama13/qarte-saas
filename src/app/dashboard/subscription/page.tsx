@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   CreditCard,
   Check,
@@ -9,6 +9,8 @@ import {
   Calendar,
   Zap,
   Loader2,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -35,6 +37,7 @@ const features = [
 
 export default function SubscriptionPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState(false);
@@ -43,6 +46,25 @@ export default function SubscriptionPage() {
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Gerer les query params de retour Stripe
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      setToast({ type: 'success', message: 'Paiement confirmé ! Votre abonnement est maintenant actif.' });
+      router.replace('/dashboard/subscription', { scroll: false });
+    } else if (searchParams.get('canceled') === 'true') {
+      setToast({ type: 'error', message: 'Paiement annulé. Vous pouvez réessayer à tout moment.' });
+      router.replace('/dashboard/subscription', { scroll: false });
+    }
+  }, [searchParams, router]);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   // Live countdown timer
   const updateCountdown = useCallback(() => {
@@ -117,7 +139,7 @@ export default function SubscriptionPage() {
       const data = await res.json();
 
       if (data.error) {
-        alert(data.error);
+        setToast({ type: 'error', message: data.error });
         return;
       }
 
@@ -126,7 +148,7 @@ export default function SubscriptionPage() {
       }
     } catch (error) {
       console.error('Error opening portal:', error);
-      alert('Erreur lors de l\'ouverture du portail');
+      setToast({ type: 'error', message: 'Erreur lors de l\'ouverture du portail' });
     } finally {
       setLoadingPortal(false);
     }
@@ -145,7 +167,7 @@ export default function SubscriptionPage() {
       const data = await res.json();
 
       if (data.error) {
-        alert(data.error);
+        setToast({ type: 'error', message: data.error });
         return;
       }
 
@@ -155,7 +177,7 @@ export default function SubscriptionPage() {
       }
     } catch (error) {
       console.error('Error:', error);
-      alert('Erreur lors de la redirection vers le paiement');
+      setToast({ type: 'error', message: 'Erreur lors de la redirection vers le paiement' });
     } finally {
       setSubscribing(false);
     }
@@ -181,6 +203,25 @@ export default function SubscriptionPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 stagger-fade-in">
+      {/* Toast notification */}
+      {toast && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl border backdrop-blur-md transition-all animate-fade-in-up ${
+          toast.type === 'success'
+            ? 'bg-green-50/90 border-green-200 text-green-800'
+            : 'bg-red-50/90 border-red-200 text-red-800'
+        }`}>
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+          ) : (
+            <XCircle className="w-5 h-5 text-red-600 shrink-0" />
+          )}
+          <span className="text-sm font-semibold">{toast.message}</span>
+          <button onClick={() => setToast(null)} className="ml-2 text-current opacity-50 hover:opacity-100">
+            &times;
+          </button>
+        </div>
+      )}
+
       <div className="px-1">
         <h1 className="text-4xl font-extrabold tracking-tight text-gray-900">
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Abonnement</span>
@@ -329,7 +370,7 @@ export default function SubscriptionPage() {
                 </div>
                 {trialStatus.daysRemaining <= 3 && (
                   <p className="text-center text-xs font-semibold mt-3 opacity-90">
-                    Souscrivez maintenant pour ne pas perdre vos donnees
+                    Souscrivez maintenant pour ne pas perdre vos données
                   </p>
                 )}
               </div>
@@ -361,11 +402,7 @@ export default function SubscriptionPage() {
                   onClick={handleSubscribe}
                   loading={subscribing}
                 >
-                  {subscribing ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    'Confirmer l\'abonnement'
-                  )}
+                  Confirmer l&apos;abonnement
                 </Button>
 
                 <div className="flex items-center justify-center gap-2 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-300">
@@ -406,9 +443,9 @@ export default function SubscriptionPage() {
                       size="sm"
                       className="rounded-xl text-primary font-extrabold hover:bg-primary-50"
                       onClick={handleOpenPortal}
-                      disabled={loadingPortal}
+                      loading={loadingPortal}
                     >
-                      {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Modifier'}
+                      Modifier
                     </Button>
                   </div>
                 </div>
@@ -420,7 +457,7 @@ export default function SubscriptionPage() {
                         onClick={handleSubscribe}
                         loading={subscribing}
                       >
-                        {subscribing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Réactiver mon abonnement'}
+                        Réactiver mon abonnement
                       </Button>
                       <p className="text-[10px] text-center text-gray-400 font-medium px-4">
                         Reprenez votre abonnement pour accéder à toutes les fonctionnalités.
@@ -432,9 +469,9 @@ export default function SubscriptionPage() {
                         variant="outline"
                         className="w-full h-12 rounded-2xl text-orange-600 border-orange-100 hover:bg-orange-50 font-bold transition-all"
                         onClick={handleOpenPortal}
-                        disabled={loadingPortal}
+                        loading={loadingPortal}
                       >
-                        {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Annuler la résiliation'}
+                        Annuler la résiliation
                       </Button>
                       <p className="text-[10px] text-center text-gray-400 font-medium px-4">
                         Vous pouvez annuler la résiliation avant la fin de votre période en cours.
@@ -445,9 +482,9 @@ export default function SubscriptionPage() {
                       <Button
                         className="w-full h-12 rounded-2xl font-bold transition-all"
                         onClick={handleOpenPortal}
-                        disabled={loadingPortal}
+                        loading={loadingPortal}
                       >
-                        {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Mettre à jour le paiement'}
+                        Mettre à jour le paiement
                       </Button>
                       <p className="text-[10px] text-center text-red-400 font-medium px-4">
                         Mettez à jour votre moyen de paiement pour éviter la suspension du service.
@@ -459,9 +496,9 @@ export default function SubscriptionPage() {
                         variant="outline"
                         className="w-full h-12 rounded-2xl text-red-600 border-red-100 hover:bg-red-50 font-bold transition-all"
                         onClick={handleOpenPortal}
-                        disabled={loadingPortal}
+                        loading={loadingPortal}
                       >
-                        {loadingPortal ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Résilier le service'}
+                        Résilier le service
                       </Button>
                       <p className="text-[10px] text-center text-gray-400 font-medium px-4">
                         La résiliation prendra effet à la fin du cycle en cours. Aucune donnée ne sera perdue immédiatement.
