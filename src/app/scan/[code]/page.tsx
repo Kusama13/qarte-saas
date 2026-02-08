@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Phone,
   User,
@@ -39,6 +40,7 @@ const setCookie = (name: string, value: string, days: number) => {
 
 export default function ScanPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
+  const router = useRouter();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [step, setStep] = useState<Step>('phone');
   const [loading, setLoading] = useState(true);
@@ -351,7 +353,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         triggerConfetti();
         setStep('reward');
       } else {
-        setStep('success');
+        // Redirect to card page instead of staying on scan URL
+        router.replace(`/customer/card/${merchant.id}?scan_success=1&points=${data.points_earned || 1}`);
       }
     } catch (err) {
       console.error(err);
@@ -414,7 +417,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       }
 
       setRewardTier(null);
-      setStep('success');
+      // Redirect to card page after redemption
+      router.replace(`/customer/card/${merchant.id}?scan_success=1&redeemed=1`);
     } catch (err) {
       console.error('Redeem error:', err);
       setError('Erreur lors de l\'utilisation de la récompense');
@@ -438,8 +442,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         <AlertCircle className="w-16 h-16 mb-4 text-red-500" />
         <h1 className="text-xl font-bold text-gray-900">Commerce introuvable</h1>
         <p className="mt-2 text-gray-600">Ce QR code n&apos;est plus valide</p>
-        <Link href="/" className="mt-4">
-          <Button variant="outline">Retour à l&apos;accueil</Button>
+        <Link
+          href="/"
+          className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+        >
+          Retour à l&apos;accueil
         </Link>
       </div>
     );
@@ -820,7 +827,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               <p className="mt-4 text-sm text-gray-400">Montrez cet écran au commerçant</p>
 
               <button
-                onClick={() => window.location.href = `/customer/card/${merchant?.id}`}
+                onClick={() => router.replace(`/customer/card/${merchant?.id}?scan_success=1`)}
                 className="mt-4 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
               >
                 Plus tard →
@@ -861,11 +868,12 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 />
               </div>
 
-              <Link href={`/customer/card/${merchant.id}`}>
-                <button className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2">
-                  <CreditCard className="w-5 h-5" />
-                  Voir ma carte complète
-                </button>
+              <Link
+                href={`/customer/card/${merchant.id}`}
+                className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
+              >
+                <CreditCard className="w-5 h-5" />
+                Voir ma carte complète
               </Link>
             </div>
           </div>
@@ -922,11 +930,12 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 />
               </div>
 
-              <Link href={`/customer/card/${merchant.id}`}>
-                <button className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2">
-                  <CreditCard className="w-5 h-5" />
-                  Voir ma carte complète
-                </button>
+              <Link
+                href={`/customer/card/${merchant.id}`}
+                className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
+              >
+                <CreditCard className="w-5 h-5" />
+                Voir ma carte complète
               </Link>
 
               {/* Shield Badge */}

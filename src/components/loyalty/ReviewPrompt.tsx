@@ -31,7 +31,7 @@ export default function ReviewPrompt({ merchantId, shopName, reviewLink }: Revie
             localStorage.setItem(`qarte_review_hidden_${merchantId}`, 'true');
             setPermanentlyHidden(true);
           }}
-          className="absolute top-2 right-2 p-1.5 text-gray-300 hover:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full hover:bg-gray-100"
+          className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-gray-500 transition-colors duration-200 rounded-full hover:bg-gray-100"
           aria-label="Masquer"
         >
           <X className="w-3.5 h-3.5" />

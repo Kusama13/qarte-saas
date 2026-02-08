@@ -260,11 +260,12 @@ export default function ScanSuccessStep({
           </>
         )}
 
-        <Link href={`/customer/card/${merchant.id}`}>
-          <button className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2">
-            <CreditCard className="w-5 h-5" />
-            Voir ma carte complète
-          </button>
+        <Link
+          href={`/customer/card/${merchant.id}`}
+          className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
+        >
+          <CreditCard className="w-5 h-5" />
+          Voir ma carte complète
         </Link>
       </div>
 

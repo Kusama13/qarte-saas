@@ -11,6 +11,39 @@ export function cn(...inputs: ClassValue[]) {
 
 const TIMEZONE = 'Europe/Paris';
 
+/**
+ * Ensures a hex color has enough contrast against a white background.
+ * Returns the original color if contrast is OK, or a darkened version otherwise.
+ * Uses relative luminance per WCAG 2.0.
+ */
+export function ensureTextContrast(hex: string, minRatio = 3): string {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+  const toLinear = (c: number) => c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  const luminance = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+
+  // Contrast ratio against white (luminance = 1)
+  const ratio = (1 + 0.05) / (luminance + 0.05);
+
+  if (ratio >= minRatio) return hex;
+
+  // Darken the color until we meet the ratio
+  let factor = 0.9;
+  let dr = r, dg = g, db = b;
+  for (let i = 0; i < 20; i++) {
+    dr *= factor;
+    dg *= factor;
+    db *= factor;
+    const lum = 0.2126 * toLinear(dr) + 0.7152 * toLinear(dg) + 0.0722 * toLinear(db);
+    if ((1 + 0.05) / (lum + 0.05) >= minRatio) break;
+  }
+
+  const toHex = (c: number) => Math.round(c * 255).toString(16).padStart(2, '0');
+  return `#${toHex(dr)}${toHex(dg)}${toHex(db)}`;
+}
+
 export function generateSlug(shopName: string): string {
   let slug = shopName.toLowerCase().trim();
   slug = slug.normalize('NFD').replace(/[\u0300-\u036f]/g, '');

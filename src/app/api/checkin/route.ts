@@ -208,6 +208,47 @@ export async function POST(request: NextRequest) {
     const todayStart = getTodayStartParis();
 
     // =============================================
+    // IDEMPOTENCY: Prevent duplicate checkins (3-min window)
+    // =============================================
+    const threeMinAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+    const { data: recentVisit } = await supabaseAdmin
+      .from('visits')
+      .select('id, status, points_earned, flagged_reason')
+      .eq('customer_id', customer.id)
+      .eq('merchant_id', merchant.id)
+      .gte('created_at', threeMinAgo)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (recentVisit) {
+      // Return existing visit data without creating a duplicate
+      const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
+
+      return NextResponse.json({
+        success: true,
+        duplicate: true,
+        status: recentVisit.status,
+        visit_id: recentVisit.id,
+        message: 'Passage déjà enregistré',
+        current_stamps: loyaltyCard.current_stamps,
+        pending_stamps: recentVisit.status === 'pending' ? (recentVisit.points_earned || 1) : 0,
+        pending_count: 0,
+        required_stamps: merchant.stamps_required,
+        reward_unlocked: false,
+        reward_tier: null,
+        tier1_redeemed: false,
+        tier2_redeemed: false,
+        tier2_enabled: tier2Enabled,
+        tier2_stamps_required: merchant.tier2_stamps_required || 0,
+        tier2_reward_description: merchant.tier2_reward_description,
+        customer_name: customer.first_name,
+        flagged_reason: recentVisit.flagged_reason,
+        points_earned: recentVisit.points_earned || 1,
+      });
+    }
+
+    // =============================================
     // QARTE SHIELD: Quarantine Logic
     // =============================================
 
