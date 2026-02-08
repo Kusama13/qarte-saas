@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     // Fetch merchants created today (include reward_description to check if program is configured)
     const { data: merchants, error: merchantsError } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, shop_type, created_at, subscription_status, reward_description')
+      .select('id, user_id, shop_name, shop_type, created_at, subscription_status, reward_description, phone')
       .gte('created_at', today.toISOString())
       .order('created_at', { ascending: false });
 
@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
       subscription_status: m.subscription_status,
       user_email: emailMap[m.user_id] || null,
       has_program: m.reward_description !== null,
+      phone: m.phone || null,
     }));
 
     return NextResponse.json({ signups, count: signups.length });

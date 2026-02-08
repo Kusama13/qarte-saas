@@ -21,6 +21,8 @@ import {
   Gift,
   AlertCircle,
   Shield,
+  MessageCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -42,6 +44,8 @@ interface Merchant {
   _count?: {
     customers: number;
   };
+  _lastVisitDate?: string | null;
+  _visitsThisWeek?: number;
 }
 
 type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'canceled';
@@ -81,13 +85,14 @@ export default function AdminMerchantsPage() {
 
   const fetchMerchants = useCallback(async () => {
     try {
-      // Fetch ALL merchants and super_admins in parallel
-      const [{ data: merchantsData, error }, { data: superAdmins }] = await Promise.all([
+      // Fetch ALL merchants, super_admins, and visits in parallel
+      const [{ data: merchantsData, error }, { data: superAdmins }, { data: allVisits }] = await Promise.all([
         supabase
           .from('merchants')
           .select('*')
           .order('created_at', { ascending: false }),
         supabase.from('super_admins').select('user_id'),
+        supabase.from('visits').select('merchant_id, visited_at'),
       ]);
 
       if (error) throw error;
@@ -114,13 +119,30 @@ export default function AdminMerchantsPage() {
         });
       }
 
-      // Merge counts and program status with merchants
-      // Program is configured if reward_description is not null (palier 1)
+      // Build visits maps: last visit + visits this week per merchant
+      const lastVisitMap = new Map<string, string>();
+      const weeklyVisitMap = new Map<string, number>();
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      (allVisits || []).forEach((v: { merchant_id: string; visited_at: string }) => {
+        const existing = lastVisitMap.get(v.merchant_id);
+        if (!existing || v.visited_at > existing) {
+          lastVisitMap.set(v.merchant_id, v.visited_at);
+        }
+        if (new Date(v.visited_at) >= oneWeekAgo) {
+          weeklyVisitMap.set(v.merchant_id, (weeklyVisitMap.get(v.merchant_id) || 0) + 1);
+        }
+      });
+
+      // Merge counts, visits, and program status with merchants
       const merchantsWithCounts = (merchantsData || []).map((merchant: Merchant) => ({
         ...merchant,
         _isSuperAdmin: superAdminUserIds.has(merchant.user_id),
         _hasProgram: merchant.reward_description !== null,
         _count: { customers: countMap.get(merchant.id) || 0 },
+        _lastVisitDate: lastVisitMap.get(merchant.id) || null,
+        _visitsThisWeek: weeklyVisitMap.get(merchant.id) || 0,
       }));
 
       setMerchants(merchantsWithCounts);
@@ -282,6 +304,30 @@ export default function AdminMerchantsPage() {
           </span>
         );
     }
+  };
+
+  const formatPhoneForWhatsApp = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
+    if (cleaned.startsWith('33')) return cleaned;
+    return '33' + cleaned;
+  };
+
+  const openWhatsApp = (phone: string, name?: string) => {
+    const formattedPhone = formatPhoneForWhatsApp(phone);
+    const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');
+    window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
+  };
+
+  const getActivityLabel = (merchant: Merchant) => {
+    if (!merchant._lastVisitDate) {
+      return { text: 'Jamais scanné', color: 'text-red-600' };
+    }
+    const daysSince = Math.floor((Date.now() - new Date(merchant._lastVisitDate).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSince === 0) return { text: "Aujourd'hui", color: 'text-green-600' };
+    if (daysSince <= 3) return { text: `il y a ${daysSince}j`, color: 'text-green-600' };
+    if (daysSince <= 7) return { text: `il y a ${daysSince}j`, color: 'text-amber-600' };
+    return { text: `il y a ${daysSince}j`, color: 'text-red-600' };
   };
 
   if (loading) {
@@ -535,6 +581,21 @@ export default function AdminMerchantsPage() {
                                   </span>
                                 )}
                               </div>
+                              {/* Alert badges */}
+                              {!merchant._isSuperAdmin && (
+                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                  {!merchant._lastVisitDate && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700 rounded-full">
+                                      <AlertTriangle className="w-2.5 h-2.5" /> 0 scan
+                                    </span>
+                                  )}
+                                  {merchant.subscription_status === 'trial' && merchant.trial_ends_at && getDaysRemaining(merchant.trial_ends_at) !== null && getDaysRemaining(merchant.trial_ends_at)! <= 3 && getDaysRemaining(merchant.trial_ends_at)! > 0 && (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold bg-orange-100 text-orange-700 rounded-full">
+                                      <AlertTriangle className="w-2.5 h-2.5" /> Expire bientôt
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                               <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
                                 {merchant.shop_address && (
                                   <span className="flex items-center gap-1 truncate">
@@ -546,8 +607,17 @@ export default function AdminMerchantsPage() {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3 flex-shrink-0">
-                            {/* Customer count - more visual */}
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            {/* Activity indicator */}
+                            {!merchant._isSuperAdmin && (() => {
+                              const activity = getActivityLabel(merchant);
+                              return (
+                                <span className={cn("text-[10px] font-semibold whitespace-nowrap", activity.color)}>
+                                  {activity.text}
+                                </span>
+                              );
+                            })()}
+                            {/* Customer count */}
                             <div className={cn(
                               "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold",
                               (merchant._count?.customers || 0) > 0
@@ -558,6 +628,16 @@ export default function AdminMerchantsPage() {
                               <span>{merchant._count?.customers || 0}</span>
                             </div>
                             {getStatusBadge(merchant)}
+                            {/* WhatsApp button */}
+                            {merchant.phone && !merchant._isSuperAdmin && (
+                              <button
+                                onClick={(e) => { e.preventDefault(); openWhatsApp(merchant.phone, merchant.shop_name); }}
+                                className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                                title="Envoyer WhatsApp"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                              </button>
+                            )}
                             <ChevronRight className="w-5 h-5 text-gray-400" />
                           </div>
                         </Link>

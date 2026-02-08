@@ -11,6 +11,7 @@ import {
   Store,
   AlertTriangle,
   ChevronRight,
+  MessageCircle,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -29,6 +30,7 @@ interface TodaySignup {
   subscription_status: string;
   user_email?: string;
   has_program: boolean;
+  phone?: string;
 }
 
 type Tab = 'incomplete' | 'today';
@@ -125,6 +127,19 @@ export default function LeadsPage() {
     total: todaySignups.length,
     withProgram: todaySignups.filter(s => s.has_program).length,
     withoutProgram: todaySignups.filter(s => !s.has_program).length,
+  };
+
+  const formatPhoneForWhatsApp = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
+    if (cleaned.startsWith('33')) return cleaned;
+    return '33' + cleaned;
+  };
+
+  const openWhatsApp = (phone: string, name?: string) => {
+    const formattedPhone = formatPhoneForWhatsApp(phone);
+    const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');
+    window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
   };
 
   if (loading) {
@@ -370,10 +385,19 @@ export default function LeadsPage() {
                   </div>
 
                   <div className="flex items-center gap-2 sm:gap-3">
+                    {signup.phone && (
+                      <span
+                        onClick={(e) => { e.preventDefault(); openWhatsApp(signup.phone!, signup.shop_name); }}
+                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors flex items-center gap-2 cursor-pointer"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        WhatsApp
+                      </span>
+                    )}
                     {signup.user_email && (
                       <span
                         onClick={(e) => { e.preventDefault(); window.location.href = `mailto:${signup.user_email}`; }}
-                        className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                        className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2 cursor-pointer"
                       >
                         <Mail className="w-4 h-4" />
                         Email

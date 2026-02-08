@@ -20,6 +20,9 @@ import {
   Copy,
   Check,
   Mail,
+  MessageCircle,
+  AlertTriangle,
+  PhoneCall,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
@@ -253,6 +256,19 @@ export default function MerchantDetailPage() {
     }
   };
 
+  const formatPhoneForWhatsApp = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
+    if (cleaned.startsWith('33')) return cleaned;
+    return '33' + cleaned;
+  };
+
+  const openWhatsApp = (phone: string, name?: string) => {
+    const formattedPhone = formatPhoneForWhatsApp(phone);
+    const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');
+    window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -329,7 +345,57 @@ export default function MerchantDetailPage() {
               </div>
             </div>
           </div>
-          {getStatusBadge(merchant)}
+          <div className="flex flex-wrap items-center gap-2">
+            {getStatusBadge(merchant)}
+            {stats.totalCustomers === 0 && (
+              <span className="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" /> 0 client
+              </span>
+            )}
+            {stats.totalVisits === 0 && (
+              <span className="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" /> 0 scan
+              </span>
+            )}
+            {!merchant.reward_description && (
+              <span className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" /> Sans programme
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Actions rapides */}
+        <div className="mt-4 grid grid-cols-3 gap-3">
+          <button
+            onClick={() => openWhatsApp(merchant.phone, merchant.shop_name)}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" />
+            WhatsApp
+          </button>
+          {userEmail && (
+            <a
+              href={`mailto:${userEmail}`}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
+            >
+              <Mail className="w-4 h-4" />
+              Email
+            </a>
+          )}
+          {!userEmail && (
+            <div className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-400 bg-gray-100 rounded-xl cursor-not-allowed">
+              <Mail className="w-4 h-4" />
+              Email
+            </div>
+          )}
+          <a
+            href={`tel:${merchant.phone}`}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
+          >
+            <PhoneCall className="w-4 h-4" />
+            Appeler
+          </a>
         </div>
 
         {/* Programme de fidélité */}
