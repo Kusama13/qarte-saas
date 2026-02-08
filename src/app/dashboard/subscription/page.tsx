@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   CreditCard,
@@ -42,6 +42,28 @@ export default function SubscriptionPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [loadingPayment, setLoadingPayment] = useState(false);
   const [loadingPortal, setLoadingPortal] = useState(false);
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  // Live countdown timer
+  const updateCountdown = useCallback(() => {
+    if (!merchant?.trial_ends_at) return;
+    const end = new Date(merchant.trial_ends_at).getTime();
+    const now = Date.now();
+    const diff = Math.max(0, end - now);
+
+    setCountdown({
+      days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+      hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+      minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+      seconds: Math.floor((diff % (1000 * 60)) / 1000),
+    });
+  }, [merchant?.trial_ends_at]);
+
+  useEffect(() => {
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [updateCountdown]);
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -277,15 +299,39 @@ export default function SubscriptionPage() {
           </div>
 
           {trialStatus.isActive && (
-            <div className="p-5 rounded-2xl bg-indigo-600 text-white shadow-xl shadow-indigo-100 flex items-center justify-between overflow-hidden relative">
-              <div className="relative z-10 flex items-center gap-4">
-                <div className="p-2 bg-white/20 rounded-lg">
-                  <Calendar className="w-5 h-5 text-white" />
+            <div className={`p-5 rounded-2xl text-white shadow-xl overflow-hidden relative ${
+              trialStatus.daysRemaining <= 3
+                ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-red-100'
+                : 'bg-gradient-to-r from-indigo-600 to-violet-600 shadow-indigo-100'
+            }`}>
+              <div className="relative z-10">
+                <div className="flex items-center gap-2 mb-3">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-xs font-bold uppercase tracking-wider opacity-80">
+                    Fin de l&apos;essai le {formatDate(merchant?.trial_ends_at || '')}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm font-extrabold">{trialStatus.daysRemaining} jours restants</p>
-                  <p className="text-xs text-indigo-100 opacity-80">Jusqu&apos;au {formatDate(merchant?.trial_ends_at || '')}</p>
+                <div className="flex items-center justify-center gap-3">
+                  {[
+                    { value: countdown.days, label: 'j' },
+                    { value: countdown.hours, label: 'h' },
+                    { value: countdown.minutes, label: 'min' },
+                    { value: countdown.seconds, label: 's' },
+                  ].map((unit, i) => (
+                    <div key={unit.label} className="flex items-center gap-1">
+                      {i > 0 && <span className="text-white/40 font-bold text-lg">:</span>}
+                      <div className="bg-white/15 backdrop-blur-sm rounded-xl px-3 py-2 min-w-[48px] text-center">
+                        <span className="text-2xl font-black tabular-nums">{String(unit.value).padStart(2, '0')}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-70 ml-0.5">{unit.label}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+                {trialStatus.daysRemaining <= 3 && (
+                  <p className="text-center text-xs font-semibold mt-3 opacity-90">
+                    Souscrivez maintenant pour ne pas perdre vos donnees
+                  </p>
+                )}
               </div>
               <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-white/5 skew-x-12 translate-x-10" />
             </div>

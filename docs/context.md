@@ -171,7 +171,8 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - `GET /api/customers/cards` - Toutes les cartes
 
 ### Commercants
-- `POST /api/merchants/create` - Creer commercant
+- `POST /api/merchants/create` - Creer commercant (pre-remplit programme selon shop_type)
+- `GET /api/merchants/preview` - Donnees publiques merchant (preview carte)
 - `GET /api/merchant/stats` - Statistiques
 
 ### Push & Marketing
@@ -200,6 +201,8 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - 2 paliers de recompenses
 - Mode visite ou mode article
 - Historique des passages
+- Suggestions de programme par type de commerce (MerchantSettingsForm)
+- Preview carte client avec donnees simulees (`?preview=true`)
 
 ### Qarte Shield (Anti-fraude)
 - Quarantaine des visites suspectes
@@ -210,11 +213,13 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 ### Inscription 2 Phases & Onboarding
 - **Phase 1:** Email + mot de passe (page `/auth/merchant/signup`)
 - **Phase 2:** Infos commerce (page `/auth/merchant/signup/complete`)
-- **Flux post-inscription:** Phase 2 → `/dashboard/program` → sauvegarde → `/dashboard/qr-download`
-  - Premiere config programme redirige automatiquement vers la page QR
-  - Prefetch de la route QR au chargement de la page programme
+- **Flux post-inscription:** Phase 2 → `/dashboard/program` → sauvegarde → preview carte → `/dashboard/qr-download`
+  - Premiere config programme redirige vers la preview carte client (`?preview=true&onboarding=true`)
+  - Preview affiche la carte avec donnees simulees (VIP, offre, progression ~80%)
+  - Bouton CTA sticky "Valider et generer mon QR code" redirige vers `/dashboard/qr-download`
   - Cache merchant mis a jour avant redirect (chargement QR instantane)
   - Page QR utilise `useMerchant()` (contexte partage, pas de fetch duplique)
+- **Pre-remplissage programme:** A la creation du merchant, `stamps_required` et `reward_description` sont pre-remplis selon le `shop_type`
 - **Email relance inscription incomplete:** Programme via Resend `scheduledAt` (+1h apres Phase 1)
   - Endpoint `/api/emails/schedule-incomplete` appele apres signUp
   - Email ID stocke dans `user_metadata`, annule si Phase 2 completee
@@ -411,7 +416,7 @@ npm run email
 ## 16. Pages Principales
 
 ### Landing (`/`)
-- Hero avec demo interactive
+- Hero avec CTA inscription unique
 - Section "Comment ca marche" (3 etapes)
 - Temoignage client (Nail Salon by Elodie)
 - Pricing, FAQ, CTA
@@ -431,10 +436,11 @@ npm run email
 ### Dashboard (`/dashboard`)
 - Sidebar navigation
 - Statistiques temps reel
-- Gestion programme fidelite
+- Gestion programme fidelite (suggestions par shop_type)
 - Telechargement QR/flyers
 - Gestion clients
 - Marketing (push notifications)
+- Page abonnement avec countdown timer (fin essai)
 
 ### Scan (`/scan/[code]`)
 - Page publique pour clients
@@ -497,7 +503,7 @@ import type { Merchant } from '@/types';
 | WelcomeEmail | Inscription commercant (Phase 2 completee) |
 | IncompleteSignupEmail | Phase 1 sans Phase 2 (+1h via Resend scheduledAt) |
 | ProgramReminderEmail | Programme non configure J+1 (cron morning) |
-| TrialEndingEmail | J-3 et J-1 avant fin essai (cron morning) |
+| TrialEndingEmail | J-5, J-3 et J-1 avant fin essai (cron morning) |
 | TrialExpiredEmail | Essai expire J+1/3/5 (cron morning) |
 | PendingPointsEmail | Passages en attente J+0/1/2/3 (cron morning) |
 | EbookEmail | Telechargement ebook |

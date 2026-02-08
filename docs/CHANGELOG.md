@@ -4,6 +4,52 @@ Historique des deploiements et modifications.
 
 ---
 
+## [2026-02-08] - Preview carte + onboarding ameliore
+
+### Deploiement #11 - Preview carte client, suggestions programme, countdown
+**Commit:** *(a venir)*
+
+#### Changements
+- **feat:** Preview carte client (`?preview=true`) avec donnees simulees
+  - Nouvel endpoint `GET /api/merchants/preview` (donnees publiques merchant)
+  - Carte simulee : progression ~80% tier1, carte VIP, offre marketing
+  - Banniere "Mode previsualisation" / "Voici ce que verront vos clients !"
+  - Mode onboarding (`?preview=true&onboarding=true`) avec CTA sticky "Valider et generer mon QR code"
+- **feat:** Redirect onboarding passe par preview avant QR download
+  - Programme → preview carte → QR download (au lieu de programme → QR direct)
+- **feat:** Suggestions programme par type de commerce (MerchantSettingsForm)
+  - Suggestions contextuelles (nom reward, nb tampons) selon shop_type
+  - Remplace l'ancien ProgramGuide
+- **feat:** Pre-remplissage programme a la creation merchant (`stamps_required`, `reward_description` selon shop_type)
+- **feat:** Countdown timer sur page abonnement (jours/heures/minutes restants essai)
+- **feat:** TrialEndingEmail envoye a J-5 en plus de J-3/J-1
+- **style:** Suppression CTA "Demander une demo" de la HeroSection landing
+
+#### Nouveaux fichiers (1)
+```
+src/app/api/merchants/preview/route.ts
+```
+
+#### Fichiers supprimes (1)
+```
+src/components/loyalty/ProgramGuide.tsx
+```
+
+#### Fichiers modifies (9)
+| Fichier | Modification |
+|---------|--------------|
+| `src/app/customer/card/[merchantId]/page.tsx` | +mode preview, +mock data, +banniere, +CTA onboarding |
+| `src/app/dashboard/program/page.tsx` | Mockup iPhone supprime, redirect onboarding → preview, lien preview |
+| `src/components/loyalty/MerchantSettingsForm.tsx` | +suggestions par shop_type, -ProgramGuide |
+| `src/components/loyalty/index.ts` | -export ProgramGuide |
+| `src/app/api/merchants/create/route.ts` | +pre-remplissage programme par shop_type |
+| `src/app/api/cron/morning/route.ts` | +J-5 TrialEndingEmail |
+| `src/app/dashboard/subscription/page.tsx` | +countdown timer fin essai |
+| `src/components/landing/HeroSection.tsx` | -CTA "Demander une demo" |
+| `docs/context.md` | Mise a jour onboarding flow, routes, features |
+
+---
+
 ## [2026-02-08] - Refactor structure + tarif annuel
 
 ### Deploiement #10 - Tarif annuel + cron email sequences

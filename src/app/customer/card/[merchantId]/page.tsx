@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   Check,
@@ -31,6 +31,9 @@ import {
   ScanLine,
   Crown,
   Download,
+  Eye,
+  QrCode,
+  ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
@@ -95,6 +98,9 @@ export default function CustomerCardPage({
 }) {
   const { merchantId } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isPreview = searchParams.get('preview') === 'true';
+  const isOnboarding = searchParams.get('onboarding') === 'true';
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
@@ -147,6 +153,110 @@ export default function CustomerCardPage({
 
   useEffect(() => {
     const fetchData = async () => {
+      // Preview mode: fetch merchant data only and create mock card
+      if (isPreview) {
+        try {
+          const response = await fetch(`/api/merchants/preview?id=${merchantId}`);
+          const data = await response.json();
+          if (!response.ok || !data.merchant) {
+            router.push('/customer/cards');
+            return;
+          }
+          const m = data.merchant;
+          // Simulate ~80% progress on tier 1 (shows "almost there" state)
+          const tier1 = m.stamps_required || 10;
+          const demoStamps = Math.max(1, tier1 - 2);
+          setCard({
+            id: 'preview',
+            customer_id: 'preview',
+            merchant_id: merchantId,
+            current_stamps: demoStamps,
+            stamps_target: tier1,
+            last_visit_date: new Date().toISOString(),
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            merchant: {
+              ...m,
+              phone: '',
+              user_id: '',
+              slug: '',
+              scan_code: '',
+              shop_address: null,
+              program_name: null,
+              welcome_message: null,
+              promo_message: null,
+              max_quantity_per_scan: 1,
+              trial_ends_at: '',
+              stripe_customer_id: null,
+              subscription_status: 'active',
+              onboarding_completed: true,
+              shield_enabled: false,
+              created_at: '',
+              updated_at: '',
+            } as Merchant,
+            customer: {
+              id: 'preview',
+              phone_number: '0600000000',
+              first_name: 'Marie',
+              last_name: null,
+              created_at: new Date().toISOString(),
+            },
+          } as CardWithDetails);
+
+          // Demo VIP member card
+          const inSixMonths = new Date();
+          inSixMonths.setMonth(inSixMonths.getMonth() + 6);
+          setMemberCard({
+            id: 'preview',
+            program_id: 'preview',
+            customer_id: 'preview',
+            valid_from: new Date().toISOString(),
+            valid_until: inSixMonths.toISOString(),
+            created_at: new Date().toISOString(),
+            program: {
+              id: 'preview',
+              merchant_id: merchantId,
+              name: 'Programme VIP',
+              benefit_label: '-10% sur toutes les prestations',
+              duration_months: 6,
+              is_active: true,
+              created_at: new Date().toISOString(),
+            },
+          });
+
+          // Demo marketing offer
+          const inOneWeek = new Date();
+          inOneWeek.setDate(inOneWeek.getDate() + 7);
+          setOffer({
+            active: true,
+            title: 'Offre de bienvenue : -20% cette semaine',
+            description: 'Profitez de -20% sur votre prochaine prestation. Offre réservée à nos clients fidèles !',
+            imageUrl: null,
+            expiresAt: inOneWeek.toISOString(),
+          });
+
+          // Demo visits
+          const demoVisit = (id: string, daysAgo: number): VisitWithStatus => ({
+            id,
+            loyalty_card_id: 'preview',
+            merchant_id: merchantId,
+            customer_id: 'preview',
+            points_earned: 1,
+            visited_at: new Date(Date.now() - daysAgo * 86400000).toISOString(),
+            ip_address: null,
+            ip_hash: null,
+            status: 'confirmed' as VisitStatus,
+            flagged_reason: null,
+          });
+          setVisits([demoVisit('1', 2), demoVisit('2', 7), demoVisit('3', 14)]);
+        } catch {
+          router.push('/customer/cards');
+          return;
+        }
+        setLoading(false);
+        return;
+      }
+
       const savedPhone = getCookie('customer_phone');
       if (!savedPhone) {
         router.push('/customer/cards');
@@ -218,6 +328,9 @@ export default function CustomerCardPage({
 
     fetchData();
 
+    // Skip push/PWA/tracking in preview mode
+    if (isPreview) return;
+
     // Check push support
     const standardPushSupported = isPushSupported();
     const iOS = isIOSDevice();
@@ -273,7 +386,7 @@ export default function CustomerCardPage({
     if (reviewHidden === 'true') {
       setReviewPermanentlyHidden(true);
     }
-  }, [merchantId, router]);
+  }, [merchantId, router, isPreview]);
 
   // Auto-subscribe to push notifications when PWA is first opened
   useEffect(() => {
@@ -561,6 +674,15 @@ export default function CustomerCardPage({
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${merchant.primary_color}15 0%, ${merchant.primary_color}40 40%, ${merchant.primary_color}60 70%, ${merchant.primary_color}35 100%)` }}>
+      {/* Preview Mode Banner */}
+      {isPreview && (
+        <div className="sticky top-0 z-50 bg-indigo-600 text-white text-center py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg">
+          <Eye className="w-4 h-4" />
+          {isOnboarding
+            ? 'Voici ce que verront vos clients !'
+            : 'Mode prévisualisation — Vos clients verront cette carte'}
+        </div>
+      )}
       {/* Header with premium glassmorphism horizontal design */}
       <header className="relative w-full overflow-hidden">
         <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden bg-white/40 backdrop-blur-xl border-b lg:border border-white/40 shadow-xl shadow-slate-200/50">
@@ -2092,6 +2214,26 @@ export default function CustomerCardPage({
           </motion.button>
         )}
       </AnimatePresence>
+
+      {/* Onboarding CTA - Sticky bottom button to generate QR code */}
+      {isPreview && isOnboarding && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-2xl shadow-gray-900/10">
+          <div className="max-w-lg mx-auto">
+            <Link href="/dashboard/qr-download">
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98]"
+              >
+                <QrCode className="w-5 h-5" />
+                Valider et générer mon QR code
+                <ArrowRight className="w-5 h-5" />
+              </motion.button>
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

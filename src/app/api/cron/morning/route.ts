@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         if (!email) return;
 
         try {
-          if (trialStatus.isActive && (trialStatus.daysRemaining === 3 || trialStatus.daysRemaining === 1)) {
+          if (trialStatus.isActive && (trialStatus.daysRemaining === 5 || trialStatus.daysRemaining === 3 || trialStatus.daysRemaining === 1)) {
             await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining);
             results.trialEmails.ending++;
           }

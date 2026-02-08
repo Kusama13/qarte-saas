@@ -3,16 +3,88 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
-  HelpCircle,
   Gift,
   Target,
+  Lightbulb,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
+import type { ShopType } from '@/types';
+
+// Suggestions de récompenses par type de commerce
+const REWARD_SUGGESTIONS: Record<ShopType, string[]> = {
+  coiffeur: [
+    '1 coupe offerte',
+    '1 brushing offert',
+    '-20% sur une coloration',
+    '1 soin capillaire offert',
+  ],
+  barbier: [
+    '1 coupe offerte',
+    '1 taille de barbe offerte',
+    '-20% sur un soin',
+    '1 rasage offert',
+  ],
+  institut_beaute: [
+    '1 soin du visage offert',
+    '-20% sur une prestation',
+    '1 manucure offerte',
+    '1 modelage offert',
+  ],
+  onglerie: [
+    '1 pose offerte',
+    '-20% sur le prochain rdv',
+    '1 nail art offert',
+    '1 semi-permanent offert',
+  ],
+  spa: [
+    '1 massage 30min offert',
+    '-20% sur un soin',
+    '1 accès hammam offert',
+    '1 soin corps offert',
+  ],
+  estheticienne: [
+    '1 soin du visage offert',
+    '-20% sur une prestation',
+    '1 épilation offerte',
+    '1 modelage offert',
+  ],
+  massage: [
+    '1 massage 30min offert',
+    '-20% sur une séance',
+    '30min offertes en plus',
+    '1 massage duo offert',
+  ],
+  epilation: [
+    '1 zone offerte',
+    '-20% sur la prochaine séance',
+    '1 séance visage offerte',
+    '1 forfait aisselles offert',
+  ],
+  autre: [
+    '1 prestation offerte',
+    '-20% sur le prochain passage',
+    '1 produit offert',
+    'Un cadeau surprise',
+  ],
+};
+
+// Suggestions d'objectifs (nombre de passages) par type
+const STAMPS_SUGGESTIONS: Record<ShopType, number[]> = {
+  coiffeur: [8, 10, 12],
+  barbier: [8, 10, 12],
+  institut_beaute: [8, 10, 15],
+  onglerie: [8, 10, 12],
+  spa: [5, 8, 10],
+  estheticienne: [8, 10, 12],
+  massage: [5, 8, 10],
+  epilation: [5, 8, 10],
+  autre: [5, 10, 15],
+};
 
 interface MerchantSettingsFormProps {
   initialStampsRequired?: number;
   initialRewardDescription?: string;
-  onOpenGuide?: () => void;
+  shopType?: ShopType;
   onChange?: (settings: LoyaltySettings) => void;
 }
 
@@ -24,7 +96,7 @@ export interface LoyaltySettings {
 export function MerchantSettingsForm({
   initialStampsRequired = 10,
   initialRewardDescription = '',
-  onOpenGuide,
+  shopType = 'autre',
   onChange,
 }: MerchantSettingsFormProps) {
   const [stampsRequired, setStampsRequired] = useState(initialStampsRequired);
@@ -55,23 +127,15 @@ export function MerchantSettingsForm({
     onChangeRef.current?.(settings);
   }, [stampsRequired, rewardDescription]);
 
+  const rewardSuggestions = REWARD_SUGGESTIONS[shopType] || REWARD_SUGGESTIONS.autre;
+  const stampsSuggestions = STAMPS_SUGGESTIONS[shopType] || STAMPS_SUGGESTIONS.autre;
+
   return (
     <div className="space-y-8">
-      {/* Header with Help Button */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-bold text-gray-900">Programme de fidélité</h3>
-          <p className="text-sm text-gray-500 mt-1">Configurez les règles de votre programme</p>
-        </div>
-        {onOpenGuide && (
-          <button
-            onClick={onOpenGuide}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:scale-105 active:scale-95 text-sm font-bold"
-          >
-            <HelpCircle className="w-4 h-4" />
-            Comment ça fonctionne ?
-          </button>
-        )}
+      {/* Header */}
+      <div>
+        <h3 className="text-xl font-bold text-gray-900">Programme de fidélité</h3>
+        <p className="text-sm text-gray-500 mt-1">Configurez les règles de votre programme</p>
       </div>
 
       {/* Reward Configuration */}
@@ -101,6 +165,23 @@ export function MerchantSettingsForm({
                 passages
               </span>
             </div>
+            {/* Stamps suggestions */}
+            <div className="flex gap-2">
+              {stampsSuggestions.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setStampsRequired(n)}
+                  className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all duration-200 ${
+                    stampsRequired === n
+                      ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                      : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600'
+                  }`}
+                >
+                  {n} passages
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Reward Description */}
@@ -114,6 +195,30 @@ export function MerchantSettingsForm({
               onChange={(e) => setRewardDescription(e.target.value)}
               placeholder="Ex: Un soin offert, -20%, Une coupe gratuite..."
             />
+          </div>
+        </div>
+
+        {/* Reward Suggestions */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Lightbulb className="w-4 h-4 text-amber-500" />
+            <span className="text-sm font-semibold text-gray-600">Suggestions pour votre activité</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {rewardSuggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => setRewardDescription(suggestion)}
+                className={`px-4 py-2 text-sm font-medium rounded-xl border transition-all duration-200 ${
+                  rewardDescription === suggestion
+                    ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-sm'
+                    : 'bg-white border-gray-200 text-gray-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 hover:shadow-sm'
+                }`}
+              >
+                {suggestion}
+              </button>
+            ))}
           </div>
         </div>
       </div>

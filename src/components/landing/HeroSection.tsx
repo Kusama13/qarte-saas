@@ -6,12 +6,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Star,
   ChevronDown,
-  MessageCircle,
   X,
   Clock,
 } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
-import { trackCtaClick, trackWhatsAppClicked } from '@/lib/analytics';
+import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 
 const MOCKUP_IMAGES = [
@@ -208,16 +207,6 @@ export function HeroSection() {
             >
               <span className="relative z-10">Lancer mon programme gratuit</span>
               <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
-            <a
-              href="https://wa.me/33745953842?text=Bonjour%2C%20je%20souhaite%20une%20d%C3%A9mo%20de%20Qarte"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => trackWhatsAppClicked('hero_demo')}
-              className="px-8 py-4 border border-gray-300 text-gray-900 font-bold rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 text-center shadow-sm flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] icon-bounce"
-            >
-              <MessageCircle className="w-5 h-5" />
-              Demander une démo
             </a>
           </div>
 
