@@ -548,7 +548,7 @@ export default function ProgramPage() {
               w-full lg:w-auto h-12 lg:h-10 px-6 rounded-xl font-semibold text-base lg:text-sm inline-flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed
               ${saved
                 ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200/50'
-                : 'bg-slate-800 text-white shadow-md hover:bg-slate-700 hover:shadow-lg lg:bg-slate-100 lg:text-slate-700 lg:border lg:border-slate-200 lg:hover:bg-slate-200 lg:hover:border-slate-300'}
+                : 'bg-gradient-to-r from-pink-500 to-indigo-500 text-white shadow-md shadow-pink-200/50 hover:from-pink-600 hover:to-indigo-600 hover:shadow-lg'}
             `}
           >
             {saving ? (
