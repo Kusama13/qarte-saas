@@ -21,6 +21,17 @@ export async function GET(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    // Verify user owns a merchant
+    const { data: merchant } = await supabaseAdmin
+      .from('merchants')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!merchant) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
     const { data: program, error } = await supabaseAdmin
       .from('member_programs')
       .select(`
@@ -35,10 +46,11 @@ export async function GET(
         )
       `)
       .eq('id', id)
+      .eq('merchant_id', merchant.id)
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Programme non trouvé' }, { status: 404 });
     }
 
     return NextResponse.json({ program });
@@ -66,6 +78,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    // Verify user owns a merchant
+    const { data: merchant } = await supabaseAdmin
+      .from('merchants')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!merchant) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
     const body = await request.json();
     const { name, benefit_label, duration_months, is_active } = body;
 
@@ -79,11 +102,12 @@ export async function PATCH(
       .from('member_programs')
       .update(updateData)
       .eq('id', id)
+      .eq('merchant_id', merchant.id)
       .select()
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Programme non trouvé' }, { status: 404 });
     }
 
     return NextResponse.json({ program });
@@ -111,13 +135,25 @@ export async function DELETE(
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
     }
 
+    // Verify user owns a merchant
+    const { data: merchant } = await supabaseAdmin
+      .from('merchants')
+      .select('id')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!merchant) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
     const { error } = await supabaseAdmin
       .from('member_programs')
       .delete()
-      .eq('id', id);
+      .eq('id', id)
+      .eq('merchant_id', merchant.id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Programme non trouvé' }, { status: 404 });
     }
 
     return NextResponse.json({ success: true });
