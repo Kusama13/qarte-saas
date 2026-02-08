@@ -4,6 +4,46 @@ Historique des deploiements et modifications.
 
 ---
 
+## [2026-02-08] - Landing hero + demo + settings
+
+### Deploiement #12 - Hero copy, page demo, bouton demo, settings
+**Commits:** `27c6508` → `bba0d1e`
+
+#### Changements
+- **feat:** Page demo (`/demo`) avec 3 cartes fictives (coiffeur, onglerie, institut)
+  - Selecteur de type de commerce pour switcher entre les demos
+  - Donnees hardcodees pour `demo-coiffeur`, `demo-onglerie`, `demo-institut`
+  - CTA "Creer mon programme gratuit" en bas de page
+- **feat:** Bouton "Voir une demo" ajoute dans HeroSection (lien direct vers demo onglerie)
+  - Style gradient rose-bleu (from-pink-500 to-indigo-500)
+- **feat:** Preview carte en mode demo (`?preview=true&demo=true`)
+  - Banniere et CTA adaptes au mode demo
+- **copy:** Nouveau titre hero : "Le programme de fidelite qui fait revenir vos clientes."
+  - Gradient rose-pink-violet sur "revenir vos clientes."
+  - Sous-titre : "Concu pour les instituts de beaute, ongleries et salons"
+- **style:** Tailles hero agrandies pour remplir ~760px de viewport
+  - h1 `text-3xl md:text-5xl lg:text-6xl`, subtitle `text-base lg:text-lg`
+  - Espacement `space-y-6 lg:space-y-8`
+- **style:** Mockup iPhone avec animation `bounce-gentle` (sautille doucement)
+- **refactor:** Bouton "Supprimer mon compte" remplace par lien contact dans settings
+- **style:** Badges preview ameliores sur page programme mobile
+
+#### Nouveaux fichiers (2)
+```
+src/app/demo/page.tsx
+src/app/demo/layout.tsx
+```
+
+#### Fichiers modifies (4)
+| Fichier | Modification |
+|---------|--------------|
+| `src/components/landing/HeroSection.tsx` | Nouveau titre, sous-titre beaute, bouton demo, tailles agrandies, mockup bounce |
+| `src/app/globals.css` | +animation `bounce-gentle` |
+| `src/app/customer/card/[merchantId]/page.tsx` | +mode demo avec donnees hardcodees |
+| `src/app/dashboard/program/page.tsx` | Fix badges preview mobile |
+
+---
+
 ## [2026-02-08] - Preview carte + onboarding ameliore
 
 ### Deploiement #11 - Preview carte client, suggestions programme, countdown

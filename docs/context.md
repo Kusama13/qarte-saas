@@ -416,10 +416,21 @@ npm run email
 ## 16. Pages Principales
 
 ### Landing (`/`)
-- Hero avec CTA inscription unique
+- Hero : "Le programme de fidelite qui fait revenir vos clientes."
+  - Sous-titre niche beaute (instituts, ongleries, salons)
+  - CTA primaire : "Lancer mon programme gratuit" → signup
+  - CTA secondaire : "Voir une demo" → demo onglerie (gradient rose-bleu)
+  - Mockup iPhone avec screenshot carte client (bounce animation)
+  - Social proof : 150+ instituts, 4.9/5, 12,000+ clientes
 - Section "Comment ca marche" (3 etapes)
 - Temoignage client (Nail Salon by Elodie)
 - Pricing, FAQ, CTA
+
+### Demo (`/demo`)
+- Galerie 3 cartes fictives : coiffeur, onglerie, institut
+- Selecteur de type de commerce
+- Lien vers preview carte (`/customer/card/demo-{type}?preview=true&demo=true`)
+- CTA "Creer mon programme gratuit"
 
 ### Offre Speciale (`/offre-speciale`)
 - Page retargeting avec urgence
