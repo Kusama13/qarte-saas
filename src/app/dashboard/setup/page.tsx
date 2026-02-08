@@ -125,9 +125,16 @@ export default function OnboardingPage() {
 
       if (error) throw error;
 
-      // Send social kit email if logo is set (fire and forget)
+      // Send social kit email if logo + reward are set
       if (formData.logoUrl && formData.rewardDescription) {
-        fetch('/api/emails/social-kit', { method: 'POST' }).catch(() => {});
+        try {
+          const emailRes = await fetch('/api/emails/social-kit', { method: 'POST' });
+          if (!emailRes.ok) {
+            console.error('Social kit email failed:', emailRes.status, await emailRes.text());
+          }
+        } catch (emailErr) {
+          console.error('Social kit email error:', emailErr);
+        }
       }
 
       router.push('/dashboard/qr-download');
