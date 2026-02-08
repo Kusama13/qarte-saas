@@ -847,26 +847,38 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               <p className="text-gray-500 mb-8">Vous avez déjà validé votre passage aujourd&apos;hui. Revenez demain !</p>
 
               {/* Points Display */}
-              <div className="mb-8">
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-black" style={{ color: primaryColor }}>{loyaltyCard?.current_stamps || 0}</span>
-                  <span className="text-xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
-                </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
-                  Passages cumulés
-                </p>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.min(100, ((loyaltyCard?.current_stamps || 0) / (merchant?.stamps_required || 10)) * 100)}%`,
-                    background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
-                  }}
-                />
-              </div>
+              {(() => {
+                const stamps = loyaltyCard?.current_stamps || 0;
+                const tier2On = merchant?.tier2_enabled && merchant?.tier2_stamps_required;
+                const tier1Done = tier1Redeemed || stamps >= (merchant?.stamps_required || 10);
+                const target = tier2On && tier1Done
+                  ? merchant.tier2_stamps_required!
+                  : (merchant?.stamps_required || 10);
+                return (
+                  <>
+                    <div className="mb-8">
+                      <div className="flex items-baseline justify-center gap-1">
+                        <span className="text-5xl font-black" style={{ color: primaryColor }}>{stamps}</span>
+                        <span className="text-xl font-bold text-gray-300">/{target}</span>
+                      </div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
+                        Passages cumulés{tier2On && tier1Done ? ' · Palier 2' : tier2On ? ' · Palier 1' : ''}
+                      </p>
+                    </div>
+                    <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${Math.min(100, (stamps / target) * 100)}%`,
+                          background: tier2On && tier1Done
+                            ? 'linear-gradient(90deg, #8b5cf6, #a78bfa)'
+                            : `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
+                        }}
+                      />
+                    </div>
+                  </>
+                );
+              })()}
 
               <Link
                 href={`/customer/card/${merchant.id}`}
@@ -902,33 +914,53 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </div>
 
               {/* Points Display */}
-              <div className="mb-8">
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-black" style={{ color: primaryColor }}>
-                    {loyaltyCard.current_stamps}
-                  </span>
-                  <span className="text-xl font-bold text-gray-300">/{merchant?.stamps_required}</span>
-                </div>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
-                  Passages confirmés
-                </p>
-                <div className="mt-3 inline-flex px-3 py-1.5 bg-amber-100 rounded-full">
-                  <span className="text-sm font-bold text-amber-700">
-                    + {pendingStamps} en attente
-                  </span>
-                </div>
-              </div>
+              {(() => {
+                const tier2On = merchant?.tier2_enabled && merchant?.tier2_stamps_required;
+                const tier1Done = tier1Redeemed || loyaltyCard.current_stamps >= (merchant?.stamps_required || 10);
+                const target = tier2On && tier1Done
+                  ? merchant.tier2_stamps_required!
+                  : (merchant?.stamps_required || 10);
+                return (
+                  <div className="mb-8">
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="text-5xl font-black" style={{ color: primaryColor }}>
+                        {loyaltyCard.current_stamps}
+                      </span>
+                      <span className="text-xl font-bold text-gray-300">/{target}</span>
+                    </div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
+                      Passages confirmés{tier2On && tier1Done ? ' · Palier 2' : tier2On ? ' · Palier 1' : ''}
+                    </p>
+                    <div className="mt-3 inline-flex px-3 py-1.5 bg-amber-100 rounded-full">
+                      <span className="text-sm font-bold text-amber-700">
+                        + {pendingStamps} en attente
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Progress Bar */}
-              <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant?.stamps_required || 10)) * 100)}%`,
-                    background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
-                  }}
-                />
-              </div>
+              {(() => {
+                const tier2On = merchant?.tier2_enabled && merchant?.tier2_stamps_required;
+                const tier1Done = tier1Redeemed || loyaltyCard.current_stamps >= (merchant?.stamps_required || 10);
+                const target = tier2On && tier1Done
+                  ? merchant.tier2_stamps_required!
+                  : (merchant?.stamps_required || 10);
+                return (
+                  <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${Math.min(100, (loyaltyCard.current_stamps / target) * 100)}%`,
+                        background: tier2On && tier1Done
+                          ? 'linear-gradient(90deg, #8b5cf6, #a78bfa)'
+                          : `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
+                      }}
+                    />
+                  </div>
+                );
+              })()}
 
               <Link
                 href={`/customer/card/${merchant.id}`}
