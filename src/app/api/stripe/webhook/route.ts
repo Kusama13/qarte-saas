@@ -14,7 +14,11 @@ const supabase = createClient(
 export async function POST(request: Request) {
   const body = await request.text();
   const headersList = await headers();
-  const signature = headersList.get('stripe-signature')!;
+  const signature = headersList.get('stripe-signature');
+
+  if (!signature) {
+    return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
+  }
 
   let event;
 
@@ -36,6 +40,11 @@ export async function POST(request: Request) {
       const session = event.data.object;
       const merchantId = session.metadata?.merchant_id;
 
+      if (!merchantId) {
+        logger.error('Webhook checkout.session.completed: missing merchant_id in metadata');
+        break;
+      }
+
       logger.debug('Activating subscription for merchant:', merchantId);
 
       // Mettre à jour le statut
@@ -50,6 +59,11 @@ export async function POST(request: Request) {
         .eq('id', merchantId)
         .select('shop_name, user_id')
         .single();
+
+      if (!merchant) {
+        logger.error('Webhook checkout.session.completed: merchant not found for id:', merchantId);
+        break;
+      }
 
       // Envoyer l'email de confirmation (await pour serverless)
       if (merchant) {
@@ -78,6 +92,11 @@ export async function POST(request: Request) {
         .eq('stripe_subscription_id', subscription.id)
         .select('shop_name, user_id')
         .single();
+
+      if (!merchant) {
+        logger.error('Webhook subscription.deleted: merchant not found for stripe_subscription_id:', subscription.id);
+        break;
+      }
 
       // Envoyer l'email de confirmation de résiliation (await pour serverless)
       if (merchant) {
@@ -148,20 +167,38 @@ export async function POST(request: Request) {
 
       logger.debug('Subscription updated:', subscription.id, 'status:', subscription.status);
 
-      let newStatus: SubscriptionStatus = subscription.status as SubscriptionStatus;
+      // Map Stripe status → notre SubscriptionStatus
+      const statusMap: Record<string, SubscriptionStatus> = {
+        trialing: 'trial',
+        active: 'active',
+        past_due: 'past_due',
+        canceled: 'canceled',
+        incomplete: 'trial',
+        incomplete_expired: 'canceled',
+        unpaid: 'past_due',
+        paused: 'canceled',
+      };
 
-      // Map Stripe status to our status
+      let newStatus: SubscriptionStatus = statusMap[subscription.status] || 'trial';
+
+      // Cas special : annulation programmee en fin de periode
       if (subscription.status === 'active' && subscription.cancel_at_period_end) {
-        newStatus = 'canceling'; // Will cancel at end of period
+        newStatus = 'canceling';
       }
 
-      await supabase
+      const { data: updatedMerchant } = await supabase
         .from('merchants')
         .update({
           subscription_status: newStatus,
           updated_at: new Date().toISOString(),
         })
-        .eq('stripe_subscription_id', subscription.id);
+        .eq('stripe_subscription_id', subscription.id)
+        .select('id')
+        .single();
+
+      if (!updatedMerchant) {
+        logger.error('Webhook subscription.updated: merchant not found for stripe_subscription_id:', subscription.id);
+      }
 
       break;
     }

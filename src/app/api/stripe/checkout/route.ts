@@ -36,14 +36,22 @@ export async function POST(request: NextRequest) {
     // Get merchant info
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('id, shop_name, stripe_customer_id, trial_ends_at')
+      .select('id, shop_name, stripe_customer_id, trial_ends_at, subscription_status')
       .eq('user_id', user.id)
       .single();
 
     if (!merchant) {
       return NextResponse.json(
-        { error: 'Commercant non trouve' },
+        { error: 'Commerçant non trouvé' },
         { status: 404 }
+      );
+    }
+
+    // Bloquer si déjà abonné (évite les doublons Stripe)
+    if (merchant.subscription_status === 'active' || merchant.subscription_status === 'canceling') {
+      return NextResponse.json(
+        { error: 'Vous avez déjà un abonnement actif' },
+        { status: 400 }
       );
     }
 
