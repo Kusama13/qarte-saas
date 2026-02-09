@@ -78,9 +78,9 @@ function DashboardLayoutContent({
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <button
         onClick={() => setSidebarOpen(true)}
-        className="fixed z-40 p-3 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-2xl shadow-xl shadow-indigo-100/50 top-4 left-4 lg:hidden hover:scale-105 active:scale-95 transition-all duration-200"
+        className="fixed z-40 p-2.5 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg top-3 left-3 lg:hidden hover:scale-105 active:scale-95 transition-all duration-200"
       >
-        <Menu className="w-6 h-6 text-indigo-600" />
+        <Menu className="w-5 h-5 text-indigo-600" />
       </button>
 
       {sidebarOpen && (
@@ -130,6 +130,7 @@ function DashboardLayoutContent({
               </span>
               <Link
                 href="/dashboard/subscription"
+                onClick={() => setSidebarOpen(false)}
                 className="block mt-1 underline hover:no-underline"
               >
                 Ajouter une carte bancaire
@@ -151,6 +152,7 @@ function DashboardLayoutContent({
               </p>
               <Link
                 href="/dashboard/subscription"
+                onClick={() => setSidebarOpen(false)}
                 className="block mt-3 px-4 py-2 bg-red-600 text-white text-center rounded-lg font-medium hover:bg-red-700"
               >
                 Souscrire maintenant
@@ -226,7 +228,7 @@ function DashboardLayoutContent({
       </aside>
 
       <main className="lg:ml-72 min-h-screen">
-        <div className="p-4 md:p-8 pb-20">{children}</div>
+        <div className="px-4 py-3 md:p-8 pb-20">{children}</div>
       </main>
     </div>
   );

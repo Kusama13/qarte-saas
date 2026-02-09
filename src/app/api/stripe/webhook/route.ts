@@ -81,6 +81,12 @@ export async function POST(request: Request) {
     case 'customer.subscription.deleted': {
       const subscription = event.data.object;
 
+      // Ignore deletions of incomplete subscriptions (abandoned checkouts)
+      if (subscription.status === 'incomplete' || subscription.status === 'incomplete_expired') {
+        logger.debug('Ignoring deletion of incomplete subscription:', subscription.id);
+        break;
+      }
+
       logger.debug('Canceling subscription:', subscription.id);
 
       const { data: merchant } = await supabase
@@ -94,11 +100,11 @@ export async function POST(request: Request) {
         .single();
 
       if (!merchant) {
-        logger.error('Webhook subscription.deleted: merchant not found for stripe_subscription_id:', subscription.id);
+        logger.debug('Webhook subscription.deleted: no merchant matched stripe_subscription_id:', subscription.id);
         break;
       }
 
-      // Envoyer l'email de confirmation de résiliation (await pour serverless)
+      // Envoyer l'email de confirmation de résiliation
       if (merchant) {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         if (userData?.user?.email) {
@@ -167,14 +173,18 @@ export async function POST(request: Request) {
 
       logger.debug('Subscription updated:', subscription.id, 'status:', subscription.status);
 
+      // Ignore incomplete subscriptions (abandoned checkout sessions)
+      if (subscription.status === 'incomplete' || subscription.status === 'incomplete_expired') {
+        logger.debug('Ignoring incomplete subscription:', subscription.id);
+        break;
+      }
+
       // Map Stripe status → notre SubscriptionStatus
       const statusMap: Record<string, SubscriptionStatus> = {
         trialing: 'trial',
         active: 'active',
         past_due: 'past_due',
         canceled: 'canceled',
-        incomplete: 'trial',
-        incomplete_expired: 'canceled',
         unpaid: 'past_due',
         paused: 'canceled',
       };
@@ -197,7 +207,7 @@ export async function POST(request: Request) {
         .single();
 
       if (!updatedMerchant) {
-        logger.error('Webhook subscription.updated: merchant not found for stripe_subscription_id:', subscription.id);
+        logger.debug('Webhook subscription.updated: no merchant matched stripe_subscription_id:', subscription.id);
       }
 
       break;

@@ -302,29 +302,29 @@ export default function ProgramPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="relative overflow-hidden mb-10 p-8 rounded-3xl bg-white/70 backdrop-blur-md border border-white/20 shadow-xl shadow-indigo-200/30">
+      <div className="relative overflow-hidden mb-5 md:mb-10 p-4 md:p-8 rounded-2xl md:rounded-3xl bg-white/70 backdrop-blur-md border border-white/20 shadow-xl shadow-indigo-200/30">
         {/* Animated Gradient Background Blobs */}
-        <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-violet-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
+        <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl animate-pulse hidden md:block" />
+        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-violet-600/10 rounded-full blur-3xl animate-pulse hidden md:block" style={{ animationDelay: '1.5s' }} />
 
         <div className="relative">
-          <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
             Mon Programme
           </h1>
-          <p className="mt-2 text-gray-500 font-medium">
+          <p className="mt-1 md:mt-2 text-sm md:text-base text-gray-500 font-medium">
             Personnalisez votre programme de fidélité
           </p>
         </div>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="space-y-6">
-          <div className="p-6 bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl shadow-indigo-100/40 relative overflow-hidden group">
+      <div className="grid gap-5 md:gap-8 lg:grid-cols-2">
+        <div className="space-y-4 md:space-y-6">
+          <div className="p-4 md:p-6 bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl shadow-indigo-100/40 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 transition-transform duration-500 rounded-full bg-gradient-to-br from-indigo-50/50 to-violet-50/50 blur-3xl group-hover:scale-110" />
 
-            <h3 className="relative flex items-center gap-3 mb-6 text-lg font-bold text-gray-900">
-              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200">
-                <Upload className="w-5 h-5 text-white" />
+            <h3 className="relative flex items-center gap-2.5 md:gap-3 mb-4 md:mb-6 text-base md:text-lg font-bold text-gray-900">
+              <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200">
+                <Upload className="w-4 h-4 md:w-5 md:h-5 text-white" />
               </div>
               Logo du Programme
             </h3>
@@ -398,10 +398,10 @@ export default function ProgramPage() {
             </div>
           </div>
 
-          <div className="p-6 bg-white/60 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg shadow-indigo-100/50">
-            <h3 className="flex items-center gap-3 mb-6 text-lg font-semibold text-gray-900">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30">
-                <Palette className="w-5 h-5 text-white" />
+          <div className="p-4 md:p-6 bg-white/60 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg shadow-indigo-100/50">
+            <h3 className="flex items-center gap-2.5 md:gap-3 mb-4 md:mb-6 text-base md:text-lg font-semibold text-gray-900">
+              <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30">
+                <Palette className="w-4 h-4 md:w-5 md:h-5 text-white" />
               </div>
               Couleurs
             </h3>
@@ -442,7 +442,7 @@ export default function ProgramPage() {
 
           </div>
 
-          <div className="p-8 bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl shadow-lg shadow-indigo-200/50 border border-white/60 backdrop-blur-xl transition-all duration-300">
+          <div className="p-4 md:p-8 bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl shadow-lg shadow-indigo-200/50 border border-white/60 backdrop-blur-xl transition-all duration-300">
             <MerchantSettingsForm
               initialStampsRequired={formData.stampsRequired}
               initialRewardDescription={formData.rewardDescription}
@@ -466,14 +466,14 @@ export default function ProgramPage() {
           </div>
 
           {/* 2nd Tier Reward Section */}
-          <div className="p-6 bg-gradient-to-br from-white via-white to-violet-50/30 rounded-2xl shadow-lg shadow-violet-200/30 border border-violet-100/50 backdrop-blur-xl">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg shadow-violet-200">
-                  <Trophy className="w-5 h-5 text-white" />
+          <div className="p-4 md:p-6 bg-gradient-to-br from-white via-white to-violet-50/30 rounded-2xl shadow-lg shadow-violet-200/30 border border-violet-100/50 backdrop-blur-xl">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <div className="flex items-center gap-2.5 md:gap-3">
+                <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg shadow-violet-200">
+                  <Trophy className="w-4 h-4 md:w-5 md:h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">2ème Palier de Récompense</h3>
+                  <h3 className="text-base md:text-lg font-bold text-gray-900">2ème Palier de Récompense</h3>
                   <p className="text-xs text-gray-500">Les points se cumulent sans remise à zéro</p>
                 </div>
               </div>
@@ -572,12 +572,12 @@ export default function ProgramPage() {
           </div>
 
           {/* Review Link Section */}
-          <div className="p-5 bg-white/80 backdrop-blur-xl border border-amber-100 rounded-2xl shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-400 flex items-center justify-center shadow-md">
-                <Star className="w-5 h-5 text-white fill-white" />
+          <div className="p-4 md:p-5 bg-white/80 backdrop-blur-xl border border-amber-100 rounded-2xl shadow-sm">
+            <div className="flex items-center gap-2.5 md:gap-3 mb-3 md:mb-4">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-400 flex items-center justify-center shadow-md">
+                <Star className="w-4 h-4 md:w-5 md:h-5 text-white fill-white" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Avis Google</h3>
+              <h3 className="text-base md:text-lg font-bold text-gray-900">Avis Google</h3>
             </div>
 
             <div className="space-y-3">
@@ -620,29 +620,29 @@ export default function ProgramPage() {
         )}
       </div>
 
-      {/* Sticky Save Button (All Screens) */}
-      <div className="fixed bottom-0 left-0 right-0 lg:left-72 z-50 p-3 lg:p-4 bg-white/70 backdrop-blur-xl border-t border-gray-100/50 shadow-lg shadow-gray-900/5">
+      {/* Save Button — inline on mobile, sticky on desktop */}
+      <div className="mt-6 md:mt-0 md:fixed md:bottom-0 md:left-0 md:right-0 lg:left-72 md:z-50 md:p-4 md:bg-white/70 md:backdrop-blur-xl md:border-t md:border-gray-100/50 md:shadow-lg md:shadow-gray-900/5">
         <div className="max-w-6xl mx-auto flex justify-center lg:justify-end">
           <button
             onClick={handleSave}
             disabled={saving || saved}
             className={`
-              w-full lg:w-auto h-12 lg:h-10 px-6 rounded-xl font-semibold text-base lg:text-sm inline-flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed
+              w-full md:w-auto h-11 md:h-10 px-6 rounded-xl font-semibold text-sm inline-flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed
               ${saved
                 ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200/50'
                 : 'bg-gradient-to-r from-pink-500 to-indigo-500 text-white shadow-md shadow-pink-200/50 hover:from-pink-600 hover:to-indigo-600 hover:shadow-lg'}
             `}
           >
             {saving ? (
-              <Loader2 className="w-5 h-5 lg:w-4 lg:h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : saved ? (
               <>
-                <Check className="w-5 h-5 lg:w-4 lg:h-4" />
+                <Check className="w-4 h-4" />
                 <span>Enregistré !</span>
               </>
             ) : (
               <>
-                <Save className="w-5 h-5 lg:w-4 lg:h-4" />
+                <Save className="w-4 h-4" />
                 <span>Enregistrer</span>
               </>
             )}
@@ -650,8 +650,8 @@ export default function ProgramPage() {
         </div>
       </div>
 
-      {/* Spacer for sticky button */}
-      <div className="h-20 lg:h-16" />
+      {/* Spacer for sticky button (desktop only) */}
+      <div className="hidden md:block h-16" />
     </div>
   );
 }

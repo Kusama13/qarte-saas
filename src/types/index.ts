@@ -65,6 +65,7 @@ export interface Merchant {
   tier2_reward_description: string | null;
   trial_ends_at: string;
   stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
   subscription_status: SubscriptionStatus;
   onboarding_completed: boolean;
   shield_enabled: boolean;

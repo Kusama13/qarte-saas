@@ -24,15 +24,15 @@ interface StatsCardProps {
 
 const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, color }: StatsCardProps) {
   return (
-    <div className="group relative p-6 bg-white/70 backdrop-blur-2xl border border-white/50 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(79,70,229,0.1)] hover:-translate-y-1.5 overflow-hidden">
+    <div className="group relative p-4 md:p-6 bg-white/70 backdrop-blur-2xl border border-white/50 rounded-2xl md:rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-500 hover:shadow-[0_20px_50px_rgba(79,70,229,0.1)] hover:-translate-y-1.5 overflow-hidden">
       {/* Premium Gradient Border Effect */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
       <div className="relative flex items-center justify-between">
         <div className="flex flex-col">
-          <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-1.5">{title}</p>
-          <div className="flex items-baseline gap-2.5">
-            <h3 className="text-3xl font-bold text-slate-900 tracking-[-0.03em] tabular-nums">{value}</h3>
+          <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-1">{title}</p>
+          <div className="flex items-baseline gap-2">
+            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-[-0.03em] tabular-nums">{value}</h3>
             {trend && (
               <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50/80 text-emerald-600 border border-emerald-100/50 shadow-sm">
                 <TrendingUp className="w-3 h-3 stroke-[3]" />
@@ -48,13 +48,13 @@ const StatsCard = memo(function StatsCard({ title, value, icon: Icon, trend, col
             style={{ backgroundColor: color }}
           />
           <div
-            className="relative flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-500 ease-out border border-white/50 shadow-inner group-hover:shadow-lg"
+            className="relative flex items-center justify-center w-11 h-11 md:w-14 md:h-14 rounded-2xl transition-all duration-500 ease-out border border-white/50 shadow-inner group-hover:shadow-lg"
             style={{
               background: `linear-gradient(145deg, ${color}10, ${color}25)`
             }}
           >
             <Icon
-              className="w-7 h-7 transition-all duration-500 ease-out group-hover:-rotate-12 group-hover:scale-110"
+              className="w-5 h-5 md:w-7 md:h-7 transition-all duration-500 ease-out group-hover:-rotate-12 group-hover:scale-110"
               style={{ color }}
             />
             {/* Animated Highlight */}
@@ -425,17 +425,17 @@ export default function DashboardPage() {
       <div className="space-y-8">
         <div className="relative">
           <div className="absolute -left-8 -top-8 -z-10 h-32 w-32 rounded-full bg-indigo-50/60 blur-3xl" />
-          <h1 className="text-2xl font-extrabold tracking-tight text-gray-900 md:text-3xl">
+          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900">
           Bonjour, <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
             {merchant?.shop_name}
           </span>
         </h1>
-        <div className="mt-2 flex items-center gap-2.5">
+        <div className="mt-1 md:mt-2 flex items-center gap-2">
           <div className="flex h-2 w-2 items-center justify-center">
             <span className="absolute h-2 w-2 animate-ping rounded-full bg-indigo-400/50" />
             <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
           </div>
-          <p className="text-sm font-medium text-gray-500 md:text-base">
+          <p className="text-xs md:text-base font-medium text-gray-500">
             Voici un aperçu de votre programme de fidélité
           </p>
         </div>
@@ -607,21 +607,21 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         {/* Weekly Comparison Card */}
-        <div className="group relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/20 rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
+        <div className="group relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-600 to-violet-600" />
-          <div className="p-8">
-            <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-6">
+          <div className="p-5 md:p-8">
+            <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-4 md:mb-6">
               7 derniers jours
             </p>
             {weeklyData.thisWeek > 0 || weeklyData.lastWeek > 0 ? (
               <div>
                 <div className="flex items-baseline gap-2.5">
-                  <span className="text-5xl font-black tracking-[-0.03em] text-slate-900">
+                  <span className="text-3xl md:text-5xl font-black tracking-[-0.03em] text-slate-900">
                     {weeklyData.thisWeek}
                   </span>
-                  <span className="text-base font-semibold text-slate-400">
+                  <span className="text-sm md:text-base font-semibold text-slate-400">
                     visite{weeklyData.thisWeek !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -691,10 +691,10 @@ export default function DashboardPage() {
         </div>
 
         {/* Activity Card */}
-        <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
-          <div className="p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-bold tracking-tight text-gray-900">
+        <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
+          <div className="p-5 md:p-8">
+            <div className="flex items-center justify-between mb-5 md:mb-8">
+              <h2 className="text-base md:text-xl font-bold tracking-tight text-gray-900">
                 Activité récente
               </h2>
               <Link href="/dashboard/customers">
@@ -712,12 +712,12 @@ export default function DashboardPage() {
                     key={customer.id}
                     className="group/item flex items-center justify-between p-4 rounded-2xl bg-indigo-50/30 border border-transparent hover:bg-white hover:border-indigo-100 hover:shadow-md hover:shadow-indigo-100/50 transition-all duration-200"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center justify-center w-12 h-12 font-bold text-white rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200/50">
+                    <div className="flex items-center gap-3 md:gap-4">
+                      <div className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 text-sm md:text-base font-bold text-white rounded-xl md:rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200/50">
                         {customer.name.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-bold text-gray-900">{customer.name}</p>
+                        <p className="text-sm md:text-base font-bold text-gray-900">{customer.name}</p>
                         <p className="text-sm text-gray-500">
                           {customer.lastVisit
                             ? formatRelativeTime(customer.lastVisit)
@@ -727,7 +727,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex items-baseline gap-1">
-                        <span className="text-lg font-bold text-indigo-600">{customer.stamps}</span>
+                        <span className="text-base md:text-lg font-bold text-indigo-600">{customer.stamps}</span>
                         <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">/ {merchant?.stamps_required}</span>
                       </div>
                       <div className="h-1.5 w-16 bg-gray-200/50 rounded-full overflow-hidden">
