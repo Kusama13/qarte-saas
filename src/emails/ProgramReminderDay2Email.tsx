@@ -116,12 +116,12 @@ const recommendationBox = {
   borderRadius: '12px',
   padding: '24px',
   margin: '24px 0',
-  border: '2px solid #654EDA',
+  border: '2px solid #4b0082',
   textAlign: 'center' as const,
 };
 
 const recommendationLabel = {
-  color: '#654EDA',
+  color: '#4b0082',
   fontSize: '13px',
   fontWeight: '600',
   textTransform: 'uppercase' as const,
@@ -154,7 +154,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: '#654EDA',
+  backgroundColor: '#4b0082',
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '16px',

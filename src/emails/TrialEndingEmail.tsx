@@ -79,7 +79,7 @@ const paragraph = {
 };
 
 const highlight = {
-  color: '#654EDA',
+  color: '#4b0082',
 };
 
 const urgentText = {
@@ -91,7 +91,7 @@ const infoBox = {
   borderRadius: '12px',
   padding: '20px 24px',
   margin: '24px 0',
-  borderLeft: '4px solid #654EDA',
+  borderLeft: '4px solid #4b0082',
 };
 
 const urgentBox = {
@@ -148,7 +148,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: '#654EDA',
+  backgroundColor: '#4b0082',
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '16px',

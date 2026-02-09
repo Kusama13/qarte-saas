@@ -7,10 +7,6 @@
     {
       "path": "/api/cron/evening",
       "schedule": "0 17 * * *"
-    },
-    {
-      "path": "/api/cron/reactivation",
-      "schedule": "0 10 * * *"
     }
   ]
 }

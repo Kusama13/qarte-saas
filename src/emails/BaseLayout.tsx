@@ -25,7 +25,12 @@ export function BaseLayout({ preview, children }: BaseLayoutProps) {
         <Container style={container}>
           {/* Header */}
           <Section style={header}>
-            <Text style={logo}>Qarte</Text>
+            <Img
+              src="https://getqarte.com/images/email-banner.png"
+              alt="Qarte"
+              width="600"
+              style={bannerImg}
+            />
           </Section>
 
           {/* Content */}
@@ -35,6 +40,11 @@ export function BaseLayout({ preview, children }: BaseLayoutProps) {
 
           {/* Footer */}
           <Section style={footer}>
+            <Text style={footerSocial}>
+              <Link href="https://www.instagram.com/getqarte/" style={socialLink}>Instagram</Link>
+              {' • '}
+              <Link href="https://www.facebook.com/profile.php?id=61587048661028" style={socialLink}>Facebook</Link>
+            </Text>
             <Text style={footerText}>
               © {new Date().getFullYear()} Qarte. Tous droits réservés.
             </Text>
@@ -76,16 +86,13 @@ const container = {
 };
 
 const header = {
-  backgroundColor: '#654EDA',
-  padding: '32px 40px',
+  padding: '0',
   textAlign: 'center' as const,
 };
 
-const logo = {
-  color: '#ffffff',
-  fontSize: '28px',
-  fontWeight: '700',
-  margin: '0',
+const bannerImg = {
+  width: '100%',
+  display: 'block' as const,
 };
 
 const content = {
@@ -117,8 +124,20 @@ const footerLinks = {
 };
 
 const link = {
-  color: '#654EDA',
+  color: '#4b0082',
   textDecoration: 'none',
+};
+
+const footerSocial = {
+  fontSize: '13px',
+  margin: '0 0 12px 0',
+  textAlign: 'center' as const,
+};
+
+const socialLink = {
+  color: '#4b0082',
+  textDecoration: 'none',
+  fontWeight: '600',
 };
 
 const unsubscribeText = {

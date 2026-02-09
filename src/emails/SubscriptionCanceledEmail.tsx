@@ -50,10 +50,13 @@ export function SubscriptionCanceledEmail({ shopName, endDate }: SubscriptionCan
         </Text>
       </Section>
 
-      <Text style={paragraph}>
-        Nous sommes tristes de vous voir partir. Si vous changez d&apos;avis, vous pouvez
-        réactiver votre compte à tout moment.
-      </Text>
+      <Section style={offerBox}>
+        <Text style={offerTitle}>Envie de revenir ?</Text>
+        <Text style={offerText}>
+          Si vous changez d&apos;avis, vous pouvez réactiver votre compte à tout moment.
+          Vos données et vos clients seront toujours là.
+        </Text>
+      </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
@@ -140,7 +143,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: '#654EDA',
+  backgroundColor: '#4b0082',
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '16px',
@@ -148,6 +151,28 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
+};
+
+const offerBox = {
+  backgroundColor: '#f0edfc',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '24px 0',
+  borderLeft: '4px solid #4b0082',
+};
+
+const offerTitle = {
+  color: '#4b0082',
+  fontSize: '15px',
+  fontWeight: '600',
+  margin: '0 0 8px 0',
+};
+
+const offerText = {
+  color: '#4a5568',
+  fontSize: '15px',
+  lineHeight: '1.6',
+  margin: '0',
 };
 
 const feedbackText = {

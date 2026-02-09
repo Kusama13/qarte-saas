@@ -142,26 +142,35 @@ export async function POST(request: NextRequest) {
     if (userData?.user?.email) {
       const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-      // Cancel scheduled incomplete signup email if one exists
+      // Cancel scheduled incomplete signup emails (both) if they exist
       const scheduledEmailId = userData.user.user_metadata?.scheduled_incomplete_email_id;
-      if (scheduledEmailId) {
-        // Cancel email (Resend API call #1)
-        await cancelScheduledEmail(scheduledEmailId).catch((err) => {
-          logger.error('Failed to cancel scheduled incomplete email', err);
-        });
+      const scheduledEmailId2 = userData.user.user_metadata?.scheduled_incomplete_email_id_2;
 
-        // Clear metadata (Supabase, pas Resend - pas besoin de delay)
+      if (scheduledEmailId) {
+        await cancelScheduledEmail(scheduledEmailId).catch((err) => {
+          logger.error('Failed to cancel scheduled incomplete email 1', err);
+        });
+        await delay(600);
+      }
+
+      if (scheduledEmailId2) {
+        await cancelScheduledEmail(scheduledEmailId2).catch((err) => {
+          logger.error('Failed to cancel scheduled incomplete email 2', err);
+        });
+        await delay(600);
+      }
+
+      if (scheduledEmailId || scheduledEmailId2) {
+        // Clear both metadata entries
         await supabaseAdmin.auth.admin.updateUserById(user_id, {
           user_metadata: {
             ...userData.user.user_metadata,
             scheduled_incomplete_email_id: null,
+            scheduled_incomplete_email_id_2: null,
           },
         }).catch((err) => {
           logger.error('Failed to clear scheduled email metadata', err);
         });
-
-        // Resend rate limit: 2 req/s - attendre avant le prochain appel
-        await delay(600);
       }
 
       // Welcome email en priorité (Resend API call #2)

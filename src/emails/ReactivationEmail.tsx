@@ -83,7 +83,7 @@ export function ReactivationEmail({
 }
 
 const heading = {
-  color: '#654EDA',
+  color: '#4b0082',
   fontSize: '24px',
   fontWeight: '600',
   lineHeight: '1.3',
@@ -116,7 +116,7 @@ const statsTitle = {
 };
 
 const statsNumber = {
-  color: '#654EDA',
+  color: '#4b0082',
   fontSize: '48px',
   fontWeight: '700',
   margin: '0',
@@ -186,7 +186,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: '#654EDA',
+  backgroundColor: '#4b0082',
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '16px',

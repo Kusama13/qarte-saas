@@ -7,57 +7,59 @@ import {
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
 
-interface IncompleteSignupEmailProps {
+interface IncompleteSignupReminder2EmailProps {
   email: string;
 }
 
-export function IncompleteSignupEmail({ email }: IncompleteSignupEmailProps) {
+export function IncompleteSignupReminder2Email({ email }: IncompleteSignupReminder2EmailProps) {
   return (
-    <BaseLayout preview="Votre compte Qarte est presque prêt — il ne reste que 30 secondes">
+    <BaseLayout preview="Votre espace Qarte vous attend toujours">
       <Heading style={heading}>
-        Vous y êtes presque !
+        On ne vous a pas oubli&eacute; !
       </Heading>
 
       <Text style={paragraph}>
-        Bonjour ({email}),
+        Bonjour,
       </Text>
 
       <Text style={paragraph}>
-        Vous avez créé votre compte Qarte, mais vous n&apos;avez pas terminé la
-        configuration de votre commerce.
+        Vous avez commenc&eacute; &agrave; cr&eacute;er votre compte Qarte il y a quelques heures,
+        mais la configuration de votre commerce n&apos;est pas termin&eacute;e.
       </Text>
 
       <Text style={highlightBox}>
-        Il ne reste que <strong>4 champs à remplir</strong> (nom, activité,
-        téléphone, adresse) — ça prend <strong>30 secondes</strong>.
+        Votre espace est <strong>d&eacute;j&agrave; pr&ecirc;t</strong>. Il ne manque que
+        les infos de votre commerce pour lancer votre programme de fid&eacute;lit&eacute;.
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/auth/merchant/signup/complete">
-          Finaliser mon inscription
+          Reprendre mon inscription
         </Button>
       </Section>
 
-      <Section style={benefitsBox}>
-        <Text style={benefitsTitle}>Ce qui vous attend après :</Text>
-        <Text style={benefitItem}>→ Un programme de fidélité prêt en 3 minutes</Text>
-        <Text style={benefitItem}>→ Un QR code unique pour votre commerce</Text>
-        <Text style={benefitItem}>→ 15 jours d&apos;essai gratuit</Text>
+      <Section style={testimonialBox}>
+        <Text style={testimonialQuote}>
+          &laquo; J&apos;ai configur&eacute; mon programme en 3 minutes, et d&egrave;s la premi&egrave;re
+          semaine j&apos;avais des clients qui revenaient avec leur carte. &raquo;
+        </Text>
+        <Text style={testimonialAuthor}>
+          &mdash; Un coiffeur sur Qarte
+        </Text>
       </Section>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? Répondez à cet email ou contactez-nous sur
-        WhatsApp.
+        Si vous avez des questions ou besoin d&apos;aide, je suis l&agrave; :
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20finaliser%20mon%20inscription%20Qarte">
-          Nous contacter sur WhatsApp
+          &Eacute;crire sur WhatsApp
         </Button>
       </Section>
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        Judicael, fondateur de Qarte
       </Text>
     </BaseLayout>
   );
@@ -83,7 +85,7 @@ const highlightBox = {
   fontSize: '16px',
   fontWeight: '500',
   lineHeight: '1.6',
-  backgroundColor: '#f0edfc',
+  backgroundColor: '#fef3c7',
   borderRadius: '8px',
   padding: '16px 20px',
   margin: '0 0 8px 0',
@@ -105,24 +107,25 @@ const button = {
   padding: '14px 32px',
 };
 
-const benefitsBox = {
+const testimonialBox = {
   backgroundColor: '#f8f9fa',
   borderRadius: '12px',
   padding: '20px 24px',
   margin: '0 0 24px 0',
+  borderLeft: '4px solid #4b0082',
 };
 
-const benefitsTitle = {
-  color: '#1a1a1a',
-  fontSize: '15px',
-  fontWeight: '600',
-  margin: '0 0 12px 0',
-};
-
-const benefitItem = {
+const testimonialQuote = {
   color: '#4a5568',
   fontSize: '14px',
-  lineHeight: '1.8',
+  fontStyle: 'italic' as const,
+  lineHeight: '1.6',
+  margin: '0 0 8px 0',
+};
+
+const testimonialAuthor = {
+  color: '#718096',
+  fontSize: '13px',
   margin: '0',
 };
 
@@ -144,4 +147,4 @@ const signature = {
   margin: '24px 0 0 0',
 };
 
-export default IncompleteSignupEmail;
+export default IncompleteSignupReminder2Email;

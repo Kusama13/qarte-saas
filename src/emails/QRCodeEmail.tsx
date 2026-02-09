@@ -96,7 +96,7 @@ export function QRCodeEmail({ menuUrl, businessName, qrCodeUrl, designedQrCodeUr
 }
 
 const headerSection = {
-  backgroundColor: '#6366f1',
+  backgroundColor: '#4b0082',
   borderRadius: '12px',
   padding: '16px 24px',
   margin: '0 0 24px 0',
@@ -142,7 +142,7 @@ const linkBox = {
   borderRadius: '12px',
   padding: '16px 20px',
   margin: '0 0 12px 0',
-  borderLeft: '4px solid #6366f1',
+  borderLeft: '4px solid #4b0082',
 };
 
 const linkLabel = {
@@ -159,7 +159,7 @@ const linkDescription = {
 };
 
 const downloadLink = {
-  color: '#6366f1',
+  color: '#4b0082',
   fontSize: '14px',
   fontWeight: '600',
   textDecoration: 'underline',
@@ -225,7 +225,7 @@ const ctaText = {
 };
 
 const ctaButton = {
-  backgroundColor: '#6366f1',
+  backgroundColor: '#4b0082',
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '14px',

@@ -227,7 +227,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: '#654EDA',
+  backgroundColor: '#4b0082',
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '16px',
@@ -272,7 +272,7 @@ const previewImage = {
 };
 
 const cardPreview = {
-  background: 'linear-gradient(135deg, #654EDA 0%, #9D8FE8 100%)',
+  background: 'linear-gradient(135deg, #4b0082 0%, #9D8FE8 100%)',
   borderRadius: '16px',
   padding: '32px 24px',
   margin: '24px 0',
@@ -309,7 +309,7 @@ const cardRewardBox = {
 };
 
 const cardRewardLabel = {
-  color: '#654EDA',
+  color: '#4b0082',
   fontSize: '10px',
   fontWeight: '700',
   textTransform: 'uppercase' as const,
@@ -339,7 +339,7 @@ const captionBox = {
 };
 
 const captionLabel = {
-  color: '#654EDA',
+  color: '#4b0082',
   fontSize: '12px',
   fontWeight: '700',
   textTransform: 'uppercase' as const,

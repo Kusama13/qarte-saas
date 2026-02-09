@@ -7,15 +7,15 @@ import {
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
 
-interface SubscriptionConfirmedEmailProps {
+interface FirstScanEmailProps {
   shopName: string;
 }
 
-export function SubscriptionConfirmedEmail({ shopName }: SubscriptionConfirmedEmailProps) {
+export function FirstScanEmail({ shopName }: FirstScanEmailProps) {
   return (
-    <BaseLayout preview="Votre abonnement Qarte est activé !">
+    <BaseLayout preview={`${shopName}, votre 1er client a scanné !`}>
       <Heading style={heading}>
-        🎉 Bienvenue parmi nos abonnés !
+        Votre programme est lanc&eacute; !
       </Heading>
 
       <Text style={paragraph}>
@@ -23,37 +23,34 @@ export function SubscriptionConfirmedEmail({ shopName }: SubscriptionConfirmedEm
       </Text>
 
       <Text style={paragraph}>
-        Votre abonnement Qarte est maintenant actif. Merci pour votre confiance !
+        Votre premier client vient de scanner votre QR code.
+        C&apos;est le d&eacute;but de votre programme de fid&eacute;lit&eacute; !
       </Text>
 
-      <Section style={confirmBox}>
-        <Text style={confirmTitle}>✓ Abonnement confirmé</Text>
-        <Text style={confirmDetail}>Plan Pro • 19€/mois</Text>
-        <Text style={confirmNote}>Prochain prélèvement dans 30 jours</Text>
+      <Section style={celebrationBox}>
+        <Text style={celebrationEmoji}>&#127881;</Text>
+        <Text style={celebrationTitle}>Premier scan valid&eacute;</Text>
+        <Text style={celebrationText}>
+          Chaque scan, c&apos;est un client qui s&apos;engage avec votre commerce.
+          Les r&eacute;sultats arrivent vite.
+        </Text>
       </Section>
 
-      <Section style={features}>
-        <Text style={featureTitle}>Vous avez accès à :</Text>
-        <Text style={featureItem}>✓ Programme de fidélité illimité</Text>
-        <Text style={featureItem}>✓ Clients illimités</Text>
-        <Text style={featureItem}>✓ Statistiques en temps réel</Text>
-        <Text style={featureItem}>✓ Support prioritaire</Text>
-        <Text style={featureItem}>✓ Mises à jour gratuites</Text>
+      <Section style={tipsBox}>
+        <Text style={tipsTitle}>Pour acc&eacute;l&eacute;rer :</Text>
+        <Text style={tipItem}>&#8594; Proposez le scan &agrave; chaque client aujourd&apos;hui</Text>
+        <Text style={tipItem}>&#8594; Placez le QR code &agrave; hauteur des yeux pr&egrave;s de la caisse</Text>
+        <Text style={tipItem}>&#8594; Dites simplement : &laquo; On a une carte de fid&eacute;lit&eacute; digitale, scannez ce QR code ! &raquo;</Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard">
-          Accéder à mon tableau de bord
+          Voir mes statistiques
         </Button>
       </Section>
 
-      <Text style={paragraph}>
-        Une question sur votre abonnement ? Répondez à cet email, nous sommes là pour vous.
-      </Text>
-
       <Text style={signature}>
-        Merci de faire grandir Qarte avec nous !<br />
-        L&apos;équipe Qarte
+        L&apos;&eacute;quipe Qarte
       </Text>
     </BaseLayout>
   );
@@ -62,7 +59,7 @@ export function SubscriptionConfirmedEmail({ shopName }: SubscriptionConfirmedEm
 const heading = {
   color: '#1a1a1a',
   fontSize: '24px',
-  fontWeight: '600',
+  fontWeight: '700',
   lineHeight: '1.3',
   margin: '0 0 24px 0',
 };
@@ -74,50 +71,49 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const confirmBox = {
+const celebrationBox = {
   backgroundColor: '#f0fdf4',
   borderRadius: '12px',
   padding: '24px',
   margin: '24px 0',
-  border: '2px solid #bbf7d0',
   textAlign: 'center' as const,
+  border: '2px solid #bbf7d0',
 };
 
-const confirmTitle = {
-  color: '#166534',
-  fontSize: '18px',
-  fontWeight: '600',
+const celebrationEmoji = {
+  fontSize: '40px',
   margin: '0 0 8px 0',
 };
 
-const confirmDetail = {
-  color: '#15803d',
-  fontSize: '16px',
-  fontWeight: '500',
-  margin: '0 0 4px 0',
+const celebrationTitle = {
+  color: '#166534',
+  fontSize: '18px',
+  fontWeight: '700',
+  margin: '0 0 8px 0',
 };
 
-const confirmNote = {
-  color: '#6b7280',
-  fontSize: '13px',
+const celebrationText = {
+  color: '#15803d',
+  fontSize: '15px',
+  lineHeight: '1.6',
   margin: '0',
 };
 
-const features = {
+const tipsBox = {
   backgroundColor: '#f8f9fa',
   borderRadius: '12px',
   padding: '20px 24px',
   margin: '24px 0',
 };
 
-const featureTitle = {
+const tipsTitle = {
   color: '#1a1a1a',
-  fontSize: '14px',
+  fontSize: '15px',
   fontWeight: '600',
   margin: '0 0 12px 0',
 };
 
-const featureItem = {
+const tipItem = {
   color: '#4a5568',
   fontSize: '14px',
   lineHeight: '1.8',
@@ -126,7 +122,7 @@ const featureItem = {
 
 const buttonContainer = {
   textAlign: 'center' as const,
-  margin: '32px 0',
+  margin: '28px 0',
 };
 
 const button = {
@@ -147,4 +143,4 @@ const signature = {
   margin: '24px 0 0 0',
 };
 
-export default SubscriptionConfirmedEmail;
+export default FirstScanEmail;

@@ -11,6 +11,14 @@ import {
   sendInactiveMerchantDay7Email,
   sendInactiveMerchantDay14Email,
   sendInactiveMerchantDay30Email,
+  sendDay5CheckinEmail,
+  sendQRCodeEmail,
+  sendSocialKitEmail,
+  sendFirstScanEmail,
+  sendFirstRewardEmail,
+  sendWeeklyDigestEmail,
+  sendTier2UpsellEmail,
+  sendReactivationEmail,
 } from '@/lib/email';
 import { getTrialStatus } from '@/lib/utils';
 import logger from '@/lib/logger';
@@ -72,7 +80,15 @@ export async function GET(request: NextRequest) {
     programReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     programRemindersDay2: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     programRemindersDay3: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    day5Checkin: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    qrCode: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    socialKit: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    firstScan: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    firstReward: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    weeklyDigest: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    tier2Upsell: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     inactiveMerchants: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    reactivation: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     pendingReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     scheduledPush: { processed: 0, sent: 0, errors: 0 },
   };
@@ -228,7 +244,432 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // ==================== 2d. INACTIVE MERCHANTS (programme configuré, 0 check-in) ====================
+    // ==================== 2d. DAY 5 CHECKIN (programme configuré, J+5) ====================
+    const oneTwentyOneHoursAgo = new Date(now.getTime() - 121 * 60 * 60 * 1000);
+    const oneTwentyHoursAgo = new Date(now.getTime() - 120 * 60 * 60 * 1000);
+
+    const { data: day5Merchants } = await supabase
+      .from('merchants')
+      .select('id, shop_name, user_id')
+      .not('reward_description', 'is', null)
+      .in('subscription_status', ['trial', 'active'])
+      .lte('created_at', oneTwentyHoursAgo.toISOString())
+      .gte('created_at', oneTwentyOneHoursAgo.toISOString());
+
+    if (day5Merchants && day5Merchants.length > 0) {
+      const emailMap = await batchGetUserEmails([...new Set(day5Merchants.map(m => m.user_id))]);
+
+      // Get scan counts for these merchants
+      const day5Ids = day5Merchants.map(m => m.id);
+      const { data: day5Visits } = await supabase
+        .from('visits')
+        .select('merchant_id')
+        .in('merchant_id', day5Ids)
+        .eq('status', 'confirmed');
+
+      const scanCountMap = new Map<string, number>();
+      for (const v of day5Visits || []) {
+        scanCountMap.set(v.merchant_id, (scanCountMap.get(v.merchant_id) || 0) + 1);
+      }
+
+      await batchProcess(day5Merchants, async (merchant) => {
+        results.day5Checkin.processed++;
+        const email = emailMap.get(merchant.user_id);
+        if (!email) { results.day5Checkin.skipped++; return; }
+
+        try {
+          const totalScans = scanCountMap.get(merchant.id) || 0;
+          const result = await sendDay5CheckinEmail(email, merchant.shop_name, totalScans);
+          if (result.success) { results.day5Checkin.sent++; }
+          else { results.day5Checkin.errors++; }
+        } catch { results.day5Checkin.errors++; }
+      });
+    }
+
+    // ==================== 2e. QR CODE EMAIL (programme configuré, envoi unique) ====================
+    {
+      const { data: qrCandidates } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id')
+        .not('reward_description', 'is', null)
+        .in('subscription_status', ['trial', 'active']);
+
+      if (qrCandidates && qrCandidates.length > 0) {
+        // Check tracking to avoid sending twice
+        const { data: existingQr } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id')
+          .in('merchant_id', qrCandidates.map(m => m.id))
+          .eq('reminder_day', -103);
+
+        const alreadySentQr = new Set((existingQr || []).map(t => t.merchant_id));
+        const qrToSend = qrCandidates.filter(m => !alreadySentQr.has(m.id));
+        results.qrCode.processed = qrCandidates.length;
+        results.qrCode.skipped = qrCandidates.length - qrToSend.length;
+
+        if (qrToSend.length > 0) {
+          const qrEmailMap = await batchGetUserEmails([...new Set(qrToSend.map(m => m.user_id))]);
+
+          await batchProcess(qrToSend, async (merchant) => {
+            const email = qrEmailMap.get(merchant.user_id);
+            if (!email) { results.qrCode.skipped++; return; }
+
+            try {
+              const result = await sendQRCodeEmail(email, merchant.shop_name);
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({
+                  merchant_id: merchant.id, reminder_day: -103, pending_count: 0,
+                });
+                results.qrCode.sent++;
+              } else { results.qrCode.errors++; }
+            } catch { results.qrCode.errors++; }
+          });
+        }
+      }
+    }
+
+    // ==================== 2f. SOCIAL KIT EMAIL (programme + logo, 2j après QR code) ====================
+    {
+      const { data: socialKitCandidates } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description')
+        .not('reward_description', 'is', null)
+        .not('logo_url', 'is', null)
+        .in('subscription_status', ['trial', 'active']);
+
+      if (socialKitCandidates && socialKitCandidates.length > 0) {
+        // Check who already got the social kit email
+        const { data: existingSocialKit } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id')
+          .in('merchant_id', socialKitCandidates.map(m => m.id))
+          .eq('reminder_day', -104);
+
+        const alreadySentSocialKit = new Set((existingSocialKit || []).map(t => t.merchant_id));
+
+        // Check who got QR code email at least 2 days ago
+        const { data: qrSentTrackings } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id, sent_at')
+          .in('merchant_id', socialKitCandidates.map(m => m.id))
+          .eq('reminder_day', -103);
+
+        const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        const qrSentOver2DaysAgo = new Set(
+          (qrSentTrackings || [])
+            .filter(t => new Date(t.sent_at) <= twoDaysAgo)
+            .map(t => t.merchant_id)
+        );
+
+        // Filter: got QR code ≥2 days ago AND didn't get social kit yet
+        const socialKitToSend = socialKitCandidates.filter(
+          m => qrSentOver2DaysAgo.has(m.id) && !alreadySentSocialKit.has(m.id)
+        );
+
+        results.socialKit.processed = socialKitCandidates.length;
+        results.socialKit.skipped = socialKitCandidates.length - socialKitToSend.length;
+
+        if (socialKitToSend.length > 0) {
+          const skEmailMap = await batchGetUserEmails([...new Set(socialKitToSend.map(m => m.user_id))]);
+
+          await batchProcess(socialKitToSend, async (merchant) => {
+            const email = skEmailMap.get(merchant.user_id);
+            if (!email) { results.socialKit.skipped++; return; }
+
+            try {
+              const result = await sendSocialKitEmail(
+                email, merchant.shop_name, merchant.reward_description!,
+                merchant.stamps_required, merchant.primary_color,
+                merchant.logo_url || undefined, undefined,
+                merchant.tier2_enabled, merchant.tier2_stamps_required, merchant.tier2_reward_description
+              );
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({
+                  merchant_id: merchant.id, reminder_day: -104, pending_count: 0,
+                });
+                results.socialKit.sent++;
+              } else { results.socialKit.errors++; }
+            } catch { results.socialKit.errors++; }
+          });
+        }
+      }
+    }
+
+    // ==================== 2g. FIRST SCAN EMAIL ====================
+    // Merchants with exactly 1 confirmed visit (first scan happened recently)
+    const { data: allConfiguredMerchants } = await supabase
+      .from('merchants')
+      .select('id, shop_name, user_id')
+      .not('reward_description', 'is', null)
+      .in('subscription_status', ['trial', 'active']);
+
+    if (allConfiguredMerchants && allConfiguredMerchants.length > 0) {
+      const configuredIds = allConfiguredMerchants.map(m => m.id);
+
+      // Get visit counts per merchant
+      const { data: visitCounts } = await supabase
+        .from('visits')
+        .select('merchant_id')
+        .in('merchant_id', configuredIds)
+        .eq('status', 'confirmed');
+
+      const visitCountMap = new Map<string, number>();
+      for (const v of visitCounts || []) {
+        visitCountMap.set(v.merchant_id, (visitCountMap.get(v.merchant_id) || 0) + 1);
+      }
+
+      // Filter to merchants with exactly 1 visit (first scan)
+      const firstScanMerchants = allConfiguredMerchants.filter(m => visitCountMap.get(m.id) === 1);
+
+      if (firstScanMerchants.length > 0) {
+        // Check tracking to avoid sending twice
+        const { data: existingFirstScan } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id')
+          .in('merchant_id', firstScanMerchants.map(m => m.id))
+          .eq('reminder_day', -100);
+
+        const alreadySent = new Set((existingFirstScan || []).map(t => t.merchant_id));
+
+        const emailMap = await batchGetUserEmails([...new Set(firstScanMerchants.map(m => m.user_id))]);
+
+        await batchProcess(firstScanMerchants, async (merchant) => {
+          results.firstScan.processed++;
+          if (alreadySent.has(merchant.id)) { results.firstScan.skipped++; return; }
+
+          const email = emailMap.get(merchant.user_id);
+          if (!email) { results.firstScan.skipped++; return; }
+
+          try {
+            const result = await sendFirstScanEmail(email, merchant.shop_name);
+            if (result.success) {
+              await supabase.from('pending_email_tracking').insert({
+                merchant_id: merchant.id, reminder_day: -100, pending_count: 0,
+              });
+              results.firstScan.sent++;
+            } else { results.firstScan.errors++; }
+          } catch { results.firstScan.errors++; }
+        });
+      }
+
+      // ==================== 2f. FIRST REWARD EMAIL ====================
+      // Check for merchants where a customer has reached stamps_required
+      const { data: merchantsWithProgram } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id, reward_description, stamps_required')
+        .not('reward_description', 'is', null)
+        .in('subscription_status', ['trial', 'active']);
+
+      if (merchantsWithProgram && merchantsWithProgram.length > 0) {
+        const programIds = merchantsWithProgram.map(m => m.id);
+        const merchantProgramMap = new Map(merchantsWithProgram.map(m => [m.id, m]));
+
+        // Get loyalty cards where current_stamps >= stamps_required (reward unlocked)
+        const { data: rewardCards } = await supabase
+          .from('loyalty_cards')
+          .select('merchant_id, rewards_earned')
+          .in('merchant_id', programIds)
+          .gt('rewards_earned', 0);
+
+        // Find merchants that have at least 1 reward earned
+        const merchantsWithRewards = new Map<string, number>();
+        for (const card of rewardCards || []) {
+          merchantsWithRewards.set(card.merchant_id, (merchantsWithRewards.get(card.merchant_id) || 0) + card.rewards_earned);
+        }
+
+        // Filter to merchants with total rewards_earned = 1 (first reward just happened)
+        const firstRewardMerchantIds = [...merchantsWithRewards.entries()]
+          .filter(([, count]) => count === 1)
+          .map(([id]) => id);
+
+        if (firstRewardMerchantIds.length > 0) {
+          // Check tracking
+          const { data: existingFirstReward } = await supabase
+            .from('pending_email_tracking')
+            .select('merchant_id')
+            .in('merchant_id', firstRewardMerchantIds)
+            .eq('reminder_day', -101);
+
+          const alreadySentReward = new Set((existingFirstReward || []).map(t => t.merchant_id));
+
+          const rewardEmailMap = await batchGetUserEmails(
+            [...new Set(firstRewardMerchantIds
+              .filter(id => !alreadySentReward.has(id))
+              .map(id => merchantProgramMap.get(id)?.user_id)
+              .filter(Boolean) as string[])]
+          );
+
+          await batchProcess(firstRewardMerchantIds, async (merchantId) => {
+            results.firstReward.processed++;
+            if (alreadySentReward.has(merchantId)) { results.firstReward.skipped++; return; }
+
+            const merchant = merchantProgramMap.get(merchantId);
+            if (!merchant) { results.firstReward.skipped++; return; }
+
+            const email = rewardEmailMap.get(merchant.user_id);
+            if (!email) { results.firstReward.skipped++; return; }
+
+            try {
+              const result = await sendFirstRewardEmail(email, merchant.shop_name, merchant.reward_description!);
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({
+                  merchant_id: merchantId, reminder_day: -101, pending_count: 0,
+                });
+                results.firstReward.sent++;
+              } else { results.firstReward.errors++; }
+            } catch { results.firstReward.errors++; }
+          });
+        }
+      }
+
+      // ==================== 2g. TIER 2 UPSELL (50+ clients, tier2 pas activé) ====================
+      const { data: tier2Candidates } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id, reward_description, tier2_enabled')
+        .not('reward_description', 'is', null)
+        .in('subscription_status', ['trial', 'active'])
+        .or('tier2_enabled.is.null,tier2_enabled.eq.false');
+
+      if (tier2Candidates && tier2Candidates.length > 0) {
+        const t2Ids = tier2Candidates.map(m => m.id);
+
+        // Count unique customers per merchant
+        const { data: loyaltyCards } = await supabase
+          .from('loyalty_cards')
+          .select('merchant_id, customer_id')
+          .in('merchant_id', t2Ids);
+
+        const customerCountMap = new Map<string, number>();
+        const seenCustomers = new Map<string, Set<string>>();
+        for (const card of loyaltyCards || []) {
+          if (!seenCustomers.has(card.merchant_id)) seenCustomers.set(card.merchant_id, new Set());
+          seenCustomers.get(card.merchant_id)!.add(card.customer_id);
+        }
+        for (const [merchantId, customers] of seenCustomers) {
+          customerCountMap.set(merchantId, customers.size);
+        }
+
+        // Filter to merchants with 50+ customers
+        const tier2Eligible = tier2Candidates.filter(m => (customerCountMap.get(m.id) || 0) >= 50);
+
+        if (tier2Eligible.length > 0) {
+          // Check tracking
+          const { data: existingTier2 } = await supabase
+            .from('pending_email_tracking')
+            .select('merchant_id')
+            .in('merchant_id', tier2Eligible.map(m => m.id))
+            .eq('reminder_day', -102);
+
+          const alreadySentTier2 = new Set((existingTier2 || []).map(t => t.merchant_id));
+          const t2EmailMap = await batchGetUserEmails([...new Set(tier2Eligible.map(m => m.user_id))]);
+
+          await batchProcess(tier2Eligible, async (merchant) => {
+            results.tier2Upsell.processed++;
+            if (alreadySentTier2.has(merchant.id)) { results.tier2Upsell.skipped++; return; }
+
+            const email = t2EmailMap.get(merchant.user_id);
+            if (!email) { results.tier2Upsell.skipped++; return; }
+
+            try {
+              const totalCustomers = customerCountMap.get(merchant.id) || 0;
+              const result = await sendTier2UpsellEmail(email, merchant.shop_name, totalCustomers, merchant.reward_description!);
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({
+                  merchant_id: merchant.id, reminder_day: -102, pending_count: 0,
+                });
+                results.tier2Upsell.sent++;
+              } else { results.tier2Upsell.errors++; }
+            } catch { results.tier2Upsell.errors++; }
+          });
+        }
+      }
+    }
+
+    // ==================== 2h. WEEKLY DIGEST (lundi matin) ====================
+    const dayOfWeek = now.getUTCDay(); // 0 = dimanche, 1 = lundi
+    if (dayOfWeek === 1) {
+      const { data: digestMerchants } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id')
+        .not('reward_description', 'is', null)
+        .in('subscription_status', ['trial', 'active']);
+
+      if (digestMerchants && digestMerchants.length > 0) {
+        const digestIds = digestMerchants.map(m => m.id);
+        const sevenDaysAgoDigest = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        // Get this week's visits
+        const { data: weekVisits } = await supabase
+          .from('visits')
+          .select('merchant_id, customer_id, visited_at')
+          .in('merchant_id', digestIds)
+          .eq('status', 'confirmed')
+          .gte('visited_at', sevenDaysAgoDigest.toISOString());
+
+        // Get total customers and rewards earned this week
+        const { data: allCards } = await supabase
+          .from('loyalty_cards')
+          .select('merchant_id, customer_id, rewards_earned, created_at')
+          .in('merchant_id', digestIds);
+
+        // Build stats per merchant
+        const weekStats = new Map<string, { scans: number; newCustomers: number; rewards: number; totalCustomers: number }>();
+        for (const m of digestMerchants) {
+          weekStats.set(m.id, { scans: 0, newCustomers: 0, rewards: 0, totalCustomers: 0 });
+        }
+
+        for (const v of weekVisits || []) {
+          const stats = weekStats.get(v.merchant_id);
+          if (stats) stats.scans++;
+        }
+
+        for (const card of allCards || []) {
+          const stats = weekStats.get(card.merchant_id);
+          if (!stats) continue;
+          stats.totalCustomers++;
+          if (new Date(card.created_at) >= sevenDaysAgoDigest) {
+            stats.newCustomers++;
+          }
+        }
+
+        // Count rewards earned this week (approximate via visits where customer reached threshold)
+        const { data: merchantPrograms } = await supabase
+          .from('merchants')
+          .select('id, stamps_required')
+          .in('id', digestIds);
+
+        const stampsMap = new Map((merchantPrograms || []).map(m => [m.id, m.stamps_required]));
+
+        for (const card of allCards || []) {
+          const stats = weekStats.get(card.merchant_id);
+          if (stats && card.rewards_earned > 0) {
+            stats.rewards += card.rewards_earned;
+          }
+        }
+
+        const digestEmailMap = await batchGetUserEmails([...new Set(digestMerchants.map(m => m.user_id))]);
+
+        await batchProcess(digestMerchants, async (merchant) => {
+          results.weeklyDigest.processed++;
+          const email = digestEmailMap.get(merchant.user_id);
+          if (!email) { results.weeklyDigest.skipped++; return; }
+
+          const stats = weekStats.get(merchant.id);
+          if (!stats) { results.weeklyDigest.skipped++; return; }
+
+          try {
+            const result = await sendWeeklyDigestEmail(
+              email, merchant.shop_name,
+              stats.scans, stats.newCustomers, stats.rewards, stats.totalCustomers
+            );
+            if (result.success) { results.weeklyDigest.sent++; }
+            else { results.weeklyDigest.errors++; }
+          } catch { results.weeklyDigest.errors++; }
+        });
+      }
+    }
+
+    // ==================== 3. INACTIVE MERCHANTS (programme configuré, 0 check-in) ====================
     const INACTIVE_DAYS = [7, 14, 30];
 
     const { data: activeMerchants } = await supabase
@@ -329,7 +770,89 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ==================== 3. PENDING REMINDERS ====================
+    // ==================== 3. REACTIVATION (merchants annulés) ====================
+    const REACTIVATION_DAYS = [7, 14, 30];
+
+    const { data: canceledMerchants } = await supabase
+      .from('merchants')
+      .select('id, shop_name, user_id, updated_at')
+      .eq('subscription_status', 'canceled');
+
+    if (canceledMerchants && canceledMerchants.length > 0) {
+      // Pre-filter to only merchants matching reactivation days
+      const reactivationCandidates = canceledMerchants.filter(merchant => {
+        const canceledAt = new Date(merchant.updated_at);
+        const daysSince = Math.floor((now.getTime() - canceledAt.getTime()) / (1000 * 60 * 60 * 24));
+        return REACTIVATION_DAYS.includes(daysSince);
+      });
+
+      results.reactivation.processed = canceledMerchants.length;
+      results.reactivation.skipped = canceledMerchants.length - reactivationCandidates.length;
+
+      if (reactivationCandidates.length > 0) {
+        // Batch fetch existing tracking
+        const { data: reactivationTrackings } = await supabase
+          .from('reactivation_email_tracking')
+          .select('merchant_id, day_sent')
+          .in('merchant_id', reactivationCandidates.map(m => m.id));
+
+        const reactivationTrackingSet = new Set(
+          (reactivationTrackings || []).map(t => `${t.merchant_id}:${t.day_sent}`)
+        );
+
+        // Batch fetch user emails
+        const reactivationEmailMap = await batchGetUserEmails(
+          [...new Set(reactivationCandidates.map(m => m.user_id))]
+        );
+
+        // Batch fetch customer counts
+        const { data: reactivationCards } = await supabase
+          .from('loyalty_cards')
+          .select('merchant_id')
+          .in('merchant_id', reactivationCandidates.map(m => m.id));
+
+        const reactivationCountMap = new Map<string, number>();
+        for (const card of reactivationCards || []) {
+          reactivationCountMap.set(card.merchant_id, (reactivationCountMap.get(card.merchant_id) || 0) + 1);
+        }
+
+        await batchProcess(reactivationCandidates, async (merchant) => {
+          const canceledAt = new Date(merchant.updated_at);
+          const daysSinceCancellation = Math.floor(
+            (now.getTime() - canceledAt.getTime()) / (1000 * 60 * 60 * 24)
+          );
+
+          if (reactivationTrackingSet.has(`${merchant.id}:${daysSinceCancellation}`)) {
+            results.reactivation.skipped++;
+            return;
+          }
+
+          const email = reactivationEmailMap.get(merchant.user_id);
+          if (!email) { results.reactivation.skipped++; return; }
+
+          const totalCustomers = reactivationCountMap.get(merchant.id) || 0;
+
+          try {
+            const result = await sendReactivationEmail(
+              email, merchant.shop_name, daysSinceCancellation, totalCustomers || undefined
+            );
+            if (result.success) {
+              await supabase.from('reactivation_email_tracking').insert({
+                merchant_id: merchant.id,
+                day_sent: daysSinceCancellation,
+              });
+              results.reactivation.sent++;
+            } else {
+              results.reactivation.errors++;
+            }
+          } catch {
+            results.reactivation.errors++;
+          }
+        });
+      }
+    }
+
+    // ==================== 4. PENDING REMINDERS ====================
     const { data: merchantsWithPending } = await supabase
       .from('visits')
       .select('merchant_id')
@@ -441,6 +964,11 @@ export async function GET(request: NextRequest) {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     await supabase.from('pending_email_tracking').delete().lt('sent_at', sevenDaysAgo.toISOString());
+
+    // Clean up old reactivation tracking (> 60 jours)
+    const sixtyDaysAgo = new Date();
+    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+    await supabase.from('reactivation_email_tracking').delete().lt('sent_at', sixtyDaysAgo.toISOString());
 
     // ==================== 4. SCHEDULED PUSH 10:00 ====================
     const today = new Date().toISOString().split('T')[0];

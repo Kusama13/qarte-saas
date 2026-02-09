@@ -118,7 +118,7 @@ const contentItem = {
 };
 
 const ctaBox = {
-  backgroundColor: '#654EDA',
+  backgroundColor: '#4b0082',
   borderRadius: '12px',
   padding: '24px',
   margin: '32px 0',
@@ -142,7 +142,7 @@ const ctaText = {
 const ctaButton = {
   backgroundColor: '#ffffff',
   borderRadius: '8px',
-  color: '#654EDA',
+  color: '#4b0082',
   fontSize: '14px',
   fontWeight: '600',
   textDecoration: 'none',

@@ -161,7 +161,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: '#654EDA',
+  backgroundColor: '#4b0082',
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '16px',
@@ -183,7 +183,7 @@ const whatsappButton = {
 };
 
 const testimonialBox = {
-  borderLeft: '3px solid #654EDA',
+  borderLeft: '3px solid #4b0082',
   paddingLeft: '20px',
   margin: '0 0 24px 0',
 };
@@ -197,7 +197,7 @@ const testimonialQuote = {
 };
 
 const testimonialAuthor = {
-  color: '#654EDA',
+  color: '#4b0082',
   fontSize: '14px',
   fontWeight: '600',
   margin: '0',

@@ -11,12 +11,19 @@ import {
   ReactivationEmail,
   ProgramReminderEmail,
   IncompleteSignupEmail,
+  IncompleteSignupReminder2Email,
   ProgramReminderDay2Email,
   ProgramReminderDay3Email,
   InactiveMerchantDay7Email,
   InactiveMerchantDay14Email,
   InactiveMerchantDay30Email,
   SocialKitEmail,
+  QRCodeEmail,
+  FirstScanEmail,
+  FirstRewardEmail,
+  WeeklyDigestEmail,
+  Day5CheckinEmail,
+  Tier2UpsellEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -49,7 +56,7 @@ export async function sendWelcomeEmail(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `Bienvenue sur Qarte, ${shopName}`,
+      subject: `Bienvenue ${shopName} !`,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -79,8 +86,8 @@ export async function sendTrialEndingEmail(
 
   try {
     const subject = daysRemaining <= 1
-      ? `${shopName} - Dernier jour de votre essai Qarte`
-      : `${shopName} - Votre essai Qarte se termine dans ${daysRemaining} jours`;
+      ? `${shopName}, dernier jour d'essai`
+      : `Plus que ${daysRemaining} jours d'essai`;
 
     const html = await render(TrialEndingEmail({ shopName, daysRemaining }));
     const text = await render(TrialEndingEmail({ shopName, daysRemaining }), { plainText: true });
@@ -125,7 +132,7 @@ export async function sendTrialExpiredEmail(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName} - Action requise : votre compte expire dans ${daysUntilDeletion} jours`,
+      subject: `${shopName}, votre essai est terminé`,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -296,7 +303,7 @@ export async function sendPaymentFailedEmail(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName} - Action requise : problème de paiement`,
+      subject: `Un souci avec votre carte`,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -376,7 +383,7 @@ export async function scheduleIncompleteSignupEmail(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: 'Votre compte Qarte est presque prêt — il ne reste que 30 secondes',
+      subject: 'Il ne reste qu\'une étape',
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -438,7 +445,7 @@ export async function sendProgramReminderEmail(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName}, vos clientes d'aujourd'hui repartent sans carte de fidélité`,
+      subject: `${shopName}, lancez votre programme`,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -523,7 +530,7 @@ export async function sendProgramReminderDay2Email(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName} - Quelle récompense choisir ? On a la réponse`,
+      subject: `Quelle récompense choisir ?`,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -559,7 +566,7 @@ export async function sendProgramReminderDay3Email(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName} - Dernier rappel : vos jours d'essai passent vite`,
+      subject: `Dernier rappel : configurez votre programme`,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -594,7 +601,7 @@ export async function sendInactiveMerchantDay7Email(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName} - Aucun passage depuis 7 jours, tout va bien ?`,
+      subject: `${shopName}, tout va bien ?`,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -631,7 +638,7 @@ export async function sendInactiveMerchantDay14Email(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName} - Comment vos concurrents fidélisent leurs clients`,
+      subject: `Comment fidéliser vos clients`,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -666,7 +673,7 @@ export async function sendInactiveMerchantDay30Email(
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName} - Un mois sans utiliser Qarte : on peut vous aider ?`,
+      subject: `${shopName}, on peut vous aider ?`,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -681,6 +688,41 @@ export async function sendInactiveMerchantDay30Email(
     return { success: true };
   } catch (error) {
     logger.error('Error sending inactive merchant day 30 email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email QR code automatique (après configuration du programme)
+export async function sendQRCodeEmail(
+  to: string,
+  shopName: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(QRCodeEmail({ businessName: shopName }));
+    const text = await render(QRCodeEmail({ businessName: shopName }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName}, votre QR code est prêt`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send QR code email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`QR code email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending QR code email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }
@@ -735,6 +777,227 @@ export async function sendSocialKitEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending social kit email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email relance inscription incomplète #2 - PROGRAMMÉ via Resend scheduledAt
+export async function scheduleIncompleteSignupReminder2Email(
+  to: string,
+  delayMinutes: number = 180
+): Promise<ScheduleEmailResult> {
+  const check = checkResend();
+  if (check) return { success: false, error: check.error };
+
+  try {
+    const html = await render(IncompleteSignupReminder2Email({ email: to }));
+    const text = await render(IncompleteSignupReminder2Email({ email: to }), { plainText: true });
+
+    const scheduledAt = new Date(Date.now() + delayMinutes * 60 * 1000).toISOString();
+
+    const { data, error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: 'Votre espace Qarte vous attend',
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+      scheduledAt,
+    });
+
+    if (error) {
+      logger.error('Failed to schedule incomplete signup reminder 2 email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Incomplete signup reminder 2 email scheduled for ${to} in ${delayMinutes} minutes (id: ${data?.id})`);
+    return { success: true, emailId: data?.id };
+  } catch (error) {
+    logger.error('Error scheduling incomplete signup reminder 2 email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to schedule email' };
+  }
+}
+
+// Email premier scan (célébration)
+export async function sendFirstScanEmail(
+  to: string,
+  shopName: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(FirstScanEmail({ shopName }));
+    const text = await render(FirstScanEmail({ shopName }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName}, votre 1er client !`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send first scan email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`First scan email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending first scan email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email première récompense débloquée
+export async function sendFirstRewardEmail(
+  to: string,
+  shopName: string,
+  rewardDescription: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(FirstRewardEmail({ shopName, rewardDescription }));
+    const text = await render(FirstRewardEmail({ shopName, rewardDescription }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `1ère récompense débloquée !`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send first reward email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`First reward email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending first reward email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email bilan hebdomadaire
+export async function sendWeeklyDigestEmail(
+  to: string,
+  shopName: string,
+  scansThisWeek: number,
+  newCustomers: number,
+  rewardsEarned: number,
+  totalCustomers: number
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(WeeklyDigestEmail({ shopName, scansThisWeek, newCustomers, rewardsEarned, totalCustomers }));
+    const text = await render(WeeklyDigestEmail({ shopName, scansThisWeek, newCustomers, rewardsEarned, totalCustomers }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} — votre semaine`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send weekly digest email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Weekly digest email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending weekly digest email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email check-in J+5 (comble le gap J+3 → J+7)
+export async function sendDay5CheckinEmail(
+  to: string,
+  shopName: string,
+  totalScans: number
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(Day5CheckinEmail({ shopName, totalScans }));
+    const text = await render(Day5CheckinEmail({ shopName, totalScans }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName}, votre 1ère semaine`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send day 5 checkin email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Day 5 checkin email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending day 5 checkin email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email upsell Tier 2 VIP
+export async function sendTier2UpsellEmail(
+  to: string,
+  shopName: string,
+  totalCustomers: number,
+  rewardDescription: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(Tier2UpsellEmail({ shopName, totalCustomers, rewardDescription }));
+    const text = await render(Tier2UpsellEmail({ shopName, totalCustomers, rewardDescription }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `Vos meilleurs clients méritent plus`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send tier 2 upsell email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Tier 2 upsell email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending tier 2 upsell email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

@@ -111,11 +111,11 @@ const challengeBox = {
   padding: '24px',
   margin: '24px 0',
   textAlign: 'center' as const,
-  border: '2px solid #654EDA',
+  border: '2px solid #4b0082',
 };
 
 const challengeTitle = {
-  color: '#654EDA',
+  color: '#4b0082',
   fontSize: '13px',
   fontWeight: '600',
   textTransform: 'uppercase' as const,
@@ -135,7 +135,7 @@ const scriptBox = {
   borderRadius: '12px',
   padding: '20px 24px',
   margin: '24px 0',
-  borderLeft: '4px solid #654EDA',
+  borderLeft: '4px solid #4b0082',
 };
 
 const scriptTitle = {
@@ -189,7 +189,7 @@ const buttonContainer = {
 };
 
 const button = {
-  backgroundColor: '#654EDA',
+  backgroundColor: '#4b0082',
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '16px',
