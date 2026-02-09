@@ -14,6 +14,7 @@ import {
   Sparkles,
   Trophy,
   ExternalLink,
+  Eye,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -309,6 +310,12 @@ export default function ProgramPage() {
         <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
           Personnalisez votre programme de fidélité
         </p>
+        {merchant && (
+          <p className="mt-2 text-xs text-[#4b0082]/60 flex items-center gap-1.5 lg:hidden">
+            <Eye className="w-3.5 h-3.5" />
+            Après enregistrement, un aperçu de votre carte sera disponible en bas de page
+          </p>
+        )}
       </div>
 
       <div className="grid gap-5 md:gap-8 lg:grid-cols-2">
@@ -552,7 +559,7 @@ export default function ProgramPage() {
                         key={suggestion}
                         type="button"
                         onClick={() => setFormData({ ...formData, tier2RewardDescription: suggestion })}
-                        className={`px-4 py-2 text-sm font-medium rounded-xl border transition-all duration-200 ${
+                        className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all duration-200 ${
                           formData.tier2RewardDescription === suggestion
                             ? 'bg-violet-100 border-violet-300 text-violet-700 shadow-sm'
                             : 'bg-white border-gray-200 text-gray-600 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600 hover:shadow-sm'

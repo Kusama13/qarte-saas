@@ -210,7 +210,7 @@ export function MerchantSettingsForm({
                 key={suggestion}
                 type="button"
                 onClick={() => setRewardDescription(suggestion)}
-                className={`px-4 py-2 text-sm font-medium rounded-xl border transition-all duration-200 ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all duration-200 ${
                   rewardDescription === suggestion
                     ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-sm'
                     : 'bg-white border-gray-200 text-gray-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 hover:shadow-sm'

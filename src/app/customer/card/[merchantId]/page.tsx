@@ -649,13 +649,24 @@ export default function CustomerCardPage({
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${merchant.primary_color}15 0%, ${merchant.primary_color}40 40%, ${merchant.primary_color}60 70%, ${merchant.primary_color}35 100%)` }}>
       {/* Preview Mode Banner */}
       {isPreview && (
-        <div className={`sticky top-0 z-50 ${isDemo ? 'bg-gradient-to-r from-indigo-600 to-violet-600' : 'bg-indigo-600'} text-white text-center py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2 shadow-lg`}>
-          <Eye className="w-4 h-4" />
-          {isDemo
-            ? 'Exemple de carte de fidélité — Essayez gratuitement !'
-            : isOnboarding
-              ? 'Voici ce que verront vos clients !'
-              : 'Mode prévisualisation — Vos clients verront cette carte'}
+        <div className="sticky top-0 z-50 shadow-lg">
+          <div className={`${isDemo ? 'bg-gradient-to-r from-indigo-600 to-violet-600' : 'bg-indigo-600'} text-white text-center py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2`}>
+            <Eye className="w-4 h-4" />
+            {isDemo
+              ? 'Exemple de carte de fidélité — Essayez gratuitement !'
+              : isOnboarding
+                ? 'Voici ce que verront vos clients !'
+                : 'Mode prévisualisation — Vos clients verront cette carte'}
+          </div>
+          {!isDemo && (
+            <Link
+              href="/dashboard/qr-download"
+              className="flex items-center justify-center gap-2 bg-indigo-500 text-white text-xs font-medium py-2 px-4 hover:bg-indigo-400 transition-colors"
+            >
+              <QrCode className="w-3.5 h-3.5" />
+              L&apos;aperçu vous convient ? Téléchargez votre QR code
+            </Link>
+          )}
         </div>
       )}
       {/* Demo type selector */}
