@@ -57,7 +57,7 @@ export async function POST(request: Request) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', merchantId)
-        .select('shop_name, user_id')
+        .select('shop_name, user_id, trial_ends_at')
         .single();
 
       if (!merchant) {
@@ -69,7 +69,19 @@ export async function POST(request: Request) {
       if (merchant) {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         if (userData?.user?.email) {
-          await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name).catch((err) => {
+          // Date du prochain prélèvement = fin de l'essai si encore actif
+          let nextBillingDate: string | undefined;
+          if (merchant.trial_ends_at) {
+            const trialEnd = new Date(merchant.trial_ends_at);
+            if (trialEnd > new Date()) {
+              nextBillingDate = trialEnd.toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              });
+            }
+          }
+          await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate).catch((err) => {
             logger.error('Failed to send subscription email', err);
           });
         }
@@ -101,24 +113,9 @@ export async function POST(request: Request) {
 
       if (!merchant) {
         logger.debug('Webhook subscription.deleted: no merchant matched stripe_subscription_id:', subscription.id);
-        break;
       }
 
-      // Envoyer l'email de confirmation de résiliation
-      if (merchant) {
-        const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
-        if (userData?.user?.email) {
-          const endDate = new Date().toLocaleDateString('fr-FR', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          });
-          await sendSubscriptionCanceledEmail(userData.user.email, merchant.shop_name, endDate).catch((err) => {
-            logger.error('Failed to send subscription canceled email', err);
-          });
-        }
-      }
-
+      // Email déjà envoyé au moment du passage en 'canceling' (subscription.updated)
       break;
     }
 
@@ -156,14 +153,26 @@ export async function POST(request: Request) {
       logger.debug('Payment succeeded for customer:', invoice.customer);
 
       // Restore to active if was past_due
-      await supabase
+      const { data: merchant } = await supabase
         .from('merchants')
         .update({
           subscription_status: 'active',
           updated_at: new Date().toISOString(),
         })
         .eq('stripe_customer_id', invoice.customer as string)
-        .eq('subscription_status', 'past_due');
+        .eq('subscription_status', 'past_due')
+        .select('shop_name, user_id')
+        .single();
+
+      // Email de confirmation si paiement récupéré (past_due → active)
+      if (merchant) {
+        const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+        if (userData?.user?.email) {
+          await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name).catch((err) => {
+            logger.error('Failed to send payment recovery email', err);
+          });
+        }
+      }
 
       break;
     }
@@ -219,11 +228,26 @@ export async function POST(request: Request) {
           updated_at: new Date().toISOString(),
         })
         .eq('stripe_subscription_id', subscription.id)
-        .select('id')
+        .select('id, shop_name, user_id')
         .single();
 
       if (!updatedMerchant) {
         logger.debug('Webhook subscription.updated: no merchant matched stripe_subscription_id:', subscription.id);
+      }
+
+      // Email de confirmation d'annulation programmée
+      if (updatedMerchant && newStatus === 'canceling') {
+        const { data: userData } = await supabase.auth.admin.getUserById(updatedMerchant.user_id);
+        if (userData?.user?.email) {
+          const endDate = new Date((subscription.cancel_at as number) * 1000).toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          });
+          await sendSubscriptionCanceledEmail(userData.user.email, updatedMerchant.shop_name, endDate).catch((err) => {
+            logger.error('Failed to send subscription canceling email', err);
+          });
+        }
       }
 
       break;

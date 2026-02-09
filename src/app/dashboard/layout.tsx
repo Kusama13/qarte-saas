@@ -148,7 +148,7 @@ function DashboardLayoutContent({
                 onClick={() => setSidebarOpen(false)}
                 className="block mt-1 text-xs underline hover:no-underline"
               >
-                Ajouter une carte bancaire
+                {merchant?.stripe_subscription_id ? 'Voir l\'abonnement' : 'Ajouter une carte bancaire'}
               </Link>
             </div>
           )}
@@ -168,6 +168,21 @@ function DashboardLayoutContent({
                 className="block mt-2 px-3 py-1.5 bg-red-600 text-white text-center rounded-lg font-medium text-xs hover:bg-red-700"
               >
                 Souscrire maintenant
+              </Link>
+            </div>
+          )}
+
+          {/* Banner annulation en cours */}
+          {merchant?.subscription_status === 'canceling' && (
+            <div className="mx-3 mt-3 p-3 rounded-xl text-sm bg-orange-50 text-orange-700">
+              <AlertTriangle className="w-4 h-4 inline mr-1.5" />
+              <span className="font-medium">Annulation en fin de période</span>
+              <Link
+                href="/dashboard/subscription"
+                onClick={() => setSidebarOpen(false)}
+                className="block mt-1 text-xs underline hover:no-underline"
+              >
+                Annuler la résiliation
               </Link>
             </div>
           )}

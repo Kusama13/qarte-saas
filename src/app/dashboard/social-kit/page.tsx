@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   Check,
   Loader2,
-  Share2,
   Copy,
   Instagram,
   Sparkles,
@@ -102,26 +101,20 @@ export default function SocialKitPage() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="relative overflow-hidden mb-8 p-8 rounded-3xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-600">
-        <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-
-        <div className="relative">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm font-medium mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour au tableau de bord
-          </Link>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight flex items-center gap-3">
-            <Share2 className="w-8 h-8" />
-            Kit Réseaux Sociaux
-          </h1>
-          <p className="mt-2 text-white/80 font-medium">
-            Téléchargez votre visuel et partagez-le sur Instagram, Facebook, WhatsApp...
-          </p>
-        </div>
+      <div className="mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors mb-3"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Retour
+        </Link>
+        <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+          Kit Réseaux Sociaux
+        </h1>
+        <p className="mt-2 text-sm text-gray-500">
+          Téléchargez votre visuel et partagez-le sur Instagram, Facebook, WhatsApp...
+        </p>
       </div>
 
       {/* Main Content */}

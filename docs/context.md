@@ -46,7 +46,7 @@ src/
 ├── app/                    # Next.js App Router
 │   ├── api/               # Routes API
 │   ├── auth/              # Pages authentification
-│   ├── dashboard/         # Dashboard commercant
+│   ├── dashboard/         # Dashboard commercant (+ social-kit/)
 │   ├── admin/             # Dashboard admin
 │   ├── customer/          # Pages client
 │   ├── offre-speciale/    # Landing retargeting (exit popup)
@@ -68,18 +68,34 @@ src/
 │   ├── stripe.ts         # Client Stripe
 │   ├── analytics.ts      # Tracking events
 │   ├── push.ts           # Notifications push
-│   └── utils.ts          # Helpers generaux
+│   ├── logger.ts         # Logger structuré
+│   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber)
 │
-├── emails/               # Templates React Email
-│   ├── WelcomeEmail.tsx           # Email bienvenue (urgence + temoignage)
-│   ├── TrialEndingEmail.tsx       # Rappel fin essai
-│   ├── TrialExpiredEmail.tsx      # Essai expire
-│   ├── PendingPointsEmail.tsx     # Passages en attente
-│   ├── ProgramReminderEmail.tsx   # Rappel config programme (J+1)
-│   ├── IncompleteSignupEmail.tsx  # Relance inscription incomplete (2-3h)
-│   ├── PaymentFailedEmail.tsx     # Echec paiement Stripe
-│   ├── SubscriptionCanceledEmail.tsx # Annulation abonnement
-│   ├── ReactivationEmail.tsx      # Win-back J+7/14/30
+├── emails/               # Templates React Email (24 templates + BaseLayout)
+│   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
+│   ├── WelcomeEmail.tsx           # Bienvenue (urgence + temoignage)
+│   ├── IncompleteSignupEmail.tsx  # Relance inscription +1h
+│   ├── IncompleteSignupReminder2Email.tsx # Relance inscription +3h
+│   ├── ProgramReminderEmail.tsx   # Rappel programme J+1
+│   ├── ProgramReminderDay2Email.tsx # Rappel programme J+2 (par shop_type)
+│   ├── ProgramReminderDay3Email.tsx # Rappel programme J+3 (urgence)
+│   ├── TrialEndingEmail.tsx       # Fin essai J-5/3/1
+│   ├── TrialExpiredEmail.tsx      # Essai expire J+1/3/5
+│   ├── InactiveMerchantDay7Email.tsx  # Inactif J+7 (diagnostic)
+│   ├── InactiveMerchantDay14Email.tsx # Inactif J+14 (pression)
+│   ├── InactiveMerchantDay30Email.tsx # Inactif J+30 (check-in)
+│   ├── FirstScanEmail.tsx         # Premier scan (celebration)
+│   ├── Day5CheckinEmail.tsx       # Check-in J+5
+│   ├── FirstRewardEmail.tsx       # Premiere recompense
+│   ├── Tier2UpsellEmail.tsx       # Upsell palier VIP
+│   ├── WeeklyDigestEmail.tsx      # Bilan hebdomadaire
+│   ├── PendingPointsEmail.tsx     # Passages en attente (Shield)
+│   ├── QRCodeEmail.tsx            # QR code pret
+│   ├── SocialKitEmail.tsx         # Kit reseaux sociaux
+│   ├── SubscriptionConfirmedEmail.tsx # Confirmation abonnement (Stripe)
+│   ├── PaymentFailedEmail.tsx     # Echec paiement (Stripe)
+│   ├── SubscriptionCanceledEmail.tsx # Annulation abonnement (Stripe)
+│   ├── ReactivationEmail.tsx      # Win-back J+7/14/30 (codes promo)
 │   └── EbookEmail.tsx             # Telechargement ebook
 │
 ├── hooks/
@@ -97,11 +113,12 @@ docs/
 └── roadmap/              # Fonctionnalites a venir (mode article, scheduled push)
 
 supabase/
-└── migrations/           # 30 migrations SQL
+└── migrations/           # 31 migrations SQL
     ├── 001-025           # Schema initial + fixes
     ├── 026               # Trial period 15 jours
     ├── 027               # Spelling cancelled→canceled
     ├── 028               # Reactivation email tracking
+    ├── 029               # Merchant country + E.164 phone migration
     └── 030               # Derniere migration
 
 public/
@@ -117,6 +134,7 @@ public/
 ### merchants
 - `id`, `user_id`, `slug`, `scan_code`
 - `shop_name`, `shop_type`, `shop_address`, `phone`
+- `country` (MerchantCountry: 'FR' | 'BE' | 'CH' | 'LU', default 'FR')
 - `logo_url`, `primary_color`, `secondary_color`
 - `loyalty_mode` ('visit' | 'article')
 - `stamps_required`, `reward_description`
@@ -125,7 +143,7 @@ public/
 - `shield_enabled` (Qarte Shield)
 
 ### customers
-- `id`, `phone_number`, `first_name`, `last_name`
+- `id`, `phone_number` (format E.164 sans +, ex: `33612345678`), `first_name`, `last_name`
 
 ### loyalty_cards
 - `id`, `customer_id`, `merchant_id`
@@ -161,7 +179,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 ## 5. Routes API Principales
 
 ### Fidelite
-- `POST /api/checkin` - Enregistrer un passage
+- `POST /api/checkin` - Enregistrer un passage (parallelise: 5 groupes Promise.all, cree customer+card si besoin)
 - `POST /api/redeem` - Utiliser un bon
 - `POST /api/adjust-points` - Ajustement manuel
 
@@ -196,13 +214,24 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 ## 6. Fonctionnalites Cles
 
 ### Systeme de Fidelite
-- Check-in par QR code
+- Check-in par QR code (API parallelisee — 5 groupes Promise.all, ~300-600ms)
 - Accumulation de tampons/points
 - 2 paliers de recompenses
 - Mode visite ou mode article
 - Historique des passages
 - Suggestions de programme par type de commerce (MerchantSettingsForm)
+- 10 palettes couleurs (6 mobile + 4 desktop-only)
 - Preview carte client avec donnees simulees (`?preview=true`)
+
+### Support Multi-Pays
+- Pays supportes : France (FR), Belgique (BE), Suisse (CH), Luxembourg (LU)
+- Numeros stockes en format E.164 sans `+` (ex: `33612345678`, `32475123456`)
+- `PHONE_CONFIG` par pays : prefix international, longueur, placeholder
+- `formatPhoneNumber(phone, country)` : local → E.164
+- `validatePhone(phone, country)` : validation prefix + longueur
+- `displayPhoneNumber(phone, country)` : E.164 → format local lisible
+- Selecteur pays a l'onboarding merchant
+- Backward-compatible : default `'FR'` pour anciens numeros
 
 ### Qarte Shield (Anti-fraude)
 - Quarantaine des visites suspectes
@@ -326,6 +355,12 @@ npm run email
 - estheticienne, massage, epilation
 - autre
 
+### Pays Supportes (MerchantCountry)
+- `FR` France (prefix 33, local 10 chiffres)
+- `BE` Belgique (prefix 32, local 9-10 chiffres)
+- `CH` Suisse (prefix 41, local 10 chiffres)
+- `LU` Luxembourg (prefix 352, local 9 chiffres, pas de 0 initial)
+
 ### Statuts Abonnement
 - `trial` - periode d'essai
 - `active` - abonnement actif
@@ -363,18 +398,20 @@ npm run email
 ## 13. Design & UX
 
 ### Palette de Couleurs
-- **Primaire:** `#5167fc` (indigo/bleu)
+- **Primaire:** `#4b0082` (violet profond — emails, headers dashboard, branding)
 - **Secondaire:** `#654EDA` (violet)
 - **Accent:** Rose/Pink pour les CTAs
 - **Fond:** Gradients violet vers rose (landing)
 
 ### Style Visuel
+- **Dashboard headers:** `bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]`, gradient texte `from-[#4b0082] to-violet-600`
 - **Glassmorphism:** Utilise sur les pages auth et offre-speciale
   - `backdrop-blur-xl`, `bg-white/80`, bordures transparentes
   - Blobs decoratifs animes en arriere-plan
 - **Cartes:** `rounded-2xl` ou `rounded-3xl`, ombres douces
-- **Boutons:** Gradients, hover effects, transitions fluides
+- **Boutons:** Gradients indigo-violet, hover effects, transitions fluides
 - **Animations:** Framer Motion pour les entrees/sorties
+- **Sidebar mobile:** Bottom sheet 50vh avec drag-to-dismiss (Framer Motion spring)
 
 ### Composants UI Reutilisables (`src/components/ui/`)
 - Button, Input, Select, Modal, Badge
@@ -439,26 +476,30 @@ npm run email
 - 15 jours gratuits
 
 ### Admin (`/admin`)
-- Merchants : liste, filtres par statut, detail par commercant
-- Leads : onglet Inscriptions incompletes (48h) + onglet Ebook
+- Dashboard : metriques startup (MRR, churn, ARPU, LTV) + actions du jour
+- Merchants : liste, filtres par statut + pays, actions rapides, activite, alertes
+- Leads : onglet Inscriptions incompletes (48h, cliquable) + onglet Ebook
 - Analytics, Metriques, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
 
 ### Dashboard (`/dashboard`)
-- Sidebar navigation
-- Statistiques temps reel
-- Gestion programme fidelite (suggestions par shop_type)
-- Telechargement QR/flyers
+- Sidebar navigation (bottom sheet mobile, sidebar desktop)
+- Statistiques temps reel + comparaison semaine precedente
+- Gestion programme fidelite (suggestions par shop_type, 10 palettes couleurs)
+- Telechargement QR/flyers + kit reseaux sociaux
 - Gestion clients
 - Marketing (push notifications)
-- Page abonnement avec countdown timer (fin essai)
+- Page abonnement avec countdown timer + polling apres retour portail Stripe
+- Kit reseaux sociaux (visuel + legendes Instagram)
+- Headers harmonises (violet #4b0082)
 
 ### Scan (`/scan/[code]`)
 - Page publique pour clients
-- Inscription rapide (nom + telephone)
+- Inscription rapide (nom + telephone) — skip register API, checkin cree tout en 1 appel
 - Validation passage
 - Affichage progression fidelite
 - Utilisation recompense
+- Placeholder telephone dynamique selon pays merchant
 
 ---
 
@@ -507,20 +548,51 @@ import type { Merchant } from '@/types';
 
 ---
 
-## 19. Emails Transactionnels
+## 19. Emails Transactionnels (24 templates)
 
+### Onboarding & Activation
 | Email | Declencheur |
 |-------|-------------|
 | WelcomeEmail | Inscription commercant (Phase 2 completee) |
 | IncompleteSignupEmail | Phase 1 sans Phase 2 (+1h via Resend scheduledAt) |
+| IncompleteSignupReminder2Email | Relance #2 (+3h via Resend scheduledAt) |
 | ProgramReminderEmail | Programme non configure J+1 (cron morning) |
+| ProgramReminderDay2Email | Programme non configure J+2, personnalise par shop_type (cron morning) |
+| ProgramReminderDay3Email | Programme non configure J+3, urgence + done-for-you (cron morning) |
+| QRCodeEmail | QR code pret (apres config programme) |
+| SocialKitEmail | Kit reseaux sociaux pret (API email/social-kit) |
+
+### Engagement & Milestones
+| Email | Declencheur |
+|-------|-------------|
+| FirstScanEmail | Premier scan client — celebration (cron morning) |
+| Day5CheckinEmail | Check-in J+5 — bilan premiere semaine (cron morning) |
+| FirstRewardEmail | Premiere recompense debloquee (cron morning) |
+| Tier2UpsellEmail | Upsell palier 2 VIP — 10+ clients (cron morning) |
+| WeeklyDigestEmail | Bilan hebdomadaire — scans, clients, recompenses (cron morning) |
+| PendingPointsEmail | Passages en attente J+0/1/2/3 — Shield (cron morning) |
+
+### Retention & Trial
+| Email | Declencheur |
+|-------|-------------|
 | TrialEndingEmail | J-5, J-3 et J-1 avant fin essai (cron morning) |
 | TrialExpiredEmail | Essai expire J+1/3/5 (cron morning) |
-| PendingPointsEmail | Passages en attente J+0/1/2/3 (cron morning) |
+| InactiveMerchantDay7Email | Merchant inactif J+7 — diagnostic (cron morning) |
+| InactiveMerchantDay14Email | Merchant inactif J+14 — pression concurrentielle (cron morning) |
+| InactiveMerchantDay30Email | Merchant inactif J+30 — check-in personnel (cron morning) |
+
+### Stripe & Paiement
+| Email | Declencheur |
+|-------|-------------|
+| SubscriptionConfirmedEmail | checkout.session.completed + invoice.payment_succeeded recovery (webhook Stripe) |
+| PaymentFailedEmail | invoice.payment_failed (webhook Stripe) |
+| SubscriptionCanceledEmail | customer.subscription.updated → canceling (webhook Stripe, date de fin Stripe) |
+| ReactivationEmail | Win-back J+7/14/30 — codes promo QARTE50/QARTEBOOST/QARTELAST (cron reactivation) |
+
+### Autre
+| Email | Declencheur |
+|-------|-------------|
 | EbookEmail | Telechargement ebook |
-| PaymentFailedEmail | Echec paiement Stripe (webhook) |
-| SubscriptionCanceledEmail | Annulation abonnement (webhook) |
-| ReactivationEmail | Win-back J+7/14/30 apres annulation (cron reactivation) |
 
 ### Headers Anti-spam
 ```typescript

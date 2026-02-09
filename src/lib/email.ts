@@ -206,14 +206,15 @@ export async function sendNewMerchantNotification(
 // Email confirmation d'abonnement
 export async function sendSubscriptionConfirmedEmail(
   to: string,
-  shopName: string
+  shopName: string,
+  nextBillingDate?: string
 ): Promise<SendEmailResult> {
   const check = checkResend();
   if (check) return check;
 
   try {
-    const html = await render(SubscriptionConfirmedEmail({ shopName }));
-    const text = await render(SubscriptionConfirmedEmail({ shopName }), { plainText: true });
+    const html = await render(SubscriptionConfirmedEmail({ shopName, nextBillingDate }));
+    const text = await render(SubscriptionConfirmedEmail({ shopName, nextBillingDate }), { plainText: true });
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,

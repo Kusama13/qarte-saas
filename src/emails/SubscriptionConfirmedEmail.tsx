@@ -9,9 +9,10 @@ import { BaseLayout } from './BaseLayout';
 
 interface SubscriptionConfirmedEmailProps {
   shopName: string;
+  nextBillingDate?: string;
 }
 
-export function SubscriptionConfirmedEmail({ shopName }: SubscriptionConfirmedEmailProps) {
+export function SubscriptionConfirmedEmail({ shopName, nextBillingDate }: SubscriptionConfirmedEmailProps) {
   return (
     <BaseLayout preview="Votre abonnement Qarte est activé !">
       <Heading style={heading}>
@@ -28,8 +29,12 @@ export function SubscriptionConfirmedEmail({ shopName }: SubscriptionConfirmedEm
 
       <Section style={confirmBox}>
         <Text style={confirmTitle}>✓ Abonnement confirmé</Text>
-        <Text style={confirmDetail}>Plan Pro • 19€/mois</Text>
-        <Text style={confirmNote}>Prochain prélèvement dans 30 jours</Text>
+        <Text style={confirmDetail}>Plan Pro</Text>
+        <Text style={confirmNote}>
+          {nextBillingDate
+            ? `Prochain prélèvement le ${nextBillingDate}`
+            : 'Prochain prélèvement dans 30 jours'}
+        </Text>
       </Section>
 
       <Section style={features}>

@@ -4,6 +4,207 @@ Historique des deploiements et modifications.
 
 ---
 
+## [2026-02-09] - Performance + Dashboard polish
+
+### Deploiement #17 - Parallelisation checkin API + harmonisation dashboard
+**Commits:** `995c804` → `76aaef4`
+
+#### Changements
+- **perf:** Parallelisation API checkin — 11 requetes sequentielles → 5 groupes paralleles (Promise.all)
+  - Step 2 : banned check + customer fetch en parallele
+  - Step 4 : loyalty card + recent visit (idempotency) + today scans (shield) en parallele
+  - Step 8 : pending count + tier2 redemption en parallele
+  - Utilisation `maybeSingle()` au lieu de `single()` pour gestion null propre
+  - Latence estimee : ~600-1200ms → ~300-600ms (-50%)
+- **perf:** Scan page — skip API `/api/customers/register` pour nouveaux clients
+  - `processCheckin` cree directement customer + card + visit en 1 seul appel API
+  - Signature changee : `(cust: Customer)` → `(customerInfo: { first_name, last_name })`
+  - `customer_id` retourne dans la reponse checkin pour reconstruire le state client
+- **fix:** `customer_id` manquant dans la reponse duplicate checkin (idempotency early-return)
+- **style:** Harmonisation headers 8 pages dashboard
+  - Style unifie : `bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]`
+  - Gradient texte : `from-[#4b0082] to-violet-600`
+  - Pages : accueil, programme, QR, clients, membres, marketing, abonnement, parametres
+- **fix:** Bouton preview duplique sur page programme (breakpoint `lg:block` → `hidden lg:block`)
+- **fix:** Sidebar mobile — bottom sheet 50vh au lieu de sidebar pleine largeur
+  - Drag-to-dismiss, backdrop tap-to-close
+  - Animation spring avec Framer Motion
+- **fix:** Subscription page — UX cancelled-during-trial
+  - Affichage "Essai annule" au lieu de "Abonnement annule" si annule pendant trial
+  - CTA "Reprendre mon essai gratuit" au lieu de "Se reabonner"
+- **fix:** Webhook `customer.subscription.updated` — detection `trialing + cancel_at_period_end`
+  - Avant : statut `trial` (incorrect), apres : statut `canceling`
+  - Cas inverse : merchant annule resiliation → retour `active` (pas `trial`)
+- **feat:** 4 palettes desktop-only (Terracotta, Ocean, Foret, Noir & Or)
+
+#### Fichiers modifies (14)
+| Fichier | Modification |
+|---------|--------------|
+| `src/app/api/checkin/route.ts` | Parallelisation Promise.all, maybeSingle, customer_id response |
+| `src/app/scan/[code]/page.tsx` | Skip register API, nouvelle signature processCheckin |
+| `src/app/dashboard/page.tsx` | Header harmonise |
+| `src/app/dashboard/program/page.tsx` | Header harmonise + fix bouton preview duplique |
+| `src/app/dashboard/qr-download/page.tsx` | Header harmonise |
+| `src/app/dashboard/customers/page.tsx` | Header harmonise |
+| `src/app/dashboard/members/page.tsx` | Header harmonise |
+| `src/app/dashboard/marketing/page.tsx` | Header harmonise |
+| `src/app/dashboard/subscription/page.tsx` | Header harmonise + UX cancelled-during-trial |
+| `src/app/dashboard/settings/page.tsx` | Header harmonise |
+| `src/components/shared/Sidebar.tsx` | Bottom sheet mobile + drag-to-dismiss |
+| `src/app/api/stripe/webhook/route.ts` | Fix trialing+cancel_at_period_end |
+| `src/components/loyalty/MerchantSettingsForm.tsx` | 4 palettes desktop-only |
+
+---
+
+## [2026-02-09] - Mobile responsive + QR + palettes
+
+### Deploiement #16 - Audit responsive + couleurs beaute
+**Commits:** `8d98ff1` → `b5de032`
+
+#### Changements
+- **style:** Audit responsive complet mobile — polices et paddings reduits
+  - Fonts: `text-3xl` → `text-xl md:text-3xl`, `text-xl` → `text-base md:text-xl`
+  - Paddings: `p-8` → `p-5 md:p-8`, `gap-8` → `gap-4 md:gap-6`
+  - Boutons: `h-14` → `h-10 md:h-14`
+- **fix:** Hamburger menu overlap avec header sur mobile
+- **feat:** Bouton preview programme visible mobile+tablet (`lg:hidden`)
+- **fix:** Page QR download — utilise layout sidebar (etait en pleine page)
+- **fix:** Page abonnement — bouton duplique supprime, texte reduit
+- **fix:** Stripe checkout — gere `checkout.session.expired` et `incomplete` subscriptions
+  - Ignore `customer.subscription.deleted` pour subscriptions `incomplete`/`incomplete_expired`
+- **feat:** 6 palettes couleurs beaute mobile (Rose Poudre, Mauve, Terracotta, etc.)
+- **fix:** Logique CTA abonnement corrigee selon statut merchant
+
+#### Fichiers modifies (8+)
+| Fichier | Modification |
+|---------|--------------|
+| `src/app/dashboard/subscription/page.tsx` | Responsive + bouton duplique + CTA logique |
+| `src/app/dashboard/qr-download/page.tsx` | Layout sidebar |
+| `src/app/dashboard/program/page.tsx` | Bouton preview mobile |
+| `src/components/shared/Sidebar.tsx` | Fix hamburger overlap |
+| `src/components/loyalty/MerchantSettingsForm.tsx` | 6 palettes beaute |
+| `src/app/api/stripe/webhook/route.ts` | Gestion incomplete subscriptions |
+| Multiple dashboard pages | Responsive fonts/paddings |
+
+---
+
+## [2026-02-09] - Support multi-pays telephone
+
+### Deploiement #15 - FR/BE/CH/LU telephone + migration E.164
+**Commit:** `89ac4ce`
+
+#### Changements
+- **feat:** Support 4 pays (France, Belgique, Suisse, Luxembourg) pour numeros de telephone
+  - Nouveau type `MerchantCountry = 'FR' | 'BE' | 'CH' | 'LU'`
+  - `COUNTRIES` mapping, `PHONE_CONFIG` par pays (prefix, longueur, placeholder)
+  - Champ `country` dans interface `Merchant` et table `merchants`
+- **feat:** Stockage numeros en format E.164 sans `+` (ex: `33612345678`, `32475123456`)
+  - `formatPhoneNumber(phone, country)` convertit local → E.164
+  - `validatePhone(phone, country)` valide prefix + longueur
+  - `displayPhoneNumber(phone, country)` E.164 → format local lisible
+- **feat:** Selecteur pays a l'onboarding merchant (signup/complete)
+  - Placeholder telephone dynamique selon pays
+- **refactor:** API checkin restructuree — format phone APRES fetch merchant (pour avoir `merchant.country`)
+- **fix:** API customers/create — ajout `formatPhoneNumber` (manquant avant)
+- **feat:** Filtre par pays dans admin merchants
+- Migration SQL : colonne `country` + conversion phones FR existants vers E.164
+
+#### Nouveaux fichiers (1)
+```
+supabase/migrations/029_add_merchant_country_and_e164.sql
+```
+
+#### Fichiers modifies (14)
+| Fichier | Modification |
+|---------|--------------|
+| `src/types/index.ts` | +MerchantCountry, +COUNTRIES, +country dans Merchant |
+| `src/lib/utils.ts` | +PHONE_CONFIG, refonte formatPhoneNumber/validatePhone, +displayPhoneNumber |
+| `src/app/auth/merchant/signup/complete/page.tsx` | +Select pays, placeholder dynamique |
+| `src/app/api/merchants/create/route.ts` | +country dans insert |
+| `src/app/api/checkin/route.ts` | Restructure : format phone apres fetch merchant |
+| `src/app/api/customers/create/route.ts` | +formatPhoneNumber (bug fix) |
+| `src/app/scan/[code]/page.tsx` | Placeholder + format avec merchant.country |
+| `src/app/dashboard/customers/page.tsx` | Modal + affichage |
+| `src/app/dashboard/settings/page.tsx` | Placeholder + affichage pays |
+| `src/app/customer/page.tsx` | Backward-compatible (default FR) |
+| `src/app/admin/merchants/page.tsx` | +filtre pays |
+| 3 fichiers admin | Simplifier formatPhoneForWhatsApp |
+
+---
+
+## [2026-02-09] - Admin dashboard + refonte emails
+
+### Deploiement #14 - Metriques startup admin + emails #4b0082
+**Commits:** `95936ce` → `0166b0c`
+
+#### Changements
+- **feat:** Admin dashboard metriques startup (MRR, churn, ARPU, LTV, NPS)
+  - Actions du jour (follow up trial, relances, leads)
+- **feat:** Admin merchants — actions rapides, activite recente, alertes
+- **feat:** Admin leads — onglet inscriptions incompletes cliquable
+- **feat:** Kit reseaux sociaux — page telechargement visuel + email marketing
+- **refactor:** Refonte complete templates emails
+  - Couleur primaire `#4b0082` (violet profond)
+  - Banniere email (email-banner.png)
+  - Signatures email coherentes
+- **feat:** Codes promo progressifs dans emails (QARTE50, QARTEBOOST, QARTELAST)
+- **feat:** ReactivationEmail avec escalade urgence J+7/J+14/J+30
+- **fix:** Rate limit Resend — envoi sequentiel avec 600ms entre chaque email
+- **fix:** test-emails utilise ADMIN_SECRET_CODE
+- **feat:** SubscriptionConfirmedEmail envoyee apres checkout reussi
+
+#### Fichiers modifies (15+)
+| Fichier | Modification |
+|---------|--------------|
+| `src/app/admin/page.tsx` | +metriques startup, +actions du jour |
+| `src/app/admin/merchants/page.tsx` | +actions rapides, +activite, +alertes |
+| `src/app/admin/leads/page.tsx` | +onglet cliquable |
+| `src/app/dashboard/social-kit/page.tsx` | Nouvelle page |
+| `src/emails/*.tsx` | Refonte couleur #4b0082, banniere, signatures |
+| `src/lib/email.ts` | +sendSubscriptionConfirmedEmail, +codes promo |
+| `src/app/api/stripe/webhook/route.ts` | +email confirmation abonnement |
+
+---
+
+## [2026-02-08] - Security + Shield + components
+
+### Deploiement #13 - Audit securite, Shield, composants, social kit
+**Commits:** `0c08b3a` → `11e364c`
+
+#### Changements
+- **security:** Stripe webhook verification renforcee + checkout validation
+- **security:** Respect rate limit Resend 2 req/s sur tous les envois
+- **fix:** Audit Qarte Shield — 6 bugs corriges
+  - Quarantaine, detection IP, moderation, affichage
+- **refactor:** Extraction 6 composants + 1 hook depuis pages card et scan
+  - Meilleure separation des responsabilites
+- **refactor:** Smart install bar, texte inclusif (genre neutre), historique 30j
+- **refactor:** Suppression QR scanner (inutilise)
+- **fix:** Prevention auto-checkins repetes a l'ouverture PWA
+- **feat:** Kit reseaux sociaux (social-kit) — templates visuels
+- **feat:** Dashboard comparaison semaine precedente
+- **feat:** Reward sticky priority + tier2 dans social kit
+- **fix:** Affichage dual-tier coherent sur ecrans pending et already-checked
+- **fix:** Audit design carte client + redirect post-scan anti-doublon
+- **fix:** Boutons retour style indigo/violet + responsive dashboard
+- **feat:** Scan reward visibility, tier2 suggestions, leads cliquables
+- **fix:** Page abonnement UX — toast, double loader, success/cancel feedback
+- **fix:** Badges footer non-verifies supprimes
+
+#### Fichiers modifies (20+)
+| Fichier | Modification |
+|---------|--------------|
+| `src/app/api/stripe/webhook/route.ts` | +signature verification |
+| `src/app/scan/[code]/page.tsx` | +anti-auto-checkin, +shield fixes, +dual-tier |
+| `src/app/customer/card/[merchantId]/page.tsx` | +design audit, +composants extraits |
+| `src/app/dashboard/social-kit/page.tsx` | Nouvelle page social kit |
+| `src/app/dashboard/page.tsx` | +comparaison semaine |
+| `src/app/dashboard/subscription/page.tsx` | +toast, +feedback |
+| `src/components/shared/Sidebar.tsx` | +smart install bar |
+| Multiple scan/card components | Extraction + refactor |
+
+---
+
 ## [2026-02-08] - Landing hero + demo + settings
 
 ### Deploiement #12 - Hero copy, page demo, bouton demo, settings
@@ -516,4 +717,4 @@ vercel logs
 
 ---
 
-*Derniere mise a jour: 8 fevrier 2026*
+*Derniere mise a jour: 9 fevrier 2026*

@@ -18,6 +18,7 @@ import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
 import type { Merchant } from '@/types';
+import { useMerchant } from '@/contexts/MerchantContext';
 
 interface PaymentMethod {
   brand: string;
@@ -40,6 +41,7 @@ const features = [
 export default function SubscriptionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refetch: refetchContext } = useMerchant();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
   const [subscribing, setSubscribing] = useState(false);
@@ -49,6 +51,16 @@ export default function SubscriptionPage() {
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [polling, setPolling] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const flag = sessionStorage.getItem('qarte_portal_return');
+      if (flag) {
+        sessionStorage.removeItem('qarte_portal_return');
+        return true;
+      }
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (searchParams.get('success') === 'true') {
@@ -112,6 +124,42 @@ export default function SubscriptionPage() {
     fetchMerchant();
   }, [router]);
 
+  // Poll after Stripe portal return to catch webhook updates
+  useEffect(() => {
+    if (!polling || !merchant) return;
+
+    const initialStatus = merchant.subscription_status;
+    let attempts = 0;
+
+    const interval = setInterval(async () => {
+      attempts++;
+      if (attempts >= 8) {
+        clearInterval(interval);
+        setPolling(false);
+        return;
+      }
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { clearInterval(interval); setPolling(false); return; }
+
+      const { data } = await supabase
+        .from('merchants')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (data && data.subscription_status !== initialStatus) {
+        setMerchant(data);
+        refetchContext();
+        if (data.stripe_subscription_id) fetchPaymentMethod();
+        clearInterval(interval);
+        setPolling(false);
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [polling, merchant?.id]);
+
   const fetchPaymentMethod = async () => {
     setLoadingPayment(true);
     try {
@@ -136,7 +184,10 @@ export default function SubscriptionPage() {
         setToast({ type: 'error', message: data.error });
         return;
       }
-      if (data.url) window.location.href = data.url;
+      if (data.url) {
+        sessionStorage.setItem('qarte_portal_return', '1');
+        window.location.href = data.url;
+      }
     } catch (error) {
       console.error('Error opening portal:', error);
       setToast({ type: 'error', message: 'Erreur portail' });
