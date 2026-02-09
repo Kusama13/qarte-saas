@@ -21,6 +21,18 @@ interface SocialKitEmailProps {
   tier2RewardDescription?: string | null;
 }
 
+// Lighten a hex color by mixing with white
+function lightenColor(hex: string, amount: number = 0.4): string {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  const lr = Math.round(r + (255 - r) * amount);
+  const lg = Math.round(g + (255 - g) * amount);
+  const lb = Math.round(b + (255 - b) * amount);
+  return `#${lr.toString(16).padStart(2, '0')}${lg.toString(16).padStart(2, '0')}${lb.toString(16).padStart(2, '0')}`;
+}
+
 export function SocialKitEmail({
   shopName,
   rewardDescription,
@@ -33,6 +45,7 @@ export function SocialKitEmail({
   tier2RewardDescription,
 }: SocialKitEmailProps) {
   const dashboardUrl = 'https://getqarte.com/dashboard/social-kit';
+  const lightColor = lightenColor(primaryColor || '#4b0082');
 
   return (
     <BaseLayout preview={`${shopName}, votre kit réseaux sociaux est prêt — partagez avec vos clients !`}>
@@ -61,7 +74,7 @@ export function SocialKitEmail({
           />
         </Section>
       ) : (
-        <Section style={cardPreview}>
+        <Section style={{ ...cardPreview, background: `linear-gradient(135deg, ${primaryColor || '#4b0082'} 0%, ${lightColor} 100%)` }}>
           <div style={{ textAlign: 'center' as const }}>
             {logoUrl && (
               <Img
@@ -75,17 +88,17 @@ export function SocialKitEmail({
             <Text style={cardShopName}>{shopName}</Text>
             <Text style={cardSubtitle}>Programme de fidélité</Text>
             <Section style={cardRewardBox}>
-              <Text style={cardRewardLabel}>Votre récompense</Text>
+              <Text style={{ ...cardRewardLabel, color: primaryColor || '#4b0082' }}>Votre récompense</Text>
               <Text style={cardRewardText}>{rewardDescription}</Text>
-              <Text style={{ ...cardRewardStamps, color: primaryColor }}>
+              <Text style={{ ...cardRewardStamps, color: primaryColor || '#4b0082' }}>
                 Après {stampsRequired} passage{stampsRequired > 1 ? 's' : ''}
               </Text>
             </Section>
             {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
               <Section style={{ ...cardRewardBox, marginTop: '8px', backgroundColor: 'rgba(255,255,255,0.8)' }}>
-                <Text style={{ ...cardRewardLabel, color: '#7C3AED' }}>Palier 2</Text>
+                <Text style={{ ...cardRewardLabel, color: primaryColor || '#4b0082' }}>Palier 2</Text>
                 <Text style={{ ...cardRewardText, fontSize: '16px' }}>{tier2RewardDescription}</Text>
-                <Text style={{ ...cardRewardStamps, color: '#7C3AED' }}>
+                <Text style={{ ...cardRewardStamps, color: primaryColor || '#4b0082' }}>
                   Après {tier2StampsRequired} passage{tier2StampsRequired > 1 ? 's' : ''}
                 </Text>
               </Section>
@@ -272,7 +285,6 @@ const previewImage = {
 };
 
 const cardPreview = {
-  background: 'linear-gradient(135deg, #4b0082 0%, #9D8FE8 100%)',
   borderRadius: '16px',
   padding: '32px 24px',
   margin: '24px 0',
@@ -309,7 +321,6 @@ const cardRewardBox = {
 };
 
 const cardRewardLabel = {
-  color: '#4b0082',
   fontSize: '10px',
   fontWeight: '700',
   textTransform: 'uppercase' as const,

@@ -404,7 +404,7 @@ Signup (email+password)
 
 ## Semaine 1 (10-16 fev)
 - [ ] **F3** : Celebration premier scan (1h)
-- [ ] Creer les coupons Stripe : `QARTEBOOST` (2 mois -10€) et `QARTELAST` (3 mois -10€)
+- [x] Creer les coupons Stripe : `QARTEBOOST` (2 mois -10€) et `QARTELAST` (3 mois -10€)
 - [ ] Implementer le plan admin merchants (barre actions, badges alerte, WhatsApp)
 
 ## Semaine 2 (17-23 fev)

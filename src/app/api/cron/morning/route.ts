@@ -398,7 +398,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ==================== 2g. FIRST SCAN EMAIL ====================
-    // Merchants with exactly 1 confirmed visit (first scan happened recently)
+    // Merchants with exactly 2 confirmed visits (1st is always merchant's test, 2nd is first real client)
     const { data: allConfiguredMerchants } = await supabase
       .from('merchants')
       .select('id, shop_name, user_id')
@@ -420,8 +420,8 @@ export async function GET(request: NextRequest) {
         visitCountMap.set(v.merchant_id, (visitCountMap.get(v.merchant_id) || 0) + 1);
       }
 
-      // Filter to merchants with exactly 1 visit (first scan)
-      const firstScanMerchants = allConfiguredMerchants.filter(m => visitCountMap.get(m.id) === 1);
+      // Filter to merchants with exactly 2 visits (1st = merchant test, 2nd = first real client)
+      const firstScanMerchants = allConfiguredMerchants.filter(m => visitCountMap.get(m.id) === 2);
 
       if (firstScanMerchants.length > 0) {
         // Check tracking to avoid sending twice

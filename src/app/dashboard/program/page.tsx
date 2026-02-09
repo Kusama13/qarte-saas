@@ -245,6 +245,9 @@ export default function ProgramPage() {
       if (error) throw error;
 
       if (isFirstSetup) {
+        // Send QR code email immediately (fire and forget)
+        fetch('/api/emails/qr-code', { method: 'POST' }).catch(() => {});
+
         // Update merchant cache so QR page loads instantly with fresh data
         try {
           const updatedMerchant = {

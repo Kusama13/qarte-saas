@@ -9,6 +9,7 @@ import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
+import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
 
 // Cache for dashboard stats
 const STATS_CACHE_KEY = 'qarte_dashboard_stats';
@@ -433,6 +434,9 @@ export default function DashboardPage() {
           Voici un aperçu de votre programme de fidélité
         </p>
       </div>
+
+      {/* Onboarding Checklist */}
+      <OnboardingChecklist />
 
       {/* Qarte Shield Status Bar */}
       <div className="relative">

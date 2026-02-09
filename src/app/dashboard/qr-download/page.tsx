@@ -33,6 +33,8 @@ export default function QRDownloadPage() {
     if (!merchant?.scan_code) return;
     const scanUrl = getScanUrl(merchant.scan_code);
     generateQRCode(scanUrl).then(setQrCodeUrl);
+    // Track visit for onboarding checklist
+    localStorage.setItem(`qarte_checklist_qr_${merchant.id}`, '1');
   }, [merchant?.scan_code]);
 
   const generatePdf = async () => {
