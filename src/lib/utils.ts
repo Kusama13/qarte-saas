@@ -215,24 +215,18 @@ export async function generateQRCodeSVG(url: string): Promise<string> {
 
 export function formatPhoneNumber(phone: string): string {
   const cleaned = phone.replace(/\D/g, '');
+  // France international → local (retrocompat BDD existante)
   if (cleaned.startsWith('33') && cleaned.length === 11) {
     return '0' + cleaned.slice(2);
   }
-  if (cleaned.startsWith('0') && cleaned.length === 10) {
-    return cleaned;
-  }
+  // Tout le reste : garder tel quel (FR local, BE, CH, LU, etc.)
   return cleaned;
 }
 
 export function validateFrenchPhone(phone: string): boolean {
   const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.startsWith('33') && cleaned.length === 11) {
-    return true;
-  }
-  if (cleaned.startsWith('0') && cleaned.length === 10) {
-    return true;
-  }
-  return false;
+  // Accepte tout numero avec 6+ chiffres (FR, BE, CH, LU)
+  return cleaned.length >= 6;
 }
 
 export function validateEmail(email: string): boolean {
