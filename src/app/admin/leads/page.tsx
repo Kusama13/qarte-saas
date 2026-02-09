@@ -12,8 +12,6 @@ import {
   ChevronRight,
   MessageCircle,
   Trash2,
-  BookOpen,
-  Phone,
   Loader2,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
@@ -39,23 +37,6 @@ interface TodaySignup {
   phone?: string;
 }
 
-interface ToolLead {
-  id: string;
-  email: string;
-  source: string;
-  business_name: string | null;
-  generated_value: string | null;
-  converted: boolean;
-  created_at: string;
-}
-
-interface DemoLead {
-  id: string;
-  phone_number: string;
-  created_at: string;
-  converted: boolean;
-}
-
 interface ContactMessage {
   id: string;
   name: string;
@@ -65,7 +46,7 @@ interface ContactMessage {
   created_at: string;
 }
 
-type Tab = 'incomplete' | 'today' | 'tools' | 'demo' | 'messages';
+type Tab = 'incomplete' | 'today' | 'messages';
 
 // ============================================
 // MAIN COMPONENT
@@ -79,8 +60,6 @@ export default function LeadsPage() {
   // Tab data
   const [incompleteSignups, setIncompleteSignups] = useState<IncompleteSignup[]>([]);
   const [todaySignups, setTodaySignups] = useState<TodaySignup[]>([]);
-  const [toolLeads, setToolLeads] = useState<ToolLead[]>([]);
-  const [demoLeads, setDemoLeads] = useState<DemoLead[]>([]);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
 
   // ============================================
@@ -120,34 +99,6 @@ export default function LeadsPage() {
     }
   }, [getAuthHeaders]);
 
-  const fetchToolLeads = useCallback(async () => {
-    try {
-      const headers = await getAuthHeaders();
-      if (!headers) return;
-      const res = await fetch('/api/leads/tools', { headers });
-      if (res.ok) {
-        const data = await res.json();
-        setToolLeads(data.leads || []);
-      }
-    } catch (error) {
-      console.error('Error fetching tool leads:', error);
-    }
-  }, [getAuthHeaders]);
-
-  const fetchDemoLeads = useCallback(async () => {
-    try {
-      const headers = await getAuthHeaders();
-      if (!headers) return;
-      const res = await fetch('/api/demo-leads', { headers });
-      if (res.ok) {
-        const data = await res.json();
-        setDemoLeads(data.leads || []);
-      }
-    } catch (error) {
-      console.error('Error fetching demo leads:', error);
-    }
-  }, [getAuthHeaders]);
-
   const fetchContactMessages = useCallback(async () => {
     try {
       const headers = await getAuthHeaders();
@@ -166,11 +117,9 @@ export default function LeadsPage() {
     Promise.all([
       fetchIncompleteSignups(),
       fetchTodaySignups(),
-      fetchToolLeads(),
-      fetchDemoLeads(),
       fetchContactMessages(),
     ]).finally(() => setLoading(false));
-  }, [fetchIncompleteSignups, fetchTodaySignups, fetchToolLeads, fetchDemoLeads, fetchContactMessages]);
+  }, [fetchIncompleteSignups, fetchTodaySignups, fetchContactMessages]);
 
   // ============================================
   // ACTIONS
@@ -185,24 +134,6 @@ export default function LeadsPage() {
     const formattedPhone = formatPhoneForWhatsApp(phone);
     const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');
     window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
-  };
-
-  const markDemoLeadConverted = async (id: string) => {
-    const { error } = await supabase
-      .from('demo_leads')
-      .update({ converted: true, converted_at: new Date().toISOString() })
-      .eq('id', id);
-    if (!error) {
-      setDemoLeads(prev => prev.map(l => l.id === id ? { ...l, converted: true } : l));
-    }
-  };
-
-  const deleteDemoLead = async (id: string) => {
-    if (!confirm('Supprimer ce lead ?')) return;
-    const { error } = await supabase.from('demo_leads').delete().eq('id', id);
-    if (!error) {
-      setDemoLeads(prev => prev.filter(l => l.id !== id));
-    }
   };
 
   const deleteContactMessage = async (id: string) => {
@@ -253,8 +184,6 @@ export default function LeadsPage() {
   const counts = {
     incomplete: incompleteSignups.length,
     today: todaySignups.length,
-    tools: toolLeads.length,
-    demo: demoLeads.length,
     messages: contactMessages.length,
   };
 
@@ -265,13 +194,6 @@ export default function LeadsPage() {
   const filteredToday = todaySignups.filter(s =>
     !search || s.shop_name.toLowerCase().includes(search.toLowerCase()) ||
     (s.user_email && s.user_email.toLowerCase().includes(search.toLowerCase()))
-  );
-  const filteredTools = toolLeads.filter(l =>
-    !search || l.email.toLowerCase().includes(search.toLowerCase()) ||
-    (l.business_name && l.business_name.toLowerCase().includes(search.toLowerCase()))
-  );
-  const filteredDemo = demoLeads.filter(l =>
-    !search || l.phone_number.includes(search)
   );
   const filteredMessages = contactMessages.filter(m =>
     !search || m.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -293,8 +215,6 @@ export default function LeadsPage() {
   const tabs: { key: Tab; label: string; shortLabel: string; icon: React.ElementType; count: number }[] = [
     { key: 'incomplete', label: 'Incomplètes', shortLabel: 'Incompl.', icon: AlertTriangle, count: counts.incomplete },
     { key: 'today', label: 'Aujourd\'hui', shortLabel: 'Auj.', icon: Store, count: counts.today },
-    { key: 'tools', label: 'Leads Outils', shortLabel: 'Outils', icon: BookOpen, count: counts.tools },
-    { key: 'demo', label: 'Leads Démo', shortLabel: 'Démo', icon: Phone, count: counts.demo },
     { key: 'messages', label: 'Messages', shortLabel: 'Msgs', icon: MessageCircle, count: counts.messages },
   ];
 
@@ -458,112 +378,6 @@ export default function LeadsPage() {
             </div>
           ) : (
             <EmptyState icon={Store} title="Aucune inscription aujourd'hui" subtitle="Les nouveaux commerçants apparaîtront ici" />
-          )
-        )}
-
-        {/* Tab: Tool Leads */}
-        {activeTab === 'tools' && (
-          filteredTools.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {filteredTools.map((lead) => (
-                <div key={lead.id} className={cn(
-                  'p-4 sm:p-5 flex items-center justify-between gap-4',
-                  lead.converted ? 'bg-green-50/50' : 'hover:bg-gray-50'
-                )}>
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-                      lead.converted ? 'bg-green-100' : 'bg-[#5167fc]/10'
-                    )}>
-                      <BookOpen className={cn('w-5 h-5', lead.converted ? 'text-green-600' : 'text-[#5167fc]')} />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-medium text-gray-900 truncate">{lead.email}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        {lead.business_name && (
-                          <span className="text-xs text-gray-500">{lead.business_name}</span>
-                        )}
-                        <span className="text-xs text-gray-400">{formatDate(lead.created_at)}</span>
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">
-                          {lead.source}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {lead.converted ? (
-                      <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">Converti</span>
-                    ) : (
-                      <a
-                        href={`mailto:${lead.email}`}
-                        className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1.5"
-                      >
-                        <Mail className="w-4 h-4" />
-                        Email
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState icon={BookOpen} title="Aucun lead outil" subtitle="Les leads des outils gratuits apparaîtront ici" />
-          )
-        )}
-
-        {/* Tab: Demo Leads */}
-        {activeTab === 'demo' && (
-          filteredDemo.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {filteredDemo.map((lead) => (
-                <div key={lead.id} className={cn(
-                  'p-4 sm:p-5 flex items-center justify-between gap-4',
-                  lead.converted ? 'bg-green-50/50' : 'hover:bg-gray-50'
-                )}>
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-                      lead.converted ? 'bg-green-100' : 'bg-[#5167fc]/10'
-                    )}>
-                      <Phone className={cn('w-5 h-5', lead.converted ? 'text-green-600' : 'text-[#5167fc]')} />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{lead.phone_number}</p>
-                      <p className="text-xs text-gray-400">{formatDate(lead.created_at)}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {lead.converted ? (
-                      <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">Converti</span>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => openWhatsApp(lead.phone_number)}
-                          className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          <span className="hidden sm:inline">Contacter</span>
-                        </button>
-                        <button
-                          onClick={() => markDemoLeadConverted(lead.id)}
-                          className="px-3 py-1.5 text-sm font-medium text-[#5167fc] bg-[#5167fc]/10 rounded-lg hover:bg-[#5167fc]/20 transition-colors"
-                        >
-                          Converti
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => deleteDemoLead(lead.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState icon={Phone} title="Aucun lead démo" subtitle="Les leads de la démo apparaîtront ici" />
           )
         )}
 

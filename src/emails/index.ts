@@ -22,3 +22,4 @@ export { FirstRewardEmail } from './FirstRewardEmail';
 export { WeeklyDigestEmail } from './WeeklyDigestEmail';
 export { Day5CheckinEmail } from './Day5CheckinEmail';
 export { Tier2UpsellEmail } from './Tier2UpsellEmail';
+export { SubscriptionReactivatedEmail } from './SubscriptionReactivatedEmail';

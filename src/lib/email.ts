@@ -24,6 +24,7 @@ import {
   WeeklyDigestEmail,
   Day5CheckinEmail,
   Tier2UpsellEmail,
+  SubscriptionReactivatedEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -363,6 +364,41 @@ export async function sendSubscriptionCanceledEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending subscription canceled email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email confirmation réactivation (annulation de résiliation)
+export async function sendSubscriptionReactivatedEmail(
+  to: string,
+  shopName: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(SubscriptionReactivatedEmail({ shopName }));
+    const text = await render(SubscriptionReactivatedEmail({ shopName }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName} - Votre abonnement est maintenu`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send subscription reactivated email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Subscription reactivated email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending subscription reactivated email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

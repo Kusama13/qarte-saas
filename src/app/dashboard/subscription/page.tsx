@@ -174,7 +174,7 @@ export default function SubscriptionPage() {
         clearInterval(interval);
         setPolling(false);
       }
-    }, 2000);
+    }, 1000);
 
     return () => clearInterval(interval);
   }, [polling, merchant?.id]);

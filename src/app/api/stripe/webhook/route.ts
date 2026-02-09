@@ -3,7 +3,7 @@ import { stripe } from '@/lib/stripe';
 import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
-import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail } from '@/lib/email';
+import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail } from '@/lib/email';
 import type { SubscriptionStatus } from '@/types';
 
 const supabase = createClient(
@@ -208,6 +208,7 @@ export async function POST(request: Request) {
 
       // Cas inverse : merchant annule la resiliation via le portail
       // trialing + cancel_at_period_end=false → garder 'active' (pas 'trial')
+      let wasReactivated = false;
       if (subscription.status === 'trialing' && !subscription.cancel_at_period_end) {
         // Verifier si le merchant a deja un abonnement actif (checkout complete)
         const { data: existingMerchant } = await supabase
@@ -217,7 +218,21 @@ export async function POST(request: Request) {
           .single();
 
         if (existingMerchant && (existingMerchant.subscription_status === 'active' || existingMerchant.subscription_status === 'canceling')) {
+          if (existingMerchant.subscription_status === 'canceling') wasReactivated = true;
           newStatus = 'active';
+        }
+      }
+
+      // active + cancel_at_period_end=false → verifier si etait canceling
+      if (subscription.status === 'active' && !subscription.cancel_at_period_end) {
+        const { data: existingMerchant } = await supabase
+          .from('merchants')
+          .select('subscription_status')
+          .eq('stripe_subscription_id', subscription.id)
+          .single();
+
+        if (existingMerchant?.subscription_status === 'canceling') {
+          wasReactivated = true;
         }
       }
 
@@ -246,6 +261,16 @@ export async function POST(request: Request) {
           });
           await sendSubscriptionCanceledEmail(userData.user.email, updatedMerchant.shop_name, endDate).catch((err) => {
             logger.error('Failed to send subscription canceling email', err);
+          });
+        }
+      }
+
+      // Email de confirmation de réactivation (canceling → active)
+      if (updatedMerchant && wasReactivated && newStatus === 'active') {
+        const { data: userData } = await supabase.auth.admin.getUserById(updatedMerchant.user_id);
+        if (userData?.user?.email) {
+          await sendSubscriptionReactivatedEmail(userData.user.email, updatedMerchant.shop_name).catch((err) => {
+            logger.error('Failed to send subscription reactivated email', err);
           });
         }
       }
