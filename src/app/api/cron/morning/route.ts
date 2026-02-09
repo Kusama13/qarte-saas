@@ -42,30 +42,29 @@ if (vapidPublicKey && vapidPrivateKey) {
 const INITIAL_ALERT_DAYS = [0, 1];
 const REMINDER_DAYS = [2, 3];
 
-// Helper: process items in parallel batches (max 2 pour respecter Resend 2 req/s)
+// Helper: process items sequentially with 600ms pause between each (Resend rate limit: 2 req/s)
 async function batchProcess<T>(
   items: T[],
   fn: (item: T) => Promise<void>,
-  batchSize = 2
 ) {
-  for (let i = 0; i < items.length; i += batchSize) {
-    const batch = items.slice(i, i + batchSize);
-    await Promise.allSettled(batch.map(fn));
-    // Resend rate limit: 2 req/s — pause entre les batches
-    if (i + batchSize < items.length) {
-      await new Promise(resolve => setTimeout(resolve, 600));
-    }
+  for (let i = 0; i < items.length; i++) {
+    await fn(items[i]);
+    // Resend rate limit: 2 req/s — pause après chaque envoi
+    await new Promise(resolve => setTimeout(resolve, 600));
   }
 }
 
-// Helper: batch fetch user emails by user_id
+// Helper: batch fetch user emails by user_id (Supabase auth, pas Resend — pas de rate limit strict)
 async function batchGetUserEmails(userIds: string[]): Promise<Map<string, string>> {
   const emailMap = new Map<string, string>();
-  await batchProcess(userIds, async (userId) => {
-    const { data: userData } = await supabase.auth.admin.getUserById(userId);
-    const email = userData?.user?.email;
-    if (email) emailMap.set(userId, email);
-  }, 10);
+  for (let i = 0; i < userIds.length; i += 10) {
+    const batch = userIds.slice(i, i + 10);
+    await Promise.allSettled(batch.map(async (userId) => {
+      const { data: userData } = await supabase.auth.admin.getUserById(userId);
+      const email = userData?.user?.email;
+      if (email) emailMap.set(userId, email);
+    }));
+  }
   return emailMap;
 }
 
