@@ -6,335 +6,280 @@ import {
   Search,
   Store,
   ChevronRight,
-  MapPin,
   Users,
   Clock,
   CheckCircle,
   XCircle,
-  Scissors,
-  Sparkles,
-  Heart,
-  Hand,
-  Flower2,
-  MoreHorizontal,
   Loader2,
-  Gift,
-  AlertCircle,
   Shield,
   MessageCircle,
   AlertTriangle,
+  Mail,
+  CalendarX,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { SHOP_TYPES, COUNTRIES, type ShopType, type MerchantCountry } from '@/types';
+import type { Merchant, MerchantCountry } from '@/types';
 
-interface Merchant {
-  id: string;
-  user_id: string;
-  shop_name: string;
-  shop_type: ShopType;
-  shop_address: string | null;
-  phone: string;
-  country?: MerchantCountry;
-  subscription_status: string;
-  trial_ends_at: string | null;
-  created_at: string;
-  reward_description: string | null;
-  _isSuperAdmin?: boolean;
-  _hasProgram?: boolean;
-  _count?: {
-    customers: number;
-  };
-  _lastVisitDate?: string | null;
-  _visitsThisWeek?: number;
+// --- Types ---
+
+interface MerchantsDataResponse {
+  merchants: Merchant[];
+  superAdminIds: string[];
+  customerCounts: Record<string, number>;
+  lastVisitDates: Record<string, string>;
+  todayScans: Record<string, number>;
+  weeklyScans: Record<string, number>;
+  emailTracking: Record<string, number[]>;
+  reactivationTracking: Record<string, number[]>;
+  userEmails: Record<string, string>;
 }
 
-type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'canceled';
+interface LifecycleStage {
+  label: string;
+  color: string;
+  bgColor: string;
+  urgency: number;
+}
 
-// Icons for shop types (beauté / bien-être)
-const SHOP_TYPE_ICONS: Record<ShopType, React.ElementType> = {
-  coiffeur: Scissors,
-  barbier: Scissors,
-  institut_beaute: Sparkles,
-  onglerie: Hand,
-  spa: Flower2,
-  estheticienne: Heart,
-  massage: Heart,
-  epilation: Sparkles,
-  autre: MoreHorizontal,
-};
+interface EmailSteps {
+  steps: { code: string; sent: boolean }[];
+  summary: string;
+}
 
-const SHOP_TYPE_COLORS: Record<ShopType, string> = {
-  coiffeur: 'bg-slate-100 text-slate-700',
-  barbier: 'bg-amber-100 text-amber-700',
-  institut_beaute: 'bg-pink-100 text-pink-700',
-  onglerie: 'bg-rose-100 text-rose-700',
-  spa: 'bg-emerald-100 text-emerald-700',
-  estheticienne: 'bg-purple-100 text-purple-700',
-  massage: 'bg-teal-100 text-teal-700',
-  epilation: 'bg-indigo-100 text-indigo-700',
-  autre: 'bg-gray-100 text-gray-700',
-};
+type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'canceling' | 'canceled';
+
+// --- Lifecycle Stage ---
+
+function getLifecycleStage(
+  merchant: Merchant,
+  lastVisit: string | null,
+  todayScans: number,
+  hasProgram: boolean,
+): LifecycleStage {
+  const now = new Date();
+  const trialEnd = merchant.trial_ends_at ? new Date(merchant.trial_ends_at) : null;
+  const status = merchant.subscription_status;
+
+  // Essai expire
+  if (status === 'trial' && trialEnd && trialEnd < now) {
+    return { label: 'Essai expiré', color: 'text-orange-700', bgColor: 'bg-orange-100', urgency: 0 };
+  }
+
+  // Impaye
+  if (status === 'past_due') {
+    return { label: 'Impayé', color: 'text-red-700', bgColor: 'bg-red-100', urgency: 1 };
+  }
+
+  // Essai J-X (3 jours ou moins)
+  if (status === 'trial' && trialEnd) {
+    const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (daysLeft <= 3 && daysLeft > 0) {
+      return { label: `Essai J-${daysLeft}`, color: 'text-orange-700', bgColor: 'bg-orange-100', urgency: 1 };
+    }
+  }
+
+  // Config programme manquante
+  if ((status === 'trial' || status === 'active') && !hasProgram) {
+    return { label: 'Config programme', color: 'text-amber-700', bgColor: 'bg-amber-100', urgency: 2 };
+  }
+
+  // 1er scan attendu (aucune visite)
+  if ((status === 'trial' || status === 'active') && !lastVisit) {
+    return { label: '1er scan attendu', color: 'text-amber-700', bgColor: 'bg-amber-100', urgency: 3 };
+  }
+
+  // Inactif >7j
+  if ((status === 'trial' || status === 'active') && lastVisit) {
+    const daysSince = Math.floor((now.getTime() - new Date(lastVisit).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSince > 7) {
+      return { label: `Inactif ${daysSince}j`, color: 'text-red-700', bgColor: 'bg-red-100', urgency: 3 };
+    }
+  }
+
+  // Annulation programmee
+  if (status === 'canceling') {
+    return { label: 'Annulation', color: 'text-purple-700', bgColor: 'bg-purple-100', urgency: 4 };
+  }
+
+  // Churned
+  if (status === 'canceled') {
+    return { label: 'Churned', color: 'text-gray-600', bgColor: 'bg-gray-100', urgency: 5 };
+  }
+
+  // En essai normal
+  if (status === 'trial') {
+    const daysLeft = trialEnd ? Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : '?';
+    return { label: `Essai J-${daysLeft}`, color: 'text-blue-700', bgColor: 'bg-blue-100', urgency: 7 };
+  }
+
+  // Actif avec scans aujourd'hui
+  if (status === 'active' && todayScans > 0) {
+    return { label: 'Actif', color: 'text-green-700', bgColor: 'bg-green-100', urgency: 10 };
+  }
+
+  // Actif
+  if (status === 'active') {
+    return { label: 'Actif', color: 'text-green-700', bgColor: 'bg-green-100', urgency: 9 };
+  }
+
+  return { label: status, color: 'text-gray-600', bgColor: 'bg-gray-100', urgency: 6 };
+}
+
+// --- Email Pipeline ---
+
+// Milestone codes: -103=QR, -104=Kit, -100=1er scan, -101=Recompense
+function getEmailSteps(
+  merchantId: string,
+  emailTracking: Record<string, number[]>,
+  reactivationTracking: Record<string, number[]>,
+): EmailSteps {
+  const codes = emailTracking[merchantId] || [];
+  const steps = [
+    { code: 'QR', sent: codes.includes(-103) },
+    { code: 'Kit', sent: codes.includes(-104) },
+    { code: '1er', sent: codes.includes(-100) },
+    { code: 'Réc', sent: codes.includes(-101) },
+  ];
+  const sentCount = steps.filter((s) => s.sent).length;
+  return { steps, summary: `${sentCount}/4` };
+}
+
+// --- Activity Label ---
+
+function getActivityLabel(lastVisit: string | null): { text: string; color: string } {
+  if (!lastVisit) return { text: 'Jamais', color: 'text-red-600' };
+  const daysSince = Math.floor((Date.now() - new Date(lastVisit).getTime()) / (1000 * 60 * 60 * 24));
+  if (daysSince === 0) return { text: "Auj.", color: 'text-green-600' };
+  if (daysSince <= 3) return { text: `${daysSince}j`, color: 'text-green-600' };
+  if (daysSince <= 7) return { text: `${daysSince}j`, color: 'text-amber-600' };
+  return { text: `${daysSince}j`, color: 'text-red-600' };
+}
+
+// --- WhatsApp ---
+
+function formatPhoneForWhatsApp(phone: string) {
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
+  return cleaned;
+}
+
+// --- Component ---
 
 export default function AdminMerchantsPage() {
   const supabase = getSupabase();
-  const [merchants, setMerchants] = useState<Merchant[]>([]);
+  const [data, setData] = useState<MerchantsDataResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [countryFilter, setCountryFilter] = useState<'all' | MerchantCountry>('all');
   const [showAdmins, setShowAdmins] = useState(false);
 
-  const fetchMerchants = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     try {
-      // Fetch ALL merchants, super_admins, and visits in parallel
-      const [{ data: merchantsData, error }, { data: superAdmins }, { data: allVisits }] = await Promise.all([
-        supabase
-          .from('merchants')
-          .select('*')
-          .order('created_at', { ascending: false }),
-        supabase.from('super_admins').select('user_id'),
-        supabase.from('visits').select('merchant_id, visited_at'),
-      ]);
-
-      if (error) throw error;
-
-      // Get super admin user_ids
-      const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
-
-      // Get all merchant IDs
-      const merchantIds = (merchantsData || []).map((m: Merchant) => m.id);
-
-      // Initialize customer count map
-      const countMap = new Map<string, number>();
-
-      // Fetch loyalty cards to count customers
-      if (merchantIds.length > 0) {
-        const { data: loyaltyCards } = await supabase
-          .from('loyalty_cards')
-          .select('merchant_id')
-          .in('merchant_id', merchantIds);
-
-        // Group counts in memory
-        (loyaltyCards || []).forEach((card: { merchant_id: string }) => {
-          countMap.set(card.merchant_id, (countMap.get(card.merchant_id) || 0) + 1);
-        });
-      }
-
-      // Build visits maps: last visit + visits this week per merchant
-      const lastVisitMap = new Map<string, string>();
-      const weeklyVisitMap = new Map<string, number>();
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-
-      (allVisits || []).forEach((v: { merchant_id: string; visited_at: string }) => {
-        const existing = lastVisitMap.get(v.merchant_id);
-        if (!existing || v.visited_at > existing) {
-          lastVisitMap.set(v.merchant_id, v.visited_at);
-        }
-        if (new Date(v.visited_at) >= oneWeekAgo) {
-          weeklyVisitMap.set(v.merchant_id, (weeklyVisitMap.get(v.merchant_id) || 0) + 1);
-        }
-      });
-
-      // Merge counts, visits, and program status with merchants
-      const merchantsWithCounts = (merchantsData || []).map((merchant: Merchant) => ({
-        ...merchant,
-        _isSuperAdmin: superAdminUserIds.has(merchant.user_id),
-        _hasProgram: merchant.reward_description !== null,
-        _count: { customers: countMap.get(merchant.id) || 0 },
-        _lastVisitDate: lastVisitMap.get(merchant.id) || null,
-        _visitsThisWeek: weeklyVisitMap.get(merchant.id) || 0,
-      }));
-
-      setMerchants(merchantsWithCounts);
+      const res = await fetch('/api/admin/merchants-data');
+      if (!res.ok) throw new Error('Fetch failed');
+      const json: MerchantsDataResponse = await res.json();
+      setData(json);
     } catch (error) {
-      console.error('Error fetching merchants:', error);
+      console.error('Error fetching merchants data:', error);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
-    fetchMerchants();
+    fetchData();
 
-    // Subscribe to realtime changes on loyalty_cards
+    // Realtime refresh on loyalty_cards changes
     const channel = supabase
       .channel('loyalty_cards_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'loyalty_cards' },
-        () => {
-          // Refetch when any loyalty_card is added or deleted
-          fetchMerchants();
-        }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_cards' }, () => {
+        fetchData();
+      })
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [supabase, fetchMerchants]);
+    return () => { supabase.removeChannel(channel); };
+  }, [supabase, fetchData]);
 
-  // Helper to check if trial is expired
-  const isTrialExpired = (merchant: Merchant) => {
-    if (merchant.subscription_status !== 'trial') return false;
-    if (!merchant.trial_ends_at) return false;
-    return new Date(merchant.trial_ends_at) < new Date();
-  };
+  const superAdminIds = useMemo(() => new Set(data?.superAdminIds || []), [data]);
 
-  // Stats (exclude super admin accounts from counts)
+  // Helper
+  const isTrialExpired = (m: Merchant) =>
+    m.subscription_status === 'trial' && m.trial_ends_at && new Date(m.trial_ends_at) < new Date();
+
+  // Stats
   const stats = useMemo(() => {
-    const nonAdminMerchants = merchants.filter((m: Merchant) => !m._isSuperAdmin);
-    const adminCount = merchants.filter((m: Merchant) => m._isSuperAdmin).length;
+    if (!data) return { total: 0, trial: 0, trialExpired: 0, active: 0, canceling: 0, canceled: 0, adminCount: 0 };
+    const nonAdmin = data.merchants.filter((m) => !superAdminIds.has(m.user_id));
+    return {
+      total: nonAdmin.length,
+      trial: nonAdmin.filter((m) => m.subscription_status === 'trial' && !isTrialExpired(m)).length,
+      trialExpired: nonAdmin.filter((m) => isTrialExpired(m)).length,
+      active: nonAdmin.filter((m) => m.subscription_status === 'active').length,
+      canceling: nonAdmin.filter((m) => m.subscription_status === 'canceling').length,
+      canceled: nonAdmin.filter((m) => m.subscription_status === 'canceled').length,
+      adminCount: data.merchants.filter((m) => superAdminIds.has(m.user_id)).length,
+    };
+  }, [data, superAdminIds]);
 
-    const total = nonAdminMerchants.length;
-    const trialActive = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'trial' && !isTrialExpired(m)).length;
-    const trialExpired = nonAdminMerchants.filter((m: Merchant) => isTrialExpired(m)).length;
-    const active = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'active').length;
-    const cancelled = nonAdminMerchants.filter((m: Merchant) => m.subscription_status === 'canceled').length;
-    const withProgram = nonAdminMerchants.filter((m: Merchant) => m._hasProgram).length;
-    const withoutProgram = nonAdminMerchants.filter((m: Merchant) => !m._hasProgram).length;
-    const totalCustomers = nonAdminMerchants.reduce((acc, m) => acc + (m._count?.customers || 0), 0);
+  // Filtered & sorted merchants
+  const sortedMerchants = useMemo(() => {
+    if (!data) return [];
+    let filtered = data.merchants;
 
-    const byType: Record<string, number> = {};
-    nonAdminMerchants.forEach((m: Merchant) => {
-      const type = m.shop_type || 'autre';
-      byType[type] = (byType[type] || 0) + 1;
-    });
-
-    return { total, trial: trialActive, trialExpired, active, cancelled, byType, adminCount, withProgram, withoutProgram, totalCustomers };
-  }, [merchants]);
-
-  // Filtered merchants
-  const filteredMerchants = useMemo(() => {
-    let filtered = merchants;
-
-    // Hide admins by default
+    // Hide admins
     if (!showAdmins) {
-      filtered = filtered.filter((m: Merchant) => !m._isSuperAdmin);
+      filtered = filtered.filter((m) => !superAdminIds.has(m.user_id));
     }
 
+    // Status filter
     if (statusFilter === 'trial') {
-      // Only active trials (not expired)
-      filtered = filtered.filter((m: Merchant) => m.subscription_status === 'trial' && !isTrialExpired(m));
+      filtered = filtered.filter((m) => m.subscription_status === 'trial' && !isTrialExpired(m));
     } else if (statusFilter === 'trial_expired') {
-      // Expired trials
-      filtered = filtered.filter((m: Merchant) => isTrialExpired(m));
+      filtered = filtered.filter((m) => isTrialExpired(m));
     } else if (statusFilter !== 'all') {
-      filtered = filtered.filter((m: Merchant) => m.subscription_status === statusFilter);
+      filtered = filtered.filter((m) => m.subscription_status === statusFilter);
     }
 
+    // Country filter
     if (countryFilter !== 'all') {
-      filtered = filtered.filter((m: Merchant) => (m.country || 'FR') === countryFilter);
+      filtered = filtered.filter((m) => (m.country || 'FR') === countryFilter);
     }
 
+    // Search
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase();
       filtered = filtered.filter(
-        (m: Merchant) =>
-          m.shop_name.toLowerCase().includes(query) ||
-          m.phone.includes(query) ||
-          (m.shop_address && m.shop_address.toLowerCase().includes(query))
+        (m) =>
+          m.shop_name.toLowerCase().includes(q) ||
+          m.phone.includes(q) ||
+          (m.shop_address && m.shop_address.toLowerCase().includes(q)),
       );
     }
 
-    return filtered;
-  }, [merchants, searchQuery, statusFilter, countryFilter, showAdmins]);
-
-  // Group by shop type
-  const groupedMerchants = useMemo(() => {
-    const groups: Record<string, Merchant[]> = {};
-
-    filteredMerchants.forEach((merchant: Merchant) => {
-      const type = merchant.shop_type || 'autre';
-      if (!groups[type]) {
-        groups[type] = [];
-      }
-      groups[type].push(merchant);
-    });
-
-    // Sort groups by count (descending)
-    return Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
-  }, [filteredMerchants]);
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-    });
-  };
-
-  const getDaysRemaining = (trialEndsAt: string | null) => {
-    if (!trialEndsAt) return null;
-    const end = new Date(trialEndsAt);
-    const now = new Date();
-    return Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  };
-
-  const getStatusBadge = (merchant: Merchant) => {
-    // Check for expired trial first
-    if (isTrialExpired(merchant)) {
-      return (
-        <span className="px-2 py-1 text-xs font-medium text-orange-700 bg-orange-100 rounded-full">
-          Essai expiré
-        </span>
-      );
-    }
-
-    switch (merchant.subscription_status) {
-      case 'trial': {
-        const daysLeft = getDaysRemaining(merchant.trial_ends_at);
-        return (
-          <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
-            Essai · {daysLeft}j
-          </span>
-        );
-      }
-      case 'active':
-        return (
-          <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
-            Actif
-          </span>
-        );
-      case 'canceled':
-        return (
-          <span className="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full">
-            Churned
-          </span>
-        );
-      default:
-        return (
-          <span className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full">
-            {merchant.subscription_status}
-          </span>
-        );
-    }
-  };
-
-  const formatPhoneForWhatsApp = (phone: string) => {
-    const cleaned = phone.replace(/\D/g, '');
-    // Legacy local format → assume French
-    if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
-    // Already E.164 (33xxx, 32xxx, 41xxx, 352xxx...)
-    return cleaned;
-  };
+    // Sort by urgency ASC, then created_at DESC
+    return filtered
+      .map((m) => ({
+        merchant: m,
+        lifecycle: getLifecycleStage(
+          m,
+          data.lastVisitDates[m.id] || null,
+          data.todayScans[m.id] || 0,
+          m.reward_description !== null,
+        ),
+        isAdmin: superAdminIds.has(m.user_id),
+      }))
+      .sort((a, b) => {
+        if (a.lifecycle.urgency !== b.lifecycle.urgency) return a.lifecycle.urgency - b.lifecycle.urgency;
+        return new Date(b.merchant.created_at).getTime() - new Date(a.merchant.created_at).getTime();
+      });
+  }, [data, searchQuery, statusFilter, countryFilter, showAdmins, superAdminIds]);
 
   const openWhatsApp = (phone: string, name?: string) => {
     const formattedPhone = formatPhoneForWhatsApp(phone);
     const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');
     window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
-  };
-
-  const getActivityLabel = (merchant: Merchant) => {
-    if (!merchant._lastVisitDate) {
-      return { text: 'Jamais scanné', color: 'text-red-600' };
-    }
-    const daysSince = Math.floor((Date.now() - new Date(merchant._lastVisitDate).getTime()) / (1000 * 60 * 60 * 24));
-    if (daysSince === 0) return { text: "Aujourd'hui", color: 'text-green-600' };
-    if (daysSince <= 3) return { text: `il y a ${daysSince}j`, color: 'text-green-600' };
-    if (daysSince <= 7) return { text: `il y a ${daysSince}j`, color: 'text-amber-600' };
-    return { text: `il y a ${daysSince}j`, color: 'text-red-600' };
   };
 
   if (loading) {
@@ -350,140 +295,41 @@ export default function AdminMerchantsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Commerçants</h1>
-        <p className="mt-1 text-sm sm:text-base text-gray-600">Gestion et suivi des commerçants</p>
+        <p className="mt-1 text-sm sm:text-base text-gray-600">Vue lifecycle — trié par urgence</p>
       </div>
 
-      {/* Stats Cards - Row 1: Subscription status */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-4">
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#5167fc]/10 flex items-center justify-center">
-              <Store className="w-5 h-5 text-[#5167fc]" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              <p className="text-xs text-gray-500">Total</p>
-              {stats.adminCount > 0 && (
-                <p className="text-[10px] text-purple-600 mt-0.5">+ {stats.adminCount} admin{stats.adminCount > 1 ? 's' : ''}</p>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.trial}</p>
-              <p className="text-xs text-gray-500">En essai</p>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-3 gap-3 lg:grid-cols-6 lg:gap-4">
+        {[
+          { label: 'Total', value: stats.total, icon: Store, iconBg: 'bg-[#5167fc]/10', iconColor: 'text-[#5167fc]', extra: stats.adminCount > 0 ? `+${stats.adminCount} admin` : undefined },
+          { label: 'En essai', value: stats.trial, icon: Clock, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
+          { label: 'Expirés', value: stats.trialExpired, icon: CalendarX, iconBg: 'bg-orange-50', iconColor: 'text-orange-600' },
+          { label: 'Actifs', value: stats.active, icon: CheckCircle, iconBg: 'bg-green-50', iconColor: 'text-green-600' },
+          { label: 'Annulation', value: stats.canceling, icon: AlertTriangle, iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
+          { label: 'Churned', value: stats.canceled, icon: XCircle, iconBg: 'bg-red-50', iconColor: 'text-red-600' },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center", stat.iconBg)}>
+                <stat.icon className={cn("w-4 h-4 sm:w-5 sm:h-5", stat.iconColor)} />
+              </div>
+              <div>
+                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-[10px] sm:text-xs text-gray-500">{stat.label}</p>
+                {stat.extra && <p className="text-[10px] text-purple-600">{stat.extra}</p>}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-orange-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.trialExpired}</p>
-              <p className="text-xs text-gray-500">Essais expirés</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.active}</p>
-              <p className="text-xs text-gray-500">Actifs</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.cancelled}</p>
-              <p className="text-xs text-gray-500">Churned</p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Stats Cards - Row 2: Programs & Customers */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
-              <Gift className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.withProgram}</p>
-              <p className="text-xs text-gray-500">Avec programme</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-              <AlertCircle className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.withoutProgram}</p>
-              <p className="text-xs text-gray-500">Sans programme</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-              <Users className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.totalCustomers}</p>
-              <p className="text-xs text-gray-500">Clients total</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats by Type */}
-      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Par type de commerce</p>
-        <div className="flex flex-wrap gap-2">
-          {Object.entries(stats.byType)
-            .sort((a, b) => b[1] - a[1])
-            .map(([type, count]) => {
-              const Icon = SHOP_TYPE_ICONS[type as ShopType] || MoreHorizontal;
-              return (
-                <div
-                  key={type}
-                  className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium",
-                    SHOP_TYPE_COLORS[type as ShopType] || 'bg-gray-100 text-gray-700'
-                  )}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{SHOP_TYPES[type as ShopType] || type}</span>
-                  <span className="font-bold">({count})</span>
-                </div>
-              );
-            })}
-        </div>
-      </div>
-
-      {/* Search & Filters */}
+      {/* Filters */}
       <div className="space-y-3 sm:space-y-0 sm:flex sm:flex-row sm:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Rechercher..."
+            placeholder="Rechercher nom, téléphone, adresse..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5167fc] focus:border-transparent"
@@ -491,13 +337,14 @@ export default function AdminMerchantsPage() {
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap -mx-4 px-4 sm:mx-0 sm:px-0">
-          {[
+          {([
             { label: 'Tous', value: 'all' as FilterStatus, count: stats.total },
-            { label: 'En essai', value: 'trial' as FilterStatus, count: stats.trial },
+            { label: 'Essai', value: 'trial' as FilterStatus, count: stats.trial },
             { label: 'Expirés', value: 'trial_expired' as FilterStatus, count: stats.trialExpired },
             { label: 'Actifs', value: 'active' as FilterStatus, count: stats.active },
-            { label: 'Churned', value: 'canceled' as FilterStatus, count: stats.cancelled },
-          ].map((btn) => (
+            { label: 'Annulation', value: 'canceling' as FilterStatus, count: stats.canceling },
+            { label: 'Churned', value: 'canceled' as FilterStatus, count: stats.canceled },
+          ]).map((btn) => (
             <button
               key={btn.value}
               onClick={() => setStatusFilter(btn.value)}
@@ -505,14 +352,13 @@ export default function AdminMerchantsPage() {
                 "px-3 py-2 text-xs sm:text-sm font-medium rounded-xl transition-colors whitespace-nowrap flex-shrink-0",
                 statusFilter === btn.value
                   ? "bg-[#5167fc] text-white"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
               )}
             >
               {btn.label} ({btn.count})
             </button>
           ))}
-          {/* Country filter */}
-          <div className="w-px h-6 bg-gray-200 flex-shrink-0 hidden sm:block" />
+          <div className="w-px h-6 bg-gray-200 flex-shrink-0 hidden sm:block self-center" />
           {(['all', 'FR', 'BE', 'CH', 'LU'] as const).map((c) => (
             <button
               key={c}
@@ -521,156 +367,252 @@ export default function AdminMerchantsPage() {
                 "px-3 py-2 text-xs sm:text-sm font-medium rounded-xl transition-colors whitespace-nowrap flex-shrink-0",
                 countryFilter === c
                   ? "bg-violet-600 text-white"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
               )}
             >
-              {c === 'all' ? 'Tous pays' : c}
+              {c === 'all' ? 'Pays' : c}
             </button>
           ))}
-          {/* Admin toggle */}
           {stats.adminCount > 0 && (
             <button
               onClick={() => setShowAdmins(!showAdmins)}
               className={cn(
-                "px-4 py-2 text-sm font-medium rounded-xl transition-colors whitespace-nowrap flex items-center gap-2",
+                "px-3 py-2 text-xs sm:text-sm font-medium rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 flex-shrink-0",
                 showAdmins
                   ? "bg-purple-600 text-white"
-                  : "bg-white text-purple-600 border border-purple-200 hover:bg-purple-50"
+                  : "bg-white text-purple-600 border border-purple-200 hover:bg-purple-50",
               )}
             >
-              <Shield className="w-4 h-4" />
-              Admin ({stats.adminCount})
+              <Shield className="w-3.5 h-3.5" />
+              Admin
             </button>
           )}
         </div>
       </div>
 
-      {/* Merchants grouped by type */}
-      {filteredMerchants.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
-              <Store className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p className="font-medium text-gray-900">Aucun commerçant trouvé</p>
-              <p className="text-sm text-gray-500 mt-1">Essayez de modifier vos filtres</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {groupedMerchants.map(([type, typeMerchants]) => {
-                const Icon = SHOP_TYPE_ICONS[type as ShopType] || MoreHorizontal;
-                const colorClass = SHOP_TYPE_COLORS[type as ShopType] || 'bg-gray-100 text-gray-700';
+      {/* Results count */}
+      <p className="text-sm text-gray-500">{sortedMerchants.length} commerçant{sortedMerchants.length > 1 ? 's' : ''}</p>
 
-                return (
-                  <div key={type} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    {/* Group Header */}
-                    <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-                      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", colorClass)}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <h3 className="font-semibold text-gray-900">
-                        {SHOP_TYPES[type as ShopType] || type}
-                      </h3>
-                      <span className="text-sm text-gray-500">({typeMerchants.length})</span>
-                    </div>
+      {/* Table Desktop / Cards Mobile */}
+      {sortedMerchants.length === 0 ? (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-12 text-center">
+          <Store className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+          <p className="font-medium text-gray-900">Aucun commerçant trouvé</p>
+          <p className="text-sm text-gray-500 mt-1">Essayez de modifier vos filtres</p>
+        </div>
+      ) : (
+        <>
+          {/* Desktop Table */}
+          <div className="hidden lg:block bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/50">
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Commerçant</th>
+                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Étape</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Activité</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Auj.</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Clients</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Emails</th>
+                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {sortedMerchants.map(({ merchant, lifecycle, isAdmin }) => {
+                  const lastVisit = data?.lastVisitDates[merchant.id] || null;
+                  const activity = getActivityLabel(lastVisit);
+                  const today = data?.todayScans[merchant.id] || 0;
+                  const customers = data?.customerCounts[merchant.id] || 0;
+                  const emailSteps = getEmailSteps(
+                    merchant.id,
+                    data?.emailTracking || {},
+                    data?.reactivationTracking || {},
+                  );
 
-                    {/* Merchants List */}
-                    <div className="divide-y divide-gray-100">
-                      {typeMerchants.map((merchant) => (
-                        <Link
-                          key={merchant.id}
-                          href={`/admin/merchants/${merchant.id}`}
-                          className="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 transition-colors gap-2"
-                        >
-                          <div className="flex items-center gap-4 min-w-0">
-                            <div className="w-10 h-10 rounded-lg bg-[#5167fc] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                              {merchant.shop_name.charAt(0)}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-medium text-gray-900 truncate">{merchant.shop_name}</p>
-                                {merchant._isSuperAdmin && (
-                                  <span className="px-2 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
-                                    Admin
-                                  </span>
-                                )}
-                                {/* Program Badge */}
-                                {merchant._hasProgram ? (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full flex-shrink-0">
-                                    <Gift className="w-3 h-3" />
-                                    Programme
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0">
-                                    <AlertCircle className="w-3 h-3" />
-                                    Sans programme
-                                  </span>
-                                )}
-                              </div>
-                              {/* Alert badges */}
-                              {!merchant._isSuperAdmin && (
-                                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                                  {!merchant._lastVisitDate && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700 rounded-full">
-                                      <AlertTriangle className="w-2.5 h-2.5" /> 0 scan
-                                    </span>
-                                  )}
-                                  {merchant.subscription_status === 'trial' && merchant.trial_ends_at && getDaysRemaining(merchant.trial_ends_at) !== null && getDaysRemaining(merchant.trial_ends_at)! <= 3 && getDaysRemaining(merchant.trial_ends_at)! > 0 && (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-semibold bg-orange-100 text-orange-700 rounded-full">
-                                      <AlertTriangle className="w-2.5 h-2.5" /> Expire bientôt
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                              <div className="flex items-center gap-3 text-xs text-gray-500 mt-1">
-                                {merchant.shop_address && (
-                                  <span className="flex items-center gap-1 truncate">
-                                    <MapPin className="w-3 h-3 flex-shrink-0" />
-                                    <span className="truncate">{merchant.shop_address}</span>
-                                  </span>
-                                )}
-                                <span className="flex-shrink-0">{formatDate(merchant.created_at)}</span>
-                              </div>
-                            </div>
+                  return (
+                    <tr key={merchant.id} className="hover:bg-gray-50/50 transition-colors group">
+                      {/* Commercant */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-[#5167fc] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                            {merchant.shop_name.charAt(0)}
                           </div>
-                          <div className="flex items-center gap-2 flex-shrink-0">
-                            {/* Activity indicator */}
-                            {!merchant._isSuperAdmin && (() => {
-                              const activity = getActivityLabel(merchant);
-                              return (
-                                <span className={cn("text-[10px] font-semibold whitespace-nowrap", activity.color)}>
-                                  {activity.text}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-gray-900 truncate max-w-[200px]">{merchant.shop_name}</p>
+                              {isAdmin && (
+                                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
+                                  Admin
                                 </span>
-                              );
-                            })()}
-                            {/* Customer count */}
-                            <div className={cn(
-                              "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold",
-                              (merchant._count?.customers || 0) > 0
-                                ? "bg-blue-100 text-blue-700"
-                                : "bg-gray-100 text-gray-500"
-                            )}>
-                              <Users className="w-3.5 h-3.5" />
-                              <span>{merchant._count?.customers || 0}</span>
+                              )}
                             </div>
-                            {getStatusBadge(merchant)}
-                            {/* WhatsApp button */}
-                            {merchant.phone && !merchant._isSuperAdmin && (
-                              <button
-                                onClick={(e) => { e.preventDefault(); openWhatsApp(merchant.phone, merchant.shop_name); }}
-                                className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                                title="Envoyer WhatsApp"
-                              >
-                                <MessageCircle className="w-4 h-4" />
-                              </button>
+                            {merchant.shop_address && (
+                              <p className="text-xs text-gray-400 truncate max-w-[250px]">{merchant.shop_address}</p>
                             )}
-                            <ChevronRight className="w-5 h-5 text-gray-400" />
                           </div>
-                        </Link>
-                      ))}
+                        </div>
+                      </td>
+
+                      {/* Etape */}
+                      <td className="px-4 py-3">
+                        <span className={cn("px-2.5 py-1 text-xs font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>
+                          {lifecycle.label}
+                        </span>
+                      </td>
+
+                      {/* Activite */}
+                      <td className="px-4 py-3 text-center">
+                        <span className={cn("text-sm font-medium", activity.color)}>{activity.text}</span>
+                      </td>
+
+                      {/* Scans aujourd'hui */}
+                      <td className="px-4 py-3 text-center">
+                        <span className={cn(
+                          "text-sm font-bold",
+                          today > 0 ? "text-green-600" : "text-gray-300",
+                        )}>
+                          {today}
+                        </span>
+                      </td>
+
+                      {/* Clients */}
+                      <td className="px-4 py-3 text-center">
+                        <span className="text-sm font-medium text-gray-700">{customers}</span>
+                      </td>
+
+                      {/* Emails */}
+                      <td className="px-4 py-3 text-center">
+                        <div className="group/tooltip relative inline-block">
+                          <span className={cn(
+                            "text-sm font-medium cursor-default",
+                            emailSteps.summary === '4/4' ? "text-green-600" :
+                            emailSteps.summary === '0/4' ? "text-gray-400" : "text-amber-600"
+                          )}>
+                            {emailSteps.summary}
+                          </span>
+                          {/* Tooltip */}
+                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block z-10">
+                            <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
+                              <div className="space-y-1">
+                                {emailSteps.steps.map((step) => (
+                                  <div key={step.code} className="flex items-center gap-2">
+                                    <span className={step.sent ? 'text-green-400' : 'text-gray-500'}>{step.sent ? '✓' : '✗'}</span>
+                                    <span>{step.code}</span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
+                                <div className="border-4 border-transparent border-t-gray-900" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {merchant.phone && !isAdmin && (
+                            <button
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); openWhatsApp(merchant.phone, merchant.shop_name); }}
+                              className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                              title="WhatsApp"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </button>
+                          )}
+                          <Link
+                            href={`/admin/merchants/${merchant.id}`}
+                            className="p-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                            title="Détail"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="lg:hidden space-y-2">
+            {sortedMerchants.map(({ merchant, lifecycle, isAdmin }) => {
+              const lastVisit = data?.lastVisitDates[merchant.id] || null;
+              const activity = getActivityLabel(lastVisit);
+              const today = data?.todayScans[merchant.id] || 0;
+              const customers = data?.customerCounts[merchant.id] || 0;
+              const emailSteps = getEmailSteps(
+                merchant.id,
+                data?.emailTracking || {},
+                data?.reactivationTracking || {},
+              );
+
+              return (
+                <div key={merchant.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-[#5167fc] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                        {merchant.shop_name.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-gray-900 truncate">{merchant.shop_name}</p>
+                          {isAdmin && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
+                              Admin
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className={cn("px-2 py-0.5 text-[10px] font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>
+                            {lifecycle.label}
+                          </span>
+                          <span className={cn("text-xs font-medium", activity.color)}>{activity.text}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {merchant.phone && !isAdmin && (
+                        <button
+                          onClick={() => openWhatsApp(merchant.phone, merchant.shop_name)}
+                          className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </button>
+                      )}
+                      <Link
+                        href={`/admin/merchants/${merchant.id}`}
+                        className="p-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Link>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
+
+                  {/* Bottom row: metrics */}
+                  <div className="flex items-center gap-4 mt-2 pl-12 text-xs text-gray-500">
+                    <span className={cn("font-medium", today > 0 ? "text-green-600" : "text-gray-400")}>
+                      Auj: {today}
+                    </span>
+                    <span>
+                      <Users className="w-3 h-3 inline mr-0.5" />{customers}
+                    </span>
+                    <span className={cn(
+                      "font-medium",
+                      emailSteps.summary === '4/4' ? "text-green-600" :
+                      emailSteps.summary === '0/4' ? "text-gray-400" : "text-amber-600"
+                    )}>
+                      <Mail className="w-3 h-3 inline mr-0.5" />{emailSteps.summary}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

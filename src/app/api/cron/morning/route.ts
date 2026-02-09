@@ -975,7 +975,7 @@ export async function GET(request: NextRequest) {
     // Clean up old tracking
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    await supabase.from('pending_email_tracking').delete().lt('sent_at', sevenDaysAgo.toISOString());
+    await supabase.from('pending_email_tracking').delete().lt('sent_at', sevenDaysAgo.toISOString()).gte('reminder_day', 0);
 
     // Clean up old reactivation tracking (> 60 jours)
     const sixtyDaysAgo = new Date();

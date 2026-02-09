@@ -74,6 +74,13 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
       }
 
       setMerchant(data);
+
+      // Track last_seen_at (fire-and-forget, non-blocking)
+      supabase
+        .from('merchants')
+        .update({ last_seen_at: new Date().toISOString() })
+        .eq('id', data.id)
+        .then(() => {});
     } catch (err) {
       console.error('MerchantContext error:', err);
     } finally {
