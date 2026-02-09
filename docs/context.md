@@ -58,7 +58,7 @@ src/
 │   ├── landing/           # 12 composants landing (Hero, Features, Pricing, FAQ...)
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
-│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingGuide
+│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist
 │   ├── loyalty/           # Composants fidelite
 │   ├── marketing/         # QRCardTemplate, FlyerTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel
@@ -575,13 +575,13 @@ import type { Merchant } from '@/types';
 | ProgramReminderEmail | Programme non configure J+1 (cron morning) |
 | ProgramReminderDay2Email | Programme non configure J+2, personnalise par shop_type (cron morning) |
 | ProgramReminderDay3Email | Programme non configure J+3, urgence + done-for-you (cron morning) |
-| QRCodeEmail | QR code pret (apres config programme) |
+| QRCodeEmail | QR code pret (apres config programme, endpoint `/api/emails/qr-code` + cron morning) |
 | SocialKitEmail | Kit reseaux sociaux pret (API email/social-kit) |
 
 ### Engagement & Milestones
 | Email | Declencheur |
 |-------|-------------|
-| FirstScanEmail | Premier scan client — celebration (cron morning) |
+| FirstScanEmail | 2eme visite confirmee — celebration 1er vrai client (cron morning) |
 | Day5CheckinEmail | Check-in J+5 — bilan premiere semaine (cron morning) |
 | FirstRewardEmail | Premiere recompense debloquee (cron morning) |
 | Tier2UpsellEmail | Upsell palier 2 VIP — 10+ clients (cron morning) |

@@ -168,10 +168,10 @@ Signup (email+password)
 
 ## Niveau 2 : FEATURES MOYENNES (4-8h chacune)
 
-### F7. Onboarding checklist gamifiee
+### F7. Onboarding checklist gamifiee ✅ FAIT
 - **Description** : Barre de progression 5 etapes dans le dashboard (voir section conversion)
-- **Effort** : 4h
-- **Impact** : Guide le merchant, reduit le churn d'onboarding
+- **Implementation** : `OnboardingChecklist.tsx` dans le dashboard (trial only), confetti a 100%, sessionStorage dismiss, auto-hide 3j apres completion
+- **Etapes** : Configurer programme, Ajouter logo, Telecharger QR, 2 premiers clients, 1ere notification push
 
 ### F8. Birthday Club — Anniversaire clients
 - **Description** : Champ date de naissance sur la carte client
@@ -394,8 +394,12 @@ Signup (email+password)
 
 ### Features & UX
 - [x] **F1** : Suggestions cliquables par metier palier 1 + palier 2 (MerchantSettingsForm + program page)
-- [x] **F2** : QRCodeEmail envoye auto apres config programme
+- [x] **F2** : QRCodeEmail envoye auto apres config programme (endpoint `/api/emails/qr-code` + trigger fire-and-forget)
 - [x] Suppression pre-remplissage `reward_description` a la creation → emails ProgramReminder J+1/2/3 fonctionnent
+- [x] **F7** : Onboarding checklist gamifiee 5 etapes (OnboardingChecklist.tsx, confetti, trial only)
+- [x] SocialKitEmail : couleurs dynamiques du merchant (primaryColor au lieu de #4b0082 hardcode)
+- [x] FirstScanEmail : seuil passe a 2 visites (1ere = test merchant)
+- [x] Suppression OnboardingGuide.tsx (inutilise)
 - [x] Renommage `/offre-speciale` → `/essai-gratuit` (compatibilite Facebook Ads)
 - [x] Preview banner sticky avec CTA "Telechargez votre QR code" (lien vers `/dashboard/qr-download`)
 - [x] Hint mobile sur page programme : "Apres enregistrement, un apercu sera disponible"
@@ -408,7 +412,6 @@ Signup (email+password)
 - [ ] Implementer le plan admin merchants (barre actions, badges alerte, WhatsApp)
 
 ## Semaine 2 (17-23 fev)
-- [ ] **F7** : Onboarding checklist gamifiee (4h)
 - [ ] **F5** : Bouton partage programme (2-3h)
 - [ ] **F6** : Templates push enrichis (2h)
 - [ ] **F4** : Stats enrichies carte client (2h)
