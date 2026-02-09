@@ -50,6 +50,7 @@ src/
 │   ├── admin/             # Dashboard admin
 │   ├── customer/          # Pages client
 │   ├── scan/[code]/       # Scan QR dynamique
+│   ├── essai-gratuit/     # Landing offre essai (Facebook Ads)
 │   ├── ebook/             # Landing ebook (lead generation)
 │   └── page.tsx           # Landing page (composition de composants)
 │
@@ -113,13 +114,15 @@ docs/
 └── roadmap/              # Fonctionnalites a venir (mode article, scheduled push)
 
 supabase/
-└── migrations/           # 31 migrations SQL
+└── migrations/           # 32 migrations SQL
     ├── 001-025           # Schema initial + fixes
     ├── 026               # Trial period 15 jours
     ├── 027               # Spelling cancelled→canceled
     ├── 028               # Reactivation email tracking
     ├── 029               # Merchant country + E.164 phone migration
-    └── 030               # Derniere migration
+    ├── 030               # Shield + divers
+    ├── 031               # last_seen_at column
+    └── 032               # Fix updated_at trigger (exclut last_seen_at)
 
 public/
 ├── images/              # Images statiques
@@ -189,7 +192,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - `GET /api/customers/cards` - Toutes les cartes
 
 ### Commercants
-- `POST /api/merchants/create` - Creer commercant (pre-remplit programme selon shop_type)
+- `POST /api/merchants/create` - Creer commercant (pre-remplit `stamps_required` selon shop_type, `reward_description` laisse null)
 - `GET /api/merchants/preview` - Donnees publiques merchant (preview carte)
 - `GET /api/merchant/stats` - Statistiques
 
@@ -250,7 +253,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
   - Bouton CTA sticky "Valider et generer mon QR code" redirige vers `/dashboard/qr-download`
   - Cache merchant mis a jour avant redirect (chargement QR instantane)
   - Page QR utilise `useMerchant()` (contexte partage, pas de fetch duplique)
-- **Pre-remplissage programme:** A la creation du merchant, `stamps_required` et `reward_description` sont pre-remplis selon le `shop_type`
+- **Pre-remplissage programme:** A la creation du merchant, seul `stamps_required` est pre-rempli selon le `shop_type`. `reward_description` reste `null` pour que les emails ProgramReminder J+1/2/3 se declenchent et guident le merchant vers la configuration
 - **Email relance inscription incomplete:** Programme via Resend `scheduledAt` (+1h apres Phase 1)
   - Endpoint `/api/emails/schedule-incomplete` appele apres signUp
   - Email ID stocke dans `user_metadata`, annule si Phase 2 completee
@@ -409,7 +412,7 @@ npm run email
 | `src/app/api/cron/morning/route.ts` | Cron principal (4 taches) |
 | `src/app/api/stripe/webhook/route.ts` | Webhook Stripe (5 events, machine d'etats) |
 | `src/app/api/stripe/checkout/route.ts` | Checkout Stripe (verification customer) |
-| `supabase/migrations/` | 30 migrations SQL |
+| `supabase/migrations/` | 32 migrations SQL |
 
 ---
 
@@ -423,7 +426,7 @@ npm run email
 
 ### Style Visuel
 - **Dashboard headers:** `bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]`, gradient texte `from-[#4b0082] to-violet-600`
-- **Glassmorphism:** Utilise sur les pages auth et offre-speciale
+- **Glassmorphism:** Utilise sur les pages auth et essai-gratuit
   - `backdrop-blur-xl`, `bg-white/80`, bordures transparentes
   - Blobs decoratifs animes en arriere-plan
 - **Cartes:** `rounded-2xl` ou `rounded-3xl`, ombres douces

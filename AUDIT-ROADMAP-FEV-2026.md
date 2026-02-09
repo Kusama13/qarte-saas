@@ -23,28 +23,31 @@ Signup (email+password)
 
 ## 1.2 Points de friction identifies
 
-### Friction #1 : Programme jamais configure
+### Friction #1 : Programme jamais configure ✅ ATTENUATION
 - **Symptome** : Merchant s'inscrit mais ne configure pas sa recompense
 - **Impact** : Sans programme, le QR code ne sert a rien
 - **Emails existants** : ProgramReminder J+1, J+2, J+3 (bon)
-- **Manque** : Setup en 1 clic avec presets par metier
+- ~~**Manque** : Setup en 1 clic avec presets par metier~~
+- **FAIT (09/02)** : Suggestions cliquables par metier dans MerchantSettingsForm (palier 1 + palier 2). `reward_description` n'est PLUS pre-remplie a la creation → les emails ProgramReminder J+1/2/3 se declenchent correctement.
 
-### Friction #2 : QR code jamais imprime
+### Friction #2 : QR code jamais imprime ✅ ATTENUATION
 - **Symptome** : Programme configure mais 0 scan
 - **Impact** : Pas de premiere valeur = pas de conversion
 - **Emails existants** : InactiveMerchantDay7, Day14, Day30 (bon)
-- **Manque** : Envoi automatique du QR code par email/WhatsApp apres setup
+- ~~**Manque** : Envoi automatique du QR code par email/WhatsApp apres setup~~
+- **FAIT** : QRCodeEmail envoye automatiquement apres config programme. Preview banner avec CTA "Telechargez votre QR code" ajoute (09/02).
 
 ### Friction #3 : Pas de "aha moment" avant J+14
 - **Symptome** : Merchant n'a pas eu assez de scans pour voir la valeur
 - **Impact** : Pas convaincu de payer
 - **Manque** : Objectif gamifie ("10 scans cette semaine"), celebration des milestones
 
-### Friction #4 : Checkout frictionnel
+### Friction #4 : Checkout frictionnel ✅ PARTIEL
 - **Symptome** : Merchant veut payer mais l'UX de conversion est faible
 - **Impact** : Abandon au moment du paiement
 - **Etat actuel** : Page subscription avec countdown + CTA
 - **Manque** : Relance J-1 plus agressive, WhatsApp perso
+- **FAIT (08/02)** : Fix checkout Stripe quand customer supprime manuellement (recree automatiquement). Fix `past_due` qui bloquait les users comme si essai expire. Coherence UI sidebar + page abonnement.
 
 ## 1.3 Recommandations conversion (classees par impact)
 
@@ -133,16 +136,15 @@ Signup (email+password)
 
 ## Niveau 1 : QUICK WINS (1-4h chacun)
 
-### F1. Presets de recompense par metier
-- **Description** : 3 suggestions pre-remplies basees sur le `shop_type`
-- **Effort** : 1-2h
-- **Impact** : Reduit le temps de setup de 3min a 30s
-- **Fichier** : `src/app/dashboard/setup/page.tsx`
+### F1. Presets de recompense par metier ✅ FAIT
+- **Description** : 3-4 suggestions cliquables basees sur le `shop_type` (palier 1 + palier 2)
+- **Implementation** : `MerchantSettingsForm.tsx` (palier 1) + `program/page.tsx` (palier 2)
+- **Bonus** : `reward_description` n'est plus pre-remplie a la creation → merchant doit choisir activement → emails ProgramReminder J+1/2/3 fonctionnent correctement
 
-### F2. Email automatique avec QR code apres setup
+### F2. Email automatique avec QR code apres setup ✅ FAIT
 - **Description** : Email envoye automatiquement avec QR code + instructions d'impression
-- **Effort** : 1-2h (nouveau template + trigger)
-- **Impact** : Elimine l'oubli d'imprimer le QR code
+- **Implementation** : Template `QRCodeEmail.tsx` + trigger apres config programme
+- **Bonus** : CTA "Telechargez votre QR code" ajoute dans le bandeau preview carte
 
 ### F3. Dashboard — Celebration premier scan
 - **Description** : Confetti/animation + notification quand le 1er scan arrive
@@ -345,8 +347,8 @@ Signup (email+password)
 
 | # | Feature | Effort | Impact Conv. | Impact Retention | Priorite |
 |---|---------|--------|-------------|-----------------|----------|
-| F1 | Presets recompense | 1-2h | ★★★★★ | ★★ | **P0** |
-| F2 | Email QR code auto | 1-2h | ★★★★ | ★★★ | **P0** |
+| F1 | ~~Presets recompense~~ | ~~1-2h~~ | ★★★★★ | ★★ | **✅ FAIT** |
+| F2 | ~~Email QR code auto~~ | ~~1-2h~~ | ★★★★ | ★★★ | **✅ FAIT** |
 | F3 | Celebration 1er scan | 1h | ★★★ | ★★★ | **P0** |
 | F5 | Bouton partage | 2-3h | ★★★ | ★★ | **P1** |
 | F6 | Templates push | 2h | ★★ | ★★★★ | **P1** |
@@ -381,9 +383,26 @@ Signup (email+password)
 
 # PARTIE 5 : PLAN D'ACTION — 30 PROCHAINS JOURS
 
+## Pre-Semaine 1 — Travail realise (08-09 fev)
+
+### Bugs critiques corriges
+- [x] Fix checkout Stripe quand customer supprime manuellement (recree auto)
+- [x] Fix `past_due` traite comme essai expire → ne bloque plus l'acces
+- [x] Coherence UI abonnement : banner sidebar `past_due` + badge page subscription
+- [x] Fix `updated_at` trigger qui se declenchait sur `last_seen_at` (migration 032)
+- [x] Admin stats excluent les comptes admin (via `super_admins` table)
+
+### Features & UX
+- [x] **F1** : Suggestions cliquables par metier palier 1 + palier 2 (MerchantSettingsForm + program page)
+- [x] **F2** : QRCodeEmail envoye auto apres config programme
+- [x] Suppression pre-remplissage `reward_description` a la creation → emails ProgramReminder J+1/2/3 fonctionnent
+- [x] Renommage `/offre-speciale` → `/essai-gratuit` (compatibilite Facebook Ads)
+- [x] Preview banner sticky avec CTA "Telechargez votre QR code" (lien vers `/dashboard/qr-download`)
+- [x] Hint mobile sur page programme : "Apres enregistrement, un apercu sera disponible"
+- [x] Reduction taille suggestions palier 1 et palier 2 (text-xs)
+- [x] Admin leads : auto-refresh 30s (donnees + temps relatif)
+
 ## Semaine 1 (10-16 fev)
-- [ ] **F1** : Presets recompense par metier (1-2h)
-- [ ] **F2** : Email QR code auto post-setup (1-2h)
 - [ ] **F3** : Celebration premier scan (1h)
 - [ ] Creer les coupons Stripe : `QARTEBOOST` (2 mois -10€) et `QARTELAST` (3 mois -10€)
 - [ ] Implementer le plan admin merchants (barre actions, badges alerte, WhatsApp)
@@ -424,3 +443,4 @@ Signup (email+password)
 ---
 
 *Document genere le 09/02/2026 — Audit realise par analyse complete du codebase, emails, APIs, dashboard, landing page, et recherche competitive (Treatwell, Fresha, Square, Planity, Stamp Me, Zenoti, GlossGenius).*
+*Derniere mise a jour : 09/02/2026 — Ajout section travail realise pre-semaine 1.*

@@ -101,19 +101,11 @@ export async function POST(request: NextRequest) {
       attempts++;
     }
 
-    // Pré-remplir récompense selon le type de commerce
-    const defaultRewards: Record<string, { stamps: number; reward: string }> = {
-      coiffeur: { stamps: 10, reward: '1 coupe offerte' },
-      barbier: { stamps: 10, reward: '1 coupe offerte' },
-      institut_beaute: { stamps: 10, reward: '1 soin du visage offert' },
-      onglerie: { stamps: 10, reward: '1 pose offerte' },
-      spa: { stamps: 8, reward: '1 massage 30min offert' },
-      estheticienne: { stamps: 10, reward: '1 soin du visage offert' },
-      massage: { stamps: 8, reward: '1 massage 30min offert' },
-      epilation: { stamps: 8, reward: '1 zone offerte' },
-      autre: { stamps: 10, reward: '1 prestation offerte' },
+    // Stamps par défaut selon le type de commerce (récompense laissée null pour forcer la config)
+    const defaultStamps: Record<string, number> = {
+      coiffeur: 10, barbier: 10, institut_beaute: 10, onglerie: 10,
+      spa: 8, estheticienne: 10, massage: 8, epilation: 8, autre: 10,
     };
-    const defaults = defaultRewards[shop_type] || defaultRewards.autre;
 
     const { data, error } = await supabaseAdmin
       .from('merchants')
@@ -126,8 +118,7 @@ export async function POST(request: NextRequest) {
         shop_address,
         phone: formattedPhone,
         country: merchantCountry,
-        stamps_required: defaults.stamps,
-        reward_description: defaults.reward,
+        stamps_required: defaultStamps[shop_type] || 10,
       })
       .select()
       .single();
