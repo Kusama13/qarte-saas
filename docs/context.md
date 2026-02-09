@@ -49,7 +49,6 @@ src/
 │   ├── dashboard/         # Dashboard commercant (+ social-kit/)
 │   ├── admin/             # Dashboard admin
 │   ├── customer/          # Pages client
-│   ├── offre-speciale/    # Landing retargeting (exit popup)
 │   ├── scan/[code]/       # Scan QR dynamique
 │   ├── ebook/             # Landing ebook (lead generation)
 │   └── page.tsx           # Landing page (composition de composants)
@@ -71,7 +70,7 @@ src/
 │   ├── logger.ts         # Logger structuré
 │   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber)
 │
-├── emails/               # Templates React Email (24 templates + BaseLayout)
+├── emails/               # Templates React Email (25 templates + BaseLayout)
 │   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
 │   ├── WelcomeEmail.tsx           # Bienvenue (urgence + temoignage)
 │   ├── IncompleteSignupEmail.tsx  # Relance inscription +1h
@@ -95,6 +94,7 @@ src/
 │   ├── SubscriptionConfirmedEmail.tsx # Confirmation abonnement (Stripe)
 │   ├── PaymentFailedEmail.tsx     # Echec paiement (Stripe)
 │   ├── SubscriptionCanceledEmail.tsx # Annulation abonnement (Stripe)
+│   ├── SubscriptionReactivatedEmail.tsx # Reactivation abonnement (canceling→active)
 │   ├── ReactivationEmail.tsx      # Win-back J+7/14/30 (codes promo)
 │   └── EbookEmail.tsx             # Telechargement ebook
 │
@@ -139,7 +139,7 @@ public/
 - `loyalty_mode` ('visit' | 'article')
 - `stamps_required`, `reward_description`
 - `tier2_enabled`, `tier2_stamps_required`, `tier2_reward_description`
-- `trial_ends_at`, `subscription_status`, `stripe_customer_id`
+- `trial_ends_at`, `subscription_status`, `stripe_customer_id`, `stripe_subscription_id`
 - `shield_enabled` (Qarte Shield)
 
 ### customers
@@ -162,7 +162,7 @@ public/
 ### Autres tables
 - `redemptions`, `point_adjustments`, `banned_numbers`
 - `push_subscriptions`, `push_history`, `scheduled_push`
-- `demo_leads`, `tool_leads`, `pending_email_tracking`
+- `pending_email_tracking`
 - `member_programs`, `member_cards`
 - `super_admins`, `admin_expenses`, `admin_fixed_costs`
 - `admin_notes`, `admin_tasks`, `prospects`
@@ -199,15 +199,17 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - `GET /api/offers` - Offres promotionnelles
 
 ### Paiements
-- `POST /api/stripe/checkout` - Creer session paiement
-- `POST /api/stripe/webhook` - Webhook Stripe
+- `POST /api/stripe/checkout` - Creer session paiement (verifie que le customer Stripe existe encore)
+- `POST /api/stripe/webhook` - Webhook Stripe (5 events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted, invoice.payment_failed, invoice.payment_succeeded)
+- `POST /api/stripe/portal` - Creer session portail client Stripe
+- `GET /api/stripe/payment-method` - Recuperer methode de paiement active
 
 ### Admin
 - `/api/admin/merchants/[id]` - Gestion commercants
 - `/api/admin/incomplete-signups` - Inscriptions incompletes (auth sans merchant, 48h)
 - `/api/admin/prospects` - Leads/prospects
 - `/api/admin/tasks` - Taches admin
-- `/api/leads/tools` - Leads ebook (POST public, GET admin)
+- `/api/admin/merchant-emails` - Emails merchants (auth admin)
 
 ---
 
@@ -361,12 +363,27 @@ npm run email
 - `CH` Suisse (prefix 41, local 10 chiffres)
 - `LU` Luxembourg (prefix 352, local 9 chiffres, pas de 0 initial)
 
-### Statuts Abonnement
+### Statuts Abonnement (SubscriptionStatus)
 - `trial` - periode d'essai
 - `active` - abonnement actif
 - `canceled` - annule (orthographe US)
-- `canceling` - annulation en cours (fin de periode)
-- `past_due` - paiement en retard
+- `canceling` - annulation programmee (fin de periode, cancel_at_period_end=true)
+- `past_due` - paiement en retard (traite comme abonne actif, pas bloque)
+
+### Machine d'etats Stripe → DB
+| Evenement Stripe | Statut DB | Email |
+|-----------------|-----------|-------|
+| checkout.session.completed | `active` | SubscriptionConfirmedEmail |
+| subscription.updated (cancel_at_period_end=true) | `canceling` | SubscriptionCanceledEmail |
+| subscription.updated (canceling→active) | `active` | SubscriptionReactivatedEmail |
+| subscription.updated (trialing, post-checkout) | `active` | — |
+| subscription.deleted | `canceled` | — |
+| invoice.payment_failed | `past_due` | PaymentFailedEmail |
+| invoice.payment_succeeded (past_due→active) | `active` | SubscriptionConfirmedEmail |
+
+### Checkout robustesse
+- Verifie que le `stripe_customer_id` existe encore sur Stripe avant de creer la session
+- Si le customer a ete supprime manuellement, en recree un nouveau et nettoie `stripe_subscription_id`
 
 ### Statuts Visites (Qarte Shield)
 - `confirmed` - validee
@@ -381,7 +398,6 @@ npm run email
 |---------|-------------|
 | `src/app/page.tsx` | Landing page (composition de 12 composants) |
 | `src/components/landing/` | 12 composants landing (Hero, FAQ, Pricing...) |
-| `src/app/offre-speciale/page.tsx` | Landing retargeting avec exit popup |
 | `src/middleware.ts` | Protection routes authentifiees |
 | `src/lib/supabase.ts` | Client Supabase |
 | `src/lib/stripe.ts` | Client Stripe (mensuel + annuel) |
@@ -391,6 +407,8 @@ npm run email
 | `tailwind.config.ts` | Config Tailwind (couleurs, fonts) |
 | `next.config.mjs` | Config Next.js (securite, images) |
 | `src/app/api/cron/morning/route.ts` | Cron principal (4 taches) |
+| `src/app/api/stripe/webhook/route.ts` | Webhook Stripe (5 events, machine d'etats) |
+| `src/app/api/stripe/checkout/route.ts` | Checkout Stripe (verification customer) |
 | `supabase/migrations/` | 30 migrations SQL |
 
 ---
@@ -469,18 +487,13 @@ npm run email
 - Lien vers preview carte (`/customer/card/demo-{type}?preview=true&demo=true`)
 - CTA "Creer mon programme gratuit"
 
-### Offre Speciale (`/offre-speciale`)
-- Page retargeting avec urgence
-- Glassmorphism design
-- Temoignage integre
-- 15 jours gratuits
-
 ### Admin (`/admin`)
-- Dashboard : metriques startup (MRR, churn, ARPU, LTV) + actions du jour
+- Dashboard : metriques startup (MRR, churn, ARPU, LTV) + segments d'action lifecycle (trial expiring, inactive, canceling, past_due)
 - Merchants : liste, filtres par statut + pays, actions rapides, activite, alertes
-- Leads : onglet Inscriptions incompletes (48h, cliquable) + onglet Ebook
+- Leads : onglet Incompletes + Aujourd'hui + Messages
 - Analytics, Metriques, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
+- **Toutes les stats excluent les comptes admin** (via `super_admins` table)
 
 ### Dashboard (`/dashboard`)
 - Sidebar navigation (bottom sheet mobile, sidebar desktop)
@@ -489,7 +502,7 @@ npm run email
 - Telechargement QR/flyers + kit reseaux sociaux
 - Gestion clients
 - Marketing (push notifications)
-- Page abonnement avec countdown timer + polling apres retour portail Stripe
+- Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe
 - Kit reseaux sociaux (visuel + legendes Instagram)
 - Headers harmonises (violet #4b0082)
 
@@ -548,7 +561,7 @@ import type { Merchant } from '@/types';
 
 ---
 
-## 19. Emails Transactionnels (24 templates)
+## 19. Emails Transactionnels (25 templates)
 
 ### Onboarding & Activation
 | Email | Declencheur |
@@ -587,6 +600,7 @@ import type { Merchant } from '@/types';
 | SubscriptionConfirmedEmail | checkout.session.completed + invoice.payment_succeeded recovery (webhook Stripe) |
 | PaymentFailedEmail | invoice.payment_failed (webhook Stripe) |
 | SubscriptionCanceledEmail | customer.subscription.updated → canceling (webhook Stripe, date de fin Stripe) |
+| SubscriptionReactivatedEmail | customer.subscription.updated → canceling→active (webhook Stripe, reactivation via portail) |
 | ReactivationEmail | Win-back J+7/14/30 — codes promo QARTE50/QARTEBOOST/QARTELAST (cron reactivation) |
 
 ### Autre
@@ -609,10 +623,7 @@ export const EMAIL_HEADERS = {
 | Fichier | Description |
 |---------|-------------|
 | `docs/context.md` | Contexte projet (ce fichier) |
-| `docs/AUDIT_COMPLET.md` | Audit securite/qualite |
-| `docs/AUDIT_SCALABILITE.md` | Audit performance/scalabilite |
-| `docs/CHANGELOG.md` | Historique deploiements |
-| `docs/roadmap/` | Fonctionnalites a venir (mode article, scheduled push) |
+| `AUDIT-ROADMAP-FEV-2026.md` | Audit conversion + roadmap features + micro-SaaS |
 
 ---
 

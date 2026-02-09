@@ -113,12 +113,25 @@ export default function LeadsPage() {
     }
   }, [getAuthHeaders]);
 
+  // State to force time recalculation every 30s
+  const [, setTick] = useState(0);
+
   useEffect(() => {
     Promise.all([
       fetchIncompleteSignups(),
       fetchTodaySignups(),
       fetchContactMessages(),
     ]).finally(() => setLoading(false));
+
+    // Refresh data + recalculate times every 30s
+    const interval = setInterval(() => {
+      fetchIncompleteSignups();
+      fetchTodaySignups();
+      fetchContactMessages();
+      setTick(t => t + 1);
+    }, 30_000);
+
+    return () => clearInterval(interval);
   }, [fetchIncompleteSignups, fetchTodaySignups, fetchContactMessages]);
 
   // ============================================
