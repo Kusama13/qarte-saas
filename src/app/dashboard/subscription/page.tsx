@@ -260,8 +260,10 @@ export default function SubscriptionPage() {
                 </div>
               </div>
               {isPaid && <span className="px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-full border border-green-100">Actif</span>}
-              {trialStatus.isActive && <span className="px-3 py-1 text-xs font-bold text-primary bg-primary-50 rounded-full border border-primary-100">Essai</span>}
+              {isCanceling && <span className="px-3 py-1 text-xs font-bold text-orange-700 bg-orange-50 rounded-full border border-orange-100">Annulation en cours</span>}
+              {trialStatus.isActive && !hasStripe && <span className="px-3 py-1 text-xs font-bold text-primary bg-primary-50 rounded-full border border-primary-100">Essai</span>}
               {isCanceled && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">Annulé</span>}
+              {isPastDue && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">Paiement échoué</span>}
             </div>
 
             {/* Price */}
@@ -411,7 +413,44 @@ export default function SubscriptionPage() {
                 </div>
               </div>
 
-              {isCanceled ? (
+              {isCanceled && trialStatus.isActive ? (
+                <div className="space-y-4">
+                  <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100">
+                    <p className="text-sm text-indigo-800 font-medium">
+                      Votre essai est toujours actif. Souscrivez pour continuer sans interruption.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100">
+                    <button
+                      onClick={() => setBillingPlan('monthly')}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                        billingPlan === 'monthly'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      Mensuel
+                    </button>
+                    <button
+                      onClick={() => setBillingPlan('annual')}
+                      className={`flex-1 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                        billingPlan === 'annual'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      Annuel <span className="text-emerald-600">-17%</span>
+                    </button>
+                  </div>
+                  <Button
+                    className="w-full h-11 rounded-2xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
+                    onClick={handleSubscribe}
+                    loading={subscribing}
+                  >
+                    {billingPlan === 'annual' ? 'S\'abonner — 190 €/an' : 'S\'abonner — 19 €/mois'}
+                  </Button>
+                </div>
+              ) : isCanceled ? (
                 <Button className="w-full h-11 rounded-2xl font-bold" onClick={handleSubscribe} loading={subscribing}>
                   Réactiver
                 </Button>

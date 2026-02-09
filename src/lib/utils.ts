@@ -114,8 +114,8 @@ export interface TrialStatus {
 export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: string): TrialStatus {
   const GRACE_PERIOD_DAYS = 7;
 
-  // Si abonné, pas de restriction
-  if (subscriptionStatus === 'active') {
+  // Si abonné (actif ou en cours d'annulation), pas de restriction
+  if (subscriptionStatus === 'active' || subscriptionStatus === 'canceling') {
     return {
       isActive: false,
       isInGracePeriod: false,
