@@ -24,7 +24,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validateFrenchPhone, getTodayInParis } from '@/lib/utils';
+import { formatPhoneNumber, validateFrenchPhone, getTodayInParis, PHONE_CONFIG } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -119,7 +119,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       if (savedPhone && step === 'phone') {
         setAutoLoginAttempted(true);
-        const formattedPhone = formatPhoneNumber(savedPhone);
+        const formattedPhone = formatPhoneNumber(savedPhone, merchant.country || 'FR');
 
         if (validateFrenchPhone(formattedPhone)) {
           setSubmitting(true);
@@ -181,7 +181,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     e.preventDefault();
     setError('');
 
-    const formattedPhone = formatPhoneNumber(phoneNumber);
+    const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
     if (!validateFrenchPhone(formattedPhone)) {
       setError('Veuillez entrer un numéro de téléphone valide');
       return;
@@ -256,7 +256,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setSubmitting(true);
 
     try {
-      const formattedPhone = formatPhoneNumber(phoneNumber);
+      const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
 
       const response = await fetch('/api/customers/register', {
         method: 'POST',
@@ -294,7 +294,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setStep('checkin');
 
     try {
-      const formattedPhone = formatPhoneNumber(phoneNumber);
+      const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
 
       // Use the /api/checkin endpoint with Qarte Shield
       const response = await fetch('/api/checkin', {
@@ -655,7 +655,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   <div className="relative group">
                     <Input
                       type="tel"
-                      placeholder="06 12 34 56 78"
+                      placeholder={PHONE_CONFIG[merchant.country || 'FR'].placeholder}
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
                       required

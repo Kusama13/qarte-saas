@@ -13,12 +13,17 @@ import {
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
-import { generateSlug, validateFrenchPhone } from '@/lib/utils';
-import { SHOP_TYPES, type ShopType } from '@/types';
+import { generateSlug, formatPhoneNumber, validatePhone, PHONE_CONFIG } from '@/lib/utils';
+import { SHOP_TYPES, type ShopType, COUNTRIES, type MerchantCountry } from '@/types';
 import { trackPageView, trackSetupCompleted, trackSignupCompleted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
 
 const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+const countryOptions = Object.entries(COUNTRIES).map(([value, label]) => ({
   value,
   label,
 }));
@@ -36,6 +41,7 @@ export default function CompleteProfilePage() {
     shopName: '',
     shopType: '' as ShopType | '',
     shopAddress: '',
+    country: 'FR' as MerchantCountry,
   });
 
   // Track page view
@@ -85,8 +91,9 @@ export default function CompleteProfilePage() {
     setLoading(true);
     setError('');
 
-    if (!validateFrenchPhone(formData.phone)) {
-      setError('Veuillez entrer un numéro de téléphone français valide');
+    const formattedPhone = formatPhoneNumber(formData.phone, formData.country);
+    if (!validatePhone(formattedPhone, formData.country)) {
+      setError('Veuillez entrer un numéro de téléphone valide');
       setLoading(false);
       return;
     }
@@ -120,7 +127,8 @@ export default function CompleteProfilePage() {
           shop_name: formData.shopName,
           shop_type: formData.shopType,
           shop_address: formData.shopAddress || null,
-          phone: formData.phone,
+          phone: formattedPhone,
+          country: formData.country,
         }),
       });
 
@@ -217,11 +225,21 @@ export default function CompleteProfilePage() {
                 required
               />
 
+              <Select
+                label="Pays"
+                options={countryOptions}
+                value={formData.country}
+                onChange={(e) =>
+                  setFormData({ ...formData, country: e.target.value as MerchantCountry })
+                }
+                required
+              />
+
               <div className="relative">
                 <Input
                   type="tel"
                   label="Téléphone"
-                  placeholder="06 12 34 56 78"
+                  placeholder={PHONE_CONFIG[formData.country].placeholder}
                   value={formData.phone}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })

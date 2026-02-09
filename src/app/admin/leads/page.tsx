@@ -131,9 +131,10 @@ export default function LeadsPage() {
 
   const formatPhoneForWhatsApp = (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
+    // Legacy local format → assume French
     if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
-    if (cleaned.startsWith('33')) return cleaned;
-    return '33' + cleaned;
+    // Already E.164 (33xxx, 32xxx, 41xxx, 352xxx...)
+    return cleaned;
   };
 
   const openWhatsApp = (phone: string, name?: string) => {

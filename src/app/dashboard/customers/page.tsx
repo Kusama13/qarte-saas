@@ -20,7 +20,7 @@ import {
 import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
 import { supabase } from '@/lib/supabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatPhoneNumber, displayPhoneNumber, PHONE_CONFIG } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer } from '@/types';
 
 interface CustomerWithCard extends LoyaltyCard {
@@ -157,7 +157,7 @@ export default function CustomersPage() {
         body: JSON.stringify({
           first_name: newFirstName.trim(),
           last_name: newLastName.trim() || null,
-          phone_number: newPhone.trim(),
+          phone_number: formatPhoneNumber(newPhone.trim(), merchant.country || 'FR'),
         }),
       });
 
@@ -414,7 +414,7 @@ export default function CustomersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
-                        {card.customer?.phone_number}
+                        {displayPhoneNumber(card.customer?.phone_number || '', merchant?.country || 'FR')}
                       </td>
                       <td className="px-6 py-4">
                         {merchant?.tier2_enabled && merchant?.tier2_stamps_required ? (
@@ -570,7 +570,7 @@ export default function CustomersPage() {
           />
           <Input
             label="Téléphone"
-            placeholder="+33 6 12 34 56 78"
+            placeholder={PHONE_CONFIG[merchant?.country || 'FR'].placeholder}
             value={newPhone}
             onChange={(e) => setNewPhone(e.target.value)}
           />

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import { formatPhoneNumber, validateFrenchPhone, getTodayInParis, getTrialStatus } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTodayInParis, getTrialStatus } from '@/lib/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import type { VisitStatus } from '@/types';
+import type { VisitStatus, MerchantCountry } from '@/types';
 
 // Use singleton admin client for server-side operations
 const supabaseAdmin = getSupabaseAdmin();
@@ -77,16 +77,8 @@ export async function POST(request: NextRequest) {
     }
 
     const { scan_code, phone_number, first_name, last_name } = parsed.data;
-    const formattedPhone = formatPhoneNumber(phone_number);
 
-    if (!validateFrenchPhone(formattedPhone)) {
-      return NextResponse.json(
-        { error: 'Numéro de téléphone invalide' },
-        { status: 400 }
-      );
-    }
-
-    // Get merchant by scan_code
+    // Get merchant by scan_code FIRST (need country for phone formatting)
     const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
       .select('*')
@@ -97,6 +89,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Commerce introuvable' },
         { status: 404 }
+      );
+    }
+
+    const merchantCountry: MerchantCountry = merchant.country || 'FR';
+    const formattedPhone = formatPhoneNumber(phone_number, merchantCountry);
+
+    if (!validatePhone(formattedPhone, merchantCountry)) {
+      return NextResponse.json(
+        { error: 'Numéro de téléphone invalide' },
+        { status: 400 }
       );
     }
 

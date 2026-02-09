@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { validateFrenchPhone } from '@/lib/utils';
-import { SHOP_TYPES, type ShopType } from '@/types';
+import { formatPhoneNumber, validatePhone, PHONE_CONFIG } from '@/lib/utils';
+import { SHOP_TYPES, type ShopType, COUNTRIES } from '@/types';
 import type { Merchant } from '@/types';
 
 const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
@@ -77,12 +77,13 @@ export default function SettingsPage() {
       return;
     }
 
-    if (!validateFrenchPhone(formData.phone)) {
+    if (!merchant) return;
+
+    const formattedPhone = formatPhoneNumber(formData.phone, merchant.country || 'FR');
+    if (!validatePhone(formattedPhone, merchant.country || 'FR')) {
       setError('Veuillez entrer un numéro de téléphone valide');
       return;
     }
-
-    if (!merchant) return;
 
     setSaving(true);
     try {
@@ -92,7 +93,7 @@ export default function SettingsPage() {
           shop_name: formData.shopName,
           shop_type: formData.shopType,
           shop_address: formData.shopAddress || null,
-          phone: formData.phone,
+          phone: formattedPhone,
         })
         .eq('id', merchant.id);
 
@@ -212,7 +213,7 @@ export default function SettingsPage() {
             <Input
               label="Téléphone"
               type="tel"
-              placeholder="06 12 34 56 78"
+              placeholder={PHONE_CONFIG[merchant?.country || 'FR'].placeholder}
               value={formData.phone}
               onChange={(e) =>
                 setFormData({ ...formData, phone: e.target.value })
@@ -247,6 +248,11 @@ export default function SettingsPage() {
           <div className="p-5 rounded-2xl bg-white/50 border border-gray-100 shadow-sm transition-all hover:border-indigo-100">
             <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Identifiant unique</p>
             <p className="text-sm text-indigo-600 font-mono font-medium">{merchant?.slug}</p>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white/50 border border-gray-100 shadow-sm transition-all hover:border-indigo-100">
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Pays</p>
+            <p className="text-sm text-gray-700 font-medium">{COUNTRIES[merchant?.country || 'FR']}</p>
           </div>
 
           <div className="p-5 rounded-2xl bg-white/50 border border-gray-100 shadow-sm transition-all hover:border-indigo-100">

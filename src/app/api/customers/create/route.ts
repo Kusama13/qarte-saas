@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import { formatPhoneNumber } from '@/lib/utils';
+import type { MerchantCountry } from '@/types';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -20,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Get merchant for this user
     const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
-      .select('id, stamps_required')
+      .select('id, stamps_required, country')
       .eq('user_id', user.id)
       .single();
 
@@ -40,7 +42,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const phoneFormatted = phone_number.trim();
+    const merchantCountry: MerchantCountry = merchant.country || 'FR';
+    const phoneFormatted = formatPhoneNumber(phone_number.trim(), merchantCountry);
 
     // Check if customer already exists for THIS merchant with this phone number
     const { data: existingCustomerForMerchant } = await supabaseAdmin

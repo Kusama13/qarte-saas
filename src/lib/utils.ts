@@ -213,20 +213,120 @@ export async function generateQRCodeSVG(url: string): Promise<string> {
   }
 }
 
-export function formatPhoneNumber(phone: string): string {
+// =============================================
+// Phone: multi-country support (FR, BE, CH, LU)
+// Storage: E.164 without + (e.g. 33612345678)
+// =============================================
+
+import type { MerchantCountry } from '@/types';
+
+export const PHONE_CONFIG: Record<MerchantCountry, {
+  prefix: string;
+  localLeadingZero: boolean;
+  localLengths: number[];
+  intlLengths: number[];
+  placeholder: string;
+}> = {
+  FR: {
+    prefix: '33',
+    localLeadingZero: true,
+    localLengths: [10],       // 0612345678
+    intlLengths: [11],        // 33612345678
+    placeholder: '06 12 34 56 78',
+  },
+  BE: {
+    prefix: '32',
+    localLeadingZero: true,
+    localLengths: [9, 10],    // 027123456 (fixe 9), 0475123456 (mobile 10)
+    intlLengths: [10, 11],    // 327123456 (fixe), 32475123456 (mobile)
+    placeholder: '0475 12 34 56',
+  },
+  CH: {
+    prefix: '41',
+    localLeadingZero: true,
+    localLengths: [10],       // 0791234567
+    intlLengths: [11],        // 41791234567
+    placeholder: '079 123 45 67',
+  },
+  LU: {
+    prefix: '352',
+    localLeadingZero: false,  // Pas de 0 initial au Luxembourg
+    localLengths: [6, 7, 8, 9], // 621123, 6211234, 62112345, 621123456
+    intlLengths: [9, 10, 11, 12], // 352 + local
+    placeholder: '621 123 456',
+  },
+};
+
+/**
+ * Convertit un numero vers E.164 sans + (ex: 33612345678).
+ * Le parametre country determine comment interpreter les numeros locaux.
+ * Default 'FR' pour backward-compatibility.
+ */
+export function formatPhoneNumber(phone: string, country: MerchantCountry = 'FR'): string {
   const cleaned = phone.replace(/\D/g, '');
-  // France international → local (retrocompat BDD existante)
-  if (cleaned.startsWith('33') && cleaned.length === 11) {
-    return '0' + cleaned.slice(2);
+  const config = PHONE_CONFIG[country];
+
+  // Deja en E.164 pour ce pays ?
+  if (cleaned.startsWith(config.prefix) && config.intlLengths.includes(cleaned.length)) {
+    return cleaned;
   }
-  // Tout le reste : garder tel quel (FR local, BE, CH, LU, etc.)
+
+  // Format local avec 0 (FR, BE, CH)
+  if (config.localLeadingZero && cleaned.startsWith('0') && config.localLengths.includes(cleaned.length)) {
+    return config.prefix + cleaned.slice(1);
+  }
+
+  // Luxembourg : pas de 0 initial
+  if (!config.localLeadingZero && config.localLengths.includes(cleaned.length) && !cleaned.startsWith(config.prefix)) {
+    return config.prefix + cleaned;
+  }
+
+  // Deja en E.164 pour un AUTRE pays ? (backward-compat)
+  for (const cfg of Object.values(PHONE_CONFIG)) {
+    if (cleaned.startsWith(cfg.prefix) && cfg.intlLengths.includes(cleaned.length)) {
+      return cleaned;
+    }
+  }
+
+  // Fallback : retourner tel quel
   return cleaned;
 }
 
-export function validateFrenchPhone(phone: string): boolean {
+/**
+ * Valide un numero E.164 sans + pour un pays donne.
+ */
+export function validatePhone(phone: string, country: MerchantCountry = 'FR'): boolean {
   const cleaned = phone.replace(/\D/g, '');
-  // Accepte tout numero avec 6+ chiffres (FR, BE, CH, LU)
-  return cleaned.length >= 6;
+  const config = PHONE_CONFIG[country];
+  return cleaned.startsWith(config.prefix) && config.intlLengths.includes(cleaned.length);
+}
+
+/**
+ * Affiche un numero E.164 en format local lisible.
+ * Ex: 33612345678 → 06 12 34 56 78
+ */
+export function displayPhoneNumber(phone: string, country: MerchantCountry = 'FR'): string {
+  const cleaned = phone.replace(/\D/g, '');
+  const config = PHONE_CONFIG[country];
+
+  if (cleaned.startsWith(config.prefix)) {
+    const local = cleaned.slice(config.prefix.length);
+    if (config.localLeadingZero) {
+      const withZero = '0' + local;
+      return withZero.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
+    }
+    // Luxembourg
+    return local.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
+  }
+
+  return cleaned.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
+}
+
+/** @deprecated Use validatePhone instead */
+export function validateFrenchPhone(phone: string): boolean {
+  // Permissif pour les pages sans contexte merchant
+  const cleaned = phone.replace(/\D/g, '');
+  return cleaned.length >= 9;
 }
 
 export function validateEmail(email: string): boolean {

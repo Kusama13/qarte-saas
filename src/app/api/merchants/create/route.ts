@@ -3,7 +3,8 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 import { sendWelcomeEmail, sendNewMerchantNotification, cancelScheduledEmail } from '@/lib/email';
-import { generateScanCode } from '@/lib/utils';
+import { generateScanCode, formatPhoneNumber } from '@/lib/utils';
+import type { MerchantCountry } from '@/types';
 
 // Client avec service role (bypass RLS)
 const supabaseAdmin = getSupabaseAdmin();
@@ -20,7 +21,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { user_id, slug, shop_name, shop_type, shop_address, phone } = body;
+    const { user_id, slug, shop_name, shop_type, shop_address, phone, country } = body;
+    const merchantCountry: MerchantCountry = country || 'FR';
+    const formattedPhone = formatPhoneNumber(phone, merchantCountry);
 
     if (!user_id || !shop_name || !shop_type || !phone || !shop_address) {
       return NextResponse.json(
@@ -121,7 +124,8 @@ export async function POST(request: NextRequest) {
         shop_name,
         shop_type,
         shop_address,
-        phone,
+        phone: formattedPhone,
+        country: merchantCountry,
         stamps_required: defaults.stamps,
         reward_description: defaults.reward,
       })

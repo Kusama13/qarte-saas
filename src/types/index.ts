@@ -21,6 +21,15 @@ export const SHOP_TYPES: Record<ShopType, string> = {
   autre: 'Autre',
 };
 
+export type MerchantCountry = 'FR' | 'BE' | 'CH' | 'LU';
+
+export const COUNTRIES: Record<MerchantCountry, string> = {
+  FR: 'France',
+  BE: 'Belgique',
+  CH: 'Suisse',
+  LU: 'Luxembourg',
+};
+
 export type SubscriptionStatus = 'trial' | 'active' | 'canceled' | 'canceling' | 'past_due';
 
 export type LoyaltyMode = 'visit' | 'article';
@@ -37,6 +46,7 @@ export interface Merchant {
   shop_type: ShopType;
   shop_address: string | null;
   phone: string;
+  country: MerchantCountry;
   logo_url: string | null;
   primary_color: string;
   secondary_color: string;

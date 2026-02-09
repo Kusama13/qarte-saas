@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import { SHOP_TYPES, type ShopType } from '@/types';
+import { SHOP_TYPES, COUNTRIES, type ShopType, type MerchantCountry } from '@/types';
 
 interface Merchant {
   id: string;
@@ -35,6 +35,7 @@ interface Merchant {
   shop_type: ShopType;
   shop_address: string | null;
   phone: string;
+  country?: MerchantCountry;
   subscription_status: string;
   trial_ends_at: string | null;
   created_at: string;
@@ -81,6 +82,7 @@ export default function AdminMerchantsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
+  const [countryFilter, setCountryFilter] = useState<'all' | MerchantCountry>('all');
   const [showAdmins, setShowAdmins] = useState(false);
 
   const fetchMerchants = useCallback(async () => {
@@ -223,6 +225,10 @@ export default function AdminMerchantsPage() {
       filtered = filtered.filter((m: Merchant) => m.subscription_status === statusFilter);
     }
 
+    if (countryFilter !== 'all') {
+      filtered = filtered.filter((m: Merchant) => (m.country || 'FR') === countryFilter);
+    }
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
@@ -234,7 +240,7 @@ export default function AdminMerchantsPage() {
     }
 
     return filtered;
-  }, [merchants, searchQuery, statusFilter, showAdmins]);
+  }, [merchants, searchQuery, statusFilter, countryFilter, showAdmins]);
 
   // Group by shop type
   const groupedMerchants = useMemo(() => {
@@ -308,9 +314,10 @@ export default function AdminMerchantsPage() {
 
   const formatPhoneForWhatsApp = (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
+    // Legacy local format → assume French
     if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
-    if (cleaned.startsWith('33')) return cleaned;
-    return '33' + cleaned;
+    // Already E.164 (33xxx, 32xxx, 41xxx, 352xxx...)
+    return cleaned;
   };
 
   const openWhatsApp = (phone: string, name?: string) => {
@@ -502,6 +509,22 @@ export default function AdminMerchantsPage() {
               )}
             >
               {btn.label} ({btn.count})
+            </button>
+          ))}
+          {/* Country filter */}
+          <div className="w-px h-6 bg-gray-200 flex-shrink-0 hidden sm:block" />
+          {(['all', 'FR', 'BE', 'CH', 'LU'] as const).map((c) => (
+            <button
+              key={c}
+              onClick={() => setCountryFilter(c)}
+              className={cn(
+                "px-3 py-2 text-xs sm:text-sm font-medium rounded-xl transition-colors whitespace-nowrap flex-shrink-0",
+                countryFilter === c
+                  ? "bg-violet-600 text-white"
+                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+              )}
+            >
+              {c === 'all' ? 'Tous pays' : c}
             </button>
           ))}
           {/* Admin toggle */}
