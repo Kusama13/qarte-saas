@@ -113,13 +113,16 @@ export async function GET(request: NextRequest) {
 
         try {
           if (trialStatus.isActive && (trialStatus.daysRemaining === 5 || trialStatus.daysRemaining === 3 || trialStatus.daysRemaining === 1)) {
+            // Pas de code promo à J-1 : on laisse convertir au prix normal
             await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining);
             results.trialEmails.ending++;
           }
           if (trialStatus.isInGracePeriod) {
             const daysExpired = Math.abs(trialStatus.daysRemaining);
             if (daysExpired === 1 || daysExpired === 3 || daysExpired === 5) {
-              await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion);
+              // Code promo QARTE50 uniquement à J+1 (1er email après expiration)
+              const promoCode = daysExpired === 1 ? 'QARTE50' : undefined;
+              await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, promoCode);
               results.trialEmails.expired++;
             }
           }
@@ -832,8 +835,18 @@ export async function GET(request: NextRequest) {
           const totalCustomers = reactivationCountMap.get(merchant.id) || 0;
 
           try {
+            // Codes promo progressifs : J+14 = 2 mois à 9€, J+30 = 3 mois à 9€
+            let promoCode: string | undefined;
+            let promoMonths: number | undefined;
+            if (daysSinceCancellation === 14) {
+              promoCode = 'QARTEBOOST';
+              promoMonths = 2;
+            } else if (daysSinceCancellation === 30) {
+              promoCode = 'QARTELAST';
+              promoMonths = 3;
+            }
             const result = await sendReactivationEmail(
-              email, merchant.shop_name, daysSinceCancellation, totalCustomers || undefined
+              email, merchant.shop_name, daysSinceCancellation, totalCustomers || undefined, promoCode, promoMonths
             );
             if (result.success) {
               await supabase.from('reactivation_email_tracking').insert({

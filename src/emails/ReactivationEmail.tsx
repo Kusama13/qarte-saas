@@ -11,12 +11,16 @@ interface ReactivationEmailProps {
   shopName: string;
   daysSinceCancellation: number;
   totalCustomers?: number;
+  promoCode?: string;
+  promoMonths?: number;
 }
 
 export function ReactivationEmail({
   shopName,
   daysSinceCancellation,
-  totalCustomers
+  totalCustomers,
+  promoCode,
+  promoMonths = 1
 }: ReactivationEmailProps) {
   return (
     <BaseLayout preview={`${shopName} - Vos clients vous attendent`}>
@@ -55,16 +59,32 @@ export function ReactivationEmail({
         <Text style={benefitItem}>✓ Support prioritaire</Text>
       </Section>
 
-      <Section style={offerBox}>
-        <Text style={offerTitle}>Offre de retour</Text>
-        <Text style={offerText}>
-          Réactivez votre compte aujourd&apos;hui et retrouvez toutes vos données clients intactes.
-        </Text>
-      </Section>
+      {promoCode ? (
+        <Section style={promoBox}>
+          <Text style={promoTitle}>Offre de retour exclusive</Text>
+          <Text style={promoPrice}>
+            <span style={promoPriceOld}>19€</span> → 9€/mois pendant {promoMonths} mois
+          </Text>
+          <Text style={promoLabel}>CODE PROMO</Text>
+          <Text style={promoCodeStyle}>{promoCode}</Text>
+          <Text style={promoNote}>
+            -{promoMonths * 10}€ d&apos;économie sur {promoMonths === 1 ? 'votre premier mois' : `vos ${promoMonths} premiers mois`}
+          </Text>
+        </Section>
+      ) : (
+        <Section style={offerBox}>
+          <Text style={offerTitle}>Offre de retour</Text>
+          <Text style={offerText}>
+            Réactivez votre compte aujourd&apos;hui et retrouvez toutes vos données clients intactes.
+          </Text>
+        </Section>
+      )}
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          Réactiver mon compte - 19€/mois
+          {promoCode
+            ? `Réactiver à 9€/mois pendant ${promoMonths} mois`
+            : 'Réactiver mon compte - 19€/mois'}
         </Button>
       </Section>
 
@@ -178,6 +198,58 @@ const offerText = {
   color: '#92400e',
   fontSize: '14px',
   margin: '0',
+};
+
+const promoBox = {
+  backgroundColor: '#f0edfc',
+  borderRadius: '12px',
+  padding: '24px',
+  margin: '24px 0',
+  textAlign: 'center' as const,
+  border: '2px dashed #4b0082',
+};
+
+const promoTitle = {
+  color: '#4b0082',
+  fontSize: '16px',
+  fontWeight: '600',
+  margin: '0 0 8px 0',
+};
+
+const promoPrice = {
+  color: '#1a1a1a',
+  fontSize: '20px',
+  fontWeight: '700',
+  margin: '0 0 16px 0',
+};
+
+const promoPriceOld = {
+  textDecoration: 'line-through',
+  color: '#8898aa',
+  fontWeight: '400',
+};
+
+const promoLabel = {
+  color: '#8898aa',
+  fontSize: '11px',
+  fontWeight: '600',
+  margin: '0 0 4px 0',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '1px',
+};
+
+const promoCodeStyle = {
+  color: '#4b0082',
+  fontSize: '28px',
+  fontWeight: '700',
+  margin: '0',
+  letterSpacing: '2px',
+};
+
+const promoNote = {
+  color: '#4b0082',
+  fontSize: '13px',
+  margin: '4px 0 0 0',
 };
 
 const buttonContainer = {

@@ -10,9 +10,10 @@ import { BaseLayout } from './BaseLayout';
 interface TrialExpiredEmailProps {
   shopName: string;
   daysUntilDeletion: number;
+  promoCode?: string;
 }
 
-export function TrialExpiredEmail({ shopName, daysUntilDeletion }: TrialExpiredEmailProps) {
+export function TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode }: TrialExpiredEmailProps) {
   return (
     <BaseLayout preview={`${shopName}, votre essai est terminé`}>
       <Heading style={heading}>
@@ -40,17 +41,29 @@ export function TrialExpiredEmail({ shopName, daysUntilDeletion }: TrialExpiredE
         </Text>
       </Section>
 
-      <Section style={offerBox}>
-        <Text style={offerTitle}>On veut vous aider à réussir</Text>
-        <Text style={offerText}>
-          Réactivez maintenant et on vous accompagne personnellement
-          pour lancer votre programme avec vos premiers clients.
-        </Text>
-      </Section>
+      {promoCode ? (
+        <Section style={promoBox}>
+          <Text style={promoTitle}>Offre spéciale pour vous</Text>
+          <Text style={promoPrice}>
+            <span style={promoPriceOld}>19€</span> → 9€/mois le 1er mois
+          </Text>
+          <Text style={promoLabel}>CODE PROMO</Text>
+          <Text style={promoCodeStyle}>{promoCode}</Text>
+          <Text style={promoNote}>Utilisez ce code lors du paiement</Text>
+        </Section>
+      ) : (
+        <Section style={offerBox}>
+          <Text style={offerTitle}>On veut vous aider à réussir</Text>
+          <Text style={offerText}>
+            Réactivez maintenant et on vous accompagne personnellement
+            pour lancer votre programme avec vos premiers clients.
+          </Text>
+        </Section>
+      )}
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          Réactiver mon compte — 19€/mois
+          {promoCode ? 'Réactiver à 9€ le 1er mois' : 'Réactiver mon compte — 19€/mois'}
         </Button>
       </Section>
 
@@ -159,6 +172,58 @@ const whatsappButton = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '12px 28px',
+};
+
+const promoBox = {
+  backgroundColor: '#f0edfc',
+  borderRadius: '12px',
+  padding: '24px',
+  margin: '24px 0',
+  textAlign: 'center' as const,
+  border: '2px dashed #4b0082',
+};
+
+const promoTitle = {
+  color: '#4b0082',
+  fontSize: '16px',
+  fontWeight: '600',
+  margin: '0 0 8px 0',
+};
+
+const promoPrice = {
+  color: '#1a1a1a',
+  fontSize: '20px',
+  fontWeight: '700',
+  margin: '0 0 16px 0',
+};
+
+const promoPriceOld = {
+  textDecoration: 'line-through',
+  color: '#8898aa',
+  fontWeight: '400',
+};
+
+const promoLabel = {
+  color: '#8898aa',
+  fontSize: '11px',
+  fontWeight: '600',
+  margin: '0 0 4px 0',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '1px',
+};
+
+const promoCodeStyle = {
+  color: '#4b0082',
+  fontSize: '28px',
+  fontWeight: '700',
+  margin: '0',
+  letterSpacing: '2px',
+};
+
+const promoNote = {
+  color: '#4b0082',
+  fontSize: '13px',
+  margin: '4px 0 0 0',
 };
 
 const noteText = {

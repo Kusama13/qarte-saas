@@ -10,9 +10,10 @@ import { BaseLayout } from './BaseLayout';
 interface TrialEndingEmailProps {
   shopName: string;
   daysRemaining: number;
+  promoCode?: string;
 }
 
-export function TrialEndingEmail({ shopName, daysRemaining }: TrialEndingEmailProps) {
+export function TrialEndingEmail({ shopName, daysRemaining, promoCode }: TrialEndingEmailProps) {
   const isUrgent = daysRemaining <= 1;
 
   return (
@@ -42,13 +43,25 @@ export function TrialEndingEmail({ shopName, daysRemaining }: TrialEndingEmailPr
 
       <Section style={priceSection}>
         <Text style={priceLabel}>Abonnement Qarte</Text>
-        <Text style={price}>19€<span style={priceMonth}>/mois</span></Text>
+        {promoCode ? (
+          <>
+            <Text style={priceOld}>19€/mois</Text>
+            <Text style={price}>9€<span style={priceMonth}>/mois le 1er mois</span></Text>
+            <Section style={promoBox}>
+              <Text style={promoLabel}>CODE PROMO</Text>
+              <Text style={promoCodeStyle}>{promoCode}</Text>
+              <Text style={promoNote}>-10€ sur votre premier mois</Text>
+            </Section>
+          </>
+        ) : (
+          <Text style={price}>19€<span style={priceMonth}>/mois</span></Text>
+        )}
         <Text style={priceNote}>Sans engagement • Annulable à tout moment</Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          Ajouter ma carte bancaire
+          {promoCode ? 'Profiter de l\'offre — 9€ le 1er mois' : 'Ajouter ma carte bancaire'}
         </Button>
       </Section>
 
@@ -134,6 +147,47 @@ const priceMonth = {
   fontSize: '18px',
   fontWeight: '400',
   color: '#8898aa',
+};
+
+const priceOld = {
+  color: '#8898aa',
+  fontSize: '24px',
+  fontWeight: '400',
+  margin: '0',
+  textDecoration: 'line-through',
+  textAlign: 'center' as const,
+};
+
+const promoBox = {
+  backgroundColor: '#f0edfc',
+  borderRadius: '12px',
+  padding: '16px 24px',
+  margin: '16px 0 0 0',
+  textAlign: 'center' as const,
+  border: '2px dashed #4b0082',
+};
+
+const promoLabel = {
+  color: '#8898aa',
+  fontSize: '11px',
+  fontWeight: '600',
+  margin: '0 0 4px 0',
+  textTransform: 'uppercase' as const,
+  letterSpacing: '1px',
+};
+
+const promoCodeStyle = {
+  color: '#4b0082',
+  fontSize: '28px',
+  fontWeight: '700',
+  margin: '0',
+  letterSpacing: '2px',
+};
+
+const promoNote = {
+  color: '#4b0082',
+  fontSize: '13px',
+  margin: '4px 0 0 0',
 };
 
 const priceNote = {

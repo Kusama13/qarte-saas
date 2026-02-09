@@ -79,18 +79,21 @@ export async function sendWelcomeEmail(
 export async function sendTrialEndingEmail(
   to: string,
   shopName: string,
-  daysRemaining: number
+  daysRemaining: number,
+  promoCode?: string
 ): Promise<SendEmailResult> {
   const check = checkResend();
   if (check) return check;
 
   try {
     const subject = daysRemaining <= 1
-      ? `${shopName}, dernier jour d'essai`
+      ? promoCode
+        ? `${shopName}, dernier jour — code promo inside`
+        : `${shopName}, dernier jour d'essai`
       : `Plus que ${daysRemaining} jours d'essai`;
 
-    const html = await render(TrialEndingEmail({ shopName, daysRemaining }));
-    const text = await render(TrialEndingEmail({ shopName, daysRemaining }), { plainText: true });
+    const html = await render(TrialEndingEmail({ shopName, daysRemaining, promoCode }));
+    const text = await render(TrialEndingEmail({ shopName, daysRemaining, promoCode }), { plainText: true });
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
@@ -119,20 +122,25 @@ export async function sendTrialEndingEmail(
 export async function sendTrialExpiredEmail(
   to: string,
   shopName: string,
-  daysUntilDeletion: number
+  daysUntilDeletion: number,
+  promoCode?: string
 ): Promise<SendEmailResult> {
   const check = checkResend();
   if (check) return check;
 
   try {
-    const html = await render(TrialExpiredEmail({ shopName, daysUntilDeletion }));
-    const text = await render(TrialExpiredEmail({ shopName, daysUntilDeletion }), { plainText: true });
+    const html = await render(TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode }));
+    const text = await render(TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode }), { plainText: true });
+
+    const subject = promoCode
+      ? `${shopName}, -10€ pour réactiver votre compte`
+      : `${shopName}, votre essai est terminé`;
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName}, votre essai est terminé`,
+      subject,
       html,
       text,
       headers: EMAIL_HEADERS,
@@ -469,18 +477,24 @@ export async function sendReactivationEmail(
   to: string,
   shopName: string,
   daysSinceCancellation: number,
-  totalCustomers?: number
+  totalCustomers?: number,
+  promoCode?: string,
+  promoMonths?: number
 ): Promise<SendEmailResult> {
   const check = checkResend();
   if (check) return check;
 
   try {
-    const html = await render(ReactivationEmail({ shopName, daysSinceCancellation, totalCustomers }));
-    const text = await render(ReactivationEmail({ shopName, daysSinceCancellation, totalCustomers }), { plainText: true });
+    const html = await render(ReactivationEmail({ shopName, daysSinceCancellation, totalCustomers, promoCode, promoMonths }));
+    const text = await render(ReactivationEmail({ shopName, daysSinceCancellation, totalCustomers, promoCode, promoMonths }), { plainText: true });
 
     // Sujets différenciés selon le timing
     let subject: string;
-    if (daysSinceCancellation <= 7) {
+    if (promoCode && promoMonths && promoMonths >= 3) {
+      subject = `${shopName} - Dernière chance : ${promoMonths} mois à 9€`;
+    } else if (promoCode && daysSinceCancellation >= 14) {
+      subject = `${shopName} - ${promoMonths || 1} mois à 9€ pour revenir sur Qarte`;
+    } else if (daysSinceCancellation <= 7) {
       subject = totalCustomers
         ? `${shopName} - Vos ${totalCustomers} clients n'ont plus accès à leur carte`
         : `${shopName} - Vos clients n'ont plus accès à leur carte`;
