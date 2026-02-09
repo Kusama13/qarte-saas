@@ -251,10 +251,10 @@ export default function CustomersPage() {
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between px-1">
         <div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900">
             Gestion <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Clients</span>
           </h1>
-          <p className="mt-2 text-base font-medium text-gray-500">
+          <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 mr-2 border border-indigo-100">
               {customers.length} total
             </span>
@@ -282,10 +282,10 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      <div className="p-8 bg-white/80 backdrop-blur-xl rounded-3xl border border-white/20 shadow-xl shadow-indigo-100/50 relative overflow-hidden">
+      <div className="p-4 md:p-8 bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/20 shadow-xl shadow-indigo-100/50 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-600 to-violet-600 opacity-80" />
 
-        <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-3 mb-6 md:mb-8">
           <div className="relative flex-1 max-w-md group">
             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
               <Search className="w-5 h-5 text-gray-400 transition-all duration-300 group-focus-within:text-indigo-600 group-focus-within:scale-110" />

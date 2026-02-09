@@ -650,6 +650,21 @@ export default function ProgramPage() {
         </div>
       </div>
 
+      {/* Preview link — mobile only (desktop has it in the right column) */}
+      {merchant && (
+        <div className="mt-4 md:hidden">
+          <a
+            href={`/customer/card/${merchant.id}?preview=true`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2.5 p-3.5 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-700 font-semibold text-sm hover:bg-indigo-100 transition-colors"
+          >
+            <ExternalLink className="w-4 h-4" />
+            Voir l&apos;aperçu de la carte client
+          </a>
+        </div>
+      )}
+
       {/* Spacer for sticky button (desktop only) */}
       <div className="hidden md:block h-16" />
     </div>

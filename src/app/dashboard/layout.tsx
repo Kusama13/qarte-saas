@@ -228,7 +228,7 @@ function DashboardLayoutContent({
       </aside>
 
       <main className="lg:ml-72 min-h-screen">
-        <div className="px-4 py-3 md:p-8 pb-20">{children}</div>
+        <div className="px-4 pt-14 pb-20 lg:pt-8 lg:px-8 lg:pb-8">{children}</div>
       </main>
     </div>
   );

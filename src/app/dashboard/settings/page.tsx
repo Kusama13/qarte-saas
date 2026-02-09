@@ -119,20 +119,20 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto pb-12">
-      <div className="flex items-center justify-between mb-10">
+      <div className="flex items-center justify-between mb-6 md:mb-10">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
             Paramètres
           </h1>
-          <p className="mt-1 text-gray-500 font-medium">
-            Gérez les informations et les accès de votre commerce
+          <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
+            Gérez les informations de votre commerce
           </p>
         </div>
         <Button
           onClick={handleSave}
           loading={saving}
           disabled={saved}
-          className={`px-6 h-12 rounded-2xl transition-all duration-300 shadow-lg ${
+          className={`px-4 md:px-6 h-10 md:h-12 rounded-xl md:rounded-2xl transition-all duration-300 shadow-lg text-sm ${
             saved
               ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-100'
               : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-indigo-200 hover:scale-[1.02] active:scale-[0.98]'
@@ -140,12 +140,12 @@ export default function SettingsPage() {
         >
           {saved ? (
             <>
-              <Check className="w-5 h-5 mr-2" />
+              <Check className="w-4 h-4 mr-1.5" />
               Enregistré
             </>
           ) : (
             <>
-              <Save className="w-5 h-5 mr-2" />
+              <Save className="w-4 h-4 mr-1.5" />
               Enregistrer
             </>
           )}
@@ -159,12 +159,12 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div className="p-8 bg-white/80 backdrop-blur-xl rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/50">
-        <div className="flex items-center gap-4 mb-8">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200">
-            <Store className="w-5 h-5" />
+      <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/50">
+        <div className="flex items-center gap-3 mb-5 md:mb-8">
+          <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200">
+            <Store className="w-4 h-4 md:w-5 md:h-5" />
           </div>
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-base md:text-xl font-bold text-gray-900">
             Informations du commerce
           </h2>
         </div>
@@ -239,8 +239,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-8 p-8 bg-white/60 backdrop-blur-xl rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
-        <h2 className="mb-8 text-xl font-bold text-gray-900">
+      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
+        <h2 className="mb-5 md:mb-8 text-base md:text-xl font-bold text-gray-900">
           Informations du compte
         </h2>
 
@@ -268,8 +268,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-8 p-8 bg-red-50/50 backdrop-blur-sm rounded-3xl border border-red-100/50 shadow-lg shadow-red-100/20">
-        <h2 className="mb-2 text-xl font-bold text-red-900">
+      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-red-50/50 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-red-100/50 shadow-lg shadow-red-100/20">
+        <h2 className="mb-2 text-base md:text-xl font-bold text-red-900">
           Zone de danger
         </h2>
         <p className="mb-6 text-sm text-red-700 leading-relaxed">

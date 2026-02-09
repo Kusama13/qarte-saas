@@ -387,37 +387,26 @@ export default function SubscriptionPage() {
               <h2 className="text-lg font-extrabold text-gray-900 mb-6">Facturation</h2>
 
               <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 mb-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                      <CreditCard className="w-5 h-5 text-indigo-500" />
-                    </div>
-                    <div>
-                      {loadingPayment ? (
-                        <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                      ) : paymentMethod ? (
-                        <>
-                          <p className="font-bold text-gray-900 capitalize text-sm">
-                            {paymentMethod.brand} •••• {paymentMethod.last4}
-                          </p>
-                          <p className="text-[10px] text-gray-400 font-bold">
-                            Exp {String(paymentMethod.exp_month).padStart(2, '0')}/{paymentMethod.exp_year}
-                          </p>
-                        </>
-                      ) : (
-                        <p className="text-sm text-gray-500">Aucune carte</p>
-                      )}
-                    </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
+                    <CreditCard className="w-5 h-5 text-indigo-500" />
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="rounded-xl text-primary font-bold hover:bg-primary-50 text-xs"
-                    onClick={handleOpenPortal}
-                    loading={loadingPortal}
-                  >
-                    Modifier
-                  </Button>
+                  <div>
+                    {loadingPayment ? (
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    ) : paymentMethod ? (
+                      <>
+                        <p className="font-bold text-gray-900 capitalize text-sm">
+                          {paymentMethod.brand} •••• {paymentMethod.last4}
+                        </p>
+                        <p className="text-[10px] text-gray-400 font-bold">
+                          Exp {String(paymentMethod.exp_month).padStart(2, '0')}/{paymentMethod.exp_year}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-500">Aucune carte</p>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -434,8 +423,8 @@ export default function SubscriptionPage() {
                   Mettre à jour le paiement
                 </Button>
               ) : (
-                <Button variant="outline" className="w-full h-11 rounded-2xl text-gray-400 border-gray-200 hover:text-red-600 hover:border-red-200 hover:bg-red-50 font-medium text-sm" onClick={handleOpenPortal} loading={loadingPortal}>
-                  Gérer l&apos;abonnement
+                <Button variant="outline" className="w-full h-11 rounded-2xl text-gray-500 border-gray-200 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" onClick={handleOpenPortal} loading={loadingPortal}>
+                  Gérer mon abonnement
                 </Button>
               )}
             </div>
