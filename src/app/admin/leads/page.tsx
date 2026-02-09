@@ -151,29 +151,30 @@ export default function LeadsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 pt-10 lg:pt-0">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
           Leads
         </h1>
-        <p className="mt-1 text-gray-600">
+        <p className="mt-1 text-sm sm:text-base text-gray-600">
           Prospects a contacter et convertir
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-1 sm:gap-2 border-b border-gray-200">
         <button
           onClick={() => setActiveTab('incomplete')}
           className={cn(
-            'px-6 py-3 font-semibold text-sm border-b-2 transition-colors flex items-center gap-2',
+            'px-3 sm:px-6 py-3 font-semibold text-xs sm:text-sm border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap',
             activeTab === 'incomplete'
               ? 'border-[#5167fc] text-[#5167fc]'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           )}
         >
-          <AlertTriangle className="w-4 h-4" />
-          Inscriptions incomplètes
+          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+          <span className="hidden sm:inline">Inscriptions incomplètes</span>
+          <span className="sm:hidden">Incomplètes</span>
           <span className={cn(
             'px-2 py-0.5 rounded-full text-xs font-bold',
             activeTab === 'incomplete' ? 'bg-[#5167fc] text-white' : 'bg-gray-100 text-gray-600'
@@ -184,14 +185,15 @@ export default function LeadsPage() {
         <button
           onClick={() => setActiveTab('today')}
           className={cn(
-            'px-6 py-3 font-semibold text-sm border-b-2 transition-colors flex items-center gap-2',
+            'px-3 sm:px-6 py-3 font-semibold text-xs sm:text-sm border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap',
             activeTab === 'today'
               ? 'border-[#5167fc] text-[#5167fc]'
               : 'border-transparent text-gray-500 hover:text-gray-700'
           )}
         >
-          <Store className="w-4 h-4" />
-          Inscriptions du jour
+          <Store className="w-4 h-4 flex-shrink-0" />
+          <span className="hidden sm:inline">Inscriptions du jour</span>
+          <span className="sm:hidden">Aujourd&apos;hui</span>
           <span className={cn(
             'px-2 py-0.5 rounded-full text-xs font-bold',
             activeTab === 'today' ? 'bg-[#5167fc] text-white' : 'bg-gray-100 text-gray-600'
@@ -203,66 +205,66 @@ export default function LeadsPage() {
 
       {/* Stats */}
       {activeTab === 'incomplete' ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-yellow-100">
-                <AlertTriangle className="w-6 h-6 text-yellow-600" />
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="p-4 sm:p-6 bg-white rounded-2xl shadow-sm">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-yellow-100 flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Inscriptions incomplètes</p>
-                <p className="text-2xl font-bold text-gray-900">{incompleteStats.total}</p>
-                <p className="text-xs text-gray-400 mt-0.5">Dernières 48h</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500">Incomplètes</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{incompleteStats.total}</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">48h</p>
               </div>
             </div>
           </div>
 
-          <div className="p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100">
-                <Mail className="w-6 h-6 text-indigo-600" />
+          <div className="p-4 sm:p-6 bg-white rounded-2xl shadow-sm">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-indigo-100 flex-shrink-0">
+                <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-500">Email de relance envoyé</p>
-                <p className="text-xs text-gray-400 mt-1">Automatique 2-3h après inscription</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-500">Relance auto</p>
+                <p className="text-[10px] sm:text-xs text-gray-400 mt-1">2-3h après</p>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100">
-                <UserPlus className="w-6 h-6 text-indigo-600" />
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <div className="p-3 sm:p-6 bg-white rounded-2xl shadow-sm">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-indigo-100 flex-shrink-0">
+                <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Inscriptions aujourd&apos;hui</p>
-                <p className="text-2xl font-bold text-gray-900">{todayStats.total}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100">
-                <CheckCircle className="w-6 h-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Programme créé</p>
-                <p className="text-2xl font-bold text-gray-900">{todayStats.withProgram}</p>
+              <div className="text-center sm:text-left">
+                <p className="text-[10px] sm:text-sm font-medium text-gray-500">Aujourd&apos;hui</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{todayStats.total}</p>
               </div>
             </div>
           </div>
 
-          <div className="p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100">
-                <AlertTriangle className="w-6 h-6 text-amber-600" />
+          <div className="p-3 sm:p-6 bg-white rounded-2xl shadow-sm">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-100 flex-shrink-0">
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Sans programme</p>
-                <p className="text-2xl font-bold text-gray-900">{todayStats.withoutProgram}</p>
+              <div className="text-center sm:text-left">
+                <p className="text-[10px] sm:text-sm font-medium text-gray-500">Programme</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{todayStats.withProgram}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 sm:p-6 bg-white rounded-2xl shadow-sm">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-100 flex-shrink-0">
+                <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
+              </div>
+              <div className="text-center sm:text-left">
+                <p className="text-[10px] sm:text-sm font-medium text-gray-500">Sans prog.</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{todayStats.withoutProgram}</p>
               </div>
             </div>
           </div>
@@ -384,26 +386,27 @@ export default function LeadsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
                     {signup.phone && (
                       <span
                         onClick={(e) => { e.preventDefault(); openWhatsApp(signup.phone!, signup.shop_name); }}
-                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors flex items-center gap-2 cursor-pointer"
+                        className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white bg-green-600 rounded-xl hover:bg-green-700 transition-colors flex items-center gap-1.5 cursor-pointer"
                       >
-                        <MessageCircle className="w-4 h-4" />
-                        WhatsApp
+                        <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">WhatsApp</span>
+                        <span className="sm:hidden">WA</span>
                       </span>
                     )}
                     {signup.user_email && (
                       <span
                         onClick={(e) => { e.preventDefault(); window.location.href = `mailto:${signup.user_email}`; }}
-                        className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2 cursor-pointer"
+                        className="px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-1.5 cursor-pointer"
                       >
-                        <Mail className="w-4 h-4" />
+                        <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         Email
                       </span>
                     )}
-                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-400 transition-colors" />
+                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-indigo-400 transition-colors hidden sm:block" />
                   </div>
                 </Link>
               ))}

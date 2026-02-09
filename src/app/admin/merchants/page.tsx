@@ -339,15 +339,15 @@ export default function AdminMerchantsPage() {
   }
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-4 sm:space-y-6 pb-8 pt-10 lg:pt-0">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Commerçants</h1>
-        <p className="mt-1 text-gray-600">Gestion et suivi des commerçants</p>
+        <p className="mt-1 text-sm sm:text-base text-gray-600">Gestion et suivi des commerçants</p>
       </div>
 
       {/* Stats Cards - Row 1: Subscription status */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-4">
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-[#5167fc]/10 flex items-center justify-center">
@@ -409,7 +409,7 @@ export default function AdminMerchantsPage() {
       </div>
 
       {/* Stats Cards - Row 2: Programs & Customers */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
         <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center">
@@ -471,19 +471,19 @@ export default function AdminMerchantsPage() {
       </div>
 
       {/* Search & Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="space-y-3 sm:space-y-0 sm:flex sm:flex-row sm:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Rechercher par nom, téléphone, adresse..."
+            placeholder="Rechercher..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5167fc] focus:border-transparent"
           />
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap -mx-4 px-4 sm:mx-0 sm:px-0">
           {[
             { label: 'Tous', value: 'all' as FilterStatus, count: stats.total },
             { label: 'En essai', value: 'trial' as FilterStatus, count: stats.trial },
@@ -495,7 +495,7 @@ export default function AdminMerchantsPage() {
               key={btn.value}
               onClick={() => setStatusFilter(btn.value)}
               className={cn(
-                "px-4 py-2 text-sm font-medium rounded-xl transition-colors whitespace-nowrap",
+                "px-3 py-2 text-xs sm:text-sm font-medium rounded-xl transition-colors whitespace-nowrap flex-shrink-0",
                 statusFilter === btn.value
                   ? "bg-[#5167fc] text-white"
                   : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
@@ -554,7 +554,7 @@ export default function AdminMerchantsPage() {
                         <Link
                           key={merchant.id}
                           href={`/admin/merchants/${merchant.id}`}
-                          className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                          className="flex items-center justify-between p-3 sm:p-4 hover:bg-gray-50 transition-colors gap-2"
                         >
                           <div className="flex items-center gap-4 min-w-0">
                             <div className="w-10 h-10 rounded-lg bg-[#5167fc] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">

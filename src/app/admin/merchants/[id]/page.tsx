@@ -23,6 +23,9 @@ import {
   MessageCircle,
   AlertTriangle,
   PhoneCall,
+  Image,
+  Loader2,
+  CheckCircle,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
@@ -45,6 +48,8 @@ interface Merchant {
   tier2_enabled: boolean;
   tier2_stamps_required: number | null;
   tier2_reward_description: string | null;
+  logo_url: string | null;
+  primary_color: string;
   // Offer fields
   offer_active: boolean;
   offer_title: string | null;
@@ -93,6 +98,9 @@ export default function MerchantDetailPage() {
   const [copied, setCopied] = useState(false);
   const [emailCopied, setEmailCopied] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [sendingSocialKit, setSendingSocialKit] = useState(false);
+  const [socialKitSent, setSocialKitSent] = useState(false);
+  const [socialKitError, setSocialKitError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -269,6 +277,35 @@ export default function MerchantDetailPage() {
     window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
   };
 
+  const handleSendSocialKit = async () => {
+    if (!merchant || sendingSocialKit) return;
+    setSendingSocialKit(true);
+    setSocialKitError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const res = await fetch('/api/admin/send-social-kit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ merchantId: merchant.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSocialKitError(data.error || 'Erreur envoi');
+      } else {
+        setSocialKitSent(true);
+        setTimeout(() => setSocialKitSent(false), 5000);
+      }
+    } catch {
+      setSocialKitError('Erreur réseau');
+    } finally {
+      setSendingSocialKit(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -292,7 +329,7 @@ export default function MerchantDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between pt-10 lg:pt-0">
         <div className="flex items-center gap-4">
           <Link href="/admin/merchants">
             <Button variant="ghost" size="sm">
@@ -304,14 +341,14 @@ export default function MerchantDetailPage() {
       </div>
 
       {/* Info commerçant */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-100 p-6">
-        <div className="flex items-start justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center justify-center w-16 h-16 font-bold text-2xl text-white rounded-lg bg-[#5167fc]">
+      <div className="bg-white rounded-lg shadow-md border border-gray-100 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 font-bold text-xl sm:text-2xl text-white rounded-lg bg-[#5167fc] flex-shrink-0">
               {merchant.shop_name.charAt(0)}
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">{merchant.shop_name}</h1>
+            <div className="min-w-0">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{merchant.shop_name}</h1>
               {merchant.shop_address && (
                 <p className="text-gray-600 flex items-center gap-1 mt-1">
                   <MapPin className="w-4 h-4" />
@@ -366,36 +403,70 @@ export default function MerchantDetailPage() {
         </div>
 
         {/* Actions rapides */}
-        <div className="mt-4 grid grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
           <button
             onClick={() => openWhatsApp(merchant.phone, merchant.shop_name)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors"
+            className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors"
           >
             <MessageCircle className="w-4 h-4" />
-            WhatsApp
+            <span className="hidden sm:inline">WhatsApp</span>
+            <span className="sm:hidden">WA</span>
           </button>
-          {userEmail && (
+          {userEmail ? (
             <a
               href={`mailto:${userEmail}`}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
+              className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
             >
               <Mail className="w-4 h-4" />
               Email
             </a>
-          )}
-          {!userEmail && (
-            <div className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-400 bg-gray-100 rounded-xl cursor-not-allowed">
+          ) : (
+            <div className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400 bg-gray-100 rounded-xl cursor-not-allowed">
               <Mail className="w-4 h-4" />
               Email
             </div>
           )}
           <a
             href={`tel:${merchant.phone}`}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
+            className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors"
           >
             <PhoneCall className="w-4 h-4" />
             Appeler
           </a>
+          {merchant.reward_description && merchant.logo_url ? (
+            <button
+              onClick={handleSendSocialKit}
+              disabled={sendingSocialKit || socialKitSent}
+              className={cn(
+                "flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium rounded-xl transition-colors",
+                socialKitSent
+                  ? "bg-green-100 text-green-700"
+                  : socialKitError
+                    ? "bg-red-100 text-red-700 hover:bg-red-200"
+                    : "bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50"
+              )}
+            >
+              {sendingSocialKit ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : socialKitSent ? (
+                <CheckCircle className="w-4 h-4" />
+              ) : (
+                <Image className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">
+                {socialKitSent ? 'Envoyé !' : socialKitError || 'Social Kit'}
+              </span>
+              <span className="sm:hidden">
+                {socialKitSent ? 'OK' : socialKitError ? 'Err' : 'Kit'}
+              </span>
+            </button>
+          ) : (
+            <div className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-gray-400 bg-gray-100 rounded-xl cursor-not-allowed" title="Logo ou programme manquant">
+              <Image className="w-4 h-4" />
+              <span className="hidden sm:inline">Social Kit</span>
+              <span className="sm:hidden">Kit</span>
+            </div>
+          )}
         </div>
 
         {/* Programme de fidélité */}
@@ -577,7 +648,7 @@ export default function MerchantDetailPage() {
       </div>
 
       {/* Stats - Row 1 */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[#5167fc]/10">
@@ -625,7 +696,7 @@ export default function MerchantDetailPage() {
       </div>
 
       {/* Stats - Row 2: Push & Marketing */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3">
         <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
