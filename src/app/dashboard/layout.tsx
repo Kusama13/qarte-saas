@@ -187,6 +187,21 @@ function DashboardLayoutContent({
             </div>
           )}
 
+          {/* Banner paiement échoué */}
+          {merchant?.subscription_status === 'past_due' && (
+            <div className="mx-3 mt-3 p-3 rounded-xl text-sm bg-red-50 text-red-700 border border-red-200">
+              <AlertTriangle className="w-4 h-4 inline mr-1.5" />
+              <span className="font-medium">Paiement échoué</span>
+              <Link
+                href="/dashboard/subscription"
+                onClick={() => setSidebarOpen(false)}
+                className="block mt-1 text-xs underline hover:no-underline"
+              >
+                Mettre à jour le paiement
+              </Link>
+            </div>
+          )}
+
           <nav className="flex-1 px-3 py-3 lg:px-4 lg:py-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
