@@ -17,7 +17,6 @@ interface OnboardingStep {
 
 const DISMISSED_KEY = 'qarte_checklist_dismissed';
 const COMPLETED_KEY = 'qarte_checklist_completed_at';
-const QR_VISITED_KEY = 'qarte_checklist_qr';
 
 export default function OnboardingChecklist() {
   const { merchant } = useMerchant();
@@ -51,7 +50,7 @@ export default function OnboardingChecklist() {
 
     const fetchSteps = async () => {
       try {
-        const [visitsResult, pushRes] = await Promise.all([
+        const [visitsResult, pushRes, onboardingRes] = await Promise.all([
           supabase
             .from('visits')
             .select('*', { count: 'exact', head: true })
@@ -60,11 +59,14 @@ export default function OnboardingChecklist() {
           fetch(`/api/push/history?merchantId=${merchant.id}&limit=1`)
             .then(r => r.json())
             .catch(() => ({ history: [] })),
+          fetch('/api/onboarding/status')
+            .then(r => r.json())
+            .catch(() => ({ qrEmailSent: false })),
         ]);
 
         const visitsCount = visitsResult.count || 0;
         const hasPush = (pushRes.history?.length || 0) > 0;
-        const qrVisited = !!localStorage.getItem(`${QR_VISITED_KEY}_${merchant.id}`);
+        const qrDownloaded = onboardingRes.qrDownloaded === true;
 
         setSteps([
           {
@@ -84,7 +86,7 @@ export default function OnboardingChecklist() {
           {
             id: 'qr',
             label: 'Télécharger mon QR code',
-            done: qrVisited,
+            done: qrDownloaded,
             href: '/dashboard/qr-download',
             icon: QrCode,
           },

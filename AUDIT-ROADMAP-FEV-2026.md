@@ -350,10 +350,10 @@ Signup (email+password)
 | F1 | ~~Presets recompense~~ | ~~1-2h~~ | ★★★★★ | ★★ | **✅ FAIT** |
 | F2 | ~~Email QR code auto~~ | ~~1-2h~~ | ★★★★ | ★★★ | **✅ FAIT** |
 | F3 | Celebration 1er scan | 1h | ★★★ | ★★★ | **P0** |
-| F5 | Bouton partage | 2-3h | ★★★ | ★★ | **P1** |
+| ~~F5~~ | ~~Bouton partage~~ | ~~2-3h~~ | — | — | **Retire** |
 | F6 | Templates push | 2h | ★★ | ★★★★ | **P1** |
 | F4 | Stats carte client | 2h | ★★ | ★★★ | **P1** |
-| F7 | Checklist gamifiee | 4h | ★★★★★ | ★★★ | **P1** |
+| F7 | ~~Checklist gamifiee~~ | ~~4h~~ | ★★★★★ | ★★★ | **✅ FAIT** |
 | F8 | Birthday Club | 6h | ★★★ | ★★★★★ | **P1** |
 | F10 | Scratch & Win | 6h | ★★ | ★★★★★ | **P2** |
 | F9 | Parrainage | 6-8h | ★★★★ | ★★★ | **P2** |
@@ -412,14 +412,13 @@ Signup (email+password)
 - [ ] Implementer le plan admin merchants (barre actions, badges alerte, WhatsApp)
 
 ## Semaine 2 (17-23 fev)
-- [ ] **F5** : Bouton partage programme (2-3h)
 - [ ] **F6** : Templates push enrichis (2h)
 - [ ] **F4** : Stats enrichies carte client (2h)
 
 ## Semaine 3 (24 fev - 2 mars)
 - [ ] **F8** : Birthday Club (6h)
 - [ ] **F9** : Programme parrainage (6-8h)
-- [ ] Analyse des metriques de conversion trial → paid (implementer tracking)
+- [x] Analyse des metriques de conversion trial → paid (deja en place via admin dashboard + webhooks Stripe)
 
 ## Semaine 4 (3-9 mars)
 - [ ] **F10** : Scratch & Win gamification (6h)
@@ -446,4 +445,4 @@ Signup (email+password)
 ---
 
 *Document genere le 09/02/2026 — Audit realise par analyse complete du codebase, emails, APIs, dashboard, landing page, et recherche competitive (Treatwell, Fresha, Square, Planity, Stamp Me, Zenoti, GlossGenius).*
-*Derniere mise a jour : 09/02/2026 — Ajout section travail realise pre-semaine 1.*
+*Derniere mise a jour : 09/02/2026 — F7 checklist gamifiee, SocialKitEmail couleurs dynamiques, QR email trigger, FirstScan 2 visites.*

@@ -33,8 +33,6 @@ export default function QRDownloadPage() {
     if (!merchant?.scan_code) return;
     const scanUrl = getScanUrl(merchant.scan_code);
     generateQRCode(scanUrl).then(setQrCodeUrl);
-    // Track visit for onboarding checklist
-    localStorage.setItem(`qarte_checklist_qr_${merchant.id}`, '1');
   }, [merchant?.scan_code]);
 
   const generatePdf = async () => {
@@ -80,6 +78,9 @@ export default function QRDownloadPage() {
 
       pdf.save(`qr-flyer-${merchant.slug}.pdf`);
 
+      // Track QR download for onboarding checklist (fire and forget)
+      fetch('/api/onboarding/status', { method: 'POST' }).catch(() => {});
+
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 3000);
     } catch (error) {
@@ -104,6 +105,9 @@ export default function QRDownloadPage() {
       link.download = `flyer-${merchant.slug}.png`;
       link.href = flyerImage;
       link.click();
+
+      // Track QR download for onboarding checklist (fire and forget)
+      fetch('/api/onboarding/status', { method: 'POST' }).catch(() => {});
 
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 3000);
