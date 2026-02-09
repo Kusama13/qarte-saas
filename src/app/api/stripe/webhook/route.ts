@@ -192,8 +192,24 @@ export async function POST(request: Request) {
       let newStatus: SubscriptionStatus = statusMap[subscription.status] || 'trial';
 
       // Cas special : annulation programmee en fin de periode
-      if (subscription.status === 'active' && subscription.cancel_at_period_end) {
+      // Couvre active ET trialing (annulation pendant le trial)
+      if ((subscription.status === 'active' || subscription.status === 'trialing') && subscription.cancel_at_period_end) {
         newStatus = 'canceling';
+      }
+
+      // Cas inverse : merchant annule la resiliation via le portail
+      // trialing + cancel_at_period_end=false → garder 'active' (pas 'trial')
+      if (subscription.status === 'trialing' && !subscription.cancel_at_period_end) {
+        // Verifier si le merchant a deja un abonnement actif (checkout complete)
+        const { data: existingMerchant } = await supabase
+          .from('merchants')
+          .select('subscription_status')
+          .eq('stripe_subscription_id', subscription.id)
+          .single();
+
+        if (existingMerchant && (existingMerchant.subscription_status === 'active' || existingMerchant.subscription_status === 'canceling')) {
+          newStatus = 'active';
+        }
       }
 
       const { data: updatedMerchant } = await supabase

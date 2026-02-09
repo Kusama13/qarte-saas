@@ -32,7 +32,7 @@ const BUSINESS_IMAGES = [
 ];
 
 
-// 6 palettes beauté & bien-être (grid 3x2 mobile)
+// 6 palettes mobile (3x2) + 4 desktop-only (2x5)
 const COLOR_PALETTES = [
   { primary: '#1e293b', secondary: '#475569', name: 'Élégant', icon: '✂️' },
   { primary: '#db2777', secondary: '#f472b6', name: 'Glamour', icon: '💅' },
@@ -40,6 +40,10 @@ const COLOR_PALETTES = [
   { primary: '#059669', secondary: '#10b981', name: 'Zen', icon: '🧘' },
   { primary: '#0891b2', secondary: '#22d3ee', name: 'Frais', icon: '💎' },
   { primary: '#9f1239', secondary: '#e11d48', name: 'Rosé', icon: '🌸' },
+  { primary: '#b45309', secondary: '#f59e0b', name: 'Doré', icon: '👑', desktopOnly: true },
+  { primary: '#0f766e', secondary: '#2dd4bf', name: 'Menthe', icon: '🍃', desktopOnly: true },
+  { primary: '#6d28d9', secondary: '#c084fc', name: 'Orchidée', icon: '🪻', desktopOnly: true },
+  { primary: '#be185d', secondary: '#fb7185', name: 'Corail', icon: '🌺', desktopOnly: true },
 ];
 
 // Suggestions récompenses palier 2 (plus premium que palier 1)
@@ -411,6 +415,8 @@ export default function ProgramPage() {
                     type="button"
                     onClick={() => setFormData({ ...formData, primaryColor: palette.primary, secondaryColor: palette.secondary })}
                     className={`relative p-2 rounded-xl border-2 transition-all duration-300 group/palette ${
+                      'desktopOnly' in palette && palette.desktopOnly ? 'hidden sm:block' : ''
+                    } ${
                       formData.primaryColor === palette.primary && formData.secondaryColor === palette.secondary
                         ? 'border-indigo-600 ring-4 ring-indigo-500/10 shadow-lg'
                         : 'border-gray-100 hover:border-indigo-200 hover:shadow-md'
