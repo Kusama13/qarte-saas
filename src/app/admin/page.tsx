@@ -162,13 +162,11 @@ export default function AdminDashboardPage() {
     // Fetch all data in parallel
     const [
       { data: allMerchants },
-      { count: totalCustomers },
       { data: superAdmins },
       { data: allVisits },
       { data: recentMerchantsList },
     ] = await Promise.all([
       supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, trial_ends_at, created_at, reward_description, logo_url'),
-      supabase.from('customers').select('*', { count: 'exact', head: true }),
       supabase.from('super_admins').select('user_id'),
       supabase.from('visits').select('merchant_id, visited_at'),
       supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, trial_ends_at, created_at, reward_description, logo_url').order('created_at', { ascending: false }).limit(10),
@@ -191,6 +189,13 @@ export default function AdminDashboardPage() {
 
     const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
     const merchants = (allMerchants || []).filter((m: Merchant) => !superAdminUserIds.has(m.user_id));
+
+    // Count customers excluding admin merchants
+    const adminMerchantIds = (allMerchants || []).filter((m: Merchant) => superAdminUserIds.has(m.user_id)).map((m: Merchant) => m.id);
+    const customerCountQuery = adminMerchantIds.length > 0
+      ? supabase.from('customers').select('*', { count: 'exact', head: true }).not('merchant_id', 'in', `(${adminMerchantIds.join(',')})`)
+      : supabase.from('customers').select('*', { count: 'exact', head: true });
+    const { count: totalCustomers } = await customerCountQuery;
 
     // Build visits maps
     const merchantsWithAnyVisit = new Set<string>();

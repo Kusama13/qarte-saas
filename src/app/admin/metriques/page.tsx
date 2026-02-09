@@ -99,8 +99,6 @@ export default function MetriquesPage() {
       // Fetch all data in parallel
       const [
         { data: allMerchants },
-        { count: totalCustomers },
-        { count: totalVisits },
         { data: superAdmins },
         { data: allVisitsData },
         { data: allLoyaltyCards },
@@ -108,8 +106,6 @@ export default function MetriquesPage() {
         { data: snapshots },
       ] = await Promise.all([
         supabase.from('merchants').select('id, user_id, subscription_status, created_at, reward_description, trial_ends_at'),
-        supabase.from('customers').select('*', { count: 'exact', head: true }),
-        supabase.from('visits').select('*', { count: 'exact', head: true }),
         supabase.from('super_admins').select('user_id'),
         supabase.from('visits').select('merchant_id, visited_at'),
         supabase.from('loyalty_cards').select('merchant_id, created_at'),
@@ -130,6 +126,26 @@ export default function MetriquesPage() {
       // Filter out super admin merchants
       type MerchantData = { id: string; user_id: string; subscription_status: string; created_at: string; reward_description: string | null; trial_ends_at: string | null };
       const merchants = (allMerchants || []).filter((m: MerchantData) => !superAdminUserIds.has(m.user_id));
+
+      // Count customers and visits excluding admin merchants
+      const adminMerchantIds = (allMerchants || []).filter((m: MerchantData) => superAdminUserIds.has(m.user_id)).map((m: MerchantData) => m.id);
+      let totalCustomers = 0;
+      let totalVisits = 0;
+      if (adminMerchantIds.length > 0) {
+        const [{ count: custCount }, { count: visitCount }] = await Promise.all([
+          supabase.from('customers').select('*', { count: 'exact', head: true }).not('merchant_id', 'in', `(${adminMerchantIds.join(',')})`),
+          supabase.from('visits').select('*', { count: 'exact', head: true }).not('merchant_id', 'in', `(${adminMerchantIds.join(',')})`),
+        ]);
+        totalCustomers = custCount || 0;
+        totalVisits = visitCount || 0;
+      } else {
+        const [{ count: custCount }, { count: visitCount }] = await Promise.all([
+          supabase.from('customers').select('*', { count: 'exact', head: true }),
+          supabase.from('visits').select('*', { count: 'exact', head: true }),
+        ]);
+        totalCustomers = custCount || 0;
+        totalVisits = visitCount || 0;
+      }
 
       // Revenue calculations
       const active = merchants.filter((m: MerchantData) => m.subscription_status === 'active').length;
