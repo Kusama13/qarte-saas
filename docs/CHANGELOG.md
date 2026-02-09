@@ -4,6 +4,49 @@ Historique des deploiements et modifications.
 
 ---
 
+## [2026-02-09] - Stripe emails + subscription UX
+
+### Deploiement #18 - Fix emails Stripe + polling + sidebar banners
+**Commits:** `76aaef4` → `3eb3440`
+
+#### Changements
+- **fix:** 3 correctifs emails webhook Stripe
+  - Email annulation envoye au `customer.subscription.updated` → canceling (avant : `subscription.deleted` trop tard)
+  - Email recovery envoye au `invoice.payment_succeeded` quand retour past_due → active
+  - Date fin abonnement utilise `subscription.cancel_at` Stripe (avant : `new Date()` incorrect)
+- **fix:** `SubscriptionConfirmedEmail` — date facturation dynamique
+  - Prop `nextBillingDate` optionnelle (calcul depuis `trial_ends_at`)
+  - Suppression prix hardcode `19€/mois` → `Plan Pro` generique
+- **fix:** Polling apres retour portail Stripe
+  - `sessionStorage` flag avant navigation vers portail
+  - Polling 2s × 8 tentatives max pour detecter changement statut webhook
+  - Appel `refetchContext()` pour invalider cache MerchantContext
+- **fix:** Sidebar — banner `canceling` orange + texte lien trial dynamique
+  - Nouveau banner orange "Annulation en fin de periode" pour statut `canceling`
+  - Texte lien trial : "Voir l'abonnement" si carte ajoutee, "Ajouter une carte" sinon
+- **style:** Social-kit header harmonise avec style dashboard violet
+- **fix:** Palettes couleurs — swap Dore/Rose (Dore visible sur mobile)
+- **docs:** context.md — 24 templates emails, multi-pays, Stripe triggers
+
+#### Fichiers modifies (13)
+| Fichier | Modification |
+|---------|--------------|
+| `src/app/api/stripe/webhook/route.ts` | 3 fixes emails (canceling, recovery, endDate) |
+| `src/app/dashboard/subscription/page.tsx` | Polling portal return + refetchContext |
+| `src/app/dashboard/layout.tsx` | Banner canceling + texte lien trial dynamique |
+| `src/app/dashboard/social-kit/page.tsx` | Header harmonise violet |
+| `src/emails/SubscriptionConfirmedEmail.tsx` | Prop nextBillingDate, suppression prix hardcode |
+| `src/lib/email.ts` | Signature sendSubscriptionConfirmedEmail + nextBillingDate |
+| `src/app/dashboard/program/page.tsx` | Swap Dore/Rose palettes |
+| `docs/context.md` | 24 templates, multi-pays, Stripe triggers |
+| `docs/CHANGELOG.md` | Ce deploiement |
+| `package.json` | +@react-email/preview-server devDep |
+| `package-lock.json` | Lock file update |
+| `tsconfig.tsbuildinfo` | Build info |
+| `MAJ du 08:02/audit-securite.md` | Minor fix |
+
+---
+
 ## [2026-02-09] - Performance + Dashboard polish
 
 ### Deploiement #17 - Parallelisation checkin API + harmonisation dashboard
