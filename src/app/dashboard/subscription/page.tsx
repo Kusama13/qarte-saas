@@ -65,6 +65,7 @@ export default function SubscriptionPage() {
   useEffect(() => {
     if (searchParams.get('success') === 'true') {
       setToast({ type: 'success', message: 'Abonnement actif !' });
+      setPolling(true);
       router.replace('/dashboard/subscription', { scroll: false });
     } else if (searchParams.get('canceled') === 'true') {
       setToast({ type: 'error', message: 'Paiement annulé.' });
@@ -124,16 +125,31 @@ export default function SubscriptionPage() {
     fetchMerchant();
   }, [router]);
 
-  // Poll after Stripe portal return to catch webhook updates
+  // Poll after Stripe checkout/portal return to catch webhook updates
   useEffect(() => {
     if (!polling || !merchant) return;
 
     const initialStatus = merchant.subscription_status;
+    const initialStripeId = merchant.stripe_subscription_id;
     let attempts = 0;
 
     const interval = setInterval(async () => {
       attempts++;
-      if (attempts >= 8) {
+      if (attempts >= 10) {
+        // Max attempts reached — force refetch one last time
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase
+            .from('merchants')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+          if (data) {
+            setMerchant(data);
+            refetchContext();
+            if (data.stripe_subscription_id) fetchPaymentMethod();
+          }
+        }
         clearInterval(interval);
         setPolling(false);
         return;
@@ -148,7 +164,10 @@ export default function SubscriptionPage() {
         .eq('user_id', user.id)
         .single();
 
-      if (data && data.subscription_status !== initialStatus) {
+      if (data && (
+        data.subscription_status !== initialStatus ||
+        data.stripe_subscription_id !== initialStripeId
+      )) {
         setMerchant(data);
         refetchContext();
         if (data.stripe_subscription_id) fetchPaymentMethod();
@@ -236,7 +255,7 @@ export default function SubscriptionPage() {
   const isCanceled = subscriptionStatus === 'canceled';
   const isPastDue = subscriptionStatus === 'past_due';
   const hasStripe = !!merchant?.stripe_subscription_id;
-  const showSubscribeCTA = !isPaid && !isCanceling && !hasStripe;
+  const showSubscribeCTA = !isPaid && !isCanceling && !hasStripe && !polling;
 
   return (
     <div className="max-w-5xl mx-auto stagger-fade-in">
@@ -272,7 +291,7 @@ export default function SubscriptionPage() {
       </div>
 
       {/* Alert banner — single line */}
-      {(trialStatus.isInGracePeriod || trialStatus.isFullyExpired) && (
+      {!polling && (trialStatus.isInGracePeriod || trialStatus.isFullyExpired) && (
         <div className="flex items-center gap-2 px-4 py-2.5 mb-6 rounded-xl bg-red-500 text-white text-sm font-semibold">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           {trialStatus.isInGracePeriod
@@ -281,13 +300,13 @@ export default function SubscriptionPage() {
           }
         </div>
       )}
-      {isCanceling && (
+      {!polling && isCanceling && (
         <div className="flex items-center gap-2 px-4 py-2.5 mb-6 rounded-xl bg-orange-500 text-white text-sm font-semibold">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>Annulation en fin de période</span>
         </div>
       )}
-      {isPastDue && (
+      {!polling && isPastDue && (
         <div className="flex items-center gap-2 px-4 py-2.5 mb-6 rounded-xl bg-red-500 text-white text-sm font-semibold">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>Paiement échoué</span>
@@ -310,11 +329,12 @@ export default function SubscriptionPage() {
                   <p className="text-xs text-gray-400 font-medium">Tout inclus</p>
                 </div>
               </div>
-              {isPaid && <span className="px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-full border border-green-100">Actif</span>}
-              {isCanceling && <span className="px-3 py-1 text-xs font-bold text-orange-700 bg-orange-50 rounded-full border border-orange-100">Annulation en cours</span>}
-              {trialStatus.isActive && !hasStripe && <span className="px-3 py-1 text-xs font-bold text-primary bg-primary-50 rounded-full border border-primary-100">Essai</span>}
-              {isCanceled && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">Annulé</span>}
-              {isPastDue && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">Paiement échoué</span>}
+              {polling && <span className="px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" />Synchronisation</span>}
+              {!polling && isPaid && <span className="px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-full border border-green-100">Actif</span>}
+              {!polling && isCanceling && <span className="px-3 py-1 text-xs font-bold text-orange-700 bg-orange-50 rounded-full border border-orange-100">Annulation en cours</span>}
+              {!polling && trialStatus.isActive && !hasStripe && <span className="px-3 py-1 text-xs font-bold text-primary bg-primary-50 rounded-full border border-primary-100">Essai</span>}
+              {!polling && isCanceled && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">Annulé</span>}
+              {!polling && isPastDue && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">Paiement échoué</span>}
             </div>
 
             {/* Price */}
@@ -398,8 +418,19 @@ export default function SubscriptionPage() {
             )}
           </div>
 
+          {/* Syncing indicator */}
+          {polling && (
+            <div className="rounded-2xl shadow-xl overflow-hidden relative p-4 sm:p-5 bg-gradient-to-r from-indigo-600 to-violet-600 shadow-indigo-100">
+              <div className="relative z-10 flex items-center justify-center gap-3 text-white">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="text-sm font-bold">Synchronisation de votre abonnement...</span>
+              </div>
+              <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-white/5 skew-x-12 translate-x-10" />
+            </div>
+          )}
+
           {/* Countdown timer */}
-          {trialStatus.isActive && (
+          {!polling && trialStatus.isActive && (
             <div className={`rounded-2xl text-white shadow-xl overflow-hidden relative p-4 sm:p-5 ${
               trialStatus.daysRemaining <= 3
                 ? 'bg-gradient-to-r from-red-600 to-red-500 shadow-red-100'
