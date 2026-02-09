@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   // Vérifier l'authentification admin (obligatoire)
   const authHeader = request.headers.get('authorization');
-  const adminToken = process.env.ADMIN_SECRET_TOKEN;
+  const adminToken = process.env.ADMIN_SECRET_CODE;
 
   // Token obligatoire - refuse si non configuré ou invalide
   if (!adminToken || authHeader !== `Bearer ${adminToken}`) {
