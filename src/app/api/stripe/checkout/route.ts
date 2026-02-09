@@ -58,6 +58,18 @@ export async function POST(request: NextRequest) {
     // Create or retrieve Stripe customer
     let customerId = merchant.stripe_customer_id;
 
+    // Verify customer still exists on Stripe (may have been deleted manually)
+    if (customerId) {
+      try {
+        const existing = await stripe.customers.retrieve(customerId);
+        if ('deleted' in existing && existing.deleted) {
+          customerId = null;
+        }
+      } catch {
+        customerId = null;
+      }
+    }
+
     if (!customerId) {
       const customer = await stripe.customers.create({
         email: user.email,
@@ -68,10 +80,13 @@ export async function POST(request: NextRequest) {
       });
       customerId = customer.id;
 
-      // Save customer ID to merchant
+      // Save new customer ID and clear stale subscription ID
       await supabase
         .from('merchants')
-        .update({ stripe_customer_id: customerId })
+        .update({
+          stripe_customer_id: customerId,
+          stripe_subscription_id: null,
+        })
         .eq('id', merchant.id);
     }
 
