@@ -184,7 +184,8 @@ export default function SubscriptionPage() {
   const isCanceling = subscriptionStatus === 'canceling';
   const isCanceled = subscriptionStatus === 'canceled';
   const isPastDue = subscriptionStatus === 'past_due';
-  const needsAction = !isPaid && !isCanceling;
+  const hasStripe = !!merchant?.stripe_subscription_id;
+  const showSubscribeCTA = !isPaid && !isCanceling && !hasStripe;
 
   return (
     <div className="max-w-5xl mx-auto stagger-fade-in">
@@ -280,7 +281,7 @@ export default function SubscriptionPage() {
             </div>
 
             {/* Toggle mensuel/annuel */}
-            {needsAction && (
+            {showSubscribeCTA && (
               <div className="flex items-center justify-center gap-1 p-1 rounded-xl bg-gray-100 mb-6">
                 <button
                   onClick={() => setBillingPlan('monthly')}
@@ -326,7 +327,7 @@ export default function SubscriptionPage() {
             </div>
 
             {/* CTA */}
-            {needsAction && (
+            {showSubscribeCTA && (
               <Button
                 className="w-full h-14 rounded-2xl font-bold text-base shadow-lg shadow-primary/20 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700"
                 onClick={handleSubscribe}
@@ -337,7 +338,7 @@ export default function SubscriptionPage() {
             )}
 
             {/* Micro-reassurance under CTA — mobile only */}
-            {needsAction && (
+            {showSubscribeCTA && (
               <p className="text-[11px] text-gray-400 text-center mt-3 sm:hidden">
                 Sans engagement · Résiliable en 1 clic · Paiement sécurisé
               </p>

@@ -32,18 +32,14 @@ const BUSINESS_IMAGES = [
 ];
 
 
-// 10 palettes de couleurs inspirées des commerces
+// 6 palettes beauté & bien-être (grid 3x2 mobile)
 const COLOR_PALETTES = [
   { primary: '#1e293b', secondary: '#475569', name: 'Élégant', icon: '✂️' },
-  { primary: '#dc2626', secondary: '#f97316', name: 'Gourmand', icon: '🍕' },
-  { primary: '#059669', secondary: '#10b981', name: 'Nature', icon: '🌿' },
-  { primary: '#7c3aed', secondary: '#a78bfa', name: 'Moderne', icon: '💜' },
   { primary: '#db2777', secondary: '#f472b6', name: 'Glamour', icon: '💅' },
-  { primary: '#ea580c', secondary: '#fb923c', name: 'Chaleureux', icon: '🥐' },
+  { primary: '#7c3aed', secondary: '#a78bfa', name: 'Moderne', icon: '💜' },
+  { primary: '#059669', secondary: '#10b981', name: 'Zen', icon: '🧘' },
   { primary: '#0891b2', secondary: '#22d3ee', name: 'Frais', icon: '💎' },
-  { primary: '#4f46e5', secondary: '#818cf8', name: 'Premium', icon: '⭐' },
-  { primary: '#16a34a', secondary: '#4ade80', name: 'Bio', icon: '🥗' },
-  { primary: '#0f172a', secondary: '#334155', name: 'Luxe', icon: '🖤' },
+  { primary: '#9f1239', secondary: '#e11d48', name: 'Rosé', icon: '🌸' },
 ];
 
 // Suggestions récompenses palier 2 (plus premium que palier 1)
