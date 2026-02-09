@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const { scan_code, phone_number, first_name, last_name } = parsed.data;
 
-    // Get merchant by scan_code FIRST (need country for phone formatting)
+    // ── Step 1: Fetch merchant (required for phone formatting + all subsequent queries)
     const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
       .select('*')
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check trial status
+    // Check trial status (no DB call, just logic)
     const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
 
     if (trialStatus.isInGracePeriod || trialStatus.isFullyExpired) {
@@ -115,15 +115,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if phone is banned
-    const { data: bannedCheck } = await supabaseAdmin
-      .from('banned_numbers')
-      .select('id')
-      .eq('phone_number', formattedPhone)
-      .eq('merchant_id', merchant.id)
-      .single();
+    // ── Step 2: Parallel — banned check + customer fetch
+    const [bannedResult, customerResult] = await Promise.all([
+      supabaseAdmin
+        .from('banned_numbers')
+        .select('id')
+        .eq('phone_number', formattedPhone)
+        .eq('merchant_id', merchant.id)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('customers')
+        .select('*')
+        .eq('phone_number', formattedPhone)
+        .eq('merchant_id', merchant.id)
+        .maybeSingle(),
+    ]);
 
-    if (bannedCheck) {
+    if (bannedResult.data) {
       return NextResponse.json(
         {
           error: 'Ce numéro n\'est plus autorisé à utiliser ce programme de fidélité.',
@@ -133,17 +141,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get or create customer for THIS merchant
+    // ── Step 3: Get or create customer
     let customer;
-    const { data: existingCustomer } = await supabaseAdmin
-      .from('customers')
-      .select('*')
-      .eq('phone_number', formattedPhone)
-      .eq('merchant_id', merchant.id)
-      .maybeSingle();
-
-    if (existingCustomer) {
-      customer = existingCustomer;
+    if (customerResult.data) {
+      customer = customerResult.data;
     } else {
       // New customer for this merchant - need first_name
       if (!first_name) {
@@ -174,17 +175,42 @@ export async function POST(request: NextRequest) {
       customer = newCustomer;
     }
 
-    // Get or create loyalty card
-    let loyaltyCard;
-    const { data: existingCard } = await supabaseAdmin
-      .from('loyalty_cards')
-      .select('*')
-      .eq('customer_id', customer.id)
-      .eq('merchant_id', merchant.id)
-      .single();
+    // ── Step 4: Parallel — loyalty card + recent visit (idempotency) + today scans (shield)
+    const shieldEnabled = merchant.shield_enabled !== false;
+    const threeMinAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+    const todayStart = getTodayStartParis();
 
-    if (existingCard) {
-      loyaltyCard = existingCard;
+    const [cardResult, recentVisitResult, shieldResult] = await Promise.all([
+      supabaseAdmin
+        .from('loyalty_cards')
+        .select('*')
+        .eq('customer_id', customer.id)
+        .eq('merchant_id', merchant.id)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('visits')
+        .select('id, status, points_earned, flagged_reason')
+        .eq('customer_id', customer.id)
+        .eq('merchant_id', merchant.id)
+        .gte('created_at', threeMinAgo)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      shieldEnabled
+        ? supabaseAdmin
+            .from('visits')
+            .select('*', { count: 'exact', head: true })
+            .eq('customer_id', customer.id)
+            .eq('merchant_id', merchant.id)
+            .gte('visited_at', todayStart)
+            .in('status', ['confirmed', 'pending'])
+        : Promise.resolve({ count: 0 } as { count: number }),
+    ]);
+
+    // Handle loyalty card — get or create
+    let loyaltyCard;
+    if (cardResult.data) {
+      loyaltyCard = cardResult.data;
     } else {
       const { data: newCard, error: cardError } = await supabaseAdmin
         .from('loyalty_cards')
@@ -206,25 +232,9 @@ export async function POST(request: NextRequest) {
       loyaltyCard = newCard;
     }
 
-    const today = getTodayInParis();
-    const todayStart = getTodayStartParis();
-
-    // =============================================
-    // IDEMPOTENCY: Prevent duplicate checkins (3-min window)
-    // =============================================
-    const threeMinAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-    const { data: recentVisit } = await supabaseAdmin
-      .from('visits')
-      .select('id, status, points_earned, flagged_reason')
-      .eq('customer_id', customer.id)
-      .eq('merchant_id', merchant.id)
-      .gte('created_at', threeMinAgo)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
+    // ── Idempotency: return early if duplicate (3-min window)
+    const recentVisit = recentVisitResult.data;
     if (recentVisit) {
-      // Return existing visit data without creating a duplicate
       const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
 
       return NextResponse.json({
@@ -250,44 +260,26 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // =============================================
-    // QARTE SHIELD: Quarantine Logic
-    // =============================================
-
-    // Visit mode: 1 point per visit
+    // ── Step 5: Qarte Shield — determine visit status
+    const today = getTodayInParis();
     const pointsEarned = 1;
-
-    // Determine status based on threshold
     let visitStatus: VisitStatus = 'confirmed';
     let flaggedReason: string | null = null;
 
-    // Check if Qarte Shield is enabled (default to true if not set)
-    const shieldEnabled = merchant.shield_enabled !== false;
-
     if (shieldEnabled) {
-      // Count today's scans (confirmed + pending) for this customer/merchant
-      const { count: todayScansCount } = await supabaseAdmin
-        .from('visits')
-        .select('*', { count: 'exact', head: true })
-        .eq('customer_id', customer.id)
-        .eq('merchant_id', merchant.id)
-        .gte('visited_at', todayStart)
-        .in('status', ['confirmed', 'pending']);
+      const todayScansCount = ('count' in shieldResult ? shieldResult.count : 0) || 0;
+      const currentScanNumber = todayScansCount + 1;
 
-      const currentScanNumber = (todayScansCount || 0) + 1;
-
-      // If more than 1 visit today, flag as pending
       if (currentScanNumber > QUARANTINE_THRESHOLD) {
         visitStatus = 'pending';
         flaggedReason = `${currentScanNumber}ème passage ce jour`;
       }
     }
-    // If shield is disabled, visitStatus remains 'confirmed' and no quarantine checks
 
     // Hash IP for GDPR
     const ipHash = hashIP(ip);
 
-    // Insert visit record
+    // ── Step 6: Insert visit record
     const { data: visitData, error: visitError } = await supabaseAdmin
       .from('visits')
       .insert({
@@ -310,7 +302,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only update stamps if confirmed
+    // ── Step 7: Update stamps if confirmed
     let newStamps = loyaltyCard.current_stamps;
 
     if (visitStatus === 'confirmed') {
@@ -334,29 +326,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Count pending visits for this customer at this merchant
-    const { count: pendingCount } = await supabaseAdmin
-      .from('visits')
-      .select('*', { count: 'exact', head: true })
-      .eq('customer_id', customer.id)
-      .eq('merchant_id', merchant.id)
-      .eq('status', 'pending');
+    // ── Step 8: Parallel — pending count + tier 2 redemption check
+    const [pendingCountResult, lastTier2Result] = await Promise.all([
+      supabaseAdmin
+        .from('visits')
+        .select('*', { count: 'exact', head: true })
+        .eq('customer_id', customer.id)
+        .eq('merchant_id', merchant.id)
+        .eq('status', 'pending'),
+      supabaseAdmin
+        .from('redemptions')
+        .select('redeemed_at')
+        .eq('loyalty_card_id', loyaltyCard.id)
+        .eq('tier', 2)
+        .order('redeemed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
 
-    // Check for existing redemptions to determine which tier rewards are available
-    // We need to check redemptions within the current CYCLE
-    // A cycle resets after tier 2 is redeemed
+    const pendingCount = pendingCountResult.count;
+    const lastTier2Redemption = lastTier2Result.data;
 
-    // First, get the last tier 2 redemption (which marks the start of the current cycle)
-    const { data: lastTier2Redemption } = await supabaseAdmin
-      .from('redemptions')
-      .select('redeemed_at')
-      .eq('loyalty_card_id', loyaltyCard.id)
-      .eq('tier', 2)
-      .order('redeemed_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    // Check if tier 1 was redeemed in the CURRENT cycle (after the last tier 2, or ever if no tier 2)
+    // ── Step 9: Tier 1 in cycle check (depends on tier 2 result)
     let tier1Query = supabaseAdmin
       .from('redemptions')
       .select('id')
@@ -367,7 +358,7 @@ export async function POST(request: NextRequest) {
       tier1Query = tier1Query.gt('redeemed_at', lastTier2Redemption.redeemed_at);
     }
 
-    const { data: tier1InCycle } = await tier1Query.limit(1).single();
+    const { data: tier1InCycle } = await tier1Query.limit(1).maybeSingle();
     const tier1Redeemed = !!tier1InCycle;
 
     // Tier 2 redeemed status: check if current stamps warrant showing tier 2
@@ -399,6 +390,7 @@ export async function POST(request: NextRequest) {
     // Build response
     const response = {
       success: true,
+      customer_id: customer.id,
       status: visitStatus,
       visit_id: visitData.id,
       message: visitStatus === 'pending'

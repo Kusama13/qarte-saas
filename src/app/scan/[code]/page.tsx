@@ -257,29 +257,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
-
-      const response = await fetch('/api/customers/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone_number: formattedPhone,
-          first_name: firstName.trim(),
-          last_name: lastName.trim() || null,
-          merchant_id: merchant?.id,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur serveur');
-      }
-
-      setCustomer(data.customer);
       localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
       localStorage.setItem('qarte_customer_phone', formattedPhone);
       setCookie('customer_phone', formattedPhone, 30);
-      await processCheckin(data.customer);
+      // Skip register API — checkin creates customer + card + visit in one call
+      await processCheckin({ first_name: firstName.trim(), last_name: lastName.trim() || null });
     } catch (err) {
       console.error(err);
       setError('Erreur lors de l\'inscription');
@@ -288,7 +270,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     }
   };
 
-  const processCheckin = async (cust: Customer) => {
+  const processCheckin = async (customerInfo: { first_name: string; last_name?: string | null }) => {
     if (!merchant) return;
 
     setStep('checkin');
@@ -303,9 +285,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         body: JSON.stringify({
           scan_code: code,
           phone_number: formattedPhone,
-          first_name: cust.first_name,
-          last_name: cust.last_name,
-          points_to_add: 1,
+          first_name: customerInfo.first_name,
+          last_name: customerInfo.last_name,
         }),
       });
 
@@ -322,10 +303,19 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       // Update state with response data
       setLastCheckinPoints(data.points_earned || 1);
 
+      // Set customer state from checkin response (needed for reward flow)
+      setCustomer({
+        id: data.customer_id,
+        phone_number: formattedPhone,
+        first_name: customerInfo.first_name,
+        last_name: customerInfo.last_name || null,
+        created_at: new Date().toISOString(),
+      } as Customer);
+
       // Create updated card object
       const updatedCard = {
         id: data.visit_id,
-        customer_id: cust.id,
+        customer_id: data.customer_id,
         merchant_id: merchant.id,
         current_stamps: data.current_stamps,
         stamps_target: merchant.stamps_required,
