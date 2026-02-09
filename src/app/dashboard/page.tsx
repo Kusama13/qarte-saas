@@ -423,22 +423,15 @@ export default function DashboardPage() {
 
   return (
       <div className="space-y-8">
-        <div className="relative">
-          <div className="absolute -left-8 -top-8 -z-10 h-32 w-32 rounded-full bg-indigo-50/60 blur-3xl" />
+        <div className="p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
           <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900">
-          Bonjour, <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+          Bonjour, <span className="bg-gradient-to-r from-[#4b0082] to-violet-600 bg-clip-text text-transparent">
             {merchant?.shop_name}
           </span>
         </h1>
-        <div className="mt-1 md:mt-2 flex items-center gap-2">
-          <div className="flex h-2 w-2 items-center justify-center">
-            <span className="absolute h-2 w-2 animate-ping rounded-full bg-indigo-400/50" />
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
-          </div>
-          <p className="text-xs md:text-base font-medium text-gray-500">
-            Voici un aperçu de votre programme de fidélité
-          </p>
-        </div>
+        <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
+          Voici un aperçu de votre programme de fidélité
+        </p>
       </div>
 
       {/* Qarte Shield Status Bar */}

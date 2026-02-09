@@ -556,16 +556,13 @@ export default function MarketingPushPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md shadow-amber-200">
-            <Bell className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl font-black text-gray-900">Notifications Push</h1>
-            <p className="text-gray-500 text-xs">Envoyez des messages à vos clients</p>
-          </div>
-        </div>
+      <div className="mb-4 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+        <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+          Marketing
+        </h1>
+        <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
+          Envoyez des notifications push à vos clients
+        </p>
       </div>
 
       {/* Stats Card */}

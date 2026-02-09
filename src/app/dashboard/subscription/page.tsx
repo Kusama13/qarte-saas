@@ -207,7 +207,7 @@ export default function SubscriptionPage() {
       )}
 
       {/* Header */}
-      <div className="px-1 mb-6">
+      <div className="mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors mb-3"
@@ -215,8 +215,8 @@ export default function SubscriptionPage() {
           <ArrowLeft className="w-4 h-4" />
           Retour
         </Link>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Abonnement</span>
+        <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+          Abonnement
         </h1>
       </div>
 

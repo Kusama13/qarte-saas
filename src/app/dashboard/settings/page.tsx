@@ -119,9 +119,9 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto pb-12">
-      <div className="flex items-center justify-between mb-6 md:mb-10">
+      <div className="flex items-center justify-between mb-6 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <div>
-          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
             Paramètres
           </h1>
           <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">

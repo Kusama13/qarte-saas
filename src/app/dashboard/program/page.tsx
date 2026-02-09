@@ -302,19 +302,13 @@ export default function ProgramPage() {
 
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="relative overflow-hidden mb-5 md:mb-10 p-4 md:p-8 rounded-2xl md:rounded-3xl bg-white/70 backdrop-blur-md border border-white/20 shadow-xl shadow-indigo-200/30">
-        {/* Animated Gradient Background Blobs */}
-        <div className="absolute -top-24 -left-24 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl animate-pulse hidden md:block" />
-        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-violet-600/10 rounded-full blur-3xl animate-pulse hidden md:block" style={{ animationDelay: '1.5s' }} />
-
-        <div className="relative">
-          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-            Mon Programme
-          </h1>
-          <p className="mt-1 md:mt-2 text-sm md:text-base text-gray-500 font-medium">
-            Personnalisez votre programme de fidélité
-          </p>
-        </div>
+      <div className="mb-5 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+        <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+          Mon Programme
+        </h1>
+        <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
+          Personnalisez votre programme de fidélité
+        </p>
       </div>
 
       <div className="grid gap-5 md:gap-8 lg:grid-cols-2">
@@ -601,7 +595,7 @@ export default function ProgramPage() {
         </div>
 
         {merchant && (
-          <div className="lg:block">
+          <div className="hidden lg:block">
             <div className="sticky top-8">
               <a
                 href={`/customer/card/${merchant.id}?preview=true`}
@@ -654,7 +648,7 @@ export default function ProgramPage() {
 
       {/* Preview link — mobile only (desktop has it in the right column) */}
       {merchant && (
-        <div className="mt-4 md:hidden">
+        <div className="mt-4 lg:hidden">
           <a
             href={`/customer/card/${merchant.id}?preview=true`}
             target="_blank"

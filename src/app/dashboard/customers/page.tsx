@@ -249,13 +249,13 @@ export default function CustomersPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8">
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between px-1">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <div>
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900">
-            Gestion <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Clients</span>
+          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900">
+            Gestion <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4b0082] to-violet-600">Clients</span>
           </h1>
           <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 mr-2 border border-indigo-100">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#4b0082]/10 text-[#4b0082] mr-2 border border-[#4b0082]/20">
               {customers.length} total
             </span>
             {customers.length > 1 ? 'Clients inscrits' : 'Client inscrit'} sur la plateforme

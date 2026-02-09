@@ -123,18 +123,13 @@ export default function QRDownloadPage() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="relative overflow-hidden mb-6 md:mb-8 p-5 md:p-8 rounded-2xl md:rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700">
-        <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-
-        <div className="relative">
-          <h1 className="text-xl sm:text-2xl md:text-4xl font-black text-white tracking-tight">
-            Prêt à scanner
-          </h1>
-          <p className="mt-1 md:mt-2 text-sm md:text-base text-white/80 font-medium">
-            Sur place ou en déplacement
-          </p>
-        </div>
+      <div className="mb-6 md:mb-8 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+        <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+          Télécharger QR
+        </h1>
+        <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
+          Imprimez ou partagez votre QR code
+        </p>
       </div>
 
       {/* Main Content - Two Column Layout */}
