@@ -239,6 +239,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         success: true,
+        customer_id: customer.id,
         duplicate: true,
         status: recentVisit.status,
         visit_id: recentVisit.id,
