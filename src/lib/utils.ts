@@ -213,27 +213,47 @@ export async function generateQRCodeSVG(url: string): Promise<string> {
   }
 }
 
+// Formats supportes : FR (+33), BE (+32), CH (+41), LU (+352)
+// FR stocke en format local (0612345678) pour retrocompatibilite BDD
+// BE/CH/LU stockes en format international sans + (32470123456)
 export function formatPhoneNumber(phone: string): string {
   const cleaned = phone.replace(/\D/g, '');
+  // France international → local : 33612345678 → 0612345678
   if (cleaned.startsWith('33') && cleaned.length === 11) {
     return '0' + cleaned.slice(2);
   }
+  // France local : 0612345678 → 0612345678
   if (cleaned.startsWith('0') && cleaned.length === 10) {
     return cleaned;
   }
+  // International (BE/CH/LU) : garder tel quel avec indicatif
   return cleaned;
 }
 
-export function validateFrenchPhone(phone: string): boolean {
+// Pays supportes : FR, BE, CH, LU
+const PHONE_RULES: { prefix: string; totalDigits: number }[] = [
+  { prefix: '33', totalDigits: 11 },   // France : 33 + 9 digits
+  { prefix: '32', totalDigits: 10 },   // Belgique : 32 + 8 digits (fixe)
+  { prefix: '32', totalDigits: 11 },   // Belgique : 32 + 9 digits (mobile)
+  { prefix: '41', totalDigits: 11 },   // Suisse : 41 + 9 digits
+  { prefix: '352', totalDigits: 9 },   // Luxembourg : 352 + 6 digits
+  { prefix: '352', totalDigits: 10 },  // Luxembourg : 352 + 7 digits
+  { prefix: '352', totalDigits: 11 },  // Luxembourg : 352 + 8 digits
+  { prefix: '352', totalDigits: 12 },  // Luxembourg : 352 + 9 digits
+];
+
+export function validatePhone(phone: string): boolean {
   const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.startsWith('33') && cleaned.length === 11) {
-    return true;
-  }
+  // Format local francais : 0X + 8 digits = 10
   if (cleaned.startsWith('0') && cleaned.length === 10) {
     return true;
   }
-  return false;
+  // Format international
+  return PHONE_RULES.some(r => cleaned.startsWith(r.prefix) && cleaned.length === r.totalDigits);
 }
+
+/** @deprecated Use validatePhone instead */
+export const validateFrenchPhone = validatePhone;
 
 export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

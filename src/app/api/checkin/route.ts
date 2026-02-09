@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import { formatPhoneNumber, validateFrenchPhone, getTodayInParis, getTrialStatus } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTodayInParis, getTrialStatus } from '@/lib/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import type { VisitStatus } from '@/types';
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     const { scan_code, phone_number, first_name, last_name } = parsed.data;
     const formattedPhone = formatPhoneNumber(phone_number);
 
-    if (!validateFrenchPhone(formattedPhone)) {
+    if (!validatePhone(formattedPhone)) {
       return NextResponse.json(
         { error: 'Numéro de téléphone invalide' },
         { status: 400 }

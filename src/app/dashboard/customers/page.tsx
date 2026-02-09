@@ -570,7 +570,7 @@ export default function CustomersPage() {
           />
           <Input
             label="Téléphone"
-            placeholder="+33 6 12 34 56 78"
+            placeholder="06 12 34 56 78"
             value={newPhone}
             onChange={(e) => setNewPhone(e.target.value)}
           />

@@ -9,7 +9,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { formatPhoneNumber, validateFrenchPhone } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone } from '@/lib/utils';
 
 export default function CustomerLoginPage() {
   const router = useRouter();
@@ -47,7 +47,7 @@ export default function CustomerLoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!validateFrenchPhone(phoneNumber)) {
+    if (!validatePhone(phoneNumber)) {
       setError('Veuillez entrer un numéro de téléphone valide');
       return;
     }

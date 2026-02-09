@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validateFrenchPhone } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone } from '@/lib/utils';
 import type { LoyaltyCard, Merchant, Customer } from '@/types';
 
 interface CardWithMerchant extends LoyaltyCard {
@@ -82,7 +82,7 @@ export default function CustomerDashboardPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateFrenchPhone(phoneNumber)) {
+    if (!validatePhone(phoneNumber)) {
       setError('Veuillez entrer un numéro de téléphone valide');
       return;
     }
