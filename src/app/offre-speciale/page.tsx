@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
 import {
   CreditCard,
@@ -10,7 +10,6 @@ import {
   Zap,
   Shield,
   Lock,
-  X,
   Heart,
   Gift,
 } from 'lucide-react';
@@ -31,93 +30,6 @@ const staggerContainer = {
     },
   },
 };
-
-// Exit Intent Popup
-function ExitIntentPopup({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  const handleCTAClick = () => {
-    fbEvents.initiateCheckout();
-    onClose();
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-          />
-
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed left-1/2 top-1/2 z-[101] w-[90%] max-w-md max-h-[90vh] -translate-x-1/2 -translate-y-1/2 overflow-y-auto"
-          >
-            <div className="relative overflow-hidden bg-white/90 backdrop-blur-xl shadow-2xl rounded-3xl border border-white/20">
-              {/* Close button */}
-              <button
-                onClick={onClose}
-                className="absolute z-10 p-2 text-white transition-colors bg-black/30 rounded-full top-3 right-3 hover:bg-black/50"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
-              {/* Image header */}
-              <div className="relative w-full h-48 sm:h-56">
-                <Image
-                  src="/images/exit-popup.jpg"
-                  alt="Ne partez pas !"
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
-
-              {/* Content */}
-              <div className="p-6 text-center">
-                <h3 className="mb-2 text-xl font-bold text-gray-900">
-                  Attendez ! Ne partez pas si vite
-                </h3>
-                <p className="mb-6 text-gray-600">
-                  Testez Qarte gratuitement pendant 15 jours.
-                  <br />
-                  <span className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Sans carte bancaire. Sans engagement.</span>
-                </p>
-
-                <Link href="/auth/merchant/signup" onClick={handleCTAClick}>
-                  <button className="w-full mb-3 px-8 py-4 text-lg font-semibold text-white rounded-2xl bg-gradient-to-r from-primary via-primary to-secondary hover:opacity-90 transition-all duration-300 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
-                    Essayer gratuitement
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
-                </Link>
-
-                <button
-                  onClick={onClose}
-                  className="text-sm text-gray-500 transition-colors hover:text-gray-700"
-                >
-                  Non merci, je préfère passer à côté
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
 
 // Sticky Mobile CTA
 function StickyMobileCTA() {
@@ -158,59 +70,13 @@ function StickyMobileCTA() {
 }
 
 export default function OffreSpecialePage() {
-  const [showExitPopup, setShowExitPopup] = useState(false);
-  const [hasShownPopup, setHasShownPopup] = useState(false);
-
   const handleCTAClick = () => {
     fbEvents.initiateCheckout();
-  };
-
-  // Exit intent detection
-  const handleMouseLeave = useCallback(
-    (e: MouseEvent) => {
-      // Only trigger when mouse leaves from the top of the viewport
-      if (e.clientY <= 0 && !hasShownPopup) {
-        setShowExitPopup(true);
-        setHasShownPopup(true);
-      }
-    },
-    [hasShownPopup]
-  );
-
-  useEffect(() => {
-    // Check if popup was already shown this session
-    const popupShown = sessionStorage.getItem('exitPopupShown');
-    if (popupShown) {
-      setHasShownPopup(true);
-    }
-
-    // Desktop: mouse leave detection
-    document.addEventListener('mouseout', handleMouseLeave);
-
-    // Mobile: show popup after 30 seconds if still on page
-    const mobileTimer = setTimeout(() => {
-      if (!hasShownPopup && window.innerWidth < 768) {
-        setShowExitPopup(true);
-        setHasShownPopup(true);
-        sessionStorage.setItem('exitPopupShown', 'true');
-      }
-    }, 30000);
-
-    return () => {
-      document.removeEventListener('mouseout', handleMouseLeave);
-      clearTimeout(mobileTimer);
-    };
-  }, [handleMouseLeave, hasShownPopup]);
-
-  const closeExitPopup = () => {
-    setShowExitPopup(false);
-    sessionStorage.setItem('exitPopupShown', 'true');
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 relative overflow-hidden">
       <FacebookPixel />
-      <ExitIntentPopup isOpen={showExitPopup} onClose={closeExitPopup} />
       <StickyMobileCTA />
 
       {/* Background decorative blobs */}

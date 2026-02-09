@@ -23,7 +23,6 @@ import {
   Save,
   Loader2,
   X,
-  Gift,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button, Input, Modal } from '@/components/ui';
@@ -78,15 +77,6 @@ interface Prospect {
   created_at: string;
 }
 
-interface TodaySignup {
-  id: string;
-  shop_name: string;
-  shop_type: string;
-  created_at: string;
-  has_program: boolean;
-  user_email?: string;
-}
-
 // ============================================
 // STATUS CONFIG
 // ============================================
@@ -129,9 +119,6 @@ export default function AdminDashboardPage() {
   const [noProgram, setNoProgram] = useState<ActionMerchant[]>([]);
   const [inactive7Days, setInactive7Days] = useState<ActionMerchant[]>([]);
 
-  // Funnel
-  const [funnel, setFunnel] = useState({ total: 0, withProgram: 0, withFirstScan: 0, paid: 0 });
-
   // Notes
   const [notes, setNotes] = useState('');
   const [notesSaving, setNotesSaving] = useState(false);
@@ -160,9 +147,6 @@ export default function AdminDashboardPage() {
     next_followup: '',
   });
   const [savingProspect, setSavingProspect] = useState(false);
-
-  // Today's Signups
-  const [todaySignups, setTodaySignups] = useState<TodaySignup[]>([]);
 
   const [loading, setLoading] = useState(true);
 
@@ -259,14 +243,6 @@ export default function AdminDashboardPage() {
       activationRate,
     });
 
-    // Funnel
-    setFunnel({
-      total: merchants.length,
-      withProgram: merchants.filter((m: Merchant) => m.reward_description !== null).length,
-      withFirstScan: merchants.filter((m: Merchant) => merchantsWithAnyVisit.has(m.id)).length,
-      paid: active.length,
-    });
-
     // Helper to enrich merchant for action segments
     const enrichMerchant = (m: Merchant): ActionMerchant => {
       const lastScan = lastVisitMap.get(m.id) || null;
@@ -354,26 +330,6 @@ export default function AdminDashboardPage() {
     }
   }, [prospectFilter]);
 
-  const fetchTodaySignups = useCallback(async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await fetch('/api/admin/today-signups', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setTodaySignups((data.signups || []).slice(0, 5));
-      }
-    } catch (error) {
-      console.error('Error fetching today signups:', error);
-    }
-  }, [supabase]);
-
   useEffect(() => {
     const loadAll = async () => {
       try {
@@ -382,7 +338,6 @@ export default function AdminDashboardPage() {
           fetchNotes(),
           fetchTasks(),
           fetchProspects(),
-          fetchTodaySignups(),
         ]);
       } catch (error) {
         console.error('Error loading admin data:', error);
@@ -391,7 +346,7 @@ export default function AdminDashboardPage() {
       }
     };
     loadAll();
-  }, [fetchStatsAndActions, fetchNotes, fetchTasks, fetchProspects, fetchTodaySignups]);
+  }, [fetchStatsAndActions, fetchNotes, fetchTasks, fetchProspects]);
 
   useEffect(() => {
     fetchProspects();
@@ -708,23 +663,22 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* Funnel de conversion */}
-      {funnel.total > 0 && (
-        <div className="bg-white rounded-lg border border-slate-100 shadow-md p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-[#5167fc]/10 rounded-lg">
-              <ArrowRight className="w-5 h-5 text-[#5167fc]" />
-            </div>
-            <h2 className="font-semibold text-slate-900">Funnel de conversion</h2>
+      {/* Funnel → voir Métriques */}
+      <Link
+        href="/admin/metriques"
+        className="flex items-center justify-between bg-white rounded-lg border border-slate-100 shadow-md p-5 hover:bg-slate-50 transition-colors group"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-[#5167fc]/10 rounded-lg">
+            <ArrowRight className="w-5 h-5 text-[#5167fc]" />
           </div>
-          <div className="space-y-3">
-            <FunnelBar label="Inscrits" count={funnel.total} total={funnel.total} color="#5167fc" />
-            <FunnelBar label="Programme configuré" count={funnel.withProgram} total={funnel.total} color="#7c8afc" prevCount={funnel.total} />
-            <FunnelBar label="1er scan reçu" count={funnel.withFirstScan} total={funnel.total} color="#a3adfd" prevCount={funnel.withProgram} />
-            <FunnelBar label="Abonnés payants" count={funnel.paid} total={funnel.total} color="#10B981" prevCount={funnel.withFirstScan} />
+          <div>
+            <h2 className="font-semibold text-slate-900">Funnel de conversion</h2>
+            <p className="text-xs text-slate-500">Voir le funnel complet dans Métriques</p>
           </div>
         </div>
-      )}
+        <ChevronRight className="w-5 h-5 text-slate-400 group-hover:text-[#5167fc] transition-colors" />
+      </Link>
 
       {/* Main Grid */}
       <div className="grid lg:grid-cols-3 gap-6">
@@ -962,99 +916,42 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Bottom Row */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Recent Signups */}
-        <div className="bg-white rounded-lg border border-slate-100 shadow-md overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#5167fc]/10 rounded-lg">
-                <Store className="w-5 h-5 text-[#5167fc]" />
-              </div>
-              <h2 className="font-semibold text-slate-900">Dernières inscriptions</h2>
+      {/* Dernières inscriptions */}
+      <div className="bg-white rounded-lg border border-slate-100 shadow-md overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-[#5167fc]/10 rounded-lg">
+              <Store className="w-5 h-5 text-[#5167fc]" />
             </div>
-            <Link href="/admin/merchants" className="text-[#5167fc] text-sm font-medium hover:underline">
-              Voir tout
-            </Link>
+            <h2 className="font-semibold text-slate-900">Dernières inscriptions</h2>
           </div>
-          <div className="divide-y divide-slate-100">
-            {recentMerchants.length === 0 ? (
-              <p className="p-6 text-center text-slate-400 text-sm">Aucune inscription</p>
-            ) : (
-              recentMerchants.map((merchant) => (
-                <Link
-                  key={merchant.id}
-                  href={`/admin/merchants/${merchant.id}`}
-                  className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#5167fc] flex items-center justify-center text-white font-medium text-sm">
-                      {merchant.shop_name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm">{merchant.shop_name}</p>
-                      <p className="text-xs text-slate-400">{formatDate(merchant.created_at)}</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400" />
-                </Link>
-              ))
-            )}
-          </div>
+          <Link href="/admin/merchants" className="text-[#5167fc] text-sm font-medium hover:underline">
+            Voir tout
+          </Link>
         </div>
-
-        {/* Today's Signups */}
-        <div className="bg-white rounded-lg border border-slate-100 shadow-md overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-50 rounded-lg">
-                <Store className="w-5 h-5 text-emerald-600" />
-              </div>
-              <div>
-                <h2 className="font-semibold text-slate-900">Inscriptions du jour</h2>
-                <p className="text-xs text-emerald-600">{todaySignups.length} nouveau{todaySignups.length > 1 ? 'x' : ''}</p>
-              </div>
-            </div>
-            <Link href="/admin/leads" className="text-[#5167fc] text-sm font-medium hover:underline">
-              Voir tout
-            </Link>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {todaySignups.length === 0 ? (
-              <p className="p-6 text-center text-slate-400 text-sm">Aucune inscription aujourd&apos;hui</p>
-            ) : (
-              todaySignups.map((signup) => (
-                <Link
-                  key={signup.id}
-                  href={`/admin/merchants/${signup.id}`}
-                  className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#5167fc] flex items-center justify-center text-white font-medium text-sm">
-                      {signup.shop_name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-medium text-slate-900 text-sm">{signup.shop_name}</p>
-                      <p className="text-xs text-slate-400">{signup.shop_type}</p>
-                    </div>
+        <div className="divide-y divide-slate-100">
+          {recentMerchants.length === 0 ? (
+            <p className="p-6 text-center text-slate-400 text-sm">Aucune inscription</p>
+          ) : (
+            recentMerchants.map((merchant) => (
+              <Link
+                key={merchant.id}
+                href={`/admin/merchants/${merchant.id}`}
+                className="flex items-center justify-between p-4 hover:bg-slate-50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-[#5167fc] flex items-center justify-center text-white font-medium text-sm">
+                    {merchant.shop_name.charAt(0)}
                   </div>
-                  <div className="flex items-center gap-2">
-                    {signup.has_program ? (
-                      <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full flex items-center gap-1">
-                        <Gift className="w-3 h-3" />
-                        Programme
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full">
-                        Sans prog.
-                      </span>
-                    )}
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  <div>
+                    <p className="font-medium text-slate-900 text-sm">{merchant.shop_name}</p>
+                    <p className="text-xs text-slate-400">{formatDate(merchant.created_at)}</p>
                   </div>
-                </Link>
-              ))
-            )}
-          </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </Link>
+            ))
+          )}
         </div>
       </div>
 
@@ -1283,45 +1180,3 @@ function ActionSegment({
   );
 }
 
-// ============================================
-// FUNNEL BAR COMPONENT
-// ============================================
-function FunnelBar({
-  label,
-  count,
-  total,
-  color,
-  prevCount,
-}: {
-  label: string;
-  count: number;
-  total: number;
-  color: string;
-  prevCount?: number;
-}) {
-  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-  const dropOff = prevCount !== undefined && prevCount > 0
-    ? Math.round(((prevCount - count) / prevCount) * 100)
-    : null;
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-medium text-slate-700">{label}</span>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-slate-900">{count}</span>
-          <span className="text-xs text-slate-400">({pct}%)</span>
-          {dropOff !== null && dropOff > 0 && (
-            <span className="text-xs font-medium text-red-500">-{dropOff}%</span>
-          )}
-        </div>
-      </div>
-      <div className="w-full bg-slate-100 rounded-full h-6 overflow-hidden">
-        <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${Math.max(pct, 3)}%`, backgroundColor: color }}
-        />
-      </div>
-    </div>
-  );
-}

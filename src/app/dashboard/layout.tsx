@@ -80,7 +80,7 @@ function DashboardLayoutContent({
     return null;
   }
 
-  if (pathname === '/dashboard/setup' || pathname === '/dashboard/social-kit') {
+  if (pathname === '/dashboard/setup') {
     return <>{children}</>;
   }
 

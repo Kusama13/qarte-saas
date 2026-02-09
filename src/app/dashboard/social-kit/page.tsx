@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import Link from 'next/link';
 import {
   Download,
-  ArrowLeft,
   Check,
   Loader2,
   Copy,
@@ -101,18 +99,11 @@ export default function SocialKitPage() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors mb-3"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Retour
-        </Link>
+      <div className="mb-6 md:mb-8 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
           Kit Réseaux Sociaux
         </h1>
-        <p className="mt-2 text-sm text-gray-500">
+        <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
           Téléchargez votre visuel et partagez-le sur Instagram, Facebook, WhatsApp...
         </p>
       </div>
@@ -237,23 +228,6 @@ export default function SocialKitPage() {
             </ul>
           </div>
         </div>
-      </div>
-
-      {/* Bottom CTA */}
-      <div className="mt-12 mb-8 flex flex-col sm:flex-row gap-4">
-        <Link
-          href="/dashboard/qr-download"
-          className="flex-1 flex items-center justify-center gap-3 py-5 bg-white hover:bg-gray-50 text-gray-700 font-bold text-base rounded-2xl border-2 border-gray-200 hover:border-gray-300 shadow-sm transition-all"
-        >
-          Télécharger mon QR code
-        </Link>
-        <Link
-          href="/dashboard"
-          className="flex-1 flex items-center justify-center gap-3 py-5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-base rounded-2xl shadow-xl shadow-indigo-200 transition-all"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Tableau de bord
-        </Link>
       </div>
 
       {/* Hidden high-res template for export */}

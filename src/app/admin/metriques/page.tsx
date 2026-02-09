@@ -9,15 +9,13 @@ import {
   TrendingUp,
   TrendingDown,
   UserX,
-  MessageCircle,
-  CheckCircle,
-  Trash2,
   Calendar,
   Eye,
   UserPlus,
   Loader2,
   Zap,
   ArrowRight,
+  Target,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import {
@@ -30,17 +28,17 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from 'recharts';
 import { cn } from '@/lib/utils';
 
 const SUBSCRIPTION_PRICE = 19;
-const WHATSAPP_PREFIX = 'https://wa.me/33';
 
-interface DemoLead {
-  id: string;
-  phone_number: string;
-  created_at: string;
-  converted: boolean;
+interface Snapshot {
+  snapshot_date: string;
+  mrr: number;
+  active_subscribers: number;
+  trial_users: number;
 }
 
 export default function MetriquesPage() {
@@ -56,6 +54,8 @@ export default function MetriquesPage() {
     conversionRate: 0,
     churnRate: 0,
     annualProjection: 0,
+    revenueNextMonth: 0,
+    trialEndingSoon: 0,
   });
 
   // Activity metrics
@@ -66,10 +66,6 @@ export default function MetriquesPage() {
     signupsThisWeek: 0,
     signupsThisMonth: 0,
   });
-
-  // Leads
-  const [leads, setLeads] = useState<DemoLead[]>([]);
-  const [leadsStats, setLeadsStats] = useState({ total: 0, pending: 0, converted: 0 });
 
   // Activation metrics
   const [activation, setActivation] = useState({
@@ -85,6 +81,7 @@ export default function MetriquesPage() {
   // Charts data
   const [mrrHistory, setMrrHistory] = useState<{ month: string; mrr: number }[]>([]);
   const [weeklySignups, setWeeklySignups] = useState<{ week: string; count: number }[]>([]);
+  const [monthlyComparison, setMonthlyComparison] = useState<{ month: string; revenue: number; projected: number }[]>([]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -96,30 +93,42 @@ export default function MetriquesPage() {
       const sixMonthsAgo = new Date(now);
       sixMonthsAgo.setMonth(now.getMonth() - 6);
 
+      const sevenDaysFromNow = new Date();
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
       // Fetch all data in parallel
       const [
         { data: allMerchants },
         { count: totalCustomers },
         { count: totalVisits },
-        { data: leadsData },
         { data: superAdmins },
         { data: allVisitsData },
         { data: allLoyaltyCards },
+        { count: endingSoonCount },
+        { data: snapshots },
       ] = await Promise.all([
-        supabase.from('merchants').select('id, user_id, subscription_status, created_at, reward_description'),
+        supabase.from('merchants').select('id, user_id, subscription_status, created_at, reward_description, trial_ends_at'),
         supabase.from('customers').select('*', { count: 'exact', head: true }),
         supabase.from('visits').select('*', { count: 'exact', head: true }),
-        supabase.from('demo_leads').select('*').order('created_at', { ascending: false }),
         supabase.from('super_admins').select('user_id'),
         supabase.from('visits').select('merchant_id, visited_at'),
         supabase.from('loyalty_cards').select('merchant_id, created_at'),
+        supabase.from('merchants')
+          .select('*', { count: 'exact', head: true })
+          .eq('subscription_status', 'trial')
+          .lte('trial_ends_at', sevenDaysFromNow.toISOString())
+          .gte('trial_ends_at', now.toISOString()),
+        supabase.from('revenue_snapshots')
+          .select('*')
+          .order('snapshot_date', { ascending: true })
+          .limit(12),
       ]);
 
       // Get super admin user_ids
       const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
 
       // Filter out super admin merchants
-      type MerchantData = { id: string; user_id: string; subscription_status: string; created_at: string; reward_description: string | null };
+      type MerchantData = { id: string; user_id: string; subscription_status: string; created_at: string; reward_description: string | null; trial_ends_at: string | null };
       const merchants = (allMerchants || []).filter((m: MerchantData) => !superAdminUserIds.has(m.user_id));
 
       // Revenue calculations
@@ -130,6 +139,11 @@ export default function MetriquesPage() {
       const mrr = active * SUBSCRIPTION_PRICE;
       const conversionRate = total > 0 ? Math.round((active / total) * 100) : 0;
       const churnRate = (active + churned) > 0 ? Math.round((churned / (active + churned)) * 100) : 0;
+
+      // Revenue projections (from Revenus page)
+      const trialEndingSoon = endingSoonCount || 0;
+      const estimatedConversions = Math.round(trialEndingSoon * 0.5);
+      const revenueNextMonth = (active + estimatedConversions) * SUBSCRIPTION_PRICE;
 
       // Time-based stats
       const weekMerchants = merchants.filter((m: MerchantData) => new Date(m.created_at) >= oneWeekAgo);
@@ -144,6 +158,8 @@ export default function MetriquesPage() {
         conversionRate,
         churnRate,
         annualProjection: mrr * 12,
+        revenueNextMonth,
+        trialEndingSoon,
       });
 
       // Activity
@@ -155,44 +171,67 @@ export default function MetriquesPage() {
         signupsThisMonth: monthMerchants.length,
       });
 
-      // Leads
-      const allLeads = leadsData || [];
-      setLeads(allLeads);
-      setLeadsStats({
-        total: allLeads.length,
-        pending: allLeads.filter((l: { converted?: boolean }) => !l.converted).length,
-        converted: allLeads.filter((l: { converted?: boolean }) => l.converted).length,
-      });
+      // MRR History - use real snapshots if available, else calculate
+      if (snapshots && snapshots.length > 0) {
+        setMrrHistory(snapshots.map((s: Snapshot) => ({
+          month: new Date(s.snapshot_date).toLocaleDateString('fr-FR', { month: 'short' }),
+          mrr: s.mrr,
+        })));
+      } else {
+        const mrrData: { month: string; mrr: number }[] = [];
+        const merchantsByMonth = new Map<string, number>();
 
-      // MRR History (last 6 months) - simplified calculation
-      const mrrData: { month: string; mrr: number }[] = [];
-      const merchantsByMonth = new Map<string, number>();
+        sixMonthMerchants.forEach((m: { subscription_status: string; created_at: string }) => {
+          if (m.subscription_status === 'active') {
+            const date = new Date(m.created_at);
+            const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
+            merchantsByMonth.set(monthKey, (merchantsByMonth.get(monthKey) || 0) + 1);
+          }
+        });
 
-      sixMonthMerchants.forEach((m: { subscription_status: string; created_at: string }) => {
-        if (m.subscription_status === 'active') {
-          const date = new Date(m.created_at);
+        let cumulativeActive = active - sixMonthMerchants.filter((m: { subscription_status: string }) => m.subscription_status === 'active').length;
+        for (let i = 5; i >= 0; i--) {
+          const date = new Date();
+          date.setMonth(date.getMonth() - i);
           const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-          merchantsByMonth.set(monthKey, (merchantsByMonth.get(monthKey) || 0) + 1);
-        }
-      });
+          const monthName = date.toLocaleDateString('fr-FR', { month: 'short' });
 
-      let cumulativeActive = active - sixMonthMerchants.filter((m: { subscription_status: string }) => m.subscription_status === 'active').length;
-      for (let i = 5; i >= 0; i--) {
+          cumulativeActive += merchantsByMonth.get(monthKey) || 0;
+          mrrData.push({
+            month: monthName,
+            mrr: Math.max(0, cumulativeActive) * SUBSCRIPTION_PRICE,
+          });
+        }
+        setMrrHistory(mrrData);
+      }
+
+      // Monthly comparison (Real vs Projection) - from Revenus page
+      const comparisonData: { month: string; revenue: number; projected: number }[] = [];
+      for (let i = 2; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
-        const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
         const monthName = date.toLocaleDateString('fr-FR', { month: 'short' });
-
-        cumulativeActive += merchantsByMonth.get(monthKey) || 0;
-        mrrData.push({
+        const growthFactor = 1 - (i * 0.1);
+        comparisonData.push({
           month: monthName,
-          mrr: Math.max(0, cumulativeActive) * SUBSCRIPTION_PRICE,
+          revenue: Math.round(mrr * growthFactor),
+          projected: Math.round(mrr * growthFactor * 1.1),
         });
       }
-      setMrrHistory(mrrData);
+      for (let i = 1; i <= 3; i++) {
+        const date = new Date();
+        date.setMonth(date.getMonth() + i);
+        const monthName = date.toLocaleDateString('fr-FR', { month: 'short' });
+        const growthFactor = 1 + (i * 0.05);
+        comparisonData.push({
+          month: monthName,
+          revenue: 0,
+          projected: Math.round(mrr * growthFactor),
+        });
+      }
+      setMonthlyComparison(comparisonData);
 
       // ====== ACTIVATION + FUNNEL ======
-      // Build visits maps
       const merchantsWithAnyVisit = new Set<string>();
       const firstVisitPerMerchant = new Map<string, Date>();
 
@@ -205,7 +244,6 @@ export default function MetriquesPage() {
         }
       });
 
-      // Build loyalty cards count per merchant (for time to 10 customers)
       const cardDatesPerMerchant = new Map<string, Date[]>();
       (allLoyaltyCards || []).forEach((c: { merchant_id: string; created_at: string }) => {
         if (!cardDatesPerMerchant.has(c.merchant_id)) {
@@ -213,15 +251,12 @@ export default function MetriquesPage() {
         }
         cardDatesPerMerchant.get(c.merchant_id)!.push(new Date(c.created_at));
       });
-      // Sort each merchant's card dates
       cardDatesPerMerchant.forEach((dates) => dates.sort((a, b) => a.getTime() - b.getTime()));
 
-      // Activation rate: % of merchants created in last 30 days with ≥1 scan
       const recentCreated = merchants.filter((m: MerchantData) => new Date(m.created_at) >= oneMonthAgo);
       const recentActivated = recentCreated.filter((m: MerchantData) => merchantsWithAnyVisit.has(m.id));
       const activationRate = recentCreated.length > 0 ? Math.round((recentActivated.length / recentCreated.length) * 100) : 0;
 
-      // Avg time to first scan (for all merchants with a first visit)
       let totalDaysToFirst = 0;
       let countWithFirst = 0;
       firstVisitPerMerchant.forEach((firstDate, merchantId) => {
@@ -234,7 +269,6 @@ export default function MetriquesPage() {
       });
       const avgTimeToFirstScan = countWithFirst > 0 ? Math.round((totalDaysToFirst / countWithFirst) * 10) / 10 : 0;
 
-      // Avg time to 10 customers
       let totalDaysTo10 = 0;
       let countWith10 = 0;
       cardDatesPerMerchant.forEach((dates, merchantId) => {
@@ -251,12 +285,11 @@ export default function MetriquesPage() {
 
       setActivation({
         activationRate,
-        avgTimeToFirstScan: avgTimeToFirstScan,
+        avgTimeToFirstScan,
         avgTimeTo10Customers: avgTimeTo10,
         recentMerchantCount: recentCreated.length,
       });
 
-      // Funnel
       setFunnel({
         total: merchants.length,
         withProgram: merchants.filter((m: MerchantData) => m.reward_description !== null).length,
@@ -284,6 +317,20 @@ export default function MetriquesPage() {
       }
       setWeeklySignups(weeklyData);
 
+      // Save daily snapshot (fire-and-forget, from Revenus page)
+      const today = new Date().toISOString().split('T')[0];
+      supabase
+        .from('revenue_snapshots')
+        .upsert({
+          snapshot_date: today,
+          active_subscribers: active,
+          trial_users: trial,
+          cancelled_users: churned,
+          mrr,
+          conversion_rate: conversionRate,
+        }, { onConflict: 'snapshot_date' })
+        .then(() => {});
+
     } catch (error) {
       console.error('Error fetching metrics:', error);
     } finally {
@@ -295,57 +342,12 @@ export default function MetriquesPage() {
     fetchData();
   }, [fetchData]);
 
-  const formatPhone = (phone: string) => {
-    // Remove spaces and special chars, convert 06... to 6...
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.startsWith('0')) {
-      return cleaned.substring(1);
-    }
-    if (cleaned.startsWith('33')) {
-      return cleaned.substring(2);
-    }
-    return cleaned;
-  };
-
-  const openWhatsApp = (phone: string) => {
-    const formattedPhone = formatPhone(phone);
-    const message = encodeURIComponent('Bonjour, vous avez téléchargé notre guide sur la fidélisation. Avez-vous des questions ?');
-    window.open(`${WHATSAPP_PREFIX}${formattedPhone}?text=${message}`, '_blank');
-  };
-
-  const markLeadConverted = async (id: string) => {
-    const { error } = await supabase
-      .from('demo_leads')
-      .update({ converted: true, converted_at: new Date().toISOString() })
-      .eq('id', id);
-
-    if (!error) {
-      setLeads(leads.map((l: DemoLead) => l.id === id ? { ...l, converted: true } : l));
-      setLeadsStats(prev => ({ ...prev, pending: prev.pending - 1, converted: prev.converted + 1 }));
-    }
-  };
-
-  const deleteLead = async (id: string) => {
-    if (!confirm('Supprimer ce lead ?')) return;
-    const { error } = await supabase.from('demo_leads').delete().eq('id', id);
-    if (!error) {
-      const lead = leads.find((l: DemoLead) => l.id === id);
-      setLeads(leads.filter((l: DemoLead) => l.id !== id));
-      setLeadsStats(prev => ({
-        total: prev.total - 1,
-        pending: lead?.converted ? prev.pending : prev.pending - 1,
-        converted: lead?.converted ? prev.converted - 1 : prev.converted,
-      }));
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+    }).format(amount);
   };
 
   if (loading) {
@@ -360,7 +362,7 @@ export default function MetriquesPage() {
     <div className="space-y-8 pb-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Métriques</h1>
-        <p className="mt-1 text-gray-600">Vue d'ensemble business</p>
+        <p className="mt-1 text-gray-600">Vue d&apos;ensemble business et revenus</p>
       </div>
 
       {/* REVENUS */}
@@ -384,6 +386,21 @@ export default function MetriquesPage() {
             color="green"
           />
           <MetricCard
+            label="Prévu mois prochain"
+            value={formatCurrency(revenue.revenueNextMonth)}
+            sub={`+${revenue.trialEndingSoon} essai${revenue.trialEndingSoon > 1 ? 's' : ''} potentiel${revenue.trialEndingSoon > 1 ? 's' : ''}`}
+            icon={Target}
+            color="amber"
+          />
+          <MetricCard
+            label="Projection annuelle"
+            value={formatCurrency(revenue.annualProjection)}
+            icon={Calendar}
+            color="purple"
+          />
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+          <MetricCard
             label="En essai"
             value={revenue.trialUsers}
             icon={Clock}
@@ -396,8 +413,6 @@ export default function MetriquesPage() {
             icon={UserX}
             color="red"
           />
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
           <MetricCard
             label="Taux conversion"
             value={`${revenue.conversionRate}%`}
@@ -410,12 +425,6 @@ export default function MetriquesPage() {
             icon={TrendingDown}
             color="orange"
           />
-          <MetricCard
-            label="Projection annuelle"
-            value={`${revenue.annualProjection}€`}
-            icon={Calendar}
-            color="purple"
-          />
         </div>
       </section>
 
@@ -426,36 +435,11 @@ export default function MetriquesPage() {
           Activité
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <MetricCard
-            label="Commerçants"
-            value={activity.totalMerchants}
-            icon={Store}
-            color="indigo"
-          />
-          <MetricCard
-            label="Clients"
-            value={activity.totalCustomers}
-            icon={Users}
-            color="blue"
-          />
-          <MetricCard
-            label="Visites"
-            value={activity.totalVisits}
-            icon={Eye}
-            color="green"
-          />
-          <MetricCard
-            label="Inscrits 7j"
-            value={activity.signupsThisWeek}
-            icon={UserPlus}
-            color="amber"
-          />
-          <MetricCard
-            label="Inscrits 30j"
-            value={activity.signupsThisMonth}
-            icon={UserPlus}
-            color="purple"
-          />
+          <MetricCard label="Commerçants" value={activity.totalMerchants} icon={Store} color="indigo" />
+          <MetricCard label="Clients" value={activity.totalCustomers} icon={Users} color="blue" />
+          <MetricCard label="Visites" value={activity.totalVisits} icon={Eye} color="green" />
+          <MetricCard label="Inscrits 7j" value={activity.signupsThisWeek} icon={UserPlus} color="amber" />
+          <MetricCard label="Inscrits 30j" value={activity.signupsThisMonth} icon={UserPlus} color="purple" />
         </div>
       </section>
 
@@ -556,86 +540,45 @@ export default function MetriquesPage() {
         </div>
       </section>
 
-      {/* LEADS EBOOK */}
-      <section>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <MessageCircle className="w-5 h-5 text-[#5167fc]" />
-          Leads Ebook
-        </h2>
+      {/* Réel vs Projection (from Revenus page) */}
+      <section className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+        <h3 className="font-semibold text-gray-900 mb-4">Revenus : Réel vs Projection</h3>
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={monthlyComparison}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey="month" stroke="#9CA3AF" fontSize={12} />
+            <YAxis stroke="#9CA3AF" fontSize={12} tickFormatter={(v) => `${v}€`} />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+              formatter={(value: number) => [`${value}€`]}
+            />
+            <Legend />
+            <Bar dataKey="revenue" name="Réel" fill="#5167fc" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="projected" name="Projection" fill="#93C5FD" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </section>
 
-        {/* Leads stats */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
-          <MetricCard label="Total" value={leadsStats.total} icon={UserPlus} color="indigo" />
-          <MetricCard label="À contacter" value={leadsStats.pending} icon={Clock} color="amber" />
-          <MetricCard label="Convertis" value={leadsStats.converted} icon={CheckCircle} color="green" />
-        </div>
-
-        {/* Leads list */}
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          {leads.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p>Aucun lead pour le moment</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100 max-h-[400px] overflow-y-auto">
-              {leads.map((lead) => (
-                <div
-                  key={lead.id}
-                  className={cn(
-                    'p-4 flex items-center justify-between gap-4',
-                    lead.converted ? 'bg-green-50/50' : 'hover:bg-gray-50'
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center',
-                      lead.converted ? 'bg-green-100' : 'bg-[#5167fc]/10'
-                    )}>
-                      <MessageCircle className={cn(
-                        'w-5 h-5',
-                        lead.converted ? 'text-green-600' : 'text-[#5167fc]'
-                      )} />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{lead.phone_number}</p>
-                      <p className="text-xs text-gray-500">{formatDate(lead.created_at)}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {lead.converted ? (
-                      <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">
-                        Converti
-                      </span>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => openWhatsApp(lead.phone_number)}
-                          className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          Contacter
-                        </button>
-                        <button
-                          onClick={() => markLeadConverted(lead.id)}
-                          className="px-3 py-1.5 text-sm font-medium text-[#5167fc] bg-[#5167fc]/10 rounded-lg hover:bg-[#5167fc]/20 transition-colors"
-                        >
-                          Converti
-                        </button>
-                      </>
-                    )}
-                    <button
-                      onClick={() => deleteLead(lead.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+      {/* Résumé financier (from Revenus page) */}
+      <section className="p-6 bg-gradient-to-r from-[#5167fc] to-[#7c3aed] rounded-xl shadow-md text-white">
+        <h2 className="mb-4 text-lg font-semibold">Résumé financier</h2>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <p className="text-white/70 text-sm">Revenu par client</p>
+            <p className="text-2xl font-bold">{SUBSCRIPTION_PRICE}€/mois</p>
+          </div>
+          <div>
+            <p className="text-white/70 text-sm">LTV estimée (12 mois)</p>
+            <p className="text-2xl font-bold">{SUBSCRIPTION_PRICE * 12}€</p>
+          </div>
+          <div>
+            <p className="text-white/70 text-sm">Revenus potentiels (essais)</p>
+            <p className="text-2xl font-bold">{formatCurrency(revenue.trialUsers * SUBSCRIPTION_PRICE)}</p>
+          </div>
+          <div>
+            <p className="text-white/70 text-sm">Perte mensuelle (annulés)</p>
+            <p className="text-2xl font-bold">{formatCurrency(revenue.churned * SUBSCRIPTION_PRICE)}</p>
+          </div>
         </div>
       </section>
     </div>

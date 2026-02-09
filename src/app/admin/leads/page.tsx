@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Mail,
-  UserPlus,
   Calendar,
   CheckCircle,
   Search,
@@ -12,10 +11,17 @@ import {
   AlertTriangle,
   ChevronRight,
   MessageCircle,
+  Trash2,
+  BookOpen,
+  Phone,
+  Loader2,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
+// ============================================
+// TYPES
+// ============================================
 interface IncompleteSignup {
   id: string;
   email: string;
@@ -33,64 +39,200 @@ interface TodaySignup {
   phone?: string;
 }
 
-type Tab = 'incomplete' | 'today';
+interface ToolLead {
+  id: string;
+  email: string;
+  source: string;
+  business_name: string | null;
+  generated_value: string | null;
+  converted: boolean;
+  created_at: string;
+}
 
+interface DemoLead {
+  id: string;
+  phone_number: string;
+  created_at: string;
+  converted: boolean;
+}
+
+interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at: string;
+}
+
+type Tab = 'incomplete' | 'today' | 'tools' | 'demo' | 'messages';
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
 export default function LeadsPage() {
   const supabase = getSupabase();
   const [activeTab, setActiveTab] = useState<Tab>('incomplete');
-  const [incompleteSignups, setIncompleteSignups] = useState<IncompleteSignup[]>([]);
-  const [todaySignups, setTodaySignups] = useState<TodaySignup[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
+  // Tab data
+  const [incompleteSignups, setIncompleteSignups] = useState<IncompleteSignup[]>([]);
+  const [todaySignups, setTodaySignups] = useState<TodaySignup[]>([]);
+  const [toolLeads, setToolLeads] = useState<ToolLead[]>([]);
+  const [demoLeads, setDemoLeads] = useState<DemoLead[]>([]);
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
+
+  // ============================================
+  // DATA FETCHING
+  // ============================================
+  const getAuthHeaders = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return null;
+    return { 'Authorization': `Bearer ${session.access_token}` };
+  }, [supabase]);
+
   const fetchIncompleteSignups = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await fetch('/api/admin/incomplete-signups', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+      const res = await fetch('/api/admin/incomplete-signups', { headers });
+      if (res.ok) {
+        const data = await res.json();
         setIncompleteSignups(data.incompleteSignups || []);
       }
     } catch (error) {
       console.error('Error fetching incomplete signups:', error);
     }
-  }, [supabase]);
+  }, [getAuthHeaders]);
 
   const fetchTodaySignups = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
-      const response = await fetch('/api/admin/today-signups', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+      const res = await fetch('/api/admin/today-signups', { headers });
+      if (res.ok) {
+        const data = await res.json();
         setTodaySignups(data.signups || []);
       }
     } catch (error) {
       console.error('Error fetching today signups:', error);
     }
-  }, [supabase]);
+  }, [getAuthHeaders]);
+
+  const fetchToolLeads = useCallback(async () => {
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+      const res = await fetch('/api/leads/tools', { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setToolLeads(data.leads || []);
+      }
+    } catch (error) {
+      console.error('Error fetching tool leads:', error);
+    }
+  }, [getAuthHeaders]);
+
+  const fetchDemoLeads = useCallback(async () => {
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+      const res = await fetch('/api/demo-leads', { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setDemoLeads(data.leads || []);
+      }
+    } catch (error) {
+      console.error('Error fetching demo leads:', error);
+    }
+  }, [getAuthHeaders]);
+
+  const fetchContactMessages = useCallback(async () => {
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+      const res = await fetch('/api/admin/contact-messages', { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setContactMessages(data.messages || []);
+      }
+    } catch (error) {
+      console.error('Error fetching contact messages:', error);
+    }
+  }, [getAuthHeaders]);
 
   useEffect(() => {
-    Promise.all([fetchIncompleteSignups(), fetchTodaySignups()]).finally(() => {
-      setLoading(false);
-    });
-  }, [fetchIncompleteSignups, fetchTodaySignups]);
+    Promise.all([
+      fetchIncompleteSignups(),
+      fetchTodaySignups(),
+      fetchToolLeads(),
+      fetchDemoLeads(),
+      fetchContactMessages(),
+    ]).finally(() => setLoading(false));
+  }, [fetchIncompleteSignups, fetchTodaySignups, fetchToolLeads, fetchDemoLeads, fetchContactMessages]);
 
+  // ============================================
+  // ACTIONS
+  // ============================================
+  const formatPhoneForWhatsApp = (phone: string) => {
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
+    return cleaned;
+  };
+
+  const openWhatsApp = (phone: string, name?: string) => {
+    const formattedPhone = formatPhoneForWhatsApp(phone);
+    const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');
+    window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
+  };
+
+  const markDemoLeadConverted = async (id: string) => {
+    const { error } = await supabase
+      .from('demo_leads')
+      .update({ converted: true, converted_at: new Date().toISOString() })
+      .eq('id', id);
+    if (!error) {
+      setDemoLeads(prev => prev.map(l => l.id === id ? { ...l, converted: true } : l));
+    }
+  };
+
+  const deleteDemoLead = async (id: string) => {
+    if (!confirm('Supprimer ce lead ?')) return;
+    const { error } = await supabase.from('demo_leads').delete().eq('id', id);
+    if (!error) {
+      setDemoLeads(prev => prev.filter(l => l.id !== id));
+    }
+  };
+
+  const deleteContactMessage = async (id: string) => {
+    if (!confirm('Supprimer ce message ?')) return;
+    try {
+      const headers = await getAuthHeaders();
+      if (!headers) return;
+      const res = await fetch(`/api/admin/contact-messages?id=${id}`, { method: 'DELETE', headers });
+      if (res.ok) {
+        setContactMessages(prev => prev.filter(m => m.id !== id));
+      }
+    } catch (error) {
+      console.error('Error deleting contact message:', error);
+    }
+  };
+
+  // ============================================
+  // HELPERS
+  // ============================================
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
       hour: '2-digit',
       minute: '2-digit',
     });
@@ -102,210 +244,124 @@ export default function LeadsPage() {
     const diffMs = now.getTime() - created.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffHours / 24);
-
     if (diffDays > 0) return `il y a ${diffDays}j`;
     if (diffHours > 0) return `il y a ${diffHours}h`;
     return 'à l\'instant';
   };
 
-  const filteredTodaySignups = todaySignups.filter(signup => {
-    if (!search) return true;
-    return signup.shop_name.toLowerCase().includes(search.toLowerCase()) ||
-      (signup.user_email && signup.user_email.toLowerCase().includes(search.toLowerCase()));
-  });
-
-  const filteredIncomplete = incompleteSignups.filter(signup => {
-    if (!search) return true;
-    return signup.email.toLowerCase().includes(search.toLowerCase());
-  });
-
-  const incompleteStats = {
-    total: incompleteSignups.length,
+  // Counts
+  const counts = {
+    incomplete: incompleteSignups.length,
+    today: todaySignups.length,
+    tools: toolLeads.length,
+    demo: demoLeads.length,
+    messages: contactMessages.length,
   };
 
-  const todayStats = {
-    total: todaySignups.length,
-    withProgram: todaySignups.filter(s => s.has_program).length,
-    withoutProgram: todaySignups.filter(s => !s.has_program).length,
-  };
-
-  const formatPhoneForWhatsApp = (phone: string) => {
-    const cleaned = phone.replace(/\D/g, '');
-    // Legacy local format → assume French
-    if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
-    // Already E.164 (33xxx, 32xxx, 41xxx, 352xxx...)
-    return cleaned;
-  };
-
-  const openWhatsApp = (phone: string, name?: string) => {
-    const formattedPhone = formatPhoneForWhatsApp(phone);
-    const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');
-    window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
-  };
+  // Filtered data
+  const filteredIncomplete = incompleteSignups.filter(s =>
+    !search || s.email.toLowerCase().includes(search.toLowerCase())
+  );
+  const filteredToday = todaySignups.filter(s =>
+    !search || s.shop_name.toLowerCase().includes(search.toLowerCase()) ||
+    (s.user_email && s.user_email.toLowerCase().includes(search.toLowerCase()))
+  );
+  const filteredTools = toolLeads.filter(l =>
+    !search || l.email.toLowerCase().includes(search.toLowerCase()) ||
+    (l.business_name && l.business_name.toLowerCase().includes(search.toLowerCase()))
+  );
+  const filteredDemo = demoLeads.filter(l =>
+    !search || l.phone_number.includes(search)
+  );
+  const filteredMessages = contactMessages.filter(m =>
+    !search || m.name.toLowerCase().includes(search.toLowerCase()) ||
+    m.email.toLowerCase().includes(search.toLowerCase()) ||
+    m.subject.toLowerCase().includes(search.toLowerCase())
+  );
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5167fc]"></div>
+        <Loader2 className="w-8 h-8 animate-spin text-[#5167fc]" />
       </div>
     );
   }
 
+  // ============================================
+  // TAB CONFIG
+  // ============================================
+  const tabs: { key: Tab; label: string; shortLabel: string; icon: React.ElementType; count: number }[] = [
+    { key: 'incomplete', label: 'Incomplètes', shortLabel: 'Incompl.', icon: AlertTriangle, count: counts.incomplete },
+    { key: 'today', label: 'Aujourd\'hui', shortLabel: 'Auj.', icon: Store, count: counts.today },
+    { key: 'tools', label: 'Leads Outils', shortLabel: 'Outils', icon: BookOpen, count: counts.tools },
+    { key: 'demo', label: 'Leads Démo', shortLabel: 'Démo', icon: Phone, count: counts.demo },
+    { key: 'messages', label: 'Messages', shortLabel: 'Msgs', icon: MessageCircle, count: counts.messages },
+  ];
+
   return (
     <div className="space-y-6 sm:space-y-8 pt-10 lg:pt-0">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-          Leads
-        </h1>
+        <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Leads</h1>
         <p className="mt-1 text-sm sm:text-base text-gray-600">
-          Prospects a contacter et convertir
+          Prospects à contacter et convertir
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 sm:gap-2 border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab('incomplete')}
-          className={cn(
-            'px-3 sm:px-6 py-3 font-semibold text-xs sm:text-sm border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap',
-            activeTab === 'incomplete'
-              ? 'border-[#5167fc] text-[#5167fc]'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-          )}
-        >
-          <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-          <span className="hidden sm:inline">Inscriptions incomplètes</span>
-          <span className="sm:hidden">Incomplètes</span>
-          <span className={cn(
-            'px-2 py-0.5 rounded-full text-xs font-bold',
-            activeTab === 'incomplete' ? 'bg-[#5167fc] text-white' : 'bg-gray-100 text-gray-600'
-          )}>
-            {incompleteStats.total}
-          </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('today')}
-          className={cn(
-            'px-3 sm:px-6 py-3 font-semibold text-xs sm:text-sm border-b-2 transition-colors flex items-center gap-1.5 sm:gap-2 whitespace-nowrap',
-            activeTab === 'today'
-              ? 'border-[#5167fc] text-[#5167fc]'
-              : 'border-transparent text-gray-500 hover:text-gray-700'
-          )}
-        >
-          <Store className="w-4 h-4 flex-shrink-0" />
-          <span className="hidden sm:inline">Inscriptions du jour</span>
-          <span className="sm:hidden">Aujourd&apos;hui</span>
-          <span className={cn(
-            'px-2 py-0.5 rounded-full text-xs font-bold',
-            activeTab === 'today' ? 'bg-[#5167fc] text-white' : 'bg-gray-100 text-gray-600'
-          )}>
-            {todayStats.total}
-          </span>
-        </button>
+      {/* Tabs - horizontal scroll on mobile */}
+      <div className="flex gap-1 border-b border-gray-200 overflow-x-auto pb-px">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                'px-2.5 sm:px-4 py-3 font-semibold text-xs sm:text-sm border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0',
+                activeTab === tab.key
+                  ? 'border-[#5167fc] text-[#5167fc]'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
+              )}
+            >
+              <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">{tab.label}</span>
+              <span className="sm:hidden">{tab.shortLabel}</span>
+              <span className={cn(
+                'px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold',
+                activeTab === tab.key ? 'bg-[#5167fc] text-white' : 'bg-gray-100 text-gray-600'
+              )}>
+                {tab.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Stats */}
-      {activeTab === 'incomplete' ? (
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          <div className="p-4 sm:p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-yellow-100 flex-shrink-0">
-                <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500">Incomplètes</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{incompleteStats.total}</p>
-                <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">48h</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 sm:p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-indigo-100 flex-shrink-0">
-                <Mail className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-500">Relance auto</p>
-                <p className="text-[10px] sm:text-xs text-gray-400 mt-1">2-3h après</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">
-          <div className="p-3 sm:p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-indigo-100 flex-shrink-0">
-                <UserPlus className="w-5 h-5 sm:w-6 sm:h-6 text-indigo-600" />
-              </div>
-              <div className="text-center sm:text-left">
-                <p className="text-[10px] sm:text-sm font-medium text-gray-500">Aujourd&apos;hui</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{todayStats.total}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-3 sm:p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-emerald-100 flex-shrink-0">
-                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
-              </div>
-              <div className="text-center sm:text-left">
-                <p className="text-[10px] sm:text-sm font-medium text-gray-500">Programme</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{todayStats.withProgram}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-3 sm:p-6 bg-white rounded-2xl shadow-sm">
-            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-              <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-amber-100 flex-shrink-0">
-                <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
-              </div>
-              <div className="text-center sm:text-left">
-                <p className="text-[10px] sm:text-sm font-medium text-gray-500">Sans prog.</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{todayStats.withoutProgram}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder={activeTab === 'incomplete' ? "Rechercher par email..." : "Rechercher par nom ou email..."}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5167fc]"
-          />
-        </div>
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <input
+          type="text"
+          placeholder="Rechercher..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5167fc]"
+        />
       </div>
 
-      {/* Leads List */}
+      {/* Content */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-        {activeTab === 'incomplete' ? (
-          // Incomplete Signups List
+        {/* Tab: Incomplete */}
+        {activeTab === 'incomplete' && (
           filteredIncomplete.length > 0 ? (
             <div className="divide-y divide-gray-100">
               {filteredIncomplete.map((signup) => (
-                <div
-                  key={signup.id}
-                  className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-gray-50"
-                >
+                <div key={signup.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-gray-50">
                   <div className="flex items-center gap-4 flex-1">
                     <div className="flex items-center justify-center w-12 h-12 rounded-full bg-yellow-100">
                       <Mail className="w-5 h-5 text-yellow-700" />
                     </div>
-
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-lg">
-                        {signup.email}
-                      </p>
+                      <p className="font-semibold text-gray-900 text-lg">{signup.email}</p>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
                           Phase 1 uniquement
@@ -317,33 +373,26 @@ export default function LeadsPage() {
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <a
-                      href={`mailto:${signup.email}`}
-                      className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2"
-                    >
-                      <Mail className="w-4 h-4" />
-                      Email
-                    </a>
-                  </div>
+                  <a
+                    href={`mailto:${signup.email}`}
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition-colors flex items-center gap-2 w-fit"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Email
+                  </a>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-              <CheckCircle className="w-16 h-16 mb-4 text-green-300" />
-              <p className="text-lg font-medium">Aucune inscription incomplète</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Tous les utilisateurs ont finalisé leur inscription (dernières 48h)
-              </p>
-            </div>
+            <EmptyState icon={CheckCircle} title="Aucune inscription incomplète" subtitle="Tous les utilisateurs ont finalisé (48h)" />
           )
-        ) : (
-          // Today's Signups List
-          filteredTodaySignups.length > 0 ? (
+        )}
+
+        {/* Tab: Today */}
+        {activeTab === 'today' && (
+          filteredToday.length > 0 ? (
             <div className="divide-y divide-gray-100">
-              {filteredTodaySignups.map((signup) => (
+              {filteredToday.map((signup) => (
                 <Link
                   key={signup.id}
                   href={`/admin/merchants/${signup.id}`}
@@ -354,12 +403,8 @@ export default function LeadsPage() {
                       'flex items-center justify-center w-12 h-12 rounded-full',
                       signup.has_program ? 'bg-emerald-100' : 'bg-amber-100'
                     )}>
-                      <Store className={cn(
-                        'w-5 h-5',
-                        signup.has_program ? 'text-emerald-600' : 'text-amber-600'
-                      )} />
+                      <Store className={cn('w-5 h-5', signup.has_program ? 'text-emerald-600' : 'text-amber-600')} />
                     </div>
-
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-gray-900 text-lg group-hover:text-indigo-600 transition-colors">
                         {signup.shop_name}
@@ -386,7 +431,6 @@ export default function LeadsPage() {
                       </div>
                     </div>
                   </div>
-
                   <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
                     {signup.phone && (
                       <span
@@ -413,16 +457,174 @@ export default function LeadsPage() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-gray-500">
-              <Store className="w-16 h-16 mb-4 text-gray-300" />
-              <p className="text-lg font-medium">Aucune inscription aujourd&apos;hui</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Les nouveaux commerçants inscrits aujourd&apos;hui apparaîtront ici
-              </p>
+            <EmptyState icon={Store} title="Aucune inscription aujourd'hui" subtitle="Les nouveaux commerçants apparaîtront ici" />
+          )
+        )}
+
+        {/* Tab: Tool Leads */}
+        {activeTab === 'tools' && (
+          filteredTools.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {filteredTools.map((lead) => (
+                <div key={lead.id} className={cn(
+                  'p-4 sm:p-5 flex items-center justify-between gap-4',
+                  lead.converted ? 'bg-green-50/50' : 'hover:bg-gray-50'
+                )}>
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={cn(
+                      'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+                      lead.converted ? 'bg-green-100' : 'bg-[#5167fc]/10'
+                    )}>
+                      <BookOpen className={cn('w-5 h-5', lead.converted ? 'text-green-600' : 'text-[#5167fc]')} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 truncate">{lead.email}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {lead.business_name && (
+                          <span className="text-xs text-gray-500">{lead.business_name}</span>
+                        )}
+                        <span className="text-xs text-gray-400">{formatDate(lead.created_at)}</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500">
+                          {lead.source}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {lead.converted ? (
+                      <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">Converti</span>
+                    ) : (
+                      <a
+                        href={`mailto:${lead.email}`}
+                        className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1.5"
+                      >
+                        <Mail className="w-4 h-4" />
+                        Email
+                      </a>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
+          ) : (
+            <EmptyState icon={BookOpen} title="Aucun lead outil" subtitle="Les leads des outils gratuits apparaîtront ici" />
+          )
+        )}
+
+        {/* Tab: Demo Leads */}
+        {activeTab === 'demo' && (
+          filteredDemo.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {filteredDemo.map((lead) => (
+                <div key={lead.id} className={cn(
+                  'p-4 sm:p-5 flex items-center justify-between gap-4',
+                  lead.converted ? 'bg-green-50/50' : 'hover:bg-gray-50'
+                )}>
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={cn(
+                      'w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+                      lead.converted ? 'bg-green-100' : 'bg-[#5167fc]/10'
+                    )}>
+                      <Phone className={cn('w-5 h-5', lead.converted ? 'text-green-600' : 'text-[#5167fc]')} />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{lead.phone_number}</p>
+                      <p className="text-xs text-gray-400">{formatDate(lead.created_at)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {lead.converted ? (
+                      <span className="px-2 py-1 text-xs font-medium text-green-700 bg-green-100 rounded-full">Converti</span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => openWhatsApp(lead.phone_number)}
+                          className="px-3 py-1.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          <span className="hidden sm:inline">Contacter</span>
+                        </button>
+                        <button
+                          onClick={() => markDemoLeadConverted(lead.id)}
+                          className="px-3 py-1.5 text-sm font-medium text-[#5167fc] bg-[#5167fc]/10 rounded-lg hover:bg-[#5167fc]/20 transition-colors"
+                        >
+                          Converti
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => deleteDemoLead(lead.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState icon={Phone} title="Aucun lead démo" subtitle="Les leads de la démo apparaîtront ici" />
+          )
+        )}
+
+        {/* Tab: Contact Messages */}
+        {activeTab === 'messages' && (
+          filteredMessages.length > 0 ? (
+            <div className="divide-y divide-gray-100">
+              {filteredMessages.map((msg) => (
+                <div key={msg.id} className="p-4 sm:p-5 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-amber-50 shrink-0">
+                        <MessageCircle className="w-5 h-5 text-amber-600" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-gray-900">{msg.name}</p>
+                          <span className="text-xs text-gray-400">{msg.email}</span>
+                        </div>
+                        <p className="text-sm font-medium text-gray-700 mt-1">{msg.subject}</p>
+                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">{msg.message}</p>
+                        <p className="text-xs text-gray-400 mt-2">{formatDate(msg.created_at)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(msg.subject)}`}
+                        className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1.5"
+                      >
+                        <Mail className="w-4 h-4" />
+                        <span className="hidden sm:inline">Répondre</span>
+                      </a>
+                      <button
+                        onClick={() => deleteContactMessage(msg.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState icon={MessageCircle} title="Aucun message" subtitle="Les messages du formulaire de contact apparaîtront ici" />
           )
         )}
       </div>
+    </div>
+  );
+}
+
+// ============================================
+// EMPTY STATE COMPONENT
+// ============================================
+function EmptyState({ icon: Icon, title, subtitle }: { icon: React.ElementType; title: string; subtitle: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+      <Icon className="w-16 h-16 mb-4 text-gray-300" />
+      <p className="text-lg font-medium">{title}</p>
+      <p className="text-sm text-gray-400 mt-1">{subtitle}</p>
     </div>
   );
 }
