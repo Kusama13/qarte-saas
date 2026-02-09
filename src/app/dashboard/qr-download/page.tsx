@@ -6,7 +6,6 @@ import {
   Download,
   FileText,
   Image as ImageIcon,
-  ArrowLeft,
   Check,
   Loader2,
   Palette,
@@ -124,37 +123,30 @@ export default function QRDownloadPage() {
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
-      <div className="relative overflow-hidden mb-8 p-8 rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700">
+      <div className="relative overflow-hidden mb-6 md:mb-8 p-5 md:p-8 rounded-2xl md:rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700">
         <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
 
         <div className="relative">
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center gap-2 text-white/70 hover:text-white text-sm font-medium mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Retour au tableau de bord
-          </Link>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl md:text-4xl font-black text-white tracking-tight">
             Prêt à scanner
           </h1>
-          <p className="mt-2 text-white/80 font-medium">
+          <p className="mt-1 md:mt-2 text-sm md:text-base text-white/80 font-medium">
             Sur place ou en déplacement
           </p>
         </div>
       </div>
 
       {/* Main Content - Two Column Layout */}
-      <div className="grid lg:grid-cols-2 gap-8">
+      <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
         {/* Left Column: Flyer Preview */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
+        <div className="space-y-3 md:space-y-4">
+          <div className="flex items-center gap-2 text-xs md:text-sm font-semibold text-gray-500 uppercase tracking-wider">
             <Sparkles className="w-4 h-4 text-indigo-500" />
             Aperçu du Flyer A6
           </div>
 
-          <div className="relative flex items-center justify-center p-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-3xl">
+          <div className="relative flex items-center justify-center p-4 md:p-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl md:rounded-3xl">
             <div className="absolute inset-0 m-8 bg-black/10 blur-2xl rounded-2xl transform translate-y-4" />
 
             <div className="relative transform hover:scale-[1.02] transition-transform duration-300">
@@ -183,9 +175,9 @@ export default function QRDownloadPage() {
         </div>
 
         {/* Right Column: Actions & Info */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {/* Design Detected Panel */}
-          <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="p-4 md:p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
                 <Palette className="w-5 h-5 text-indigo-600" />
@@ -221,23 +213,23 @@ export default function QRDownloadPage() {
           </div>
 
           {/* Download Buttons */}
-          <div className="p-6 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-4">
-            <h3 className="font-bold text-gray-900 flex items-center gap-2">
-              <Download className="w-5 h-5 text-indigo-600" />
+          <div className="p-4 md:p-6 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-3 md:space-y-4">
+            <h3 className="font-bold text-gray-900 flex items-center gap-2 text-sm md:text-base">
+              <Download className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
               Télécharger
             </h3>
 
             <Button
               onClick={generatePdf}
               disabled={isGenerating}
-              className="w-full h-14 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all"
+              className="w-full h-12 md:h-14 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all text-sm md:text-base"
             >
               {isGenerating ? (
-                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin mr-2" />
               ) : downloadSuccess ? (
-                <Check className="w-5 h-5 mr-2" />
+                <Check className="w-4 h-4 md:w-5 md:h-5 mr-2" />
               ) : (
-                <FileText className="w-5 h-5 mr-2" />
+                <FileText className="w-4 h-4 md:w-5 md:h-5 mr-2" />
               )}
               {downloadSuccess ? 'Téléchargé !' : 'Télécharger le PDF (A4 - 4 flyers)'}
             </Button>
@@ -246,20 +238,20 @@ export default function QRDownloadPage() {
               onClick={downloadPng}
               disabled={isGenerating}
               variant="outline"
-              className="w-full h-12 border-2 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50 font-semibold rounded-xl transition-all"
+              className="w-full h-10 md:h-12 border-2 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50 font-semibold rounded-xl transition-all text-sm"
             >
-              <ImageIcon className="w-5 h-5 mr-2" />
+              <ImageIcon className="w-4 h-4 md:w-5 md:h-5 mr-2" />
               Télécharger en PNG (1 flyer)
             </Button>
           </div>
 
           {/* Info Message */}
-          <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                <Smartphone className="w-5 h-5 text-indigo-600" />
+          <div className="p-3 md:p-4 bg-indigo-50 rounded-xl md:rounded-2xl border border-indigo-100">
+            <div className="flex items-center gap-2.5 md:gap-3">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                <Smartphone className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
               </div>
-              <p className="text-sm text-indigo-800">
+              <p className="text-xs md:text-sm text-indigo-800">
                 Vous pouvez imprimer ce flyer ou le présenter directement sur votre téléphone, ça marche aussi !
               </p>
             </div>
@@ -268,33 +260,22 @@ export default function QRDownloadPage() {
       </div>
 
       {/* Social Kit Banner */}
-      <div className="mt-8 p-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl border border-purple-100">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-200">
-            <Share2 className="w-6 h-6 text-white" />
+      <div className="mt-6 md:mt-8 p-4 md:p-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl border border-purple-100">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-200">
+            <Share2 className="w-5 h-5 md:w-6 md:h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-gray-900">Partagez sur vos réseaux</h3>
-            <p className="text-sm text-gray-600">Téléchargez un visuel prêt à poster sur Instagram, Facebook...</p>
+            <h3 className="font-bold text-gray-900 text-sm md:text-base">Partagez sur vos réseaux</h3>
+            <p className="text-xs md:text-sm text-gray-600">Téléchargez un visuel prêt à poster sur Instagram, Facebook...</p>
           </div>
           <Link
             href="/dashboard/social-kit"
-            className="px-5 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all text-sm whitespace-nowrap"
+            className="px-4 py-2 md:px-5 md:py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all text-xs md:text-sm whitespace-nowrap"
           >
             Voir le kit
           </Link>
         </div>
-      </div>
-
-      {/* Bottom CTA - Return to Dashboard */}
-      <div className="mt-8 mb-8">
-        <Link
-          href="/dashboard"
-          className="flex items-center justify-center gap-3 w-full py-5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-lg rounded-2xl shadow-xl shadow-indigo-200 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99]"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Retour au tableau de bord
-        </Link>
       </div>
 
       {/* Hidden high-res flyer for PDF generation */}
