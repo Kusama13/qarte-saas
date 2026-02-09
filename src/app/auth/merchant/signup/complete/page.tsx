@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
-import { generateSlug, validatePhone } from '@/lib/utils';
+import { generateSlug, validateFrenchPhone } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType } from '@/types';
 import { trackPageView, trackSetupCompleted, trackSignupCompleted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
@@ -85,8 +85,8 @@ export default function CompleteProfilePage() {
     setLoading(true);
     setError('');
 
-    if (!validatePhone(formData.phone)) {
-      setError('Veuillez entrer un numéro de téléphone valide (FR, BE, CH, LU)');
+    if (!validateFrenchPhone(formData.phone)) {
+      setError('Veuillez entrer un numéro de téléphone français valide');
       setLoading(false);
       return;
     }

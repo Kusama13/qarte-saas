@@ -266,11 +266,9 @@ export default function MerchantDetailPage() {
 
   const formatPhoneForWhatsApp = (phone: string) => {
     const cleaned = phone.replace(/\D/g, '');
-    // Format local français : 0X → 33X
     if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
-    // Déjà en format international (FR, BE, CH, LU)
-    if (cleaned.startsWith('33') || cleaned.startsWith('32') || cleaned.startsWith('41') || cleaned.startsWith('352')) return cleaned;
-    return cleaned;
+    if (cleaned.startsWith('33')) return cleaned;
+    return '33' + cleaned;
   };
 
   const openWhatsApp = (phone: string, name?: string) => {

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { validatePhone } from '@/lib/utils';
+import { validateFrenchPhone } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType } from '@/types';
 import type { Merchant } from '@/types';
 
@@ -77,7 +77,7 @@ export default function SettingsPage() {
       return;
     }
 
-    if (!validatePhone(formData.phone)) {
+    if (!validateFrenchPhone(formData.phone)) {
       setError('Veuillez entrer un numéro de téléphone valide');
       return;
     }

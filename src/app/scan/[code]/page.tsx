@@ -24,7 +24,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, getTodayInParis } from '@/lib/utils';
+import { formatPhoneNumber, validateFrenchPhone, getTodayInParis } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -121,7 +121,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         setAutoLoginAttempted(true);
         const formattedPhone = formatPhoneNumber(savedPhone);
 
-        if (validatePhone(formattedPhone)) {
+        if (validateFrenchPhone(formattedPhone)) {
           setSubmitting(true);
           try {
             const response = await fetch(`/api/customers/register?phone=${encodeURIComponent(formattedPhone)}&merchant_id=${merchant.id}`);
@@ -182,7 +182,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setError('');
 
     const formattedPhone = formatPhoneNumber(phoneNumber);
-    if (!validatePhone(formattedPhone)) {
+    if (!validateFrenchPhone(formattedPhone)) {
       setError('Veuillez entrer un numéro de téléphone valide');
       return;
     }
