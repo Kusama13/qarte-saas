@@ -85,7 +85,9 @@ export function Day5CheckinEmail({ shopName, totalScans }: Day5CheckinEmailProps
       </Section>
 
       <Text style={signature}>
-        Judicael, fondateur de Qarte
+        À très vite,
+        <br />
+        L&apos;équipe Qarte
       </Text>
     </BaseLayout>
   );

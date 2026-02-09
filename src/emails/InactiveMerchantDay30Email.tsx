@@ -23,7 +23,7 @@ export function InactiveMerchantDay30Email({ shopName }: InactiveMerchantDay30Em
       </Text>
 
       <Text style={paragraph}>
-        C&apos;est Judicael de l&apos;équipe Qarte. Je vois que votre programme
+        C&apos;est l&apos;équipe Qarte. On voit que votre programme
         de fidélité n&apos;a pas encore eu de passages ce mois-ci. Je voulais
         simplement prendre des nouvelles.
       </Text>
@@ -59,15 +59,13 @@ export function InactiveMerchantDay30Email({ shopName }: InactiveMerchantDay30Em
       </Text>
 
       <Section style={buttonContainer}>
-        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%20Judicael%2C%20j%27aimerais%20discuter%20de%20mon%20compte%20Qarte">
+        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%20Qarte%2C%20j%27aimerais%20discuter%20de%20mon%20compte">
           R&eacute;pondre sur WhatsApp
         </Button>
       </Section>
 
       <Text style={signatureBlock}>
-        Judicael
-        <br />
-        Fondateur, Qarte
+        L&apos;équipe Qarte
         <br />
         <span style={signaturePhone}>WhatsApp : 06 07 44 74 20</span>
       </Text>

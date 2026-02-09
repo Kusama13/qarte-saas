@@ -7,6 +7,7 @@ import {
   sendTrialExpiredEmail,
   sendSubscriptionConfirmedEmail,
   sendSocialKitEmail,
+  sendReactivationEmail,
 } from '@/lib/email';
 
 // GET - Preview emails in browser (dev only)
@@ -109,6 +110,21 @@ export async function POST(request: NextRequest) {
     // 5. Email confirmation abonnement
     const subscription = await sendSubscriptionConfirmedEmail(email, 'Boulangerie Test');
     results.push({ type: 'subscription_confirmed', ...subscription });
+    await delay(600);
+
+    // 6. Email essai expiré AVEC code promo QARTE50
+    const trialExpiredPromo = await sendTrialExpiredEmail(email, 'Boulangerie Test', 5, 'QARTE50');
+    results.push({ type: 'trial_expired_promo', ...trialExpiredPromo });
+    await delay(600);
+
+    // 7. Email réactivation AVEC code promo QARTEBOOST (2 mois)
+    const reactivationPromo = await sendReactivationEmail(email, 'Boulangerie Test', 14, 42, 'QARTEBOOST', 2);
+    results.push({ type: 'reactivation_promo_2months', ...reactivationPromo });
+    await delay(600);
+
+    // 8. Email réactivation AVEC code promo QARTELAST (3 mois)
+    const reactivationLast = await sendReactivationEmail(email, 'Boulangerie Test', 30, 42, 'QARTELAST', 3);
+    results.push({ type: 'reactivation_promo_3months', ...reactivationLast });
 
     const successCount = results.filter(r => r.success).length;
 

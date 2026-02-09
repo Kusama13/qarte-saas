@@ -82,7 +82,9 @@ export function TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode }: Tr
       </Section>
 
       <Text style={signature}>
-        Judicael, fondateur de Qarte
+        À très vite,
+        <br />
+        L&apos;équipe Qarte
       </Text>
     </BaseLayout>
   );

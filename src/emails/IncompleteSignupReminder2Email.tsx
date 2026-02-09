@@ -59,7 +59,9 @@ export function IncompleteSignupReminder2Email({ email }: IncompleteSignupRemind
       </Section>
 
       <Text style={signature}>
-        Judicael, fondateur de Qarte
+        À très vite,
+        <br />
+        L&apos;équipe Qarte
       </Text>
     </BaseLayout>
   );
