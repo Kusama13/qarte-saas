@@ -97,6 +97,8 @@ export async function POST(request: NextRequest) {
     }
 
     let subscriptions: PushSubscriptionRecord[] = [];
+    // Map customer_id -> phone_number for deduplication (unique customers notified)
+    const customerIdToPhone = new Map<string, string>();
 
     if (customerId) {
       // Send to specific customer
@@ -174,6 +176,11 @@ export async function POST(request: NextRequest) {
           );
         }
 
+        // Build customer_id -> phone map for deduplication after send
+        for (const c of allCustomersWithPhone || []) {
+          customerIdToPhone.set(c.id, c.phone_number);
+        }
+
         const allCustomerIds = (allCustomersWithPhone || []).map(c => c.id);
 
         if (allCustomerIds.length === 0) {
@@ -231,12 +238,12 @@ export async function POST(request: NextRequest) {
             JSON.stringify({
               title: payload.title,
               body: payload.body,
-              icon: payload.icon || '/icon-192.svg',
+              icon: payload.icon || '/icon-192.png',
               url: payload.url || '/customer/cards',
               tag: payload.tag || 'qarte-notification',
             })
           );
-          return { success: true, endpoint: sub.endpoint };
+          return { success: true, endpoint: sub.endpoint, customerId: sub.customer_id };
         } catch (err) {
           const webPushError = err as { statusCode?: number; message?: string; body?: string };
           console.error('Push send error for endpoint:', sub.endpoint?.substring(0, 50));
@@ -248,26 +255,41 @@ export async function POST(request: NextRequest) {
               .delete()
               .eq('endpoint', sub.endpoint);
           }
-          return { success: false, endpoint: sub.endpoint, error: webPushError.message };
+          return { success: false, endpoint: sub.endpoint, customerId: sub.customer_id, error: webPushError.message };
         }
       })
     );
 
-    const successful = results.filter(
+    const successfulResults = results.filter(
       (r) => r.status === 'fulfilled' && r.value.success
-    ).length;
-    const failed = results.length - successful;
+    );
+    const successfulEndpoints = successfulResults.length;
+    const failedEndpoints = results.length - successfulEndpoints;
+
+    // Count unique customers notified (deduplicate by phone number)
+    // A customer with 2 devices = 1 person notified, not 2
+    let uniqueCustomersNotified = successfulEndpoints;
+    if (merchantId && customerIdToPhone.size > 0) {
+      const notifiedPhones = new Set<string>();
+      for (const r of successfulResults) {
+        if (r.status === 'fulfilled') {
+          const phone = customerIdToPhone.get(r.value.customerId);
+          if (phone) notifiedPhones.add(phone);
+        }
+      }
+      uniqueCustomersNotified = notifiedPhones.size;
+    }
 
     // Save to push history (only for merchant sends, not individual customer sends)
-    if (merchantId && successful > 0) {
+    if (merchantId && successfulEndpoints > 0) {
       try {
         await supabase.from('push_history').insert({
           merchant_id: merchantId,
           title: payload.title,
           body: payload.body,
           filter_type: filterType || 'all',
-          sent_count: successful,
-          failed_count: failed,
+          sent_count: uniqueCustomersNotified,
+          failed_count: failedEndpoints,
         });
       } catch (historyError) {
         console.error('Error saving push history:', historyError);
@@ -277,8 +299,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      sent: successful,
-      failed,
+      sent: uniqueCustomersNotified,
+      failed: failedEndpoints,
       total: subscriptions.length,
     });
   } catch (error) {

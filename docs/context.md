@@ -69,7 +69,7 @@ src/
 │   ├── analytics.ts      # Tracking events
 │   ├── push.ts           # Notifications push
 │   ├── logger.ts         # Logger structuré
-│   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber)
+│   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode)
 │
 ├── emails/               # Templates React Email (25 templates + BaseLayout)
 │   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
@@ -84,7 +84,7 @@ src/
 │   ├── InactiveMerchantDay7Email.tsx  # Inactif J+7 (diagnostic)
 │   ├── InactiveMerchantDay14Email.tsx # Inactif J+14 (pression)
 │   ├── InactiveMerchantDay30Email.tsx # Inactif J+30 (check-in)
-│   ├── FirstScanEmail.tsx         # Premier scan (celebration)
+│   ├── FirstScanEmail.tsx         # Premier scan (celebration + bloc parrainage)
 │   ├── Day5CheckinEmail.tsx       # Check-in J+5
 │   ├── FirstRewardEmail.tsx       # Premiere recompense
 │   ├── Tier2UpsellEmail.tsx       # Upsell palier VIP
@@ -114,7 +114,7 @@ docs/
 └── roadmap/              # Fonctionnalites a venir (mode article, scheduled push)
 
 supabase/
-└── migrations/           # 32 migrations SQL
+└── migrations/           # 33 migrations SQL
     ├── 001-025           # Schema initial + fixes
     ├── 026               # Trial period 15 jours
     ├── 027               # Spelling cancelled→canceled
@@ -122,7 +122,8 @@ supabase/
     ├── 029               # Merchant country + E.164 phone migration
     ├── 030               # Shield + divers
     ├── 031               # last_seen_at column
-    └── 032               # Fix updated_at trigger (exclut last_seen_at)
+    ├── 032               # Fix updated_at trigger (exclut last_seen_at)
+    └── 033               # Add referral_code (parrainage merchant)
 
 public/
 ├── images/              # Images statiques
@@ -142,6 +143,7 @@ public/
 - `loyalty_mode` ('visit' | 'article')
 - `stamps_required`, `reward_description`
 - `tier2_enabled`, `tier2_stamps_required`, `tier2_reward_description`
+- `referral_code` (VARCHAR 10, UNIQUE — ex: `QARTE-AB3K`)
 - `trial_ends_at`, `subscription_status`, `stripe_customer_id`, `stripe_subscription_id`
 - `shield_enabled` (Qarte Shield)
 
@@ -412,7 +414,7 @@ npm run email
 | `src/app/api/cron/morning/route.ts` | Cron principal (4 taches) |
 | `src/app/api/stripe/webhook/route.ts` | Webhook Stripe (5 events, machine d'etats) |
 | `src/app/api/stripe/checkout/route.ts` | Checkout Stripe (verification customer) |
-| `supabase/migrations/` | 32 migrations SQL |
+| `supabase/migrations/` | 33 migrations SQL |
 
 ---
 
@@ -466,6 +468,7 @@ npm run email
 | tampon | Synonyme de passage (reference cartes papier) |
 | palier | Niveau de recompense (tier1, tier2) |
 | scan_code | Code unique du commercant pour le QR |
+| referral_code | Code parrainage unique merchant (QARTE-XXXX) |
 | slug | URL-friendly du nom de commerce |
 | shield | Systeme anti-fraude Qarte Shield |
 
@@ -496,6 +499,7 @@ npm run email
 - Leads : onglet Incompletes + Aujourd'hui + Messages
 - Analytics, Metriques, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
+- Activity : vue "hier" (`?date=yesterday`) pour suivi activite merchants
 - **Toutes les stats excluent les comptes admin** (via `super_admins` table)
 
 ### Dashboard (`/dashboard`)
@@ -507,6 +511,7 @@ npm run email
 - Marketing (push notifications)
 - Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe
 - Kit reseaux sociaux (visuel + legendes Instagram)
+- Parrainage : encart en haut de Settings (code + copier + partager via Web Share API)
 - Headers harmonises (violet #4b0082)
 
 ### Scan (`/scan/[code]`)
@@ -581,7 +586,7 @@ import type { Merchant } from '@/types';
 ### Engagement & Milestones
 | Email | Declencheur |
 |-------|-------------|
-| FirstScanEmail | 2eme visite confirmee — celebration 1er vrai client (cron morning) |
+| FirstScanEmail | 2eme visite confirmee — celebration 1er vrai client + bloc parrainage si referral_code (cron morning) |
 | Day5CheckinEmail | Check-in J+5 — bilan premiere semaine (cron morning) |
 | FirstRewardEmail | Premiere recompense debloquee (cron morning) |
 | Tier2UpsellEmail | Upsell palier 2 VIP — 10+ clients (cron morning) |

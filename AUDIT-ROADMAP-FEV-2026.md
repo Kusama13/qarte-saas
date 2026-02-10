@@ -181,12 +181,17 @@ Signup (email+password)
 - **Impact** : Feature la plus demandee dans la beauty tech (source: Stamp Me, Zenoti)
 - **Inspiration** : Stamp Me "Birthday Club", Treatwell birthday campaigns
 
-### F9. Programme de parrainage client
-- **Description** : Le client partage un lien → le filleul scanne → les 2 gagnent des points bonus
-- Lien unique par client (UUID)
-- Dashboard merchant : voir les parrainages
-- **Effort** : 6-8h (table referrals, logique bonus, UI client + merchant)
-- **Impact** : Viral loop client → acquisition gratuite pour le merchant
+### F9. Programme de parrainage merchant ✅ FAIT (v1 simple)
+- **Description** : Parrainage entre merchants — chaque merchant recoit un code unique `QARTE-XXXX`
+- Le merchant partage son code a un collegue (coiffeur, barbier, estheticienne, institut, onglerie, spa...)
+- Le filleul communique le code apres son inscription → admin applique -10€ manuellement via Stripe aux deux
+- **Implementation** :
+  - Migration 033 : `referral_code` VARCHAR(10) UNIQUE sur merchants + backfill existants
+  - `generateReferralCode()` dans utils.ts (meme pattern que `generateScanCode()`)
+  - Code genere automatiquement a la creation du merchant (route `/api/merchants/create`)
+  - Encart parrainage en haut de la page Settings (code + bouton Copier + bouton Partager via Web Share API)
+  - Bloc parrainage dans FirstScanEmail (apres celebration "Premier scan valide")
+- **Effort reel** : ~3h (migration + code + UI + email)
 
 ### F10. Scratch & Win — Gamification
 - **Description** : Apres X scans, le client debloque un "ticket a gratter" digital
@@ -356,7 +361,7 @@ Signup (email+password)
 | F7 | ~~Checklist gamifiee~~ | ~~4h~~ | ★★★★★ | ★★★ | **✅ FAIT** |
 | F8 | Birthday Club | 6h | ★★★ | ★★★★★ | **P1** |
 | F10 | Scratch & Win | 6h | ★★ | ★★★★★ | **P2** |
-| F9 | Parrainage | 6-8h | ★★★★ | ★★★ | **P2** |
+| F9 | ~~Parrainage~~ | ~~3h~~ | ★★★★ | ★★★ | **✅ FAIT** |
 | F11 | Mode articles | 4-5h | ★★ | ★★★ | **P2** |
 | F12 | Export CSV/PDF | 5h | ★ | ★★★ | **P2** |
 | F16 | Google Reviews auto | 1-2j | ★★★★ | ★★★★ | **P2** |
@@ -405,6 +410,9 @@ Signup (email+password)
 - [x] Hint mobile sur page programme : "Apres enregistrement, un apercu sera disponible"
 - [x] Reduction taille suggestions palier 1 et palier 2 (text-xs)
 - [x] Admin leads : auto-refresh 30s (donnees + temps relatif)
+- [x] **F9** : Parrainage merchant v1 simple (code QARTE-XXXX, Settings + FirstScanEmail, Web Share API, copy)
+- [x] Admin activity : vue "hier" (`?date=yesterday`) avec filtre timezone Paris
+- [x] Trial reactivation : merchants expired < 7j reactives automatiquement (cron morning)
 
 ## Semaine 1 (10-16 fev)
 - [ ] **F3** : Celebration premier scan (1h)
@@ -417,7 +425,7 @@ Signup (email+password)
 
 ## Semaine 3 (24 fev - 2 mars)
 - [ ] **F8** : Birthday Club (6h)
-- [ ] **F9** : Programme parrainage (6-8h)
+- [x] ~~**F9** : Programme parrainage (6-8h)~~ → fait Pre-Semaine (v1 simple, ~3h)
 - [x] Analyse des metriques de conversion trial → paid (deja en place via admin dashboard + webhooks Stripe)
 
 ## Semaine 4 (3-9 mars)
@@ -445,4 +453,4 @@ Signup (email+password)
 ---
 
 *Document genere le 09/02/2026 — Audit realise par analyse complete du codebase, emails, APIs, dashboard, landing page, et recherche competitive (Treatwell, Fresha, Square, Planity, Stamp Me, Zenoti, GlossGenius).*
-*Derniere mise a jour : 09/02/2026 — F7 checklist gamifiee, SocialKitEmail couleurs dynamiques, QR email trigger, FirstScan 2 visites.*
+*Derniere mise a jour : 09/02/2026 — F9 parrainage merchant v1 (code + Settings + FirstScanEmail + Web Share API), admin activity hier, trial reactivation auto, F7 checklist gamifiee, SocialKitEmail couleurs dynamiques, QR email trigger, FirstScan 2 visites.*
