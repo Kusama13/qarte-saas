@@ -125,6 +125,7 @@ supabase/
 
 public/
 ├── images/              # Images statiques
+│   └── logos/           # 10 logos clients reels (grayscale marquee landing)
 ├── ebooks/              # Ressources ebook
 └── sw.js                # Service worker PWA
 ```
@@ -478,13 +479,15 @@ npm run email
 ### Landing (`/`)
 - Hero : "Le programme de fidelite qui fait revenir vos clientes."
   - Sous-titre niche beaute (instituts, ongleries, salons)
-  - CTA primaire : "Lancer mon programme gratuit" → signup
-  - CTA secondaire : "Voir une demo" → demo onglerie (gradient rose-bleu)
+  - CTA primaire : "Essayer gratuitement" → signup
+  - CTA secondaire : "Voir une demo" → demo onglerie (outline style)
   - Mockup iPhone avec screenshot carte client (bounce animation)
-  - Social proof : 150+ instituts, 4.9/5, 12,000+ clientes
+- Bandeau logos clients defilant (10 vrais logos, grayscale marquee, FOMO "rejoignez-les")
 - Section "Comment ca marche" (3 etapes)
 - Temoignage client (Nail Salon by Elodie)
 - Pricing, FAQ, CTA
+- Blog SEO : 3 articles (coiffure, onglerie, institut) avec images
+- Page comparatif `/qarte-vs-carte-papier`
 
 ### Demo (`/demo`)
 - Galerie 3 cartes fictives : coiffeur, onglerie, institut

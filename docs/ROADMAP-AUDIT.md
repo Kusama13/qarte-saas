@@ -1,0 +1,583 @@
+# Qarte — Roadmap, Audit & Changelog
+## Fevrier 2026
+
+---
+
+# PARTIE 1 : ROADMAP FEATURES
+
+## 1.1 Conversion trial → payant
+
+### Funnel actuel
+
+```
+Signup (email+password)
+  → Onboarding (logo, couleur, programme)
+    → Premier scan (QR code en caisse)
+      → Engagement (scans reguliers)
+        → Conversion (paiement a J+14)
+          → Retention (renouvellement mensuel)
+```
+
+**Benchmarks SaaS :**
+- Opt-in free trial (sans CB) : **18-25%** conversion
+- Opt-out free trial (avec CB) : **45-55%** conversion
+- Qarte utilise le modele opt-in → cible realiste : **20-25%**
+
+### Frictions identifiees
+
+| # | Friction | Statut | Detail |
+|---|----------|--------|--------|
+| 1 | Programme jamais configure | ✅ Attenue | Suggestions cliquables par metier (MerchantSettingsForm). `reward_description` null a la creation → emails ProgramReminder J+1/2/3 se declenchent. |
+| 2 | QR code jamais imprime | ✅ Attenue | QRCodeEmail envoye auto apres config. CTA "Telechargez votre QR code" dans preview banner. |
+| 3 | Pas de "aha moment" avant J+14 | ❌ A faire | Objectif gamifie, celebration milestones. |
+| 4 | Checkout frictionnel | ✅ Partiel | Fix checkout Stripe (customer supprime → recree auto). Fix `past_due` non bloquant. Coherence UI sidebar + page abonnement. |
+
+## 1.2 Features — Du plus facile au plus complexe
+
+### Niveau 1 : QUICK WINS (1-4h)
+
+| # | Feature | Effort | Statut |
+|---|---------|--------|--------|
+| F1 | Presets recompense par metier | 1-2h | ✅ FAIT — `MerchantSettingsForm.tsx` (palier 1 + palier 2) |
+| F2 | Email QR code auto post-setup | 1h | ✅ FAIT — `QRCodeEmail.tsx` + trigger auto + cron morning |
+| F3 | Celebration premier scan (confetti + notif) | 1h | ❌ A FAIRE |
+| F4 | Stats enrichies carte client | 2h | ❌ A FAIRE |
+| F5 | Bouton "Partager mon programme" | 2-3h | ~~Retire~~ |
+| F6 | Templates push enrichis (+10 templates) | 2h | ❌ A FAIRE |
+
+### Niveau 2 : FEATURES MOYENNES (4-8h)
+
+| # | Feature | Effort | Statut |
+|---|---------|--------|--------|
+| F7 | Onboarding checklist gamifiee | 4h | ✅ FAIT — `OnboardingChecklist.tsx`, 5 etapes, confetti, trial only |
+| F8 | Birthday Club (anniversaire clients) | 6h | ❌ A FAIRE |
+| F9 | Parrainage merchant | 3h | ✅ FAIT — code QARTE-XXXX, Settings + FirstScanEmail, Web Share API |
+| F10 | Scratch & Win gamification | 6h | ❌ A FAIRE |
+| F11 | Mode articles (points par euro) | 4-5h | ❌ A FAIRE |
+| F12 | Export CSV/PDF enrichi | 5h | ❌ A FAIRE |
+| F13 | Push geolocalisee | 6-8h | ❌ A FAIRE |
+
+### Niveau 3 : FEATURES AVANCEES (1-3 jours)
+
+| # | Feature | Effort | Statut |
+|---|---------|--------|--------|
+| F14 | Multi-location | 2-3j | ❌ A FAIRE |
+| F15 | Analytics avance (cohorts, heatmap, LTV) | 2j | ❌ A FAIRE |
+| F16 | Google Reviews automatise | 1-2j | ❌ A FAIRE |
+| F17 | Apple/Google Wallet pass | 2-3j | ❌ A FAIRE |
+| F18 | API publique + Webhooks | 3j | ❌ A FAIRE |
+| F19 | Booking leger (prise de RDV) | 3-5j | ❌ A FAIRE |
+| F20 | Tiered pricing (Starter/Pro/Business) | 2-3j | ❌ A FAIRE |
+
+## 1.3 Matrice de priorisation
+
+| # | Feature | Effort | Impact Conv. | Impact Retention | Priorite |
+|---|---------|--------|-------------|-----------------|----------|
+| F1 | ~~Presets recompense~~ | ~~1-2h~~ | ★★★★★ | ★★ | **✅ FAIT** |
+| F2 | ~~Email QR code auto~~ | ~~1-2h~~ | ★★★★ | ★★★ | **✅ FAIT** |
+| F3 | Celebration 1er scan | 1h | ★★★ | ★★★ | **P0** |
+| F6 | Templates push | 2h | ★★ | ★★★★ | **P1** |
+| F4 | Stats carte client | 2h | ★★ | ★★★ | **P1** |
+| F7 | ~~Checklist gamifiee~~ | ~~4h~~ | ★★★★★ | ★★★ | **✅ FAIT** |
+| F8 | Birthday Club | 6h | ★★★ | ★★★★★ | **P1** |
+| F10 | Scratch & Win | 6h | ★★ | ★★★★★ | **P2** |
+| F9 | ~~Parrainage~~ | ~~3h~~ | ★★★★ | ★★★ | **✅ FAIT** |
+| F11 | Mode articles | 4-5h | ★★ | ★★★ | **P2** |
+| F12 | Export CSV/PDF | 5h | ★ | ★★★ | **P2** |
+| F16 | Google Reviews auto | 1-2j | ★★★★ | ★★★★ | **P2** |
+| F13 | Push geolocalisee | 6-8h | ★★ | ★★★★ | **P3** |
+| F15 | Analytics avance | 2j | ★★ | ★★★★ | **P3** |
+| F17 | Apple/Google Wallet | 2-3j | ★★★ | ★★★★ | **P3** |
+| F14 | Multi-location | 2-3j | ★★★★ | ★★★ | **P3** |
+| F20 | Tiered pricing | 2-3j | ★★★★★ | ★★★ | **P3** |
+| F18 | API publique | 3j | ★★★ | ★★ | **P4** |
+| F19 | Booking leger | 3-5j | ★★★★ | ★★★★ | **P4** |
+
+## 1.4 Micro-SaaS Cross — Beauty Tech
+
+| # | Idee | Effort | Synergie Qarte | TAM | Priorite |
+|---|------|--------|----------------|-----|----------|
+| 1 | **ReviewBoost** — Collecteur avis Google | 1-2 sem | ★★★★ | ★★★★★ | **#1** |
+| 2 | **BeautyMenu** — Menu digital instituts | 2 sem | ★★★★ | ★★★★ | **#2** |
+| 3 | **WaitlistApp** — File d'attente digitale | 2-3 sem | ★★★★ | ★★★ | **#3** |
+| 4 | **BeautyPay** — Pourboires digitaux | 2-3 sem | ★★★ | ★★★★ | **#4** |
+| 5 | **BeautyKit** — Contenu social auto | 3-4 sem | ★★★ | ★★★★★ | **#5** |
+| 6 | **StaffBoard** — Planning employes | 3-4 sem | ★★ | ★★★ | **#6** |
+
+---
+
+# PARTIE 2 : AUDIT — Etat au 10 fevrier 2026
+
+## 2.1 Problemes restants
+
+### Securite
+
+| # | Severite | Probleme | Fichier | Action |
+|---|----------|----------|---------|--------|
+| 1 | MEDIUM | `getSession()` dans pages admin (ne valide pas le JWT) | `admin/leads/page.tsx`, `admin/page.tsx` | Remplacer par `getUser()` |
+| 2 | LOW | Rate limiting in-memory (Map) ne persiste pas entre cold starts | `api/checkin/route.ts` | OK pour le moment, passer a Redis si besoin |
+
+### Qualite code
+
+| # | Severite | Probleme | Fichier | Action |
+|---|----------|----------|---------|--------|
+| 1 | HIGH | Fichier 1533 lignes | `customer/card/[merchantId]/page.tsx` | Splitter en composants |
+| 2 | HIGH | Fichier 1025 lignes | `scan/[code]/page.tsx` | Splitter en composants |
+| 3 | MEDIUM | Fichier 573 lignes | `admin/merchants/page.tsx` | Acceptable, surveiller |
+
+### Marketing
+
+| # | Severite | Probleme | Action |
+|---|----------|----------|--------|
+| 1 | ~~MEDIUM~~ | ~~Social proof "150+ instituts, 12,000+ clientes"~~ | **✅ RETIRE** — faux chiffres supprimes du hero |
+| 2 | LOW | Structured data SEO manquant (LocalBusiness, SoftwareApplication) | Ajouter |
+| 3 | LOW | Framer Motion dans 12 composants landing (non lazy-loaded) | Dynamic import below-fold |
+
+### Infrastructure
+
+| # | Severite | Probleme | Action |
+|---|----------|----------|--------|
+| 1 | LOW | Pas de monitoring erreurs (Sentry) | Ajouter quand trafic augmente |
+
+## 2.2 Problemes resolus
+
+Tous ces points ont ete verifies dans le code au 10/02/2026 :
+
+| Probleme | Resolution |
+|----------|-----------|
+| Trial 14→15 jours | Migration 026 : `NOW() + INTERVAL '15 days'` |
+| Spelling canceled/cancelled | Migration 027 : constraint + update data |
+| Path traversal upload | MIME whitelist (jpeg, png, webp, gif) + UUID filename |
+| Auth bypass member-programs | `getUser()` + verification merchant ownership |
+| Stripe error details exposes | Message generique, erreur loguee serveur uniquement |
+| console.log en production | 0 occurrences dans `src/app/api/` |
+| Pages legales manquantes | `/politique-confidentialite`, `/mentions-legales`, `/cgv` presentes |
+| Index customers(phone_number) | Index present dans migration 001 |
+| Types manquants (tier, scan_code) | Ajoutes dans `src/types/index.ts` |
+| Apple/Google Wallet badges footer | Retires du footer |
+| Checkin API sequentiel | Parallelise avec 5 groupes Promise.all (~300-600ms) |
+| Push notifications sequentielles | `Promise.allSettled` pour envoi parallele |
+| N+1 admin merchants | Batch query (1001 → 3 requetes) |
+
+---
+
+# PARTIE 3 : SCALABILITE
+
+## 3.1 Capacite actuelle
+
+| Metrique | Capacite | Limite |
+|----------|----------|--------|
+| Marchands | ~300-500 | Crons timeout a 500+ |
+| Checkins/jour | ~20,000 | Index visits OK |
+| Clients/marchand | ~2,000 | Admin optimise |
+| Push/envoi | ~5,000 | Parallelise (Promise.allSettled) |
+
+### Echelle de confiance
+
+| Echelle | Status |
+|---------|--------|
+| 0-300 marchands | ✅ OK |
+| 300-500 marchands | ⚠️ Limite |
+| 500+ marchands | 🔴 Fixes requis |
+
+## 3.2 Optimisations appliquees
+
+| Optimisation | Fichier | Impact |
+|-------------|---------|--------|
+| Parallelisation checkin (5 groupes Promise.all) | `api/checkin/route.ts` | ~600-1200ms → ~300-600ms |
+| Parallelisation push (Promise.allSettled) | `api/push/send/route.ts` | Envoi parallele |
+| Batch query admin merchants | `admin/merchants/page.tsx` | 1001 → 3 requetes |
+| Index DB (visits, loyalty_cards, push, customers) | Migrations | -80-90% temps requete |
+| Cache localStorage merchant (2 min TTL) | Dashboard | Moins de fetches |
+| Skip register API pour nouveaux clients | `scan/[code]/page.tsx` | 1 appel API au lieu de 2 |
+
+## 3.3 Problemes restants
+
+| # | Priorite | Probleme | Fichier | Solution |
+|---|----------|----------|---------|----------|
+| 1 | P1 | Crons email sequentiels (intentionnel: rate limit Resend 2 req/s) | `api/cron/morning/route.ts` | Acceptable. Batching avec 600ms entre envois. |
+| 2 | P2 | Push subscribers sans pagination | `api/push/subscribers/route.ts` | Ajouter `.limit(1000)` + pagination |
+| 3 | P2 | Visits moderate — N+1 dans boucle | `api/visits/moderate/route.ts` | Batch UPDATE avec array |
+| 4 | P3 | Pas de pagination sur `/api/redemptions`, `/api/member-cards` | Divers | Ajouter pagination |
+| 5 | P3 | Rate limiting en memoire (ne persiste pas entre cold starts) | `api/checkin/route.ts` | Passer a Redis quand necessaire |
+
+## 3.4 Capacite cible (apres tous les fixes)
+
+| Metrique | Actuel | Cible |
+|----------|--------|-------|
+| Marchands max | 500 | **10,000+** |
+| Checkins/jour | 20,000 | **500,000** |
+| Push/jour | 50,000 | **5,000,000** |
+| Temps cron | 30-60 min | **5 min** |
+
+---
+
+# PARTIE 4 : EMAILS (29 templates)
+
+## 4.1 Parcours Signup (temps reel)
+
+| # | Email | Declencheur | Quand |
+|---|-------|-------------|-------|
+| 1 | **IncompleteSignupEmail** | Phase 1 signup | +1h (Resend scheduledAt) |
+| 2 | **IncompleteSignupReminder2Email** | Phase 1 signup | +3h (Resend scheduledAt) |
+| 3 | **WelcomeEmail** | Phase 2 completee | Immediat |
+| 4 | **NewMerchantNotification** | Phase 2 completee | Immediat → admin |
+
+> Emails #1-2 annules automatiquement si signup complete avant l'envoi.
+
+## 4.2 Onboarding — Programme non configure (cron morning 09:00)
+
+| # | Email | Condition | Quand |
+|---|-------|-----------|-------|
+| 5 | **ProgramReminderEmail** | `reward_description` NULL | J+1 |
+| 6 | **ProgramReminderDay2Email** | `reward_description` NULL | J+2 (par shop_type) |
+| 7 | **ProgramReminderDay3Email** | `reward_description` NULL | J+3 (urgence) |
+
+## 4.3 Post-configuration programme (temps reel)
+
+| # | Email | Declencheur | Quand |
+|---|-------|-------------|-------|
+| 8 | **QRCodeEmail** | Programme configure | Immediat + cron morning |
+| 9 | **SocialKitEmail** | API `/api/emails/social-kit` | Immediat |
+
+## 4.4 Engagement & Milestones (cron morning 09:00)
+
+| # | Email | Condition | Quand |
+|---|-------|-----------|-------|
+| 10 | **FirstScanEmail** | 2eme visite confirmee | J+1 apres premier scan |
+| 11 | **Day5CheckinEmail** | 5 jours apres signup | J+5 |
+| 12 | **FirstRewardEmail** | 1ere recompense debloquee | J+1 apres recompense |
+| 13 | **Tier2UpsellEmail** | 10+ clients, tier2 non active | Cron morning |
+| 14 | **WeeklyDigestEmail** | Merchant actif avec scans | Hebdomadaire |
+
+## 4.5 Inactivite (cron morning 09:00)
+
+| # | Email | Condition | Quand |
+|---|-------|-----------|-------|
+| 15 | **InactiveMerchantDay7Email** | 0 visite depuis 7j | D+7 (diagnostic) |
+| 16 | **InactiveMerchantDay14Email** | 0 visite depuis 14j | D+14 (pression) |
+| 17 | **InactiveMerchantDay30Email** | 0 visite depuis 30j | D+30 (message perso) |
+
+## 4.6 Trial (cron morning 09:00)
+
+| # | Email | Condition | Quand |
+|---|-------|-----------|-------|
+| 18 | **TrialEndingEmail** | Trial actif | J-5, J-3, J-1 |
+| 19 | **TrialExpiredEmail** | Trial expire | J+1, J+3, J+5 |
+
+## 4.7 Points en attente — Qarte Shield (cron morning 09:00)
+
+| # | Email | Condition | Quand |
+|---|-------|-----------|-------|
+| 20 | **PendingPointsEmail** (alerte) | Visites `pending` | D+0, D+1 |
+| 21 | **PendingPointsEmail** (rappel) | Visites `pending` toujours | D+2, D+3 |
+
+## 4.8 Stripe & Paiement (webhook temps reel)
+
+| # | Email | Evenement Stripe | Quand |
+|---|-------|-----------------|-------|
+| 22 | **SubscriptionConfirmedEmail** | `checkout.session.completed` | Immediat |
+| 23 | **SubscriptionConfirmedEmail** | `invoice.payment_succeeded` (recovery) | Immediat |
+| 24 | **PaymentFailedEmail** | `invoice.payment_failed` | Immediat |
+| 25 | **SubscriptionCanceledEmail** | `subscription.updated` → canceling | Immediat |
+| 26 | **SubscriptionReactivatedEmail** | `subscription.updated` → canceling→active | Immediat |
+
+## 4.9 Win-back (cron reactivation 10:00)
+
+| # | Email | Condition | Quand |
+|---|-------|-----------|-------|
+| 27 | **ReactivationEmail** (QARTE50) | `canceled` | J+7 |
+| 28 | **ReactivationEmail** (QARTEBOOST) | `canceled` | J+14 |
+| 29 | **ReactivationEmail** (QARTELAST) | `canceled` | J+30 |
+
+## 4.10 Autre
+
+| # | Email | Declencheur |
+|---|-------|-------------|
+| 30 | **EbookEmail** | Formulaire `/ebook` |
+
+## 4.11 Timeline complete d'un commercant
+
+```
+SIGNUP
+  +0       WelcomeEmail
+  +0       NewMerchantNotification → admin
+  +1h      [IncompleteSignupEmail si pas fini]
+  +3h      [IncompleteSignupReminder2Email si toujours pas fini]
+
+ONBOARDING (si programme pas configure)
+  +1 jour  ProgramReminderEmail
+  +2 jours ProgramReminderDay2Email (par shop_type)
+  +3 jours ProgramReminderDay3Email (urgence)
+
+POST-CONFIG PROGRAMME
+  +0       QRCodeEmail (immediat)
+  +0       SocialKitEmail (via API)
+
+ENGAGEMENT
+  +1j apres 1er scan   FirstScanEmail (+ bloc parrainage)
+  +5 jours             Day5CheckinEmail
+  +1j apres 1ere rec.  FirstRewardEmail
+  10+ clients          Tier2UpsellEmail
+  Hebdomadaire         WeeklyDigestEmail
+
+INACTIVITE (programme configure, 0 check-in)
+  +7 jours   InactiveMerchantDay7Email
+  +14 jours  InactiveMerchantDay14Email
+  +30 jours  InactiveMerchantDay30Email
+
+TRIAL
+  -5 jours  TrialEndingEmail
+  -3 jours  TrialEndingEmail
+  -1 jour   TrialEndingEmail
+  +1 jour   TrialExpiredEmail (grace period)
+  +3 jours  TrialExpiredEmail
+  +5 jours  TrialExpiredEmail
+
+PAIEMENT (Stripe webhook)
+  [checkout OK]       SubscriptionConfirmedEmail
+  [echec paiement]    PaymentFailedEmail
+  [recovery]          SubscriptionConfirmedEmail
+
+ANNULATION
+  [canceling]    SubscriptionCanceledEmail
+  [reactivation] SubscriptionReactivatedEmail
+  +7 jours       ReactivationEmail (QARTE50)
+  +14 jours      ReactivationEmail (QARTEBOOST)
+  +30 jours      ReactivationEmail (QARTELAST)
+
+SHIELD (points en attente)
+  D+0  PendingPointsEmail (alerte)
+  D+1  PendingPointsEmail (alerte)
+  D+2  PendingPointsEmail (rappel)
+  D+3  PendingPointsEmail (rappel)
+```
+
+## 4.12 Notes techniques emails
+
+- **Provider** : Resend (2 req/s max)
+- **Rate limiting** : batch de 2 + 600ms entre les batches
+- **Anti-spam** : headers `List-Unsubscribe` + `List-Unsubscribe-Post` sur tous les emails
+- **Emails programmes** : via `scheduledAt` de Resend (IncompleteSignup +1h, Reminder2 +3h)
+- **Tracking doublons** : tables `pending_email_tracking` et `reactivation_email_tracking`
+- **Layout** : `BaseLayout.tsx` (header violet #4b0082, footer)
+
+---
+
+# PARTIE 5 : PLAN D'ACTION — 30 jours
+
+## Travail realise (08-10 fev)
+
+### Bugs critiques corriges
+- [x] Fix checkout Stripe quand customer supprime manuellement
+- [x] Fix `past_due` traite comme essai expire
+- [x] Coherence UI abonnement : banner sidebar `past_due` + badge page subscription
+- [x] Fix `updated_at` trigger qui se declenchait sur `last_seen_at` (migration 032)
+- [x] Admin stats excluent les comptes admin (via `super_admins`)
+
+### Features & UX
+- [x] **F1** : Suggestions cliquables par metier palier 1 + palier 2
+- [x] **F2** : QRCodeEmail envoye auto apres config programme
+- [x] **F7** : Onboarding checklist gamifiee 5 etapes (confetti, trial only)
+- [x] **F9** : Parrainage merchant v1 (code QARTE-XXXX, Settings, FirstScanEmail, Web Share API)
+- [x] Suppression pre-remplissage `reward_description` → emails ProgramReminder fonctionnent
+- [x] SocialKitEmail couleurs dynamiques du merchant
+- [x] FirstScanEmail seuil passe a 2 visites
+- [x] Renommage `/offre-speciale` → `/essai-gratuit`
+- [x] Preview banner sticky CTA "Telechargez votre QR code"
+- [x] Admin leads auto-refresh 30s
+- [x] Admin activite : vue "hier" (`?date=yesterday`)
+- [x] Trial reactivation : merchants expired < 7j (cron morning)
+- [x] Logo PWA gradient indigo → rose
+- [x] Fix push `sent_count` : clients uniques (deduplique par telephone)
+- [x] Prix journalier sous prix mensuel/annuel (0,63€/jour)
+- [x] Fix QRCodeEmail reecrit (menu → fidelite)
+- [x] Nettoyage dead code (QRCardTemplate, OnboardingGuide)
+- [x] Coupons Stripe : QARTEBOOST, QARTELAST
+
+### Marketing & Landing (10 fev)
+- [x] Blog SEO : 3 articles (coiffure, onglerie, institut) + images Unsplash
+- [x] Page `/qarte-vs-carte-papier` (comparatif)
+- [x] FAQ pricing + RGPD ajoutees
+- [x] JSON-LD structured data (Organization + SoftwareApplication)
+- [x] Bloc parrainage dans emails (FirstScan, Inactive)
+- [x] Bandeau logos : 10 vrais logos clients (grayscale marquee defilant)
+- [x] Hero : retire faux social proof (150+, 4.9/5, 12000+)
+- [x] Hero : CTA "Essayer gratuitement", bouton demo secondaire (outline)
+- [x] Footer + blog : liens blog, comparatif, contact
+
+## Semaine 1 (10-16 fev)
+- [ ] **F3** : Celebration premier scan (1h)
+- [ ] Plan admin merchants (barre actions, badges alerte, WhatsApp)
+
+## Semaine 2 (17-23 fev)
+- [ ] **F6** : Templates push enrichis (2h)
+- [ ] **F4** : Stats enrichies carte client (2h)
+
+## Semaine 3 (24 fev - 2 mars)
+- [ ] **F8** : Birthday Club (6h)
+
+## Semaine 4 (3-9 mars)
+- [ ] **F10** : Scratch & Win gamification (6h)
+- [ ] **F16** : Google Reviews automatise (1-2j)
+- [ ] Demarrer prototype **ReviewBoost** (micro-SaaS #1)
+
+## KPIs a suivre
+
+1. **Taux de completion setup** (signup → programme configure)
+2. **Time to first scan** (signup → premier scan client)
+3. **Trial-to-paid conversion rate**
+4. **30-day merchant retention**
+5. **Monthly churn rate**
+6. **MRR growth**
+
+---
+
+# PARTIE 6 : CHANGELOG
+
+## [2026-02-10] — Marketing landing, blog SEO, vrais logos clients
+**Commits:** `e553555`, `4110f17`, `906a4d4`, `949e4c6`, `5ce4a3a`, `402fa8b`, `85e80fb`, `5fb6533`, `02f4c5c`
+
+### Landing & Marketing
+- **feat:** Blog SEO — 3 articles longs (coiffure, onglerie, institut) + images Unsplash
+- **feat:** Page `/qarte-vs-carte-papier` (comparatif papier vs digital)
+- **feat:** FAQ pricing + RGPD ajoutees a la landing
+- **feat:** JSON-LD structured data (Organization + SoftwareApplication)
+- **feat:** Bloc parrainage insere dans emails (FirstScan, Inactive)
+- **feat:** Bandeau logos — 10 vrais logos clients (grayscale marquee + FOMO)
+- **fix:** Retire faux social proof du hero (150+ instituts, 4.9/5, 12000+ clientes)
+- **fix:** Hero CTA "Essayer gratuitement", bouton demo secondaire (outline)
+- **feat:** Footer liens blog, comparatif, contact
+
+### Produit
+- **fix:** QRCodeEmail reecrit de zero (ancien template parlait de "QR code menu")
+- **fix:** Nettoyage QRCardTemplate.tsx (dead code), fix test-emails preview
+- **feat:** Prix journalier affiche sous le prix mensuel/annuel (0,63€/jour)
+- **feat:** Logo PWA gradient indigo → rose (#4f46e5 → #ec4899)
+- **fix:** Push `sent_count` clients uniques (deduplique par telephone)
+- **fix:** Parrainage — liste tous les types de commerce + texte "apres inscription"
+
+## [2026-02-09] — Stripe emails, subscription UX, parallelisation, multi-pays
+
+### Deploiement #18 — Fix emails Stripe + polling + sidebar banners
+- **fix:** Email annulation → `canceling` (avant: `subscription.deleted` trop tard)
+- **fix:** Email recovery → `past_due` → `active`
+- **fix:** Date fin abonnement utilise `subscription.cancel_at` Stripe
+- **fix:** Polling apres retour portail Stripe (sessionStorage + 2s × 8 tentatives)
+- **fix:** Sidebar banner `canceling` orange + texte lien trial dynamique
+
+### Deploiement #17 — Parallelisation checkin API + harmonisation dashboard
+- **perf:** API checkin 11 requetes → 5 groupes Promise.all (-50% latence)
+- **perf:** Scan page skip API `/api/customers/register` (1 appel au lieu de 2)
+- **style:** Harmonisation headers 8 pages dashboard (violet #4b0082)
+- **fix:** Sidebar mobile bottom sheet 50vh (drag-to-dismiss, Framer Motion)
+- **fix:** Webhook trialing + cancel_at_period_end → `canceling`
+- **feat:** 4 palettes desktop-only (Terracotta, Ocean, Foret, Noir & Or)
+
+### Deploiement #16 — Audit responsive + couleurs beaute
+- **style:** Audit responsive complet mobile (fonts, paddings, boutons reduits)
+- **fix:** Hamburger menu overlap mobile
+- **fix:** Page QR download → layout sidebar
+- **fix:** Stripe checkout → gestion `checkout.session.expired` et `incomplete`
+- **feat:** 6 palettes couleurs beaute mobile
+
+### Deploiement #15 — FR/BE/CH/LU telephone + migration E.164
+- **feat:** Support 4 pays (FR, BE, CH, LU) — format E.164 sans `+`
+- **feat:** `formatPhoneNumber()`, `validatePhone()`, `displayPhoneNumber()`
+- **feat:** Selecteur pays onboarding + filtre pays admin
+- **refactor:** API checkin restructuree (format phone apres fetch merchant)
+
+### Deploiement #14 — Metriques startup admin + emails #4b0082
+- **feat:** Admin dashboard metriques (MRR, churn, ARPU, LTV)
+- **feat:** Admin merchants actions rapides, activite, alertes
+- **refactor:** Refonte templates emails → couleur #4b0082
+- **feat:** Codes promo progressifs (QARTE50, QARTEBOOST, QARTELAST)
+- **feat:** SubscriptionConfirmedEmail apres checkout
+
+## [2026-02-08] — Securite, Shield, demo, preview carte
+
+### Deploiement #13 — Audit securite + Shield + social kit
+- **security:** Stripe webhook verification + checkout validation
+- **fix:** 6 bugs Qarte Shield corriges
+- **refactor:** Extraction 6 composants + 1 hook (card/scan)
+- **feat:** Kit reseaux sociaux + dashboard comparaison semaine
+- **fix:** Prevention auto-checkins repetes a l'ouverture PWA
+
+### Deploiement #12 — Hero copy, page demo, settings
+- **feat:** Page `/demo` (3 cartes fictives: coiffeur, onglerie, institut)
+- **feat:** Bouton "Voir une demo" dans HeroSection
+- **copy:** "Le programme de fidelite qui fait revenir vos clientes."
+- **style:** Mockup iPhone bounce animation
+
+### Deploiement #11 — Preview carte client, countdown
+- **feat:** Preview carte (`?preview=true`) avec donnees simulees
+- **feat:** Redirect onboarding passe par preview avant QR download
+- **feat:** Suggestions programme par shop_type (MerchantSettingsForm)
+- **feat:** Countdown timer page abonnement
+- **feat:** TrialEndingEmail a J-5 (en plus de J-3/J-1)
+
+### Deploiement #10 — Tarif annuel + cron refactor
+- **feat:** Tarif annuel 190€/an (toggle mensuel/annuel)
+- **refactor:** Cron morning/evening/reactivation refactores
+
+## [2026-02-06] — Admin + fixes
+
+- **feat:** Inscriptions du jour sur accueil admin + badges programme
+- **feat:** Masquer comptes admin par defaut
+- **fix:** Detection programme via `reward_description`
+- **fix:** Race condition `schedule-incomplete` signup
+
+## [2026-02-05] — Inscription 2 phases
+
+### Deploiement #6 — Email relance via Resend scheduledAt
+- **feat:** IncompleteSignupEmail programme +1h via Resend scheduledAt
+- **feat:** Annulation automatique si Phase 2 completee
+
+### Deploiement #5 — Optimisation flux onboarding
+- **perf:** Page QR utilise `useMerchant()` (pas de fetch duplique)
+- **feat:** Premiere sauvegarde programme redirige vers QR download
+
+### Deploiement #4 — Suppression GuidedTour
+- **fix:** Suppression `GuidedTour.tsx` (bloquait tous les clics)
+- **feat:** Redirect post-inscription → `/dashboard/program`
+
+### Deploiement #3 — Leads & Nettoyage
+- **refactor:** Inscriptions incompletes deplacees vers `/admin/leads`
+- **delete:** Suppression outils gratuits (qr-menu, qr-wifi, lien-avis) — -2744 lignes
+
+### Deploiement #2 — Corrections audit
+- **security:** `getUser()` au lieu de `getSession()` dans signup/complete
+- **security:** Rate limiting sur `/api/merchants/check`
+- **perf:** Pagination `listUsers` dans cron morning
+
+### Deploiement #1 — Inscription 2 phases & emails
+- **feat:** Inscription 2 phases (email+mdp → infos commerce)
+- **feat:** Email relance inscription incomplete (2-3h)
+- **feat:** Email rappel configuration programme J+1
+- **feat:** Cron morning 5 taches
+
+## [2026-02-04] — Performance + emails + migrations
+
+### Deploiement #2 — Performance
+- **perf:** Fix N+1 admin merchants (1001 → 3 requetes)
+
+### Deploiement #1 — Emails & Anti-spam
+- **feat:** PaymentFailedEmail, SubscriptionCanceledEmail, ReactivationEmail
+- **feat:** Cron reactivation (10:00 UTC)
+- **feat:** Anti-spam headers sur tous les emails
+- **feat:** Index DB (visits, loyalty_cards, push_subscriptions)
+
+### Migrations SQL
+- 026 : Trial 14→15 jours
+- 027 : Spelling cancelled→canceled + constraint
+- 028 : Reactivation email tracking
+- 029 : Merchant country + E.164 migration
+- 030 : Shield + divers
+- 031 : last_seen_at column
+- 032 : Fix updated_at trigger (exclut last_seen_at)
+- 033 : Add referral_code (parrainage merchant)
+
+---
+
+*Derniere mise a jour : 10 fevrier 2026*
+*Statuts verifies contre le code source le 10/02/2026.*
