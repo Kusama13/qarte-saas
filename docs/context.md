@@ -200,7 +200,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 
 ### Push & Marketing
 - `POST /api/push/subscribe` - S'abonner aux push
-- `POST /api/push/send` - Envoyer notification
+- `POST /api/push/send` - Envoyer notification (sent_count = clients uniques dedupliques par telephone)
 - `GET /api/offers` - Offres promotionnelles
 
 ### Paiements
@@ -424,6 +424,7 @@ npm run email
 - **Primaire:** `#4b0082` (violet profond — emails, headers dashboard, branding)
 - **Secondaire:** `#654EDA` (violet)
 - **Accent:** Rose/Pink pour les CTAs
+- **PWA Icon:** Gradient indigo → rose (`#4f46e5` → `#ec4899`) — "Q" blanc italic bold
 - **Fond:** Gradients violet vers rose (landing)
 
 ### Style Visuel

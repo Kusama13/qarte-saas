@@ -413,6 +413,9 @@ Signup (email+password)
 - [x] **F9** : Parrainage merchant v1 simple (code QARTE-XXXX, Settings + FirstScanEmail, Web Share API, copy)
 - [x] Admin activity : vue "hier" (`?date=yesterday`) avec filtre timezone Paris
 - [x] Trial reactivation : merchants expired < 7j reactives automatiquement (cron morning)
+- [x] Logo PWA : gradient indigo → rose (#4f46e5 → #ec4899) — icon.tsx, apple-icon.tsx, SVG + PNG 192/512
+- [x] Fix push `sent_count` : compte les clients uniques (deduplique par telephone) au lieu des endpoints navigateur
+- [x] Icone push notification corrigee (.svg → .png)
 
 ## Semaine 1 (10-16 fev)
 - [ ] **F3** : Celebration premier scan (1h)
@@ -453,4 +456,4 @@ Signup (email+password)
 ---
 
 *Document genere le 09/02/2026 — Audit realise par analyse complete du codebase, emails, APIs, dashboard, landing page, et recherche competitive (Treatwell, Fresha, Square, Planity, Stamp Me, Zenoti, GlossGenius).*
-*Derniere mise a jour : 09/02/2026 — F9 parrainage merchant v1 (code + Settings + FirstScanEmail + Web Share API), admin activity hier, trial reactivation auto, F7 checklist gamifiee, SocialKitEmail couleurs dynamiques, QR email trigger, FirstScan 2 visites.*
+*Derniere mise a jour : 10/02/2026 — Logo PWA indigo-rose, fix push sent_count clients uniques, F9 parrainage merchant v1 (code + Settings + FirstScanEmail + Web Share API), admin activity hier, trial reactivation auto, F7 checklist gamifiee.*
