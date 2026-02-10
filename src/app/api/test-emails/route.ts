@@ -24,8 +24,7 @@ export async function GET(request: NextRequest) {
       }));
     } else if (type === 'qrcode') {
       html = await render(QRCodeEmail({
-        menuUrl: 'https://menu.getqarte.com/restaurant-demo',
-        businessName: 'Restaurant Demo',
+        businessName: 'Salon Demo',
       }));
     } else if (type === 'social-kit') {
       html = await render(SocialKitEmail({

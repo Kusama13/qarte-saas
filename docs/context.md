@@ -60,7 +60,7 @@ src/
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
 │   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist
 │   ├── loyalty/           # Composants fidelite
-│   ├── marketing/         # QRCardTemplate, FlyerTemplate
+│   ├── marketing/         # FlyerTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel
 │
 ├── lib/                   # Utilitaires
@@ -510,7 +510,7 @@ npm run email
 - Telechargement QR/flyers + kit reseaux sociaux
 - Gestion clients
 - Marketing (push notifications)
-- Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe
+- Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe + prix journalier (0,63€/jour mensuel, 0,52€/jour annuel)
 - Kit reseaux sociaux (visuel + legendes Instagram)
 - Parrainage : encart en haut de Settings (code + copier + partager via Web Share API)
 - Headers harmonises (violet #4b0082)

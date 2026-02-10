@@ -131,17 +131,17 @@ export function MerchantSettingsForm({
   const stampsSuggestions = STAMPS_SUGGESTIONS[shopType] || STAMPS_SUGGESTIONS.autre;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       {/* Header */}
       <div>
-        <h3 className="text-xl font-bold text-gray-900">Programme de fidélité</h3>
-        <p className="text-sm text-gray-500 mt-1">Configurez les règles de votre programme</p>
+        <h3 className="text-base md:text-xl font-bold text-gray-900">Programme de fidélité</h3>
+        <p className="text-xs md:text-sm text-gray-500 mt-0.5 md:mt-1">Configurez les règles de votre programme</p>
       </div>
 
       {/* Reward Configuration */}
-      <div className="space-y-6">
-        <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
-          <Gift className="w-4 h-4" />
+      <div className="space-y-4 md:space-y-6">
+        <h4 className="text-xs md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+          <Gift className="w-3.5 h-3.5 md:w-4 md:h-4" />
           Configuration Récompense
         </h4>
 
@@ -228,10 +228,10 @@ export function MerchantSettingsForm({
         key={`${stampsRequired}-${rewardDescription}`}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-5 rounded-2xl border bg-indigo-50/50 border-indigo-100"
+        className="p-3 md:p-5 rounded-xl md:rounded-2xl border bg-indigo-50/50 border-indigo-100"
       >
-        <p className="text-sm font-medium text-gray-600 mb-2">Résumé du programme</p>
-        <p className="text-lg text-gray-800">
+        <p className="text-xs md:text-sm font-medium text-gray-600 mb-1 md:mb-2">Résumé du programme</p>
+        <p className="text-sm md:text-lg text-gray-800">
           Vos clients devront venir{' '}
           <span className="font-bold text-indigo-600">{stampsRequired} fois</span> pour gagner{' '}
           <span className="font-bold text-indigo-600">{rewardDescription || '[Récompense]'}</span>.

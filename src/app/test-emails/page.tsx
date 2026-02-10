@@ -80,7 +80,7 @@ export default function TestEmailsPage() {
                 <span className="text-gray-900">
                   {selectedEmail === 'ebook'
                     ? '📚 Votre guide de fidelisation est pret !'
-                    : '📱 Votre QR code menu est pret !'}
+                    : '📱 Votre QR code fidelite est pret !'}
                 </span>
               </div>
             </div>

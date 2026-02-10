@@ -416,6 +416,9 @@ Signup (email+password)
 - [x] Logo PWA : gradient indigo → rose (#4f46e5 → #ec4899) — icon.tsx, apple-icon.tsx, SVG + PNG 192/512
 - [x] Fix push `sent_count` : compte les clients uniques (deduplique par telephone) au lieu des endpoints navigateur
 - [x] Icone push notification corrigee (.svg → .png)
+- [x] Prix journalier affiche sous le prix mensuel/annuel (0,63€/jour — "moins qu'un cafe")
+- [x] Fix QRCodeEmail : reecrit de zero (ancien template parlait de "QR code menu" au lieu du QR fidelite)
+- [x] Nettoyage restes outils QR menu : suppression QRCardTemplate.tsx (dead code), fix test-emails preview
 
 ## Semaine 1 (10-16 fev)
 - [ ] **F3** : Celebration premier scan (1h)
@@ -456,4 +459,4 @@ Signup (email+password)
 ---
 
 *Document genere le 09/02/2026 — Audit realise par analyse complete du codebase, emails, APIs, dashboard, landing page, et recherche competitive (Treatwell, Fresha, Square, Planity, Stamp Me, Zenoti, GlossGenius).*
-*Derniere mise a jour : 10/02/2026 — Logo PWA indigo-rose, fix push sent_count clients uniques, F9 parrainage merchant v1 (code + Settings + FirstScanEmail + Web Share API), admin activity hier, trial reactivation auto, F7 checklist gamifiee.*
+*Derniere mise a jour : 10/02/2026 — Logo PWA indigo-rose, fix push sent_count clients uniques, F9 parrainage merchant v1 (code + Settings + FirstScanEmail + Web Share API), admin activity hier, trial reactivation auto, F7 checklist gamifiee, prix journalier page abonnement, fix QRCodeEmail (menu→fidelite).*

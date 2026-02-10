@@ -3,30 +3,21 @@ import {
   Heading,
   Text,
   Section,
-  Link,
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
 
 interface QRCodeEmailProps {
-  menuUrl?: string;
   businessName?: string;
-  qrCodeUrl?: string;
-  designedQrCodeUrl?: string;
 }
 
-export function QRCodeEmail({ menuUrl, businessName, qrCodeUrl, designedQrCodeUrl }: QRCodeEmailProps) {
-  return (
-    <BaseLayout preview="Votre QR code menu est prêt">
-      {/* Qarte Header */}
-      <Section style={headerSection}>
-        <Text style={headerText}>
-          Fidélisez vos clients avec Qarte
-        </Text>
-      </Section>
+export function QRCodeEmail({ businessName }: QRCodeEmailProps) {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
+  return (
+    <BaseLayout preview={`${businessName || 'Votre commerce'}, votre QR code fidélité est prêt !`}>
       <Heading style={heading}>
-        Votre QR code est prêt
+        Votre QR code est pr&ecirc;t ! &#127881;
       </Heading>
 
       <Text style={paragraph}>
@@ -34,82 +25,52 @@ export function QRCodeEmail({ menuUrl, businessName, qrCodeUrl, designedQrCodeUr
       </Text>
 
       <Text style={paragraph}>
-        Merci d&apos;avoir utilisé notre générateur de QR code menu. Vous trouverez ci-dessous vos liens de téléchargement.
+        Votre programme de fid&eacute;lit&eacute; est configur&eacute; et votre QR code est pr&ecirc;t &agrave; &ecirc;tre utilis&eacute;. Il ne reste plus qu&apos;&agrave; l&apos;imprimer et le placer en caisse !
       </Text>
 
-      {/* Download Links */}
-      <Section style={linksSection}>
-        <Text style={linksSectionTitle}>Vos QR codes à télécharger :</Text>
-
-        <Section style={linkBox}>
-          <Text style={linkLabel}>QR Code Simple</Text>
-          <Text style={linkDescription}>Format standard, idéal pour une utilisation rapide</Text>
-          {qrCodeUrl ? (
-            <Link href={qrCodeUrl} style={downloadLink}>
-              Télécharger le QR code simple
-            </Link>
-          ) : (
-            <Text style={linkNote}>Disponible sur la page de téléchargement</Text>
-          )}
-        </Section>
-
-        <Section style={linkBox}>
-          <Text style={linkLabel}>QR Code Design</Text>
-          <Text style={linkDescription}>Avec votre logo et couleurs personnalisées</Text>
-          {designedQrCodeUrl ? (
-            <Link href={designedQrCodeUrl} style={downloadLink}>
-              Télécharger le QR code design
-            </Link>
-          ) : (
-            <Text style={linkNote}>Disponible sur la page de téléchargement</Text>
-          )}
-        </Section>
-      </Section>
-
-      {menuUrl && (
-        <Section style={urlBox}>
-          <Text style={urlLabel}>Lien de votre menu :</Text>
-          <Text style={urlText}>{menuUrl}</Text>
-        </Section>
-      )}
-
-      <Text style={tipText}>
-        Conseil : Testez votre QR code avec votre téléphone avant de l&apos;imprimer.
-      </Text>
-
-      {/* Qarte CTA */}
-      <Section style={ctaBox}>
-        <Text style={ctaTitle}>Envie d&apos;aller plus loin ?</Text>
-        <Text style={ctaText}>
-          Créez votre carte de fidélité digitale et augmentez la fréquence de visite de vos clients.
-        </Text>
-        <Button style={ctaButton} href="https://getqarte.com">
-          Découvrir Qarte — essai 15 jours
+      {/* CTA Download */}
+      <Section style={ctaSection}>
+        <Button style={ctaButton} href={`${appUrl}/dashboard/qr-download`}>
+          T&eacute;l&eacute;charger mon QR code
         </Button>
       </Section>
 
+      {/* Steps */}
+      <Section style={stepsSection}>
+        <Text style={stepsTitle}>3 &eacute;tapes pour lancer votre programme :</Text>
+
+        <Section style={stepBox}>
+          <Text style={stepNumber}>1</Text>
+          <Text style={stepText}>
+            <strong>T&eacute;l&eacute;chargez</strong> votre QR code depuis le bouton ci-dessus
+          </Text>
+        </Section>
+
+        <Section style={stepBox}>
+          <Text style={stepNumber}>2</Text>
+          <Text style={stepText}>
+            <strong>Imprimez-le</strong> et placez-le pr&egrave;s de votre caisse ou comptoir
+          </Text>
+        </Section>
+
+        <Section style={stepBox}>
+          <Text style={stepNumber}>3</Text>
+          <Text style={stepText}>
+            <strong>Proposez &agrave; vos clients</strong> de scanner pour s&apos;inscrire &agrave; votre programme de fid&eacute;lit&eacute;
+          </Text>
+        </Section>
+      </Section>
+
+      <Text style={tipText}>
+        &#128161; Astuce : proposez le scan d&egrave;s le passage en caisse. Un simple &laquo; Vous voulez cumuler vos points fid&eacute;lit&eacute; ? &raquo; suffit !
+      </Text>
+
       <Text style={signature}>
-        L&apos;équipe Qarte
+        L&apos;&eacute;quipe Qarte
       </Text>
     </BaseLayout>
   );
 }
-
-const headerSection = {
-  backgroundColor: '#4b0082',
-  borderRadius: '12px',
-  padding: '16px 24px',
-  margin: '0 0 24px 0',
-  textAlign: 'center' as const,
-};
-
-const headerText = {
-  color: '#ffffff',
-  fontSize: '18px',
-  fontWeight: '700',
-  margin: '0',
-  letterSpacing: '-0.02em',
-};
 
 const heading = {
   color: '#1a1a1a',
@@ -117,6 +78,7 @@ const heading = {
   fontWeight: '600',
   lineHeight: '1.3',
   margin: '0 0 24px 0',
+  textAlign: 'center' as const,
 };
 
 const paragraph = {
@@ -126,73 +88,56 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const linksSection = {
+const ctaSection = {
+  textAlign: 'center' as const,
   margin: '24px 0',
 };
 
-const linksSectionTitle = {
+const ctaButton = {
+  backgroundColor: '#4b0082',
+  borderRadius: '8px',
+  color: '#ffffff',
+  fontSize: '16px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  padding: '14px 32px',
+};
+
+const stepsSection = {
+  margin: '24px 0',
+  backgroundColor: '#f8fafc',
+  borderRadius: '12px',
+  padding: '20px',
+};
+
+const stepsTitle = {
   color: '#1a1a1a',
   fontSize: '16px',
   fontWeight: '600',
   margin: '0 0 16px 0',
 };
 
-const linkBox = {
-  backgroundColor: '#f8fafc',
-  borderRadius: '12px',
-  padding: '16px 20px',
+const stepBox = {
   margin: '0 0 12px 0',
-  borderLeft: '4px solid #4b0082',
+  paddingLeft: '8px',
 };
 
-const linkLabel = {
-  color: '#1a1a1a',
-  fontSize: '15px',
-  fontWeight: '600',
-  margin: '0 0 4px 0',
-};
-
-const linkDescription = {
-  color: '#64748b',
-  fontSize: '13px',
-  margin: '0 0 12px 0',
-};
-
-const downloadLink = {
+const stepNumber = {
   color: '#4b0082',
-  fontSize: '14px',
-  fontWeight: '600',
-  textDecoration: 'underline',
-};
-
-const linkNote = {
-  color: '#94a3b8',
-  fontSize: '13px',
-  fontStyle: 'italic' as const,
+  fontSize: '20px',
+  fontWeight: '700',
   margin: '0',
+  display: 'inline',
 };
 
-const urlBox = {
-  backgroundColor: '#f1f5f9',
-  borderRadius: '8px',
-  padding: '12px 16px',
-  margin: '16px 0',
-};
-
-const urlLabel = {
-  color: '#64748b',
-  fontSize: '12px',
-  fontWeight: '600',
-  margin: '0 0 4px 0',
-  textTransform: 'uppercase' as const,
-};
-
-const urlText = {
-  color: '#334155',
-  fontSize: '14px',
-  fontFamily: 'monospace',
+const stepText = {
+  color: '#4a5568',
+  fontSize: '15px',
+  lineHeight: '1.5',
   margin: '0',
-  wordBreak: 'break-all' as const,
+  display: 'inline',
+  paddingLeft: '8px',
 };
 
 const tipText = {
@@ -200,39 +145,9 @@ const tipText = {
   fontSize: '14px',
   fontStyle: 'italic' as const,
   margin: '16px 0 24px 0',
-  textAlign: 'center' as const,
-};
-
-const ctaBox = {
-  backgroundColor: '#f3f4f6',
-  borderRadius: '12px',
-  padding: '20px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-};
-
-const ctaTitle = {
-  color: '#1f2937',
-  fontSize: '16px',
-  fontWeight: '600',
-  margin: '0 0 4px 0',
-};
-
-const ctaText = {
-  color: '#6b7280',
-  fontSize: '14px',
-  margin: '0 0 12px 0',
-};
-
-const ctaButton = {
-  backgroundColor: '#4b0082',
+  backgroundColor: '#fef3c7',
   borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '14px',
-  fontWeight: '600',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  padding: '12px 24px',
+  padding: '12px 16px',
 };
 
 const signature = {
