@@ -30,6 +30,14 @@ export function FAQSection() {
     {
       question: "Que se passe-t-il si j'arrête Qarte ?",
       answer: "Vous exportez vos données clientes en CSV quand vous voulez. Pas de piège, pas d'engagement. Vos données vous appartiennent."
+    },
+    {
+      question: "19€/mois, c'est trop cher pour mon salon ?",
+      answer: "C'est 0,63€ par jour — moins qu'un café. Une seule cliente fidélisée qui revient une fois de plus par mois rembourse votre abonnement. Sans compter les cartes papier que vous n'imprimez plus et le temps gagné."
+    },
+    {
+      question: "Mes données clients sont-elles protégées (RGPD) ?",
+      answer: "100% conforme RGPD. Vos données sont hébergées en Europe, chiffrées, et vous en restez propriétaire. Vos clientes peuvent demander la suppression à tout moment. Aucune revente de données, jamais."
     }
   ];
 

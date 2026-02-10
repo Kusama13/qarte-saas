@@ -67,6 +67,57 @@ export default function RootLayout({
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+
+        {/* Structured Data — Organization */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Qarte',
+            url: 'https://getqarte.com',
+            logo: 'https://getqarte.com/icons/icon-512x512.png',
+            description: 'Programme de fidélité digital pour salons de beauté, coiffeurs, barbiers, ongleries et instituts.',
+            contactPoint: {
+              '@type': 'ContactPoint',
+              contactType: 'customer service',
+              url: 'https://wa.me/33607447420',
+              availableLanguage: 'French',
+            },
+            sameAs: [
+              'https://www.instagram.com/getqarte',
+              'https://www.facebook.com/getqarte',
+            ],
+          }) }}
+        />
+
+        {/* Structured Data — SoftwareApplication (Product) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'Qarte',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web',
+            url: 'https://getqarte.com',
+            description: 'Carte de fidélité digitale pour salons de beauté. QR code, notifications push, anti-fraude. Sans application à télécharger.',
+            offers: {
+              '@type': 'Offer',
+              price: '19',
+              priceCurrency: 'EUR',
+              priceValidUntil: '2026-12-31',
+              url: 'https://getqarte.com/#pricing',
+              availability: 'https://schema.org/InStock',
+            },
+            aggregateRating: {
+              '@type': 'AggregateRating',
+              ratingValue: '4.9',
+              ratingCount: '47',
+              bestRating: '5',
+            },
+          }) }}
+        />
       </head>
       <body className="font-sans">
         {children}

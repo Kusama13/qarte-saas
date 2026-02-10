@@ -108,10 +108,8 @@ src/
 
 docs/
 ├── context.md            # Contexte projet (ce fichier)
-├── AUDIT_COMPLET.md      # Audit securite/qualite
-├── AUDIT_SCALABILITE.md  # Audit performance/scalabilite
-├── CHANGELOG.md          # Historique deploiements
-└── roadmap/              # Fonctionnalites a venir (mode article, scheduled push)
+├── ROADMAP-AUDIT.md      # Roadmap, audit, emails, changelog (document unifie)
+└── roadmap/              # Backups code (mode article, scheduled push)
 
 supabase/
 └── migrations/           # 33 migrations SQL
@@ -632,7 +630,7 @@ export const EMAIL_HEADERS = {
 | Fichier | Description |
 |---------|-------------|
 | `docs/context.md` | Contexte projet (ce fichier) |
-| `AUDIT-ROADMAP-FEV-2026.md` | Audit conversion + roadmap features + micro-SaaS |
+| `docs/ROADMAP-AUDIT.md` | Roadmap, audit, emails, changelog (document unifie) |
 
 ---
 

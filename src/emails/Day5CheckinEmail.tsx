@@ -10,9 +10,10 @@ import { BaseLayout } from './BaseLayout';
 interface Day5CheckinEmailProps {
   shopName: string;
   totalScans: number;
+  referralCode?: string;
 }
 
-export function Day5CheckinEmail({ shopName, totalScans }: Day5CheckinEmailProps) {
+export function Day5CheckinEmail({ shopName, totalScans, referralCode }: Day5CheckinEmailProps) {
   const hasScans = totalScans > 0;
 
   return (
@@ -83,6 +84,20 @@ export function Day5CheckinEmail({ shopName, totalScans }: Day5CheckinEmailProps
           &Eacute;crire sur WhatsApp
         </Button>
       </Section>
+
+      {referralCode && (
+        <Section style={referralBox}>
+          <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
+          <Text style={referralText}>
+            Vous connaissez un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
+            Recommandez-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+          </Text>
+          <Text style={referralCode_style}>Votre code : <strong>{referralCode}</strong></Text>
+          <Text style={referralHint}>
+            Votre filleul nous communique votre code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+          </Text>
+        </Section>
+      )}
 
       <Text style={signature}>
         À très vite,
@@ -183,6 +198,48 @@ const signature = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '24px 0 0 0',
+};
+
+const referralBox = {
+  backgroundColor: '#faf5ff',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '24px 0',
+  border: '1px solid #e9d5ff',
+};
+
+const referralTitle = {
+  color: '#4b0082',
+  fontSize: '16px',
+  fontWeight: '700',
+  margin: '0 0 8px 0',
+};
+
+const referralText = {
+  color: '#4a5568',
+  fontSize: '14px',
+  lineHeight: '1.6',
+  margin: '0 0 12px 0',
+};
+
+const referralCode_style = {
+  color: '#4b0082',
+  fontSize: '18px',
+  fontWeight: '700',
+  fontFamily: 'monospace',
+  textAlign: 'center' as const,
+  margin: '0 0 8px 0',
+  padding: '8px',
+  backgroundColor: '#ffffff',
+  borderRadius: '8px',
+  border: '1px dashed #c4b5fd',
+};
+
+const referralHint = {
+  color: '#9ca3af',
+  fontSize: '12px',
+  textAlign: 'center' as const,
+  margin: '0',
 };
 
 export default Day5CheckinEmail;

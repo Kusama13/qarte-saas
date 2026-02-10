@@ -47,6 +47,8 @@ export function FooterSection() {
 
           {/* Pages légales */}
           <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+            <a href="/blog" className="text-gray-500 hover:text-gray-700 text-sm transition-colors">Blog</a>
+            <a href="/qarte-vs-carte-papier" className="text-gray-500 hover:text-gray-700 text-sm transition-colors">Qarte vs Carte papier</a>
             <a href="/contact" className="text-gray-500 hover:text-gray-700 text-sm transition-colors">Contact</a>
             <a href="/mentions-legales" className="text-gray-500 hover:text-gray-700 text-sm transition-colors">Mentions légales</a>
             <a href="/cgv" className="text-gray-500 hover:text-gray-700 text-sm transition-colors">CGV</a>

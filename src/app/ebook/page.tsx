@@ -11,52 +11,10 @@ import {
   Star,
   Zap,
   Mail,
-  Clock,
   Loader2,
 } from "lucide-react";
 
 // --- Components ---
-
-const UrgencyBanner = () => {
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, min: 0, sec: 0 });
-
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const midnight = new Date();
-      midnight.setHours(24, 0, 0, 0);
-      const diff = midnight.getTime() - now.getTime();
-
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const min = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const sec = Math.floor((diff % (1000 * 60)) / 1000);
-
-      return { hours, min, sec };
-    };
-
-    setTimeLeft(calculateTimeLeft());
-
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft());
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  const pad = (n: number) => n.toString().padStart(2, '0');
-
-  return (
-    <div className="bg-primary-900 text-white py-2 text-center text-sm font-medium flex items-center justify-center gap-3 px-4">
-      <span className="flex items-center gap-1.5">
-        <Clock className="w-4 h-4 text-secondary" />
-        OFFRE LIMITÉE :
-      </span>
-      <span>Le guide devient payant dans {pad(timeLeft.hours)}h {pad(timeLeft.min)}m {pad(timeLeft.sec)}s</span>
-      <span className="hidden md:inline text-primary-200">|</span>
-      <span className="hidden md:inline">Plus de 120 commerçants ont déjà lu</span>
-    </div>
-  );
-};
 
 const EbookTeaser = () => {
   return (
@@ -218,8 +176,6 @@ export default function EbookLandingPage() {
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-primary-100 selection:text-primary">
       <FacebookPixel />
-      <UrgencyBanner />
-
       {/* Header */}
       <nav className="max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
         <div className="flex items-center gap-2">

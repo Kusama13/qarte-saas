@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Headphones, CreditCard, Zap } from 'lucide-react';
+import { Check, Headphones, CreditCard, Zap, ShieldCheck } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
@@ -101,6 +101,10 @@ export function PricingSection() {
           <div className="flex items-center gap-2 px-4 py-2 bg-violet-50 rounded-full border border-violet-100">
             <Zap className="w-4 h-4 text-violet-600" />
             <span className="text-sm font-medium text-violet-700">Activation instantanée</span>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 rounded-full border border-amber-100">
+            <ShieldCheck className="w-4 h-4 text-amber-600" />
+            <span className="text-sm font-medium text-amber-700">Satisfait ou remboursé 30j</span>
           </div>
         </div>
       </div>
