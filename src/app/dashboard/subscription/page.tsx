@@ -348,6 +348,9 @@ export default function SubscriptionPage() {
                 </span>
                 <span className="text-lg text-gray-400 font-medium ml-1">€/mois</span>
               </div>
+              <p className="text-sm text-gray-400 mt-1.5">
+                Soit <span className="font-bold text-gray-600">{billingPlan === 'annual' ? '0,52' : '0,63'}€/jour</span> — moins qu&apos;un caf&eacute;
+              </p>
               {billingPlan === 'annual' && (
                 <p className="text-sm text-gray-400 mt-1"><span className="line-through">228 €</span> → <span className="font-bold text-emerald-600">190 €/an</span></p>
               )}
