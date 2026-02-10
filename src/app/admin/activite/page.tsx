@@ -10,6 +10,8 @@ import {
   Loader2,
   Filter,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -45,13 +47,19 @@ export default function ActivitePage() {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
   const [summary, setSummary] = useState<Summary>({ scans: 0, signups: 0, redemptions: 0, newCustomers: 0, contacts: 0 });
   const [activeFilter, setActiveFilter] = useState<EventType | 'all'>('all');
+  const [dateView, setDateView] = useState<'today' | 'yesterday'>('today');
 
   const fetchActivity = useCallback(async () => {
+    setLoading(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      const res = await fetch('/api/admin/activity-feed', {
+      const url = dateView === 'yesterday'
+        ? '/api/admin/activity-feed?date=yesterday'
+        : '/api/admin/activity-feed';
+
+      const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${session.access_token}` },
       });
 
@@ -65,7 +73,7 @@ export default function ActivitePage() {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, dateView]);
 
   useEffect(() => {
     fetchActivity();
@@ -77,12 +85,16 @@ export default function ActivitePage() {
 
   const totalEvents = events.length;
 
+  const displayDate = dateView === 'yesterday'
+    ? new Date(Date.now() - 86400000)
+    : new Date();
+
   const formattedDate = new Intl.DateTimeFormat('fr-FR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
-  }).format(new Date());
+  }).format(displayDate);
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('fr-FR', {
@@ -102,11 +114,41 @@ export default function ActivitePage() {
   return (
     <div className="space-y-6 sm:space-y-8 pt-10 lg:pt-0">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Activité</h1>
-        <div className="flex items-center gap-2 mt-1 text-gray-500 text-sm">
-          <Calendar className="w-4 h-4" />
-          <span className="capitalize">{formattedDate}</span>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">Activité</h1>
+          <div className="flex items-center gap-2 mt-1 text-gray-500 text-sm">
+            <Calendar className="w-4 h-4" />
+            <span className="capitalize">{formattedDate}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setDateView('yesterday')}
+            disabled={dateView === 'yesterday'}
+            className={cn(
+              'flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+              dateView === 'yesterday'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            )}
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+            Hier
+          </button>
+          <button
+            onClick={() => setDateView('today')}
+            disabled={dateView === 'today'}
+            className={cn(
+              'flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors',
+              dateView === 'today'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            )}
+          >
+            Aujourd&apos;hui
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
@@ -163,9 +205,13 @@ export default function ActivitePage() {
         {filteredEvents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-gray-500">
             <Eye className="w-16 h-16 mb-4 text-gray-300" />
-            <p className="text-lg font-medium">Aucune activité aujourd&apos;hui</p>
+            <p className="text-lg font-medium">
+              {dateView === 'yesterday' ? 'Aucune activité hier' : 'Aucune activité aujourd\'hui'}
+            </p>
             <p className="text-sm text-gray-400 mt-1">
-              Les événements apparaîtront ici au fil de la journée
+              {dateView === 'yesterday'
+                ? 'Aucun événement enregistré la veille'
+                : 'Les événements apparaîtront ici au fil de la journée'}
             </p>
           </div>
         ) : (

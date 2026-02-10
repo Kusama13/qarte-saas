@@ -134,8 +134,7 @@ export default function OnboardingChecklist() {
   }, [steps, confettiFired, merchant]);
 
   if (!merchant) return null;
-  // TODO: remettre après test
-  // if (merchant.subscription_status !== 'trial') return null;
+  if (merchant.subscription_status !== 'trial') return null;
   if (dismissed || loading) return null;
 
   const completedCount = steps.filter(s => s.done).length;

@@ -10,6 +10,8 @@ import {
   Save,
   Check,
   Loader2,
+  Gift,
+  Copy,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -29,6 +31,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [referralCopied, setReferralCopied] = useState(false);
 
   const [formData, setFormData] = useState({
     shopName: '',
@@ -266,6 +269,49 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Parrainage */}
+      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-emerald-100/30">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200">
+            <Gift className="w-4 h-4 md:w-5 md:h-5" />
+          </div>
+          <h2 className="text-base md:text-xl font-bold text-gray-900">
+            Parrainage
+          </h2>
+        </div>
+
+        <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+          Parrainez un collègue commerçant et recevez chacun <strong className="text-emerald-600">10€ de réduction</strong> sur votre prochain mois d&apos;abonnement.
+        </p>
+
+        {merchant?.referral_code && (
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100 mb-3">
+            <div className="flex-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Votre code</p>
+              <p className="text-lg font-mono font-bold text-[#4b0082]">{merchant.referral_code}</p>
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(merchant.referral_code);
+                setReferralCopied(true);
+                setTimeout(() => setReferralCopied(false), 2000);
+              }}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl bg-[#4b0082]/10 text-[#4b0082] hover:bg-[#4b0082]/20 transition-colors"
+            >
+              {referralCopied ? (
+                <><Check className="w-4 h-4" /> Copié !</>
+              ) : (
+                <><Copy className="w-4 h-4" /> Copier</>
+              )}
+            </button>
+          </div>
+        )}
+
+        <p className="text-xs text-gray-400">
+          Votre filleul nous communique votre code lors de son inscription et nous appliquons la réduction aux deux.
+        </p>
       </div>
 
       <div className="mt-6 md:mt-8 p-5 md:p-8 bg-red-50/50 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-red-100/50 shadow-lg shadow-red-100/20">

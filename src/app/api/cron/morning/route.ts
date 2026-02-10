@@ -401,7 +401,7 @@ export async function GET(request: NextRequest) {
     // Merchants with exactly 2 confirmed visits (1st is always merchant's test, 2nd is first real client)
     const { data: allConfiguredMerchants } = await supabase
       .from('merchants')
-      .select('id, shop_name, user_id')
+      .select('id, shop_name, user_id, referral_code')
       .not('reward_description', 'is', null)
       .in('subscription_status', ['trial', 'active']);
 
@@ -443,7 +443,7 @@ export async function GET(request: NextRequest) {
           if (!email) { results.firstScan.skipped++; return; }
 
           try {
-            const result = await sendFirstScanEmail(email, merchant.shop_name);
+            const result = await sendFirstScanEmail(email, merchant.shop_name, merchant.referral_code);
             if (result.success) {
               await supabase.from('pending_email_tracking').insert({
                 merchant_id: merchant.id, reminder_day: -100, pending_count: 0,

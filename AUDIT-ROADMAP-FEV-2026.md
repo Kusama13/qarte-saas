@@ -429,10 +429,10 @@ Signup (email+password)
 
 # RAPPELS IMPORTANTS
 
-## Coupons Stripe a creer
-- `QARTE50` : -10€ premier mois (deja cree)
-- `QARTEBOOST` : -10€/mois pendant 2 mois → **A CREER SUR STRIPE**
-- `QARTELAST` : -10€/mois pendant 3 mois → **A CREER SUR STRIPE**
+## ~~Coupons Stripe~~ ✅
+- ~~`QARTE50` : -10€ premier mois~~
+- ~~`QARTEBOOST` : -10€/mois pendant 2 mois~~
+- ~~`QARTELAST` : -10€/mois pendant 3 mois~~
 
 ## KPIs a suivre
 1. **Taux de completion setup** (signup → programme configure)

@@ -873,14 +873,15 @@ export async function scheduleIncompleteSignupReminder2Email(
 // Email premier scan (célébration)
 export async function sendFirstScanEmail(
   to: string,
-  shopName: string
+  shopName: string,
+  referralCode?: string
 ): Promise<SendEmailResult> {
   const check = checkResend();
   if (check) return check;
 
   try {
-    const html = await render(FirstScanEmail({ shopName }));
-    const text = await render(FirstScanEmail({ shopName }), { plainText: true });
+    const html = await render(FirstScanEmail({ shopName, referralCode }));
+    const text = await render(FirstScanEmail({ shopName, referralCode }), { plainText: true });
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,

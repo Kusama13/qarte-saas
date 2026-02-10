@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 import { sendWelcomeEmail, sendNewMerchantNotification, cancelScheduledEmail } from '@/lib/email';
-import { generateScanCode, formatPhoneNumber } from '@/lib/utils';
+import { generateScanCode, generateReferralCode, formatPhoneNumber } from '@/lib/utils';
 import type { MerchantCountry } from '@/types';
 
 // Client avec service role (bypass RLS)
@@ -101,6 +101,22 @@ export async function POST(request: NextRequest) {
       attempts++;
     }
 
+    // Générer un code de parrainage unique
+    let referral_code = generateReferralCode();
+    let referralAttempts = 0;
+
+    while (referralAttempts < maxAttempts) {
+      const { data: existingRef } = await supabaseAdmin
+        .from('merchants')
+        .select('id')
+        .eq('referral_code', referral_code)
+        .single();
+
+      if (!existingRef) break;
+      referral_code = generateReferralCode();
+      referralAttempts++;
+    }
+
     // Stamps par défaut selon le type de commerce (récompense laissée null pour forcer la config)
     const defaultStamps: Record<string, number> = {
       coiffeur: 10, barbier: 10, institut_beaute: 10, onglerie: 10,
@@ -113,6 +129,7 @@ export async function POST(request: NextRequest) {
         user_id,
         slug,
         scan_code,
+        referral_code,
         shop_name,
         shop_type,
         shop_address,

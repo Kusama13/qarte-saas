@@ -15,6 +15,9 @@ export async function GET(request: NextRequest) {
   try {
     const supabaseAdmin = getSupabaseAdmin();
 
+    // Date parameter: "yesterday" or default to today
+    const dateParam = request.nextUrl.searchParams.get('date');
+
     // Today in Paris timezone
     const now = new Date();
     const parisOffset = new Intl.DateTimeFormat('fr-FR', {
@@ -23,7 +26,23 @@ export async function GET(request: NextRequest) {
     }).format(now);
     // parisOffset = "DD/MM/YYYY" → parse to YYYY-MM-DD
     const [dd, mm, yyyy] = parisOffset.split('/');
-    const todayStart = `${yyyy}-${mm}-${dd}T00:00:00`;
+
+    let periodStart: string;
+    let periodEnd: string | null = null;
+
+    if (dateParam === 'yesterday') {
+      const yesterday = new Date(now);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yOffset = new Intl.DateTimeFormat('fr-FR', {
+        timeZone: 'Europe/Paris',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+      }).format(yesterday);
+      const [yd, ym, yy] = yOffset.split('/');
+      periodStart = `${yy}-${ym}-${yd}T00:00:00`;
+      periodEnd = `${yyyy}-${mm}-${dd}T00:00:00`;
+    } else {
+      periodStart = `${yyyy}-${mm}-${dd}T00:00:00`;
+    }
 
     // Fetch all data in parallel
     const [
@@ -35,32 +54,46 @@ export async function GET(request: NextRequest) {
       { data: allMerchants },
       { data: superAdmins },
     ] = await Promise.all([
-      supabaseAdmin
-        .from('visits')
-        .select('id, merchant_id, customer_id, visited_at, points_earned')
-        .gte('visited_at', todayStart)
-        .order('visited_at', { ascending: false })
-        .limit(200),
-      supabaseAdmin
-        .from('merchants')
-        .select('id, shop_name, created_at, user_id')
-        .gte('created_at', todayStart)
-        .order('created_at', { ascending: false }),
-      supabaseAdmin
-        .from('redemptions')
-        .select('id, merchant_id, customer_id, redeemed_at, tier')
-        .gte('redeemed_at', todayStart)
-        .order('redeemed_at', { ascending: false }),
-      supabaseAdmin
-        .from('loyalty_cards')
-        .select('id, merchant_id, customer_id, created_at')
-        .gte('created_at', todayStart)
-        .order('created_at', { ascending: false }),
-      supabaseAdmin
-        .from('contact_messages')
-        .select('id, name, email, subject, created_at')
-        .gte('created_at', todayStart)
-        .order('created_at', { ascending: false }),
+      (() => {
+        let q = supabaseAdmin
+          .from('visits')
+          .select('id, merchant_id, customer_id, visited_at, points_earned')
+          .gte('visited_at', periodStart);
+        if (periodEnd) q = q.lt('visited_at', periodEnd);
+        return q.order('visited_at', { ascending: false }).limit(200);
+      })(),
+      (() => {
+        let q = supabaseAdmin
+          .from('merchants')
+          .select('id, shop_name, created_at, user_id')
+          .gte('created_at', periodStart);
+        if (periodEnd) q = q.lt('created_at', periodEnd);
+        return q.order('created_at', { ascending: false });
+      })(),
+      (() => {
+        let q = supabaseAdmin
+          .from('redemptions')
+          .select('id, merchant_id, customer_id, redeemed_at, tier')
+          .gte('redeemed_at', periodStart);
+        if (periodEnd) q = q.lt('redeemed_at', periodEnd);
+        return q.order('redeemed_at', { ascending: false });
+      })(),
+      (() => {
+        let q = supabaseAdmin
+          .from('loyalty_cards')
+          .select('id, merchant_id, customer_id, created_at')
+          .gte('created_at', periodStart);
+        if (periodEnd) q = q.lt('created_at', periodEnd);
+        return q.order('created_at', { ascending: false });
+      })(),
+      (() => {
+        let q = supabaseAdmin
+          .from('contact_messages')
+          .select('id, name, email, subject, created_at')
+          .gte('created_at', periodStart);
+        if (periodEnd) q = q.lt('created_at', periodEnd);
+        return q.order('created_at', { ascending: false });
+      })(),
       supabaseAdmin
         .from('merchants')
         .select('id, shop_name, user_id'),

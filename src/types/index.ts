@@ -69,6 +69,7 @@ export interface Merchant {
   subscription_status: SubscriptionStatus;
   onboarding_completed: boolean;
   shield_enabled: boolean;
+  referral_code: string;
   created_at: string;
   updated_at: string;
   last_seen_at: string | null;

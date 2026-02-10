@@ -9,9 +9,10 @@ import { BaseLayout } from './BaseLayout';
 
 interface FirstScanEmailProps {
   shopName: string;
+  referralCode?: string;
 }
 
-export function FirstScanEmail({ shopName }: FirstScanEmailProps) {
+export function FirstScanEmail({ shopName, referralCode }: FirstScanEmailProps) {
   return (
     <BaseLayout preview={`${shopName}, votre 1er client a scanné !`}>
       <Heading style={heading}>
@@ -48,6 +49,19 @@ export function FirstScanEmail({ shopName }: FirstScanEmailProps) {
           Voir mes statistiques
         </Button>
       </Section>
+
+      {referralCode && (
+        <Section style={referralBox}>
+          <Text style={referralTitle}>&#127873; Parrainez un coll&egrave;gue !</Text>
+          <Text style={referralText}>
+            Recommandez Qarte &agrave; un autre commer&ccedil;ant et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+          </Text>
+          <Text style={referralCode_style}>Votre code : <strong>{referralCode}</strong></Text>
+          <Text style={referralHint}>
+            Votre filleul nous communique votre code lors de son inscription.
+          </Text>
+        </Section>
+      )}
 
       <Text style={signature}>
         L&apos;&eacute;quipe Qarte
@@ -134,6 +148,48 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
+};
+
+const referralBox = {
+  backgroundColor: '#faf5ff',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '24px 0',
+  border: '1px solid #e9d5ff',
+};
+
+const referralTitle = {
+  color: '#4b0082',
+  fontSize: '16px',
+  fontWeight: '700',
+  margin: '0 0 8px 0',
+};
+
+const referralText = {
+  color: '#4a5568',
+  fontSize: '14px',
+  lineHeight: '1.6',
+  margin: '0 0 12px 0',
+};
+
+const referralCode_style = {
+  color: '#4b0082',
+  fontSize: '18px',
+  fontWeight: '700',
+  fontFamily: 'monospace',
+  textAlign: 'center' as const,
+  margin: '0 0 8px 0',
+  padding: '8px',
+  backgroundColor: '#ffffff',
+  borderRadius: '8px',
+  border: '1px dashed #c4b5fd',
+};
+
+const referralHint = {
+  color: '#9ca3af',
+  fontSize: '12px',
+  textAlign: 'center' as const,
+  margin: '0',
 };
 
 const signature = {
