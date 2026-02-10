@@ -247,6 +247,10 @@
     animation: marquee 25s linear infinite;
   }
 
+  .animate-marquee-fast {
+    animation: marquee 12s linear infinite;
+  }
+
   .animate-blob {
     animation: blob 8s ease-in-out infinite;
   }
