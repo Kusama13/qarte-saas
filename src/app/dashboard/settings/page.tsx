@@ -12,6 +12,7 @@ import {
   Loader2,
   Gift,
   Copy,
+  Share2,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -162,6 +163,67 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {/* Parrainage - en haut */}
+      {merchant?.referral_code && (
+        <div className="mb-6 md:mb-8 p-5 md:p-8 bg-gradient-to-br from-emerald-50 to-teal-50 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-emerald-200/60 shadow-xl shadow-emerald-100/30">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200">
+              <Gift className="w-4 h-4 md:w-5 md:h-5" />
+            </div>
+            <h2 className="text-base md:text-xl font-bold text-gray-900">
+              Gagnez 10&euro; de r&eacute;duction
+            </h2>
+          </div>
+
+          <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+            Vous connaissez un(e) <strong className="text-gray-800">coiffeur, barbier, esth&eacute;ticien(ne), g&eacute;rant(e) d&apos;institut de beaut&eacute;, d&apos;onglerie ou de spa</strong> ? Recommandez-lui Qarte et recevez chacun <strong className="text-emerald-600">10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+          </p>
+
+          <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/80 border border-emerald-100 mb-4">
+            <div className="flex-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Votre code parrainage</p>
+              <p className="text-lg font-mono font-bold text-[#4b0082]">{merchant.referral_code}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(merchant.referral_code);
+                  setReferralCopied(true);
+                  setTimeout(() => setReferralCopied(false), 2000);
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-[#4b0082]/10 text-[#4b0082] hover:bg-[#4b0082]/20 transition-colors"
+              >
+                {referralCopied ? (
+                  <><Check className="w-4 h-4" /> Copi&eacute; !</>
+                ) : (
+                  <><Copy className="w-4 h-4" /> Copier</>
+                )}
+              </button>
+              <button
+                onClick={() => {
+                  const text = `Salut ! J'utilise Qarte pour g\u00e9rer ma carte de fid\u00e9lit\u00e9 digitale et c'est top. Utilise mon code ${merchant.referral_code} en t'inscrivant sur getqarte.com et on re\u00e7oit chacun 10\u20ac de r\u00e9duction. \u00c0 bient\u00f4t !`;
+                  if (navigator.share) {
+                    navigator.share({ text }).catch(() => {});
+                  } else {
+                    navigator.clipboard.writeText(text);
+                    setReferralCopied(true);
+                    setTimeout(() => setReferralCopied(false), 2000);
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
+              >
+                <Share2 className="w-4 h-4" />
+                Partager
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs text-gray-500">
+            Votre filleul nous communique votre code apr&egrave;s son inscription sur Qarte et nous appliquons la r&eacute;duction de 10&euro; &agrave; chacun de vous.
+          </p>
+        </div>
+      )}
+
       <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/50">
         <div className="flex items-center gap-3 mb-5 md:mb-8">
           <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-lg shadow-indigo-200">
@@ -269,49 +331,6 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
-      </div>
-
-      {/* Parrainage */}
-      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/80 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-emerald-100/30">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 md:p-2.5 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-200">
-            <Gift className="w-4 h-4 md:w-5 md:h-5" />
-          </div>
-          <h2 className="text-base md:text-xl font-bold text-gray-900">
-            Parrainage
-          </h2>
-        </div>
-
-        <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-          Parrainez un collègue commerçant et recevez chacun <strong className="text-emerald-600">10€ de réduction</strong> sur votre prochain mois d&apos;abonnement.
-        </p>
-
-        {merchant?.referral_code && (
-          <div className="flex items-center gap-3 p-4 rounded-2xl bg-gray-50 border border-gray-100 mb-3">
-            <div className="flex-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Votre code</p>
-              <p className="text-lg font-mono font-bold text-[#4b0082]">{merchant.referral_code}</p>
-            </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(merchant.referral_code);
-                setReferralCopied(true);
-                setTimeout(() => setReferralCopied(false), 2000);
-              }}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-xl bg-[#4b0082]/10 text-[#4b0082] hover:bg-[#4b0082]/20 transition-colors"
-            >
-              {referralCopied ? (
-                <><Check className="w-4 h-4" /> Copié !</>
-              ) : (
-                <><Copy className="w-4 h-4" /> Copier</>
-              )}
-            </button>
-          </div>
-        )}
-
-        <p className="text-xs text-gray-400">
-          Votre filleul nous communique votre code lors de son inscription et nous appliquons la réduction aux deux.
-        </p>
       </div>
 
       <div className="mt-6 md:mt-8 p-5 md:p-8 bg-red-50/50 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-red-100/50 shadow-lg shadow-red-100/20">

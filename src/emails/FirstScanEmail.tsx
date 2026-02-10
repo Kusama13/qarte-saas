@@ -13,6 +13,7 @@ interface FirstScanEmailProps {
 }
 
 export function FirstScanEmail({ shopName, referralCode }: FirstScanEmailProps) {
+
   return (
     <BaseLayout preview={`${shopName}, votre 1er client a scanné !`}>
       <Heading style={heading}>
@@ -37,6 +38,20 @@ export function FirstScanEmail({ shopName, referralCode }: FirstScanEmailProps) 
         </Text>
       </Section>
 
+      {referralCode && (
+        <Section style={referralBox}>
+          <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
+          <Text style={referralText}>
+            Vous connaissez un(e) coiffeur, barbier, esth&eacute;ticien(ne), g&eacute;rant(e) d&apos;institut de beaut&eacute;, d&apos;onglerie ou de spa ?
+            Recommandez-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+          </Text>
+          <Text style={referralCode_style}>Votre code : <strong>{referralCode}</strong></Text>
+          <Text style={referralHint}>
+            Votre filleul nous communique votre code apr&egrave;s son inscription sur Qarte et nous appliquons la r&eacute;duction &agrave; chacun de vous.
+          </Text>
+        </Section>
+      )}
+
       <Section style={tipsBox}>
         <Text style={tipsTitle}>Pour acc&eacute;l&eacute;rer :</Text>
         <Text style={tipItem}>&#8594; Proposez le scan &agrave; chaque client aujourd&apos;hui</Text>
@@ -49,19 +64,6 @@ export function FirstScanEmail({ shopName, referralCode }: FirstScanEmailProps) 
           Voir mes statistiques
         </Button>
       </Section>
-
-      {referralCode && (
-        <Section style={referralBox}>
-          <Text style={referralTitle}>&#127873; Parrainez un coll&egrave;gue !</Text>
-          <Text style={referralText}>
-            Recommandez Qarte &agrave; un autre commer&ccedil;ant et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
-          </Text>
-          <Text style={referralCode_style}>Votre code : <strong>{referralCode}</strong></Text>
-          <Text style={referralHint}>
-            Votre filleul nous communique votre code lors de son inscription.
-          </Text>
-        </Section>
-      )}
 
       <Text style={signature}>
         L&apos;&eacute;quipe Qarte
