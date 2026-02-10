@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -97,6 +98,16 @@ export default function ProgrammeFideliteOngleriePage() {
                 <span>Mis à jour en 2025</span>
               </div>
             </motion.div>
+            <div className="mt-8 rounded-2xl overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=1200&q=80"
+                alt="Vernis à ongles colorés — programme fidélité onglerie"
+                width={1200}
+                height={675}
+                className="w-full h-auto"
+                priority
+              />
+            </div>
           </div>
         </section>
 
@@ -212,6 +223,16 @@ export default function ProgrammeFideliteOngleriePage() {
                 </div>
               </div>
             </motion.section>
+
+            <div className="mb-16 rounded-2xl overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1610992015732-2449b76344bc?auto=format&fit=crop&w=1200&q=80"
+                alt="Manucure en cours dans un salon de nail art"
+                width={1200}
+                height={675}
+                className="w-full h-auto"
+              />
+            </div>
 
             {/* Section 2: Quel type */}
             <motion.section
@@ -406,6 +427,16 @@ export default function ProgrammeFideliteOngleriePage() {
                 </div>
               </div>
             </motion.section>
+
+            <div className="mb-16 rounded-2xl overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1519014816548-bf5fe059798b?auto=format&fit=crop&w=1200&q=80"
+                alt="Résultat de nail art professionnel sur ongles"
+                width={1200}
+                height={675}
+                className="w-full h-auto"
+              />
+            </div>
 
             {/* Section 4: Comment le mettre en place */}
             <motion.section
@@ -607,6 +638,16 @@ export default function ProgrammeFideliteOngleriePage() {
                 votre communication. Avec une carte papier, vous ne savez rien de vos clientes.
               </p>
             </motion.section>
+
+            <div className="mb-16 rounded-2xl overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1607779097040-26e80aa78e66?auto=format&fit=crop&w=1200&q=80"
+                alt="Professionnelle de l'onglerie au travail"
+                width={1200}
+                height={675}
+                className="w-full h-auto"
+              />
+            </div>
 
             {/* Section 6: Astuces */}
             <motion.section

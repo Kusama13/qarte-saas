@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -93,6 +94,17 @@ export default function AugmenterRecurrenceInstitutPage() {
               c&apos;est de les faire revenir. Voici les stratégies qui fonctionnent.
             </p>
           </motion.div>
+
+          <div className="mt-8 rounded-2xl overflow-hidden">
+            <Image
+              src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=1200&q=80"
+              alt="Soin du visage en institut de beauté"
+              width={1200}
+              height={675}
+              className="w-full h-auto"
+              priority
+            />
+          </div>
 
           {/* Table of contents */}
           <motion.nav
@@ -217,6 +229,16 @@ export default function AugmenterRecurrenceInstitutPage() {
               les occasions de visite.
             </p>
           </motion.section>
+
+          <div className="mb-14 rounded-2xl overflow-hidden">
+            <Image
+              src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=1200&q=80"
+              alt="Massage relaxant dans un institut de beauté"
+              width={1200}
+              height={675}
+              className="w-full h-auto"
+            />
+          </div>
 
           {/* Section 2: Programme de fidélité multi-services */}
           <motion.section
@@ -537,6 +559,16 @@ export default function AugmenterRecurrenceInstitutPage() {
             </div>
           </motion.section>
 
+          <div className="mb-14 rounded-2xl overflow-hidden">
+            <Image
+              src="https://images.unsplash.com/photo-1540555700478-4be289fbec6d?auto=format&fit=crop&w=1200&q=80"
+              alt="Ambiance spa et bien-être en institut"
+              width={1200}
+              height={675}
+              className="w-full h-auto"
+            />
+          </div>
+
           {/* Section 6: Parrainage */}
           <motion.section
             id="strategie-parrainage"
@@ -706,6 +738,16 @@ export default function AugmenterRecurrenceInstitutPage() {
               </p>
             </div>
           </motion.section>
+
+          <div className="mb-14 rounded-2xl overflow-hidden">
+            <Image
+              src="https://images.unsplash.com/photo-1552693673-1bf958298935?auto=format&fit=crop&w=1200&q=80"
+              alt="Produits de soins et ambiance zen en institut de beauté"
+              width={1200}
+              height={675}
+              className="w-full h-auto"
+            />
+          </div>
 
           {/* Conclusion */}
           <motion.section

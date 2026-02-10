@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -94,6 +95,17 @@ export default function FideliserClientesSalonCoiffurePage() {
                 d&apos;en acquérir une nouvelle. Voici les stratégies concrètes qui font la différence.
               </p>
             </motion.div>
+
+            <div className="mt-8 rounded-2xl overflow-hidden">
+              <Image
+                src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80"
+                alt="Intérieur d'un salon de coiffure moderne et chaleureux"
+                width={1200}
+                height={675}
+                className="w-full h-auto"
+                priority
+              />
+            </div>
           </div>
         </section>
 
@@ -226,6 +238,16 @@ export default function FideliserClientesSalonCoiffurePage() {
               </div>
             </div>
           </motion.section>
+
+          <div className="mb-16 rounded-2xl overflow-hidden">
+            <Image
+              src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1200&q=80"
+              alt="Cliente souriante dans un salon de coiffure"
+              width={1200}
+              height={675}
+              className="w-full h-auto"
+            />
+          </div>
 
           {/* --- Section 3: Les 7 stratégies --- */}
           <motion.section
@@ -409,6 +431,16 @@ export default function FideliserClientesSalonCoiffurePage() {
               </p>
             </div>
           </motion.section>
+
+          <div className="mb-16 rounded-2xl overflow-hidden">
+            <Image
+              src="https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=1200&q=80"
+              alt="Coiffeuse travaillant sur la coiffure d'une cliente"
+              width={1200}
+              height={675}
+              className="w-full h-auto"
+            />
+          </div>
 
           {/* --- Section 4: Programme de fidélité --- */}
           <motion.section
@@ -604,6 +636,16 @@ export default function FideliserClientesSalonCoiffurePage() {
               </div>
             </div>
           </motion.section>
+
+          <div className="mb-16 rounded-2xl overflow-hidden">
+            <Image
+              src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?auto=format&fit=crop&w=1200&q=80"
+              alt="Outils et accessoires de salon de coiffure professionnel"
+              width={1200}
+              height={675}
+              className="w-full h-auto"
+            />
+          </div>
 
           {/* --- Section 6: CTA --- */}
           <section id="lancer-programme" className="scroll-mt-24">

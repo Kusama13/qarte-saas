@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowRight, Clock, BookOpen } from 'lucide-react';
 import { FacebookPixel } from '@/components/analytics/FacebookPixel';
@@ -17,6 +18,7 @@ interface Article {
   readTime: string;
   category: string;
   date: string;
+  image: string;
 }
 
 const articles: Article[] = [
@@ -28,6 +30,7 @@ const articles: Article[] = [
     readTime: '8 min',
     category: 'Coiffure',
     date: '2025-02-10',
+    image: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
   },
   {
     slug: 'programme-fidelite-onglerie-guide',
@@ -37,6 +40,7 @@ const articles: Article[] = [
     readTime: '7 min',
     category: 'Onglerie',
     date: '2025-02-10',
+    image: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=800&q=80',
   },
   {
     slug: 'augmenter-recurrence-client-institut-beaute',
@@ -46,6 +50,7 @@ const articles: Article[] = [
     readTime: '7 min',
     category: 'Institut',
     date: '2025-02-10',
+    image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=800&q=80',
   },
 ];
 
@@ -113,26 +118,36 @@ export default function BlogPage() {
                     href={`/blog/${article.slug}`}
                     className="group block h-full"
                   >
-                    <div className="h-full border border-gray-100 rounded-2xl p-6 hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300">
-                      <div className="flex items-center gap-3 mb-4">
-                        <span className="inline-flex px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-full">
-                          {article.category}
-                        </span>
-                        <span className="flex items-center gap-1 text-xs text-gray-400">
-                          <Clock className="w-3 h-3" />
-                          {article.readTime}
+                    <div className="h-full border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg hover:shadow-indigo-500/5 transition-all duration-300">
+                      <div className="relative h-48 overflow-hidden bg-gray-100">
+                        <Image
+                          src={article.image}
+                          alt={article.title}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                      <div className="p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="inline-flex px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-semibold rounded-full">
+                            {article.category}
+                          </span>
+                          <span className="flex items-center gap-1 text-xs text-gray-400">
+                            <Clock className="w-3 h-3" />
+                            {article.readTime}
+                          </span>
+                        </div>
+                        <h2 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors leading-tight">
+                          {article.title}
+                        </h2>
+                        <p className="text-sm text-gray-500 leading-relaxed mb-4">
+                          {article.description}
+                        </p>
+                        <span className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 group-hover:gap-2 transition-all">
+                          Lire l&apos;article
+                          <ArrowRight className="w-4 h-4" />
                         </span>
                       </div>
-                      <h2 className="text-lg font-bold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors leading-tight">
-                        {article.title}
-                      </h2>
-                      <p className="text-sm text-gray-500 leading-relaxed mb-4">
-                        {article.description}
-                      </p>
-                      <span className="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 group-hover:gap-2 transition-all">
-                        Lire l&apos;article
-                        <ArrowRight className="w-4 h-4" />
-                      </span>
                     </div>
                   </Link>
                 </motion.article>
