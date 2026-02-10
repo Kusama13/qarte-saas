@@ -1521,7 +1521,7 @@ export default function CustomerCardPage({
                 className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98]"
               >
                 <Sparkles className="w-5 h-5" />
-                Créer mon programme gratuit
+                Essayer gratuitement 15 jours
                 <ArrowRight className="w-5 h-5" />
               </motion.button>
             </Link>

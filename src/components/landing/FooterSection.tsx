@@ -18,7 +18,7 @@ export function FooterSection() {
             onClick={() => { trackCtaClick('footer_cta', 'footer_section'); fbEvents.initiateCheckout(); }}
             className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
           >
-            Créer ma carte gratuite
+            Essayer gratuitement 15 jours
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </a>
           <p className="text-sm text-gray-500 mt-3">Essai 15 jours gratuit • Sans carte bancaire</p>
