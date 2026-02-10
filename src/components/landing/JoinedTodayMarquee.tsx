@@ -1,68 +1,40 @@
 'use client';
 
-import Image from 'next/image';
-
-/**
- * Logo wall — "Ils nous font confiance"
- *
- * Design: grayscale + reduced opacity for visual harmony.
- * All logos share a fixed height (36px) with auto width to normalize
- * different aspect ratios without distortion.
- *
- * To add/replace logos:
- * 1. Drop the file in /public/images/logos/ (PNG transparent bg, min 200px wide)
- * 2. Add/update the entry below
- */
-const PARTNER_LOGOS = [
-  { name: 'Atelier Onyx', src: '/images/logos/atelier-onyx.jpeg' },
-  { name: 'Clara Nails', src: '/images/logos/clara-nails.png' },
-  { name: "L'Institut by Leana", src: '/images/logos/institut-by-leana.png' },
-  { name: 'La Canopée des Sens', src: '/images/logos/canopee-des-sens.png' },
-  { name: 'Lash by Noumi', src: '/images/logos/lash-by-noumi.png' },
-  { name: 'Les Ongles de Eva', src: '/images/logos/les-ongles-de-eva.png' },
-  { name: 'Les Ongles de Nini', src: '/images/logos/les-ongles-de-nini.jpeg' },
-  { name: 'Light on Nails', src: '/images/logos/light-on-nails.png' },
-  { name: 'Lylabella', src: '/images/logos/lylabella.jpg' },
-  { name: 'Nana by Touch', src: '/images/logos/nana-by-touch.png' },
+const JOINED_TODAY_ESTABLISHMENTS = [
+  'Lunzia Studio',
+  'La Canopée des Sens',
+  'Lylabella',
+  'Doux Regard',
+  'Nour Beauté',
+  'Autres Regards',
+  'Le Comptoir du Visage',
 ];
 
 export function JoinedTodayMarquee() {
-  // Duplicate for seamless infinite scroll
-  const logos = [...PARTNER_LOGOS, ...PARTNER_LOGOS];
-
   return (
-    <section className="relative bg-white border-y border-gray-100 py-8 overflow-hidden">
-      {/* Label */}
-      <p className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">
-        <span className="inline-block w-2 h-2 bg-emerald-500 rounded-full animate-pulse mr-2 align-middle" />
-        Ils nous ont rejoint aujourd&apos;hui — rejoignez-les
-      </p>
+    <div className="relative bg-gradient-to-r from-rose-50 via-pink-50 to-rose-50 border-y border-rose-100 py-3 overflow-hidden">
+      <div className="flex items-center">
+        {/* Fixed label on the left with opaque background */}
+        <div className="absolute left-0 top-0 bottom-0 flex items-center px-4 pr-6 bg-rose-50 z-10 border-r border-rose-200">
+          <span className="text-xs font-semibold uppercase tracking-wider text-rose-500">
+            Ils nous ont rejoint
+          </span>
+        </div>
 
-      {/* Marquee container */}
-      <div className="relative">
-        {/* Left fade */}
-        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
-        {/* Right fade */}
-        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
-
-        {/* Scrolling track */}
-        <div className="flex animate-marquee items-center">
-          {logos.map((logo, i) => (
-            <div
-              key={`${logo.name}-${i}`}
-              className="flex-shrink-0 mx-8 sm:mx-12"
-            >
-              <Image
-                src={logo.src}
-                alt={logo.name}
-                width={120}
-                height={36}
-                className="h-8 sm:h-9 w-auto object-contain grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-300"
-              />
+        {/* Scrolling names - with left padding to not overlap label */}
+        <div className="animate-marquee flex items-center whitespace-nowrap pl-44">
+          {[...JOINED_TODAY_ESTABLISHMENTS, ...JOINED_TODAY_ESTABLISHMENTS].map((name, i) => (
+            <div key={i} className="flex items-center mx-6">
+              <span
+                className="font-playfair text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600"
+              >
+                {name}
+              </span>
+              <span className="mx-6 text-rose-300">✦</span>
             </div>
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

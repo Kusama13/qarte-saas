@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+  Star,
   ChevronDown,
   X,
   Clock,
@@ -146,28 +147,51 @@ export function HeroSection() {
             Conçu pour les <span className="text-gray-900 font-medium">instituts de beauté, ongleries et salons</span>. QR code, points, récompenses. <span className="text-gray-900 font-medium">+40% de récurrence</span> en moyenne.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-3 lg:gap-4">
-            <div className="flex flex-col items-center sm:items-start">
-              <a
-                href="/auth/merchant/signup"
-                onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); }}
-                className="group relative flex items-center justify-center px-7 py-3.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm lg:text-base rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <span className="relative z-10">Essayer gratuitement</span>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </a>
-              <p className="text-[11px] text-gray-400 mt-1.5 tracking-wide">Sans carte bancaire · Sans engagement</p>
-            </div>
+          <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
+            <a
+              href="/auth/merchant/signup"
+              onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); }}
+              className="group relative px-7 py-3.5 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 text-center shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <span className="relative z-10">Lancer mon programme gratuit</span>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </a>
             <a
               href="/customer/card/demo-onglerie?preview=true&demo=true"
               onClick={() => trackCtaClick('hero_demo', 'hero_section')}
-              className="flex items-center justify-center gap-2 px-7 py-3.5 border border-gray-200 bg-white text-gray-700 font-semibold text-sm lg:text-base rounded-xl transition-all duration-300 hover:border-indigo-300 hover:text-indigo-600 hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 px-7 py-3.5 lg:px-9 lg:py-4 bg-gradient-to-r from-pink-500 to-indigo-500 text-white font-bold rounded-xl transition-all duration-300 text-center shadow-lg shadow-pink-500/25 hover:shadow-pink-500/40 hover:from-pink-600 hover:to-indigo-600 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Eye className="w-4 h-4" />
+              <Eye className="w-5 h-5" />
               Voir une démo
             </a>
           </div>
 
+          {/* Social Proof Stats */}
+          <div className="flex flex-wrap items-center gap-5 pt-6 border-t border-gray-200/60 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-1.5">
+                {[1,2,3,4].map((i) => (
+                  <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-rose-400 to-pink-400 border-2 border-white flex items-center justify-center text-white text-[9px] font-bold">
+                    {['S', 'C', 'M', 'L'][i-1]}
+                  </div>
+                ))}
+              </div>
+              <span className="text-gray-600"><span className="font-semibold text-gray-900">150+</span> instituts</span>
+            </div>
+            <div className="hidden sm:block w-px h-4 bg-gray-200" />
+            <div className="flex items-center gap-1">
+              <div className="flex">
+                {[1,2,3,4,5].map((i) => (
+                  <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                ))}
+              </div>
+              <span className="text-gray-600"><span className="font-semibold text-gray-900">4.9/5</span></span>
+            </div>
+            <div className="hidden sm:block w-px h-4 bg-gray-200" />
+            <div className="text-gray-600">
+              <span className="font-semibold text-gray-900">12,000+</span> client(e)s fidélisé(e)s
+            </div>
+          </div>
         </div>
 
         {/* iPhone Mockup - Peek */}
