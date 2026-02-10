@@ -12,28 +12,19 @@ const JOINED_TODAY_ESTABLISHMENTS = [
 
 export function JoinedTodayMarquee() {
   return (
-    <div className="relative bg-gradient-to-r from-rose-50 via-pink-50 to-rose-50 border-y border-rose-100 py-3 overflow-hidden">
-      <div className="flex items-center">
-        {/* Fixed label on the left with opaque background */}
-        <div className="absolute left-0 top-0 bottom-0 flex items-center px-4 pr-6 bg-rose-50 z-10 border-r border-rose-200">
-          <span className="text-xs font-semibold uppercase tracking-wider text-rose-500">
-            Ils nous ont rejoint
-          </span>
-        </div>
-
-        {/* Scrolling names - with left padding to not overlap label */}
-        <div className="animate-marquee flex items-center whitespace-nowrap pl-44">
-          {[...JOINED_TODAY_ESTABLISHMENTS, ...JOINED_TODAY_ESTABLISHMENTS].map((name, i) => (
-            <div key={i} className="flex items-center mx-6">
-              <span
-                className="font-playfair text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600"
-              >
-                {name}
-              </span>
-              <span className="mx-6 text-rose-300">✦</span>
-            </div>
-          ))}
-        </div>
+    <div className="bg-gradient-to-r from-rose-50 via-pink-50 to-rose-50 border-y border-rose-100 py-3 overflow-hidden">
+      <p className="text-center text-xs font-semibold uppercase tracking-wider text-rose-500 mb-2">
+        Ils nous ont rejoint
+      </p>
+      <div className="animate-marquee flex items-center whitespace-nowrap">
+        {[...JOINED_TODAY_ESTABLISHMENTS, ...JOINED_TODAY_ESTABLISHMENTS].map((name, i) => (
+          <div key={i} className="flex items-center mx-6">
+            <span className="font-playfair text-base font-semibold text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-pink-600">
+              {name}
+            </span>
+            <span className="mx-6 text-rose-300">✦</span>
+          </div>
+        ))}
       </div>
     </div>
   );
