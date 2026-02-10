@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Contact | Qarte - Programme de fidélité digital',
-  description: 'Contactez l\'équipe Qarte pour toute question sur notre solution de fidélité digitale. Nous sommes là pour vous aider.',
+  title: 'Contact - Une question sur votre fidélité digitale ?',
+  description: 'Besoin d\'aide pour votre carte de fidélité digitale ? Notre équipe vous répond sous 24h. Accompagnement personnalisé pour votre salon de beauté.',
   openGraph: {
     title: 'Contact | Qarte',
-    description: 'Contactez l\'équipe Qarte pour toute question sur notre solution de fidélité digitale.',
+    description: 'Besoin d\'aide pour votre carte de fidélité digitale ? Notre équipe vous répond sous 24h.',
   },
 };
 

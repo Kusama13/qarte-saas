@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Tarifs | Qarte - Programme de fidélité digital',
-  description: 'Découvrez nos tarifs simples et transparents. 19€/mois pour digitaliser votre programme de fidélité. Essai gratuit de 15 jours sans engagement.',
+  title: 'Tarifs - Programme de fidélité dès 19€/mois',
+  description: 'Tarifs transparents pour votre carte de fidélité digitale. Essai gratuit 30 jours, puis dès 19€/mois. Idéal pour coiffeurs, barbiers et instituts de beauté.',
   openGraph: {
-    title: 'Tarifs | Qarte - Programme de fidélité digital',
-    description: 'Découvrez nos tarifs simples et transparents. 19€/mois pour digitaliser votre programme de fidélité.',
+    title: 'Tarifs - Programme de fidélité dès 19€/mois | Qarte',
+    description: 'Tarifs transparents pour votre carte de fidélité digitale. Essai gratuit 30 jours, puis dès 19€/mois.',
   },
 };
 

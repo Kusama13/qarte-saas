@@ -12,11 +12,11 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'Qarte - Digitalisez vos cartes de fidélité',
+    default: 'Qarte - Carte de fidélité digitale pour salons de beauté',
     template: '%s | Qarte',
   },
-  description: 'La solution la moins chère du marché pour digitaliser vos cartes de fidélité. Démarrez gratuitement, sans carte bancaire.',
-  keywords: ['carte de fidélité', 'fidélisation client', 'commerce', 'QR code', 'digital', 'programme fidélité'],
+  description: 'Programme de fidélité digital pour coiffeurs, barbiers, instituts de beauté et ongleries. La solution la moins chère du marché. Essai gratuit, sans carte bancaire.',
+  keywords: ['carte de fidélité', 'fidélisation client', 'programme fidélité', 'salon de coiffure', 'barbier', 'institut de beauté', 'onglerie', 'carte de fidélité coiffeur', 'QR code', 'digital'],
   authors: [{ name: 'Qarte' }],
   creator: 'Qarte',
   publisher: 'Qarte',
@@ -26,8 +26,8 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: 'Qarte - Digitalisez vos cartes de fidélité',
-    description: 'La solution la moins chère du marché pour digitaliser vos cartes de fidélité. Démarrez gratuitement, sans carte bancaire.',
+    title: 'Qarte - Carte de fidélité digitale pour salons de beauté',
+    description: 'Programme de fidélité digital pour coiffeurs, barbiers, instituts de beauté et ongleries. La solution la moins chère du marché. Essai gratuit, sans carte bancaire.',
     url: baseUrl,
     siteName: 'Qarte',
     type: 'website',
@@ -36,8 +36,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Qarte - Digitalisez vos cartes de fidélité',
-    description: 'La solution la moins chère du marché pour digitaliser vos cartes de fidélité.',
+    title: 'Qarte - Carte de fidélité digitale pour salons de beauté',
+    description: 'Programme de fidélité digital pour coiffeurs, barbiers, instituts de beauté et ongleries. Essai gratuit, sans carte bancaire.',
     images: ['/opengraph-image'],
   },
   robots: {
