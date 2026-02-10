@@ -148,15 +148,17 @@ export function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 lg:gap-4">
-            <a
-              href="/auth/merchant/signup"
-              onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); }}
-              className="group relative px-7 py-3.5 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 text-center shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <span className="relative z-10">Essayer gratuitement 15 jours</span>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
-            <p className="text-xs text-gray-400 sm:hidden mt-1 text-center">Sans carte bancaire • Sans engagement</p>
+            <div className="flex flex-col items-center sm:items-start">
+              <a
+                href="/auth/merchant/signup"
+                onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); }}
+                className="group relative px-7 py-3.5 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 text-center shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span className="relative z-10">Essayer gratuitement 15 jours</span>
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+              <p className="text-xs text-gray-400 mt-2">Sans carte bancaire • Sans engagement</p>
+            </div>
             <a
               href="/customer/card/demo-onglerie?preview=true&demo=true"
               onClick={() => trackCtaClick('hero_demo', 'hero_section')}
