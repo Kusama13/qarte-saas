@@ -26,10 +26,10 @@ import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50' },
   { href: '/dashboard/program', icon: Gift, label: 'Mon Programme', color: 'text-pink-500', bg: 'bg-pink-50' },
-  { href: '/dashboard/qr-download', icon: QrCode, label: 'Télécharger QR', color: 'text-violet-500', bg: 'bg-violet-50' },
+  { href: '/dashboard/qr-download', icon: QrCode, label: 'Mon QR code', color: 'text-violet-500', bg: 'bg-violet-50' },
   { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
   { href: '/dashboard/members', icon: Crown, label: 'Membres', color: 'text-amber-500', bg: 'bg-amber-50' },
-  { href: '/dashboard/marketing', icon: Megaphone, label: 'Marketing', color: 'text-orange-500', bg: 'bg-orange-50' },
+  { href: '/dashboard/marketing', icon: Megaphone, label: 'Notifications', color: 'text-orange-500', bg: 'bg-orange-50' },
   { href: '/dashboard/subscription', icon: Wallet, label: 'Abonnement', color: 'text-teal-500', bg: 'bg-teal-50' },
   { href: '/dashboard/settings', icon: Settings, label: 'Paramètres', color: 'text-slate-500', bg: 'bg-slate-50' },
 ];
@@ -230,19 +230,18 @@ function DashboardLayoutContent({
           </nav>
 
           <div className="px-3 py-3 lg:px-4 lg:py-4 border-t border-gray-100/50 bg-gray-50/30">
-            <div className="flex items-center gap-2.5 px-2.5 py-2 mb-2 bg-white rounded-xl border border-gray-100 shadow-sm">
+            <Link
+              href="/dashboard/settings"
+              onClick={() => setSidebarOpen(false)}
+              className="flex items-center gap-2.5 px-2.5 py-2 mb-2 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all duration-200 group"
+            >
               <div className="flex items-center justify-center w-9 h-9 font-bold text-white text-sm rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md shadow-indigo-200/50 shrink-0">
                 {merchant?.shop_name?.charAt(0) || 'M'}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 truncate text-sm">
-                  {merchant?.shop_name}
-                </p>
-                <p className="text-[11px] text-gray-400 truncate">
-                  {merchant?.phone}
-                </p>
-              </div>
-            </div>
+              <p className="font-semibold text-gray-900 truncate text-sm flex-1 min-w-0 group-hover:text-indigo-600 transition-colors">
+                {merchant?.shop_name}
+              </p>
+            </Link>
             <div className="flex items-center gap-1">
               <a
                 href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20avec%20Qarte"
