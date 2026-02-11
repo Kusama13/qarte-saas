@@ -17,7 +17,6 @@ import {
   InactiveMerchantDay7Email,
   InactiveMerchantDay14Email,
   InactiveMerchantDay30Email,
-  SocialKitEmail,
   QRCodeEmail,
   FirstScanEmail,
   FirstRewardEmail,
@@ -745,50 +744,14 @@ export async function sendInactiveMerchantDay30Email(
   }
 }
 
-// Email QR code automatique (après configuration du programme)
+// Email QR code + kit promo (après configuration du programme)
 export async function sendQRCodeEmail(
   to: string,
-  shopName: string
-): Promise<SendEmailResult> {
-  const check = checkResend();
-  if (check) return check;
-
-  try {
-    const html = await render(QRCodeEmail({ businessName: shopName }));
-    const text = await render(QRCodeEmail({ businessName: shopName }), { plainText: true });
-
-    const { error } = await resend!.emails.send({
-      from: EMAIL_FROM,
-      to,
-      replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName}, votre QR code est prêt`,
-      html,
-      text,
-      headers: EMAIL_HEADERS,
-    });
-
-    if (error) {
-      logger.error('Failed to send QR code email', error);
-      return { success: false, error: error.message };
-    }
-
-    logger.info(`QR code email sent to ${to}`);
-    return { success: true };
-  } catch (error) {
-    logger.error('Error sending QR code email', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
-  }
-}
-
-// Email kit réseaux sociaux (après configuration du programme)
-export async function sendSocialKitEmail(
-  to: string,
   shopName: string,
-  rewardDescription: string,
-  stampsRequired: number,
-  primaryColor: string,
+  rewardDescription?: string,
+  stampsRequired?: number,
+  primaryColor?: string,
   logoUrl?: string,
-  socialImageUrl?: string,
   tier2Enabled?: boolean,
   tier2StampsRequired?: number | null,
   tier2RewardDescription?: string | null
@@ -803,33 +766,32 @@ export async function sendSocialKitEmail(
       stampsRequired,
       primaryColor,
       logoUrl,
-      socialImageUrl,
       tier2Enabled,
       tier2StampsRequired,
       tier2RewardDescription,
     };
-    const html = await render(SocialKitEmail(emailProps));
-    const text = await render(SocialKitEmail(emailProps), { plainText: true });
+    const html = await render(QRCodeEmail(emailProps));
+    const text = await render(QRCodeEmail(emailProps), { plainText: true });
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
       to,
       replyTo: EMAIL_REPLY_TO,
-      subject: `${shopName} — Votre visuel réseaux sociaux est prêt !`,
+      subject: `${shopName}, tout est prêt — lancez votre programme !`,
       html,
       text,
       headers: EMAIL_HEADERS,
     });
 
     if (error) {
-      logger.error('Failed to send social kit email', error);
+      logger.error('Failed to send QR code email', error);
       return { success: false, error: error.message };
     }
 
-    logger.info(`Social kit email sent to ${to}`);
+    logger.info(`QR code email sent to ${to}`);
     return { success: true };
   } catch (error) {
-    logger.error('Error sending social kit email', error);
+    logger.error('Error sending QR code email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

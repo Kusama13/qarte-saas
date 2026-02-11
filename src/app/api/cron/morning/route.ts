@@ -13,7 +13,6 @@ import {
   sendInactiveMerchantDay30Email,
   sendDay5CheckinEmail,
   sendQRCodeEmail,
-  sendSocialKitEmail,
   sendFirstScanEmail,
   sendFirstRewardEmail,
   sendWeeklyDigestEmail,
@@ -83,7 +82,6 @@ export async function GET(request: NextRequest) {
     programRemindersDay3: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     day5Checkin: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     qrCode: { processed: 0, sent: 0, skipped: 0, errors: 0 },
-    socialKit: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstClientScript: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     quickCheck: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstScan: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -294,11 +292,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // ==================== 2e. QR CODE EMAIL (programme configuré, envoi unique) ====================
+    // ==================== 2e. QR CODE + KIT PROMO EMAIL (programme configuré, envoi unique) ====================
     {
       const { data: qrCandidates } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id')
+        .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description')
         .not('reward_description', 'is', null)
         .in('subscription_status', ['trial', 'active']);
 
@@ -323,7 +321,13 @@ export async function GET(request: NextRequest) {
             if (!email) { results.qrCode.skipped++; return; }
 
             try {
-              const result = await sendQRCodeEmail(email, merchant.shop_name);
+              const result = await sendQRCodeEmail(
+                email, merchant.shop_name,
+                merchant.reward_description || undefined,
+                merchant.stamps_required, merchant.primary_color,
+                merchant.logo_url || undefined,
+                merchant.tier2_enabled, merchant.tier2_stamps_required, merchant.tier2_reward_description
+              );
               if (result.success) {
                 await supabase.from('pending_email_tracking').insert({
                   merchant_id: merchant.id, reminder_day: -103, pending_count: 0,
@@ -331,73 +335,6 @@ export async function GET(request: NextRequest) {
                 results.qrCode.sent++;
               } else { results.qrCode.errors++; }
             } catch { results.qrCode.errors++; }
-          });
-        }
-      }
-    }
-
-    // ==================== 2f. SOCIAL KIT EMAIL (programme + logo, 2j après QR code) ====================
-    {
-      const { data: socialKitCandidates } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description')
-        .not('reward_description', 'is', null)
-        .not('logo_url', 'is', null)
-        .in('subscription_status', ['trial', 'active']);
-
-      if (socialKitCandidates && socialKitCandidates.length > 0) {
-        // Check who already got the social kit email
-        const { data: existingSocialKit } = await supabase
-          .from('pending_email_tracking')
-          .select('merchant_id')
-          .in('merchant_id', socialKitCandidates.map(m => m.id))
-          .eq('reminder_day', -104);
-
-        const alreadySentSocialKit = new Set((existingSocialKit || []).map(t => t.merchant_id));
-
-        // Check who got QR code email at least 2 days ago
-        const { data: qrSentTrackings } = await supabase
-          .from('pending_email_tracking')
-          .select('merchant_id, sent_at')
-          .in('merchant_id', socialKitCandidates.map(m => m.id))
-          .eq('reminder_day', -103);
-
-        const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
-        const qrSentOver2DaysAgo = new Set(
-          (qrSentTrackings || [])
-            .filter(t => new Date(t.sent_at) <= twoDaysAgo)
-            .map(t => t.merchant_id)
-        );
-
-        // Filter: got QR code ≥2 days ago AND didn't get social kit yet
-        const socialKitToSend = socialKitCandidates.filter(
-          m => qrSentOver2DaysAgo.has(m.id) && !alreadySentSocialKit.has(m.id)
-        );
-
-        results.socialKit.processed = socialKitCandidates.length;
-        results.socialKit.skipped = socialKitCandidates.length - socialKitToSend.length;
-
-        if (socialKitToSend.length > 0) {
-          const skEmailMap = await batchGetUserEmails([...new Set(socialKitToSend.map(m => m.user_id))]);
-
-          await batchProcess(socialKitToSend, async (merchant) => {
-            const email = skEmailMap.get(merchant.user_id);
-            if (!email) { results.socialKit.skipped++; return; }
-
-            try {
-              const result = await sendSocialKitEmail(
-                email, merchant.shop_name, merchant.reward_description!,
-                merchant.stamps_required, merchant.primary_color,
-                merchant.logo_url || undefined, undefined,
-                merchant.tier2_enabled, merchant.tier2_stamps_required, merchant.tier2_reward_description
-              );
-              if (result.success) {
-                await supabase.from('pending_email_tracking').insert({
-                  merchant_id: merchant.id, reminder_day: -104, pending_count: 0,
-                });
-                results.socialKit.sent++;
-              } else { results.socialKit.errors++; }
-            } catch { results.socialKit.errors++; }
           });
         }
       }

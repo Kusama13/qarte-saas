@@ -322,33 +322,24 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
 
             {/* Qarte Branding */}
             <div
-              className="flex items-center justify-center gap-1 mt-3"
-              style={{ opacity: 0.8 }}
+              className="flex items-center justify-center mt-3"
+              style={{
+                padding: `${3 * scale}px ${10 * scale}px`,
+                borderRadius: `${20 * scale}px`,
+                backgroundColor: 'rgba(255,255,255,0.9)',
+              }}
             >
               <span
-                className="text-white font-medium"
-                style={{ fontSize: `${8 * scale}px` }}
+                className="font-medium"
+                style={{ fontSize: `${8 * scale}px`, color: '#9ca3af' }}
               >
-                Propulsé par
+                Propulsé par&nbsp;
               </span>
               <span
-                className="text-white font-black"
-                style={{ fontSize: `${10 * scale}px` }}
+                className="font-black"
+                style={{ fontSize: `${10 * scale}px`, color: '#4b5563' }}
               >
-                Qarte
-              </span>
-              <span
-                className="text-white"
-                style={{ fontSize: `${9 * scale}px` }}
-              >
-                avec
-              </span>
-              <span style={{ fontSize: `${9 * scale}px` }}>❤️</span>
-              <span
-                className="text-white font-medium"
-                style={{ fontSize: `${8 * scale}px` }}
-              >
-                en France
+                getqarte.com
               </span>
             </div>
           </div>

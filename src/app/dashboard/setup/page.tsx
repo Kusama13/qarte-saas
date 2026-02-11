@@ -125,16 +125,14 @@ export default function OnboardingPage() {
 
       if (error) throw error;
 
-      // Send social kit email if logo + reward are set
-      if (formData.logoUrl && formData.rewardDescription) {
-        try {
-          const emailRes = await fetch('/api/emails/social-kit', { method: 'POST' });
-          if (!emailRes.ok) {
-            console.error('Social kit email failed:', emailRes.status, await emailRes.text());
-          }
-        } catch (emailErr) {
-          console.error('Social kit email error:', emailErr);
+      // Send QR code + kit promo email
+      try {
+        const emailRes = await fetch('/api/emails/qr-code', { method: 'POST' });
+        if (!emailRes.ok) {
+          console.error('QR code email failed:', emailRes.status, await emailRes.text());
         }
+      } catch (emailErr) {
+        console.error('QR code email error:', emailErr);
       }
 
       router.push('/dashboard/qr-download');

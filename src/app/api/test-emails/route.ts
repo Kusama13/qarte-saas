@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { render } from '@react-email/render';
-import { EbookEmail, QRCodeEmail, SocialKitEmail } from '@/emails';
+import { EbookEmail, QRCodeEmail } from '@/emails';
 import {
   sendWelcomeEmail,
   sendTrialEndingEmail,
   sendTrialExpiredEmail,
   sendSubscriptionConfirmedEmail,
-  sendSocialKitEmail,
+  sendQRCodeEmail,
   sendReactivationEmail,
 } from '@/lib/email';
 
@@ -24,18 +24,17 @@ export async function GET(request: NextRequest) {
       }));
     } else if (type === 'qrcode') {
       html = await render(QRCodeEmail({
-        businessName: 'Salon Demo',
-      }));
-    } else if (type === 'social-kit') {
-      html = await render(SocialKitEmail({
         shopName: 'Le Salon de Clara',
         rewardDescription: '1 brushing offert',
         stampsRequired: 10,
         primaryColor: '#654EDA',
         logoUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200',
+        tier2Enabled: true,
+        tier2StampsRequired: 15,
+        tier2RewardDescription: '1 soin complet offert',
       }));
     } else {
-      return NextResponse.json({ error: 'Invalid email type. Use ?type=ebook, ?type=qrcode, or ?type=social-kit' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid email type. Use ?type=ebook or ?type=qrcode' }, { status: 400 });
     }
 
     return NextResponse.json({ html });
@@ -61,26 +60,6 @@ export async function POST(request: NextRequest) {
 
     if (!email) {
       return NextResponse.json({ error: 'Email requis' }, { status: 400 });
-    }
-
-    // Single email type test
-    if (type === 'social-kit') {
-      const result = await sendSocialKitEmail(
-        email,
-        'Le Salon de Clara',
-        '1 brushing offert',
-        10,
-        '#654EDA',
-        'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200',
-        undefined,
-        true,
-        15,
-        '1 soin complet offert'
-      );
-      return NextResponse.json({
-        success: result.success,
-        message: result.success ? `Social kit email envoyé à ${email}` : result.error,
-      });
     }
 
     const results = [];
