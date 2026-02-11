@@ -27,8 +27,8 @@ export default function ForgotPasswordPage() {
 
     try {
       const redirectUrl = typeof window !== 'undefined'
-        ? `${window.location.origin}/auth/merchant/reset-password`
-        : '/auth/merchant/reset-password';
+        ? `${window.location.origin}/auth/callback?next=/auth/merchant/reset-password`
+        : '/auth/callback?next=/auth/merchant/reset-password';
 
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: redirectUrl,

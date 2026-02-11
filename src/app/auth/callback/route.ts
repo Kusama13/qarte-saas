@@ -6,6 +6,9 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code');
   const token_hash = requestUrl.searchParams.get('token_hash');
   const type = requestUrl.searchParams.get('type');
+  // Sécurité : n'accepter que les chemins relatifs (pas d'open redirect)
+  const rawNext = requestUrl.searchParams.get('next') || '/dashboard';
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/dashboard';
 
   const supabase = await createRouteHandlerSupabaseClient();
 
@@ -18,6 +21,6 @@ export async function GET(request: Request) {
     });
   }
 
-  // Rediriger vers le dashboard (qui redirigera vers setup si nécessaire)
-  return NextResponse.redirect(new URL('/dashboard', requestUrl.origin));
+  // Rediriger vers la page demandée (ou dashboard par défaut)
+  return NextResponse.redirect(new URL(next, requestUrl.origin));
 }
