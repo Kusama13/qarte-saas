@@ -10,7 +10,6 @@ interface ReviewPromptProps {
 }
 
 export default function ReviewPrompt({ merchantId, shopName, reviewLink }: ReviewPromptProps) {
-  const [dismissed, setDismissed] = useState(false);
   const [permanentlyHidden, setPermanentlyHidden] = useState(false);
 
   useEffect(() => {
@@ -20,42 +19,54 @@ export default function ReviewPrompt({ merchantId, shopName, reviewLink }: Revie
     }
   }, [merchantId]);
 
-  if (!reviewLink || reviewLink.trim() === '' || dismissed || permanentlyHidden) return null;
+  if (!reviewLink || reviewLink.trim() === '' || permanentlyHidden) return null;
 
   return (
-    <div className="mt-8 px-4">
-      <div className="relative group bg-white/90 backdrop-blur-sm rounded-2xl py-5 px-6 shadow-sm border border-gray-100/80">
+    <div className="mt-2 mb-4">
+      <div
+        className="relative rounded-2xl p-4 overflow-hidden border border-amber-100/60"
+        style={{
+          background: 'linear-gradient(135deg, rgba(251,191,36,0.06) 0%, rgba(251,146,60,0.04) 100%)'
+        }}
+      >
+        {/* Dismiss */}
         <button
           onClick={(e) => {
             e.preventDefault();
             localStorage.setItem(`qarte_review_hidden_${merchantId}`, 'true');
             setPermanentlyHidden(true);
           }}
-          className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-gray-500 transition-colors duration-200 rounded-full hover:bg-gray-100"
+          className="absolute top-2.5 right-2.5 p-1 text-amber-300 hover:text-amber-500 transition-colors rounded-full hover:bg-amber-100/50"
           aria-label="Masquer"
         >
           <X className="w-3.5 h-3.5" />
         </button>
 
-        <div className="flex flex-col items-center text-center">
-          <p className="text-[10px] uppercase tracking-[0.15em] text-gray-400 font-semibold mb-2">
-            {shopName} vous remercie
-          </p>
-
-          <div className="flex items-center justify-center gap-3 mb-3 w-full max-w-[200px]">
-            <div className="h-px flex-1 bg-gray-200" />
-            <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
-            <div className="h-px flex-1 bg-gray-200" />
+        <div className="flex items-center gap-3.5">
+          {/* 5 stars — visual anchor */}
+          <div className="shrink-0">
+            <div className="flex gap-0.5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
+              ))}
+            </div>
           </div>
 
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-gray-800 leading-tight">Votre avis compte</p>
+            <p className="text-[11px] text-gray-500 mt-0.5">Partagez votre expérience</p>
+          </div>
+
+          {/* CTA button */}
           <a
             href={reviewLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 transition-colors duration-200 group/link"
+            className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold shadow-sm shadow-amber-200/50 hover:bg-amber-600 active:scale-95 transition-all"
           >
-            Laisser un avis
-            <ChevronRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5" />
+            J&apos;y vais
+            <ChevronRight className="w-3.5 h-3.5" />
           </a>
         </div>
       </div>

@@ -92,7 +92,7 @@ export default function HistorySection({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 }}
-      className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/50 overflow-hidden mb-10"
+      className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/50 overflow-hidden mb-4"
     >
       <div className="p-4 border-b border-gray-50 flex items-center justify-between">
         <h2 className="font-bold text-gray-900 text-sm flex items-center gap-2">

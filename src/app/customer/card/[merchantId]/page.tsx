@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, useCallback } from 'react';
+import { useState, useEffect, use, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -10,8 +10,6 @@ import {
   Loader2,
   AlertCircle,
   ChevronRight,
-  ChevronDown,
-  ChevronUp,
   Heart,
   Hourglass,
   Shield,
@@ -69,13 +67,42 @@ const getCookie = (name: string): string | null => {
   return null;
 };
 
-// Get icon for visits
-const getLoyaltyIcon = () => {
-  return Heart;
-};
-
 const getLoyaltyLabel = (count: number) => {
   return count === 1 ? 'Passage' : 'Passages';
+};
+
+interface MerchantOffer {
+  active: boolean;
+  title: string;
+  description: string;
+  imageUrl: string | null;
+  expiresAt: string | null;
+}
+
+// Pure function — no component state dependency
+const formatRewardText = (reward: string, remaining: number) => {
+  const lowerReward = reward.toLowerCase();
+  const unit = remaining === 1 ? 'passage' : 'passages';
+
+  const percentMatch = reward.match(/(\d+)\s*%/);
+  if (percentMatch) {
+    return `Plus que ${remaining} ${unit} pour ${percentMatch[1]}% de réduction !`;
+  }
+
+  const euroMatch = reward.match(/(\d+)\s*€/);
+  if (euroMatch) {
+    return `Plus que ${remaining} ${unit} pour ${euroMatch[1]}€ de réduction !`;
+  }
+
+  if (lowerReward.includes('gratuit') || lowerReward.includes('offert')) {
+    return `Plus que ${remaining} ${unit} pour ${reward.toLowerCase()} !`;
+  }
+
+  if (lowerReward.includes('café') || lowerReward.includes('boisson') || lowerReward.includes('thé')) {
+    return `Plus que ${remaining} ${unit} pour votre ${reward.toLowerCase()} !`;
+  }
+
+  return `Plus que ${remaining} ${unit} pour : ${reward}`;
 };
 
 export default function CustomerCardPage({
@@ -108,15 +135,7 @@ export default function CustomerCardPage({
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   // Offer state
-  interface MerchantOffer {
-    active: boolean;
-    title: string;
-    description: string;
-    imageUrl: string | null;
-    expiresAt: string | null;
-  }
   const [offer, setOffer] = useState<MerchantOffer | null>(null);
-  const [offerExpanded, setOfferExpanded] = useState(false);
 
   // Member card state
   const [memberCard, setMemberCard] = useState<MemberCard | null>(null);
@@ -438,37 +457,6 @@ export default function CustomerCardPage({
     localStorage.setItem('qarte_install_dismissed', Date.now().toString());
   }, []);
 
-  // Format reward text based on type
-  const formatRewardText = (reward: string, remaining: number) => {
-    const lowerReward = reward.toLowerCase();
-    const unit = remaining === 1 ? 'passage' : 'passages';
-
-    // Percentage discount: "-20%", "20% de réduction", etc.
-    const percentMatch = reward.match(/(\d+)\s*%/);
-    if (percentMatch) {
-      return `Plus que ${remaining} ${unit} pour ${percentMatch[1]}% de réduction !`;
-    }
-
-    // Euro discount: "-5€", "5€ de réduction", etc.
-    const euroMatch = reward.match(/(\d+)\s*€/);
-    if (euroMatch) {
-      return `Plus que ${remaining} ${unit} pour ${euroMatch[1]}€ de réduction !`;
-    }
-
-    // Free item: "gratuit", "offert"
-    if (lowerReward.includes('gratuit') || lowerReward.includes('offert')) {
-      return `Plus que ${remaining} ${unit} pour ${reward.toLowerCase()} !`;
-    }
-
-    // Coffee/drink specific
-    if (lowerReward.includes('café') || lowerReward.includes('boisson') || lowerReward.includes('thé')) {
-      return `Plus que ${remaining} ${unit} pour votre ${reward.toLowerCase()} !`;
-    }
-
-    // Default: show full reward
-    return `Plus que ${remaining} ${unit} pour : ${reward}`;
-  };
-
   const triggerConfetti = useCallback(async () => {
     // Dynamic import - only load confetti when needed
     const confetti = (await import('canvas-confetti')).default;
@@ -558,46 +546,65 @@ export default function CustomerCardPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-white">
+      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50">
         {/* Skeleton Header */}
-        <header className="relative w-full h-48 bg-gray-200 animate-pulse">
-          <div className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/20" />
+        <header className="relative w-full">
+          <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden">
+            <div className="bg-gray-200 animate-pulse flex flex-col items-center pt-16 pb-14 px-5">
+              <div className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/20" />
+              <div className="w-[88px] h-[88px] rounded-[1.75rem] bg-white/30 mb-4" />
+              <div className="w-36 h-6 bg-white/20 rounded-lg mb-2" />
+            </div>
+          </div>
         </header>
-        <main className="px-4 -mt-20 relative z-10 max-w-lg mx-auto pb-10">
-          {/* Skeleton Card */}
-          <div className="bg-white rounded-[2rem] shadow-xl p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-gray-200 animate-pulse" />
+        <main className="px-4 max-w-lg mx-auto pb-10">
+          {/* Skeleton Greeting Card */}
+          <div className="relative z-10 -mt-8 mb-4 bg-white rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100/80 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <div className="w-16 h-4 bg-gray-100 rounded animate-pulse mb-2" />
+                <div className="w-28 h-7 bg-gray-200 rounded animate-pulse" />
+              </div>
+              <div className="w-20 h-7 bg-gray-50 rounded-full animate-pulse" />
+            </div>
+            <div className="flex items-end justify-between mb-2">
+              <div className="w-20 h-10 bg-gray-200 rounded animate-pulse" />
+              <div className="w-16 h-4 bg-gray-100 rounded animate-pulse" />
+            </div>
+            <div className="h-2.5 bg-gray-100 rounded-full animate-pulse" />
+          </div>
+          {/* Skeleton Stamps */}
+          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/40 border border-gray-100/80 p-5 mb-4">
+            <div className="flex justify-between items-center mb-4">
+              <div className="w-20 h-4 bg-gray-100 rounded animate-pulse" />
+            </div>
+            <div className="grid grid-cols-5 gap-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="aspect-square rounded-xl bg-gray-100 animate-pulse" />
+              ))}
+            </div>
+          </div>
+          {/* Skeleton Reward */}
+          <div className="mb-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gray-200 animate-pulse shrink-0" />
               <div className="flex-1">
-                <div className="w-32 h-6 bg-gray-200 rounded animate-pulse mb-2" />
-                <div className="w-20 h-4 bg-gray-100 rounded animate-pulse" />
+                <div className="w-40 h-5 bg-gray-200 rounded animate-pulse mb-1.5" />
+                <div className="w-24 h-3 bg-gray-100 rounded animate-pulse" />
               </div>
             </div>
-            {/* Skeleton Progress */}
-            <div className="space-y-4 mb-6">
-              <div className="flex justify-between">
-                <div className="w-20 h-4 bg-gray-100 rounded animate-pulse" />
-                <div className="w-12 h-4 bg-gray-100 rounded animate-pulse" />
-              </div>
-              <div className="flex flex-wrap gap-2.5">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="w-9 h-9 rounded-full bg-gray-100 animate-pulse" />
-                ))}
-              </div>
-              <div className="h-1.5 bg-gray-100 rounded-full animate-pulse" />
-            </div>
-            {/* Skeleton Button */}
-            <div className="w-full h-14 bg-gray-200 rounded-xl animate-pulse" />
           </div>
           {/* Skeleton History */}
-          <div className="mt-6 bg-white rounded-2xl p-4">
-            <div className="w-24 h-5 bg-gray-200 rounded animate-pulse mb-4" />
+          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/50 overflow-hidden mb-4">
+            <div className="p-4 border-b border-gray-50">
+              <div className="w-24 h-5 bg-gray-200 rounded animate-pulse" />
+            </div>
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3 py-3 border-b border-gray-50 last:border-0">
-                <div className="w-8 h-8 rounded-lg bg-gray-100 animate-pulse" />
+              <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 last:border-0">
+                <div className="w-9 h-9 rounded-xl bg-gray-100 animate-pulse" />
                 <div className="flex-1">
-                  <div className="w-20 h-4 bg-gray-100 rounded animate-pulse mb-1" />
-                  <div className="w-32 h-3 bg-gray-50 rounded animate-pulse" />
+                  <div className="w-24 h-4 bg-gray-100 rounded animate-pulse mb-1" />
+                  <div className="w-16 h-3 bg-gray-50 rounded animate-pulse" />
                 </div>
               </div>
             ))}
@@ -623,27 +630,53 @@ export default function CustomerCardPage({
   }
 
   const { merchant } = card;
-  // Ensure merchant color has enough contrast on white for text usage
   const safeColor = ensureTextContrast(merchant.primary_color);
-  const isRewardReady = card.current_stamps >= merchant.stamps_required;
-
-  // Tier 2 reward variables
+  const currentStamps = card.current_stamps;
+  const tier1Required = merchant.stamps_required;
   const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
   const tier2Required = merchant.tier2_stamps_required || 0;
   const tier2Reward = merchant.tier2_reward_description || '';
-  const isTier2Ready = tier2Enabled && card.current_stamps >= tier2Required;
-  const tier1Required = merchant.stamps_required;
-  const currentStamps = card.current_stamps;
+  const LoyaltyIcon = Heart;
 
-  // Effective tier 1 redeemed status - only consider redeemed if points still support it
-  // If points were reduced below tier1_required, treat as if not redeemed
-  const effectiveTier1Redeemed = tier1RedeemedInCycle && currentStamps >= tier1Required;
+  // Memoized computed state — only recalculates when card data or redeem state changes
+  const {
+    isRewardReady,
+    isTier2Ready,
+    effectiveTier1Redeemed,
+    isRewardSticky,
+    isMemberCardActive,
+    rewardShowingTier2,
+    rewardCardReady,
+    rewardCardDescription,
+    rewardCardRemaining,
+    rewardCardTierLabel,
+  } = useMemo(() => {
+    const _isRewardReady = currentStamps >= tier1Required;
+    const _isTier2Ready = tier2Enabled && currentStamps >= tier2Required;
+    const _effectiveTier1Redeemed = tier1RedeemedInCycle && currentStamps >= tier1Required;
+    const _isRewardSticky = !redeemSuccess && ((_isRewardReady && !_effectiveTier1Redeemed) || (tier2Enabled && _isTier2Ready));
+    const _isMemberCardActive = !!memberCard && new Date(memberCard.valid_until) > new Date();
+    const _showingTier2 = tier2Enabled && _effectiveTier1Redeemed;
 
-  // Whether the sticky redeem bar is visible (used for z-index priority over PWA install bar)
-  const isRewardSticky = !redeemSuccess && ((isRewardReady && !effectiveTier1Redeemed) || (tier2Enabled && isTier2Ready));
-
-  // Get the loyalty icon component for stamps display
-  const LoyaltyIcon = getLoyaltyIcon();
+    return {
+      isRewardReady: _isRewardReady,
+      isTier2Ready: _isTier2Ready,
+      effectiveTier1Redeemed: _effectiveTier1Redeemed,
+      isRewardSticky: _isRewardSticky,
+      isMemberCardActive: _isMemberCardActive,
+      rewardShowingTier2: _showingTier2,
+      rewardCardReady: _showingTier2 ? !!_isTier2Ready : _isRewardReady,
+      rewardCardDescription: _showingTier2
+        ? (tier2Reward || 'Récompense Premium')
+        : (merchant.reward_description || 'Votre récompense fidélité'),
+      rewardCardRemaining: _showingTier2
+        ? tier2Required - currentStamps
+        : tier1Required - currentStamps,
+      rewardCardTierLabel: tier2Enabled
+        ? (_showingTier2 ? 'Palier 2' : 'Palier 1')
+        : '',
+    };
+  }, [currentStamps, tier1Required, tier2Enabled, tier2Required, tier2Reward, tier1RedeemedInCycle, redeemSuccess, memberCard, merchant.reward_description]);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${merchant.primary_color}15 0%, ${merchant.primary_color}40 40%, ${merchant.primary_color}60 70%, ${merchant.primary_color}35 100%)` }}>
@@ -693,89 +726,119 @@ export default function CustomerCardPage({
           </div>
         </div>
       )}
-      {/* Header with premium glassmorphism horizontal design */}
+      {/* Header — Immersive centered design */}
       <header className="relative w-full overflow-hidden">
-        <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden bg-white/40 backdrop-blur-xl border-b lg:border border-white/40 shadow-xl shadow-slate-200/50">
-          {/* Animated decorative background elements */}
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.18 }}
-            transition={{ duration: 1.2 }}
-            className="absolute -top-12 -right-12 w-64 h-64 rounded-full blur-3xl"
-            style={{ background: merchant.primary_color }}
+        <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden">
+          {/* Full gradient background */}
+          <div
+            className="absolute inset-0"
+            style={{ background: `linear-gradient(160deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
           />
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 0.12 }}
-            transition={{ duration: 1.2, delay: 0.3 }}
-            className="absolute -bottom-12 -left-12 w-64 h-64 rounded-full blur-3xl"
-            style={{ background: merchant.secondary_color || merchant.primary_color }}
-          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent)]" />
 
-          <div className="relative w-full pt-14 pb-6 px-5 flex items-end justify-between min-h-[180px]">
-            {/* Back button - Absolute Top Left */}
+          {/* Back button */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute top-4 left-4 z-20"
+          >
+            <Link
+              href={isDemo ? '/' : isPreview ? '/dashboard/program' : '/customer/cards'}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 transition-all hover:bg-white/30 active:scale-90"
+            >
+              <ArrowLeft className="w-5 h-5 text-white" />
+            </Link>
+          </motion.div>
+
+          {/* Centered content */}
+          <div className="relative flex flex-col items-center pt-16 pb-14 px-5">
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="relative w-[88px] h-[88px] rounded-[1.75rem] p-1 bg-white/90 shadow-2xl border border-white/60 flex items-center justify-center overflow-hidden mb-4"
+            >
+              {merchant.logo_url ? (
+                <img
+                  src={merchant.logo_url}
+                  alt={merchant.shop_name}
+                  className="w-full h-full object-cover rounded-[1.5rem]"
+                />
+              ) : (
+                <div
+                  className="w-full h-full rounded-[1.5rem] flex items-center justify-center text-white text-3xl font-black"
+                  style={{ background: `linear-gradient(135deg, ${merchant.primary_color}cc, ${merchant.secondary_color || merchant.primary_color})` }}
+                >
+                  {merchant.shop_name[0]}
+                </div>
+              )}
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute top-4 left-4 z-20"
+              className="text-xl font-black tracking-tight text-white text-center leading-tight mb-2"
             >
-              <Link
-                href={isDemo ? '/' : isPreview ? '/dashboard/program' : '/customer/cards'}
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-white/80 backdrop-blur-xl border border-white/60 shadow-sm transition-all hover:shadow-md hover:bg-white active:scale-90"
+              {merchant.shop_name}
+            </motion.h1>
+
+            {memberCard && isMemberCardActive && (
+              <motion.button
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                onClick={() => setShowMemberCardModal(true)}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all"
               >
-                <ArrowLeft className="w-5 h-5 text-slate-800" />
-              </Link>
-            </motion.div>
-
-            {/* Left Section: Logo & Shop Name */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex flex-col gap-3"
-            >
-              <div className="relative w-20 h-20 rounded-[1.5rem] p-1 bg-white/90 shadow-2xl shadow-slate-200/80 border border-white flex items-center justify-center overflow-hidden">
-                {merchant.logo_url ? (
-                  <img
-                    src={merchant.logo_url}
-                    alt={merchant.shop_name}
-                    className="w-full h-full object-cover rounded-[1.25rem]"
-                  />
-                ) : (
-                  <div
-                    className="w-full h-full rounded-[1.25rem] flex items-center justify-center text-white text-2xl font-black"
-                    style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
-                  >
-                    {merchant.shop_name[0]}
-                  </div>
-                )}
-              </div>
-              <h1 className="text-lg font-black tracking-tight text-slate-900 leading-tight max-w-[220px]">
-                {merchant.shop_name}
-              </h1>
-            </motion.div>
-
-            {/* Right Section: First Name & Status Badge */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex flex-col items-end gap-2 text-right mb-1"
-            >
-              <h2 className="text-2xl font-black text-slate-900 tracking-tighter drop-shadow-sm max-w-[140px] truncate">
-                {card?.customer?.first_name}
-              </h2>
-
-              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border shadow-sm backdrop-blur-xl transition-all ${memberCard ? 'bg-amber-100/60 border-amber-200/50 ring-1 ring-amber-200/20' : 'bg-white/60 border-slate-200/40'}`}>
-                {memberCard && <Crown className="w-3.5 h-3.5 text-amber-600 fill-amber-500/30" />}
-                <span className={`text-[11px] font-bold uppercase tracking-widest ${memberCard ? 'text-amber-800' : 'text-slate-600'}`}>
-                  {memberCard ? "Membre VIP" : "Client fidèle"}
-                </span>
-              </div>
-            </motion.div>
+                <Crown className="w-3 h-3 text-amber-300" />
+                <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">Membre VIP</span>
+              </motion.button>
+            )}
           </div>
         </div>
       </header>
 
-      <main className={`flex-1 px-4 pt-4 w-full max-w-lg mx-auto z-10 ${showInstallBar ? 'pb-28' : 'pb-12'}`}>
+      <main className={`flex-1 px-4 w-full max-w-lg mx-auto z-10 ${showInstallBar ? 'pb-28' : 'pb-12'}`}>
+        {/* Floating greeting card — overlaps header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="relative z-10 -mt-8 mb-4 bg-white rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100/80 p-5"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Bonjour</p>
+              <p className="text-2xl font-black tracking-tight text-gray-900">{card?.customer?.first_name}</p>
+            </div>
+            {!memberCard && (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Client fidèle</span>
+              </div>
+            )}
+          </div>
+          {/* Hero counter + progress */}
+          <div className="flex items-end justify-between mb-2">
+            <p className="text-4xl font-black tracking-tight" style={{ color: safeColor }}>
+              {currentStamps}<span className="text-gray-300 text-2xl mx-0.5">/</span><span className="text-gray-400 text-2xl">{tier2Enabled && effectiveTier1Redeemed ? tier2Required : tier1Required}</span>
+            </p>
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
+              {getLoyaltyLabel(currentStamps)}
+            </p>
+          </div>
+          <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min((currentStamps / (tier2Enabled && effectiveTier1Redeemed ? tier2Required : tier1Required)) * 100, 100)}%` }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="h-full rounded-full"
+              style={{
+                background: isRewardReady
+                  ? 'linear-gradient(90deg, #10B981, #059669)'
+                  : `linear-gradient(90deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`
+              }}
+            />
+          </div>
+        </motion.div>
+
         {/* Scan Success Banner */}
         <AnimatePresence>
           {showScanSuccess && (
@@ -849,428 +912,367 @@ export default function CustomerCardPage({
         {/* Offre Exclusive */}
         {offer && <ExclusiveOffer offer={offer} merchantColor={merchant.primary_color} isPreview={isPreview} />}
 
-        {/* Member Card Badge - Show if customer has an active member card */}
-        {memberCard && new Date(memberCard.valid_until) > new Date() && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => setShowMemberCardModal(true)}
-            className="relative w-full group mb-4 p-[1.5px] overflow-hidden rounded-2xl bg-gradient-to-br from-amber-200 via-amber-500 to-amber-200 shadow-xl shadow-amber-900/10"
-          >
-            {isPreview && (
-              <div className="absolute top-2 right-2 z-20 bg-white/90 backdrop-blur-sm text-[10px] font-bold text-gray-500 px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
-                Exemple — Personnalisable
-              </div>
-            )}
-            <div className="relative flex items-center gap-4 p-3.5 bg-white/80 backdrop-blur-xl rounded-[14.5px] overflow-hidden">
-              {/* Internal Glass Highlight */}
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/50 via-transparent to-white/30 pointer-events-none" />
-
-              {/* Dynamic Golden Shine */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-amber-200/40 to-transparent -translate-x-full group-hover:animate-shimmer transition-all duration-1000 ease-in-out pointer-events-none" />
-
-              {/* Animated Icon Container */}
-              <div className="relative z-10 flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 shadow-lg shadow-amber-500/20 group-hover:shadow-amber-500/40 transition-shadow">
-                <motion.div
-                  animate={{
-                    rotate: [0, -8, 8, -8, 0],
-                    y: [0, -2, 0]
-                  }}
-                  transition={{
-                    duration: 5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
-                  <Crown className="w-6 h-6 text-white drop-shadow-md" />
-                </motion.div>
-                {/* Particle Dots */}
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-amber-200 rounded-full animate-pulse opacity-60" />
-                <div className="absolute -bottom-0.5 -left-0.5 w-1.5 h-1.5 bg-amber-300 rounded-full animate-ping opacity-40" />
-              </div>
-
-              <div className="relative z-10 flex-1 min-w-0 text-left">
-                <div className="flex items-center gap-2">
-                  <p className="font-extrabold text-amber-950 text-[13px] tracking-wide uppercase">Membre Privilège</p>
-                  <div className="h-1 w-1 rounded-full bg-amber-500 animate-pulse" />
+        {/* Stamps Section — separate card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.35 }}
+          className="bg-white rounded-2xl shadow-lg shadow-gray-200/40 border border-gray-100/80 p-5 mb-4"
+        >
+          {tier2Enabled ? (
+            /* ═══════════════ DUAL TIER ═══════════════ */
+            <div className="space-y-5">
+              {/* PALIER 1 */}
+              <div className={`p-4 rounded-xl border transition-all ${
+                isRewardReady && !effectiveTier1Redeemed
+                  ? 'border-amber-200 bg-amber-50/30'
+                  : effectiveTier1Redeemed
+                    ? 'border-gray-100 bg-gray-50/50 opacity-60'
+                    : 'border-gray-100'
+              }`}>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex items-center gap-2">
+                    <Gift className={`w-4 h-4 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-500' : 'text-gray-400'}`} />
+                    <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-400'}`}>
+                      Palier 1
+                    </span>
+                  </div>
+                  {effectiveTier1Redeemed ? (
+                    <span className="px-2.5 py-1 rounded-full bg-gray-200 text-[10px] font-bold text-gray-500 uppercase">Réclamé</span>
+                  ) : isRewardReady ? (
+                    <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-black text-white uppercase shadow-lg shadow-amber-200">Prêt !</motion.span>
+                  ) : tier1Required - currentStamps <= 2 ? (
+                    <span className="px-2.5 py-1 rounded-full bg-amber-100 text-[10px] font-black text-amber-700 border border-amber-200">Plus que {tier1Required - currentStamps} !</span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-gray-400">{tier1Required - currentStamps} restants</span>
+                  )}
                 </div>
-                <p className="text-xs font-semibold text-amber-700/90 truncate mt-0.5">
-                  {memberCard.program?.benefit_label}
+
+                <div className="grid grid-cols-5 gap-2.5 mb-3">
+                  {Array.from({ length: tier1Required }).map((_, i) => {
+                    const isEarned = i < currentStamps;
+                    const isGreyed = effectiveTier1Redeemed;
+                    const isLast = i === tier1Required - 1;
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: i * 0.04 }}
+                        className={`aspect-square rounded-xl flex items-center justify-center transition-all duration-300 ${
+                          isEarned && !isGreyed
+                            ? 'text-white shadow-md'
+                            : isEarned && isGreyed
+                              ? 'bg-gray-200 text-gray-400'
+                              : isLast
+                                ? 'bg-gray-50 border-2 border-dashed text-gray-300'
+                                : 'bg-gray-50 text-gray-300 border border-gray-100'
+                        }`}
+                        style={{
+                          backgroundColor: isEarned && !isGreyed ? merchant.primary_color : undefined,
+                          borderColor: isLast && !isEarned ? `${merchant.primary_color}40` : undefined,
+                        }}
+                      >
+                        {isLast && !isEarned ? (
+                          <Gift className="w-4 h-4" style={{ color: `${merchant.primary_color}60` }} />
+                        ) : (
+                          <LoyaltyIcon className="w-4 h-4" />
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                <p className={`text-center text-sm font-medium italic ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
+                  {merchant.reward_description || 'Cadeau de fidélité'}
                 </p>
               </div>
 
-              <div className="relative z-10">
-                <div className="flex flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-amber-950 text-white font-bold text-[10px] tracking-widest shadow-lg shadow-amber-900/20 uppercase">
-                  VIP
+              {/* PALIER 2 */}
+              <div className={`p-4 rounded-xl border transition-all ${
+                isTier2Ready
+                  ? 'border-violet-200 bg-violet-50/30'
+                  : currentStamps >= tier1Required
+                    ? 'border-violet-100'
+                    : 'border-gray-100 opacity-50'
+              }`}>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="flex items-center gap-2">
+                    <Trophy className={`w-4 h-4 ${isTier2Ready ? 'text-violet-500' : 'text-gray-400'}`} />
+                    <span className={`text-[11px] font-black uppercase tracking-widest ${isTier2Ready ? 'text-violet-600' : 'text-gray-400'}`}>Palier 2</span>
+                  </div>
+                  {isTier2Ready ? (
+                    <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="px-2.5 py-1 rounded-full bg-violet-600 text-[10px] font-black text-white uppercase shadow-lg shadow-violet-200">Débloqué !</motion.span>
+                  ) : tier2Required - currentStamps <= 2 ? (
+                    <span className="px-2.5 py-1 rounded-full bg-violet-100 text-[10px] font-black text-violet-700 border border-violet-200">Plus que {tier2Required - currentStamps} !</span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-gray-400">{tier2Required - currentStamps} restants</span>
+                  )}
                 </div>
+
+                <div className="grid grid-cols-5 gap-2.5 mb-3">
+                  {Array.from({ length: tier2Required - tier1Required }).map((_, i) => {
+                    const isEarned = currentStamps >= (tier1Required + i + 1);
+                    const isLast = i === (tier2Required - tier1Required - 1);
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: i * 0.04 }}
+                        className={`aspect-square rounded-xl flex items-center justify-center transition-all duration-300 ${
+                          isEarned ? 'bg-violet-600 text-white shadow-md' : isLast ? 'bg-gray-50 border-2 border-dashed border-violet-200 text-violet-300' : 'bg-gray-50 text-gray-300 border border-gray-100'
+                        }`}
+                      >
+                        {isLast && !isEarned ? <Trophy className="w-4 h-4" /> : <LoyaltyIcon className="w-4 h-4" />}
+                      </motion.div>
+                    );
+                  })}
+                </div>
+
+                <p className={`text-center text-sm font-medium italic ${isTier2Ready ? 'text-violet-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
+                  {tier2Reward || 'Récompense Premium'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            /* ═══════════════ SINGLE TIER ═══════════════ */
+            <div className="space-y-5">
+              {/* Label + status badge */}
+              <div className="flex justify-between items-center">
+                <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Ma fidélité</span>
+                {isRewardReady ? (
+                  <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200">
+                    <Gift className="w-4 h-4" />
+                    <span className="text-xs font-black uppercase">Prêt !</span>
+                  </motion.div>
+                ) : tier1Required - currentStamps <= 2 ? (
+                  <motion.div animate={{ x: [0, -2, 2, 0] }} transition={{ repeat: Infinity, duration: 0.5, repeatDelay: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-200">
+                    <Zap className="w-3.5 h-3.5" />
+                    <span className="text-xs font-black">Plus que {tier1Required - currentStamps} !</span>
+                  </motion.div>
+                ) : null}
               </div>
 
-              {/* Decorative corner accents */}
-              <div className="absolute top-0 right-0 p-1">
-                <div className="w-8 h-8 border-t-2 border-r-2 border-amber-400/20 rounded-tr-xl" />
+              {/* Stamps grid — rounded-xl, last one = gift */}
+              <div className="grid grid-cols-5 gap-3">
+                {Array.from({ length: tier1Required }).map((_, i) => {
+                  const isEarned = i < currentStamps;
+                  const isLast = i === tier1Required - 1;
+                  const isNext = !isEarned && i === currentStamps && !isLast;
+                  return (
+                    <motion.div
+                      key={i}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: i * 0.04 }}
+                      className={`aspect-square rounded-xl flex items-center justify-center transition-all duration-300 ${
+                        isEarned
+                          ? 'text-white shadow-lg'
+                          : isLast
+                            ? 'bg-white border-2 border-dashed text-gray-300'
+                            : isNext
+                              ? 'bg-white border-2 border-dashed shadow-sm'
+                              : 'bg-gray-50 text-gray-200 border border-gray-100'
+                      }`}
+                      style={{
+                        backgroundColor: isEarned ? merchant.primary_color : undefined,
+                        borderColor: (isLast && !isEarned)
+                          ? `${merchant.primary_color}40`
+                          : isNext
+                            ? `${merchant.primary_color}35`
+                            : undefined,
+                      }}
+                    >
+                      {isLast && !isEarned ? (
+                        <Gift className="w-5 h-5" style={{ color: `${merchant.primary_color}60` }} />
+                      ) : isNext ? (
+                        <LoyaltyIcon className="w-5 h-5" style={{ color: `${merchant.primary_color}30` }} />
+                      ) : (
+                        <LoyaltyIcon className={isEarned ? 'w-6 h-6' : 'w-4 h-4'} />
+                      )}
+                    </motion.div>
+                  );
+                })}
               </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Reward card — dual-tier aware */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.4 }}
+          className={`mb-4 rounded-2xl overflow-hidden ${
+            rewardCardReady
+              ? 'shadow-lg'
+              : 'bg-white border border-gray-100/80 shadow-sm'
+          }`}
+        >
+          {rewardCardReady ? (
+            /* ═══ REWARD READY — celebration mode ═══ */
+            <div
+              className="relative p-5 overflow-hidden"
+              style={{
+                background: rewardShowingTier2
+                  ? 'linear-gradient(135deg, #8B5CF6, #7C3AED)'
+                  : `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
+              }}
+            >
+              {/* Shimmer sweep */}
+              <motion.div
+                animate={{ x: ['-150%', '200%'] }}
+                transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"
+              />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
+
+              <div className="relative flex items-center gap-4">
+                <motion.div
+                  animate={{ scale: [1, 1.08, 1] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center shrink-0"
+                >
+                  {rewardShowingTier2 ? (
+                    <Trophy className="w-7 h-7 text-white" />
+                  ) : (
+                    <Gift className="w-7 h-7 text-white" />
+                  )}
+                </motion.div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
+                    {rewardCardTierLabel ? `${rewardCardTierLabel} débloqué` : 'Récompense débloquée'}
+                  </p>
+                  <p className="text-white text-base font-black leading-snug line-clamp-2">
+                    {rewardCardDescription}
+                  </p>
+                  <p className="text-white/80 text-xs font-semibold mt-1">
+                    Réclamez-la maintenant !
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ═══ NOT READY — motivational preview ═══ */
+            <div className="p-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-md"
+                  style={{
+                    background: rewardShowingTier2
+                      ? 'linear-gradient(135deg, #8B5CF6, #7C3AED)'
+                      : `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
+                  }}
+                >
+                  {rewardShowingTier2 ? (
+                    <Trophy className="w-6 h-6 text-white" />
+                  ) : (
+                    <Gift className="w-6 h-6 text-white" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
+                    {rewardCardTierLabel ? `Récompense · ${rewardCardTierLabel}` : 'Récompense'}
+                  </p>
+                  <p className="text-sm font-bold text-gray-800 line-clamp-2">
+                    {rewardCardDescription}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    {formatRewardText(rewardCardDescription, rewardCardRemaining)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Member Card Badge — dark premium card */}
+        {memberCard && isMemberCardActive && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowMemberCardModal(true)}
+            className="relative w-full mb-4 group"
+          >
+            <div
+              className="relative flex items-center gap-3.5 p-4 bg-gradient-to-r from-zinc-900 via-zinc-800 to-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-zinc-900/20"
+              style={{ border: '1px solid rgba(251,191,36,0.12)' }}
+            >
+              {/* Shimmer sweep */}
+              <motion.div
+                animate={{ x: ['-200%', '200%'] }}
+                transition={{ duration: 3, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12 pointer-events-none"
+              />
+              {/* Gold ambient glow */}
+              <div className="absolute inset-0 pointer-events-none" style={{
+                background: 'radial-gradient(ellipse at 15% 50%, rgba(251,191,36,0.06) 0%, transparent 60%)'
+              }} />
+
+              <div className="relative z-10 w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/25 shrink-0">
+                <Crown className="w-5 h-5 text-white" />
+              </div>
+              <div className="relative z-10 flex-1 min-w-0 text-left">
+                <p className="text-amber-400 text-[10px] font-bold uppercase tracking-[0.15em]">Membre Privilège</p>
+                <p className="text-white/60 text-xs font-medium truncate mt-0.5">{memberCard.program?.benefit_label}</p>
+              </div>
+              <ChevronRight className="relative z-10 w-4 h-4 text-amber-500/40 shrink-0" />
+            </div>
+            {isPreview && (
+              <div className="absolute top-2.5 right-2.5 z-20 bg-black/60 backdrop-blur-sm text-[9px] font-bold text-white/80 px-2 py-0.5 rounded-full">
+                Exemple
+              </div>
+            )}
+          </motion.button>
+        )}
+
+        {/* Push Notification Banner */}
+        {push.isStandalone && isMobile && !push.pushSubscribed && push.pushPermission !== 'denied' && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={push.handlePushSubscribe}
+            disabled={push.pushSubscribing}
+            className="w-full mb-4"
+          >
+            <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl border bg-white shadow-sm" style={{ borderColor: `${merchant.primary_color}20` }}>
+              <Bell className="w-4 h-4 shrink-0" style={{ color: merchant.primary_color }} />
+              <span className="flex-1 text-xs font-medium text-gray-700 text-left">Activer les notifications</span>
+              {push.pushSubscribing ? (
+                <Loader2 className="w-4 h-4 animate-spin shrink-0" style={{ color: merchant.primary_color }} />
+              ) : (
+                <ChevronRight className="w-4 h-4 shrink-0" style={{ color: merchant.primary_color }} />
+              )}
             </div>
           </motion.button>
         )}
 
-
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/50 p-6 overflow-hidden relative"
-        >
-          {/* Progression Section with Stamp Icons */}
-          <div className="mb-8 px-2 space-y-6">
-            {tier2Enabled ? (
-              /* ═══════════════════════════════════════════════════════════════
-                 DUAL TIER DESIGN - Palier 1 et Palier 2
-                 ═══════════════════════════════════════════════════════════════ */
-              <>
-                {/* PALIER 1 SECTION */}
-                <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`p-5 rounded-2xl border transition-all duration-500 ${
-                    isRewardReady && !effectiveTier1Redeemed
-                      ? 'bg-white border-amber-200 shadow-[0_8px_30px_rgb(245,158,11,0.1)]'
-                      : effectiveTier1Redeemed
-                        ? 'bg-gray-50/50 border-gray-100 opacity-60'
-                        : 'bg-white border-gray-100'
-                  }`}
-                >
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center gap-2">
-                      <Gift className={`w-4 h-4 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-500' : 'text-gray-400'}`} />
-                      <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-400'}`}>
-                        Palier 1
-                      </span>
-                    </div>
-                    {effectiveTier1Redeemed ? (
-                      <span className="px-2.5 py-1 rounded-full bg-gray-200 text-[10px] font-bold text-gray-500 uppercase">
-                        Réclamé
-                      </span>
-                    ) : isRewardReady ? (
-                      <motion.span
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                        className="px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-black text-white uppercase shadow-lg shadow-amber-200"
-                      >
-                        Prêt !
-                      </motion.span>
-                    ) : tier1Required - currentStamps <= 2 ? (
-                      <motion.span
-                        animate={{ x: [0, -2, 2, 0] }}
-                        transition={{ repeat: Infinity, duration: 0.5, repeatDelay: 1 }}
-                        className="px-2.5 py-1 rounded-full bg-amber-100 text-[10px] font-black text-amber-700 border border-amber-200"
-                      >
-                        Plus que {tier1Required - currentStamps} !
-                      </motion.span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
-                        {tier1Required - currentStamps} restants
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Stamps Grid Tier 1 */}
-                  <div className="grid grid-cols-5 gap-2.5 mb-4">
-                    {Array.from({ length: tier1Required }).map((_, i) => {
-                      const isEarned = i < currentStamps;
-                      const isGreyed = effectiveTier1Redeemed;
-                      return (
-                        <motion.div
-                          key={i}
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ delay: i * 0.05 }}
-                          className={`aspect-square rounded-full flex items-center justify-center transition-all duration-300 ${
-                            isEarned && !isGreyed
-                              ? 'text-white shadow-md'
-                              : isEarned && isGreyed
-                                ? 'bg-gray-300 text-gray-400'
-                                : 'bg-gray-50 text-gray-300 border border-gray-100'
-                          }`}
-                          style={{
-                            backgroundColor: isEarned && !isGreyed ? merchant.primary_color : undefined,
-                          }}
-                        >
-                          <LoyaltyIcon className="w-4 h-4" />
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Bottom Progress & Desc - CENTERED */}
-                  <div className="space-y-3">
-                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min((currentStamps / tier1Required) * 100, 100)}%` }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                        className="h-full rounded-full"
-                        style={{ backgroundColor: effectiveTier1Redeemed ? '#9ca3af' : (isRewardReady ? '#f59e0b' : merchant.primary_color) }}
-                      />
-                    </div>
-                    <p
-                      className={`text-center text-base font-medium italic line-clamp-2 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-900' : 'text-gray-600'}`}
-                      style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}
-                    >
-                      {merchant.reward_description || 'Cadeau de fidélité'}
-                    </p>
-                  </div>
-                </motion.div>
-              </>
-            ) : (
-              /* ═══════════════════════════════════════════════════════════════
-                 SINGLE TIER DESIGN - Plus gros, sans label "Palier 1"
-                 ═══════════════════════════════════════════════════════════════ */
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="space-y-6"
-              >
-                {/* Header with count and status */}
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Progression</p>
-                    <p className="text-4xl font-black tracking-tight" style={{ color: safeColor }}>
-                      {currentStamps}<span className="text-gray-300 text-2xl mx-1">/</span><span className="text-gray-400 text-2xl">{tier1Required}</span>
-                    </p>
-                  </div>
-                  {isRewardReady ? (
-                    <motion.div
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ repeat: Infinity, duration: 1.5 }}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200"
-                    >
-                      <Gift className="w-5 h-5" />
-                      <span className="text-sm font-black uppercase">Prêt !</span>
-                    </motion.div>
-                  ) : tier1Required - currentStamps <= 2 ? (
-                    <motion.div
-                      animate={{ x: [0, -3, 3, 0], scale: [1, 1.02, 1] }}
-                      transition={{ repeat: Infinity, duration: 0.6, repeatDelay: 1.5 }}
-                      className="flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-200"
-                    >
-                      <Zap className="w-4 h-4" />
-                      <span className="text-sm font-black">Plus que {tier1Required - currentStamps} !</span>
-                    </motion.div>
-                  ) : null}
-                </div>
-
-                {/* Large Stamps Grid - Centered */}
-                <div className="grid grid-cols-5 gap-3">
-                  {Array.from({ length: tier1Required }).map((_, i) => {
-                    const isEarned = i < currentStamps;
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: i * 0.05 }}
-                        className={`aspect-square rounded-full flex items-center justify-center transition-all duration-300 ${
-                          isEarned
-                            ? 'text-white shadow-lg'
-                            : 'bg-gray-100 text-gray-300 border-2 border-dashed border-gray-200'
-                        }`}
-                        style={{
-                          backgroundColor: isEarned ? merchant.primary_color : undefined,
-                        }}
-                      >
-                        <LoyaltyIcon className="w-6 h-6" />
-                      </motion.div>
-                    );
-                  })}
-                </div>
-
-                {/* Large Progress Bar */}
-                <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${Math.min((currentStamps / tier1Required) * 100, 100)}%` }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="h-full rounded-full"
-                    style={{
-                      background: isRewardReady
-                        ? 'linear-gradient(90deg, #10B981, #059669)'
-                        : `linear-gradient(90deg, ${merchant.primary_color}, ${merchant.primary_color}cc)`
-                    }}
-                  />
-                </div>
-
-                {/* Centered Reward Description */}
-                <div className="text-center py-5 px-6 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/60">
-                  <p
-                    className={`text-lg font-medium italic line-clamp-2 ${isRewardReady ? 'text-emerald-700' : 'text-gray-700'}`}
-                    style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}
-                  >
-                    {merchant.reward_description || 'Votre récompense fidélité'}
-                  </p>
-                </div>
-              </motion.div>
-            )}
-
-            {/* PALIER 2 SECTION */}
-            {tier2Enabled && (
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: currentStamps >= tier1Required ? 1 : 0.5, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className={`p-5 rounded-2xl border transition-all duration-500 ${
-                  isTier2Ready
-                    ? 'bg-white border-violet-200 shadow-[0_8px_30px_rgb(124,58,237,0.1)]'
-                    : currentStamps >= tier1Required
-                      ? 'bg-white border-violet-100'
-                      : 'bg-gray-50/30 border-gray-100'
-                }`}
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center gap-2">
-                    <Trophy className={`w-4 h-4 ${isTier2Ready ? 'text-violet-500' : 'text-gray-400'}`} />
-                    <span className={`text-[11px] font-black uppercase tracking-widest ${isTier2Ready ? 'text-violet-600' : 'text-gray-400'}`}>
-                      Palier 2
-                    </span>
-                  </div>
-                  {isTier2Ready ? (
-                    <motion.span
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                      className="px-2.5 py-1 rounded-full bg-violet-600 text-[10px] font-black text-white uppercase shadow-lg shadow-violet-200"
-                    >
-                      Débloqué !
-                    </motion.span>
-                  ) : tier2Required - currentStamps <= 2 ? (
-                    <motion.span
-                      animate={{ x: [0, -2, 2, 0] }}
-                      transition={{ repeat: Infinity, duration: 0.5, repeatDelay: 1 }}
-                      className="px-2.5 py-1 rounded-full bg-violet-100 text-[10px] font-black text-violet-700 border border-violet-200"
-                    >
-                      Plus que {tier2Required - currentStamps} !
-                    </motion.span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-md">
-                      {tier2Required - currentStamps} restants
-                    </span>
-                  )}
-                </div>
-
-                {/* Stamps Grid Tier 2 - Only shows additional stamps needed after tier 1 */}
-                <div className="grid grid-cols-5 gap-2.5 mb-4">
-                  {Array.from({ length: tier2Required - tier1Required }).map((_, i) => {
-                    const isEarned = currentStamps >= (tier1Required + i + 1);
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: i * 0.05 }}
-                        className={`aspect-square rounded-full flex items-center justify-center transition-all duration-300 ${
-                          isEarned
-                            ? 'bg-violet-600 text-white shadow-md'
-                            : 'bg-gray-50 text-gray-300 border border-gray-100'
-                        }`}
-                      >
-                        <LoyaltyIcon className="w-4 h-4" />
-                      </motion.div>
-                    );
-                  })}
-                </div>
-
-                {/* Bottom Progress & Desc - CENTERED */}
-                <div className="space-y-3">
-                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${Math.min((Math.max(0, currentStamps - tier1Required) / (tier2Required - tier1Required)) * 100, 100)}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      className="h-full bg-violet-600 rounded-full"
-                    />
-                  </div>
-                  <p
-                    className={`text-center text-base font-medium italic line-clamp-2 ${isTier2Ready ? 'text-violet-900' : 'text-gray-600'}`}
-                    style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}
-                  >
-                    {tier2Reward || 'Récompense Premium'}
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </div>
-
-          {/* PWA Notification Banner - Show in PWA when NOT subscribed */}
-          {push.isStandalone && isMobile && !push.pushSubscribed && push.pushPermission !== 'denied' && (
-            <motion.button
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={push.handlePushSubscribe}
-              disabled={push.pushSubscribing}
-              className="w-full mb-5"
-            >
-              <div
-                className="flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all hover:shadow-sm"
-                style={{
-                  borderColor: `${merchant.primary_color}30`,
-                  backgroundColor: `${merchant.primary_color}05`
-                }}
-              >
-                <motion.div
-                  animate={{ rotate: [0, -10, 10, 0] }}
-                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-                  className="shrink-0"
-                >
-                  <Bell className="w-4 h-4" style={{ color: merchant.primary_color }} />
-                </motion.div>
-                <span className="flex-1 text-xs font-medium text-gray-700 text-left">
-                  Activer les notifications pour ne rater aucune offre
-                </span>
-                {push.pushSubscribing ? (
-                  <Loader2 className="w-4 h-4 animate-spin shrink-0" style={{ color: merchant.primary_color }} />
-                ) : (
-                  <ChevronRight className="w-4 h-4 shrink-0" style={{ color: merchant.primary_color }} />
-                )}
-              </div>
-            </motion.button>
-          )}
-
-
-          {/* Push Error Display — inline in card flow */}
-          {push.pushError && (
-            <div className="w-full rounded-2xl p-4 bg-red-50 border border-red-200 flex items-start gap-3 mb-4">
-              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
-              <div>
-                <p className="font-semibold text-red-800 text-sm">Erreur d&apos;activation</p>
-                <p className="text-xs text-red-600 mt-1">{push.pushError}</p>
-                {push.isIOS && (
-                  <p className="text-xs text-red-500 mt-2">
-                    iOS {push.iOSVersion || '?'} &bull; {push.isStandalone ? 'Mode PWA' : 'Navigateur'}
-                  </p>
-                )}
-              </div>
+        {/* Push Error */}
+        {push.pushError && (
+          <div className="w-full rounded-2xl p-4 bg-red-50 border border-red-200 flex items-start gap-3 mb-4">
+            <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold text-red-800 text-sm">Erreur d&apos;activation</p>
+              <p className="text-xs text-red-600 mt-1">{push.pushError}</p>
+              {push.isIOS && (
+                <p className="text-xs text-red-500 mt-2">iOS {push.iOSVersion || '?'} &bull; {push.isStandalone ? 'Mode PWA' : 'Navigateur'}</p>
+              )}
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Subscribed confirmation - Small bell icon */}
-          {push.pushSubscribed && (
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="flex justify-center mb-4"
-            >
-              <div
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full"
-                style={{ backgroundColor: `${merchant.primary_color}10` }}
-              >
-                <Bell className="w-3 h-3" style={{ color: merchant.primary_color }} />
-                <span className="text-[10px] font-medium" style={{ color: safeColor }}>Notifications actives</span>
-              </div>
-            </motion.div>
-          )}
-
-        </motion.div>
+        {/* Subscribed confirmation */}
+        {push.pushSubscribed && (
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ backgroundColor: `${merchant.primary_color}10` }}>
+              <Bell className="w-3 h-3" style={{ color: merchant.primary_color }} />
+              <span className="text-[10px] font-medium" style={{ color: safeColor }}>Notifications actives</span>
+            </div>
+          </motion.div>
+        )}
 
         {/* Historique */}
         <HistorySection visits={visits} adjustments={adjustments} redemptions={redemptions} merchant={merchant} />
@@ -1281,8 +1283,8 @@ export default function CustomerCardPage({
         )}
 
         <footer className="py-6 text-center">
-          <a href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
-            <span className="text-xs text-gray-400 group-hover:text-gray-500">Créé avec ❤️ par</span>
+          <a href="https://www.qarte.fr" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
+            <span className="text-xs text-gray-400 group-hover:text-gray-500">Propulsé par</span>
             <div className="w-4 h-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-sm flex items-center justify-center">
               <span className="text-white text-[8px] font-black italic">Q</span>
             </div>

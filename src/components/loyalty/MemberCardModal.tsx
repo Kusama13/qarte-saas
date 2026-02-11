@@ -22,94 +22,92 @@ export default function MemberCardModal({
   customerFirstName,
   customerLastName,
 }: MemberCardModalProps) {
+  const isActive = new Date(memberCard.valid_until) > new Date();
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="">
       <div className="py-2">
-        {/* Credit Card Container */}
+        {/* Credit Card */}
         <motion.div
-          initial={{ scale: 0.9, opacity: 0, rotateY: -10 }}
-          animate={{ scale: 1, opacity: 1, rotateY: 0 }}
-          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 25 }}
           className="relative w-full mx-auto overflow-hidden rounded-2xl shadow-2xl"
           style={{ aspectRatio: '1.58/1' }}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-amber-950" />
+          {/* Base gradient */}
+          <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-800 to-zinc-900" />
 
-          {/* Holographic Pattern */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 2px,
-                rgba(251,191,36,0.3) 2px,
-                rgba(251,191,36,0.3) 4px
-              )`
-            }} />
+          {/* Mesh gradient — gold ambient glow */}
+          <div className="absolute inset-0" style={{
+            background: 'radial-gradient(ellipse at 20% 15%, rgba(251,191,36,0.1) 0%, transparent 50%), radial-gradient(ellipse at 85% 85%, rgba(251,191,36,0.07) 0%, transparent 50%)'
+          }} />
+
+          {/* Gold foil dot texture */}
+          <div className="absolute inset-0" style={{
+            opacity: 0.03,
+            backgroundImage: 'radial-gradient(circle, rgba(251,191,36,1) 0.5px, transparent 0.5px)',
+            backgroundSize: '14px 14px'
+          }} />
+
+          {/* Q Watermark — large centered */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none">
+            <span className="text-[100px] font-black italic leading-none" style={{ color: 'rgba(251,191,36,0.03)' }}>Q</span>
           </div>
 
           {/* Animated Shine Sweep */}
           <motion.div
             animate={{ x: ['-100%', '200%'] }}
-            transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
+            transition={{ duration: 4, repeat: Infinity, repeatDelay: 3, ease: "easeInOut" }}
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent skew-x-12"
           />
 
           {/* Card Content */}
           <div className="relative h-full p-5 flex flex-col justify-between">
-            {/* Top: Crown + Program */}
+            {/* Top: Crown + Program + Status */}
             <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                  <Crown className="w-5 h-5 text-white drop-shadow-sm" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/25">
+                  <Crown className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-amber-400 text-[10px] font-bold uppercase tracking-widest">
+                  <p className="text-amber-400/90 text-[10px] font-bold uppercase" style={{ letterSpacing: '0.15em' }}>
                     {memberCard.program?.name || 'Programme VIP'}
                   </p>
-                  <p className="text-white/60 text-[9px] font-medium mt-0.5">
+                  <p className="text-white/40 text-[9px] font-medium mt-0.5">
                     {merchant.shop_name}
                   </p>
                 </div>
               </div>
 
-              <div className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                new Date(memberCard.valid_until) > new Date()
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
+              <div className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${
+                isActive
+                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
+                  : 'bg-red-500/15 text-red-400 border border-red-500/20'
               }`}>
-                {new Date(memberCard.valid_until) > new Date() ? 'Actif' : 'Expiré'}
+                {isActive ? 'Actif' : 'Expiré'}
               </div>
             </div>
 
-            {/* Middle: Benefit */}
-            <div className="flex items-center justify-between">
-              <div className="flex-1">
-                <p className="text-amber-400/70 text-[8px] font-semibold uppercase tracking-wider mb-1">Avantage</p>
-                <div className="inline-block px-3 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-lg">
-                  <p className="text-amber-100 text-xs font-bold truncate max-w-[140px]">
-                    {memberCard.program?.benefit_label}
-                  </p>
-                </div>
-              </div>
-
-              <div className="w-11 h-11 rounded-xl border border-amber-500/20 flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-white/5 to-transparent shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)]">
-                <span className="text-2xl font-bold text-amber-500/20 select-none">Q</span>
-                <div className="absolute inset-0 bg-gradient-to-tr from-amber-500/5 via-transparent to-amber-200/5 pointer-events-none" />
-              </div>
+            {/* Center: Benefit — prominent, centered */}
+            <div className="text-center px-2">
+              <p className="text-amber-500/50 text-[7px] font-bold uppercase mb-1.5" style={{ letterSpacing: '0.2em' }}>Votre avantage</p>
+              <p className="text-amber-100 text-sm font-bold leading-snug">
+                {memberCard.program?.benefit_label}
+              </p>
             </div>
 
-            {/* Bottom: Customer + Expiry */}
+            {/* Bottom: Name + Expiry */}
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-white/40 text-[8px] font-medium uppercase tracking-wider mb-1">Titulaire</p>
-                <p className="text-white text-sm font-bold tracking-wide uppercase">
+                <p className="text-white/30 text-[7px] font-medium uppercase mb-0.5" style={{ letterSpacing: '0.15em' }}>Titulaire</p>
+                <p className="text-white/90 text-xs font-bold tracking-wide uppercase">
                   {customerFirstName} {customerLastName}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-white/40 text-[8px] font-medium uppercase tracking-wider mb-1">Valable jusqu&apos;au</p>
-                <p className="text-white text-sm font-bold tracking-wider font-mono">
+                <p className="text-white/30 text-[7px] font-medium uppercase mb-0.5" style={{ letterSpacing: '0.15em' }}>Expire le</p>
+                <p className="text-white/90 text-xs font-bold tracking-wider font-mono">
                   {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', {
                     day: '2-digit',
                     month: '2-digit',
@@ -120,12 +118,14 @@ export default function MemberCardModal({
             </div>
           </div>
 
-          <div className="absolute inset-0 rounded-2xl border border-amber-500/20 pointer-events-none" />
+          {/* Border overlay */}
+          <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ border: '1px solid rgba(251,191,36,0.1)' }} />
         </motion.div>
 
-        <div className="mt-4 text-center">
-          <p className="text-[10px] text-gray-400 font-medium tracking-wider">
-            REF: {memberCard.id.slice(0, 8).toUpperCase()}
+        {/* Reference */}
+        <div className="mt-3 text-center">
+          <p className="text-[10px] text-gray-400 font-medium tracking-wider font-mono">
+            {memberCard.id.slice(0, 8).toUpperCase()}
           </p>
         </div>
       </div>
