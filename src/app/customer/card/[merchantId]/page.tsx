@@ -457,6 +457,66 @@ export default function CustomerCardPage({
     localStorage.setItem('qarte_install_dismissed', Date.now().toString());
   }, []);
 
+  // Memoized computed state — must be before early returns (Rules of Hooks)
+  const {
+    isRewardReady,
+    isTier2Ready,
+    effectiveTier1Redeemed,
+    isRewardSticky,
+    isMemberCardActive,
+    rewardShowingTier2,
+    rewardCardReady,
+    rewardCardDescription,
+    rewardCardRemaining,
+    rewardCardTierLabel,
+  } = useMemo(() => {
+    if (!card) {
+      return {
+        isRewardReady: false,
+        isTier2Ready: false,
+        effectiveTier1Redeemed: false,
+        isRewardSticky: false,
+        isMemberCardActive: false,
+        rewardShowingTier2: false,
+        rewardCardReady: false,
+        rewardCardDescription: '',
+        rewardCardRemaining: 0,
+        rewardCardTierLabel: '',
+      };
+    }
+    const _currentStamps = card.current_stamps;
+    const _tier1Required = card.merchant.stamps_required;
+    const _tier2Enabled = card.merchant.tier2_enabled && card.merchant.tier2_stamps_required;
+    const _tier2Required = card.merchant.tier2_stamps_required || 0;
+    const _tier2Reward = card.merchant.tier2_reward_description || '';
+
+    const _isRewardReady = _currentStamps >= _tier1Required;
+    const _isTier2Ready = _tier2Enabled && _currentStamps >= _tier2Required;
+    const _effectiveTier1Redeemed = tier1RedeemedInCycle && _currentStamps >= _tier1Required;
+    const _isRewardSticky = !redeemSuccess && ((_isRewardReady && !_effectiveTier1Redeemed) || (_tier2Enabled && _isTier2Ready));
+    const _isMemberCardActive = !!memberCard && new Date(memberCard.valid_until) > new Date();
+    const _showingTier2 = _tier2Enabled && _effectiveTier1Redeemed;
+
+    return {
+      isRewardReady: _isRewardReady,
+      isTier2Ready: _isTier2Ready,
+      effectiveTier1Redeemed: _effectiveTier1Redeemed,
+      isRewardSticky: _isRewardSticky,
+      isMemberCardActive: _isMemberCardActive,
+      rewardShowingTier2: _showingTier2,
+      rewardCardReady: _showingTier2 ? !!_isTier2Ready : _isRewardReady,
+      rewardCardDescription: _showingTier2
+        ? (_tier2Reward || 'Récompense Premium')
+        : (card.merchant.reward_description || 'Votre récompense fidélité'),
+      rewardCardRemaining: _showingTier2
+        ? _tier2Required - _currentStamps
+        : _tier1Required - _currentStamps,
+      rewardCardTierLabel: _tier2Enabled
+        ? (_showingTier2 ? 'Palier 2' : 'Palier 1')
+        : '',
+    };
+  }, [card, tier1RedeemedInCycle, redeemSuccess, memberCard]);
+
   const triggerConfetti = useCallback(async () => {
     // Dynamic import - only load confetti when needed
     const confetti = (await import('canvas-confetti')).default;
@@ -637,46 +697,6 @@ export default function CustomerCardPage({
   const tier2Required = merchant.tier2_stamps_required || 0;
   const tier2Reward = merchant.tier2_reward_description || '';
   const LoyaltyIcon = Heart;
-
-  // Memoized computed state — only recalculates when card data or redeem state changes
-  const {
-    isRewardReady,
-    isTier2Ready,
-    effectiveTier1Redeemed,
-    isRewardSticky,
-    isMemberCardActive,
-    rewardShowingTier2,
-    rewardCardReady,
-    rewardCardDescription,
-    rewardCardRemaining,
-    rewardCardTierLabel,
-  } = useMemo(() => {
-    const _isRewardReady = currentStamps >= tier1Required;
-    const _isTier2Ready = tier2Enabled && currentStamps >= tier2Required;
-    const _effectiveTier1Redeemed = tier1RedeemedInCycle && currentStamps >= tier1Required;
-    const _isRewardSticky = !redeemSuccess && ((_isRewardReady && !_effectiveTier1Redeemed) || (tier2Enabled && _isTier2Ready));
-    const _isMemberCardActive = !!memberCard && new Date(memberCard.valid_until) > new Date();
-    const _showingTier2 = tier2Enabled && _effectiveTier1Redeemed;
-
-    return {
-      isRewardReady: _isRewardReady,
-      isTier2Ready: _isTier2Ready,
-      effectiveTier1Redeemed: _effectiveTier1Redeemed,
-      isRewardSticky: _isRewardSticky,
-      isMemberCardActive: _isMemberCardActive,
-      rewardShowingTier2: _showingTier2,
-      rewardCardReady: _showingTier2 ? !!_isTier2Ready : _isRewardReady,
-      rewardCardDescription: _showingTier2
-        ? (tier2Reward || 'Récompense Premium')
-        : (merchant.reward_description || 'Votre récompense fidélité'),
-      rewardCardRemaining: _showingTier2
-        ? tier2Required - currentStamps
-        : tier1Required - currentStamps,
-      rewardCardTierLabel: tier2Enabled
-        ? (_showingTier2 ? 'Palier 2' : 'Palier 1')
-        : '',
-    };
-  }, [currentStamps, tier1Required, tier2Enabled, tier2Required, tier2Reward, tier1RedeemedInCycle, redeemSuccess, memberCard, merchant.reward_description]);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${merchant.primary_color}15 0%, ${merchant.primary_color}40 40%, ${merchant.primary_color}60 70%, ${merchant.primary_color}35 100%)` }}>
