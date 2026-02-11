@@ -128,7 +128,7 @@ function getLifecycleStage(
 
 // --- Email Pipeline ---
 
-// Milestone codes: -103=QR, -104=Kit, -100=1er scan, -101=Recompense
+// Milestone codes: -103=QR+Kit (merged), -100=1er scan, -101=Recompense
 function getEmailSteps(
   merchantId: string,
   emailTracking: Record<string, number[]>,
@@ -136,13 +136,12 @@ function getEmailSteps(
 ): EmailSteps {
   const codes = emailTracking[merchantId] || [];
   const steps = [
-    { code: 'QR', sent: codes.includes(-103) },
-    { code: 'Kit', sent: codes.includes(-104) },
-    { code: '1er', sent: codes.includes(-100) },
-    { code: 'Réc', sent: codes.includes(-101) },
+    { code: 'QR+Kit', sent: codes.includes(-103) },
+    { code: '1er scan', sent: codes.includes(-100) },
+    { code: 'Récomp.', sent: codes.includes(-101) },
   ];
   const sentCount = steps.filter((s) => s.sent).length;
-  return { steps, summary: `${sentCount}/4` };
+  return { steps, summary: `${sentCount}/3` };
 }
 
 // --- Activity Label ---
@@ -484,8 +483,8 @@ export default function AdminMerchantsPage() {
                         <div className="group/tooltip relative inline-block">
                           <span className={cn(
                             "text-sm font-medium cursor-default",
-                            emailSteps.summary === '4/4' ? "text-green-600" :
-                            emailSteps.summary === '0/4' ? "text-gray-400" : "text-amber-600"
+                            emailSteps.summary === '3/3' ? "text-green-600" :
+                            emailSteps.summary === '0/3' ? "text-gray-400" : "text-amber-600"
                           )}>
                             {emailSteps.summary}
                           </span>
@@ -601,8 +600,8 @@ export default function AdminMerchantsPage() {
                     </span>
                     <span className={cn(
                       "font-medium",
-                      emailSteps.summary === '4/4' ? "text-green-600" :
-                      emailSteps.summary === '0/4' ? "text-gray-400" : "text-amber-600"
+                      emailSteps.summary === '3/3' ? "text-green-600" :
+                      emailSteps.summary === '0/3' ? "text-gray-400" : "text-amber-600"
                     )}>
                       <Mail className="w-3 h-3 inline mr-0.5" />{emailSteps.summary}
                     </span>
