@@ -26,7 +26,7 @@ import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50' },
   { href: '/dashboard/program', icon: Gift, label: 'Mon Programme', color: 'text-pink-500', bg: 'bg-pink-50' },
-  { href: '/dashboard/qr-download', icon: QrCode, label: 'Mon QR code', color: 'text-violet-500', bg: 'bg-violet-50' },
+  { href: '/dashboard/qr-download', icon: QrCode, label: 'QR code & Supports', color: 'text-violet-500', bg: 'bg-violet-50' },
   { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
   { href: '/dashboard/members', icon: Crown, label: 'Membres', color: 'text-amber-500', bg: 'bg-amber-50' },
   { href: '/dashboard/marketing', icon: Megaphone, label: 'Notifications', color: 'text-orange-500', bg: 'bg-orange-50' },

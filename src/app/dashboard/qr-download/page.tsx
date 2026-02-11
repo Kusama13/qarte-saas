@@ -137,27 +137,27 @@ export default function QRDownloadPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6 lg:max-w-md">
+      <div className="flex gap-1.5 p-1.5 bg-gray-100/80 rounded-2xl mb-6 lg:max-w-md border border-gray-200/60">
         <button
           onClick={() => setActiveTab('qr')}
-          className={`flex items-center justify-center gap-2 flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
+          className={`flex items-center justify-center gap-2 flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-200 ${
             activeTab === 'qr'
-              ? 'bg-white text-indigo-700 shadow-sm'
-              : 'text-gray-400 hover:text-gray-600'
+              ? 'bg-white text-indigo-700 shadow-md shadow-indigo-100/50 ring-1 ring-indigo-100'
+              : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
           }`}
         >
-          <QrCode className="w-4 h-4" />
+          <QrCode className={`w-4 h-4 ${activeTab === 'qr' ? 'text-indigo-500' : ''}`} />
           Mon QR code
         </button>
         <button
           onClick={() => setActiveTab('social')}
-          className={`flex items-center justify-center gap-2 flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all ${
+          className={`flex items-center justify-center gap-2 flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-200 ${
             activeTab === 'social'
-              ? 'bg-white text-purple-700 shadow-sm'
-              : 'text-gray-400 hover:text-gray-600'
+              ? 'bg-white text-purple-700 shadow-md shadow-purple-100/50 ring-1 ring-purple-100'
+              : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
           }`}
         >
-          <Image className="w-4 h-4" />
+          <Image className={`w-4 h-4 ${activeTab === 'social' ? 'text-purple-500' : ''}`} />
           Kit réseaux
         </button>
       </div>
