@@ -1,121 +1,46 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Download,
-  FileText,
-  Image as ImageIcon,
   Check,
   Loader2,
-  Palette,
-  Sparkles,
   Smartphone,
-  Share2,
+  Printer,
+  Play,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { generateQRCode, getScanUrl } from '@/lib/utils';
-import { jsPDF } from 'jspdf';
-import { toPng } from 'html-to-image';
-import { FlyerTemplate } from '@/components/marketing/FlyerTemplate';
 import { useMerchant } from '@/contexts/MerchantContext';
 
 export default function QRDownloadPage() {
   const { merchant, loading } = useMerchant();
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [scanUrl, setScanUrl] = useState<string>('');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
-  const flyerPreviewRef = useRef<HTMLDivElement>(null);
-  const flyerExportRef = useRef<HTMLDivElement>(null);
 
   // Generate QR code when merchant data is available
   useEffect(() => {
     if (!merchant?.scan_code) return;
-    const scanUrl = getScanUrl(merchant.scan_code);
-    generateQRCode(scanUrl).then(setQrCodeUrl);
+    const url = getScanUrl(merchant.scan_code);
+    setScanUrl(url);
+    generateQRCode(url).then(setQrCodeUrl);
   }, [merchant?.scan_code]);
 
-  const generatePdf = async () => {
-    if (!flyerExportRef.current || !merchant) return;
+  const saveQrImage = () => {
+    if (!qrCodeUrl || !merchant) return;
 
-    setIsGenerating(true);
+    const link = document.createElement('a');
+    link.download = `qr-${merchant.slug}.png`;
+    link.href = qrCodeUrl;
+    link.click();
 
-    try {
-      const flyerImage = await toPng(flyerExportRef.current, {
-        pixelRatio: 4,
-        cacheBust: true,
-      });
+    // Track QR download for onboarding checklist (fire and forget)
+    fetch('/api/onboarding/status', { method: 'POST' }).catch(() => {});
 
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      const flyerWidth = 105;
-      const flyerHeight = 148;
-
-      const positions = [
-        { x: 0, y: 0 },
-        { x: flyerWidth, y: 0 },
-        { x: 0, y: flyerHeight },
-        { x: flyerWidth, y: flyerHeight },
-      ];
-
-      positions.forEach((pos) => {
-        pdf.addImage(flyerImage, 'PNG', pos.x, pos.y, flyerWidth, flyerHeight);
-      });
-
-      pdf.setDrawColor(200, 200, 200);
-      pdf.setLineDashPattern([2, 2], 0);
-      pdf.setLineWidth(0.3);
-
-      pdf.line(pageWidth / 2, 0, pageWidth / 2, pageHeight);
-      pdf.line(0, pageHeight / 2, pageWidth, pageHeight / 2);
-
-      pdf.save(`qr-flyer-${merchant.slug}.pdf`);
-
-      // Track QR download for onboarding checklist (fire and forget)
-      fetch('/api/onboarding/status', { method: 'POST' }).catch(() => {});
-
-      setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 3000);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const downloadPng = async () => {
-    if (!flyerExportRef.current || !merchant) return;
-
-    setIsGenerating(true);
-
-    try {
-      const flyerImage = await toPng(flyerExportRef.current, {
-        pixelRatio: 4,
-        cacheBust: true,
-      });
-
-      const link = document.createElement('a');
-      link.download = `flyer-${merchant.slug}.png`;
-      link.href = flyerImage;
-      link.click();
-
-      // Track QR download for onboarding checklist (fire and forget)
-      fetch('/api/onboarding/status', { method: 'POST' }).catch(() => {});
-
-      setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 3000);
-    } catch (error) {
-      console.error('Error generating PNG:', error);
-    } finally {
-      setIsGenerating(false);
-    }
+    setDownloadSuccess(true);
+    setTimeout(() => setDownloadSuccess(false), 3000);
   };
 
   if (loading) {
@@ -127,136 +52,110 @@ export default function QRDownloadPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-lg mx-auto">
       {/* Header */}
       <div className="mb-6 md:mb-8 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
-          Télécharger QR
+          Mon QR code
         </h1>
         <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
-          Imprimez ou partagez votre QR code
+          Montrez-le à vos client(e)s depuis votre téléphone
         </p>
       </div>
 
-      {/* Main Content - Two Column Layout */}
-      <div className="grid lg:grid-cols-2 gap-6 md:gap-8">
-        {/* Left Column: Flyer Preview */}
-        <div className="space-y-3 md:space-y-4">
-          <div className="flex items-center gap-2 text-xs md:text-sm font-semibold text-gray-500 uppercase tracking-wider">
-            <Sparkles className="w-4 h-4 text-indigo-500" />
-            Aperçu du Flyer A6
+      {/* QR Card */}
+      <div
+        className="relative overflow-hidden rounded-2xl md:rounded-3xl shadow-xl"
+        style={{
+          background: `linear-gradient(135deg, ${merchant?.primary_color || '#4b0082'}15, ${merchant?.secondary_color || '#7c3aed'}15)`,
+        }}
+      >
+        {/* Decorative circles */}
+        <div
+          className="absolute -top-16 -right-16 w-48 h-48 rounded-full opacity-10"
+          style={{ backgroundColor: merchant?.primary_color || '#4b0082' }}
+        />
+        <div
+          className="absolute -bottom-12 -left-12 w-36 h-36 rounded-full opacity-10"
+          style={{ backgroundColor: merchant?.secondary_color || '#7c3aed' }}
+        />
+
+        <div className="relative px-6 py-8 md:px-10 md:py-12 flex flex-col items-center text-center">
+          {/* Shop name */}
+          <h2 className="text-lg md:text-xl font-bold text-gray-900">
+            {merchant?.shop_name}
+          </h2>
+
+          {/* CTA above QR */}
+          <p className="mt-2 text-sm md:text-base text-gray-500">
+            Ajoutez votre carte de fidélité en 15 secondes
+          </p>
+
+          {/* QR code */}
+          <div className="mt-6 bg-white rounded-2xl p-4 md:p-6 shadow-lg">
+            {qrCodeUrl ? (
+              <img
+                src={qrCodeUrl}
+                alt="QR Code"
+                className="w-48 h-48 md:w-56 md:h-56"
+              />
+            ) : (
+              <div className="w-48 h-48 md:w-56 md:h-56 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+              </div>
+            )}
           </div>
 
-          <div className="relative flex items-center justify-center p-4 md:p-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl md:rounded-3xl">
-            <div className="absolute inset-0 m-8 bg-black/10 blur-2xl rounded-2xl transform translate-y-4" />
+          {/* Scannez-moi */}
+          <p className="mt-5 text-lg md:text-xl font-bold text-gray-900">
+            Scannez-moi !
+          </p>
 
-            <div className="relative transform hover:scale-[1.02] transition-transform duration-300">
-              {qrCodeUrl && merchant && (
-                <FlyerTemplate
-                  ref={flyerPreviewRef}
-                  shopName={merchant.shop_name}
-                  primaryColor={merchant.primary_color}
-                  secondaryColor={merchant.secondary_color}
-                  logoUrl={merchant.logo_url || undefined}
-                  qrCodeUrl={qrCodeUrl}
-                  rewardDescription={merchant.reward_description || 'Récompense fidélité'}
-                  stampsRequired={merchant.stamps_required}
-                  scale={0.65}
-                  tier2Enabled={merchant.tier2_enabled}
-                  tier2StampsRequired={merchant.tier2_stamps_required}
-                  tier2RewardDescription={merchant.tier2_reward_description}
-                />
-              )}
-            </div>
-          </div>
-
-          <p className="text-center text-xs text-gray-400">
-            Le flyer s&apos;adapte automatiquement à vos couleurs
+          {/* Branding */}
+          <p className="mt-3 text-xs text-gray-400">
+            Propulsé par <span className="font-semibold">Qarte</span>
           </p>
         </div>
+      </div>
 
-        {/* Right Column: Actions & Info */}
-        <div className="space-y-4 md:space-y-6">
-          {/* Design Detected Panel */}
-          <div className="p-4 md:p-6 bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center">
-                <Palette className="w-5 h-5 text-indigo-600" />
-              </div>
-              <div>
-                <h3 className="font-bold text-gray-900">Design détecté</h3>
-                <p className="text-sm text-gray-500">Basé sur votre configuration</p>
-              </div>
-            </div>
+      {/* Test button */}
+      {scanUrl && (
+        <a
+          href={scanUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border-2 border-indigo-200 hover:border-indigo-400 rounded-xl text-indigo-700 font-semibold text-sm transition-all hover:shadow-md"
+        >
+          <Play className="w-4 h-4" />
+          Tester l&apos;expérience client
+        </a>
+      )}
 
-            <div className="flex flex-wrap gap-3">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
-                <div
-                  className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                  style={{ backgroundColor: merchant?.primary_color }}
-                />
-                <span className="text-xs font-medium text-gray-600">Couleur principale</span>
-              </div>
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
-                <div
-                  className="w-4 h-4 rounded-full border-2 border-white shadow-sm"
-                  style={{ backgroundColor: merchant?.secondary_color }}
-                />
-                <span className="text-xs font-medium text-gray-600">Couleur secondaire</span>
-              </div>
-              {merchant?.logo_url && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
-                  <Check className="w-3 h-3 text-green-600" />
-                  <span className="text-xs font-medium text-gray-600">Logo inclus</span>
-                </div>
-              )}
-            </div>
+      {/* Save button */}
+      <div className="mt-6">
+        <Button
+          onClick={saveQrImage}
+          disabled={!qrCodeUrl}
+          className="w-full h-12 md:h-14 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all text-sm md:text-base"
+        >
+          {downloadSuccess ? (
+            <Check className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+          ) : (
+            <Download className="w-4 h-4 md:w-5 md:h-5 mr-2" />
+          )}
+          {downloadSuccess ? 'Enregistré !' : 'Enregistrer l\'image'}
+        </Button>
+      </div>
+
+      {/* Info Message */}
+      <div className="mt-4 p-3 md:p-4 bg-indigo-50 rounded-xl md:rounded-2xl border border-indigo-100">
+        <div className="flex items-center gap-2.5 md:gap-3">
+          <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
+            <Smartphone className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
           </div>
-
-          {/* Download Buttons */}
-          <div className="p-4 md:p-6 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-3 md:space-y-4">
-            <h3 className="font-bold text-gray-900 flex items-center gap-2 text-sm md:text-base">
-              <Download className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
-              Télécharger
-            </h3>
-
-            <Button
-              onClick={generatePdf}
-              disabled={isGenerating}
-              className="w-full h-12 md:h-14 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all text-sm md:text-base"
-            >
-              {isGenerating ? (
-                <Loader2 className="w-4 h-4 md:w-5 md:h-5 animate-spin mr-2" />
-              ) : downloadSuccess ? (
-                <Check className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-              ) : (
-                <FileText className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-              )}
-              {downloadSuccess ? 'Téléchargé !' : 'Télécharger le PDF (A4 - 4 flyers)'}
-            </Button>
-
-            <Button
-              onClick={downloadPng}
-              disabled={isGenerating}
-              variant="outline"
-              className="w-full h-10 md:h-12 border-2 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50 font-semibold rounded-xl transition-all text-sm"
-            >
-              <ImageIcon className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-              Télécharger en PNG (1 flyer)
-            </Button>
-          </div>
-
-          {/* Info Message */}
-          <div className="p-3 md:p-4 bg-indigo-50 rounded-xl md:rounded-2xl border border-indigo-100">
-            <div className="flex items-center gap-2.5 md:gap-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                <Smartphone className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
-              </div>
-              <p className="text-xs md:text-sm text-indigo-800">
-                Vous pouvez imprimer ce flyer ou le présenter directement sur votre téléphone, ça marche aussi !
-              </p>
-            </div>
-          </div>
+          <p className="text-xs md:text-sm text-indigo-800">
+            Gardez-le sur votre téléphone et montrez-le à vos client(e)s au moment de payer
+          </p>
         </div>
       </div>
 
@@ -264,11 +163,11 @@ export default function QRDownloadPage() {
       <div className="mt-6 md:mt-8 p-4 md:p-6 bg-gradient-to-r from-pink-50 to-purple-50 rounded-2xl border border-purple-100">
         <div className="flex items-center gap-3 md:gap-4">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-200">
-            <Share2 className="w-5 h-5 md:w-6 md:h-6 text-white" />
+            <Printer className="w-5 h-5 md:w-6 md:h-6 text-white" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-gray-900 text-sm md:text-base">Partagez sur vos réseaux</h3>
-            <p className="text-xs md:text-sm text-gray-600">Téléchargez un visuel prêt à poster sur Instagram, Facebook...</p>
+            <h3 className="font-bold text-gray-900 text-sm md:text-base">Pour le comptoir ou la vitrine</h3>
+            <p className="text-xs md:text-sm text-gray-600">Imprimez votre kit fidélité ou partagez-le sur Instagram</p>
           </div>
           <Link
             href="/dashboard/social-kit"
@@ -277,26 +176,6 @@ export default function QRDownloadPage() {
             Voir le kit
           </Link>
         </div>
-      </div>
-
-      {/* Hidden high-res flyer for PDF generation */}
-      <div className="fixed left-[-9999px] top-0">
-        {qrCodeUrl && merchant && (
-          <FlyerTemplate
-            ref={flyerExportRef}
-            shopName={merchant.shop_name}
-            primaryColor={merchant.primary_color}
-            secondaryColor={merchant.secondary_color}
-            logoUrl={merchant.logo_url || undefined}
-            qrCodeUrl={qrCodeUrl}
-            rewardDescription={merchant.reward_description || 'Récompense fidélité'}
-            stampsRequired={merchant.stamps_required}
-            scale={1}
-            tier2Enabled={merchant.tier2_enabled}
-            tier2StampsRequired={merchant.tier2_stamps_required}
-            tier2RewardDescription={merchant.tier2_reward_description}
-          />
-        )}
       </div>
     </div>
   );
