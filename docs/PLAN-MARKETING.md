@@ -18,7 +18,7 @@
 |---|----------|--------|--------|
 | 1 | **Temoignages fictifs** (photos Unsplash, noms generiques) | Tue la confiance si decouvert | Remplacer par vrais clients ou retirer |
 | 2 | **Pas de video** (landing, demo, onboarding) | -30% conversion vs landing avec video | Enregistrer video 60s explainer |
-| 3 | **Social proof non verifiable** (150+ instituts, 4.9/5) | Sonne creux sans lien externe | Adapter aux vrais chiffres ou lier a Trustpilot/Google |
+| 3 | ~~**Social proof non verifiable** (150+ instituts, 4.9/5)~~ | ~~Sonne creux sans lien externe~~ | **✅ RETIRE** — faux chiffres supprimes du hero (11 fev) |
 | 4 | **Pas de comparaison concurrents** | Prospect ne sait pas pourquoi Qarte | Creer tableau comparatif |
 | 5 | ~~**Pas de blog/SEO**~~ | ~~0 trafic organique~~ | ✅ Blog cree avec 3 articles SEO (coiffure, onglerie, institut) |
 | 6 | **GTM pas active** | Funnel pas mesurable | Activer GTM + GA4 complet |
@@ -51,7 +51,7 @@
 
 ### Actions produit
 - [ ] Remplacer temoignages fictifs par vrais (ou retirer)
-- [ ] Adapter social proof aux vrais chiffres
+- [x] ~~Adapter social proof aux vrais chiffres~~ — retire du hero (11 fev)
 - [ ] Enregistrer 1 video temoignage client (30s)
 - [ ] Activer GTM + GA4 + Hotjar
 - [x] ~~Creer page `/qarte-vs-carte-papier` (SEO)~~ — fait
@@ -276,7 +276,7 @@
 
 ## Cette semaine — Marketing
 1. [ ] Remplacer temoignages fictifs par vrais clients OU retirer
-2. [ ] Adapter social proof aux chiffres reels
+2. [x] ~~Adapter social proof aux chiffres reels~~ — faux chiffres retires du hero (11 fev)
 3. [ ] Activer GTM + GA4 complet
 4. [x] ~~Ajouter FAQ "C'est trop cher" + "RGPD"~~ — fait (FAQSection.tsx)
 

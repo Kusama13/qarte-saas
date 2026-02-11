@@ -25,6 +25,8 @@ import {
   Day5CheckinEmail,
   Tier2UpsellEmail,
   SubscriptionReactivatedEmail,
+  FirstClientScriptEmail,
+  QuickCheckEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -1050,6 +1052,80 @@ export async function sendTier2UpsellEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending tier 2 upsell email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email script client J+2 après config programme (0 scans)
+export async function sendFirstClientScriptEmail(
+  to: string,
+  shopName: string,
+  shopType: string,
+  rewardDescription: string,
+  stampsRequired: number
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(FirstClientScriptEmail({ shopName, shopType, rewardDescription, stampsRequired }));
+    const text = await render(FirstClientScriptEmail({ shopName, shopType, rewardDescription, stampsRequired }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `La phrase exacte à dire à vos client(e)s`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send first client script email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`First client script email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending first client script email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email quick check J+4 après config programme (0 scans)
+export async function sendQuickCheckEmail(
+  to: string,
+  shopName: string,
+  daysRemaining: number
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(QuickCheckEmail({ shopName, daysRemaining }));
+    const text = await render(QuickCheckEmail({ shopName, daysRemaining }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName}, une question rapide`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send quick check email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Quick check email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending quick check email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

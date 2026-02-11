@@ -109,6 +109,7 @@ src/
 docs/
 ├── context.md            # Contexte projet (ce fichier)
 ├── ROADMAP-AUDIT.md      # Roadmap, audit, emails, changelog (document unifie)
+├── PLAN-MARKETING.md     # Plan marketing & acquisition (audit CMO, phases 0→1000)
 └── roadmap/              # Backups code (mode article, scheduled push)
 
 supabase/
@@ -649,6 +650,7 @@ export const EMAIL_HEADERS = {
 |---------|-------------|
 | `docs/context.md` | Contexte projet (ce fichier) |
 | `docs/ROADMAP-AUDIT.md` | Roadmap, audit, emails, changelog (document unifie) |
+| `docs/PLAN-MARKETING.md` | Plan marketing & acquisition (audit CMO, phases 0→1000) |
 
 ---
 
@@ -661,4 +663,4 @@ export const EMAIL_HEADERS = {
 | Push/envoi | ~100 (non optimise) |
 | Clients/marchand | ~2,000 |
 
-*Pour plus de details, voir `docs/AUDIT_SCALABILITE.md`*
+*Pour plus de details, voir `docs/ROADMAP-AUDIT.md` partie 3 (Scalabilite)*

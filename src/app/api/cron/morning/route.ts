@@ -19,6 +19,8 @@ import {
   sendWeeklyDigestEmail,
   sendTier2UpsellEmail,
   sendReactivationEmail,
+  sendFirstClientScriptEmail,
+  sendQuickCheckEmail,
 } from '@/lib/email';
 import { getTrialStatus } from '@/lib/utils';
 import logger from '@/lib/logger';
@@ -82,6 +84,8 @@ export async function GET(request: NextRequest) {
     day5Checkin: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     qrCode: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     socialKit: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    firstClientScript: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    quickCheck: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstScan: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstReward: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     weeklyDigest: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -281,6 +285,8 @@ export async function GET(request: NextRequest) {
 
         try {
           const totalScans = scanCountMap.get(merchant.id) || 0;
+          // Skip for 0-scan merchants — covered by FirstClientScript (J+2) and QuickCheck (J+4)
+          if (totalScans === 0) { results.day5Checkin.skipped++; return; }
           const result = await sendDay5CheckinEmail(email, merchant.shop_name, totalScans);
           if (result.success) { results.day5Checkin.sent++; }
           else { results.day5Checkin.errors++; }
@@ -397,7 +403,159 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ==================== 2g. FIRST SCAN EMAIL ====================
+    // ==================== 2g. FIRST CLIENT SCRIPT EMAIL (J+2 après config, 0 scans) ====================
+    {
+      // Find merchants who got QR code email exactly 2 days ago
+      const { data: scriptCandidates } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id, shop_type, reward_description, stamps_required, trial_ends_at, subscription_status')
+        .not('reward_description', 'is', null)
+        .in('subscription_status', ['trial', 'active']);
+
+      if (scriptCandidates && scriptCandidates.length > 0) {
+        const scriptIds = scriptCandidates.map(m => m.id);
+
+        // Check who got QR code email (~2 days ago)
+        const twoDaysAgo = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+        const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+        const { data: qrTrackings } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id, sent_at')
+          .in('merchant_id', scriptIds)
+          .eq('reminder_day', -103);
+
+        const qrSent2DaysAgo = new Set(
+          (qrTrackings || [])
+            .filter(t => {
+              const sentAt = new Date(t.sent_at);
+              return sentAt <= twoDaysAgo && sentAt >= threeDaysAgo;
+            })
+            .map(t => t.merchant_id)
+        );
+
+        // Check who already got this email
+        const { data: existingScript } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id')
+          .in('merchant_id', scriptIds)
+          .eq('reminder_day', -106);
+        const alreadySentScript = new Set((existingScript || []).map(t => t.merchant_id));
+
+        // Check who has visits (exclude them)
+        const { data: scriptVisits } = await supabase
+          .from('visits')
+          .select('merchant_id')
+          .in('merchant_id', scriptIds)
+          .eq('status', 'confirmed');
+        const hasVisits = new Set((scriptVisits || []).map(v => v.merchant_id));
+
+        const scriptToSend = scriptCandidates.filter(
+          m => qrSent2DaysAgo.has(m.id) && !alreadySentScript.has(m.id) && !hasVisits.has(m.id)
+        );
+
+        results.firstClientScript.processed = scriptCandidates.length;
+        results.firstClientScript.skipped = scriptCandidates.length - scriptToSend.length;
+
+        if (scriptToSend.length > 0) {
+          const scriptEmailMap = await batchGetUserEmails([...new Set(scriptToSend.map(m => m.user_id))]);
+
+          await batchProcess(scriptToSend, async (merchant) => {
+            const email = scriptEmailMap.get(merchant.user_id);
+            if (!email) { results.firstClientScript.skipped++; return; }
+
+            try {
+              const result = await sendFirstClientScriptEmail(
+                email, merchant.shop_name, merchant.shop_type || '',
+                merchant.reward_description!, merchant.stamps_required
+              );
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({
+                  merchant_id: merchant.id, reminder_day: -106, pending_count: 0,
+                });
+                results.firstClientScript.sent++;
+              } else { results.firstClientScript.errors++; }
+            } catch { results.firstClientScript.errors++; }
+          });
+        }
+      }
+    }
+
+    // ==================== 2h. QUICK CHECK EMAIL (J+4 après config, 0 scans) ====================
+    {
+      const { data: qcCandidates } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id, trial_ends_at, subscription_status')
+        .not('reward_description', 'is', null)
+        .in('subscription_status', ['trial', 'active']);
+
+      if (qcCandidates && qcCandidates.length > 0) {
+        const qcIds = qcCandidates.map(m => m.id);
+
+        // Check who got QR code email ~4 days ago
+        const fourDaysAgo = new Date(now.getTime() - 4 * 24 * 60 * 60 * 1000);
+        const fiveDaysAgo = new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000);
+        const { data: qrTrackings4 } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id, sent_at')
+          .in('merchant_id', qcIds)
+          .eq('reminder_day', -103);
+
+        const qrSent4DaysAgo = new Set(
+          (qrTrackings4 || [])
+            .filter(t => {
+              const sentAt = new Date(t.sent_at);
+              return sentAt <= fourDaysAgo && sentAt >= fiveDaysAgo;
+            })
+            .map(t => t.merchant_id)
+        );
+
+        // Check who already got this email
+        const { data: existingQc } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id')
+          .in('merchant_id', qcIds)
+          .eq('reminder_day', -107);
+        const alreadySentQc = new Set((existingQc || []).map(t => t.merchant_id));
+
+        // Check who has visits
+        const { data: qcVisits } = await supabase
+          .from('visits')
+          .select('merchant_id')
+          .in('merchant_id', qcIds)
+          .eq('status', 'confirmed');
+        const qcHasVisits = new Set((qcVisits || []).map(v => v.merchant_id));
+
+        const qcToSend = qcCandidates.filter(
+          m => qrSent4DaysAgo.has(m.id) && !alreadySentQc.has(m.id) && !qcHasVisits.has(m.id)
+        );
+
+        results.quickCheck.processed = qcCandidates.length;
+        results.quickCheck.skipped = qcCandidates.length - qcToSend.length;
+
+        if (qcToSend.length > 0) {
+          const qcEmailMap = await batchGetUserEmails([...new Set(qcToSend.map(m => m.user_id))]);
+
+          await batchProcess(qcToSend, async (merchant) => {
+            const email = qcEmailMap.get(merchant.user_id);
+            if (!email) { results.quickCheck.skipped++; return; }
+
+            try {
+              const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
+              const daysRemaining = Math.max(trialStatus.daysRemaining, 1);
+              const result = await sendQuickCheckEmail(email, merchant.shop_name, daysRemaining);
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({
+                  merchant_id: merchant.id, reminder_day: -107, pending_count: 0,
+                });
+                results.quickCheck.sent++;
+              } else { results.quickCheck.errors++; }
+            } catch { results.quickCheck.errors++; }
+          });
+        }
+      }
+    }
+
+    // ==================== 2i. FIRST SCAN EMAIL ====================
     // Merchants with exactly 2 confirmed visits (1st is always merchant's test, 2nd is first real client)
     const { data: allConfiguredMerchants } = await supabase
       .from('merchants')

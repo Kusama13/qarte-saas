@@ -10,6 +10,7 @@ import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
 import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
+import ZeroScansCoach from '@/components/dashboard/ZeroScansCoach';
 
 // Cache for dashboard stats
 const STATS_CACHE_KEY = 'qarte_dashboard_stats';
@@ -737,6 +738,8 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
+            ) : merchant?.reward_description ? (
+              <ZeroScansCoach merchant={merchant} />
             ) : (
               <div className="flex flex-col items-center justify-center py-12 text-gray-500">
                 <div className="p-4 mb-4 rounded-2xl bg-indigo-50/50">

@@ -92,9 +92,9 @@ export default function OnboardingChecklist() {
           },
           {
             id: 'clients',
-            label: 'Recevoir mes 2 premiers clients',
+            label: 'Obtenir mes 2 premiers scans',
             done: visitsCount >= 2,
-            href: '/dashboard/customers',
+            href: '/dashboard/qr-download',
             icon: Users,
           },
           {
