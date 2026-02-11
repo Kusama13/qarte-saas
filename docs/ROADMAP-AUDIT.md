@@ -409,6 +409,22 @@ SHIELD (points en attente)
 - [x] Hero : CTA "Essayer gratuitement", bouton demo secondaire (outline)
 - [x] Footer + blog : liens blog, comparatif, contact
 
+### Landing refonte UX & couleurs (11 fev)
+- [x] FeaturesSection : CSS Grid 3x3 (remplace SVG arrows casses)
+- [x] FeaturesSection : titre "Avec Qarte, vos client(e)s ne vous oublient plus."
+- [x] FeaturesSection : subtitle "Pendant que vous travaillez, Qarte fidelise."
+- [x] Harmonie couleurs landing : 9 familles → 4 (indigo/violet, rose/pink, emerald, gray)
+- [x] Tous les CTAs unifies indigo-600 → violet-600 (Hero, HowItWorks, Pricing, MobileStickyCta)
+- [x] PricingSection : suppression shimmer, glow, backdrop-blur → card epuree
+- [x] PricingSection : checkmarks emerald → indigo
+- [x] Hero : demo CTA ghost button, reward card rose, blobs simplifies
+- [x] ComparisonSection retiree du flow landing
+- [x] Ecriture inclusive client(e)s partout (Features, FAQ)
+- [x] MobileStickyCta : gradient corrige (pink→indigo → indigo→violet)
+- [x] ScrollToTopButton : bottom-24 mobile (au-dessus sticky CTA)
+- [x] Icone tampons : Footprints → Heart (carte client + historique)
+- [x] Fix &circlearrowleft; → ↺ (entite HTML non supportee JSX)
+
 ## Semaine 1 (10-16 fev)
 - [ ] **F3** : Celebration premier scan (1h)
 - [ ] Plan admin merchants (barre actions, badges alerte, WhatsApp)
@@ -437,6 +453,23 @@ SHIELD (points en attente)
 ---
 
 # PARTIE 6 : CHANGELOG
+
+## [2026-02-11] — Landing refonte UX, harmonie couleurs, icone coeur
+**Commit:** `f41847c`
+
+### Landing & UX
+- **refactor:** FeaturesSection CSS Grid 3x3 (remplace SVG arrows desalignes)
+- **copy:** Titre "Avec Qarte, vos client(e)s ne vous oublient plus." + subtitle "Pendant que vous travaillez, Qarte fidelise."
+- **style:** Audit harmonie couleurs — 9 familles → 4 (indigo/violet actions, rose/pink emotion, emerald succes, gray neutre)
+- **style:** Tous CTAs unifies `indigo-600→violet-600` (Hero, HowItWorks, Pricing, MobileStickyCta)
+- **style:** PricingSection epuree — suppression shimmer, glow, backdrop-blur, checkmarks indigo
+- **style:** Hero — demo CTA ghost button, reward card rose, blobs simplifies
+- **fix:** ComparisonSection retiree du flow landing (redondante)
+- **copy:** Ecriture inclusive client(e)s partout (Features, FAQ)
+- **fix:** MobileStickyCta gradient corrige
+- **fix:** ScrollToTopButton position mobile (au-dessus sticky CTA)
+- **feat:** Icone tampons Footprints → Heart (carte client + historique)
+- **fix:** Entite HTML `&circlearrowleft;` → caractere Unicode ↺
 
 ## [2026-02-10] — Marketing landing, blog SEO, bandeau clients
 **Commits:** `753558d`, `e553555`, `4110f17`, `906a4d4`, `949e4c6`, `5ce4a3a`, `402fa8b`, `85e80fb`, `5fb6533`, `02f4c5c`
@@ -586,5 +619,5 @@ SHIELD (points en attente)
 
 ---
 
-*Derniere mise a jour : 10 fevrier 2026*
-*Statuts verifies contre le code source le 10/02/2026.*
+*Derniere mise a jour : 11 fevrier 2026*
+*Statuts verifies contre le code source le 11/02/2026.*

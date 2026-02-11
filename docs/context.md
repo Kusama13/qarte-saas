@@ -124,8 +124,7 @@ supabase/
     └── 033               # Add referral_code (parrainage merchant)
 
 public/
-├── images/              # Images statiques
-│   └── logos/           # 10 logos clients reels (grayscale marquee landing)
+├── images/              # Images statiques (mockups, temoignages, email-banner)
 ├── ebooks/              # Ressources ebook
 └── sw.js                # Service worker PWA
 ```
@@ -400,8 +399,8 @@ npm run email
 
 | Fichier | Description |
 |---------|-------------|
-| `src/app/page.tsx` | Landing page (composition de 12 composants) |
-| `src/components/landing/` | 12 composants landing (Hero, FAQ, Pricing...) |
+| `src/app/page.tsx` | Landing page (7 sections: Hero, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer) |
+| `src/components/landing/` | Composants landing (+ MobileStickyCta, ScrollToTopButton) |
 | `src/middleware.ts` | Protection routes authentifiees |
 | `src/lib/supabase.ts` | Client Supabase |
 | `src/lib/stripe.ts` | Client Stripe (mensuel + annuel) |
@@ -422,9 +421,11 @@ npm run email
 ### Palette de Couleurs
 - **Primaire:** `#4b0082` (violet profond — emails, headers dashboard, branding)
 - **Secondaire:** `#654EDA` (violet)
-- **Accent:** Rose/Pink pour les CTAs
+- **Landing CTAs:** Gradient `indigo-600` → `violet-600` (unifie sur tous les boutons)
+- **Landing emotion:** Rose/Pink (blobs hero, reward card, titres accent)
+- **Landing succes:** Emerald (etape 3 FeaturesSection uniquement)
 - **PWA Icon:** Gradient indigo → rose (`#4f46e5` → `#ec4899`) — "Q" blanc italic bold
-- **Fond:** Gradients violet vers rose (landing)
+- **Fond landing:** Hero rose/pink blobs, Features slate-50, Pricing/HowItWorks white
 
 ### SEO
 - **Title global** : "Qarte - Carte de fidelite digitale pour salons de beaute"
@@ -472,7 +473,7 @@ npm run email
 | Terme | Signification |
 |-------|---------------|
 | passage | Visite client validee (scan QR) |
-| tampon | Synonyme de passage (reference cartes papier) |
+| tampon | Synonyme de passage (icone coeur sur la carte) |
 | palier | Niveau de recompense (tier1, tier2) |
 | scan_code | Code unique du commercant pour le QR |
 | referral_code | Code parrainage unique merchant (QARTE-XXXX) |
@@ -485,14 +486,19 @@ npm run email
 
 ### Landing (`/`)
 - Hero : "Le programme de fidelite qui fait revenir vos clientes."
-  - Sous-titre niche beaute (instituts, ongleries, salons)
-  - CTA primaire : "Essayer gratuitement" → signup
-  - CTA secondaire : "Voir une demo" → demo onglerie (outline style)
-  - Mockup iPhone avec screenshot carte client (bounce animation)
-- Bandeau noms clients defilant (texte marquee, gradient rose, FOMO "Ils nous ont rejoint")
-- Section "Comment ca marche" (3 etapes)
-- Temoignage client (Nail Salon by Elodie)
-- Pricing, FAQ, CTA
+  - CTA primaire : "Essayer gratuitement" → signup (indigo→violet)
+  - CTA secondaire : "Voir une demo" → demo onglerie (ghost button, border indigo)
+  - Mockup iPhone carte fidelite (coeurs, reward card rose)
+- Features : "Avec Qarte, vos client(e)s ne vous oublient plus."
+  - CSS Grid 3x3 desktop (4 step cards + stat 78% centre + fleches coins)
+  - Mobile : flow vertical avec ChevronDown
+  - Subtitle : "Pendant que vous travaillez, Qarte fidelise."
+- HowItWorks : 2 etapes (Creez votre programme, Affichez le QR Code)
+- Testimonials, Pricing (card epuree, border indigo, checks indigo), FAQ
+- MobileStickyCta : barre sticky bottom mobile (indigo→violet)
+- ScrollToTopButton : bottom-24 mobile (au-dessus sticky), bottom-6 desktop
+- Ecriture inclusive : client(e)s partout
+- ComparisonSection retiree du flow (fichier conserve)
 - Blog SEO : 3 articles (coiffure, onglerie, institut) avec images
 - Page comparatif `/qarte-vs-carte-papier`
 - JSON-LD structured data : Organization + SoftwareApplication (layout.tsx)
