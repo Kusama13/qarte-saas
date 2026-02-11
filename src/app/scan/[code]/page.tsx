@@ -75,6 +75,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const [tier1Redeemed, setTier1Redeemed] = useState(false);
   const [tier2Redeemed, setTier2Redeemed] = useState(false);
 
+  // Previous stamps for success animation (old → new)
+  const [previousStamps, setPreviousStamps] = useState(0);
+
   useEffect(() => {
     const fetchMerchant = async () => {
       const { data } = await supabase
@@ -168,13 +171,24 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
   const triggerConfetti = useCallback(() => {
     if (!merchant) return;
-    const colors = [merchant.primary_color, merchant.secondary_color || '#fbbf24'];
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors,
-    });
+    const colors = [merchant.primary_color, merchant.secondary_color || '#fbbf24', '#ffffff'];
+
+    // Haptic feedback
+    if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+
+    // Wave 1 — center burst
+    confetti({ particleCount: 100, spread: 70, origin: { y: 0.5 }, colors });
+
+    // Wave 2 — side bursts (500ms)
+    setTimeout(() => {
+      confetti({ particleCount: 50, spread: 90, origin: { y: 0.55, x: 0.2 }, colors });
+      confetti({ particleCount: 50, spread: 90, origin: { y: 0.55, x: 0.8 }, colors });
+    }, 500);
+
+    // Wave 3 — golden rain (1s)
+    setTimeout(() => {
+      confetti({ particleCount: 30, spread: 120, origin: { y: 0.3 }, colors: ['#fbbf24', '#f59e0b', '#ffffff'], gravity: 0.8 });
+    }, 1000);
   }, [merchant]);
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
@@ -303,6 +317,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       // Update state with response data
       setLastCheckinPoints(data.points_earned || 1);
 
+      // Compute previous stamps for success animation (before update)
+      const prevStamps = Math.max(0, (data.current_stamps || 0) - (data.points_earned || 1));
+      setPreviousStamps(prevStamps);
+
       // Set customer state from checkin response (needed for reward flow)
       setCustomer({
         id: data.customer_id,
@@ -343,8 +361,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         triggerConfetti();
         setStep('reward');
       } else {
-        // Redirect to card page instead of staying on scan URL
-        router.replace(`/customer/card/${merchant.id}?scan_success=1&points=${data.points_earned || 1}`);
+        // Show animated success screen (auto-redirects to card after 3s)
+        setStep('success');
       }
     } catch (err) {
       console.error(err);
@@ -755,71 +773,131 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             loyaltyCard={loyaltyCard}
             customer={customer}
             lastCheckinPoints={lastCheckinPoints}
+            previousStamps={previousStamps}
             tier1Redeemed={tier1Redeemed}
             tier2Redeemed={tier2Redeemed}
-            pushSupported={push.pushSupported}
-            pushSubscribed={push.pushSubscribed}
-            pushPermission={push.pushPermission}
-            pushSubscribing={push.pushSubscribing}
-            isIOS={push.isIOS}
-            isStandalone={push.isStandalone}
-            handlePushSubscribe={push.handlePushSubscribe}
           />
         )}
 
         {step === 'reward' && loyaltyCard && (
-          <div className="animate-fade-in">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-emerald-100">
-                {rewardTier === 2 ? (
-                  <Trophy className="w-10 h-10 text-emerald-600" />
-                ) : (
-                  <Gift className="w-10 h-10 text-emerald-600" />
-                )}
-              </div>
-
-              <h2 className="text-2xl font-black text-gray-900 mb-2">🎉 Félicitations !</h2>
-              <p className="text-gray-500 mb-6">
-                Vous avez atteint {rewardTier === 2 ? merchant?.tier2_stamps_required : merchant?.stamps_required} passages !
-              </p>
-
-              {/* Reward Card */}
+          <div className="flex flex-col items-center justify-center min-h-[70vh] py-8">
+            {/* Animated icon with glow */}
+            <motion.div
+              className="relative mb-6"
+              initial={{ scale: 0, rotate: -20 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.1 }}
+            >
+              {/* Pulsing glow */}
+              <motion.div
+                className="absolute inset-0 rounded-3xl"
+                style={{ backgroundColor: rewardTier === 2 ? '#8b5cf620' : '#10b98120' }}
+                animate={{ scale: [1, 1.4, 1.2], opacity: [0.8, 0.3, 0.6] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              />
               <div
-                className="rounded-3xl p-6 mb-8 border"
-                style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}20` }}
+                className="relative inline-flex items-center justify-center w-24 h-24 rounded-3xl"
+                style={{
+                  background: rewardTier === 2
+                    ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)'
+                    : 'linear-gradient(135deg, #10b981, #059669)',
+                }}
               >
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-                  {rewardTier === 2 ? 'Palier 2 - Votre récompense' : (merchant?.tier2_enabled ? 'Palier 1 - Votre récompense' : 'Votre récompense')}
-                </p>
-                <p className="text-xl font-black" style={{ color: primaryColor }}>
-                  {rewardTier === 2 ? merchant?.tier2_reward_description : merchant?.reward_description}
-                </p>
-              </div>
-
-              <button
-                onClick={handleRedeemReward}
-                disabled={submitting}
-                className="w-full h-16 rounded-2xl text-lg font-bold text-white shadow-lg shadow-emerald-200 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500"
-              >
-                {submitting ? (
-                  <Loader2 className="w-6 h-6 animate-spin" />
+                {rewardTier === 2 ? (
+                  <Trophy className="w-12 h-12 text-white" />
                 ) : (
-                  <>
-                    <Gift className="w-6 h-6" />
-                    Utiliser ma récompense
-                  </>
+                  <Gift className="w-12 h-12 text-white" />
                 )}
-              </button>
+              </div>
+            </motion.div>
 
-              <p className="mt-4 text-sm text-gray-400">Montrez cet écran au commerçant</p>
+            {/* Title */}
+            <motion.h2
+              className="text-3xl font-black text-gray-900 mb-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              🎉 Félicitations !
+            </motion.h2>
+            <motion.p
+              className="text-gray-500 mb-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              {rewardTier === 2 ? merchant?.tier2_stamps_required : merchant?.stamps_required} passages atteints !
+            </motion.p>
 
-              <button
-                onClick={() => router.replace(`/customer/card/${merchant?.id}?scan_success=1`)}
-                className="mt-4 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                Plus tard →
-              </button>
-            </div>
+            {/* Reward Card with shine effect */}
+            <motion.div
+              className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 w-full max-w-sm overflow-hidden relative"
+              initial={{ opacity: 0, y: 30, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 15 }}
+            >
+              {/* Animated shine sweep */}
+              <motion.div
+                className="absolute inset-0 opacity-20"
+                style={{
+                  background: 'linear-gradient(105deg, transparent 40%, white 50%, transparent 60%)',
+                }}
+                initial={{ x: '-150%' }}
+                animate={{ x: '200%' }}
+                transition={{ duration: 2, delay: 0.8, ease: 'easeInOut' }}
+              />
+
+              <div className="relative">
+                <motion.div
+                  className="rounded-2xl p-5 mb-6"
+                  style={{ backgroundColor: `${primaryColor}08`, border: `2px solid ${primaryColor}20` }}
+                  animate={{ scale: [1, 1.02, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+                    {rewardTier === 2 ? 'Palier 2 — Votre récompense' : (merchant?.tier2_enabled ? 'Palier 1 — Votre récompense' : 'Votre récompense')}
+                  </p>
+                  <p className="text-2xl font-black" style={{ color: primaryColor }}>
+                    {rewardTier === 2 ? merchant?.tier2_reward_description : merchant?.reward_description}
+                  </p>
+                </motion.div>
+
+                <button
+                  onClick={handleRedeemReward}
+                  disabled={submitting}
+                  className="w-full h-16 rounded-2xl text-lg font-bold text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{
+                    background: rewardTier === 2
+                      ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)'
+                      : 'linear-gradient(135deg, #10b981, #059669)',
+                    boxShadow: rewardTier === 2
+                      ? '0 8px 24px -4px rgba(139,92,246,0.4)'
+                      : '0 8px 24px -4px rgba(16,185,129,0.4)',
+                  }}
+                >
+                  {submitting ? (
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <>
+                      {rewardTier === 2 ? <Trophy className="w-6 h-6" /> : <Gift className="w-6 h-6" />}
+                      Utiliser ma récompense
+                    </>
+                  )}
+                </button>
+
+                <p className="mt-4 text-sm text-gray-400">Montrez cet écran au commerçant</p>
+              </div>
+            </motion.div>
+
+            <motion.button
+              onClick={() => router.replace(`/customer/card/${merchant?.id}?scan_success=1`)}
+              className="mt-6 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+            >
+              Plus tard →
+            </motion.button>
           </div>
         )}
 

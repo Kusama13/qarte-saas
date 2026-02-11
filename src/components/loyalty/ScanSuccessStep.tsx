@@ -1,15 +1,11 @@
 'use client';
 
+import { useEffect, useCallback, useState } from 'react';
 import Link from 'next/link';
-import {
-  Check,
-  Gift,
-  CreditCard,
-  Loader2,
-  Bell,
-  Trophy,
-} from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { CreditCard, Gift, Trophy } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 import type { Merchant, LoyaltyCard, Customer } from '@/types';
 
 interface ScanSuccessStepProps {
@@ -17,16 +13,89 @@ interface ScanSuccessStepProps {
   loyaltyCard: LoyaltyCard;
   customer: Customer | null;
   lastCheckinPoints: number;
+  previousStamps: number;
   tier1Redeemed: boolean;
   tier2Redeemed: boolean;
-  // Push props
-  pushSupported: boolean;
-  pushSubscribed: boolean;
-  pushPermission: NotificationPermission | 'unsupported';
-  pushSubscribing: boolean;
-  isIOS: boolean;
-  isStandalone: boolean;
-  handlePushSubscribe: () => void;
+}
+
+// --- Animated SVG Checkmark ---
+function AnimatedCheckmark({ color, size = 96 }: { color: string; size?: number }) {
+  return (
+    <motion.svg
+      width={size}
+      height={size}
+      viewBox="0 0 52 52"
+      initial={{ scale: 0.6, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+    >
+      {/* Filled circle */}
+      <motion.circle
+        cx="26" cy="26" r="25"
+        fill={color}
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.5, ease: [0.175, 0.885, 0.32, 1.275] }}
+        style={{ transformOrigin: 'center' }}
+      />
+      {/* White checkmark */}
+      <motion.path
+        d="M15 27 L23 35 L38 18"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.4, delay: 0.4, ease: 'easeOut' }}
+      />
+    </motion.svg>
+  );
+}
+
+// --- Contextual celebration messages (Proposal C) ---
+function getCelebrationMessage(
+  currentStamps: number,
+  previousStamps: number,
+  stampsRequired: number,
+  customerName?: string,
+): { title: string; subtitle: string; emoji: string } {
+  const remaining = stampsRequired - currentStamps;
+
+  // First scan ever
+  if (previousStamps === 0) {
+    return {
+      title: 'Bienvenue dans la famille !',
+      subtitle: `Votre carte est lanc\u00e9e${customerName ? `, ${customerName}` : ''} !`,
+      emoji: '\ud83c\udf89',
+    };
+  }
+
+  // Almost there (1-2 remaining)
+  if (remaining > 0 && remaining <= 2) {
+    return {
+      title: `Plus que ${remaining} passage${remaining > 1 ? 's' : ''} !`,
+      subtitle: 'Votre r\u00e9compense est toute proche !',
+      emoji: '\ud83d\udd25',
+    };
+  }
+
+  // Exact mid-way
+  if (currentStamps === Math.ceil(stampsRequired / 2)) {
+    return {
+      title: 'D\u00e9j\u00e0 \u00e0 mi-chemin !',
+      subtitle: 'Continuez comme \u00e7a !',
+      emoji: '\u2b50',
+    };
+  }
+
+  // Default
+  return {
+    title: 'Passage valid\u00e9 !',
+    subtitle: `Merci${customerName ? ` ${customerName}` : ''} !`,
+    emoji: '\u2728',
+  };
 }
 
 export default function ScanSuccessStep({
@@ -34,337 +103,248 @@ export default function ScanSuccessStep({
   loyaltyCard,
   customer,
   lastCheckinPoints,
+  previousStamps,
   tier1Redeemed,
   tier2Redeemed,
-  pushSupported,
-  pushSubscribed,
-  pushPermission,
-  pushSubscribing,
-  isIOS,
-  isStandalone,
-  handlePushSubscribe,
 }: ScanSuccessStepProps) {
+  const router = useRouter();
   const primaryColor = merchant.primary_color;
   const secondaryColor = merchant.secondary_color;
+  const currentStamps = loyaltyCard.current_stamps;
+  const stampsRequired = merchant.stamps_required || 10;
+
+  const [showContent, setShowContent] = useState(false);
+  const [displayedStamps, setDisplayedStamps] = useState(previousStamps);
+
+  const celebration = getCelebrationMessage(
+    currentStamps,
+    previousStamps,
+    stampsRequired,
+    customer?.first_name,
+  );
+
+  // Active tier target
+  const tier2On = merchant.tier2_enabled && merchant.tier2_stamps_required;
+  const tier1Done = tier1Redeemed || currentStamps >= stampsRequired;
+  const displayTarget = tier2On && tier1Done
+    ? merchant.tier2_stamps_required!
+    : stampsRequired;
+
+  // Confetti intensity varies by context
+  const triggerMiniConfetti = useCallback(() => {
+    const colors = [primaryColor, secondaryColor || '#fbbf24', '#ffffff'];
+    const remaining = stampsRequired - currentStamps;
+
+    if (previousStamps === 0) {
+      // First scan = big celebration
+      confetti({ particleCount: 80, spread: 70, origin: { y: 0.4 }, colors });
+      setTimeout(() => {
+        confetti({ particleCount: 40, spread: 100, origin: { y: 0.5, x: 0.25 }, colors });
+        confetti({ particleCount: 40, spread: 100, origin: { y: 0.5, x: 0.75 }, colors });
+      }, 300);
+    } else if (remaining > 0 && remaining <= 2) {
+      // Almost there
+      confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 }, colors });
+    } else if (currentStamps === Math.ceil(stampsRequired / 2)) {
+      // Mid-way
+      confetti({ particleCount: 30, spread: 50, origin: { y: 0.4 }, colors });
+    } else {
+      // Normal
+      confetti({ particleCount: 15, spread: 40, origin: { y: 0.35 }, colors, gravity: 1.2 });
+    }
+  }, [primaryColor, secondaryColor, previousStamps, currentStamps, stampsRequired]);
+
+  // Animation timeline
+  useEffect(() => {
+    // 0.4s — haptic vibration
+    const t0 = setTimeout(() => {
+      if ('vibrate' in navigator) navigator.vibrate(200);
+    }, 400);
+
+    // 0.6s — reveal content + confetti
+    const t1 = setTimeout(() => {
+      setShowContent(true);
+      triggerMiniConfetti();
+    }, 600);
+
+    // 1.1s — animate counter old → new
+    const t2 = setTimeout(() => {
+      setDisplayedStamps(currentStamps);
+    }, 1100);
+
+    // 3s — auto-redirect to card page
+    const t3 = setTimeout(() => {
+      router.replace(`/customer/card/${merchant.id}?scan_success=1&points=${lastCheckinPoints}`);
+    }, 3000);
+
+    return () => { clearTimeout(t0); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const progressPct = Math.min(100, (displayedStamps / displayTarget) * 100);
+  const prevProgressPct = Math.min(100, (previousStamps / displayTarget) * 100);
 
   return (
-    <div className="animate-fade-in">
-      <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
-        <div
-          className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl"
-          style={{ backgroundColor: `${primaryColor}15` }}
+    <div className="flex flex-col items-center justify-center min-h-[70vh] py-8">
+
+      {/* === Animated Checkmark with glow + countdown ring === */}
+      <div className="relative mb-8" style={{ width: 120, height: 120 }}>
+        {/* Outer glow rings */}
+        <motion.div
+          className="absolute rounded-full"
+          style={{ backgroundColor: `${primaryColor}20`, inset: 12 }}
+          initial={{ scale: 0 }}
+          animate={{ scale: [0, 1.8, 1.5] }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+        />
+        <motion.div
+          className="absolute rounded-full"
+          style={{ backgroundColor: `${primaryColor}10`, inset: 12 }}
+          initial={{ scale: 0 }}
+          animate={{ scale: [0, 2.2, 2] }}
+          transition={{ duration: 1.2, ease: 'easeOut' }}
+        />
+
+        {/* Countdown ring (fills over 3s) */}
+        <svg
+          className="absolute inset-0"
+          width="120"
+          height="120"
+          viewBox="0 0 120 120"
+          style={{ transform: 'rotate(-90deg)' }}
         >
-          <Check className="w-10 h-10" style={{ color: primaryColor }} />
+          {/* Track */}
+          <circle cx="60" cy="60" r="56" fill="none" stroke={`${primaryColor}15`} strokeWidth="3" />
+          {/* Progress */}
+          <motion.circle
+            cx="60" cy="60" r="56"
+            fill="none"
+            stroke={primaryColor}
+            strokeWidth="3"
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 3, ease: 'linear' }}
+            style={{ opacity: 0.4 }}
+          />
+        </svg>
+
+        {/* Checkmark centered */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <AnimatedCheckmark color={primaryColor} />
         </div>
 
-        <h2 className="text-2xl font-black text-gray-900 mb-1">
-          Passage validé !
-        </h2>
-        <p className="text-gray-500 mb-8">Merci {customer?.first_name} !</p>
+        {/* +1 flying up */}
+        <motion.div
+          className="absolute font-black text-2xl"
+          style={{ color: primaryColor, right: -4, top: 8 }}
+          initial={{ opacity: 0, y: 20, scale: 0.3 }}
+          animate={{
+            opacity: [0, 1, 1, 0],
+            y: [20, 0, -15, -35],
+            scale: [0.3, 1.3, 1.1, 0.8],
+          }}
+          transition={{
+            duration: 1.6,
+            delay: 0.5,
+            times: [0, 0.25, 0.65, 1],
+          }}
+        >
+          +{lastCheckinPoints}
+        </motion.div>
+      </div>
 
-        {/* Dual Tier Progress */}
-        {merchant.tier2_enabled && merchant.tier2_stamps_required ? (
-          <div className="mb-6" style={{ perspective: '800px' }}>
-            <div className="flex items-baseline justify-center gap-1 mb-6">
-              <motion.span
-                key={loyaltyCard.current_stamps}
-                initial={{ scale: 1.2 }}
-                animate={{ scale: 1 }}
-                className="text-5xl font-black"
-                style={{ color: primaryColor }}
-              >
-                {loyaltyCard.current_stamps}
-              </motion.span>
-              <span className="text-xl font-bold text-gray-300">pts</span>
-            </div>
+      {/* === Content: message + counter + progress === */}
+      <AnimatePresence>
+        {showContent && (
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="text-center w-full"
+          >
+            <p className="text-3xl mb-2">{celebration.emoji}</p>
+            <h2 className="text-2xl font-black text-gray-900 mb-1">
+              {celebration.title}
+            </h2>
+            <p className="text-gray-500 mb-8">{celebration.subtitle}</p>
 
-            {/* Tier Cards */}
-            <div className="space-y-3 mb-4">
-              {/* Active Tier Card (on top) */}
-              {tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10) ? (
-                <>
-                  {/* Tier 2 = Active */}
-                  <motion.div
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    className="rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50/50 to-white p-4"
-                    style={{
-                      boxShadow: `0 8px 24px -6px rgba(139,92,246,0.15), 0 4px 12px -4px rgba(0,0,0,0.06)`,
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                        loyaltyCard.current_stamps >= (merchant.tier2_stamps_required || 20)
-                          ? 'bg-violet-100'
-                          : 'bg-violet-50'
-                      }`}>
-                        <Trophy className={`w-5 h-5 ${
-                          loyaltyCard.current_stamps >= (merchant.tier2_stamps_required || 20)
-                            ? 'text-violet-600'
-                            : 'text-violet-400'
-                        }`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-violet-500">
-                          Palier 2 · {merchant.tier2_stamps_required} pts
-                        </p>
-                        <p className="text-sm font-bold text-gray-800 leading-tight">
-                          {merchant.tier2_reward_description}
-                        </p>
-                      </div>
-                      {loyaltyCard.current_stamps >= (merchant.tier2_stamps_required || 20) ? (
-                        <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1 flex-shrink-0">
-                          <Check className="w-3 h-3" /> Prêt
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-violet-500 bg-violet-50 px-2.5 py-1 rounded-full flex-shrink-0">
-                          {(merchant.tier2_stamps_required || 20) - loyaltyCard.current_stamps} restants
-                        </span>
-                      )}
-                    </div>
-                  </motion.div>
-                  {/* Tier 1 = Completed/Used */}
-                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 opacity-60">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
-                        <Gift className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                          Palier 1 · {merchant.stamps_required} pts
-                        </p>
-                        <p className="text-xs font-bold text-gray-400 leading-tight">
-                          {merchant.reward_description}
-                        </p>
-                      </div>
-                      <span className="text-[10px] font-bold text-gray-500 bg-gray-200 px-2 py-1 rounded-full flex items-center gap-1 flex-shrink-0">
-                        <Check className="w-3 h-3" /> {tier1Redeemed ? 'Utilisé' : 'Atteint'}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  {/* Tier 1 = Active */}
-                  <motion.div
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    className="rounded-2xl border bg-white p-4"
-                    style={{
-                      borderColor: `${primaryColor}25`,
-                      boxShadow: `0 8px 24px -6px ${primaryColor}20, 0 4px 12px -4px rgba(0,0,0,0.06)`,
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: `${primaryColor}15` }}
-                      >
-                        <Gift className="w-5 h-5" style={{ color: primaryColor }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: primaryColor }}>
-                          Palier 1 · {merchant.stamps_required} pts
-                        </p>
-                        <p className="text-sm font-bold text-gray-800 leading-tight">
-                          {merchant.reward_description}
-                        </p>
-                      </div>
-                      <span className="text-[10px] font-bold bg-gray-100 px-2.5 py-1 rounded-full flex-shrink-0" style={{ color: primaryColor }}>
-                        {(merchant.stamps_required || 10) - loyaltyCard.current_stamps} restants
-                      </span>
-                    </div>
-                  </motion.div>
-                  {/* Tier 2 = Locked */}
-                  <div className="rounded-xl border border-gray-200 bg-gray-50/50 p-3 opacity-50">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center flex-shrink-0">
-                        <Trophy className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">
-                          Palier 2 · {merchant.tier2_stamps_required} pts
-                        </p>
-                        <p className="text-xs font-bold text-gray-400 leading-tight">
-                          {merchant.tier2_reward_description}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </>
+            {/* Score card */}
+            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-6 mx-auto max-w-sm">
+              {/* Animated counter */}
+              <div className="flex items-baseline justify-center gap-1 mb-1">
+                <motion.span
+                  key={displayedStamps}
+                  initial={{ scale: 1.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 14 }}
+                  className="text-5xl font-black"
+                  style={{ color: primaryColor }}
+                >
+                  {displayedStamps}
+                </motion.span>
+                <span className="text-xl font-bold text-gray-300">/{displayTarget}</span>
+              </div>
+
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-5">
+                Passages cumulés{tier2On && tier1Done ? ' · Palier 2' : tier2On ? ' · Palier 1' : ''}
+              </p>
+
+              {/* Progress bar that animates forward */}
+              <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  initial={{ width: `${prevProgressPct}%` }}
+                  animate={{ width: `${progressPct}%` }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+                  style={{
+                    background: tier2On && tier1Done
+                      ? 'linear-gradient(90deg, #8b5cf6, #a78bfa)'
+                      : `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
+                  }}
+                />
+              </div>
+
+              {/* Reward proximity hint */}
+              {currentStamps < displayTarget && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="mt-4 flex items-center justify-center gap-2 text-sm"
+                >
+                  {tier2On && tier1Done ? (
+                    <Trophy className="w-4 h-4 text-violet-500" />
+                  ) : (
+                    <Gift className="w-4 h-4" style={{ color: primaryColor }} />
+                  )}
+                  <span className="text-gray-500">
+                    <strong style={{ color: tier2On && tier1Done ? '#8b5cf6' : primaryColor }}>
+                      {displayTarget - currentStamps}
+                    </strong>{' '}
+                    passage{displayTarget - currentStamps > 1 ? 's' : ''} avant votre récompense
+                  </span>
+                </motion.div>
               )}
             </div>
 
-            {/* Progress Bar */}
-            <div className="relative h-2 w-full bg-gray-100 rounded-full overflow-hidden">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant.tier2_stamps_required || 20)) * 100)}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="h-full rounded-full"
-                style={{
-                  background: tier1Redeemed || loyaltyCard.current_stamps >= (merchant.stamps_required || 10)
-                    ? 'linear-gradient(90deg, #8b5cf6, #a78bfa)'
-                    : `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
-                }}
-              />
-              <div
-                className={`absolute top-1/2 -translate-y-1/2 w-0.5 h-4 ${tier1Redeemed ? 'bg-gray-400' : 'bg-gray-300'}`}
-                style={{ left: `${((merchant.stamps_required || 10) / (merchant.tier2_stamps_required || 20)) * 100}%` }}
-              />
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Single Tier */}
-            <div className="mb-8">
-              <div className="flex items-baseline justify-center gap-1">
-                <motion.span
-                  key={loyaltyCard.current_stamps}
-                  initial={{ scale: 1.2 }}
-                  animate={{ scale: 1 }}
-                  className="text-6xl font-black"
-                  style={{ color: primaryColor }}
-                >
-                  {loyaltyCard.current_stamps}
-                </motion.span>
-                <span className="text-2xl font-bold text-gray-300">/{merchant.stamps_required}</span>
-              </div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
-                Passages cumulés
-              </p>
-            </div>
-
-            <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: `${Math.min(100, (loyaltyCard.current_stamps / (merchant.stamps_required || 10)) * 100)}%` }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-                className="h-full rounded-full"
-                style={{
-                  background: `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
-                }}
-              />
-            </div>
-
-            {loyaltyCard.current_stamps < (merchant.stamps_required || 10) && (
-              <div
-                className="rounded-2xl p-4 mb-6"
-                style={{ backgroundColor: `${primaryColor}08`, borderColor: `${primaryColor}15` }}
+            {/* Link — fallback if auto-redirect feels slow */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+            >
+              <Link
+                href={`/customer/card/${merchant.id}`}
+                className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <p className="font-bold text-gray-700">
-                  Plus que {(merchant.stamps_required || 10) - loyaltyCard.current_stamps} passage{(merchant.stamps_required || 10) - loyaltyCard.current_stamps > 1 ? 's' : ''} avant votre récompense !
-                </p>
-              </div>
-            )}
-          </>
+                <CreditCard className="w-4 h-4" />
+                Voir ma carte complète
+              </Link>
+            </motion.div>
+          </motion.div>
         )}
-
-        <Link
-          href={`/customer/card/${merchant.id}`}
-          className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
-        >
-          <CreditCard className="w-5 h-5" />
-          Voir ma carte complète
-        </Link>
-      </div>
-
-      {/* Push Notification Prompts */}
-      {pushSupported && !pushSubscribed && pushPermission !== 'denied' && !isIOS && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-4 bg-white rounded-2xl shadow-lg border border-gray-100 p-5 overflow-hidden"
-        >
-          <div className="flex items-start gap-4">
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: `${primaryColor}15` }}
-            >
-              <Bell className="w-6 h-6" style={{ color: primaryColor }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-gray-900 mb-1">🎁 Offres exclusives</h3>
-              <p className="text-sm text-gray-500 mb-3">
-                Promos flash, récompenses proches, surprises... ne ratez rien !
-              </p>
-              <button
-                onClick={handlePushSubscribe}
-                disabled={pushSubscribing}
-                className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {pushSubscribing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Bell className="w-4 h-4" />
-                    Oui, je veux en profiter !
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* iOS standalone push */}
-      {isIOS && isStandalone && !pushSubscribed && pushPermission !== 'denied' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-4 bg-white rounded-2xl shadow-lg border border-gray-100 p-5 overflow-hidden"
-        >
-          <div className="flex items-start gap-4">
-            <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: `${primaryColor}15` }}
-            >
-              <Bell className="w-6 h-6" style={{ color: primaryColor }} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-gray-900 mb-1">🎁 Offres exclusives</h3>
-              <p className="text-sm text-gray-500 mb-3">
-                Promos flash, récompenses proches, surprises... ne ratez rien !
-              </p>
-              <button
-                onClick={handlePushSubscribe}
-                disabled={pushSubscribing}
-                className="w-full py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ backgroundColor: primaryColor }}
-              >
-                {pushSubscribing ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <Bell className="w-4 h-4" />
-                    Oui, je veux en profiter !
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Subscribed confirmation */}
-      {pushSubscribed && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="mt-4 bg-emerald-50 rounded-2xl p-4 flex items-center gap-3"
-        >
-          <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-            <Check className="w-5 h-5 text-emerald-600" />
-          </div>
-          <div>
-            <p className="font-semibold text-emerald-800 text-sm">Notifications activées</p>
-            <p className="text-xs text-emerald-600">Vous serez alerté de vos récompenses</p>
-          </div>
-        </motion.div>
-      )}
+      </AnimatePresence>
     </div>
   );
 }
