@@ -130,7 +130,7 @@ Signup (email+password)
 | # | Severite | Probleme | Action |
 |---|----------|----------|--------|
 | 1 | ~~MEDIUM~~ | ~~Social proof "150+ instituts, 12,000+ clientes"~~ | **✅ RETIRE** — faux chiffres supprimes du hero |
-| 2 | LOW | Structured data SEO manquant (LocalBusiness, SoftwareApplication) | Ajouter |
+| 2 | ~~LOW~~ | ~~Structured data SEO manquant~~ | **✅ FAIT** — JSON-LD Organization + SoftwareApplication dans layout.tsx |
 | 3 | LOW | Framer Motion dans 12 composants landing (non lazy-loaded) | Dynamic import below-fold |
 
 ### Infrastructure
@@ -394,6 +394,9 @@ SHIELD (points en attente)
 - [x] Fix QRCodeEmail reecrit (menu → fidelite)
 - [x] Nettoyage dead code (QRCardTemplate, OnboardingGuide)
 - [x] Coupons Stripe : QARTEBOOST, QARTELAST
+- [x] SEO metadata niche beaute (coiffeurs, barbiers, instituts, ongleries) sur toutes les pages
+- [x] Metadata creees pour /ebook et /essai-gratuit (etaient orphelines)
+- [x] /essai-gratuit ajoute au sitemap (priority 0.9)
 
 ### Marketing & Landing (10 fev)
 - [x] Blog SEO : 3 articles (coiffure, onglerie, institut) + images Unsplash
@@ -401,7 +404,7 @@ SHIELD (points en attente)
 - [x] FAQ pricing + RGPD ajoutees
 - [x] JSON-LD structured data (Organization + SoftwareApplication)
 - [x] Bloc parrainage dans emails (FirstScan, Inactive)
-- [x] Bandeau logos : 10 vrais logos clients (grayscale marquee defilant)
+- [x] Bandeau noms clients defilant (texte marquee, gradient rose)
 - [x] Hero : retire faux social proof (150+, 4.9/5, 12000+)
 - [x] Hero : CTA "Essayer gratuitement", bouton demo secondaire (outline)
 - [x] Footer + blog : liens blog, comparatif, contact
@@ -435,8 +438,8 @@ SHIELD (points en attente)
 
 # PARTIE 6 : CHANGELOG
 
-## [2026-02-10] — Marketing landing, blog SEO, vrais logos clients
-**Commits:** `e553555`, `4110f17`, `906a4d4`, `949e4c6`, `5ce4a3a`, `402fa8b`, `85e80fb`, `5fb6533`, `02f4c5c`
+## [2026-02-10] — Marketing landing, blog SEO, bandeau clients
+**Commits:** `753558d`, `e553555`, `4110f17`, `906a4d4`, `949e4c6`, `5ce4a3a`, `402fa8b`, `85e80fb`, `5fb6533`, `02f4c5c`
 
 ### Landing & Marketing
 - **feat:** Blog SEO — 3 articles longs (coiffure, onglerie, institut) + images Unsplash
@@ -444,10 +447,14 @@ SHIELD (points en attente)
 - **feat:** FAQ pricing + RGPD ajoutees a la landing
 - **feat:** JSON-LD structured data (Organization + SoftwareApplication)
 - **feat:** Bloc parrainage insere dans emails (FirstScan, Inactive)
-- **feat:** Bandeau logos — 10 vrais logos clients (grayscale marquee + FOMO)
+- **feat:** Bandeau noms clients defilant (texte marquee gradient rose + FOMO)
 - **fix:** Retire faux social proof du hero (150+ instituts, 4.9/5, 12000+ clientes)
 - **fix:** Hero CTA "Essayer gratuitement", bouton demo secondaire (outline)
 - **feat:** Footer liens blog, comparatif, contact
+- **seo:** Metadata niche beaute sur toutes les pages (coiffeurs, barbiers, instituts, ongleries)
+- **seo:** Metadata creees pour /ebook et /essai-gratuit (etaient orphelines SEO)
+- **seo:** /essai-gratuit ajoute au sitemap + blog articles + comparatif
+- **seo:** JSON-LD structured data Organization + SoftwareApplication (layout.tsx)
 
 ### Produit
 - **fix:** QRCodeEmail reecrit de zero (ancien template parlait de "QR code menu")

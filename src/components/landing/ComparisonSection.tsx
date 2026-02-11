@@ -10,22 +10,22 @@ export function ComparisonSection() {
   const { ref, isInView } = useInView();
 
   const painPoints = [
-    "Cartes papier perdues ou oubliées",
-    "Clients qui ne reviennent pas",
+    "Cartes papier perdues au fond du sac",
+    "Clientes qui ne reviennent pas après un soin",
     "Difficulté à obtenir des avis Google",
-    "Impossible de relancer les inactifs",
-    "Aucune donnée sur vos clientes",
+    "Impossible de relancer les clientes inactives",
+    "Aucune visibilité sur votre clientèle",
     "Gaspillage de papier et d'encre",
     "Configuration longue et coûteuse"
   ];
 
   const benefits = [
-    "Carte digitale toujours accessible",
-    "Boostez votre chiffre d'affaires",
-    "Collectez des avis Google facilement",
-    "Notifications push pour réengager",
+    "Carte digitale toujours sur le téléphone de vos clientes",
+    "Vos clientes reviennent plus souvent",
+    "Collectez des avis Google après chaque visite",
+    "Notifications push pour rappeler vos clientes",
     "Programmes VIP pour vos meilleures clientes",
-    "Dashboard et statistiques en temps réel",
+    "Dashboard pour suivre votre activité",
     "100% écologique, zéro papier"
   ];
 
@@ -59,7 +59,7 @@ export function ComparisonSection() {
               <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider text-red-600 bg-red-50 mb-4">
                 Méthode Classique
               </span>
-              <h3 className="text-2xl font-bold text-gray-900">Sans Carte de Fidélité</h3>
+              <h3 className="text-2xl font-bold text-gray-900">Sans fidélité digitale</h3>
             </div>
 
             <ul className="space-y-4">

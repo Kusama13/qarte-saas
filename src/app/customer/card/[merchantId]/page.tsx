@@ -12,7 +12,7 @@ import {
   ChevronRight,
   ChevronDown,
   ChevronUp,
-  Footprints,
+  Heart,
   Hourglass,
   Shield,
   Bell,
@@ -71,7 +71,7 @@ const getCookie = (name: string): string | null => {
 
 // Get icon for visits
 const getLoyaltyIcon = () => {
-  return Footprints;
+  return Heart;
 };
 
 const getLoyaltyLabel = (count: number) => {

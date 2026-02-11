@@ -6,7 +6,7 @@ import {
   Gift,
   ChevronDown,
   ChevronUp,
-  Footprints,
+  Heart,
   SlidersHorizontal,
   Hourglass,
   XCircle,
@@ -50,7 +50,7 @@ export default function HistorySection({
 }: HistorySectionProps) {
   const [expanded, setExpanded] = useState(false);
 
-  const LoyaltyIcon = Footprints;
+  const LoyaltyIcon = Heart;
   const hasItems = visits.length > 0 || adjustments.length > 0 || redemptions.length > 0;
 
   // Pre-compute sorted items

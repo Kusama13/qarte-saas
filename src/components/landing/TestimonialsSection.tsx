@@ -1,209 +1,393 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
+
+/* ─── Types ──────────────────────────────────────────── */
+
+interface ChatMsg {
+  from: 'qarte' | 'them';
+  text: string;
+  time?: string;
+  timeBreak?: string; // time separator shown BEFORE this message (shows delay)
+}
+
+interface Testimonial {
+  platform: 'whatsapp' | 'imessage' | 'instagram';
+  name: string;
+  initials: string;
+  dayLabel: string;
+  messages: ChatMsg[];
+  handle?: string;
+  readStatus?: string;
+}
+
+/* ─── Data (noms du bandeau défilant) ────────────────── */
+
+const testimonials: Testimonial[] = [
+  {
+    platform: 'whatsapp',
+    name: 'Lunzia Studio',
+    initials: 'LS',
+    dayLabel: 'SAMEDI',
+    messages: [
+      { from: 'qarte', text: "Salut ! Ca fait 3 mois que vous êtes sur Qarte, vous pouvez nous faire un petit retour ? 🙏", time: '14:32' },
+      { from: 'them', text: "Franchement au top 🔥", timeBreak: '16:45' },
+      { from: 'them', text: "Mes clientes perdait toujours leurs cartes avant" },
+      { from: 'them', text: "Maintenant tout est sur leur tel elles adorent la notif quand la pose offerte est dispo 💅" },
+      { from: 'them', text: "ah et merci pour les stickers ils sont trop beaux 😍", time: '16:47' },
+    ],
+  },
+  {
+    platform: 'imessage',
+    name: 'Doux Regard',
+    initials: 'DR',
+    dayLabel: 'Jeudi 16:48',
+    readStatus: 'Lu',
+    messages: [
+      { from: 'qarte', text: "Hello ! 6 semaines sur Qarte, vous en pensez quoi ? 😊" },
+      { from: 'them', text: "Ah oui j'adore", timeBreak: '19:12' },
+      { from: 'them', text: "Honnêtement en 2 semaines j'avais deja recupéré le prix de l'abonnement" },
+      { from: 'them', text: "Y'a une cliente qui est revenue 3 fois juste pour remplir sa carte 😂" },
+    ],
+  },
+  {
+    platform: 'instagram',
+    name: 'Nour Beauté',
+    handle: 'nour.beaute',
+    initials: 'NB',
+    dayLabel: '',
+    messages: [
+      { from: 'qarte', text: "Hey ! 2 mois sur Qarte, on peut avoir votre retour ? 🙏" },
+      { from: 'them', text: "Le truc qui change tout c'est la notif auto", timeBreak: 'jeu. 14:33' },
+      { from: 'them', text: "Mes clientes me disent \"ah oui faut que je revienne\" 😂" },
+      { from: 'them', text: "Honnêtement j'aurais du prendre avant" },
+      { from: 'them', text: "D'ailleurs merci Camélia elle repond super vite a mes questions 🙏" },
+    ],
+  },
+  {
+    platform: 'whatsapp',
+    name: 'La Canopée des Sens',
+    initials: 'CS',
+    dayLabel: 'HIER',
+    messages: [
+      { from: 'qarte', text: "Coucou ! 4 mois avec Qarte, ca se passe comment de votre côté ? 😊", time: '11:03' },
+      { from: 'them', text: "Au début j'avai peur que mes clientes de 50+ ans galèrent", timeBreak: '14:22' },
+      { from: 'them', text: "En fait elles scannent le QR avec l'appareil photo et c'est tout" },
+      { from: 'them', text: "Même ma mère y arrive 😅" },
+      { from: 'them', text: "Par contre je retrouve plus mon code de parainage vous pouvez me le renvoyer ?", time: '14:25' },
+    ],
+  },
+  {
+    platform: 'imessage',
+    name: 'Autres Regards',
+    initials: 'AR',
+    dayLabel: 'Vendredi 17:21',
+    readStatus: 'Lu 19:48',
+    messages: [
+      { from: 'qarte', text: "Salut ! 2 mois avec Qarte, un petit retour ? 🙏" },
+      { from: 'them', text: "J'ai mis 10 min a tout configurer franchement", timeBreak: '19:43' },
+      { from: 'them', text: "Le côté zero papier ca correspond a l'image du salon 🌿" },
+      { from: 'them', text: "Et les push notifs ca marche trop bien mes clientes reviennent plus souvent" },
+    ],
+  },
+  {
+    platform: 'whatsapp',
+    name: 'Le Comptoir du Visage',
+    initials: 'CV',
+    dayLabel: 'MERCREDI',
+    messages: [
+      { from: 'qarte', text: "Bonjour ! Bientôt 2 mois sur Qarte, comment ça se passe pour vous ? 😊", time: '09:47' },
+      { from: 'them', text: "Coucou !", timeBreak: '13:02' },
+      { from: 'them', text: "Très contente moi je galérais avec les cartes en carton mes clientes les oubliait tout le temps" },
+      { from: 'them', text: "La c'est simple elles scan et c'est bon" },
+      { from: 'them', text: "Et en plus elles recoivent une notif quand elles ont la récompense 👏", time: '13:04' },
+    ],
+  },
+];
+
+/* ─── Scatter layout (desktop only) ──────────────────── */
+
+const scatterClasses = [
+  'md:-rotate-[2deg] md:z-10',
+  'md:rotate-[1.5deg] md:z-20 md:mt-10',
+  'md:rotate-[1deg] md:z-30 md:-mt-8',
+  'md:-rotate-[1.2deg] md:z-20 md:-mt-10',
+  'md:-rotate-[0.8deg] md:z-10 md:-mt-6',
+  'md:rotate-[1.8deg] md:z-30 md:-mt-12',
+];
+
+/* ─── WhatsApp double check ──────────────────────────── */
+
+function DoubleCheck() {
+  return (
+    <svg
+      className="w-[16px] h-[11px] text-[#53BDEB]"
+      viewBox="0 0 16 11"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="1,5.5 3.5,9 10,1.5" />
+      <polyline points="5,5.5 7.5,9 14,1.5" />
+    </svg>
+  );
+}
+
+/* ─── WhatsApp ───────────────────────────────────────── */
+
+function WhatsAppChat({ data }: { data: Testimonial }) {
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/5">
+      {/* Header */}
+      <div className="bg-[#008069] px-3 py-2 flex items-center gap-2.5">
+        <svg className="w-5 h-5 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        <div className="w-8 h-8 rounded-full bg-[#DFE5E7] flex items-center justify-center text-[#54656F] text-[11px] font-bold">
+          {data.initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-white text-[13.5px] font-medium leading-tight truncate">{data.name}</p>
+          <p className="text-[#a5d6d0] text-[10.5px] leading-tight">en ligne</p>
+        </div>
+        <div className="flex items-center gap-4 text-white/80">
+          <svg className="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 00-1.02.24l-2.2 2.2a15.045 15.045 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1A11.36 11.36 0 018.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z" /></svg>
+          <svg className="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" /></svg>
+        </div>
+      </div>
+
+      {/* Chat body */}
+      <div className="bg-[#ECE5DD] px-2.5 py-3 flex flex-col gap-[3px]">
+        {/* Day chip */}
+        <div className="flex justify-center mb-1.5">
+          <span className="bg-[#E1F2FB] text-[#54656F] text-[10.5px] px-3 py-[3px] rounded-md shadow-sm font-medium">
+            {data.dayLabel}
+          </span>
+        </div>
+
+        {data.messages.map((msg, i) => {
+          const isQarte = msg.from === 'qarte';
+          const hasTime = !!msg.time;
+          return (
+            <div key={i}>
+              {/* Time gap spacer */}
+              {msg.timeBreak && (
+                <div className="h-3" />
+              )}
+
+              <div className={`flex ${isQarte ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[82%] px-2 py-1 shadow-sm ${
+                  isQarte
+                    ? 'bg-[#D9FDD3] rounded-lg rounded-tr-[3px]'
+                    : 'bg-white rounded-lg rounded-tl-[3px]'
+                }`}>
+                  <p className="text-[13.5px] text-[#111B21] leading-[19px]">
+                    {msg.text}
+                    {hasTime && <span className="inline-block w-[62px]" />}
+                  </p>
+                  {hasTime && (
+                    <div className="flex items-center justify-end gap-0.5 -mt-[14px] mb-0.5">
+                      <span className="text-[10.5px] text-[#667781]">{msg.time}</span>
+                      {isQarte && <DoubleCheck />}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── iMessage ───────────────────────────────────────── */
+
+function IMessageChat({ data }: { data: Testimonial }) {
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/5 bg-white">
+      {/* Header */}
+      <div className="px-3 pt-2 pb-2.5 border-b border-[#C6C6C8]/40 bg-[#F2F2F7]">
+        <div className="flex items-center justify-between mb-1.5">
+          <svg className="w-5 h-5 text-[#007AFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span className="text-[10px] text-[#8E8E93] font-medium">iMessage</span>
+        </div>
+        <div className="flex flex-col items-center">
+          <div className="w-10 h-10 rounded-full bg-[#C7C7CC] flex items-center justify-center text-white text-[15px] font-semibold">
+            {data.initials}
+          </div>
+          <p className="text-[13px] font-semibold text-black mt-1">{data.name}</p>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="px-3 py-3 flex flex-col gap-[5px]">
+        {data.dayLabel && (
+          <p className="text-[11px] text-[#8E8E93] text-center mb-1">{data.dayLabel}</p>
+        )}
+
+        {data.messages.map((msg, i) => {
+          const isQarte = msg.from === 'qarte';
+          return (
+            <div key={i}>
+              {/* Time gap label */}
+              {msg.timeBreak && (
+                <p className="text-[11px] text-[#8E8E93] text-center my-2">{msg.timeBreak}</p>
+              )}
+
+              <div className={`flex ${isQarte ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[78%] px-3 py-[6px] rounded-[18px] ${
+                  isQarte
+                    ? 'bg-[#007AFF] text-white rounded-br-[6px]'
+                    : 'bg-[#E9E9EB] text-black rounded-bl-[6px]'
+                }`}>
+                  <p className="text-[15.5px] leading-[20px]">{msg.text}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        {data.readStatus && (
+          <p className="text-[10.5px] text-[#8E8E93] text-right mr-1 mt-0.5">{data.readStatus}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Instagram DM ───────────────────────────────────── */
+
+function InstagramChat({ data }: { data: Testimonial }) {
+  const lastThemIdx = (() => {
+    for (let i = data.messages.length - 1; i >= 0; i--) {
+      if (data.messages[i].from === 'them') return i;
+    }
+    return -1;
+  })();
+
+  return (
+    <div className="rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/5 bg-white">
+      {/* Header */}
+      <div className="px-3 py-2.5 flex items-center gap-2.5 border-b border-[#DBDBDB]/60">
+        <svg className="w-5 h-5 text-[#262626]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        <div className="relative">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] p-[2px]">
+            <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-[10px] font-bold text-[#262626]">
+              {data.initials}
+            </div>
+          </div>
+          <div className="absolute -bottom-0.5 -right-0.5 w-[9px] h-[9px] bg-[#1CD14F] rounded-full border-[1.5px] border-white" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold text-[#262626] leading-tight truncate">{data.handle || data.name}</p>
+          <p className="text-[11px] text-[#8E8E93] leading-tight">Active maintenant</p>
+        </div>
+        <div className="flex items-center gap-3 text-[#262626]">
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" /></svg>
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="px-3 py-3 flex flex-col gap-[5px]">
+        {data.messages.map((msg, i) => {
+          const isQarte = msg.from === 'qarte';
+          const isLastThem = i === lastThemIdx;
+
+          return (
+            <div key={i}>
+              {/* Time gap label */}
+              {msg.timeBreak && (
+                <p className="text-[10.5px] text-[#8E8E93] text-center my-2">{msg.timeBreak}</p>
+              )}
+
+              {isQarte ? (
+                <div className="flex justify-end">
+                  <div className="max-w-[75%] px-3 py-2 bg-[#3797F0] text-white rounded-[22px] rounded-br-[6px]">
+                    <p className="text-[14px] leading-[18px]">{msg.text}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-start items-end gap-1.5">
+                  {isLastThem ? (
+                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] p-[1px] flex-shrink-0">
+                      <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-[6px] font-bold text-[#262626]">
+                        {data.initials}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-5 flex-shrink-0" />
+                  )}
+                  <div className="max-w-[75%] px-3 py-2 bg-[#EFEFEF] text-[#262626] rounded-[22px] rounded-bl-[6px]">
+                    <p className="text-[14px] leading-[18px]">{msg.text}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+        <p className="text-[10.5px] text-[#8E8E93] text-right mr-1 mt-0.5">Vu</p>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Dispatcher ─────────────────────────────────────── */
+
+function ChatCard({ data }: { data: Testimonial }) {
+  switch (data.platform) {
+    case 'whatsapp':
+      return <WhatsAppChat data={data} />;
+    case 'imessage':
+      return <IMessageChat data={data} />;
+    case 'instagram':
+      return <InstagramChat data={data} />;
+  }
+}
+
+/* ─── Section ────────────────────────────────────────── */
 
 export function TestimonialsSection() {
   const { ref, isInView } = useInView();
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  const testimonials = [
-    {
-      name: 'Marie L.',
-      role: 'Gérante de salon de coiffure',
-      content: 'Depuis Qarte, +35% de mes clientes reviennent plus régulièrement. Et surtout : fini les cartes tampons perdues !',
-      image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face',
-      stat: '+35%',
-      statLabel: 'fidélisation'
-    },
-    {
-      name: 'Jessica P.',
-      role: 'Nail Artist - Onglerie',
-      content: 'Mes clientes adorent recevoir une notification quand leur pose offerte est disponible. Ça les motive à revenir !',
-      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=200&h=200&fit=crop&crop=face',
-      stat: '5 min',
-      statLabel: 'installation'
-    },
-    {
-      name: 'Laura D.',
-      role: 'Masseuse - Centre bien-être',
-      content: 'J\'ai enfin des données sur mes clientes. Et le côté écologique, ça correspond parfaitement à l\'image de mon centre.',
-      image: 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=200&h=200&fit=crop&crop=face',
-      stat: '0',
-      statLabel: 'papier utilisé'
-    }
-  ];
-
-  const nextSlide = useCallback(() => setCurrentIndex((prev) => (prev + 1) % testimonials.length), [testimonials.length]);
-  const prevSlide = () => setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-
-  useEffect(() => {
-    if (!isPaused) {
-      const interval = setInterval(nextSlide, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [isPaused, nextSlide]);
 
   return (
-    <section className="py-24 bg-white relative overflow-hidden">
-      {/* Decorative Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40">
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-indigo-100 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-violet-100 rounded-full blur-3xl" />
-      </div>
+    <section className="relative py-28 overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-white via-gray-50/50 to-white" />
 
-      <div ref={ref} className="max-w-7xl mx-auto px-6 relative">
-        <div className={`text-center mb-12 transition-all duration-1000 transform ${isInView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4 tracking-tight">
-            Ils nous font confiance
+      <div ref={ref} className="relative max-w-5xl mx-auto px-6">
+        {/* Header */}
+        <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            On leur a demandé{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+              ce qu&apos;elles en pensent
+            </span>
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">Découvrez ce que nos professionnels de la beauté disent de Qarte</p>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Leurs retours, dans leurs mots.
+          </p>
         </div>
 
-        <div
-          className="relative max-w-4xl mx-auto"
-          onMouseEnter={() => setIsPaused(true)}
-          onMouseLeave={() => setIsPaused(false)}
-        >
-          {/* Floating Previews (Desktop) */}
-          <div className="hidden lg:block absolute -left-48 top-1/2 -translate-y-1/2 opacity-20 scale-90 blur-[1px]">
-            <div className="bg-gray-50 p-6 rounded-3xl w-64 border border-gray-100 shadow-sm">
-              <div className="w-10 h-10 rounded-full bg-gray-200 mb-3" />
-              <div className="h-4 bg-gray-200 rounded w-full mb-2" />
-              <div className="h-4 bg-gray-200 rounded w-2/3" />
-            </div>
-          </div>
-          <div className="hidden lg:block absolute -right-48 top-1/2 -translate-y-1/2 opacity-20 scale-90 blur-[1px]">
-            <div className="bg-gray-50 p-6 rounded-3xl w-64 border border-gray-100 shadow-sm">
-              <div className="w-10 h-10 rounded-full bg-gray-200 mb-3" />
-              <div className="h-4 bg-gray-200 rounded w-full mb-2" />
-              <div className="h-4 bg-gray-200 rounded w-2/3" />
-            </div>
-          </div>
-
-          {/* Main Carousel Card */}
-          <div className="relative min-h-[580px] sm:min-h-[520px] md:min-h-[400px]">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentIndex}
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -20 }}
-                transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-                className="absolute inset-0"
-              >
-                <div className="h-full bg-white/80 backdrop-blur-xl rounded-[2.5rem] p-6 sm:p-8 md:p-12 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] border border-white relative overflow-hidden flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-stretch">
-
-                  {/* Visual Background Quote */}
-                  <Quote className="absolute -top-6 -left-6 w-32 h-32 text-indigo-500/5 rotate-12" />
-
-                  {/* Left Side: Identity & Stat */}
-                  <div className="flex flex-col items-center md:items-start md:w-1/3 justify-between gap-6">
-                    <div className="relative">
-                      <div className="absolute -inset-2 bg-gradient-to-tr from-indigo-500 to-violet-500 rounded-full opacity-20 blur-lg animate-pulse" />
-                      <div className="relative w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-indigo-500 to-violet-500">
-                        <div className="w-full h-full rounded-full overflow-hidden border-4 border-white">
-                          <Image
-                            src={testimonials[currentIndex].image}
-                            alt={testimonials[currentIndex].name}
-                            width={96}
-                            height={96}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-center md:text-left">
-                      <h4 className="text-2xl font-bold text-gray-900 leading-tight">{testimonials[currentIndex].name}</h4>
-                      <p className="text-indigo-600 font-medium text-sm mt-1">{testimonials[currentIndex].role}</p>
-                    </div>
-
-                    <div className="mt-auto w-full">
-                      <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-4 md:p-6 rounded-2xl md:rounded-3xl text-white shadow-lg shadow-indigo-200/50">
-                        <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest opacity-80 mb-1">{testimonials[currentIndex].statLabel}</p>
-                        <p className="text-2xl md:text-3xl font-black">{testimonials[currentIndex].stat}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Side: Quote & Content */}
-                  <div className="flex-1 flex flex-col justify-center text-center md:text-left">
-                    {/* Trustpilot-style Rating */}
-                    <div className="flex flex-col sm:flex-row items-center md:items-start gap-3 mb-6">
-                      <div className="flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <div key={s} className="w-7 h-7 bg-[#00b67a] flex items-center justify-center">
-                            <Star className="w-4 h-4 fill-white text-white" />
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-gray-900">Excellent</span>
-                        <span className="text-sm text-gray-500">4.9 sur 5</span>
-                      </div>
-                    </div>
-
-                    <blockquote className="text-lg sm:text-xl md:text-2xl text-gray-800 font-medium leading-relaxed">
-                      &quot;{testimonials[currentIndex].content}&quot;
-                    </blockquote>
-
-                    <div className="mt-6 flex items-center justify-center md:justify-start gap-2">
-                      <svg className="w-4 h-4 text-[#00b67a]" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                      <span className="text-gray-500 text-sm font-medium">Avis vérifié</span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Premium Navigation Controls */}
-          <div className="flex items-center justify-between mt-12 px-4">
-            <button
-              onClick={prevSlide}
-              className="group w-12 h-12 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition-all active:scale-90"
-              aria-label="Précédent"
+        {/* Grille éparpillée de captures */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-x-5 md:gap-y-0 items-start">
+          {testimonials.map((t, i) => (
+            <div
+              key={i}
+              className={`relative transition-all duration-500 cursor-default md:hover:!rotate-0 md:hover:scale-[1.02] md:hover:!z-50 ${
+                isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+              } ${scatterClasses[i]}`}
+              style={{ transitionDelay: isInView ? `${i * 100}ms` : '0ms' }}
             >
-              <ChevronLeft className="w-6 h-6 group-hover:-translate-x-0.5 transition-transform" />
-            </button>
-
-            {/* Enhanced Dot Indicators with Progress */}
-            <div className="flex gap-4">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className="relative h-1.5 overflow-hidden rounded-full bg-gray-200 transition-all duration-500"
-                  style={{ width: index === currentIndex ? '48px' : '12px' }}
-                >
-                  {index === currentIndex && (
-                    <motion.div
-                      className="absolute inset-0 bg-indigo-600"
-                      initial={{ x: '-100%' }}
-                      animate={{ x: isPaused ? '0%' : '0%' }}
-                      transition={{ duration: 5, ease: "linear" }}
-                      key={`${currentIndex}-${isPaused}`}
-                    />
-                  )}
-                </button>
-              ))}
+              <ChatCard data={t} />
             </div>
-
-            <button
-              onClick={nextSlide}
-              className="group w-12 h-12 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-gray-400 hover:text-indigo-600 hover:border-indigo-200 transition-all active:scale-90"
-              aria-label="Suivant"
-            >
-              <ChevronRight className="w-6 h-6 group-hover:translate-x-0.5 transition-transform" />
-            </button>
-          </div>
+          ))}
         </div>
       </div>
     </section>

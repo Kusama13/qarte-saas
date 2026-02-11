@@ -426,6 +426,13 @@ npm run email
 - **PWA Icon:** Gradient indigo → rose (`#4f46e5` → `#ec4899`) — "Q" blanc italic bold
 - **Fond:** Gradients violet vers rose (landing)
 
+### SEO
+- **Title global** : "Qarte - Carte de fidelite digitale pour salons de beaute"
+- **Template** : `%s | Qarte`
+- **Keywords** : carte de fidelite, salon de coiffure, barbier, institut de beaute, onglerie
+- **Structured data** : JSON-LD Organization + SoftwareApplication (layout.tsx)
+- Toutes les pages publiques ont des metadata specifiques (title + description + openGraph)
+
 ### Style Visuel
 - **Dashboard headers:** `bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]`, gradient texte `from-[#4b0082] to-violet-600`
 - **Glassmorphism:** Utilise sur les pages auth et essai-gratuit
@@ -482,12 +489,14 @@ npm run email
   - CTA primaire : "Essayer gratuitement" → signup
   - CTA secondaire : "Voir une demo" → demo onglerie (outline style)
   - Mockup iPhone avec screenshot carte client (bounce animation)
-- Bandeau logos clients defilant (10 vrais logos, grayscale marquee, FOMO "rejoignez-les")
+- Bandeau noms clients defilant (texte marquee, gradient rose, FOMO "Ils nous ont rejoint")
 - Section "Comment ca marche" (3 etapes)
 - Temoignage client (Nail Salon by Elodie)
 - Pricing, FAQ, CTA
 - Blog SEO : 3 articles (coiffure, onglerie, institut) avec images
 - Page comparatif `/qarte-vs-carte-papier`
+- JSON-LD structured data : Organization + SoftwareApplication (layout.tsx)
+- Sitemap : /, /pricing, /essai-gratuit, /qarte-vs-carte-papier, /blog, 3 articles blog, /ebook, /contact, /cgv, /mentions-legales, /politique-confidentialite
 
 ### Demo (`/demo`)
 - Galerie 3 cartes fictives : coiffeur, onglerie, institut

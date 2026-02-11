@@ -6,12 +6,9 @@ import { LandingAnalytics } from '@/components/analytics/LandingAnalytics';
 import { FacebookPixel, FacebookScrollTracker } from '@/components/analytics/FacebookPixel';
 import {
   HeroSection,
-  JoinedTodayMarquee,
   HowItWorksSection,
-  ComparisonSection,
   FeaturesSection,
   TestimonialsSection,
-  CaseStudySection,
   PricingSection,
   FAQSection,
   FooterSection,
@@ -22,10 +19,8 @@ import {
 // Memoized sections for better performance
 const MemoizedHeroSection = memo(HeroSection);
 const MemoizedHowItWorksSection = memo(HowItWorksSection);
-const MemoizedComparisonSection = memo(ComparisonSection);
 const MemoizedFeaturesSection = memo(FeaturesSection);
 const MemoizedTestimonialsSection = memo(TestimonialsSection);
-const MemoizedCaseStudySection = memo(CaseStudySection);
 const MemoizedPricingSection = memo(PricingSection);
 const MemoizedFAQSection = memo(FAQSection);
 const MemoizedFooterSection = memo(FooterSection);
@@ -40,12 +35,9 @@ export default function LandingPageV4() {
 
       <main className="overflow-hidden pb-24 md:pb-0">
         <MemoizedHeroSection />
-        <JoinedTodayMarquee />
-        <MemoizedHowItWorksSection />
-        <MemoizedComparisonSection />
         <MemoizedFeaturesSection />
+        <MemoizedHowItWorksSection />
         <MemoizedTestimonialsSection />
-        <MemoizedCaseStudySection />
         <MemoizedPricingSection />
         <MemoizedFAQSection />
         <MemoizedFooterSection />
