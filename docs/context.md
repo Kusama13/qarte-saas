@@ -46,7 +46,7 @@ src/
 ├── app/                    # Next.js App Router
 │   ├── api/               # Routes API
 │   ├── auth/              # Pages authentification
-│   ├── dashboard/         # Dashboard commercant (+ social-kit/)
+│   ├── dashboard/         # Dashboard commercant
 │   ├── admin/             # Dashboard admin
 │   ├── customer/          # Pages client
 │   ├── scan/[code]/       # Scan QR dynamique
@@ -60,7 +60,7 @@ src/
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
 │   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
 │   ├── loyalty/           # Composants fidelite
-│   ├── marketing/         # FlyerTemplate
+│   ├── marketing/         # SocialMediaTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel
 │
 ├── lib/                   # Utilitaires
@@ -72,7 +72,7 @@ src/
 │   ├── scripts.ts        # Scripts verbaux par shop_type (emails + dashboard)
 │   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode)
 │
-├── emails/               # Templates React Email (27 templates + BaseLayout)
+├── emails/               # Templates React Email (26 templates + BaseLayout)
 │   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
 │   ├── WelcomeEmail.tsx           # Bienvenue (urgence + temoignage)
 │   ├── IncompleteSignupEmail.tsx  # Relance inscription +1h
@@ -91,10 +91,9 @@ src/
 │   ├── Tier2UpsellEmail.tsx       # Upsell palier VIP
 │   ├── WeeklyDigestEmail.tsx      # Bilan hebdomadaire
 │   ├── PendingPointsEmail.tsx     # Passages en attente (Shield)
-│   ├── QRCodeEmail.tsx            # QR code pret
+│   ├── QRCodeEmail.tsx            # QR code + kit reseaux sociaux (merged)
 │   ├── FirstClientScriptEmail.tsx # Script verbal J+2 post-config (par shop_type)
 │   ├── QuickCheckEmail.tsx        # Check-in J+4 post-config (0 scans)
-│   ├── SocialKitEmail.tsx         # Kit reseaux sociaux
 │   ├── SubscriptionConfirmedEmail.tsx # Confirmation abonnement (Stripe)
 │   ├── PaymentFailedEmail.tsx     # Echec paiement (Stripe)
 │   ├── SubscriptionCanceledEmail.tsx # Annulation abonnement (Stripe)
@@ -265,7 +264,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 
 ### Marketing
 - Notifications push programmees (10h et 18h)
-- Templates flyers/cartes (PDF)
+- Kit reseaux sociaux (SocialMediaTemplate, visuel 4:5 + legendes Instagram)
 - Ebook telechargeable (lead generation)
 
 ### Programmes Membres
@@ -527,11 +526,10 @@ npm run email
 - Sidebar navigation (bottom sheet mobile, sidebar desktop)
 - Statistiques temps reel + comparaison semaine precedente
 - Gestion programme fidelite (suggestions par shop_type, 10 palettes couleurs)
-- Telechargement QR/flyers + kit reseaux sociaux
+- Page QR code & Kit promo (2 onglets : QR code + Kit reseaux sociaux avec SocialMediaTemplate)
 - Gestion clients
 - Marketing (push notifications)
 - Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe + prix journalier (0,63€/jour mensuel, 0,52€/jour annuel)
-- Kit reseaux sociaux (visuel + legendes Instagram)
 - Parrainage : encart en haut de Settings (code + copier + partager via Web Share API)
 - Headers harmonises (violet #4b0082)
 
@@ -568,7 +566,7 @@ import type { Merchant } from '@/types';
 ```
 
 ### Nommage
-- Composants: PascalCase (`FlyerTemplate.tsx`)
+- Composants: PascalCase (`SocialMediaTemplate.tsx`)
 - Utilitaires: camelCase (`generateQRCode`)
 - Types: PascalCase (`Merchant`, `LoyaltyCard`)
 - Routes API: kebab-case (`/api/adjust-points`)
@@ -590,7 +588,7 @@ import type { Merchant } from '@/types';
 
 ---
 
-## 19. Emails Transactionnels (27 templates)
+## 19. Emails Transactionnels (26 templates)
 
 ### Onboarding & Activation
 | Email | Declencheur |
@@ -601,10 +599,9 @@ import type { Merchant } from '@/types';
 | ProgramReminderEmail | Programme non configure J+1 (cron morning) |
 | ProgramReminderDay2Email | Programme non configure J+2, personnalise par shop_type (cron morning) |
 | ProgramReminderDay3Email | Programme non configure J+3, urgence + done-for-you (cron morning) |
-| QRCodeEmail | QR code pret (apres config programme, endpoint `/api/emails/qr-code` + cron morning) |
+| QRCodeEmail | QR code + kit reseaux sociaux (apres config programme, endpoint `/api/emails/qr-code` + cron morning). Section kit conditionnelle sur `rewardDescription`. |
 | FirstClientScriptEmail | Script verbal personnalise par shop_type J+2 post-config (cron morning) |
 | QuickCheckEmail | Check-in J+4 si 0 scans — 3 options diagnostic (cron morning) |
-| SocialKitEmail | Kit reseaux sociaux pret (API email/social-kit) |
 
 ### Engagement & Milestones
 | Email | Declencheur |

@@ -213,7 +213,7 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 
 ---
 
-# PARTIE 4 : EMAILS (31 templates)
+# PARTIE 4 : EMAILS (30 templates)
 
 ## 4.1 Parcours Signup (temps reel)
 
@@ -238,66 +238,65 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 
 | # | Email | Declencheur | Quand |
 |---|-------|-------------|-------|
-| 8 | **QRCodeEmail** | Programme configure | Immediat + cron morning |
+| 8 | **QRCodeEmail** | Programme configure | Immediat + cron morning (inclut kit reseaux si rewardDescription) |
 | 9 | **FirstClientScriptEmail** | QR envoye + 0 scans | J+2 post-config (cron morning) |
 | 10 | **QuickCheckEmail** | QR envoye + 0 scans | J+4 post-config (cron morning) |
-| 11 | **SocialKitEmail** | API `/api/emails/social-kit` | Immediat |
 
 ## 4.4 Engagement & Milestones (cron morning 09:00)
 
 | # | Email | Condition | Quand |
 |---|-------|-----------|-------|
-| 12 | **FirstScanEmail** | 2eme visite confirmee | J+1 apres premier scan |
-| 13 | **Day5CheckinEmail** | 5 jours apres signup, skip si 0 scans | J+5 |
-| 14 | **FirstRewardEmail** | 1ere recompense debloquee | J+1 apres recompense |
-| 15 | **Tier2UpsellEmail** | 10+ clients, tier2 non active | Cron morning |
-| 16 | **WeeklyDigestEmail** | Merchant actif avec scans | Hebdomadaire |
+| 11 | **FirstScanEmail** | 2eme visite confirmee | J+1 apres premier scan |
+| 12 | **Day5CheckinEmail** | 5 jours apres signup, skip si 0 scans | J+5 |
+| 13 | **FirstRewardEmail** | 1ere recompense debloquee | J+1 apres recompense |
+| 14 | **Tier2UpsellEmail** | 50+ clients, tier2 non active | Cron morning |
+| 15 | **WeeklyDigestEmail** | Merchant actif avec scans | Lundi (cron morning) |
 
 ## 4.5 Inactivite (cron morning 09:00)
 
 | # | Email | Condition | Quand |
 |---|-------|-----------|-------|
-| 17 | **InactiveMerchantDay7Email** | 0 visite depuis 7j | D+7 (diagnostic) |
-| 18 | **InactiveMerchantDay14Email** | 0 visite depuis 14j | D+14 (pression) |
-| 19 | **InactiveMerchantDay30Email** | 0 visite depuis 30j | D+30 (message perso) |
+| 16 | **InactiveMerchantDay7Email** | 0 visite depuis 7j | D+7 (diagnostic) |
+| 17 | **InactiveMerchantDay14Email** | 0 visite depuis 14j | D+14 (pression) |
+| 18 | **InactiveMerchantDay30Email** | 0 visite depuis 30j | D+30 (message perso) |
 
 ## 4.6 Trial (cron morning 09:00)
 
 | # | Email | Condition | Quand |
 |---|-------|-----------|-------|
-| 20 | **TrialEndingEmail** | Trial actif | J-5, J-3, J-1 |
-| 21 | **TrialExpiredEmail** | Trial expire | J+1, J+3, J+5 |
+| 19 | **TrialEndingEmail** | Trial actif | J-5, J-3, J-1 |
+| 20 | **TrialExpiredEmail** | Trial expire | J+1, J+3, J+5 |
 
 ## 4.7 Points en attente — Qarte Shield (cron morning 09:00)
 
 | # | Email | Condition | Quand |
 |---|-------|-----------|-------|
-| 22 | **PendingPointsEmail** (alerte) | Visites `pending` | D+0, D+1 |
-| 23 | **PendingPointsEmail** (rappel) | Visites `pending` toujours | D+2, D+3 |
+| 21 | **PendingPointsEmail** (alerte) | Visites `pending` | D+0, D+1 |
+| 22 | **PendingPointsEmail** (rappel) | Visites `pending` toujours | D+2, D+3 |
 
 ## 4.8 Stripe & Paiement (webhook temps reel)
 
 | # | Email | Evenement Stripe | Quand |
 |---|-------|-----------------|-------|
-| 24 | **SubscriptionConfirmedEmail** | `checkout.session.completed` | Immediat |
-| 25 | **SubscriptionConfirmedEmail** | `invoice.payment_succeeded` (recovery) | Immediat |
-| 26 | **PaymentFailedEmail** | `invoice.payment_failed` | Immediat |
-| 27 | **SubscriptionCanceledEmail** | `subscription.updated` → canceling | Immediat |
-| 28 | **SubscriptionReactivatedEmail** | `subscription.updated` → canceling→active | Immediat |
+| 23 | **SubscriptionConfirmedEmail** | `checkout.session.completed` | Immediat |
+| 24 | **SubscriptionConfirmedEmail** | `invoice.payment_succeeded` (recovery) | Immediat |
+| 25 | **PaymentFailedEmail** | `invoice.payment_failed` | Immediat |
+| 26 | **SubscriptionCanceledEmail** | `subscription.updated` → canceling | Immediat |
+| 27 | **SubscriptionReactivatedEmail** | `subscription.updated` → canceling→active | Immediat |
 
 ## 4.9 Win-back (cron reactivation 10:00)
 
 | # | Email | Condition | Quand |
 |---|-------|-----------|-------|
-| 29 | **ReactivationEmail** (QARTE50) | `canceled` | J+7 |
-| 30 | **ReactivationEmail** (QARTEBOOST) | `canceled` | J+14 |
-| 31 | **ReactivationEmail** (QARTELAST) | `canceled` | J+30 |
+| 28 | **ReactivationEmail** (QARTE50) | `canceled` | J+7 |
+| 29 | **ReactivationEmail** (QARTEBOOST) | `canceled` | J+14 |
+| 30 | **ReactivationEmail** (QARTELAST) | `canceled` | J+30 |
 
 ## 4.10 Autre
 
 | # | Email | Declencheur |
 |---|-------|-------------|
-| 32 | **EbookEmail** | Formulaire `/ebook` |
+| 31 | **EbookEmail** | Formulaire `/ebook` |
 
 ## 4.11 Timeline complete d'un commercant
 
@@ -314,8 +313,7 @@ ONBOARDING (si programme pas configure)
   +3 jours ProgramReminderDay3Email (urgence)
 
 POST-CONFIG PROGRAMME
-  +0       QRCodeEmail (immediat)
-  +0       SocialKitEmail (via API)
+  +0       QRCodeEmail (immediat, inclut kit reseaux si rewardDescription)
   +2 jours FirstClientScriptEmail (script verbal par shop_type, si 0 scans)
   +4 jours QuickCheckEmail (diagnostic 3 options, si 0 scans)
 
@@ -365,7 +363,7 @@ SHIELD (points en attente)
 - **Anti-spam** : headers `List-Unsubscribe` + `List-Unsubscribe-Post` sur tous les emails
 - **Emails programmes** : via `scheduledAt` de Resend (IncompleteSignup +1h, Reminder2 +3h)
 - **Tracking doublons** : tables `pending_email_tracking` et `reactivation_email_tracking`
-- **Codes tracking** : -103 QRCode, -104 SocialKit, -106 FirstClientScript, -107 QuickCheck
+- **Codes tracking** : -100 FirstScan, -101 FirstReward, -102 Tier2Upsell, -103 QRCode+Kit, -106 FirstClientScript, -107 QuickCheck
 - **Layout** : `BaseLayout.tsx` (header violet #4b0082, footer)
 
 ---
@@ -387,7 +385,7 @@ SHIELD (points en attente)
 - [x] **F7** : Onboarding checklist gamifiee 5 etapes (confetti, trial only)
 - [x] **F9** : Parrainage merchant v1 (code QARTE-XXXX, Settings, FirstScanEmail, Web Share API)
 - [x] Suppression pre-remplissage `reward_description` → emails ProgramReminder fonctionnent
-- [x] SocialKitEmail couleurs dynamiques du merchant
+- [x] ~~SocialKitEmail~~ supprime — fusionne dans QRCodeEmail
 - [x] FirstScanEmail seuil passe a 2 visites
 - [x] Renommage `/offre-speciale` → `/essai-gratuit`
 - [x] Preview banner sticky CTA "Telechargez votre QR code"
@@ -468,7 +466,20 @@ SHIELD (points en attente)
 
 # PARTIE 6 : CHANGELOG
 
-## [2026-02-11] — Funnel activation post-config + Landing refonte
+## [2026-02-11] — Merge QR + Social Kit, cleanup, admin emails
+
+### Merge QR code + Kit reseaux sociaux
+**Commit:** `dfa29eb`
+- **refactor:** Merge `/dashboard/social-kit` dans `/dashboard/qr-download` — 2 onglets (QR code + Kit reseaux)
+- **refactor:** Merge SocialKitEmail dans QRCodeEmail — section kit conditionnelle sur `rewardDescription`
+- **delete:** Suppression page social-kit, API route, email template, admin button, FlyerTemplate orphelin
+- **feat:** Section "Emails envoyes" dans admin merchant detail (tracking codes -100 a -107)
+- **fix:** Label tracking -102 corrige (Upsell Tier 2, pas Bilan hebdomadaire)
+- **refactor:** Cron morning — suppression section social kit, QR section enrichie avec donnees merchant completes
+- **style:** Branding "Propulse par getqarte.com" en white pill partout (SocialMediaTemplate, QR card)
+- **delete:** Page test/qr-preview (mock data dev only)
+
+### Funnel activation post-config + Landing refonte
 
 ### Funnel "Programme configure → Premier scan"
 **Commit:** `3bcaf14`
@@ -644,5 +655,5 @@ SHIELD (points en attente)
 
 ---
 
-*Derniere mise a jour : 11 fevrier 2026*
+*Derniere mise a jour : 11 fevrier 2026 (soir)*
 *Statuts verifies contre le code source le 11/02/2026.*
