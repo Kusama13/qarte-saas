@@ -58,7 +58,7 @@ src/
 │   ├── landing/           # 12 composants landing (Hero, Features, Pricing, FAQ...)
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
-│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist
+│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
 │   ├── loyalty/           # Composants fidelite
 │   ├── marketing/         # FlyerTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel
@@ -69,9 +69,10 @@ src/
 │   ├── analytics.ts      # Tracking events
 │   ├── push.ts           # Notifications push
 │   ├── logger.ts         # Logger structuré
+│   ├── scripts.ts        # Scripts verbaux par shop_type (emails + dashboard)
 │   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode)
 │
-├── emails/               # Templates React Email (25 templates + BaseLayout)
+├── emails/               # Templates React Email (27 templates + BaseLayout)
 │   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
 │   ├── WelcomeEmail.tsx           # Bienvenue (urgence + temoignage)
 │   ├── IncompleteSignupEmail.tsx  # Relance inscription +1h
@@ -91,6 +92,8 @@ src/
 │   ├── WeeklyDigestEmail.tsx      # Bilan hebdomadaire
 │   ├── PendingPointsEmail.tsx     # Passages en attente (Shield)
 │   ├── QRCodeEmail.tsx            # QR code pret
+│   ├── FirstClientScriptEmail.tsx # Script verbal J+2 post-config (par shop_type)
+│   ├── QuickCheckEmail.tsx        # Check-in J+4 post-config (0 scans)
 │   ├── SocialKitEmail.tsx         # Kit reseaux sociaux
 │   ├── SubscriptionConfirmedEmail.tsx # Confirmation abonnement (Stripe)
 │   ├── PaymentFailedEmail.tsx     # Echec paiement (Stripe)
@@ -587,7 +590,7 @@ import type { Merchant } from '@/types';
 
 ---
 
-## 19. Emails Transactionnels (25 templates)
+## 19. Emails Transactionnels (27 templates)
 
 ### Onboarding & Activation
 | Email | Declencheur |
@@ -599,13 +602,15 @@ import type { Merchant } from '@/types';
 | ProgramReminderDay2Email | Programme non configure J+2, personnalise par shop_type (cron morning) |
 | ProgramReminderDay3Email | Programme non configure J+3, urgence + done-for-you (cron morning) |
 | QRCodeEmail | QR code pret (apres config programme, endpoint `/api/emails/qr-code` + cron morning) |
+| FirstClientScriptEmail | Script verbal personnalise par shop_type J+2 post-config (cron morning) |
+| QuickCheckEmail | Check-in J+4 si 0 scans — 3 options diagnostic (cron morning) |
 | SocialKitEmail | Kit reseaux sociaux pret (API email/social-kit) |
 
 ### Engagement & Milestones
 | Email | Declencheur |
 |-------|-------------|
 | FirstScanEmail | 2eme visite confirmee — celebration 1er vrai client + bloc parrainage si referral_code (cron morning) |
-| Day5CheckinEmail | Check-in J+5 — bilan premiere semaine (cron morning) |
+| Day5CheckinEmail | Check-in J+5 — bilan premiere semaine, skip si 0 scans (cron morning) |
 | FirstRewardEmail | Premiere recompense debloquee (cron morning) |
 | Tier2UpsellEmail | Upsell palier 2 VIP — 10+ clients (cron morning) |
 | WeeklyDigestEmail | Bilan hebdomadaire — scans, clients, recompenses (cron morning) |

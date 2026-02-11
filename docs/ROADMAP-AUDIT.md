@@ -29,6 +29,7 @@ Signup (email+password)
 |---|----------|--------|--------|
 | 1 | Programme jamais configure | ✅ Attenue | Suggestions cliquables par metier (MerchantSettingsForm). `reward_description` null a la creation → emails ProgramReminder J+1/2/3 se declenchent. |
 | 2 | QR code jamais imprime | ✅ Attenue | QRCodeEmail envoye auto apres config. CTA "Telechargez votre QR code" dans preview banner. |
+| 2b | Programme configure mais 0 scans | ✅ Attenue | Sequence J+2 (FirstClientScriptEmail) + J+4 (QuickCheckEmail) + ZeroScansCoach dashboard. Day5 skip si 0 scans. |
 | 3 | Pas de "aha moment" avant J+14 | ❌ A faire | Objectif gamifie, celebration milestones. |
 | 4 | Checkout frictionnel | ✅ Partiel | Fix checkout Stripe (customer supprime → recree auto). Fix `past_due` non bloquant. Coherence UI sidebar + page abonnement. |
 
@@ -212,7 +213,7 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 
 ---
 
-# PARTIE 4 : EMAILS (29 templates)
+# PARTIE 4 : EMAILS (31 templates)
 
 ## 4.1 Parcours Signup (temps reel)
 
@@ -238,63 +239,65 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 | # | Email | Declencheur | Quand |
 |---|-------|-------------|-------|
 | 8 | **QRCodeEmail** | Programme configure | Immediat + cron morning |
-| 9 | **SocialKitEmail** | API `/api/emails/social-kit` | Immediat |
+| 9 | **FirstClientScriptEmail** | QR envoye + 0 scans | J+2 post-config (cron morning) |
+| 10 | **QuickCheckEmail** | QR envoye + 0 scans | J+4 post-config (cron morning) |
+| 11 | **SocialKitEmail** | API `/api/emails/social-kit` | Immediat |
 
 ## 4.4 Engagement & Milestones (cron morning 09:00)
 
 | # | Email | Condition | Quand |
 |---|-------|-----------|-------|
-| 10 | **FirstScanEmail** | 2eme visite confirmee | J+1 apres premier scan |
-| 11 | **Day5CheckinEmail** | 5 jours apres signup | J+5 |
-| 12 | **FirstRewardEmail** | 1ere recompense debloquee | J+1 apres recompense |
-| 13 | **Tier2UpsellEmail** | 10+ clients, tier2 non active | Cron morning |
-| 14 | **WeeklyDigestEmail** | Merchant actif avec scans | Hebdomadaire |
+| 12 | **FirstScanEmail** | 2eme visite confirmee | J+1 apres premier scan |
+| 13 | **Day5CheckinEmail** | 5 jours apres signup, skip si 0 scans | J+5 |
+| 14 | **FirstRewardEmail** | 1ere recompense debloquee | J+1 apres recompense |
+| 15 | **Tier2UpsellEmail** | 10+ clients, tier2 non active | Cron morning |
+| 16 | **WeeklyDigestEmail** | Merchant actif avec scans | Hebdomadaire |
 
 ## 4.5 Inactivite (cron morning 09:00)
 
 | # | Email | Condition | Quand |
 |---|-------|-----------|-------|
-| 15 | **InactiveMerchantDay7Email** | 0 visite depuis 7j | D+7 (diagnostic) |
-| 16 | **InactiveMerchantDay14Email** | 0 visite depuis 14j | D+14 (pression) |
-| 17 | **InactiveMerchantDay30Email** | 0 visite depuis 30j | D+30 (message perso) |
+| 17 | **InactiveMerchantDay7Email** | 0 visite depuis 7j | D+7 (diagnostic) |
+| 18 | **InactiveMerchantDay14Email** | 0 visite depuis 14j | D+14 (pression) |
+| 19 | **InactiveMerchantDay30Email** | 0 visite depuis 30j | D+30 (message perso) |
 
 ## 4.6 Trial (cron morning 09:00)
 
 | # | Email | Condition | Quand |
 |---|-------|-----------|-------|
-| 18 | **TrialEndingEmail** | Trial actif | J-5, J-3, J-1 |
-| 19 | **TrialExpiredEmail** | Trial expire | J+1, J+3, J+5 |
+| 20 | **TrialEndingEmail** | Trial actif | J-5, J-3, J-1 |
+| 21 | **TrialExpiredEmail** | Trial expire | J+1, J+3, J+5 |
 
 ## 4.7 Points en attente — Qarte Shield (cron morning 09:00)
 
 | # | Email | Condition | Quand |
 |---|-------|-----------|-------|
-| 20 | **PendingPointsEmail** (alerte) | Visites `pending` | D+0, D+1 |
-| 21 | **PendingPointsEmail** (rappel) | Visites `pending` toujours | D+2, D+3 |
+| 22 | **PendingPointsEmail** (alerte) | Visites `pending` | D+0, D+1 |
+| 23 | **PendingPointsEmail** (rappel) | Visites `pending` toujours | D+2, D+3 |
 
 ## 4.8 Stripe & Paiement (webhook temps reel)
 
 | # | Email | Evenement Stripe | Quand |
 |---|-------|-----------------|-------|
-| 22 | **SubscriptionConfirmedEmail** | `checkout.session.completed` | Immediat |
-| 23 | **SubscriptionConfirmedEmail** | `invoice.payment_succeeded` (recovery) | Immediat |
-| 24 | **PaymentFailedEmail** | `invoice.payment_failed` | Immediat |
-| 25 | **SubscriptionCanceledEmail** | `subscription.updated` → canceling | Immediat |
-| 26 | **SubscriptionReactivatedEmail** | `subscription.updated` → canceling→active | Immediat |
+| 24 | **SubscriptionConfirmedEmail** | `checkout.session.completed` | Immediat |
+| 25 | **SubscriptionConfirmedEmail** | `invoice.payment_succeeded` (recovery) | Immediat |
+| 26 | **PaymentFailedEmail** | `invoice.payment_failed` | Immediat |
+| 27 | **SubscriptionCanceledEmail** | `subscription.updated` → canceling | Immediat |
+| 28 | **SubscriptionReactivatedEmail** | `subscription.updated` → canceling→active | Immediat |
 
 ## 4.9 Win-back (cron reactivation 10:00)
 
 | # | Email | Condition | Quand |
 |---|-------|-----------|-------|
-| 27 | **ReactivationEmail** (QARTE50) | `canceled` | J+7 |
-| 28 | **ReactivationEmail** (QARTEBOOST) | `canceled` | J+14 |
-| 29 | **ReactivationEmail** (QARTELAST) | `canceled` | J+30 |
+| 29 | **ReactivationEmail** (QARTE50) | `canceled` | J+7 |
+| 30 | **ReactivationEmail** (QARTEBOOST) | `canceled` | J+14 |
+| 31 | **ReactivationEmail** (QARTELAST) | `canceled` | J+30 |
 
 ## 4.10 Autre
 
 | # | Email | Declencheur |
 |---|-------|-------------|
-| 30 | **EbookEmail** | Formulaire `/ebook` |
+| 32 | **EbookEmail** | Formulaire `/ebook` |
 
 ## 4.11 Timeline complete d'un commercant
 
@@ -313,10 +316,12 @@ ONBOARDING (si programme pas configure)
 POST-CONFIG PROGRAMME
   +0       QRCodeEmail (immediat)
   +0       SocialKitEmail (via API)
+  +2 jours FirstClientScriptEmail (script verbal par shop_type, si 0 scans)
+  +4 jours QuickCheckEmail (diagnostic 3 options, si 0 scans)
 
 ENGAGEMENT
   +1j apres 1er scan   FirstScanEmail (+ bloc parrainage)
-  +5 jours             Day5CheckinEmail
+  +5 jours             Day5CheckinEmail (skip si 0 scans)
   +1j apres 1ere rec.  FirstRewardEmail
   10+ clients          Tier2UpsellEmail
   Hebdomadaire         WeeklyDigestEmail
@@ -360,6 +365,7 @@ SHIELD (points en attente)
 - **Anti-spam** : headers `List-Unsubscribe` + `List-Unsubscribe-Post` sur tous les emails
 - **Emails programmes** : via `scheduledAt` de Resend (IncompleteSignup +1h, Reminder2 +3h)
 - **Tracking doublons** : tables `pending_email_tracking` et `reactivation_email_tracking`
+- **Codes tracking** : -103 QRCode, -104 SocialKit, -106 FirstClientScript, -107 QuickCheck
 - **Layout** : `BaseLayout.tsx` (header violet #4b0082, footer)
 
 ---
@@ -409,6 +415,14 @@ SHIELD (points en attente)
 - [x] Hero : CTA "Essayer gratuitement", bouton demo secondaire (outline)
 - [x] Footer + blog : liens blog, comparatif, contact
 
+### Funnel activation post-config (11 fev)
+- [x] FirstClientScriptEmail J+2 (script verbal par shop_type, 0 scans)
+- [x] QuickCheckEmail J+4 (diagnostic 3 options, 0 scans)
+- [x] ZeroScansCoach dashboard (remplace empty state par coaching 3 etapes)
+- [x] `src/lib/scripts.ts` (constantes scripts verbaux partagees)
+- [x] Fix OnboardingChecklist etape 4 (label + href /qr-download)
+- [x] Skip Day5CheckinEmail pour 0-scan merchants
+
 ### Landing refonte UX & couleurs (11 fev)
 - [x] FeaturesSection : CSS Grid 3x3 (remplace SVG arrows casses)
 - [x] FeaturesSection : titre "Avec Qarte, vos client(e)s ne vous oublient plus."
@@ -454,7 +468,18 @@ SHIELD (points en attente)
 
 # PARTIE 6 : CHANGELOG
 
-## [2026-02-11] — Landing refonte UX, harmonie couleurs, icone coeur
+## [2026-02-11] — Funnel activation post-config + Landing refonte
+
+### Funnel "Programme configure → Premier scan"
+**Commit:** `3bcaf14`
+- **feat:** FirstClientScriptEmail J+2 — script verbal personnalise par shop_type (coiffeur, onglerie, spa...)
+- **feat:** QuickCheckEmail J+4 — diagnostic court avec 3 options (QR pas imprime, ne sait pas presenter, autre)
+- **feat:** ZeroScansCoach — composant dashboard remplacant l'empty state par coaching 3 etapes
+- **feat:** `src/lib/scripts.ts` — constantes scripts verbaux partagees (emails + dashboard)
+- **fix:** OnboardingChecklist etape 4 — label "Obtenir mes 2 premiers scans" + href `/qr-download`
+- **optim:** Day5CheckinEmail skip pour merchants 0 scans (couvert par J+2 et J+4)
+
+### Landing refonte UX, harmonie couleurs, icone coeur
 **Commit:** `f41847c`
 
 ### Landing & UX
