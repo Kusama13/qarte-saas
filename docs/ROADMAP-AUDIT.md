@@ -122,7 +122,7 @@ Signup (email+password)
 
 | # | Severite | Probleme | Fichier | Action |
 |---|----------|----------|---------|--------|
-| 1 | HIGH | Fichier 1533 lignes | `customer/card/[merchantId]/page.tsx` | Splitter en composants |
+| 1 | HIGH | Fichier 1533 lignes (optimise: useMemo, fonctions pures extraites, dead code supprime) | `customer/card/[merchantId]/page.tsx` | Splitter en composants |
 | 2 | HIGH | Fichier 1025 lignes | `scan/[code]/page.tsx` | Splitter en composants |
 | 3 | MEDIUM | Fichier 573 lignes | `admin/merchants/page.tsx` | Acceptable, surveiller |
 
@@ -437,6 +437,15 @@ SHIELD (points en attente)
 - [x] Icone tampons : Footprints → Heart (carte client + historique)
 - [x] Fix &circlearrowleft; → ↺ (entite HTML non supportee JSX)
 
+### Refonte carte client (12 fev)
+- [x] Reward card celebration mode (gradient + shimmer + pulsing icon)
+- [x] Dual-tier awareness (Palier 1/2 dynamique)
+- [x] Footer "Propulse par Qarte" avec lien landing
+- [x] Optimisation page: useMemo, fonctions pures extraites, dead code supprime
+- [x] ReviewPrompt redesign compact
+- [x] MemberCardModal redesign premium
+- [x] Nettoyage logos clients inutilises
+
 ## Semaine 1 (10-16 fev)
 - [ ] **F3** : Celebration premier scan (1h)
 - [ ] Plan admin merchants (barre actions, badges alerte, WhatsApp)
@@ -465,6 +474,25 @@ SHIELD (points en attente)
 ---
 
 # PARTIE 6 : CHANGELOG
+
+## [2026-02-12] — Refonte carte client, reward celebration, optimisation
+
+### Carte client (`customer/card/[merchantId]/page.tsx`)
+- **ui:** Reward card redesign — celebration mode (gradient merchant + shimmer sweep + pulsing icon) quand recompense prete
+- **ui:** Reward card motivational preview — icone + description + "Plus que X passages" quand pas prete
+- **feat:** Dual-tier awareness — reward card affiche dynamiquement Palier 1 ou Palier 2 selon l'etat de la carte
+- **ui:** Footer "Propulse par Qarte" avec lien vers landing (logo Q gradient indigo→violet)
+- **perf:** `useMemo` pour 10 computed values (isRewardReady, isTier2Ready, effectiveTier1Redeemed, etc.)
+- **perf:** Fonctions pures (`formatRewardText`, `getLoyaltyLabel`, `MerchantOffer` interface) extraites hors composant
+- **cleanup:** Suppression dead code — `getLoyaltyIcon()`, `offerExpanded` state, imports inutilises (ChevronDown, ChevronUp)
+
+### Composants loyalty
+- **ui:** `ReviewPrompt.tsx` — redesign compact (etoiles + CTA "J'y vais", dismiss permanent localStorage)
+- **ui:** `MemberCardModal.tsx` — redesign premium dark card
+- **ui:** `HistorySection.tsx` — espacement reduit (mb-4)
+
+### Nettoyage
+- **delete:** 10 logos clients inutilises (`public/images/logos/`)
 
 ## [2026-02-11] — Merge QR + Social Kit, cleanup, admin emails
 
@@ -655,5 +683,5 @@ SHIELD (points en attente)
 
 ---
 
-*Derniere mise a jour : 11 fevrier 2026 (soir)*
-*Statuts verifies contre le code source le 11/02/2026.*
+*Derniere mise a jour : 12 fevrier 2026*
+*Statuts verifies contre le code source le 12/02/2026.*

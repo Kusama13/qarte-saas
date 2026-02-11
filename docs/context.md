@@ -59,7 +59,7 @@ src/
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
 │   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
-│   ├── loyalty/           # Composants fidelite
+│   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, ReviewPrompt, MemberCardModal)
 │   ├── marketing/         # SocialMediaTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel
 │
@@ -230,6 +230,8 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Suggestions de programme par type de commerce (MerchantSettingsForm)
 - 10 palettes couleurs (6 mobile + 4 desktop-only)
 - Preview carte client avec donnees simulees (`?preview=true`)
+- Reward card dual-tier : celebration mode (gradient + shimmer + pulsing) quand recompense prete, motivational preview sinon
+- Footer "Propulse par Qarte" avec lien vers landing
 
 ### Support Multi-Pays
 - Pays supportes : France (FR), Belgique (BE), Suisse (CH), Luxembourg (LU)
