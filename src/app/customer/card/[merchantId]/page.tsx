@@ -6,17 +6,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   Check,
-  Gift,
   Loader2,
   AlertCircle,
   ChevronRight,
-  Heart,
   Hourglass,
   Shield,
   Bell,
   Sparkles,
-  Zap,
-  Trophy,
   Crown,
   Eye,
   QrCode,
@@ -24,12 +20,21 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
-import { Button, Modal } from '@/components/ui';
 import { trackPwaInstalled } from '@/lib/analytics';
 import { formatPhoneNumber, ensureTextContrast } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard } from '@/types';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
-import { HistorySection, ExclusiveOffer, MemberCardModal, InstallPrompts, ReviewPrompt } from '@/components/loyalty';
+import {
+  HistorySection,
+  ExclusiveOffer,
+  MemberCardModal,
+  InstallPrompts,
+  ReviewPrompt,
+  StampsSection,
+  RewardCard,
+  RedeemModal,
+  StickyRedeemBar,
+} from '@/components/loyalty';
 
 interface PointAdjustment {
   id: string;
@@ -79,31 +84,30 @@ interface MerchantOffer {
   expiresAt: string | null;
 }
 
-// Pure function — no component state dependency
-const formatRewardText = (reward: string, remaining: number) => {
-  const lowerReward = reward.toLowerCase();
-  const unit = remaining === 1 ? 'passage' : 'passages';
-
-  const percentMatch = reward.match(/(\d+)\s*%/);
-  if (percentMatch) {
-    return `Plus que ${remaining} ${unit} pour ${percentMatch[1]}% de réduction !`;
-  }
-
-  const euroMatch = reward.match(/(\d+)\s*€/);
-  if (euroMatch) {
-    return `Plus que ${remaining} ${unit} pour ${euroMatch[1]}€ de réduction !`;
-  }
-
-  if (lowerReward.includes('gratuit') || lowerReward.includes('offert')) {
-    return `Plus que ${remaining} ${unit} pour ${reward.toLowerCase()} !`;
-  }
-
-  if (lowerReward.includes('café') || lowerReward.includes('boisson') || lowerReward.includes('thé')) {
-    return `Plus que ${remaining} ${unit} pour votre ${reward.toLowerCase()} !`;
-  }
-
-  return `Plus que ${remaining} ${unit} pour : ${reward}`;
+const DEMO_MERCHANTS: Record<string, { id: string; shop_name: string; shop_type: string; logo_url: string | null; primary_color: string; secondary_color: string; stamps_required: number; reward_description: string; tier2_enabled: boolean; tier2_stamps_required: number | null; tier2_reward_description: string | null; loyalty_mode: string; product_name: string | null; review_link: string | null }> = {
+  'demo-coiffeur': {
+    id: 'demo-coiffeur', shop_name: 'Le Salon de Clara', shop_type: 'coiffeur',
+    logo_url: null, primary_color: '#D97706', secondary_color: '#F59E0B',
+    stamps_required: 10, reward_description: 'Un brushing offert',
+    tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
+    loyalty_mode: 'visit', product_name: null, review_link: 'https://g.page/example',
+  },
+  'demo-onglerie': {
+    id: 'demo-onglerie', shop_name: 'Nails & Beauty', shop_type: 'onglerie',
+    logo_url: null, primary_color: '#EC4899', secondary_color: '#F472B6',
+    stamps_required: 8, reward_description: 'Une pose gel offerte',
+    tier2_enabled: true, tier2_stamps_required: 15, tier2_reward_description: 'Un soin complet des mains offert',
+    loyalty_mode: 'visit', product_name: null, review_link: null,
+  },
+  'demo-institut': {
+    id: 'demo-institut', shop_name: 'Institut Éclat', shop_type: 'institut_beaute',
+    logo_url: null, primary_color: '#8B5CF6', secondary_color: '#A78BFA',
+    stamps_required: 8, reward_description: 'Un soin visage offert',
+    tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
+    loyalty_mode: 'visit', product_name: null, review_link: 'https://g.page/example-institut',
+  },
 };
+
 
 export default function CustomerCardPage({
   params,
@@ -170,34 +174,9 @@ export default function CustomerCardPage({
       // Preview mode: fetch merchant data only and create mock card
       if (isPreview) {
         try {
-          // Demo merchants: hardcoded data, no API call
-          const demoMerchants: Record<string, { id: string; shop_name: string; shop_type: string; logo_url: string | null; primary_color: string; secondary_color: string; stamps_required: number; reward_description: string; tier2_enabled: boolean; tier2_stamps_required: number | null; tier2_reward_description: string | null; loyalty_mode: string; product_name: string | null; review_link: string | null }> = {
-            'demo-coiffeur': {
-              id: 'demo-coiffeur', shop_name: 'Le Salon de Clara', shop_type: 'coiffeur',
-              logo_url: null, primary_color: '#D97706', secondary_color: '#F59E0B',
-              stamps_required: 10, reward_description: 'Un brushing offert',
-              tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
-              loyalty_mode: 'visit', product_name: null, review_link: 'https://g.page/example',
-            },
-            'demo-onglerie': {
-              id: 'demo-onglerie', shop_name: 'Nails & Beauty', shop_type: 'onglerie',
-              logo_url: null, primary_color: '#EC4899', secondary_color: '#F472B6',
-              stamps_required: 8, reward_description: 'Une pose gel offerte',
-              tier2_enabled: true, tier2_stamps_required: 15, tier2_reward_description: 'Un soin complet des mains offert',
-              loyalty_mode: 'visit', product_name: null, review_link: null,
-            },
-            'demo-institut': {
-              id: 'demo-institut', shop_name: 'Institut Éclat', shop_type: 'institut_beaute',
-              logo_url: null, primary_color: '#8B5CF6', secondary_color: '#A78BFA',
-              stamps_required: 8, reward_description: 'Un soin visage offert',
-              tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
-              loyalty_mode: 'visit', product_name: null, review_link: 'https://g.page/example-institut',
-            },
-          };
-
           let m;
           if (merchantId.startsWith('demo-')) {
-            m = demoMerchants[merchantId];
+            m = DEMO_MERCHANTS[merchantId];
             if (!m) { router.push('/'); return; }
           } else {
             const response = await fetch(`/api/merchants/preview?id=${merchantId}`);
@@ -491,11 +470,11 @@ export default function CustomerCardPage({
     const _tier2Reward = card.merchant.tier2_reward_description || '';
 
     const _isRewardReady = _currentStamps >= _tier1Required;
-    const _isTier2Ready = _tier2Enabled && _currentStamps >= _tier2Required;
+    const _isTier2Ready = !!_tier2Enabled && _currentStamps >= _tier2Required;
     const _effectiveTier1Redeemed = tier1RedeemedInCycle && _currentStamps >= _tier1Required;
-    const _isRewardSticky = !redeemSuccess && ((_isRewardReady && !_effectiveTier1Redeemed) || (_tier2Enabled && _isTier2Ready));
+    const _isRewardSticky = !redeemSuccess && ((_isRewardReady && !_effectiveTier1Redeemed) || (!!_tier2Enabled && _isTier2Ready));
     const _isMemberCardActive = !!memberCard && new Date(memberCard.valid_until) > new Date();
-    const _showingTier2 = _tier2Enabled && _effectiveTier1Redeemed;
+    const _showingTier2 = !!_tier2Enabled && _effectiveTier1Redeemed;
 
     return {
       isRewardReady: _isRewardReady,
@@ -696,7 +675,6 @@ export default function CustomerCardPage({
   const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
   const tier2Required = merchant.tier2_stamps_required || 0;
   const tier2Reward = merchant.tier2_reward_description || '';
-  const LoyaltyIcon = Heart;
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${merchant.primary_color}15 0%, ${merchant.primary_color}40 40%, ${merchant.primary_color}60 70%, ${merchant.primary_color}35 100%)` }}>
@@ -932,280 +910,38 @@ export default function CustomerCardPage({
         {/* Offre Exclusive */}
         {offer && <ExclusiveOffer offer={offer} merchantColor={merchant.primary_color} isPreview={isPreview} />}
 
-        {/* Stamps Section — separate card */}
+        {/* Stamps Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.35 }}
           className="bg-white rounded-2xl shadow-lg shadow-gray-200/40 border border-gray-100/80 p-5 mb-4"
         >
-          {tier2Enabled ? (
-            /* ═══════════════ DUAL TIER ═══════════════ */
-            <div className="space-y-5">
-              {/* PALIER 1 */}
-              <div className={`p-4 rounded-xl border transition-all ${
-                isRewardReady && !effectiveTier1Redeemed
-                  ? 'border-amber-200 bg-amber-50/30'
-                  : effectiveTier1Redeemed
-                    ? 'border-gray-100 bg-gray-50/50 opacity-60'
-                    : 'border-gray-100'
-              }`}>
-                <div className="flex justify-between items-center mb-3">
-                  <div className="flex items-center gap-2">
-                    <Gift className={`w-4 h-4 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-500' : 'text-gray-400'}`} />
-                    <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-400'}`}>
-                      Palier 1
-                    </span>
-                  </div>
-                  {effectiveTier1Redeemed ? (
-                    <span className="px-2.5 py-1 rounded-full bg-gray-200 text-[10px] font-bold text-gray-500 uppercase">Réclamé</span>
-                  ) : isRewardReady ? (
-                    <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-black text-white uppercase shadow-lg shadow-amber-200">Prêt !</motion.span>
-                  ) : tier1Required - currentStamps <= 2 ? (
-                    <span className="px-2.5 py-1 rounded-full bg-amber-100 text-[10px] font-black text-amber-700 border border-amber-200">Plus que {tier1Required - currentStamps} !</span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-gray-400">{tier1Required - currentStamps} restants</span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-5 gap-2.5 mb-3">
-                  {Array.from({ length: tier1Required }).map((_, i) => {
-                    const isEarned = i < currentStamps;
-                    const isGreyed = effectiveTier1Redeemed;
-                    const isLast = i === tier1Required - 1;
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: i * 0.04 }}
-                        className={`aspect-square rounded-xl flex items-center justify-center transition-all duration-300 ${
-                          isEarned && !isGreyed
-                            ? 'text-white shadow-md'
-                            : isEarned && isGreyed
-                              ? 'bg-gray-200 text-gray-400'
-                              : isLast
-                                ? 'bg-gray-50 border-2 border-dashed text-gray-300'
-                                : 'bg-gray-50 text-gray-300 border border-gray-100'
-                        }`}
-                        style={{
-                          backgroundColor: isEarned && !isGreyed ? merchant.primary_color : undefined,
-                          borderColor: isLast && !isEarned ? `${merchant.primary_color}40` : undefined,
-                        }}
-                      >
-                        {isLast && !isEarned ? (
-                          <Gift className="w-4 h-4" style={{ color: `${merchant.primary_color}60` }} />
-                        ) : (
-                          <LoyaltyIcon className="w-4 h-4" />
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-
-                <p className={`text-center text-sm font-medium italic ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
-                  {merchant.reward_description || 'Cadeau de fidélité'}
-                </p>
-              </div>
-
-              {/* PALIER 2 */}
-              <div className={`p-4 rounded-xl border transition-all ${
-                isTier2Ready
-                  ? 'border-violet-200 bg-violet-50/30'
-                  : currentStamps >= tier1Required
-                    ? 'border-violet-100'
-                    : 'border-gray-100 opacity-50'
-              }`}>
-                <div className="flex justify-between items-center mb-3">
-                  <div className="flex items-center gap-2">
-                    <Trophy className={`w-4 h-4 ${isTier2Ready ? 'text-violet-500' : 'text-gray-400'}`} />
-                    <span className={`text-[11px] font-black uppercase tracking-widest ${isTier2Ready ? 'text-violet-600' : 'text-gray-400'}`}>Palier 2</span>
-                  </div>
-                  {isTier2Ready ? (
-                    <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="px-2.5 py-1 rounded-full bg-violet-600 text-[10px] font-black text-white uppercase shadow-lg shadow-violet-200">Débloqué !</motion.span>
-                  ) : tier2Required - currentStamps <= 2 ? (
-                    <span className="px-2.5 py-1 rounded-full bg-violet-100 text-[10px] font-black text-violet-700 border border-violet-200">Plus que {tier2Required - currentStamps} !</span>
-                  ) : (
-                    <span className="text-[10px] font-bold text-gray-400">{tier2Required - currentStamps} restants</span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-5 gap-2.5 mb-3">
-                  {Array.from({ length: tier2Required - tier1Required }).map((_, i) => {
-                    const isEarned = currentStamps >= (tier1Required + i + 1);
-                    const isLast = i === (tier2Required - tier1Required - 1);
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: i * 0.04 }}
-                        className={`aspect-square rounded-xl flex items-center justify-center transition-all duration-300 ${
-                          isEarned ? 'bg-violet-600 text-white shadow-md' : isLast ? 'bg-gray-50 border-2 border-dashed border-violet-200 text-violet-300' : 'bg-gray-50 text-gray-300 border border-gray-100'
-                        }`}
-                      >
-                        {isLast && !isEarned ? <Trophy className="w-4 h-4" /> : <LoyaltyIcon className="w-4 h-4" />}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-
-                <p className={`text-center text-sm font-medium italic ${isTier2Ready ? 'text-violet-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
-                  {tier2Reward || 'Récompense Premium'}
-                </p>
-              </div>
-            </div>
-          ) : (
-            /* ═══════════════ SINGLE TIER ═══════════════ */
-            <div className="space-y-5">
-              {/* Label + status badge */}
-              <div className="flex justify-between items-center">
-                <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Ma fidélité</span>
-                {isRewardReady ? (
-                  <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200">
-                    <Gift className="w-4 h-4" />
-                    <span className="text-xs font-black uppercase">Prêt !</span>
-                  </motion.div>
-                ) : tier1Required - currentStamps <= 2 ? (
-                  <motion.div animate={{ x: [0, -2, 2, 0] }} transition={{ repeat: Infinity, duration: 0.5, repeatDelay: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-200">
-                    <Zap className="w-3.5 h-3.5" />
-                    <span className="text-xs font-black">Plus que {tier1Required - currentStamps} !</span>
-                  </motion.div>
-                ) : null}
-              </div>
-
-              {/* Stamps grid — rounded-xl, last one = gift */}
-              <div className="grid grid-cols-5 gap-3">
-                {Array.from({ length: tier1Required }).map((_, i) => {
-                  const isEarned = i < currentStamps;
-                  const isLast = i === tier1Required - 1;
-                  const isNext = !isEarned && i === currentStamps && !isLast;
-                  return (
-                    <motion.div
-                      key={i}
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: i * 0.04 }}
-                      className={`aspect-square rounded-xl flex items-center justify-center transition-all duration-300 ${
-                        isEarned
-                          ? 'text-white shadow-lg'
-                          : isLast
-                            ? 'bg-white border-2 border-dashed text-gray-300'
-                            : isNext
-                              ? 'bg-white border-2 border-dashed shadow-sm'
-                              : 'bg-gray-50 text-gray-200 border border-gray-100'
-                      }`}
-                      style={{
-                        backgroundColor: isEarned ? merchant.primary_color : undefined,
-                        borderColor: (isLast && !isEarned)
-                          ? `${merchant.primary_color}40`
-                          : isNext
-                            ? `${merchant.primary_color}35`
-                            : undefined,
-                      }}
-                    >
-                      {isLast && !isEarned ? (
-                        <Gift className="w-5 h-5" style={{ color: `${merchant.primary_color}60` }} />
-                      ) : isNext ? (
-                        <LoyaltyIcon className="w-5 h-5" style={{ color: `${merchant.primary_color}30` }} />
-                      ) : (
-                        <LoyaltyIcon className={isEarned ? 'w-6 h-6' : 'w-4 h-4'} />
-                      )}
-                    </motion.div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          <StampsSection
+            currentStamps={currentStamps}
+            tier1Required={tier1Required}
+            tier2Enabled={tier2Enabled}
+            tier2Required={tier2Required}
+            isRewardReady={isRewardReady}
+            isTier2Ready={isTier2Ready}
+            effectiveTier1Redeemed={effectiveTier1Redeemed}
+            merchantColor={merchant.primary_color}
+            secondaryColor={merchant.secondary_color}
+            rewardDescription={merchant.reward_description || ''}
+            tier2Reward={tier2Reward}
+          />
         </motion.div>
 
-        {/* Reward card — dual-tier aware */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
-          className={`mb-4 rounded-2xl overflow-hidden ${
-            rewardCardReady
-              ? 'shadow-lg'
-              : 'bg-white border border-gray-100/80 shadow-sm'
-          }`}
-        >
-          {rewardCardReady ? (
-            /* ═══ REWARD READY — celebration mode ═══ */
-            <div
-              className="relative p-5 overflow-hidden"
-              style={{
-                background: rewardShowingTier2
-                  ? 'linear-gradient(135deg, #8B5CF6, #7C3AED)'
-                  : `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
-              }}
-            >
-              {/* Shimmer sweep */}
-              <motion.div
-                animate={{ x: ['-150%', '200%'] }}
-                transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"
-              />
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
-
-              <div className="relative flex items-center gap-4">
-                <motion.div
-                  animate={{ scale: [1, 1.08, 1] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                  className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center shrink-0"
-                >
-                  {rewardShowingTier2 ? (
-                    <Trophy className="w-7 h-7 text-white" />
-                  ) : (
-                    <Gift className="w-7 h-7 text-white" />
-                  )}
-                </motion.div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
-                    {rewardCardTierLabel ? `${rewardCardTierLabel} débloqué` : 'Récompense débloquée'}
-                  </p>
-                  <p className="text-white text-base font-black leading-snug line-clamp-2">
-                    {rewardCardDescription}
-                  </p>
-                  <p className="text-white/80 text-xs font-semibold mt-1">
-                    Réclamez-la maintenant !
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* ═══ NOT READY — motivational preview ═══ */
-            <div className="p-4">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-md"
-                  style={{
-                    background: rewardShowingTier2
-                      ? 'linear-gradient(135deg, #8B5CF6, #7C3AED)'
-                      : `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
-                  }}
-                >
-                  {rewardShowingTier2 ? (
-                    <Trophy className="w-6 h-6 text-white" />
-                  ) : (
-                    <Gift className="w-6 h-6 text-white" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
-                    {rewardCardTierLabel ? `Récompense · ${rewardCardTierLabel}` : 'Récompense'}
-                  </p>
-                  <p className="text-sm font-bold text-gray-800 line-clamp-2">
-                    {rewardCardDescription}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    {formatRewardText(rewardCardDescription, rewardCardRemaining)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </motion.div>
+        {/* Reward card */}
+        <RewardCard
+          ready={rewardCardReady}
+          showingTier2={rewardShowingTier2}
+          tierLabel={rewardCardTierLabel}
+          description={rewardCardDescription}
+          remaining={rewardCardRemaining}
+          merchantColor={merchant.primary_color}
+          secondaryColor={merchant.secondary_color}
+        />
 
         {/* Member Card Badge — dark premium card */}
         {memberCard && isMemberCardActive && (
@@ -1320,165 +1056,33 @@ export default function CustomerCardPage({
         )}
       </main>
 
-      {/* Sticky Redeem Buttons — z-50 to stay above PWA install bar */}
-      {isRewardSticky && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl border-t border-gray-100 px-4 py-3 space-y-2 safe-bottom"
-          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
-        >
-          {isRewardReady && !effectiveTier1Redeemed && (
-            <Button
-              onClick={() => {
-                setRedeemTier(1);
-                setShowRedeemModal(true);
-              }}
-              className="w-full h-12 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all"
-              style={{
-                background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`
-              }}
-            >
-              <Gift className="w-4 h-4 mr-2" />
-              Profiter de ma récompense
-            </Button>
-          )}
-          {tier2Enabled && isTier2Ready && (
-            <Button
-              onClick={() => {
-                setRedeemTier(2);
-                setShowRedeemModal(true);
-              }}
-              className="w-full h-12 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all"
-              style={{
-                background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)'
-              }}
-            >
-              <Trophy className="w-4 h-4 mr-2" />
-              Profiter de ma récompense palier 2
-            </Button>
-          )}
-        </motion.div>
-      )}
+      {/* Sticky Redeem Buttons */}
+      <StickyRedeemBar
+        visible={isRewardSticky}
+        isRewardReady={isRewardReady}
+        effectiveTier1Redeemed={effectiveTier1Redeemed}
+        isTier2Ready={isTier2Ready}
+        tier2Enabled={tier2Enabled}
+        merchantColor={merchant.primary_color}
+        secondaryColor={merchant.secondary_color}
+        onRedeemTier1={() => { setRedeemTier(1); setShowRedeemModal(true); }}
+        onRedeemTier2={() => { setRedeemTier(2); setShowRedeemModal(true); }}
+      />
 
-      <Modal
+      {/* Redeem Modal */}
+      <RedeemModal
         isOpen={showRedeemModal}
-        onClose={() => !redeemSuccess && setShowRedeemModal(false)}
-        title={redeemSuccess ? "Félicitations !" : `Récompense ${tier2Enabled ? `Palier ${redeemTier}` : ''}`}
-      >
-        <div className="relative overflow-hidden rounded-2xl p-1">
-          {/* Ambient Background Particles */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            {[...Array(6)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-2 h-2 rounded-full bg-white/40"
-                animate={{
-                  y: [0, -100],
-                  x: [0, Math.sin(i) * 50],
-                  opacity: [0, 1, 0],
-                  scale: [0, 1.5, 0],
-                }}
-                transition={{
-                  duration: 3 + i,
-                  repeat: Infinity,
-                  delay: i * 0.5,
-                  ease: "easeOut"
-                }}
-                style={{
-                  left: `${15 + i * 15}%`,
-                  bottom: "-10%",
-                }}
-              />
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`relative z-10 p-6 rounded-xl border border-white/40 backdrop-blur-xl shadow-2xl overflow-hidden
-              ${redeemTier === 2
-                ? 'bg-gradient-to-br from-violet-500/10 via-white/80 to-amber-500/10'
-                : 'bg-white/80'
-              }`}
-          >
-            {/* Animated Shine Effect */}
-            <motion.div
-              initial={{ x: "-150%" }}
-              animate={{ x: "200%" }}
-              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 2 }}
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 pointer-events-none"
-            />
-
-            <div className="text-center">
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: [0.8, 1.1, 1], rotate: [0, -5, 5, 0] }}
-                transition={{ duration: 0.5, type: "spring" }}
-                className="relative inline-block mb-6"
-              >
-                {/* Glow Ring */}
-                <motion.div
-                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                  className={`absolute inset-0 rounded-full blur-xl ${redeemTier === 2 ? 'bg-violet-400' : ''}`}
-                  style={{ backgroundColor: redeemTier !== 2 ? `${merchant.primary_color}40` : undefined }}
-                />
-
-                <div className={`relative flex items-center justify-center w-20 h-20 rounded-2xl shadow-lg
-                  ${redeemTier === 2 ? 'bg-gradient-to-br from-violet-600 to-indigo-600' : 'border border-white/20'}`}
-                  style={{ backgroundColor: redeemTier !== 2 ? merchant.primary_color : undefined }}
-                >
-                  {redeemSuccess ? (
-                    <Check className="w-10 h-10 text-white" />
-                  ) : (
-                    redeemTier === 2 ? <Trophy className="w-10 h-10 text-white" /> : <Gift className="w-10 h-10 text-white" />
-                  )}
-                </div>
-              </motion.div>
-
-              <div className="space-y-2 mb-8">
-                <h3 className={`text-2xl font-black tracking-tight ${redeemTier === 2 ? 'text-violet-900' : 'text-gray-900'}`}>
-                  {redeemSuccess
-                    ? (redeemTier === 2 ? 'Privilège Débloqué !' : 'Cadeau Validé !')
-                    : (redeemTier === 2 ? tier2Reward : merchant.reward_description)
-                  }
-                </h3>
-                <p className="text-gray-600 font-medium px-4 leading-relaxed">
-                  {redeemSuccess
-                    ? (redeemTier === 2 || !tier2Enabled
-                        ? 'Votre fidélité a été récompensée. À très bientôt !'
-                        : 'Vos points sont préservés. Le palier 2 vous attend !')
-                    : 'Présentez ce coupon digital au commerçant pour profiter de votre offre.'
-                  }
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <Button
-                  onClick={() => redeemSuccess ? (setShowRedeemModal(false), setRedeemSuccess(false)) : handleRedeem(redeemTier)}
-                  loading={redeeming}
-                  className={`w-full h-14 text-lg font-bold rounded-xl transition-all duration-300 transform active:scale-95 shadow-xl hover:shadow-2xl hover:-translate-y-0.5
-                    ${redeemTier === 2 ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-none' : ''}`}
-                  style={{ backgroundColor: redeemTier !== 2 ? merchant.primary_color : undefined }}
-                >
-                  {redeemSuccess ? 'Fermer' : 'Valider maintenant'}
-                </Button>
-
-                {!redeemSuccess && (
-                  <button
-                    onClick={() => setShowRedeemModal(false)}
-                    className="w-full py-2 text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    Plus tard
-                  </button>
-                )}
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </Modal>
+        onClose={() => setShowRedeemModal(false)}
+        tier={redeemTier}
+        tier2Enabled={tier2Enabled}
+        rewardDescription={merchant.reward_description || ''}
+        tier2Reward={tier2Reward}
+        success={redeemSuccess}
+        redeeming={redeeming}
+        merchantColor={merchant.primary_color}
+        onRedeem={handleRedeem}
+        onDone={() => { setShowRedeemModal(false); setRedeemSuccess(false); }}
+      />
 
       {/* Member Card Modal */}
       {memberCard && (
