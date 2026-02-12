@@ -1,5 +1,6 @@
 'use client';
 
+import { CalendarDays } from 'lucide-react';
 import type { Merchant } from '@/types';
 
 interface SocialLinksProps {
@@ -63,41 +64,63 @@ export default function SocialLinks({ merchant }: SocialLinksProps) {
     return val && val.trim() !== '';
   });
 
-  if (active.length === 0) return null;
+  const hasBooking = merchant.booking_url && merchant.booking_url.trim() !== '';
+
+  if (active.length === 0 && !hasBooking) return null;
 
   return (
     <div className="mt-2 mb-4">
       <div
         className="rounded-2xl px-5 py-4 bg-white/70 backdrop-blur-sm shadow-lg shadow-gray-200/50 border border-gray-100/80"
       >
-        <p className="text-center text-[11px] font-bold text-gray-600 uppercase tracking-[0.15em] mb-3">
-          On se suit ?
-        </p>
+        {active.length > 0 && (
+          <>
+            <p className="text-center text-[11px] font-bold text-gray-600 uppercase tracking-[0.15em] mb-3">
+              On se suit ?
+            </p>
 
-        <div className="flex items-center justify-center gap-5">
-          {active.map((s) => {
-            const Icon = s.icon;
-            return (
-              <a
-                key={s.key}
-                href={merchant[s.field]!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group"
-              >
-                <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-active:scale-95"
-                  style={{
-                    background: s.bg,
-                    boxShadow: `0 4px 12px ${s.shadow}`,
-                  }}
-                >
-                  <Icon className="w-[22px] h-[22px] text-white" />
-                </div>
-              </a>
-            );
-          })}
-        </div>
+            <div className="flex items-center justify-center gap-5">
+              {active.map((s) => {
+                const Icon = s.icon;
+                return (
+                  <a
+                    key={s.key}
+                    href={merchant[s.field]!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group"
+                  >
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-200 group-hover:scale-110 group-active:scale-95"
+                      style={{
+                        background: s.bg,
+                        boxShadow: `0 4px 12px ${s.shadow}`,
+                      }}
+                    >
+                      <Icon className="w-[22px] h-[22px] text-white" />
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {hasBooking && (
+          <a
+            href={merchant.booking_url!}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90 active:scale-[0.98] ${active.length > 0 ? 'mt-3' : ''}`}
+            style={{
+              backgroundColor: merchant.primary_color,
+              boxShadow: `0 4px 12px ${merchant.primary_color}30`,
+            }}
+          >
+            <CalendarDays className="w-4 h-4" />
+            Réserver
+          </a>
+        )}
       </div>
     </div>
   );

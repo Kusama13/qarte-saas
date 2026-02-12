@@ -20,6 +20,7 @@ import {
   UserPlus,
   Gift,
   Share2,
+  CalendarDays,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
@@ -867,16 +868,33 @@ export default function CustomerCardPage({
               {merchant.shop_name}
             </motion.h1>
 
-            {memberCard && isMemberCardActive && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                onClick={() => setShowMemberCardModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all"
-              >
-                <Crown className="w-3 h-3 text-amber-300" />
-                <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">Membre VIP</span>
-              </motion.button>
+            {(memberCard && isMemberCardActive || merchant.booking_url?.trim()) && (
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                {memberCard && isMemberCardActive && (
+                  <motion.button
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    onClick={() => setShowMemberCardModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all"
+                  >
+                    <Crown className="w-3 h-3 text-amber-300" />
+                    <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">Membre VIP</span>
+                  </motion.button>
+                )}
+                {merchant.booking_url && merchant.booking_url.trim() !== '' && (
+                  <motion.a
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    href={merchant.booking_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all active:scale-95"
+                  >
+                    <CalendarDays className="w-3 h-3 text-white" />
+                    <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">Réserver</span>
+                  </motion.a>
+                )}
+              </div>
             )}
           </div>
         </div>

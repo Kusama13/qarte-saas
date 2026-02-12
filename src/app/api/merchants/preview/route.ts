@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   const { data: merchant, error } = await supabaseAdmin
     .from('merchants')
-    .select('id, shop_name, shop_type, logo_url, primary_color, secondary_color, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, product_name, review_link, scan_code, referral_program_enabled, referral_reward_referrer, referral_reward_referred')
+    .select('id, shop_name, shop_type, logo_url, primary_color, secondary_color, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, product_name, review_link, scan_code, referral_program_enabled, referral_reward_referrer, referral_reward_referred, booking_url')
     .eq('id', id)
     .single();
 

@@ -17,6 +17,8 @@ import {
   Eye,
   ChevronDown,
   Instagram,
+  CalendarDays,
+  Globe,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -125,6 +127,7 @@ export default function ProgramPage() {
     instagramUrl: '',
     facebookUrl: '',
     tiktokUrl: '',
+    bookingUrl: '',
     stampsRequired: 10,
     rewardDescription: '',
     // 2nd tier reward
@@ -168,6 +171,7 @@ export default function ProgramPage() {
           instagramUrl: data.instagram_url || '',
           facebookUrl: data.facebook_url || '',
           tiktokUrl: data.tiktok_url || '',
+          bookingUrl: data.booking_url || '',
           stampsRequired: data.stamps_required || 10,
           rewardDescription: data.reward_description || '',
           tier2Enabled: data.tier2_enabled || false,
@@ -243,6 +247,7 @@ export default function ProgramPage() {
           instagram_url: formData.instagramUrl || null,
           facebook_url: formData.facebookUrl || null,
           tiktok_url: formData.tiktokUrl || null,
+          booking_url: formData.bookingUrl || null,
           stamps_required: formData.stampsRequired,
           reward_description: formData.rewardDescription,
           loyalty_mode: 'visit',
@@ -271,6 +276,7 @@ export default function ProgramPage() {
             instagram_url: formData.instagramUrl || null,
             facebook_url: formData.facebookUrl || null,
             tiktok_url: formData.tiktokUrl || null,
+            booking_url: formData.bookingUrl || null,
             stamps_required: formData.stampsRequired,
             reward_description: formData.rewardDescription,
             loyalty_mode: 'visit',
@@ -592,32 +598,7 @@ export default function ProgramPage() {
             )}
           </div>
 
-          {/* Review Link Section */}
-          <div className="p-3 md:p-5 bg-white/80 backdrop-blur-xl border border-amber-100 rounded-2xl shadow-sm">
-            <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
-              <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-amber-500 to-yellow-400 flex items-center justify-center shadow-md">
-                <Star className="w-3.5 h-3.5 md:w-5 md:h-5 text-white fill-white" />
-              </div>
-              <h3 className="text-sm md:text-lg font-bold text-gray-900">Avis Google</h3>
-            </div>
-
-            <div className="space-y-3">
-              <Input
-                type="url"
-                className="bg-white border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 h-11 text-sm rounded-xl w-full"
-                placeholder="https://g.page/r/votre-commerce/review"
-                value={formData.reviewLink}
-                onChange={(e) =>
-                  setFormData({ ...formData, reviewLink: e.target.value })
-                }
-              />
-              <p className="text-xs text-gray-500">
-                Ce lien apparaîtra sur la carte de fidélité de vos clients.
-              </p>
-            </div>
-          </div>
-
-          {/* Social Media Section — Collapsible */}
+          {/* Liens & Réseaux — Collapsible */}
           <div className="bg-white/80 backdrop-blur-xl border border-pink-100 rounded-2xl shadow-sm overflow-hidden">
             <button
               type="button"
@@ -626,9 +607,9 @@ export default function ProgramPage() {
             >
               <div className="flex items-center gap-2 md:gap-3">
                 <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center shadow-md">
-                  <Instagram className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
+                  <Globe className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
                 </div>
-                <h3 className="text-sm md:text-lg font-bold text-gray-900">Réseaux sociaux</h3>
+                <h3 className="text-sm md:text-lg font-bold text-gray-900">Liens & Réseaux</h3>
               </div>
               <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${socialOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -664,6 +645,33 @@ export default function ProgramPage() {
                       placeholder="https://tiktok.com/@votre-commerce"
                       value={formData.tiktokUrl}
                       onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })}
+                    />
+                  </div>
+                  <div className="border-t border-gray-100 my-1" />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
+                      <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
+                      Lien de réservation
+                    </label>
+                    <Input
+                      type="url"
+                      className="bg-white border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 h-11 text-sm rounded-xl w-full"
+                      placeholder="https://planity.com/votre-salon"
+                      value={formData.bookingUrl}
+                      onChange={(e) => setFormData({ ...formData, bookingUrl: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
+                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                      Avis Google
+                    </label>
+                    <Input
+                      type="url"
+                      className="bg-white border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 h-11 text-sm rounded-xl w-full"
+                      placeholder="https://g.page/r/votre-commerce/review"
+                      value={formData.reviewLink}
+                      onChange={(e) => setFormData({ ...formData, reviewLink: e.target.value })}
                     />
                   </div>
                   <p className="text-xs text-gray-500">
