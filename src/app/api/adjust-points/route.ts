@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
         .eq('tier', 2)
         .order('redeemed_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       const lastTier2Date = lastTier2?.redeemed_at || '1970-01-01';
 

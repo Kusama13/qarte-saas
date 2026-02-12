@@ -512,6 +512,8 @@ export default function CustomerCardPage({
 
   const handleUseVoucher = useCallback(async (voucherId: string) => {
     if (!card) return;
+    const savedPhone = getCookie('customer_phone');
+    if (!savedPhone) return;
     setUsingVoucherId(voucherId);
     try {
       const res = await fetch('/api/vouchers/use', {
@@ -520,6 +522,7 @@ export default function CustomerCardPage({
         body: JSON.stringify({
           voucher_id: voucherId,
           customer_id: card.customer_id,
+          phone_number: formatPhoneNumber(savedPhone),
         }),
       });
       const data = await res.json();
@@ -605,6 +608,8 @@ export default function CustomerCardPage({
 
   const handleRedeem = async (tier: 1 | 2 = 1) => {
     if (!card) return;
+    const savedPhone = getCookie('customer_phone');
+    if (!savedPhone) return;
 
     setRedeeming(true);
 
@@ -615,6 +620,7 @@ export default function CustomerCardPage({
         body: JSON.stringify({
           loyalty_card_id: card.id,
           customer_id: card.customer_id,
+          phone_number: formatPhoneNumber(savedPhone),
           tier: tier,
         }),
       });

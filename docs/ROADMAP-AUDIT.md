@@ -161,6 +161,14 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 | Checkin API sequentiel | Parallelise avec 5 groupes Promise.all (~300-600ms) |
 | Push notifications sequentielles | `Promise.allSettled` pour envoi parallele |
 | N+1 admin merchants | Batch query (1001 → 3 requetes) |
+| Scan page visit_id comme loyalty_card_id | Checkin retourne `loyalty_card_id`, scan l'utilise |
+| Members insert sans merchant_id | `merchant_id` + `formatPhoneNumber` ajoutes |
+| Redemptions orphelines (race condition) | Stamp update atomique AVANT redemption insert |
+| `.single()` crash 0 rows (PGRST116) | `.maybeSingle()` sur 9+ routes API |
+| Empty `.in()` retourne tout | Guard `cardIds.length > 0` |
+| Rate limiting manquant register/preview | Rate limit ajoute (15-30/min) |
+| Offer duration cap incoherent (3 vs 30) | `Math.min(30, ...)` API + client |
+| Cookie decode inconsistency cards page | `decodeURIComponent` ajoute |
 
 ---
 
@@ -486,6 +494,30 @@ SHIELD (points en attente)
 
 # PARTIE 6 : CHANGELOG
 
+## [2026-02-12] — Audit bugs complet, admin social links, landing cleanup
+
+### Audit bugs complet (10+ fixes critiques)
+- **fix(CRITICAL):** Scan page utilisait `visit_id` comme `loyalty_card_id` — corrige dans checkin API + scan page
+- **fix(CRITICAL):** Members page — `merchant_id` manquant a l'insertion client + `formatPhoneNumber` absent
+- **fix(HIGH):** Redemptions orphelines — reorder atomic stamp update AVANT redemption insert (redeem + redeem-public)
+- **fix(HIGH):** `.single()` → `.maybeSingle()` sur 9+ fichiers API (evite crash PGRST116 sur 0 rows)
+- **fix(MEDIUM):** Empty array `.in()` guard sur customers/cards (evite retour de TOUTES les redemptions)
+- **fix(MEDIUM):** Rate limiting ajoute sur customers/register (GET 15/min, POST 10/min) et merchants/preview (30/min)
+- **fix(MEDIUM):** Offer duration cap 3 → 30 jours (API + client-side)
+- **fix(MEDIUM):** Cookie decode inconsistency — `decodeURIComponent` ajoute dans cards page
+- **fix(MEDIUM):** Redemptions API — phone rendu obligatoire pour securite
+
+### Marketing page
+- **fix:** Offre creee meme si 0 abonnes push (decouplage offre/push)
+- **fix:** `handleSchedule` sauvegarde l'offre avant de programmer le push
+- **fix:** `getDurationDays()` cap client-side a 30 jours (coherence API)
+
+### Admin merchant detail
+- **feat:** Section "Liens & Reseaux" dans `/admin/merchants/[id]` — pills cliquables Instagram, Facebook, TikTok, Reservation, Avis Google
+
+### Landing
+- **fix:** "Solutions" retire du menu desktop et mobile
+
 ## [2026-02-12] — Landing parrainage, reservation, URL normalization
 
 ### Landing page
@@ -739,4 +771,4 @@ SHIELD (points en attente)
 ---
 
 *Derniere mise a jour : 12 fevrier 2026*
-*Statuts verifies contre le code source le 12/02/2026. Landing parrainage + reservation + URL normalization.*
+*Statuts verifies contre le code source le 12/02/2026. Audit bugs complet + admin social links + landing cleanup.*

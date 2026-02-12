@@ -91,8 +91,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: authCheck.error }, { status: authCheck.status || 403 });
     }
 
-    // Validate duration
-    const duration = Math.min(3, Math.max(1, durationDays || 1));
+    // Validate duration (max 30 days)
+    const duration = Math.min(30, Math.max(1, durationDays || 1));
 
     // Calculate expiration date
     const expiresAt = new Date();

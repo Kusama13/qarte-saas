@@ -268,34 +268,34 @@ export default function ProgramPage() {
 
       if (error) throw error;
 
+      // Update merchant cache so preview page loads with fresh data
+      try {
+        const updatedMerchant = {
+          ...merchant,
+          logo_url: formData.logoUrl || null,
+          primary_color: formData.primaryColor,
+          secondary_color: formData.secondaryColor,
+          review_link: normalizeUrl(formData.reviewLink) || null,
+          instagram_url: normalizeUrl(formData.instagramUrl) || null,
+          facebook_url: normalizeUrl(formData.facebookUrl) || null,
+          tiktok_url: normalizeUrl(formData.tiktokUrl) || null,
+          booking_url: normalizeUrl(formData.bookingUrl) || null,
+          stamps_required: formData.stampsRequired,
+          reward_description: formData.rewardDescription,
+          loyalty_mode: 'visit',
+          tier2_enabled: formData.tier2Enabled,
+          tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
+          tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription : null,
+        };
+        localStorage.setItem('qarte_merchant_cache', JSON.stringify({
+          data: updatedMerchant,
+          timestamp: Date.now(),
+        }));
+      } catch {}
+
       if (isFirstSetup) {
         // Send QR code email immediately (fire and forget)
         fetch('/api/emails/qr-code', { method: 'POST' }).catch(() => {});
-
-        // Update merchant cache so QR page loads instantly with fresh data
-        try {
-          const updatedMerchant = {
-            ...merchant,
-            logo_url: formData.logoUrl || null,
-            primary_color: formData.primaryColor,
-            secondary_color: formData.secondaryColor,
-            review_link: normalizeUrl(formData.reviewLink) || null,
-            instagram_url: normalizeUrl(formData.instagramUrl) || null,
-            facebook_url: normalizeUrl(formData.facebookUrl) || null,
-            tiktok_url: normalizeUrl(formData.tiktokUrl) || null,
-            booking_url: normalizeUrl(formData.bookingUrl) || null,
-            stamps_required: formData.stampsRequired,
-            reward_description: formData.rewardDescription,
-            loyalty_mode: 'visit',
-            tier2_enabled: formData.tier2Enabled,
-            tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
-            tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription : null,
-          };
-          localStorage.setItem('qarte_merchant_cache', JSON.stringify({
-            data: updatedMerchant,
-            timestamp: Date.now(),
-          }));
-        } catch {}
         router.push(`/customer/card/${merchant.id}?preview=true&onboarding=true`);
         return;
       }

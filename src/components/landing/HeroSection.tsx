@@ -51,7 +51,6 @@ export function HeroSection() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-            <a href="#features" className="hover:text-indigo-600 transition-colors link-underline">Solutions</a>
             <a href="#pricing" className="hover:text-indigo-600 transition-colors link-underline">Tarifs</a>
             <a href="/contact" className="hover:text-indigo-600 transition-colors link-underline">Contact</a>
             <a href="/auth/merchant" className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg">Espace Pro</a>
@@ -84,13 +83,6 @@ export function HeroSection() {
               className="md:hidden bg-white border-t border-gray-100 overflow-hidden"
             >
               <div className="px-6 py-4 space-y-3">
-                <a
-                  href="#features"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block py-2 text-gray-600 hover:text-indigo-600 font-medium transition-colors"
-                >
-                  Solutions
-                </a>
                 <a
                   href="#pricing"
                   onClick={() => setMobileMenuOpen(false)}

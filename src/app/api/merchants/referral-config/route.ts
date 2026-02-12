@@ -37,7 +37,8 @@ export async function PUT(request: NextRequest) {
         referral_reward_referrer: referral_program_enabled ? referral_reward_referrer : null,
         referral_reward_referred: referral_program_enabled ? referral_reward_referred : null,
       })
-      .eq('id', merchant_id);
+      .eq('id', merchant_id)
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Referral config save error:', error);

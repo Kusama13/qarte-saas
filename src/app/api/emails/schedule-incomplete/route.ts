@@ -26,13 +26,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify user exists
+    // Verify user exists and email matches
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
     if (userError || !userData?.user) {
       logger.warn(`User ${userId} not found for scheduling incomplete email`);
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
+      );
+    }
+
+    if (userData.user.email !== email) {
+      logger.warn(`Email mismatch for user ${userId}: expected ${userData.user.email}, got ${email}`);
+      return NextResponse.json(
+        { error: 'Email mismatch' },
+        { status: 400 }
       );
     }
 

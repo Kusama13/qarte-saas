@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       .from('merchants')
       .select('id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     if (merchantError || !merchant) {
       return NextResponse.json(
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       .from('loyalty_cards')
       .select('id, merchant_id, customer_id')
       .eq('id', loyalty_card_id)
-      .single();
+      .maybeSingle();
 
     if (cardError || !card || card.merchant_id !== merchant.id) {
       return NextResponse.json(
@@ -82,6 +82,11 @@ export async function POST(request: NextRequest) {
       supabaseAdmin.from('redemptions').delete().eq('loyalty_card_id', loyalty_card_id),
       supabaseAdmin.from('referrals').delete().eq('referrer_card_id', loyalty_card_id),
       supabaseAdmin.from('referrals').delete().eq('referred_card_id', loyalty_card_id),
+      // Clean up push subscriptions and member cards linked to this customer
+      ...(card.customer_id ? [
+        supabaseAdmin.from('push_subscriptions').delete().eq('customer_id', card.customer_id),
+        supabaseAdmin.from('member_cards').delete().eq('customer_id', card.customer_id),
+      ] : []),
     ]);
 
     // Delete the loyalty card

@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 const supabaseAdmin = getSupabaseAdmin();
 
 // GET: Récupérer la carte membre d'un client pour un commerçant
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit: 20 per minute per IP
+    const ip = getClientIP(request);
+    const rateLimit = checkRateLimit(`member-cards-customer:${ip}`, { maxRequests: 20, windowMs: 60 * 1000 });
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get('customer_id');
     const merchantId = searchParams.get('merchant_id');
@@ -32,15 +40,13 @@ export async function GET(request: NextRequest) {
       `)
       .eq('customer_id', customerId)
       .eq('program.merchant_id', merchantId)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
-      // PGRST116 = no rows returned (not an error in this context)
+    if (error) {
       console.error('Error fetching member card:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Return null if no card found (not an error)
     return NextResponse.json({ memberCard: memberCard || null });
   } catch (error) {
     console.error('API error:', error);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -14,6 +15,12 @@ const registerSchema = z.object({
 // GET: Rechercher un client par téléphone
 export async function GET(request: NextRequest) {
   try {
+    const ip = getClientIP(request);
+    const rateLimit = checkRateLimit(`register-get:${ip}`, { maxRequests: 15, windowMs: 60 * 1000 });
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const { searchParams } = new URL(request.url);
     const phone = searchParams.get('phone');
     const merchantId = searchParams.get('merchant_id');
@@ -33,7 +40,7 @@ export async function GET(request: NextRequest) {
       .from('merchants')
       .select('id')
       .eq('id', merchantId)
-      .single();
+      .maybeSingle();
 
     if (!merchant) {
       return NextResponse.json(
@@ -59,16 +66,16 @@ export async function GET(request: NextRequest) {
     }
 
     // 2. Vérifier si le client existe chez UN AUTRE commerçant (client Qarte existant)
+    // Only return first_name for auto-fill, NOT full customer record (PII scoping)
     const { data: customersGlobal } = await supabaseAdmin
       .from('customers')
-      .select('*')
+      .select('first_name, last_name')
       .eq('phone_number', phone)
       .limit(1);
 
     if (customersGlobal && customersGlobal.length > 0) {
-      // Client existe ailleurs - retourner ses infos pour éviter de redemander nom/prénom
       return NextResponse.json({
-        customer: customersGlobal[0],
+        customer: { first_name: customersGlobal[0].first_name, last_name: customersGlobal[0].last_name },
         exists: true,
         existsForMerchant: false,
         existsGlobally: true
@@ -87,6 +94,12 @@ export async function GET(request: NextRequest) {
 // POST: Créer ou récupérer un client
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIP(request);
+    const rateLimit = checkRateLimit(`register-post:${ip}`, { maxRequests: 10, windowMs: 60 * 1000 });
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const body = await request.json();
 
     const parsed = registerSchema.safeParse(body);
@@ -108,7 +121,7 @@ export async function POST(request: NextRequest) {
       .from('merchants')
       .select('id')
       .eq('id', merchant_id)
-      .single();
+      .maybeSingle();
 
     if (!merchant) {
       return NextResponse.json(

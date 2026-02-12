@@ -73,10 +73,15 @@ export async function GET(request: NextRequest) {
     const cardIds = (cardsData || []).map((c) => c.id);
 
     // Fetch redemptions for all cards to know if tier 1 was already redeemed
-    const { data: redemptionsData } = await supabaseAdmin
-      .from('redemptions')
-      .select('loyalty_card_id, tier')
-      .in('loyalty_card_id', cardIds);
+    // Guard: .in() with empty array would return ALL rows
+    let redemptionsData: { loyalty_card_id: string; tier: number }[] | null = null;
+    if (cardIds.length > 0) {
+      const { data } = await supabaseAdmin
+        .from('redemptions')
+        .select('loyalty_card_id, tier')
+        .in('loyalty_card_id', cardIds);
+      redemptionsData = data;
+    }
 
     // Create a map of card_id -> redeemed tiers
     const redemptionsByCard: Record<string, number[]> = {};

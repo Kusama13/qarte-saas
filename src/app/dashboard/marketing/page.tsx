@@ -284,7 +284,6 @@ export default function MarketingPushPage() {
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim() || !merchant?.id) return;
-    if (subscriberCount === 0) return;
 
     // Check for forbidden words
     const allText = `${title} ${body} ${offerDescription}`;
@@ -298,42 +297,49 @@ export default function MarketingPushPage() {
     setSendResult(null);
 
     try {
-      // Send push notification
-      const response = await fetch('/api/push/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          merchantId: merchant.id,
-          filterType: 'all',
-          payload: {
-            title: merchant.shop_name || 'Qarte',
-            body: `${title.trim()}: ${body.trim()}`,
-            url: `/customer/card/${merchant.id}`,
-          },
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Also save the offer if description is provided
-        if (offerDescription.trim()) {
-          await fetch('/api/offers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              merchantId: merchant.id,
-              title: title.trim(),
-              description: offerDescription.trim(),
-              imageUrl: offerImageUrl.trim() || null,
-              durationDays: getDurationDays(),
-            }),
-          });
+      // Save the offer first (works even with 0 subscribers)
+      let offerSaved = false;
+      if (offerDescription.trim()) {
+        const offerResponse = await fetch('/api/offers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            merchantId: merchant.id,
+            title: title.trim(),
+            description: offerDescription.trim(),
+            imageUrl: offerImageUrl.trim() || null,
+            durationDays: getDurationDays(),
+          }),
+        });
+        if (offerResponse.ok) {
           setOfferActive(true);
+          setCurrentOfferTitle(title.trim());
+          setCurrentOfferDescription(offerDescription.trim());
+          setCurrentOfferImageUrl(offerImageUrl.trim() || null);
+          offerSaved = true;
         }
+      }
 
-        setSendResult({ success: true, sent: data.sent, failed: data.failed });
-        if (data.sent > 0) {
+      // Send push notification (only if there are subscribers)
+      if (subscriberCount && subscriberCount > 0) {
+        const response = await fetch('/api/push/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            merchantId: merchant.id,
+            filterType: 'all',
+            payload: {
+              title: merchant.shop_name || 'Qarte',
+              body: `${title.trim()}: ${body.trim()}`,
+              url: `/customer/card/${merchant.id}`,
+            },
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setSendResult({ success: true, sent: data.sent, failed: data.failed });
           setTitle('');
           setBody('');
           setOfferDescription('');
@@ -344,9 +350,20 @@ export default function MarketingPushPage() {
           if (historyResponse.ok) {
             setPushHistory(historyData.history || []);
           }
+        } else {
+          setSendResult({ success: false, message: data.error || 'Erreur lors de l\'envoi' });
         }
       } else {
-        setSendResult({ success: false, message: data.error || 'Erreur lors de l\'envoi' });
+        // No subscribers — offer was saved, inform user
+        if (offerSaved) {
+          setSendResult({ success: true, sent: 0, message: 'Offre publiée ! Aucun abonné push pour le moment.' });
+          setTitle('');
+          setBody('');
+          setOfferDescription('');
+          setOfferImageUrl('');
+        } else {
+          setSendResult({ success: false, message: 'Aucun abonné push et aucune offre à publier.' });
+        }
       }
     } catch {
       setSendResult({ success: false, message: 'Erreur de connexion' });
@@ -358,9 +375,38 @@ export default function MarketingPushPage() {
   const handleSchedule = async () => {
     if (!title.trim() || !body.trim() || !merchant?.id || !scheduleDate) return;
 
+    // Check for forbidden words
+    const allText = `${title} ${body} ${offerDescription}`;
+    const forbiddenWord = containsForbiddenWords(allText);
+    if (forbiddenWord) {
+      setSendResult({ success: false, message: `Contenu interdit détecté: "${forbiddenWord}". Veuillez modifier votre message.` });
+      return;
+    }
+
     setScheduling(true);
 
     try {
+      // Save the offer if description provided
+      if (offerDescription.trim()) {
+        const offerResponse = await fetch('/api/offers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            merchantId: merchant.id,
+            title: title.trim(),
+            description: offerDescription.trim(),
+            imageUrl: offerImageUrl.trim() || null,
+            durationDays: getDurationDays(),
+          }),
+        });
+        if (offerResponse.ok) {
+          setOfferActive(true);
+          setCurrentOfferTitle(title.trim());
+          setCurrentOfferDescription(offerDescription.trim());
+          setCurrentOfferImageUrl(offerImageUrl.trim() || null);
+        }
+      }
+
       const response = await fetch('/api/push/schedule', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -379,6 +425,8 @@ export default function MarketingPushPage() {
         setSendResult({ success: true, message: `Programmé pour ${scheduleTime === '10:00' ? '10h' : '18h'}` });
         setTitle('');
         setBody('');
+        setOfferDescription('');
+        setOfferImageUrl('');
         setShowSchedule(false);
         // Refresh scheduled list
         const scheduledResponse = await fetch(`/api/push/schedule?merchantId=${merchant.id}`);
@@ -548,7 +596,7 @@ export default function MarketingPushPage() {
       const customDate = new Date(offerCustomDate);
       const diffTime = customDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-      return Math.max(1, diffDays);
+      return Math.min(30, Math.max(1, diffDays));
     }
     return 1;
   };
@@ -1082,7 +1130,7 @@ export default function MarketingPushPage() {
             <div className="flex-1 relative">
               <button
                 onClick={handleSend}
-                disabled={!title.trim() || !body.trim() || sending || subscriberCount === 0}
+                disabled={!title.trim() || !body.trim() || sending}
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center gap-2"
               >
                 {sending ? (

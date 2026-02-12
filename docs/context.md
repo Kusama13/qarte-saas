@@ -297,6 +297,10 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Bouton "Reserver" dans header carte (pill) + dans SocialLinks (bouton pleine largeur)
 - Lien de reservation configurable dans dashboard (section "Liens & Reseaux")
 - Normalisation automatique des URLs (ajout https:// si absent) a la sauvegarde
+- Offres marketing decouplee du push : offre creee meme si 0 abonnes push
+
+### Admin
+- Page detail merchant (`/admin/merchants/[id]`) : section "Liens & Reseaux" (Instagram, Facebook, TikTok, reservation, avis Google) cliquables
 
 ### Programmes Membres
 - Cartes de membre avec validite
@@ -529,6 +533,7 @@ npm run email
   - CTA secondaire : "Voir une demo" → demo onglerie (ghost button, border indigo)
   - Mockup iPhone carte fidelite (coeurs, reward card rose)
   - Badges flottants : avis Google, point ajoute, parrainage, notification push
+  - Menu desktop/mobile : Tarifs, Contact, Espace Pro (Solutions retire)
 - Referral : "Vos client(e)s recrutent pour vous"
   - 3 cartes visuelles (Elle partage → Son amie rejoint → Les 2 recompensees)
   - Stats (x3 bouche-a-oreille, +25% nouveaux client(e)s, 0€ de pub)
@@ -561,6 +566,7 @@ npm run email
 - Analytics, Metriques, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
 - Activity : vue "hier" (`?date=yesterday`) pour suivi activite merchants
+- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google)
 - **Toutes les stats excluent les comptes admin** (via `super_admins` table)
 
 ### Dashboard (`/dashboard`)

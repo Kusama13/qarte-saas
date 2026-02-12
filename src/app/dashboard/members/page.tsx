@@ -30,7 +30,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button, Input, Modal, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatPhoneNumber } from '@/lib/utils';
 import type { Merchant, MemberProgram, MemberCard, Customer } from '@/types';
 
 interface ProgramWithCount extends MemberProgram {
@@ -260,7 +260,8 @@ export default function MembersPage() {
         .insert({
           first_name: newCustomerFirstName.trim(),
           last_name: newCustomerLastName.trim() || null,
-          phone_number: newCustomerPhone.trim(),
+          phone_number: formatPhoneNumber(newCustomerPhone.trim(), merchant.country || 'FR'),
+          merchant_id: merchant.id,
         })
         .select()
         .single();

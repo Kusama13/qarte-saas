@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, generateReferralCode } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, generateReferralCode, getTrialStatus } from '@/lib/utils';
 import { z } from 'zod';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import type { MerchantCountry } from '@/types';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -31,14 +32,14 @@ export async function GET(request: NextRequest) {
     const [merchantResult, customerResult] = await Promise.all([
       supabaseAdmin
         .from('merchants')
-        .select('id, shop_name, scan_code, primary_color, logo_url, referral_program_enabled, referral_reward_referred')
+        .select('id, shop_name, primary_color, logo_url, referral_program_enabled, referral_reward_referred')
         .eq('id', card.merchant_id)
-        .single(),
+        .maybeSingle(),
       supabaseAdmin
         .from('customers')
         .select('first_name')
         .eq('id', card.customer_id)
-        .single(),
+        .maybeSingle(),
     ]);
 
     if (!merchantResult.data || !merchantResult.data.referral_program_enabled) {
@@ -53,7 +54,6 @@ export async function GET(request: NextRequest) {
       referrer_name: referrer?.first_name || 'Un ami',
       shop_name: merchant.shop_name,
       merchant_id: merchant.id,
-      scan_code: merchant.scan_code,
       reward_for_you: merchant.referral_reward_referred,
       primary_color: merchant.primary_color,
       logo_url: merchant.logo_url,
@@ -74,6 +74,13 @@ const referralSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 per minute per IP
+    const ip = getClientIP(request);
+    const rateLimit = checkRateLimit(`referrals:${ip}`, { maxRequests: 5, windowMs: 60 * 1000 });
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const body = await request.json();
     const parsed = referralSchema.safeParse(body);
 
@@ -102,10 +109,16 @@ export async function POST(request: NextRequest) {
       .from('merchants')
       .select('*')
       .eq('id', referrerCard.merchant_id)
-      .single();
+      .maybeSingle();
 
     if (!merchant || !merchant.referral_program_enabled) {
       return NextResponse.json({ error: 'Programme de parrainage non actif' }, { status: 400 });
+    }
+
+    // Check subscription status
+    const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
+    if (trialStatus.isFullyExpired) {
+      return NextResponse.json({ error: 'Ce commerce n\'accepte plus les inscriptions pour le moment.' }, { status: 403 });
     }
 
     // 3. Formater et valider le téléphone
@@ -120,7 +133,7 @@ export async function POST(request: NextRequest) {
       .from('customers')
       .select('phone_number, first_name')
       .eq('id', referrerCard.customer_id)
-      .single();
+      .maybeSingle();
 
     if (referrerCustomer?.phone_number === formattedPhone) {
       return NextResponse.json({ error: 'Vous ne pouvez pas vous parrainer vous-même' }, { status: 400 });

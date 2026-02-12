@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       .from('merchants')
       .select('id')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
     return NextResponse.json({ exists: !!merchant });
   } catch {

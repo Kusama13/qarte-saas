@@ -7,6 +7,7 @@ const supabaseAdmin = getSupabaseAdmin();
 const useVoucherSchema = z.object({
   voucher_id: z.string().uuid(),
   customer_id: z.string().uuid(),
+  phone_number: z.string().min(1),
 });
 
 // POST: Client consomme un voucher (self-service)
@@ -22,7 +23,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { voucher_id, customer_id } = parsed.data;
+    const { voucher_id, customer_id, phone_number } = parsed.data;
+
+    // SECURITY: Verify phone_number matches the customer
+    const { data: customer } = await supabaseAdmin
+      .from('customers')
+      .select('id')
+      .eq('id', customer_id)
+      .eq('phone_number', phone_number)
+      .maybeSingle();
+
+    if (!customer) {
+      return NextResponse.json({ error: 'Vérification échouée' }, { status: 403 });
+    }
 
     // 1. Récupérer le voucher
     const { data: voucher, error: voucherError } = await supabaseAdmin
@@ -30,7 +43,7 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('id', voucher_id)
       .eq('customer_id', customer_id)
-      .single();
+      .maybeSingle();
 
     if (voucherError || !voucher) {
       return NextResponse.json({ error: 'Récompense introuvable' }, { status: 404 });
@@ -40,15 +53,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Récompense déjà utilisée' }, { status: 409 });
     }
 
-    // 2. Marquer le voucher comme utilisé
-    const { error: updateError } = await supabaseAdmin
+    // Check expiration
+    if (voucher.expires_at && new Date(voucher.expires_at) < new Date()) {
+      return NextResponse.json({ error: 'Récompense expirée' }, { status: 410 });
+    }
+
+    // 2. Atomic: mark as used only if still unused (prevents double-use race condition)
+    const { data: updated, error: updateError } = await supabaseAdmin
       .from('vouchers')
       .update({ is_used: true, used_at: new Date().toISOString() })
-      .eq('id', voucher_id);
+      .eq('id', voucher_id)
+      .eq('is_used', false)
+      .select('id');
 
     if (updateError) {
       console.error('Voucher update error:', updateError);
       return NextResponse.json({ error: 'Erreur lors de la mise à jour' }, { status: 500 });
+    }
+
+    if (!updated || updated.length === 0) {
+      return NextResponse.json({ error: 'Récompense déjà utilisée' }, { status: 409 });
     }
 
     // 3. Vérifier si c'est un voucher filleul → auto-créer le voucher parrain

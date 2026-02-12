@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       .from('loyalty_cards')
       .select('*, merchant:merchants(*)')
       .eq('id', loyalty_card_id)
-      .single();
+      .maybeSingle();
 
     if (!loyaltyCard) {
       return NextResponse.json(
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
         .eq('tier', 2)
         .order('redeemed_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       // Check if tier 1 was already redeemed in current cycle
       let tier1Query = supabase
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
         tier1Query = tier1Query.gt('redeemed_at', lastTier2Redemption.redeemed_at);
       }
 
-      const { data: existingTier1 } = await tier1Query.limit(1).single();
+      const { data: existingTier1 } = await tier1Query.limit(1).maybeSingle();
 
       if (existingTier1) {
         return NextResponse.json(
@@ -112,7 +112,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Record the redemption
+    // Only reset stamps to 0 for tier 2 (or tier 1 if tier 2 is not enabled)
+    const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
+
+    if (shouldResetStamps) {
+      // Atomic stamp update FIRST to prevent orphaned redemptions on race condition
+      const { data: updated, error: updateError } = await supabase
+        .from('loyalty_cards')
+        .update({ current_stamps: 0 })
+        .eq('id', loyaltyCard.id)
+        .gte('current_stamps', stampsRequired)
+        .select('id');
+
+      if (updateError) {
+        return NextResponse.json(
+          { error: 'Erreur lors de la mise à jour de la carte' },
+          { status: 500 }
+        );
+      }
+      if (!updated || updated.length === 0) {
+        return NextResponse.json(
+          { error: 'Récompense déjà récupérée' },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Record the redemption (after stamp update to avoid orphans)
     const { error: redemptionError } = await supabase
       .from('redemptions')
       .insert({
@@ -128,23 +154,6 @@ export async function POST(request: NextRequest) {
         { error: 'Erreur lors de l\'enregistrement de la récompense' },
         { status: 500 }
       );
-    }
-
-    // Only reset stamps to 0 for tier 2 (or tier 1 if tier 2 is not enabled)
-    const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
-
-    if (shouldResetStamps) {
-      const { error: updateError } = await supabase
-        .from('loyalty_cards')
-        .update({ current_stamps: 0 })
-        .eq('id', loyaltyCard.id);
-
-      if (updateError) {
-        return NextResponse.json(
-          { error: 'Erreur lors de la mise à jour de la carte' },
-          { status: 500 }
-        );
-      }
     }
 
     return NextResponse.json({

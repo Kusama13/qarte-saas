@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { sparkleGrand } from '@/lib/sparkles';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validateFrenchPhone, getTodayInParis, PHONE_CONFIG } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTodayInParis, PHONE_CONFIG } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -36,7 +36,6 @@ interface ReferralInfo {
   referrer_name: string;
   shop_name: string;
   merchant_id: string;
-  scan_code: string;
   reward_for_you: string;
   primary_color: string;
 }
@@ -156,7 +155,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         setAutoLoginAttempted(true);
         const formattedPhone = formatPhoneNumber(savedPhone, merchant.country || 'FR');
 
-        if (validateFrenchPhone(formattedPhone)) {
+        if (validatePhone(formattedPhone, merchant.country || 'FR')) {
           setSubmitting(true);
           try {
             const response = await fetch(`/api/customers/register?phone=${encodeURIComponent(formattedPhone)}&merchant_id=${merchant.id}`);
@@ -216,7 +215,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setError('');
 
     const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
-    if (!validateFrenchPhone(formattedPhone)) {
+    if (!validatePhone(formattedPhone, merchant?.country || 'FR')) {
       setError('Veuillez entrer un numéro de téléphone valide');
       return;
     }
@@ -389,7 +388,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       // Create updated card object
       const updatedCard = {
-        id: data.visit_id,
+        id: data.loyalty_card_id,
         customer_id: data.customer_id,
         merchant_id: merchant.id,
         current_stamps: data.current_stamps,
@@ -434,55 +433,42 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setSubmitting(true);
 
     try {
-      // Determine which tier is being redeemed
       const tierToRedeem = rewardTier || 1;
-      const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
+      const formattedPhone = formatPhoneNumber(phoneNumber, merchant.country || 'FR');
 
-      // Insert redemption with tier info
-      const { error: redemptionError } = await supabase.from('redemptions').insert({
-        loyalty_card_id: loyaltyCard.id,
-        merchant_id: merchant.id,
-        customer_id: customer.id,
-        stamps_used: tierToRedeem === 1 ? merchant.stamps_required : merchant.tier2_stamps_required,
-        tier: tierToRedeem,
+      // Use server-side API instead of direct Supabase (auth + atomic + race-safe)
+      const response = await fetch('/api/redeem-public', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          loyalty_card_id: loyaltyCard.id,
+          customer_id: customer.id,
+          phone_number: formattedPhone,
+          tier: tierToRedeem,
+        }),
       });
 
-      if (redemptionError) {
-        console.error('Redemption insert error:', redemptionError);
-        setError('Erreur lors de l\'enregistrement de la récompense. Veuillez réessayer.');
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Erreur lors de l\'enregistrement de la récompense');
         setStep('error');
         return;
       }
 
-      // Only reset stamps to 0 when:
-      // - Redeeming tier 2 (always reset after tier 2)
-      // - Redeeming tier 1 AND tier 2 is NOT enabled (classic single-tier flow)
-      const shouldResetStamps = tierToRedeem === 2 || !tier2Enabled;
-
-      if (shouldResetStamps) {
-        const { error: updateError } = await supabase
-          .from('loyalty_cards')
-          .update({ current_stamps: 0 })
-          .eq('id', loyaltyCard.id);
-
-        if (updateError) {
-          console.error('Stamps update error:', updateError);
-          // Continue anyway, redemption was recorded
-        }
+      // Update local state from API response
+      if (data.stamps_reset) {
         setLoyaltyCard({ ...loyaltyCard, current_stamps: 0 });
       }
 
-      // Update local tier redeemed state
       if (tierToRedeem === 1) {
         setTier1Redeemed(true);
       } else if (tierToRedeem === 2) {
         setTier2Redeemed(true);
-        // After tier 2, reset tier 1 redeemed as well (new cycle)
         setTier1Redeemed(false);
       }
 
       setRewardTier(null);
-      // Redirect to card page after redemption
       router.replace(`/customer/card/${merchant.id}?scan_success=1&redeemed=1`);
     } catch (err) {
       console.error('Redeem error:', err);

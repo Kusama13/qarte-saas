@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 // Helper to get Supabase client at runtime
 function getSupabase() {
@@ -10,6 +11,13 @@ function getSupabase() {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 per minute per IP
+  const ip = getClientIP(request);
+  const rateLimit = checkRateLimit(`push-subscribe:${ip}`, { maxRequests: 10, windowMs: 60 * 1000 });
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit.resetTime);
+  }
+
   const supabase = getSupabase();
 
   try {
@@ -34,7 +42,7 @@ export async function POST(request: NextRequest) {
       .from('customers')
       .select('id')
       .eq('id', customerId)
-      .single();
+      .maybeSingle();
 
     if (customerError || !customer) {
       return NextResponse.json(

@@ -245,6 +245,7 @@ export async function POST(request: NextRequest) {
         duplicate: true,
         status: recentVisit.status,
         visit_id: recentVisit.id,
+        loyalty_card_id: loyaltyCard.id,
         message: 'Passage déjà enregistré',
         current_stamps: loyaltyCard.current_stamps,
         pending_stamps: recentVisit.status === 'pending' ? (recentVisit.points_earned || 1) : 0,
@@ -396,6 +397,7 @@ export async function POST(request: NextRequest) {
       customer_id: customer.id,
       status: visitStatus,
       visit_id: visitData.id,
+      loyalty_card_id: loyaltyCard.id,
       message: visitStatus === 'pending'
         ? 'Passage en cours de vérification'
         : rewardUnlocked
