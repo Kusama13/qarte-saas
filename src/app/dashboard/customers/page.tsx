@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Users,
   Search,
@@ -19,17 +18,18 @@ import {
 } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
-import { supabase } from '@/lib/supabase';
+import { useMerchant } from '@/contexts/MerchantContext';
+import { getSupabase } from '@/lib/supabase';
 import { formatDate, formatPhoneNumber, displayPhoneNumber, PHONE_CONFIG } from '@/lib/utils';
-import type { Merchant, LoyaltyCard, Customer } from '@/types';
+import type { LoyaltyCard, Customer } from '@/types';
 
 interface CustomerWithCard extends LoyaltyCard {
   customer: Customer;
 }
 
 export default function CustomersPage() {
-  const router = useRouter();
-  const [merchant, setMerchant] = useState<Merchant | null>(null);
+  const { merchant, loading: merchantLoading } = useMerchant();
+  const supabase = getSupabase();
   const [customers, setCustomers] = useState<CustomerWithCard[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<CustomerWithCard[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,91 +49,80 @@ export default function CustomersPage() {
   const [creatingCustomer, setCreatingCustomer] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const fetchData = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      router.push('/auth/merchant');
-      return;
+  const fetchData = useCallback(async () => {
+    if (!merchant) return;
+
+    // Parallel fetch: cards + push subscribers at the same time
+    const [cardsResult, pushResult] = await Promise.all([
+      supabase
+        .from('loyalty_cards')
+        .select(`
+          *,
+          customer:customers (*)
+        `)
+        .eq('merchant_id', merchant.id)
+        .order('updated_at', { ascending: false }),
+
+      fetch(`/api/push/subscribers?merchantId=${merchant.id}`)
+        .then(r => r.json())
+        .catch(() => ({ subscriberIds: [] })),
+    ]);
+
+    const cardsData = cardsResult.data;
+
+    // Set push subscribers
+    if (pushResult.subscriberIds) {
+      setSubscriberIds(pushResult.subscriberIds);
     }
-
-    const { data: merchantData } = await supabase
-      .from('merchants')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!merchantData) return;
-    setMerchant(merchantData);
-
-    const { data: cardsData } = await supabase
-      .from('loyalty_cards')
-      .select(`
-        *,
-        customer:customers (*)
-      `)
-      .eq('merchant_id', merchantData.id)
-      .order('updated_at', { ascending: false });
 
     if (cardsData) {
       setCustomers(cardsData as CustomerWithCard[]);
       setFilteredCustomers(cardsData as CustomerWithCard[]);
 
-      // Fetch tier 1 redemptions for tier2 merchants to show "Palier 1 utilisé"
-      if (merchantData.tier2_enabled) {
+      // Fetch tier 1 redemptions for tier2 merchants (only if needed)
+      if (merchant.tier2_enabled) {
         const cardIds = cardsData.map((c: CustomerWithCard) => c.id);
-        const { data: redemptionsData } = await supabase
-          .from('redemptions')
-          .select('loyalty_card_id, tier, redeemed_at')
-          .in('loyalty_card_id', cardIds)
-          .order('redeemed_at', { ascending: false });
+        if (cardIds.length > 0) {
+          const { data: redemptionsData } = await supabase
+            .from('redemptions')
+            .select('loyalty_card_id, tier, redeemed_at')
+            .in('loyalty_card_id', cardIds)
+            .order('redeemed_at', { ascending: false });
 
-        if (redemptionsData) {
-          // For each card, check if tier 1 was redeemed after last tier 2
-          const tier1Redeemed = new Set<string>();
-          const cardRedemptions = new Map<string, Array<{ tier: number; redeemed_at: string }>>();
+          if (redemptionsData) {
+            const tier1Redeemed = new Set<string>();
+            const cardRedemptions = new Map<string, Array<{ tier: number; redeemed_at: string }>>();
 
-          // Group redemptions by card
-          redemptionsData.forEach((r: { loyalty_card_id: string; tier: number; redeemed_at: string }) => {
-            if (!cardRedemptions.has(r.loyalty_card_id)) {
-              cardRedemptions.set(r.loyalty_card_id, []);
-            }
-            cardRedemptions.get(r.loyalty_card_id)!.push({ tier: r.tier, redeemed_at: r.redeemed_at });
-          });
+            redemptionsData.forEach((r: { loyalty_card_id: string; tier: number; redeemed_at: string }) => {
+              if (!cardRedemptions.has(r.loyalty_card_id)) {
+                cardRedemptions.set(r.loyalty_card_id, []);
+              }
+              cardRedemptions.get(r.loyalty_card_id)!.push({ tier: r.tier, redeemed_at: r.redeemed_at });
+            });
 
-          // Check each card
-          cardRedemptions.forEach((redemptions, cardId) => {
-            const tier2Redemptions = redemptions.filter(r => r.tier === 2);
-            const lastTier2Date = tier2Redemptions.length > 0
-              ? new Date(tier2Redemptions[0].redeemed_at).getTime()
-              : 0;
+            cardRedemptions.forEach((redemptions, cardId) => {
+              const tier2Redemptions = redemptions.filter(r => r.tier === 2);
+              const lastTier2Date = tier2Redemptions.length > 0
+                ? new Date(tier2Redemptions[0].redeemed_at).getTime()
+                : 0;
 
-            const tier1AfterTier2 = redemptions.some(
-              r => r.tier === 1 && new Date(r.redeemed_at).getTime() > lastTier2Date
-            );
+              const tier1AfterTier2 = redemptions.some(
+                r => r.tier === 1 && new Date(r.redeemed_at).getTime() > lastTier2Date
+              );
 
-            if (tier1AfterTier2) {
-              tier1Redeemed.add(cardId);
-            }
-          });
+              if (tier1AfterTier2) {
+                tier1Redeemed.add(cardId);
+              }
+            });
 
-          setTier1RedeemedCards(tier1Redeemed);
+            setTier1RedeemedCards(tier1Redeemed);
+          }
         }
       }
     }
 
-    // Fetch push subscriber IDs
-    try {
-      const response = await fetch(`/api/push/subscribers?merchantId=${merchantData.id}`);
-      const data = await response.json();
-      if (response.ok && data.subscriberIds) {
-        setSubscriberIds(data.subscriberIds);
-      }
-    } catch (err) {
-      console.error('Error fetching subscriber IDs:', err);
-    }
-
     setLoading(false);
-  };
+  }, [merchant, supabase]);
 
   const handleOpenAdjustModal = (customer: CustomerWithCard) => {
     setSelectedCustomer(customer);
@@ -184,8 +173,10 @@ export default function CustomersPage() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, [router]);
+    if (!merchantLoading && merchant) {
+      fetchData();
+    }
+  }, [merchant, merchantLoading, fetchData]);
 
   useEffect(() => {
     let filtered = customers;
@@ -239,7 +230,7 @@ export default function CustomersPage() {
     }
   };
 
-  if (loading) {
+  if (loading || merchantLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
