@@ -96,13 +96,13 @@ export function FeaturesSection() {
         {/* Header */}
         <div className="text-center mb-14">
           <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
-            Avec Qarte, vos client(e)s{' '}
+            Notifiez vos client(e)s{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500">
-              ne vous oublient plus.
+              au meilleur moment
             </span>
           </h2>
           <p className="text-lg text-slate-400 mt-4 max-w-xl mx-auto">
-            Pendant que vous travaillez, Qarte fidélise.
+            Grâce aux notifications push, vos client(e)s reviennent sans que vous ayez à y penser.
           </p>
         </div>
 

@@ -4,6 +4,7 @@ export { HowItWorksSection } from './HowItWorksSection';
 export { ComparisonSection } from './ComparisonSection';
 export { FeaturesSection } from './FeaturesSection';
 export { TestimonialsSection } from './TestimonialsSection';
+export { ReferralSection } from './ReferralSection';
 export { PricingSection } from './PricingSection';
 export { FAQSection } from './FAQSection';
 export { FooterSection } from './FooterSection';

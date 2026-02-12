@@ -15,6 +15,8 @@ export function PricingSection() {
     'Programmation envois',
     'Dashboard analytics',
     'Avis Google',
+    'Programme de parrainage',
+    'Lien de réservation',
     'Support prioritaire',
     'Zéro commission'
   ];

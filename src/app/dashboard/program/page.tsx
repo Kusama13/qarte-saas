@@ -219,6 +219,13 @@ export default function ProgramPage() {
     }
   };
 
+  const normalizeUrl = (url: string) => {
+    const trimmed = url.trim();
+    if (!trimmed) return '';
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  };
+
   const handleSave = async () => {
     if (!merchant) return;
 
@@ -243,11 +250,11 @@ export default function ProgramPage() {
           logo_url: formData.logoUrl || null,
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
-          review_link: formData.reviewLink || null,
-          instagram_url: formData.instagramUrl || null,
-          facebook_url: formData.facebookUrl || null,
-          tiktok_url: formData.tiktokUrl || null,
-          booking_url: formData.bookingUrl || null,
+          review_link: normalizeUrl(formData.reviewLink) || null,
+          instagram_url: normalizeUrl(formData.instagramUrl) || null,
+          facebook_url: normalizeUrl(formData.facebookUrl) || null,
+          tiktok_url: normalizeUrl(formData.tiktokUrl) || null,
+          booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
           reward_description: formData.rewardDescription,
           loyalty_mode: 'visit',
@@ -272,11 +279,11 @@ export default function ProgramPage() {
             logo_url: formData.logoUrl || null,
             primary_color: formData.primaryColor,
             secondary_color: formData.secondaryColor,
-            review_link: formData.reviewLink || null,
-            instagram_url: formData.instagramUrl || null,
-            facebook_url: formData.facebookUrl || null,
-            tiktok_url: formData.tiktokUrl || null,
-            booking_url: formData.bookingUrl || null,
+            review_link: normalizeUrl(formData.reviewLink) || null,
+            instagram_url: normalizeUrl(formData.instagramUrl) || null,
+            facebook_url: normalizeUrl(formData.facebookUrl) || null,
+            tiktok_url: normalizeUrl(formData.tiktokUrl) || null,
+            booking_url: normalizeUrl(formData.bookingUrl) || null,
             stamps_required: formData.stampsRequired,
             reward_description: formData.rewardDescription,
             loyalty_mode: 'visit',

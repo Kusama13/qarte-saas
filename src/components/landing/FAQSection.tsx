@@ -27,6 +27,10 @@ const faqs = [
     answer: "Vous exportez vos données client(e)s en CSV quand vous voulez. Pas de piège, pas d'engagement. Vos données vous appartiennent.",
   },
   {
+    question: "Comment fonctionne le programme de parrainage ?",
+    answer: "Chaque cliente peut partager son lien personnel avec ses amies. Quand une amie s'inscrit et fait son premier passage, les deux reçoivent une récompense que vous définissez (soin offert, réduction…). Tout est automatique, vous n'avez rien à gérer.",
+  },
+  {
     question: "19€/mois, c'est trop cher pour mon salon ?",
     answer: "C'est 0,63€ par jour — moins qu'un café. Un(e) seul(e) client(e) fidélisé(e) qui revient une fois de plus par mois rembourse votre abonnement. Sans compter les cartes papier que vous n'imprimez plus et le temps gagné.",
   },

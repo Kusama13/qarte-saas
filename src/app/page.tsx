@@ -9,6 +9,7 @@ import {
   HowItWorksSection,
   FeaturesSection,
   TestimonialsSection,
+  ReferralSection,
   PricingSection,
   FAQSection,
   FooterSection,
@@ -21,6 +22,7 @@ const MemoizedHeroSection = memo(HeroSection);
 const MemoizedHowItWorksSection = memo(HowItWorksSection);
 const MemoizedFeaturesSection = memo(FeaturesSection);
 const MemoizedTestimonialsSection = memo(TestimonialsSection);
+const MemoizedReferralSection = memo(ReferralSection);
 const MemoizedPricingSection = memo(PricingSection);
 const MemoizedFAQSection = memo(FAQSection);
 const MemoizedFooterSection = memo(FooterSection);
@@ -35,6 +37,7 @@ export default function LandingPageV4() {
 
       <main className="overflow-hidden pb-24 md:pb-0">
         <MemoizedHeroSection />
+        <MemoizedReferralSection />
         <MemoizedFeaturesSection />
         <MemoizedHowItWorksSection />
         <MemoizedTestimonialsSection />

@@ -13,6 +13,7 @@ import {
   Sparkles,
   Heart,
   Bell,
+  Users,
 } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -308,10 +309,17 @@ export function HeroSection() {
               <p className="text-[8px] text-gray-400 text-center">+120 avis</p>
             </div>
 
-            {/* Floating stat bubble */}
-            <div className="absolute bottom-32 left-0 -translate-x-1/2 bg-gradient-to-br from-violet-500 to-indigo-600 px-3 py-2 rounded-xl shadow-lg shadow-violet-300/40 z-30">
-              <p className="text-[9px] text-violet-200">Récurrence</p>
-              <p className="text-sm font-extrabold text-white">+42%</p>
+            {/* Floating referral badge */}
+            <div className="absolute bottom-32 left-0 -translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-violet-200/40 border border-violet-100 z-30">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-pink-500 rounded-full flex items-center justify-center shadow-md shadow-violet-300/40">
+                  <Users className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-800">Marie a parrainé Sophie</p>
+                  <p className="text-[8px] text-violet-500 font-semibold">+1 récompense chacune</p>
+                </div>
+              </div>
             </div>
 
             {/* Push notification Qarte */}
