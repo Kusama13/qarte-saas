@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
 import { trackPwaInstalled } from '@/lib/analytics';
 import { formatPhoneNumber, ensureTextContrast } from '@/lib/utils';
+import { sparkleGrand } from '@/lib/sparkles';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard, Voucher } from '@/types';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import {
@@ -108,14 +109,17 @@ interface MerchantOffer {
   expiresAt: string | null;
 }
 
-const DEMO_MERCHANTS: Record<string, { id: string; shop_name: string; shop_type: string; logo_url: string | null; primary_color: string; secondary_color: string; stamps_required: number; reward_description: string; tier2_enabled: boolean; tier2_stamps_required: number | null; tier2_reward_description: string | null; loyalty_mode: string; product_name: string | null; review_link: string | null; instagram_url: string | null; facebook_url: string | null; tiktok_url: string | null; scan_code: string }> = {
+const DEMO_MERCHANTS: Record<string, { id: string; shop_name: string; shop_type: string; logo_url: string | null; primary_color: string; secondary_color: string; stamps_required: number; reward_description: string; tier2_enabled: boolean; tier2_stamps_required: number | null; tier2_reward_description: string | null; loyalty_mode: string; product_name: string | null; review_link: string | null; instagram_url: string | null; facebook_url: string | null; tiktok_url: string | null; booking_url: string | null; referral_program_enabled: boolean; referral_reward_referrer: string | null; referral_reward_referred: string | null; scan_code: string }> = {
   'demo-coiffeur': {
     id: 'demo-coiffeur', shop_name: 'Le Salon de Clara', shop_type: 'coiffeur',
     logo_url: null, primary_color: '#D97706', secondary_color: '#F59E0B',
     stamps_required: 10, reward_description: 'Un brushing offert',
     tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
     loyalty_mode: 'visit', product_name: null, review_link: 'https://g.page/example',
-    instagram_url: 'https://instagram.com/lesalonclara', facebook_url: 'https://facebook.com/lesalonclara', tiktok_url: 'https://tiktok.com/@lesalonclara', scan_code: 'demo-coiffeur',
+    instagram_url: 'https://instagram.com/lesalonclara', facebook_url: 'https://facebook.com/lesalonclara', tiktok_url: 'https://tiktok.com/@lesalonclara',
+    booking_url: 'https://planity.com/le-salon-de-clara',
+    referral_program_enabled: true, referral_reward_referrer: 'Un brushing offert', referral_reward_referred: '-20% sur votre 1ère coupe',
+    scan_code: 'demo-coiffeur',
   },
   'demo-onglerie': {
     id: 'demo-onglerie', shop_name: 'Nails & Beauty', shop_type: 'onglerie',
@@ -123,7 +127,10 @@ const DEMO_MERCHANTS: Record<string, { id: string; shop_name: string; shop_type:
     stamps_required: 8, reward_description: 'Une pose gel offerte',
     tier2_enabled: true, tier2_stamps_required: 15, tier2_reward_description: 'Un soin complet des mains offert',
     loyalty_mode: 'visit', product_name: null, review_link: null,
-    instagram_url: 'https://instagram.com/nailsandbeauty', facebook_url: 'https://facebook.com/nailsandbeauty', tiktok_url: 'https://tiktok.com/@nailsandbeauty', scan_code: 'demo-onglerie',
+    instagram_url: 'https://instagram.com/nailsandbeauty', facebook_url: 'https://facebook.com/nailsandbeauty', tiktok_url: 'https://tiktok.com/@nailsandbeauty',
+    booking_url: 'https://treatwell.fr/nails-and-beauty',
+    referral_program_enabled: true, referral_reward_referrer: 'Une pose gel offerte', referral_reward_referred: '-15% sur votre 1ère pose',
+    scan_code: 'demo-onglerie',
   },
   'demo-institut': {
     id: 'demo-institut', shop_name: 'Institut Éclat', shop_type: 'institut_beaute',
@@ -131,7 +138,10 @@ const DEMO_MERCHANTS: Record<string, { id: string; shop_name: string; shop_type:
     stamps_required: 8, reward_description: 'Un soin visage offert',
     tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
     loyalty_mode: 'visit', product_name: null, review_link: 'https://g.page/example-institut',
-    instagram_url: 'https://instagram.com/instituteclat', facebook_url: 'https://facebook.com/instituteclat', tiktok_url: 'https://tiktok.com/@instituteclat', scan_code: 'demo-institut',
+    instagram_url: 'https://instagram.com/instituteclat', facebook_url: 'https://facebook.com/instituteclat', tiktok_url: 'https://tiktok.com/@instituteclat',
+    booking_url: 'https://planity.com/institut-eclat',
+    referral_program_enabled: true, referral_reward_referrer: 'Un soin visage offert', referral_reward_referred: '-10% sur votre 1er soin',
+    scan_code: 'demo-institut',
   },
 };
 
@@ -585,45 +595,13 @@ export default function CustomerCardPage({
     };
   }, [card, tier1RedeemedInCycle, redeemSuccess, memberCard]);
 
-  const triggerConfetti = useCallback(async () => {
-    // Dynamic import - only load confetti when needed
-    const confetti = (await import('canvas-confetti')).default;
-
-    // Fire confetti from both sides
-    const duration = 3000;
-    const end = Date.now() + duration;
-
-    const frame = () => {
-      confetti({
-        particleCount: 3,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.7 },
-        colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
-      });
-      confetti({
-        particleCount: 3,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.7 },
-        colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
-      });
-
-      if (Date.now() < end) {
-        requestAnimationFrame(frame);
-      }
-    };
-
-    // Initial burst
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#ff6b6b', '#feca57', '#48dbfb', '#ff9ff3', '#54a0ff'],
-    });
-
-    frame();
-  }, []);
+  const triggerSparkles = useCallback(() => {
+    const m = card?.merchant;
+    const colors = m
+      ? [m.primary_color, m.secondary_color || '#FFD700', '#FFB6C1', '#FFFFFF']
+      : undefined;
+    sparkleGrand(colors);
+  }, [card?.merchant]);
 
   const handleRedeem = async (tier: 1 | 2 = 1) => {
     if (!card) return;
@@ -657,7 +635,7 @@ export default function CustomerCardPage({
           setTier1RedeemedInCycle(false);
         }
         setRedeemSuccess(true);
-        triggerConfetti();
+        triggerSparkles();
       } else {
         console.error('Redeem failed:', data);
         // Show debug info if available

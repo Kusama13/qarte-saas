@@ -13,7 +13,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import confetti from 'canvas-confetti';
+import { sparkleMedium } from '@/lib/sparkles';
 import type { Merchant, LoyaltyCard, Customer } from '@/types';
 
 interface ClientScanViewProps {
@@ -61,14 +61,9 @@ export function ClientScanView({
     return () => clearInterval(interval);
   }, [canUndo, undoTimer]);
 
-  const triggerConfetti = useCallback(() => {
-    const colors = [merchant.primary_color, merchant.secondary_color || '#fbbf24'];
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors,
-    });
+  const triggerSparkles = useCallback(() => {
+    const colors = [merchant.primary_color, merchant.secondary_color || '#FFD700', '#FFB6C1', '#FFFFFF'];
+    sparkleMedium(colors);
   }, [merchant.primary_color, merchant.secondary_color]);
 
   const handleCheckin = async () => {
@@ -89,7 +84,7 @@ export function ClientScanView({
 
         if (result.voucherCreated) {
           setVoucherUnlocked(true);
-          triggerConfetti();
+          triggerSparkles();
         }
 
         // Start undo timer

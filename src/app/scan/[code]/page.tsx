@@ -19,7 +19,7 @@ import {
   PartyPopper,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
+import { sparkleGrand } from '@/lib/sparkles';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validateFrenchPhone, getTodayInParis, PHONE_CONFIG } from '@/lib/utils';
@@ -201,26 +201,14 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     autoLogin();
   }, [loading, merchant, step, autoLoginAttempted, code, submitting]);
 
-  const triggerConfetti = useCallback(() => {
+  const triggerSparkles = useCallback(() => {
     if (!merchant) return;
-    const colors = [merchant.primary_color, merchant.secondary_color || '#fbbf24', '#ffffff'];
+    const colors = [merchant.primary_color, merchant.secondary_color || '#FFD700', '#FFB6C1', '#FFFFFF'];
 
     // Haptic feedback
     if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
 
-    // Wave 1 — center burst
-    confetti({ particleCount: 100, spread: 70, origin: { y: 0.5 }, colors });
-
-    // Wave 2 — side bursts (500ms)
-    setTimeout(() => {
-      confetti({ particleCount: 50, spread: 90, origin: { y: 0.55, x: 0.2 }, colors });
-      confetti({ particleCount: 50, spread: 90, origin: { y: 0.55, x: 0.8 }, colors });
-    }, 500);
-
-    // Wave 3 — golden rain (1s)
-    setTimeout(() => {
-      confetti({ particleCount: 30, spread: 120, origin: { y: 0.3 }, colors: ['#fbbf24', '#f59e0b', '#ffffff'], gravity: 0.8 });
-    }, 1000);
+    sparkleGrand(colors);
   }, [merchant]);
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
@@ -335,7 +323,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             merchant_id: data.merchant_id,
           });
           setCustomer({ id: data.customer_id } as Customer);
-          triggerConfetti();
+          triggerSparkles();
           setStep('referral-success');
         } else {
           setError(data.error || 'Erreur lors de l\'inscription par parrainage');
@@ -427,7 +415,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       // Confirmed - normal flow
       if (data.reward_unlocked) {
-        triggerConfetti();
+        triggerSparkles();
         setStep('reward');
       } else {
         // Show animated success screen (auto-redirects to card after 3s)

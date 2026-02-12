@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CreditCard, Gift, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import confetti from 'canvas-confetti';
+import { sparkle, sparkleGrand, sparkleMedium, sparkleSubtle } from '@/lib/sparkles';
 import type { Merchant, LoyaltyCard, Customer } from '@/types';
 
 interface ScanSuccessStepProps {
@@ -130,27 +130,19 @@ export default function ScanSuccessStep({
     ? merchant.tier2_stamps_required!
     : stampsRequired;
 
-  // Confetti intensity varies by context
-  const triggerMiniConfetti = useCallback(() => {
-    const colors = [primaryColor, secondaryColor || '#fbbf24', '#ffffff'];
+  // Sparkle intensity varies by context
+  const triggerSparkles = useCallback(() => {
+    const colors = [primaryColor, secondaryColor || '#FFD700', '#FFB6C1', '#FFFFFF'];
     const remaining = stampsRequired - currentStamps;
 
     if (previousStamps === 0) {
-      // First scan = big celebration
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.4 }, colors });
-      setTimeout(() => {
-        confetti({ particleCount: 40, spread: 100, origin: { y: 0.5, x: 0.25 }, colors });
-        confetti({ particleCount: 40, spread: 100, origin: { y: 0.5, x: 0.75 }, colors });
-      }, 300);
+      sparkleGrand(colors);
     } else if (remaining > 0 && remaining <= 2) {
-      // Almost there
-      confetti({ particleCount: 50, spread: 60, origin: { y: 0.4 }, colors });
+      sparkleMedium(colors);
     } else if (currentStamps === Math.ceil(stampsRequired / 2)) {
-      // Mid-way
-      confetti({ particleCount: 30, spread: 50, origin: { y: 0.4 }, colors });
+      sparkleSubtle(colors);
     } else {
-      // Normal
-      confetti({ particleCount: 15, spread: 40, origin: { y: 0.35 }, colors, gravity: 1.2 });
+      sparkleSubtle(colors);
     }
   }, [primaryColor, secondaryColor, previousStamps, currentStamps, stampsRequired]);
 
@@ -161,10 +153,10 @@ export default function ScanSuccessStep({
       if ('vibrate' in navigator) navigator.vibrate(200);
     }, 400);
 
-    // 0.6s — reveal content + confetti
+    // 0.6s — reveal content + sparkles
     const t1 = setTimeout(() => {
       setShowContent(true);
-      triggerMiniConfetti();
+      triggerSparkles();
     }, 600);
 
     // 1.1s — animate counter old → new
