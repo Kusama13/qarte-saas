@@ -32,6 +32,7 @@ interface MerchantsDataResponse {
   weeklyScans: Record<string, number>;
   emailTracking: Record<string, number[]>;
   reactivationTracking: Record<string, number[]>;
+  pendingPoints: Record<string, number>;
   userEmails: Record<string, string>;
 }
 
@@ -421,6 +422,7 @@ export default function AdminMerchantsPage() {
                   const activity = getActivityLabel(lastVisit);
                   const today = data?.todayScans[merchant.id] || 0;
                   const customers = data?.customerCounts[merchant.id] || 0;
+                  const pending = data?.pendingPoints[merchant.id] || 0;
                   const emailSteps = getEmailSteps(
                     merchant.id,
                     data?.emailTracking || {},
@@ -441,6 +443,12 @@ export default function AdminMerchantsPage() {
                               {isAdmin && (
                                 <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
                                   Admin
+                                </span>
+                              )}
+                              {pending > 0 && (
+                                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0 flex items-center gap-0.5" title={`${pending} point${pending > 1 ? 's' : ''} en attente`}>
+                                  <Shield className="w-3 h-3" />
+                                  {pending}
                                 </span>
                               )}
                             </div>
@@ -542,6 +550,7 @@ export default function AdminMerchantsPage() {
               const activity = getActivityLabel(lastVisit);
               const today = data?.todayScans[merchant.id] || 0;
               const customers = data?.customerCounts[merchant.id] || 0;
+              const pending = data?.pendingPoints[merchant.id] || 0;
               const emailSteps = getEmailSteps(
                 merchant.id,
                 data?.emailTracking || {},
@@ -561,6 +570,12 @@ export default function AdminMerchantsPage() {
                           {isAdmin && (
                             <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
                               Admin
+                            </span>
+                          )}
+                          {pending > 0 && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0 flex items-center gap-0.5">
+                              <Shield className="w-3 h-3" />
+                              {pending}
                             </span>
                           )}
                         </div>

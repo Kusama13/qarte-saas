@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
       { data: loyaltyCards },
       { data: emailTracking },
       { data: reactivationTracking },
+      { data: pendingVisits },
       { data: { users } },
     ] = await Promise.all([
       supabaseAdmin.from('merchants').select('*').order('created_at', { ascending: false }),
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('loyalty_cards').select('merchant_id'),
       supabaseAdmin.from('pending_email_tracking').select('merchant_id, reminder_day'),
       supabaseAdmin.from('reactivation_email_tracking').select('merchant_id, day_sent'),
+      supabaseAdmin.from('visits').select('merchant_id').eq('status', 'pending'),
       supabaseAdmin.auth.admin.listUsers({ perPage: 1000 }),
     ]);
 
@@ -86,6 +88,12 @@ export async function GET(request: NextRequest) {
       }
     });
 
+    // Pending points per merchant (shield)
+    const pendingPoints: Record<string, number> = {};
+    (pendingVisits || []).forEach((v: { merchant_id: string }) => {
+      pendingPoints[v.merchant_id] = (pendingPoints[v.merchant_id] || 0) + 1;
+    });
+
     // User emails mapping
     const userEmails: Record<string, string> = {};
     (users || []).forEach((u) => {
@@ -101,6 +109,7 @@ export async function GET(request: NextRequest) {
       weeklyScans,
       emailTracking: emailTrackingMap,
       reactivationTracking: reactivationMap,
+      pendingPoints,
       userEmails,
     });
   } catch (error) {

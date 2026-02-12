@@ -27,6 +27,7 @@ import {
   Star,
   Share2,
   ListChecks,
+  Shield,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
@@ -75,6 +76,7 @@ interface Stats {
   totalRedemptions: number;
   pushSubscribers: number;
   pushSent: number;
+  pendingPoints: number;
 }
 
 interface MemberProgram {
@@ -100,6 +102,7 @@ export default function MerchantDetailPage() {
     totalRedemptions: 0,
     pushSubscribers: 0,
     pushSent: 0,
+    pendingPoints: 0,
   });
   const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,6 +150,12 @@ export default function MerchantDetailPage() {
           .select('*', { count: 'exact', head: true })
           .eq('merchant_id', merchantId);
 
+        const { count: pendingPointsCount } = await supabase
+          .from('visits')
+          .select('*', { count: 'exact', head: true })
+          .eq('merchant_id', merchantId)
+          .eq('status', 'pending');
+
         // Get push stats and email via admin API (uses service role to bypass RLS)
         let pushSubscribers = 0;
         let pushSentCount = 0;
@@ -188,6 +197,7 @@ export default function MerchantDetailPage() {
           totalRedemptions: totalRedemptions || 0,
           pushSubscribers,
           pushSent: pushSentCount || 0,
+          pendingPoints: pendingPointsCount || 0,
         });
       } catch (error) {
         console.error('Error fetching merchant data:', error);
@@ -396,6 +406,12 @@ export default function MerchantDetailPage() {
               <Share2 className="w-3 h-3" />
               Parrainage {merchant.referral_program_enabled ? 'actif' : 'inactif'}
             </span>
+            {stats.pendingPoints > 0 && (
+              <span className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full flex items-center gap-1">
+                <Shield className="w-3 h-3" />
+                {stats.pendingPoints} point{stats.pendingPoints > 1 ? 's' : ''} en attente
+              </span>
+            )}
           </div>
         </div>
 
@@ -801,6 +817,17 @@ export default function MerchantDetailPage() {
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.pushSent}</p>
               <p className="text-sm text-gray-500">Notifs envoyées</p>
+            </div>
+          </div>
+        </div>
+        <div className={cn("p-5 rounded-lg shadow-md border", stats.pendingPoints > 0 ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100")}>
+          <div className="flex items-center gap-3">
+            <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg", stats.pendingPoints > 0 ? "bg-amber-100" : "bg-gray-50")}>
+              <Shield className={cn("w-5 h-5", stats.pendingPoints > 0 ? "text-amber-600" : "text-gray-400")} />
+            </div>
+            <div>
+              <p className={cn("text-2xl font-bold", stats.pendingPoints > 0 ? "text-amber-700" : "text-gray-900")}>{stats.pendingPoints}</p>
+              <p className="text-sm text-gray-500">Points en attente</p>
             </div>
           </div>
         </div>
