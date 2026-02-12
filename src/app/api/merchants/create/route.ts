@@ -22,10 +22,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { user_id, slug, shop_name, shop_type, shop_address, phone, country } = body;
+    const trimmedShopName = shop_name?.trim() || '';
+    const trimmedAddress = shop_address?.trim() || '';
     const merchantCountry: MerchantCountry = country || 'FR';
     const formattedPhone = formatPhoneNumber(phone, merchantCountry);
 
-    if (!user_id || !shop_name || !shop_type || !phone || !shop_address) {
+    if (!user_id || !trimmedShopName || !shop_type || !phone || !trimmedAddress) {
       return NextResponse.json(
         { error: 'Champs requis manquants' },
         { status: 400 }
@@ -130,9 +132,9 @@ export async function POST(request: NextRequest) {
         slug,
         scan_code,
         referral_code,
-        shop_name,
+        shop_name: trimmedShopName,
         shop_type,
-        shop_address,
+        shop_address: trimmedAddress,
         phone: formattedPhone,
         country: merchantCountry,
         stamps_required: defaultStamps[shop_type] || 10,
@@ -186,7 +188,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Welcome email en priorité (Resend API call #2)
-      await sendWelcomeEmail(userData.user.email, shop_name).catch((err) => {
+      await sendWelcomeEmail(userData.user.email, trimmedShopName).catch((err) => {
         logger.error('Failed to send welcome email', err);
       });
 
@@ -195,9 +197,9 @@ export async function POST(request: NextRequest) {
 
       // Notification interne (Resend API call #3)
       await sendNewMerchantNotification(
-        shop_name,
+        trimmedShopName,
         shop_type,
-        shop_address,
+        trimmedAddress,
         phone,
         userData.user.email
       ).catch((err) => {

@@ -256,6 +256,7 @@ export async function GET(request: NextRequest) {
       .from('merchants')
       .select('id, shop_name, user_id')
       .not('reward_description', 'is', null)
+      .neq('reward_description', '')
       .in('subscription_status', ['trial', 'active'])
       .lte('created_at', oneTwentyHoursAgo.toISOString())
       .gte('created_at', oneTwentyOneHoursAgo.toISOString());
@@ -298,6 +299,7 @@ export async function GET(request: NextRequest) {
         .from('merchants')
         .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description')
         .not('reward_description', 'is', null)
+        .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active']);
 
       if (qrCandidates && qrCandidates.length > 0) {
@@ -347,6 +349,7 @@ export async function GET(request: NextRequest) {
         .from('merchants')
         .select('id, shop_name, user_id, shop_type, reward_description, stamps_required, trial_ends_at, subscription_status')
         .not('reward_description', 'is', null)
+        .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active']);
 
       if (scriptCandidates && scriptCandidates.length > 0) {
@@ -423,6 +426,7 @@ export async function GET(request: NextRequest) {
         .from('merchants')
         .select('id, shop_name, user_id, trial_ends_at, subscription_status')
         .not('reward_description', 'is', null)
+        .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active']);
 
       if (qcCandidates && qcCandidates.length > 0) {
@@ -498,6 +502,7 @@ export async function GET(request: NextRequest) {
       .from('merchants')
       .select('id, shop_name, user_id, referral_code')
       .not('reward_description', 'is', null)
+      .neq('reward_description', '')
       .in('subscription_status', ['trial', 'active']);
 
     if (allConfiguredMerchants && allConfiguredMerchants.length > 0) {
@@ -555,6 +560,7 @@ export async function GET(request: NextRequest) {
         .from('merchants')
         .select('id, shop_name, user_id, reward_description, stamps_required')
         .not('reward_description', 'is', null)
+        .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active']);
 
       if (merchantsWithProgram && merchantsWithProgram.length > 0) {
@@ -624,6 +630,7 @@ export async function GET(request: NextRequest) {
         .from('merchants')
         .select('id, shop_name, user_id, reward_description, tier2_enabled')
         .not('reward_description', 'is', null)
+        .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
         .or('tier2_enabled.is.null,tier2_enabled.eq.false');
 
@@ -689,6 +696,7 @@ export async function GET(request: NextRequest) {
         .from('merchants')
         .select('id, shop_name, user_id')
         .not('reward_description', 'is', null)
+        .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active']);
 
       if (digestMerchants && digestMerchants.length > 0) {
@@ -773,6 +781,7 @@ export async function GET(request: NextRequest) {
       .from('merchants')
       .select('id, shop_name, user_id, reward_description, stamps_required, created_at')
       .not('reward_description', 'is', null)
+      .neq('reward_description', '')
       .in('subscription_status', ['trial', 'active']);
 
     if (activeMerchants && activeMerchants.length > 0) {

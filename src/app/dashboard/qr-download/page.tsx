@@ -14,6 +14,7 @@ import {
   Sparkles,
   Printer,
   Share2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { generateQRCode, getScanUrl } from '@/lib/utils';
@@ -110,6 +111,8 @@ export default function QRDownloadPage() {
   }
 
   if (!merchant) return null;
+
+  const hasPalier1 = !!merchant.reward_description;
 
   const tier2Text = merchant.tier2_enabled && merchant.tier2_reward_description
     ? ` Et ce n'est pas tout : après ${merchant.tier2_stamps_required} passages, recevez ${merchant.tier2_reward_description} !`
@@ -270,10 +273,18 @@ export default function QRDownloadPage() {
 
             {/* Download */}
             <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-3">
+              {!hasPalier1 && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <p className="text-xs text-amber-700 font-medium">
+                    Configurez votre programme de fidélité (palier 1) avant de télécharger.
+                  </p>
+                </div>
+              )}
               <Button
                 onClick={saveQrImage}
-                disabled={!qrCodeUrl}
-                className="w-full h-12 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all text-sm"
+                disabled={!qrCodeUrl || !hasPalier1}
+                className="w-full h-12 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 {downloadSuccess ? (
                   <Check className="w-4 h-4 mr-2" />
@@ -289,15 +300,22 @@ export default function QRDownloadPage() {
 
             {/* Test */}
             {scanUrl && (
-              <a
-                href={scanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border-2 border-indigo-200 hover:border-indigo-400 rounded-xl text-indigo-700 font-bold text-sm transition-all hover:shadow-md active:scale-[0.98]"
-              >
-                <Play className="w-4 h-4" />
-                Tester l&apos;expérience client
-              </a>
+              hasPalier1 ? (
+                <a
+                  href={scanUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border-2 border-indigo-200 hover:border-indigo-400 rounded-xl text-indigo-700 font-bold text-sm transition-all hover:shadow-md active:scale-[0.98]"
+                >
+                  <Play className="w-4 h-4" />
+                  Tester l&apos;expérience client
+                </a>
+              ) : (
+                <div className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border-2 border-gray-200 rounded-xl text-gray-400 font-bold text-sm opacity-50 cursor-not-allowed">
+                  <Play className="w-4 h-4" />
+                  Tester l&apos;expérience client
+                </div>
+              )
             )}
 
             {/* Tip */}
@@ -363,10 +381,18 @@ export default function QRDownloadPage() {
 
             {/* Download */}
             <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-sm space-y-3">
+              {!hasPalier1 && (
+                <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                  <p className="text-xs text-amber-700 font-medium">
+                    Configurez votre programme de fidélité (palier 1) avant de télécharger.
+                  </p>
+                </div>
+              )}
               <Button
                 onClick={downloadSocialPng}
-                disabled={isGenerating}
-                className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all text-sm"
+                disabled={isGenerating || !hasPalier1}
+                className="w-full h-12 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-lg shadow-purple-200 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 {isGenerating ? (
                   <Loader2 className="w-4 h-4 animate-spin mr-2" />

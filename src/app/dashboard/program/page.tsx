@@ -238,9 +238,14 @@ export default function ProgramPage() {
 
   const handleSave = async () => {
     if (!merchant) return;
+    if (!formData.rewardDescription.trim()) return;
 
-    // Validate tier 2 stamps
+    // Validate tier 2
     if (formData.tier2Enabled) {
+      if (!formData.tier2RewardDescription.trim()) {
+        setTier2Error('Veuillez entrer la récompense du palier 2');
+        return;
+      }
       if (!formData.tier2StampsRequired || formData.tier2StampsRequired <= 0) {
         setTier2Error('Veuillez entrer le nombre de passages requis pour le palier 2');
         return;
@@ -266,13 +271,13 @@ export default function ProgramPage() {
           tiktok_url: normalizeUrl(formData.tiktokUrl) || null,
           booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
-          reward_description: formData.rewardDescription,
+          reward_description: formData.rewardDescription.trim(),
           loyalty_mode: 'visit',
           product_name: null,
           max_quantity_per_scan: 1,
           tier2_enabled: formData.tier2Enabled,
           tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
-          tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription : null,
+          tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null,
         })
         .eq('id', merchant.id);
 
@@ -291,11 +296,11 @@ export default function ProgramPage() {
           tiktok_url: normalizeUrl(formData.tiktokUrl) || null,
           booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
-          reward_description: formData.rewardDescription,
+          reward_description: formData.rewardDescription.trim(),
           loyalty_mode: 'visit',
           tier2_enabled: formData.tier2Enabled,
           tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
-          tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription : null,
+          tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null,
         };
         localStorage.setItem('qarte_merchant_cache', JSON.stringify({
           data: updatedMerchant,

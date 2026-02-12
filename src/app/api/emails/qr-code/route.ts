@@ -29,6 +29,14 @@ export async function POST() {
       );
     }
 
+    // Don't send if palier 1 not configured
+    if (!merchant.reward_description) {
+      return NextResponse.json(
+        { error: 'Programme non configuré' },
+        { status: 400 }
+      );
+    }
+
     // Check if already sent (avoid duplicates with cron)
     const { data: existing } = await supabaseAdmin
       .from('pending_email_tracking')

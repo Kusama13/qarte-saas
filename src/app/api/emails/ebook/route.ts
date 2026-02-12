@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse(rateLimit.resetTime);
     }
 
-    const { email } = await request.json();
+    const { email: rawEmail } = await request.json();
+    const email = rawEmail?.trim();
 
     if (!email) {
       return NextResponse.json({ error: 'Email required' }, { status: 400 });
