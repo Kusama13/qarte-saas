@@ -10,8 +10,8 @@ export function MobileStickyCta() {
 
   useEffect(() => {
     const handleScroll = () => {
-      // Show after scrolling past hero (approx 600px)
-      setIsVisible(window.scrollY > 600);
+      // Show after AI reengagement section (approx 2000px)
+      setIsVisible(window.scrollY > 2000);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -30,9 +30,6 @@ export function MobileStickyCta() {
         Essayer gratuitement 15 jours
         <ArrowRight className="w-5 h-5" />
       </a>
-      <p className="text-center text-xs text-gray-500 mt-2">
-        Essai 15 jours gratuit • Sans CB
-      </p>
     </div>
   );
 }

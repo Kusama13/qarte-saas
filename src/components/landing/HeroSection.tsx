@@ -276,7 +276,7 @@ export function HeroSection() {
             {/* === Floating elements around phone === */}
 
             {/* Toast "Point ajouté" */}
-            <div className="hidden sm:flex absolute top-28 right-0 translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100 items-center gap-2 z-30">
+            <div className="flex absolute top-28 right-0 translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100 items-center gap-2 z-30">
               <div className="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center">
                 <Check className="w-3.5 h-3.5 text-white" />
               </div>
@@ -287,7 +287,7 @@ export function HeroSection() {
             </div>
 
             {/* Floating star rating badge */}
-            <div className="hidden sm:block absolute top-12 left-0 -translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-amber-200/50 border border-amber-200 z-30">
+            <div className="absolute top-12 left-0 -translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-amber-200/50 border border-amber-200 z-30">
               <div className="flex gap-0.5 mb-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -298,7 +298,7 @@ export function HeroSection() {
             </div>
 
             {/* Floating referral badge */}
-            <div className="hidden sm:block absolute bottom-32 left-0 -translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-violet-200/40 border border-violet-100 z-30">
+            <div className="absolute bottom-32 left-0 -translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-violet-200/40 border border-violet-100 z-30">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-pink-500 rounded-full flex items-center justify-center shadow-md shadow-violet-300/40">
                   <Users className="w-3.5 h-3.5 text-white" />
@@ -311,7 +311,7 @@ export function HeroSection() {
             </div>
 
             {/* Push notification Qarte */}
-            <div className="hidden sm:block absolute bottom-28 right-0 translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-indigo-200/40 border border-indigo-100 z-30 max-w-[200px]">
+            <div className="absolute bottom-28 right-0 translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-indigo-200/40 border border-indigo-100 z-30 max-w-[200px]">
               <div className="flex items-start gap-2.5">
                 <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-300/40">
                   <Bell className="w-4 h-4 text-white" />
