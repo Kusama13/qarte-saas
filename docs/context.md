@@ -141,6 +141,7 @@ public/
 - `shop_name`, `shop_type`, `shop_address`, `phone`
 - `country` (MerchantCountry: 'FR' | 'BE' | 'CH' | 'LU', default 'FR')
 - `logo_url`, `primary_color`, `secondary_color`
+- `instagram_url`, `facebook_url`, `tiktok_url`, `booking_url`, `review_link`
 - `loyalty_mode` ('visit' | 'article')
 - `stamps_required`, `reward_description`
 - `tier2_enabled`, `tier2_stamps_required`, `tier2_reward_description`
@@ -293,6 +294,9 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Dashboard `/dashboard/referrals` : toggle on/off, config recompenses, stats, tableau de suivi
 - Statuts : `pending` (filleul inscrit) → `completed` (filleul a consomme)
 - Message d'accueil quotidien rotatif sous le prenom client (10 phrases motivationnelles)
+- Bouton "Reserver" dans header carte (pill) + dans SocialLinks (bouton pleine largeur)
+- Lien de reservation configurable dans dashboard (section "Liens & Reseaux")
+- Normalisation automatique des URLs (ajout https:// si absent) a la sauvegarde
 
 ### Programmes Membres
 - Cartes de membre avec validite
@@ -429,8 +433,8 @@ npm run email
 
 | Fichier | Description |
 |---------|-------------|
-| `src/app/page.tsx` | Landing page (7 sections: Hero, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer) |
-| `src/components/landing/` | Composants landing (+ MobileStickyCta, ScrollToTopButton) |
+| `src/app/page.tsx` | Landing page (8 sections: Hero, Referral, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer) |
+| `src/components/landing/` | 13 composants landing (Hero, Referral, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer + utilitaires) |
 | `src/middleware.ts` | Protection routes authentifiees |
 | `src/lib/supabase.ts` | Client Supabase |
 | `src/lib/stripe.ts` | Client Stripe (mensuel + annuel) |
@@ -520,16 +524,21 @@ npm run email
 ## 16. Pages Principales
 
 ### Landing (`/`)
-- Hero : "Le programme de fidelite qui fait revenir vos clientes."
+- Hero : "Le programme de fidelite qui fait revenir vos client(e)s."
   - CTA primaire : "Essayer gratuitement" → signup (indigo→violet)
   - CTA secondaire : "Voir une demo" → demo onglerie (ghost button, border indigo)
   - Mockup iPhone carte fidelite (coeurs, reward card rose)
-- Features : "Avec Qarte, vos client(e)s ne vous oublient plus."
+  - Badges flottants : avis Google, point ajoute, parrainage, notification push
+- Referral : "Vos client(e)s recrutent pour vous"
+  - 3 cartes visuelles (Elle partage → Son amie rejoint → Les 2 recompensees)
+  - Stats (x3 bouche-a-oreille, +25% nouveaux client(e)s, 0€ de pub)
+  - CTA "Activer le parrainage"
+- Features : "Notifiez vos client(e)s au meilleur moment"
   - CSS Grid 3x3 desktop (4 step cards + stat 78% centre + fleches coins)
   - Mobile : flow vertical avec ChevronDown
-  - Subtitle : "Pendant que vous travaillez, Qarte fidelise."
+  - Subtitle : notifications push
 - HowItWorks : 2 etapes (Creez votre programme, Affichez le QR Code)
-- Testimonials, Pricing (card epuree, border indigo, checks indigo), FAQ
+- Testimonials, Pricing (10 features dont parrainage + reservation), FAQ (8 questions dont parrainage)
 - MobileStickyCta : barre sticky bottom mobile (indigo→violet)
 - ScrollToTopButton : bottom-24 mobile (au-dessus sticky), bottom-6 desktop
 - Ecriture inclusive : client(e)s partout

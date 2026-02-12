@@ -425,8 +425,12 @@ SHIELD (points en attente)
 
 ### Landing refonte UX & couleurs (11 fev)
 - [x] FeaturesSection : CSS Grid 3x3 (remplace SVG arrows casses)
-- [x] FeaturesSection : titre "Avec Qarte, vos client(e)s ne vous oublient plus."
-- [x] FeaturesSection : subtitle "Pendant que vous travaillez, Qarte fidelise."
+- [x] FeaturesSection : titre "Notifiez vos client(e)s au meilleur moment" + subtitle push
+- [x] ReferralSection : nouvelle section landing parrainage (3 cards, stats, CTA)
+- [x] HeroSection : badge flottant parrainage (remplace stat +42% Recurrence)
+- [x] PricingSection : +2 features (Programme de parrainage, Lien de reservation)
+- [x] FAQSection : +1 question parrainage
+- [x] URL normalisation : auto-ajout `https://` sur tous les champs liens dashboard
 - [x] Harmonie couleurs landing : 9 familles → 4 (indigo/violet, rose/pink, emerald, gray)
 - [x] Tous les CTAs unifies indigo-600 → violet-600 (Hero, HowItWorks, Pricing, MobileStickyCta)
 - [x] PricingSection : suppression shimmer, glow, backdrop-blur → card epuree
@@ -481,6 +485,20 @@ SHIELD (points en attente)
 ---
 
 # PARTIE 6 : CHANGELOG
+
+## [2026-02-12] — Landing parrainage, reservation, URL normalization
+
+### Landing page
+**Commit:** `33e5390`
+- **feat:** ReferralSection — nouvelle section parrainage landing (3 cards visuelles, stats x3/+25%/0€, CTA)
+- **copy:** FeaturesSection titre change → "Notifiez vos client(e)s au meilleur moment" + subtitle push
+- **feat:** HeroSection — badge flottant parrainage "Marie a parraine Sophie" (remplace stat +42%)
+- **feat:** PricingSection — +2 features (Programme de parrainage, Lien de reservation)
+- **feat:** FAQSection — +1 question "Comment fonctionne le programme de parrainage ?"
+- **copy:** Ecriture inclusive ReferralSection (client(e)s, ambassadeur/rice, nouveaux/elles)
+
+### Dashboard
+- **fix:** URL normalization — auto-ajout `https://` sur 5 champs liens (review, instagram, facebook, tiktok, booking)
 
 ## [2026-02-12] — Programme parrainage client, harmonisation design, message accueil
 
@@ -721,4 +739,4 @@ SHIELD (points en attente)
 ---
 
 *Derniere mise a jour : 12 fevrier 2026*
-*Statuts verifies contre le code source le 12/02/2026. Parrainage client + design harmonise.*
+*Statuts verifies contre le code source le 12/02/2026. Landing parrainage + reservation + URL normalization.*
