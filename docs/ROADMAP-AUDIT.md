@@ -509,6 +509,10 @@ SHIELD (points en attente)
 ### PWA carte client
 - **fix:** Retrait badge "Notifications actives" (inutile visuellement)
 
+### Dashboard page clients
+- **perf:** `useMerchant()` au lieu de re-fetch auth + merchant (economise 2 requetes ~150ms)
+- **perf:** `Promise.all` cards + push subscribers en parallele (~50-60% plus rapide)
+
 ### AdjustPointsModal
 - **fix:** Boutons +1/-1 incrementaux (accumulent au lieu de remplacer)
 
