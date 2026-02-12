@@ -10,3 +10,4 @@ export { default as StampsSection } from './StampsSection';
 export { default as RewardCard } from './RewardCard';
 export { default as RedeemModal } from './RedeemModal';
 export { default as StickyRedeemBar } from './StickyRedeemBar';
+export { default as SocialLinks } from './SocialLinks';

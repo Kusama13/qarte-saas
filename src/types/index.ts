@@ -54,6 +54,9 @@ export interface Merchant {
   welcome_message: string | null;
   promo_message: string | null;
   review_link: string | null;
+  instagram_url: string | null;
+  facebook_url: string | null;
+  tiktok_url: string | null;
   loyalty_mode: LoyaltyMode;
   product_name: string | null;
   max_quantity_per_scan: number;

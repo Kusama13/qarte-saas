@@ -34,6 +34,7 @@ import {
   RewardCard,
   RedeemModal,
   StickyRedeemBar,
+  SocialLinks,
 } from '@/components/loyalty';
 
 interface PointAdjustment {
@@ -84,13 +85,14 @@ interface MerchantOffer {
   expiresAt: string | null;
 }
 
-const DEMO_MERCHANTS: Record<string, { id: string; shop_name: string; shop_type: string; logo_url: string | null; primary_color: string; secondary_color: string; stamps_required: number; reward_description: string; tier2_enabled: boolean; tier2_stamps_required: number | null; tier2_reward_description: string | null; loyalty_mode: string; product_name: string | null; review_link: string | null }> = {
+const DEMO_MERCHANTS: Record<string, { id: string; shop_name: string; shop_type: string; logo_url: string | null; primary_color: string; secondary_color: string; stamps_required: number; reward_description: string; tier2_enabled: boolean; tier2_stamps_required: number | null; tier2_reward_description: string | null; loyalty_mode: string; product_name: string | null; review_link: string | null; instagram_url: string | null; facebook_url: string | null; tiktok_url: string | null; scan_code: string }> = {
   'demo-coiffeur': {
     id: 'demo-coiffeur', shop_name: 'Le Salon de Clara', shop_type: 'coiffeur',
     logo_url: null, primary_color: '#D97706', secondary_color: '#F59E0B',
     stamps_required: 10, reward_description: 'Un brushing offert',
     tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
     loyalty_mode: 'visit', product_name: null, review_link: 'https://g.page/example',
+    instagram_url: 'https://instagram.com/lesalonclara', facebook_url: 'https://facebook.com/lesalonclara', tiktok_url: 'https://tiktok.com/@lesalonclara', scan_code: 'demo-coiffeur',
   },
   'demo-onglerie': {
     id: 'demo-onglerie', shop_name: 'Nails & Beauty', shop_type: 'onglerie',
@@ -98,6 +100,7 @@ const DEMO_MERCHANTS: Record<string, { id: string; shop_name: string; shop_type:
     stamps_required: 8, reward_description: 'Une pose gel offerte',
     tier2_enabled: true, tier2_stamps_required: 15, tier2_reward_description: 'Un soin complet des mains offert',
     loyalty_mode: 'visit', product_name: null, review_link: null,
+    instagram_url: 'https://instagram.com/nailsandbeauty', facebook_url: 'https://facebook.com/nailsandbeauty', tiktok_url: 'https://tiktok.com/@nailsandbeauty', scan_code: 'demo-onglerie',
   },
   'demo-institut': {
     id: 'demo-institut', shop_name: 'Institut Éclat', shop_type: 'institut_beaute',
@@ -105,6 +108,7 @@ const DEMO_MERCHANTS: Record<string, { id: string; shop_name: string; shop_type:
     stamps_required: 8, reward_description: 'Un soin visage offert',
     tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
     loyalty_mode: 'visit', product_name: null, review_link: 'https://g.page/example-institut',
+    instagram_url: 'https://instagram.com/instituteclat', facebook_url: 'https://facebook.com/instituteclat', tiktok_url: 'https://tiktok.com/@instituteclat', scan_code: 'demo-institut',
   },
 };
 
@@ -1032,6 +1036,9 @@ export default function CustomerCardPage({
 
         {/* Historique */}
         <HistorySection visits={visits} adjustments={adjustments} redemptions={redemptions} merchant={merchant} />
+
+        {/* Réseaux sociaux + Recommander */}
+        <SocialLinks merchant={merchant} />
 
         {/* Avis Google */}
         {merchant.review_link && merchant.review_link.trim() !== '' && (

@@ -15,6 +15,8 @@ import {
   Trophy,
   ExternalLink,
   Eye,
+  ChevronDown,
+  Instagram,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -120,6 +122,9 @@ export default function ProgramPage() {
     primaryColor: '#654EDA',
     secondaryColor: '#9D8FE8',
     reviewLink: '',
+    instagramUrl: '',
+    facebookUrl: '',
+    tiktokUrl: '',
     stampsRequired: 10,
     rewardDescription: '',
     // 2nd tier reward
@@ -132,6 +137,7 @@ export default function ProgramPage() {
   const [originalStampsRequired, setOriginalStampsRequired] = useState(10);
   const [showStampsWarning, setShowStampsWarning] = useState(false);
   const [tier2Error, setTier2Error] = useState('');
+  const [socialOpen, setSocialOpen] = useState(false);
 
   // Prefetch preview page for faster navigation after first save
   useEffect(() => {
@@ -159,6 +165,9 @@ export default function ProgramPage() {
           primaryColor: data.primary_color || '#654EDA',
           secondaryColor: data.secondary_color || '#9D8FE8',
           reviewLink: data.review_link || '',
+          instagramUrl: data.instagram_url || '',
+          facebookUrl: data.facebook_url || '',
+          tiktokUrl: data.tiktok_url || '',
           stampsRequired: data.stamps_required || 10,
           rewardDescription: data.reward_description || '',
           tier2Enabled: data.tier2_enabled || false,
@@ -231,6 +240,9 @@ export default function ProgramPage() {
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
           review_link: formData.reviewLink || null,
+          instagram_url: formData.instagramUrl || null,
+          facebook_url: formData.facebookUrl || null,
+          tiktok_url: formData.tiktokUrl || null,
           stamps_required: formData.stampsRequired,
           reward_description: formData.rewardDescription,
           loyalty_mode: 'visit',
@@ -256,6 +268,9 @@ export default function ProgramPage() {
             primary_color: formData.primaryColor,
             secondary_color: formData.secondaryColor,
             review_link: formData.reviewLink || null,
+            instagram_url: formData.instagramUrl || null,
+            facebook_url: formData.facebookUrl || null,
+            tiktok_url: formData.tiktokUrl || null,
             stamps_required: formData.stampsRequired,
             reward_description: formData.rewardDescription,
             loyalty_mode: 'visit',
@@ -599,6 +614,63 @@ export default function ProgramPage() {
               <p className="text-xs text-gray-500">
                 Ce lien apparaîtra sur la carte de fidélité de vos clients.
               </p>
+            </div>
+          </div>
+
+          {/* Social Media Section — Collapsible */}
+          <div className="bg-white/80 backdrop-blur-xl border border-pink-100 rounded-2xl shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setSocialOpen(!socialOpen)}
+              className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+            >
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center shadow-md">
+                  <Instagram className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
+                </div>
+                <h3 className="text-sm md:text-lg font-bold text-gray-900">Réseaux sociaux</h3>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${socialOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <div className={`grid transition-all duration-300 ease-in-out ${socialOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+              <div className="overflow-hidden">
+                <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600">Instagram</label>
+                    <Input
+                      type="url"
+                      className="bg-white border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 h-11 text-sm rounded-xl w-full"
+                      placeholder="https://instagram.com/votre-commerce"
+                      value={formData.instagramUrl}
+                      onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600">Facebook</label>
+                    <Input
+                      type="url"
+                      className="bg-white border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 h-11 text-sm rounded-xl w-full"
+                      placeholder="https://facebook.com/votre-commerce"
+                      value={formData.facebookUrl}
+                      onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600">TikTok</label>
+                    <Input
+                      type="url"
+                      className="bg-white border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/20 h-11 text-sm rounded-xl w-full"
+                      placeholder="https://tiktok.com/@votre-commerce"
+                      value={formData.tiktokUrl}
+                      onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Ces liens seront affichés sur la carte de fidélité de vos clients.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 
