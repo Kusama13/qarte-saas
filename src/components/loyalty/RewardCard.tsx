@@ -61,7 +61,7 @@ export default function RewardCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.4 }}
       className={`mb-4 rounded-2xl overflow-hidden ${
-        ready ? 'shadow-lg' : 'bg-white border border-gray-100/80 shadow-sm'
+        ready ? 'shadow-lg shadow-black/5' : 'bg-white border border-gray-100/80 shadow-lg shadow-gray-200/50'
       }`}
     >
       {ready ? (

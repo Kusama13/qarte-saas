@@ -65,16 +65,6 @@ export function generateScanCode(): string {
   return code;
 }
 
-// Génère un code de parrainage unique (QARTE-XXXX)
-export function generateReferralCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 4; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return `QARTE-${code}`;
-}
-
 export function formatDate(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return format(d, 'dd/MM/yyyy', { locale: fr });
@@ -355,4 +345,11 @@ export function getAppUrl(): string {
 
 export function getScanUrl(scanCode: string): string {
   return `${getAppUrl()}/scan/${scanCode}`;
+}
+
+export function generateReferralCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = '';
+  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
 }

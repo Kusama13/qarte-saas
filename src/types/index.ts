@@ -73,6 +73,10 @@ export interface Merchant {
   onboarding_completed: boolean;
   shield_enabled: boolean;
   referral_code: string;
+  // Referral program
+  referral_program_enabled: boolean;
+  referral_reward_referrer: string | null;
+  referral_reward_referred: string | null;
   created_at: string;
   updated_at: string;
   last_seen_at: string | null;
@@ -93,6 +97,7 @@ export interface LoyaltyCard {
   current_stamps: number;
   stamps_target: number; // Grandfathering: target when card was created
   last_visit_date: string | null;
+  referral_code: string | null;
   created_at: string;
   updated_at: string;
   customer?: Customer;
@@ -226,6 +231,25 @@ export interface MemberProgramWithMerchant extends MemberProgram {
 /** MemberCard with program and nested merchant */
 export interface MemberCardWithProgramAndMerchant extends MemberCard {
   program: MemberProgramWithMerchant;
+}
+
+// ============================================
+// Referral program
+// ============================================
+
+export type ReferralStatus = 'pending' | 'completed';
+
+export interface Referral {
+  id: string;
+  merchant_id: string;
+  referrer_customer_id: string;
+  referrer_card_id: string;
+  referred_customer_id: string;
+  referred_card_id: string;
+  referred_voucher_id: string | null;
+  referrer_voucher_id: string | null;
+  status: ReferralStatus;
+  created_at: string;
 }
 
 // ============================================

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { generateReferralCode } from '@/lib/utils';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -62,8 +63,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Auto-generate referral_code if missing
+    if (!card.referral_code) {
+      const code = generateReferralCode();
+      await supabaseAdmin
+        .from('loyalty_cards')
+        .update({ referral_code: code })
+        .eq('id', card.id);
+      card.referral_code = code;
+    }
+
     // Fetch all additional data in parallel
-    const [visitsResult, adjustmentsResult, memberCardResult, redemptionsResult] = await Promise.all([
+    const [visitsResult, adjustmentsResult, memberCardResult, redemptionsResult, vouchersResult] = await Promise.all([
       // Visits
       supabaseAdmin
         .from('visits')
@@ -103,6 +114,14 @@ export async function GET(request: NextRequest) {
         .select('id, redeemed_at, stamps_used, tier')
         .eq('loyalty_card_id', card.id)
         .order('redeemed_at', { ascending: false }),
+
+      // Vouchers (referral rewards)
+      supabaseAdmin
+        .from('vouchers')
+        .select('*')
+        .eq('customer_id', customer.id)
+        .eq('merchant_id', merchantId)
+        .order('created_at', { ascending: false }),
     ]);
 
     // Process offer data from merchant (already included in card.merchant)
@@ -132,6 +151,7 @@ export async function GET(request: NextRequest) {
       adjustments: adjustmentsResult.data || [],
       memberCard: memberCardResult.data || null,
       redemptions: redemptionsResult.data || [],
+      vouchers: vouchersResult.data || [],
       offer: offer.active ? offer : null,
       pwaOffer: merchant.pwa_offer_text || null,
     });

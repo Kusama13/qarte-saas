@@ -17,12 +17,15 @@ import {
   Eye,
   QrCode,
   ArrowRight,
+  UserPlus,
+  Gift,
+  Share2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
 import { trackPwaInstalled } from '@/lib/analytics';
 import { formatPhoneNumber, ensureTextContrast } from '@/lib/utils';
-import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard } from '@/types';
+import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard, Voucher } from '@/types';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import {
   HistorySection,
@@ -75,6 +78,25 @@ const getCookie = (name: string): string | null => {
 
 const getLoyaltyLabel = (count: number) => {
   return count === 1 ? 'Passage' : 'Passages';
+};
+
+const GREETING_MESSAGES = [
+  'Ravie de vous retrouver !',
+  'On adore vous revoir !',
+  'Vous êtes au top aujourd\'hui !',
+  'Ça fait plaisir de vous voir !',
+  'Belle journée pour se faire plaisir !',
+  'Toujours fidèle, merci !',
+  'Contente de vous revoir !',
+  'Vous êtes resplendissante !',
+  'Bon retour parmi nous !',
+  'Prenez soin de vous !',
+];
+
+const getGreetingMessage = () => {
+  const today = new Date();
+  const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000);
+  return GREETING_MESSAGES[dayOfYear % GREETING_MESSAGES.length];
 };
 
 interface MerchantOffer {
@@ -145,6 +167,11 @@ export default function CustomerCardPage({
   // Offer state
   const [offer, setOffer] = useState<MerchantOffer | null>(null);
 
+  // Vouchers state (referral rewards)
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [usingVoucherId, setUsingVoucherId] = useState<string | null>(null);
+  const [shareCopied, setShareCopied] = useState(false);
+
   // Member card state
   const [memberCard, setMemberCard] = useState<MemberCard | null>(null);
   const [showMemberCardModal, setShowMemberCardModal] = useState(false);
@@ -201,6 +228,7 @@ export default function CustomerCardPage({
             current_stamps: demoStamps,
             stamps_target: tier1,
             last_visit_date: new Date().toISOString(),
+            referral_code: m.referral_program_enabled ? 'DEMO01' : null,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             merchant: {
@@ -208,7 +236,7 @@ export default function CustomerCardPage({
               phone: '',
               user_id: '',
               slug: '',
-              scan_code: '',
+              scan_code: m.scan_code || '',
               shop_address: null,
               program_name: null,
               welcome_message: null,
@@ -219,6 +247,10 @@ export default function CustomerCardPage({
               subscription_status: 'active',
               onboarding_completed: true,
               shield_enabled: false,
+              referral_program_enabled: m.referral_program_enabled || false,
+              referral_reward_referrer: m.referral_reward_referrer || null,
+              referral_reward_referred: m.referral_reward_referred || null,
+              referral_code: '',
               created_at: '',
               updated_at: '',
             } as Merchant,
@@ -327,6 +359,11 @@ export default function CustomerCardPage({
         // Set member card from consolidated response
         if (data.memberCard) {
           setMemberCard(data.memberCard);
+        }
+
+        // Set vouchers from consolidated response
+        if (data.vouchers) {
+          setVouchers(data.vouchers);
         }
 
         // Check if tier 1 has been redeemed in current cycle (for tier 2 enabled merchants)
@@ -439,6 +476,53 @@ export default function CustomerCardPage({
     setShowInstallBar(false);
     localStorage.setItem('qarte_install_dismissed', Date.now().toString());
   }, []);
+
+  const handleShareReferral = useCallback(async () => {
+    if (!card?.merchant) return;
+    const referralCode = (card as LoyaltyCard & { referral_code?: string }).referral_code;
+    if (!referralCode) return;
+
+    const m = card.merchant;
+    const url = `${window.location.origin}/scan/${m.scan_code}?ref=${referralCode}`;
+    const text = `${m.shop_name} te recommande ! Inscris-toi et reçois ta récompense :`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: m.shop_name, text, url });
+      } catch {
+        // User cancelled share
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    }
+  }, [card]);
+
+  const handleUseVoucher = useCallback(async (voucherId: string) => {
+    if (!card) return;
+    setUsingVoucherId(voucherId);
+    try {
+      const res = await fetch('/api/vouchers/use', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          voucher_id: voucherId,
+          customer_id: card.customer_id,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setVouchers(prev => prev.map(v =>
+          v.id === voucherId ? { ...v, is_used: true, used_at: new Date().toISOString() } : v
+        ));
+      }
+    } catch (err) {
+      console.error('Use voucher error:', err);
+    } finally {
+      setUsingVoucherId(null);
+    }
+  }, [card]);
 
   // Memoized computed state — must be before early returns (Rules of Hooks)
   const {
@@ -810,6 +894,7 @@ export default function CustomerCardPage({
             <div>
               <p className="text-sm text-gray-500 font-medium">Bonjour</p>
               <p className="text-2xl font-black tracking-tight text-gray-900">{card?.customer?.first_name}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5 italic">{getGreetingMessage()}</p>
             </div>
             {!memberCard && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
@@ -911,6 +996,61 @@ export default function CustomerCardPage({
           )}
         </AnimatePresence>
 
+        {/* Bouton Parrainer un ami */}
+        {merchant.referral_program_enabled && (card as LoyaltyCard & { referral_code?: string }).referral_code && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4"
+          >
+            <div
+              className="rounded-2xl overflow-hidden shadow-lg shadow-gray-200/50 border border-gray-100/80"
+              style={{ background: `linear-gradient(135deg, white 65%, ${merchant.primary_color}08 100%)` }}
+            >
+              <div className="p-4 flex items-center gap-3.5">
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
+                    boxShadow: `0 4px 12px ${merchant.primary_color}25`,
+                  }}
+                >
+                  <UserPlus className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-900 text-sm">Parrainer un ami</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
+                    {merchant.referral_reward_referred && merchant.referral_reward_referrer
+                      ? `Filleul : "${merchant.referral_reward_referred}" · Vous : "${merchant.referral_reward_referrer}"`
+                      : 'Vous et votre filleul recevez une récompense'}
+                  </p>
+                </div>
+                <motion.button
+                  whileTap={{ scale: 0.92 }}
+                  onClick={handleShareReferral}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-white font-bold text-xs shrink-0 transition-all"
+                  style={{
+                    background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
+                    boxShadow: `0 2px 8px ${merchant.primary_color}30`,
+                  }}
+                >
+                  {shareCopied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      Copié !
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-3.5 h-3.5" />
+                      Partager
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Offre Exclusive */}
         {offer && <ExclusiveOffer offer={offer} merchantColor={merchant.primary_color} isPreview={isPreview} />}
 
@@ -919,7 +1059,7 @@ export default function CustomerCardPage({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.35 }}
-          className="bg-white rounded-2xl shadow-lg shadow-gray-200/40 border border-gray-100/80 p-5 mb-4"
+          className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/80 p-5 mb-4"
         >
           <StampsSection
             currentStamps={currentStamps}
@@ -998,8 +1138,10 @@ export default function CustomerCardPage({
             disabled={push.pushSubscribing}
             className="w-full mb-4"
           >
-            <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl border bg-white shadow-sm" style={{ borderColor: `${merchant.primary_color}20` }}>
-              <Bell className="w-4 h-4 shrink-0" style={{ color: merchant.primary_color }} />
+            <div className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100/80">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${merchant.primary_color}12` }}>
+                <Bell className="w-4 h-4" style={{ color: merchant.primary_color }} />
+              </div>
               <span className="flex-1 text-xs font-medium text-gray-700 text-left">Activer les notifications</span>
               {push.pushSubscribing ? (
                 <Loader2 className="w-4 h-4 animate-spin shrink-0" style={{ color: merchant.primary_color }} />
@@ -1037,8 +1179,50 @@ export default function CustomerCardPage({
         {/* Historique */}
         <HistorySection visits={visits} adjustments={adjustments} redemptions={redemptions} merchant={merchant} />
 
-        {/* Réseaux sociaux + Recommander */}
+        {/* Réseaux sociaux */}
         <SocialLinks merchant={merchant} />
+
+        {/* Mes récompenses (vouchers) */}
+        {vouchers.filter(v => !v.is_used).length > 0 && (
+          <div className="mb-4">
+            <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/80 overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-50">
+                <div className="flex items-center gap-2">
+                  <Gift className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                  <h3 className="font-bold text-gray-900 text-sm">Mes récompenses</h3>
+                </div>
+              </div>
+              <div className="divide-y divide-gray-50">
+                {vouchers.filter(v => !v.is_used).map((voucher) => (
+                  <div key={voucher.id} className="px-4 py-3 flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                      style={{ backgroundColor: `${merchant.primary_color}12` }}
+                    >
+                      <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 text-sm truncate">{voucher.reward_description}</p>
+                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mt-0.5">Parrainage</p>
+                    </div>
+                    <button
+                      onClick={() => handleUseVoucher(voucher.id)}
+                      disabled={usingVoucherId === voucher.id}
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shrink-0 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+                      style={{ backgroundColor: merchant.primary_color }}
+                    >
+                      {usingVoucherId === voucher.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        'Utiliser'
+                      )}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Avis Google */}
         {merchant.review_link && merchant.review_link.trim() !== '' && (

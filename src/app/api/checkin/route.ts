@@ -212,6 +212,7 @@ export async function POST(request: NextRequest) {
     if (cardResult.data) {
       loyaltyCard = cardResult.data;
     } else {
+      const { generateReferralCode } = await import('@/lib/utils');
       const { data: newCard, error: cardError } = await supabaseAdmin
         .from('loyalty_cards')
         .insert({
@@ -219,6 +220,7 @@ export async function POST(request: NextRequest) {
           merchant_id: merchant.id,
           current_stamps: 0,
           stamps_target: merchant.stamps_required,
+          referral_code: generateReferralCode(),
         })
         .select()
         .single();

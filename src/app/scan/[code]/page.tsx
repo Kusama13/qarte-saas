@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Phone,
   User,
@@ -14,6 +14,9 @@ import {
   Ban,
   Star,
   HelpCircle,
+  UserPlus,
+  CheckCircle2,
+  PartyPopper,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -26,7 +29,17 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { ScanSuccessStep } from '@/components/loyalty';
 import { WelcomeBanner, ScanRewardScreen, ScanAlreadyCheckedScreen, ScanPendingScreen } from '@/components/scan';
 
-type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'pending' | 'banned';
+type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'pending' | 'banned' | 'referral-success';
+
+interface ReferralInfo {
+  valid: boolean;
+  referrer_name: string;
+  shop_name: string;
+  merchant_id: string;
+  scan_code: string;
+  reward_for_you: string;
+  primary_color: string;
+}
 
 const setCookie = (name: string, value: string, days: number) => {
   const expires = new Date();
@@ -37,6 +50,8 @@ const setCookie = (name: string, value: string, days: number) => {
 export default function ScanPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const refCode = searchParams.get('ref');
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [step, setStep] = useState<Step>('phone');
   const [loading, setLoading] = useState(true);
@@ -46,6 +61,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const [phoneNumber, setPhoneNumber] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+
+  // Referral state
+  const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
+  const [referralResult, setReferralResult] = useState<{ referrer_name: string; referred_reward: string; merchant_id: string } | null>(null);
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loyaltyCard, setLoyaltyCard] = useState<LoyaltyCard | null>(null);
@@ -102,10 +121,27 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     }
   }, [code]);
 
+  // Fetch referral info if ?ref= is present
+  useEffect(() => {
+    if (!refCode) return;
+    const fetchReferralInfo = async () => {
+      try {
+        const res = await fetch(`/api/referrals?code=${encodeURIComponent(refCode)}`);
+        const data = await res.json();
+        if (res.ok && data.valid) {
+          setReferralInfo(data);
+        }
+      } catch {
+        // Silently ignore — fall back to normal flow
+      }
+    };
+    fetchReferralInfo();
+  }, [refCode]);
+
   // Auto-login effect: if we have a saved phone and merchant is loaded, auto-submit
   useEffect(() => {
     const autoLogin = async () => {
-      if (autoLoginAttempted || loading || !merchant || submitting) return;
+      if (autoLoginAttempted || loading || !merchant || submitting || refCode) return;
 
       // Guard: skip auto-login if already auto-checked-in today for this scan code
       const lastAutoCheckin = localStorage.getItem(`qarte_checkin_${code}`);
@@ -211,36 +247,44 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       if (data.exists && data.customer) {
         // Client existe déjà pour ce commerçant OU globalement
         if (data.existsForMerchant) {
-          // Client existe pour ce commerçant → checkin direct
+          // Client existe pour ce commerçant → checkin direct (even if referral link)
           setCustomer(data.customer);
           localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
           localStorage.setItem('qarte_customer_phone', formattedPhone);
           setCookie('customer_phone', formattedPhone, 30);
           await processCheckin(data.customer);
         } else if (data.existsGlobally) {
-          // Client existe chez un autre commerçant → créer pour ce commerçant avec les mêmes infos
-          const createResponse = await fetch('/api/customers/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              phone_number: formattedPhone,
-              first_name: data.customer.first_name,
-              last_name: data.customer.last_name,
-              merchant_id: merchant.id,
-            }),
-          });
-
-          const createData = await createResponse.json();
-
-          if (createResponse.ok && createData.customer) {
-            setCustomer(createData.customer);
-            localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
-            localStorage.setItem('qarte_customer_phone', formattedPhone);
-            setCookie('customer_phone', formattedPhone, 30);
-            await processCheckin(createData.customer);
+          // Client exists globally but not for this merchant
+          if (refCode && referralInfo) {
+            // Referral flow: pre-fill name and go to register for referral inscription
+            setFirstName(data.customer.first_name || '');
+            setLastName(data.customer.last_name || '');
+            setStep('register');
           } else {
-            console.error('Create failed:', createData);
-            setError(createData.error || 'Erreur lors de l\'inscription');
+            // Normal flow: create for this merchant
+            const createResponse = await fetch('/api/customers/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                phone_number: formattedPhone,
+                first_name: data.customer.first_name,
+                last_name: data.customer.last_name,
+                merchant_id: merchant.id,
+              }),
+            });
+
+            const createData = await createResponse.json();
+
+            if (createResponse.ok && createData.customer) {
+              setCustomer(createData.customer);
+              localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
+              localStorage.setItem('qarte_customer_phone', formattedPhone);
+              setCookie('customer_phone', formattedPhone, 30);
+              await processCheckin(createData.customer);
+            } else {
+              console.error('Create failed:', createData);
+              setError(createData.error || 'Erreur lors de l\'inscription');
+            }
           }
         }
       } else {
@@ -270,6 +314,35 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
       localStorage.setItem('qarte_customer_phone', formattedPhone);
       setCookie('customer_phone', formattedPhone, 30);
+
+      // Referral flow: call /api/referrals instead of /api/checkin
+      if (refCode && referralInfo) {
+        const res = await fetch('/api/referrals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            referral_code: refCode,
+            phone_number: formattedPhone,
+            first_name: firstName.trim(),
+            last_name: lastName.trim() || null,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setReferralResult({
+            referrer_name: data.referrer_name,
+            referred_reward: data.referred_reward,
+            merchant_id: data.merchant_id,
+          });
+          setCustomer({ id: data.customer_id } as Customer);
+          triggerConfetti();
+          setStep('referral-success');
+        } else {
+          setError(data.error || 'Erreur lors de l\'inscription par parrainage');
+        }
+        return;
+      }
+
       // Skip register API — checkin creates customer + card + visit in one call
       await processCheckin({ first_name: firstName.trim(), last_name: lastName.trim() || null });
     } catch (err) {
@@ -466,6 +539,39 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           <div className="animate-fade-in">
             <WelcomeBanner merchant={merchant} primaryColor={primaryColor} secondaryColor={secondaryColor} />
 
+            {/* Referral Banner */}
+            {referralInfo && (
+              <div className="mb-4">
+                <div
+                  className="rounded-2xl p-4 border shadow-md"
+                  style={{
+                    background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}08)`,
+                    borderColor: `${primaryColor}30`,
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: `${primaryColor}20` }}
+                    >
+                      <UserPlus className="w-5 h-5" style={{ color: primaryColor }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm">
+                        {referralInfo.referrer_name} vous recommande !
+                      </p>
+                      <p className="text-gray-600 text-xs mt-0.5">
+                        Inscrivez-vous et recevez :
+                      </p>
+                      <p className="font-bold text-sm mt-1" style={{ color: primaryColor }}>
+                        {referralInfo.reward_for_you}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* How it works Accordion */}
             <div className="mb-4">
               <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
@@ -571,7 +677,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      Valider mon passage
+                      {referralInfo ? 'M\'inscrire' : 'Valider mon passage'}
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
@@ -589,7 +695,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   <User className="w-8 h-8" style={{ color: primaryColor }} />
                 </div>
                 <h2 className="text-2xl font-black text-gray-900">Bienvenue !</h2>
-                <p className="mt-2 text-gray-500">Créez votre carte en quelques secondes</p>
+                <p className="mt-2 text-gray-500">
+                  {referralInfo
+                    ? `Finalisez votre inscription pour recevoir votre récompense`
+                    : 'Créez votre carte en quelques secondes'}
+                </p>
               </div>
 
               <form onSubmit={handleRegisterSubmit} className="space-y-5">
@@ -698,6 +808,53 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             primaryColor={primaryColor}
             secondaryColor={secondaryColor}
           />
+        )}
+
+        {/* Referral Success */}
+        {step === 'referral-success' && referralResult && (
+          <div className="animate-fade-in">
+            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
+              <div
+                className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl"
+                style={{ backgroundColor: `${primaryColor}15` }}
+              >
+                <PartyPopper className="w-10 h-10" style={{ color: primaryColor }} />
+              </div>
+
+              <h2 className="text-2xl font-black text-gray-900 mb-2">
+                Bienvenue !
+              </h2>
+              <p className="text-gray-500 mb-4">
+                Parrainé{'\u00B7'}e par <span className="font-bold text-gray-900">{referralResult.referrer_name}</span>
+              </p>
+
+              <div
+                className="rounded-2xl p-4 mb-6"
+                style={{ backgroundColor: `${primaryColor}10` }}
+              >
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Gift className="w-4 h-4" style={{ color: primaryColor }} />
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Votre récompense</span>
+                </div>
+                <p className="font-bold text-lg" style={{ color: primaryColor }}>
+                  {referralResult.referred_reward}
+                </p>
+              </div>
+
+              <p className="text-xs text-gray-400 mb-6">
+                Votre récompense est disponible sur votre carte de fidélité.
+              </p>
+
+              <button
+                onClick={() => router.push(`/customer/card/${referralResult.merchant_id}`)}
+                className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
+              >
+                <CheckCircle2 className="w-5 h-5" />
+                Voir ma carte
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Banned Screen */}
