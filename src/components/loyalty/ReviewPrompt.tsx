@@ -24,10 +24,7 @@ export default function ReviewPrompt({ merchantId, shopName, reviewLink }: Revie
   return (
     <div className="mt-2 mb-4">
       <div
-        className="relative rounded-2xl p-4 overflow-hidden border border-amber-100/60"
-        style={{
-          background: 'linear-gradient(135deg, rgba(251,191,36,0.06) 0%, rgba(251,146,60,0.04) 100%)'
-        }}
+        className="relative rounded-2xl p-4 overflow-hidden bg-white/70 backdrop-blur-sm shadow-lg shadow-gray-200/50 border border-gray-100/80"
       >
         {/* Dismiss */}
         <button

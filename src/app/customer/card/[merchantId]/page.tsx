@@ -1168,16 +1168,6 @@ export default function CustomerCardPage({
           </div>
         )}
 
-        {/* Subscribed confirmation */}
-        {push.pushSubscribed && (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex justify-center mb-4">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full" style={{ backgroundColor: `${merchant.primary_color}10` }}>
-              <Bell className="w-3 h-3" style={{ color: merchant.primary_color }} />
-              <span className="text-[10px] font-medium" style={{ color: safeColor }}>Notifications actives</span>
-            </div>
-          </motion.div>
-        )}
-
         {/* Historique */}
         <HistorySection visits={visits} adjustments={adjustments} redemptions={redemptions} merchant={merchant} />
 

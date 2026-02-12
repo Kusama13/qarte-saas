@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Check, ChevronRight, Sparkles, X, Gift, QrCode, Users, Megaphone, ImageIcon } from 'lucide-react';
+import { Check, ChevronRight, Sparkles, X, Gift, QrCode, Users, ImageIcon, Share2, Eye } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
 import confetti from 'canvas-confetti';
@@ -50,22 +50,18 @@ export default function OnboardingChecklist() {
 
     const fetchSteps = async () => {
       try {
-        const [visitsResult, pushRes, onboardingRes] = await Promise.all([
+        const [visitsResult, onboardingRes] = await Promise.all([
           supabase
             .from('visits')
             .select('*', { count: 'exact', head: true })
             .eq('merchant_id', merchant.id)
             .eq('status', 'confirmed'),
-          fetch(`/api/push/history?merchantId=${merchant.id}&limit=1`)
-            .then(r => r.json())
-            .catch(() => ({ history: [] })),
           fetch('/api/onboarding/status')
             .then(r => r.json())
             .catch(() => ({ qrEmailSent: false })),
         ]);
 
         const visitsCount = visitsResult.count || 0;
-        const hasPush = (pushRes.history?.length || 0) > 0;
         const qrDownloaded = onboardingRes.qrDownloaded === true;
 
         setSteps([
@@ -84,6 +80,20 @@ export default function OnboardingChecklist() {
             icon: ImageIcon,
           },
           {
+            id: 'social',
+            label: 'Ajouter au moins un réseau social',
+            done: !!(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url),
+            href: '/dashboard/program?section=social',
+            icon: Share2,
+          },
+          {
+            id: 'preview',
+            label: 'Simuler l\'expérience client',
+            done: false,
+            href: `/customer/card/${merchant.id}?preview=true`,
+            icon: Eye,
+          },
+          {
             id: 'qr',
             label: 'Télécharger mon QR code',
             done: qrDownloaded,
@@ -96,13 +106,6 @@ export default function OnboardingChecklist() {
             done: visitsCount >= 2,
             href: '/dashboard/qr-download',
             icon: Users,
-          },
-          {
-            id: 'push',
-            label: 'Envoyer une notification push',
-            done: hasPush,
-            href: '/dashboard/marketing',
-            icon: Megaphone,
           },
         ]);
       } catch (err) {

@@ -299,8 +299,17 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Normalisation automatique des URLs (ajout https:// si absent) a la sauvegarde
 - Offres marketing decouplee du push : offre creee meme si 0 abonnes push
 
+### Onboarding Checklist (Dashboard)
+- 6 etapes : programme, logo, reseau social, preview client, QR code, 2 premiers scans
+- Deep-link `?section=social` auto-ouvre le collapse reseaux sociaux dans la page programme
+- Confetti a la completion de toutes les etapes
+- Auto-dismiss 3 jours apres completion, dismiss session via bouton X
+- Visible uniquement en periode d'essai (`subscription_status === 'trial'`)
+
 ### Admin
 - Page detail merchant (`/admin/merchants/[id]`) : section "Liens & Reseaux" (Instagram, Facebook, TikTok, reservation, avis Google) cliquables
+- Badge parrainage actif/inactif dans les badges statut
+- Section "Progression onboarding" : 5 items checklist + barre de progression par merchant
 
 ### Programmes Membres
 - Cartes de membre avec validite
@@ -566,7 +575,7 @@ npm run email
 - Analytics, Metriques, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
 - Activity : vue "hier" (`?date=yesterday`) pour suivi activite merchants
-- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google)
+- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badge parrainage, progression onboarding
 - **Toutes les stats excluent les comptes admin** (via `super_admins` table)
 
 ### Dashboard (`/dashboard`)

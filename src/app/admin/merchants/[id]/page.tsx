@@ -25,6 +25,8 @@ import {
   PhoneCall,
   ExternalLink,
   Star,
+  Share2,
+  ListChecks,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
@@ -55,6 +57,8 @@ interface Merchant {
   tiktok_url: string | null;
   booking_url: string | null;
   review_link: string | null;
+  // Referral
+  referral_program_enabled: boolean;
   // Offer fields
   offer_active: boolean;
   offer_title: string | null;
@@ -383,6 +387,15 @@ export default function MerchantDetailPage() {
                 <AlertTriangle className="w-3 h-3" /> Sans programme
               </span>
             )}
+            <span className={cn(
+              "px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1",
+              merchant.referral_program_enabled
+                ? "text-violet-700 bg-violet-100"
+                : "text-gray-500 bg-gray-100"
+            )}>
+              <Share2 className="w-3 h-3" />
+              Parrainage {merchant.referral_program_enabled ? 'actif' : 'inactif'}
+            </span>
           </div>
         </div>
 
@@ -543,6 +556,55 @@ export default function MerchantDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Progression onboarding */}
+        {(() => {
+          const checklistItems = [
+            { label: 'Programme configuré', done: !!merchant.reward_description },
+            { label: 'Logo ajouté', done: !!merchant.logo_url },
+            { label: 'Réseau social ajouté', done: !!(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url) },
+            { label: 'QR code téléchargé', done: stats.totalVisits > 0 },
+            { label: 'Premiers scans obtenus', done: stats.totalVisits >= 2 },
+          ];
+          const doneCount = checklistItems.filter(i => i.done).length;
+          return (
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <ListChecks className="w-5 h-5 text-[#5167fc]" />
+                Progression onboarding
+                <span className="text-sm font-normal text-gray-500">
+                  {doneCount}/{checklistItems.length}
+                </span>
+              </h3>
+              <div className="h-2 bg-gray-200/60 rounded-full mb-3 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-[#5167fc] to-violet-500 rounded-full transition-all"
+                  style={{ width: `${(doneCount / checklistItems.length) * 100}%` }}
+                />
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {checklistItems.map((item) => (
+                  <div
+                    key={item.label}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg text-sm",
+                      item.done
+                        ? "bg-green-50 text-green-700"
+                        : "bg-gray-50 text-gray-400"
+                    )}
+                  >
+                    {item.done ? (
+                      <Check className="w-4 h-4 flex-shrink-0" />
+                    ) : (
+                      <div className="w-4 h-4 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                    )}
+                    <span className={item.done ? '' : 'line-through'}>{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Liens & Réseaux */}
         {(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.booking_url || merchant.review_link) && (

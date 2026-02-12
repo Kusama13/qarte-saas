@@ -36,7 +36,12 @@ export function AdjustPointsModal({
   if (!isOpen) return null;
 
   const handleQuickAdjust = (value: number) => {
-    setAdjustment(value);
+    setAdjustment((prev) => {
+      const next = prev + value;
+      // Don't go below -currentStamps (can't have negative total)
+      if (next < -currentStamps) return -currentStamps;
+      return next;
+    });
   };
 
   const handleSubmit = async () => {
@@ -148,26 +153,26 @@ export function AdjustPointsModal({
                     type="button"
                     onClick={() => handleQuickAdjust(1)}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
-                      adjustment === 1
+                      adjustment > 0
                         ? 'bg-green-600 text-white'
                         : 'bg-green-50 text-green-700 hover:bg-green-100'
                     }`}
                   >
                     <Plus className="w-5 h-5" />
-                    +1 point
+                    +1
                   </button>
                   <button
                     type="button"
                     onClick={() => handleQuickAdjust(-1)}
-                    disabled={currentStamps === 0}
+                    disabled={newStamps === 0}
                     className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all ${
-                      adjustment === -1
+                      adjustment < 0
                         ? 'bg-red-600 text-white'
                         : 'bg-red-50 text-red-700 hover:bg-red-100'
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
                     <Minus className="w-5 h-5" />
-                    -1 point
+                    -1
                   </button>
                 </div>
               </div>

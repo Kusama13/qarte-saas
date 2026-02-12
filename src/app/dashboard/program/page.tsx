@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Upload,
   Palette,
@@ -111,6 +111,7 @@ const TIER2_REWARD_SUGGESTIONS: Record<string, string[]> = {
 
 export default function ProgramPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -140,12 +141,21 @@ export default function ProgramPage() {
   const [originalStampsRequired, setOriginalStampsRequired] = useState(10);
   const [showStampsWarning, setShowStampsWarning] = useState(false);
   const [tier2Error, setTier2Error] = useState('');
-  const [socialOpen, setSocialOpen] = useState(false);
+  const [socialOpen, setSocialOpen] = useState(searchParams.get('section') === 'social');
 
   // Prefetch preview page for faster navigation after first save
   useEffect(() => {
     if (merchant?.id) router.prefetch(`/customer/card/${merchant.id}?preview=true&onboarding=true`);
   }, [router, merchant?.id]);
+
+  // Auto-scroll to social section when coming from onboarding checklist
+  useEffect(() => {
+    if (searchParams.get('section') === 'social' && !loading) {
+      setTimeout(() => {
+        document.getElementById('social-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  }, [searchParams, loading]);
 
   useEffect(() => {
     const fetchMerchant = async () => {
@@ -606,7 +616,7 @@ export default function ProgramPage() {
           </div>
 
           {/* Liens & Réseaux — Collapsible */}
-          <div className="bg-white/80 backdrop-blur-xl border border-pink-100 rounded-2xl shadow-sm overflow-hidden">
+          <div id="social-section" className="bg-white/80 backdrop-blur-xl border border-pink-100 rounded-2xl shadow-sm overflow-hidden">
             <button
               type="button"
               onClick={() => setSocialOpen(!socialOpen)}

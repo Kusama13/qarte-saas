@@ -494,6 +494,29 @@ SHIELD (points en attente)
 
 # PARTIE 6 : CHANGELOG
 
+## [2026-02-12] — Onboarding checklist, admin parrainage + progression, UX fixes
+
+### Dashboard onboarding checklist
+- **feat:** 6 etapes checklist : programme, logo, reseau social, preview client, QR code, 2 premiers scans
+- **feat:** Deep-link `?section=social` vers section reseaux sociaux (auto-open collapse + scroll)
+- **feat:** Etape "Simuler l'experience client" → preview carte (`?preview=true`)
+- **refactor:** Retrait etapes push/parrainage (incoherentes au debut), reduction 8→6 etapes
+
+### Admin merchant detail
+- **feat:** Badge parrainage actif/inactif (violet/gris) dans badges statut
+- **feat:** Section "Progression onboarding" : 5 items checklist + barre de progression
+
+### PWA carte client
+- **fix:** Retrait badge "Notifications actives" (inutile visuellement)
+
+### AdjustPointsModal
+- **fix:** Boutons +1/-1 incrementaux (accumulent au lieu de remplacer)
+
+### ReviewPrompt
+- **fix:** Background `bg-white/70 backdrop-blur-sm` (harmonise avec SocialLinks)
+
+---
+
 ## [2026-02-12] — Audit bugs complet, admin social links, landing cleanup
 
 ### Audit bugs complet (10+ fixes critiques)
@@ -771,4 +794,4 @@ SHIELD (points en attente)
 ---
 
 *Derniere mise a jour : 12 fevrier 2026*
-*Statuts verifies contre le code source le 12/02/2026. Audit bugs complet + admin social links + landing cleanup.*
+*Statuts verifies contre le code source le 12/02/2026. Onboarding checklist + admin progression + audit bugs + landing cleanup.*
