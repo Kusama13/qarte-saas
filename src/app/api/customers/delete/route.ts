@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     // Verify the loyalty card belongs to this merchant
     const { data: card, error: cardError } = await supabaseAdmin
       .from('loyalty_cards')
-      .select('id, merchant_id')
+      .select('id, merchant_id, customer_id')
       .eq('id', loyalty_card_id)
       .single();
 
@@ -73,22 +73,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Delete in order: visits, point_adjustments, redemptions, then loyalty_card
+    // Delete in order: vouchers, referrals, visits, point_adjustments, redemptions, then loyalty_card
     // The ON DELETE CASCADE should handle this, but we do it explicitly for safety
-    await supabaseAdmin
-      .from('visits')
-      .delete()
-      .eq('loyalty_card_id', loyalty_card_id);
-
-    await supabaseAdmin
-      .from('point_adjustments')
-      .delete()
-      .eq('loyalty_card_id', loyalty_card_id);
-
-    await supabaseAdmin
-      .from('redemptions')
-      .delete()
-      .eq('loyalty_card_id', loyalty_card_id);
+    await Promise.all([
+      supabaseAdmin.from('vouchers').delete().eq('loyalty_card_id', loyalty_card_id),
+      supabaseAdmin.from('visits').delete().eq('loyalty_card_id', loyalty_card_id),
+      supabaseAdmin.from('point_adjustments').delete().eq('loyalty_card_id', loyalty_card_id),
+      supabaseAdmin.from('redemptions').delete().eq('loyalty_card_id', loyalty_card_id),
+      supabaseAdmin.from('referrals').delete().eq('referrer_card_id', loyalty_card_id),
+      supabaseAdmin.from('referrals').delete().eq('referred_card_id', loyalty_card_id),
+    ]);
 
     // Delete the loyalty card
     const { error: deleteError } = await supabaseAdmin
@@ -102,6 +96,15 @@ export async function POST(request: NextRequest) {
         { error: 'Erreur lors de la suppression' },
         { status: 500 }
       );
+    }
+
+    // Delete the customer row (scoped to this merchant via merchant_id)
+    if (card.customer_id) {
+      await supabaseAdmin
+        .from('customers')
+        .delete()
+        .eq('id', card.customer_id)
+        .eq('merchant_id', merchant.id);
     }
 
     return NextResponse.json({
