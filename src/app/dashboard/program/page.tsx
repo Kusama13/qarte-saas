@@ -566,6 +566,22 @@ export default function ProgramPage() {
                     }}
                     className={`bg-white ${tier2Error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-violet-200 focus:border-violet-500 focus:ring-violet-500/20'}`}
                   />
+                  <div className="flex gap-2">
+                    {[10, 15, 20].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => { setFormData({ ...formData, tier2StampsRequired: n }); setTier2Error(''); }}
+                        className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all duration-200 ${
+                          formData.tier2StampsRequired === n
+                            ? 'bg-violet-100 border-violet-300 text-violet-700'
+                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600'
+                        }`}
+                      >
+                        {n} passages
+                      </button>
+                    ))}
+                  </div>
                   {tier2Error ? (
                     <p className="text-xs text-red-500 font-medium">{tier2Error}</p>
                   ) : (

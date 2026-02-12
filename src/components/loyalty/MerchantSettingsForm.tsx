@@ -70,15 +70,15 @@ const REWARD_SUGGESTIONS: Record<ShopType, string[]> = {
 
 // Suggestions d'objectifs (nombre de passages) par type
 const STAMPS_SUGGESTIONS: Record<ShopType, number[]> = {
-  coiffeur: [8, 10, 12],
-  barbier: [8, 10, 12],
-  institut_beaute: [8, 10, 15],
-  onglerie: [8, 10, 12],
+  coiffeur: [5, 8, 10],
+  barbier: [5, 8, 10],
+  institut_beaute: [5, 8, 10],
+  onglerie: [5, 8, 10],
   spa: [5, 8, 10],
-  estheticienne: [8, 10, 12],
+  estheticienne: [5, 8, 10],
   massage: [5, 8, 10],
   epilation: [5, 8, 10],
-  autre: [5, 10, 15],
+  autre: [5, 8, 10],
 };
 
 interface MerchantSettingsFormProps {

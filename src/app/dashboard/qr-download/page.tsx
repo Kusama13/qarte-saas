@@ -70,7 +70,7 @@ export default function QRDownloadPage() {
     setIsGenerating(true);
     try {
       const image = await toPng(socialExportRef.current, {
-        pixelRatio: 4,
+        pixelRatio: 2,
         cacheBust: true,
       });
       const link = document.createElement('a');
