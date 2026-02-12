@@ -9,16 +9,11 @@ import {
   ArrowRight,
   AlertCircle,
   Gift,
-  Sparkles,
   Loader2,
-  CreditCard,
   ChevronDown,
-  Hourglass,
-  Shield,
   Ban,
   Star,
   HelpCircle,
-  Trophy,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -29,6 +24,7 @@ import type { Merchant, Customer, LoyaltyCard } from '@/types';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { ScanSuccessStep } from '@/components/loyalty';
+import { WelcomeBanner, ScanRewardScreen, ScanAlreadyCheckedScreen, ScanPendingScreen } from '@/components/scan';
 
 type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'pending' | 'banned';
 
@@ -468,115 +464,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       <main className="flex-1 px-4 pt-4 pb-4 mx-auto max-w-md w-full">
         {step === 'phone' && (
           <div className="animate-fade-in">
-            {/* Welcome Banner */}
-            <div className="relative mb-4 overflow-hidden rounded-3xl shadow-xl border border-gray-100">
-              {/* Logo/Image Section - Compact with gradient background */}
-              <div
-                className="relative h-40 flex items-center justify-center overflow-hidden"
-                style={{ background: `linear-gradient(135deg, ${primaryColor}30, ${secondaryColor || primaryColor}40)` }}
-              >
-                {/* Decorative gradient circles */}
-                <div
-                  className="absolute -top-12 -right-12 w-36 h-36 rounded-full opacity-30"
-                  style={{ background: `radial-gradient(circle, ${primaryColor}, transparent)` }}
-                />
-                <div
-                  className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full opacity-25"
-                  style={{ background: `radial-gradient(circle, ${secondaryColor || primaryColor}, transparent)` }}
-                />
-
-                {/* Logo or Initial */}
-                {merchant.logo_url ? (
-                  <div className="relative">
-                    <div
-                      className="absolute -inset-3 rounded-2xl blur-xl opacity-40"
-                      style={{ backgroundColor: primaryColor }}
-                    />
-                    <img
-                      src={merchant.logo_url}
-                      alt={merchant.shop_name}
-                      className="relative w-28 h-28 rounded-2xl object-cover shadow-2xl border-3 border-white/90"
-                    />
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <div
-                      className="absolute -inset-3 rounded-full blur-xl opacity-40"
-                      style={{ backgroundColor: primaryColor }}
-                    />
-                    <div
-                      className="relative w-28 h-28 rounded-full flex items-center justify-center shadow-2xl border-3 border-white/90"
-                      style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
-                    >
-                      <span className="text-5xl font-black text-white drop-shadow-lg">{merchant.shop_name[0]}</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Content Section */}
-              <div className="relative bg-white pt-5 pb-4 px-6 text-center overflow-hidden">
-                {/* Subtle Gift icon background */}
-                <Gift
-                  className="absolute -right-4 -bottom-4 w-24 h-24 opacity-[0.03]"
-                  style={{ color: primaryColor }}
-                />
-
-                <div className="relative z-10">
-                  <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-                    Bienvenue chez <span style={{ color: primaryColor }}>{merchant.shop_name}</span>
-                  </h2>
-
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <Sparkles className="w-4 h-4" style={{ color: primaryColor }} />
-                    <p className="text-lg font-extrabold text-gray-900 tracking-tight">
-                      Nous récompensons votre fidélité
-                    </p>
-                    <Sparkles className="w-4 h-4" style={{ color: primaryColor }} />
-                  </div>
-
-                  {/* Reward Badges */}
-                  <div className="flex flex-col gap-2.5">
-                    {/* Tier 1 - Primary Reward */}
-                    <div
-                      className="rounded-2xl p-3.5 border-2 shadow-md"
-                      style={{ backgroundColor: `${primaryColor}10`, borderColor: `${primaryColor}25` }}
-                    >
-                      <div className="flex items-center justify-center gap-2 mb-1">
-                        <Gift className="w-4 h-4" style={{ color: primaryColor }} />
-                        <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                          Votre récompense
-                        </span>
-                      </div>
-                      <p className="text-base font-extrabold text-gray-900 text-center">
-                        {merchant.reward_description}
-                      </p>
-                      <p className="text-xs font-bold text-center mt-1" style={{ color: primaryColor }}>
-                        Après {merchant.stamps_required} passage{merchant.stamps_required > 1 ? 's' : ''}
-                      </p>
-                    </div>
-
-                    {/* Tier 2 - Premium Reward (if enabled) */}
-                    {merchant.tier2_enabled && merchant.tier2_stamps_required && merchant.tier2_reward_description && (
-                      <div className="rounded-2xl p-3.5 border-2 border-amber-200 bg-amber-50/60 shadow-md">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <Trophy className="w-4 h-4 text-amber-500" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
-                            Palier 2 — Récompense
-                          </span>
-                        </div>
-                        <p className="text-base font-extrabold text-gray-900 text-center">
-                          {merchant.tier2_reward_description}
-                        </p>
-                        <p className="text-xs font-bold text-center mt-1 text-amber-600">
-                          Après {merchant.tier2_stamps_required} passage{merchant.tier2_stamps_required > 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <WelcomeBanner merchant={merchant} primaryColor={primaryColor} secondaryColor={secondaryColor} />
 
             {/* How it works Accordion */}
             <div className="mb-4">
@@ -780,270 +668,36 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         )}
 
         {step === 'reward' && loyaltyCard && (
-          <div className="flex flex-col items-center justify-center min-h-[70vh] py-8">
-            {/* Animated icon with glow */}
-            <motion.div
-              className="relative mb-6"
-              initial={{ scale: 0, rotate: -20 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.1 }}
-            >
-              {/* Pulsing glow */}
-              <motion.div
-                className="absolute inset-0 rounded-3xl"
-                style={{ backgroundColor: rewardTier === 2 ? '#8b5cf620' : '#10b98120' }}
-                animate={{ scale: [1, 1.4, 1.2], opacity: [0.8, 0.3, 0.6] }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              <div
-                className="relative inline-flex items-center justify-center w-24 h-24 rounded-3xl"
-                style={{
-                  background: rewardTier === 2
-                    ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)'
-                    : 'linear-gradient(135deg, #10b981, #059669)',
-                }}
-              >
-                {rewardTier === 2 ? (
-                  <Trophy className="w-12 h-12 text-white" />
-                ) : (
-                  <Gift className="w-12 h-12 text-white" />
-                )}
-              </div>
-            </motion.div>
-
-            {/* Title */}
-            <motion.h2
-              className="text-3xl font-black text-gray-900 mb-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              🎉 Félicitations !
-            </motion.h2>
-            <motion.p
-              className="text-gray-500 mb-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              {rewardTier === 2 ? merchant?.tier2_stamps_required : merchant?.stamps_required} passages atteints !
-            </motion.p>
-
-            {/* Reward Card with shine effect */}
-            <motion.div
-              className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 w-full max-w-sm overflow-hidden relative"
-              initial={{ opacity: 0, y: 30, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 15 }}
-            >
-              {/* Animated shine sweep */}
-              <motion.div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  background: 'linear-gradient(105deg, transparent 40%, white 50%, transparent 60%)',
-                }}
-                initial={{ x: '-150%' }}
-                animate={{ x: '200%' }}
-                transition={{ duration: 2, delay: 0.8, ease: 'easeInOut' }}
-              />
-
-              <div className="relative">
-                <motion.div
-                  className="rounded-2xl p-5 mb-6"
-                  style={{ backgroundColor: `${primaryColor}08`, border: `2px solid ${primaryColor}20` }}
-                  animate={{ scale: [1, 1.02, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
-                    {rewardTier === 2 ? 'Palier 2 — Votre récompense' : (merchant?.tier2_enabled ? 'Palier 1 — Votre récompense' : 'Votre récompense')}
-                  </p>
-                  <p className="text-2xl font-black" style={{ color: primaryColor }}>
-                    {rewardTier === 2 ? merchant?.tier2_reward_description : merchant?.reward_description}
-                  </p>
-                </motion.div>
-
-                <button
-                  onClick={handleRedeemReward}
-                  disabled={submitting}
-                  className="w-full h-16 rounded-2xl text-lg font-bold text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                  style={{
-                    background: rewardTier === 2
-                      ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)'
-                      : 'linear-gradient(135deg, #10b981, #059669)',
-                    boxShadow: rewardTier === 2
-                      ? '0 8px 24px -4px rgba(139,92,246,0.4)'
-                      : '0 8px 24px -4px rgba(16,185,129,0.4)',
-                  }}
-                >
-                  {submitting ? (
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                  ) : (
-                    <>
-                      {rewardTier === 2 ? <Trophy className="w-6 h-6" /> : <Gift className="w-6 h-6" />}
-                      Utiliser ma récompense
-                    </>
-                  )}
-                </button>
-
-                <p className="mt-4 text-sm text-gray-400">Montrez cet écran au commerçant</p>
-              </div>
-            </motion.div>
-
-            <motion.button
-              onClick={() => router.replace(`/customer/card/${merchant?.id}?scan_success=1`)}
-              className="mt-6 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-            >
-              Plus tard →
-            </motion.button>
-          </div>
+          <ScanRewardScreen
+            merchant={merchant}
+            loyaltyCard={loyaltyCard}
+            rewardTier={rewardTier}
+            submitting={submitting}
+            primaryColor={primaryColor}
+            onRedeem={handleRedeemReward}
+            onSkip={() => router.replace(`/customer/card/${merchant?.id}?scan_success=1`)}
+          />
         )}
 
         {step === 'already-checked' && (
-          <div className="animate-fade-in">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
-              <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-amber-100">
-                <AlertCircle className="w-10 h-10 text-amber-600" />
-              </div>
-
-              <h2 className="text-2xl font-black text-gray-900 mb-2">Déjà validé !</h2>
-              <p className="text-gray-500 mb-8">Vous avez déjà validé votre passage aujourd&apos;hui. Revenez demain !</p>
-
-              {/* Points Display */}
-              {(() => {
-                const stamps = loyaltyCard?.current_stamps || 0;
-                const tier2On = merchant?.tier2_enabled && merchant?.tier2_stamps_required;
-                const tier1Done = tier1Redeemed || stamps >= (merchant?.stamps_required || 10);
-                const target = tier2On && tier1Done
-                  ? merchant.tier2_stamps_required!
-                  : (merchant?.stamps_required || 10);
-                return (
-                  <>
-                    <div className="mb-8">
-                      <div className="flex items-baseline justify-center gap-1">
-                        <span className="text-5xl font-black" style={{ color: primaryColor }}>{stamps}</span>
-                        <span className="text-xl font-bold text-gray-300">/{target}</span>
-                      </div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
-                        Passages cumulés{tier2On && tier1Done ? ' · Palier 2' : tier2On ? ' · Palier 1' : ''}
-                      </p>
-                    </div>
-                    <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${Math.min(100, (stamps / target) * 100)}%`,
-                          background: tier2On && tier1Done
-                            ? 'linear-gradient(90deg, #8b5cf6, #a78bfa)'
-                            : `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
-                        }}
-                      />
-                    </div>
-                  </>
-                );
-              })()}
-
-              <Link
-                href={`/customer/card/${merchant.id}`}
-                className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
-              >
-                <CreditCard className="w-5 h-5" />
-                Voir ma carte complète
-              </Link>
-            </div>
-          </div>
+          <ScanAlreadyCheckedScreen
+            merchant={merchant}
+            loyaltyCard={loyaltyCard}
+            tier1Redeemed={tier1Redeemed}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+          />
         )}
 
-        {/* Qarte Shield: Pending Verification Screen */}
         {step === 'pending' && loyaltyCard && (
-          <div className="animate-fade-in">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
-              <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-amber-50">
-                <Hourglass className="w-10 h-10 text-amber-600 animate-pulse" />
-              </div>
-
-              <h2 className="text-2xl font-black text-gray-900 mb-2">
-                Passage en cours de vérification
-              </h2>
-              <p className="text-gray-500 mb-6">
-                Pour votre sécurité, ce passage doit être validé par votre commerçant.
-              </p>
-
-              {/* Info Card */}
-              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8 text-left">
-                <p className="text-sm text-amber-900 leading-relaxed">
-                  Notre système a détecté plusieurs passages aujourd&apos;hui. Cette mesure protège votre compte contre les utilisations frauduleuses. Votre passage sera validé dès confirmation par le commerçant.
-                </p>
-              </div>
-
-              {/* Points Display */}
-              {(() => {
-                const tier2On = merchant?.tier2_enabled && merchant?.tier2_stamps_required;
-                const tier1Done = tier1Redeemed || loyaltyCard.current_stamps >= (merchant?.stamps_required || 10);
-                const target = tier2On && tier1Done
-                  ? merchant.tier2_stamps_required!
-                  : (merchant?.stamps_required || 10);
-                return (
-                  <div className="mb-8">
-                    <div className="flex items-baseline justify-center gap-1">
-                      <span className="text-5xl font-black" style={{ color: primaryColor }}>
-                        {loyaltyCard.current_stamps}
-                      </span>
-                      <span className="text-xl font-bold text-gray-300">/{target}</span>
-                    </div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
-                      Passages confirmés{tier2On && tier1Done ? ' · Palier 2' : tier2On ? ' · Palier 1' : ''}
-                    </p>
-                    <div className="mt-3 inline-flex px-3 py-1.5 bg-amber-100 rounded-full">
-                      <span className="text-sm font-bold text-amber-700">
-                        + {pendingStamps} en attente
-                      </span>
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {/* Progress Bar */}
-              {(() => {
-                const tier2On = merchant?.tier2_enabled && merchant?.tier2_stamps_required;
-                const tier1Done = tier1Redeemed || loyaltyCard.current_stamps >= (merchant?.stamps_required || 10);
-                const target = tier2On && tier1Done
-                  ? merchant.tier2_stamps_required!
-                  : (merchant?.stamps_required || 10);
-                return (
-                  <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden mb-6">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${Math.min(100, (loyaltyCard.current_stamps / target) * 100)}%`,
-                        background: tier2On && tier1Done
-                          ? 'linear-gradient(90deg, #8b5cf6, #a78bfa)'
-                          : `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`
-                      }}
-                    />
-                  </div>
-                );
-              })()}
-
-              <Link
-                href={`/customer/card/${merchant.id}`}
-                className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
-              >
-                <CreditCard className="w-5 h-5" />
-                Voir ma carte complète
-              </Link>
-
-              {/* Shield Badge */}
-              <div className="flex items-center justify-center gap-2 mt-6">
-                <Shield className="w-4 h-4 text-gray-400" />
-                <span className="text-xs font-medium text-gray-400 uppercase tracking-widest">
-                  Protégé par Qarte Shield
-                </span>
-              </div>
-            </div>
-          </div>
+          <ScanPendingScreen
+            merchant={merchant}
+            loyaltyCard={loyaltyCard}
+            tier1Redeemed={tier1Redeemed}
+            pendingStamps={pendingStamps}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+          />
         )}
 
         {/* Banned Screen */}
