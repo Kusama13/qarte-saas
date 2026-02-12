@@ -33,6 +33,7 @@ export default function QRDownloadPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedCaption, setCopiedCaption] = useState<number | null>(null);
   const socialExportRef = useRef<HTMLDivElement>(null);
+  const qrCardRef = useRef<HTMLDivElement>(null);
 
   // Generate QR code when merchant data is available
   useEffect(() => {
@@ -42,18 +43,26 @@ export default function QRDownloadPage() {
     generateQRCode(url).then(setQrCodeUrl);
   }, [merchant?.scan_code]);
 
-  const saveQrImage = () => {
-    if (!qrCodeUrl || !merchant) return;
-    const link = document.createElement('a');
-    link.download = `qr-${merchant.slug}.png`;
-    link.href = qrCodeUrl;
-    link.click();
+  const saveQrImage = async () => {
+    if (!qrCardRef.current || !merchant) return;
+    try {
+      const image = await toPng(qrCardRef.current, {
+        pixelRatio: 4,
+        cacheBust: true,
+      });
+      const link = document.createElement('a');
+      link.download = `qr-${merchant.slug}.png`;
+      link.href = image;
+      link.click();
 
-    // Track QR download for onboarding checklist (fire and forget)
-    fetch('/api/onboarding/status', { method: 'POST' }).catch(() => {});
+      // Track QR download for onboarding checklist (fire and forget)
+      fetch('/api/onboarding/status', { method: 'POST' }).catch(() => {});
 
-    setDownloadSuccess(true);
-    setTimeout(() => setDownloadSuccess(false), 3000);
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 3000);
+    } catch (error) {
+      console.error('Error generating QR image:', error);
+    }
   };
 
   const downloadSocialPng = async () => {
@@ -180,6 +189,7 @@ export default function QRDownloadPage() {
               <div className="relative">
                 {/* QR Card — 280x350 = same 4:5 ratio as SocialMediaTemplate at scale 0.7 */}
                 <div
+                  ref={qrCardRef}
                   className="relative overflow-hidden"
                   style={{
                     width: '280px',
