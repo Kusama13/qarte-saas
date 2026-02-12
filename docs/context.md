@@ -59,7 +59,7 @@ src/
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
 │   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
-│   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, ReviewPrompt, MemberCardModal)
+│   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, ReviewPrompt, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep)
 │   ├── marketing/         # SocialMediaTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel
 │
@@ -145,6 +145,7 @@ public/
 - `stamps_required`, `reward_description`
 - `tier2_enabled`, `tier2_stamps_required`, `tier2_reward_description`
 - `referral_code` (VARCHAR 10, UNIQUE — ex: `QARTE-AB3K`)
+- `referral_program_enabled`, `referral_reward_referrer`, `referral_reward_referred`
 - `trial_ends_at`, `subscription_status`, `stripe_customer_id`, `stripe_subscription_id`
 - `shield_enabled` (Qarte Shield)
 
@@ -154,6 +155,7 @@ public/
 ### loyalty_cards
 - `id`, `customer_id`, `merchant_id`
 - `current_stamps`, `stamps_target`, `last_visit_date`
+- `referral_code` (VARCHAR 8, UNIQUE — code parrainage client)
 
 ### visits
 - `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
@@ -165,6 +167,13 @@ public/
 - `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
 - `reward_description`, `is_used`, `used_at`, `expires_at`
 
+### referrals
+- `id`, `merchant_id`, `referrer_customer_id`, `referrer_card_id`
+- `referred_customer_id`, `referred_card_id`
+- `referred_voucher_id`, `referrer_voucher_id`
+- `status` ('pending' | 'completed')
+- UNIQUE `(merchant_id, referred_customer_id)` — 1 parrainage par filleul par merchant
+
 ### Autres tables
 - `redemptions`, `point_adjustments`, `banned_numbers`
 - `push_subscriptions`, `push_history`, `scheduled_push`
@@ -175,7 +184,7 @@ public/
 
 ### Securite RLS
 Toutes les tables ont **Row Level Security (RLS)** active avec policies appropriees :
-- Tables publiques : `customers`, `loyalty_cards`, `visits` (lecture/ecriture via scan)
+- Tables publiques : `customers`, `loyalty_cards`, `visits`, `referrals`, `vouchers` (lecture/ecriture via scan)
 - Tables merchants : acces filtre par `user_id`
 - Tables admin : acces via `super_admins` ou `service_role` uniquement
 - Tables internes : `service_role` uniquement (cron jobs, API)
@@ -198,6 +207,12 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - `POST /api/merchants/create` - Creer commercant (pre-remplit `stamps_required` selon shop_type, `reward_description` laisse null)
 - `GET /api/merchants/preview` - Donnees publiques merchant (preview carte)
 - `GET /api/merchant/stats` - Statistiques
+
+### Parrainage Client
+- `GET /api/referrals?code=` - Info code parrainage (merchant, parrain, recompense)
+- `POST /api/referrals` - Inscription filleul (cree customer + carte + voucher filleul)
+- `POST /api/vouchers/use` - Consommer voucher (auto-cree voucher parrain si referral)
+- `POST /api/merchants/referral-config` - Sauvegarder config parrainage (auth merchant)
 
 ### Push & Marketing
 - `POST /api/push/subscribe` - S'abonner aux push
@@ -268,6 +283,16 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Notifications push programmees (10h et 18h)
 - Kit reseaux sociaux (SocialMediaTemplate, visuel 4:5 + legendes Instagram)
 - Ebook telechargeable (lead generation)
+
+### Parrainage Client
+- Code parrainage unique par carte fidelite (`referral_code` 6 caracteres)
+- Bouton "Parrainer un ami" sur carte client (Web Share API + fallback clipboard)
+- Lien `/scan/[code]?ref=[referral_code]` — banner parrain + inscription filleul
+- Voucher filleul auto-cree a l'inscription, voucher parrain auto-cree quand filleul consomme
+- Bouton "Utiliser" self-service sur carte client (pas d'action merchant)
+- Dashboard `/dashboard/referrals` : toggle on/off, config recompenses, stats, tableau de suivi
+- Statuts : `pending` (filleul inscrit) → `completed` (filleul a consomme)
+- Message d'accueil quotidien rotatif sous le prenom client (10 phrases motivationnelles)
 
 ### Programmes Membres
 - Cartes de membre avec validite
@@ -417,6 +442,9 @@ npm run email
 | `src/app/api/cron/morning/route.ts` | Cron principal (4 taches) |
 | `src/app/api/stripe/webhook/route.ts` | Webhook Stripe (5 events, machine d'etats) |
 | `src/app/api/stripe/checkout/route.ts` | Checkout Stripe (verification customer) |
+| `src/app/api/referrals/route.ts` | API parrainage client (GET info + POST inscription) |
+| `src/app/api/vouchers/use/route.ts` | API consommation voucher + auto-creation parrain |
+| `src/app/dashboard/referrals/page.tsx` | Dashboard parrainage (config + stats + tableau) |
 | `supabase/migrations/` | 33 migrations SQL |
 
 ---
@@ -481,7 +509,9 @@ npm run email
 | tampon | Synonyme de passage (icone coeur sur la carte) |
 | palier | Niveau de recompense (tier1, tier2) |
 | scan_code | Code unique du commercant pour le QR |
-| referral_code | Code parrainage unique merchant (QARTE-XXXX) |
+| referral_code (merchant) | Code parrainage unique merchant (QARTE-XXXX) |
+| referral_code (loyalty_card) | Code parrainage unique client (6 chars, ex: XY7Z9K) |
+| voucher | Recompense parrainage (filleul ou parrain) |
 | slug | URL-friendly du nom de commerce |
 | shield | Systeme anti-fraude Qarte Shield |
 
@@ -532,7 +562,8 @@ npm run email
 - Gestion clients
 - Marketing (push notifications)
 - Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe + prix journalier (0,63€/jour mensuel, 0,52€/jour annuel)
-- Parrainage : encart en haut de Settings (code + copier + partager via Web Share API)
+- Parrainage merchant : encart en haut de Settings (code QARTE-XXXX + copier + partager via Web Share API)
+- Parrainage client : page `/dashboard/referrals` (toggle, config recompenses, stats, tableau de suivi)
 - Headers harmonises (violet #4b0082)
 
 ### Scan (`/scan/[code]`)
@@ -542,6 +573,7 @@ npm run email
 - Affichage progression fidelite
 - Utilisation recompense
 - Placeholder telephone dynamique selon pays merchant
+- Detection `?ref=` : banner parrain, inscription filleul via `/api/referrals`, ecran succes referral
 
 ---
 

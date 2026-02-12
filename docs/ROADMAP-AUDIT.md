@@ -54,6 +54,7 @@ Signup (email+password)
 | F8 | Birthday Club (anniversaire clients) | 6h | ❌ A FAIRE |
 | F9 | Parrainage merchant | 3h | ✅ FAIT — code QARTE-XXXX, Settings + FirstScanEmail, Web Share API |
 | F10 | Scratch & Win gamification | 6h | ❌ A FAIRE |
+| F21 | Parrainage client (filleul/parrain) | 8h | ✅ FAIT — APIs, scan ?ref=, carte client, dashboard /referrals |
 | F11 | Mode articles (points par euro) | 4-5h | ❌ A FAIRE |
 | F12 | Export CSV/PDF enrichi | 5h | ❌ A FAIRE |
 | F13 | Push geolocalisee | 6-8h | ❌ A FAIRE |
@@ -82,7 +83,8 @@ Signup (email+password)
 | F7 | ~~Checklist gamifiee~~ | ~~4h~~ | ★★★★★ | ★★★ | **✅ FAIT** |
 | F8 | Birthday Club | 6h | ★★★ | ★★★★★ | **P1** |
 | F10 | Scratch & Win | 6h | ★★ | ★★★★★ | **P2** |
-| F9 | ~~Parrainage~~ | ~~3h~~ | ★★★★ | ★★★ | **✅ FAIT** |
+| F9 | ~~Parrainage merchant~~ | ~~3h~~ | ★★★★ | ★★★ | **✅ FAIT** |
+| F21 | ~~Parrainage client~~ | ~~8h~~ | ★★★★★ | ★★★★★ | **✅ FAIT** |
 | F11 | Mode articles | 4-5h | ★★ | ★★★ | **P2** |
 | F12 | Export CSV/PDF | 5h | ★ | ★★★ | **P2** |
 | F16 | Google Reviews auto | 1-2j | ★★★★ | ★★★★ | **P2** |
@@ -122,8 +124,8 @@ Signup (email+password)
 
 | # | Severite | Probleme | Fichier | Action |
 |---|----------|----------|---------|--------|
-| 1 | HIGH | Fichier 1533 lignes (optimise: useMemo, fonctions pures extraites, dead code supprime) | `customer/card/[merchantId]/page.tsx` | Splitter en composants |
-| 2 | HIGH | Fichier 1025 lignes | `scan/[code]/page.tsx` | Splitter en composants |
+| 1 | HIGH | Fichier ~1300 lignes (optimise: useMemo, fonctions pures, composants loyalty extraits) | `customer/card/[merchantId]/page.tsx` | Splitter davantage |
+| 2 | HIGH | Fichier ~1200 lignes (referral flow ajoute) | `scan/[code]/page.tsx` | Splitter en composants |
 | 3 | MEDIUM | Fichier 573 lignes | `admin/merchants/page.tsx` | Acceptable, surveiller |
 
 ### Marketing
@@ -445,6 +447,11 @@ SHIELD (points en attente)
 - [x] ReviewPrompt redesign compact
 - [x] MemberCardModal redesign premium
 - [x] Nettoyage logos clients inutilises
+- [x] **F21** : Programme parrainage client complet (APIs + scan + carte + dashboard)
+- [x] Harmonisation design : shadows, borders, cards uniformes
+- [x] Message d'accueil quotidien rotatif (10 phrases motivationnelles)
+- [x] SocialLinks redesigne en card style
+- [x] Referral button redesigne en card blanche + bouton compact
 
 ## Semaine 1 (10-16 fev)
 - [ ] **F3** : Celebration premier scan (1h)
@@ -474,6 +481,36 @@ SHIELD (points en attente)
 ---
 
 # PARTIE 6 : CHANGELOG
+
+## [2026-02-12] — Programme parrainage client, harmonisation design, message accueil
+
+### Programme de parrainage client (F21)
+**Commit:** `f34670c`
+- **feat:** `POST /api/referrals` — inscription filleul (cree customer + carte + voucher, anti-doublon, anti-parrainage soi-meme)
+- **feat:** `GET /api/referrals?code=` — info code parrainage (merchant, parrain, recompense)
+- **feat:** `POST /api/vouchers/use` — consommation voucher self-service + auto-creation voucher parrain si referral
+- **feat:** `POST /api/merchants/referral-config` — sauvegarde config parrainage (auth merchant)
+- **feat:** Scan page `?ref=` detection — banner parrain, inscription filleul, ecran succes referral
+- **feat:** Carte client — bouton "Parrainer un ami" (Web Share API + fallback clipboard)
+- **feat:** Carte client — section "Mes recompenses" avec vouchers + bouton "Utiliser"
+- **feat:** Dashboard `/dashboard/referrals` — toggle on/off, 2 inputs recompenses, 3 compteurs stats, tableau parrainages
+- **feat:** Sidebar dashboard — lien "Parrainage" ajoute
+- **feat:** `generateReferralCode()` dans utils.ts (6 chars alphanum sans ambiguite)
+- **feat:** Auto-generation `referral_code` sur loyalty_cards (checkin + referral creation)
+- **types:** `Referral`, `Voucher`, `ReferralStatus` ajoutes dans types/index.ts
+
+### Harmonisation design carte client
+- **style:** Shadows uniformes `shadow-lg shadow-gray-200/50` sur toutes les cartes blanches
+- **style:** Borders uniformes `border border-gray-100/80 rounded-2xl`
+- **style:** SocialLinks redesigne — `bg-white/70 backdrop-blur-sm` avec card style standard
+- **style:** Push notification banner — icone dans carre teinte merchant, card style uniforme
+- **style:** Referral button — redesigne en card blanche avec icone gradient + bouton compact "Partager"
+- **style:** RewardCard not-ready — `shadow-lg shadow-gray-200/50` (harmonise)
+- **style:** HistorySection border `border-gray-100/80` (harmonise)
+
+### Message d'accueil quotidien
+- **feat:** 10 phrases motivationnelles rotatives (1 par jour, stable via day-of-year)
+- **ui:** Texte italic gris sous le prenom client ("Vous etes resplendissante !", "On adore vous revoir !", etc.)
 
 ## [2026-02-12] — Refonte carte client, reward celebration, optimisation
 
@@ -684,4 +721,4 @@ SHIELD (points en attente)
 ---
 
 *Derniere mise a jour : 12 fevrier 2026*
-*Statuts verifies contre le code source le 12/02/2026.*
+*Statuts verifies contre le code source le 12/02/2026. Parrainage client + design harmonise.*
