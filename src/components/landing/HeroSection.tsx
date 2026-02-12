@@ -6,7 +6,6 @@ import {
   Star,
   ChevronDown,
   X,
-  Zap,
   Eye,
   Gift,
   Check,
@@ -127,37 +126,34 @@ export function HeroSection() {
         <div className={`space-y-6 lg:space-y-8 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
-            <h1 className="relative text-5xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+            <h1 className="relative text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
               Le programme de fidélité qui fait{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
-                revenir vos client(e)s.
+                revenir vos clients.
               </span>
             </h1>
           </div>
 
           <p className="text-base lg:text-lg text-gray-600 max-w-lg leading-relaxed">
-            Conçu pour les <span className="text-gray-900 font-medium">instituts de beauté, ongleries et salons</span>. QR code, points, récompenses. <span className="text-gray-900 font-medium">+40% de récurrence</span> en moyenne.
+            Conçu pour les <span className="text-gray-900 font-medium">instituts de beauté, ongleries et salons</span>. QR code, points, récompenses. <span className="text-gray-900 font-medium">Fini les cartes papier perdues</span>.
           </p>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 lg:gap-4">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-3 lg:gap-4">
+            <div>
               <a
                 href="/auth/merchant/signup"
                 onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); }}
-                className="group relative px-7 py-3.5 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 text-center shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] block"
+                className="group relative flex items-center justify-center px-7 py-4 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <span className="relative z-10">Essayer gratuitement</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
-              <span className="absolute -top-3 -right-2 flex items-center gap-0.5 px-2 py-0.5 bg-white text-gray-900 text-[10px] font-bold rounded-full -rotate-12 shadow-md border border-gray-100 z-20">
-                <Zap className="w-2.5 h-2.5 text-indigo-500 fill-indigo-500" />
-                En 2 min
-              </span>
+              <p className="text-xs text-gray-400 font-medium mt-2 text-center">En 2 mn, sans CB.</p>
             </div>
             <a
               href="/customer/card/demo-onglerie?preview=true&demo=true"
               onClick={() => trackCtaClick('hero_demo', 'hero_section')}
-              className="flex items-center justify-center gap-2 px-7 py-3.5 lg:px-9 lg:py-4 bg-white border-2 border-indigo-200 text-indigo-600 font-bold rounded-xl transition-all duration-300 text-center hover:border-indigo-400 hover:bg-indigo-50 hover:scale-[1.02] active:scale-[0.98]"
+              className="flex items-center justify-center gap-2 px-7 py-4 lg:px-9 lg:py-4 bg-white border-2 border-indigo-200 text-indigo-600 font-bold rounded-xl transition-all duration-300 text-center hover:border-indigo-400 hover:bg-indigo-50 hover:scale-[1.02] active:scale-[0.98]"
             >
               <Eye className="w-5 h-5" />
               Voir une démo
@@ -168,7 +164,7 @@ export function HeroSection() {
 
         {/* iPhone Mockup - Static */}
         <div className={`flex justify-center lg:items-start ${isInView ? 'animate-fade-in-up delay-300' : 'opacity-0'}`} style={{ animationDelay: '0.3s' }}>
-          <div className="relative mt-8 lg:mt-0 scale-[0.72] sm:scale-100 origin-top">
+          <div className="relative mt-8 lg:mt-0 scale-[0.85] sm:scale-100 origin-top">
             {/* Glow behind phone */}
             <div className="absolute inset-0 -m-8 bg-gradient-to-br from-rose-300/40 via-pink-300/30 to-violet-300/40 rounded-full blur-[60px]" />
 
@@ -280,7 +276,7 @@ export function HeroSection() {
             {/* === Floating elements around phone === */}
 
             {/* Toast "Point ajouté" */}
-            <div className="flex absolute top-28 right-0 translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100 items-center gap-2 z-30">
+            <div className="hidden sm:flex absolute top-28 right-0 translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100 items-center gap-2 z-30">
               <div className="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center">
                 <Check className="w-3.5 h-3.5 text-white" />
               </div>
@@ -291,7 +287,7 @@ export function HeroSection() {
             </div>
 
             {/* Floating star rating badge */}
-            <div className="absolute top-12 left-0 -translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-amber-200/50 border border-amber-200 z-30">
+            <div className="hidden sm:block absolute top-12 left-0 -translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-amber-200/50 border border-amber-200 z-30">
               <div className="flex gap-0.5 mb-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -302,7 +298,7 @@ export function HeroSection() {
             </div>
 
             {/* Floating referral badge */}
-            <div className="absolute bottom-32 left-0 -translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-violet-200/40 border border-violet-100 z-30">
+            <div className="hidden sm:block absolute bottom-32 left-0 -translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-violet-200/40 border border-violet-100 z-30">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-pink-500 rounded-full flex items-center justify-center shadow-md shadow-violet-300/40">
                   <Users className="w-3.5 h-3.5 text-white" />
@@ -315,7 +311,7 @@ export function HeroSection() {
             </div>
 
             {/* Push notification Qarte */}
-            <div className="absolute bottom-28 right-0 translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-indigo-200/40 border border-indigo-100 z-30 max-w-[200px]">
+            <div className="hidden sm:block absolute bottom-28 right-0 translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-indigo-200/40 border border-indigo-100 z-30 max-w-[200px]">
               <div className="flex items-start gap-2.5">
                 <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-300/40">
                   <Bell className="w-4 h-4 text-white" />

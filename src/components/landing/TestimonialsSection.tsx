@@ -358,15 +358,14 @@ export function TestimonialsSection() {
   const { ref, isInView } = useInView();
 
   return (
-    <section className="relative py-28 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-white via-gray-50/50 to-white" />
+    <section className="relative py-24 md:py-32 overflow-hidden bg-white">
 
       <div ref={ref} className="relative max-w-5xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             On leur a demandé{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
               ce qu&apos;elles en pensent
             </span>
           </h2>

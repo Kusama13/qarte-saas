@@ -16,7 +16,7 @@ function Step1() {
         <BarChart3 className="w-4 h-4 text-indigo-400" />
         <span className="text-sm font-bold text-indigo-400 uppercase tracking-wider">Vous repérez</span>
       </div>
-      <p className="text-lg font-bold text-slate-800 leading-snug">12 client(e)s prêt(e)s à revenir</p>
+      <p className="text-lg font-bold text-slate-800 leading-snug">12 clients prêts à revenir</p>
       <p className="text-base text-slate-400">Plus qu&apos;1 point avant leur cadeau</p>
       <div className="mt-2 inline-flex items-center gap-1.5 text-base font-bold text-indigo-500 bg-indigo-50 px-3 py-1 rounded-full">
         Relancez-les <ArrowRight className="w-4 h-4" />
@@ -96,13 +96,13 @@ export function FeaturesSection() {
         {/* Header */}
         <div className="text-center mb-14">
           <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">
-            Notifiez vos client(e)s{' '}
+            Notifiez vos clients{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-pink-500">
               au meilleur moment
             </span>
           </h2>
           <p className="text-lg text-slate-400 mt-4 max-w-xl mx-auto">
-            Grâce aux notifications push, vos client(e)s reviennent sans que vous ayez à y penser.
+            Grâce aux notifications push, vos clients reviennent sans que vous ayez à y penser.
           </p>
         </div>
 
@@ -140,7 +140,7 @@ export function FeaturesSection() {
             <div className="z-10 flex items-center justify-center">
               <div className="text-center">
                 <p className="text-5xl font-black text-indigo-600 leading-none">78%</p>
-                <p className="text-base font-semibold text-slate-400 mt-1">de vos client(e)s reviennent</p>
+                <p className="text-base font-semibold text-slate-400 mt-1">de vos clients reviennent</p>
               </div>
             </div>
             <div className="z-10 flex items-center">

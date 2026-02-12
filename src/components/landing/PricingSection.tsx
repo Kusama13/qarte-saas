@@ -22,7 +22,7 @@ export function PricingSection() {
   ];
 
   return (
-    <section id="pricing" className="py-24 bg-white">
+    <section id="pricing" className="py-24 md:py-32 bg-gray-50">
       <div ref={ref} className="max-w-4xl mx-auto px-6">
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -57,7 +57,7 @@ export function PricingSection() {
 
             <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-10" />
 
-            <ul className="grid grid-cols-2 gap-3 mb-10 relative">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10 relative">
               {features.map((feature, index) => (
                 <li key={index} className="flex items-center gap-2">
                   <div className="w-5 h-5 bg-indigo-500/10 rounded-full flex items-center justify-center flex-shrink-0">

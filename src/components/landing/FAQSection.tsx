@@ -7,36 +7,48 @@ import { useInView } from '@/hooks/useInView';
 
 const faqs = [
   {
-    question: "Et si mes client(e)s n'ont pas de smartphone ?",
-    answer: "99% de vos client(e)s ont un smartphone. Pour les rares exceptions, vous pouvez noter leurs points manuellement et les ajouter plus tard. Aucune client(e) n'est laissée de côté.",
+    question: "Et si mes clients n'ont pas de smartphone ?",
+    answer: "99% de vos clients en ont un. Pour les autres, notez les points manuellement et ajoutez-les plus tard.",
   },
   {
     question: "Combien de temps pour être opérationnel ?",
-    answer: "5 minutes chrono. Créez votre compte, ajoutez votre logo, définissez votre récompense, imprimez le QR code. C'est prêt. Aucune formation nécessaire.",
+    answer: "5 minutes. Compte, logo, récompense, QR code. C'est prêt.",
   },
   {
     question: "Ça marche pour les prestations à domicile ?",
-    answer: "Absolument ! Montrez simplement le QR code sur votre téléphone à votre client(e). Il/elle scanne, et son point est validé. Parfait pour les coiffeuses, esthéticiennes et masseuses à domicile.",
+    answer: "Oui. Montrez le QR code sur votre téléphone, la cliente scanne, son point est validé.",
   },
   {
-    question: "Mes client(e)s vont trouver ça compliqué ?",
-    answer: "Au contraire ! Elles scannent le QR code avec leur appareil photo, c'est tout. Pas d'application à télécharger, pas de compte à créer. Plus simple qu'une carte papier.",
+    question: "Mes clients vont trouver ça compliqué ?",
+    answer: "Elles scannent le QR code avec leur appareil photo, c'est tout. Pas d'app à télécharger, pas de compte à créer.",
   },
   {
     question: "Que se passe-t-il si j'arrête Qarte ?",
-    answer: "Vous exportez vos données client(e)s en CSV quand vous voulez. Pas de piège, pas d'engagement. Vos données vous appartiennent.",
+    answer: "Export CSV de toutes vos données en 1 clic. Pas de piège, pas d'engagement.",
   },
   {
-    question: "Comment fonctionne le programme de parrainage ?",
-    answer: "Chaque cliente peut partager son lien personnel avec ses amies. Quand une amie s'inscrit et fait son premier passage, les deux reçoivent une récompense que vous définissez (soin offert, réduction…). Tout est automatique, vous n'avez rien à gérer.",
+    question: "Comment fonctionne le parrainage ?",
+    answer: "Votre cliente partage son lien. Quand une amie fait son premier passage, les deux sont récompensées. Automatique.",
   },
   {
-    question: "19€/mois, c'est trop cher pour mon salon ?",
-    answer: "C'est 0,63€ par jour — moins qu'un café. Un(e) seul(e) client(e) fidélisé(e) qui revient une fois de plus par mois rembourse votre abonnement. Sans compter les cartes papier que vous n'imprimez plus et le temps gagné.",
+    question: "19€/mois, c'est trop cher ?",
+    answer: "0,63€/jour. Un seul client fidélisé en plus = abonnement remboursé. Et vous économisez ~200€/an de cartes papier.",
   },
   {
-    question: "Mes données clients sont-elles protégées (RGPD) ?",
-    answer: "100% conforme RGPD. Vos données sont hébergées en Europe, chiffrées, et vous en restez propriétaire. Vos client(e)s peuvent demander la suppression à tout moment. Aucune revente de données, jamais.",
+    question: "Mes données sont-elles protégées (RGPD) ?",
+    answer: "100% conforme RGPD. Hébergé en Europe, chiffré. Vos données restent les vôtres. Aucune revente, jamais.",
+  },
+  {
+    question: "Ça s'intègre avec mon logiciel de salon ?",
+    answer: "Qarte fonctionne de façon indépendante. Rien à modifier dans votre organisation actuelle.",
+  },
+  {
+    question: "Le prix change après les 15 jours gratuits ?",
+    answer: "Non. 19€/mois, point final. Mêmes fonctionnalités pendant l'essai et après. Zéro surprise.",
+  },
+  {
+    question: "Je suis esthéticienne indépendante, c'est pour moi ?",
+    answer: "Absolument. Créez votre programme en 5 minutes, gérez vos clientes, développez le bouche-à-oreille.",
   },
 ];
 
@@ -67,7 +79,7 @@ function AccordionItem({
       >
         <button
           onClick={onToggle}
-          className="group w-full flex items-center gap-5 p-6 md:p-7 text-left cursor-pointer"
+          className="group w-full flex items-center gap-4 sm:gap-5 p-4 sm:p-6 md:p-7 text-left cursor-pointer"
           aria-expanded={isOpen}
         >
           {/* Question */}
@@ -119,17 +131,14 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="relative py-28 overflow-hidden">
-      {/* Background with subtle pattern */}
-      <div className="absolute inset-0 bg-gradient-to-b from-gray-50 via-white to-gray-50" />
-      <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, #6366f1 1px, transparent 0)', backgroundSize: '40px 40px' }} />
+    <section id="faq" className="relative py-24 md:py-32 overflow-hidden bg-white">
 
       <div ref={ref} className="relative max-w-4xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Une question ?{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
               On vous répond
             </span>
           </h2>
