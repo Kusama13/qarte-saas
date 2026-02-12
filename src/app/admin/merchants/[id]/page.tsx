@@ -60,6 +60,8 @@ interface Merchant {
   review_link: string | null;
   // Referral
   referral_program_enabled: boolean;
+  referral_reward_referrer: string | null;
+  referral_reward_referred: string | null;
   // Offer fields
   offer_active: boolean;
   offer_title: string | null;
@@ -498,6 +500,33 @@ export default function MerchantDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Parrainage */}
+        {merchant.referral_program_enabled && (merchant.referral_reward_referrer || merchant.referral_reward_referred) && (
+          <div className="mt-4 p-4 bg-violet-50 rounded-lg border border-violet-200">
+            <div className="flex items-center gap-2 mb-3">
+              <Share2 className="w-5 h-5 text-violet-600" />
+              <span className="font-medium text-gray-900">Récompenses parrainage</span>
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-violet-100 text-violet-700">
+                Actif
+              </span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {merchant.referral_reward_referrer && (
+                <div className="flex items-start gap-2 p-2.5 bg-white rounded-lg">
+                  <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide mt-0.5">Parrain</span>
+                  <span className="text-sm text-gray-700">{merchant.referral_reward_referrer}</span>
+                </div>
+              )}
+              {merchant.referral_reward_referred && (
+                <div className="flex items-start gap-2 p-2.5 bg-white rounded-lg">
+                  <span className="text-xs font-semibold text-violet-600 uppercase tracking-wide mt-0.5">Filleul</span>
+                  <span className="text-sm text-gray-700">{merchant.referral_reward_referred}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Current Temporary Offer */}
         {merchant.offer_active && merchant.offer_title && (

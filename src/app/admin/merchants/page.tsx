@@ -14,12 +14,13 @@ import {
   Shield,
   MessageCircle,
   AlertTriangle,
-  Mail,
+
   CalendarX,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
-import type { Merchant, MerchantCountry } from '@/types';
+import type { Merchant, MerchantCountry, ShopType } from '@/types';
+import { SHOP_TYPES } from '@/types';
 
 // --- Types ---
 
@@ -30,8 +31,7 @@ interface MerchantsDataResponse {
   lastVisitDates: Record<string, string>;
   todayScans: Record<string, number>;
   weeklyScans: Record<string, number>;
-  emailTracking: Record<string, number[]>;
-  reactivationTracking: Record<string, number[]>;
+
   pendingPoints: Record<string, number>;
   userEmails: Record<string, string>;
 }
@@ -41,11 +41,6 @@ interface LifecycleStage {
   color: string;
   bgColor: string;
   urgency: number;
-}
-
-interface EmailSteps {
-  steps: { code: string; sent: boolean }[];
-  summary: string;
 }
 
 type FilterStatus = 'all' | 'trial' | 'trial_expired' | 'active' | 'canceling' | 'canceled';
@@ -127,25 +122,6 @@ function getLifecycleStage(
   return { label: status, color: 'text-gray-600', bgColor: 'bg-gray-100', urgency: 6 };
 }
 
-// --- Email Pipeline ---
-
-// Milestone codes: -103=QR+Kit, -105=QR téléchargé, -100=1er scan, -101=Recompense
-function getEmailSteps(
-  merchantId: string,
-  emailTracking: Record<string, number[]>,
-  reactivationTracking: Record<string, number[]>,
-): EmailSteps {
-  const codes = emailTracking[merchantId] || [];
-  const steps = [
-    { code: 'QR+Kit', sent: codes.includes(-103) },
-    { code: 'QR DL', sent: codes.includes(-105) },
-    { code: '1er scan', sent: codes.includes(-100) },
-    { code: 'Récomp.', sent: codes.includes(-101) },
-  ];
-  const sentCount = steps.filter((s) => s.sent).length;
-  return { steps, summary: `${sentCount}/4` };
-}
-
 // --- Activity Label ---
 
 function getActivityLabel(lastVisit: string | null): { text: string; color: string } {
@@ -174,6 +150,7 @@ export default function AdminMerchantsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<FilterStatus>('all');
   const [countryFilter, setCountryFilter] = useState<'all' | MerchantCountry>('all');
+  const [shopTypeFilter, setShopTypeFilter] = useState<'all' | ShopType>('all');
   const [showAdmins, setShowAdmins] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -248,14 +225,20 @@ export default function AdminMerchantsPage() {
       filtered = filtered.filter((m) => (m.country || 'FR') === countryFilter);
     }
 
-    // Search
+    // Shop type filter
+    if (shopTypeFilter !== 'all') {
+      filtered = filtered.filter((m) => m.shop_type === shopTypeFilter);
+    }
+
+    // Search (accent-insensitive)
     if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+      const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const q = normalize(searchQuery);
       filtered = filtered.filter(
         (m) =>
-          m.shop_name.toLowerCase().includes(q) ||
+          normalize(m.shop_name).includes(q) ||
           m.phone.includes(q) ||
-          (m.shop_address && m.shop_address.toLowerCase().includes(q)),
+          (m.shop_address && normalize(m.shop_address).includes(q)),
       );
     }
 
@@ -275,7 +258,7 @@ export default function AdminMerchantsPage() {
         if (a.lifecycle.urgency !== b.lifecycle.urgency) return a.lifecycle.urgency - b.lifecycle.urgency;
         return new Date(b.merchant.created_at).getTime() - new Date(a.merchant.created_at).getTime();
       });
-  }, [data, searchQuery, statusFilter, countryFilter, showAdmins, superAdminIds]);
+  }, [data, searchQuery, statusFilter, countryFilter, shopTypeFilter, showAdmins, superAdminIds]);
 
   const openWhatsApp = (phone: string, name?: string) => {
     const formattedPhone = formatPhoneForWhatsApp(phone);
@@ -325,38 +308,64 @@ export default function AdminMerchantsPage() {
       </div>
 
       {/* Filters */}
-      <div className="space-y-3 sm:space-y-0 sm:flex sm:flex-row sm:gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Rechercher nom, téléphone, adresse..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5167fc] focus:border-transparent"
-          />
+      <div className="space-y-3">
+        {/* Row 1: Search + Status */}
+        <div className="space-y-3 sm:space-y-0 sm:flex sm:flex-row sm:gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Rechercher nom, téléphone, adresse..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5167fc] focus:border-transparent"
+            />
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap -mx-4 px-4 sm:mx-0 sm:px-0">
+            {([
+              { label: 'Tous', value: 'all' as FilterStatus, count: stats.total },
+              { label: 'Essai', value: 'trial' as FilterStatus, count: stats.trial },
+              { label: 'Expirés', value: 'trial_expired' as FilterStatus, count: stats.trialExpired },
+              { label: 'Actifs', value: 'active' as FilterStatus, count: stats.active },
+              { label: 'Annulation', value: 'canceling' as FilterStatus, count: stats.canceling },
+              { label: 'Churned', value: 'canceled' as FilterStatus, count: stats.canceled },
+            ]).map((btn) => (
+              <button
+                key={btn.value}
+                onClick={() => setStatusFilter(btn.value)}
+                className={cn(
+                  "px-3 py-2 text-xs sm:text-sm font-medium rounded-xl transition-colors whitespace-nowrap flex-shrink-0",
+                  statusFilter === btn.value
+                    ? "bg-[#5167fc] text-white"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
+                )}
+              >
+                {btn.label} ({btn.count})
+              </button>
+            ))}
+          </div>
         </div>
 
+        {/* Row 2: Shop type + Country + Admin */}
         <div className="flex gap-2 overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap -mx-4 px-4 sm:mx-0 sm:px-0">
           {([
-            { label: 'Tous', value: 'all' as FilterStatus, count: stats.total },
-            { label: 'Essai', value: 'trial' as FilterStatus, count: stats.trial },
-            { label: 'Expirés', value: 'trial_expired' as FilterStatus, count: stats.trialExpired },
-            { label: 'Actifs', value: 'active' as FilterStatus, count: stats.active },
-            { label: 'Annulation', value: 'canceling' as FilterStatus, count: stats.canceling },
-            { label: 'Churned', value: 'canceled' as FilterStatus, count: stats.canceled },
+            { label: 'Type', value: 'all' as const },
+            ...Object.entries(SHOP_TYPES).map(([value, label]) => ({
+              label: label.replace('Salon de ', '').replace('Centre d\'', '').replace(' / Nail bar', '').replace(' & Bien-être', ''),
+              value: value as ShopType,
+            })),
           ]).map((btn) => (
             <button
               key={btn.value}
-              onClick={() => setStatusFilter(btn.value)}
+              onClick={() => setShopTypeFilter(btn.value)}
               className={cn(
                 "px-3 py-2 text-xs sm:text-sm font-medium rounded-xl transition-colors whitespace-nowrap flex-shrink-0",
-                statusFilter === btn.value
-                  ? "bg-[#5167fc] text-white"
+                shopTypeFilter === btn.value
+                  ? "bg-amber-600 text-white"
                   : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50",
               )}
             >
-              {btn.label} ({btn.count})
+              {btn.label}
             </button>
           ))}
           <div className="w-px h-6 bg-gray-200 flex-shrink-0 hidden sm:block self-center" />
@@ -413,7 +422,7 @@ export default function AdminMerchantsPage() {
                   <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Activité</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Auj.</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Clients</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Emails</th>
+
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
@@ -424,12 +433,6 @@ export default function AdminMerchantsPage() {
                   const today = data?.todayScans[merchant.id] || 0;
                   const customers = data?.customerCounts[merchant.id] || 0;
                   const pending = data?.pendingPoints[merchant.id] || 0;
-                  const emailSteps = getEmailSteps(
-                    merchant.id,
-                    data?.emailTracking || {},
-                    data?.reactivationTracking || {},
-                  );
-
                   return (
                     <tr key={merchant.id} className="hover:bg-gray-50/50 transition-colors group">
                       {/* Commercant */}
@@ -487,35 +490,6 @@ export default function AdminMerchantsPage() {
                         <span className="text-sm font-medium text-gray-700">{customers}</span>
                       </td>
 
-                      {/* Emails */}
-                      <td className="px-4 py-3 text-center">
-                        <div className="group/tooltip relative inline-block">
-                          <span className={cn(
-                            "text-sm font-medium cursor-default",
-                            emailSteps.summary === '4/4' ? "text-green-600" :
-                            emailSteps.summary === '0/4' ? "text-gray-400" : "text-amber-600"
-                          )}>
-                            {emailSteps.summary}
-                          </span>
-                          {/* Tooltip */}
-                          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/tooltip:block z-10">
-                            <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-lg">
-                              <div className="space-y-1">
-                                {emailSteps.steps.map((step) => (
-                                  <div key={step.code} className="flex items-center gap-2">
-                                    <span className={step.sent ? 'text-green-400' : 'text-gray-500'}>{step.sent ? '✓' : '✗'}</span>
-                                    <span>{step.code}</span>
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-px">
-                                <div className="border-4 border-transparent border-t-gray-900" />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
                       {/* Actions */}
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1.5">
@@ -552,12 +526,6 @@ export default function AdminMerchantsPage() {
               const today = data?.todayScans[merchant.id] || 0;
               const customers = data?.customerCounts[merchant.id] || 0;
               const pending = data?.pendingPoints[merchant.id] || 0;
-              const emailSteps = getEmailSteps(
-                merchant.id,
-                data?.emailTracking || {},
-                data?.reactivationTracking || {},
-              );
-
               return (
                 <div key={merchant.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3">
                   <div className="flex items-start justify-between gap-2">
@@ -613,13 +581,6 @@ export default function AdminMerchantsPage() {
                     </span>
                     <span>
                       <Users className="w-3 h-3 inline mr-0.5" />{customers}
-                    </span>
-                    <span className={cn(
-                      "font-medium",
-                      emailSteps.summary === '3/3' ? "text-green-600" :
-                      emailSteps.summary === '0/3' ? "text-gray-400" : "text-amber-600"
-                    )}>
-                      <Mail className="w-3 h-3 inline mr-0.5" />{emailSteps.summary}
                     </span>
                   </div>
                 </div>
