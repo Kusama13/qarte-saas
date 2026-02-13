@@ -26,6 +26,7 @@ import {
   SubscriptionReactivatedEmail,
   FirstClientScriptEmail,
   QuickCheckEmail,
+  ProductUpdateEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -1088,6 +1089,43 @@ export async function sendQuickCheckEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending quick check email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email nouveautés produit (newsletter)
+export async function sendProductUpdateEmail(
+  to: string,
+  shopName: string,
+  merchantId: string,
+  referralCode?: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(ProductUpdateEmail({ shopName, merchantId, referralCode }));
+    const text = await render(ProductUpdateEmail({ shopName, merchantId, referralCode }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName}, découvrez les nouveautés Qarte de la semaine`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send product update email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Product update email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending product update email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

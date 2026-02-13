@@ -24,3 +24,4 @@ export { Tier2UpsellEmail } from './Tier2UpsellEmail';
 export { SubscriptionReactivatedEmail } from './SubscriptionReactivatedEmail';
 export { FirstClientScriptEmail } from './FirstClientScriptEmail';
 export { QuickCheckEmail } from './QuickCheckEmail';
+export { ProductUpdateEmail } from './ProductUpdateEmail';

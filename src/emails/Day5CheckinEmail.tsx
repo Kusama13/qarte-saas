@@ -42,7 +42,7 @@ export function Day5CheckinEmail({ shopName, totalScans, referralCode }: Day5Che
           </Section>
 
           <Section style={buttonContainer}>
-            <Button style={button} href="https://getqarte.com/dashboard/program">
+            <Button style={button} href="https://getqarte.com/dashboard/qr-download?tab=social">
               T&eacute;l&eacute;charger mon kit r&eacute;seaux sociaux
             </Button>
           </Section>
@@ -68,7 +68,7 @@ export function Day5CheckinEmail({ shopName, totalScans, referralCode }: Day5Che
           </Section>
 
           <Section style={buttonContainer}>
-            <Button style={button} href="https://getqarte.com/dashboard">
+            <Button style={button} href="https://getqarte.com/dashboard/qr-download">
               Acc&eacute;der &agrave; mon QR code
             </Button>
           </Section>

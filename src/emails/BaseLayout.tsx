@@ -41,9 +41,11 @@ export function BaseLayout({ preview, children }: BaseLayoutProps) {
           {/* Footer */}
           <Section style={footer}>
             <Text style={footerSocial}>
-              <Link href="https://www.instagram.com/getqarte/" style={socialLink}>Instagram</Link>
+              <Link href="https://www.instagram.com/qarte.app" style={socialLink}>Instagram</Link>
               {' • '}
               <Link href="https://www.facebook.com/profile.php?id=61587048661028" style={socialLink}>Facebook</Link>
+              {' • '}
+              <Link href="https://www.tiktok.com/@getqarte" style={socialLink}>TikTok</Link>
             </Text>
             <Text style={footerText}>
               © {new Date().getFullYear()} Qarte. Tous droits réservés.

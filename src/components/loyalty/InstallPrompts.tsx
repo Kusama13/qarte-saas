@@ -212,7 +212,7 @@ export default function InstallPrompts({
                       <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
                         <PlusSquare className="w-4 h-4 text-white" />
                       </div>
-                      <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> <strong>Installer l&apos;application</strong></p>
+                      <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> <strong>Ajouter un raccourci</strong></p>
                     </div>
                   </>
                 )}
@@ -300,7 +300,7 @@ export default function InstallPrompts({
                 className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
                 style={{ backgroundColor: merchant.primary_color }}
               >
-                Installer
+                Ajouter
               </button>
               <button
                 onClick={onDismissInstallBar}

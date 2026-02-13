@@ -43,7 +43,7 @@ export function InactiveMerchantDay7Email({ shopName }: InactiveMerchantDay7Emai
       </Section>
 
       <Section style={buttonContainer}>
-        <Button style={button} href="https://getqarte.com/dashboard">
+        <Button style={button} href="https://getqarte.com/dashboard/qr-download">
           Télécharger mon QR code
         </Button>
       </Section>
