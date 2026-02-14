@@ -83,7 +83,7 @@
 
 ### Actions produit
 - [ ] **Birthday Club** — table stakes, tous les concurrents l'ont
-- [ ] **Referral client→client** — "Parrainez une amie → 5 points bonus chacune"
+- [x] ~~**Referral client→client**~~ — ✅ Programme parrainage complet (APIs, scan ?ref=, carte client, dashboard /referrals)
 - [ ] **Segmentation push** — cibler "inactifs 30j", "VIP 10+ visites"
 - [ ] **Apple/Google Wallet pass** — gros differenciateur sans app
 - [ ] Video demo interactive sur `/demo`
@@ -229,7 +229,7 @@
 | Push notifications | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Push programmees | ✅ | ❌ | ✅ | ✅ | ❌ |
 | Birthday auto | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Referral client | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Referral client | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Segmentation push | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Apple/Google Wallet | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Analytics avance | ❌ | ✅ | ✅ | ✅ | ✅ |

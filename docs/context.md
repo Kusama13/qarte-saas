@@ -72,7 +72,7 @@ src/
 │   ├── scripts.ts        # Scripts verbaux par shop_type (emails + dashboard)
 │   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode)
 │
-├── emails/               # Templates React Email (26 templates + BaseLayout)
+├── emails/               # Templates React Email (27 templates + BaseLayout)
 │   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
 │   ├── WelcomeEmail.tsx           # Bienvenue (urgence + temoignage)
 │   ├── IncompleteSignupEmail.tsx  # Relance inscription +1h
@@ -94,12 +94,17 @@ src/
 │   ├── QRCodeEmail.tsx            # QR code + kit reseaux sociaux (merged)
 │   ├── FirstClientScriptEmail.tsx # Script verbal J+2 post-config (par shop_type)
 │   ├── QuickCheckEmail.tsx        # Check-in J+4 post-config (0 scans)
+│   ├── ProductUpdateEmail.tsx     # Newsletter nouveautes produit (parrainage, reseaux, design)
 │   ├── SubscriptionConfirmedEmail.tsx # Confirmation abonnement (Stripe)
 │   ├── PaymentFailedEmail.tsx     # Echec paiement (Stripe)
 │   ├── SubscriptionCanceledEmail.tsx # Annulation abonnement (Stripe)
 │   ├── SubscriptionReactivatedEmail.tsx # Reactivation abonnement (canceling→active)
 │   ├── ReactivationEmail.tsx      # Win-back J+7/14/30 (codes promo)
 │   └── EbookEmail.tsx             # Telechargement ebook
+│
+├── scripts/
+│   ├── send-test-email.ts        # Script test email unitaire
+│   └── send-product-update.ts    # Script envoi bulk ProductUpdateEmail
 │
 ├── hooks/
 │   └── useInView.ts     # Hook IntersectionObserver (landing)
@@ -446,8 +451,8 @@ npm run email
 
 | Fichier | Description |
 |---------|-------------|
-| `src/app/page.tsx` | Landing page (8 sections: Hero, Referral, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer) |
-| `src/components/landing/` | 13 composants landing (Hero, Referral, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer + utilitaires) |
+| `src/app/page.tsx` | Landing page (9 sections: Hero, Referral, AIReengagement, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer) |
+| `src/components/landing/` | 14 composants landing (Hero, Referral, AIReengagement, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer + utilitaires) |
 | `src/middleware.ts` | Protection routes authentifiees |
 | `src/lib/supabase.ts` | Client Supabase |
 | `src/lib/stripe.ts` | Client Stripe (mensuel + annuel) |
@@ -547,6 +552,10 @@ npm run email
   - 3 cartes visuelles (Elle partage → Son amie rejoint → Les 2 recompensees)
   - Stats (x3 bouche-a-oreille, +25% nouveaux client(e)s, 0€ de pub)
   - CTA "Activer le parrainage"
+- AIReengagement : "Vos clients reviennent tous seuls"
+  - Mockup iPhone avec 3 notifications push animees (inactivite, anniversaire, Saint-Valentin)
+  - 3 feature rows (Relance inactivite, Anniversaires, Evenements speciaux)
+  - Badge "Autopilot IA"
 - Features : "Notifiez vos client(e)s au meilleur moment"
   - CSS Grid 3x3 desktop (4 step cards + stat 78% centre + fleches coins)
   - Mobile : flow vertical avec ChevronDown
@@ -555,6 +564,7 @@ npm run email
 - Testimonials, Pricing (10 features dont parrainage + reservation), FAQ (8 questions dont parrainage)
 - MobileStickyCta : barre sticky bottom mobile (indigo→violet)
 - ScrollToTopButton : bottom-24 mobile (au-dessus sticky), bottom-6 desktop
+- Footer : liens sociaux Instagram, Facebook, TikTok (icones SVG cliquables)
 - Ecriture inclusive : client(e)s partout
 - ComparisonSection retiree du flow (fichier conserve)
 - Blog SEO : 3 articles (coiffure, onglerie, institut) avec images
@@ -646,7 +656,7 @@ import type { Merchant } from '@/types';
 
 ---
 
-## 19. Emails Transactionnels (26 templates)
+## 19. Emails Transactionnels (27 templates)
 
 ### Onboarding & Activation
 | Email | Declencheur |
@@ -688,6 +698,11 @@ import type { Merchant } from '@/types';
 | SubscriptionCanceledEmail | customer.subscription.updated → canceling (webhook Stripe, date de fin Stripe) |
 | SubscriptionReactivatedEmail | customer.subscription.updated → canceling→active (webhook Stripe, reactivation via portail) |
 | ReactivationEmail | Win-back J+7/14/30 — codes promo QARTE50/QARTEBOOST/QARTELAST (cron reactivation) |
+
+### Newsletter
+| Email | Declencheur |
+|-------|-------------|
+| ProductUpdateEmail | Envoi manuel bulk (script `send-product-update.ts`). Annonce nouveautes : parrainage, reseaux sociaux, nouveau design, blog, code parrainage merchant. |
 
 ### Autre
 | Email | Declencheur |

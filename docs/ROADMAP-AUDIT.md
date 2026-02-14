@@ -223,7 +223,7 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 
 ---
 
-# PARTIE 4 : EMAILS (30 templates)
+# PARTIE 4 : EMAILS (31 templates)
 
 ## 4.1 Parcours Signup (temps reel)
 
@@ -302,13 +302,19 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 | 29 | **ReactivationEmail** (QARTEBOOST) | `canceled` | J+14 |
 | 30 | **ReactivationEmail** (QARTELAST) | `canceled` | J+30 |
 
-## 4.10 Autre
+## 4.10 Newsletter
 
 | # | Email | Declencheur |
 |---|-------|-------------|
-| 31 | **EbookEmail** | Formulaire `/ebook` |
+| 31 | **ProductUpdateEmail** | Envoi manuel bulk (`scripts/send-product-update.ts`). Annonce nouveautes. |
 
-## 4.11 Timeline complete d'un commercant
+## 4.11 Autre
+
+| # | Email | Declencheur |
+|---|-------|-------------|
+| 32 | **EbookEmail** | Formulaire `/ebook` |
+
+## 4.12 Timeline complete d'un commercant
 
 ```
 SIGNUP
@@ -366,7 +372,7 @@ SHIELD (points en attente)
   D+3  PendingPointsEmail (rappel)
 ```
 
-## 4.12 Notes techniques emails
+## 4.13 Notes techniques emails
 
 - **Provider** : Resend (2 req/s max)
 - **Rate limiting** : batch de 2 + 600ms entre les batches
@@ -374,7 +380,7 @@ SHIELD (points en attente)
 - **Emails programmes** : via `scheduledAt` de Resend (IncompleteSignup +1h, Reminder2 +3h)
 - **Tracking doublons** : tables `pending_email_tracking` et `reactivation_email_tracking`
 - **Codes tracking** : -100 FirstScan, -101 FirstReward, -102 Tier2Upsell, -103 QRCode+Kit, -106 FirstClientScript, -107 QuickCheck
-- **Layout** : `BaseLayout.tsx` (header violet #4b0082, footer)
+- **Layout** : `BaseLayout.tsx` (header banner, footer avec liens Instagram/Facebook/TikTok)
 
 ---
 
@@ -493,6 +499,31 @@ SHIELD (points en attente)
 ---
 
 # PARTIE 6 : CHANGELOG
+
+## [2026-02-13] — ProductUpdateEmail, fix email links, footer social, PWA wording, AIReengagement
+
+### ProductUpdateEmail (newsletter nouveautes)
+- **feat:** `ProductUpdateEmail.tsx` — template newsletter (parrainage, reseaux sociaux, nouveau design carte, article blog, code parrainage merchant)
+- **feat:** `sendProductUpdateEmail()` dans `email.ts`
+- **feat:** `scripts/send-product-update.ts` — script envoi bulk a tous les merchants actifs
+- **ops:** Envoi bulk effectue a 37 merchants (0 erreurs)
+
+### Fix liens emails
+- **fix:** Day5CheckinEmail — "Telecharger kit reseaux" pointe vers `/dashboard/qr-download?tab=social` (etait `/dashboard/program`)
+- **fix:** Day5CheckinEmail — "Acceder a mon QR code" pointe vers `/dashboard/qr-download` (etait `/dashboard`)
+- **fix:** InactiveMerchantDay7Email — "Telecharger mon QR code" pointe vers `/dashboard/qr-download` (etait `/dashboard`)
+- **fix:** BaseLayout — Instagram URL corrigee `qarte.app` (etait `getqarte/`) + ajout lien TikTok
+
+### Landing page
+- **feat:** AIReengagementSection — section "Vos clients reviennent tous seuls" avec mockup iPhone, 3 notifications push animees, 3 feature rows (Relance inactivite, Anniversaires, Evenements speciaux)
+- **feat:** FooterSection — icones SVG Instagram, Facebook, TikTok avec liens reels
+- **feat:** Demo merchants — liens sociaux reels (Instagram, Facebook, TikTok Qarte)
+
+### PWA
+- **copy:** Bouton install bar "Installer" → "Ajouter"
+- **copy:** Instruction iOS "Installer l'application" → "Ajouter un raccourci"
+
+---
 
 ## [2026-02-12] — Onboarding checklist, admin parrainage + progression, UX fixes
 
@@ -797,5 +828,5 @@ SHIELD (points en attente)
 
 ---
 
-*Derniere mise a jour : 12 fevrier 2026*
-*Statuts verifies contre le code source le 12/02/2026. Onboarding checklist + admin progression + audit bugs + landing cleanup.*
+*Derniere mise a jour : 13 fevrier 2026*
+*Statuts verifies contre le code source le 13/02/2026. ProductUpdateEmail, fix liens emails, footer social, PWA wording, AIReengagement landing.*

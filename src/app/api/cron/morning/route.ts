@@ -838,6 +838,12 @@ export async function GET(request: NextRequest) {
             return;
           }
 
+          // Skip if merchant already received onboarding emails — avoid double email
+          if (trackingSet.has(`${merchant.id}:-106`) || trackingSet.has(`${merchant.id}:-107`)) {
+            results.inactiveMerchants.skipped++;
+            return;
+          }
+
           const email = emailMap.get(merchant.user_id);
           if (!email) {
             results.inactiveMerchants.skipped++;
