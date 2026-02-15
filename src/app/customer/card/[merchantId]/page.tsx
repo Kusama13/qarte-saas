@@ -984,7 +984,7 @@ export default function CustomerCardPage({
                     } en attente
                   </p>
                   <p className="text-xs text-gray-500">
-                    Validation par le commerçant en cours
+                    Validation par {merchant.shop_name} en cours
                   </p>
                 </div>
               </div>

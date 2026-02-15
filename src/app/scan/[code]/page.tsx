@@ -841,10 +841,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
               <h2 className="text-2xl font-black text-gray-900 mb-2">Accès non autorisé</h2>
               <p className="text-gray-500 mb-8">
-                Ce numéro n&apos;est plus autorisé à utiliser le programme de fidélité de ce commerce.
+                Ce numéro n&apos;est plus autorisé à utiliser le programme de fidélité de {merchant?.shop_name || 'ce commerce'}.
               </p>
               <p className="text-sm text-gray-400 mb-8">
-                Si vous pensez qu&apos;il s&apos;agit d&apos;une erreur, contactez directement le commerçant.
+                Si vous pensez qu&apos;il s&apos;agit d&apos;une erreur, contactez directement {merchant?.shop_name || 'le commerçant'}.
               </p>
 
               <Button onClick={() => setStep('phone')} variant="outline">

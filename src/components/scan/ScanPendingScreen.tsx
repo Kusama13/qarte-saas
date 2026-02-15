@@ -38,7 +38,7 @@ export default function ScanPendingScreen({
 
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8 text-left">
           <p className="text-sm text-amber-900 leading-relaxed">
-            Notre système a détecté plusieurs passages aujourd&apos;hui. Cette mesure protège votre compte contre les utilisations frauduleuses. Votre passage sera validé dès confirmation par le commerçant.
+            Notre système a détecté plusieurs passages aujourd&apos;hui. Cette mesure protège votre compte contre les utilisations frauduleuses. Votre passage sera validé dès confirmation par {merchant.shop_name}.
           </p>
         </div>
 
