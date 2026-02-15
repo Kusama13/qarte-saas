@@ -27,7 +27,7 @@ export function MobileStickyCta() {
         onClick={() => { trackCtaClick('mobile_sticky', 'mobile_sticky_cta'); fbEvents.initiateCheckout(); }}
         className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 active:scale-[0.98] transition-transform"
       >
-        Essayer gratuitement 15 jours
+        Essayer gratuitement 7 jours
         <ArrowRight className="w-5 h-5" />
       </a>
     </div>

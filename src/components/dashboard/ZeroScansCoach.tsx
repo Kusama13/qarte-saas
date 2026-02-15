@@ -60,9 +60,9 @@ export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
       </div>
 
       {/* Trial urgency */}
-      {merchant.subscription_status === 'trial' && daysRemaining <= 12 && (
+      {merchant.subscription_status === 'trial' && daysRemaining <= 5 && (
         <p className="text-xs text-center text-gray-400 pt-1">
-          Jour {15 - daysRemaining} sur 15 de votre essai
+          Jour {7 - daysRemaining} sur 7 de votre essai
         </p>
       )}
     </div>

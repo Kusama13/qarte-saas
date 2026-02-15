@@ -105,7 +105,8 @@ export async function POST(request: NextRequest) {
     // Check trial status (no DB call, just logic)
     const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
 
-    if (trialStatus.isInGracePeriod || trialStatus.isFullyExpired) {
+    // Scans autorisés pendant la grâce, bloqués après
+    if (trialStatus.isFullyExpired) {
       return NextResponse.json(
         {
           error: 'Ce commerce n\'accepte plus les passages pour le moment.',

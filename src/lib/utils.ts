@@ -104,15 +104,15 @@ export function getDaysRemaining(endDate: string): number {
 
 export interface TrialStatus {
   isActive: boolean;           // Essai en cours
-  isInGracePeriod: boolean;    // Période de grâce (7 jours après expiration)
-  isFullyExpired: boolean;     // Plus de 7 jours après expiration
+  isInGracePeriod: boolean;    // Période de grâce (3 jours après expiration)
+  isFullyExpired: boolean;     // Plus de 3 jours après expiration
   daysRemaining: number;       // Jours restants (négatif si expiré)
   daysUntilDeletion: number;   // Jours avant suppression des données
-  gracePeriodDays: number;     // Constante: 7 jours
+  gracePeriodDays: number;     // Constante: 3 jours
 }
 
 export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: string): TrialStatus {
-  const GRACE_PERIOD_DAYS = 7;
+  const GRACE_PERIOD_DAYS = 3;
 
   // Si abonné (actif, en cours d'annulation, ou paiement échoué), pas de restriction trial
   if (subscriptionStatus === 'active' || subscriptionStatus === 'canceling' || subscriptionStatus === 'past_due') {
@@ -154,7 +154,7 @@ export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: s
     };
   }
 
-  // Période de grâce (0 à 7 jours après expiration)
+  // Période de grâce (0 à 3 jours après expiration)
   const daysExpired = Math.abs(daysRemaining);
   const daysUntilDeletion = GRACE_PERIOD_DAYS - daysExpired;
 
@@ -169,7 +169,7 @@ export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: s
     };
   }
 
-  // Plus de 7 jours après expiration
+  // Plus de 3 jours après expiration
   return {
     isActive: false,
     isInGracePeriod: false,

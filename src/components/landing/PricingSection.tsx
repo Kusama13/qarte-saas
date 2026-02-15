@@ -36,7 +36,7 @@ export function PricingSection() {
           {/* Trial Badge - Outside overflow container */}
           <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
             <div className="px-8 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-xs font-bold rounded-full shadow-xl shadow-indigo-500/20 tracking-[0.1em] uppercase whitespace-nowrap">
-              15 jours gratuits
+              7 jours gratuits
             </div>
           </div>
 

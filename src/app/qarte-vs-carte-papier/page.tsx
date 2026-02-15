@@ -319,7 +319,7 @@ export default function QarteVsCartePapierPage() {
               Prete a passer au digital ?
             </h2>
             <p className="text-white/80 text-lg mb-8">
-              15 jours gratuits, sans carte bancaire. Votre programme de fidelite est pret en 5 minutes.
+              7 jours gratuits, sans carte bancaire. Votre programme de fidelite est pret en 5 minutes.
             </p>
             <Link
               href="/auth/merchant/signup"

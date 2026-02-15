@@ -43,7 +43,7 @@ const faqs = [
     answer: "Qarte fonctionne de façon indépendante. Rien à modifier dans votre organisation actuelle.",
   },
   {
-    question: "Le prix change après les 15 jours gratuits ?",
+    question: "Le prix change après les 7 jours gratuits ?",
     answer: "Non. 19€/mois, point final. Mêmes fonctionnalités pendant l'essai et après. Zéro surprise.",
   },
   {

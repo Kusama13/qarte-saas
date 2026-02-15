@@ -812,7 +812,7 @@ export default function ProgrammeFideliteOngleriePage() {
                 Pas d&apos;application à télécharger, pas de matériel. Un QR code, et c&apos;est parti.
               </p>
               <p className="text-indigo-200 mb-8">
-                19 &euro;/mois &middot; 15 jours d&apos;essai gratuit &middot; Sans engagement
+                19 &euro;/mois &middot; 7 jours d&apos;essai gratuit &middot; Sans engagement
               </p>
               <Link
                 href="/essai-gratuit"

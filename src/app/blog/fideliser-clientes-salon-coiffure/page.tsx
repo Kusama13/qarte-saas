@@ -679,7 +679,7 @@ export default function FideliserClientesSalonCoiffurePage() {
               <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-indigo-200">
                 <span className="flex items-center gap-1.5">
                   <CheckCircle className="w-4 h-4" />
-                  15 jours d&apos;essai gratuit
+                  7 jours d&apos;essai gratuit
                 </span>
                 <span className="flex items-center gap-1.5">
                   <CheckCircle className="w-4 h-4" />

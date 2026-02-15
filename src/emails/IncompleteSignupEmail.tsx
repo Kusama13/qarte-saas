@@ -42,7 +42,7 @@ export function IncompleteSignupEmail({ email }: IncompleteSignupEmailProps) {
         <Text style={benefitsTitle}>Ce qui vous attend après :</Text>
         <Text style={benefitItem}>→ Un programme de fidélité prêt en 3 minutes</Text>
         <Text style={benefitItem}>→ Un QR code unique pour votre commerce</Text>
-        <Text style={benefitItem}>→ 15 jours d&apos;essai gratuit</Text>
+        <Text style={benefitItem}>→ 7 jours d&apos;essai gratuit</Text>
       </Section>
 
       <Text style={paragraph}>

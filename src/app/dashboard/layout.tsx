@@ -76,8 +76,8 @@ function DashboardLayoutContent({
     merchant?.subscription_status || 'trial'
   );
 
-  // Redirection forcée si plus de 7 jours après expiration
-  if (trialStatus.isFullyExpired && pathname !== '/dashboard/subscription') {
+  // Redirection forcée dès la fin de l'essai (grâce ou expiration complète)
+  if ((trialStatus.isInGracePeriod || trialStatus.isFullyExpired) && pathname !== '/dashboard/subscription') {
     router.push('/dashboard/subscription');
     return null;
   }

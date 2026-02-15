@@ -87,7 +87,7 @@ export default async function Image() {
             >
               Essayer gratuitement
             </div>
-            <span style={{ fontSize: 16, color: '#9ca3af', fontWeight: 600 }}>15 jours gratuits</span>
+            <span style={{ fontSize: 16, color: '#9ca3af', fontWeight: 600 }}>7 jours gratuits</span>
           </div>
         </div>
 

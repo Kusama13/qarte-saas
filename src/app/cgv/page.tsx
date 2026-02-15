@@ -64,7 +64,7 @@ export default function CGVPage() {
             </h2>
             <p className="text-gray-600">
               Le service est proposé à 19€ HT par mois, sans engagement. Un essai
-              gratuit de 15 jours est disponible sans carte bancaire.
+              gratuit de 7 jours est disponible sans carte bancaire.
             </p>
           </section>
 

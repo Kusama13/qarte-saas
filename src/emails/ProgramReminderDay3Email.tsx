@@ -31,7 +31,7 @@ export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramRem
 
       <Section style={urgencyBox}>
         <Text style={urgencyText}>
-          Votre essai de 15 jours avance — il vous reste <strong>{daysRemaining} jours</strong>.
+          Votre essai de 7 jours avance — il vous reste <strong>{daysRemaining} jours</strong>.
         </Text>
       </Section>
 

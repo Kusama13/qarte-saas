@@ -114,14 +114,14 @@ export async function GET(request: NextRequest) {
         if (!email) return;
 
         try {
-          if (trialStatus.isActive && (trialStatus.daysRemaining === 5 || trialStatus.daysRemaining === 3 || trialStatus.daysRemaining === 1)) {
+          if (trialStatus.isActive && (trialStatus.daysRemaining === 3 || trialStatus.daysRemaining === 1)) {
             // Pas de code promo à J-1 : on laisse convertir au prix normal
             await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining);
             results.trialEmails.ending++;
           }
           if (trialStatus.isInGracePeriod) {
             const daysExpired = Math.abs(trialStatus.daysRemaining);
-            if (daysExpired === 1 || daysExpired === 3 || daysExpired === 5) {
+            if (daysExpired === 1 || daysExpired === 2) {
               // Code promo QARTE50 uniquement à J+1 (1er email après expiration)
               const promoCode = daysExpired === 1 ? 'QARTE50' : undefined;
               await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, promoCode);
@@ -779,7 +779,7 @@ export async function GET(request: NextRequest) {
 
     const { data: activeMerchants } = await supabase
       .from('merchants')
-      .select('id, shop_name, user_id, reward_description, stamps_required, created_at')
+      .select('id, shop_name, user_id, reward_description, stamps_required, created_at, trial_ends_at, subscription_status')
       .not('reward_description', 'is', null)
       .neq('reward_description', '')
       .in('subscription_status', ['trial', 'active']);
@@ -842,6 +842,15 @@ export async function GET(request: NextRequest) {
           if (trackingSet.has(`${merchant.id}:-106`) || trackingSet.has(`${merchant.id}:-107`)) {
             results.inactiveMerchants.skipped++;
             return;
+          }
+
+          // Skip InactiveMerchantDay7 if merchant is in grace period (trial just expired)
+          if (daysInactive === 7) {
+            const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
+            if (trialStatus.isInGracePeriod) {
+              results.inactiveMerchants.skipped++;
+              return;
+            }
           }
 
           const email = emailMap.get(merchant.user_id);

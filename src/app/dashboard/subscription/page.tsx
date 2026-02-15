@@ -292,12 +292,19 @@ export default function SubscriptionPage() {
 
       {/* Alert banner — single line */}
       {!polling && (trialStatus.isInGracePeriod || trialStatus.isFullyExpired) && (
-        <div className="flex items-center gap-2 px-4 py-2.5 mb-6 rounded-xl bg-red-500 text-white text-sm font-semibold">
-          <AlertTriangle className="w-4 h-4 shrink-0" />
-          {trialStatus.isInGracePeriod
-            ? <span>Essai terminé — données supprimées dans {trialStatus.daysUntilDeletion}j</span>
-            : <span>Compte inactif</span>
-          }
+        <div className="flex flex-col gap-1.5 px-4 py-3 mb-6 rounded-xl bg-red-500 text-white text-sm font-semibold">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            {trialStatus.isInGracePeriod
+              ? <span>Essai terminé — données supprimées dans {trialStatus.daysUntilDeletion}j</span>
+              : <span>Compte inactif — tous les scans clients sont bloqués</span>
+            }
+          </div>
+          {trialStatus.isFullyExpired && (
+            <p className="text-xs font-normal text-white/80 ml-6">
+              Vos clients ne peuvent plus tamponner leur carte. Abonnez-vous pour réactiver votre programme.
+            </p>
+          )}
         </div>
       )}
       {!polling && isCanceling && (

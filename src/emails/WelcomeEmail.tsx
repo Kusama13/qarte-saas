@@ -13,7 +13,7 @@ interface WelcomeEmailProps {
   trialDays?: number;
 }
 
-export function WelcomeEmail({ shopName, trialDays = 15 }: WelcomeEmailProps) {
+export function WelcomeEmail({ shopName, trialDays = 7 }: WelcomeEmailProps) {
   return (
     <BaseLayout preview={`${shopName}, votre programme de fidélité est prêt en 3 minutes`}>
       <Heading style={heading}>

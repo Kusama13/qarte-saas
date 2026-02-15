@@ -108,13 +108,13 @@ export default function OffreSpecialePage() {
             {/* Badge */}
             <span className="inline-flex items-center gap-2 px-4 py-2 mb-6 text-sm font-medium rounded-full bg-gradient-to-r from-primary/10 to-secondary/10 backdrop-blur-md border border-primary/20 text-primary shadow-sm">
               <Gift className="w-4 h-4" />
-              Offre spéciale : 15 jours gratuits
+              Offre spéciale : 7 jours gratuits
             </span>
 
             {/* H1 */}
             <h1 className="mb-6 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl md:text-5xl">
               Inscrivez votre établissement aujourd&apos;hui et{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">bénéficiez de 15 jours gratuits</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">bénéficiez de 7 jours gratuits</span>
             </h1>
 
             {/* Subtitle */}
@@ -133,7 +133,7 @@ export default function OffreSpecialePage() {
             {/* Micro-copy */}
             <p className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-500">
               <Lock className="w-4 h-4" />
-              15 jours gratuits • Sans carte bancaire
+              7 jours gratuits • Sans carte bancaire
             </p>
           </motion.div>
         </div>
@@ -239,7 +239,7 @@ export default function OffreSpecialePage() {
                 Essai sans risque
               </h3>
               <p className="text-gray-600">
-                15 jours pour tester gratuitement. Aucun engagement, aucune carte bancaire requise.
+                7 jours pour tester gratuitement. Aucun engagement, aucune carte bancaire requise.
               </p>
             </motion.div>
           </motion.div>
@@ -270,7 +270,7 @@ export default function OffreSpecialePage() {
             </Link>
             <p className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-500">
               <Lock className="w-4 h-4" />
-              15 jours d&apos;essai gratuit • Sans carte bancaire
+              7 jours d&apos;essai gratuit • Sans carte bancaire
             </p>
           </div>
         </motion.div>

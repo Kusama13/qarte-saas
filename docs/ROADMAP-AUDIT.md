@@ -148,7 +148,7 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 
 | Probleme | Resolution |
 |----------|-----------|
-| Trial 14→15 jours | Migration 026 : `NOW() + INTERVAL '15 days'` |
+| Trial 15→7 jours | Migration 034 : `NOW() + INTERVAL '7 days'` (nouveaux inscrits) |
 | Spelling canceled/cancelled | Migration 027 : constraint + update data |
 | Path traversal upload | MIME whitelist (jpeg, png, webp, gif) + UUID filename |
 | Auth bypass member-programs | `getUser()` + verification merchant ownership |
@@ -380,6 +380,7 @@ SHIELD (points en attente)
 - **Emails programmes** : via `scheduledAt` de Resend (IncompleteSignup +1h, Reminder2 +3h)
 - **Tracking doublons** : tables `pending_email_tracking` et `reactivation_email_tracking`
 - **Codes tracking** : -100 FirstScan, -101 FirstReward, -102 Tier2Upsell, -103 QRCode+Kit, -106 FirstClientScript, -107 QuickCheck
+- **Anti-doublon cross-email** : InactiveMerchant skip si -106 ou -107 existe (evite collision onboarding + inactivite)
 - **Layout** : `BaseLayout.tsx` (header banner, footer avec liens Instagram/Facebook/TikTok)
 
 ---
@@ -499,6 +500,28 @@ SHIELD (points en attente)
 ---
 
 # PARTIE 6 : CHANGELOG
+
+## [2026-02-15] — Essai 15j → 7j, grâce 7j → 3j, planning emails optimisé
+
+### Période d'essai réduite
+- **feat:** Migration 034 — trial default `NOW() + INTERVAL '7 days'` (nouveaux inscrits uniquement)
+- **feat:** `GRACE_PERIOD_DAYS` 7 → 3 dans `utils.ts` (appliqué immédiatement à tous)
+- **feat:** Planning emails cron optimisé pour 7 jours :
+  - TrialEnding : 3 alertes (J-5/J-3/J-1) → 2 alertes (J-3/J-1)
+  - TrialExpired : 3 alertes (J+1/J+3/J+5) → 2 alertes (J+1/J+2)
+  - InactiveMerchantDay7 : skip si merchant en période de grâce
+- **feat:** Tous les textes "15 jours" → "7 jours" (emails, landing, signup, CGV, blog, marketing, opengraph)
+- **feat:** ZeroScansCoach adapté (seuil 12→5, compteur 15→7)
+
+---
+
+## [2026-02-14] — Fix doublons emails cron
+
+### Anti-doublon emails onboarding vs inactivite
+- **fix:** InactiveMerchant (J+7/14/30) skippé si merchant a déjà reçu FirstClientScript (-106) ou QuickCheck (-107) — évite 2 emails le même jour
+- **audit:** Revue complète du cron morning : toutes les paires d'emails vérifiées, aucune autre collision détectée
+
+---
 
 ## [2026-02-13] — ProductUpdateEmail, fix email links, footer social, PWA wording, AIReengagement
 
@@ -825,8 +848,9 @@ SHIELD (points en attente)
 - 031 : last_seen_at column
 - 032 : Fix updated_at trigger (exclut last_seen_at)
 - 033 : Add referral_code (parrainage merchant)
+- 034 : Trial period 15j → 7j (nouveaux inscrits)
 
 ---
 
-*Derniere mise a jour : 13 fevrier 2026*
-*Statuts verifies contre le code source le 13/02/2026. ProductUpdateEmail, fix liens emails, footer social, PWA wording, AIReengagement landing.*
+*Derniere mise a jour : 15 fevrier 2026*
+*Statuts verifies contre le code source le 15/02/2026. Essai 15j→7j, grace 7j→3j, planning emails optimise.*

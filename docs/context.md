@@ -7,7 +7,7 @@
 - **URL:** getqarte.com
 - **Version:** 0.1.0
 - **Langue:** Francais
-- **Essai:** 15 jours gratuits
+- **Essai:** 7 jours gratuits
 - **Prix:** 19€/mois ou 190€/an
 
 ---
@@ -120,16 +120,17 @@ docs/
 └── roadmap/              # Backups code (mode article, scheduled push)
 
 supabase/
-└── migrations/           # 33 migrations SQL
+└── migrations/           # 34 migrations SQL
     ├── 001-025           # Schema initial + fixes
-    ├── 026               # Trial period 15 jours
+    ├── 026               # Trial period 15 jours (original)
     ├── 027               # Spelling cancelled→canceled
     ├── 028               # Reactivation email tracking
     ├── 029               # Merchant country + E.164 phone migration
     ├── 030               # Shield + divers
     ├── 031               # last_seen_at column
     ├── 032               # Fix updated_at trigger (exclut last_seen_at)
-    └── 033               # Add referral_code (parrainage merchant)
+    ├── 033               # Add referral_code (parrainage merchant)
+    └── 034               # Trial period 15j → 7j (nouveaux inscrits)
 
 public/
 ├── images/              # Images statiques (mockups, temoignages, email-banner)
@@ -467,7 +468,7 @@ npm run email
 | `src/app/api/referrals/route.ts` | API parrainage client (GET info + POST inscription) |
 | `src/app/api/vouchers/use/route.ts` | API consommation voucher + auto-creation parrain |
 | `src/app/dashboard/referrals/page.tsx` | Dashboard parrainage (config + stats + tableau) |
-| `supabase/migrations/` | 33 migrations SQL |
+| `supabase/migrations/` | 34 migrations SQL |
 
 ---
 
@@ -509,11 +510,11 @@ npm run email
 ## 14. Business Model
 
 ### Tarification
-- **Essai gratuit:** 15 jours
+- **Essai gratuit:** 7 jours
 - **Abonnement mensuel:** 19€/mois
 - **Abonnement annuel:** 190€/an (equivalent ~15,83€/mois, -17%)
-- **Periode de grace:** 7 jours apres expiration (lecture seule)
-- **Suppression:** Donnees supprimees 7 jours apres expiration
+- **Periode de grace:** 3 jours apres expiration (lecture seule)
+- **Suppression:** Donnees supprimees 3 jours apres expiration
 
 ### Cible
 - Salons de coiffure, barbiers

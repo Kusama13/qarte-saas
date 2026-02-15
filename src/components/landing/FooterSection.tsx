@@ -10,7 +10,7 @@ export function FooterSection() {
         {/* Final CTA */}
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-            Essayez Qarte pendant 15 jours gratuitement
+            Essayez Qarte pendant 7 jours gratuitement
           </h2>
           <a
             href="/auth/merchant/signup"
