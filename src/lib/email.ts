@@ -27,6 +27,7 @@ import {
   FirstClientScriptEmail,
   QuickCheckEmail,
   ProductUpdateEmail,
+  ChallengeCompletedEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -1089,6 +1090,42 @@ export async function sendQuickCheckEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending quick check email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email challenge réussi (5 clients en 3 jours)
+export async function sendChallengeCompletedEmail(
+  to: string,
+  shopName: string,
+  promoCode: string = 'QARTE50'
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(ChallengeCompletedEmail({ shopName, promoCode }));
+    const text = await render(ChallengeCompletedEmail({ shopName, promoCode }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName}, défi réussi — votre code promo QARTE50`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send challenge completed email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Challenge completed email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending challenge completed email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

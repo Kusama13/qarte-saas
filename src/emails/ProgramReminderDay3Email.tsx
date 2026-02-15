@@ -66,6 +66,14 @@ export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramRem
         </Section>
       </Section>
 
+      <Section style={challengeBox}>
+        <Text style={challengeTitle}>Défi : 5 clients en 3 jours = premier mois à 9€</Text>
+        <Text style={challengeText}>
+          Configurez votre programme maintenant, faites scanner <strong>5 clients en 3 jours</strong>,
+          et obtenez votre <strong>premier mois à 9€ seulement</strong> au lieu de 19€.
+        </Text>
+      </Section>
+
       <Hr style={divider} />
 
       <Section style={testimonialBox}>
@@ -200,6 +208,28 @@ const testimonialAuthor = {
   color: '#4b0082',
   fontSize: '14px',
   fontWeight: '600',
+  margin: '0',
+};
+
+const challengeBox = {
+  backgroundColor: '#fffbeb',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '28px 0',
+  border: '2px solid #f59e0b',
+};
+
+const challengeTitle = {
+  color: '#92400e',
+  fontSize: '16px',
+  fontWeight: '700',
+  margin: '0 0 8px 0',
+};
+
+const challengeText = {
+  color: '#78350f',
+  fontSize: '15px',
+  lineHeight: '1.6',
   margin: '0',
 };
 

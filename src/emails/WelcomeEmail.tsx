@@ -58,6 +58,17 @@ export function WelcomeEmail({ shopName, trialDays = 7 }: WelcomeEmailProps) {
         </Text>
       </Section>
 
+      <Section style={challengeBox}>
+        <Text style={challengeTitle}>Défi activation</Text>
+        <Text style={challengeText}>
+          Faites scanner <strong>5 clients en 3 jours</strong> et obtenez
+          votre <strong>premier mois à 9€ seulement</strong> au lieu de 19€.
+        </Text>
+        <Text style={challengeHint}>
+          Montrez simplement votre QR code au moment de payer — c&apos;est tout !
+        </Text>
+      </Section>
+
       <Hr style={divider} />
 
       <Section style={benefitsBox}>
@@ -249,6 +260,35 @@ const whatsappButton = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '12px 28px',
+};
+
+const challengeBox = {
+  backgroundColor: '#fffbeb',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '28px 0',
+  border: '2px solid #f59e0b',
+};
+
+const challengeTitle = {
+  color: '#92400e',
+  fontSize: '16px',
+  fontWeight: '700',
+  margin: '0 0 8px 0',
+};
+
+const challengeText = {
+  color: '#78350f',
+  fontSize: '15px',
+  lineHeight: '1.6',
+  margin: '0 0 8px 0',
+};
+
+const challengeHint = {
+  color: '#a16207',
+  fontSize: '13px',
+  lineHeight: '1.5',
+  margin: '0',
 };
 
 const signature = {

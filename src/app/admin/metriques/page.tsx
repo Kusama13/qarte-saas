@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Euro,
   Users,
@@ -16,6 +16,8 @@ import {
   Zap,
   ArrowRight,
   Target,
+  Filter,
+  Timer,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import {
@@ -75,8 +77,36 @@ export default function MetriquesPage() {
     recentMerchantCount: 0,
   });
 
-  // Funnel
-  const [funnel, setFunnel] = useState({ total: 0, withProgram: 0, withFirstScan: 0, paid: 0 });
+  // Trial-to-paid (P4) + Time-to-convert (P6)
+  const [trialConversion, setTrialConversion] = useState({
+    trialToPaidRate: 0,
+    trialEnded30d: 0,
+    trialConverted30d: 0,
+    avgTimeToConvert: 0,
+  });
+
+  // Funnel — store raw data for period filtering (P5)
+  type FunnelMerchant = { id: string; created_at: string; reward_description: string | null; subscription_status: string };
+  const [funnelMerchants, setFunnelMerchants] = useState<FunnelMerchant[]>([]);
+  const [funnelVisitSet, setFunnelVisitSet] = useState<Set<string>>(new Set());
+  const [funnelPeriod, setFunnelPeriod] = useState<'7' | '30' | '90' | 'all'>('all');
+
+  // Computed funnel based on period
+  const funnel = useMemo(() => {
+    let filtered = funnelMerchants;
+    if (funnelPeriod !== 'all') {
+      const days = parseInt(funnelPeriod);
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - days);
+      filtered = funnelMerchants.filter(m => new Date(m.created_at) >= cutoff);
+    }
+    return {
+      total: filtered.length,
+      withProgram: filtered.filter(m => m.reward_description !== null).length,
+      withFirstScan: filtered.filter(m => funnelVisitSet.has(m.id)).length,
+      paid: filtered.filter(m => m.subscription_status === 'active').length,
+    };
+  }, [funnelMerchants, funnelVisitSet, funnelPeriod]);
 
   // Charts data
   const [mrrHistory, setMrrHistory] = useState<{ month: string; mrr: number }[]>([]);
@@ -153,12 +183,48 @@ export default function MetriquesPage() {
       const churned = merchants.filter((m: MerchantData) => m.subscription_status === 'canceled').length;
       const total = merchants.length;
       const mrr = active * SUBSCRIPTION_PRICE;
-      const conversionRate = total > 0 ? Math.round((active / total) * 100) : 0;
+      const conversionRate = (active + churned) > 0 ? Math.round((active / (active + churned)) * 100) : 0;
       const churnRate = (active + churned) > 0 ? Math.round((churned / (active + churned)) * 100) : 0;
 
-      // Revenue projections (from Revenus page)
+      // P4: Trial-to-paid rate (compute early for projection P8)
+      const trialEndedRecently = merchants.filter((m: MerchantData) => {
+        if (!m.trial_ends_at) return false;
+        const trialEnd = new Date(m.trial_ends_at);
+        return trialEnd < now && trialEnd >= oneMonthAgo;
+      });
+      const trialConvertedCount = trialEndedRecently.filter((m: MerchantData) => m.subscription_status === 'active').length;
+      const trialToPaidRate = trialEndedRecently.length > 0
+        ? Math.round((trialConvertedCount / trialEndedRecently.length) * 100)
+        : 0;
+
+      // P6: Time-to-convert
+      const activeMerchantsList = merchants.filter((m: MerchantData) => m.subscription_status === 'active');
+      let totalConvertDays = 0;
+      let convertCount = 0;
+      activeMerchantsList.forEach((m: MerchantData) => {
+        if (m.trial_ends_at) {
+          const created = new Date(m.created_at);
+          const trialEnd = new Date(m.trial_ends_at);
+          const days = (trialEnd.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+          if (days > 0 && days < 60) {
+            totalConvertDays += days;
+            convertCount++;
+          }
+        }
+      });
+      const avgTimeToConvert = convertCount > 0 ? Math.round((totalConvertDays / convertCount) * 10) / 10 : 0;
+
+      setTrialConversion({
+        trialToPaidRate,
+        trialEnded30d: trialEndedRecently.length,
+        trialConverted30d: trialConvertedCount,
+        avgTimeToConvert,
+      });
+
+      // Revenue projections — use real trial-to-paid rate if available (P8)
       const trialEndingSoon = endingSoonCount || 0;
-      const estimatedConversions = Math.round(trialEndingSoon * 0.5);
+      const estimatedConversionRate = trialToPaidRate > 0 ? trialToPaidRate / 100 : 0.5;
+      const estimatedConversions = Math.round(trialEndingSoon * estimatedConversionRate);
       const revenueNextMonth = (active + estimatedConversions) * SUBSCRIPTION_PRICE;
 
       // Time-based stats
@@ -221,29 +287,49 @@ export default function MetriquesPage() {
         setMrrHistory(mrrData);
       }
 
-      // Monthly comparison (Real vs Projection) - from Revenus page
+      // Monthly comparison (Real vs Projection) - use real snapshots
       const comparisonData: { month: string; revenue: number; projected: number }[] = [];
-      for (let i = 2; i >= 0; i--) {
-        const date = new Date();
-        date.setMonth(date.getMonth() - i);
-        const monthName = date.toLocaleDateString('fr-FR', { month: 'short' });
-        const growthFactor = 1 - (i * 0.1);
-        comparisonData.push({
-          month: monthName,
-          revenue: Math.round(mrr * growthFactor),
-          projected: Math.round(mrr * growthFactor * 1.1),
+      if (snapshots && snapshots.length >= 2) {
+        // Use real snapshot data for past months
+        const recentSnapshots = snapshots.slice(-3);
+        recentSnapshots.forEach((s: Snapshot) => {
+          comparisonData.push({
+            month: new Date(s.snapshot_date).toLocaleDateString('fr-FR', { month: 'short' }),
+            revenue: s.mrr,
+            projected: s.mrr,
+          });
         });
-      }
-      for (let i = 1; i <= 3; i++) {
-        const date = new Date();
-        date.setMonth(date.getMonth() + i);
-        const monthName = date.toLocaleDateString('fr-FR', { month: 'short' });
-        const growthFactor = 1 + (i * 0.05);
+        // Compute average monthly growth from snapshots for projection
+        const lastMrr = recentSnapshots[recentSnapshots.length - 1].mrr;
+        const firstMrr = recentSnapshots[0].mrr;
+        const monthlyGrowth = recentSnapshots.length > 1 && firstMrr > 0
+          ? Math.pow(lastMrr / firstMrr, 1 / (recentSnapshots.length - 1))
+          : 1.05;
+        for (let i = 1; i <= 3; i++) {
+          const date = new Date();
+          date.setMonth(date.getMonth() + i);
+          comparisonData.push({
+            month: date.toLocaleDateString('fr-FR', { month: 'short' }),
+            revenue: 0,
+            projected: Math.round(lastMrr * Math.pow(monthlyGrowth, i)),
+          });
+        }
+      } else {
+        // Not enough snapshot data — show current month + projections only
         comparisonData.push({
-          month: monthName,
-          revenue: 0,
-          projected: Math.round(mrr * growthFactor),
+          month: new Date().toLocaleDateString('fr-FR', { month: 'short' }),
+          revenue: mrr,
+          projected: mrr,
         });
+        for (let i = 1; i <= 3; i++) {
+          const date = new Date();
+          date.setMonth(date.getMonth() + i);
+          comparisonData.push({
+            month: date.toLocaleDateString('fr-FR', { month: 'short' }),
+            revenue: 0,
+            projected: Math.round(mrr * (1 + i * 0.05)),
+          });
+        }
       }
       setMonthlyComparison(comparisonData);
 
@@ -306,12 +392,9 @@ export default function MetriquesPage() {
         recentMerchantCount: recentCreated.length,
       });
 
-      setFunnel({
-        total: merchants.length,
-        withProgram: merchants.filter((m: MerchantData) => m.reward_description !== null).length,
-        withFirstScan: merchants.filter((m: MerchantData) => merchantsWithAnyVisit.has(m.id)).length,
-        paid: active,
-      });
+      // Store raw data for funnel period filtering (P5)
+      setFunnelMerchants(merchants as FunnelMerchant[]);
+      setFunnelVisitSet(merchantsWithAnyVisit);
 
       // Weekly signups (last 8 weeks)
       const weeklyData: { week: string; count: number }[] = [];
@@ -497,13 +580,70 @@ export default function MetriquesPage() {
         </div>
       </section>
 
-      {/* FUNNEL DE CONVERSION */}
+      {/* CONVERSION ESSAI (P4 + P6) */}
+      <section>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <Target className="w-5 h-5 text-[#5167fc]" />
+          Conversion essai (30 derniers jours)
+        </h2>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard
+            label="Essai → Payant"
+            value={`${trialConversion.trialToPaidRate}%`}
+            sub={`${trialConversion.trialConverted30d}/${trialConversion.trialEnded30d} essais terminés`}
+            icon={TrendingUp}
+            color="green"
+          />
+          <MetricCard
+            label="Essais terminés"
+            value={trialConversion.trialEnded30d}
+            sub="30 derniers jours"
+            icon={Clock}
+            color="amber"
+          />
+          <MetricCard
+            label="Convertis"
+            value={trialConversion.trialConverted30d}
+            sub="Passés payants"
+            icon={Users}
+            color="indigo"
+          />
+          <MetricCard
+            label="Temps conversion"
+            value={trialConversion.avgTimeToConvert > 0 ? `${trialConversion.avgTimeToConvert}j` : '-'}
+            sub="Moy. création → abo"
+            icon={Timer}
+            color="blue"
+          />
+        </div>
+      </section>
+
+      {/* FUNNEL DE CONVERSION (P5: filtrable) */}
       {funnel.total > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <ArrowRight className="w-5 h-5 text-[#5167fc]" />
-            Funnel de conversion
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <ArrowRight className="w-5 h-5 text-[#5167fc]" />
+              Funnel de conversion
+            </h2>
+            <div className="flex items-center gap-1.5">
+              <Filter className="w-4 h-4 text-gray-400" />
+              {(['7', '30', '90', 'all'] as const).map((period) => (
+                <button
+                  key={period}
+                  onClick={() => setFunnelPeriod(period)}
+                  className={cn(
+                    "px-2.5 py-1 text-xs font-medium rounded-lg transition-colors",
+                    funnelPeriod === period
+                      ? "bg-[#5167fc] text-white"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  )}
+                >
+                  {period === 'all' ? 'Tout' : `${period}j`}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-4">
             <FunnelBarMetric label="Inscrits" count={funnel.total} total={funnel.total} color="#5167fc" />
             <FunnelBarMetric label="Programme configuré" count={funnel.withProgram} total={funnel.total} color="#7c8afc" prevCount={funnel.total} />
@@ -584,8 +724,17 @@ export default function MetriquesPage() {
             <p className="text-2xl font-bold">{SUBSCRIPTION_PRICE}€/mois</p>
           </div>
           <div>
-            <p className="text-white/70 text-sm">LTV estimée (12 mois)</p>
-            <p className="text-2xl font-bold">{SUBSCRIPTION_PRICE * 12}€</p>
+            <p className="text-white/70 text-sm">LTV estimée</p>
+            <p className="text-2xl font-bold">
+              {revenue.churnRate > 0
+                ? formatCurrency(Math.round(SUBSCRIPTION_PRICE / (revenue.churnRate / 100)))
+                : `${SUBSCRIPTION_PRICE * 12}€`}
+            </p>
+            <p className="text-white/50 text-xs mt-0.5">
+              {revenue.churnRate > 0
+                ? `ARPU / ${revenue.churnRate}% churn`
+                : 'Estimation 12 mois'}
+            </p>
           </div>
           <div>
             <p className="text-white/70 text-sm">Revenus potentiels (essais)</p>

@@ -20,6 +20,7 @@ import {
   sendReactivationEmail,
   sendFirstClientScriptEmail,
   sendQuickCheckEmail,
+  sendChallengeCompletedEmail,
 } from '@/lib/email';
 import { getTrialStatus } from '@/lib/utils';
 import logger from '@/lib/logger';
@@ -89,10 +90,14 @@ export async function GET(request: NextRequest) {
     weeklyDigest: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     tier2Upsell: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     inactiveMerchants: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    challengeCompleted: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     reactivation: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     pendingReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     scheduledPush: { processed: 0, sent: 0, errors: 0 },
   };
+
+  // Track merchants who already received a trial email this run (avoid double email with program reminders)
+  const merchantsSentTrialEmail = new Set<string>();
 
   try {
     // ==================== 1. TRIAL EMAILS ====================
@@ -118,6 +123,7 @@ export async function GET(request: NextRequest) {
             // Pas de code promo à J-1 : on laisse convertir au prix normal
             await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining);
             results.trialEmails.ending++;
+            merchantsSentTrialEmail.add(merchant.id);
           }
           if (trialStatus.isInGracePeriod) {
             const daysExpired = Math.abs(trialStatus.daysRemaining);
@@ -126,6 +132,7 @@ export async function GET(request: NextRequest) {
               const promoCode = daysExpired === 1 ? 'QARTE50' : undefined;
               await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, promoCode);
               results.trialEmails.expired++;
+              merchantsSentTrialEmail.add(merchant.id);
             }
           }
         } catch {
@@ -226,6 +233,13 @@ export async function GET(request: NextRequest) {
 
       await batchProcess(unconfiguredDay3, async (merchant) => {
         results.programRemindersDay3.processed++;
+
+        // Skip if merchant already received a trial email this run (avoid double email)
+        if (merchantsSentTrialEmail.has(merchant.id)) {
+          results.programRemindersDay3.skipped++;
+          return;
+        }
+
         const email = emailMap.get(merchant.user_id);
 
         if (!email) {
@@ -337,6 +351,76 @@ export async function GET(request: NextRequest) {
                 results.qrCode.sent++;
               } else { results.qrCode.errors++; }
             } catch { results.qrCode.errors++; }
+          });
+        }
+      }
+    }
+
+    // ==================== 2f. CHALLENGE COMPLETED (5 unique clients in 3 days) ====================
+    {
+      // Find trial merchants created within last 10 days (generous window to catch late completions)
+      const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+      const { data: challengeCandidates } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id, created_at')
+        .eq('subscription_status', 'trial')
+        .not('reward_description', 'is', null)
+        .neq('reward_description', '')
+        .gte('created_at', tenDaysAgo.toISOString());
+
+      if (challengeCandidates && challengeCandidates.length > 0) {
+        const challengeIds = challengeCandidates.map(m => m.id);
+
+        // Check who already received the challenge email
+        const { data: existingChallenge } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id')
+          .in('merchant_id', challengeIds)
+          .eq('reminder_day', -104);
+        const alreadySentChallenge = new Set((existingChallenge || []).map(t => t.merchant_id));
+
+        // Get unique customers per merchant — count customers created within 3 days of merchant creation
+        const { data: challengeCustomers } = await supabase
+          .from('customers')
+          .select('id, merchant_id, created_at')
+          .in('merchant_id', challengeIds);
+
+        // Count unique customers created within 3 days of merchant creation
+        const merchantCreatedMap = new Map(challengeCandidates.map(m => [m.id, new Date(m.created_at)]));
+        const customerCountMap = new Map<string, number>();
+        for (const customer of challengeCustomers || []) {
+          const merchantCreated = merchantCreatedMap.get(customer.merchant_id);
+          if (!merchantCreated) continue;
+          const threeDaysAfter = new Date(merchantCreated.getTime() + 3 * 24 * 60 * 60 * 1000);
+          if (new Date(customer.created_at) <= threeDaysAfter) {
+            customerCountMap.set(customer.merchant_id, (customerCountMap.get(customer.merchant_id) || 0) + 1);
+          }
+        }
+
+        // Filter to merchants with >= 5 unique clients and not already sent
+        const challengeToSend = challengeCandidates.filter(
+          m => !alreadySentChallenge.has(m.id) && (customerCountMap.get(m.id) || 0) >= 5
+        );
+
+        results.challengeCompleted.processed = challengeCandidates.length;
+        results.challengeCompleted.skipped = challengeCandidates.length - challengeToSend.length;
+
+        if (challengeToSend.length > 0) {
+          const challengeEmailMap = await batchGetUserEmails([...new Set(challengeToSend.map(m => m.user_id))]);
+
+          await batchProcess(challengeToSend, async (merchant) => {
+            const email = challengeEmailMap.get(merchant.user_id);
+            if (!email) { results.challengeCompleted.skipped++; return; }
+
+            try {
+              const result = await sendChallengeCompletedEmail(email, merchant.shop_name, 'QARTE50');
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({
+                  merchant_id: merchant.id, reminder_day: -104, pending_count: 0,
+                });
+                results.challengeCompleted.sent++;
+              } else { results.challengeCompleted.errors++; }
+            } catch { results.challengeCompleted.errors++; }
           });
         }
       }

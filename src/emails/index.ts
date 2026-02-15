@@ -25,3 +25,4 @@ export { SubscriptionReactivatedEmail } from './SubscriptionReactivatedEmail';
 export { FirstClientScriptEmail } from './FirstClientScriptEmail';
 export { QuickCheckEmail } from './QuickCheckEmail';
 export { ProductUpdateEmail } from './ProductUpdateEmail';
+export { ChallengeCompletedEmail } from './ChallengeCompletedEmail';

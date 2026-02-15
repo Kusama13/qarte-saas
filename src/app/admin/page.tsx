@@ -23,6 +23,7 @@ import {
   Save,
   Loader2,
   X,
+  Trophy,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button, Input, Modal } from '@/components/ui';
@@ -107,6 +108,7 @@ export default function AdminDashboardPage() {
     totalMerchants: 0,
     trialMerchants: 0,
     activeMerchants: 0,
+    canceledMerchants: 0,
     totalCustomers: 0,
     weeklyActiveMerchants: 0,
     activationRate: 0,
@@ -118,6 +120,9 @@ export default function AdminDashboardPage() {
   const [trialsExpiring, setTrialsExpiring] = useState<ActionMerchant[]>([]);
   const [noProgram, setNoProgram] = useState<ActionMerchant[]>([]);
   const [inactive7Days, setInactive7Days] = useState<ActionMerchant[]>([]);
+
+  // Challenge progress
+  const [challengeData, setChallengeData] = useState<{ shopName: string; clients: number; completed: boolean; daysSinceCreation: number }[]>([]);
 
   // Notes
   const [notes, setNotes] = useState('');
@@ -235,14 +240,11 @@ export default function AdminDashboardPage() {
     const recentActivated = recentCreated.filter((m: Merchant) => scans30dSet.has(m.id));
     const activationRate = recentCreated.length > 0 ? Math.round((recentActivated.length / recentCreated.length) * 100) : 0;
 
-    const convRate = (active.length + canceled.length + trial.length) > 0
-      ? Math.round((active.length / (active.length + canceled.length + trial.length)) * 100)
-      : 0;
-
     setStats({
       totalMerchants: merchants.length,
       trialMerchants: trial.length,
       activeMerchants: active.length,
+      canceledMerchants: canceled.length,
       totalCustomers: totalCustomers || 0,
       weeklyActiveMerchants: weeklyActive.size,
       activationRate,
@@ -306,6 +308,48 @@ export default function AdminDashboardPage() {
     setRecentMerchants(
       (recentMerchantsList || []).filter((m: Merchant) => !superAdminUserIds.has(m.user_id)).slice(0, 5)
     );
+
+    // Challenge progress: trial merchants created within last 10 days
+    const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
+    const recentTrials = trial.filter((m: Merchant) =>
+      new Date(m.created_at) >= tenDaysAgo && m.reward_description
+    );
+
+    if (recentTrials.length > 0) {
+      const { data: challengeCustomers } = await supabase
+        .from('customers')
+        .select('id, merchant_id, created_at')
+        .in('merchant_id', recentTrials.map((m: Merchant) => m.id));
+
+      const { data: challengeSent } = await supabase
+        .from('pending_email_tracking')
+        .select('merchant_id')
+        .in('merchant_id', recentTrials.map((m: Merchant) => m.id))
+        .eq('reminder_day', -104);
+      const completedSet = new Set((challengeSent || []).map((t: { merchant_id: string }) => t.merchant_id));
+
+      const merchantCreatedMap = new Map<string, Date>(recentTrials.map((m: Merchant) => [m.id, new Date(m.created_at)]));
+      const clientCountMap = new Map<string, number>();
+      for (const c of challengeCustomers || []) {
+        const created = merchantCreatedMap.get(c.merchant_id);
+        if (!created) continue;
+        const threeDaysAfter = new Date(created.getTime() + 3 * 24 * 60 * 60 * 1000);
+        if (new Date(c.created_at) <= threeDaysAfter) {
+          clientCountMap.set(c.merchant_id, (clientCountMap.get(c.merchant_id) || 0) + 1);
+        }
+      }
+
+      setChallengeData(
+        recentTrials.map((m: Merchant) => ({
+          shopName: m.shop_name,
+          clients: clientCountMap.get(m.id) || 0,
+          completed: completedSet.has(m.id) || (clientCountMap.get(m.id) || 0) >= 5,
+          daysSinceCreation: Math.floor((now.getTime() - new Date(m.created_at).getTime()) / (1000 * 60 * 60 * 24)),
+        }))
+          .filter((d: { clients: number; daysSinceCreation: number }) => d.clients > 0 || d.daysSinceCreation <= 3)
+          .sort((a: { clients: number }, b: { clients: number }) => b.clients - a.clients)
+      );
+    }
   }, [supabase]);
 
   const fetchNotes = useCallback(async () => {
@@ -527,8 +571,8 @@ export default function AdminDashboardPage() {
     month: 'long',
   }).format(new Date());
 
-  const conversionRate = stats.totalMerchants > 0
-    ? Math.round((stats.activeMerchants / stats.totalMerchants) * 100)
+  const conversionRate = (stats.activeMerchants + stats.canceledMerchants) > 0
+    ? Math.round((stats.activeMerchants / (stats.activeMerchants + stats.canceledMerchants)) * 100)
     : 0;
 
   const totalActions = trialsNoScan.length + trialsExpiring.length + noProgram.length + inactive7Days.length;
@@ -598,6 +642,49 @@ export default function AdminDashboardPage() {
         <StatCard label="En essai" value={stats.trialMerchants} icon={Clock} color="amber" />
         <StatCard label="Conversion" value={`${conversionRate}%`} icon={Percent} color="green" />
       </div>
+
+      {/* Challenge progress */}
+      {challengeData.length > 0 && (
+        <div className="bg-white rounded-lg border border-slate-100 shadow-md overflow-hidden">
+          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+            <div className="p-2 bg-amber-50 rounded-lg">
+              <Trophy className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-slate-900">Défi activation</h2>
+              <p className="text-xs text-slate-500">5 clients en 3 jours = premier mois à 9€</p>
+            </div>
+          </div>
+          <div className="divide-y divide-slate-50">
+            {challengeData.map((d, i) => (
+              <div key={i} className="flex items-center gap-4 px-5 py-3">
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-slate-900 truncate block">{d.shopName}</span>
+                  <span className="text-xs text-slate-400">Inscrit il y a {d.daysSinceCreation}j</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Progress bar */}
+                  <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        d.completed ? "bg-green-500" : "bg-amber-400"
+                      )}
+                      style={{ width: `${Math.min((d.clients / 5) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <span className={cn(
+                    "text-xs font-bold min-w-[3rem] text-right",
+                    d.completed ? "text-green-600" : "text-amber-600"
+                  )}>
+                    {d.completed ? 'Réussi' : `${d.clients}/5`}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Actions du jour */}
       {totalActions > 0 && (
