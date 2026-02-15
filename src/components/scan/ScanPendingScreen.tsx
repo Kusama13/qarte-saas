@@ -33,7 +33,7 @@ export default function ScanPendingScreen({
           Passage en cours de vérification
         </h2>
         <p className="text-gray-500 mb-6">
-          Pour votre sécurité, ce passage doit être validé par votre commerçant.
+          Pour votre sécurité, ce passage doit être validé par {merchant.shop_name}.
         </p>
 
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-8 text-left">
