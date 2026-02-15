@@ -19,6 +19,8 @@ import {
   Instagram,
   CalendarDays,
   Globe,
+  QrCode,
+  Smartphone,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -142,11 +144,7 @@ export default function ProgramPage() {
   const [showStampsWarning, setShowStampsWarning] = useState(false);
   const [tier2Error, setTier2Error] = useState('');
   const [socialOpen, setSocialOpen] = useState(searchParams.get('section') === 'social');
-
-  // Prefetch preview page for faster navigation after first save
-  useEffect(() => {
-    if (merchant?.id) router.prefetch(`/customer/card/${merchant.id}?preview=true&onboarding=true`);
-  }, [router, merchant?.id]);
+  const [showTestModal, setShowTestModal] = useState(false);
 
   // Auto-scroll to social section when coming from onboarding checklist
   useEffect(() => {
@@ -311,7 +309,8 @@ export default function ProgramPage() {
       if (isFirstSetup) {
         // Send QR code email immediately (fire and forget)
         fetch('/api/emails/qr-code', { method: 'POST' }).catch(() => {});
-        router.push(`/customer/card/${merchant.id}?preview=true&onboarding=true`);
+        setShowTestModal(true);
+        setSaving(false);
         return;
       }
 
@@ -450,11 +449,11 @@ export default function ProgramPage() {
               <div className="p-1.5 md:p-2.5 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30">
                 <Palette className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
               </div>
-              Couleurs
+              Ambiance
             </h3>
 
             <div className="space-y-3 md:space-y-4">
-              <label className="text-xs md:text-sm font-semibold tracking-wide text-gray-700 uppercase">Palettes suggérées</label>
+              <label className="text-xs md:text-sm font-semibold tracking-wide text-gray-700 uppercase">Choisissez l&apos;ambiance de votre carte</label>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 md:gap-2">
                 {COLOR_PALETTES.map((palette, index) => (
                   <button
@@ -791,6 +790,41 @@ export default function ProgramPage() {
 
       {/* Spacer for sticky button (desktop only) */}
       <div className="hidden md:block h-16" />
+
+      {/* Test Scan Modal — shown after first program save */}
+      {showTestModal && merchant && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 text-center animate-in zoom-in-95 duration-300">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200/50">
+              <QrCode className="w-7 h-7 text-white" />
+            </div>
+
+            <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+              Votre carte est prête. Vos clients vont adorer.
+            </p>
+
+            <a
+              href={`/scan/${merchant.scan_code}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <Smartphone className="w-5 h-5" />
+              Découvrir ma carte
+            </a>
+
+            <button
+              onClick={() => {
+                setShowTestModal(false);
+                router.push('/dashboard');
+              }}
+              className="mt-3 w-full py-2.5 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors"
+            >
+              Plus tard
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

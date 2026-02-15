@@ -3,9 +3,9 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle } from 'lucide-react';
+import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, Clock, Sparkles } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
-import { formatRelativeTime } from '@/lib/utils';
+import { formatRelativeTime, getTrialStatus } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
@@ -423,6 +423,17 @@ export default function DashboardPage() {
     );
   }
 
+  const trialStatus = getTrialStatus(
+    merchant?.trial_ends_at || null,
+    merchant?.subscription_status || 'trial'
+  );
+
+  // Show banner only for trial merchants at J-3 or less, with program configured
+  const showTrialBanner = trialStatus.isActive
+    && trialStatus.daysRemaining <= 3
+    && !merchant.stripe_subscription_id
+    && merchant.reward_description;
+
   return (
       <div className="space-y-8">
         <div className="p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
@@ -435,6 +446,45 @@ export default function DashboardPage() {
           Voici un aperçu de votre programme de fidélité
         </p>
       </div>
+
+      {/* Trial Countdown Banner — J-3 */}
+      {showTrialBanner && (
+        <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-red-500" />
+          <div className="p-5 md:p-6">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 p-3 rounded-xl bg-amber-100">
+                <Clock className="w-6 h-6 text-amber-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-gray-900">
+                  {trialStatus.daysRemaining === 0
+                    ? 'Dernier jour d\'essai'
+                    : `Plus que ${trialStatus.daysRemaining} jour${trialStatus.daysRemaining > 1 ? 's' : ''} d'essai`}
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Votre programme fonctionne, ne perdez pas vos clients fidélisés.
+                </p>
+                <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-amber-100">
+                  <Sparkles className="w-4 h-4 text-[#4b0082] shrink-0" />
+                  <p className="text-sm font-medium text-gray-800">
+                    Code <span className="font-black text-[#4b0082]">QARTE50</span> → premier mois à <span className="font-bold">9€</span> au lieu de 19€
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/dashboard/subscription"
+                className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-[#4b0082] to-violet-600 text-white font-bold text-sm shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                Souscrire à 9€/mois
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Onboarding Checklist */}
       <OnboardingChecklist />
