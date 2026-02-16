@@ -261,10 +261,41 @@ export default function AdminMerchantsPage() {
       });
   }, [data, searchQuery, statusFilter, countryFilter, shopTypeFilter, showAdmins, superAdminIds]);
 
-  const openWhatsApp = (phone: string, name?: string) => {
+  const [waDropdown, setWaDropdown] = useState<string | null>(null);
+
+  function getWhatsAppMessages(name: string, lifecycle: LifecycleStage, customers: number): { label: string; text: string }[] {
+    const msgs: { label: string; text: string }[] = [];
+    const l = lifecycle.label.toLowerCase();
+
+    if (l.includes('config programme')) {
+      msgs.push({ label: 'Aide config', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu que vous n'aviez pas encore configuré votre programme, c'est normal ça prend 30 secondes ! Vous voulez que je vous aide ? 😊` });
+      msgs.push({ label: 'Relance douce', text: `Hello ${name} ! Elodie de Qarte. Votre compte est prêt, il manque juste la récompense pour vos clients. Dites-moi ce que vous offrez après X passages et je configure tout pour vous !` });
+    } else if (l.includes('1er scan')) {
+      msgs.push({ label: 'Premier pas', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre carte est magnifique ! L'astuce : montrez le QR code à vos 3 prochains clients au moment de payer. C'est tout, ils adorent ! 😍` });
+      msgs.push({ label: 'Challenge', text: `Hello ${name} ! Petit défi du jour : montrez votre QR Qarte à 5 clients aujourd'hui. Vous allez voir, la réaction est toujours la même : "ah trop bien !" 😄` });
+    } else if (l.includes('essai j-')) {
+      msgs.push({ label: 'Fin essai', text: `Coucou ${name} ! C'est Elodie. Votre essai Qarte se termine bientôt${customers > 0 ? ` et vos ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. Ça vous dit ? 😊` });
+      msgs.push({ label: 'Accompagnement', text: `Hello ${name} ! Elodie de Qarte. Comment ça se passe de votre côté ? Si vous avez des questions avant la fin de l'essai, je suis là ! On peut s'appeler 2 min si vous voulez 📞` });
+    } else if (l.includes('expiré')) {
+      msgs.push({ label: 'Relance expirée', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre essai est terminé mais rien n'est perdu ! ${customers > 0 ? `Vos ${customers} clients gardent leur carte.` : ''} Le code QARTE50 vous offre le premier mois à 9€. On relance ensemble ? 😊` });
+      msgs.push({ label: 'Question ouverte', text: `Hello ${name} ! Elodie de Qarte. Est-ce qu'il y a quelque chose qui vous a bloqué(e) pendant l'essai ? Vos retours m'aident beaucoup, et je peux sûrement vous aider 🙏` });
+    } else if (l.includes('inactif')) {
+      msgs.push({ label: 'Prise de nouvelles', text: `Coucou ${name} ! C'est Elodie de Qarte. Ça fait quelques jours sans scan, tout va bien ? Si vos clients demandent leur carte, n'hésitez pas à ressortir le QR ! Je suis là si besoin 😊` });
+    } else if (l.includes('annulation')) {
+      msgs.push({ label: 'Rétention', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu votre demande d'annulation, je comprends. Est-ce qu'il y a quelque chose qu'on peut améliorer ? Vos retours comptent beaucoup pour nous 🙏` });
+    } else if (l === 'actif') {
+      msgs.push({ label: 'Suivi', text: `Coucou ${name} ! C'est Elodie de Qarte. Comment ça se passe avec la carte de fidélité ? Vos clients sont contents ? N'hésitez pas si vous avez des idées d'amélioration ! 😊` });
+    }
+
+    // Toujours un message libre en dernier
+    msgs.push({ label: 'Message libre', text: `Coucou ${name} ! C'est Elodie de Qarte. ` });
+    return msgs;
+  }
+
+  const openWhatsApp = (phone: string, message: string) => {
     const formattedPhone = formatPhoneForWhatsApp(phone);
-    const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');
-    window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
+    setWaDropdown(null);
   };
 
   const exportCSV = () => {
@@ -527,15 +558,34 @@ export default function AdminMerchantsPage() {
 
                       {/* Actions */}
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-1.5 relative">
                           {merchant.phone && !isAdmin && (
-                            <button
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); openWhatsApp(merchant.phone, merchant.shop_name); }}
-                              className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                              title="WhatsApp"
-                            >
-                              <MessageCircle className="w-4 h-4" />
-                            </button>
+                            <div className="relative">
+                              <button
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWaDropdown(waDropdown === merchant.id ? null : merchant.id); }}
+                                className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                                title="WhatsApp"
+                              >
+                                <MessageCircle className="w-4 h-4" />
+                              </button>
+                              {waDropdown === merchant.id && (
+                                <>
+                                  <div className="fixed inset-0 z-40" onClick={() => setWaDropdown(null)} />
+                                  <div className="absolute right-0 top-full mt-1 z-50 w-72 bg-white rounded-xl border border-gray-200 shadow-xl p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                                    {getWhatsAppMessages(merchant.shop_name, lifecycle, customers).map((msg, i) => (
+                                      <button
+                                        key={i}
+                                        onClick={(e) => { e.stopPropagation(); openWhatsApp(merchant.phone, msg.text); }}
+                                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-green-50 transition-colors group/wa"
+                                      >
+                                        <span className="text-xs font-semibold text-green-700">{msg.label}</span>
+                                        <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5 group-hover/wa:text-gray-700">{msg.text}</p>
+                                      </button>
+                                    ))}
+                                  </div>
+                                </>
+                              )}
+                            </div>
                           )}
                           <Link
                             href={`/admin/merchants/${merchant.id}`}
@@ -593,12 +643,31 @@ export default function AdminMerchantsPage() {
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {merchant.phone && !isAdmin && (
-                        <button
-                          onClick={() => openWhatsApp(merchant.phone, merchant.shop_name)}
-                          className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </button>
+                        <div className="relative">
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWaDropdown(waDropdown === `m-${merchant.id}` ? null : `m-${merchant.id}`); }}
+                            className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </button>
+                          {waDropdown === `m-${merchant.id}` && (
+                            <>
+                              <div className="fixed inset-0 z-40" onClick={() => setWaDropdown(null)} />
+                              <div className="absolute right-0 top-full mt-1 z-50 w-72 bg-white rounded-xl border border-gray-200 shadow-xl p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
+                                {getWhatsAppMessages(merchant.shop_name, lifecycle, customers).map((msg, i) => (
+                                  <button
+                                    key={i}
+                                    onClick={(e) => { e.stopPropagation(); openWhatsApp(merchant.phone, msg.text); }}
+                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-green-50 transition-colors group/wa"
+                                  >
+                                    <span className="text-xs font-semibold text-green-700">{msg.label}</span>
+                                    <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5 group-hover/wa:text-gray-700">{msg.text}</p>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       )}
                       <Link
                         href={`/admin/merchants/${merchant.id}`}
