@@ -232,6 +232,22 @@ export default function ProgramPage() {
     return `https://${trimmed}`;
   };
 
+  const normalizeSocialUrl = (value: string, platform: 'instagram' | 'facebook' | 'tiktok') => {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    // Already a URL
+    if (/^https?:\/\//i.test(trimmed) || trimmed.includes('.com') || trimmed.includes('.fr')) {
+      return normalizeUrl(trimmed);
+    }
+    // Username → build URL
+    const username = trimmed.replace(/^@/, '');
+    switch (platform) {
+      case 'instagram': return `https://instagram.com/${username}`;
+      case 'facebook': return `https://facebook.com/${username}`;
+      case 'tiktok': return `https://tiktok.com/@${username}`;
+    }
+  };
+
   const handleSave = async () => {
     if (!merchant) return;
     if (!formData.rewardDescription.trim()) return;
@@ -262,9 +278,9 @@ export default function ProgramPage() {
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
           review_link: normalizeUrl(formData.reviewLink) || null,
-          instagram_url: normalizeUrl(formData.instagramUrl) || null,
-          facebook_url: normalizeUrl(formData.facebookUrl) || null,
-          tiktok_url: normalizeUrl(formData.tiktokUrl) || null,
+          instagram_url: normalizeSocialUrl(formData.instagramUrl, 'instagram') || null,
+          facebook_url: normalizeSocialUrl(formData.facebookUrl, 'facebook') || null,
+          tiktok_url: normalizeSocialUrl(formData.tiktokUrl, 'tiktok') || null,
           booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
           reward_description: formData.rewardDescription.trim(),
@@ -287,9 +303,9 @@ export default function ProgramPage() {
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
           review_link: normalizeUrl(formData.reviewLink) || null,
-          instagram_url: normalizeUrl(formData.instagramUrl) || null,
-          facebook_url: normalizeUrl(formData.facebookUrl) || null,
-          tiktok_url: normalizeUrl(formData.tiktokUrl) || null,
+          instagram_url: normalizeSocialUrl(formData.instagramUrl, 'instagram') || null,
+          facebook_url: normalizeSocialUrl(formData.facebookUrl, 'facebook') || null,
+          tiktok_url: normalizeSocialUrl(formData.tiktokUrl, 'tiktok') || null,
           booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
           reward_description: formData.rewardDescription.trim(),
@@ -649,9 +665,9 @@ export default function ProgramPage() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-gray-600">Instagram</label>
                     <Input
-                      type="url"
+                      type="text"
                       className="bg-white border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 h-11 text-sm rounded-xl w-full"
-                      placeholder="https://instagram.com/votre-commerce"
+                      placeholder="@votre-commerce ou lien complet"
                       value={formData.instagramUrl}
                       onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
                     />
@@ -659,9 +675,9 @@ export default function ProgramPage() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-gray-600">Facebook</label>
                     <Input
-                      type="url"
+                      type="text"
                       className="bg-white border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 h-11 text-sm rounded-xl w-full"
-                      placeholder="https://facebook.com/votre-commerce"
+                      placeholder="votre-page ou lien complet"
                       value={formData.facebookUrl}
                       onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
                     />
@@ -669,9 +685,9 @@ export default function ProgramPage() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-gray-600">TikTok</label>
                     <Input
-                      type="url"
+                      type="text"
                       className="bg-white border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/20 h-11 text-sm rounded-xl w-full"
-                      placeholder="https://tiktok.com/@votre-commerce"
+                      placeholder="@votre-commerce ou lien complet"
                       value={formData.tiktokUrl}
                       onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })}
                     />
