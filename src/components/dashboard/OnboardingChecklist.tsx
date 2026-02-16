@@ -91,7 +91,7 @@ export default function OnboardingChecklist() {
             id: 'preview',
             label: 'Simuler l\'expérience client',
             done: previewDone,
-            href: `/customer/card/${merchant.id}?preview=true`,
+            href: `/scan/${merchant.scan_code}`,
             icon: Eye,
           },
           {
@@ -195,6 +195,15 @@ export default function OnboardingChecklist() {
             <Link
               key={step.id}
               href={step.href}
+              target={step.id === 'preview' ? '_blank' : undefined}
+              rel={step.id === 'preview' ? 'noopener noreferrer' : undefined}
+              onClick={step.id === 'preview' && !step.done ? () => {
+                fetch('/api/onboarding/status', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ step: 'preview' }),
+                }).catch(() => {});
+              } : undefined}
               className={`flex items-center gap-2 p-2 rounded-lg transition-all duration-200 ${
                 step.done
                   ? 'bg-white/40 opacity-70'
