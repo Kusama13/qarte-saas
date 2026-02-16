@@ -63,6 +63,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
   // Referral state
   const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
+  const [referralLoading, setReferralLoading] = useState(!!searchParams.get('ref'));
   const [referralResult, setReferralResult] = useState<{ referrer_name: string; referred_reward: string; merchant_id: string } | null>(null);
 
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -123,6 +124,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   // Fetch referral info if ?ref= is present
   useEffect(() => {
     if (!refCode) return;
+    setReferralLoading(true);
     const fetchReferralInfo = async () => {
       try {
         const res = await fetch(`/api/referrals?code=${encodeURIComponent(refCode)}`);
@@ -132,6 +134,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         }
       } catch {
         // Silently ignore — fall back to normal flow
+      } finally {
+        setReferralLoading(false);
       }
     };
     fetchReferralInfo();
@@ -220,6 +224,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       return;
     }
 
+    // Block submission while referral info is loading
+    if (refCode && referralLoading) return;
+
     setSubmitting(true);
 
     try {
@@ -234,7 +241,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       if (data.exists && data.customer) {
         // Client existe déjà pour ce commerçant OU globalement
         if (data.existsForMerchant) {
-          // Client existe pour ce commerçant → checkin direct (even if referral link)
+          // Referral link but client already exists → block
+          if (refCode) {
+            setError('Vous êtes déjà client(e) de cet établissement. Le parrainage est réservé aux nouveaux clients.');
+            setSubmitting(false);
+            return;
+          }
+          // Client existe pour ce commerçant → checkin direct
           setCustomer(data.customer);
           localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
           localStorage.setItem('qarte_customer_phone', formattedPhone);
@@ -293,6 +306,9 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       setError('Le prénom est requis');
       return;
     }
+
+    // Block submission while referral info is loading
+    if (refCode && referralLoading) return;
 
     setSubmitting(true);
 
@@ -643,11 +659,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || (!!refCode && referralLoading)}
                   className="w-full h-12 text-base font-bold rounded-xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
                 >
-                  {submitting ? (
+                  {submitting || (!!refCode && referralLoading) ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
@@ -711,11 +727,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || (!!refCode && referralLoading)}
                   className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                   style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
                 >
-                  {submitting ? (
+                  {submitting || (!!refCode && referralLoading) ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>

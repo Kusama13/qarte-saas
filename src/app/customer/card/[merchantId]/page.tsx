@@ -1089,6 +1089,75 @@ export default function CustomerCardPage({
           secondaryColor={merchant.secondary_color}
         />
 
+        {/* Voucher rewards (referral) — displayed like RewardCard */}
+        {(() => {
+          const unusedVouchers = vouchers.filter(v => !v.is_used);
+          if (unusedVouchers.length === 0) return null;
+
+          // Group by reward_description
+          const groups = unusedVouchers.reduce((acc, v) => {
+            const key = v.reward_description;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(v);
+            return acc;
+          }, {} as Record<string, Voucher[]>);
+
+          const gradient = `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`;
+
+          return Object.entries(groups).map(([desc, group]) => (
+            <motion.div
+              key={desc}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.5 }}
+              className="mb-4 rounded-2xl overflow-hidden shadow-lg shadow-black/5"
+            >
+              <div className="relative p-5 overflow-hidden" style={{ background: gradient }}>
+                {/* Shimmer sweep */}
+                <motion.div
+                  animate={{ x: ['-150%', '200%'] }}
+                  transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"
+                />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
+
+                <div className="relative flex items-center gap-4">
+                  <motion.div
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center shrink-0"
+                  >
+                    <Gift className="w-7 h-7 text-white" />
+                  </motion.div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
+                      Parrainage{group.length > 1 ? ` · ${group.length} disponibles` : ''}
+                    </p>
+                    <p className="text-white text-base font-black leading-snug line-clamp-2">
+                      {desc}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handleUseVoucher(group[0].id)}
+                  disabled={usingVoucherId === group[0].id}
+                  className="relative mt-4 w-full py-2.5 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold text-sm hover:bg-white/30 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {usingVoucherId === group[0].id ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Gift className="w-4 h-4" />
+                      Utiliser ma récompense
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          ));
+        })()}
+
         {/* Member Card Badge — dark premium card */}
         {memberCard && isMemberCardActive && (
           <motion.button
@@ -1173,48 +1242,6 @@ export default function CustomerCardPage({
 
         {/* Réseaux sociaux */}
         <SocialLinks merchant={merchant} />
-
-        {/* Mes récompenses (vouchers) */}
-        {vouchers.filter(v => !v.is_used).length > 0 && (
-          <div className="mb-4">
-            <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/80 overflow-hidden">
-              <div className="px-4 py-3 border-b border-gray-50">
-                <div className="flex items-center gap-2">
-                  <Gift className="w-4 h-4" style={{ color: merchant.primary_color }} />
-                  <h3 className="font-bold text-gray-900 text-sm">Mes récompenses</h3>
-                </div>
-              </div>
-              <div className="divide-y divide-gray-50">
-                {vouchers.filter(v => !v.is_used).map((voucher) => (
-                  <div key={voucher.id} className="px-4 py-3 flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: `${merchant.primary_color}12` }}
-                    >
-                      <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 text-sm truncate">{voucher.reward_description}</p>
-                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mt-0.5">Parrainage</p>
-                    </div>
-                    <button
-                      onClick={() => handleUseVoucher(voucher.id)}
-                      disabled={usingVoucherId === voucher.id}
-                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-white shrink-0 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
-                      style={{ backgroundColor: merchant.primary_color }}
-                    >
-                      {usingVoucherId === voucher.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        'Utiliser'
-                      )}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Avis Google */}
         {merchant.review_link && merchant.review_link.trim() !== '' && (
