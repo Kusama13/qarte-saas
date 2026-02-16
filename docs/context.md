@@ -72,7 +72,7 @@ src/
 │   ├── scripts.ts        # Scripts verbaux par shop_type (emails + dashboard)
 │   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode)
 │
-├── emails/               # Templates React Email (27 templates + BaseLayout)
+├── emails/               # Templates React Email (32 templates + BaseLayout)
 │   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
 │   ├── WelcomeEmail.tsx           # Bienvenue (urgence + temoignage)
 │   ├── IncompleteSignupEmail.tsx  # Relance inscription +1h
@@ -100,7 +100,12 @@ src/
 │   ├── SubscriptionCanceledEmail.tsx # Annulation abonnement (Stripe)
 │   ├── SubscriptionReactivatedEmail.tsx # Reactivation abonnement (canceling→active)
 │   ├── ReactivationEmail.tsx      # Win-back J+7/14/30 (codes promo)
-│   └── EbookEmail.tsx             # Telechargement ebook
+│   ├── EbookEmail.tsx             # Telechargement ebook
+│   ├── GuidedSignupEmail.tsx      # Relance auth-only T+24h (guide 3 etapes)
+│   ├── SetupForYouEmail.tsx       # Relance auth-only T+72h (done-for-you WhatsApp)
+│   ├── LastChanceSignupEmail.tsx   # Relance auth-only T+7j (urgence + promo 9€)
+│   ├── AutoSuggestRewardEmail.tsx  # Merchant sans programme J+5 (suggestion par shop_type)
+│   └── GracePeriodSetupEmail.tsx   # Grace period + pas configure (empathie + WhatsApp)
 │
 ├── scripts/
 │   ├── send-test-email.ts        # Script test email unitaire
@@ -234,7 +239,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 
 ### Admin
 - `/api/admin/merchants/[id]` - Gestion commercants
-- `/api/admin/incomplete-signups` - Inscriptions incompletes (auth sans merchant, 48h)
+- `/api/admin/incomplete-signups` - Inscriptions incompletes (auth sans merchant, 30 jours)
 - `/api/admin/prospects` - Leads/prospects
 - `/api/admin/tasks` - Taches admin
 - `/api/admin/merchant-emails` - Emails merchants (auth admin)
@@ -284,7 +289,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - **Email relance inscription incomplete:** Programme via Resend `scheduledAt` (+1h apres Phase 1)
   - Endpoint `/api/emails/schedule-incomplete` appele apres signUp
   - Email ID stocke dans `user_metadata`, annule si Phase 2 completee
-- Admin : suivi des inscriptions incompletes dans `/admin/leads`
+- Admin : suivi des inscriptions incompletes dans `/admin/leads` (fenetre 30 jours)
 
 ### Marketing
 - Notifications push programmees (10h et 18h)
@@ -581,8 +586,8 @@ npm run email
 
 ### Admin (`/admin`)
 - Dashboard : metriques startup (MRR, churn, ARPU, LTV) + segments d'action lifecycle (trial expiring, inactive, canceling, past_due)
-- Merchants : liste, filtres par statut + pays, actions rapides, activite, alertes
-- Leads : onglet Incompletes + Aujourd'hui + Messages
+- Merchants : liste, filtres par statut + pays, actions rapides, activite, alertes, export CSV
+- Leads : onglet Incompletes (30 jours) + Aujourd'hui + Messages
 - Analytics, Metriques, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
 - Activity : vue "hier" (`?date=yesterday`) pour suivi activite merchants
@@ -651,13 +656,13 @@ import type { Merchant } from '@/types';
 
 | Cron | Horaire | Description |
 |------|---------|-------------|
-| `/api/cron/morning` | 09:00 UTC | Emails essai, rappel programme J+1, rappels pending, push 10h |
+| `/api/cron/morning` | 09:00 UTC | Emails essai, rappel programme, relance auth-only, auto-suggest reward, grace period setup, rappels pending, push 10h |
 | `/api/cron/evening` | 18:00 UTC | Push notifications programmees 18h |
 | `/api/cron/reactivation` | 10:00 UTC | Emails win-back J+7/14/30 |
 
 ---
 
-## 19. Emails Transactionnels (27 templates)
+## 19. Emails Transactionnels (32 templates)
 
 ### Onboarding & Activation
 | Email | Declencheur |
@@ -665,12 +670,17 @@ import type { Merchant } from '@/types';
 | WelcomeEmail | Inscription commercant (Phase 2 completee) |
 | IncompleteSignupEmail | Phase 1 sans Phase 2 (+1h via Resend scheduledAt) |
 | IncompleteSignupReminder2Email | Relance #2 (+3h via Resend scheduledAt) |
+| GuidedSignupEmail | Auth-only T+24h, guide pas a pas (cron morning) |
+| SetupForYouEmail | Auth-only T+72h, done-for-you WhatsApp (cron morning) |
+| LastChanceSignupEmail | Auth-only T+7j, urgence + promo 9€ (cron morning) |
 | ProgramReminderEmail | Programme non configure J+1 (cron morning) |
 | ProgramReminderDay2Email | Programme non configure J+2, personnalise par shop_type (cron morning) |
 | ProgramReminderDay3Email | Programme non configure J+3, urgence + done-for-you (cron morning) |
 | QRCodeEmail | QR code + kit reseaux sociaux (apres config programme, endpoint `/api/emails/qr-code` + cron morning). Section kit conditionnelle sur `rewardDescription`. |
 | FirstClientScriptEmail | Script verbal personnalise par shop_type J+2 post-config (cron morning) |
 | QuickCheckEmail | Check-in J+4 si 0 scans — 3 options diagnostic (cron morning) |
+| AutoSuggestRewardEmail | Merchant sans programme J+5, suggestion par shop_type (cron morning) |
+| GracePeriodSetupEmail | Grace period + programme non configure, WhatsApp setup (cron morning) |
 
 ### Engagement & Milestones
 | Email | Declencheur |

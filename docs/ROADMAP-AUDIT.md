@@ -223,7 +223,7 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 
 ---
 
-# PARTIE 4 : EMAILS (31 templates)
+# PARTIE 4 : EMAILS (36 templates)
 
 ## 4.1 Parcours Signup (temps reel)
 
@@ -236,6 +236,14 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 
 > Emails #1-2 annules automatiquement si signup complete avant l'envoi.
 
+## 4.2b Relance auth-only — Inscription jamais finalisee (cron morning 09:00)
+
+| # | Email | Condition | Quand |
+|---|-------|-----------|-------|
+| 4b | **GuidedSignupEmail** | Auth user sans merchant | T+24h (tracking -110) |
+| 4c | **SetupForYouEmail** | Auth user sans merchant | T+72h (tracking -111) |
+| 4d | **LastChanceSignupEmail** | Auth user sans merchant | T+7j (tracking -112) |
+
 ## 4.2 Onboarding — Programme non configure (cron morning 09:00)
 
 | # | Email | Condition | Quand |
@@ -243,6 +251,13 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 | 5 | **ProgramReminderEmail** | `reward_description` NULL | J+1 |
 | 6 | **ProgramReminderDay2Email** | `reward_description` NULL | J+2 (par shop_type) |
 | 7 | **ProgramReminderDay3Email** | `reward_description` NULL | J+3 (urgence) |
+| 7b | **AutoSuggestRewardEmail** | `reward_description` NULL | J+5 (suggestion par shop_type) |
+
+## 4.2c Grace period — Programme non configure (cron morning 09:00)
+
+| # | Email | Condition | Quand |
+|---|-------|-----------|-------|
+| 7c | **GracePeriodSetupEmail** | Grace period + `reward_description` NULL | Periode de grace (tracking -113) |
 
 ## 4.3 Post-configuration programme (temps reel)
 
@@ -323,10 +338,19 @@ SIGNUP
   +1h      [IncompleteSignupEmail si pas fini]
   +3h      [IncompleteSignupReminder2Email si toujours pas fini]
 
+RELANCE AUTH-ONLY (auth sans merchant — cron morning)
+  +24h     GuidedSignupEmail (guide 3 etapes)
+  +72h     SetupForYouEmail (done-for-you WhatsApp)
+  +7 jours LastChanceSignupEmail (urgence + promo 9€)
+
 ONBOARDING (si programme pas configure)
   +1 jour  ProgramReminderEmail
   +2 jours ProgramReminderDay2Email (par shop_type)
   +3 jours ProgramReminderDay3Email (urgence)
+  +5 jours AutoSuggestRewardEmail (suggestion par shop_type)
+
+GRACE PERIOD (programme non configure)
+  [grace]  GracePeriodSetupEmail (empathie + WhatsApp setup)
 
 POST-CONFIG PROGRAMME
   +0       QRCodeEmail (immediat, inclut kit reseaux si rewardDescription)
@@ -379,8 +403,9 @@ SHIELD (points en attente)
 - **Anti-spam** : headers `List-Unsubscribe` + `List-Unsubscribe-Post` sur tous les emails
 - **Emails programmes** : via `scheduledAt` de Resend (IncompleteSignup +1h, Reminder2 +3h)
 - **Tracking doublons** : tables `pending_email_tracking` et `reactivation_email_tracking`
-- **Codes tracking** : -100 FirstScan, -101 FirstReward, -102 Tier2Upsell, -103 QRCode+Kit, -106 FirstClientScript, -107 QuickCheck
+- **Codes tracking** : -100 FirstScan, -101 FirstReward, -102 Tier2Upsell, -103 QRCode+Kit, -106 FirstClientScript, -107 QuickCheck, -110 GuidedSignup, -111 SetupForYou, -112 LastChanceSignup, -113 GracePeriodSetup
 - **Anti-doublon cross-email** : InactiveMerchant skip si -106 ou -107 existe (evite collision onboarding + inactivite)
+- **Auth-only tracking** : user.id utilise comme merchant_id dans pending_email_tracking (pas de merchant record)
 - **Layout** : `BaseLayout.tsx` (header banner, footer avec liens Instagram/Facebook/TikTok)
 
 ---
@@ -475,6 +500,8 @@ SHIELD (points en attente)
 ## Semaine 1 (10-16 fev)
 - [ ] **F3** : Celebration premier scan (1h)
 - [ ] Plan admin merchants (barre actions, badges alerte, WhatsApp)
+- [x] Relance CMO : 5 emails (GuidedSignup, SetupForYou, LastChanceSignup, AutoSuggestReward, GracePeriodSetup)
+- [x] Admin leads 48h → 30 jours + admin merchants export CSV
 
 ## Semaine 2 (17-23 fev)
 - [ ] **F6** : Templates push enrichis (2h)
@@ -500,6 +527,29 @@ SHIELD (points en attente)
 ---
 
 # PARTIE 6 : CHANGELOG
+
+## [2026-02-16] — Relance CMO emails, admin exports, program layout
+
+### 5 nouveaux emails de relance (cron morning)
+- **feat:** `GuidedSignupEmail` — relance auth-only T+24h (guide 3 etapes, WhatsApp CTA)
+- **feat:** `SetupForYouEmail` — relance auth-only T+72h (done-for-you via WhatsApp)
+- **feat:** `LastChanceSignupEmail` — relance auth-only T+7j (urgence + promo 9€/mois)
+- **feat:** `AutoSuggestRewardEmail` — merchant sans programme J+5 (suggestion recompense par shop_type)
+- **feat:** `GracePeriodSetupEmail` — grace period + programme non configure (empathie + WhatsApp setup)
+
+### Cron morning — 3 nouvelles sections
+- **feat:** Section 3b: Incomplete signup relance (T+24h, T+72h, T+7j) — tracking -110/-111/-112
+- **feat:** Section 3c: Auto-suggest reward J+5 — merchants sans programme, suggestion par shop_type
+- **feat:** Section 3d: Grace period setup — merchants en grace period sans programme, tracking -113
+
+### Admin
+- **feat:** `/admin/leads` — fenetre elargie de 48h a 30 jours pour meilleure visibilite historique
+- **feat:** `/admin/merchants` — bouton Export CSV avec filtre actif (nom, email, telephone, type, etape, statut, clients, date)
+
+### Dashboard
+- **style:** `/dashboard/program` — max-w-6xl → max-w-3xl pour format 1 colonne compact sur desktop
+
+---
 
 ## [2026-02-15] — Essai 15j → 7j, grâce 7j → 3j, planning emails optimisé
 
@@ -852,5 +902,5 @@ SHIELD (points en attente)
 
 ---
 
-*Derniere mise a jour : 15 fevrier 2026*
-*Statuts verifies contre le code source le 15/02/2026. Essai 15j→7j, grace 7j→3j, planning emails optimise.*
+*Derniere mise a jour : 16 fevrier 2026*
+*Statuts verifies contre le code source le 16/02/2026. 5 emails relance CMO, admin CSV export, 30j leads.*
