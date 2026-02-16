@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   CreditCard,
-  Phone,
-  Store,
-  MapPin,
   ArrowRight,
+  ArrowLeft,
   Loader2,
+  Check,
+  Shield,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
@@ -36,11 +36,11 @@ export default function CompleteProfilePage() {
   const [error, setError] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     phone: '',
     shopName: '',
     shopType: '' as ShopType | '',
-    shopAddress: '',
     country: 'FR' as MerchantCountry,
   });
 
@@ -86,6 +86,13 @@ export default function CompleteProfilePage() {
     checkAuth();
   }, [supabase, router]);
 
+  // Auto-focus first field when ready
+  useEffect(() => {
+    if (!checkingAuth) {
+      setTimeout(() => nameRef.current?.focus(), 100);
+    }
+  }, [checkingAuth]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -100,12 +107,6 @@ export default function CompleteProfilePage() {
 
     if (!formData.shopType) {
       setError('Veuillez sélectionner un type de commerce');
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.shopAddress || formData.shopAddress.trim().length < 10) {
-      setError('Veuillez entrer une adresse complète');
       setLoading(false);
       return;
     }
@@ -126,7 +127,7 @@ export default function CompleteProfilePage() {
           slug,
           shop_name: formData.shopName,
           shop_type: formData.shopType,
-          shop_address: formData.shopAddress || null,
+          shop_address: null,
           phone: formattedPhone,
           country: formData.country,
         }),
@@ -180,39 +181,45 @@ export default function CompleteProfilePage() {
         </Link>
 
         <div className="w-full max-w-md">
-          <div className="p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full mb-4">
-                Étape 2 sur 2
+          <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
+            {/* Progress bar */}
+            <div className="flex items-center justify-center gap-2 mb-5">
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-white text-xs font-bold">
+                <Check className="w-4 h-4" />
               </div>
+              <div className="w-10 h-0.5 bg-primary rounded-full" />
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-white text-xs font-bold">
+                2
+              </div>
+            </div>
+
+            <div className="text-center mb-5">
               <h1 className="text-2xl font-bold text-gray-900">
                 Parlez-nous de votre commerce
               </h1>
-              <p className="mt-2 text-gray-600">
-                Plus que quelques infos pour lancer votre programme
+              <p className="mt-2 text-gray-500 text-sm">
+                3 infos et c&apos;est parti
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="p-4 text-sm text-red-700 bg-red-50 rounded-xl">
+                <div className="p-3 text-sm text-red-700 bg-red-50 rounded-xl">
                   {error}
                 </div>
               )}
 
-              <div className="relative">
-                <Input
-                  type="text"
-                  label="Votre établissement"
-                  placeholder="Ex: Institut Beauté Marie"
-                  value={formData.shopName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, shopName: e.target.value })
-                  }
-                  required
-                />
-                <Store className="absolute w-5 h-5 text-gray-400 right-4 top-10" />
-              </div>
+              <Input
+                ref={nameRef}
+                type="text"
+                label="Votre établissement"
+                placeholder="Ex: Institut Beauté Marie"
+                value={formData.shopName}
+                onChange={(e) =>
+                  setFormData({ ...formData, shopName: e.target.value })
+                }
+                required
+              />
 
               <Select
                 label="Activité"
@@ -225,17 +232,16 @@ export default function CompleteProfilePage() {
                 required
               />
 
-              <Select
-                label="Pays"
-                options={countryOptions}
-                value={formData.country}
-                onChange={(e) =>
-                  setFormData({ ...formData, country: e.target.value as MerchantCountry })
-                }
-                required
-              />
-
-              <div className="relative">
+              <div className="grid grid-cols-[100px_1fr] gap-2">
+                <Select
+                  label="Pays"
+                  options={countryOptions}
+                  value={formData.country}
+                  onChange={(e) =>
+                    setFormData({ ...formData, country: e.target.value as MerchantCountry })
+                  }
+                  required
+                />
                 <Input
                   type="tel"
                   label="Téléphone"
@@ -246,21 +252,6 @@ export default function CompleteProfilePage() {
                   }
                   required
                 />
-                <Phone className="absolute w-5 h-5 text-gray-400 right-4 top-10" />
-              </div>
-
-              <div className="relative">
-                <Input
-                  type="text"
-                  label="Adresse"
-                  placeholder="123 rue du Commerce, 75001 Paris"
-                  value={formData.shopAddress}
-                  onChange={(e) =>
-                    setFormData({ ...formData, shopAddress: e.target.value })
-                  }
-                  required
-                />
-                <MapPin className="absolute w-5 h-5 text-gray-400 right-4 top-10" />
               </div>
 
               <Button type="submit" loading={loading} className="w-full">
@@ -269,10 +260,26 @@ export default function CompleteProfilePage() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-500">
-                30 secondes et c&apos;est terminé
-              </p>
+            {/* Reassurance */}
+            <div className="mt-4 flex items-center justify-center gap-3 text-xs text-gray-400">
+              <span className="flex items-center gap-1">
+                <Shield className="w-3.5 h-3.5" />
+                Sans carte bancaire
+              </span>
+              <span>·</span>
+              <span>Annulation en 1 clic</span>
+            </div>
+
+            {/* Back link */}
+            <div className="mt-4 text-center">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Retour
+              </button>
             </div>
           </div>
         </div>

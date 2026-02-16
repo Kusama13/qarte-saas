@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const merchantCountry: MerchantCountry = country || 'FR';
     const formattedPhone = formatPhoneNumber(phone, merchantCountry);
 
-    if (!user_id || !trimmedShopName || !shop_type || !phone || !trimmedAddress) {
+    if (!user_id || !trimmedShopName || !shop_type || !phone) {
       return NextResponse.json(
         { error: 'Champs requis manquants' },
         { status: 400 }

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   CreditCard,
-  Mail,
   Eye,
   EyeOff,
   ArrowRight,
@@ -118,11 +117,19 @@ export default function MerchantSignupPage() {
         </Link>
 
         <div className="w-full max-w-md">
-          <div className="p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
-            <div className="text-center mb-8">
-              <span className="inline-block px-3 py-1 text-xs font-medium bg-primary/10 text-primary rounded-full mb-3">
-                Étape 1 sur 2
-              </span>
+          <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
+            {/* Progress bar */}
+            <div className="flex items-center justify-center gap-2 mb-5">
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-white text-xs font-bold">
+                1
+              </div>
+              <div className="w-10 h-0.5 bg-gray-200 rounded-full" />
+              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-200 text-gray-400 text-xs font-bold">
+                2
+              </div>
+            </div>
+
+            <div className="text-center mb-5">
               <h1 className="text-2xl font-bold text-gray-900">
                 Créer votre compte
               </h1>
@@ -138,19 +145,16 @@ export default function MerchantSignupPage() {
                 </div>
               )}
 
-              <div className="relative">
-                <Input
-                  type="email"
-                  label="Email"
-                  placeholder="votre@email.fr"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  required
-                />
-                <Mail className="absolute w-5 h-5 text-gray-400 right-4 top-10" />
-              </div>
+              <Input
+                type="email"
+                label="Email"
+                placeholder="votre@email.fr"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                required
+              />
 
               <div className="relative">
                 <Input
