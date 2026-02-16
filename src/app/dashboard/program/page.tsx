@@ -780,6 +780,14 @@ export default function ProgramPage() {
               href={`/scan/${merchant.scan_code}`}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                // Track preview step as done for onboarding checklist
+                fetch('/api/onboarding/status', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ step: 'preview' }),
+                }).catch(() => {});
+              }}
               className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Smartphone className="w-5 h-5" />
@@ -789,7 +797,7 @@ export default function ProgramPage() {
             <button
               onClick={() => {
                 setShowTestModal(false);
-                router.push('/dashboard');
+                router.push('/dashboard/qr-download');
               }}
               className="mt-3 w-full py-2.5 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors"
             >

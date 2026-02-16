@@ -63,6 +63,7 @@ export default function OnboardingChecklist() {
 
         const visitsCount = visitsResult.count || 0;
         const qrDownloaded = onboardingRes.qrDownloaded === true;
+        const previewDone = onboardingRes.previewDone === true;
 
         setSteps([
           {
@@ -89,7 +90,7 @@ export default function OnboardingChecklist() {
           {
             id: 'preview',
             label: 'Simuler l\'expérience client',
-            done: false,
+            done: previewDone,
             href: `/customer/card/${merchant.id}?preview=true`,
             icon: Eye,
           },
@@ -186,15 +187,15 @@ export default function OnboardingChecklist() {
         />
       </div>
 
-      {/* Steps */}
-      <div className="space-y-2">
+      {/* Steps — 2-column grid */}
+      <div className="grid grid-cols-2 gap-1.5">
         {steps.map((step) => {
           const isNext = !step.done && step.id === nextStep?.id;
           return (
             <Link
               key={step.id}
               href={step.href}
-              className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 ${
+              className={`flex items-center gap-2 p-2 rounded-lg transition-all duration-200 ${
                 step.done
                   ? 'bg-white/40 opacity-70'
                   : isNext
@@ -202,7 +203,7 @@ export default function OnboardingChecklist() {
                     : 'bg-white/40 hover:bg-white/60'
               }`}
             >
-              <div className={`flex items-center justify-center w-7 h-7 rounded-full shrink-0 transition-all ${
+              <div className={`flex items-center justify-center w-5 h-5 rounded-full shrink-0 transition-all ${
                 step.done
                   ? 'bg-emerald-500 text-white'
                   : isNext
@@ -210,21 +211,17 @@ export default function OnboardingChecklist() {
                     : 'bg-gray-200 text-gray-400'
               }`}>
                 {step.done ? (
-                  <Check className="w-4 h-4 stroke-[3]" />
+                  <Check className="w-3 h-3 stroke-[3]" />
                 ) : (
-                  <step.icon className="w-3.5 h-3.5" />
+                  <step.icon className="w-2.5 h-2.5" />
                 )}
               </div>
 
-              <span className={`flex-1 text-sm font-medium ${
+              <span className={`flex-1 text-xs font-medium leading-tight ${
                 step.done ? 'text-gray-400 line-through' : 'text-gray-700'
               }`}>
                 {step.label}
               </span>
-
-              {isNext && (
-                <ChevronRight className="w-4 h-4 text-[#4b0082]" />
-              )}
             </Link>
           );
         })}
