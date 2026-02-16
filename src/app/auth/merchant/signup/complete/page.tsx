@@ -10,6 +10,7 @@ import {
   Loader2,
   Check,
   Shield,
+  Gift,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
@@ -157,20 +158,20 @@ export default function CompleteProfilePage() {
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-pink-50">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50 relative overflow-hidden">
       <FacebookPixel />
 
-      {/* Background decorative blobs */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute top-1/3 right-0 w-80 h-80 bg-gradient-to-br from-secondary/15 to-primary/15 rounded-full blur-3xl translate-x-1/2" />
-      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-gradient-to-br from-primary/10 to-secondary/20 rounded-full blur-3xl" />
+      {/* Background decorative blobs — blue/pink */}
+      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/25 to-purple-400/20 rounded-full blur-3xl -translate-x-1/3 -translate-y-1/3" />
+      <div className="absolute top-1/4 right-0 w-[400px] h-[400px] bg-gradient-to-br from-pink-400/25 to-rose-300/20 rounded-full blur-3xl translate-x-1/4" />
+      <div className="absolute bottom-0 left-1/3 w-[350px] h-[350px] bg-gradient-to-br from-violet-400/15 to-pink-400/20 rounded-full blur-3xl translate-y-1/4" />
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
         <Link href="/" className="flex items-center gap-2 mb-8 group">
@@ -195,10 +196,36 @@ export default function CompleteProfilePage() {
 
             <div className="text-center mb-5">
               <h1 className="text-2xl font-bold text-gray-900">
-                Parlez-nous de votre commerce
+                Créez votre carte de fidélité
               </h1>
               <p className="mt-2 text-gray-500 text-sm">
                 3 infos et c&apos;est parti
+              </p>
+
+              {/* Mini stamp card teaser */}
+              <div className="mt-4 flex items-center justify-center gap-2">
+                {[...Array(6)].map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      i < 5
+                        ? 'bg-gradient-to-br from-primary to-secondary text-white shadow-sm shadow-primary/20'
+                        : 'relative border-2 border-dashed border-primary/30 text-primary/40 overflow-hidden'
+                    }`}
+                  >
+                    {i < 5 ? (
+                      <Check className="w-3.5 h-3.5" />
+                    ) : (
+                      <>
+                        <Gift className="w-3.5 h-3.5 relative z-10" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/60 to-transparent animate-[shimmer_2s_infinite] -skew-x-12" />
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="mt-1.5 text-xs text-gray-400">
+                Vos clients vont adorer
               </p>
             </div>
 
