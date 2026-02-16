@@ -13,8 +13,6 @@ import {
   AlertTriangle,
   Sparkles,
   Trophy,
-  ExternalLink,
-  Eye,
   ChevronDown,
   Instagram,
   CalendarDays,
@@ -355,15 +353,9 @@ export default function ProgramPage() {
         <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
           Personnalisez votre programme de fidélité
         </p>
-        {merchant && (
-          <p className="mt-2 text-xs text-[#4b0082]/60 flex items-center gap-1.5 lg:hidden">
-            <Eye className="w-3.5 h-3.5" />
-            Après enregistrement, un aperçu de votre carte sera disponible en bas de page
-          </p>
-        )}
       </div>
 
-      <div className="grid gap-3 md:gap-8 lg:grid-cols-2">
+      <div className="grid gap-3 md:gap-8">
         <div className="space-y-3 md:space-y-6">
           <div className="p-3 md:p-6 bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl shadow-indigo-100/40 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 transition-transform duration-500 rounded-full bg-gradient-to-br from-indigo-50/50 to-violet-50/50 blur-3xl group-hover:scale-110" />
@@ -721,26 +713,6 @@ export default function ProgramPage() {
 
         </div>
 
-        {merchant && (
-          <div className="hidden lg:block">
-            <div className="sticky top-8">
-              <a
-                href={`/customer/card/${merchant.id}?preview=true`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-3 p-4 lg:p-6 bg-white/80 backdrop-blur-xl border border-indigo-100 rounded-2xl shadow-lg shadow-indigo-100/40 hover:shadow-xl hover:border-indigo-200 transition-all duration-300 group"
-              >
-                <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
-                  <ExternalLink className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-900">Voir la carte client</p>
-                  <p className="text-xs text-gray-500">Aperçu réel de ce que voient vos clients</p>
-                </div>
-              </a>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Save Button — inline on mobile, sticky on desktop */}
@@ -772,21 +744,6 @@ export default function ProgramPage() {
           </button>
         </div>
       </div>
-
-      {/* Preview link — mobile only (desktop has it in the right column) */}
-      {merchant && (
-        <div className="mt-4 lg:hidden">
-          <a
-            href={`/customer/card/${merchant.id}?preview=true`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2.5 p-3.5 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-700 font-semibold text-sm hover:bg-indigo-100 transition-colors"
-          >
-            <ExternalLink className="w-4 h-4" />
-            Voir l&apos;aperçu de la carte client
-          </a>
-        </div>
-      )}
 
       {/* Spacer for sticky button (desktop only) */}
       <div className="hidden md:block h-16" />
