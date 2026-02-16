@@ -328,6 +328,13 @@ export default function QRDownloadPage() {
                   href={scanUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => {
+                    fetch('/api/onboarding/status', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ step: 'preview' }),
+                    }).catch(() => {});
+                  }}
                   className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border-2 border-indigo-200 hover:border-indigo-400 rounded-xl text-indigo-700 font-bold text-sm transition-all hover:shadow-md active:scale-[0.98]"
                 >
                   <Play className="w-4 h-4" />
