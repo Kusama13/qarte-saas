@@ -317,7 +317,7 @@ export default function LeadsPage() {
               ))}
             </div>
           ) : (
-            <EmptyState icon={CheckCircle} title="Aucune inscription incomplète" subtitle="Tous les utilisateurs ont finalisé (48h)" />
+            <EmptyState icon={CheckCircle} title="Aucune inscription incomplète" subtitle="Tous les utilisateurs ont finalisé (30 derniers jours)" />
           )
         )}
 

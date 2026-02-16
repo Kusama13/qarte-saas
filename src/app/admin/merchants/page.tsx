@@ -16,6 +16,7 @@ import {
   AlertTriangle,
 
   CalendarX,
+  Download,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -266,6 +267,29 @@ export default function AdminMerchantsPage() {
     window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
   };
 
+  const exportCSV = () => {
+    if (!data || sortedMerchants.length === 0) return;
+    const header = ['Nom', 'Email', 'Téléphone', 'Type', 'Étape', 'Statut', 'Clients', 'Créé le'];
+    const rows = sortedMerchants.map(({ merchant, lifecycle }) => [
+      merchant.shop_name,
+      data.userEmails[merchant.user_id] || '',
+      merchant.phone,
+      merchant.shop_type,
+      lifecycle.label,
+      merchant.subscription_status,
+      String(data.customerCounts[merchant.id] || 0),
+      new Date(merchant.created_at).toLocaleDateString('fr-FR'),
+    ]);
+    const csv = [header, ...rows].map(r => r.map(c => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `merchants-${statusFilter !== 'all' ? statusFilter : 'tous'}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -400,8 +424,19 @@ export default function AdminMerchantsPage() {
         </div>
       </div>
 
-      {/* Results count */}
-      <p className="text-sm text-gray-500">{sortedMerchants.length} commerçant{sortedMerchants.length > 1 ? 's' : ''}</p>
+      {/* Results count + Export */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-gray-500">{sortedMerchants.length} commerçant{sortedMerchants.length > 1 ? 's' : ''}</p>
+        {sortedMerchants.length > 0 && (
+          <button
+            onClick={exportCSV}
+            className="px-3 py-2 text-xs sm:text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors flex items-center gap-1.5"
+          >
+            <Download className="w-3.5 h-3.5" />
+            Export CSV
+          </button>
+        )}
+      </div>
 
       {/* Table Desktop / Cards Mobile */}
       {sortedMerchants.length === 0 ? (

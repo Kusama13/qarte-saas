@@ -26,3 +26,8 @@ export { FirstClientScriptEmail } from './FirstClientScriptEmail';
 export { QuickCheckEmail } from './QuickCheckEmail';
 export { ProductUpdateEmail } from './ProductUpdateEmail';
 export { ChallengeCompletedEmail } from './ChallengeCompletedEmail';
+export { GuidedSignupEmail } from './GuidedSignupEmail';
+export { SetupForYouEmail } from './SetupForYouEmail';
+export { LastChanceSignupEmail } from './LastChanceSignupEmail';
+export { AutoSuggestRewardEmail } from './AutoSuggestRewardEmail';
+export { GracePeriodSetupEmail } from './GracePeriodSetupEmail';

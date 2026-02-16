@@ -38,14 +38,14 @@ export async function GET(request: NextRequest) {
 
     const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
 
-    // Filter: auth users who have no merchant, are not super admins, and created in last 48h
-    const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    // Filter: auth users who have no merchant, are not super admins, and created in last 30 days
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const incompleteSignups = (users || [])
       .filter((u) => {
         if (merchantUserIds.has(u.id)) return false;
         if (superAdminUserIds.has(u.id)) return false;
         if (!u.email) return false;
-        if (new Date(u.created_at) < fortyEightHoursAgo) return false;
+        if (new Date(u.created_at) < thirtyDaysAgo) return false;
         return true;
       })
       .map((u) => ({

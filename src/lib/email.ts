@@ -28,6 +28,11 @@ import {
   QuickCheckEmail,
   ProductUpdateEmail,
   ChallengeCompletedEmail,
+  GuidedSignupEmail,
+  SetupForYouEmail,
+  LastChanceSignupEmail,
+  AutoSuggestRewardEmail,
+  GracePeriodSetupEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -1163,6 +1168,181 @@ export async function sendProductUpdateEmail(
     return { success: true };
   } catch (error) {
     logger.error('Error sending product update email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email relance inscription incomplète T+24h (guide pas à pas)
+export async function sendGuidedSignupEmail(
+  to: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(GuidedSignupEmail({ email: to }));
+    const text = await render(GuidedSignupEmail({ email: to }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `30 secondes, on vous guide`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send guided signup email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Guided signup email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending guided signup email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email relance inscription incomplète T+72h (done-for-you)
+export async function sendSetupForYouEmail(
+  to: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(SetupForYouEmail({ email: to }));
+    const text = await render(SetupForYouEmail({ email: to }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `On peut le faire pour vous`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send setup-for-you email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Setup-for-you email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending setup-for-you email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email relance inscription incomplète T+7j (dernière chance + promo)
+export async function sendLastChanceSignupEmail(
+  to: string
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(LastChanceSignupEmail({ email: to }));
+    const text = await render(LastChanceSignupEmail({ email: to }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `Dernière chance : votre place est réservée`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send last chance signup email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Last chance signup email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending last chance signup email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email relance programme non configuré J+5 (auto-suggestion récompense)
+export async function sendAutoSuggestRewardEmail(
+  to: string,
+  shopName: string,
+  shopType: string,
+  daysRemaining: number
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }));
+    const text = await render(AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName}, on a choisi la meilleure récompense pour vous`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send auto-suggest reward email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Auto-suggest reward email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending auto-suggest reward email', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
+  }
+}
+
+// Email relance grace period + programme non configuré (J+10 depuis création)
+export async function sendGracePeriodSetupEmail(
+  to: string,
+  shopName: string,
+  daysUntilDeletion: number
+): Promise<SendEmailResult> {
+  const check = checkResend();
+  if (check) return check;
+
+  try {
+    const html = await render(GracePeriodSetupEmail({ shopName, daysUntilDeletion }));
+    const text = await render(GracePeriodSetupEmail({ shopName, daysUntilDeletion }), { plainText: true });
+
+    const { error } = await resend!.emails.send({
+      from: EMAIL_FROM,
+      to,
+      replyTo: EMAIL_REPLY_TO,
+      subject: `${shopName}, on garde vos données encore ${daysUntilDeletion} jours`,
+      html,
+      text,
+      headers: EMAIL_HEADERS,
+    });
+
+    if (error) {
+      logger.error('Failed to send grace period setup email', error);
+      return { success: false, error: error.message };
+    }
+
+    logger.info(`Grace period setup email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    logger.error('Error sending grace period setup email', error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };
   }
 }

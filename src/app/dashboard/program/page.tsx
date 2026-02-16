@@ -361,7 +361,7 @@ export default function ProgramPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       <div className="mb-5 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
           Mon Programme
@@ -733,7 +733,7 @@ export default function ProgramPage() {
 
       {/* Save Button — inline on mobile, sticky on desktop */}
       <div className="mt-6 md:mt-0 md:fixed md:bottom-0 md:left-0 md:right-0 lg:left-72 md:z-50 md:p-4 md:bg-white/70 md:backdrop-blur-xl md:border-t md:border-gray-100/50 md:shadow-lg md:shadow-gray-900/5">
-        <div className="max-w-6xl mx-auto flex justify-center lg:justify-end">
+        <div className="max-w-3xl mx-auto flex justify-center lg:justify-end">
           <button
             onClick={handleSave}
             disabled={saving || saved}

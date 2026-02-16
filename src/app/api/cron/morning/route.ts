@@ -21,6 +21,11 @@ import {
   sendFirstClientScriptEmail,
   sendQuickCheckEmail,
   sendChallengeCompletedEmail,
+  sendGuidedSignupEmail,
+  sendSetupForYouEmail,
+  sendLastChanceSignupEmail,
+  sendAutoSuggestRewardEmail,
+  sendGracePeriodSetupEmail,
 } from '@/lib/email';
 import { getTrialStatus } from '@/lib/utils';
 import logger from '@/lib/logger';
@@ -92,6 +97,9 @@ export async function GET(request: NextRequest) {
     inactiveMerchants: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     challengeCompleted: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     reactivation: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    incompleteRelance: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    autoSuggestReward: { processed: 0, sent: 0, skipped: 0, errors: 0 },
+    gracePeriodSetup: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     pendingReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     scheduledPush: { processed: 0, sent: 0, errors: 0 },
   };
@@ -1063,6 +1071,169 @@ export async function GET(request: NextRequest) {
           } catch {
             results.reactivation.errors++;
           }
+        });
+      }
+    }
+
+    // ==================== 3b. INCOMPLETE SIGNUP RELANCE (T+24h, T+72h, T+7j) ====================
+    {
+      // List all auth users without merchants
+      const { data: { users: allAuthUsers } } = await supabase.auth.admin.listUsers({ perPage: 500 });
+      const { data: allMerchantUserIds } = await supabase.from('merchants').select('user_id');
+      const merchantUserIdSet = new Set((allMerchantUserIds || []).map((m: { user_id: string }) => m.user_id));
+      const { data: superAdminList } = await supabase.from('super_admins').select('user_id');
+      const superAdminSet = new Set((superAdminList || []).map((sa: { user_id: string }) => sa.user_id));
+
+      // Check existing tracking to avoid duplicates
+      const incompleteUsers = (allAuthUsers || []).filter(u => {
+        if (merchantUserIdSet.has(u.id)) return false;
+        if (superAdminSet.has(u.id)) return false;
+        if (!u.email) return false;
+        return true;
+      });
+
+      if (incompleteUsers.length > 0) {
+        // Fetch tracking for these users (use user id as merchant_id in tracking)
+        const { data: existingIncompleteTracking } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id, reminder_day')
+          .in('merchant_id', incompleteUsers.map(u => u.id))
+          .in('reminder_day', [-110, -111, -112]);
+
+        const incompleteTrackingSet = new Set(
+          (existingIncompleteTracking || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
+        );
+
+        await batchProcess(incompleteUsers, async (user) => {
+          results.incompleteRelance.processed++;
+          const createdAt = new Date(user.created_at);
+          const hoursSince = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+
+          // T+24h (23-25h window)
+          if (hoursSince >= 23 && hoursSince <= 25 && !incompleteTrackingSet.has(`${user.id}:-110`)) {
+            try {
+              const result = await sendGuidedSignupEmail(user.email!);
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({ merchant_id: user.id, reminder_day: -110, pending_count: 0 });
+                results.incompleteRelance.sent++;
+              } else { results.incompleteRelance.errors++; }
+            } catch { results.incompleteRelance.errors++; }
+            return;
+          }
+
+          // T+72h (71-73h window)
+          if (hoursSince >= 71 && hoursSince <= 73 && !incompleteTrackingSet.has(`${user.id}:-111`)) {
+            try {
+              const result = await sendSetupForYouEmail(user.email!);
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({ merchant_id: user.id, reminder_day: -111, pending_count: 0 });
+                results.incompleteRelance.sent++;
+              } else { results.incompleteRelance.errors++; }
+            } catch { results.incompleteRelance.errors++; }
+            return;
+          }
+
+          // T+7j (167-169h window)
+          if (hoursSince >= 167 && hoursSince <= 169 && !incompleteTrackingSet.has(`${user.id}:-112`)) {
+            try {
+              const result = await sendLastChanceSignupEmail(user.email!);
+              if (result.success) {
+                await supabase.from('pending_email_tracking').insert({ merchant_id: user.id, reminder_day: -112, pending_count: 0 });
+                results.incompleteRelance.sent++;
+              } else { results.incompleteRelance.errors++; }
+            } catch { results.incompleteRelance.errors++; }
+            return;
+          }
+
+          results.incompleteRelance.skipped++;
+        });
+      }
+    }
+
+    // ==================== 3c. AUTO-SUGGEST REWARD (J+5 merchant, programme non configuré) ====================
+    {
+      const oneHundredTwentyOneHoursAgo = new Date(now.getTime() - 121 * 60 * 60 * 1000);
+      const oneHundredTwentyHoursAgo = new Date(now.getTime() - 120 * 60 * 60 * 1000);
+
+      const { data: autoSuggestCandidates } = await supabase
+        .from('merchants')
+        .select('id, shop_name, shop_type, user_id, trial_ends_at, subscription_status')
+        .is('reward_description', null)
+        .in('subscription_status', ['trial', 'active'])
+        .lte('created_at', oneHundredTwentyHoursAgo.toISOString())
+        .gte('created_at', oneHundredTwentyOneHoursAgo.toISOString());
+
+      if (autoSuggestCandidates && autoSuggestCandidates.length > 0) {
+        const asEmailMap = await batchGetUserEmails([...new Set(autoSuggestCandidates.map(m => m.user_id))]);
+
+        await batchProcess(autoSuggestCandidates, async (merchant) => {
+          results.autoSuggestReward.processed++;
+
+          if (merchantsSentTrialEmail.has(merchant.id)) {
+            results.autoSuggestReward.skipped++;
+            return;
+          }
+
+          const email = asEmailMap.get(merchant.user_id);
+          if (!email) { results.autoSuggestReward.skipped++; return; }
+
+          try {
+            const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
+            const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
+            const result = await sendAutoSuggestRewardEmail(email, merchant.shop_name, merchant.shop_type || '', daysRemaining);
+            if (result.success) { results.autoSuggestReward.sent++; }
+            else { results.autoSuggestReward.errors++; }
+          } catch { results.autoSuggestReward.errors++; }
+        });
+      }
+    }
+
+    // ==================== 3d. GRACE PERIOD SETUP (programme non configuré + grace period) ====================
+    {
+      const { data: graceCandidates } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id, trial_ends_at, subscription_status')
+        .is('reward_description', null)
+        .eq('subscription_status', 'trial');
+
+      if (graceCandidates && graceCandidates.length > 0) {
+        // Check tracking to avoid sending twice
+        const { data: existingGrace } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id')
+          .in('merchant_id', graceCandidates.map(m => m.id))
+          .eq('reminder_day', -113);
+        const alreadySentGrace = new Set((existingGrace || []).map(t => t.merchant_id));
+
+        const graceEmailMap = await batchGetUserEmails([...new Set(graceCandidates.map(m => m.user_id))]);
+
+        await batchProcess(graceCandidates, async (merchant) => {
+          results.gracePeriodSetup.processed++;
+
+          if (alreadySentGrace.has(merchant.id)) {
+            results.gracePeriodSetup.skipped++;
+            return;
+          }
+
+          const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
+          // Only send during grace period (trial expired but not fully expired yet)
+          if (!trialStatus.isInGracePeriod) {
+            results.gracePeriodSetup.skipped++;
+            return;
+          }
+
+          const email = graceEmailMap.get(merchant.user_id);
+          if (!email) { results.gracePeriodSetup.skipped++; return; }
+
+          try {
+            const result = await sendGracePeriodSetupEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion);
+            if (result.success) {
+              await supabase.from('pending_email_tracking').insert({
+                merchant_id: merchant.id, reminder_day: -113, pending_count: 0,
+              });
+              results.gracePeriodSetup.sent++;
+            } else { results.gracePeriodSetup.errors++; }
+          } catch { results.gracePeriodSetup.errors++; }
         });
       }
     }
