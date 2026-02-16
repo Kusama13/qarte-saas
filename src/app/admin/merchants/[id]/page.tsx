@@ -28,6 +28,7 @@ import {
   Share2,
   ListChecks,
   Shield,
+  ChevronDown,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
@@ -299,11 +300,27 @@ export default function MerchantDetailPage() {
     return cleaned;
   };
 
-  const openWhatsApp = (phone: string, name?: string) => {
+  const [waOpen, setWaOpen] = useState(false);
+
+  const openWhatsApp = (phone: string, message: string) => {
     const formattedPhone = formatPhoneForWhatsApp(phone);
-    const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');
-    window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
+    window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
   };
+
+  const getAllWhatsAppMessages = (name: string, customers: number): { label: string; text: string }[] => [
+    { label: 'Aide config', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu que vous n'aviez pas encore configuré votre programme, c'est normal ça prend 30 secondes ! Vous voulez que je vous aide ? 😊` },
+    { label: 'Relance douce', text: `Hello ${name} ! Elodie de Qarte. Votre compte est prêt, il manque juste la récompense pour vos clients. Dites-moi ce que vous offrez après X passages et je configure tout pour vous !` },
+    { label: 'Premier pas', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre carte est magnifique ! L'astuce : montrez le QR code à vos 3 prochains clients au moment de payer. C'est tout, ils adorent ! 😍` },
+    { label: 'Challenge', text: `Hello ${name} ! Petit défi du jour : montrez votre QR Qarte à 5 clients aujourd'hui. Vous allez voir, la réaction est toujours la même : "ah trop bien !" 😄` },
+    { label: 'Fin essai', text: `Coucou ${name} ! C'est Elodie. Votre essai Qarte se termine bientôt${customers > 0 ? ` et vos ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. Ça vous dit ? 😊` },
+    { label: 'Accompagnement', text: `Hello ${name} ! Elodie de Qarte. Comment ça se passe de votre côté ? Si vous avez des questions avant la fin de l'essai, je suis là ! On peut s'appeler 2 min si vous voulez 📞` },
+    { label: 'Relance expirée', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre essai est terminé mais rien n'est perdu ! ${customers > 0 ? `Vos ${customers} clients gardent leur carte. ` : ''}Le code QARTE50 vous offre le premier mois à 9€. On relance ensemble ? 😊` },
+    { label: 'Question ouverte', text: `Hello ${name} ! Elodie de Qarte. Est-ce qu'il y a quelque chose qui vous a bloqué(e) pendant l'essai ? Vos retours m'aident beaucoup, et je peux sûrement vous aider 🙏` },
+    { label: 'Prise de nouvelles', text: `Coucou ${name} ! C'est Elodie de Qarte. Ça fait quelques jours sans scan, tout va bien ? Si vos clients demandent leur carte, n'hésitez pas à ressortir le QR ! Je suis là si besoin 😊` },
+    { label: 'Rétention', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu votre demande d'annulation, je comprends. Est-ce qu'il y a quelque chose qu'on peut améliorer ? Vos retours comptent beaucoup pour nous 🙏` },
+    { label: 'Suivi', text: `Coucou ${name} ! C'est Elodie de Qarte. Comment ça se passe avec la carte de fidélité ? Vos clients sont contents ? N'hésitez pas si vous avez des idées d'amélioration ! 😊` },
+    { label: 'Message libre', text: `Coucou ${name} ! C'est Elodie de Qarte. ` },
+  ];
 
 
   if (loading) {
@@ -418,15 +435,7 @@ export default function MerchantDetailPage() {
         </div>
 
         {/* Actions rapides */}
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
-          <button
-            onClick={() => openWhatsApp(merchant.phone, merchant.shop_name)}
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-xl transition-colors"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">WhatsApp</span>
-            <span className="sm:hidden">WA</span>
-          </button>
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
           {userEmail ? (
             <a
               href={`mailto:${userEmail}`}
@@ -449,6 +458,36 @@ export default function MerchantDetailPage() {
             Appeler
           </a>
         </div>
+
+        {/* WhatsApp — menu repliable */}
+        {merchant.phone && (
+          <div className="mt-4">
+            <button
+              onClick={() => setWaOpen(!waOpen)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <MessageCircle className="w-5 h-5" />
+                <span className="font-semibold text-sm">WhatsApp</span>
+              </div>
+              <ChevronDown className={cn("w-4 h-4 transition-transform", waOpen && "rotate-180")} />
+            </button>
+            {waOpen && (
+              <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                {getAllWhatsAppMessages(merchant.shop_name, stats.totalCustomers).map((msg, i) => (
+                  <button
+                    key={i}
+                    onClick={() => openWhatsApp(merchant.phone, msg.text)}
+                    className="text-left px-3 py-2.5 rounded-xl border border-green-100 bg-green-50 hover:bg-green-100 transition-colors group"
+                  >
+                    <span className="text-xs font-bold text-green-700">{msg.label}</span>
+                    <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5 group-hover:text-gray-700">{msg.text}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Programme de fidélité */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
