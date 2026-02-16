@@ -32,7 +32,8 @@ export async function GET(request: NextRequest) {
     const { data: canceledMerchants, error } = await supabase
       .from('merchants')
       .select('id, shop_name, user_id, updated_at')
-      .eq('subscription_status', 'canceled');
+      .eq('subscription_status', 'canceled')
+      .neq('no_contact', true);
 
     if (error) {
       logger.error('Error fetching canceled merchants', error);

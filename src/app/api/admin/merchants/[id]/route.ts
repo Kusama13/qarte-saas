@@ -117,6 +117,52 @@ export async function GET(
   }
 }
 
+// PATCH - Update merchant admin fields (no_contact, admin_notes)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = await verifyAdminAuth(request);
+  if (!auth.authorized) return auth.error!;
+
+  const supabase = getSupabaseAdmin();
+  const { id: merchantId } = await params;
+
+  if (!merchantId) {
+    return NextResponse.json({ error: 'ID merchant requis' }, { status: 400 });
+  }
+
+  try {
+    const body = await request.json();
+    const updates: Record<string, unknown> = {};
+
+    if (typeof body.no_contact === 'boolean') updates.no_contact = body.no_contact;
+    if (typeof body.admin_notes === 'string') updates.admin_notes = body.admin_notes || null;
+
+    if (Object.keys(updates).length === 0) {
+      return NextResponse.json({ error: 'Aucun champ à mettre à jour' }, { status: 400 });
+    }
+
+    updates.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabase
+      .from('merchants')
+      .update(updates)
+      .eq('id', merchantId)
+      .select('no_contact, admin_notes')
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Admin merchant PATCH error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}
+
 // DELETE - Supprimer un merchant et toutes ses données
 export async function DELETE(
   request: NextRequest,

@@ -112,7 +112,8 @@ export async function GET(request: NextRequest) {
     const { data: merchants } = await supabase
       .from('merchants')
       .select('id, shop_name, user_id, trial_ends_at, subscription_status')
-      .eq('subscription_status', 'trial');
+      .eq('subscription_status', 'trial')
+      .neq('no_contact', true);
 
     if (merchants && merchants.length > 0) {
       // Batch fetch all user emails upfront
@@ -160,7 +161,8 @@ export async function GET(request: NextRequest) {
       .is('reward_description', null)
       .in('subscription_status', ['trial', 'active'])
       .lte('created_at', twentyFourHoursAgo.toISOString())
-      .gte('created_at', twentyFiveHoursAgo.toISOString());
+      .gte('created_at', twentyFiveHoursAgo.toISOString())
+      .neq('no_contact', true);
 
     if (unconfiguredMerchants && unconfiguredMerchants.length > 0) {
       const emailMap = await batchGetUserEmails([...new Set(unconfiguredMerchants.map(m => m.user_id))]);
@@ -197,7 +199,8 @@ export async function GET(request: NextRequest) {
       .is('reward_description', null)
       .in('subscription_status', ['trial', 'active'])
       .lte('created_at', fortyEightHoursAgo.toISOString())
-      .gte('created_at', fortyNineHoursAgo.toISOString());
+      .gte('created_at', fortyNineHoursAgo.toISOString())
+      .neq('no_contact', true);
 
     if (unconfiguredDay2 && unconfiguredDay2.length > 0) {
       const emailMap = await batchGetUserEmails([...new Set(unconfiguredDay2.map(m => m.user_id))]);
@@ -234,7 +237,8 @@ export async function GET(request: NextRequest) {
       .is('reward_description', null)
       .in('subscription_status', ['trial', 'active'])
       .lte('created_at', seventyTwoHoursAgo.toISOString())
-      .gte('created_at', seventyThreeHoursAgo.toISOString());
+      .gte('created_at', seventyThreeHoursAgo.toISOString())
+      .neq('no_contact', true);
 
     if (unconfiguredDay3 && unconfiguredDay3.length > 0) {
       const emailMap = await batchGetUserEmails([...new Set(unconfiguredDay3.map(m => m.user_id))]);
@@ -281,7 +285,8 @@ export async function GET(request: NextRequest) {
       .neq('reward_description', '')
       .in('subscription_status', ['trial', 'active'])
       .lte('created_at', oneTwentyHoursAgo.toISOString())
-      .gte('created_at', oneTwentyOneHoursAgo.toISOString());
+      .gte('created_at', oneTwentyOneHoursAgo.toISOString())
+      .neq('no_contact', true);
 
     if (day5Merchants && day5Merchants.length > 0) {
       const emailMap = await batchGetUserEmails([...new Set(day5Merchants.map(m => m.user_id))]);
@@ -322,7 +327,8 @@ export async function GET(request: NextRequest) {
         .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active']);
+        .in('subscription_status', ['trial', 'active'])
+        .neq('no_contact', true);
 
       if (qrCandidates && qrCandidates.length > 0) {
         // Check tracking to avoid sending twice
@@ -374,7 +380,8 @@ export async function GET(request: NextRequest) {
         .eq('subscription_status', 'trial')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
-        .gte('created_at', tenDaysAgo.toISOString());
+        .gte('created_at', tenDaysAgo.toISOString())
+        .neq('no_contact', true);
 
       if (challengeCandidates && challengeCandidates.length > 0) {
         const challengeIds = challengeCandidates.map(m => m.id);
@@ -442,7 +449,8 @@ export async function GET(request: NextRequest) {
         .select('id, shop_name, user_id, shop_type, reward_description, stamps_required, trial_ends_at, subscription_status')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active']);
+        .in('subscription_status', ['trial', 'active'])
+        .neq('no_contact', true);
 
       if (scriptCandidates && scriptCandidates.length > 0) {
         const scriptIds = scriptCandidates.map(m => m.id);
@@ -519,7 +527,8 @@ export async function GET(request: NextRequest) {
         .select('id, shop_name, user_id, trial_ends_at, subscription_status')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active']);
+        .in('subscription_status', ['trial', 'active'])
+        .neq('no_contact', true);
 
       if (qcCandidates && qcCandidates.length > 0) {
         const qcIds = qcCandidates.map(m => m.id);
@@ -595,7 +604,8 @@ export async function GET(request: NextRequest) {
       .select('id, shop_name, user_id, referral_code')
       .not('reward_description', 'is', null)
       .neq('reward_description', '')
-      .in('subscription_status', ['trial', 'active']);
+      .in('subscription_status', ['trial', 'active'])
+      .neq('no_contact', true);
 
     if (allConfiguredMerchants && allConfiguredMerchants.length > 0) {
       const configuredIds = allConfiguredMerchants.map(m => m.id);
@@ -653,7 +663,8 @@ export async function GET(request: NextRequest) {
         .select('id, shop_name, user_id, reward_description, stamps_required')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active']);
+        .in('subscription_status', ['trial', 'active'])
+        .neq('no_contact', true);
 
       if (merchantsWithProgram && merchantsWithProgram.length > 0) {
         const programIds = merchantsWithProgram.map(m => m.id);
@@ -724,7 +735,8 @@ export async function GET(request: NextRequest) {
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
-        .or('tier2_enabled.is.null,tier2_enabled.eq.false');
+        .or('tier2_enabled.is.null,tier2_enabled.eq.false')
+        .neq('no_contact', true);
 
       if (tier2Candidates && tier2Candidates.length > 0) {
         const t2Ids = tier2Candidates.map(m => m.id);
@@ -789,7 +801,8 @@ export async function GET(request: NextRequest) {
         .select('id, shop_name, user_id')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active']);
+        .in('subscription_status', ['trial', 'active'])
+        .neq('no_contact', true);
 
       if (digestMerchants && digestMerchants.length > 0) {
         const digestIds = digestMerchants.map(m => m.id);
@@ -874,7 +887,8 @@ export async function GET(request: NextRequest) {
       .select('id, shop_name, user_id, reward_description, stamps_required, created_at, trial_ends_at, subscription_status')
       .not('reward_description', 'is', null)
       .neq('reward_description', '')
-      .in('subscription_status', ['trial', 'active']);
+      .in('subscription_status', ['trial', 'active'])
+      .neq('no_contact', true);
 
     if (activeMerchants && activeMerchants.length > 0) {
       // Batch fetch last visits for ALL active merchants in one query (instead of N queries)
@@ -989,7 +1003,8 @@ export async function GET(request: NextRequest) {
     const { data: canceledMerchants } = await supabase
       .from('merchants')
       .select('id, shop_name, user_id, updated_at')
-      .eq('subscription_status', 'canceled');
+      .eq('subscription_status', 'canceled')
+      .neq('no_contact', true);
 
     if (canceledMerchants && canceledMerchants.length > 0) {
       // Pre-filter to only merchants matching reactivation days
@@ -1161,7 +1176,8 @@ export async function GET(request: NextRequest) {
         .is('reward_description', null)
         .in('subscription_status', ['trial', 'active'])
         .lte('created_at', oneHundredTwentyHoursAgo.toISOString())
-        .gte('created_at', oneHundredTwentyOneHoursAgo.toISOString());
+        .gte('created_at', oneHundredTwentyOneHoursAgo.toISOString())
+        .neq('no_contact', true);
 
       if (autoSuggestCandidates && autoSuggestCandidates.length > 0) {
         const asEmailMap = await batchGetUserEmails([...new Set(autoSuggestCandidates.map(m => m.user_id))]);
@@ -1194,7 +1210,8 @@ export async function GET(request: NextRequest) {
         .from('merchants')
         .select('id, shop_name, user_id, trial_ends_at, subscription_status')
         .is('reward_description', null)
-        .eq('subscription_status', 'trial');
+        .eq('subscription_status', 'trial')
+        .neq('no_contact', true);
 
       if (graceCandidates && graceCandidates.length > 0) {
         // Check tracking to avoid sending twice
@@ -1252,7 +1269,8 @@ export async function GET(request: NextRequest) {
       const { data: merchantsData } = await supabase
         .from('merchants')
         .select('id, shop_name, user_id')
-        .in('id', uniqueMerchantIds);
+        .in('id', uniqueMerchantIds)
+        .neq('no_contact', true);
 
       const merchantMap = new Map(
         (merchantsData || []).map(m => [m.id, m])

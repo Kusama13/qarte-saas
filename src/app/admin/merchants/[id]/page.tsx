@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -29,6 +29,9 @@ import {
   ListChecks,
   Shield,
   ChevronDown,
+  Ban,
+  StickyNote,
+  Loader2 as Loader2Icon,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
@@ -69,6 +72,9 @@ interface Merchant {
   offer_description: string | null;
   offer_expires_at: string | null;
   offer_created_at: string | null;
+  // Admin
+  no_contact: boolean;
+  admin_notes: string | null;
 }
 
 
@@ -301,6 +307,28 @@ export default function MerchantDetailPage() {
   };
 
   const [waOpen, setWaOpen] = useState(false);
+  const [adminNotes, setAdminNotes] = useState(merchant?.admin_notes || '');
+  const [savingField, setSavingField] = useState<string | null>(null);
+
+  const patchMerchant = useCallback(async (fields: Record<string, unknown>) => {
+    const key = Object.keys(fields)[0];
+    setSavingField(key);
+    try {
+      const res = await fetch(`/api/admin/merchants/${merchantId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fields),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMerchant(prev => prev ? { ...prev, ...data } : prev);
+      }
+    } catch (err) {
+      console.error('Patch merchant error:', err);
+    } finally {
+      setSavingField(null);
+    }
+  }, [merchantId]);
 
   const openWhatsApp = (phone: string, message: string) => {
     const formattedPhone = formatPhoneForWhatsApp(phone);
@@ -434,6 +462,45 @@ export default function MerchantDetailPage() {
           </div>
         </div>
 
+        {/* Admin — Ne pas contacter + Notes */}
+        <div className="mt-4 flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={() => patchMerchant({ no_contact: !merchant.no_contact })}
+            disabled={savingField === 'no_contact'}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors border",
+              merchant.no_contact
+                ? "bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                : "bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100"
+            )}
+          >
+            {savingField === 'no_contact' ? (
+              <Loader2Icon className="w-4 h-4 animate-spin" />
+            ) : (
+              <Ban className="w-4 h-4" />
+            )}
+            {merchant.no_contact ? 'Ne pas contacter' : 'Contacter OK'}
+          </button>
+          <div className="flex-1 relative">
+            <StickyNote className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Notes admin..."
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              onBlur={() => {
+                if (adminNotes !== (merchant.admin_notes || '')) {
+                  patchMerchant({ admin_notes: adminNotes });
+                }
+              }}
+              className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5167fc] focus:border-transparent"
+            />
+            {savingField === 'admin_notes' && (
+              <Loader2Icon className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+            )}
+          </div>
+        </div>
+
         {/* Actions rapides */}
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
           {userEmail ? (
@@ -460,7 +527,7 @@ export default function MerchantDetailPage() {
         </div>
 
         {/* WhatsApp — menu repliable */}
-        {merchant.phone && (
+        {merchant.phone && !merchant.no_contact && (
           <div className="mt-4">
             <button
               onClick={() => setWaOpen(!waOpen)}

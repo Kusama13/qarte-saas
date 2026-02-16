@@ -515,6 +515,11 @@ export default function AdminMerchantsPage() {
                                   Admin
                                 </span>
                               )}
+                              {merchant.no_contact && (
+                                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700 rounded-full flex-shrink-0">
+                                  NC
+                                </span>
+                              )}
                               {pending > 0 && (
                                 <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0 flex items-center gap-0.5" title={`${pending} point${pending > 1 ? 's' : ''} en attente`}>
                                   <Shield className="w-3 h-3" />
@@ -559,7 +564,7 @@ export default function AdminMerchantsPage() {
                       {/* Actions */}
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1.5 relative">
-                          {merchant.phone && !isAdmin && (
+                          {merchant.phone && !isAdmin && !merchant.no_contact && (
                             <div className="relative">
                               <button
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWaDropdown(waDropdown === merchant.id ? null : merchant.id); }}
@@ -626,6 +631,11 @@ export default function AdminMerchantsPage() {
                               Admin
                             </span>
                           )}
+                          {merchant.no_contact && (
+                            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700 rounded-full flex-shrink-0">
+                              NC
+                            </span>
+                          )}
                           {pending > 0 && (
                             <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0 flex items-center gap-0.5">
                               <Shield className="w-3 h-3" />
@@ -642,7 +652,7 @@ export default function AdminMerchantsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {merchant.phone && !isAdmin && (
+                      {merchant.phone && !isAdmin && !merchant.no_contact && (
                         <div className="relative">
                           <button
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWaDropdown(waDropdown === `m-${merchant.id}` ? null : `m-${merchant.id}`); }}

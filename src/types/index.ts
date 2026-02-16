@@ -81,6 +81,8 @@ export interface Merchant {
   created_at: string;
   updated_at: string;
   last_seen_at: string | null;
+  no_contact: boolean;
+  admin_notes: string | null;
 }
 
 export interface Customer {
