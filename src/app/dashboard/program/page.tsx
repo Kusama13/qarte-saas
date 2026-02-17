@@ -24,6 +24,7 @@ import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { MerchantSettingsForm, type LoyaltySettings } from '@/components/loyalty';
 import { compressLogo } from '@/lib/image-compression';
+import { useMerchant } from '@/contexts/MerchantContext';
 import type { Merchant } from '@/types';
 
 // Images par type de commerce (beauté / bien-être)
@@ -112,6 +113,7 @@ const TIER2_REWARD_SUGGESTIONS: Record<string, string[]> = {
 export default function ProgramPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refetch: refetchMerchantContext } = useMerchant();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -320,6 +322,9 @@ export default function ProgramPage() {
           timestamp: Date.now(),
         }));
       } catch {}
+
+      // Refresh MerchantContext so other pages (QR download, checklist) see updated data
+      refetchMerchantContext();
 
       if (isFirstSetup) {
         // Send QR code email immediately (fire and forget)
