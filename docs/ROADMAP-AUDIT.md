@@ -499,11 +499,14 @@ SHIELD (points en attente)
 
 ## Semaine 1 (10-16 fev)
 - [ ] **F3** : Celebration premier scan (1h)
-- [ ] Plan admin merchants (barre actions, badges alerte, WhatsApp)
+- [x] Plan admin merchants (WhatsApp contextuel + repliable, no_contact, admin_notes)
 - [x] Relance CMO : 5 emails (GuidedSignup, SetupForYou, LastChanceSignup, AutoSuggestReward, GracePeriodSetup)
 - [x] Admin leads 48h → 30 jours + admin merchants export CSV
+- [x] Signup refonte : fond bleu-rose, mini stamp card teaser Phase 2, suppression adresse
+- [x] Onboarding checklist : track preview step, grille 2 colonnes, popup → QR
 
 ## Semaine 2 (17-23 fev)
+- [ ] **F3** : Celebration premier scan (1h, reporte semaine 1)
 - [ ] **F6** : Templates push enrichis (2h)
 - [ ] **F4** : Stats enrichies carte client (2h)
 
@@ -527,6 +530,36 @@ SHIELD (points en attente)
 ---
 
 # PARTIE 6 : CHANGELOG
+
+## [2026-02-17] — no_contact + admin_notes, WhatsApp admin, signup refonte, checklist fixes
+
+### no_contact + admin_notes (migration 036)
+- **feat:** Migration 036 — `no_contact` (boolean, default false) + `admin_notes` (text) sur merchants
+- **feat:** PATCH `/api/admin/merchants/[id]` — endpoint pour toggle no_contact et sauvegarder notes admin
+- **feat:** Page detail merchant — toggle "Ne pas contacter" + champ notes admin (save onBlur)
+- **feat:** Page liste merchants — badge NC rouge + masquage WhatsApp si no_contact
+- **feat:** Crons emails — `.neq('no_contact', true)` sur 19 queries (18 morning + 1 reactivation)
+
+### WhatsApp admin
+- **feat:** Menu WhatsApp repliable sur page detail merchant — 12 messages pre-remplis (relance, felicitations, support, upsell)
+- **feat:** Messages WhatsApp contextuels par lifecycle sur page liste merchants (dropdown desktop + mobile)
+
+### Signup refonte
+- **style:** Pages signup Phase 1 + Phase 2 — fond bleu-rose gradient
+- **feat:** Phase 2 — mini stamp card teaser animee (apercu carte fidelite)
+- **fix:** Phase 2 — suppression champ adresse (friction reduite)
+
+### Onboarding checklist
+- **feat:** Etape "Tester l'experience client" track preview step
+- **style:** Grille 2 colonnes desktop
+- **fix:** Lien preview → page scan reelle, ouverture nouvel onglet
+- **fix:** Bouton "Tester" depuis QR download track correctement
+
+### Migration SQL
+- 035 : Referrals table RLS policies
+- 036 : no_contact + admin_notes columns
+
+---
 
 ## [2026-02-16] — Relance CMO emails, admin exports, program layout
 
@@ -899,8 +932,10 @@ SHIELD (points en attente)
 - 032 : Fix updated_at trigger (exclut last_seen_at)
 - 033 : Add referral_code (parrainage merchant)
 - 034 : Trial period 15j → 7j (nouveaux inscrits)
+- 035 : Referrals table RLS policies
+- 036 : no_contact + admin_notes columns
 
 ---
 
-*Derniere mise a jour : 16 fevrier 2026*
-*Statuts verifies contre le code source le 16/02/2026. 5 emails relance CMO, admin CSV export, 30j leads.*
+*Derniere mise a jour : 17 fevrier 2026*
+*Statuts verifies contre le code source le 17/02/2026. no_contact/admin_notes, WhatsApp admin, signup refonte, checklist fixes.*

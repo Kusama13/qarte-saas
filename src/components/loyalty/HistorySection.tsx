@@ -11,6 +11,8 @@ import {
   Hourglass,
   XCircle,
   Trophy,
+  Ticket,
+  UserPlus,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDateTime } from '@/lib/utils';
@@ -35,10 +37,17 @@ interface VisitWithStatus extends Visit {
   flagged_reason: string | null;
 }
 
+export interface UsedVoucher {
+  id: string;
+  used_at: string;
+  reward_description: string;
+}
+
 interface HistorySectionProps {
   visits: VisitWithStatus[];
   adjustments: PointAdjustment[];
   redemptions: RedemptionHistory[];
+  usedVouchers?: UsedVoucher[];
   merchant: Merchant;
 }
 
@@ -46,12 +55,13 @@ export default function HistorySection({
   visits,
   adjustments,
   redemptions,
+  usedVouchers = [],
   merchant,
 }: HistorySectionProps) {
   const [expanded, setExpanded] = useState(false);
 
   const LoyaltyIcon = Heart;
-  const hasItems = visits.length > 0 || adjustments.length > 0 || redemptions.length > 0;
+  const hasItems = visits.length > 0 || adjustments.length > 0 || redemptions.length > 0 || usedVouchers.length > 0;
 
   // Pre-compute sorted items
   const allItems = [
@@ -63,6 +73,7 @@ export default function HistorySection({
       status: v.status || ('confirmed' as const),
       flagged_reason: v.flagged_reason,
       tier: undefined as number | undefined,
+      reward_description: undefined as string | undefined,
     })),
     ...adjustments.map((a) => ({
       type: 'adjustment' as const,
@@ -72,6 +83,7 @@ export default function HistorySection({
       status: 'confirmed' as const,
       flagged_reason: null as string | null,
       tier: undefined as number | undefined,
+      reward_description: undefined as string | undefined,
     })),
     ...redemptions.map((r) => ({
       type: 'redemption' as const,
@@ -81,6 +93,17 @@ export default function HistorySection({
       status: 'confirmed' as const,
       flagged_reason: null as string | null,
       tier: r.tier as number | undefined,
+      reward_description: undefined as string | undefined,
+    })),
+    ...usedVouchers.map((v) => ({
+      type: 'voucher_used' as const,
+      date: v.used_at,
+      points: 0,
+      id: v.id,
+      status: 'confirmed' as const,
+      flagged_reason: null as string | null,
+      tier: undefined as number | undefined,
+      reward_description: v.reward_description,
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 30);
 
@@ -109,10 +132,14 @@ export default function HistorySection({
             {displayItems.map((item, index) => {
               const isAdjustment = item.type === 'adjustment';
               const isRedemption = item.type === 'redemption';
+              const isVoucherUsed = item.type === 'voucher_used';
+              const isBonusParrainage = item.type === 'visit' && item.flagged_reason === 'bonus_parrainage';
               const isPending = item.status === 'pending';
               const isRejected = item.status === 'rejected';
 
               const getStatusIcon = () => {
+                if (isVoucherUsed) return <Ticket className="w-4 h-4 text-indigo-500" />;
+                if (isBonusParrainage) return <UserPlus className="w-4 h-4" style={{ color: merchant.primary_color }} />;
                 if (isRedemption) {
                   return item.tier === 2
                     ? <Trophy className="w-4 h-4 text-violet-500" />
@@ -125,6 +152,7 @@ export default function HistorySection({
               };
 
               const getIconBgColor = () => {
+                if (isVoucherUsed) return '#e0e7ff';
                 if (isRedemption) return item.tier === 2 ? '#ede9fe' : '#d1fae5';
                 if (isAdjustment) return '#fef3c7';
                 if (isPending) return '#fef3c7';
@@ -133,6 +161,8 @@ export default function HistorySection({
               };
 
               const getLabel = () => {
+                if (isVoucherUsed) return `🎟️ ${item.reward_description || 'Récompense utilisée'}`;
+                if (isBonusParrainage) return '🎉 Bonus parrainage +1';
                 if (isRedemption) {
                   const tierLabel = merchant.tier2_enabled ? ` palier ${item.tier}` : '';
                   return `🎁 Cadeau${tierLabel} utilisé`;
@@ -159,7 +189,13 @@ export default function HistorySection({
                     {getStatusIcon()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className={`font-semibold text-sm truncate ${isRejected ? 'text-gray-500 line-through' : isRedemption ? 'text-emerald-700' : 'text-gray-900'}`}>
+                    <p className={`font-semibold text-sm truncate ${
+                      isRejected ? 'text-gray-500 line-through'
+                      : isRedemption ? 'text-emerald-700'
+                      : isVoucherUsed ? 'text-indigo-700'
+                      : isBonusParrainage ? 'text-gray-900'
+                      : 'text-gray-900'
+                    }`}>
                       {getLabel()}
                     </p>
                     <p className="text-[10px] text-gray-400 flex items-center gap-1">
@@ -167,7 +203,7 @@ export default function HistorySection({
                       {formatDateTime(item.date)}
                     </p>
                   </div>
-                  {!isRedemption && (
+                  {!isRedemption && !isVoucherUsed && (
                     <div
                       className={`px-2 py-1 rounded-lg text-xs font-bold ${
                         isPending
@@ -191,6 +227,11 @@ export default function HistorySection({
                   )}
                   {isRedemption && (
                     <div className={`px-2 py-1 rounded-lg text-xs font-bold ${item.tier === 2 ? 'bg-violet-100 text-violet-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                      ✓
+                    </div>
+                  )}
+                  {isVoucherUsed && (
+                    <div className="px-2 py-1 rounded-lg text-xs font-bold bg-indigo-100 text-indigo-700">
                       ✓
                     </div>
                   )}

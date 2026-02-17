@@ -125,7 +125,7 @@ docs/
 └── roadmap/              # Backups code (mode article, scheduled push)
 
 supabase/
-└── migrations/           # 34 migrations SQL
+└── migrations/           # 36 migrations SQL
     ├── 001-025           # Schema initial + fixes
     ├── 026               # Trial period 15 jours (original)
     ├── 027               # Spelling cancelled→canceled
@@ -135,7 +135,9 @@ supabase/
     ├── 031               # last_seen_at column
     ├── 032               # Fix updated_at trigger (exclut last_seen_at)
     ├── 033               # Add referral_code (parrainage merchant)
-    └── 034               # Trial period 15j → 7j (nouveaux inscrits)
+    ├── 034               # Trial period 15j → 7j (nouveaux inscrits)
+    ├── 035               # Referrals table RLS policies
+    └── 036               # no_contact + admin_notes columns
 
 public/
 ├── images/              # Images statiques (mockups, temoignages, email-banner)
@@ -160,6 +162,8 @@ public/
 - `referral_program_enabled`, `referral_reward_referrer`, `referral_reward_referred`
 - `trial_ends_at`, `subscription_status`, `stripe_customer_id`, `stripe_subscription_id`
 - `shield_enabled` (Qarte Shield)
+- `no_contact` (boolean, default false — coupe toutes les communications)
+- `admin_notes` (text, nullable — notes admin libres)
 
 ### customers
 - `id`, `phone_number` (format E.164 sans +, ex: `33612345678`), `first_name`, `last_name`
@@ -238,7 +242,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - `GET /api/stripe/payment-method` - Recuperer methode de paiement active
 
 ### Admin
-- `/api/admin/merchants/[id]` - Gestion commercants
+- `/api/admin/merchants/[id]` - Gestion commercants (GET stats, PATCH no_contact/admin_notes, DELETE)
 - `/api/admin/incomplete-signups` - Inscriptions incompletes (auth sans merchant, 30 jours)
 - `/api/admin/prospects` - Leads/prospects
 - `/api/admin/tasks` - Taches admin
@@ -321,6 +325,11 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Page detail merchant (`/admin/merchants/[id]`) : section "Liens & Reseaux" (Instagram, Facebook, TikTok, reservation, avis Google) cliquables
 - Badge parrainage actif/inactif dans les badges statut
 - Section "Progression onboarding" : 5 items checklist + barre de progression par merchant
+- Menu WhatsApp repliable : 12 messages pre-remplis (relance, felicitations, support, upsell)
+- Toggle "Ne pas contacter" (`no_contact`) + champ "Notes admin" editables
+- Badge NC (rouge) dans la liste merchants si `no_contact = true`
+- WhatsApp masque automatiquement pour merchants `no_contact`
+- Crons emails : merchants `no_contact` exclus de toutes les communications (19 queries filtrees)
 
 ### Programmes Membres
 - Cartes de membre avec validite
@@ -473,7 +482,7 @@ npm run email
 | `src/app/api/referrals/route.ts` | API parrainage client (GET info + POST inscription) |
 | `src/app/api/vouchers/use/route.ts` | API consommation voucher + auto-creation parrain |
 | `src/app/dashboard/referrals/page.tsx` | Dashboard parrainage (config + stats + tableau) |
-| `supabase/migrations/` | 34 migrations SQL |
+| `supabase/migrations/` | 36 migrations SQL |
 
 ---
 
@@ -591,7 +600,8 @@ npm run email
 - Analytics, Metriques, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
 - Activity : vue "hier" (`?date=yesterday`) pour suivi activite merchants
-- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badge parrainage, progression onboarding
+- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badge parrainage, progression onboarding, menu WhatsApp repliable (12 messages), toggle no_contact + notes admin
+- Merchants liste : badge NC rouge si no_contact, WhatsApp masque
 - **Toutes les stats excluent les comptes admin** (via `super_admins` table)
 
 ### Dashboard (`/dashboard`)
