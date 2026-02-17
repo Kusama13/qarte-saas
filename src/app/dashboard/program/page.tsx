@@ -28,12 +28,12 @@ import type { Merchant } from '@/types';
 
 // Images par type de commerce (beauté / bien-être)
 const BUSINESS_IMAGES = [
-  { url: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?w=200', label: 'Coiffeur' },
-  { url: 'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=200', label: 'Barbier' },
-  { url: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=200', label: 'Institut' },
-  { url: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=200', label: 'Onglerie' },
-  { url: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200', label: 'Spa' },
-  { url: 'https://images.unsplash.com/photo-1600334089648-b0d9d3028eb2?w=200', label: 'Massage' },
+  { url: 'https://images.unsplash.com/photo-1637777277337-f114350fb088?w=200', label: 'Coiffeur' },
+  { url: 'https://images.unsplash.com/photo-1744095407400-aa337918bbb1?w=200', label: 'Barbier' },
+  { url: 'https://images.unsplash.com/photo-1761718210089-ba3bb5ccb54f?w=200', label: 'Institut' },
+  { url: 'https://images.unsplash.com/photo-1741826016673-a47a45346002?w=200', label: 'Onglerie' },
+  { url: 'https://images.unsplash.com/photo-1770625468009-71c90199d5e0?w=200', label: 'Spa' },
+  { url: 'https://images.unsplash.com/photo-1696841212541-449ca29397cc?w=200', label: 'Massage' },
 ];
 
 

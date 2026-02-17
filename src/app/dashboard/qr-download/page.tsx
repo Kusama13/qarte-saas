@@ -189,11 +189,14 @@ export default function QRDownloadPage() {
           className={`flex items-center justify-center gap-2 flex-1 py-3 px-4 rounded-xl text-sm font-bold transition-all duration-200 ${
             activeTab === 'social'
               ? 'bg-white text-purple-700 shadow-md shadow-purple-100/50 ring-1 ring-purple-100'
-              : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
+              : 'text-purple-600 bg-purple-50 hover:bg-purple-100 ring-1 ring-purple-200'
           }`}
         >
-          <Image className={`w-4 h-4 ${activeTab === 'social' ? 'text-purple-500' : ''}`} />
+          <Image className={`w-4 h-4 ${activeTab === 'social' ? 'text-purple-500' : 'text-purple-500'}`} />
           Kit réseaux
+          {activeTab !== 'social' && (
+            <span className="px-1.5 py-0.5 text-[10px] font-bold bg-purple-600 text-white rounded-full">NEW</span>
+          )}
         </button>
       </div>
 
@@ -319,6 +322,12 @@ export default function QRDownloadPage() {
               <p className="text-center text-xs text-gray-400">
                 Format PNG — gardez-le sur votre téléphone
               </p>
+              <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+                <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-red-700 font-medium leading-relaxed">
+                  Ne publiez pas votre QR code sur les réseaux sociaux — vos clients doivent le scanner <span className="font-bold">en magasin uniquement</span>. Pour vos réseaux, utilisez l&apos;onglet Kit réseaux !
+                </p>
+              </div>
             </div>
 
             {/* Test */}
