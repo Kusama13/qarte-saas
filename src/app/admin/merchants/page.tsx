@@ -271,6 +271,7 @@ export default function AdminMerchantsPage() {
       msgs.push({ label: 'Aide config', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu que vous n'aviez pas encore configuré votre programme, c'est normal ça prend 30 secondes ! Vous voulez que je vous aide ? 😊` });
       msgs.push({ label: 'Relance douce', text: `Hello ${name} ! Elodie de Qarte. Votre compte est prêt, il manque juste la récompense pour vos clients. Dites-moi ce que vous offrez après X passages et je configure tout pour vous !` });
     } else if (l.includes('1er scan')) {
+      msgs.push({ label: '1er scan', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre carte est prête, il ne reste plus qu'à tester ! Scannez votre propre QR code pour voir comment ça marche côté client. Ça prend 10 secondes 😊` });
       msgs.push({ label: 'Premier pas', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre carte est magnifique ! L'astuce : montrez le QR code à vos 3 prochains clients au moment de payer. C'est tout, ils adorent ! 😍` });
       msgs.push({ label: 'Challenge', text: `Hello ${name} ! Petit défi du jour : montrez votre QR Qarte à 5 clients aujourd'hui. Vous allez voir, la réaction est toujours la même : "ah trop bien !" 😄` });
     } else if (l.includes('essai j-')) {
@@ -285,6 +286,10 @@ export default function AdminMerchantsPage() {
       msgs.push({ label: 'Rétention', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu votre demande d'annulation, je comprends. Est-ce qu'il y a quelque chose qu'on peut améliorer ? Vos retours comptent beaucoup pour nous 🙏` });
     } else if (l === 'actif') {
       msgs.push({ label: 'Suivi', text: `Coucou ${name} ! C'est Elodie de Qarte. Comment ça se passe avec la carte de fidélité ? Vos clients sont contents ? N'hésitez pas si vous avez des idées d'amélioration ! 😊` });
+      if (customers >= 5) {
+        msgs.push({ label: 'Bravo', text: `Coucou ${name} ! C'est Elodie de Qarte. Bravo, ${customers} clients utilisent déjà votre carte ! Vous savez que vous pouvez aussi envoyer des notifications push pour les faire revenir ? Je vous montre si vous voulez 🚀` });
+      }
+      msgs.push({ label: 'Affichage QR', text: `Coucou ${name} ! Elodie de Qarte. Petite astuce qui change tout : imprimez le QR code et collez-le près de la caisse ou sur le comptoir. Les clients le scannent d'eux-mêmes, sans que vous ayez à y penser ! 📱` });
     }
 
     // Toujours un message libre en dernier

@@ -12,11 +12,12 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Cake,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
-type EventType = 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact';
+type EventType = 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher';
 
 interface ActivityEvent {
   type: EventType;
@@ -31,6 +32,7 @@ interface Summary {
   redemptions: number;
   newCustomers: number;
   contacts: number;
+  vouchers: number;
 }
 
 const EVENT_CONFIG: Record<EventType, { icon: React.ElementType; color: string; bg: string; label: string }> = {
@@ -39,13 +41,14 @@ const EVENT_CONFIG: Record<EventType, { icon: React.ElementType; color: string; 
   redemption: { icon: Gift, color: 'text-pink-600', bg: 'bg-pink-50', label: 'Récompenses' },
   new_customer: { icon: Users, color: 'text-indigo-600', bg: 'bg-indigo-50', label: 'Clients' },
   contact: { icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Messages' },
+  voucher: { icon: Cake, color: 'text-pink-600', bg: 'bg-pink-50', label: 'Vouchers' },
 };
 
 export default function ActivitePage() {
   const supabase = getSupabase();
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<ActivityEvent[]>([]);
-  const [summary, setSummary] = useState<Summary>({ scans: 0, signups: 0, redemptions: 0, newCustomers: 0, contacts: 0 });
+  const [summary, setSummary] = useState<Summary>({ scans: 0, signups: 0, redemptions: 0, newCustomers: 0, contacts: 0, vouchers: 0 });
   const [activeFilter, setActiveFilter] = useState<EventType | 'all'>('all');
   const [dateView, setDateView] = useState<'today' | 'yesterday'>('today');
 
@@ -66,7 +69,7 @@ export default function ActivitePage() {
       if (res.ok) {
         const data = await res.json();
         setEvents(data.events || []);
-        setSummary(data.summary || { scans: 0, signups: 0, redemptions: 0, newCustomers: 0, contacts: 0 });
+        setSummary(data.summary || { scans: 0, signups: 0, redemptions: 0, newCustomers: 0, contacts: 0, vouchers: 0 });
       }
     } catch (error) {
       console.error('Error fetching activity:', error);
@@ -153,10 +156,11 @@ export default function ActivitePage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <SummaryCard label="Scans" value={summary.scans} icon={Eye} color="emerald" />
         <SummaryCard label="Inscriptions" value={summary.signups} icon={UserPlus} color="blue" />
         <SummaryCard label="Récompenses" value={summary.redemptions} icon={Gift} color="pink" />
+        <SummaryCard label="Vouchers" value={summary.vouchers} icon={Cake} color="rose" />
         <SummaryCard label="Nouveaux clients" value={summary.newCustomers} icon={Users} color="indigo" />
         <SummaryCard label="Messages" value={summary.contacts} icon={MessageCircle} color="amber" />
       </div>
@@ -181,6 +185,7 @@ export default function ActivitePage() {
             : type === 'signup' ? summary.signups
             : type === 'redemption' ? summary.redemptions
             : type === 'new_customer' ? summary.newCustomers
+            : type === 'voucher' ? summary.vouchers
             : summary.contacts;
           return (
             <button
@@ -250,12 +255,13 @@ function SummaryCard({
   label: string;
   value: number;
   icon: React.ElementType;
-  color: 'emerald' | 'blue' | 'pink' | 'indigo' | 'amber';
+  color: 'emerald' | 'blue' | 'pink' | 'indigo' | 'amber' | 'rose';
 }) {
   const colorMap = {
     emerald: 'bg-emerald-50 text-emerald-600',
     blue: 'bg-blue-50 text-blue-600',
     pink: 'bg-pink-50 text-pink-600',
+    rose: 'bg-rose-50 text-rose-600',
     indigo: 'bg-[#5167fc]/10 text-[#5167fc]',
     amber: 'bg-amber-50 text-amber-600',
   };

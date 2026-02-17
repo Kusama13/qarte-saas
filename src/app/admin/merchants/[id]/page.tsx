@@ -9,6 +9,7 @@ import {
   Phone,
   Calendar,
   Gift,
+  Cake,
   Users,
   Clock,
   TrendingUp,
@@ -66,6 +67,9 @@ interface Merchant {
   referral_program_enabled: boolean;
   referral_reward_referrer: string | null;
   referral_reward_referred: string | null;
+  // Birthday
+  birthday_gift_enabled: boolean;
+  birthday_gift_description: string | null;
   // Offer fields
   offer_active: boolean;
   offer_title: string | null;
@@ -338,14 +342,17 @@ export default function MerchantDetailPage() {
   const getAllWhatsAppMessages = (name: string, customers: number): { label: string; text: string }[] => [
     { label: 'Aide config', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu que vous n'aviez pas encore configuré votre programme, c'est normal ça prend 30 secondes ! Vous voulez que je vous aide ? 😊` },
     { label: 'Relance douce', text: `Hello ${name} ! Elodie de Qarte. Votre compte est prêt, il manque juste la récompense pour vos clients. Dites-moi ce que vous offrez après X passages et je configure tout pour vous !` },
+    { label: '1er scan', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre carte est prête, il ne reste plus qu'à tester ! Scannez votre propre QR code pour voir comment ça marche côté client. Ça prend 10 secondes 😊` },
     { label: 'Premier pas', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre carte est magnifique ! L'astuce : montrez le QR code à vos 3 prochains clients au moment de payer. C'est tout, ils adorent ! 😍` },
     { label: 'Challenge', text: `Hello ${name} ! Petit défi du jour : montrez votre QR Qarte à 5 clients aujourd'hui. Vous allez voir, la réaction est toujours la même : "ah trop bien !" 😄` },
+    { label: 'Affichage QR', text: `Coucou ${name} ! Elodie de Qarte. Petite astuce qui change tout : imprimez le QR code et collez-le près de la caisse ou sur le comptoir. Les clients le scannent d'eux-mêmes, sans que vous ayez à y penser ! 📱` },
     { label: 'Fin essai', text: `Coucou ${name} ! C'est Elodie. Votre essai Qarte se termine bientôt${customers > 0 ? ` et vos ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. Ça vous dit ? 😊` },
     { label: 'Accompagnement', text: `Hello ${name} ! Elodie de Qarte. Comment ça se passe de votre côté ? Si vous avez des questions avant la fin de l'essai, je suis là ! On peut s'appeler 2 min si vous voulez 📞` },
     { label: 'Relance expirée', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre essai est terminé mais rien n'est perdu ! ${customers > 0 ? `Vos ${customers} clients gardent leur carte. ` : ''}Le code QARTE50 vous offre le premier mois à 9€. On relance ensemble ? 😊` },
     { label: 'Question ouverte', text: `Hello ${name} ! Elodie de Qarte. Est-ce qu'il y a quelque chose qui vous a bloqué(e) pendant l'essai ? Vos retours m'aident beaucoup, et je peux sûrement vous aider 🙏` },
     { label: 'Prise de nouvelles', text: `Coucou ${name} ! C'est Elodie de Qarte. Ça fait quelques jours sans scan, tout va bien ? Si vos clients demandent leur carte, n'hésitez pas à ressortir le QR ! Je suis là si besoin 😊` },
     { label: 'Rétention', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu votre demande d'annulation, je comprends. Est-ce qu'il y a quelque chose qu'on peut améliorer ? Vos retours comptent beaucoup pour nous 🙏` },
+    { label: 'Bravo', text: `Coucou ${name} ! C'est Elodie de Qarte. Bravo, ${customers} clients utilisent déjà votre carte ! Vous savez que vous pouvez aussi envoyer des notifications push pour les faire revenir ? Je vous montre si vous voulez 🚀` },
     { label: 'Suivi', text: `Coucou ${name} ! C'est Elodie de Qarte. Comment ça se passe avec la carte de fidélité ? Vos clients sont contents ? N'hésitez pas si vous avez des idées d'amélioration ! 😊` },
     { label: 'Message libre', text: `Coucou ${name} ! C'est Elodie de Qarte. ` },
   ];
@@ -452,6 +459,15 @@ export default function MerchantDetailPage() {
             )}>
               <Share2 className="w-3 h-3" />
               Parrainage {merchant.referral_program_enabled ? 'actif' : 'inactif'}
+            </span>
+            <span className={cn(
+              "px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1",
+              merchant.birthday_gift_enabled
+                ? "text-pink-700 bg-pink-100"
+                : "text-gray-500 bg-gray-100"
+            )}>
+              <Cake className="w-3 h-3" />
+              Anniversaire {merchant.birthday_gift_enabled ? 'actif' : 'inactif'}
             </span>
             {stats.pendingPoints > 0 && (
               <span className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full flex items-center gap-1">
@@ -606,6 +622,22 @@ export default function MerchantDetailPage() {
             </div>
           )}
         </div>
+
+        {/* Cadeau anniversaire */}
+        {merchant.birthday_gift_enabled && (
+          <div className="mt-4 p-4 bg-pink-50 rounded-lg border border-pink-200">
+            <div className="flex items-center gap-2 mb-2">
+              <Cake className="w-5 h-5 text-pink-600" />
+              <span className="font-medium text-gray-900">Cadeau anniversaire</span>
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-pink-100 text-pink-700">
+                Actif
+              </span>
+            </div>
+            <p className="text-gray-700 text-sm">
+              {merchant.birthday_gift_description || 'Description non configurée'}
+            </p>
+          </div>
+        )}
 
         {/* Parrainage */}
         {merchant.referral_program_enabled && (merchant.referral_reward_referrer || merchant.referral_reward_referred) && (

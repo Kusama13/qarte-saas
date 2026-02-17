@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
       { data: redemptions },
       { data: newCards },
       { data: contacts },
+      { data: usedVouchers },
       { data: allMerchants },
       { data: superAdmins },
     ] = await Promise.all([
@@ -94,6 +95,15 @@ export async function GET(request: NextRequest) {
         if (periodEnd) q = q.lt('created_at', periodEnd);
         return q.order('created_at', { ascending: false });
       })(),
+      (() => {
+        let q = supabaseAdmin
+          .from('vouchers')
+          .select('id, merchant_id, source, reward_description, used_at')
+          .eq('is_used', true)
+          .gte('used_at', periodStart);
+        if (periodEnd) q = q.lt('used_at', periodEnd);
+        return q.order('used_at', { ascending: false });
+      })(),
       supabaseAdmin
         .from('merchants')
         .select('id, shop_name, user_id'),
@@ -116,7 +126,7 @@ export async function GET(request: NextRequest) {
 
     // Build events timeline
     interface ActivityEvent {
-      type: 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact';
+      type: 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher';
       timestamp: string;
       title: string;
       subtitle: string;
@@ -169,6 +179,16 @@ export async function GET(request: NextRequest) {
       });
     });
 
+    (usedVouchers || []).forEach((v: { used_at: string; merchant_id: string; source: string; reward_description: string | null }) => {
+      const sourceLabel = v.source === 'birthday' ? 'Anniversaire' : 'Parrainage';
+      events.push({
+        type: 'voucher',
+        timestamp: v.used_at,
+        title: `${sourceLabel} utilisé chez ${merchantNameMap.get(v.merchant_id) || 'Inconnu'}`,
+        subtitle: v.reward_description || sourceLabel,
+      });
+    });
+
     // Sort by timestamp descending
     events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
@@ -178,6 +198,7 @@ export async function GET(request: NextRequest) {
       redemptions: (redemptions || []).length,
       newCustomers: (newCards || []).length,
       contacts: (contacts || []).length,
+      vouchers: (usedVouchers || []).length,
     };
 
     return NextResponse.json({ events, summary });
