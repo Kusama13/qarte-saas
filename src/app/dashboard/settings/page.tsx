@@ -13,10 +13,11 @@ import {
   Gift,
   Copy,
   Share2,
+  Download,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, PHONE_CONFIG } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, formatDate, PHONE_CONFIG } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType, COUNTRIES } from '@/types';
 import type { Merchant } from '@/types';
 
@@ -33,6 +34,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [referralCopied, setReferralCopied] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const [formData, setFormData] = useState({
     shopName: '',
@@ -110,6 +112,48 @@ export default function SettingsPage() {
       console.error(err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const exportCSV = async () => {
+    if (!merchant) return;
+    setExporting(true);
+    try {
+      const { data: cards } = await supabase
+        .from('loyalty_cards')
+        .select('*, customer:customers (*)')
+        .eq('merchant_id', merchant.id)
+        .order('updated_at', { ascending: false });
+
+      if (!cards) return;
+
+      const headers = ['Prénom', 'Nom', 'Téléphone', 'Passages', 'Dernière visite', 'Date inscription'];
+      const rows = cards.map((card: Record<string, unknown>) => {
+        const customer = card.customer as Record<string, unknown> | null;
+        return [
+          (customer?.first_name as string) || '',
+          (customer?.last_name as string) || '',
+          (customer?.phone_number as string) || '',
+          String(card.current_stamps),
+          card.last_visit_date ? formatDate(card.last_visit_date as string) : '',
+          formatDate(card.created_at as string),
+        ];
+      });
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((row: string[]) => row.map((cell: string) => `"${cell}"`).join(',')),
+      ].join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `clients-${merchant.slug}-${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -331,6 +375,24 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
+        <h2 className="mb-2 text-base md:text-xl font-bold text-gray-900">
+          Vos données
+        </h2>
+        <p className="mb-4 text-sm text-gray-600 leading-relaxed">
+          Exportez la liste de vos clients au format CSV.
+        </p>
+        <Button
+          variant="outline"
+          onClick={exportCSV}
+          loading={exporting}
+          className="h-9 px-4 text-sm border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 text-gray-700 rounded-xl transition-all duration-200 shadow-sm"
+        >
+          <Download className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
+          Exporter les clients (CSV)
+        </Button>
       </div>
 
       <div className="mt-6 md:mt-8 p-5 md:p-8 bg-red-50/50 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-red-100/50 shadow-lg shadow-red-100/20">

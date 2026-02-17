@@ -1293,8 +1293,8 @@ export default function CustomerCardPage({
           </motion.button>
         )}
 
-        {/* Birthday Input */}
-        {merchant.birthday_gift_enabled && !isPreview && (
+        {/* Birthday Input — hidden once saved */}
+        {merchant.birthday_gift_enabled && !isPreview && !birthdaySaved && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

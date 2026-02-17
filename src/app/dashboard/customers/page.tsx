@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import {
   Users,
   Search,
-  Download,
   Phone,
   Calendar,
   Gift,
@@ -15,6 +15,7 @@ import {
   Plus,
   UserPlus,
   Trophy,
+  Cake,
 } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
@@ -34,7 +35,6 @@ export default function CustomersPage() {
   const [filteredCustomers, setFilteredCustomers] = useState<CustomerWithCard[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithCard | null>(null);
   const [subscriberIds, setSubscriberIds] = useState<string[]>([]);
@@ -205,37 +205,6 @@ export default function CustomersPage() {
     setFilteredCustomers(filtered);
   }, [searchQuery, customers, filterPushOnly, subscriberIds]);
 
-  const exportCSV = async () => {
-    setExporting(true);
-
-    try {
-      const headers = ['Prénom', 'Nom', 'Téléphone', 'Passages', 'Dernière visite', 'Date inscription'];
-      const rows = customers.map((card) => [
-        card.customer?.first_name || '',
-        card.customer?.last_name || '',
-        card.customer?.phone_number || '',
-        card.current_stamps.toString(),
-        card.last_visit_date ? formatDate(card.last_visit_date) : '',
-        formatDate(card.created_at),
-      ]);
-
-      const csvContent = [
-        headers.join(','),
-        ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-      ].join('\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `clients-${merchant?.slug}-${new Date().toISOString().split('T')[0]}.csv`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } finally {
-      setExporting(false);
-    }
-  };
-
   if (loading || merchantLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -258,24 +227,23 @@ export default function CustomersPage() {
             {customers.length > 1 ? 'Clients inscrits' : 'Client inscrit'} sur la plateforme
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2">
           <Button
             onClick={() => setCreateModalOpen(true)}
-            className="h-11 px-5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-xl transition-all duration-200 shadow-lg shadow-indigo-200"
+            className="h-9 px-3 text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all duration-200 shadow-md shadow-indigo-200"
           >
-            <UserPlus className="w-4 h-4 mr-2" />
-            Nouveau client
+            <UserPlus className="w-3.5 h-3.5 mr-1.5" />
+            Nouveau
           </Button>
-          <Button
-            variant="outline"
-            onClick={exportCSV}
-            loading={exporting}
-            disabled={customers.length === 0}
-            className="h-11 px-5 border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 text-gray-700 rounded-xl transition-all duration-200 shadow-sm"
-          >
-            <Download className="w-4 h-4 mr-2 text-indigo-600" />
-            Exporter CSV
-          </Button>
+          <Link href="/dashboard/marketing?tab=automations">
+            <Button
+              variant="outline"
+              className="h-9 px-3 text-sm border-pink-200 hover:border-pink-300 hover:bg-pink-50/50 text-pink-700 rounded-lg transition-all duration-200 shadow-sm"
+            >
+              <Cake className="w-3.5 h-3.5 mr-1.5 text-pink-500" />
+              Anniversaire
+            </Button>
+          </Link>
         </div>
       </div>
 
