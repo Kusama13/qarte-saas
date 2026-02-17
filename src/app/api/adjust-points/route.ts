@@ -106,12 +106,12 @@ export async function POST(request: NextRequest) {
     // This allows re-earning tier 1 reward after a manual point reset
     const { data: merchantData } = await supabase
       .from('merchants')
-      .select('stamps_required, tier2_enabled')
+      .select('stamps_required, tier2_enabled, tier2_stamps_required')
       .eq('id', merchant_id)
       .single();
 
-    if (merchantData && merchantData.tier2_enabled && newStamps < merchantData.stamps_required) {
-      // Find the last tier 2 redemption date
+    if (merchantData) {
+      // Find the last tier 2 redemption date (used for cycle tracking)
       const { data: lastTier2 } = await supabase
         .from('redemptions')
         .select('redeemed_at')
@@ -123,16 +123,66 @@ export async function POST(request: NextRequest) {
 
       const lastTier2Date = lastTier2?.redeemed_at || '1970-01-01';
 
-      // Delete tier 1 redemptions after the last tier 2 (current cycle)
-      const { error: deleteError } = await supabase
-        .from('redemptions')
-        .delete()
-        .eq('loyalty_card_id', loyalty_card_id)
-        .eq('tier', 1)
-        .gt('redeemed_at', lastTier2Date);
+      if (newStamps < merchantData.stamps_required) {
+        // Points reduced below tier 1: reset tier 1 redemptions in current cycle
+        if (merchantData.tier2_enabled) {
+          const { error: deleteError } = await supabase
+            .from('redemptions')
+            .delete()
+            .eq('loyalty_card_id', loyalty_card_id)
+            .eq('tier', 1)
+            .gt('redeemed_at', lastTier2Date);
 
-      if (deleteError) {
-        console.error('Error resetting tier 1 redemptions:', deleteError);
+          if (deleteError) {
+            console.error('Error resetting tier 1 redemptions:', deleteError);
+          }
+        }
+      } else if (newStamps >= merchantData.stamps_required && adjustment > 0) {
+        // Points adjusted above tier 1 threshold: mark tier 1 as already redeemed
+        // (for merchants migrating paper loyalty cards with stamps already past the threshold)
+        let tier1Query = supabase
+          .from('redemptions')
+          .select('id')
+          .eq('loyalty_card_id', loyalty_card_id)
+          .eq('tier', 1);
+
+        if (lastTier2Date !== '1970-01-01') {
+          tier1Query = tier1Query.gt('redeemed_at', lastTier2Date);
+        }
+
+        const { data: existingTier1 } = await tier1Query.limit(1).maybeSingle();
+
+        if (!existingTier1) {
+          await supabase.from('redemptions').insert({
+            loyalty_card_id,
+            merchant_id,
+            customer_id,
+            stamps_used: merchantData.stamps_required,
+            tier: 1,
+          });
+        }
+
+        // Same for tier 2 if applicable
+        if (merchantData.tier2_enabled && merchantData.tier2_stamps_required && newStamps >= merchantData.tier2_stamps_required) {
+          const { data: existingTier2 } = await supabase
+            .from('redemptions')
+            .select('id')
+            .eq('loyalty_card_id', loyalty_card_id)
+            .eq('tier', 2)
+            .gt('redeemed_at', lastTier2Date || '1970-01-01')
+            .limit(1)
+            .maybeSingle();
+
+          if (!existingTier2) {
+            await supabase.from('redemptions').insert({
+              loyalty_card_id,
+              merchant_id,
+              customer_id,
+              stamps_used: merchantData.tier2_stamps_required,
+              tier: 2,
+            });
+          }
+        }
       }
     }
 
