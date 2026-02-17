@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button, Input, Textarea } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
+import { compressLogo } from '@/lib/image-compression';
 import type { Merchant } from '@/types';
 
 // Images beauté / bien-être
@@ -34,6 +35,7 @@ export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [merchant, setMerchant] = useState<Merchant | null>(null);
 
   const [formData, setFormData] = useState({
@@ -83,12 +85,13 @@ export default function OnboardingPage() {
 
     setUploading(true);
     try {
+      const compressedFile = await compressLogo(file);
       const fileExt = file.name.split('.').pop();
       const fileName = `${merchant?.id}-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('logos')
-        .upload(fileName, file);
+        .upload(fileName, compressedFile);
 
       if (uploadError) throw uploadError;
 
@@ -108,6 +111,7 @@ export default function OnboardingPage() {
     if (!merchant) return;
 
     setLoading(true);
+    setSaveError('');
     try {
       const { error } = await supabase
         .from('merchants')
@@ -138,6 +142,7 @@ export default function OnboardingPage() {
       router.push('/dashboard/qr-download');
     } catch (error) {
       console.error('Error saving:', error);
+      setSaveError('Erreur lors de la sauvegarde. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }
@@ -403,6 +408,12 @@ export default function OnboardingPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {saveError && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 font-medium">
+                {saveError}
               </div>
             )}
 

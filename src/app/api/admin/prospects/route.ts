@@ -142,13 +142,38 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const { id, ...updates } = await request.json();
+    const body = await request.json();
+    const { id } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Prospect ID required' }, { status: 400 });
     }
 
-    updates.updated_at = new Date().toISOString();
+    // Whitelist allowed fields (H10)
+    const updateSchema = z.object({
+      business_name: z.string().min(1).optional(),
+      contact_name: z.string().optional().nullable(),
+      phone: z.string().optional().nullable(),
+      email: z.string().email().optional().nullable().or(z.literal('')),
+      address: z.string().optional().nullable(),
+      source: z.enum(['cold_call', 'referral', 'website', 'social', 'other']).optional(),
+      status: z.enum(['new', 'contacted', 'demo_scheduled', 'demo_done', 'trial', 'converted', 'lost']).optional(),
+      notes: z.string().optional().nullable(),
+      next_followup: z.string().optional().nullable(),
+    });
+
+    const validation = updateSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors[0].message },
+        { status: 400 }
+      );
+    }
+
+    const updates: Record<string, unknown> = {
+      ...validation.data,
+      updated_at: new Date().toISOString(),
+    };
 
     const { data, error } = await supabaseAdmin
       .from('prospects')

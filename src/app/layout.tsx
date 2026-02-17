@@ -75,8 +75,8 @@ export default function RootLayout({
             '@context': 'https://schema.org',
             '@type': 'Organization',
             name: 'Qarte',
-            url: 'https://getqarte.com',
-            logo: 'https://getqarte.com/icons/icon-512x512.png',
+            url: baseUrl,
+            logo: `${baseUrl}/icons/icon-512x512.png`,
             description: 'Programme de fidélité digital pour salons de beauté, coiffeurs, barbiers, ongleries et instituts.',
             contactPoint: {
               '@type': 'ContactPoint',
@@ -100,21 +100,15 @@ export default function RootLayout({
             name: 'Qarte',
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
-            url: 'https://getqarte.com',
+            url: baseUrl,
             description: 'Carte de fidélité digitale pour salons de beauté. QR code, notifications push, anti-fraude. Sans application à télécharger.',
             offers: {
               '@type': 'Offer',
               price: '19',
               priceCurrency: 'EUR',
               priceValidUntil: '2026-12-31',
-              url: 'https://getqarte.com/#pricing',
+              url: `${baseUrl}/#pricing`,
               availability: 'https://schema.org/InStock',
-            },
-            aggregateRating: {
-              '@type': 'AggregateRating',
-              ratingValue: '4.9',
-              ratingCount: '47',
-              bestRating: '5',
             },
           }) }}
         />

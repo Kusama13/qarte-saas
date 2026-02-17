@@ -10,24 +10,20 @@ import {
 
 // Mock supabase
 vi.mock('@/lib/supabase', async () => {
-  const { mockSupabaseAdmin } = await import('../mocks/supabase');
+  const { mockSupabaseAdmin, mockSupabaseWithAuth } = await import('../mocks/supabase');
   return {
     getSupabaseAdmin: () => mockSupabaseAdmin,
+    createRouteHandlerSupabaseClient: async () => mockSupabaseWithAuth,
     supabase: mockSupabaseAdmin,
   };
 });
 
 // Import after mocks
-import { GET, POST } from '@/app/api/customers/register/route';
+import { POST } from '@/app/api/customers/register/route';
 
 // Helper to create mock request
-function createMockRequest(body?: any, searchParams?: Record<string, string>): NextRequest {
+function createMockRequest(body?: any): NextRequest {
   const url = new URL('http://localhost:3000/api/customers/register');
-  if (searchParams) {
-    Object.entries(searchParams).forEach(([key, value]) => {
-      url.searchParams.set(key, value);
-    });
-  }
 
   return {
     json: async () => body || {},
@@ -44,14 +40,15 @@ describe('/api/customers/register', () => {
     vi.clearAllMocks();
   });
 
-  describe('GET - Search customer by phone (PUBLIC endpoint)', () => {
+  describe('POST action=lookup - Search customer by phone (PUBLIC endpoint)', () => {
     it('should return 404 for unknown merchant', async () => {
-      const request = createMockRequest(undefined, {
-        phone: '0612345678',
+      const request = createMockRequest({
+        action: 'lookup',
+        phone_number: '0612345678',
         merchant_id: generateUUID(),
       });
 
-      const response = await GET(request);
+      const response = await POST(request);
       expect(response.status).toBe(404);
     });
 
@@ -66,12 +63,13 @@ describe('/api/customers/register', () => {
       });
 
       // Search for customer at merchant A - should find
-      const requestA = createMockRequest(undefined, {
-        phone: '0612345678',
+      const requestA = createMockRequest({
+        action: 'lookup',
+        phone_number: '0612345678',
         merchant_id: merchantA.id,
       });
 
-      const responseA = await GET(requestA);
+      const responseA = await POST(requestA);
       const dataA = await responseA.json();
 
       expect(dataA.exists).toBe(true);
@@ -91,12 +89,13 @@ describe('/api/customers/register', () => {
       });
 
       // Search for customer at merchant B - should find globally but not for merchant
-      const request = createMockRequest(undefined, {
-        phone: '0612345678',
+      const request = createMockRequest({
+        action: 'lookup',
+        phone_number: '0612345678',
         merchant_id: merchantB.id,
       });
 
-      const response = await GET(request);
+      const response = await POST(request);
       const data = await response.json();
 
       expect(data.exists).toBe(true);
@@ -107,12 +106,13 @@ describe('/api/customers/register', () => {
     it('should return exists=false for unknown phone', async () => {
       const merchant = createTestMerchant();
 
-      const request = createMockRequest(undefined, {
-        phone: '0699999999',
+      const request = createMockRequest({
+        action: 'lookup',
+        phone_number: '0699999999',
         merchant_id: merchant.id,
       });
 
-      const response = await GET(request);
+      const response = await POST(request);
       const data = await response.json();
 
       expect(data.exists).toBe(false);

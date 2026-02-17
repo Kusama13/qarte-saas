@@ -1,15 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { getAuthenticatedPhone } from '@/lib/customer-auth';
 
 const supabaseAdmin = getSupabaseAdmin();
 
 // PUT: Customer sets their birthday (one-time only)
 export async function PUT(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { customer_id, phone_number, birth_month, birth_day } = body;
+    const phone_number = getAuthenticatedPhone(request);
+    if (!phone_number) {
+      return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    }
 
-    if (!customer_id || !phone_number || !birth_month || !birth_day) {
+    const body = await request.json();
+    const { customer_id, birth_month, birth_day } = body;
+
+    if (!customer_id || !birth_month || !birth_day) {
       return NextResponse.json({ error: 'Données manquantes' }, { status: 400 });
     }
 

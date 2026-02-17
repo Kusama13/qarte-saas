@@ -4,6 +4,7 @@ import { formatPhoneNumber, validatePhone, getTodayInParis, getTrialStatus } fro
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import type { VisitStatus, MerchantCountry } from '@/types';
+import { setPhoneCookie } from '@/lib/customer-auth';
 
 // Use singleton admin client for server-side operations
 const supabaseAdmin = getSupabaseAdmin();
@@ -39,9 +40,13 @@ function checkRateLimit(ip: string): boolean {
 }
 
 // Hash IP for GDPR compliance - use dedicated salt (not secret keys)
-const IP_HASH_SALT = process.env.IP_HASH_SALT || 'qarte-ip-hash-v1-default-salt';
+function getIPHashSalt(): string {
+  const salt = process.env.IP_HASH_SALT;
+  if (!salt) throw new Error('IP_HASH_SALT environment variable is required');
+  return salt;
+}
 function hashIP(ip: string): string {
-  return createHash('sha256').update(ip + IP_HASH_SALT).digest('hex');
+  return createHash('sha256').update(ip + getIPHashSalt()).digest('hex');
 }
 
 // Get today's start timestamp in Paris timezone
@@ -420,7 +425,9 @@ export async function POST(request: NextRequest) {
       points_earned: pointsEarned,
     };
 
-    return NextResponse.json(response);
+    const jsonResponse = NextResponse.json(response);
+    setPhoneCookie(jsonResponse, formattedPhone);
+    return jsonResponse;
   } catch (error) {
     console.error('Checkin error:', error);
     return NextResponse.json(

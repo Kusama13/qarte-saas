@@ -92,12 +92,7 @@ export default function QRDownloadPage() {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
+      // Clipboard API not available (e.g. non-HTTPS)
     }
     setCopiedCaption(index);
     setTimeout(() => setCopiedCaption(null), 2000);
@@ -554,22 +549,24 @@ export default function QRDownloadPage() {
         </div>
       )}
 
-      {/* Hidden high-res template for social kit export */}
-      <div className="fixed left-[-9999px] top-0">
-        <SocialMediaTemplate
-          ref={socialExportRef}
-          shopName={merchant.shop_name}
-          primaryColor={merchant.primary_color}
-          secondaryColor={merchant.secondary_color}
-          logoUrl={merchant.logo_url || undefined}
-          rewardDescription={merchant.reward_description || 'Récompense fidélité'}
-          stampsRequired={merchant.stamps_required}
-          scale={2.7}
-          tier2Enabled={merchant.tier2_enabled}
-          tier2StampsRequired={merchant.tier2_stamps_required}
-          tier2RewardDescription={merchant.tier2_reward_description}
-        />
-      </div>
+      {/* Hidden high-res template for social kit export — only rendered when needed */}
+      {activeTab === 'social' && (
+        <div className="fixed left-[-9999px] top-0">
+          <SocialMediaTemplate
+            ref={socialExportRef}
+            shopName={merchant.shop_name}
+            primaryColor={merchant.primary_color}
+            secondaryColor={merchant.secondary_color}
+            logoUrl={merchant.logo_url || undefined}
+            rewardDescription={merchant.reward_description || 'Récompense fidélité'}
+            stampsRequired={merchant.stamps_required}
+            scale={2.7}
+            tier2Enabled={merchant.tier2_enabled}
+            tier2StampsRequired={merchant.tier2_stamps_required}
+            tier2RewardDescription={merchant.tier2_reward_description}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -7,39 +7,18 @@ import {
   createTestCustomer,
   createTestLoyaltyCard,
   generateUUID,
+  setMockAuthUser,
 } from '../mocks/supabase';
 
-// Mock auth user
-let mockUser: any = null;
-
-// Mock supabase
+// Mock supabase — includes createRouteHandlerSupabaseClient with auth
 vi.mock('@/lib/supabase', async () => {
-  const { mockSupabaseAdmin } = await import('../mocks/supabase');
+  const { mockSupabaseAdmin, mockSupabaseWithAuth } = await import('../mocks/supabase');
   return {
     getSupabaseAdmin: () => mockSupabaseAdmin,
+    createRouteHandlerSupabaseClient: async () => mockSupabaseWithAuth,
     supabase: mockSupabaseAdmin,
   };
 });
-
-// Mock auth helpers
-vi.mock('@supabase/auth-helpers-nextjs', () => ({
-  createRouteHandlerClient: () => ({
-    auth: {
-      getUser: async () => ({
-        data: { user: mockUser },
-        error: mockUser ? null : { message: 'Not authenticated' },
-      }),
-    },
-    from: (table: string) => {
-      const { mockSupabaseAdmin } = require('../mocks/supabase');
-      return mockSupabaseAdmin.from(table);
-    },
-  }),
-}));
-
-vi.mock('next/headers', () => ({
-  cookies: () => ({}),
-}));
 
 // Import after mocks
 import { POST } from '@/app/api/redeem/route';
@@ -62,7 +41,7 @@ describe('/api/redeem', () => {
 
   describe('Authentication', () => {
     it('should require authentication', async () => {
-      mockUser = null;
+      setMockAuthUser(null);
 
       const request = createMockRequest({
         loyalty_card_id: generateUUID(),
@@ -82,7 +61,7 @@ describe('/api/redeem', () => {
         current_stamps: 10,
       });
 
-      mockUser = { id: 'different-user-id' }; // Wrong user
+      setMockAuthUser({ id: 'different-user-id' }); // Wrong user
 
       const request = createMockRequest({
         loyalty_card_id: card.id,
@@ -107,7 +86,7 @@ describe('/api/redeem', () => {
         current_stamps: 10,
       });
 
-      mockUser = { id: merchant.user_id };
+      setMockAuthUser({ id: merchant.user_id });
 
       const request = createMockRequest({
         loyalty_card_id: card.id,
@@ -139,7 +118,7 @@ describe('/api/redeem', () => {
         current_stamps: 5, // Not enough
       });
 
-      mockUser = { id: merchant.user_id };
+      setMockAuthUser({ id: merchant.user_id });
 
       const request = createMockRequest({
         loyalty_card_id: card.id,
@@ -155,7 +134,7 @@ describe('/api/redeem', () => {
 
     it('should return 404 for unknown card', async () => {
       const merchant = createTestMerchant();
-      mockUser = { id: merchant.user_id };
+      setMockAuthUser({ id: merchant.user_id });
 
       const request = createMockRequest({
         loyalty_card_id: generateUUID(),
@@ -180,7 +159,7 @@ describe('/api/redeem', () => {
         current_stamps: 20,
       });
 
-      mockUser = { id: merchant.user_id };
+      setMockAuthUser({ id: merchant.user_id });
 
       const request = createMockRequest({
         loyalty_card_id: card.id,
@@ -207,7 +186,7 @@ describe('/api/redeem', () => {
         current_stamps: 20,
       });
 
-      mockUser = { id: merchant.user_id };
+      setMockAuthUser({ id: merchant.user_id });
 
       const request = createMockRequest({
         loyalty_card_id: card.id,
@@ -238,7 +217,7 @@ describe('/api/redeem', () => {
         current_stamps: 15,
       });
 
-      mockUser = { id: merchant.user_id };
+      setMockAuthUser({ id: merchant.user_id });
 
       const request = createMockRequest({
         loyalty_card_id: card.id,
@@ -273,7 +252,7 @@ describe('/api/redeem', () => {
         redeemed_at: new Date().toISOString(),
       });
 
-      mockUser = { id: merchant.user_id };
+      setMockAuthUser({ id: merchant.user_id });
 
       const request = createMockRequest({
         loyalty_card_id: card.id,
@@ -301,7 +280,7 @@ describe('/api/redeem', () => {
       });
 
       // Try to redeem with merchant B's owner
-      mockUser = { id: merchantB.user_id };
+      setMockAuthUser({ id: merchantB.user_id });
 
       const request = createMockRequest({
         loyalty_card_id: cardA.id,

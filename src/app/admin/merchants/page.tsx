@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import {
   Search,
@@ -22,6 +22,10 @@ import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 import type { Merchant, MerchantCountry, ShopType } from '@/types';
 import { SHOP_TYPES } from '@/types';
+
+// --- Constants ---
+
+const ADMIN_CONTACT_NAME = 'Elodie';
 
 // --- Types ---
 
@@ -142,6 +146,85 @@ function formatPhoneForWhatsApp(phone: string) {
   return cleaned;
 }
 
+// --- Shared Sub-Components ---
+
+/** Badges shown next to merchant name (Admin, No-Contact, Pending points) */
+function MerchantBadges({ isAdmin, noContact, pending }: { isAdmin: boolean; noContact: boolean | null; pending: number }) {
+  return (
+    <>
+      {isAdmin && (
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
+          Admin
+        </span>
+      )}
+      {noContact && (
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700 rounded-full flex-shrink-0">
+          NC
+        </span>
+      )}
+      {pending > 0 && (
+        <span
+          className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0 flex items-center gap-0.5"
+          title={`${pending} point${pending > 1 ? 's' : ''} en attente`}
+        >
+          <Shield className="w-3 h-3" />
+          {pending}
+        </span>
+      )}
+    </>
+  );
+}
+
+/** WhatsApp button with message dropdown */
+function WhatsAppDropdown({
+  merchant,
+  lifecycle,
+  customers,
+  dropdownId,
+  waDropdown,
+  setWaDropdown,
+  getMessages,
+  onSend,
+}: {
+  merchant: Merchant;
+  lifecycle: LifecycleStage;
+  customers: number;
+  dropdownId: string;
+  waDropdown: string | null;
+  setWaDropdown: (id: string | null) => void;
+  getMessages: (name: string, lifecycle: LifecycleStage, customers: number) => { label: string; text: string }[];
+  onSend: (phone: string, message: string) => void;
+}) {
+  return (
+    <div className="relative">
+      <button
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWaDropdown(waDropdown === dropdownId ? null : dropdownId); }}
+        className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+        title="WhatsApp"
+      >
+        <MessageCircle className="w-4 h-4" />
+      </button>
+      {waDropdown === dropdownId && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setWaDropdown(null)} />
+          <div className="absolute right-0 top-full mt-1 z-50 w-72 bg-white rounded-xl border border-gray-200 shadow-xl p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
+            {getMessages(merchant.shop_name, lifecycle, customers).map((msg, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.stopPropagation(); onSend(merchant.phone, msg.text); }}
+                className="w-full text-left px-3 py-2 rounded-lg hover:bg-green-50 transition-colors group/wa"
+              >
+                <span className="text-xs font-semibold text-green-700">{msg.label}</span>
+                <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5 group-hover/wa:text-gray-700">{msg.text}</p>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // --- Component ---
 
 export default function AdminMerchantsPage() {
@@ -167,18 +250,25 @@ export default function AdminMerchantsPage() {
     }
   }, []);
 
+  // Debounce ref for realtime (H6 — was re-fetching on every single change)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     fetchData();
 
-    // Realtime refresh on loyalty_cards changes
+    // Realtime refresh on loyalty_cards changes — debounced 30s
     const channel = supabase
       .channel('loyalty_cards_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'loyalty_cards' }, () => {
-        fetchData();
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        debounceRef.current = setTimeout(() => fetchData(), 30_000);
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      supabase.removeChannel(channel);
+    };
   }, [supabase, fetchData]);
 
   const superAdminIds = useMemo(() => new Set(data?.superAdminIds || []), [data]);
@@ -262,38 +352,44 @@ export default function AdminMerchantsPage() {
   }, [data, searchQuery, statusFilter, countryFilter, shopTypeFilter, showAdmins, superAdminIds]);
 
   const [waDropdown, setWaDropdown] = useState<string | null>(null);
+  const [displayCount, setDisplayCount] = useState(50);
+
+  // Reset pagination when filters change
+  useEffect(() => { setDisplayCount(50); }, [searchQuery, statusFilter, countryFilter, shopTypeFilter, showAdmins]);
+
+  const displayedMerchants = useMemo(() => sortedMerchants.slice(0, displayCount), [sortedMerchants, displayCount]);
 
   function getWhatsAppMessages(name: string, lifecycle: LifecycleStage, customers: number): { label: string; text: string }[] {
     const msgs: { label: string; text: string }[] = [];
     const l = lifecycle.label.toLowerCase();
 
     if (l.includes('config programme')) {
-      msgs.push({ label: 'Aide config', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu que vous n'aviez pas encore configuré votre programme, c'est normal ça prend 30 secondes ! Vous voulez que je vous aide ? 😊` });
-      msgs.push({ label: 'Relance douce', text: `Hello ${name} ! Elodie de Qarte. Votre compte est prêt, il manque juste la récompense pour vos clients. Dites-moi ce que vous offrez après X passages et je configure tout pour vous !` });
+      msgs.push({ label: 'Aide config', text: `Coucou ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. J'ai vu que vous n'aviez pas encore configuré votre programme, c'est normal ça prend 30 secondes ! Vous voulez que je vous aide ? 😊` });
+      msgs.push({ label: 'Relance douce', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Votre compte est prêt, il manque juste la récompense pour vos clients. Dites-moi ce que vous offrez après X passages et je configure tout pour vous !` });
     } else if (l.includes('1er scan')) {
-      msgs.push({ label: '1er scan', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre carte est prête, il ne reste plus qu'à tester ! Scannez votre propre QR code pour voir comment ça marche côté client. Ça prend 10 secondes 😊` });
-      msgs.push({ label: 'Premier pas', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre carte est magnifique ! L'astuce : montrez le QR code à vos 3 prochains clients au moment de payer. C'est tout, ils adorent ! 😍` });
+      msgs.push({ label: '1er scan', text: `Coucou ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Votre carte est prête, il ne reste plus qu'à tester ! Scannez votre propre QR code pour voir comment ça marche côté client. Ça prend 10 secondes 😊` });
+      msgs.push({ label: 'Premier pas', text: `Coucou ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Votre carte est magnifique ! L'astuce : montrez le QR code à vos 3 prochains clients au moment de payer. C'est tout, ils adorent ! 😍` });
       msgs.push({ label: 'Challenge', text: `Hello ${name} ! Petit défi du jour : montrez votre QR Qarte à 5 clients aujourd'hui. Vous allez voir, la réaction est toujours la même : "ah trop bien !" 😄` });
     } else if (l.includes('essai j-')) {
-      msgs.push({ label: 'Fin essai', text: `Coucou ${name} ! C'est Elodie. Votre essai Qarte se termine bientôt${customers > 0 ? ` et vos ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. Ça vous dit ? 😊` });
-      msgs.push({ label: 'Accompagnement', text: `Hello ${name} ! Elodie de Qarte. Comment ça se passe de votre côté ? Si vous avez des questions avant la fin de l'essai, je suis là ! On peut s'appeler 2 min si vous voulez 📞` });
+      msgs.push({ label: 'Fin essai', text: `Coucou ${name} ! C'est ${ADMIN_CONTACT_NAME}. Votre essai Qarte se termine bientôt${customers > 0 ? ` et vos ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. Ça vous dit ? 😊` });
+      msgs.push({ label: 'Accompagnement', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Comment ça se passe de votre côté ? Si vous avez des questions avant la fin de l'essai, je suis là ! On peut s'appeler 2 min si vous voulez 📞` });
     } else if (l.includes('expiré')) {
-      msgs.push({ label: 'Relance expirée', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre essai est terminé mais rien n'est perdu ! ${customers > 0 ? `Vos ${customers} clients gardent leur carte.` : ''} Le code QARTE50 vous offre le premier mois à 9€. On relance ensemble ? 😊` });
-      msgs.push({ label: 'Question ouverte', text: `Hello ${name} ! Elodie de Qarte. Est-ce qu'il y a quelque chose qui vous a bloqué(e) pendant l'essai ? Vos retours m'aident beaucoup, et je peux sûrement vous aider 🙏` });
+      msgs.push({ label: 'Relance expirée', text: `Coucou ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Votre essai est terminé mais rien n'est perdu ! ${customers > 0 ? `Vos ${customers} clients gardent leur carte.` : ''} Le code QARTE50 vous offre le premier mois à 9€. On relance ensemble ? 😊` });
+      msgs.push({ label: 'Question ouverte', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Est-ce qu'il y a quelque chose qui vous a bloqué(e) pendant l'essai ? Vos retours m'aident beaucoup, et je peux sûrement vous aider 🙏` });
     } else if (l.includes('inactif')) {
-      msgs.push({ label: 'Prise de nouvelles', text: `Coucou ${name} ! C'est Elodie de Qarte. Ça fait quelques jours sans scan, tout va bien ? Si vos clients demandent leur carte, n'hésitez pas à ressortir le QR ! Je suis là si besoin 😊` });
+      msgs.push({ label: 'Prise de nouvelles', text: `Coucou ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Ça fait quelques jours sans scan, tout va bien ? Si vos clients demandent leur carte, n'hésitez pas à ressortir le QR ! Je suis là si besoin 😊` });
     } else if (l.includes('annulation')) {
-      msgs.push({ label: 'Rétention', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu votre demande d'annulation, je comprends. Est-ce qu'il y a quelque chose qu'on peut améliorer ? Vos retours comptent beaucoup pour nous 🙏` });
+      msgs.push({ label: 'Rétention', text: `Coucou ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. J'ai vu votre demande d'annulation, je comprends. Est-ce qu'il y a quelque chose qu'on peut améliorer ? Vos retours comptent beaucoup pour nous 🙏` });
     } else if (l === 'actif') {
-      msgs.push({ label: 'Suivi', text: `Coucou ${name} ! C'est Elodie de Qarte. Comment ça se passe avec la carte de fidélité ? Vos clients sont contents ? N'hésitez pas si vous avez des idées d'amélioration ! 😊` });
+      msgs.push({ label: 'Suivi', text: `Coucou ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Comment ça se passe avec la carte de fidélité ? Vos clients sont contents ? N'hésitez pas si vous avez des idées d'amélioration ! 😊` });
       if (customers >= 5) {
-        msgs.push({ label: 'Bravo', text: `Coucou ${name} ! C'est Elodie de Qarte. Bravo, ${customers} clients utilisent déjà votre carte ! Vous savez que vous pouvez aussi envoyer des notifications push pour les faire revenir ? Je vous montre si vous voulez 🚀` });
+        msgs.push({ label: 'Bravo', text: `Coucou ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Bravo, ${customers} clients utilisent déjà votre carte ! Vous savez que vous pouvez aussi envoyer des notifications push pour les faire revenir ? Je vous montre si vous voulez 🚀` });
       }
-      msgs.push({ label: 'Affichage QR', text: `Coucou ${name} ! Elodie de Qarte. Petite astuce qui change tout : imprimez le QR code et collez-le près de la caisse ou sur le comptoir. Les clients le scannent d'eux-mêmes, sans que vous ayez à y penser ! 📱` });
+      msgs.push({ label: 'Affichage QR', text: `Coucou ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Petite astuce qui change tout : imprimez le QR code et collez-le près de la caisse ou sur le comptoir. Les clients le scannent d'eux-mêmes, sans que vous ayez à y penser ! 📱` });
     }
 
     // Toujours un message libre en dernier
-    msgs.push({ label: 'Message libre', text: `Coucou ${name} ! C'est Elodie de Qarte. ` });
+    msgs.push({ label: 'Message libre', text: `Coucou ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. ` });
     return msgs;
   }
 
@@ -498,7 +594,7 @@ export default function AdminMerchantsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {sortedMerchants.map(({ merchant, lifecycle, isAdmin }) => {
+                {displayedMerchants.map(({ merchant, lifecycle, isAdmin }) => {
                   const lastVisit = data?.lastVisitDates[merchant.id] || null;
                   const activity = getActivityLabel(lastVisit);
                   const today = data?.todayScans[merchant.id] || 0;
@@ -515,22 +611,7 @@ export default function AdminMerchantsPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="font-medium text-gray-900 truncate max-w-[200px]">{merchant.shop_name}</p>
-                              {isAdmin && (
-                                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
-                                  Admin
-                                </span>
-                              )}
-                              {merchant.no_contact && (
-                                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700 rounded-full flex-shrink-0">
-                                  NC
-                                </span>
-                              )}
-                              {pending > 0 && (
-                                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0 flex items-center gap-0.5" title={`${pending} point${pending > 1 ? 's' : ''} en attente`}>
-                                  <Shield className="w-3 h-3" />
-                                  {pending}
-                                </span>
-                              )}
+                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} />
                             </div>
                             {merchant.shop_address && (
                               <p className="text-xs text-gray-400 truncate max-w-[250px]">{merchant.shop_address}</p>
@@ -570,32 +651,16 @@ export default function AdminMerchantsPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1.5 relative">
                           {merchant.phone && !isAdmin && !merchant.no_contact && (
-                            <div className="relative">
-                              <button
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWaDropdown(waDropdown === merchant.id ? null : merchant.id); }}
-                                className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                                title="WhatsApp"
-                              >
-                                <MessageCircle className="w-4 h-4" />
-                              </button>
-                              {waDropdown === merchant.id && (
-                                <>
-                                  <div className="fixed inset-0 z-40" onClick={() => setWaDropdown(null)} />
-                                  <div className="absolute right-0 top-full mt-1 z-50 w-72 bg-white rounded-xl border border-gray-200 shadow-xl p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
-                                    {getWhatsAppMessages(merchant.shop_name, lifecycle, customers).map((msg, i) => (
-                                      <button
-                                        key={i}
-                                        onClick={(e) => { e.stopPropagation(); openWhatsApp(merchant.phone, msg.text); }}
-                                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-green-50 transition-colors group/wa"
-                                      >
-                                        <span className="text-xs font-semibold text-green-700">{msg.label}</span>
-                                        <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5 group-hover/wa:text-gray-700">{msg.text}</p>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </>
-                              )}
-                            </div>
+                            <WhatsAppDropdown
+                              merchant={merchant}
+                              lifecycle={lifecycle}
+                              customers={customers}
+                              dropdownId={merchant.id}
+                              waDropdown={waDropdown}
+                              setWaDropdown={setWaDropdown}
+                              getMessages={getWhatsAppMessages}
+                              onSend={openWhatsApp}
+                            />
                           )}
                           <Link
                             href={`/admin/merchants/${merchant.id}`}
@@ -615,7 +680,7 @@ export default function AdminMerchantsPage() {
 
           {/* Mobile Cards */}
           <div className="lg:hidden space-y-2">
-            {sortedMerchants.map(({ merchant, lifecycle, isAdmin }) => {
+            {displayedMerchants.map(({ merchant, lifecycle, isAdmin }) => {
               const lastVisit = data?.lastVisitDates[merchant.id] || null;
               const activity = getActivityLabel(lastVisit);
               const today = data?.todayScans[merchant.id] || 0;
@@ -631,22 +696,7 @@ export default function AdminMerchantsPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-gray-900 truncate">{merchant.shop_name}</p>
-                          {isAdmin && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded-full flex-shrink-0">
-                              Admin
-                            </span>
-                          )}
-                          {merchant.no_contact && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-red-100 text-red-700 rounded-full flex-shrink-0">
-                              NC
-                            </span>
-                          )}
-                          {pending > 0 && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0 flex items-center gap-0.5">
-                              <Shield className="w-3 h-3" />
-                              {pending}
-                            </span>
-                          )}
+                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} />
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className={cn("px-2 py-0.5 text-[10px] font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>
@@ -658,31 +708,16 @@ export default function AdminMerchantsPage() {
                     </div>
                     <div className="flex items-center gap-1.5 flex-shrink-0">
                       {merchant.phone && !isAdmin && !merchant.no_contact && (
-                        <div className="relative">
-                          <button
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWaDropdown(waDropdown === `m-${merchant.id}` ? null : `m-${merchant.id}`); }}
-                            className="p-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                          </button>
-                          {waDropdown === `m-${merchant.id}` && (
-                            <>
-                              <div className="fixed inset-0 z-40" onClick={() => setWaDropdown(null)} />
-                              <div className="absolute right-0 top-full mt-1 z-50 w-72 bg-white rounded-xl border border-gray-200 shadow-xl p-2 space-y-1 animate-in fade-in slide-in-from-top-2 duration-150">
-                                {getWhatsAppMessages(merchant.shop_name, lifecycle, customers).map((msg, i) => (
-                                  <button
-                                    key={i}
-                                    onClick={(e) => { e.stopPropagation(); openWhatsApp(merchant.phone, msg.text); }}
-                                    className="w-full text-left px-3 py-2 rounded-lg hover:bg-green-50 transition-colors group/wa"
-                                  >
-                                    <span className="text-xs font-semibold text-green-700">{msg.label}</span>
-                                    <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5 group-hover/wa:text-gray-700">{msg.text}</p>
-                                  </button>
-                                ))}
-                              </div>
-                            </>
-                          )}
-                        </div>
+                        <WhatsAppDropdown
+                          merchant={merchant}
+                          lifecycle={lifecycle}
+                          customers={customers}
+                          dropdownId={`m-${merchant.id}`}
+                          waDropdown={waDropdown}
+                          setWaDropdown={setWaDropdown}
+                          getMessages={getWhatsAppMessages}
+                          onSend={openWhatsApp}
+                        />
                       )}
                       <Link
                         href={`/admin/merchants/${merchant.id}`}
@@ -706,6 +741,18 @@ export default function AdminMerchantsPage() {
               );
             })}
           </div>
+
+          {/* Load more button (H18) */}
+          {sortedMerchants.length > displayCount && (
+            <div className="flex justify-center mt-4">
+              <button
+                onClick={() => setDisplayCount(prev => prev + 50)}
+                className="px-6 py-2.5 text-sm font-semibold text-[#5167fc] bg-[#5167fc]/5 hover:bg-[#5167fc]/10 rounded-xl border border-[#5167fc]/10 transition-colors"
+              >
+                Charger plus ({sortedMerchants.length - displayCount} restant{sortedMerchants.length - displayCount > 1 ? 's' : ''})
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

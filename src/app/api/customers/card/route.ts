@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { generateReferralCode } from '@/lib/utils';
+import { getAuthenticatedPhone } from '@/lib/customer-auth';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -9,8 +10,8 @@ export const revalidate = 0;
 
 const supabaseAdmin = getSupabaseAdmin();
 
-// GET: Récupérer les détails d'une carte de fidélité d'un client (API consolidée)
-export async function GET(request: NextRequest) {
+// POST: Récupérer les détails d'une carte de fidélité d'un client (C5 fix: phone in body, not URL)
+export async function POST(request: NextRequest) {
   try {
     // Rate limit: 10 req/min par IP pour bloquer le bruteforce
     const ip = getClientIP(request);
@@ -19,13 +20,20 @@ export async function GET(request: NextRequest) {
       return rateLimitResponse(rateLimit.resetTime);
     }
 
-    const { searchParams } = new URL(request.url);
-    const phone = searchParams.get('phone');
-    const merchantId = searchParams.get('merchant_id');
-
-    if (!phone || !merchantId) {
+    const phone = getAuthenticatedPhone(request);
+    if (!phone) {
       return NextResponse.json(
-        { error: 'Numéro de téléphone et merchant_id requis' },
+        { error: 'Non authentifié' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const merchantId = body.merchant_id;
+
+    if (!merchantId) {
+      return NextResponse.json(
+        { error: 'merchant_id requis' },
         { status: 400 }
       );
     }

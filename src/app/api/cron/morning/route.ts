@@ -105,11 +105,16 @@ export async function GET(request: NextRequest) {
     birthdayVouchers: { processed: 0, created: 0, skipped: 0, errors: 0 },
   };
 
-  // Track merchants who already received a trial email this run (avoid double email with program reminders)
+  // Track section statuses for isolated error handling (C6 fix)
+  const sectionStatuses: Array<{ name: string; status: 'ok' | 'error'; error?: string }> = [];
+
+  // Shared state across sections
+  const now = new Date();
   const merchantsSentTrialEmail = new Set<string>();
 
+  // ==================== 1. TRIAL EMAILS ====================
+  // C7: Idempotent — tracked via pending_email_tracking with codes -201/-203 (ending) and -211/-212 (expired)
   try {
-    // ==================== 1. TRIAL EMAILS ====================
     const { data: merchants } = await supabase
       .from('merchants')
       .select('id, shop_name, user_id, trial_ends_at, subscription_status')
@@ -121,6 +126,16 @@ export async function GET(request: NextRequest) {
       const userIds = [...new Set(merchants.map(m => m.user_id))];
       const emailMap = await batchGetUserEmails(userIds);
 
+      // C7: Batch fetch existing trial email tracking
+      const { data: existingTrialTracking } = await supabase
+        .from('pending_email_tracking')
+        .select('merchant_id, reminder_day')
+        .in('merchant_id', merchants.map(m => m.id))
+        .in('reminder_day', [-201, -203, -211, -212]);
+      const trialTrackingSet = new Set(
+        (existingTrialTracking || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
+      );
+
       await batchProcess(merchants, async (merchant) => {
         results.trialEmails.processed++;
         const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
@@ -130,17 +145,21 @@ export async function GET(request: NextRequest) {
 
         try {
           if (trialStatus.isActive && (trialStatus.daysRemaining === 3 || trialStatus.daysRemaining === 1)) {
-            // Pas de code promo à J-1 : on laisse convertir au prix normal
+            const trackCode = trialStatus.daysRemaining === 3 ? -203 : -201;
+            if (trialTrackingSet.has(`${merchant.id}:${trackCode}`)) return;
             await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining);
+            await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
             results.trialEmails.ending++;
             merchantsSentTrialEmail.add(merchant.id);
           }
           if (trialStatus.isInGracePeriod) {
             const daysExpired = Math.abs(trialStatus.daysRemaining);
             if (daysExpired === 1 || daysExpired === 2) {
-              // Code promo QARTE50 uniquement à J+1 (1er email après expiration)
+              const trackCode = daysExpired === 1 ? -211 : -212;
+              if (trialTrackingSet.has(`${merchant.id}:${trackCode}`)) return;
               const promoCode = daysExpired === 1 ? 'QARTE50' : undefined;
               await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, promoCode);
+              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
               results.trialEmails.expired++;
               merchantsSentTrialEmail.add(merchant.id);
             }
@@ -150,9 +169,13 @@ export async function GET(request: NextRequest) {
         }
       });
     }
+  } catch (error) {
+    sectionStatuses.push({ name: 'trialEmails', status: 'error', error: String(error) });
+  }
 
-    // ==================== 2. PROGRAM REMINDER (J+1) ====================
-    const now = new Date();
+  // ==================== SECTION 2: PROGRAM REMINDERS (J+1/J+2/J+3) ====================
+  // C7: Idempotent — tracked via pending_email_tracking with codes -301/-302/-303
+  try {
     const twentyFiveHoursAgo = new Date(now.getTime() - 25 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -167,26 +190,22 @@ export async function GET(request: NextRequest) {
 
     if (unconfiguredMerchants && unconfiguredMerchants.length > 0) {
       const emailMap = await batchGetUserEmails([...new Set(unconfiguredMerchants.map(m => m.user_id))]);
+      const { data: existingJ1 } = await supabase.from('pending_email_tracking').select('merchant_id').in('merchant_id', unconfiguredMerchants.map(m => m.id)).eq('reminder_day', -301);
+      const alreadySentJ1 = new Set((existingJ1 || []).map(t => t.merchant_id));
 
       await batchProcess(unconfiguredMerchants, async (merchant) => {
         results.programReminders.processed++;
+        if (alreadySentJ1.has(merchant.id)) { results.programReminders.skipped++; return; }
         const email = emailMap.get(merchant.user_id);
-
-        if (!email) {
-          results.programReminders.skipped++;
-          return;
-        }
+        if (!email) { results.programReminders.skipped++; return; }
 
         try {
           const result = await sendProgramReminderEmail(email, merchant.shop_name);
           if (result.success) {
+            await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -301, pending_count: 0 });
             results.programReminders.sent++;
-          } else {
-            results.programReminders.errors++;
-          }
-        } catch {
-          results.programReminders.errors++;
-        }
+          } else { results.programReminders.errors++; }
+        } catch { results.programReminders.errors++; }
       });
     }
 
@@ -205,26 +224,22 @@ export async function GET(request: NextRequest) {
 
     if (unconfiguredDay2 && unconfiguredDay2.length > 0) {
       const emailMap = await batchGetUserEmails([...new Set(unconfiguredDay2.map(m => m.user_id))]);
+      const { data: existingJ2 } = await supabase.from('pending_email_tracking').select('merchant_id').in('merchant_id', unconfiguredDay2.map(m => m.id)).eq('reminder_day', -302);
+      const alreadySentJ2 = new Set((existingJ2 || []).map(t => t.merchant_id));
 
       await batchProcess(unconfiguredDay2, async (merchant) => {
         results.programRemindersDay2.processed++;
+        if (alreadySentJ2.has(merchant.id)) { results.programRemindersDay2.skipped++; return; }
         const email = emailMap.get(merchant.user_id);
-
-        if (!email) {
-          results.programRemindersDay2.skipped++;
-          return;
-        }
+        if (!email) { results.programRemindersDay2.skipped++; return; }
 
         try {
           const result = await sendProgramReminderDay2Email(email, merchant.shop_name, merchant.shop_type || '');
           if (result.success) {
+            await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -302, pending_count: 0 });
             results.programRemindersDay2.sent++;
-          } else {
-            results.programRemindersDay2.errors++;
-          }
-        } catch {
-          results.programRemindersDay2.errors++;
-        }
+          } else { results.programRemindersDay2.errors++; }
+        } catch { results.programRemindersDay2.errors++; }
       });
     }
 
@@ -243,39 +258,39 @@ export async function GET(request: NextRequest) {
 
     if (unconfiguredDay3 && unconfiguredDay3.length > 0) {
       const emailMap = await batchGetUserEmails([...new Set(unconfiguredDay3.map(m => m.user_id))]);
+      const { data: existingJ3 } = await supabase.from('pending_email_tracking').select('merchant_id').in('merchant_id', unconfiguredDay3.map(m => m.id)).eq('reminder_day', -303);
+      const alreadySentJ3 = new Set((existingJ3 || []).map(t => t.merchant_id));
 
       await batchProcess(unconfiguredDay3, async (merchant) => {
         results.programRemindersDay3.processed++;
 
-        // Skip if merchant already received a trial email this run (avoid double email)
-        if (merchantsSentTrialEmail.has(merchant.id)) {
+        if (merchantsSentTrialEmail.has(merchant.id) || alreadySentJ3.has(merchant.id)) {
           results.programRemindersDay3.skipped++;
           return;
         }
 
         const email = emailMap.get(merchant.user_id);
-
-        if (!email) {
-          results.programRemindersDay3.skipped++;
-          return;
-        }
+        if (!email) { results.programRemindersDay3.skipped++; return; }
 
         try {
           const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
           const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
           const result = await sendProgramReminderDay3Email(email, merchant.shop_name, daysRemaining);
           if (result.success) {
+            await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -303, pending_count: 0 });
             results.programRemindersDay3.sent++;
-          } else {
-            results.programRemindersDay3.errors++;
-          }
-        } catch {
-          results.programRemindersDay3.errors++;
-        }
+          } else { results.programRemindersDay3.errors++; }
+        } catch { results.programRemindersDay3.errors++; }
       });
     }
+  } catch (error) {
+    sectionStatuses.push({ name: 'programReminders', status: 'error', error: String(error) });
+  }
 
+  // ==================== SECTION 3: ONBOARDING EMAILS ====================
+  try {
     // ==================== 2d. DAY 5 CHECKIN (programme configuré, J+5) ====================
+    // C7: Idempotent — tracked via pending_email_tracking with code -305
     const oneTwentyOneHoursAgo = new Date(now.getTime() - 121 * 60 * 60 * 1000);
     const oneTwentyHoursAgo = new Date(now.getTime() - 120 * 60 * 60 * 1000);
 
@@ -292,6 +307,10 @@ export async function GET(request: NextRequest) {
     if (day5Merchants && day5Merchants.length > 0) {
       const emailMap = await batchGetUserEmails([...new Set(day5Merchants.map(m => m.user_id))]);
 
+      // C7: Check tracking
+      const { data: existingDay5 } = await supabase.from('pending_email_tracking').select('merchant_id').in('merchant_id', day5Merchants.map(m => m.id)).eq('reminder_day', -305);
+      const alreadySentDay5 = new Set((existingDay5 || []).map(t => t.merchant_id));
+
       // Get scan counts for these merchants
       const day5Ids = day5Merchants.map(m => m.id);
       const { data: day5Visits } = await supabase
@@ -307,15 +326,18 @@ export async function GET(request: NextRequest) {
 
       await batchProcess(day5Merchants, async (merchant) => {
         results.day5Checkin.processed++;
+        if (alreadySentDay5.has(merchant.id)) { results.day5Checkin.skipped++; return; }
         const email = emailMap.get(merchant.user_id);
         if (!email) { results.day5Checkin.skipped++; return; }
 
         try {
           const totalScans = scanCountMap.get(merchant.id) || 0;
-          // Skip for 0-scan merchants — covered by FirstClientScript (J+2) and QuickCheck (J+4)
           if (totalScans === 0) { results.day5Checkin.skipped++; return; }
           const result = await sendDay5CheckinEmail(email, merchant.shop_name, totalScans);
-          if (result.success) { results.day5Checkin.sent++; }
+          if (result.success) {
+            await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -305, pending_count: 0 });
+            results.day5Checkin.sent++;
+          }
           else { results.day5Checkin.errors++; }
         } catch { results.day5Checkin.errors++; }
       });
@@ -597,7 +619,12 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+  } catch (error) {
+    sectionStatuses.push({ name: 'onboardingEmails', status: 'error', error: String(error) });
+  }
 
+  // ==================== SECTION 4: MILESTONE EMAILS ====================
+  try {
     // ==================== 2i. FIRST SCAN EMAIL ====================
     // Merchants with exactly 2 confirmed visits (1st is always merchant's test, 2nd is first real client)
     const { data: allConfiguredMerchants } = await supabase
@@ -793,8 +820,13 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+  } catch (error) {
+    sectionStatuses.push({ name: 'milestoneEmails', status: 'error', error: String(error) });
+  }
 
-    // ==================== 2h. WEEKLY DIGEST (lundi matin) ====================
+  // ==================== SECTION 5: WEEKLY DIGEST ====================
+  // C7: Idempotent — tracked via pending_email_tracking with code -400
+  try {
     const dayOfWeek = now.getUTCDay(); // 0 = dimanche, 1 = lundi
     if (dayOfWeek === 1) {
       const { data: digestMerchants } = await supabase
@@ -808,6 +840,16 @@ export async function GET(request: NextRequest) {
       if (digestMerchants && digestMerchants.length > 0) {
         const digestIds = digestMerchants.map(m => m.id);
         const sevenDaysAgoDigest = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        // C7: Check if digest already sent within 6 days (prevents duplicate on same Monday)
+        const sixDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+        const { data: existingDigest } = await supabase
+          .from('pending_email_tracking')
+          .select('merchant_id')
+          .in('merchant_id', digestIds)
+          .eq('reminder_day', -400)
+          .gte('sent_at', sixDaysAgo.toISOString());
+        const alreadySentDigest = new Set((existingDigest || []).map(t => t.merchant_id));
 
         // Get this week's visits
         const { data: weekVisits } = await supabase
@@ -862,6 +904,7 @@ export async function GET(request: NextRequest) {
 
         await batchProcess(digestMerchants, async (merchant) => {
           results.weeklyDigest.processed++;
+          if (alreadySentDigest.has(merchant.id)) { results.weeklyDigest.skipped++; return; }
           const email = digestEmailMap.get(merchant.user_id);
           if (!email) { results.weeklyDigest.skipped++; return; }
 
@@ -873,14 +916,21 @@ export async function GET(request: NextRequest) {
               email, merchant.shop_name,
               stats.scans, stats.newCustomers, stats.rewards, stats.totalCustomers
             );
-            if (result.success) { results.weeklyDigest.sent++; }
+            if (result.success) {
+              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -400, pending_count: 0 });
+              results.weeklyDigest.sent++;
+            }
             else { results.weeklyDigest.errors++; }
           } catch { results.weeklyDigest.errors++; }
         });
       }
     }
+  } catch (error) {
+    sectionStatuses.push({ name: 'weeklyDigest', status: 'error', error: String(error) });
+  }
 
-    // ==================== 3. INACTIVE MERCHANTS (programme configuré, 0 check-in) ====================
+  // ==================== SECTION 6: INACTIVE MERCHANTS ====================
+  try {
     const INACTIVE_DAYS = [7, 14, 30];
 
     const { data: activeMerchants } = await supabase
@@ -997,8 +1047,12 @@ export async function GET(request: NextRequest) {
         });
       }
     }
+  } catch (error) {
+    sectionStatuses.push({ name: 'inactiveMerchants', status: 'error', error: String(error) });
+  }
 
-    // ==================== 3. REACTIVATION (merchants annulés) ====================
+  // ==================== SECTION 7: REACTIVATION ====================
+  try {
     const REACTIVATION_DAYS = [7, 14, 30];
 
     const { data: canceledMerchants } = await supabase
@@ -1090,11 +1144,24 @@ export async function GET(request: NextRequest) {
         });
       }
     }
+  } catch (error) {
+    sectionStatuses.push({ name: 'reactivation', status: 'error', error: String(error) });
+  }
 
+  // ==================== SECTION 8: LIFECYCLE EMAILS ====================
+  try {
     // ==================== 3b. INCOMPLETE SIGNUP RELANCE (T+24h, T+72h, T+7j) ====================
     {
-      // List all auth users without merchants
-      const { data: { users: allAuthUsers } } = await supabase.auth.admin.listUsers({ perPage: 500 });
+      // List all auth users without merchants (paginated to handle >500 users)
+      let allAuthUsers: any[] = [];
+      let page = 1;
+      let hasMore = true;
+      while (hasMore) {
+        const { data: { users: batch } } = await supabase.auth.admin.listUsers({ page, perPage: 500 });
+        allAuthUsers = allAuthUsers.concat(batch || []);
+        hasMore = (batch?.length || 0) === 500;
+        page++;
+      }
       const { data: allMerchantUserIds } = await supabase.from('merchants').select('user_id');
       const merchantUserIdSet = new Set((allMerchantUserIds || []).map((m: { user_id: string }) => m.user_id));
       const { data: superAdminList } = await supabase.from('super_admins').select('user_id');
@@ -1167,6 +1234,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ==================== 3c. AUTO-SUGGEST REWARD (J+5 merchant, programme non configuré) ====================
+    // C7: Idempotent — tracked via pending_email_tracking with code -120
     {
       const oneHundredTwentyOneHoursAgo = new Date(now.getTime() - 121 * 60 * 60 * 1000);
       const oneHundredTwentyHoursAgo = new Date(now.getTime() - 120 * 60 * 60 * 1000);
@@ -1182,11 +1250,13 @@ export async function GET(request: NextRequest) {
 
       if (autoSuggestCandidates && autoSuggestCandidates.length > 0) {
         const asEmailMap = await batchGetUserEmails([...new Set(autoSuggestCandidates.map(m => m.user_id))]);
+        const { data: existingAs } = await supabase.from('pending_email_tracking').select('merchant_id').in('merchant_id', autoSuggestCandidates.map(m => m.id)).eq('reminder_day', -120);
+        const alreadySentAs = new Set((existingAs || []).map(t => t.merchant_id));
 
         await batchProcess(autoSuggestCandidates, async (merchant) => {
           results.autoSuggestReward.processed++;
 
-          if (merchantsSentTrialEmail.has(merchant.id)) {
+          if (merchantsSentTrialEmail.has(merchant.id) || alreadySentAs.has(merchant.id)) {
             results.autoSuggestReward.skipped++;
             return;
           }
@@ -1198,7 +1268,10 @@ export async function GET(request: NextRequest) {
             const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
             const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
             const result = await sendAutoSuggestRewardEmail(email, merchant.shop_name, merchant.shop_type || '', daysRemaining);
-            if (result.success) { results.autoSuggestReward.sent++; }
+            if (result.success) {
+              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -120, pending_count: 0 });
+              results.autoSuggestReward.sent++;
+            }
             else { results.autoSuggestReward.errors++; }
           } catch { results.autoSuggestReward.errors++; }
         });
@@ -1255,8 +1328,12 @@ export async function GET(request: NextRequest) {
         });
       }
     }
+  } catch (error) {
+    sectionStatuses.push({ name: 'lifecycleEmails', status: 'error', error: String(error) });
+  }
 
-    // ==================== 4. PENDING REMINDERS ====================
+  // ==================== SECTION 9: PENDING REMINDERS ====================
+  try {
     const { data: merchantsWithPending } = await supabase
       .from('visits')
       .select('merchant_id')
@@ -1370,12 +1447,21 @@ export async function GET(request: NextRequest) {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     await supabase.from('pending_email_tracking').delete().lt('sent_at', sevenDaysAgo.toISOString()).gte('reminder_day', 0);
 
+    // C7: Clean up recurring email tracking (trial, weekly digest) older than 8 days so they can be re-sent
+    const eightDaysAgo = new Date();
+    eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
+    await supabase.from('pending_email_tracking').delete().lt('sent_at', eightDaysAgo.toISOString()).in('reminder_day', [-201, -203, -211, -212, -400]);
+
     // Clean up old reactivation tracking (> 60 jours)
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
     await supabase.from('reactivation_email_tracking').delete().lt('sent_at', sixtyDaysAgo.toISOString());
+  } catch (error) {
+    sectionStatuses.push({ name: 'pendingReminders', status: 'error', error: String(error) });
+  }
 
-    // ==================== 4. SCHEDULED PUSH 10:00 ====================
+  // ==================== SECTION 10: SCHEDULED PUSH ====================
+  try {
     const today = new Date().toISOString().split('T')[0];
 
     const { data: scheduledPushes } = await supabase
@@ -1478,10 +1564,13 @@ export async function GET(request: NextRequest) {
         await supabase.from('scheduled_push').update({ status: 'failed' }).eq('id', push.id);
       }
     }
+  } catch (error) {
+    sectionStatuses.push({ name: 'scheduledPush', status: 'error', error: String(error) });
+  }
 
-    // ==================== BIRTHDAY VOUCHERS (J-3) ====================
+  // ==================== SECTION 11: BIRTHDAY VOUCHERS ====================
+  try {
     {
-      const now = new Date();
       const targetDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
       const targetMonth = targetDate.getMonth() + 1;
       const targetDay = targetDate.getDate();
@@ -1621,10 +1710,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    logger.info('Morning cron completed', results);
-    return NextResponse.json({ success: true, ...results });
   } catch (error) {
-    logger.error('Morning cron error', error);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    sectionStatuses.push({ name: 'birthdayVouchers', status: 'error', error: String(error) });
   }
+
+  // ==================== RESPONSE ====================
+  const failedSections = sectionStatuses.filter(s => s.status === 'error');
+  if (failedSections.length > 0) {
+    logger.error('Morning cron — sections failed', failedSections);
+  }
+  logger.info('Morning cron completed', { ...results, sectionStatuses });
+  return NextResponse.json({ success: true, ...results, sectionStatuses });
 }

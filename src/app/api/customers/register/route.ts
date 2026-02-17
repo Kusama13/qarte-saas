@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { setPhoneCookie } from '@/lib/customer-auth';
 
 const supabaseAdmin = getSupabaseAdmin();
+
+const lookupSchema = z.object({
+  action: z.literal('lookup'),
+  phone_number: z.string().min(10),
+  merchant_id: z.string().uuid(),
+});
 
 const registerSchema = z.object({
   phone_number: z.string().min(10),
@@ -12,77 +19,17 @@ const registerSchema = z.object({
   merchant_id: z.string().uuid(),
 });
 
-// GET: Rechercher un client par téléphone
-export async function GET(request: NextRequest) {
+// POST: Lookup or create a customer (phone in body, not URL — GDPR C5 fix)
+export async function POST(request: NextRequest) {
   try {
     const ip = getClientIP(request);
-    const rateLimit = checkRateLimit(`register-get:${ip}`, { maxRequests: 15, windowMs: 60 * 1000 });
-    if (!rateLimit.success) {
-      return rateLimitResponse(rateLimit.resetTime);
+    const body = await request.json();
+
+    // Dispatch: lookup vs register
+    if (body.action === 'lookup') {
+      return handleLookup(body, ip);
     }
-
-    const { searchParams } = new URL(request.url);
-    const phone = searchParams.get('phone');
-    const merchantId = searchParams.get('merchant_id');
-
-    if (!phone || !merchantId) {
-      return NextResponse.json(
-        { error: 'Numéro de téléphone et merchant_id requis' },
-        { status: 400 }
-      );
-    }
-
-    // NOTE: This is a PUBLIC endpoint used by customers scanning QR codes
-    // No auth required - customers are not logged in when scanning
-
-    // Verify merchant exists
-    const { data: merchant } = await supabaseAdmin
-      .from('merchants')
-      .select('id')
-      .eq('id', merchantId)
-      .maybeSingle();
-
-    if (!merchant) {
-      return NextResponse.json(
-        { error: 'Commerce introuvable' },
-        { status: 404 }
-      );
-    }
-
-    // 1. Vérifier si le client existe déjà pour CE commerçant
-    const { data: customersForMerchant } = await supabaseAdmin
-      .from('customers')
-      .select('*')
-      .eq('phone_number', phone)
-      .eq('merchant_id', merchantId)
-      .limit(1);
-
-    if (customersForMerchant && customersForMerchant.length > 0) {
-      return NextResponse.json({
-        customer: customersForMerchant[0],
-        exists: true,
-        existsForMerchant: true
-      });
-    }
-
-    // 2. Vérifier si le client existe chez UN AUTRE commerçant (client Qarte existant)
-    // Only return first_name for auto-fill, NOT full customer record (PII scoping)
-    const { data: customersGlobal } = await supabaseAdmin
-      .from('customers')
-      .select('first_name, last_name')
-      .eq('phone_number', phone)
-      .limit(1);
-
-    if (customersGlobal && customersGlobal.length > 0) {
-      return NextResponse.json({
-        customer: { first_name: customersGlobal[0].first_name, last_name: customersGlobal[0].last_name },
-        exists: true,
-        existsForMerchant: false,
-        existsGlobally: true
-      });
-    }
-
-    return NextResponse.json({ customer: null, exists: false });
+    return handleRegister(body, ip);
   } catch {
     return NextResponse.json(
       { error: 'Erreur serveur' },
@@ -91,81 +38,121 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST: Créer ou récupérer un client
-export async function POST(request: NextRequest) {
-  try {
-    const ip = getClientIP(request);
-    const rateLimit = checkRateLimit(`register-post:${ip}`, { maxRequests: 10, windowMs: 60 * 1000 });
-    if (!rateLimit.success) {
-      return rateLimitResponse(rateLimit.resetTime);
-    }
+async function handleLookup(body: unknown, ip: string) {
+  const rateLimit = checkRateLimit(`register-lookup:${ip}`, { maxRequests: 15, windowMs: 60 * 1000 });
+  if (!rateLimit.success) return rateLimitResponse(rateLimit.resetTime);
 
-    const body = await request.json();
+  const parsed = lookupSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
+  }
 
-    const parsed = registerSchema.safeParse(body);
+  const { phone_number, merchant_id } = parsed.data;
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Données invalides' },
-        { status: 400 }
-      );
-    }
+  // Verify merchant exists
+  const { data: merchant } = await supabaseAdmin
+    .from('merchants')
+    .select('id')
+    .eq('id', merchant_id)
+    .maybeSingle();
 
-    const { phone_number, first_name, last_name, merchant_id } = parsed.data;
+  if (!merchant) {
+    return NextResponse.json({ error: 'Commerce introuvable' }, { status: 404 });
+  }
 
-    // NOTE: This is a PUBLIC endpoint used by customers scanning QR codes
-    // No auth required - customers are not logged in when scanning
+  // 1. Check if customer exists for THIS merchant
+  const { data: customersForMerchant } = await supabaseAdmin
+    .from('customers')
+    .select('*')
+    .eq('phone_number', phone_number)
+    .eq('merchant_id', merchant_id)
+    .limit(1);
 
-    // Verify merchant exists
-    const { data: merchant } = await supabaseAdmin
-      .from('merchants')
-      .select('id')
-      .eq('id', merchant_id)
-      .maybeSingle();
+  if (customersForMerchant && customersForMerchant.length > 0) {
+    const response = NextResponse.json({
+      customer: customersForMerchant[0],
+      exists: true,
+      existsForMerchant: true,
+    });
+    setPhoneCookie(response, phone_number);
+    return response;
+  }
 
-    if (!merchant) {
-      return NextResponse.json(
-        { error: 'Commerce introuvable' },
-        { status: 404 }
-      );
-    }
+  // 2. Check if customer exists at ANOTHER merchant (C4 fix: only return first_name, no last_name)
+  const { data: customersGlobal } = await supabaseAdmin
+    .from('customers')
+    .select('first_name')
+    .eq('phone_number', phone_number)
+    .limit(1);
 
-    // Vérifier si le client existe déjà pour ce marchand
-    const { data: existingList } = await supabaseAdmin
-      .from('customers')
-      .select('*')
-      .eq('phone_number', phone_number)
-      .eq('merchant_id', merchant_id)
-      .limit(1);
+  if (customersGlobal && customersGlobal.length > 0) {
+    return NextResponse.json({
+      customer: { first_name: customersGlobal[0].first_name },
+      exists: true,
+      existsForMerchant: false,
+      existsGlobally: true,
+    });
+  }
 
-    if (existingList && existingList.length > 0) {
-      return NextResponse.json({ customer: existingList[0] });
-    }
+  return NextResponse.json({ customer: null, exists: false });
+}
 
-    // Créer le nouveau client
-    const { data: newCustomer, error } = await supabaseAdmin
-      .from('customers')
-      .insert({
-        phone_number,
-        first_name: first_name.trim(),
-        last_name: last_name?.trim() || null,
-        merchant_id,
-      })
-      .select()
-      .single();
+async function handleRegister(body: unknown, ip: string) {
+  const rateLimit = checkRateLimit(`register-post:${ip}`, { maxRequests: 10, windowMs: 60 * 1000 });
+  if (!rateLimit.success) return rateLimitResponse(rateLimit.resetTime);
 
-    if (error) {
-      return NextResponse.json(
-        { error: 'Erreur lors de la création du client' },
-        { status: 500 }
-      );
-    }
+  const parsed = registerSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
+  }
 
-    return NextResponse.json({ customer: newCustomer });
-  } catch (error) {
+  const { phone_number, first_name, last_name, merchant_id } = parsed.data;
+
+  // Verify merchant exists
+  const { data: merchant } = await supabaseAdmin
+    .from('merchants')
+    .select('id')
+    .eq('id', merchant_id)
+    .maybeSingle();
+
+  if (!merchant) {
+    return NextResponse.json({ error: 'Commerce introuvable' }, { status: 404 });
+  }
+
+  // Check if already exists for this merchant
+  const { data: existingList } = await supabaseAdmin
+    .from('customers')
+    .select('*')
+    .eq('phone_number', phone_number)
+    .eq('merchant_id', merchant_id)
+    .limit(1);
+
+  if (existingList && existingList.length > 0) {
+    const response = NextResponse.json({ customer: existingList[0] });
+    setPhoneCookie(response, phone_number);
+    return response;
+  }
+
+  // Create new customer
+  const { data: newCustomer, error } = await supabaseAdmin
+    .from('customers')
+    .insert({
+      phone_number,
+      first_name: first_name.trim(),
+      last_name: last_name?.trim() || null,
+      merchant_id,
+    })
+    .select()
+    .single();
+
+  if (error) {
     return NextResponse.json(
-      { error: 'Erreur serveur' },
+      { error: 'Erreur lors de la création du client' },
       { status: 500 }
     );
   }
+
+  const response = NextResponse.json({ customer: newCustomer });
+  setPhoneCookie(response, phone_number);
+  return response;
 }

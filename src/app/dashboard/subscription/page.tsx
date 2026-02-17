@@ -27,6 +27,11 @@ interface PaymentMethod {
   exp_year: number;
 }
 
+const PLANS = {
+  monthly: { price: 19, priceDisplay: '19,00', daily: '0,63', label: '19 €/mois' },
+  annual: { price: 190, priceDisplay: '15,83', daily: '0,52', label: '190 €/an', originalPrice: 228, savings: '-17%' },
+} as const;
+
 const features = [
   'Clients illimités',
   'QR Code perso',
@@ -125,38 +130,20 @@ export default function SubscriptionPage() {
     fetchMerchant();
   }, [router]);
 
-  // Poll after Stripe checkout/portal return to catch webhook updates
+  // Poll after Stripe checkout/portal return to catch webhook updates (exponential backoff)
   useEffect(() => {
     if (!polling || !merchant) return;
 
     const initialStatus = merchant.subscription_status;
     const initialStripeId = merchant.stripe_subscription_id;
     let attempts = 0;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
-    const interval = setInterval(async () => {
+    const poll = async () => {
       attempts++;
-      if (attempts >= 10) {
-        // Max attempts reached — force refetch one last time
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data } = await supabase
-            .from('merchants')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-          if (data) {
-            setMerchant(data);
-            refetchContext();
-            if (data.stripe_subscription_id) fetchPaymentMethod();
-          }
-        }
-        clearInterval(interval);
-        setPolling(false);
-        return;
-      }
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { clearInterval(interval); setPolling(false); return; }
+      if (!user) { setPolling(false); return; }
 
       const { data } = await supabase
         .from('merchants')
@@ -171,15 +158,31 @@ export default function SubscriptionPage() {
         setMerchant(data);
         refetchContext();
         if (data.stripe_subscription_id) fetchPaymentMethod();
-        clearInterval(interval);
         setPolling(false);
+        return;
       }
-    }, 1000);
 
-    return () => clearInterval(interval);
+      if (attempts >= 10) {
+        // Max attempts — use last fetched data
+        if (data) {
+          setMerchant(data);
+          refetchContext();
+          if (data.stripe_subscription_id) fetchPaymentMethod();
+        }
+        setPolling(false);
+        return;
+      }
+
+      // Exponential backoff: 3s, 4.5s, 6.75s, ...
+      const delay = 3000 * Math.pow(1.5, attempts - 1);
+      timeoutId = setTimeout(poll, delay);
+    };
+
+    timeoutId = setTimeout(poll, 3000);
+    return () => clearTimeout(timeoutId);
   }, [polling, merchant?.id]);
 
-  const fetchPaymentMethod = async () => {
+  const fetchPaymentMethod = useCallback(async () => {
     setLoadingPayment(true);
     try {
       const res = await fetch('/api/stripe/payment-method');
@@ -192,7 +195,7 @@ export default function SubscriptionPage() {
     } finally {
       setLoadingPayment(false);
     }
-  };
+  }, []);
 
   const handleOpenPortal = async () => {
     setLoadingPortal(true);
@@ -348,18 +351,18 @@ export default function SubscriptionPage() {
             <div className="text-center py-4 sm:py-6">
               <div className="flex items-baseline justify-center gap-1">
                 <span className="text-5xl sm:text-6xl font-black text-gray-900 tabular-nums">
-                  {billingPlan === 'annual' ? '15' : '19'}
+                  {PLANS[billingPlan].priceDisplay.split(',')[0]}
                 </span>
                 <span className="text-2xl sm:text-3xl font-black text-gray-900">
-                  {billingPlan === 'annual' ? ',83' : ',00'}
+                  ,{PLANS[billingPlan].priceDisplay.split(',')[1]}
                 </span>
                 <span className="text-lg text-gray-400 font-medium ml-1">€/mois</span>
               </div>
               <p className="text-sm text-gray-400 mt-1.5">
-                Soit <span className="font-bold text-gray-600">{billingPlan === 'annual' ? '0,52' : '0,63'}€/jour</span> — moins qu&apos;un caf&eacute;
+                Soit <span className="font-bold text-gray-600">{PLANS[billingPlan].daily}€/jour</span> — moins qu&apos;un caf&eacute;
               </p>
               {billingPlan === 'annual' && (
-                <p className="text-sm text-gray-400 mt-1"><span className="line-through">228 €</span> → <span className="font-bold text-emerald-600">190 €/an</span></p>
+                <p className="text-sm text-gray-400 mt-1"><span className="line-through">{PLANS.annual.originalPrice} €</span> → <span className="font-bold text-emerald-600">{PLANS.annual.label}</span></p>
               )}
             </div>
 
@@ -385,7 +388,7 @@ export default function SubscriptionPage() {
                   }`}
                 >
                   Annuel
-                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">-17%</span>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">{PLANS.annual.savings}</span>
                 </button>
               </div>
             )}
@@ -416,7 +419,7 @@ export default function SubscriptionPage() {
                 onClick={handleSubscribe}
                 loading={subscribing}
               >
-                {billingPlan === 'annual' ? 'S\'abonner — 190 €/an' : 'S\'abonner — 19 €/mois'}
+                {`S'abonner — ${PLANS[billingPlan].label}`}
               </Button>
             )}
 
@@ -539,7 +542,7 @@ export default function SubscriptionPage() {
                     onClick={handleSubscribe}
                     loading={subscribing}
                   >
-                    {billingPlan === 'annual' ? 'S\'abonner — 190 €/an' : 'S\'abonner — 19 €/mois'}
+                    {`S'abonner — ${PLANS[billingPlan].label}`}
                   </Button>
                 </div>
               ) : isCanceled ? (

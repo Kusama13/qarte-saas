@@ -34,55 +34,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Vérifier l'authentification ou que l'utilisateur existe
+    // Vérifier l'authentification — Bearer token obligatoire (C12)
     const authHeader = request.headers.get('authorization');
 
-    if (authHeader?.startsWith('Bearer ')) {
-      // Si un token est fourni, vérifier qu'il correspond au user_id
-      const token = authHeader.substring(7);
-      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Non autorisé — token requis' },
+        { status: 401 }
+      );
+    }
 
-      if (authError || !user) {
-        logger.warn('Invalid auth token for merchant creation');
-        return NextResponse.json(
-          { error: 'Non autorisé' },
-          { status: 401 }
-        );
-      }
+    const token = authHeader.substring(7);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
 
-      if (user.id !== user_id) {
-        logger.warn(`User ${user.id} tried to create merchant for different user ${user_id}`);
-        return NextResponse.json(
-          { error: 'Non autorisé' },
-          { status: 403 }
-        );
-      }
-    } else {
-      // Pas de token (email non confirmé) - vérifier que l'utilisateur existe et n'a pas de merchant
-      const { data: existingUser } = await supabaseAdmin.auth.admin.getUserById(user_id);
+    if (authError || !user) {
+      logger.warn('Invalid auth token for merchant creation');
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      );
+    }
 
-      if (!existingUser?.user) {
-        logger.warn(`User ${user_id} not found for merchant creation`);
-        return NextResponse.json(
-          { error: 'Utilisateur non trouvé' },
-          { status: 404 }
-        );
-      }
-
-      // Vérifier qu'il n'y a pas déjà un merchant pour cet utilisateur
-      const { data: existingMerchant } = await supabaseAdmin
-        .from('merchants')
-        .select('id')
-        .eq('user_id', user_id)
-        .single();
-
-      if (existingMerchant) {
-        logger.warn(`Merchant already exists for user ${user_id}`);
-        return NextResponse.json(
-          { error: 'Un compte commerçant existe déjà' },
-          { status: 409 }
-        );
-      }
+    if (user.id !== user_id) {
+      logger.warn(`User ${user.id} tried to create merchant for different user ${user_id}`);
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 403 }
+      );
     }
 
     // Générer un code de scan unique

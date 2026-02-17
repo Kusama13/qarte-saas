@@ -58,9 +58,10 @@ export function generateSlug(shopName: string): string {
 // Exclut 0, O, I, l, 1 pour éviter confusion visuelle
 export function generateScanCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const randomBytes = crypto.getRandomValues(new Uint8Array(8));
   let code = '';
   for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
+    code += chars.charAt(randomBytes[i] % chars.length);
   }
   return code;
 }
@@ -349,7 +350,8 @@ export function getScanUrl(scanCode: string): string {
 
 export function generateReferralCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const randomBytes = crypto.getRandomValues(new Uint8Array(6));
   let code = '';
-  for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < 6; i++) code += chars[randomBytes[i] % chars.length];
   return code;
 }

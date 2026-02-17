@@ -108,11 +108,31 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const { id, ...updates } = await request.json();
+    const body = await request.json();
+    const { id } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Task ID required' }, { status: 400 });
     }
+
+    // Whitelist allowed fields (H10)
+    const updateSchema = z.object({
+      title: z.string().min(1).optional(),
+      priority: z.enum(['low', 'normal', 'high']).optional(),
+      due_date: z.string().optional().nullable(),
+      completed: z.boolean().optional(),
+      notes: z.string().optional().nullable(),
+    });
+
+    const validation = updateSchema.safeParse(body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors[0].message },
+        { status: 400 }
+      );
+    }
+
+    const updates: Record<string, unknown> = { ...validation.data };
 
     // If completing a task, set completed_at
     if (updates.completed === true) {

@@ -34,7 +34,6 @@ import {
   StickyNote,
   Loader2 as Loader2Icon,
 } from 'lucide-react';
-import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl } from '@/lib/utils';
 
@@ -104,7 +103,6 @@ interface MemberProgram {
 
 export default function MerchantDetailPage() {
   const params = useParams();
-  const supabase = getSupabase();
   const merchantId = params.id as string;
 
   const [merchant, setMerchant] = useState<Merchant | null>(null);
@@ -128,90 +126,16 @@ export default function MerchantDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Récupérer le commerçant
-        const { data: merchantData, error: merchantError } = await supabase
-          .from('merchants')
-          .select('*')
-          .eq('id', merchantId)
-          .single();
+        // H5: Single API call with service_role — bypasses RLS restrictions
+        const res = await fetch(`/api/admin/merchants/${merchantId}`);
+        if (!res.ok) throw new Error('Failed to fetch merchant data');
+        const data = await res.json();
 
-        if (merchantError) throw merchantError;
-        setMerchant(merchantData);
-
-        // Récupérer les stats - count loyalty cards (customers is global, no merchant_id)
-        const { count: totalCustomers } = await supabase
-          .from('loyalty_cards')
-          .select('*', { count: 'exact', head: true })
-          .eq('merchant_id', merchantId);
-
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        const { count: activeCustomers } = await supabase
-          .from('loyalty_cards')
-          .select('*', { count: 'exact', head: true })
-          .eq('merchant_id', merchantId)
-          .gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]);
-
-        const { count: totalVisits } = await supabase
-          .from('visits')
-          .select('*', { count: 'exact', head: true })
-          .eq('merchant_id', merchantId);
-
-        const { count: totalRedemptions } = await supabase
-          .from('redemptions')
-          .select('*', { count: 'exact', head: true })
-          .eq('merchant_id', merchantId);
-
-        const { count: pendingPointsCount } = await supabase
-          .from('visits')
-          .select('*', { count: 'exact', head: true })
-          .eq('merchant_id', merchantId)
-          .eq('status', 'pending');
-
-        // Get push stats and email via admin API (uses service role to bypass RLS)
-        let pushSubscribers = 0;
-        let pushSentCount = 0;
-        try {
-          const pushStatsRes = await fetch(`/api/admin/merchants/${merchantId}`);
-          if (pushStatsRes.ok) {
-            const pushStats = await pushStatsRes.json();
-            pushSubscribers = pushStats.pushSubscribers || 0;
-            pushSentCount = pushStats.pushSent || 0;
-            if (pushStats.userEmail) {
-              setUserEmail(pushStats.userEmail);
-            }
-          }
-        } catch (e) {
-          console.error('Error fetching push stats:', e);
-        }
-
-        // Get member programs for this merchant
-        const { data: programs } = await supabase
-          .from('member_programs')
-          .select('*, member_cards(count)')
-          .eq('merchant_id', merchantId)
-          .order('created_at', { ascending: false });
-
-        setMemberPrograms(programs || []);
-
-        // Fetch email tracking
-        const { data: trackings } = await supabase
-          .from('pending_email_tracking')
-          .select('reminder_day, sent_at')
-          .eq('merchant_id', merchantId)
-          .order('sent_at', { ascending: false });
-        setEmailTrackings(trackings || []);
-
-        setStats({
-          totalCustomers: totalCustomers || 0,
-          activeCustomers: activeCustomers || 0,
-          totalVisits: totalVisits || 0,
-          totalRedemptions: totalRedemptions || 0,
-          pushSubscribers,
-          pushSent: pushSentCount || 0,
-          pendingPoints: pendingPointsCount || 0,
-        });
+        setMerchant(data.merchant);
+        setStats(data.stats);
+        setMemberPrograms(data.memberPrograms || []);
+        setEmailTrackings(data.emailTrackings || []);
+        if (data.userEmail) setUserEmail(data.userEmail);
       } catch (error) {
         console.error('Error fetching merchant data:', error);
       } finally {
@@ -220,7 +144,7 @@ export default function MerchantDetailPage() {
     };
 
     fetchData();
-  }, [merchantId, supabase]);
+  }, [merchantId]);
 
   // Generate QR code when merchant is loaded
   useEffect(() => {

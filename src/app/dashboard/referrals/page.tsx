@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Users,
   Gift,
@@ -43,11 +43,12 @@ export default function ReferralsPage() {
 
   const [showHelp, setShowHelp] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
-  // Stats
-  const [totalReferrals, setTotalReferrals] = useState(0);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [completedCount, setCompletedCount] = useState(0);
+  // Derived stats from referrals array
+  const totalReferrals = useMemo(() => referrals.length, [referrals]);
+  const pendingCount = useMemo(() => referrals.filter(r => r.status === 'pending').length, [referrals]);
+  const completedCount = useMemo(() => referrals.filter(r => r.status === 'completed').length, [referrals]);
 
   useEffect(() => {
     if (merchantLoading || !merchant) return;
@@ -72,11 +73,7 @@ export default function ReferralsPage() {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        const rows = data as unknown as ReferralRow[];
-        setReferrals(rows);
-        setTotalReferrals(rows.length);
-        setPendingCount(rows.filter(r => r.status === 'pending').length);
-        setCompletedCount(rows.filter(r => r.status === 'completed').length);
+        setReferrals(data as unknown as ReferralRow[]);
       }
       setLoading(false);
     };
@@ -90,6 +87,7 @@ export default function ReferralsPage() {
     if (enabled && (!rewardReferrer.trim() || !rewardReferred.trim())) return;
 
     setSaving(true);
+    setSaveError('');
     try {
       const res = await fetch('/api/merchants/referral-config', {
         method: 'PUT',
@@ -105,6 +103,7 @@ export default function ReferralsPage() {
       if (!res.ok) {
         const data = await res.json();
         console.error('Save error:', data.error);
+        setSaveError('Erreur lors de la sauvegarde. Veuillez réessayer.');
         return;
       }
 
@@ -113,6 +112,7 @@ export default function ReferralsPage() {
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Save error:', err);
+      setSaveError('Erreur réseau. Vérifiez votre connexion.');
     } finally {
       setSaving(false);
     }
@@ -239,6 +239,13 @@ export default function ReferralsPage() {
               </div>
               <p className="text-xs text-gray-400 mt-1.5">Ce que reçoit votre client quand son filleul utilise sa récompense</p>
             </div>
+          </div>
+        )}
+
+        {/* Save error */}
+        {saveError && (
+          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+            {saveError}
           </div>
         )}
 

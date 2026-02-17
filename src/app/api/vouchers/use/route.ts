@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import webpush from 'web-push';
+import { getAuthenticatedPhone } from '@/lib/customer-auth';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -14,12 +15,19 @@ if (vapidPublicKey && vapidPrivateKey) {
 const useVoucherSchema = z.object({
   voucher_id: z.string().uuid(),
   customer_id: z.string().uuid(),
-  phone_number: z.string().min(1),
 });
 
 // POST: Client consomme un voucher (self-service)
 export async function POST(request: NextRequest) {
   try {
+    const phone_number = getAuthenticatedPhone(request);
+    if (!phone_number) {
+      return NextResponse.json(
+        { error: 'Non authentifié' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const parsed = useVoucherSchema.safeParse(body);
 
@@ -30,9 +38,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { voucher_id, customer_id, phone_number } = parsed.data;
+    const { voucher_id, customer_id } = parsed.data;
 
-    // SECURITY: Verify phone_number matches the customer
+    // SECURITY: Verify cookie phone matches the customer
     const { data: customer } = await supabaseAdmin
       .from('customers')
       .select('id, first_name')

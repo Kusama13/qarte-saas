@@ -11,7 +11,7 @@ import {
   RefreshCw,
   Trophy,
 } from 'lucide-react';
-import { formatPhoneNumber } from '@/lib/utils';
+// Phone is handled server-side via HttpOnly cookie
 
 interface LoyaltyCardWithMerchant {
   merchant_id: string;
@@ -37,50 +37,31 @@ export default function CustomerCardsPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const savedPhone = getCookie('customer_phone');
-    if (savedPhone) {
-      setPhoneNumber(savedPhone);
-      fetchCards(savedPhone);
-    } else {
-      // No phone saved, redirect to login page
-      router.replace('/customer');
-    }
-  }, [router]);
+    fetchCards();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const getCookie = (name: string): string | null => {
-    if (typeof document === 'undefined') return null;
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) {
-      const rawValue = parts.pop()?.split(';').shift() || null;
-      return rawValue ? decodeURIComponent(rawValue) : null;
-    }
-    return null;
-  };
-
-  const setCookie = (name: string, value: string, days: number) => {
-    const expires = new Date();
-    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-  };
-
-  const deleteCookie = (name: string) => {
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-  };
-
-  const fetchCards = async (phone: string) => {
+  const fetchCards = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const formattedPhone = formatPhoneNumber(phone);
+      // Phone is read from HttpOnly cookie server-side
+      const response = await fetch('/api/customers/cards', { method: 'POST' });
 
-      const response = await fetch(`/api/customers/cards?phone=${encodeURIComponent(formattedPhone)}`);
+      if (response.status === 401) {
+        // Not authenticated — redirect to login
+        router.replace('/customer');
+        return;
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || 'Erreur serveur');
       }
+
+      if (data.phone) setPhoneNumber(data.phone);
 
       if (!data.found || data.cards.length === 0) {
         setCards([]);
@@ -90,7 +71,6 @@ export default function CustomerCardsPage() {
 
       const formattedCards: LoyaltyCardWithMerchant[] = data.cards
         .sort((a: LoyaltyCardWithMerchant, b: LoyaltyCardWithMerchant) => {
-          // Check if reward is ready (considering tier 2 and if tier 1 already redeemed)
           const aHasUnclaimedReward = (a.current_stamps >= a.stamps_required && !a.tier1_redeemed) ||
             (a.tier2_enabled && a.current_stamps >= (a.tier2_stamps_required || a.stamps_required * 2));
           const bHasUnclaimedReward = (b.current_stamps >= b.stamps_required && !b.tier1_redeemed) ||
@@ -105,7 +85,6 @@ export default function CustomerCardsPage() {
         });
 
       setCards(formattedCards);
-      setCookie('customer_phone', formattedPhone, 30);
     } catch (err) {
       console.error('Error fetching cards:', err);
       setError('Erreur lors de la recherche');
@@ -114,8 +93,9 @@ export default function CustomerCardsPage() {
     }
   };
 
-  const handleChangeNumber = () => {
-    deleteCookie('customer_phone');
+  const handleChangeNumber = async () => {
+    // Clear HttpOnly cookie via API
+    await fetch('/api/customers/logout', { method: 'POST' });
     router.push('/customer');
   };
 

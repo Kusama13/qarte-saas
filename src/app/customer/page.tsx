@@ -18,30 +18,23 @@ export default function CustomerLoginPage() {
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState('');
 
-  // Check if already logged in
+  // Check if already logged in via HttpOnly cookie
   useEffect(() => {
-    const savedPhone = getCookie('customer_phone');
-    if (savedPhone) {
-      // Already has phone saved, go to cards
-      router.replace('/customer/cards');
-    } else {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/customers/me');
+        const data = await res.json();
+        if (data.authenticated) {
+          router.replace('/customer/cards');
+          return;
+        }
+      } catch {
+        // Not authenticated
+      }
       setChecking(false);
-    }
+    };
+    checkAuth();
   }, [router]);
-
-  const getCookie = (name: string): string | null => {
-    if (typeof document === 'undefined') return null;
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-    return null;
-  };
-
-  const setCookie = (name: string, value: string, days: number) => {
-    const expires = new Date();
-    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,19 +50,21 @@ export default function CustomerLoginPage() {
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber);
 
-      // Verify phone has cards
-      const response = await fetch(`/api/customers/cards?phone=${encodeURIComponent(formattedPhone)}`);
+      // Login API — sets HttpOnly cookie on success
+      const response = await fetch('/api/customers/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone_number: formattedPhone }),
+      });
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur serveur');
+      if (!data.found) {
+        setError('Aucun compte trouvé avec ce numéro. Scannez un QR code pour créer votre première carte.');
+        setLoading(false);
+        return;
       }
 
-      // Save phone to cookie regardless of whether cards exist
-      // They might scan a QR later
-      setCookie('customer_phone', formattedPhone, 30);
-
-      // Redirect to cards page
+      // Redirect to cards page — cookie is already set by the API
       router.push('/customer/cards');
     } catch (err) {
       console.error('Error:', err);

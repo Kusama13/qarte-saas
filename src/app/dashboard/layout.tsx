@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -48,13 +48,14 @@ function DashboardLayoutContent({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Swipe-to-close
+  const SWIPE_CLOSE_THRESHOLD = 60;
   const touchStartX = useRef(0);
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   }, []);
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     const diff = touchStartX.current - e.changedTouches[0].clientX;
-    if (diff > 60) setSidebarOpen(false);
+    if (diff > SWIPE_CLOSE_THRESHOLD) setSidebarOpen(false);
   }, []);
 
   const handleLogout = async () => {
@@ -76,9 +77,16 @@ function DashboardLayoutContent({
     merchant?.subscription_status || 'trial'
   );
 
+  const shouldRedirect = (trialStatus.isInGracePeriod || trialStatus.isFullyExpired) && pathname !== '/dashboard/subscription';
+
   // Redirection forcée dès la fin de l'essai (grâce ou expiration complète)
-  if ((trialStatus.isInGracePeriod || trialStatus.isFullyExpired) && pathname !== '/dashboard/subscription') {
-    router.push('/dashboard/subscription');
+  useEffect(() => {
+    if (shouldRedirect) {
+      router.push('/dashboard/subscription');
+    }
+  }, [shouldRedirect, router]);
+
+  if (shouldRedirect) {
     return null;
   }
 
@@ -90,6 +98,7 @@ function DashboardLayoutContent({
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <button
         onClick={() => setSidebarOpen(true)}
+        aria-label="Ouvrir le menu"
         className="fixed z-40 p-2.5 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg top-3 left-3 lg:hidden hover:scale-105 active:scale-95 transition-all duration-200"
       >
         <Menu className="w-5 h-5 text-indigo-600" />
@@ -125,6 +134,7 @@ function DashboardLayoutContent({
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
+              aria-label="Fermer le menu"
               className="p-2 lg:hidden rounded-lg hover:bg-white/80 hover:shadow-sm text-gray-500 transition-all duration-200 active:scale-95"
             >
               <X className="w-5 h-5" />

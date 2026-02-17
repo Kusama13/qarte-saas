@@ -8,6 +8,7 @@ export const testDb = {
   visits: [] as any[],
   redemptions: [] as any[],
   banned_numbers: [] as any[],
+  point_adjustments: [] as any[],
 };
 
 // Reset test database
@@ -18,6 +19,7 @@ export function resetTestDb() {
   testDb.visits = [];
   testDb.redemptions = [];
   testDb.banned_numbers = [];
+  testDb.point_adjustments = [];
 }
 
 // Helper to generate UUIDs
@@ -155,6 +157,10 @@ function createQueryBuilder(table: keyof typeof testDb) {
       filters.push({ field, op: 'gt', value });
       return builder;
     },
+    neq(field: string, value: any) {
+      filters.push({ field, op: 'neq', value });
+      return builder;
+    },
 
     // Execute the query
     then(resolve: (result: any) => void) {
@@ -167,6 +173,7 @@ function createQueryBuilder(table: keyof typeof testDb) {
           if (filter.op === 'in') return filter.value.includes(item[filter.field]);
           if (filter.op === 'gte') return new Date(item[filter.field]) >= new Date(filter.value);
           if (filter.op === 'gt') return new Date(item[filter.field]) > new Date(filter.value);
+          if (filter.op === 'neq') return item[filter.field] !== filter.value;
           return true;
         });
       }
@@ -201,7 +208,17 @@ function createQueryBuilder(table: keyof typeof testDb) {
         result.forEach((item) => {
           Object.assign(item, updateData);
         });
-        resolve({ data: result, error: null });
+        if (isSingle) {
+          if (result.length === 0) {
+            resolve({ data: null, error: { code: 'PGRST116', message: 'No rows found' } });
+          } else {
+            resolve({ data: result[0], error: null });
+          }
+        } else if (isMaybeSingle) {
+          resolve({ data: result[0] || null, error: null });
+        } else {
+          resolve({ data: result, error: null });
+        }
         return;
       }
 
@@ -245,13 +262,39 @@ function createQueryBuilder(table: keyof typeof testDb) {
   return builder;
 }
 
-// Mock Supabase client
+// Mock Supabase client (admin / service role)
 export const mockSupabaseAdmin = {
   from: (table: string) => createQueryBuilder(table as keyof typeof testDb),
+};
+
+// Mock authenticated user for route handler client
+let mockAuthUser: { id: string; email?: string } | null = null;
+
+export function setMockAuthUser(user: { id: string; email?: string } | null) {
+  mockAuthUser = user;
+}
+
+// Mock Supabase client with auth (for createRouteHandlerSupabaseClient)
+export const mockSupabaseWithAuth = {
+  from: (table: string) => createQueryBuilder(table as keyof typeof testDb),
+  auth: {
+    getUser: async () => {
+      if (!mockAuthUser) {
+        return { data: { user: null }, error: { message: 'Not authenticated' } };
+      }
+      return { data: { user: mockAuthUser }, error: null };
+    },
+    admin: {
+      getUserById: async (userId: string) => {
+        return { data: { user: { id: userId, email: `${userId}@test.com` } }, error: null };
+      },
+    },
+  },
 };
 
 // Mock the getSupabaseAdmin function
 vi.mock('@/lib/supabase', () => ({
   getSupabaseAdmin: () => mockSupabaseAdmin,
+  createRouteHandlerSupabaseClient: async () => mockSupabaseWithAuth,
   supabase: mockSupabaseAdmin,
 }));

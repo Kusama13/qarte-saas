@@ -15,6 +15,20 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Only load visits from last 30 days (C9 — was loading ALL visits)
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    // Paginate listUsers to get ALL users (C10 — was capped at 1000)
+    const allUsers: Array<{ id: string; email?: string }> = [];
+    let usersPage = 1;
+    let hasMoreUsers = true;
+    while (hasMoreUsers) {
+      const { data: { users: batch } } = await supabaseAdmin.auth.admin.listUsers({ page: usersPage, perPage: 1000 });
+      allUsers.push(...batch);
+      hasMoreUsers = batch.length === 1000;
+      usersPage++;
+    }
+
     // Fetch all data in parallel (service_role bypasses RLS)
     const [
       { data: merchants },
@@ -24,16 +38,14 @@ export async function GET(request: NextRequest) {
       { data: emailTracking },
       { data: reactivationTracking },
       { data: pendingVisits },
-      { data: { users } },
     ] = await Promise.all([
       supabaseAdmin.from('merchants').select('*').order('created_at', { ascending: false }),
       supabaseAdmin.from('super_admins').select('user_id'),
-      supabaseAdmin.from('visits').select('merchant_id, visited_at'),
+      supabaseAdmin.from('visits').select('merchant_id, visited_at').gte('visited_at', thirtyDaysAgo),
       supabaseAdmin.from('loyalty_cards').select('merchant_id'),
       supabaseAdmin.from('pending_email_tracking').select('merchant_id, reminder_day'),
       supabaseAdmin.from('reactivation_email_tracking').select('merchant_id, day_sent'),
       supabaseAdmin.from('visits').select('merchant_id').eq('status', 'pending'),
-      supabaseAdmin.auth.admin.listUsers({ perPage: 1000 }),
     ]);
 
     // Super admin user_ids
@@ -94,9 +106,9 @@ export async function GET(request: NextRequest) {
       pendingPoints[v.merchant_id] = (pendingPoints[v.merchant_id] || 0) + 1;
     });
 
-    // User emails mapping
+    // User emails mapping (uses paginated allUsers from C10 fix)
     const userEmails: Record<string, string> = {};
-    (users || []).forEach((u) => {
+    allUsers.forEach((u) => {
       if (u.email) userEmails[u.id] = u.email;
     });
 

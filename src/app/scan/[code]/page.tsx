@@ -40,11 +40,7 @@ interface ReferralInfo {
   primary_color: string;
 }
 
-const setCookie = (name: string, value: string, days: number) => {
-  const expires = new Date();
-  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
-};
+// Phone cookie is now HttpOnly, set server-side by register/checkin APIs
 
 export default function ScanPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
@@ -111,14 +107,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
     fetchMerchant();
 
-    // Try to get saved phone from multiple sources (specific code, global, or cookie)
-    const savedPhoneByCode = localStorage.getItem(`qarte_phone_${code}`);
-    const savedPhoneGlobal = localStorage.getItem('qarte_customer_phone');
-    const savedPhone = savedPhoneByCode || savedPhoneGlobal;
-
-    if (savedPhone) {
-      setPhoneNumber(savedPhone);
-    }
   }, [code]);
 
   // Fetch referral info if ?ref= is present
@@ -141,7 +129,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     fetchReferralInfo();
   }, [refCode]);
 
-  // Auto-login effect: if we have a saved phone and merchant is loaded, auto-submit
+  // Auto-login effect: check HttpOnly cookie via /api/customers/me
   useEffect(() => {
     const autoLogin = async () => {
       if (autoLoginAttempted || loading || !merchant || submitting || refCode) return;
@@ -151,52 +139,46 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       const today = new Date().toDateString();
       if (lastAutoCheckin === today) return;
 
-      const savedPhoneByCode = localStorage.getItem(`qarte_phone_${code}`);
-      const savedPhoneGlobal = localStorage.getItem('qarte_customer_phone');
-      const savedPhone = savedPhoneByCode || savedPhoneGlobal;
-
-      if (savedPhone && step === 'phone') {
+      if (step === 'phone') {
         setAutoLoginAttempted(true);
-        const formattedPhone = formatPhoneNumber(savedPhone, merchant.country || 'FR');
+        setSubmitting(true);
+        try {
+          // Check if user has a valid auth cookie
+          const response = await fetch(`/api/customers/me?merchant_id=${merchant.id}`);
+          const data = await response.json();
 
-        if (validatePhone(formattedPhone, merchant.country || 'FR')) {
-          setSubmitting(true);
-          try {
-            const response = await fetch(`/api/customers/register?phone=${encodeURIComponent(formattedPhone)}&merchant_id=${merchant.id}`);
-            const data = await response.json();
+          if (data.authenticated && data.phone) {
+            setPhoneNumber(data.phone);
 
-            if (data.exists && data.customer) {
-              if (data.existsForMerchant) {
-                // Customer exists for this merchant → direct checkin
-                setCustomer(data.customer);
-                await processCheckin(data.customer);
+            if (data.existsForMerchant && data.customer) {
+              // Customer exists for this merchant → direct checkin
+              setCustomer(data.customer);
+              await processCheckin(data.customer);
+              localStorage.setItem(`qarte_checkin_${code}`, today);
+            } else if (data.existsGlobally && data.customer) {
+              // Customer exists globally → create for this merchant
+              const createResponse = await fetch('/api/customers/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  phone_number: data.phone,
+                  first_name: data.customer.first_name,
+                  merchant_id: merchant.id,
+                }),
+              });
+
+              const createData = await createResponse.json();
+              if (createResponse.ok && createData.customer) {
+                setCustomer(createData.customer);
+                await processCheckin(createData.customer);
                 localStorage.setItem(`qarte_checkin_${code}`, today);
-              } else if (data.existsGlobally) {
-                // Customer exists globally → create for this merchant
-                const createResponse = await fetch('/api/customers/register', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    phone_number: formattedPhone,
-                    first_name: data.customer.first_name,
-                    last_name: data.customer.last_name,
-                    merchant_id: merchant.id,
-                  }),
-                });
-
-                const createData = await createResponse.json();
-                if (createResponse.ok && createData.customer) {
-                  setCustomer(createData.customer);
-                  await processCheckin(createData.customer);
-                  localStorage.setItem(`qarte_checkin_${code}`, today);
-                }
               }
             }
-          } catch (err) {
-            console.error('Auto-login failed:', err);
-          } finally {
-            setSubmitting(false);
           }
+        } catch (err) {
+          console.error('Auto-login failed:', err);
+        } finally {
+          setSubmitting(false);
         }
       }
     };
@@ -235,7 +217,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         return;
       }
 
-      const response = await fetch(`/api/customers/register?phone=${encodeURIComponent(formattedPhone)}&merchant_id=${merchant.id}`);
+      const response = await fetch('/api/customers/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'lookup', phone_number: formattedPhone, merchant_id: merchant.id }),
+      });
       const data = await response.json();
 
       if (data.exists && data.customer) {
@@ -247,18 +233,15 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             setSubmitting(false);
             return;
           }
-          // Client existe pour ce commerçant → checkin direct
+          // Client existe pour ce commerçant → checkin direct (cookie set by register API)
           setCustomer(data.customer);
-          localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
-          localStorage.setItem('qarte_customer_phone', formattedPhone);
-          setCookie('customer_phone', formattedPhone, 30);
           await processCheckin(data.customer);
         } else if (data.existsGlobally) {
           // Client exists globally but not for this merchant
           if (refCode && referralInfo) {
             // Referral flow: pre-fill name and go to register for referral inscription
             setFirstName(data.customer.first_name || '');
-            setLastName(data.customer.last_name || '');
+            setLastName('');
             setStep('register');
           } else {
             // Normal flow: create for this merchant
@@ -268,7 +251,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               body: JSON.stringify({
                 phone_number: formattedPhone,
                 first_name: data.customer.first_name,
-                last_name: data.customer.last_name,
                 merchant_id: merchant.id,
               }),
             });
@@ -277,9 +259,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
             if (createResponse.ok && createData.customer) {
               setCustomer(createData.customer);
-              localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
-              localStorage.setItem('qarte_customer_phone', formattedPhone);
-              setCookie('customer_phone', formattedPhone, 30);
               await processCheckin(createData.customer);
             } else {
               console.error('Create failed:', createData);
@@ -314,9 +293,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
-      localStorage.setItem(`qarte_phone_${code}`, formattedPhone);
-      localStorage.setItem('qarte_customer_phone', formattedPhone);
-      setCookie('customer_phone', formattedPhone, 30);
+      // Cookie is set server-side by register/checkin APIs
 
       // Referral flow: call /api/referrals instead of /api/checkin
       if (refCode && referralInfo) {
@@ -459,7 +436,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         body: JSON.stringify({
           loyalty_card_id: loyaltyCard.id,
           customer_id: customer.id,
-          phone_number: formattedPhone,
           tier: tierToRedeem,
         }),
       });

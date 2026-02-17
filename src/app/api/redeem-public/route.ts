@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { getAuthenticatedPhone } from '@/lib/customer-auth';
 
 const redeemSchema = z.object({
   loyalty_card_id: z.string().uuid(),
   customer_id: z.string().uuid(),
-  phone_number: z.string().min(1),
   tier: z.number().min(1).max(2).optional().default(1),
 });
 
@@ -19,6 +19,14 @@ export async function POST(request: NextRequest) {
       return rateLimitResponse(rateLimit.resetTime);
     }
 
+    const phone_number = getAuthenticatedPhone(request);
+    if (!phone_number) {
+      return NextResponse.json(
+        { error: 'Non authentifié' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const parsed = redeemSchema.safeParse(body);
 
@@ -29,10 +37,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { loyalty_card_id, customer_id, phone_number, tier } = parsed.data;
+    const { loyalty_card_id, customer_id, tier } = parsed.data;
     const supabase = getSupabaseAdmin();
 
-    // SECURITY: Verify phone_number matches the customer
+    // SECURITY: Verify cookie phone matches the customer
     const { data: customer } = await supabase
       .from('customers')
       .select('id')

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import webpush from 'web-push';
+import { containsForbiddenWords } from '@/lib/content-moderation';
 
 interface PushSubscriptionRecord {
   id: string;
@@ -65,6 +66,15 @@ export async function POST(request: NextRequest) {
     if (!payload || !payload.title || !payload.body) {
       return NextResponse.json(
         { error: 'Payload invalide (title et body requis)' },
+        { status: 400 }
+      );
+    }
+
+    // Server-side content moderation (C8)
+    const forbiddenWord = containsForbiddenWords(`${payload.title} ${payload.body}`);
+    if (forbiddenWord) {
+      return NextResponse.json(
+        { error: `Contenu interdit détecté : "${forbiddenWord}"` },
         { status: 400 }
       );
     }

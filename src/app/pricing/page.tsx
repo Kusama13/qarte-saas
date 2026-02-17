@@ -7,9 +7,11 @@ import { Check, CreditCard, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function PricingPage() {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubscribe = async () => {
     setLoading(true);
+    setError(null);
 
     try {
       const res = await fetch('/api/stripe/checkout', {
@@ -20,16 +22,16 @@ export default function PricingPage() {
       const data = await res.json();
 
       if (data.error) {
-        alert(data.error);
+        setError(data.error);
         return;
       }
 
       if (data.url) {
         window.location.href = data.url;
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert('Erreur lors de la redirection');
+    } catch (err) {
+      console.error('Error:', err);
+      setError('Erreur lors de la redirection');
     } finally {
       setLoading(false);
     }
@@ -93,6 +95,13 @@ export default function PricingPage() {
                 </div>
                 <p className="text-gray-600">Sans engagement - Annulation a tout moment</p>
               </div>
+
+              {/* Error message */}
+              {error && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 font-medium text-center">
+                  {error}
+                </div>
+              )}
 
               {/* CTA Button */}
               <Button

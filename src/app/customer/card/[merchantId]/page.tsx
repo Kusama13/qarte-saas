@@ -27,8 +27,9 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
 import { trackPwaInstalled } from '@/lib/analytics';
-import { formatPhoneNumber, ensureTextContrast } from '@/lib/utils';
+import { ensureTextContrast } from '@/lib/utils';
 import { sparkleGrand } from '@/lib/sparkles';
+import { DEMO_MERCHANTS } from '@/lib/demo-merchants';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard, Voucher } from '@/types';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import {
@@ -68,32 +69,22 @@ interface CardWithDetails extends LoyaltyCard {
   customer: Customer;
 }
 
-const getCookie = (name: string): string | null => {
-  if (typeof document === 'undefined') return null;
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    const rawValue = parts.pop()?.split(';').shift() || null;
-    // Decode URL-encoded value
-    return rawValue ? decodeURIComponent(rawValue) : null;
-  }
-  return null;
-};
+// Phone is now in HttpOnly cookie — no client-side reading needed
 
 const getLoyaltyLabel = (count: number) => {
   return count === 1 ? 'Passage' : 'Passages';
 };
 
 const GREETING_MESSAGES = [
-  'Ravie de vous retrouver !',
+  'Bon retour parmi nous !',
   'On adore vous revoir !',
   'Vous êtes au top aujourd\'hui !',
   'Ça fait plaisir de vous voir !',
   'Belle journée pour se faire plaisir !',
   'Toujours fidèle, merci !',
-  'Contente de vous revoir !',
-  'Vous êtes resplendissante !',
-  'Bon retour parmi nous !',
+  'Content de vous revoir !',
+  'Vous êtes rayonnant(e) !',
+  'Ravi(e) de vous retrouver !',
   'Prenez soin de vous !',
 ];
 
@@ -110,43 +101,6 @@ interface MerchantOffer {
   imageUrl: string | null;
   expiresAt: string | null;
 }
-
-const DEMO_MERCHANTS: Record<string, { id: string; shop_name: string; shop_type: string; logo_url: string | null; primary_color: string; secondary_color: string; stamps_required: number; reward_description: string; tier2_enabled: boolean; tier2_stamps_required: number | null; tier2_reward_description: string | null; loyalty_mode: string; product_name: string | null; review_link: string | null; instagram_url: string | null; facebook_url: string | null; tiktok_url: string | null; booking_url: string | null; referral_program_enabled: boolean; referral_reward_referrer: string | null; referral_reward_referred: string | null; scan_code: string }> = {
-  'demo-coiffeur': {
-    id: 'demo-coiffeur', shop_name: 'Le Salon de Clara', shop_type: 'coiffeur',
-    logo_url: null, primary_color: '#D97706', secondary_color: '#F59E0B',
-    stamps_required: 10, reward_description: 'Un brushing offert',
-    tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
-    loyalty_mode: 'visit', product_name: null, review_link: 'https://getqarte.com',
-    instagram_url: 'https://www.instagram.com/qarte.app', facebook_url: 'https://www.facebook.com/profile.php?id=61587048661028', tiktok_url: 'https://www.tiktok.com/@getqarte',
-    booking_url: 'https://getqarte.com',
-    referral_program_enabled: true, referral_reward_referrer: 'Un brushing offert', referral_reward_referred: '-20% sur votre 1ère coupe',
-    scan_code: 'demo-coiffeur',
-  },
-  'demo-onglerie': {
-    id: 'demo-onglerie', shop_name: 'Nails & Beauty', shop_type: 'onglerie',
-    logo_url: null, primary_color: '#EC4899', secondary_color: '#F472B6',
-    stamps_required: 8, reward_description: 'Une pose gel offerte',
-    tier2_enabled: true, tier2_stamps_required: 15, tier2_reward_description: 'Un soin complet des mains offert',
-    loyalty_mode: 'visit', product_name: null, review_link: 'https://getqarte.com',
-    instagram_url: 'https://www.instagram.com/qarte.app', facebook_url: 'https://www.facebook.com/profile.php?id=61587048661028', tiktok_url: 'https://www.tiktok.com/@getqarte',
-    booking_url: 'https://getqarte.com',
-    referral_program_enabled: true, referral_reward_referrer: 'Une pose gel offerte', referral_reward_referred: '-15% sur votre 1ère pose',
-    scan_code: 'demo-onglerie',
-  },
-  'demo-institut': {
-    id: 'demo-institut', shop_name: 'Institut Éclat', shop_type: 'institut_beaute',
-    logo_url: null, primary_color: '#8B5CF6', secondary_color: '#A78BFA',
-    stamps_required: 8, reward_description: 'Un soin visage offert',
-    tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
-    loyalty_mode: 'visit', product_name: null, review_link: 'https://getqarte.com',
-    instagram_url: 'https://www.instagram.com/qarte.app', facebook_url: 'https://www.facebook.com/profile.php?id=61587048661028', tiktok_url: 'https://www.tiktok.com/@getqarte',
-    booking_url: 'https://getqarte.com',
-    referral_program_enabled: true, referral_reward_referrer: 'Un soin visage offert', referral_reward_referred: '-10% sur votre 1er soin',
-    scan_code: 'demo-institut',
-  },
-};
-
 
 export default function CustomerCardPage({
   params,
@@ -166,6 +120,7 @@ export default function CustomerCardPage({
   const [redeeming, setRedeeming] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [redeemSuccess, setRedeemSuccess] = useState(false);
+  const [redeemError, setRedeemError] = useState<string | null>(null);
   const [redeemTier, setRedeemTier] = useState<1 | 2>(1);
   const [tier1RedeemedInCycle, setTier1RedeemedInCycle] = useState(false);
   const [card, setCard] = useState<CardWithDetails | null>(null);
@@ -349,19 +304,13 @@ export default function CustomerCardPage({
         return;
       }
 
-      const savedPhone = getCookie('customer_phone');
-      if (!savedPhone) {
-        router.push('/customer/cards');
-        return;
-      }
-
-      const formattedPhone = formatPhoneNumber(savedPhone);
-
       try {
-        // Single consolidated API call that returns all data
-        const response = await fetch(
-          `/api/customers/card?phone=${encodeURIComponent(formattedPhone)}&merchant_id=${merchantId}`
-        );
+        // Phone is read from HttpOnly cookie server-side (C2+C3 fix)
+        const response = await fetch('/api/customers/card', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ merchant_id: merchantId }),
+        });
         const data = await response.json();
 
         if (!response.ok || !data.found) {
@@ -538,8 +487,6 @@ export default function CustomerCardPage({
 
   const handleUseVoucher = useCallback(async (voucherId: string) => {
     if (!card) return;
-    const savedPhone = getCookie('customer_phone');
-    if (!savedPhone) return;
     setUsingVoucherId(voucherId);
     try {
       const res = await fetch('/api/vouchers/use', {
@@ -548,7 +495,6 @@ export default function CustomerCardPage({
         body: JSON.stringify({
           voucher_id: voucherId,
           customer_id: card.customer_id,
-          phone_number: formatPhoneNumber(savedPhone),
         }),
       });
       const data = await res.json();
@@ -602,8 +548,6 @@ export default function CustomerCardPage({
 
   const handleSaveBirthday = useCallback(async () => {
     if (!card || !birthdayMonth || !birthdayDay) return;
-    const savedPhone = getCookie('customer_phone');
-    if (!savedPhone) return;
     setSavingBirthday(true);
     try {
       const res = await fetch('/api/customers/birthday', {
@@ -611,7 +555,6 @@ export default function CustomerCardPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer_id: card.customer_id,
-          phone_number: formatPhoneNumber(savedPhone),
           birth_month: parseInt(birthdayMonth),
           birth_day: parseInt(birthdayDay),
         }),
@@ -696,10 +639,9 @@ export default function CustomerCardPage({
 
   const handleRedeem = async (tier: 1 | 2 = 1) => {
     if (!card) return;
-    const savedPhone = getCookie('customer_phone');
-    if (!savedPhone) return;
 
     setRedeeming(true);
+    setRedeemError(null);
 
     try {
       const response = await fetch('/api/redeem-public', {
@@ -708,7 +650,6 @@ export default function CustomerCardPage({
         body: JSON.stringify({
           loyalty_card_id: card.id,
           customer_id: card.customer_id,
-          phone_number: formatPhoneNumber(savedPhone),
           tier: tier,
         }),
       });
@@ -732,13 +673,11 @@ export default function CustomerCardPage({
         triggerSparkles();
       } else {
         console.error('Redeem failed:', data);
-        // Show debug info if available
-        const debugInfo = data.debug ? `\nTéléphone envoyé: ${data.debug.searchedPhone}` : '';
-        alert((data.error || 'Une erreur est survenue') + debugInfo);
+        setRedeemError(data.error || 'Une erreur est survenue');
       }
     } catch (err) {
       console.error('Redeem error:', err);
-      alert('Erreur de connexion. Veuillez réessayer.');
+      setRedeemError('Erreur de connexion. Veuillez réessayer.');
     } finally {
       setRedeeming(false);
     }
@@ -1044,6 +983,34 @@ export default function CustomerCardPage({
                     {scanRedeemed ? 'Profitez bien de votre cadeau' : 'Votre carte a été mise à jour'}
                   </p>
                 </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Redeem Error Banner */}
+        <AnimatePresence>
+          {redeemError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              className="mb-3 p-3 rounded-2xl border border-red-200 bg-red-50 shadow-md"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                  <AlertCircle className="w-5 h-5 text-red-500" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-red-800 text-sm">{redeemError}</p>
+                </div>
+                <button
+                  onClick={() => setRedeemError(null)}
+                  className="text-red-400 hover:text-red-600 text-lg font-bold px-1"
+                  aria-label="Fermer"
+                >
+                  &times;
+                </button>
               </div>
             </motion.div>
           )}

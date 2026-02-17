@@ -5,72 +5,71 @@ import Link from 'next/link';
 import {
   CreditCard,
   Phone,
-  ArrowRight,
   Gift,
   ChevronRight,
   Search,
-  Loader2,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validateFrenchPhone } from '@/lib/utils';
-import type { LoyaltyCard, Merchant, Customer } from '@/types';
+import { validateFrenchPhone } from '@/lib/utils';
 
-interface CardWithMerchant extends LoyaltyCard {
-  merchant: Merchant;
+interface CardData {
+  merchant_id: string;
+  shop_name: string;
+  logo_url: string | null;
+  primary_color: string;
+  stamps_required: number;
+  current_stamps: number;
 }
 
 export default function CustomerDashboardPage() {
   const [step, setStep] = useState<'phone' | 'cards'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [cards, setCards] = useState<CardWithMerchant[]>([]);
+  const [firstName, setFirstName] = useState<string | null>(null);
+  const [cards, setCards] = useState<CardData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const savedPhone = localStorage.getItem('qarte_customer_phone');
-    if (savedPhone) {
-      setPhoneNumber(savedPhone);
-      fetchCards(savedPhone);
-    }
+    // Check auth via HttpOnly cookie
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/customers/me');
+        const data = await res.json();
+        if (data.authenticated && data.phone) {
+          setPhoneNumber(data.phone);
+          fetchCards();
+        }
+      } catch {
+        // Not authenticated
+      }
+    };
+    checkAuth();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const fetchCards = async (phone: string) => {
+  const fetchCards = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const formattedPhone = formatPhoneNumber(phone);
+      const res = await fetch('/api/customers/cards', { method: 'POST' });
 
-      const { data: customerData } = await supabase
-        .from('customers')
-        .select('*')
-        .eq('phone_number', formattedPhone)
-        .single();
-
-      if (!customerData) {
+      if (res.status === 401) {
         setError('Aucun compte trouvé avec ce numéro');
         setLoading(false);
         return;
       }
 
-      setCustomer(customerData);
-      localStorage.setItem('qarte_customer_phone', formattedPhone);
+      const data = await res.json();
 
-      const { data: cardsData } = await supabase
-        .from('loyalty_cards')
-        .select(`
-          *,
-          merchant:merchants (*)
-        `)
-        .eq('customer_id', customerData.id)
-        .order('updated_at', { ascending: false });
-
-      if (cardsData) {
-        setCards(cardsData as CardWithMerchant[]);
+      if (!data.found) {
+        setError('Aucun compte trouvé avec ce numéro');
+        setLoading(false);
+        return;
       }
 
+      setFirstName(data.first_name || null);
+      setCards(data.cards || []);
       setStep('cards');
     } catch {
       setError('Erreur lors de la recherche');
@@ -87,12 +86,35 @@ export default function CustomerDashboardPage() {
       return;
     }
 
-    await fetchCards(phoneNumber);
+    setLoading(true);
+    setError('');
+
+    try {
+      // Login via API (sets HttpOnly cookie)
+      const loginRes = await fetch('/api/customers/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone_number: phoneNumber }),
+      });
+
+      if (!loginRes.ok) {
+        const loginData = await loginRes.json();
+        setError(loginData.error || 'Aucun compte trouvé avec ce numéro');
+        setLoading(false);
+        return;
+      }
+
+      // Now fetch cards (cookie is set)
+      await fetchCards();
+    } catch {
+      setError('Erreur lors de la recherche');
+      setLoading(false);
+    }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('qarte_customer_phone');
-    setCustomer(null);
+  const handleLogout = async () => {
+    await fetch('/api/customers/logout', { method: 'POST' });
+    setFirstName(null);
     setCards([]);
     setPhoneNumber('');
     setStep('phone');
@@ -108,7 +130,7 @@ export default function CustomerDashboardPage() {
             </div>
             <span className="text-xl font-bold text-gray-900">Qarte</span>
           </Link>
-          {customer && (
+          {step === 'cards' && (
             <button
               onClick={handleLogout}
               className="text-sm text-gray-500 hover:text-gray-700"
@@ -169,7 +191,7 @@ export default function CustomerDashboardPage() {
           <div className="animate-fade-in">
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-gray-900">
-                Bonjour {customer?.first_name} !
+                Bonjour {firstName} !
               </h1>
               <p className="mt-1 text-gray-600">
                 {cards.length} carte{cards.length > 1 ? 's' : ''} de fidélité
@@ -180,45 +202,45 @@ export default function CustomerDashboardPage() {
               <div className="space-y-4">
                 {cards.map((card) => {
                   const isRewardReady =
-                    card.current_stamps >= card.merchant.stamps_required;
+                    card.current_stamps >= card.stamps_required;
                   const progress =
-                    (card.current_stamps / card.merchant.stamps_required) * 100;
+                    (card.current_stamps / card.stamps_required) * 100;
 
                   return (
                     <Link
-                      key={card.id}
-                      href={`/customer/card/${card.merchant.id}`}
+                      key={card.merchant_id}
+                      href={`/customer/card/${card.merchant_id}`}
                       className="block"
                     >
                       <div
                         className="p-4 bg-white rounded-2xl shadow-sm border border-gray-100 transition-all hover:shadow-md hover:border-gray-200"
                         style={{
                           borderLeftWidth: '4px',
-                          borderLeftColor: card.merchant.primary_color,
+                          borderLeftColor: card.primary_color,
                         }}
                       >
                         <div className="flex items-center gap-4">
-                          {card.merchant.logo_url ? (
+                          {card.logo_url ? (
                             <img
-                              src={card.merchant.logo_url}
-                              alt={card.merchant.shop_name}
+                              src={card.logo_url}
+                              alt={card.shop_name}
                               className="w-14 h-14 rounded-xl object-cover"
                             />
                           ) : (
                             <div
                               className="flex items-center justify-center w-14 h-14 rounded-xl text-white font-bold text-xl"
                               style={{
-                                backgroundColor: card.merchant.primary_color,
+                                backgroundColor: card.primary_color,
                               }}
                             >
-                              {card.merchant.shop_name.charAt(0)}
+                              {card.shop_name.charAt(0)}
                             </div>
                           )}
 
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
                               <h3 className="font-semibold text-gray-900 truncate">
-                                {card.merchant.shop_name}
+                                {card.shop_name}
                               </h3>
                               <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
                             </div>
@@ -227,7 +249,7 @@ export default function CustomerDashboardPage() {
                               <div className="flex items-center justify-between mb-1">
                                 <span className="text-sm text-gray-600">
                                   {card.current_stamps} /{' '}
-                                  {card.merchant.stamps_required}
+                                  {card.stamps_required}
                                 </span>
                                 {isRewardReady && (
                                   <span className="flex items-center gap-1 text-xs font-medium text-green-600">
@@ -241,7 +263,7 @@ export default function CustomerDashboardPage() {
                                   className="h-full rounded-full transition-all"
                                   style={{
                                     width: `${Math.min(progress, 100)}%`,
-                                    backgroundColor: card.merchant.primary_color,
+                                    backgroundColor: card.primary_color,
                                   }}
                                 />
                               </div>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyAdminAuth } from '@/lib/admin-auth';
 
-// GET - Récupérer les stats d'un merchant (incluant push subscribers)
+// GET - Récupérer toutes les données d'un merchant (H5: service_role pour bypasser RLS)
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -22,15 +22,20 @@ export async function GET(
   }
 
   try {
-    // Get merchant with user_id to fetch email
-    const { data: merchant } = await supabase
+    // Get full merchant data
+    const { data: merchant, error: merchantError } = await supabase
       .from('merchants')
-      .select('user_id')
+      .select('*')
       .eq('id', merchantId)
       .single();
 
+    if (merchantError || !merchant) {
+      return NextResponse.json({ error: 'Merchant introuvable' }, { status: 404 });
+    }
+
+    // Fetch user email
     let userEmail: string | null = null;
-    if (merchant?.user_id) {
+    if (merchant.user_id) {
       try {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         userEmail = userData?.user?.email || null;
@@ -39,19 +44,39 @@ export async function GET(
       }
     }
 
-    // Get loyalty cards with customer phone numbers
-    const { data: loyaltyCards } = await supabase
-      .from('loyalty_cards')
-      .select('customer_id, customers!inner(id, phone_number)')
-      .eq('merchant_id', merchantId);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    // Parallel: counts + member programs + email trackings + push stats
+    const [
+      totalCustomersRes,
+      activeCustomersRes,
+      totalVisitsRes,
+      totalRedemptionsRes,
+      pendingPointsRes,
+      memberProgramsRes,
+      emailTrackingsRes,
+      pushSentRes,
+      loyaltyCardsRes,
+    ] = await Promise.all([
+      supabase.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabase.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
+      supabase.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabase.from('redemptions').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabase.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('status', 'pending'),
+      supabase.from('member_programs').select('*, member_cards(count)').eq('merchant_id', merchantId).order('created_at', { ascending: false }),
+      supabase.from('pending_email_tracking').select('reminder_day, sent_at').eq('merchant_id', merchantId).order('sent_at', { ascending: false }),
+      supabase.from('push_history').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabase.from('loyalty_cards').select('customer_id, customers!inner(id, phone_number)').eq('merchant_id', merchantId),
+    ]);
+
+    // Compute push subscribers (same logic as before)
     let pushSubscribers = 0;
+    const loyaltyCards = loyaltyCardsRes.data;
 
     if (loyaltyCards && loyaltyCards.length > 0) {
-      // Build a map of phone numbers to merchant customer IDs
       const phoneToCustomerId = new Map<string, string>();
       for (const card of loyaltyCards) {
-        // Supabase returns customers as object (not array) with !inner join
         const customer = card.customers as unknown as { id: string; phone_number: string };
         if (customer?.phone_number) {
           phoneToCustomerId.set(customer.phone_number, customer.id);
@@ -61,7 +86,6 @@ export async function GET(
       const phoneNumbers = [...phoneToCustomerId.keys()];
 
       if (phoneNumbers.length > 0) {
-        // Find ALL customer IDs with these phone numbers (cross-merchant)
         const { data: allCustomersWithPhone } = await supabase
           .from('customers')
           .select('id, phone_number')
@@ -69,21 +93,16 @@ export async function GET(
 
         if (allCustomersWithPhone && allCustomersWithPhone.length > 0) {
           const allCustomerIds = allCustomersWithPhone.map(c => c.id);
-
-          // Get push subscriptions for any of these customer IDs
           const { data: subscriptions } = await supabase
             .from('push_subscriptions')
             .select('customer_id')
             .in('customer_id', allCustomerIds);
 
           if (subscriptions) {
-            // Build map of customer_id -> phone
             const customerIdToPhone = new Map<string, string>();
             for (const c of allCustomersWithPhone) {
               customerIdToPhone.set(c.id, c.phone_number);
             }
-
-            // Count unique phones with push subscriptions
             const phonesWithPush = new Set<string>();
             for (const sub of subscriptions) {
               const phone = customerIdToPhone.get(sub.customer_id);
@@ -97,16 +116,20 @@ export async function GET(
       }
     }
 
-    // Get push history count
-    const { count: pushSent } = await supabase
-      .from('push_history')
-      .select('*', { count: 'exact', head: true })
-      .eq('merchant_id', merchantId);
-
     return NextResponse.json({
-      pushSubscribers,
-      pushSent: pushSent || 0,
+      merchant,
       userEmail,
+      stats: {
+        totalCustomers: totalCustomersRes.count || 0,
+        activeCustomers: activeCustomersRes.count || 0,
+        totalVisits: totalVisitsRes.count || 0,
+        totalRedemptions: totalRedemptionsRes.count || 0,
+        pendingPoints: pendingPointsRes.count || 0,
+        pushSubscribers,
+        pushSent: pushSentRes.count || 0,
+      },
+      memberPrograms: memberProgramsRes.data || [],
+      emailTrackings: emailTrackingsRes.data || [],
     });
   } catch (error) {
     console.error('Admin merchant stats error:', error);

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { getAuthenticatedPhone } from '@/lib/customer-auth';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -8,8 +9,8 @@ export const revalidate = 0;
 
 const supabaseAdmin = getSupabaseAdmin();
 
-// GET: Récupérer toutes les cartes de fidélité d'un client par téléphone
-export async function GET(request: NextRequest) {
+// POST: Récupérer toutes les cartes de fidélité d'un client (auth via cookie)
+export async function POST(request: NextRequest) {
   try {
     // Rate limit: 10 req/min par IP pour bloquer le bruteforce
     const ip = getClientIP(request);
@@ -18,13 +19,11 @@ export async function GET(request: NextRequest) {
       return rateLimitResponse(rateLimit.resetTime);
     }
 
-    const { searchParams } = new URL(request.url);
-    const phone = searchParams.get('phone');
-
+    const phone = getAuthenticatedPhone(request);
     if (!phone) {
       return NextResponse.json(
-        { error: 'Numéro de téléphone requis' },
-        { status: 400 }
+        { error: 'Non authentifié' },
+        { status: 401 }
       );
     }
 
@@ -134,7 +133,8 @@ export async function GET(request: NextRequest) {
         };
       });
 
-    const response = NextResponse.json({ cards, found: true });
+    const firstName = customers[0]?.first_name || null;
+    const response = NextResponse.json({ cards, found: true, phone, first_name: firstName });
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     return response;
   } catch (error) {

@@ -147,9 +147,9 @@ export default function ProgramPage() {
   // Auto-scroll to social section when coming from onboarding checklist
   useEffect(() => {
     if (searchParams.get('section') === 'social' && !loading) {
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         document.getElementById('social-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 300);
+      });
     }
   }, [searchParams, loading]);
 
@@ -314,8 +314,9 @@ export default function ProgramPage() {
           tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
           tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null,
         };
+        const { stripe_subscription_id, stripe_customer_id, scan_code, user_id, ...safeMerchant } = updatedMerchant;
         localStorage.setItem('qarte_merchant_cache', JSON.stringify({
-          data: updatedMerchant,
+          data: safeMerchant,
           timestamp: Date.now(),
         }));
       } catch {}

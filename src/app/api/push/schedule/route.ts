@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import { containsForbiddenWords } from '@/lib/content-moderation';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -66,6 +67,15 @@ export async function POST(request: NextRequest) {
 
     if (!merchantId || !title || !messageBody || !scheduledTime || !scheduledDate) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Server-side content moderation (C8)
+    const forbiddenWord = containsForbiddenWords(`${title} ${messageBody}`);
+    if (forbiddenWord) {
+      return NextResponse.json(
+        { error: `Contenu interdit détecté : "${forbiddenWord}"` },
+        { status: 400 }
+      );
     }
 
     // SECURITY: Verify user owns this merchant

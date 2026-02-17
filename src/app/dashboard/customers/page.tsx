@@ -28,6 +28,24 @@ interface CustomerWithCard extends LoyaltyCard {
   customer: Customer;
 }
 
+function getCardBadge(
+  isTier1Ready: boolean,
+  isTier2Ready: boolean,
+  tier2Enabled: boolean,
+  tier1Redeemed: boolean,
+): { text: string; color: string } | null {
+  if (tier2Enabled) {
+    if (isTier2Ready) return { text: 'Palier 2 prêt', color: 'text-violet-700 bg-violet-100' };
+    if (isTier1Ready) {
+      if (tier1Redeemed) return { text: 'Palier 1 utilisé', color: 'text-gray-500 bg-gray-100' };
+      return { text: 'Palier 1 prêt', color: 'text-emerald-700 bg-emerald-100' };
+    }
+  } else if (isTier1Ready) {
+    return { text: 'Récompense prête', color: 'text-green-700 bg-green-100' };
+  }
+  return null;
+}
+
 export default function CustomersPage() {
   const { merchant, loading: merchantLoading } = useMerchant();
   const supabase = getSupabase();
@@ -40,6 +58,7 @@ export default function CustomersPage() {
   const [subscriberIds, setSubscriberIds] = useState<string[]>([]);
   const [filterPushOnly, setFilterPushOnly] = useState(false);
   const [tier1RedeemedCards, setTier1RedeemedCards] = useState<Set<string>>(new Set());
+  const [displayCount, setDisplayCount] = useState(50);
 
   // Create customer modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -203,6 +222,7 @@ export default function CustomersPage() {
     }
 
     setFilteredCustomers(filtered);
+    setDisplayCount(50); // Reset pagination on filter change
   }, [searchQuery, customers, filterPushOnly, subscriberIds]);
 
   if (loading || merchantLoading) {
@@ -316,31 +336,13 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filteredCustomers.map((card) => {
+                {filteredCustomers.slice(0, displayCount).map((card) => {
                   const isTier1Ready = card.current_stamps >= (merchant?.stamps_required || 10);
                   const isTier2Ready = merchant?.tier2_enabled && merchant?.tier2_stamps_required && card.current_stamps >= merchant.tier2_stamps_required;
                   const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
                   const isPushSubscriber = subscriberIds.includes(card.customer_id);
 
-                  // Determine badge to show
-                  const getBadge = () => {
-                    if (merchant?.tier2_enabled) {
-                      if (isTier2Ready) {
-                        return { text: 'Palier 2 prêt', color: 'text-violet-700 bg-violet-100' };
-                      }
-                      if (isTier1Ready) {
-                        // Check if tier 1 was already redeemed in this cycle
-                        if (tier1RedeemedCards.has(card.id)) {
-                          return { text: 'Palier 1 utilisé', color: 'text-gray-500 bg-gray-100' };
-                        }
-                        return { text: 'Palier 1 prêt', color: 'text-emerald-700 bg-emerald-100' };
-                      }
-                    } else if (isTier1Ready) {
-                      return { text: 'Récompense prête', color: 'text-green-700 bg-green-100' };
-                    }
-                    return null;
-                  };
-                  const badge = getBadge();
+                  const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id));
 
                   return (
                     <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200">
@@ -455,6 +457,16 @@ export default function CustomersPage() {
                 })}
               </tbody>
             </table>
+            {filteredCustomers.length > displayCount && (
+              <div className="flex justify-center mt-6">
+                <button
+                  onClick={() => setDisplayCount(prev => prev + 50)}
+                  className="px-6 py-2.5 text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-colors"
+                >
+                  Charger plus ({filteredCustomers.length - displayCount} restant{filteredCustomers.length - displayCount > 1 ? 's' : ''})
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-gray-500">

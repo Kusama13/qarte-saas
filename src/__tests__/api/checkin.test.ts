@@ -14,9 +14,10 @@ let testIpCounter = 0;
 
 // Mock the supabase module before importing the route
 vi.mock('@/lib/supabase', async () => {
-  const { mockSupabaseAdmin } = await import('../mocks/supabase');
+  const { mockSupabaseAdmin, mockSupabaseWithAuth } = await import('../mocks/supabase');
   return {
     getSupabaseAdmin: () => mockSupabaseAdmin,
+    createRouteHandlerSupabaseClient: async () => mockSupabaseWithAuth,
     supabase: mockSupabaseAdmin,
   };
 });
@@ -25,6 +26,8 @@ vi.mock('@/lib/supabase', async () => {
 vi.mock('@/lib/utils', () => ({
   formatPhoneNumber: (phone: string) => phone.replace(/\s/g, ''),
   validateFrenchPhone: (phone: string) => /^0[67]\d{8}$/.test(phone),
+  validatePhone: (phone: string) => /^0[67]\d{8}$/.test(phone),
+  generateReferralCode: () => 'REF' + Math.random().toString(36).slice(2, 10).toUpperCase(),
   getTodayInParis: () => new Date().toISOString().split('T')[0],
   getTrialStatus: () => ({ isInGracePeriod: false, isFullyExpired: false }),
 }));
@@ -337,11 +340,10 @@ describe('/api/checkin', () => {
     });
   });
 
-  describe('Article mode', () => {
-    it('should add multiple points in article mode', async () => {
+  describe('Standard checkin', () => {
+    it('should always add 1 point per checkin', async () => {
       const merchant = createTestMerchant({
         scan_code: 'TEST',
-        loyalty_mode: 'article',
       });
 
       const customer = createTestCustomer({
@@ -358,15 +360,14 @@ describe('/api/checkin', () => {
       const request = createMockRequest({
         scan_code: 'TEST',
         phone_number: '0612345678',
-        points_to_add: 3,
       });
 
       const response = await POST(request);
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data.current_stamps).toBe(5); // 2 + 3
-      expect(data.points_earned).toBe(3);
+      expect(data.current_stamps).toBe(3); // 2 + 1
+      expect(data.points_earned).toBe(1);
     });
   });
 });

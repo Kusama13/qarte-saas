@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
       logger.debug('Activating subscription for merchant:', merchantId);
 
-      // Mettre à jour le statut
+      // Idempotent: only update if not already active (H11)
       const { data: merchant } = await supabase
         .from('merchants')
         .update({
@@ -57,34 +57,34 @@ export async function POST(request: Request) {
           updated_at: new Date().toISOString(),
         })
         .eq('id', merchantId)
+        .neq('subscription_status', 'active')
         .select('shop_name, user_id, trial_ends_at')
         .single();
 
       if (!merchant) {
-        logger.error('Webhook checkout.session.completed: merchant not found for id:', merchantId);
+        // Either merchant not found or already active — skip email
+        logger.debug('Webhook checkout.session.completed: merchant not found or already active for id:', merchantId);
         break;
       }
 
       // Envoyer l'email de confirmation (await pour serverless)
-      if (merchant) {
-        const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
-        if (userData?.user?.email) {
-          // Date du prochain prélèvement = fin de l'essai si encore actif
-          let nextBillingDate: string | undefined;
-          if (merchant.trial_ends_at) {
-            const trialEnd = new Date(merchant.trial_ends_at);
-            if (trialEnd > new Date()) {
-              nextBillingDate = trialEnd.toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              });
-            }
+      const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+      if (userData?.user?.email) {
+        // Date du prochain prélèvement = fin de l'essai si encore actif
+        let nextBillingDate: string | undefined;
+        if (merchant.trial_ends_at) {
+          const trialEnd = new Date(merchant.trial_ends_at);
+          if (trialEnd > new Date()) {
+            nextBillingDate = trialEnd.toLocaleDateString('fr-FR', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            });
           }
-          await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate).catch((err) => {
-            logger.error('Failed to send subscription email', err);
-          });
         }
+        await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate).catch((err) => {
+          logger.error('Failed to send subscription email', err);
+        });
       }
 
       break;

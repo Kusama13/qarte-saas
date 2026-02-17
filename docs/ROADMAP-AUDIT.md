@@ -109,42 +109,72 @@ Signup (email+password)
 
 ---
 
-# PARTIE 2 : AUDIT — Etat au 10 fevrier 2026
+# PARTIE 2 : AUDIT — Etat au 18 fevrier 2026
 
-## 2.1 Problemes restants
+## 2.0 Audit global (17-18 fev) — Resume
 
-### Securite
+Audit complet du codebase (61 routes API, 11 pages dashboard, 3 crons, 37 migrations).
+4 phases executees : simplification code, securite, medium/low fixes, backlog.
+
+### Phase 1 — Simplification (FAIT)
+- [x] C6 : Cron morning split en sections isolees (chaque section son try/catch)
+- [x] M15 : Reactivation cron unifie dans morning
+- [x] H8 : marketing/page.tsx split en composants (SubscriberRing, PushHistoryList, BirthdayGiftConfig, etc.)
+- [x] H9 : members/page.tsx split en composants + hooks
+- [x] H19+H20 : Admin merchants refactor (MerchantRow, constante ADMIN_CONTACT_NAME)
+- [x] H17 : Landing page RSC (retrait 'use client', ClientShell wrapper)
+
+### Phase 2 — Securite (FAIT)
+- [x] C1+C11 : RLS restrictives sur 7 tables (migration 038)
+- [x] C2+C3 : Cookie customer HttpOnly + Secure + SameSite via API route
+- [x] C4+C5 : Register ne retourne plus le nom, phone en POST
+- [x] C8 : Moderation contenu push server-side
+- [x] C12 : Merchant creation auth obligatoire (Bearer token requis)
+- [x] H2 : `crypto.getRandomValues()` pour scan/referral codes
+- [x] H3 : `alert()` remplace par Toast inline
+- [x] H4 : Debug info (phone) supprime des reponses API
+- [x] H7 : localStorage cache filtre (pas de stripe_subscription_id ni scan_code)
+- [x] H10 : PATCH admin whitelist champs (Zod validation)
+- [x] H11 : Stripe webhook idempotent (skip si deja active)
+
+### Phase 3 — Medium & Low (FAIT)
+- [x] M10 : Messages d'accueil neutres (pas genres)
+- [x] M11 : DEMO_MERCHANTS extrait dans constants
+- [x] M14 : IP hash salt fail si non defini
+- [x] M1-M9, M16, M18-M20 : Quick fixes dashboard (polling backoff, clipboard, useMemo, etc.)
+- [x] M12+M13 : Structured data URLs dynamiques, aggregateRating supprime
+- [x] H15 : Migration 039 schema drift fix (customers.merchant_id, loyalty_cards.rewards_earned)
+- [x] H16 : Tests adjust-points (14 tests) + stripe-webhook (12 tests) → 55/55 tests
+- [x] L1-L12 : Backlog LOW/INFO (redirect useEffect, aria-labels, SVG accessible, CSV Firefox, etc.)
+
+### Migrations SQL appliquees
+- 038 : Restrict RLS policies (C1+C11)
+- 039 : Schema drift fix (H15)
+
+## 2.1 Problemes restants — Phase 4 (non testable en local)
+
+### Securite / Infrastructure
+
+| # | Severite | Probleme | Fichier | Action | Pre-requis |
+|---|----------|----------|---------|--------|------------|
+| H1 | HIGH | Rate limiting in-memory (Map) ne persiste pas entre cold starts serverless | `src/lib/rate-limit.ts` | Remplacer par `@upstash/ratelimit` (Redis serverless) | Compte Upstash (~0€/mois), env vars `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` |
+| H12 | HIGH | Push envoyees toutes en parallele (Promise.allSettled), timeout si 10,000+ abonnes | `api/cron/morning/route.ts`, `cron/evening/route.ts` | Batch de 50-100 avec pause entre chaque | Vrais abonnes push pour tester la delivrance |
+| H13 | HIGH | Birthday push N+1 queries (1 query DB par client anniversaire) | `api/cron/morning/route.ts` | Batch les queries push_subscriptions par customer_ids | Vrais abonnes push |
+| H14 | HIGH | `logger.info()` est un no-op en prod, resultats crons invisibles | `src/lib/logger.ts` | Activer info en prod, logger stack traces completes | Verification dans logs Vercel apres deploiement |
+| M17 | MEDIUM | Google Search Console non configure (meta tag commente) | `src/app/layout.tsx` | Ajouter code de verification Google | Acces Google Search Console + deploiement |
+
+### Qualite code (backlog, non urgent)
 
 | # | Severite | Probleme | Fichier | Action |
 |---|----------|----------|---------|--------|
-| 1 | MEDIUM | `getSession()` dans pages admin (ne valide pas le JWT) | `admin/leads/page.tsx`, `admin/page.tsx` | Remplacer par `getUser()` |
-| 2 | LOW | Rate limiting in-memory (Map) ne persiste pas entre cold starts | `api/checkin/route.ts` | OK pour le moment, passer a Redis si besoin |
-
-### Qualite code
-
-| # | Severite | Probleme | Fichier | Action |
-|---|----------|----------|---------|--------|
-| 1 | HIGH | Fichier ~1300 lignes (optimise: useMemo, fonctions pures, composants loyalty extraits) | `customer/card/[merchantId]/page.tsx` | Splitter davantage |
-| 2 | HIGH | Fichier ~1200 lignes (referral flow ajoute) | `scan/[code]/page.tsx` | Splitter en composants |
-| 3 | MEDIUM | Fichier 573 lignes | `admin/merchants/page.tsx` | Acceptable, surveiller |
-
-### Marketing
-
-| # | Severite | Probleme | Action |
-|---|----------|----------|--------|
-| 1 | ~~MEDIUM~~ | ~~Social proof "150+ instituts, 12,000+ clientes"~~ | **✅ RETIRE** — faux chiffres supprimes du hero |
-| 2 | ~~LOW~~ | ~~Structured data SEO manquant~~ | **✅ FAIT** — JSON-LD Organization + SoftwareApplication dans layout.tsx |
-| 3 | LOW | Framer Motion dans 12 composants landing (non lazy-loaded) | Dynamic import below-fold |
-
-### Infrastructure
-
-| # | Severite | Probleme | Action |
-|---|----------|----------|--------|
-| 1 | LOW | Pas de monitoring erreurs (Sentry) | Ajouter quand trafic augmente |
+| 1 | MEDIUM | Fichier ~1300 lignes | `customer/card/[merchantId]/page.tsx` | Splitter davantage |
+| 2 | MEDIUM | Fichier ~1200 lignes | `scan/[code]/page.tsx` | Splitter en composants |
+| 3 | LOW | Framer Motion dans 12 composants landing (non lazy-loaded) | Composants landing | Dynamic import below-fold |
+| 4 | LOW | Pas de monitoring erreurs (Sentry) | — | Ajouter quand trafic augmente |
 
 ## 2.2 Problemes resolus
 
-Tous ces points ont ete verifies dans le code au 10/02/2026 :
+Tous ces points ont ete verifies dans le code au 18/02/2026 :
 
 | Probleme | Resolution |
 |----------|-----------|
@@ -169,6 +199,41 @@ Tous ces points ont ete verifies dans le code au 10/02/2026 :
 | Rate limiting manquant register/preview | Rate limit ajoute (15-30/min) |
 | Offer duration cap incoherent (3 vs 30) | `Math.min(30, ...)` API + client |
 | Cookie decode inconsistency cards page | `decodeURIComponent` ajoute |
+| RLS trop permissives 7 tables (C1+C11) | Migration 038 : policies scoped auth.uid() + service_role |
+| Phone = seule auth client IDOR (C2) | Token signe cookie HttpOnly Secure SameSite |
+| Cookie customer sans flags (C3) | Set-Cookie server-side via API route |
+| Register expose nom par phone (C4) | Ne retourne que `{ exists }`, exige merchant_id |
+| Phone en query string GET (C5) | Appels passes en POST, phone dans le body |
+| Cron morning monolithique (C6) | Chaque section son try/catch, execution independante |
+| Pas d'idempotency emails cron (C7) | Table email_tracking, check avant envoi |
+| Moderation push client-only (C8) | Check `containsForbiddenWords()` server-side |
+| merchants-data charge ALL visits (C9) | Filtre `.gte('visited_at', thirtyDaysAgo)` |
+| listUsers cap 1000 silencieux (C10) | Boucle paginee `while (hasMore)` |
+| Push subscriptions RLS full public (C11) | Policies service_role only (migration 038) |
+| Merchant creation sans auth (C12) | Bearer token obligatoire, user_id === token.id |
+| Scan/referral codes Math.random (H2) | `crypto.getRandomValues()` |
+| alert() dans code customer-facing (H3) | Remplace par Toast inline |
+| Debug info phone expose (H4) | Champ debug supprime des reponses API |
+| Admin detail page anon client (H5) | Routes via API protegees verifyAdminAuth() |
+| Realtime refetch ALL (H6) | Debounce 30s sur callback realtime |
+| localStorage cache sensible (H7) | Filtre stripe_subscription_id, scan_code |
+| marketing/page.tsx 1724 lignes (H8) | Split en composants (SubscriberRing, PushHistoryList, etc.) |
+| members/page.tsx 1283 lignes (H9) | Split en composants + hooks custom |
+| PATCH admin champs arbitraires (H10) | Schema Zod whitelist champs autorises |
+| Stripe webhook pas idempotent (H11) | Check `subscription_status !== 'active'` avant email |
+| Schema drift colonnes manquantes (H15) | Migration 039 : customers.merchant_id, loyalty_cards.rewards_earned |
+| Test coverage 3 routes sur 61 (H16) | +2 suites (adjust-points 14 tests, stripe-webhook 12 tests) → 55/55 |
+| Landing 'use client' bloque RSC (H17) | Retrait use client, ClientShell wrapper analytics |
+| Admin merchants duplication (H19+H20) | MerchantRow composant, ADMIN_CONTACT_NAME constante |
+| Cron reactivation duplique (M15) | Unifie dans morning cron |
+| Redirect flash layout (L1) | router.push dans useEffect |
+| aria-label boutons icon-only (L2) | aria-label ajoutes |
+| SVG ring sans accessible (L3) | role="img" + aria-label dynamique |
+| CSV anchor Firefox (L6) | appendChild avant click |
+| Error referrals save (L7) | State error + affichage inline |
+| filteredCustomers non memoized (L8) | useMemo |
+| Swipe threshold magic number (L11) | Constante nommee SWIPE_CLOSE_THRESHOLD |
+| listUsers 500 cap morning cron (L12) | Boucle paginee while(hasMore) |
 
 ---
 
@@ -937,5 +1002,5 @@ SHIELD (points en attente)
 
 ---
 
-*Derniere mise a jour : 17 fevrier 2026*
-*Statuts verifies contre le code source le 17/02/2026. no_contact/admin_notes, WhatsApp admin, signup refonte, checklist fixes.*
+*Derniere mise a jour : 18 fevrier 2026*
+*Audit global complete (Phases 1-3). Migrations 038+039 appliquees. 55/55 tests. Phase 4 (Upstash, push batching, logger, Search Console) en backlog.*
