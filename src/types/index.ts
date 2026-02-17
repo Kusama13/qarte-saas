@@ -78,6 +78,9 @@ export interface Merchant {
   referral_program_enabled: boolean;
   referral_reward_referrer: string | null;
   referral_reward_referred: string | null;
+  // Birthday gift
+  birthday_gift_enabled: boolean;
+  birthday_gift_description: string | null;
   created_at: string;
   updated_at: string;
   last_seen_at: string | null;
@@ -91,6 +94,8 @@ export interface Customer {
   phone_number: string;
   first_name: string;
   last_name: string | null;
+  birth_month: number | null;
+  birth_day: number | null;
   created_at: string;
 }
 
@@ -114,6 +119,7 @@ export interface Voucher {
   merchant_id: string;
   customer_id: string;
   reward_description: string;
+  source: 'birthday' | 'referral' | 'redemption' | null;
   is_used: boolean;
   used_at: string | null;
   created_at: string;

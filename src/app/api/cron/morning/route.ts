@@ -102,6 +102,7 @@ export async function GET(request: NextRequest) {
     gracePeriodSetup: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     pendingReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     scheduledPush: { processed: 0, sent: 0, errors: 0 },
+    birthdayVouchers: { processed: 0, created: 0, skipped: 0, errors: 0 },
   };
 
   // Track merchants who already received a trial email this run (avoid double email with program reminders)
@@ -1475,6 +1476,148 @@ export async function GET(request: NextRequest) {
       } catch {
         results.scheduledPush.errors++;
         await supabase.from('scheduled_push').update({ status: 'failed' }).eq('id', push.id);
+      }
+    }
+
+    // ==================== BIRTHDAY VOUCHERS (J-3) ====================
+    {
+      const now = new Date();
+      const targetDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+      const targetMonth = targetDate.getMonth() + 1;
+      const targetDay = targetDate.getDate();
+
+      const { data: birthdayMerchants } = await supabase
+        .from('merchants')
+        .select('id, shop_name, birthday_gift_description')
+        .eq('birthday_gift_enabled', true)
+        .neq('no_contact', true)
+        .in('subscription_status', ['trial', 'active']);
+
+      if (birthdayMerchants && birthdayMerchants.length > 0) {
+        const merchantIds = birthdayMerchants.map(m => m.id);
+        const merchantMap = new Map(birthdayMerchants.map(m => [m.id, m]));
+
+        const { data: birthdayCustomers } = await supabase
+          .from('customers')
+          .select('id, merchant_id, first_name, phone_number')
+          .in('merchant_id', merchantIds)
+          .eq('birth_month', targetMonth)
+          .eq('birth_day', targetDay);
+
+        if (birthdayCustomers && birthdayCustomers.length > 0) {
+          results.birthdayVouchers.processed = birthdayCustomers.length;
+
+          const { data: loyaltyCards } = await supabase
+            .from('loyalty_cards')
+            .select('id, customer_id, merchant_id')
+            .in('customer_id', birthdayCustomers.map(c => c.id))
+            .in('merchant_id', merchantIds);
+
+          const cardMap = new Map<string, string>();
+          for (const lc of loyaltyCards || []) {
+            cardMap.set(`${lc.customer_id}:${lc.merchant_id}`, lc.id);
+          }
+
+          // Dedup: check existing birthday vouchers this year
+          const currentYear = now.getFullYear();
+          const yearStart = new Date(currentYear, 0, 1).toISOString();
+          const yearEnd = new Date(currentYear + 1, 0, 1).toISOString();
+
+          const { data: existingBirthdayVouchers } = await supabase
+            .from('vouchers')
+            .select('customer_id, merchant_id')
+            .eq('source', 'birthday')
+            .gte('created_at', yearStart)
+            .lt('created_at', yearEnd)
+            .in('customer_id', birthdayCustomers.map(c => c.id));
+
+          const alreadyHasVoucher = new Set(
+            (existingBirthdayVouchers || []).map(v => `${v.customer_id}:${v.merchant_id}`)
+          );
+
+          for (const customer of birthdayCustomers) {
+            const key = `${customer.id}:${customer.merchant_id}`;
+            const bMerchant = merchantMap.get(customer.merchant_id);
+            const loyaltyCardId = cardMap.get(key);
+
+            if (!bMerchant || !loyaltyCardId) {
+              results.birthdayVouchers.skipped++;
+              continue;
+            }
+
+            if (alreadyHasVoucher.has(key)) {
+              results.birthdayVouchers.skipped++;
+              continue;
+            }
+
+            try {
+              const expiresAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+              const { error: voucherError } = await supabase
+                .from('vouchers')
+                .insert({
+                  loyalty_card_id: loyaltyCardId,
+                  merchant_id: customer.merchant_id,
+                  customer_id: customer.id,
+                  reward_description: bMerchant.birthday_gift_description || 'Cadeau anniversaire',
+                  source: 'birthday',
+                  expires_at: expiresAt.toISOString(),
+                });
+
+              if (voucherError) {
+                results.birthdayVouchers.errors++;
+                continue;
+              }
+
+              results.birthdayVouchers.created++;
+
+              // Push notification (fire-and-forget)
+              if (vapidPublicKey && vapidPrivateKey) {
+                try {
+                  const { data: allCustIds } = await supabase
+                    .from('customers')
+                    .select('id')
+                    .eq('phone_number', customer.phone_number);
+
+                  const custIds = (allCustIds || []).map(c => c.id);
+                  if (custIds.length > 0) {
+                    const { data: pushSubs } = await supabase
+                      .from('push_subscriptions')
+                      .select('endpoint, p256dh, auth')
+                      .in('customer_id', custIds);
+
+                    if (pushSubs && pushSubs.length > 0) {
+                      await Promise.allSettled(
+                        pushSubs.map(async (sub) => {
+                          try {
+                            await webpush.sendNotification(
+                              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+                              JSON.stringify({
+                                title: bMerchant.shop_name,
+                                body: `Joyeux anniversaire bientôt ! 🎂 ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
+                                icon: '/icon-192.png',
+                                url: `/customer/card/${customer.merchant_id}`,
+                                tag: 'qarte-birthday',
+                              })
+                            );
+                          } catch (pushErr: unknown) {
+                            const webPushError = pushErr as { statusCode?: number };
+                            if (webPushError?.statusCode === 404 || webPushError?.statusCode === 410) {
+                              await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
+                            }
+                          }
+                        })
+                      );
+                    }
+                  }
+                } catch {
+                  // Never let push failure crash the cron
+                }
+              }
+            } catch {
+              results.birthdayVouchers.errors++;
+            }
+          }
+        }
       }
     }
 

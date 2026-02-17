@@ -46,6 +46,8 @@ export default function CustomersPage() {
   const [newFirstName, setNewFirstName] = useState('');
   const [newLastName, setNewLastName] = useState('');
   const [newPhone, setNewPhone] = useState('');
+  const [newBirthDay, setNewBirthDay] = useState('');
+  const [newBirthMonth, setNewBirthMonth] = useState('');
   const [creatingCustomer, setCreatingCustomer] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -147,6 +149,8 @@ export default function CustomersPage() {
           first_name: newFirstName.trim(),
           last_name: newLastName.trim() || null,
           phone_number: formatPhoneNumber(newPhone.trim(), merchant.country || 'FR'),
+          birth_month: newBirthMonth ? parseInt(newBirthMonth) : null,
+          birth_day: newBirthDay ? parseInt(newBirthDay) : null,
         }),
       });
 
@@ -163,6 +167,8 @@ export default function CustomersPage() {
       setNewFirstName('');
       setNewLastName('');
       setNewPhone('');
+      setNewBirthDay('');
+      setNewBirthMonth('');
       setCreateError(null);
       await fetchData();
     } catch (error) {
@@ -521,6 +527,8 @@ export default function CustomersPage() {
           tier2StampsRequired={merchant.tier2_stamps_required || undefined}
           tier2RewardDescription={merchant.tier2_reward_description || undefined}
           rewardDescription={merchant.reward_description || undefined}
+          birthMonth={selectedCustomer.customer?.birth_month}
+          birthDay={selectedCustomer.customer?.birth_day}
         />
       )}
 
@@ -565,6 +573,31 @@ export default function CustomersPage() {
             value={newPhone}
             onChange={(e) => setNewPhone(e.target.value)}
           />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Anniversaire (optionnel)</label>
+            <div className="flex gap-2">
+              <select
+                value={newBirthDay}
+                onChange={(e) => setNewBirthDay(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              >
+                <option value="">Jour</option>
+                {Array.from({ length: 31 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>{i + 1}</option>
+                ))}
+              </select>
+              <select
+                value={newBirthMonth}
+                onChange={(e) => setNewBirthMonth(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+              >
+                <option value="">Mois</option>
+                {['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((m, i) => (
+                  <option key={i + 1} value={i + 1}>{m}</option>
+                ))}
+              </select>
+            </div>
+          </div>
           <Button
             onClick={handleCreateCustomer}
             disabled={!newFirstName.trim() || !newPhone.trim() || creatingCustomer}

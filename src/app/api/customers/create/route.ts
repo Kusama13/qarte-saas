@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { first_name, last_name, phone_number } = await request.json();
+    const { first_name, last_name, phone_number, birth_month, birth_day } = await request.json();
 
     if (!first_name?.trim() || !phone_number?.trim()) {
       return NextResponse.json(
@@ -81,6 +81,8 @@ export async function POST(request: NextRequest) {
           last_name: last_name?.trim() || null,
           phone_number: phoneFormatted,
           merchant_id: merchant.id,
+          birth_month: birth_month ? parseInt(birth_month) : null,
+          birth_day: birth_day ? parseInt(birth_day) : null,
         })
         .select()
         .single();

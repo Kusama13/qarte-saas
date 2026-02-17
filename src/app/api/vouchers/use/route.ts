@@ -82,40 +82,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Récompense déjà utilisée' }, { status: 409 });
     }
 
-    // 3. Bonus +1 stamp
+    // 3. Bonus +1 stamp (skip for birthday vouchers)
     let bonusVisitId: string | null = null;
     let newStamps: number | null = null;
+    const isBirthdayVoucher = voucher.source === 'birthday';
 
-    const { data: filleulCard } = await supabaseAdmin
-      .from('loyalty_cards')
-      .select('id, current_stamps')
-      .eq('id', voucher.loyalty_card_id)
-      .single();
-
-    if (filleulCard) {
-      const { data: bonusVisit } = await supabaseAdmin
-        .from('visits')
-        .insert({
-          loyalty_card_id: filleulCard.id,
-          merchant_id: voucher.merchant_id,
-          customer_id: voucher.customer_id,
-          points_earned: 1,
-          status: 'confirmed',
-          flagged_reason: 'bonus_parrainage',
-        })
-        .select('id')
+    if (!isBirthdayVoucher) {
+      const { data: filleulCard } = await supabaseAdmin
+        .from('loyalty_cards')
+        .select('id, current_stamps')
+        .eq('id', voucher.loyalty_card_id)
         .single();
 
-      bonusVisitId = bonusVisit?.id || null;
+      if (filleulCard) {
+        const { data: bonusVisit } = await supabaseAdmin
+          .from('visits')
+          .insert({
+            loyalty_card_id: filleulCard.id,
+            merchant_id: voucher.merchant_id,
+            customer_id: voucher.customer_id,
+            points_earned: 1,
+            status: 'confirmed',
+            flagged_reason: 'bonus_parrainage',
+          })
+          .select('id')
+          .single();
 
-      newStamps = filleulCard.current_stamps + 1;
-      await supabaseAdmin
-        .from('loyalty_cards')
-        .update({
-          current_stamps: newStamps,
-          last_visit_date: new Date().toISOString().split('T')[0],
-        })
-        .eq('id', filleulCard.id);
+        bonusVisitId = bonusVisit?.id || null;
+
+        newStamps = filleulCard.current_stamps + 1;
+        await supabaseAdmin
+          .from('loyalty_cards')
+          .update({
+            current_stamps: newStamps,
+            last_visit_date: new Date().toISOString().split('T')[0],
+          })
+          .eq('id', filleulCard.id);
+      }
     }
 
     // 4. Vérifier si c'est un voucher filleul → auto-créer le voucher parrain

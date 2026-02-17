@@ -41,6 +41,7 @@ export interface UsedVoucher {
   id: string;
   used_at: string;
   reward_description: string;
+  source?: 'birthday' | 'referral' | 'redemption' | null;
 }
 
 interface HistorySectionProps {
@@ -74,6 +75,7 @@ export default function HistorySection({
       flagged_reason: v.flagged_reason,
       tier: undefined as number | undefined,
       reward_description: undefined as string | undefined,
+      source: null as string | null,
     })),
     ...adjustments.map((a) => ({
       type: 'adjustment' as const,
@@ -84,6 +86,7 @@ export default function HistorySection({
       flagged_reason: null as string | null,
       tier: undefined as number | undefined,
       reward_description: undefined as string | undefined,
+      source: null as string | null,
     })),
     ...redemptions.map((r) => ({
       type: 'redemption' as const,
@@ -94,6 +97,7 @@ export default function HistorySection({
       flagged_reason: null as string | null,
       tier: r.tier as number | undefined,
       reward_description: undefined as string | undefined,
+      source: null as string | null,
     })),
     ...usedVouchers.map((v) => ({
       type: 'voucher_used' as const,
@@ -104,6 +108,7 @@ export default function HistorySection({
       flagged_reason: null as string | null,
       tier: undefined as number | undefined,
       reward_description: v.reward_description,
+      source: v.source || null,
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 30);
 
@@ -161,7 +166,10 @@ export default function HistorySection({
               };
 
               const getLabel = () => {
-                if (isVoucherUsed) return `🎟️ ${item.reward_description || 'Récompense utilisée'}`;
+                if (isVoucherUsed) {
+                  const prefix = item.source === 'birthday' ? '🎂' : '🎟️';
+                  return `${prefix} ${item.reward_description || 'Récompense utilisée'}`;
+                }
                 if (isBonusParrainage) return '🎉 Bonus parrainage +1';
                 if (isRedemption) {
                   const tierLabel = merchant.tier2_enabled ? ` palier ${item.tier}` : '';

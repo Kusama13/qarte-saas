@@ -22,6 +22,7 @@ import {
   Share2,
   CalendarDays,
   PartyPopper,
+  Cake,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
@@ -184,13 +185,24 @@ export default function CustomerCardPage({
   const [usingVoucherId, setUsingVoucherId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
 
-  // Voucher celebration state
+  // Voucher detail modal state
+  const [showVoucherDetail, setShowVoucherDetail] = useState(false);
+  const [selectedVoucher, setSelectedVoucher] = useState<{ id: string; rewardDescription: string; source: string | null; expiresAt: string | null } | null>(null);
+
+  // Voucher celebration state (post-use)
   const [showVoucherCelebration, setShowVoucherCelebration] = useState(false);
   const [voucherCelebrationData, setVoucherCelebrationData] = useState<{
     rewardDescription: string;
     customerName: string | null;
     bonusStampAdded: boolean;
+    isBirthday: boolean;
   } | null>(null);
+
+  // Birthday input state
+  const [birthdayDay, setBirthdayDay] = useState('');
+  const [birthdayMonth, setBirthdayMonth] = useState('');
+  const [savingBirthday, setSavingBirthday] = useState(false);
+  const [birthdaySaved, setBirthdaySaved] = useState(false);
 
   // Member card state
   const [memberCard, setMemberCard] = useState<MemberCard | null>(null);
@@ -386,6 +398,11 @@ export default function CustomerCardPage({
           setVouchers(data.vouchers);
         }
 
+        // Check if birthday already set
+        if (data.card.customer?.birth_month && data.card.customer?.birth_day) {
+          setBirthdaySaved(true);
+        }
+
         // Check if tier 1 has been redeemed in current cycle (for tier 2 enabled merchants)
         if (data.card.merchant.tier2_enabled && data.redemptions) {
           const redemptionsData = data.redemptions as Array<{ tier: number; redeemed_at: string }>;
@@ -562,13 +579,17 @@ export default function CustomerCardPage({
           }
         }
 
-        // 3. Celebration
+        // 3. Close detail modal + Celebration
+        setShowVoucherDetail(false);
+        setSelectedVoucher(null);
         const m = card.merchant;
         sparkleGrand([m.primary_color, m.secondary_color || '#FFD700', '#FFB6C1', '#FFFFFF']);
+        const usedVoucher = vouchers.find(v => v.id === voucherId);
         setVoucherCelebrationData({
           rewardDescription: data.reward_description || '',
           customerName: data.customer_name || null,
           bonusStampAdded: !!data.bonus_stamp_added,
+          isBirthday: usedVoucher?.source === 'birthday',
         });
         setShowVoucherCelebration(true);
       }
@@ -578,6 +599,32 @@ export default function CustomerCardPage({
       setUsingVoucherId(null);
     }
   }, [card]);
+
+  const handleSaveBirthday = useCallback(async () => {
+    if (!card || !birthdayMonth || !birthdayDay) return;
+    const savedPhone = getCookie('customer_phone');
+    if (!savedPhone) return;
+    setSavingBirthday(true);
+    try {
+      const res = await fetch('/api/customers/birthday', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_id: card.customer_id,
+          phone_number: formatPhoneNumber(savedPhone),
+          birth_month: parseInt(birthdayMonth),
+          birth_day: parseInt(birthdayDay),
+        }),
+      });
+      if (res.ok) {
+        setBirthdaySaved(true);
+      }
+    } catch (err) {
+      console.error('Birthday save error:', err);
+    } finally {
+      setSavingBirthday(false);
+    }
+  }, [card, birthdayMonth, birthdayDay]);
 
   // Memoized computed state — must be before early returns (Rules of Hooks)
   const {
@@ -1172,27 +1219,33 @@ export default function CustomerCardPage({
                   </motion.div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
-                      Parrainage{group.length > 1 ? ` · ${group.length} disponibles` : ''}
+                      {group[0].source === 'birthday' ? 'Cadeau anniversaire' : 'Parrainage'}{group.length > 1 ? ` · ${group.length} disponibles` : ''}
                     </p>
                     <p className="text-white text-base font-black leading-snug line-clamp-2">
                       {desc}
                     </p>
+                    {group[0].expires_at && (
+                      <p className="text-white/50 text-[10px] mt-1">
+                        Expire le {new Date(group[0].expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <button
-                  onClick={() => handleUseVoucher(group[0].id)}
-                  disabled={usingVoucherId === group[0].id}
-                  className="relative mt-4 w-full py-2.5 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold text-sm hover:bg-white/30 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  onClick={() => {
+                    setSelectedVoucher({
+                      id: group[0].id,
+                      rewardDescription: desc,
+                      source: group[0].source || null,
+                      expiresAt: group[0].expires_at || null,
+                    });
+                    setShowVoucherDetail(true);
+                  }}
+                  className="relative mt-4 w-full py-2.5 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold text-sm hover:bg-white/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 >
-                  {usingVoucherId === group[0].id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Gift className="w-4 h-4" />
-                      Utiliser ma récompense
-                    </>
-                  )}
+                  <Eye className="w-4 h-4" />
+                  Voir
                 </button>
               </div>
             </motion.div>
@@ -1240,6 +1293,85 @@ export default function CustomerCardPage({
           </motion.button>
         )}
 
+        {/* Birthday Input */}
+        {merchant.birthday_gift_enabled && !isPreview && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4"
+          >
+            <div className="rounded-2xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100/80 overflow-hidden">
+              <div className="p-4">
+                {birthdaySaved ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center shrink-0">
+                      <Cake className="w-5 h-5 text-pink-500" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-gray-900 text-sm">Anniversaire enregistr&eacute;</p>
+                      <p className="text-xs text-gray-500">
+                        Un cadeau de {merchant.shop_name} vous attend pour votre anniversaire !
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 mb-3">
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: `${merchant.primary_color}10` }}
+                      >
+                        <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900 text-sm">Recevez un cadeau pour votre anniversaire !</p>
+                        <p className="text-xs text-gray-500">Ajoutez votre date de naissance (non modifiable)</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mb-3">
+                      <select
+                        value={birthdayDay}
+                        onChange={(e) => setBirthdayDay(e.target.value)}
+                        className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
+                      >
+                        <option value="">Jour</option>
+                        {Array.from({ length: 31 }, (_, i) => (
+                          <option key={i + 1} value={i + 1}>{i + 1}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={birthdayMonth}
+                        onChange={(e) => setBirthdayMonth(e.target.value)}
+                        className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
+                      >
+                        <option value="">Mois</option>
+                        {['Jan','F\u00e9v','Mar','Avr','Mai','Juin','Juil','Ao\u00fbt','Sep','Oct','Nov','D\u00e9c'].map((m, i) => (
+                          <option key={i + 1} value={i + 1}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      onClick={handleSaveBirthday}
+                      disabled={!birthdayMonth || !birthdayDay || savingBirthday}
+                      className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                      style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
+                    >
+                      {savingBirthday ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Cake className="w-4 h-4" />
+                          Enregistrer mon anniversaire
+                        </>
+                      )}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Push Notification Banner */}
         {push.isStandalone && isMobile && !push.pushSubscribed && push.pushPermission !== 'denied' && (
           <motion.button
@@ -1285,7 +1417,7 @@ export default function CustomerCardPage({
           redemptions={redemptions}
           usedVouchers={vouchers
             .filter(v => v.is_used && v.used_at)
-            .map(v => ({ id: v.id, used_at: v.used_at!, reward_description: v.reward_description }))
+            .map(v => ({ id: v.id, used_at: v.used_at!, reward_description: v.reward_description, source: v.source }))
           }
           merchant={merchant}
         />
@@ -1415,7 +1547,137 @@ export default function CustomerCardPage({
         </div>
       )}
 
-      {/* Voucher Use Celebration Modal */}
+      {/* Voucher Detail Modal (Voir → Utiliser / Plus tard) */}
+      <AnimatePresence>
+        {showVoucherDetail && selectedVoucher && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+            onClick={() => { setShowVoucherDetail(false); setSelectedVoucher(null); }}
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 max-w-sm w-full text-center overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Icon */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.2, 1] }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className="inline-flex items-center justify-center w-20 h-20 mb-5 rounded-3xl"
+                style={{ backgroundColor: selectedVoucher.source === 'birthday' ? '#fce7f3' : `${merchant.primary_color}15` }}
+              >
+                {selectedVoucher.source === 'birthday'
+                  ? <Cake className="w-10 h-10 text-pink-500" />
+                  : <Gift className="w-10 h-10" style={{ color: merchant.primary_color }} />
+                }
+              </motion.div>
+
+              {/* Title */}
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="text-2xl font-black text-gray-900 mb-2"
+              >
+                {selectedVoucher.source === 'birthday'
+                  ? `Joyeux anniversaire${card?.customer?.first_name ? ` ${card.customer.first_name}` : ''}\u00a0! \ud83c\udf89`
+                  : `Votre r\u00e9compense`
+                }
+              </motion.h2>
+
+              {/* Birthday message */}
+              {selectedVoucher.source === 'birthday' && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-gray-500 mb-4 text-sm"
+                >
+                  {merchant.shop_name} vous souhaite un merveilleux anniversaire et vous offre un cadeau pour c\u00e9l\u00e9brer cette occasion sp\u00e9ciale !
+                </motion.p>
+              )}
+
+              {/* Reward block */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="rounded-2xl p-4 mb-4"
+                style={{ backgroundColor: selectedVoucher.source === 'birthday' ? '#fdf2f8' : `${merchant.primary_color}10` }}
+              >
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <Gift className="w-4 h-4" style={{ color: selectedVoucher.source === 'birthday' ? '#ec4899' : merchant.primary_color }} />
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Votre cadeau</span>
+                </div>
+                <p className="font-bold text-lg" style={{ color: selectedVoucher.source === 'birthday' ? '#be185d' : merchant.primary_color }}>
+                  {selectedVoucher.rewardDescription}
+                </p>
+              </motion.div>
+
+              {/* Expiration */}
+              {selectedVoucher.expiresAt && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-xs text-gray-400 mb-3"
+                >
+                  Valable jusqu&apos;au {new Date(selectedVoucher.expiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </motion.p>
+              )}
+
+              {/* Instructions */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.45 }}
+                className="text-sm text-gray-500 mb-6"
+              >
+                Pr\u00e9sentez ce message lors de votre passage chez <span className="font-bold text-gray-700">{merchant.shop_name}</span>
+              </motion.p>
+
+              {/* Buttons */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                className="space-y-2.5"
+              >
+                <button
+                  onClick={() => handleUseVoucher(selectedVoucher.id)}
+                  disabled={usingVoucherId === selectedVoucher.id}
+                  className="w-full h-13 py-3.5 text-base font-bold rounded-2xl text-white shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
+                >
+                  {usingVoucherId === selectedVoucher.id ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5" />
+                      Utiliser maintenant
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => { setShowVoucherDetail(false); setSelectedVoucher(null); }}
+                  className="w-full py-3 text-sm font-semibold text-gray-500 rounded-2xl bg-gray-100 hover:bg-gray-200 active:scale-[0.98] transition-all"
+                >
+                  Plus tard
+                </button>
+              </motion.div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Voucher Use Celebration Modal (post-use confirmation) */}
       <AnimatePresence>
         {showVoucherCelebration && voucherCelebrationData && (
           <motion.div
@@ -1438,9 +1700,12 @@ export default function CustomerCardPage({
                 animate={{ scale: [0, 1.2, 1] }}
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl"
-                style={{ backgroundColor: `${merchant.primary_color}15` }}
+                style={{ backgroundColor: voucherCelebrationData.isBirthday ? '#fce7f3' : `${merchant.primary_color}15` }}
               >
-                <PartyPopper className="w-10 h-10" style={{ color: merchant.primary_color }} />
+                {voucherCelebrationData.isBirthday
+                  ? <Cake className="w-10 h-10 text-pink-500" />
+                  : <PartyPopper className="w-10 h-10" style={{ color: merchant.primary_color }} />
+                }
               </motion.div>
 
               <motion.h2
@@ -1449,7 +1714,10 @@ export default function CustomerCardPage({
                 transition={{ delay: 0.3 }}
                 className="text-2xl font-black text-gray-900 mb-2"
               >
-                {`F\u00e9licitations${voucherCelebrationData.customerName ? ` ${voucherCelebrationData.customerName}` : ''}\u00a0!`}
+                {voucherCelebrationData.isBirthday
+                  ? `Bon anniversaire${voucherCelebrationData.customerName ? ` ${voucherCelebrationData.customerName}` : ''}\u00a0! \ud83c\udf82`
+                  : `F\u00e9licitations${voucherCelebrationData.customerName ? ` ${voucherCelebrationData.customerName}` : ''}\u00a0!`
+                }
               </motion.h2>
 
               <motion.p
@@ -1458,7 +1726,10 @@ export default function CustomerCardPage({
                 transition={{ delay: 0.4 }}
                 className="text-gray-500 mb-4"
               >
-                {`Votre r\u00e9compense a \u00e9t\u00e9 activ\u00e9e`}
+                {voucherCelebrationData.isBirthday
+                  ? `Votre cadeau d'anniversaire a \u00e9t\u00e9 activ\u00e9\u00a0!`
+                  : `Votre r\u00e9compense a \u00e9t\u00e9 activ\u00e9e`
+                }
               </motion.p>
 
               <motion.div
@@ -1466,13 +1737,13 @@ export default function CustomerCardPage({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 }}
                 className="rounded-2xl p-4 mb-4"
-                style={{ backgroundColor: `${merchant.primary_color}10` }}
+                style={{ backgroundColor: voucherCelebrationData.isBirthday ? '#fdf2f8' : `${merchant.primary_color}10` }}
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
-                  <Gift className="w-4 h-4" style={{ color: merchant.primary_color }} />
+                  <Gift className="w-4 h-4" style={{ color: voucherCelebrationData.isBirthday ? '#ec4899' : merchant.primary_color }} />
                   <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Votre cadeau</span>
                 </div>
-                <p className="font-bold text-lg" style={{ color: merchant.primary_color }}>
+                <p className="font-bold text-lg" style={{ color: voucherCelebrationData.isBirthday ? '#be185d' : merchant.primary_color }}>
                   {voucherCelebrationData.rewardDescription}
                 </p>
               </motion.div>
@@ -1493,9 +1764,9 @@ export default function CustomerCardPage({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7 }}
-                className="text-xs text-gray-400 mb-6"
+                className="text-sm text-gray-500 mb-6"
               >
-                {`Pr\u00e9sentez cette confirmation au commer\u00e7ant pour en profiter.`}
+                Pr\u00e9sentez cette confirmation chez <span className="font-bold text-gray-700">{merchant.shop_name}</span> pour en profiter.
               </motion.p>
 
               <motion.button

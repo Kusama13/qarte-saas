@@ -17,6 +17,7 @@ import {
   History,
   Gift,
   Trophy,
+  Cake,
 } from 'lucide-react';
 import { Button, Input, Textarea } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -58,6 +59,8 @@ interface CustomerManagementModalProps {
   tier2StampsRequired?: number;
   tier2RewardDescription?: string;
   rewardDescription?: string;
+  birthMonth?: number | null;
+  birthDay?: number | null;
 }
 
 type Tab = 'adjust' | 'history' | 'danger';
@@ -77,6 +80,8 @@ export function CustomerManagementModal({
   tier2StampsRequired,
   tier2RewardDescription,
   rewardDescription,
+  birthMonth,
+  birthDay,
 }: CustomerManagementModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('adjust');
   const [adjustment, setAdjustment] = useState<number>(0);
@@ -91,6 +96,12 @@ export function CustomerManagementModal({
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(true);
+
+  // Birthday edit state
+  const [editBirthDay, setEditBirthDay] = useState(birthDay?.toString() || '');
+  const [editBirthMonth, setEditBirthMonth] = useState(birthMonth?.toString() || '');
+  const [savingBirthday, setSavingBirthday] = useState(false);
+  const [editingBirthday, setEditingBirthday] = useState(false);
 
   // Danger zone state
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -263,6 +274,29 @@ export function CustomerManagementModal({
     }
   };
 
+  const handleSaveBirthday = async () => {
+    setSavingBirthday(true);
+    try {
+      const res = await fetch('/api/customers/birthday-admin', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_id: customerId,
+          birth_month: editBirthMonth ? parseInt(editBirthMonth) : null,
+          birth_day: editBirthDay ? parseInt(editBirthDay) : null,
+        }),
+      });
+      if (res.ok) {
+        setEditingBirthday(false);
+        onSuccess();
+      }
+    } catch (err) {
+      console.error('Birthday save error:', err);
+    } finally {
+      setSavingBirthday(false);
+    }
+  };
+
   const handleClose = () => {
     setAdjustment(0);
     setReason('');
@@ -312,6 +346,61 @@ export function CustomerManagementModal({
           <h2 className="text-xl font-bold text-gray-900 mb-1">Gestion client</h2>
           <p className="text-gray-600">{customerName}</p>
           <p className="text-sm text-gray-400">{phoneNumber}</p>
+          {/* Birthday */}
+          <div className="flex items-center gap-2 mt-1.5">
+            <Cake className="w-3.5 h-3.5 text-pink-400" />
+            {!editingBirthday ? (
+              <>
+                <span className="text-sm text-gray-500">
+                  {birthMonth && birthDay
+                    ? `${birthDay} ${['janv.','fév.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'][birthMonth - 1]}`
+                    : 'Non renseigné'}
+                </span>
+                <button
+                  onClick={() => setEditingBirthday(true)}
+                  className="text-xs text-indigo-500 hover:text-indigo-700 font-medium"
+                >
+                  Modifier
+                </button>
+              </>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={editBirthDay}
+                  onChange={(e) => setEditBirthDay(e.target.value)}
+                  className="px-2 py-1 rounded-lg border border-gray-200 text-xs bg-white"
+                >
+                  <option value="">Jour</option>
+                  {Array.from({ length: 31 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>{i + 1}</option>
+                  ))}
+                </select>
+                <select
+                  value={editBirthMonth}
+                  onChange={(e) => setEditBirthMonth(e.target.value)}
+                  className="px-2 py-1 rounded-lg border border-gray-200 text-xs bg-white"
+                >
+                  <option value="">Mois</option>
+                  {['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'].map((m, i) => (
+                    <option key={i + 1} value={i + 1}>{m}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleSaveBirthday}
+                  disabled={savingBirthday}
+                  className="px-2 py-1 bg-indigo-500 text-white text-xs font-bold rounded-lg hover:bg-indigo-600 disabled:opacity-50"
+                >
+                  {savingBirthday ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                </button>
+                <button
+                  onClick={() => setEditingBirthday(false)}
+                  className="px-2 py-1 bg-gray-100 text-gray-500 text-xs rounded-lg hover:bg-gray-200"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Tabs */}

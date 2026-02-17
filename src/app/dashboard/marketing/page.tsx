@@ -28,6 +28,7 @@ import {
   Upload,
   CalendarDays,
   HelpCircle,
+  Cake,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -161,6 +162,12 @@ export default function MarketingPushPage() {
   const [currentOfferImageUrl, setCurrentOfferImageUrl] = useState<string | null>(null);
   const [showOfferModal, setShowOfferModal] = useState(false);
 
+  // Birthday gift config
+  const [birthdayGiftEnabled, setBirthdayGiftEnabled] = useState(false);
+  const [birthdayGiftDescription, setBirthdayGiftDescription] = useState('');
+  const [savingBirthday, setSavingBirthday] = useState(false);
+  const [birthdaySaveResult, setBirthdaySaveResult] = useState<{ success: boolean; message: string } | null>(null);
+
   // History visibility
   const [showHistory, setShowHistory] = useState(true);
 
@@ -281,6 +288,40 @@ export default function MarketingPushPage() {
 
     fetchOffer();
   }, [merchant?.id]);
+
+  // Init birthday config from merchant
+  useEffect(() => {
+    if (!merchant) return;
+    setBirthdayGiftEnabled(merchant.birthday_gift_enabled || false);
+    setBirthdayGiftDescription(merchant.birthday_gift_description || '');
+  }, [merchant]);
+
+  const handleSaveBirthdayConfig = async () => {
+    if (!merchant?.id) return;
+    setSavingBirthday(true);
+    setBirthdaySaveResult(null);
+    try {
+      const res = await fetch('/api/merchants/birthday-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          merchant_id: merchant.id,
+          birthday_gift_enabled: birthdayGiftEnabled,
+          birthday_gift_description: birthdayGiftDescription.trim(),
+        }),
+      });
+      if (res.ok) {
+        setBirthdaySaveResult({ success: true, message: 'Sauvegardé !' });
+      } else {
+        setBirthdaySaveResult({ success: false, message: 'Erreur' });
+      }
+    } catch {
+      setBirthdaySaveResult({ success: false, message: 'Erreur de connexion' });
+    } finally {
+      setSavingBirthday(false);
+      setTimeout(() => setBirthdaySaveResult(null), 3000);
+    }
+  };
 
   const handleSend = async () => {
     if (!title.trim() || !body.trim() || !merchant?.id) return;
@@ -1338,6 +1379,76 @@ export default function MarketingPushPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Cadeau Anniversaire */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <Cake className="w-5 h-5 text-pink-500" />
+            Cadeau anniversaire
+          </h2>
+          <button
+            onClick={() => {
+              setBirthdayGiftEnabled(!birthdayGiftEnabled);
+              // Auto-save toggle off
+              if (birthdayGiftEnabled) {
+                setSavingBirthday(true);
+                fetch('/api/merchants/birthday-config', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    merchant_id: merchant?.id,
+                    birthday_gift_enabled: false,
+                    birthday_gift_description: birthdayGiftDescription,
+                  }),
+                }).then(() => setSavingBirthday(false)).catch(() => setSavingBirthday(false));
+              }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${birthdayGiftEnabled ? 'bg-pink-500' : 'bg-gray-200'}`}
+          >
+            <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${birthdayGiftEnabled ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mb-3">
+          Envoyez automatiquement un cadeau 3 jours avant l&apos;anniversaire de vos clients. Valable 14 jours.
+        </p>
+        {birthdayGiftEnabled && (
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description du cadeau
+              </label>
+              <textarea
+                value={birthdayGiftDescription}
+                onChange={(e) => setBirthdayGiftDescription(e.target.value)}
+                placeholder="Ex: Un brushing offert pour votre anniversaire !"
+                maxLength={200}
+                rows={2}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"
+              />
+            </div>
+            <button
+              onClick={handleSaveBirthdayConfig}
+              disabled={savingBirthday || !birthdayGiftDescription.trim()}
+              className="w-full py-2.5 bg-pink-500 text-white font-bold text-sm rounded-xl hover:bg-pink-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {savingBirthday ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  Sauvegarder
+                </>
+              )}
+            </button>
+            {birthdaySaveResult && (
+              <p className={`text-xs text-center font-medium ${birthdaySaveResult.success ? 'text-emerald-600' : 'text-red-600'}`}>
+                {birthdaySaveResult.message}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Push History - Collapsed by default */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
