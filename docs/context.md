@@ -125,7 +125,7 @@ docs/
 └── roadmap/              # Backups code (mode article, scheduled push)
 
 supabase/
-└── migrations/           # 36 migrations SQL
+└── migrations/           # 37 migrations SQL
     ├── 001-025           # Schema initial + fixes
     ├── 026               # Trial period 15 jours (original)
     ├── 027               # Spelling cancelled→canceled
@@ -137,7 +137,8 @@ supabase/
     ├── 033               # Add referral_code (parrainage merchant)
     ├── 034               # Trial period 15j → 7j (nouveaux inscrits)
     ├── 035               # Referrals table RLS policies
-    └── 036               # no_contact + admin_notes columns
+    ├── 036               # no_contact + admin_notes columns
+    └── 037               # Birthday gift (birthday_gift_enabled, birthday_gift_description, vouchers source + birth_month/birth_day)
 
 public/
 ├── images/              # Images statiques (mockups, temoignages, email-banner)
@@ -160,6 +161,7 @@ public/
 - `tier2_enabled`, `tier2_stamps_required`, `tier2_reward_description`
 - `referral_code` (VARCHAR 10, UNIQUE — ex: `QARTE-AB3K`)
 - `referral_program_enabled`, `referral_reward_referrer`, `referral_reward_referred`
+- `birthday_gift_enabled`, `birthday_gift_description`
 - `trial_ends_at`, `subscription_status`, `stripe_customer_id`, `stripe_subscription_id`
 - `shield_enabled` (Qarte Shield)
 - `no_contact` (boolean, default false — coupe toutes les communications)
@@ -179,16 +181,17 @@ public/
 - `status` ('confirmed' | 'pending' | 'rejected')
 - `ip_address`, `ip_hash`, `flagged_reason`
 
-### vouchers
-- `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
-- `reward_description`, `is_used`, `used_at`, `expires_at`
-
 ### referrals
 - `id`, `merchant_id`, `referrer_customer_id`, `referrer_card_id`
 - `referred_customer_id`, `referred_card_id`
 - `referred_voucher_id`, `referrer_voucher_id`
 - `status` ('pending' | 'completed')
 - UNIQUE `(merchant_id, referred_customer_id)` — 1 parrainage par filleul par merchant
+
+### vouchers
+- `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
+- `reward_description`, `is_used`, `used_at`, `expires_at`
+- `source` ('birthday' | 'referral') — origine du voucher
 
 ### Autres tables
 - `redemptions`, `point_adjustments`, `banned_numbers`
@@ -295,10 +298,19 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
   - Email ID stocke dans `user_metadata`, annule si Phase 2 completee
 - Admin : suivi des inscriptions incompletes dans `/admin/leads` (fenetre 30 jours)
 
-### Marketing
-- Notifications push programmees (10h et 18h)
+### Marketing (2 onglets)
+- **Onglet "Envoyer"** : Push notifications manuelles + 5 templates beaute (creneau dispo, nouveau soin, offre beaute, offre duo, creneau calme)
+- **Onglet "Automatisations"** : Cadeau anniversaire (toggle + config description), 3 placeholders "Bientot"
+- Push programmees (10h et 18h)
 - Kit reseaux sociaux (SocialMediaTemplate, visuel 4:5 + legendes Instagram)
 - Ebook telechargeable (lead generation)
+
+### Cadeau Anniversaire
+- Toggle activation dans Marketing > Automatisations
+- Client saisit sa date (mois + jour) sur la carte fidelite, section masquee apres enregistrement
+- Voucher anniversaire cree J-3 via cron morning
+- Notification push envoyee le jour J
+- Voucher utilisable en self-service sur la carte client
 
 ### Parrainage Client
 - Code parrainage unique par carte fidelite (`referral_code` 6 caracteres)
@@ -482,7 +494,7 @@ npm run email
 | `src/app/api/referrals/route.ts` | API parrainage client (GET info + POST inscription) |
 | `src/app/api/vouchers/use/route.ts` | API consommation voucher + auto-creation parrain |
 | `src/app/dashboard/referrals/page.tsx` | Dashboard parrainage (config + stats + tableau) |
-| `supabase/migrations/` | 36 migrations SQL |
+| `supabase/migrations/` | 37 migrations SQL |
 
 ---
 
@@ -600,8 +612,10 @@ npm run email
 - Analytics, Metriques, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
 - Activity : vue "hier" (`?date=yesterday`) pour suivi activite merchants
-- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badge parrainage, progression onboarding, menu WhatsApp repliable (12 messages), toggle no_contact + notes admin
-- Merchants liste : badge NC rouge si no_contact, WhatsApp masque
+- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badges parrainage + anniversaire, progression onboarding, menu WhatsApp repliable (15 messages dont 1er scan, affichage QR, bravo), toggle no_contact + notes admin
+- Merchant detail : cartes cadeau anniversaire (si actif) + parrainage (si actif) avec details config
+- Merchants liste : badge NC rouge si no_contact, WhatsApp masque, messages contextuels par lifecycle
+- Activity : suivi scans, inscriptions, recompenses, nouveaux clients, messages, vouchers (anniversaire + parrainage)
 - **Toutes les stats excluent les comptes admin** (via `super_admins` table)
 
 ### Dashboard (`/dashboard`)
@@ -610,7 +624,7 @@ npm run email
 - Gestion programme fidelite (suggestions par shop_type, 10 palettes couleurs)
 - Page QR code & Kit promo (2 onglets : QR code + Kit reseaux sociaux avec SocialMediaTemplate)
 - Gestion clients
-- Marketing (push notifications)
+- Marketing (2 onglets : Envoyer push / Automatisations avec cadeau anniversaire)
 - Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe + prix journalier (0,63€/jour mensuel, 0,52€/jour annuel)
 - Parrainage merchant : encart en haut de Settings (code QARTE-XXXX + copier + partager via Web Share API)
 - Parrainage client : page `/dashboard/referrals` (toggle, config recompenses, stats, tableau de suivi)
