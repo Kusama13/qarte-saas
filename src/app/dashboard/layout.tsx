@@ -63,21 +63,15 @@ function DashboardLayoutContent({
     window.location.href = '/auth/merchant';
   };
 
-  // Wait for merchant data to load before checking trial status
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
+  // Compute trial status + useEffect BEFORE any early return to preserve hooks order (React #310)
   const trialStatus = getTrialStatus(
     merchant?.trial_ends_at || null,
     merchant?.subscription_status || 'trial'
   );
 
-  const shouldRedirect = (trialStatus.isInGracePeriod || trialStatus.isFullyExpired) && pathname !== '/dashboard/subscription';
+  const shouldRedirect = !loading
+    && (trialStatus.isInGracePeriod || trialStatus.isFullyExpired)
+    && pathname !== '/dashboard/subscription';
 
   // Redirection forcée dès la fin de l'essai (grâce ou expiration complète)
   useEffect(() => {
@@ -85,6 +79,14 @@ function DashboardLayoutContent({
       router.push('/dashboard/subscription');
     }
   }, [shouldRedirect, router]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (shouldRedirect) {
     return null;
