@@ -235,6 +235,7 @@ export default function MerchantDetailPage() {
   };
 
   const [waOpen, setWaOpen] = useState(false);
+  const [waTab, setWaTab] = useState<'marketing' | 'tuto'>('marketing');
   const [adminNotes, setAdminNotes] = useState(merchant?.admin_notes || '');
   const [savingField, setSavingField] = useState<string | null>(null);
 
@@ -263,22 +264,35 @@ export default function MerchantDetailPage() {
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
-  const getAllWhatsAppMessages = (name: string, customers: number): { label: string; text: string }[] => [
-    { label: 'Aide config', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu que vous n'aviez pas encore configuré votre programme, c'est normal ça prend 30 secondes ! Vous voulez que je vous aide ? 😊` },
-    { label: 'Relance douce', text: `Hello ${name} ! Elodie de Qarte. Votre compte est prêt, il manque juste la récompense pour vos clients. Dites-moi ce que vous offrez après X passages et je configure tout pour vous !` },
-    { label: '1er scan', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre carte est prête, il ne reste plus qu'à tester ! Scannez votre propre QR code pour voir comment ça marche côté client. Ça prend 10 secondes 😊` },
-    { label: 'Premier pas', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre carte est magnifique ! L'astuce : montrez le QR code à vos 3 prochains clients au moment de payer. C'est tout, ils adorent ! 😍` },
+  const getWhatsAppMarketing = (name: string, customers: number): { label: string; text: string }[] => [
+    { label: 'Aide config', text: `Hello ${name} ! C'est Elodie de Qarte. J'ai vu que votre programme n'était pas encore finalisé — c'est rapide, 30 secondes top chrono ! Je peux le faire avec vous si vous voulez 😊` },
+    { label: 'Relance douce', text: `Hello ${name} ! Elodie de Qarte. Votre compte est prêt, il manque juste la récompense pour vos clients. Dites-moi ce que vous offrez habituellement et je configure tout pour vous !` },
+    { label: '1er scan', text: `Hello ${name} ! C'est Elodie de Qarte. Votre carte est prête, il ne reste plus qu'à tester ! Scannez votre propre QR code pour voir comment ça marche côté client. Ça prend 10 secondes 😊` },
+    { label: 'Premier pas', text: `Hello ${name} ! C'est Elodie de Qarte. Votre carte est magnifique ! L'astuce : montrez le QR code à vos 3 prochains clients au moment de payer. C'est tout, ils adorent ! 😍` },
     { label: 'Challenge', text: `Hello ${name} ! Petit défi du jour : montrez votre QR Qarte à 5 clients aujourd'hui. Vous allez voir, la réaction est toujours la même : "ah trop bien !" 😄` },
-    { label: 'Affichage QR', text: `Coucou ${name} ! Elodie de Qarte. Petite astuce qui change tout : imprimez le QR code et collez-le près de la caisse ou sur le comptoir. Les clients le scannent d'eux-mêmes, sans que vous ayez à y penser ! 📱` },
-    { label: 'Fin essai', text: `Coucou ${name} ! C'est Elodie. Votre essai Qarte se termine bientôt${customers > 0 ? ` et vos ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. Ça vous dit ? 😊` },
+    { label: 'Affichage QR', text: `Hello ${name} ! Elodie de Qarte. Petite astuce qui change tout : imprimez le QR code et collez-le près de la caisse ou sur le comptoir. Les clients le scannent d'eux-mêmes, sans que vous ayez à y penser ! 📱` },
+    { label: 'Fin essai', text: `Hello ${name} ! C'est Elodie. Votre essai Qarte se termine bientôt${customers > 0 ? ` et vos ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. Ça vous dit ? 😊` },
     { label: 'Accompagnement', text: `Hello ${name} ! Elodie de Qarte. Comment ça se passe de votre côté ? Si vous avez des questions avant la fin de l'essai, je suis là ! On peut s'appeler 2 min si vous voulez 📞` },
-    { label: 'Relance expirée', text: `Coucou ${name} ! C'est Elodie de Qarte. Votre essai est terminé mais rien n'est perdu ! ${customers > 0 ? `Vos ${customers} clients gardent leur carte. ` : ''}Le code QARTE50 vous offre le premier mois à 9€. On relance ensemble ? 😊` },
+    { label: 'Relance expirée', text: `Hello ${name} ! C'est Elodie de Qarte. Votre essai est terminé mais rien n'est perdu ! ${customers > 0 ? `Vos ${customers} clients gardent leur carte. ` : ''}Le code QARTE50 vous offre le premier mois à 9€. On relance ensemble ? 😊` },
     { label: 'Question ouverte', text: `Hello ${name} ! Elodie de Qarte. Est-ce qu'il y a quelque chose qui vous a bloqué(e) pendant l'essai ? Vos retours m'aident beaucoup, et je peux sûrement vous aider 🙏` },
-    { label: 'Prise de nouvelles', text: `Coucou ${name} ! C'est Elodie de Qarte. Ça fait quelques jours sans scan, tout va bien ? Si vos clients demandent leur carte, n'hésitez pas à ressortir le QR ! Je suis là si besoin 😊` },
-    { label: 'Rétention', text: `Coucou ${name} ! C'est Elodie de Qarte. J'ai vu votre demande d'annulation, je comprends. Est-ce qu'il y a quelque chose qu'on peut améliorer ? Vos retours comptent beaucoup pour nous 🙏` },
-    { label: 'Bravo', text: `Coucou ${name} ! C'est Elodie de Qarte. Bravo, ${customers} clients utilisent déjà votre carte ! Vous savez que vous pouvez aussi envoyer des notifications push pour les faire revenir ? Je vous montre si vous voulez 🚀` },
-    { label: 'Suivi', text: `Coucou ${name} ! C'est Elodie de Qarte. Comment ça se passe avec la carte de fidélité ? Vos clients sont contents ? N'hésitez pas si vous avez des idées d'amélioration ! 😊` },
-    { label: 'Message libre', text: `Coucou ${name} ! C'est Elodie de Qarte. ` },
+    { label: 'Prise de nouvelles', text: `Hello ${name} ! C'est Elodie de Qarte. Je prends des nouvelles — comment ça se passe au salon ? Si besoin d'un coup de main avec Qarte, je suis dispo 😊` },
+    { label: 'Rétention', text: `Hello ${name} ! C'est Elodie de Qarte. J'ai vu pour l'annulation — pas de souci ! Est-ce qu'il y a un truc qui vous a manqué ou qu'on pourrait faire mieux ? Ça m'aide vraiment 🙏` },
+    { label: 'Bravo', text: `Hello ${name} ! C'est Elodie de Qarte. Bravo, ${customers} clients utilisent déjà votre carte ! Vous savez que vous pouvez aussi envoyer des notifications push pour les faire revenir ? Je vous montre si vous voulez 🚀` },
+    { label: 'Suivi', text: `Hello ${name} ! C'est Elodie de Qarte. Comment ça se passe avec la carte de fidélité ? Vos clients sont contents ? N'hésitez pas si vous avez des idées d'amélioration ! 😊` },
+    { label: 'Message libre', text: `Hello ${name} ! C'est Elodie de Qarte. ` },
+  ];
+
+  const getWhatsAppTuto = (name: string): { label: string; text: string }[] => [
+    { label: 'Le QR code', text: `Hello ${name} ! Pour la carte de fidélité, c'est simple : vous affichez votre QR code (imprimé ou sur l'écran), le client le scanne avec son téléphone, et hop il a sa carte ! Pas d'appli à télécharger, ça marche direct 📱` },
+    { label: 'Scanner un client', text: `Hello ${name} ! Pour tamponner un client : allez sur votre dashboard Qarte → cliquez "Scanner" → scannez le QR du client (ou entrez son numéro). Le tampon s'ajoute automatiquement sur sa carte ! Ça prend 3 secondes ✅` },
+    { label: 'La récompense', text: `Hello ${name} ! Quand un client atteint le nombre de tampons requis, un bon apparaît automatiquement sur sa carte. Au prochain passage, vous le validez en un clic depuis votre dashboard. Le compteur du client repart à zéro 🎁` },
+    { label: 'Le dashboard', text: `Hello ${name} ! Votre dashboard Qarte (app.qarte.io) c'est votre tableau de bord : vous voyez vos clients, leurs tampons, les récompenses à valider, et vos stats. Tout se gère depuis là, même sur mobile 📊` },
+    { label: 'Les notifications', text: `Hello ${name} ! Vos clients reçoivent des notifications push automatiques : rappel quand ils sont proches de la récompense, anniversaire, et si vous activez les offres. C'est dans l'onglet Marketing de votre dashboard 🔔` },
+    { label: 'Le parrainage', text: `Hello ${name} ! Le parrainage Qarte : chaque client a un lien de parrainage sur sa carte. Quand un ami s'inscrit via ce lien, les deux reçoivent un tampon bonus. Ça se met en place tout seul, rien à faire de votre côté 🤝` },
+    { label: 'Les offres', text: `Hello ${name} ! Vous pouvez créer des offres ponctuelles depuis votre dashboard (onglet Marketing → Offres). Vos clients reçoivent une notification push. C'est top pour remplir un créneau calme ou fêter un événement 🎉` },
+    { label: 'Le kit promo', text: `Hello ${name} ! On vous a envoyé par email un kit avec votre QR code en haute qualité + des visuels prêts pour Instagram/stories. Vous pouvez aussi le retélécharger depuis votre dashboard → Programme → "Télécharger le kit" 🖼️` },
+    { label: 'Personnaliser la carte', text: `Hello ${name} ! Vous pouvez personnaliser votre carte dans dashboard → Programme : logo, couleur, récompense, nombre de tampons. Vos clients voient les changements en temps réel sur leur carte 🎨` },
+    { label: 'L\'abonnement', text: `Hello ${name} ! L'abonnement Qarte c'est 19€/mois sans engagement, clients illimités. Avec le code QARTE50 c'est 9€ le premier mois. Vous pouvez annuler à tout moment depuis votre dashboard → Paramètres 💳` },
   ];
 
 
@@ -480,17 +494,36 @@ export default function MerchantDetailPage() {
               <ChevronDown className={cn("w-4 h-4 transition-transform", waOpen && "rotate-180")} />
             </button>
             {waOpen && (
-              <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
-                {getAllWhatsAppMessages(merchant.shop_name, stats.totalCustomers).map((msg, i) => (
+              <div className="mt-2">
+                <div className="flex gap-1 mb-2">
                   <button
-                    key={i}
-                    onClick={() => openWhatsApp(merchant.phone, msg.text)}
-                    className="text-left px-3 py-2.5 rounded-xl border border-green-100 bg-green-50 hover:bg-green-100 transition-colors group"
+                    onClick={() => setWaTab('marketing')}
+                    className={cn("px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors", waTab === 'marketing' ? "bg-green-600 text-white" : "bg-green-50 text-green-700 hover:bg-green-100")}
                   >
-                    <span className="text-xs font-bold text-green-700">{msg.label}</span>
-                    <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5 group-hover:text-gray-700">{msg.text}</p>
+                    Marketing
                   </button>
-                ))}
+                  <button
+                    onClick={() => setWaTab('tuto')}
+                    className={cn("px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors", waTab === 'tuto' ? "bg-blue-600 text-white" : "bg-blue-50 text-blue-700 hover:bg-blue-100")}
+                  >
+                    Tuto / Explication
+                  </button>
+                </div>
+                <div className="grid gap-1.5 sm:grid-cols-2">
+                  {(waTab === 'marketing'
+                    ? getWhatsAppMarketing(merchant.shop_name, stats.totalCustomers)
+                    : getWhatsAppTuto(merchant.shop_name)
+                  ).map((msg, i) => (
+                    <button
+                      key={i}
+                      onClick={() => openWhatsApp(merchant.phone, msg.text)}
+                      className={cn("text-left px-3 py-2.5 rounded-xl border transition-colors group", waTab === 'marketing' ? "border-green-100 bg-green-50 hover:bg-green-100" : "border-blue-100 bg-blue-50 hover:bg-blue-100")}
+                    >
+                      <span className={cn("text-xs font-bold", waTab === 'marketing' ? "text-green-700" : "text-blue-700")}>{msg.label}</span>
+                      <p className="text-[11px] text-gray-500 line-clamp-2 mt-0.5 group-hover:text-gray-700">{msg.text}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>

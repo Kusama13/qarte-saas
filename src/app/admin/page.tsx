@@ -20,6 +20,7 @@ import {
   MessageCircle,
   Mail,
   ChevronRight,
+  ChevronDown,
   Save,
   Loader2,
   X,
@@ -122,7 +123,8 @@ export default function AdminDashboardPage() {
   const [inactive7Days, setInactive7Days] = useState<ActionMerchant[]>([]);
 
   // Challenge progress
-  const [challengeData, setChallengeData] = useState<{ shopName: string; clients: number; completed: boolean; daysSinceCreation: number }[]>([]);
+  const [challengeData, setChallengeData] = useState<{ id: string; shopName: string; clients: number; completed: boolean; daysSinceCreation: number }[]>([]);
+  const [challengeOpen, setChallengeOpen] = useState(true);
 
   // Notes
   const [notes, setNotes] = useState('');
@@ -341,6 +343,7 @@ export default function AdminDashboardPage() {
 
       setChallengeData(
         recentTrials.map((m: Merchant) => ({
+          id: m.id,
           shopName: m.shop_name,
           clients: clientCountMap.get(m.id) || 0,
           completed: completedSet.has(m.id) || (clientCountMap.get(m.id) || 0) >= 5,
@@ -646,43 +649,48 @@ export default function AdminDashboardPage() {
       {/* Challenge progress */}
       {challengeData.length > 0 && (
         <div className="bg-white rounded-lg border border-slate-100 shadow-md overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
+          <button
+            onClick={() => setChallengeOpen(!challengeOpen)}
+            className="w-full px-5 py-4 border-b border-slate-100 flex items-center gap-3 hover:bg-slate-50 transition-colors"
+          >
             <div className="p-2 bg-amber-50 rounded-lg">
               <Trophy className="w-5 h-5 text-amber-600" />
             </div>
-            <div>
+            <div className="text-left flex-1">
               <h2 className="font-semibold text-slate-900">Défi activation</h2>
               <p className="text-xs text-slate-500">5 clients en 3 jours = premier mois à 9€</p>
             </div>
-          </div>
-          <div className="divide-y divide-slate-50">
-            {challengeData.map((d, i) => (
-              <div key={i} className="flex items-center gap-4 px-5 py-3">
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-slate-900 truncate block">{d.shopName}</span>
-                  <span className="text-xs text-slate-400">Inscrit il y a {d.daysSinceCreation}j</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {/* Progress bar */}
-                  <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all",
-                        d.completed ? "bg-green-500" : "bg-amber-400"
-                      )}
-                      style={{ width: `${Math.min((d.clients / 5) * 100, 100)}%` }}
-                    />
+            <ChevronDown className={cn("w-4 h-4 text-slate-400 transition-transform", challengeOpen && "rotate-180")} />
+          </button>
+          {challengeOpen && (
+            <div className="divide-y divide-slate-50">
+              {challengeData.map((d, i) => (
+                <Link key={i} href={`/admin/merchants/${d.id}`} className="flex items-center gap-4 px-5 py-3 hover:bg-slate-50 transition-colors cursor-pointer">
+                  <div className="flex-1 min-w-0">
+                    <span className="text-sm font-medium text-slate-900 truncate block">{d.shopName}</span>
+                    <span className="text-xs text-slate-400">Inscrit il y a {d.daysSinceCreation}j</span>
                   </div>
-                  <span className={cn(
-                    "text-xs font-bold min-w-[3rem] text-right",
-                    d.completed ? "text-green-600" : "text-amber-600"
-                  )}>
-                    {d.completed ? 'Réussi' : `${d.clients}/5`}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div
+                        className={cn(
+                          "h-full rounded-full transition-all",
+                          d.completed ? "bg-green-500" : "bg-amber-400"
+                        )}
+                        style={{ width: `${Math.min((d.clients / 5) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <span className={cn(
+                      "text-xs font-bold min-w-[3rem] text-right",
+                      d.completed ? "text-green-600" : "text-amber-600"
+                    )}>
+                      {d.completed ? 'Réussi' : `${d.clients}/5`}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
