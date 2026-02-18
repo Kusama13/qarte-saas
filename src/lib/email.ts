@@ -180,13 +180,14 @@ export async function sendNewMerchantNotification(
   if (check) return check;
 
   try {
+    const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const htmlContent = `
       <h2>Nouveau commerçant inscrit sur Qarte</h2>
-      <p><strong>Commerce :</strong> ${shopName}</p>
-      <p><strong>Type :</strong> ${shopType}</p>
-      <p><strong>Adresse :</strong> ${shopAddress}</p>
-      <p><strong>Téléphone :</strong> ${phone}</p>
-      <p><strong>Email :</strong> ${email}</p>
+      <p><strong>Commerce :</strong> ${esc(shopName)}</p>
+      <p><strong>Type :</strong> ${esc(shopType)}</p>
+      <p><strong>Adresse :</strong> ${esc(shopAddress)}</p>
+      <p><strong>Téléphone :</strong> ${esc(phone)}</p>
+      <p><strong>Email :</strong> ${esc(email)}</p>
       <p><strong>Date :</strong> ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}</p>
     `;
     const textContent = `Nouveau commerçant inscrit sur Qarte\n\nCommerce : ${shopName}\nType : ${shopType}\nAdresse : ${shopAddress}\nTéléphone : ${phone}\nEmail : ${email}\nDate : ${new Date().toLocaleString('fr-FR', { timeZone: 'Europe/Paris' })}`;

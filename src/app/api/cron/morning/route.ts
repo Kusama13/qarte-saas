@@ -27,7 +27,7 @@ import {
   sendAutoSuggestRewardEmail,
   sendGracePeriodSetupEmail,
 } from '@/lib/email';
-import { getTrialStatus } from '@/lib/utils';
+import { getTrialStatus, getTodayInParis } from '@/lib/utils';
 import { sendAutomationPush, getUpcomingEvent } from '@/lib/push-automation';
 import logger from '@/lib/logger';
 
@@ -1468,7 +1468,7 @@ export async function GET(request: NextRequest) {
 
   // ==================== SECTION 10: SCHEDULED PUSH ====================
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayInParis();
 
     const { data: scheduledPushes } = await supabase
       .from('scheduled_push')
@@ -1869,7 +1869,9 @@ export async function GET(request: NextRequest) {
 
     // 12C. Événements (push 7 days before event)
     {
-      const upcomingEvent = getUpcomingEvent(now);
+      // Use Paris-local date for event calendar check (avoids off-by-one at midnight)
+      const nowParis = new Date(getTodayInParis() + 'T10:00:00');
+      const upcomingEvent = getUpcomingEvent(nowParis);
 
       if (upcomingEvent) {
         const { data: automationMerchants } = await supabase

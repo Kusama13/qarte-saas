@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { getAuthenticatedPhone } from '@/lib/customer-auth';
 
 // Helper to get Supabase client at runtime
 function getSupabase() {
@@ -37,11 +38,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // SECURITY: Validate that customerId exists in the database
+    // SECURITY: Verify caller owns this customer via phone cookie
+    const phone = getAuthenticatedPhone(request);
+    if (!phone) {
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      );
+    }
+
+    // Validate customerId exists AND belongs to authenticated phone
     const { data: customer, error: customerError } = await supabase
       .from('customers')
       .select('id')
       .eq('id', customerId)
+      .eq('phone_number', phone)
       .maybeSingle();
 
     if (customerError || !customer) {

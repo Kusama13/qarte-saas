@@ -26,13 +26,12 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .maybeSingle();
 
-    if (!customer) {
-      return NextResponse.json({ found: false });
-    }
-
-    // Set HttpOnly cookie
+    // Always return same response to prevent phone enumeration
     const response = NextResponse.json({ found: true });
-    return setPhoneCookie(response, phone_number);
+    if (customer) {
+      return setPhoneCookie(response, phone_number);
+    }
+    return response;
   } catch {
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }

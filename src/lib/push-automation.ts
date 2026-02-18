@@ -106,23 +106,13 @@ export async function sendAutomationPush(params: {
       automation_type: automationType,
     });
 
-    // 7. Increment stat counter on push_automations
+    // 7. Increment stat counter on push_automations (atomic via RPC)
     const statColumn = getStatColumn(automationType);
     if (statColumn) {
-      // Use raw SQL increment via rpc or manual read+write
-      const { data: current } = await supabase
-        .from('push_automations')
-        .select(statColumn)
-        .eq('merchant_id', merchantId)
-        .maybeSingle();
-
-      if (current) {
-        const val = (current as unknown as Record<string, number>)[statColumn] || 0;
-        await supabase
-          .from('push_automations')
-          .update({ [statColumn]: val + 1 })
-          .eq('merchant_id', merchantId);
-      }
+      await supabase.rpc('increment_push_automation_stat', {
+        p_merchant_id: merchantId,
+        p_stat_column: statColumn,
+      });
     }
 
     return true;
