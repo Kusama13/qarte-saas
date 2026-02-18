@@ -21,8 +21,8 @@ self.addEventListener('push', (event) => {
   let data = {
     title: 'Qarte',
     body: 'Vous avez une nouvelle notification',
-    icon: '/icon-192.svg',
-    badge: '/icon-192.svg',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
     url: '/customer/cards',
   };
 

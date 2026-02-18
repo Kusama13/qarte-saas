@@ -300,7 +300,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 
 ### Marketing (2 onglets)
 - **Onglet "Envoyer"** : Push notifications manuelles + 5 templates beaute (creneau dispo, nouveau soin, offre beaute, offre duo, creneau calme)
-- **Onglet "Automatisations"** : Cadeau anniversaire (toggle + config description), 3 placeholders "Bientot"
+- **Onglet "Automatisations"** : Cadeau anniversaire (toggle + config description + cron J-3 voucher + push jour J), 3 placeholders "Bientot"
 - Push programmees (10h et 18h)
 - Kit reseaux sociaux (SocialMediaTemplate, visuel 4:5 + legendes Instagram)
 - Ebook telechargeable (lead generation)
@@ -337,7 +337,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Page detail merchant (`/admin/merchants/[id]`) : section "Liens & Reseaux" (Instagram, Facebook, TikTok, reservation, avis Google) cliquables
 - Badge parrainage actif/inactif dans les badges statut
 - Section "Progression onboarding" : 5 items checklist + barre de progression par merchant
-- Menu WhatsApp repliable : 12 messages pre-remplis (relance, felicitations, support, upsell)
+- Menu WhatsApp repliable : 2 onglets Marketing (12 messages contextuels) + Tuto (10 messages explication fonctionnalites)
 - Toggle "Ne pas contacter" (`no_contact`) + champ "Notes admin" editables
 - Badge NC (rouge) dans la liste merchants si `no_contact = true`
 - WhatsApp masque automatiquement pour merchants `no_contact`
@@ -612,10 +612,11 @@ npm run email
 - Analytics, Metriques, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
 - Activity : vue "hier" (`?date=yesterday`) pour suivi activite merchants
-- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badges parrainage + anniversaire, progression onboarding, menu WhatsApp repliable (15 messages dont 1er scan, affichage QR, bravo), toggle no_contact + notes admin
+- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badges parrainage + anniversaire, progression onboarding, menu WhatsApp 2 onglets (Marketing 12 msg + Tuto 10 msg), toggle no_contact + notes admin
 - Merchant detail : cartes cadeau anniversaire (si actif) + parrainage (si actif) avec details config
 - Merchants liste : badge NC rouge si no_contact, WhatsApp masque, messages contextuels par lifecycle
-- Activity : suivi scans, inscriptions, recompenses, nouveaux clients, messages, vouchers (anniversaire + parrainage)
+- Activity : suivi scans, inscriptions, recompenses, nouveaux clients, messages, vouchers (anniversaire + parrainage). Toutes les lignes avec merchant cliquables vers le detail.
+- Defi activation : section collapsible sur la homepage admin, merchants cliquables vers le detail
 - **Toutes les stats excluent les comptes admin** (via `super_admins` table)
 
 ### Dashboard (`/dashboard`)

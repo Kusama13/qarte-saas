@@ -82,7 +82,7 @@
 | **Partenariats distributeurs** | 15% | 0€ | Grossistes coiffure (L'Oreal Pro, Wella), newsletters partenaires |
 
 ### Actions produit
-- [ ] **Birthday Club** — table stakes, tous les concurrents l'ont
+- [x] ~~**Birthday Club**~~ — ✅ FAIT (migration 037, toggle marketing, cron J-3 voucher + push jour J)
 - [x] ~~**Referral client→client**~~ — ✅ Programme parrainage complet (APIs, scan ?ref=, carte client, dashboard /referrals)
 - [ ] **Segmentation push** — cibler "inactifs 30j", "VIP 10+ visites"
 - [ ] **Apple/Google Wallet pass** — gros differenciateur sans app
@@ -210,7 +210,7 @@
 
 | Concurrent | Prix/mois | Cible | Force | Faiblesse |
 |-----------|-----------|-------|-------|-----------|
-| **Qarte** | **19€** | Beaute FR | Prix, UX, anti-fraude | Pas de birthday, pas de wallet |
+| **Qarte** | **19€** | Beaute FR | Prix, UX, anti-fraude, birthday, referral | Pas de wallet, pas de segmentation push |
 | Stamp Me | 43-74€ | Beaute global | Features completes | Cher, necessite app |
 | Square Loyalty | 45€ + fees | General | Integration POS native | Pricing par client, complexe |
 | LoyalZoo | 47€ | PME general | Multi-POS (Clover, Lightspeed) | Pas de niche beaute |
@@ -228,7 +228,7 @@
 | 2 paliers recompenses | ✅ | ❌ | ✅ | ✅ | ❌ |
 | Push notifications | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Push programmees | ✅ | ❌ | ✅ | ✅ | ❌ |
-| Birthday auto | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Birthday auto | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Referral client | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Segmentation push | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Apple/Google Wallet | ❌ | ✅ | ✅ | ✅ | ✅ |

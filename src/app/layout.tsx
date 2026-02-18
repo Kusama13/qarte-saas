@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   authors: [{ name: 'Qarte' }],
   creator: 'Qarte',
   publisher: 'Qarte',
+  icons: {
+    icon: '/icon-192.png',
+    apple: '/icon-192.png',
+  },
   formatDetection: {
     email: false,
     address: false,
@@ -76,7 +80,7 @@ export default function RootLayout({
             '@type': 'Organization',
             name: 'Qarte',
             url: baseUrl,
-            logo: `${baseUrl}/icons/icon-512x512.png`,
+            logo: `${baseUrl}/icon-512.png`,
             description: 'Programme de fidélité digital pour salons de beauté, coiffeurs, barbiers, ongleries et instituts.',
             contactPoint: {
               '@type': 'ContactPoint',

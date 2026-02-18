@@ -51,7 +51,7 @@ Signup (email+password)
 | # | Feature | Effort | Statut |
 |---|---------|--------|--------|
 | F7 | Onboarding checklist gamifiee | 4h | ✅ FAIT — `OnboardingChecklist.tsx`, 5 etapes, confetti, trial only |
-| F8 | Birthday Club (anniversaire clients) | 6h | ❌ A FAIRE |
+| F8 | Birthday Club (anniversaire clients) | 6h | ✅ FAIT — migration 037, toggle marketing, cron J-3 voucher, push jour J |
 | F9 | Parrainage merchant | 3h | ✅ FAIT — code QARTE-XXXX, Settings + FirstScanEmail, Web Share API |
 | F10 | Scratch & Win gamification | 6h | ❌ A FAIRE |
 | F21 | Parrainage client (filleul/parrain) | 8h | ✅ FAIT — APIs, scan ?ref=, carte client, dashboard /referrals |
@@ -81,7 +81,7 @@ Signup (email+password)
 | F6 | Templates push | 2h | ★★ | ★★★★ | **P1** |
 | F4 | Stats carte client | 2h | ★★ | ★★★ | **P1** |
 | F7 | ~~Checklist gamifiee~~ | ~~4h~~ | ★★★★★ | ★★★ | **✅ FAIT** |
-| F8 | Birthday Club | 6h | ★★★ | ★★★★★ | **P1** |
+| F8 | ~~Birthday Club~~ | ~~6h~~ | ★★★ | ★★★★★ | **✅ FAIT** |
 | F10 | Scratch & Win | 6h | ★★ | ★★★★★ | **P2** |
 | F9 | ~~Parrainage merchant~~ | ~~3h~~ | ★★★★ | ★★★ | **✅ FAIT** |
 | F21 | ~~Parrainage client~~ | ~~8h~~ | ★★★★★ | ★★★★★ | **✅ FAIT** |
@@ -576,7 +576,7 @@ SHIELD (points en attente)
 - [ ] **F4** : Stats enrichies carte client (2h)
 
 ## Semaine 3 (24 fev - 2 mars)
-- [ ] **F8** : Birthday Club (6h)
+- [x] ~~**F8** : Birthday Club~~ — fait (migration 037)
 
 ## Semaine 4 (3-9 mars)
 - [ ] **F10** : Scratch & Win gamification (6h)
@@ -595,6 +595,31 @@ SHIELD (points en attente)
 ---
 
 # PARTIE 6 : CHANGELOG
+
+## [2026-02-18] — WhatsApp Marketing/Tuto, audit parrainage+anniversaire, admin activite cliquable
+
+### Admin WhatsApp split Marketing/Tuto
+- **feat:** WhatsApp admin split en 2 onglets : Marketing (12 messages contextuels lifecycle) + Tuto (10 messages explication fonctionnalites)
+- **feat:** Onglet Marketing (vert) : relance douce, aide config, bravo 1er scan, upsell tier 2, etc.
+- **feat:** Onglet Tuto (bleu) : explication QR code, programme fidelite, push, parrainage, anniversaire, reseaux sociaux, stats, abonnement, shield, reservation
+- **copy:** Messages WhatsApp reformules (Coucou → Hello, ton plus naturel)
+
+### Admin activite & homepage
+- **feat:** Page activite — toutes les lignes avec merchant cliquables vers `/admin/merchants/{id}` (scan, inscription, recompense, nouveau client, voucher)
+- **feat:** Homepage admin — section "Defi activation" collapsible + merchants cliquables vers le detail
+
+### Audit parrainage & anniversaire — bug fixes
+- **fix:** Birthday toggle — sauvegardait uniquement OFF, maintenant sauvegarde ON et OFF
+- **fix:** Referral code — retry 5 tentatives si code deja existant (loyalty_cards)
+- **fix:** Voucher parrainage — ajout `expires_at` 30 jours (filleul + parrain)
+- **fix:** Cron birthday timezone — `now + 3j` → `getTodayInParis() + 3j` (coherence horaire)
+- **fix:** Birthday push dedup — deduplication par endpoint + tag unique par merchant
+- **fix:** Dashboard referrals — `.limit(100)` sur query
+
+### Migration SQL
+- 037 : Birthday gift (birthday_gift_enabled, birthday_gift_description, vouchers source + birth_month/birth_day)
+
+---
 
 ## [2026-02-17] — no_contact + admin_notes, WhatsApp admin, signup refonte, checklist fixes
 
@@ -999,8 +1024,9 @@ SHIELD (points en attente)
 - 034 : Trial period 15j → 7j (nouveaux inscrits)
 - 035 : Referrals table RLS policies
 - 036 : no_contact + admin_notes columns
+- 037 : Birthday gift (birthday_gift_enabled, birthday_gift_description, vouchers source + birth_month/birth_day)
 
 ---
 
 *Derniere mise a jour : 18 fevrier 2026*
-*Audit global complete (Phases 1-3). Migrations 038+039 appliquees. 55/55 tests. Phase 4 (Upstash, push batching, logger, Search Console) en backlog.*
+*Audit global complete (Phases 1-3). Migrations 038+039 appliquees. 55/55 tests. Birthday Club + referral bug fixes deployes. Phase 4 (Upstash, push batching, logger, Search Console) en backlog.*
