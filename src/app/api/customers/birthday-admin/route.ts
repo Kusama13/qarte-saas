@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -61,13 +62,13 @@ export async function PUT(request: NextRequest) {
       .eq('id', customer_id);
 
     if (error) {
-      console.error('Birthday admin save error:', error);
+      logger.error('Birthday admin save error:', error);
       return NextResponse.json({ error: 'Erreur lors de la sauvegarde' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Birthday admin error:', error);
+    logger.error('Birthday admin error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

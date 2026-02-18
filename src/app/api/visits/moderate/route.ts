@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
 import type { VisitStatus } from '@/types';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
       .order('visited_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching pending visits:', error);
+      logger.error('Error fetching pending visits:', error);
       return NextResponse.json(
         { error: 'Erreur lors de la récupération des visites' },
         { status: 500 }
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
       pending_count: pendingCount || 0,
     });
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }
@@ -180,7 +181,7 @@ export async function POST(request: NextRequest) {
         : 'Point refusé',
     });
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }
@@ -319,7 +320,7 @@ export async function PUT(request: NextRequest) {
         : `${successCount} point(s) refusé(s)`,
     });
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

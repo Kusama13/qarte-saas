@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import logger from '@/lib/logger';
 
 interface SubscriberCustomer {
   id: string;
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
       .limit(5000);
 
     if (cardsError) {
-      console.error('Error fetching loyalty cards:', cardsError);
+      logger.error('Error fetching loyalty cards:', cardsError);
       return NextResponse.json(
         { error: 'Erreur lors de la récupération des clients' },
         { status: 500 }
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
       .limit(10000);
 
     if (phoneError) {
-      console.error('Error fetching customers by phone:', phoneError);
+      logger.error('Error fetching customers by phone:', phoneError);
       return NextResponse.json(
         { error: 'Erreur lors de la récupération des clients' },
         { status: 500 }
@@ -134,7 +135,7 @@ export async function GET(request: NextRequest) {
       .limit(10000);
 
     if (error) {
-      console.error('Error fetching subscriptions:', error);
+      logger.error('Error fetching subscriptions:', error);
       return NextResponse.json(
         { error: 'Erreur lors de la récupération des abonnés' },
         { status: 500 }
@@ -179,7 +180,7 @@ export async function GET(request: NextRequest) {
         .in('customer_id', subscriberCustomerIds);
 
       if (cardsDetailError) {
-        console.error('Error fetching loyalty card details:', cardsDetailError);
+        logger.error('Error fetching loyalty card details:', cardsDetailError);
       }
 
       // Get merchant stamps_required
@@ -247,7 +248,7 @@ export async function GET(request: NextRequest) {
       subscriberIds: subscriberCustomerIds
     });
   } catch (error) {
-    console.error('Subscribers count error:', error);
+    logger.error('Subscribers count error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

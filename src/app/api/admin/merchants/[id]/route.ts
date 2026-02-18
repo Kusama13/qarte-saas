@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyAdminAuth } from '@/lib/admin-auth';
+import logger from '@/lib/logger';
 
 // GET - Récupérer toutes les données d'un merchant (H5: service_role pour bypasser RLS)
 export async function GET(
@@ -132,7 +133,7 @@ export async function GET(
       emailTrackings: emailTrackingsRes.data || [],
     });
   } catch (error) {
-    console.error('Admin merchant stats error:', error);
+    logger.error('Admin merchant stats error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }
@@ -181,7 +182,7 @@ export async function PATCH(
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Admin merchant PATCH error:', error);
+    logger.error('Admin merchant PATCH error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
@@ -243,7 +244,7 @@ export async function DELETE(
       .eq('id', merchantId);
 
     if (deleteError) {
-      console.error('Delete merchant error:', deleteError);
+      logger.error('Delete merchant error:', deleteError);
       return NextResponse.json(
         { error: 'Erreur lors de la suppression', details: deleteError.message },
         { status: 500 }
@@ -261,7 +262,7 @@ export async function DELETE(
       message: `Merchant "${merchant.shop_name}" supprimé avec succès`,
     });
   } catch (error) {
-    console.error('Delete merchant error:', error);
+    logger.error('Delete merchant error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

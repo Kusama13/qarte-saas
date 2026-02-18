@@ -3,6 +3,7 @@ import { render } from '@react-email/render';
 import { EbookEmail } from '@/emails';
 import { resend, EMAIL_FROM, EMAIL_REPLY_TO, EMAIL_HEADERS } from '@/lib/resend';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import logger from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,13 +39,13 @@ export async function POST(request: NextRequest) {
     });
 
     if (error) {
-      console.error('Error sending ebook email:', error);
+      logger.error('Error sending ebook email:', error);
       return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Ebook email error:', error);
+    logger.error('Ebook email error:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

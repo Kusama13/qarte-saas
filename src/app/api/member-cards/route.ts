@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -68,13 +69,13 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching member cards:', error);
+      logger.error('Error fetching member cards:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ memberCards });
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
@@ -164,13 +165,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error creating member card:', error);
+      logger.error('Error creating member card:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ memberCard });
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

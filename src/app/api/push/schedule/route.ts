@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { containsForbiddenWords } from '@/lib/content-moderation';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Failed to schedule push:', error);
+      logger.error('Failed to schedule push:', error);
       return NextResponse.json({ error: 'Failed to schedule push' }, { status: 500 });
     }
 

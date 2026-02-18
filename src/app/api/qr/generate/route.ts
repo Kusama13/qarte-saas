@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { generateQRCode, getScanUrl } from '@/lib/utils';
 import { z } from 'zod';
+import logger from '@/lib/logger';
 
 const generateSchema = z.object({
   merchant_id: z.string().uuid(),
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
       scan_url: scanUrl,
     });
   } catch (error) {
-    console.error('QR generation error:', error);
+    logger.error('QR generation error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

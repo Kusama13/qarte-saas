@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
+import logger from '@/lib/logger';
 
 const adjustPointsSchema = z.object({
   customer_id: z.string().uuid(),
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
       .eq('id', loyalty_card_id);
 
     if (updateError) {
-      console.error('Update error:', updateError);
+      logger.error('Update error:', updateError);
       return NextResponse.json(
         { error: 'Erreur lors de la mise à jour des points' },
         { status: 500 }
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (auditError) {
-      console.error('Audit log error:', auditError);
+      logger.error('Audit log error:', auditError);
     }
 
     // If points are reduced below tier 1 threshold, reset tier 1 redemptions in current cycle
@@ -134,7 +135,7 @@ export async function POST(request: NextRequest) {
             .gt('redeemed_at', lastTier2Date);
 
           if (deleteError) {
-            console.error('Error resetting tier 1 redemptions:', deleteError);
+            logger.error('Error resetting tier 1 redemptions:', deleteError);
           }
         }
       } else if (newStamps >= merchantData.stamps_required && adjustment > 0) {
@@ -193,7 +194,7 @@ export async function POST(request: NextRequest) {
       adjustment,
     });
   } catch (error) {
-    console.error('Adjust points error:', error);
+    logger.error('Adjust points error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

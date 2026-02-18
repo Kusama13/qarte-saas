@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyAdminAuth } from '@/lib/admin-auth';
 import { sendQRCodeEmail } from '@/lib/email';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -69,7 +70,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, email: userEmail });
   } catch (error) {
-    console.error('Admin send social kit error:', error);
+    logger.error('Admin send social kit error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

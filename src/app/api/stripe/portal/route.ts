@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { stripe } from '@/lib/stripe';
+import logger from '@/lib/logger';
 
 export async function POST() {
   try {
@@ -32,7 +33,7 @@ export async function POST() {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error('Portal error:', error);
+    logger.error('Portal error:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la création du portail' },
       { status: 500 }

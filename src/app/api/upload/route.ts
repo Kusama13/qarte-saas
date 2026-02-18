@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import logger from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   const supabase = await createRouteHandlerSupabaseClient();
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       return NextResponse.json({ error: 'Erreur lors de l\'upload' }, { status: 500 });
     }
 
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
       url: urlData.publicUrl,
     });
   } catch (error) {
-    console.error('Upload error:', error);
+    logger.error('Upload error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

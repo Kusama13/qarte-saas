@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
         });
 
       if (banError) {
-        console.error('Error banning number:', banError);
+        logger.error('Error banning number:', banError);
         // Continue with deletion even if ban fails
       }
     }
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
       .eq('id', loyalty_card_id);
 
     if (deleteError) {
-      console.error('Error deleting loyalty card:', deleteError);
+      logger.error('Error deleting loyalty card:', deleteError);
       return NextResponse.json(
         { error: 'Erreur lors de la suppression' },
         { status: 500 }
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
       banned: ban_number || false,
     });
   } catch (error) {
-    console.error('Delete customer error:', error);
+    logger.error('Delete customer error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

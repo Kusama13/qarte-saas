@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { formatPhoneNumber } from '@/lib/utils';
 import type { MerchantCountry } from '@/types';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (customerError || !newCustomer) {
-        console.error('Error creating customer:', customerError);
+        logger.error('Error creating customer:', customerError);
         return NextResponse.json(
           { error: 'Erreur lors de la création du client' },
           { status: 500 }
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (cardError) {
-      console.error('Error creating loyalty card:', cardError);
+      logger.error('Error creating loyalty card:', cardError);
       return NextResponse.json(
         { error: 'Erreur lors de la création de la carte fidélité' },
         { status: 500 }
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
       loyalty_card_id: card.id,
     });
   } catch (error) {
-    console.error('Create customer error:', error);
+    logger.error('Create customer error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

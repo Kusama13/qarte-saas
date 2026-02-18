@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -117,7 +118,7 @@ export async function GET() {
       visitsPerDay,
     });
   } catch (error) {
-    console.error('Stats error:', error);
+    logger.error('Stats error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

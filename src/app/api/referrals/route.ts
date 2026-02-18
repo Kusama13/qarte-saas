@@ -4,6 +4,7 @@ import { formatPhoneNumber, validatePhone, generateReferralCode, getTrialStatus 
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import type { MerchantCountry } from '@/types';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
       logo_url: merchant.logo_url,
     });
   } catch (error) {
-    console.error('Referral info error:', error);
+    logger.error('Referral info error:', error);
     return NextResponse.json({ valid: false, error: 'Erreur serveur' }, { status: 500 });
   }
 }
@@ -167,7 +168,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (customerError || !newCustomer) {
-      console.error('Customer creation error:', customerError);
+      logger.error('Customer creation error:', customerError);
       return NextResponse.json({ error: 'Erreur lors de la création du compte' }, { status: 500 });
     }
 
@@ -185,7 +186,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (cardError || !newCard) {
-      console.error('Card creation error:', cardError);
+      logger.error('Card creation error:', cardError);
       return NextResponse.json({ error: 'Erreur lors de la création de la carte' }, { status: 500 });
     }
 
@@ -202,7 +203,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (voucherError || !referredVoucher) {
-      console.error('Voucher creation error:', voucherError);
+      logger.error('Voucher creation error:', voucherError);
       return NextResponse.json({ error: 'Erreur lors de la création de la récompense' }, { status: 500 });
     }
 
@@ -221,7 +222,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (referralError) {
-      console.error('Referral creation error:', referralError);
+      logger.error('Referral creation error:', referralError);
     }
 
     // 10. Retourner succès
@@ -234,7 +235,7 @@ export async function POST(request: NextRequest) {
       shop_name: merchant.shop_name,
     });
   } catch (error) {
-    console.error('Referral registration error:', error);
+    logger.error('Referral registration error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

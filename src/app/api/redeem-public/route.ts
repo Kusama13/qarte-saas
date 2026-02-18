@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
+import logger from '@/lib/logger';
 
 const redeemSchema = z.object({
   loyalty_card_id: z.string().uuid(),
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest) {
         .select('id');
 
       if (updateError) {
-        console.error('Update stamps error:', updateError);
+        logger.error('Update stamps error:', updateError);
         return NextResponse.json(
           { error: 'Erreur lors de la mise à jour de la carte' },
           { status: 500 }
@@ -166,7 +167,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (redemptionError) {
-      console.error('Redemption error:', redemptionError);
+      logger.error('Redemption error:', redemptionError);
       return NextResponse.json(
         { error: 'Erreur lors de l\'enregistrement de la récompense' },
         { status: 500 }
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest) {
       stamps_reset: shouldResetStamps,
     });
   } catch (error) {
-    console.error('Redeem public error:', error);
+    logger.error('Redeem public error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

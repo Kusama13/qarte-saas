@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import type { VisitStatus, MerchantCountry } from '@/types';
 import { setPhoneCookie } from '@/lib/customer-auth';
+import logger from '@/lib/logger';
 
 // Use singleton admin client for server-side operations
 const supabaseAdmin = getSupabaseAdmin();
@@ -170,7 +171,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (customerError) {
-        console.error('Customer creation error:', customerError);
+        logger.error('Customer creation error:', customerError);
         return NextResponse.json(
           { error: 'Erreur lors de la création du compte' },
           { status: 500 }
@@ -303,7 +304,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (visitError) {
-      console.error('Visit insert error:', visitError);
+      logger.error('Visit insert error:', visitError);
       return NextResponse.json(
         { error: 'Erreur lors de l\'enregistrement du passage' },
         { status: 500 }
@@ -427,7 +428,7 @@ export async function POST(request: NextRequest) {
     setPhoneCookie(jsonResponse, formattedPhone);
     return jsonResponse;
   } catch (error) {
-    console.error('Checkin error:', error);
+    logger.error('Checkin error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

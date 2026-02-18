@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -55,7 +56,7 @@ export async function GET(
 
     return NextResponse.json({ program });
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
@@ -112,7 +113,7 @@ export async function PATCH(
 
     return NextResponse.json({ program });
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
@@ -158,7 +159,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

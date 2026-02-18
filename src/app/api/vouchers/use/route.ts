@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import webpush from 'web-push';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
       .select('id');
 
     if (updateError) {
-      console.error('Voucher update error:', updateError);
+      logger.error('Voucher update error:', updateError);
       return NextResponse.json({ error: 'Erreur lors de la mise à jour' }, { status: 500 });
     }
 
@@ -251,7 +252,7 @@ export async function POST(request: NextRequest) {
       customer_name: customer.first_name || null,
     });
   } catch (error) {
-    console.error('Voucher use error:', error);
+    logger.error('Voucher use error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

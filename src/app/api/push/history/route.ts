@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import logger from '@/lib/logger';
 
 // GET - Get push history for a merchant
 export async function GET(request: NextRequest) {
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
       .limit(limit);
 
     if (error) {
-      console.error('Error fetching push history:', error);
+      logger.error('Error fetching push history:', error);
       return NextResponse.json(
         { error: 'Erreur lors de la récupération de l\'historique' },
         { status: 500 }
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
       history: history || []
     });
   } catch (error) {
-    console.error('Push history error:', error);
+    logger.error('Push history error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

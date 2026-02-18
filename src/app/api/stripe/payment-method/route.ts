@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { stripe } from '@/lib/stripe';
+import logger from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -95,7 +96,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Error fetching payment method:', error);
+    logger.error('Error fetching payment method:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la récupération du moyen de paiement' },
       { status: 500 }

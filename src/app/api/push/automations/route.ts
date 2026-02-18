@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ settings, isAdmin });
   } catch (error) {
-    console.error('Push automations GET error:', error);
+    logger.error('Push automations GET error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
@@ -135,7 +136,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ settings });
   } catch (error) {
-    console.error('Push automations POST error:', error);
+    logger.error('Push automations POST error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

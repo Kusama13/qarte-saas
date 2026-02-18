@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
+import logger from '@/lib/logger';
 
 // Disable caching for this route
 export const dynamic = 'force-dynamic';
@@ -138,7 +139,7 @@ export async function POST(request: NextRequest) {
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     return response;
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

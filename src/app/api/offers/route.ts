@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import logger from '@/lib/logger';
 
 // Helper to verify merchant ownership
 async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean; error?: string; status?: number }> {
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
       expiresAt: expiresAt.toISOString(),
     });
   } catch (error) {
-    console.error('Error saving offer:', error);
+    logger.error('Error saving offer:', error);
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }
@@ -157,7 +158,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error saving PWA offer:', error);
+    logger.error('Error saving PWA offer:', error);
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
   }
 }

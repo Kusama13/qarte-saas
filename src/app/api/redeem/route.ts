@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
+import logger from '@/lib/logger';
 
 const redeemSchema = z.object({
   loyalty_card_id: z.string().uuid(),
@@ -164,7 +165,7 @@ export async function POST(request: NextRequest) {
       stamps_reset: shouldResetStamps,
     });
   } catch (error) {
-    console.error('Redeem error:', error);
+    logger.error('Redeem error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

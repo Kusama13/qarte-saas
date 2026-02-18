@@ -8,12 +8,12 @@ declare global {
 
 // Generic event tracking
 export function trackEvent(eventName: string, params?: Record<string, unknown>) {
-  if (typeof window !== 'undefined' && window.dataLayer) {
-    window.dataLayer.push({
-      event: eventName,
-      ...params,
-    });
-  }
+  if (typeof window === 'undefined' || !window.dataLayer) return;
+  if (!eventName || typeof eventName !== 'string') return;
+  window.dataLayer.push({
+    event: eventName,
+    ...params,
+  });
 }
 
 // ============================================
@@ -97,6 +97,7 @@ export function trackSubscriptionStarted(plan: string, price: number) {
 }
 
 export function trackSubscriptionCompleted(plan: string, price: number, merchantId: string) {
+  if (!plan || !merchantId || typeof price !== 'number' || price < 0) return;
   trackEvent('purchase', {
     transaction_id: `sub_${merchantId}_${Date.now()}`,
     value: price,

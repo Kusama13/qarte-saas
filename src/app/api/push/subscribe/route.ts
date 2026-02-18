@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
+import logger from '@/lib/logger';
 
 // Helper to get Supabase client at runtime
 function getSupabase() {
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error saving subscription:', error);
+      logger.error('Error saving subscription:', error);
       return NextResponse.json(
         { error: 'Erreur lors de l\'enregistrement', details: error.message },
         { status: 500 }
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       subscription: data,
     });
   } catch (error) {
-    console.error('Subscribe error:', error);
+    logger.error('Subscribe error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur', details: error instanceof Error ? error.message : 'Unknown' },
       { status: 500 }
@@ -126,7 +127,7 @@ export async function DELETE(request: NextRequest) {
       .eq('endpoint', endpoint);
 
     if (error) {
-      console.error('Error deleting subscription:', error);
+      logger.error('Error deleting subscription:', error);
       return NextResponse.json(
         { error: 'Erreur lors de la suppression' },
         { status: 500 }
@@ -135,7 +136,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Unsubscribe error:', error);
+    logger.error('Unsubscribe error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import logger from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
       .order('redeemed_at', { ascending: false });
 
     if (error) {
-      console.error('Error fetching redemptions:', error);
+      logger.error('Error fetching redemptions:', error);
       return NextResponse.json(
         { error: 'Failed to fetch redemptions' },
         { status: 500 }
@@ -51,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ redemptions: redemptions || [] });
   } catch (error) {
-    console.error('Redemptions API error:', error);
+    logger.error('Redemptions API error:', error);
     return NextResponse.json(
       { error: 'Server error' },
       { status: 500 }

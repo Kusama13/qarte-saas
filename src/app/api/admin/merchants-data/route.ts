@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyAdminAuth } from '@/lib/admin-auth';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -125,7 +126,7 @@ export async function GET(request: NextRequest) {
       userEmails,
     });
   } catch (error) {
-    console.error('Merchants data API error:', error);
+    logger.error('Merchants data API error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

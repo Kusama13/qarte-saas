@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import logger from '@/lib/logger';
 
 export async function PUT(request: NextRequest) {
   try {
@@ -41,13 +42,13 @@ export async function PUT(request: NextRequest) {
       .eq('user_id', user.id);
 
     if (error) {
-      console.error('Referral config save error:', error);
+      logger.error('Referral config save error:', error);
       return NextResponse.json({ error: 'Erreur lors de la sauvegarde' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Referral config error:', error);
+    logger.error('Referral config error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

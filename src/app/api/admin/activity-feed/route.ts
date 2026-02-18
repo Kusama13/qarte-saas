@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { verifyAdminAuth } from '@/lib/admin-auth';
 import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import logger from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   const auth = await verifyAdminAuth(request);
@@ -203,7 +204,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ events, summary });
   } catch (error) {
-    console.error('Activity feed API error:', error);
+    logger.error('Activity feed API error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

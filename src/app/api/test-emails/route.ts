@@ -9,6 +9,7 @@ import {
   sendQRCodeEmail,
   sendReactivationEmail,
 } from '@/lib/email';
+import logger from '@/lib/logger';
 
 // GET - Preview emails in browser (dev only)
 export async function GET(request: NextRequest) {
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ html });
   } catch (error) {
-    console.error('Error rendering email:', error);
+    logger.error('Error rendering email:', error);
     return NextResponse.json({ error: 'Failed to render email' }, { status: 500 });
   }
 }

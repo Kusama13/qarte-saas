@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { stripe, PLAN, PLAN_ANNUAL } from '@/lib/stripe';
+import logger from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -133,7 +134,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error) {
-    console.error('Checkout error:', error);
+    logger.error('Checkout error:', error);
     return NextResponse.json(
       { error: 'Erreur lors de la creation de la session' },
       { status: 500 }

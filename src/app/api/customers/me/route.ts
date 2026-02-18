@@ -17,7 +17,9 @@ export async function GET(request: NextRequest) {
 
     const phone = getAuthenticatedPhone(request);
     if (!phone) {
-      return NextResponse.json({ authenticated: false });
+      const res = NextResponse.json({ authenticated: false });
+      res.headers.set('Cache-Control', 'no-store');
+      return res;
     }
 
     const { searchParams } = new URL(request.url);
@@ -33,12 +35,14 @@ export async function GET(request: NextRequest) {
         .maybeSingle();
 
       if (customer) {
-        return NextResponse.json({
+        const res = NextResponse.json({
           authenticated: true,
           phone,
           existsForMerchant: true,
           customer: { id: customer.id, first_name: customer.first_name },
         });
+        res.headers.set('Cache-Control', 'no-store');
+        return res;
       }
 
       // Check if exists globally (at another merchant)
@@ -49,17 +53,21 @@ export async function GET(request: NextRequest) {
         .limit(1)
         .maybeSingle();
 
-      return NextResponse.json({
+      const res = NextResponse.json({
         authenticated: true,
         phone,
         existsForMerchant: false,
         existsGlobally: !!globalCustomer,
         customer: globalCustomer ? { first_name: globalCustomer.first_name } : null,
       });
+      res.headers.set('Cache-Control', 'no-store');
+      return res;
     }
 
     // No merchant_id — just confirm auth status
-    return NextResponse.json({ authenticated: true, phone });
+    const res = NextResponse.json({ authenticated: true, phone });
+    res.headers.set('Cache-Control', 'no-store');
+    return res;
   } catch {
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }

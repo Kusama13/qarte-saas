@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -43,13 +44,13 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (error) {
-      console.error('Error fetching member card:', error);
+      logger.error('Error fetching member card:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ memberCard: memberCard || null });
   } catch (error) {
-    console.error('API error:', error);
+    logger.error('API error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

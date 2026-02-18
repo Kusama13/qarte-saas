@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import webpush from 'web-push';
 import { containsForbiddenWords } from '@/lib/content-moderation';
+import logger from '@/lib/logger';
 
 interface PushSubscriptionRecord {
   id: string;
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!vapidPublicKey || !vapidPrivateKey) {
-      console.error('VAPID keys missing:', { publicKey: !!vapidPublicKey, privateKey: !!vapidPrivateKey });
+      logger.error('VAPID keys missing:', { publicKey: !!vapidPublicKey, privateKey: !!vapidPrivateKey });
       return NextResponse.json(
         { error: 'Configuration VAPID manquante' },
         { status: 500 }
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error('Supabase config missing');
+      logger.error('Supabase config missing');
       return NextResponse.json(
         { error: 'Configuration Supabase manquante' },
         { status: 500 }
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
         .eq('customer_id', customerId);
 
       if (error) {
-        console.error('Error fetching subscriptions:', error);
+        logger.error('Error fetching subscriptions:', error);
         return NextResponse.json(
           { error: 'Erreur lors de la récupération des abonnements' },
           { status: 500 }
@@ -137,7 +138,7 @@ export async function POST(request: NextRequest) {
         .eq('merchant_id', merchantId);
 
       if (cardsError) {
-        console.error('Error fetching loyalty cards:', cardsError);
+        logger.error('Error fetching loyalty cards:', cardsError);
         return NextResponse.json(
           { error: 'Erreur lors de la récupération des clients' },
           { status: 500 }
@@ -179,7 +180,7 @@ export async function POST(request: NextRequest) {
           .in('phone_number', targetPhones);
 
         if (phoneError) {
-          console.error('Error fetching customers by phone:', phoneError);
+          logger.error('Error fetching customers by phone:', phoneError);
           return NextResponse.json(
             { error: 'Erreur lors de la récupération des clients' },
             { status: 500 }
@@ -208,7 +209,7 @@ export async function POST(request: NextRequest) {
           .in('customer_id', allCustomerIds);
 
         if (error) {
-          console.error('Error fetching subscriptions:', error);
+          logger.error('Error fetching subscriptions:', error);
           return NextResponse.json(
             { error: 'Erreur lors de la récupération des abonnements' },
             { status: 500 }
@@ -256,8 +257,8 @@ export async function POST(request: NextRequest) {
           return { success: true, endpoint: sub.endpoint, customerId: sub.customer_id };
         } catch (err) {
           const webPushError = err as { statusCode?: number; message?: string; body?: string };
-          console.error('Push send error for endpoint:', sub.endpoint?.substring(0, 50));
-          console.error('Error details:', webPushError.statusCode, webPushError.message, webPushError.body);
+          logger.error('Push send error for endpoint:', sub.endpoint?.substring(0, 50));
+          logger.error('Error details:', { statusCode: webPushError.statusCode, message: webPushError.message, body: webPushError.body });
           // If subscription is expired/invalid, delete it
           if (webPushError.statusCode === 404 || webPushError.statusCode === 410) {
             await supabase
@@ -302,7 +303,7 @@ export async function POST(request: NextRequest) {
           failed_count: failedEndpoints,
         });
       } catch (historyError) {
-        console.error('Error saving push history:', historyError);
+        logger.error('Error saving push history:', historyError);
         // Don't fail the request if history save fails
       }
     }
@@ -315,9 +316,9 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const err = error as Error;
-    console.error('Send push error:', error);
-    console.error('Error stack:', err?.stack);
-    console.error('Error message:', err?.message);
+    logger.error('Send push error:', error);
+    logger.error('Error stack:', err?.stack);
+    logger.error('Error message:', err?.message);
     return NextResponse.json(
       { error: 'Erreur serveur', details: err?.message || 'Unknown error' },
       { status: 500 }
