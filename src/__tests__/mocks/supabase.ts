@@ -9,22 +9,17 @@ export const testDb = {
   redemptions: [] as any[],
   banned_numbers: [] as any[],
   point_adjustments: [] as any[],
-  vouchers: [] as any[],
-  referrals: [] as any[],
-  member_programs: [] as any[],
-  member_cards: [] as any[],
-  push_subscriptions: [] as any[],
-  scheduled_push: [] as any[],
-  offers: [] as any[],
-  push_history: [] as any[],
-  contact_messages: [] as any[],
 };
 
 // Reset test database
 export function resetTestDb() {
-  for (const key of Object.keys(testDb) as (keyof typeof testDb)[]) {
-    testDb[key] = [];
-  }
+  testDb.merchants = [];
+  testDb.customers = [];
+  testDb.loyalty_cards = [];
+  testDb.visits = [];
+  testDb.redemptions = [];
+  testDb.banned_numbers = [];
+  testDb.point_adjustments = [];
 }
 
 // Helper to generate UUIDs
@@ -36,8 +31,7 @@ export function generateUUID(): string {
   });
 }
 
-// ─── Create test data helpers ───────────────────────────────────────
-
+// Create test data helpers
 export function createTestMerchant(overrides: Partial<any> = {}) {
   const merchant = {
     id: generateUUID(),
@@ -52,10 +46,6 @@ export function createTestMerchant(overrides: Partial<any> = {}) {
     subscription_status: 'trialing',
     shield_enabled: true,
     tier2_enabled: false,
-    referral_program_enabled: false,
-    referral_reward_referred: null,
-    referral_reward_referrer: null,
-    country: 'FR',
     ...overrides,
   };
   testDb.merchants.push(merchant);
@@ -69,8 +59,6 @@ export function createTestCustomer(overrides: Partial<any> = {}) {
     first_name: 'Test',
     last_name: 'User',
     merchant_id: overrides.merchant_id || generateUUID(),
-    birth_month: null,
-    birth_day: null,
     created_at: new Date().toISOString(),
     ...overrides,
   };
@@ -86,7 +74,6 @@ export function createTestLoyaltyCard(overrides: Partial<any> = {}) {
     current_stamps: 0,
     stamps_target: 10,
     last_visit_date: null,
-    referral_code: null,
     created_at: new Date().toISOString(),
     ...overrides,
   };
@@ -94,135 +81,20 @@ export function createTestLoyaltyCard(overrides: Partial<any> = {}) {
   return card;
 }
 
-export function createTestVoucher(overrides: Partial<any> = {}) {
-  const voucher = {
-    id: generateUUID(),
-    loyalty_card_id: overrides.loyalty_card_id || generateUUID(),
-    merchant_id: overrides.merchant_id || generateUUID(),
-    customer_id: overrides.customer_id || generateUUID(),
-    reward_description: 'Free item',
-    is_used: false,
-    used_at: null,
-    expires_at: null,
-    source: 'referral',
-    created_at: new Date().toISOString(),
-    ...overrides,
-  };
-  testDb.vouchers.push(voucher);
-  return voucher;
-}
-
-export function createTestReferral(overrides: Partial<any> = {}) {
-  const referral = {
-    id: generateUUID(),
-    merchant_id: overrides.merchant_id || generateUUID(),
-    referrer_customer_id: overrides.referrer_customer_id || generateUUID(),
-    referrer_card_id: overrides.referrer_card_id || generateUUID(),
-    referred_customer_id: overrides.referred_customer_id || generateUUID(),
-    referred_card_id: overrides.referred_card_id || generateUUID(),
-    referred_voucher_id: overrides.referred_voucher_id || generateUUID(),
-    referrer_voucher_id: null,
-    status: 'pending',
-    created_at: new Date().toISOString(),
-    ...overrides,
-  };
-  testDb.referrals.push(referral);
-  return referral;
-}
-
-export function createTestMemberProgram(overrides: Partial<any> = {}) {
-  const program = {
-    id: generateUUID(),
-    merchant_id: overrides.merchant_id || generateUUID(),
-    name: 'Programme VIP',
-    description: 'Programme de fidélité VIP',
-    duration_months: 12,
-    price: null,
-    created_at: new Date().toISOString(),
-    ...overrides,
-  };
-  testDb.member_programs.push(program);
-  return program;
-}
-
-export function createTestMemberCard(overrides: Partial<any> = {}) {
-  const card = {
-    id: generateUUID(),
-    program_id: overrides.program_id || generateUUID(),
-    customer_id: overrides.customer_id || generateUUID(),
-    merchant_id: overrides.merchant_id || generateUUID(),
-    valid_until: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-    created_at: new Date().toISOString(),
-    ...overrides,
-  };
-  testDb.member_cards.push(card);
-  return card;
-}
-
-export function createTestOffer(overrides: Partial<any> = {}) {
-  const offer = {
-    id: generateUUID(),
-    merchant_id: overrides.merchant_id || generateUUID(),
-    title: 'Offre spéciale',
-    description: '-20% sur tout',
-    is_active: true,
-    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    created_at: new Date().toISOString(),
-    ...overrides,
-  };
-  testDb.offers.push(offer);
-  return offer;
-}
-
-export function createTestPushSubscription(overrides: Partial<any> = {}) {
-  const sub = {
-    id: generateUUID(),
-    customer_id: overrides.customer_id || generateUUID(),
-    endpoint: `https://push.example.com/${generateUUID()}`,
-    p256dh: 'test-p256dh-key',
-    auth: 'test-auth-key',
-    created_at: new Date().toISOString(),
-    ...overrides,
-  };
-  testDb.push_subscriptions.push(sub);
-  return sub;
-}
-
-// ─── Parse relation joins ───────────────────────────────────────────
-
+// Parse relation joins like "merchant:merchants(*)"
 function parseRelations(selectFields: string): Array<{ alias: string; table: string }> {
   const relations: Array<{ alias: string; table: string }> = [];
-  const seen = new Set<string>();
+  const relationPattern = /(\w+):(\w+)\(\*\)/g;
   let match;
-
-  // Pattern 1: alias:table(...) or alias:table!inner(...)
-  // e.g. "customer:customers (*)" or "program:member_programs!inner (merchant_id)"
-  const aliasedPattern = /(\w+):(\w+)(?:!inner)?\s*\([^)]*\)/g;
-  while ((match = aliasedPattern.exec(selectFields)) !== null) {
-    const key = match[1];
-    if (!seen.has(key)) {
-      seen.add(key);
-      relations.push({ alias: match[1], table: match[2] });
-    }
+  while ((match = relationPattern.exec(selectFields)) !== null) {
+    relations.push({ alias: match[1], table: match[2] });
   }
-
-  // Pattern 2: table!inner(...) without alias
-  // e.g. "merchants!inner(user_id)"
-  const innerPattern = /(?<![:\w])(\w+)!inner\s*\([^)]*\)/g;
-  while ((match = innerPattern.exec(selectFields)) !== null) {
-    const key = match[1];
-    if (!seen.has(key)) {
-      seen.add(key);
-      relations.push({ alias: match[1], table: match[1] });
-    }
-  }
-
   return relations;
 }
 
-// ─── Mock Supabase query builder ────────────────────────────────────
-
+// Mock Supabase query builder
 function createQueryBuilder(table: keyof typeof testDb) {
+  const data = [...testDb[table]];
   const filters: Array<{ field: string; op: string; value: any }> = [];
   let selectFields = '*';
   let isSingle = false;
@@ -246,36 +118,12 @@ function createQueryBuilder(table: keyof typeof testDb) {
       filters.push({ field, op: 'eq', value });
       return builder;
     },
-    neq(field: string, value: any) {
-      filters.push({ field, op: 'neq', value });
-      return builder;
-    },
     in(field: string, values: any[]) {
       filters.push({ field, op: 'in', value: values });
       return builder;
     },
     gte(field: string, value: any) {
       filters.push({ field, op: 'gte', value });
-      return builder;
-    },
-    gt(field: string, value: any) {
-      filters.push({ field, op: 'gt', value });
-      return builder;
-    },
-    lte(field: string, value: any) {
-      filters.push({ field, op: 'lte', value });
-      return builder;
-    },
-    lt(field: string, value: any) {
-      filters.push({ field, op: 'lt', value });
-      return builder;
-    },
-    is(field: string, value: any) {
-      filters.push({ field, op: 'is', value });
-      return builder;
-    },
-    not(field: string, op: string, value: any) {
-      filters.push({ field, op: `not_${op}`, value });
       return builder;
     },
     single() {
@@ -305,48 +153,28 @@ function createQueryBuilder(table: keyof typeof testDb) {
       return builder;
     },
 
+    gt(field: string, value: any) {
+      filters.push({ field, op: 'gt', value });
+      return builder;
+    },
+    neq(field: string, value: any) {
+      filters.push({ field, op: 'neq', value });
+      return builder;
+    },
+
     // Execute the query
     then(resolve: (result: any) => void) {
-      let result = [...(testDb[table] || [])];
-
-      // Helper: resolve a possibly-dotted field value on an item.
-      // For "program.merchant_id", look up the related table via
-      // the relation alias "program" and return the field from the related row.
-      function resolveField(item: any, field: string): any {
-        if (!field.includes('.')) return item[field];
-        const [relAlias, relField] = field.split('.');
-        // Find the matching relation declared in the select
-        const rel = relations.find((r) => r.alias === relAlias);
-        if (rel) {
-          const relatedTable = testDb[rel.table as keyof typeof testDb];
-          if (relatedTable) {
-            const fk = `${relAlias}_id`;
-            const singularFk = relAlias.endsWith('s') ? `${relAlias.slice(0, -1)}_id` : fk;
-            const fkValue = item[fk] ?? item[singularFk];
-            const related = relatedTable.find((r: any) => r.id === fkValue);
-            return related ? related[relField] : undefined;
-          }
-        }
-        return undefined;
-      }
+      let result = [...testDb[table]];
 
       // Apply filters
       for (const filter of filters) {
         result = result.filter((item) => {
-          const fieldValue = resolveField(item, filter.field);
-          switch (filter.op) {
-            case 'eq': return fieldValue === filter.value;
-            case 'neq': return fieldValue !== filter.value;
-            case 'in': return filter.value.includes(fieldValue);
-            case 'gte': return new Date(fieldValue) >= new Date(filter.value);
-            case 'gt': return new Date(fieldValue) > new Date(filter.value);
-            case 'lte': return new Date(fieldValue) <= new Date(filter.value);
-            case 'lt': return new Date(fieldValue) < new Date(filter.value);
-            case 'is': return fieldValue === filter.value;
-            case 'not_eq': return fieldValue !== filter.value;
-            case 'not_is': return fieldValue !== filter.value;
-            default: return true;
-          }
+          if (filter.op === 'eq') return item[filter.field] === filter.value;
+          if (filter.op === 'in') return filter.value.includes(item[filter.field]);
+          if (filter.op === 'gte') return new Date(item[filter.field]) >= new Date(filter.value);
+          if (filter.op === 'gt') return new Date(item[filter.field]) > new Date(filter.value);
+          if (filter.op === 'neq') return item[filter.field] !== filter.value;
+          return true;
         });
       }
 
@@ -357,11 +185,9 @@ function createQueryBuilder(table: keyof typeof testDb) {
           for (const rel of relations) {
             const relatedTable = testDb[rel.table as keyof typeof testDb];
             if (relatedTable) {
+              // Find the related item by matching the foreign key
               const foreignKey = `${rel.alias}_id`;
-              // Also try singular form (e.g., "customers" -> "customer_id")
-              const singularForeignKey = rel.alias.endsWith('s') ? `${rel.alias.slice(0, -1)}_id` : foreignKey;
-              const fkValue = item[foreignKey] ?? item[singularForeignKey];
-              const relatedItem = relatedTable.find((r: any) => r.id === fkValue);
+              const relatedItem = relatedTable.find((r: any) => r.id === item[foreignKey]);
               itemWithRelations[rel.alias] = relatedItem || null;
             }
           }
@@ -436,49 +262,20 @@ function createQueryBuilder(table: keyof typeof testDb) {
   return builder;
 }
 
-// ─── Mock auth token store ──────────────────────────────────────────
-
-let mockAuthTokenUsers: Record<string, { id: string; email?: string; user_metadata?: any }> = {};
-
-export function setMockAuthToken(token: string, user: { id: string; email?: string; user_metadata?: any }) {
-  mockAuthTokenUsers[token] = user;
-}
-
-export function clearMockAuthTokens() {
-  mockAuthTokenUsers = {};
-}
-
-// ─── Mock Supabase admin client ─────────────────────────────────────
-
-export const mockSupabaseAdmin: any = {
+// Mock Supabase client (admin / service role)
+export const mockSupabaseAdmin = {
   from: (table: string) => createQueryBuilder(table as keyof typeof testDb),
-  auth: {
-    getUser: async (token?: string) => {
-      if (token && mockAuthTokenUsers[token]) {
-        return { data: { user: mockAuthTokenUsers[token] }, error: null };
-      }
-      return { data: { user: null }, error: { message: 'Invalid token' } };
-    },
-    admin: {
-      getUserById: async (userId: string) => {
-        return { data: { user: { id: userId, email: `${userId}@test.com`, user_metadata: {} } }, error: null };
-      },
-      updateUserById: async (userId: string, updates: any) => {
-        return { data: { user: { id: userId, ...updates } }, error: null };
-      },
-    },
-  },
 };
 
-// ─── Mock authenticated user for route handler client ───────────────
-
+// Mock authenticated user for route handler client
 let mockAuthUser: { id: string; email?: string } | null = null;
 
 export function setMockAuthUser(user: { id: string; email?: string } | null) {
   mockAuthUser = user;
 }
 
-export const mockSupabaseWithAuth: any = {
+// Mock Supabase client with auth (for createRouteHandlerSupabaseClient)
+export const mockSupabaseWithAuth = {
   from: (table: string) => createQueryBuilder(table as keyof typeof testDb),
   auth: {
     getUser: async () => {
@@ -495,11 +292,9 @@ export const mockSupabaseWithAuth: any = {
   },
 };
 
-// ─── Mock the modules ───────────────────────────────────────────────
-
+// Mock the getSupabaseAdmin function
 vi.mock('@/lib/supabase', () => ({
   getSupabaseAdmin: () => mockSupabaseAdmin,
   createRouteHandlerSupabaseClient: async () => mockSupabaseWithAuth,
-  createServerClient: () => mockSupabaseAdmin,
   supabase: mockSupabaseAdmin,
 }));
