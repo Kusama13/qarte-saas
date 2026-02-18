@@ -49,7 +49,12 @@ export async function GET(request: NextRequest) {
           .from('merchants')
           .select('shop_name')
           .eq('id', push.merchant_id)
-          .single();
+          .maybeSingle();
+
+        if (!merchant) {
+          await supabase.from('scheduled_push').update({ status: 'sent', sent_at: new Date().toISOString(), sent_count: 0 }).eq('id', push.id);
+          continue;
+        }
 
         // Get subscribers
         const { data: loyaltyCards } = await supabase
