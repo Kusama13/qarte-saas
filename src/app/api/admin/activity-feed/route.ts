@@ -131,6 +131,7 @@ export async function GET(request: NextRequest) {
       timestamp: string;
       title: string;
       subtitle: string;
+      merchant_id?: string;
     }
 
     const events: ActivityEvent[] = [];
@@ -141,15 +142,17 @@ export async function GET(request: NextRequest) {
         timestamp: v.visited_at,
         title: `Scan chez ${merchantNameMap.get(v.merchant_id) || 'Inconnu'}`,
         subtitle: `+${v.points_earned} point${v.points_earned > 1 ? 's' : ''}`,
+        merchant_id: v.merchant_id,
       });
     });
 
-    filteredSignups.forEach((m: { created_at: string; shop_name: string }) => {
+    filteredSignups.forEach((m: { id: string; created_at: string; shop_name: string }) => {
       events.push({
         type: 'signup',
         timestamp: m.created_at,
         title: `Nouveau commerçant : ${m.shop_name}`,
         subtitle: 'Inscription complétée',
+        merchant_id: m.id,
       });
     });
 
@@ -159,6 +162,7 @@ export async function GET(request: NextRequest) {
         timestamp: r.redeemed_at,
         title: `Récompense utilisée chez ${merchantNameMap.get(r.merchant_id) || 'Inconnu'}`,
         subtitle: `Palier ${r.tier}`,
+        merchant_id: r.merchant_id,
       });
     });
 
@@ -168,6 +172,7 @@ export async function GET(request: NextRequest) {
         timestamp: c.created_at,
         title: `Nouveau client chez ${merchantNameMap.get(c.merchant_id) || 'Inconnu'}`,
         subtitle: 'Carte de fidélité créée',
+        merchant_id: c.merchant_id,
       });
     });
 
@@ -187,6 +192,7 @@ export async function GET(request: NextRequest) {
         timestamp: v.used_at,
         title: `${sourceLabel} utilisé chez ${merchantNameMap.get(v.merchant_id) || 'Inconnu'}`,
         subtitle: v.reward_description || sourceLabel,
+        merchant_id: v.merchant_id,
       });
     });
 

@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Cake,
 } from 'lucide-react';
+import Link from 'next/link';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,7 @@ interface ActivityEvent {
   timestamp: string;
   title: string;
   subtitle: string;
+  merchant_id?: string;
 }
 
 interface Summary {
@@ -224,8 +226,8 @@ export default function ActivitePage() {
             {filteredEvents.map((event, index) => {
               const config = EVENT_CONFIG[event.type];
               const Icon = config.icon;
-              return (
-                <div key={index} className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors">
+              const content = (
+                <>
                   <div className={cn('w-10 h-10 rounded-full flex items-center justify-center shrink-0', config.bg)}>
                     <Icon className={cn('w-5 h-5', config.color)} />
                   </div>
@@ -236,6 +238,15 @@ export default function ActivitePage() {
                   <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">
                     {formatTime(event.timestamp)}
                   </span>
+                </>
+              );
+              return event.merchant_id ? (
+                <Link key={index} href={`/admin/merchants/${event.merchant_id}`} className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                  {content}
+                </Link>
+              ) : (
+                <div key={index} className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors">
+                  {content}
                 </div>
               );
             })}
