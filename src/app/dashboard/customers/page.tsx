@@ -345,7 +345,7 @@ export default function CustomersPage() {
                   const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id));
 
                   return (
-                    <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200">
+                    <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200 cursor-pointer" onClick={() => handleOpenAdjustModal(card)}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-4">
                           <div className={`relative flex items-center justify-center w-10 h-10 font-bold text-white rounded-xl shadow-md group-hover:scale-105 transition-transform ${
@@ -445,7 +445,7 @@ export default function CustomersPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <button
-                          onClick={() => handleOpenAdjustModal(card)}
+                          onClick={(e) => { e.stopPropagation(); handleOpenAdjustModal(card); }}
                           className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-600 bg-white border border-indigo-100 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm transition-all active:scale-95"
                         >
                           <SlidersHorizontal className="w-4 h-4" />
