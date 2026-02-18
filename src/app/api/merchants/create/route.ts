@@ -170,6 +170,13 @@ export async function POST(request: NextRequest) {
         logger.error('Failed to send welcome email', err);
       });
 
+      // Track welcome email in pending_email_tracking for admin visibility
+      await supabaseAdmin.from('pending_email_tracking').insert({
+        merchant_id: data.id,
+        reminder_day: -200,
+        pending_count: 0,
+      });
+
       // Resend rate limit: attendre avant le prochain appel
       await delay(600);
 
