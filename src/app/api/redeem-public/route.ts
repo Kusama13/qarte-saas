@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     const merchant = loyaltyCard.merchant;
-    const stampsRequired = tier === 2 ? merchant.tier2_stamps_required : merchant.stamps_required;
+    const stampsRequired = tier === 2 ? (merchant.tier2_stamps_required ?? merchant.stamps_required) : merchant.stamps_required;
     const rewardDescription = tier === 2 ? merchant.tier2_reward_description : merchant.reward_description;
 
     // Check if tier 2 is enabled when trying to redeem tier 2

@@ -114,7 +114,7 @@ export async function sendAutomationPush(params: {
         .from('push_automations')
         .select(statColumn)
         .eq('merchant_id', merchantId)
-        .single();
+        .maybeSingle();
 
       if (current) {
         const val = (current as unknown as Record<string, number>)[statColumn] || 0;
