@@ -13,6 +13,8 @@ import {
   AlertTriangle,
   Sparkles,
   Trophy,
+  Gift,
+  Target,
   ChevronDown,
   Instagram,
   CalendarDays,
@@ -26,16 +28,6 @@ import { MerchantSettingsForm, type LoyaltySettings } from '@/components/loyalty
 import { compressLogo } from '@/lib/image-compression';
 import { useMerchant } from '@/contexts/MerchantContext';
 import type { Merchant } from '@/types';
-
-// Images par type de commerce (beauté / bien-être)
-const BUSINESS_IMAGES = [
-  { url: 'https://images.unsplash.com/photo-1637777277337-f114350fb088?w=200', label: 'Coiffeur' },
-  { url: 'https://images.unsplash.com/photo-1744095407400-aa337918bbb1?w=200', label: 'Barbier' },
-  { url: 'https://images.unsplash.com/photo-1761718210089-ba3bb5ccb54f?w=200', label: 'Institut' },
-  { url: 'https://images.unsplash.com/photo-1741826016673-a47a45346002?w=200', label: 'Onglerie' },
-  { url: 'https://images.unsplash.com/photo-1770625468009-71c90199d5e0?w=200', label: 'Spa' },
-  { url: 'https://images.unsplash.com/photo-1696841212541-449ca29397cc?w=200', label: 'Massage' },
-];
 
 
 // 6 palettes mobile (3x2) + 4 desktop-only (2x5)
@@ -131,7 +123,7 @@ export default function ProgramPage() {
     facebookUrl: '',
     tiktokUrl: '',
     bookingUrl: '',
-    stampsRequired: 10,
+    stampsRequired: 5,
     rewardDescription: '',
     // 2nd tier reward
     tier2Enabled: false,
@@ -180,13 +172,13 @@ export default function ProgramPage() {
           facebookUrl: data.facebook_url || '',
           tiktokUrl: data.tiktok_url || '',
           bookingUrl: data.booking_url || '',
-          stampsRequired: data.stamps_required || 10,
+          stampsRequired: data.stamps_required || 5,
           rewardDescription: data.reward_description || '',
           tier2Enabled: data.tier2_enabled || false,
           tier2StampsRequired: data.tier2_stamps_required || 0,
           tier2RewardDescription: data.tier2_reward_description || '',
         });
-        setOriginalStampsRequired(data.stamps_required || 10);
+        setOriginalStampsRequired(data.stamps_required || 5);
         if (!data.reward_description) {
           setIsFirstSetup(true);
         }
@@ -386,12 +378,11 @@ export default function ProgramPage() {
               <div className="flex items-center justify-center w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200">
                 <Upload className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
               </div>
-              Logo du Programme
+              Téléchargez votre logo ou une image de votre activité
             </h3>
 
             <div className="relative space-y-4 md:space-y-6">
               <div className="space-y-2 md:space-y-3">
-                <label className="text-xs md:text-sm font-semibold tracking-wide text-gray-700 uppercase">Télécharger votre logo</label>
                 <div className="flex items-center gap-3 md:gap-5 p-3 md:p-4 transition-all border border-indigo-50 rounded-xl md:rounded-2xl bg-indigo-50/30 hover:bg-indigo-50/50">
                   <label className="relative flex items-center justify-center w-16 h-16 md:w-20 md:h-20 transition-all duration-300 bg-white border-2 border-dashed border-indigo-200 shadow-sm rounded-xl md:rounded-2xl cursor-pointer hover:border-indigo-500 hover:shadow-md group/upload">
                     {uploading ? (
@@ -426,35 +417,6 @@ export default function ProgramPage() {
                 </div>
               </div>
 
-              <div className="space-y-2 md:space-y-3">
-                <label className="text-xs md:text-sm font-semibold tracking-wide text-gray-700 uppercase">Ou choisissez une image</label>
-                <div className="grid grid-cols-3 gap-2 md:gap-3">
-                  {BUSINESS_IMAGES.map((image, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, logoUrl: image.url })}
-                      className={`relative h-16 md:h-20 overflow-hidden rounded-lg md:rounded-xl border-2 transition-all duration-300 transform active:scale-95 group/img ${
-                        formData.logoUrl === image.url
-                          ? 'border-indigo-600 ring-4 ring-indigo-500/10'
-                          : 'border-white shadow-sm hover:border-indigo-200 hover:shadow-md'
-                      }`}
-                    >
-                      <img src={image.url} alt={image.label} className="object-cover w-full h-full transition-transform duration-500 group-hover/img:scale-110" />
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent p-1.5">
-                        <span className="text-[9px] font-bold text-white">{image.label}</span>
-                      </div>
-                      {formData.logoUrl === image.url && (
-                        <div className="absolute top-1.5 right-1.5">
-                          <div className="p-0.5 bg-indigo-600 rounded-full shadow-sm">
-                            <Check className="w-3 h-3 text-white" />
-                          </div>
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
 
@@ -504,7 +466,22 @@ export default function ProgramPage() {
 
           </div>
 
-          <div className="p-3 md:p-8 bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl shadow-lg shadow-indigo-200/50 border border-white/60 backdrop-blur-xl transition-all duration-300">
+          <div className="flex items-center gap-3 mt-4 mb-1">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+            <h2 className="text-sm md:text-base font-bold text-gray-500 uppercase tracking-wider">Récompenses</h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+          </div>
+
+          <div className="p-3 md:p-6 bg-gradient-to-br from-white via-white to-indigo-50/30 rounded-2xl shadow-lg shadow-indigo-200/50 border border-indigo-100/50 backdrop-blur-xl transition-all duration-300">
+            <div className="flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+              <div className="p-1.5 md:p-2.5 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 shadow-lg shadow-indigo-200">
+                <Gift className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm md:text-lg font-bold text-gray-900">1er Palier</h3>
+                <p className="text-[11px] md:text-xs text-gray-500">Soyez généreux, nous conseillons 5 passages</p>
+              </div>
+            </div>
             <MerchantSettingsForm
               initialStampsRequired={formData.stampsRequired}
               initialRewardDescription={formData.rewardDescription}
@@ -569,9 +546,10 @@ export default function ProgramPage() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Nombre de passages pour le 2ème palier
+                <div className="space-y-2.5">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Target className="w-4 h-4 text-violet-500" />
+                    Nombre de passages requis
                   </label>
                   <Input
                     type="number"
@@ -585,15 +563,16 @@ export default function ProgramPage() {
                       });
                       setTier2Error('');
                     }}
-                    className={`bg-white ${tier2Error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : 'border-violet-200 focus:border-violet-500 focus:ring-violet-500/20'}`}
+                    className={`text-center font-bold text-lg h-12 border-2 max-w-[120px] ${tier2Error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
                   />
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">Suggestions :</span>
                     {[10, 15, 20].map((n) => (
                       <button
                         key={n}
                         type="button"
                         onClick={() => { setFormData({ ...formData, tier2StampsRequired: n }); setTier2Error(''); }}
-                        className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all duration-200 ${
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
                           formData.tier2StampsRequired === n
                             ? 'bg-violet-100 border-violet-300 text-violet-700'
                             : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600'
@@ -612,35 +591,28 @@ export default function ProgramPage() {
                   )}
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700">
-                    Récompense du 2ème palier
+                <div className="space-y-2.5">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Gift className="w-4 h-4 text-violet-500" />
+                    Récompense offerte
                   </label>
                   <Input
                     type="text"
                     placeholder="Ex: Un menu offert, -30% sur votre commande..."
                     value={formData.tier2RewardDescription}
                     onChange={(e) => setFormData({ ...formData, tier2RewardDescription: e.target.value })}
-                    className="bg-white border-violet-200 focus:border-violet-500 focus:ring-violet-500/20"
+                    className="h-11"
                   />
-                </div>
-
-                {/* Tier 2 Reward Suggestions */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-violet-500" />
-                    <span className="text-sm font-semibold text-gray-600">Suggestions palier 2</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-1.5">
                     {(TIER2_REWARD_SUGGESTIONS[merchant?.shop_type || 'autre'] || TIER2_REWARD_SUGGESTIONS.autre).map((suggestion) => (
                       <button
                         key={suggestion}
                         type="button"
                         onClick={() => setFormData({ ...formData, tier2RewardDescription: suggestion })}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all duration-200 ${
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
                           formData.tier2RewardDescription === suggestion
-                            ? 'bg-violet-100 border-violet-300 text-violet-700 shadow-sm'
-                            : 'bg-white border-gray-200 text-gray-600 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600 hover:shadow-sm'
+                            ? 'bg-violet-100 border-violet-300 text-violet-700'
+                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600'
                         }`}
                       >
                         {suggestion}
@@ -652,7 +624,7 @@ export default function ProgramPage() {
             )}
           </div>
 
-          {/* Liens & Réseaux — Collapsible */}
+          {/* Réseaux, Avis & Liens — Collapsible */}
           <div id="social-section" className="bg-white/80 backdrop-blur-xl border border-pink-100 rounded-2xl shadow-sm overflow-hidden">
             <button
               type="button"
@@ -663,7 +635,7 @@ export default function ProgramPage() {
                 <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center shadow-md">
                   <Globe className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
                 </div>
-                <h3 className="text-sm md:text-lg font-bold text-gray-900">Liens & Réseaux</h3>
+                <h3 className="text-sm md:text-lg font-bold text-gray-900">Réseaux, Avis & Liens</h3>
               </div>
               <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${socialOpen ? 'rotate-180' : ''}`} />
             </button>

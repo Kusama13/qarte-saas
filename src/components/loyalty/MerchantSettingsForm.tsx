@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import {
   Gift,
   Target,
-  Lightbulb,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import type { ShopType } from '@/types';
@@ -94,7 +93,7 @@ export interface LoyaltySettings {
 }
 
 export function MerchantSettingsForm({
-  initialStampsRequired = 10,
+  initialStampsRequired = 5,
   initialRewardDescription = '',
   shopType = 'autre',
   onChange,
@@ -131,113 +130,84 @@ export function MerchantSettingsForm({
   const stampsSuggestions = STAMPS_SUGGESTIONS[shopType] || STAMPS_SUGGESTIONS.autre;
 
   return (
-    <div className="space-y-5 md:space-y-8">
-      {/* Header */}
-      <div>
-        <h3 className="text-base md:text-xl font-bold text-gray-900">Programme de fidélité</h3>
-        <p className="text-xs md:text-sm text-gray-500 mt-0.5 md:mt-1">Configurez les règles de votre programme</p>
+    <div className="space-y-5">
+      {/* Stamps Required */}
+      <div className="space-y-2.5">
+        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <Target className="w-4 h-4 text-indigo-500" />
+          Nombre de passages requis
+        </label>
+        <Input
+          type="number"
+          min="1"
+          max="50"
+          value={stampsRequired}
+          onChange={(e) => setStampsRequired(Number(e.target.value))}
+          className="text-center font-bold text-lg h-12 border-2 max-w-[120px]"
+        />
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400">Suggestions :</span>
+          {stampsSuggestions.map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setStampsRequired(n)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                stampsRequired === n
+                  ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600'
+              }`}
+            >
+              {n} passages
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Reward Configuration */}
-      <div className="space-y-4 md:space-y-6">
-        <h4 className="text-xs md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
-          <Gift className="w-3.5 h-3.5 md:w-4 md:h-4" />
-          Configuration Récompense
-        </h4>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          {/* Stamps Required */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <Target className="w-4 h-4 text-gray-400" />
-              Objectif
-            </label>
-            <div className="relative">
-              <Input
-                type="number"
-                min="1"
-                max="50"
-                value={stampsRequired}
-                onChange={(e) => setStampsRequired(Number(e.target.value))}
-                className="pr-24"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500">
-                passages
-              </span>
-            </div>
-            {/* Stamps suggestions */}
-            <div className="flex gap-2">
-              {stampsSuggestions.map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setStampsRequired(n)}
-                  className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all duration-200 ${
-                    stampsRequired === n
-                      ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
-                      : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600'
-                  }`}
-                >
-                  {n} passages
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Reward Description */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-              <Gift className="w-4 h-4 text-gray-400" />
-              Récompense
-            </label>
-            <Input
-              value={rewardDescription}
-              onChange={(e) => setRewardDescription(e.target.value)}
-              placeholder="Ex: Un soin offert, -20%, Une coupe gratuite..."
-            />
-          </div>
-        </div>
-
-        {/* Reward Suggestions */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Lightbulb className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-semibold text-gray-600">Suggestions pour votre activité</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {rewardSuggestions.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => setRewardDescription(suggestion)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-xl border transition-all duration-200 ${
-                  rewardDescription === suggestion
-                    ? 'bg-indigo-100 border-indigo-300 text-indigo-700 shadow-sm'
-                    : 'bg-white border-gray-200 text-gray-600 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600 hover:shadow-sm'
-                }`}
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
+      {/* Reward Description */}
+      <div className="space-y-2.5">
+        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+          <Gift className="w-4 h-4 text-indigo-500" />
+          Récompense offerte
+        </label>
+        <Input
+          value={rewardDescription}
+          onChange={(e) => setRewardDescription(e.target.value)}
+          placeholder="Ex: Un soin offert, -20%, Une coupe gratuite..."
+          className="h-11"
+        />
+        <div className="flex flex-wrap gap-1.5">
+          {rewardSuggestions.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              onClick={() => setRewardDescription(suggestion)}
+              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                rewardDescription === suggestion
+                  ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600'
+              }`}
+            >
+              {suggestion}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Summary */}
-      <motion.div
-        key={`${stampsRequired}-${rewardDescription}`}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="p-3 md:p-5 rounded-xl md:rounded-2xl border bg-indigo-50/50 border-indigo-100"
-      >
-        <p className="text-xs md:text-sm font-medium text-gray-600 mb-1 md:mb-2">Résumé du programme</p>
-        <p className="text-sm md:text-lg text-gray-800">
-          Vos clients devront venir{' '}
-          <span className="font-bold text-indigo-600">{stampsRequired} fois</span> pour gagner{' '}
-          <span className="font-bold text-indigo-600">{rewardDescription || '[Récompense]'}</span>.
-        </p>
-      </motion.div>
-
+      {rewardDescription && (
+        <motion.div
+          key={`${stampsRequired}-${rewardDescription}`}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-3 md:p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100"
+        >
+          <p className="text-sm md:text-base text-gray-700">
+            Après <span className="font-bold text-indigo-600">{stampsRequired} passages</span>, vos clients gagnent{' '}
+            <span className="font-bold text-indigo-600">{rewardDescription}</span>
+          </p>
+        </motion.div>
+      )}
     </div>
   );
 }
