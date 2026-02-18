@@ -55,6 +55,7 @@ Signup (email+password)
 | F9 | Parrainage merchant | 3h | ✅ FAIT — code QARTE-XXXX, Settings + FirstScanEmail, Web Share API |
 | F10 | Scratch & Win gamification | 6h | ❌ A FAIRE |
 | F21 | Parrainage client (filleul/parrain) | 8h | ✅ FAIT — APIs, scan ?ref=, carte client, dashboard /referrals |
+| F22 | PWA merchant (dashboard installable) | 1h | ❌ A FAIRE |
 | F11 | Mode articles (points par euro) | 4-5h | ❌ A FAIRE |
 | F12 | Export CSV/PDF enrichi | 5h | ❌ A FAIRE |
 | F13 | Push geolocalisee | 6-8h | ❌ A FAIRE |
@@ -85,6 +86,7 @@ Signup (email+password)
 | F10 | Scratch & Win | 6h | ★★ | ★★★★★ | **P2** |
 | F9 | ~~Parrainage merchant~~ | ~~3h~~ | ★★★★ | ★★★ | **✅ FAIT** |
 | F21 | ~~Parrainage client~~ | ~~8h~~ | ★★★★★ | ★★★★★ | **✅ FAIT** |
+| F22 | PWA merchant dashboard | 1h | ★★★ | ★★★★ | **P1** |
 | F11 | Mode articles | 4-5h | ★★ | ★★★ | **P2** |
 | F12 | Export CSV/PDF | 5h | ★ | ★★★ | **P2** |
 | F16 | Google Reviews auto | 1-2j | ★★★★ | ★★★★ | **P2** |
@@ -572,6 +574,7 @@ SHIELD (points en attente)
 
 ## Semaine 2 (17-23 fev)
 - [ ] **F3** : Celebration premier scan (1h, reporte semaine 1)
+- [ ] **F22** : PWA merchant dashboard (1h) — manifest dedie `/dashboard`, nom "Qarte Pro", install prompt dashboard
 - [ ] **F6** : Templates push enrichis (2h)
 - [ ] **F4** : Stats enrichies carte client (2h)
 
@@ -596,7 +599,12 @@ SHIELD (points en attente)
 
 # PARTIE 6 : CHANGELOG
 
-## [2026-02-18] — WhatsApp Marketing/Tuto, audit parrainage+anniversaire, admin activite cliquable
+## [2026-02-18] — WhatsApp Marketing/Tuto, audit parrainage+anniversaire, admin activite cliquable, audit Stripe
+
+### Audit Stripe — 2 bugs fixes
+- **fix:** Webhook `subscription.deleted` ne clearait pas `stripe_subscription_id` — merchant canceled gardait un ID mort, page subscription affichait "Reactiver" via portail au lieu de "S'abonner" via checkout
+- **fix:** Webhook `subscription.updated` canceling — `cancel_at` peut etre null, causait date "1 janvier 1970" dans l'email de resiliation. Fallback gracieux si null
+- **fix:** Email `SubscriptionCanceledEmail` — `endDate` rendu optionnel, message fallback "fin de votre periode en cours"
 
 ### Admin WhatsApp split Marketing/Tuto
 - **feat:** WhatsApp admin split en 2 onglets : Marketing (12 messages contextuels lifecycle) + Tuto (10 messages explication fonctionnalites)

@@ -105,6 +105,7 @@ export async function POST(request: Request) {
         .from('merchants')
         .update({
           subscription_status: 'canceled',
+          stripe_subscription_id: null,
           updated_at: new Date().toISOString(),
         })
         .eq('stripe_subscription_id', subscription.id)
@@ -254,11 +255,14 @@ export async function POST(request: Request) {
       if (updatedMerchant && newStatus === 'canceling') {
         const { data: userData } = await supabase.auth.admin.getUserById(updatedMerchant.user_id);
         if (userData?.user?.email) {
-          const endDate = new Date((subscription.cancel_at as number) * 1000).toLocaleDateString('fr-FR', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          });
+          // cancel_at can be null — email template has a fallback message
+          const endDate = subscription.cancel_at
+            ? new Date(subscription.cancel_at * 1000).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })
+            : undefined;
           await sendSubscriptionCanceledEmail(userData.user.email, updatedMerchant.shop_name, endDate).catch((err) => {
             logger.error('Failed to send subscription canceling email', err);
           });

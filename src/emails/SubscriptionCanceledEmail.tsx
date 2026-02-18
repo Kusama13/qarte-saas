@@ -9,7 +9,7 @@ import { BaseLayout } from './BaseLayout';
 
 interface SubscriptionCanceledEmailProps {
   shopName: string;
-  endDate: string;
+  endDate?: string;
 }
 
 export function SubscriptionCanceledEmail({ shopName, endDate }: SubscriptionCanceledEmailProps) {
@@ -30,7 +30,10 @@ export function SubscriptionCanceledEmail({ shopName, endDate }: SubscriptionCan
       <Section style={infoBox}>
         <Text style={infoTitle}>Récapitulatif</Text>
         <Text style={infoText}>
-          Votre accès prendra fin le <strong>{endDate}</strong>.
+          {endDate
+            ? <>Votre accès prendra fin le <strong>{endDate}</strong>.</>
+            : <>Votre accès prendra fin à la fin de votre période en cours.</>
+          }
         </Text>
         <Text style={infoText}>
           Après cette date, votre compte sera suspendu et vos clients ne pourront plus

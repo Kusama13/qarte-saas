@@ -345,7 +345,7 @@ export async function sendPaymentFailedEmail(
 export async function sendSubscriptionCanceledEmail(
   to: string,
   shopName: string,
-  endDate: string
+  endDate?: string
 ): Promise<SendEmailResult> {
   const check = checkResend();
   if (check) return check;
