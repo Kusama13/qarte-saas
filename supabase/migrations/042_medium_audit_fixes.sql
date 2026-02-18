@@ -1,9 +1,21 @@
 -- Fix #33: Phone number format validation (E.164 without +)
-ALTER TABLE customers ADD CONSTRAINT IF NOT EXISTS customers_phone_format
-  CHECK (phone_number ~ '^\d{9,15}$');
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'customers_phone_format'
+  ) THEN
+    ALTER TABLE customers ADD CONSTRAINT customers_phone_format
+      CHECK (phone_number ~ '^\d{9,15}$');
+  END IF;
 
-ALTER TABLE merchants ADD CONSTRAINT IF NOT EXISTS merchants_phone_format
-  CHECK (phone ~ '^\d{9,15}$');
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'merchants_phone_format'
+  ) THEN
+    ALTER TABLE merchants ADD CONSTRAINT merchants_phone_format
+      CHECK (phone ~ '^\d{9,15}$');
+  END IF;
+END;
+$$;
 
 -- Fix #35: Auto-update updated_at on push_automations
 CREATE OR REPLACE FUNCTION update_updated_at_column()
