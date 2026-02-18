@@ -150,6 +150,7 @@ export default function MarketingPushPage() {
 
       {activeTab === 'automations' && (
         <AutomationsTab
+          merchantId={merchant?.id}
           subscriberCount={data.subscriberCount}
           birthdayGiftEnabled={data.birthdayGiftEnabled}
           birthdayGiftDescription={data.birthdayGiftDescription}

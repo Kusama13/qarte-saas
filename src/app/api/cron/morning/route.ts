@@ -28,6 +28,7 @@ import {
   sendGracePeriodSetupEmail,
 } from '@/lib/email';
 import { getTrialStatus } from '@/lib/utils';
+import { sendAutomationPush, getUpcomingEvent } from '@/lib/push-automation';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -103,6 +104,11 @@ export async function GET(request: NextRequest) {
     pendingReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     scheduledPush: { processed: 0, sent: 0, errors: 0 },
     birthdayVouchers: { processed: 0, created: 0, skipped: 0, errors: 0 },
+    pushAutomations: {
+      inactive: { sent: 0, skipped: 0, errors: 0 },
+      reward: { sent: 0, skipped: 0, errors: 0 },
+      events: { sent: 0, skipped: 0, errors: 0 },
+    },
   };
 
   // Track section statuses for isolated error handling (C6 fix)
@@ -1712,6 +1718,214 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     sectionStatuses.push({ name: 'birthdayVouchers', status: 'error', error: String(error) });
+  }
+
+  // ==================== SECTION 12: PUSH AUTOMATIONS ====================
+  try {
+    // 12A. Relance inactifs (30+ days no visit)
+    {
+      const { data: automationMerchants } = await supabase
+        .from('push_automations')
+        .select('merchant_id, inactive_reminder_offer_text')
+        .eq('inactive_reminder_enabled', true);
+
+      if (automationMerchants && automationMerchants.length > 0) {
+        const merchantIds = automationMerchants.map(a => a.merchant_id);
+
+        const { data: merchants } = await supabase
+          .from('merchants')
+          .select('id, shop_name, offer_active, offer_title, offer_expires_at')
+          .in('id', merchantIds)
+          .in('subscription_status', ['trial', 'active'])
+          .neq('no_contact', true);
+
+        for (const merchant of merchants || []) {
+          const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+          const { data: inactiveCards } = await supabase
+            .from('loyalty_cards')
+            .select('customer_id')
+            .eq('merchant_id', merchant.id)
+            .or(`last_visit_date.lte.${thirtyDaysAgo},last_visit_date.is.null`);
+
+          if (!inactiveCards || inactiveCards.length === 0) continue;
+
+          const customerIds = inactiveCards.map(c => c.customer_id);
+          const { data: customers } = await supabase
+            .from('customers')
+            .select('id, phone_number')
+            .in('id', customerIds);
+
+          // Build message: custom offer text > active offer > default
+          const automationRow = automationMerchants.find(a => a.merchant_id === merchant.id);
+          const customOfferText = automationRow?.inactive_reminder_offer_text;
+          const hasOffer = merchant.offer_active && merchant.offer_title &&
+            (!merchant.offer_expires_at || new Date(merchant.offer_expires_at) > now);
+
+          for (const customer of customers || []) {
+            if (!customer.phone_number) continue;
+
+            const body = customOfferText
+              ? customOfferText
+              : hasOffer
+                ? `${merchant.offer_title} — Profitez-en !`
+                : `${merchant.shop_name} vous manque ! Revenez vite.`;
+
+            const sent = await sendAutomationPush({
+              supabase,
+              merchantId: merchant.id,
+              customerId: customer.id,
+              customerPhone: customer.phone_number,
+              automationType: 'inactive_reminder',
+              title: merchant.shop_name,
+              body,
+              url: `/customer/card/${merchant.id}`,
+            });
+
+            if (sent) results.pushAutomations.inactive.sent++;
+            else results.pushAutomations.inactive.skipped++;
+          }
+        }
+      }
+    }
+
+    // 12B. Rappel récompense (unused voucher 7+ days)
+    {
+      const { data: automationMerchants } = await supabase
+        .from('push_automations')
+        .select('merchant_id')
+        .eq('reward_reminder_enabled', true);
+
+      if (automationMerchants && automationMerchants.length > 0) {
+        const merchantIds = automationMerchants.map(a => a.merchant_id);
+
+        const { data: merchants } = await supabase
+          .from('merchants')
+          .select('id, shop_name')
+          .in('id', merchantIds)
+          .in('subscription_status', ['trial', 'active'])
+          .neq('no_contact', true);
+
+        const activeMerchantIds = (merchants || []).map(m => m.id);
+        const merchantMap = new Map((merchants || []).map(m => [m.id, m]));
+
+        if (activeMerchantIds.length > 0) {
+          const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+          const { data: oldVouchers } = await supabase
+            .from('vouchers')
+            .select('customer_id, merchant_id')
+            .in('merchant_id', activeMerchantIds)
+            .eq('is_used', false)
+            .lte('created_at', sevenDaysAgo)
+            .or(`expires_at.gt.${now.toISOString()},expires_at.is.null`);
+
+          if (oldVouchers && oldVouchers.length > 0) {
+            // Deduplicate by customer+merchant
+            const seen = new Set<string>();
+            const uniqueVouchers = oldVouchers.filter(v => {
+              const key = `${v.customer_id}:${v.merchant_id}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+
+            const customerIds = [...new Set(uniqueVouchers.map(v => v.customer_id))];
+            const { data: customers } = await supabase
+              .from('customers')
+              .select('id, phone_number')
+              .in('id', customerIds);
+
+            const customerMap = new Map((customers || []).map(c => [c.id, c]));
+
+            for (const voucher of uniqueVouchers) {
+              const customer = customerMap.get(voucher.customer_id);
+              const vMerchant = merchantMap.get(voucher.merchant_id);
+              if (!customer?.phone_number || !vMerchant) continue;
+
+              const sent = await sendAutomationPush({
+                supabase,
+                merchantId: voucher.merchant_id,
+                customerId: voucher.customer_id,
+                customerPhone: customer.phone_number,
+                automationType: 'reward_reminder',
+                title: vMerchant.shop_name,
+                body: `Votre récompense vous attend chez ${vMerchant.shop_name} !`,
+                url: `/customer/card/${voucher.merchant_id}`,
+              });
+
+              if (sent) results.pushAutomations.reward.sent++;
+              else results.pushAutomations.reward.skipped++;
+            }
+          }
+        }
+      }
+    }
+
+    // 12C. Événements (push 7 days before event)
+    {
+      const upcomingEvent = getUpcomingEvent(now);
+
+      if (upcomingEvent) {
+        const { data: automationMerchants } = await supabase
+          .from('push_automations')
+          .select('merchant_id, events_offer_text')
+          .eq('events_enabled', true)
+          .not('events_offer_text', 'is', null);
+
+        if (automationMerchants && automationMerchants.length > 0) {
+          const merchantIds = automationMerchants.map(a => a.merchant_id);
+          const offerTextMap = new Map(automationMerchants.map(a => [a.merchant_id, a.events_offer_text]));
+
+          const { data: merchants } = await supabase
+            .from('merchants')
+            .select('id, shop_name')
+            .in('id', merchantIds)
+            .in('subscription_status', ['trial', 'active'])
+            .neq('no_contact', true);
+
+          for (const merchant of merchants || []) {
+            const offerText = offerTextMap.get(merchant.id);
+            if (!offerText) continue;
+
+            // Get all customers with loyalty cards for this merchant
+            const { data: loyaltyCards } = await supabase
+              .from('loyalty_cards')
+              .select('customer_id')
+              .eq('merchant_id', merchant.id);
+
+            if (!loyaltyCards || loyaltyCards.length === 0) continue;
+
+            const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
+            const { data: customers } = await supabase
+              .from('customers')
+              .select('id, phone_number')
+              .in('id', customerIds);
+
+            for (const customer of customers || []) {
+              if (!customer.phone_number) continue;
+
+              const sent = await sendAutomationPush({
+                supabase,
+                merchantId: merchant.id,
+                customerId: customer.id,
+                customerPhone: customer.phone_number,
+                automationType: `event_${upcomingEvent.id}`,
+                title: merchant.shop_name,
+                body: `C'est bientôt ${upcomingEvent.name} ! ${offerText}`,
+                url: `/customer/card/${merchant.id}`,
+              });
+
+              if (sent) results.pushAutomations.events.sent++;
+              else results.pushAutomations.events.skipped++;
+            }
+          }
+        }
+      }
+    }
+
+  } catch (error) {
+    sectionStatuses.push({ name: 'pushAutomations', status: 'error', error: String(error) });
   }
 
   // ==================== RESPONSE ====================
