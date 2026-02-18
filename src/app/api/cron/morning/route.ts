@@ -1602,7 +1602,9 @@ export async function GET(request: NextRequest) {
   // ==================== SECTION 11: BIRTHDAY VOUCHERS ====================
   try {
     {
-      const targetDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+      const todayParis = getTodayInParis(); // YYYY-MM-DD in Paris timezone
+      const targetDate = new Date(todayParis + 'T12:00:00');
+      targetDate.setDate(targetDate.getDate() + 3);
       const targetMonth = targetDate.getMonth() + 1;
       const targetDay = targetDate.getDate();
 
@@ -1703,21 +1705,28 @@ export async function GET(request: NextRequest) {
 
               results.birthdayVouchers.created++;
 
-              // Push notification (fire-and-forget)
+              // Push notification (fire-and-forget, dedup by endpoint)
               if (vapidPublicKey && vapidPrivateKey) {
                 try {
-                  const allCustIds = customersByPhone.get(customer.phone_number)?.map(id => ({ id })) || [];
+                  const allCustIds = customersByPhone.get(customer.phone_number) || [];
 
-                  const custIds = allCustIds.map(c => c.id);
-                  if (custIds.length > 0) {
+                  if (allCustIds.length > 0) {
                     const { data: pushSubs } = await supabase
                       .from('push_subscriptions')
                       .select('endpoint, p256dh, auth')
-                      .in('customer_id', custIds);
+                      .in('customer_id', allCustIds);
 
                     if (pushSubs && pushSubs.length > 0) {
+                      // Dedup by endpoint to avoid sending twice to same device
+                      const seen = new Set<string>();
+                      const uniqueSubs = pushSubs.filter(sub => {
+                        if (seen.has(sub.endpoint)) return false;
+                        seen.add(sub.endpoint);
+                        return true;
+                      });
+
                       await Promise.allSettled(
-                        pushSubs.map(async (sub) => {
+                        uniqueSubs.map(async (sub) => {
                           try {
                             await webpush.sendNotification(
                               { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
@@ -1726,7 +1735,7 @@ export async function GET(request: NextRequest) {
                                 body: `Joyeux anniversaire bientôt ! 🎂 ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
                                 icon: '/icon-192.png',
                                 url: `/customer/card/${customer.merchant_id}`,
-                                tag: 'qarte-birthday',
+                                tag: `qarte-birthday-${customer.merchant_id}`,
                               })
                             );
                           } catch (pushErr: unknown) {

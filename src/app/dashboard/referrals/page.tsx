@@ -70,7 +70,8 @@ export default function ReferralsPage() {
           referrer_voucher:referrer_voucher_id(is_used, used_at)
         `)
         .eq('merchant_id', merchant.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
 
       if (!error && data) {
         setReferrals(data as unknown as ReferralRow[]);

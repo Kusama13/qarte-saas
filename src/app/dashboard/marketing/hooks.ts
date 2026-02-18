@@ -181,19 +181,18 @@ export function useMarketingData(merchant: MerchantData | null) {
   };
 
   const handleToggleBirthday = () => {
-    setBirthdayGiftEnabled(!birthdayGiftEnabled);
-    if (birthdayGiftEnabled) {
-      setSavingBirthday(true);
-      fetch('/api/merchants/birthday-config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          merchant_id: merchant?.id,
-          birthday_gift_enabled: false,
-          birthday_gift_description: birthdayGiftDescription,
-        }),
-      }).then(() => setSavingBirthday(false)).catch(() => setSavingBirthday(false));
-    }
+    const newValue = !birthdayGiftEnabled;
+    setBirthdayGiftEnabled(newValue);
+    setSavingBirthday(true);
+    fetch('/api/merchants/birthday-config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        merchant_id: merchant?.id,
+        birthday_gift_enabled: newValue,
+        birthday_gift_description: birthdayGiftDescription,
+      }),
+    }).then(() => setSavingBirthday(false)).catch(() => setSavingBirthday(false));
   };
 
   return {

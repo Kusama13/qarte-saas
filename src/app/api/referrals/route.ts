@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur lors de la création de la carte' }, { status: 500 });
     }
 
-    // 8. Créer le voucher filleul
+    // 8. Créer le voucher filleul (expire dans 30 jours)
     const { data: referredVoucher, error: voucherError } = await supabaseAdmin
       .from('vouchers')
       .insert({
@@ -200,6 +200,7 @@ export async function POST(request: NextRequest) {
         merchant_id: merchant.id,
         customer_id: newCustomer.id,
         reward_description: merchant.referral_reward_referred || 'Récompense parrainage',
+        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       })
       .select()
       .single();

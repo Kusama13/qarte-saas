@@ -72,9 +72,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Auto-generate referral_code if missing
+    // Auto-generate referral_code if missing (with uniqueness retry)
     if (!card.referral_code) {
-      const code = generateReferralCode();
+      let code = generateReferralCode();
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { data: existing } = await supabaseAdmin
+          .from('loyalty_cards')
+          .select('id')
+          .eq('referral_code', code)
+          .maybeSingle();
+        if (!existing) break;
+        code = generateReferralCode();
+      }
       await supabaseAdmin
         .from('loyalty_cards')
         .update({ referral_code: code })

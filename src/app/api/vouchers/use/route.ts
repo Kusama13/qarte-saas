@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (merchant?.referral_reward_referrer) {
-        // Créer le voucher parrain
+        // Créer le voucher parrain (expire dans 30 jours)
         const { data: referrerVoucher } = await supabaseAdmin
           .from('vouchers')
           .insert({
@@ -159,6 +159,7 @@ export async function POST(request: NextRequest) {
             merchant_id: referral.merchant_id,
             customer_id: referral.referrer_customer_id,
             reward_description: merchant.referral_reward_referrer,
+            expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           })
           .select()
           .single();
