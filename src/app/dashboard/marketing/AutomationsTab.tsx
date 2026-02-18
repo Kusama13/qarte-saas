@@ -180,6 +180,9 @@ export default function AutomationsTab({
             </div>
           </div>
           <button
+            role="switch"
+            aria-checked={birthdayGiftEnabled}
+            aria-label="Activer ou désactiver le cadeau anniversaire"
             onClick={onToggleBirthday}
             className={`relative w-11 h-6 rounded-full transition-colors ${birthdayGiftEnabled ? 'bg-pink-500' : 'bg-gray-200'}`}
           >
@@ -289,6 +292,9 @@ export default function AutomationsTab({
               </div>
             </div>
             <button
+              role="switch"
+              aria-checked={settings?.inactive_reminder_enabled ?? false}
+              aria-label="Activer ou désactiver la relance des clients inactifs"
               onClick={() => toggleAutomation('inactive_reminder_enabled', settings?.inactive_reminder_enabled ?? false)}
               disabled={loading || updating === 'inactive_reminder_enabled'}
               className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
@@ -379,6 +385,9 @@ export default function AutomationsTab({
                   </div>
                 </div>
                 <button
+                  role="switch"
+                  aria-checked={isEnabled}
+                  aria-label={`Activer ou désactiver ${automation.title}`}
                   onClick={() => toggleAutomation(automation.id, isEnabled)}
                   disabled={loading || isUpdating}
                   className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
@@ -416,6 +425,9 @@ export default function AutomationsTab({
               </div>
             </div>
             <button
+              role="switch"
+              aria-checked={settings?.events_enabled ?? false}
+              aria-label="Activer ou désactiver les notifications push pour les événements"
               onClick={() => toggleAutomation('events_enabled', settings?.events_enabled ?? false)}
               disabled={loading || updating === 'events_enabled'}
               className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${

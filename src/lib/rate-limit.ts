@@ -5,6 +5,7 @@ interface RateLimitEntry {
   resetTime: number;
 }
 
+const MAX_STORE_SIZE = 10000;
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 // Nettoyer les entrées expirées toutes les minutes
@@ -39,6 +40,11 @@ export function checkRateLimit(
   const entry = rateLimitStore.get(key);
 
   if (!entry || now > entry.resetTime) {
+    // Evict oldest entries if store is full
+    if (rateLimitStore.size >= MAX_STORE_SIZE) {
+      const firstKey = rateLimitStore.keys().next().value;
+      if (firstKey) rateLimitStore.delete(firstKey);
+    }
     // Nouvelle entrée ou entrée expirée
     rateLimitStore.set(key, {
       count: 1,

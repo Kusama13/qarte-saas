@@ -12,16 +12,22 @@ async function getVapidPublicKey(): Promise<string | null> {
   // Return cached key if available
   if (cachedVapidPublicKey) return cachedVapidPublicKey;
 
-  // Fetch from API endpoint
+  // Fetch from API endpoint with timeout
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
   try {
-    const response = await fetch('/api/push/config');
+    const response = await fetch('/api/push/config', { signal: controller.signal });
     if (response.ok) {
       const data = await response.json();
       cachedVapidPublicKey = data.vapidPublicKey;
       return cachedVapidPublicKey;
     }
   } catch (error) {
-    console.error('Failed to fetch VAPID key:', error);
+    if ((error as Error).name !== 'AbortError') {
+      console.error('Failed to fetch VAPID key:', error);
+    }
+  } finally {
+    clearTimeout(timeout);
   }
 
   return null;
@@ -157,19 +163,26 @@ export async function subscribeToPush(
       });
     }
 
-    // Send subscription to backend
-    const response = await fetch('/api/push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        subscription: subscription.toJSON(),
-        customerId,
-      }),
-    });
+    // Send subscription to backend (with timeout)
+    const subController = new AbortController();
+    const subTimeout = setTimeout(() => subController.abort(), 10000);
+    try {
+      const response = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription: subscription.toJSON(),
+          customerId,
+        }),
+        signal: subController.signal,
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || 'Erreur serveur');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Erreur serveur');
+      }
+    } finally {
+      clearTimeout(subTimeout);
     }
 
     return { success: true, subscription };

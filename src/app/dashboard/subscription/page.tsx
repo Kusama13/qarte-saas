@@ -137,19 +137,23 @@ export default function SubscriptionPage() {
     const initialStatus = merchant.subscription_status;
     const initialStripeId = merchant.stripe_subscription_id;
     let attempts = 0;
+    let cancelled = false;
     let timeoutId: ReturnType<typeof setTimeout>;
 
     const poll = async () => {
+      if (cancelled) return;
       attempts++;
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setPolling(false); return; }
+      if (!user || cancelled) { setPolling(false); return; }
 
       const { data } = await supabase
         .from('merchants')
         .select('*')
         .eq('user_id', user.id)
         .single();
+
+      if (cancelled) return;
 
       if (data && (
         data.subscription_status !== initialStatus ||
@@ -163,7 +167,6 @@ export default function SubscriptionPage() {
       }
 
       if (attempts >= 10) {
-        // Max attempts — use last fetched data
         if (data) {
           setMerchant(data);
           refetchContext();
@@ -179,7 +182,10 @@ export default function SubscriptionPage() {
     };
 
     timeoutId = setTimeout(poll, 3000);
-    return () => clearTimeout(timeoutId);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
   }, [polling, merchant?.id]);
 
   const fetchPaymentMethod = useCallback(async () => {

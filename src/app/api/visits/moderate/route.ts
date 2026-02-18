@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
 
 // Bulk moderation
 const bulkModerateSchema = z.object({
-  visit_ids: z.array(z.string().uuid()),
+  visit_ids: z.array(z.string().uuid()).min(1).max(100),
   action: z.enum(['confirm', 'reject']),
   merchant_id: z.string().uuid(),
 });

@@ -47,7 +47,7 @@ export function getAuthenticatedPhone(request: NextRequest): string | null {
 function buildSetCookie(phone: string): string {
   const value = signPhone(phone);
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
-  return `${COOKIE_NAME}=${value}; HttpOnly; SameSite=Lax${secure}; Path=/; Max-Age=${MAX_AGE_SECONDS}`;
+  return `${COOKIE_NAME}=${value}; HttpOnly; SameSite=Strict${secure}; Path=/; Max-Age=${MAX_AGE_SECONDS}`;
 }
 
 /** Attach the signed phone cookie to a NextResponse. */
@@ -61,7 +61,7 @@ export function clearPhoneCookie(response: NextResponse): NextResponse {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   response.headers.append(
     'Set-Cookie',
-    `${COOKIE_NAME}=; HttpOnly; SameSite=Lax${secure}; Path=/; Max-Age=0`,
+    `${COOKIE_NAME}=; HttpOnly; SameSite=Strict${secure}; Path=/; Max-Age=0`,
   );
   return response;
 }

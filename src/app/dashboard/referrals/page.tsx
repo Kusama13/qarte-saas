@@ -168,6 +168,9 @@ export default function ReferralsPage() {
             </p>
           </div>
           <button
+            role="switch"
+            aria-checked={enabled}
+            aria-label="Activer ou désactiver le programme de parrainage"
             onClick={() => setEnabled(!enabled)}
             className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full transition-colors ${
               enabled ? 'bg-indigo-600' : 'bg-gray-200'

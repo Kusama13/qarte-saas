@@ -541,6 +541,9 @@ export default function ProgramPage() {
               </div>
               <button
                 type="button"
+                role="switch"
+                aria-checked={formData.tier2Enabled}
+                aria-label="Activer ou désactiver le 2ème palier de récompense"
                 onClick={() => setFormData({ ...formData, tier2Enabled: !formData.tier2Enabled })}
                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
                   formData.tier2Enabled ? 'bg-violet-600' : 'bg-gray-200'

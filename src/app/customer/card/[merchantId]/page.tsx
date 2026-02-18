@@ -158,6 +158,7 @@ export default function CustomerCardPage({
   const [birthdayMonth, setBirthdayMonth] = useState('');
   const [savingBirthday, setSavingBirthday] = useState(false);
   const [birthdaySaved, setBirthdaySaved] = useState(false);
+  const [birthdayError, setBirthdayError] = useState<string | null>(null);
 
   // Member card state
   const [memberCard, setMemberCard] = useState<MemberCard | null>(null);
@@ -548,6 +549,15 @@ export default function CustomerCardPage({
 
   const handleSaveBirthday = useCallback(async () => {
     if (!card || !birthdayMonth || !birthdayDay) return;
+    setBirthdayError(null);
+
+    // Validate date is real (e.g., no Feb 31)
+    const testDate = new Date(2000, parseInt(birthdayMonth) - 1, parseInt(birthdayDay));
+    if (testDate.getMonth() !== parseInt(birthdayMonth) - 1) {
+      setBirthdayError('Cette date n\u2019existe pas (ex: 31 f\u00e9vrier)');
+      return;
+    }
+
     setSavingBirthday(true);
     try {
       const res = await fetch('/api/customers/birthday', {
@@ -1298,7 +1308,7 @@ export default function CustomerCardPage({
                     <div className="flex gap-2 mb-3">
                       <select
                         value={birthdayDay}
-                        onChange={(e) => setBirthdayDay(e.target.value)}
+                        onChange={(e) => { setBirthdayDay(e.target.value); setBirthdayError(null); }}
                         className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
                       >
                         <option value="">Jour</option>
@@ -1308,7 +1318,7 @@ export default function CustomerCardPage({
                       </select>
                       <select
                         value={birthdayMonth}
-                        onChange={(e) => setBirthdayMonth(e.target.value)}
+                        onChange={(e) => { setBirthdayMonth(e.target.value); setBirthdayError(null); }}
                         className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
                       >
                         <option value="">Mois</option>
@@ -1317,6 +1327,9 @@ export default function CustomerCardPage({
                         ))}
                       </select>
                     </div>
+                    {birthdayError && (
+                      <p className="text-xs text-red-500 font-medium mb-2">{birthdayError}</p>
+                    )}
                     <button
                       onClick={handleSaveBirthday}
                       disabled={!birthdayMonth || !birthdayDay || savingBirthday}

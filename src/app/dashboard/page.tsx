@@ -524,6 +524,9 @@ export default function DashboardPage() {
             </button>
             <button
               type="button"
+              role="switch"
+              aria-checked={shieldEnabled}
+              aria-label="Activer ou désactiver Qarte Shield"
               onClick={() => handleShieldToggle(!shieldEnabled)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 shieldEnabled ? 'bg-emerald-500' : 'bg-gray-300'

@@ -187,6 +187,8 @@ export async function POST(request: NextRequest) {
 
     if (cardError || !newCard) {
       logger.error('Card creation error:', cardError);
+      // Rollback: delete orphaned customer
+      await supabaseAdmin.from('customers').delete().eq('id', newCustomer.id);
       return NextResponse.json({ error: 'Erreur lors de la création de la carte' }, { status: 500 });
     }
 
@@ -204,6 +206,9 @@ export async function POST(request: NextRequest) {
 
     if (voucherError || !referredVoucher) {
       logger.error('Voucher creation error:', voucherError);
+      // Rollback: delete orphaned card + customer
+      await supabaseAdmin.from('loyalty_cards').delete().eq('id', newCard.id);
+      await supabaseAdmin.from('customers').delete().eq('id', newCustomer.id);
       return NextResponse.json({ error: 'Erreur lors de la création de la récompense' }, { status: 500 });
     }
 

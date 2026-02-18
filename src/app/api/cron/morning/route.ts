@@ -532,10 +532,12 @@ export async function GET(request: NextRequest) {
             const email = scriptEmailMap.get(merchant.user_id);
             if (!email) { results.firstClientScript.skipped++; return; }
 
+            if (!merchant.reward_description) { results.firstClientScript.skipped++; return; }
+
             try {
               const result = await sendFirstClientScriptEmail(
                 email, merchant.shop_name, merchant.shop_type || '',
-                merchant.reward_description!, merchant.stamps_required
+                merchant.reward_description, merchant.stamps_required
               );
               if (result.success) {
                 await supabase.from('pending_email_tracking').insert({
@@ -749,8 +751,10 @@ export async function GET(request: NextRequest) {
             const email = rewardEmailMap.get(merchant.user_id);
             if (!email) { results.firstReward.skipped++; return; }
 
+            if (!merchant.reward_description) { results.firstReward.skipped++; return; }
+
             try {
-              const result = await sendFirstRewardEmail(email, merchant.shop_name, merchant.reward_description!);
+              const result = await sendFirstRewardEmail(email, merchant.shop_name, merchant.reward_description);
               if (result.success) {
                 await supabase.from('pending_email_tracking').insert({
                   merchant_id: merchantId, reminder_day: -101, pending_count: 0,
@@ -814,7 +818,8 @@ export async function GET(request: NextRequest) {
 
             try {
               const totalCustomers = customerCountMap.get(merchant.id) || 0;
-              const result = await sendTier2UpsellEmail(email, merchant.shop_name, totalCustomers, merchant.reward_description!);
+              if (!merchant.reward_description) { results.tier2Upsell.skipped++; return; }
+              const result = await sendTier2UpsellEmail(email, merchant.shop_name, totalCustomers, merchant.reward_description);
               if (result.success) {
                 await supabase.from('pending_email_tracking').insert({
                   merchant_id: merchant.id, reminder_day: -102, pending_count: 0,
@@ -857,19 +862,26 @@ export async function GET(request: NextRequest) {
           .gte('sent_at', sixDaysAgo.toISOString());
         const alreadySentDigest = new Set((existingDigest || []).map(t => t.merchant_id));
 
-        // Get this week's visits
-        const { data: weekVisits } = await supabase
-          .from('visits')
-          .select('merchant_id, customer_id, visited_at')
-          .in('merchant_id', digestIds)
-          .eq('status', 'confirmed')
-          .gte('visited_at', sevenDaysAgoDigest.toISOString());
-
-        // Get total customers and rewards earned this week
-        const { data: allCards } = await supabase
-          .from('loyalty_cards')
-          .select('merchant_id, customer_id, rewards_earned, created_at')
-          .in('merchant_id', digestIds);
+        // Get this week's visits and loyalty cards (batched to avoid memory issues)
+        let weekVisits: any[] = [];
+        let allCards: any[] = [];
+        for (let i = 0; i < digestIds.length; i += 100) {
+          const batch = digestIds.slice(i, i + 100);
+          const [visitsResult, cardsResult] = await Promise.all([
+            supabase
+              .from('visits')
+              .select('merchant_id, customer_id, visited_at')
+              .in('merchant_id', batch)
+              .eq('status', 'confirmed')
+              .gte('visited_at', sevenDaysAgoDigest.toISOString()),
+            supabase
+              .from('loyalty_cards')
+              .select('merchant_id, customer_id, rewards_earned, created_at')
+              .in('merchant_id', batch),
+          ]);
+          weekVisits = weekVisits.concat(visitsResult.data || []);
+          allCards = allCards.concat(cardsResult.data || []);
+        }
 
         // Build stats per merchant
         const weekStats = new Map<string, { scans: number; newCustomers: number; rewards: number; totalCustomers: number }>();
@@ -877,12 +889,12 @@ export async function GET(request: NextRequest) {
           weekStats.set(m.id, { scans: 0, newCustomers: 0, rewards: 0, totalCustomers: 0 });
         }
 
-        for (const v of weekVisits || []) {
+        for (const v of weekVisits) {
           const stats = weekStats.get(v.merchant_id);
           if (stats) stats.scans++;
         }
 
-        for (const card of allCards || []) {
+        for (const card of allCards) {
           const stats = weekStats.get(card.merchant_id);
           if (!stats) continue;
           stats.totalCustomers++;
@@ -899,7 +911,7 @@ export async function GET(request: NextRequest) {
 
         const stampsMap = new Map((merchantPrograms || []).map(m => [m.id, m.stamps_required]));
 
-        for (const card of allCards || []) {
+        for (const card of allCards) {
           const stats = weekStats.get(card.merchant_id);
           if (stats && card.rewards_earned > 0) {
             stats.rewards += card.rewards_earned;
@@ -1643,6 +1655,19 @@ export async function GET(request: NextRequest) {
             (existingBirthdayVouchers || []).map(v => `${v.customer_id}:${v.merchant_id}`)
           );
 
+          // Pre-fetch phone→customer_ids mapping to avoid N+1
+          const birthdayPhones = [...new Set(birthdayCustomers.map((c: any) => c.phone_number))];
+          const { data: allPhoneCustomers } = await supabase
+            .from('customers')
+            .select('id, phone_number')
+            .in('phone_number', birthdayPhones);
+
+          const customersByPhone = new Map<string, string[]>();
+          for (const c of allPhoneCustomers || []) {
+            if (!customersByPhone.has(c.phone_number)) customersByPhone.set(c.phone_number, []);
+            customersByPhone.get(c.phone_number)!.push(c.id);
+          }
+
           for (const customer of birthdayCustomers) {
             const key = `${customer.id}:${customer.merchant_id}`;
             const bMerchant = merchantMap.get(customer.merchant_id);
@@ -1681,12 +1706,9 @@ export async function GET(request: NextRequest) {
               // Push notification (fire-and-forget)
               if (vapidPublicKey && vapidPrivateKey) {
                 try {
-                  const { data: allCustIds } = await supabase
-                    .from('customers')
-                    .select('id')
-                    .eq('phone_number', customer.phone_number);
+                  const allCustIds = customersByPhone.get(customer.phone_number)?.map(id => ({ id })) || [];
 
-                  const custIds = (allCustIds || []).map(c => c.id);
+                  const custIds = allCustIds.map(c => c.id);
                   if (custIds.length > 0) {
                     const { data: pushSubs } = await supabase
                       .from('push_subscriptions')

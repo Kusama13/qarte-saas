@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import { z } from 'zod';
 import logger from '@/lib/logger';
+
+const referralConfigSchema = z.object({
+  merchant_id: z.string().uuid(),
+  referral_program_enabled: z.boolean(),
+  referral_reward_referrer: z.string().max(200).nullable().optional(),
+  referral_reward_referred: z.string().max(200).nullable().optional(),
+});
 
 export async function PUT(request: NextRequest) {
   try {
@@ -12,11 +20,13 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { merchant_id, referral_program_enabled, referral_reward_referrer, referral_reward_referred } = body;
+    const parsed = referralConfigSchema.safeParse(body);
 
-    if (!merchant_id) {
-      return NextResponse.json({ error: 'merchant_id requis' }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
+
+    const { merchant_id, referral_program_enabled, referral_reward_referrer, referral_reward_referred } = parsed.data;
 
     // Verify ownership
     const { data: merchant } = await supabase
