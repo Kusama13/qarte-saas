@@ -129,15 +129,7 @@ export default function OnboardingPage() {
 
       if (error) throw error;
 
-      // Send QR code + kit promo email
-      try {
-        const emailRes = await fetch('/api/emails/qr-code', { method: 'POST' });
-        if (!emailRes.ok) {
-          console.error('QR code email failed:', emailRes.status, await emailRes.text());
-        }
-      } catch (emailErr) {
-        console.error('QR code email error:', emailErr);
-      }
+      // QR code email handled by cron morning (next day, more relevant timing)
 
       router.push('/dashboard/qr-download');
     } catch (error) {

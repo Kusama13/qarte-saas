@@ -934,21 +934,28 @@ export default function MerchantDetailPage() {
           <div className="space-y-2">
             {emailTrackings.map((t, i) => {
               const labels: Record<number, string> = {
-                1: 'Rappel programme J+1',
-                2: 'Rappel programme J+2',
-                3: 'Rappel programme J+3',
-                5: 'Check-in J+5',
-                7: 'Inactif J+7',
-                14: 'Inactif J+14',
-                30: 'Inactif J+30',
                 [-100]: 'Premier scan',
                 [-101]: 'Première récompense',
                 [-102]: 'Upsell Tier 2',
                 [-103]: 'QR code & kit promo',
-                [-104]: 'Social kit (ancien)',
+                [-104]: 'Challenge complété',
                 [-105]: 'QR téléchargé',
                 [-106]: 'Script verbal J+2',
                 [-107]: 'Check-in J+4',
+                [-110]: 'Relance inactif J+7',
+                [-111]: 'Relance inactif J+14',
+                [-112]: 'Relance inactif J+30',
+                [-113]: 'Mise à jour produit',
+                [-120]: 'Auto-suggestion',
+                [-201]: 'Trial expire J-1',
+                [-203]: 'Trial expire J-3',
+                [-211]: 'Trial expiré +1j',
+                [-212]: 'Trial expiré +2j',
+                [-301]: 'Onboarding rappel J+1',
+                [-302]: 'Onboarding rappel J+2',
+                [-303]: 'Onboarding rappel J+3',
+                [-305]: 'Check-in J+5',
+                [-400]: 'Digest hebdo',
               };
               const label = labels[t.reminder_day] || `Code ${t.reminder_day}`;
               const date = new Date(t.sent_at).toLocaleDateString('fr-FR', {

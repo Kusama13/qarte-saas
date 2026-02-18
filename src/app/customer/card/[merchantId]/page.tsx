@@ -158,6 +158,7 @@ export default function CustomerCardPage({
   const [birthdayMonth, setBirthdayMonth] = useState('');
   const [savingBirthday, setSavingBirthday] = useState(false);
   const [birthdaySaved, setBirthdaySaved] = useState(false);
+  const [birthdayDismissed, setBirthdayDismissed] = useState(false);
   const [birthdayError, setBirthdayError] = useState<string | null>(null);
 
   // Member card state
@@ -571,6 +572,8 @@ export default function CustomerCardPage({
       });
       if (res.ok) {
         setBirthdaySaved(true);
+        // Auto-hide after 4 seconds
+        setTimeout(() => setBirthdayDismissed(true), 4000);
       }
     } catch (err) {
       console.error('Birthday save error:', err);
@@ -859,21 +862,21 @@ export default function CustomerCardPage({
           </motion.div>
 
           {/* Centered content */}
-          <div className="relative flex flex-col items-center pt-16 pb-14 px-5">
+          <div className="relative flex flex-col items-center pt-10 pb-10 px-5">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="relative w-[88px] h-[88px] rounded-[1.75rem] p-1 bg-white/90 shadow-2xl border border-white/60 flex items-center justify-center overflow-hidden mb-4"
+              className="relative w-[100px] h-[100px] rounded-[1.75rem] p-1.5 bg-white/90 shadow-2xl border border-white/60 flex items-center justify-center overflow-hidden mb-2.5"
             >
               {merchant.logo_url ? (
                 <img
                   src={merchant.logo_url}
                   alt={merchant.shop_name}
-                  className="w-full h-full object-cover rounded-[1.5rem]"
+                  className="w-full h-full object-cover rounded-[1.25rem]"
                 />
               ) : (
                 <div
-                  className="w-full h-full rounded-[1.5rem] flex items-center justify-center text-white text-3xl font-black"
+                  className="w-full h-full rounded-[1.25rem] flex items-center justify-center text-white text-4xl font-black"
                   style={{ background: `linear-gradient(135deg, ${merchant.primary_color}cc, ${merchant.secondary_color || merchant.primary_color})` }}
                 >
                   {merchant.shop_name[0]}
@@ -884,7 +887,7 @@ export default function CustomerCardPage({
             <motion.h1
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-xl font-black tracking-tight text-white text-center leading-tight mb-2"
+              className="text-lg font-black tracking-tight text-white text-center leading-tight mb-1.5"
             >
               {merchant.shop_name}
             </motion.h1>
@@ -1271,10 +1274,11 @@ export default function CustomerCardPage({
         )}
 
         {/* Birthday Input — hidden once saved */}
-        {merchant.birthday_gift_enabled && !isPreview && !birthdaySaved && (
+        {merchant.birthday_gift_enabled && !isPreview && !birthdayDismissed && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={birthdaySaved ? { opacity: 0, y: -10 } : { opacity: 1, y: 0 }}
+            transition={birthdaySaved ? { delay: 3.5, duration: 0.5 } : { duration: 0.3 }}
             className="mb-4"
           >
             <div className="rounded-2xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100/80 overflow-hidden">
@@ -1285,9 +1289,9 @@ export default function CustomerCardPage({
                       <Cake className="w-5 h-5 text-pink-500" />
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900 text-sm">Anniversaire enregistr&eacute;</p>
+                      <p className="font-bold text-gray-900 text-sm">Date sauvegard&eacute;e !</p>
                       <p className="text-xs text-gray-500">
-                        Un cadeau de {merchant.shop_name} vous attend pour votre anniversaire !
+                        Une surprise vous attendra le jour J !
                       </p>
                     </div>
                   </div>

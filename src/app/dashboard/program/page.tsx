@@ -319,8 +319,7 @@ export default function ProgramPage() {
       refetchMerchantContext();
 
       if (isFirstSetup) {
-        // Send QR code email immediately (fire and forget)
-        fetch('/api/emails/qr-code', { method: 'POST' }).catch(() => {});
+        // QR code email handled by cron morning (next day, more relevant timing)
         setShowTestModal(true);
         setSaving(false);
         return;
