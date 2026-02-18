@@ -12,8 +12,8 @@ const supabaseAdmin = getSupabaseAdmin();
 const checkinSchema = z.object({
   scan_code: z.string().min(1),
   phone_number: z.string().min(1),
-  first_name: z.string().optional(),
-  last_name: z.string().optional(),
+  first_name: z.string().nullable().optional(),
+  last_name: z.string().nullable().optional(),
 });
 
 // Rate limiting
