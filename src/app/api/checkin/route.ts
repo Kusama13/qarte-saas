@@ -41,9 +41,7 @@ function checkRateLimit(ip: string): boolean {
 
 // Hash IP for GDPR compliance - use dedicated salt (not secret keys)
 function getIPHashSalt(): string {
-  const salt = process.env.IP_HASH_SALT;
-  if (!salt) throw new Error('IP_HASH_SALT environment variable is required');
-  return salt;
+  return process.env.IP_HASH_SALT || 'qarte-default-ip-salt';
 }
 function hashIP(ip: string): string {
   return createHash('sha256').update(ip + getIPHashSalt()).digest('hex');
