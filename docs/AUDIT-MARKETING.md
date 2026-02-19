@@ -19,7 +19,6 @@
 - ✅ Comparatif papier vs digital
 - ❌ Zéro video (hero, demo, testimonial)
 - ❌ GTM pas activé (GA4 configuré mais pas de tracking complet)
-- ❌ Heatmap absente (Hotjar/Clarity)
 - ❌ Social proof non quantifiable (chiffres supprimés du hero)
 - ❌ Funnel pas mesuré (no Facebook Pixel conversion tracking)
 
@@ -57,9 +56,7 @@
 |---|----------|----------|--------|
 | 5 | **Landing page structure incohérente** | Hero → Referral → AIReengagement → Testimonials → Pricing. Logique confuse (parrainage APRÈS avantages?), no "how it works" visual | Reorder: Hero → HowItWorks visual 3-step → Features → Testimonials → Pricing → Referral bonus section (bottom) → FAQ |
 | 6 | **Pricing page pas d'urgence/scarcity** | Standard pricing card, no countdown, no limited spots | Ajouter : "Offre introductoire" badge, countdown trial reduction, "100 premièrs = tarif figé 19€ à vie" |
-| ~~7~~ | ~~**Heatmap/Clarity**~~ | ~~User behavior unknown~~ | ✅ **FAIT** — Microsoft Clarity installé (vjx7g9ttax), heatmaps + session recordings actifs |
-| 8 | **Blog articles trop courts** | 3 articles blog (coiffure, onglerie, institut) ~1500 mots chacun, pas d'images, SEO fragile | Expand : 2500-3500 mots, +3-5 internal links, +3 images Unsplash, FAQ schema, word embeddings (semantique) |
-| ~~9~~ | ~~**Google Search Console**~~ | ~~Meta tag commente~~ | ✅ **FAIT** — Domaine verifie (DNS TXT + meta tag), sitemap soumis |
+| 7 | **Blog articles trop courts** | 3 articles blog (coiffure, onglerie, institut) ~1500 mots chacun, pas d'images, SEO fragile | Expand : 2500-3500 mots, +3-5 internal links, +3 images Unsplash, FAQ schema, word embeddings (semantique) |
 
 #### 🟡 P2 — Medium term (Impact -5% conversion)
 
@@ -68,7 +65,6 @@
 | 10 | **Essai gratuit page (/essai-gratuit)** : Copy faible, manque pain points | Reformuler : "73% des cartes papier perdues → Qarte = 0 fraude + stats realtime + notifications auto" |
 | 11 | **Ebook page** : "4.9/5 basé sur 97 avis" (fake social proof visible), PDF claim unverifiable | Retirer stars / avis, garder "+120 lecteurs", value props seulement |
 | 12 | **Contact form** : Presence faible dans navigation | Ajouter lien footer "Contact", CTA "Questions?" dans FAQ |
-| 13 | **Sitemap incomplete** : Manquent `/pricing` standalone, `/features`, `/blog/index` | Ajouter pages manquantes, XML au complet |
 
 ---
 
@@ -417,7 +413,6 @@ Improvement:
 | `/blog/article-1` | ✅ Article specific | ✅ Article description | ✅ | ✅ |
 
 **Action Required:**
-- [x] ~~Verify Google Search Console + submit sitemap~~ ✅ FAIT
 - [ ] Add missing keywords metadata to `/essai-gratuit` and `/ebook`
 - [ ] Create blog index page metadata
 
@@ -482,14 +477,10 @@ Improvement:
   - /contact
   - /cgv, /mentions-legales, /politique-confidentialite
 
-❌ Missing:
-  - /features (no dedicated page, but featurable)
-  - /blog/category/* (no category pages)
-  - Local pages (/blog/carte-fidelite-paris, etc)
-  - Product schema for `/demo`
+Note: Sitemap couvre toutes les 13 pages publiques existantes. Pas de pages manquantes.
 ```
 
-**Action:** Keep current sitemap, add missing pages as they're created.
+**Action:** Ajouter au sitemap les nouvelles pages au fur et à mesure (local pages, nouveaux articles blog).
 
 ---
 
@@ -955,9 +946,8 @@ Current:
 | 4 | **Activate GTM + GA4 events** (landing, signup, conversion) | Measurement | 6h | Analytics/Dev |
 | 5 | **Add Facebook Pixel server-side** (Stripe webhook) | Attribution | 3h | Dev |
 | 6 | **Create exit-intent popup** (offer code / ebook) | Conversion +8% | 2h | Dev/Copy |
-| ~~7~~ | ~~**Verify Google Search Console**~~ | ~~SEO~~ | ~~1h~~ | ✅ **FAIT** |
 
-**Total P0: ~18 hours restantes (GSC fait)**
+**Total P0: ~18 hours**
 
 ---
 
@@ -968,8 +958,7 @@ Current:
 | 1 | Expand blog articles (1,500 → 3,000 words) | +15% organic | 2 weeks | 3 articles existing → target 2,500+ |
 | 2 | Add Article + FAQ schema to blog posts | +5% CTR | 2 days | JSON-LD markup |
 | 3 | Collect 3-5 real video testimonials | Conversion +10% | 1 week | 30s each, real merchants |
-| ~~4~~ | ~~Create Clarity heatmap dashboard~~ | ~~UX insights~~ | ~~1 day~~ | ✅ **FAIT** — Clarity vjx7g9ttax installé |
-| 5 | Refactor landing page order (HowItWorks → Features earlier) | UX/Conversion | 1 day | Reorder sections |
+| 4 | Refactor landing page order (HowItWorks → Features earlier) | UX/Conversion | 1 day | Reorder sections |
 | 6 | Add competitor comparison footnote in Pricing | Justification | 2h | Show Qarte 60% cheaper |
 | 7 | Create 3-4 local landing pages (Paris, Lyon, Marseille) | +10% organic (local) | 3 days | New pages + metadata |
 | 8 | Implement GA4 conversion goals (signup→config→first scan) | Measurement | 2 days | Setup + testing |
@@ -1140,7 +1129,6 @@ Apr 2026: ~100 merchants (target) → MRR 1,900€
 - [ ] Activate GTM + GA4 (all events)
 - [ ] Add Facebook Pixel server-side (Stripe)
 - [ ] Create exit-intent popup
-- [x] ~~Submit sitemap to Google Search Console~~ ✅ FAIT
 
 **Impact:** Credibility fix, measurement foundation, +15% conversion potential
 
@@ -1150,7 +1138,6 @@ Apr 2026: ~100 merchants (target) → MRR 1,900€
 
 - [ ] Expand blog articles (1,500 → 3,000 words)
 - [ ] Add internal linking (blog → pricing)
-- [x] ~~Install Clarity heatmap~~ ✅ FAIT
 - [ ] Refactor landing page (reorder sections)
 - [ ] Pricing section A/B test
 - [ ] Create 3-4 local landing pages
