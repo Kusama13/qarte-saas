@@ -232,44 +232,60 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Send notifications to all subscriptions
-    const results = await Promise.allSettled(
-      subscriptions.map(async (sub) => {
-        const pushSubscription = {
-          endpoint: sub.endpoint,
-          keys: {
-            p256dh: sub.p256dh,
-            auth: sub.auth,
-          },
-        };
+    // Send notifications in batches of 50 with 100ms pause between batches
+    const BATCH_SIZE = 50;
+    const BATCH_DELAY_MS = 100;
+    const results: PromiseSettledResult<{ success: boolean; endpoint: string; customerId: string; error?: string }>[] = [];
+    const expiredEndpoints: string[] = [];
 
-        try {
-          await webpush.sendNotification(
-            pushSubscription,
-            JSON.stringify({
-              title: payload.title,
-              body: payload.body,
-              icon: payload.icon || '/icon-192.png',
-              url: payload.url || '/customer/cards',
-              tag: payload.tag || 'qarte-notification',
-            })
-          );
-          return { success: true, endpoint: sub.endpoint, customerId: sub.customer_id };
-        } catch (err) {
-          const webPushError = err as { statusCode?: number; message?: string; body?: string };
-          logger.error('Push send error for endpoint:', sub.endpoint?.substring(0, 50));
-          logger.error('Error details:', { statusCode: webPushError.statusCode, message: webPushError.message, body: webPushError.body });
-          // If subscription is expired/invalid, delete it
-          if (webPushError.statusCode === 404 || webPushError.statusCode === 410) {
-            await supabase
-              .from('push_subscriptions')
-              .delete()
-              .eq('endpoint', sub.endpoint);
+    for (let i = 0; i < subscriptions.length; i += BATCH_SIZE) {
+      const batch = subscriptions.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.allSettled(
+        batch.map(async (sub) => {
+          const pushSubscription = {
+            endpoint: sub.endpoint,
+            keys: {
+              p256dh: sub.p256dh,
+              auth: sub.auth,
+            },
+          };
+
+          try {
+            await webpush.sendNotification(
+              pushSubscription,
+              JSON.stringify({
+                title: payload.title,
+                body: payload.body,
+                icon: payload.icon || '/icon-192.png',
+                url: payload.url || '/customer/cards',
+                tag: payload.tag || 'qarte-notification',
+              })
+            );
+            return { success: true, endpoint: sub.endpoint, customerId: sub.customer_id };
+          } catch (err) {
+            const webPushError = err as { statusCode?: number; message?: string; body?: string };
+            logger.error('Push send error for endpoint:', sub.endpoint?.substring(0, 50));
+            if (webPushError.statusCode === 404 || webPushError.statusCode === 410) {
+              expiredEndpoints.push(sub.endpoint);
+            }
+            return { success: false, endpoint: sub.endpoint, customerId: sub.customer_id, error: webPushError.message };
           }
-          return { success: false, endpoint: sub.endpoint, customerId: sub.customer_id, error: webPushError.message };
-        }
-      })
-    );
+        })
+      );
+      results.push(...batchResults);
+
+      if (i + BATCH_SIZE < subscriptions.length) {
+        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY_MS));
+      }
+    }
+
+    // Batch delete expired/invalid subscriptions
+    if (expiredEndpoints.length > 0) {
+      await supabase
+        .from('push_subscriptions')
+        .delete()
+        .in('endpoint', expiredEndpoints);
+    }
 
     const successfulResults = results.filter(
       (r) => r.status === 'fulfilled' && r.value.success

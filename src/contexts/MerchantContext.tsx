@@ -14,6 +14,7 @@ interface MerchantContextType {
 const MerchantContext = createContext<MerchantContextType | undefined>(undefined);
 
 const CACHE_KEY = 'qarte_merchant_cache';
+const CACHE_VERSION = 1; // Increment to bust cache on schema changes
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 export function MerchantProvider({ children }: { children: ReactNode }) {
@@ -25,8 +26,8 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
       try {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          if (Date.now() - timestamp < CACHE_DURATION) {
+          const { data, timestamp, version } = JSON.parse(cached);
+          if (version === CACHE_VERSION && Date.now() - timestamp < CACHE_DURATION) {
             return data;
           }
         }
@@ -67,7 +68,8 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
           data,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          version: CACHE_VERSION,
         }));
       } catch {
         // Ignore storage errors

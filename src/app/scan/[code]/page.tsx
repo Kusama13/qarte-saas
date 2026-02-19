@@ -89,45 +89,35 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   // Previous stamps for success animation (old → new)
   const [previousStamps, setPreviousStamps] = useState(0);
 
+  // Fetch merchant + referral info in parallel
   useEffect(() => {
-    const fetchMerchant = async () => {
-      const { data } = await supabase
+    const init = async () => {
+      const merchantPromise = supabase
         .from('merchants')
         .select('*')
         .eq('scan_code', code)
         .single();
 
-      if (data) {
-        setMerchant(data);
-        // Track QR scan
-        trackQrScanned({ merchant_id: data.id });
+      const referralPromise = refCode
+        ? fetch(`/api/referrals?code=${encodeURIComponent(refCode)}`).then(r => r.json()).catch(() => null)
+        : Promise.resolve(null);
+
+      const [merchantResult, referralData] = await Promise.all([merchantPromise, referralPromise]);
+
+      if (merchantResult.data) {
+        setMerchant(merchantResult.data);
+        trackQrScanned({ merchant_id: merchantResult.data.id });
       }
+
+      if (referralData?.valid) {
+        setReferralInfo(referralData);
+      }
+      setReferralLoading(false);
       setLoading(false);
     };
 
-    fetchMerchant();
-
-  }, [code]);
-
-  // Fetch referral info if ?ref= is present
-  useEffect(() => {
-    if (!refCode) return;
-    setReferralLoading(true);
-    const fetchReferralInfo = async () => {
-      try {
-        const res = await fetch(`/api/referrals?code=${encodeURIComponent(refCode)}`);
-        const data = await res.json();
-        if (res.ok && data.valid) {
-          setReferralInfo(data);
-        }
-      } catch {
-        // Silently ignore — fall back to normal flow
-      } finally {
-        setReferralLoading(false);
-      }
-    };
-    fetchReferralInfo();
-  }, [refCode]);
+    init();
+  }, [code, refCode]);
 
   // Auto-login effect: check HttpOnly cookie via /api/customers/me
   useEffect(() => {

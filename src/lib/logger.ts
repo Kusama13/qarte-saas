@@ -1,48 +1,39 @@
 /**
  * Simple logger utility for Qarte
- * In production, logs are suppressed unless explicitly needed
- * TODO: Replace with a proper logging service (Sentry, LogRocket, etc.)
+ * In production: info/warn/error output structured JSON for Vercel logs
+ * In development: human-readable console output
  */
 
 const isDev = process.env.NODE_ENV === 'development';
 
 export const logger = {
-  /**
-   * Log info messages (only in development)
-   */
   info: (...args: unknown[]) => {
     if (isDev) {
       console.log('[INFO]', ...args);
+    } else {
+      console.log(JSON.stringify({ level: 'info', msg: args[0], data: args.slice(1), ts: new Date().toISOString() }));
     }
   },
 
-  /**
-   * Log warning messages (only in development)
-   */
   warn: (...args: unknown[]) => {
     if (isDev) {
       console.warn('[WARN]', ...args);
+    } else {
+      console.warn(JSON.stringify({ level: 'warn', msg: args[0], data: args.slice(1), ts: new Date().toISOString() }));
     }
   },
 
-  /**
-   * Log error messages
-   * These are always logged as they indicate problems
-   * In production, these should be sent to a monitoring service
-   */
   error: (message: string, error?: unknown) => {
     if (isDev) {
       console.error('[ERROR]', message, error);
     } else {
-      // In production, you would send to Sentry/LogRocket here
-      // For now, we still log errors but without stack traces
-      console.error('[ERROR]', message);
+      console.error(JSON.stringify({
+        level: 'error', msg: message, ts: new Date().toISOString(),
+        error: error instanceof Error ? { message: error.message, code: (error as any).code } : error,
+      }));
     }
   },
 
-  /**
-   * Log debug messages (only in development)
-   */
   debug: (...args: unknown[]) => {
     if (isDev) {
       console.log('[DEBUG]', ...args);

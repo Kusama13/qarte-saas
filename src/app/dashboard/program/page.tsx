@@ -312,6 +312,7 @@ export default function ProgramPage() {
         localStorage.setItem('qarte_merchant_cache', JSON.stringify({
           data: safeMerchant,
           timestamp: Date.now(),
+          version: 1,
         }));
       } catch {}
 

@@ -4,7 +4,6 @@ import { useState, useEffect, use, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
-  ArrowLeft,
   Check,
   Loader2,
   AlertCircle,
@@ -18,11 +17,7 @@ import {
   QrCode,
   ArrowRight,
   UserPlus,
-  Gift,
   Share2,
-  CalendarDays,
-  PartyPopper,
-  Cake,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
@@ -43,6 +38,11 @@ import {
   RedeemModal,
   StickyRedeemBar,
   SocialLinks,
+  CardSkeleton,
+  CardHeader,
+  BirthdaySection,
+  VoucherRewards,
+  VoucherModals,
 } from '@/components/loyalty';
 
 interface PointAdjustment {
@@ -153,13 +153,8 @@ export default function CustomerCardPage({
     isBirthday: boolean;
   } | null>(null);
 
-  // Birthday input state
-  const [birthdayDay, setBirthdayDay] = useState('');
-  const [birthdayMonth, setBirthdayMonth] = useState('');
-  const [savingBirthday, setSavingBirthday] = useState(false);
-  const [birthdaySaved, setBirthdaySaved] = useState(false);
-  const [birthdayDismissed, setBirthdayDismissed] = useState(false);
-  const [birthdayError, setBirthdayError] = useState<string | null>(null);
+  // Birthday: track if already set (for BirthdaySection)
+  const [hasBirthday, setHasBirthday] = useState(false);
 
   // Member card state
   const [memberCard, setMemberCard] = useState<MemberCard | null>(null);
@@ -349,10 +344,9 @@ export default function CustomerCardPage({
           setVouchers(data.vouchers);
         }
 
-        // Check if birthday already set — dismiss section immediately (no empty space)
+        // Check if birthday already set
         if (data.card.customer?.birth_month && data.card.customer?.birth_day) {
-          setBirthdaySaved(true);
-          setBirthdayDismissed(true);
+          setHasBirthday(true);
         }
 
         // Check if tier 1 has been redeemed in current cycle (for tier 2 enabled merchants)
@@ -549,40 +543,6 @@ export default function CustomerCardPage({
     }
   }, [card]);
 
-  const handleSaveBirthday = useCallback(async () => {
-    if (!card || !birthdayMonth || !birthdayDay) return;
-    setBirthdayError(null);
-
-    // Validate date is real (e.g., no Feb 31)
-    const testDate = new Date(2000, parseInt(birthdayMonth) - 1, parseInt(birthdayDay));
-    if (testDate.getMonth() !== parseInt(birthdayMonth) - 1) {
-      setBirthdayError('Cette date n\u2019existe pas (ex: 31 f\u00e9vrier)');
-      return;
-    }
-
-    setSavingBirthday(true);
-    try {
-      const res = await fetch('/api/customers/birthday', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_id: card.customer_id,
-          birth_month: parseInt(birthdayMonth),
-          birth_day: parseInt(birthdayDay),
-        }),
-      });
-      if (res.ok) {
-        setBirthdaySaved(true);
-        // Auto-hide after 4 seconds
-        setTimeout(() => setBirthdayDismissed(true), 4000);
-      }
-    } catch (err) {
-      console.error('Birthday save error:', err);
-    } finally {
-      setSavingBirthday(false);
-    }
-  }, [card, birthdayMonth, birthdayDay]);
-
   // Memoized computed state — must be before early returns (Rules of Hooks)
   const {
     isRewardReady,
@@ -698,73 +658,7 @@ export default function CustomerCardPage({
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-50">
-        {/* Skeleton Header */}
-        <header className="relative w-full">
-          <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden">
-            <div className="bg-gray-200 animate-pulse flex flex-col items-center pt-16 pb-14 px-5">
-              <div className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/20" />
-              <div className="w-[88px] h-[88px] rounded-[1.75rem] bg-white/30 mb-4" />
-              <div className="w-36 h-6 bg-white/20 rounded-lg mb-2" />
-            </div>
-          </div>
-        </header>
-        <main className="px-4 max-w-lg mx-auto pb-10">
-          {/* Skeleton Greeting Card */}
-          <div className="relative z-10 -mt-8 mb-4 bg-white rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100/80 p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div>
-                <div className="w-16 h-4 bg-gray-100 rounded animate-pulse mb-2" />
-                <div className="w-28 h-7 bg-gray-200 rounded animate-pulse" />
-              </div>
-              <div className="w-20 h-7 bg-gray-50 rounded-full animate-pulse" />
-            </div>
-            <div className="flex items-end justify-between mb-2">
-              <div className="w-20 h-10 bg-gray-200 rounded animate-pulse" />
-              <div className="w-16 h-4 bg-gray-100 rounded animate-pulse" />
-            </div>
-            <div className="h-2.5 bg-gray-100 rounded-full animate-pulse" />
-          </div>
-          {/* Skeleton Stamps */}
-          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/40 border border-gray-100/80 p-5 mb-4">
-            <div className="flex justify-between items-center mb-4">
-              <div className="w-20 h-4 bg-gray-100 rounded animate-pulse" />
-            </div>
-            <div className="grid grid-cols-5 gap-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="aspect-square rounded-xl bg-gray-100 animate-pulse" />
-              ))}
-            </div>
-          </div>
-          {/* Skeleton Reward */}
-          <div className="mb-4 p-4 rounded-2xl border border-gray-100 bg-gray-50/50">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gray-200 animate-pulse shrink-0" />
-              <div className="flex-1">
-                <div className="w-40 h-5 bg-gray-200 rounded animate-pulse mb-1.5" />
-                <div className="w-24 h-3 bg-gray-100 rounded animate-pulse" />
-              </div>
-            </div>
-          </div>
-          {/* Skeleton History */}
-          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/50 overflow-hidden mb-4">
-            <div className="p-4 border-b border-gray-50">
-              <div className="w-24 h-5 bg-gray-200 rounded animate-pulse" />
-            </div>
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-gray-50 last:border-0">
-                <div className="w-9 h-9 rounded-xl bg-gray-100 animate-pulse" />
-                <div className="flex-1">
-                  <div className="w-24 h-4 bg-gray-100 rounded animate-pulse mb-1" />
-                  <div className="w-16 h-3 bg-gray-50 rounded animate-pulse" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </main>
-      </div>
-    );
+    return <CardSkeleton />;
   }
 
   if (!card) {
@@ -838,92 +732,16 @@ export default function CustomerCardPage({
           </div>
         </div>
       )}
-      {/* Header — Immersive centered design */}
-      <header className="relative w-full overflow-hidden">
-        <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden">
-          {/* Full gradient background */}
-          <div
-            className="absolute inset-0"
-            style={{ background: `linear-gradient(160deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
-          />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent)]" />
-
-          {/* Back button */}
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute top-4 left-4 z-20"
-          >
-            <Link
-              href={isDemo ? '/' : isPreview ? '/dashboard/program' : '/customer/cards'}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 transition-all hover:bg-white/30 active:scale-90"
-            >
-              <ArrowLeft className="w-5 h-5 text-white" />
-            </Link>
-          </motion.div>
-
-          {/* Centered content */}
-          <div className="relative flex flex-col items-center pt-10 pb-10 px-5">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="relative w-[100px] h-[100px] rounded-[1.75rem] p-1.5 bg-white/90 shadow-2xl border border-white/60 flex items-center justify-center overflow-hidden mb-2.5"
-            >
-              {merchant.logo_url ? (
-                <img
-                  src={merchant.logo_url}
-                  alt={merchant.shop_name}
-                  className="w-full h-full object-cover rounded-[1.25rem]"
-                />
-              ) : (
-                <div
-                  className="w-full h-full rounded-[1.25rem] flex items-center justify-center text-white text-4xl font-black"
-                  style={{ background: `linear-gradient(135deg, ${merchant.primary_color}cc, ${merchant.secondary_color || merchant.primary_color})` }}
-                >
-                  {merchant.shop_name[0]}
-                </div>
-              )}
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-lg font-black tracking-tight text-white text-center leading-tight mb-1.5"
-            >
-              {merchant.shop_name}
-            </motion.h1>
-
-            {(memberCard && isMemberCardActive || merchant.booking_url?.trim()) && (
-              <div className="flex items-center gap-2 flex-wrap justify-center">
-                {memberCard && isMemberCardActive && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    onClick={() => setShowMemberCardModal(true)}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all"
-                  >
-                    <Crown className="w-3 h-3 text-amber-300" />
-                    <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">Membre VIP</span>
-                  </motion.button>
-                )}
-                {merchant.booking_url && merchant.booking_url.trim() !== '' && (
-                  <motion.a
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    href={merchant.booking_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all active:scale-95"
-                  >
-                    <CalendarDays className="w-3 h-3 text-white" />
-                    <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">Réserver</span>
-                  </motion.a>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
+      {/* Header */}
+      <CardHeader
+        merchant={merchant}
+        memberCard={memberCard}
+        isMemberCardActive={isMemberCardActive}
+        isPreview={isPreview}
+        isDemo={isDemo}
+        merchantId={merchantId}
+        onShowMemberCard={() => setShowMemberCardModal(true)}
+      />
 
       <main className={`flex-1 px-4 w-full max-w-lg mx-auto z-10 ${showInstallBar ? 'pb-28' : 'pb-12'}`}>
         {/* Floating greeting card — overlaps header */}
@@ -1158,80 +976,12 @@ export default function CustomerCardPage({
           secondaryColor={merchant.secondary_color}
         />
 
-        {/* Voucher rewards (referral) — displayed like RewardCard */}
-        {(() => {
-          const unusedVouchers = vouchers.filter(v => !v.is_used);
-          if (unusedVouchers.length === 0) return null;
-
-          // Group by reward_description
-          const groups = unusedVouchers.reduce((acc, v) => {
-            const key = v.reward_description;
-            if (!acc[key]) acc[key] = [];
-            acc[key].push(v);
-            return acc;
-          }, {} as Record<string, Voucher[]>);
-
-          const gradient = `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`;
-
-          return Object.entries(groups).map(([desc, group]) => (
-            <motion.div
-              key={desc}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.5 }}
-              className="mb-4 rounded-2xl overflow-hidden shadow-lg shadow-black/5"
-            >
-              <div className="relative p-5 overflow-hidden" style={{ background: gradient }}>
-                {/* Shimmer sweep */}
-                <motion.div
-                  animate={{ x: ['-150%', '200%'] }}
-                  transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 pointer-events-none"
-                />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
-
-                <div className="relative flex items-center gap-4">
-                  <motion.div
-                    animate={{ scale: [1, 1.08, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center shrink-0"
-                  >
-                    <Gift className="w-7 h-7 text-white" />
-                  </motion.div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
-                      {group[0].source === 'birthday' ? 'Cadeau anniversaire' : 'Parrainage'}{group.length > 1 ? ` · ${group.length} disponibles` : ''}
-                    </p>
-                    <p className="text-white text-base font-black leading-snug line-clamp-2">
-                      {desc}
-                    </p>
-                    {group[0].expires_at && (
-                      <p className="text-white/50 text-[10px] mt-1">
-                        Expire le {new Date(group[0].expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => {
-                    setSelectedVoucher({
-                      id: group[0].id,
-                      rewardDescription: desc,
-                      source: group[0].source || null,
-                      expiresAt: group[0].expires_at || null,
-                    });
-                    setShowVoucherDetail(true);
-                  }}
-                  className="relative mt-4 w-full py-2.5 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold text-sm hover:bg-white/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                >
-                  <Eye className="w-4 h-4" />
-                  Voir
-                </button>
-              </div>
-            </motion.div>
-          ));
-        })()}
+        {/* Voucher rewards (referral) */}
+        <VoucherRewards
+          vouchers={vouchers}
+          merchant={merchant}
+          onSelectVoucher={(v) => { setSelectedVoucher(v); setShowVoucherDetail(true); }}
+        />
 
         {/* Member Card Badge — dark premium card */}
         {memberCard && isMemberCardActive && (
@@ -1274,87 +1024,9 @@ export default function CustomerCardPage({
           </motion.button>
         )}
 
-        {/* Birthday Input — hidden once saved */}
-        {merchant.birthday_gift_enabled && !isPreview && !birthdayDismissed && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={birthdaySaved ? { opacity: 0, y: -10 } : { opacity: 1, y: 0 }}
-            transition={birthdaySaved ? { delay: 3.5, duration: 0.5 } : { duration: 0.3 }}
-            className="mb-4"
-          >
-            <div className="rounded-2xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100/80 overflow-hidden">
-              <div className="p-4">
-                {birthdaySaved ? (
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center shrink-0">
-                      <Cake className="w-5 h-5 text-pink-500" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-gray-900 text-sm">Date sauvegard&eacute;e !</p>
-                      <p className="text-xs text-gray-500">
-                        Une surprise vous attendra le jour J !
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3 mb-3">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: `${merchant.primary_color}10` }}
-                      >
-                        <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
-                      </div>
-                      <div>
-                        <p className="font-bold text-gray-900 text-sm">Recevez un cadeau pour votre anniversaire !</p>
-                        <p className="text-xs text-gray-500">Ajoutez votre date de naissance (non modifiable)</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 mb-3">
-                      <select
-                        value={birthdayDay}
-                        onChange={(e) => { setBirthdayDay(e.target.value); setBirthdayError(null); }}
-                        className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
-                      >
-                        <option value="">Jour</option>
-                        {Array.from({ length: 31 }, (_, i) => (
-                          <option key={i + 1} value={i + 1}>{i + 1}</option>
-                        ))}
-                      </select>
-                      <select
-                        value={birthdayMonth}
-                        onChange={(e) => { setBirthdayMonth(e.target.value); setBirthdayError(null); }}
-                        className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
-                      >
-                        <option value="">Mois</option>
-                        {['Jan','F\u00e9v','Mar','Avr','Mai','Juin','Juil','Ao\u00fbt','Sep','Oct','Nov','D\u00e9c'].map((m, i) => (
-                          <option key={i + 1} value={i + 1}>{m}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {birthdayError && (
-                      <p className="text-xs text-red-500 font-medium mb-2">{birthdayError}</p>
-                    )}
-                    <button
-                      onClick={handleSaveBirthday}
-                      disabled={!birthdayMonth || !birthdayDay || savingBirthday}
-                      className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                      style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
-                    >
-                      {savingBirthday ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          <Cake className="w-4 h-4" />
-                          Enregistrer mon anniversaire
-                        </>
-                      )}
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          </motion.div>
+        {/* Birthday Input */}
+        {!isPreview && (
+          <BirthdaySection merchant={merchant} customerId={card.customer_id} hasBirthday={hasBirthday} />
         )}
 
         {/* Push Notification Banner */}
@@ -1532,244 +1204,19 @@ export default function CustomerCardPage({
         </div>
       )}
 
-      {/* Voucher Detail Modal (Voir → Utiliser / Plus tard) */}
-      <AnimatePresence>
-        {showVoucherDetail && selectedVoucher && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-            onClick={() => { setShowVoucherDetail(false); setSelectedVoucher(null); }}
-          >
-            <motion.div
-              initial={{ scale: 0.85, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 max-w-sm w-full text-center overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Icon */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: [0, 1.2, 1] }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="inline-flex items-center justify-center w-20 h-20 mb-5 rounded-3xl"
-                style={{ backgroundColor: selectedVoucher.source === 'birthday' ? '#fce7f3' : `${merchant.primary_color}15` }}
-              >
-                {selectedVoucher.source === 'birthday'
-                  ? <Cake className="w-10 h-10 text-pink-500" />
-                  : <Gift className="w-10 h-10" style={{ color: merchant.primary_color }} />
-                }
-              </motion.div>
-
-              {/* Title */}
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="text-2xl font-black text-gray-900 mb-2"
-              >
-                {selectedVoucher.source === 'birthday'
-                  ? `Joyeux anniversaire${card?.customer?.first_name ? ` ${card.customer.first_name}` : ''}\u00a0! \ud83c\udf89`
-                  : `Votre r\u00e9compense`
-                }
-              </motion.h2>
-
-              {/* Birthday message */}
-              {selectedVoucher.source === 'birthday' && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="text-gray-500 mb-4 text-sm"
-                >
-                  {merchant.shop_name} vous souhaite un merveilleux anniversaire et vous offre un cadeau pour c\u00e9l\u00e9brer cette occasion sp\u00e9ciale !
-                </motion.p>
-              )}
-
-              {/* Reward block */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 }}
-                className="rounded-2xl p-4 mb-4"
-                style={{ backgroundColor: selectedVoucher.source === 'birthday' ? '#fdf2f8' : `${merchant.primary_color}10` }}
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Gift className="w-4 h-4" style={{ color: selectedVoucher.source === 'birthday' ? '#ec4899' : merchant.primary_color }} />
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Votre cadeau</span>
-                </div>
-                <p className="font-bold text-lg" style={{ color: selectedVoucher.source === 'birthday' ? '#be185d' : merchant.primary_color }}>
-                  {selectedVoucher.rewardDescription}
-                </p>
-              </motion.div>
-
-              {/* Expiration */}
-              {selectedVoucher.expiresAt && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-xs text-gray-400 mb-3"
-                >
-                  Valable jusqu&apos;au {new Date(selectedVoucher.expiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                </motion.p>
-              )}
-
-              {/* Instructions */}
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.45 }}
-                className="text-sm text-gray-500 mb-6"
-              >
-                Pr\u00e9sentez ce message lors de votre passage chez <span className="font-bold text-gray-700">{merchant.shop_name}</span>
-              </motion.p>
-
-              {/* Buttons */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="space-y-2.5"
-              >
-                <button
-                  onClick={() => handleUseVoucher(selectedVoucher.id)}
-                  disabled={usingVoucherId === selectedVoucher.id}
-                  className="w-full h-13 py-3.5 text-base font-bold rounded-2xl text-white shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                  style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
-                >
-                  {usingVoucherId === selectedVoucher.id ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      <Check className="w-5 h-5" />
-                      Utiliser maintenant
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => { setShowVoucherDetail(false); setSelectedVoucher(null); }}
-                  className="w-full py-3 text-sm font-semibold text-gray-500 rounded-2xl bg-gray-100 hover:bg-gray-200 active:scale-[0.98] transition-all"
-                >
-                  Plus tard
-                </button>
-              </motion.div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Voucher Use Celebration Modal (post-use confirmation) */}
-      <AnimatePresence>
-        {showVoucherCelebration && voucherCelebrationData && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-            onClick={() => setShowVoucherCelebration(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0, y: 30 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-              className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 max-w-sm w-full text-center overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: [0, 1.2, 1] }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl"
-                style={{ backgroundColor: voucherCelebrationData.isBirthday ? '#fce7f3' : `${merchant.primary_color}15` }}
-              >
-                {voucherCelebrationData.isBirthday
-                  ? <Cake className="w-10 h-10 text-pink-500" />
-                  : <PartyPopper className="w-10 h-10" style={{ color: merchant.primary_color }} />
-                }
-              </motion.div>
-
-              <motion.h2
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="text-2xl font-black text-gray-900 mb-2"
-              >
-                {voucherCelebrationData.isBirthday
-                  ? `Bon anniversaire${voucherCelebrationData.customerName ? ` ${voucherCelebrationData.customerName}` : ''}\u00a0! \ud83c\udf82`
-                  : `F\u00e9licitations${voucherCelebrationData.customerName ? ` ${voucherCelebrationData.customerName}` : ''}\u00a0!`
-                }
-              </motion.h2>
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-gray-500 mb-4"
-              >
-                {voucherCelebrationData.isBirthday
-                  ? `Votre cadeau d'anniversaire a \u00e9t\u00e9 activ\u00e9\u00a0!`
-                  : `Votre r\u00e9compense a \u00e9t\u00e9 activ\u00e9e`
-                }
-              </motion.p>
-
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="rounded-2xl p-4 mb-4"
-                style={{ backgroundColor: voucherCelebrationData.isBirthday ? '#fdf2f8' : `${merchant.primary_color}10` }}
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Gift className="w-4 h-4" style={{ color: voucherCelebrationData.isBirthday ? '#ec4899' : merchant.primary_color }} />
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Votre cadeau</span>
-                </div>
-                <p className="font-bold text-lg" style={{ color: voucherCelebrationData.isBirthday ? '#be185d' : merchant.primary_color }}>
-                  {voucherCelebrationData.rewardDescription}
-                </p>
-              </motion.div>
-
-              {voucherCelebrationData.bonusStampAdded && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="flex items-center justify-center gap-2 mb-4 text-sm text-gray-500"
-                >
-                  <Sparkles className="w-4 h-4" style={{ color: merchant.primary_color }} />
-                  <span>{`+1 passage bonus ajout\u00e9 \u00e0 votre carte\u00a0!`}</span>
-                </motion.div>
-              )}
-
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.7 }}
-                className="text-sm text-gray-500 mb-6"
-              >
-                Pr\u00e9sentez cette confirmation chez <span className="font-bold text-gray-700">{merchant.shop_name}</span> pour en profiter.
-              </motion.p>
-
-              <motion.button
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowVoucherCelebration(false)}
-                className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-                style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
-              >
-                <Check className="w-5 h-5" />
-                {`Super, merci\u00a0!`}
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Voucher Modals */}
+      <VoucherModals
+        merchant={merchant}
+        customerFirstName={card?.customer?.first_name}
+        showDetail={showVoucherDetail}
+        selectedVoucher={selectedVoucher}
+        usingVoucherId={usingVoucherId}
+        onUseVoucher={handleUseVoucher}
+        onCloseDetail={() => { setShowVoucherDetail(false); setSelectedVoucher(null); }}
+        showCelebration={showVoucherCelebration}
+        celebrationData={voucherCelebrationData}
+        onCloseCelebration={() => setShowVoucherCelebration(false)}
+      />
     </div>
   );
 }

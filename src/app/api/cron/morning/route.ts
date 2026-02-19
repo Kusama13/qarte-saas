@@ -94,6 +94,12 @@ async function getAlreadySentSet(merchantIds: string[], trackingCode: number): P
 // 3. Skip if no email (via emailMap)
 // 4. Call sendFn, track on success, count results
 // Optional extraSkip: per-candidate custom skip logic (return true to skip)
+// Flush tracking records in batches of 100
+async function flushTrackingBatch(batch: Array<{ merchant_id: string; reminder_day: number; pending_count: number }>) {
+  if (batch.length === 0) return;
+  await supabase.from('pending_email_tracking').insert(batch);
+}
+
 async function processEmailSection<T extends { id: string; user_id: string }>(opts: {
   candidates: T[];
   trackingCode: number;
@@ -104,6 +110,7 @@ async function processEmailSection<T extends { id: string; user_id: string }>(op
   extraSkip?: (candidate: T) => boolean;
 }) {
   const { candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip } = opts;
+  const trackingBatch: Array<{ merchant_id: string; reminder_day: number; pending_count: number }> = [];
 
   await batchProcess(candidates, async (candidate) => {
     stats.processed++;
@@ -117,13 +124,17 @@ async function processEmailSection<T extends { id: string; user_id: string }>(op
     try {
       const result = await sendFn(email, candidate);
       if (result.success) {
-        await supabase.from('pending_email_tracking').insert({
-          merchant_id: candidate.id, reminder_day: trackingCode, pending_count: 0,
-        });
+        trackingBatch.push({ merchant_id: candidate.id, reminder_day: trackingCode, pending_count: 0 });
+        if (trackingBatch.length >= 100) {
+          await flushTrackingBatch(trackingBatch.splice(0));
+        }
         stats.sent++;
       } else { stats.errors++; }
     } catch { stats.errors++; }
   });
+
+  // Flush remaining tracking records
+  await flushTrackingBatch(trackingBatch);
 }
 
 // Helper: query candidates, fetch tracking, fetch emails, then run processEmailSection
@@ -181,6 +192,11 @@ export async function GET(request: NextRequest) {
   // Track section statuses for isolated error handling
   const sectionStatuses: Array<{ name: string; status: 'ok' | 'error'; error?: string }> = [];
 
+  // Hard timeout: stop processing sections after 240s (leave 60s buffer for Vercel Pro 300s limit)
+  const cronStartTime = Date.now();
+  const CRON_MAX_TIME_MS = 240 * 1000;
+  function isTimedOut() { return Date.now() - cronStartTime > CRON_MAX_TIME_MS; }
+
   // Shared state across sections
   const now = new Date();
   const merchantsSentTrialEmail = new Set<string>();
@@ -188,7 +204,8 @@ export async function GET(request: NextRequest) {
   // ==================== 1. TRIAL EMAILS ====================
   // Idempotent — tracked via pending_email_tracking with codes -201/-203 (ending) and -211/-212 (expired)
   // (Custom: multiple tracking codes per merchant, branching logic — kept manual)
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'trialEmails', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     const { data: merchants } = await supabase
       .from('merchants')
       .select('id, shop_name, user_id, trial_ends_at, subscription_status')
@@ -247,7 +264,8 @@ export async function GET(request: NextRequest) {
 
   // ==================== SECTION 2: PROGRAM REMINDERS (J+1/J+2/J+3) ====================
   // Idempotent — tracked via pending_email_tracking with codes -301/-302/-303
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'programReminders', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     // 2a. PROGRAM REMINDER (J+1)
     const twentyFiveHoursAgo = new Date(now.getTime() - 25 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -317,7 +335,8 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 3: ONBOARDING EMAILS ====================
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'onboardingEmails', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     // 2d. DAY 5 CHECKIN (programme configure, J+5)
     // Idempotent — tracked via pending_email_tracking with code -305
     // (Custom: scan count check — uses processEmailSection with extraSkip)
@@ -594,7 +613,8 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 4: MILESTONE EMAILS ====================
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'milestoneEmails', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     // 2i. FIRST SCAN EMAIL
     // Merchants with exactly 2 confirmed visits (1st is always merchant's test, 2nd is first real client)
     const { data: allConfiguredMerchants } = await supabase
@@ -760,7 +780,8 @@ export async function GET(request: NextRequest) {
 
   // ==================== SECTION 6: INACTIVE MERCHANTS ====================
   // (Custom: multiple inactive days, complex tracking with compound keys — kept manual)
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'inactiveMerchants', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     const INACTIVE_DAYS = [7, 14, 30];
 
     const { data: activeMerchants } = await supabase
@@ -878,7 +899,8 @@ export async function GET(request: NextRequest) {
 
   // ==================== SECTION 7: REACTIVATION ====================
   // (Custom: different tracking table, promo codes, days since cancellation — kept manual)
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'reactivation', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     const REACTIVATION_DAYS = [7, 14, 30];
 
     const { data: canceledMerchants } = await supabase
@@ -971,7 +993,8 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 8: LIFECYCLE EMAILS ====================
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'lifecycleEmails', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     // 3b. INCOMPLETE SIGNUP RELANCE (T+24h, T+72h, T+7j)
     // (Custom: operates on auth users not merchants, multiple time windows — kept manual)
     {
@@ -1097,7 +1120,8 @@ export async function GET(request: NextRequest) {
 
   // ==================== SECTION 9: PENDING REMINDERS ====================
   // (Custom: visits-based, complex pending count logic — kept manual)
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'pendingReminders', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     const { data: merchantsWithPending } = await supabase
       .from('visits')
       .select('merchant_id')
@@ -1228,7 +1252,8 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 10: SCHEDULED PUSH ====================
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'scheduledPush', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     const today = getTodayInParis();
 
     const { data: scheduledPushes } = await supabase
@@ -1339,7 +1364,8 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 11: BIRTHDAY VOUCHERS ====================
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'birthdayVouchers', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     {
       const todayParis = getTodayInParis(); // YYYY-MM-DD in Paris timezone
       const targetDate = new Date(todayParis + 'T12:00:00');
@@ -1409,6 +1435,20 @@ export async function GET(request: NextRequest) {
             customersByPhone.get(c.phone_number)!.push(c.id);
           }
 
+          // Pre-fetch ALL push subscriptions for birthday customers in one query (avoid N+1)
+          const allBirthdayCustIds = [...new Set((allPhoneCustomers || []).map(c => c.id))];
+          const pushSubsByCustomer = new Map<string, Array<{ endpoint: string; p256dh: string; auth: string }>>();
+          if (vapidPublicKey && vapidPrivateKey && allBirthdayCustIds.length > 0) {
+            const { data: allPushSubs } = await supabase
+              .from('push_subscriptions')
+              .select('customer_id, endpoint, p256dh, auth')
+              .in('customer_id', allBirthdayCustIds);
+            for (const sub of allPushSubs || []) {
+              if (!pushSubsByCustomer.has(sub.customer_id)) pushSubsByCustomer.set(sub.customer_id, []);
+              pushSubsByCustomer.get(sub.customer_id)!.push({ endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth });
+            }
+          }
+
           for (const customer of birthdayCustomers) {
             const key = `${customer.id}:${customer.merchant_id}`;
             const bMerchant = merchantMap.get(customer.merchant_id);
@@ -1444,47 +1484,45 @@ export async function GET(request: NextRequest) {
 
               results.birthdayVouchers.created++;
 
-              // Push notification (fire-and-forget, dedup by endpoint)
+              // Push notification (fire-and-forget, dedup by endpoint) — uses pre-fetched data
               if (vapidPublicKey && vapidPrivateKey) {
                 try {
                   const allCustIds = customersByPhone.get(customer.phone_number) || [];
+                  const allSubs: Array<{ endpoint: string; p256dh: string; auth: string }> = [];
+                  for (const cid of allCustIds) {
+                    const subs = pushSubsByCustomer.get(cid);
+                    if (subs) allSubs.push(...subs);
+                  }
 
-                  if (allCustIds.length > 0) {
-                    const { data: pushSubs } = await supabase
-                      .from('push_subscriptions')
-                      .select('endpoint, p256dh, auth')
-                      .in('customer_id', allCustIds);
+                  if (allSubs.length > 0) {
+                    const seen = new Set<string>();
+                    const uniqueSubs = allSubs.filter(sub => {
+                      if (seen.has(sub.endpoint)) return false;
+                      seen.add(sub.endpoint);
+                      return true;
+                    });
 
-                    if (pushSubs && pushSubs.length > 0) {
-                      const seen = new Set<string>();
-                      const uniqueSubs = pushSubs.filter(sub => {
-                        if (seen.has(sub.endpoint)) return false;
-                        seen.add(sub.endpoint);
-                        return true;
-                      });
-
-                      await Promise.allSettled(
-                        uniqueSubs.map(async (sub) => {
-                          try {
-                            await webpush.sendNotification(
-                              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-                              JSON.stringify({
-                                title: bMerchant.shop_name,
-                                body: `Joyeux anniversaire bientôt ! 🎂 ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
-                                icon: '/icon-192.png',
-                                url: `/customer/card/${customer.merchant_id}`,
-                                tag: `qarte-birthday-${customer.merchant_id}`,
-                              })
-                            );
-                          } catch (pushErr: unknown) {
-                            const webPushError = pushErr as { statusCode?: number };
-                            if (webPushError?.statusCode === 404 || webPushError?.statusCode === 410) {
-                              await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
-                            }
+                    await Promise.allSettled(
+                      uniqueSubs.map(async (sub) => {
+                        try {
+                          await webpush.sendNotification(
+                            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+                            JSON.stringify({
+                              title: bMerchant.shop_name,
+                              body: `Joyeux anniversaire bientôt ! 🎂 ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
+                              icon: '/icon-192.png',
+                              url: `/customer/card/${customer.merchant_id}`,
+                              tag: `qarte-birthday-${customer.merchant_id}`,
+                            })
+                          );
+                        } catch (pushErr: unknown) {
+                          const webPushError = pushErr as { statusCode?: number };
+                          if (webPushError?.statusCode === 404 || webPushError?.statusCode === 410) {
+                            await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
                           }
-                        })
-                      );
-                    }
+                        }
+                      })
+                    );
                   }
                 } catch {
                   // Never let push failure crash the cron
@@ -1503,7 +1541,8 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 12: PUSH AUTOMATIONS ====================
-  try {
+  if (isTimedOut()) { sectionStatuses.push({ name: 'pushAutomations', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
     // 12A. Relance inactifs (30+ days no visit)
     {
       const { data: automationMerchants } = await supabase
@@ -1709,14 +1748,15 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== RESPONSE ====================
+  const elapsedMs = Date.now() - cronStartTime;
   const failedSections = sectionStatuses.filter(s => s.status === 'error');
   if (failedSections.length > 0) {
     logger.error('Morning cron — sections failed', failedSections);
   }
   const hasFailures = failedSections.length > 0;
-  logger.info('Morning cron completed', { success: !hasFailures, ...results, sectionStatuses });
+  logger.info('Morning cron completed', { success: !hasFailures, elapsedMs, ...results, sectionStatuses });
   return NextResponse.json(
-    { success: !hasFailures, ...results, sectionStatuses },
+    { success: !hasFailures, elapsedMs, ...results, sectionStatuses },
     { status: hasFailures ? 500 : 200 }
   );
 }
