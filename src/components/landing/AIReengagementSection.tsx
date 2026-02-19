@@ -214,7 +214,7 @@ export function AIReengagementSection() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full mb-8"
             >
               <Sparkles className="w-4 h-4 text-indigo-500" />
-              <span className="text-sm font-semibold text-indigo-600 tracking-wide">Autopilot IA</span>
+              <span className="text-sm font-semibold text-indigo-600 tracking-wide">Notifications automatiques</span>
             </motion.div>
 
             {/* Headline */}
@@ -224,9 +224,9 @@ export function AIReengagementSection() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight tracking-tight mb-5"
             >
-              Vos clients reviennent{' '}
+              Vos clients oublient ?{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-                tous seuls
+                Ils reviennent quand même
               </span>
             </motion.h2>
 
@@ -251,7 +251,7 @@ export function AIReengagementSection() {
                 icon={<Clock className="w-5 h-5 text-indigo-600" />}
                 iconBg="bg-indigo-100"
                 title="Relance inactivité"
-                description="Un client ne vient plus ? L'IA le détecte et envoie une notification au bon moment."
+                description="Un client ne vient plus ? Qarte le détecte et lui envoie une notification au bon moment."
               />
               <FeatureRow
                 icon={<Cake className="w-5 h-5 text-rose-600" />}

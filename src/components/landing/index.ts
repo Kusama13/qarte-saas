@@ -1,8 +1,4 @@
 export { HeroSection } from './HeroSection';
-export { JoinedTodayMarquee } from './JoinedTodayMarquee';
-export { HowItWorksSection } from './HowItWorksSection';
-export { ComparisonSection } from './ComparisonSection';
-export { FeaturesSection } from './FeaturesSection';
 export { TestimonialsSection } from './TestimonialsSection';
 export { ReferralSection } from './ReferralSection';
 export { AIReengagementSection } from './AIReengagementSection';

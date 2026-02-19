@@ -85,13 +85,13 @@ export function ReferralSection() {
         {/* Header */}
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Vos clients{' '}
+            Votre meilleure pub,{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              recrutent pour vous
+              c&apos;est vos clients
             </span>
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Chaque client satisfait devient ambassadeur. Le parrainage intégré transforme le bouche-à-oreille en machine à croissance.
+            Ils partagent. Ils gagnent. Les amis gagnent. Tout le monde y gagne.
           </p>
         </div>
 

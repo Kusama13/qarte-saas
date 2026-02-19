@@ -54,7 +54,7 @@
 
 | # | Problème | Symptôme | Action |
 |---|----------|----------|--------|
-| 5 | **Landing page structure incohérente** | Hero → Referral → AIReengagement → Testimonials → Pricing. Logique confuse (parrainage APRÈS avantages?), no "how it works" visual | Reorder: Hero → HowItWorks visual 3-step → Features → Testimonials → Pricing → Referral bonus section (bottom) → FAQ |
+| 5 | **Landing page structure** | Hero → Referral → AIReengagement → Testimonials → Pricing → FAQ. Ordre cohérent mais pourrait être amélioré | Tester : Hero → Testimonials → Pricing → Referral → FAQ (social proof plus tôt) |
 | 6 | **Pricing page pas d'urgence/scarcity** | Standard pricing card, no countdown, no limited spots | Ajouter : "Offre introductoire" badge, countdown trial reduction, "100 premièrs = tarif figé 19€ à vie" |
 | 7 | **Blog articles trop courts** | 3 articles blog (coiffure, onglerie, institut) ~1500 mots chacun, pas d'images, SEO fragile | Expand : 2500-3500 mots, +3-5 internal links, +3 images Unsplash, FAQ schema, word embeddings (semantique) |
 
@@ -126,8 +126,6 @@ Current copy:
 Problèmes:
 ❌ Headline generic, no differentiation
 ❌ Zero video (mock static seulement)
-❌ Badges (avis +150, +42% recurrence) SUPPRIMÉS ✓ (11 fev)
-❌ Secondary CTA ("Voir une demo") faible visual hierarchy
 ❌ No pain point articulation
 ❌ Subheading trop court
 
@@ -139,9 +137,6 @@ Recommandation:
     • "73% des cartes papier sont perdues"
     • "Vos clients oublient → pas de revient"
     • "Pub coûte cher, fidélité coûte 19€"
-✅ Primary CTA: "Essayer 7 jours gratuit" (indigo→violet)
-✅ Secondary CTA: "Voir une demo" (outline gray, NOT ghost)
-✅ Add micro-copy: "Sans CB, sans engagement"
 ```
 
 #### **REFERRAL SECTION** (NEW)
@@ -155,32 +150,14 @@ Strengths:
 ✅ CTA "Activer le parrainage" → links to `/dashboard/referrals`
 
 Improvement:
-⚠️ Copy slightly defensive ("Vos clientes recrutent pour vous")
-→ Reframe: "Votre meilleure pub, c'est vos clientes. 
-   (Elles partagent. Elles gagnent. Les amies gagnent. Tout le monde gagne.)"
-
 ⚠️ No example: "Sophie invite Lisa → Lisa offerte 5 tampons, Sophie pareil"
 → Add concrete example, user testimonial format
 ```
 
 #### **AIReengagement SECTION** (NEW)
 ```
-Current: Mockup iPhone, 3 notifications push, "Autopilot IA"
-Status: ✅ GOOD but WEAK COPY
-
-Problems:
-❌ "Vos clients reviennent tous seuls" = vague AI hype
-❌ 3 notifications (inactivité, anniversaire, St-Valentin) too generic
-❌ No social proof / stat
-❌ Copy says "IA" but no IA in product (push automation only)
-
-Improvement:
-✅ Reframe: "Vos clientes oublient → Elles reviennent quand même.
-   Notifications push au moment clé (samedi 10h = +42% taux visite)"
-✅ Replace "Autopilot IA" badge with "Intelligent Timing"
-✅ Show concrete example: "Maria trop occupée → 
-   Notification jour anniversaire → Revient pour son cadeau gratuit"
-✅ Add metric: "+42% taux visite quand notification sent optimal time"
+Current: Mockup iPhone, 3 notifications push, "Notifications automatiques"
+Status: ✅ GOOD
 ```
 
 #### **TESTIMONIALS SECTION** (CONVERTED TO CHAT MOCKUPS)
@@ -201,111 +178,12 @@ If real → Add screenshots, add logo/website links
 If can't verify → Use GENERIC mockups with "anonyme" names
 ```
 
-#### **FEATURES SECTION** (GRID 3x3)
+#### **FEATURES / HOW IT WORKS / COMPARISON SECTIONS**
 ```
-Current: CSS Grid, 9 items, center stat "78%"
-Status: ✅ GOOD STRUCTURE
-
-Copy quality (per feature):
-1. "Recevez des notifications... — Qarte envoie au moment clé" ✅ DECENT
-2. "Pas besoin d'app — QR code suffit" ✅ STRONG (differentiator)
-3. [Center stat: "78% des retours via push"] ⚠️ SOURCE?
-4-9. Other features ✅ Standard
-
-Improvement:
-❌ Stat "78%" needs source citation (Forrester? Study?)
-   → Either remove, or add: "Selon [source], 78% des clientes reviennent 
-     plus souvent quand notifiées"
-❌ Features too listy, no narrative
-   → Add subheadline: "Notifiez vos clientes au meilleur moment"
-   ✅ (Already present in current code)
-
-Minor:
-❌ Icon "Heart" for "tampons" ✅ (recently changed from Footprints)
+Code mort supprimé — ces sections n'étaient pas utilisées sur la landing.
 ```
 
-#### **HOW IT WORKS SECTION**
-```
-Current: 2-step visual (Créez programme → Affichez QR code)
-Status: ⚠️ INCOMPLETE
 
-Problems:
-❌ Only 2 steps shown, but actual journey: Signup → Config → Preview → QR → Customers scan
-❌ Copy vague ("Créez" = how? Button click? 5 mins?)
-❌ No visual progression (timeline missing)
-
-Improvement:
-✅ Expand to 3-4 steps visual:
-   1. "Créez votre programme" (2 min: name, reward level 1+2)
-   2. "Personnalisez" (1 min: colors, logo, messages)
-   3. "Affichez le QR code" (instant: print/share)
-   4. "Clientes scannent" (auto-check-in, notification)
-✅ Add timer badges: "2 min | 1 min | instant"
-✅ Add video walkthrough link
-```
-
-#### **PRICING SECTION**
-```
-Current: Single card, 19€/mois, ~0,63€/jour, 10 features checklist
-Status: ✅ VERY GOOD STRUCTURE
-
-Copy review:
-✅ "Un prix, tout inclus" — clear value prop
-✅ "19€ / mois" — prominent, large font
-✅ "~0,63€/jour" — genius daily breakdown (psychological anchor)
-✅ "Inscription sans carte bancaire" ✅
-✅ "Annulation possible à tout moment" ✅
-✅ Features include: "Programme de parrainage, Lien de réservation" ✅
-
-Badges (Guarantee section):
-✅ "Support réactif 7j/7" (but true?)
-✅ "Sans CB pour essayer" ✅
-✅ "Activation instantanée" ✅
-✅ "Satisfait ou remboursé 30j" ✅
-
-Weaknesses:
-⚠️ No comparison with competitors visible
-   → User doesn't know if 19€ is cheap/expensive
-   Solution: Add footnote "vs Stamp Me 43-74€, Square 45€, LoyalZoo 47€ — Qarte 60% moins cher"
-
-⚠️ Annual pricing "2 mois offerts" not visible at first glance
-   Solution: Toggle button "Mensuel | Annuel" more prominent
-
-⚠️ Trial length unclear initially
-   Solution: Add under price: "7 jours gratuit | Puis 19€/mois"
-
-⚠️ CTA "Démarrer maintenant" generic
-   Solution: "Commencer mon essai gratuit →"
-```
-
-#### **FAQ SECTION**
-```
-Current: 11 questions, accordion expand/collapse
-Status: ✅ STRONG (covers objections)
-
-Reviewed FAQs:
-1. ✅ "Et si mes clients n'ont pas de smartphone?" (99% have one)
-2. ✅ "Combien de temps pour être opérationnel?" (5 min)
-3. ✅ "Ça marche pour prestations domicile?" ✅
-4. ✅ "Mes clients trouveront ça compliqué?" (QR code easy)
-5. ✅ "Que se passe si j'arrête Qarte?" (CSV export, no lock-in)
-6. ✅ "Comment fonctionne le parrainage?" (Clients share, auto-rewards)
-7. ✅ "19€/mois trop cher?" (0,63€/jour, 1 client fidèle = ROI)
-8. ✅ "RGPD — données protégées?" ✅
-9. ⚠️ "Integration logiciel salon?" (Independent) — could better explain compatibility
-10. ✅ "Prix change après essai?" (No, 19€ always)
-11. ✅ "Pour esthéticienne indépendante?" (Yes, perfect)
-
-Improvement:
-❌ Add FAQ: "Quel est le meilleur moment pour lancer mon programme?"
-   → Answer: "Immédiatement. 7j gratuit pour tester sans risque."
-   
-❌ Add FAQ: "Puis-je avoir plusieurs salons?"
-   → Answer: "Futur feature: multi-location. Actuellement 1 salon/compte."
-   
-❌ Add FAQ: "Comment marche la fusion SMS + push?"
-   → Answer: "Qarte = push only (98% taux ouverture). SMS vient plus tard."
-```
 
 ---
 
@@ -315,14 +193,12 @@ Improvement:
 
 | CTA | Location | Copy | Design | Conversion |
 |-----|----------|------|--------|-----------|
-| Hero Primary | Hero top | "Essayer gratuitement" | indigo→violet gradient, large | ⭐⭐⭐⭐ strong |
-| Hero Secondary | Hero top | "Voir une demo" | outline ghost, gray | ⭐⭐ weak visual |
+| Hero Primary | Hero top | "Essayer 7 jours gratuit" | indigo→violet gradient, large | ⭐⭐⭐⭐ strong |
+| Hero Secondary | Hero top | "Voir une démo" | outline indigo border | ⭐⭐⭐⭐ good |
 | Sticky Mobile | Mobile bottom | "Commencer l'essai" | indigo→violet, sticky | ⭐⭐⭐⭐ high conversion (mobile-first) |
 | Essai Gratuit (page) | Dedicated page | "Inscrire mon établissement" | large, prominent | ⭐⭐⭐⭐ high (dedicated traffic) |
-| Pricing | Pricing card | "Démarrer maintenant" | indigo→violet, uppercase | ⭐⭐⭐⭐ good |
+| Pricing | Pricing card | "Commencer mon essai gratuit" | indigo→violet, uppercase | ⭐⭐⭐⭐ good |
 | Referral bottom | Referral section | "Activer le parrainage" | indigo, secondary | ⭐⭐⭐ good |
-
-**Recommendation:** All CTAs unify gradient `indigo-600 → violet-600`, consistent copy "Essayer / Commencer" (not "Démarrer"), all track via `fbEvents.initiateCheckout()` ✅ (already done)
 
 ---
 
@@ -333,7 +209,8 @@ Improvement:
 | Element | Status | Quality | Issue |
 |---------|--------|---------|-------|
 | Testimonials (Chat mockups) | ✅ Present | Medium | Unverified — could be fake |
-| Star rating (ebook landing) | ⚠️ Present | WEAK | "4.9/5 basé sur 97 avis" — FAKE SOCIAL PROOF |
+| Star rating (ebook landing) | 🔴 Present | FAKE | "4.9/5 basé sur 97 avis" — À SUPPRIMER (P0 #1) |
+| Star rating (hero badge) | 🔴 Present | FAKE | "4.9/5 Google +120 avis" floating badge — À SUPPRIMER (P0 #1) |
 | Logo clients (ebook) | ❌ Absent | — | No recognizable brand logos |
 | Merchant count | ❌ Removed | — | "150+ instituts" deleted from hero (correct) |
 | User count | ❌ Absent | — | No "10,000+ clientes" claim |
@@ -343,8 +220,8 @@ Improvement:
 #### Recommendations (P1 Priority)
 
 **Immediate Actions:**
-1. ✅ Remove fake star rating from `/ebook` ("4.9/5" with unverified count)
-2. ✅ Verify chat testimonials — if real, add business logos + websites
+1. ❌ Remove fake star rating from `/ebook` + hero badge "4.9/5 Google" (P0 #1)
+2. ❌ Verify chat testimonials — if real, add business logos + websites
 3. Add security badge: "Hébergé en Europe | RGPD Conforme | Données chiffrées"
 4. Add merchant quote section: 3 short quotes (with names) from real customers
 5. DON'T add fake stats ("150+ instituts") — be honest about early stage
@@ -458,29 +335,6 @@ Improvement:
 3. Add Article schema + FAQ schema on each post
 4. Create 4-6 more articles targeting long-tail keywords
 5. Create local landing pages (e.g., `/blog/carte-fidelite-coiffure-paris`)
-
----
-
-### Sitemap Coverage
-
-#### Current Sitemap Structure
-```
-✅ Present: /sitemap.xml
-✅ Includes:
-  - / (home)
-  - /pricing
-  - /essai-gratuit
-  - /qarte-vs-carte-papier
-  - /blog
-  - /blog/3-articles
-  - /ebook
-  - /contact
-  - /cgv, /mentions-legales, /politique-confidentialite
-
-Note: Sitemap couvre toutes les 13 pages publiques existantes. Pas de pages manquantes.
-```
-
-**Action:** Ajouter au sitemap les nouvelles pages au fur et à mesure (local pages, nouveaux articles blog).
 
 ---
 
@@ -705,12 +559,7 @@ Triggered if `subscription_status = 'canceled'` (after canceling period expires)
 
 #### 🔴 Critical Gaps
 
-1. **No "Lapsed" communication** (Trial expired grace period)
-   - Merchant has 3d grace, then what? Email D+4? Or instant delete?
-   - Unclear in code — assume silent deletion
-   - **Recommendation:** Send "Final reminder" email before deletion (D+2): "Your data expires in 24h, download export."
-
-2. **No "Anniversary" email** for paying merchants
+1. **No "Anniversary" email** for paying merchants
    - E.g., "You've been with us 3 months!" (milestone celebration)
    - Could be paired with upsell or retention offer
    - **Recommendation:** Add anniversary email at 30d, 90d, 365d paid
@@ -732,12 +581,7 @@ Triggered if `subscription_status = 'canceled'` (after canceling period expires)
    - If merchant doesn't read = wastes time
    - **Improvement:** Send J+1 email with "Reply here if stuck" (support via Intercom)
 
-2. **FirstScanEmail triggers at 2nd scan** (not 1st)
-   - Safe (avoids false positives), but celebration delayed
-   - Real milestone = 1st scan. 2nd confirms real engagement
-   - **Current logic OK** — avoid over-celebration
-
-3. **No "Churn prediction" email**
+2. **No "Churn prediction" email**
    - E.g., "You're at risk of churn (0 scans 2 weeks)" before J+7 notification
    - **Recommendation:** Early warning at J+4 (silent analysis, no email)
 
@@ -940,7 +784,7 @@ Current:
 
 | # | Tâche | Impact | Effort | Owner |
 |----|-------|--------|--------|-------|
-| 1 | **REMOVE fake 4.9/5 rating** from `/ebook` page | Trust | 15min | Dev |
+| 1 | **REMOVE fake ratings** : `/ebook` "4.9/5 basé sur 97 avis" + Hero floating badge "4.9/5 Google +120 avis" | Trust | 15min | Dev |
 | 2 | **RECORD hero video 60s** (QR scan demo) | Conversion +15% | 4h | Video/Design |
 | 3 | **VERIFY testimonial authenticity** (3-5 clients real?) | Trust | 2h | Growth/Sales |
 | 4 | **Activate GTM + GA4 events** (landing, signup, conversion) | Measurement | 6h | Analytics/Dev |
@@ -958,7 +802,7 @@ Current:
 | 1 | Expand blog articles (1,500 → 3,000 words) | +15% organic | 2 weeks | 3 articles existing → target 2,500+ |
 | 2 | Add Article + FAQ schema to blog posts | +5% CTR | 2 days | JSON-LD markup |
 | 3 | Collect 3-5 real video testimonials | Conversion +10% | 1 week | 30s each, real merchants |
-| 4 | Refactor landing page order (HowItWorks → Features earlier) | UX/Conversion | 1 day | Reorder sections |
+| 4 | Tester reorder landing (Testimonials plus tôt) | UX/Conversion | 1 day | A/B test section order |
 | 6 | Add competitor comparison footnote in Pricing | Justification | 2h | Show Qarte 60% cheaper |
 | 7 | Create 3-4 local landing pages (Paris, Lyon, Marseille) | +10% organic (local) | 3 days | New pages + metadata |
 | 8 | Implement GA4 conversion goals (signup→config→first scan) | Measurement | 2 days | Setup + testing |
@@ -979,7 +823,7 @@ Current:
 | 4 | Video demo interactive on `/demo` page | Conversion +8% | 3 days |
 | 5 | Expand FAQ section (20 questions instead of 11) | Conversion +3% | 2 days |
 | 6 | Backlink outreach (50 beauty blogs, salons FR) | +20% organic | 4 weeks |
-| 7 | Refactor `/ebook` landing (remove fake stats) | Trust | 1 day |
+| 7 | Refactor `/ebook` landing (remove fake 4.9/5 stats) — aussi P0 #1 | Trust | 1 day |
 | 8 | A/B test Pricing card design (single vs annual toggle) | Conversion +2% | 1 week |
 | 9 | Implement SMS-based opt-in (future WhatsApp Business) | Engagement | 2 weeks |
 
@@ -1123,7 +967,7 @@ Apr 2026: ~100 merchants (target) → MRR 1,900€
 ### Semaines 1-2 (TRUST & MEASUREMENT)
 
 **P0 Actions (Must do):**
-- [ ] Remove fake 4.9/5 star rating (ebook page)
+- [ ] Remove fake 4.9/5 ratings (ebook page + hero floating badge)
 - [ ] Record hero video 60s (QR scan demo)
 - [ ] Verify real testimonials (contact 3-5 clients)
 - [ ] Activate GTM + GA4 (all events)
@@ -1138,7 +982,7 @@ Apr 2026: ~100 merchants (target) → MRR 1,900€
 
 - [ ] Expand blog articles (1,500 → 3,000 words)
 - [ ] Add internal linking (blog → pricing)
-- [ ] Refactor landing page (reorder sections)
+- [ ] Tester reorder landing (Testimonials plus tôt)
 - [ ] Pricing section A/B test
 - [ ] Create 3-4 local landing pages
 
