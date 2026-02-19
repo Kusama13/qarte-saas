@@ -15,7 +15,6 @@ import {
   sendQRCodeEmail,
   sendFirstScanEmail,
   sendFirstRewardEmail,
-  sendWeeklyDigestEmail,
   sendTier2UpsellEmail,
   sendReactivationEmail,
   sendFirstClientScriptEmail,
@@ -93,7 +92,6 @@ export async function GET(request: NextRequest) {
     quickCheck: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstScan: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     firstReward: { processed: 0, sent: 0, skipped: 0, errors: 0 },
-    weeklyDigest: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     tier2Upsell: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     inactiveMerchants: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     challengeCompleted: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -835,117 +833,9 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'milestoneEmails', status: 'error', error: String(error) });
   }
 
-  // ==================== SECTION 5: WEEKLY DIGEST ====================
-  // C7: Idempotent — tracked via pending_email_tracking with code -400
-  try {
-    const dayOfWeek = now.getUTCDay(); // 0 = dimanche, 1 = lundi
-    if (dayOfWeek === 1) {
-      const { data: digestMerchants } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id')
-        .not('reward_description', 'is', null)
-        .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active'])
-        .neq('no_contact', true);
-
-      if (digestMerchants && digestMerchants.length > 0) {
-        const digestIds = digestMerchants.map(m => m.id);
-        const sevenDaysAgoDigest = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-        // C7: Check if digest already sent within 6 days (prevents duplicate on same Monday)
-        const sixDaysAgo = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
-        const { data: existingDigest } = await supabase
-          .from('pending_email_tracking')
-          .select('merchant_id')
-          .in('merchant_id', digestIds)
-          .eq('reminder_day', -400)
-          .gte('sent_at', sixDaysAgo.toISOString());
-        const alreadySentDigest = new Set((existingDigest || []).map(t => t.merchant_id));
-
-        // Get this week's visits and loyalty cards (batched to avoid memory issues)
-        let weekVisits: any[] = [];
-        let allCards: any[] = [];
-        for (let i = 0; i < digestIds.length; i += 100) {
-          const batch = digestIds.slice(i, i + 100);
-          const [visitsResult, cardsResult] = await Promise.all([
-            supabase
-              .from('visits')
-              .select('merchant_id, customer_id, visited_at')
-              .in('merchant_id', batch)
-              .eq('status', 'confirmed')
-              .gte('visited_at', sevenDaysAgoDigest.toISOString()),
-            supabase
-              .from('loyalty_cards')
-              .select('merchant_id, customer_id, rewards_earned, created_at')
-              .in('merchant_id', batch),
-          ]);
-          weekVisits = weekVisits.concat(visitsResult.data || []);
-          allCards = allCards.concat(cardsResult.data || []);
-        }
-
-        // Build stats per merchant
-        const weekStats = new Map<string, { scans: number; newCustomers: number; rewards: number; totalCustomers: number }>();
-        for (const m of digestMerchants) {
-          weekStats.set(m.id, { scans: 0, newCustomers: 0, rewards: 0, totalCustomers: 0 });
-        }
-
-        for (const v of weekVisits) {
-          const stats = weekStats.get(v.merchant_id);
-          if (stats) stats.scans++;
-        }
-
-        for (const card of allCards) {
-          const stats = weekStats.get(card.merchant_id);
-          if (!stats) continue;
-          stats.totalCustomers++;
-          if (new Date(card.created_at) >= sevenDaysAgoDigest) {
-            stats.newCustomers++;
-          }
-        }
-
-        // Count rewards earned this week (approximate via visits where customer reached threshold)
-        const { data: merchantPrograms } = await supabase
-          .from('merchants')
-          .select('id, stamps_required')
-          .in('id', digestIds);
-
-        const stampsMap = new Map((merchantPrograms || []).map(m => [m.id, m.stamps_required]));
-
-        for (const card of allCards) {
-          const stats = weekStats.get(card.merchant_id);
-          if (stats && card.rewards_earned > 0) {
-            stats.rewards += card.rewards_earned;
-          }
-        }
-
-        const digestEmailMap = await batchGetUserEmails([...new Set(digestMerchants.map(m => m.user_id))]);
-
-        await batchProcess(digestMerchants, async (merchant) => {
-          results.weeklyDigest.processed++;
-          if (alreadySentDigest.has(merchant.id)) { results.weeklyDigest.skipped++; return; }
-          const email = digestEmailMap.get(merchant.user_id);
-          if (!email) { results.weeklyDigest.skipped++; return; }
-
-          const stats = weekStats.get(merchant.id);
-          if (!stats) { results.weeklyDigest.skipped++; return; }
-
-          try {
-            const result = await sendWeeklyDigestEmail(
-              email, merchant.shop_name,
-              stats.scans, stats.newCustomers, stats.rewards, stats.totalCustomers
-            );
-            if (result.success) {
-              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -400, pending_count: 0 });
-              results.weeklyDigest.sent++;
-            }
-            else { results.weeklyDigest.errors++; }
-          } catch { results.weeklyDigest.errors++; }
-        });
-      }
-    }
-  } catch (error) {
-    sectionStatuses.push({ name: 'weeklyDigest', status: 'error', error: String(error) });
-  }
+  // ==================== SECTION 5: WEEKLY DIGEST — DISABLED ====================
+  // Désactivé : risque de frustrer les merchants avec des chiffres faibles.
+  // Réactiver quand le merchant a assez d'activité (ex: seuil min 5 scans/semaine).
 
   // ==================== SECTION 6: INACTIVE MERCHANTS ====================
   try {
@@ -1465,10 +1355,10 @@ export async function GET(request: NextRequest) {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     await supabase.from('pending_email_tracking').delete().lt('sent_at', sevenDaysAgo.toISOString()).gte('reminder_day', 0);
 
-    // C7: Clean up recurring email tracking (trial, weekly digest) older than 8 days so they can be re-sent
+    // C7: Clean up recurring email tracking (trial) older than 8 days so they can be re-sent
     const eightDaysAgo = new Date();
     eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
-    await supabase.from('pending_email_tracking').delete().lt('sent_at', eightDaysAgo.toISOString()).in('reminder_day', [-201, -203, -211, -212, -400]);
+    await supabase.from('pending_email_tracking').delete().lt('sent_at', eightDaysAgo.toISOString()).in('reminder_day', [-201, -203, -211, -212]);
 
     // Clean up old reactivation tracking (> 60 jours)
     const sixtyDaysAgo = new Date();

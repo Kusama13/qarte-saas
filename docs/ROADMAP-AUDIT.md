@@ -342,7 +342,7 @@ Tous ces points ont ete verifies dans le code au 18/02/2026 :
 | 12 | **Day5CheckinEmail** | 5 jours apres signup, skip si 0 scans | J+5 |
 | 13 | **FirstRewardEmail** | 1ere recompense debloquee | J+1 apres recompense |
 | 14 | **Tier2UpsellEmail** | 50+ clients, tier2 non active | Cron morning |
-| 15 | **WeeklyDigestEmail** | Merchant actif avec scans | Lundi (cron morning) |
+| 15 | ~~**WeeklyDigestEmail**~~ | ~~Merchant actif avec scans~~ | ~~Lundi (cron morning)~~ — **DESACTIVE** (frustrant si chiffres faibles, reactiver avec seuil min activite) |
 
 ## 4.5 Inactivite (cron morning 09:00)
 
