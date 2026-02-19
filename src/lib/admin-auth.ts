@@ -21,8 +21,8 @@ export async function verifyAdminAuth(request: NextRequest): Promise<AdminAuthRe
       return {
         authorized: false,
         error: NextResponse.json(
-          { error: 'Non authentifié' },
-          { status: 401 }
+          { error: 'Accès refusé' },
+          { status: 403 }
         ),
       };
     }
@@ -39,7 +39,7 @@ export async function verifyAdminAuth(request: NextRequest): Promise<AdminAuthRe
       return {
         authorized: false,
         error: NextResponse.json(
-          { error: 'Accès non autorisé' },
+          { error: 'Accès refusé' },
           { status: 403 }
         ),
       };
@@ -50,12 +50,11 @@ export async function verifyAdminAuth(request: NextRequest): Promise<AdminAuthRe
       userId: user.id,
     };
   } catch (error) {
-    console.error('Admin auth error:', error);
     return {
       authorized: false,
       error: NextResponse.json(
-        { error: 'Erreur d\'authentification' },
-        { status: 500 }
+        { error: 'Accès refusé' },
+        { status: 403 }
       ),
     };
   }

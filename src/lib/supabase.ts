@@ -37,6 +37,7 @@ export const supabase = typeof window !== 'undefined'
     );
 
 // Alias for createClientComponentClient compatibility
+export const getBrowserClient = getSupabase;
 export const createClientComponentClient = () => getSupabase();
 
 // ============================================

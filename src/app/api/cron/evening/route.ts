@@ -10,6 +10,16 @@ const supabase = createClient(
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
+function timingSafeCompare(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  const encoder = new TextEncoder();
+  const bufA = encoder.encode(a);
+  const bufB = encoder.encode(b);
+  let result = 0;
+  for (let i = 0; i < bufA.length; i++) result |= bufA[i] ^ bufB[i];
+  return result === 0;
+}
+
 // Configure web-push
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
@@ -20,7 +30,8 @@ if (vapidPublicKey && vapidPrivateKey) {
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
-  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!CRON_SECRET || !authHeader?.startsWith('Bearer ') ||
+      !timingSafeCompare(authHeader.slice(7), CRON_SECRET)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

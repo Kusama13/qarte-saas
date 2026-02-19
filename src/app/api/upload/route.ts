@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import logger from '@/lib/logger';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 
 /** Detect image type from magic bytes. Returns extension or null if invalid. */
 function detectImageType(header: Buffer): string | null {
@@ -17,8 +18,11 @@ function detectImageType(header: Buffer): string | null {
 }
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIP(request);
+  const rl = checkRateLimit(`upload:${ip}`, { maxRequests: 10, windowMs: 60 * 1000 });
+  if (!rl.success) return rateLimitResponse(rl.resetTime);
+
   const supabase = await createRouteHandlerSupabaseClient();
-  
 
   try {
     const formData = await request.formData();

@@ -1,6 +1,6 @@
 # AUDIT SÉCURITÉ — Qarte SaaS
 
-**Score : 78/100** — 0 critical, 4 high, 8 medium, 12 low
+**Score : 89/100** — 0 critical, 0 high, 4 medium, 1 low
 
 ---
 
@@ -9,18 +9,19 @@
 - RLS policies restrictives (migration 038)
 - JWT validation correcte (`getUser()` pas `getSession()`)
 - Zod partout pour validation inputs
-- File upload avec magic bytes + UUID filename
+- File upload avec magic bytes + UUID filename + rate limit 10/min
 - Webhook Stripe signature vérifiée
 - Headers HSTS, X-Frame-Options, X-Content-Type-Options OK
+- Permissions-Policy complet (camera, microphone, geolocation, magnetometer, gyroscope, accelerometer, payment, usb)
 - Cookie customer HttpOnly + SameSite=Strict
-- Admin auth centralisée (`verifyAdminAuth()`)
-- Cron protégé par `CRON_SECRET`
+- Admin auth centralisée (`verifyAdminAuth()`) — messages d'erreur uniformes
+- Cron protégé par `CRON_SECRET` (comparaison timing-safe)
 
 ---
 
 ## Corrections faisables en local
 
-### Semaine 1 — MEDIUM
+### MEDIUM
 
 - [ ] **Rate limit routes publiques** (1h)
   - Ajouter rate limit sur : `/api/merchants/preview`, `/api/merchant/stats`, `/api/referrals` GET, `/api/offers`
@@ -34,22 +35,10 @@
 - [ ] **Validate merchant_id dans webhook metadata** (1h)
   - `src/app/api/stripe/webhook/route.ts` : vérifier que le merchant existe avant update
 
-### Semaine 3 — LOW
-
-- [ ] **Bearer token timing-safe** (30min)
-  - `src/app/api/cron/morning/route.ts` : utiliser `crypto.timingSafeEqual` pour comparer CRON_SECRET
-
-- [ ] **Admin error messages uniformes** (15min)
-  - `src/lib/admin-auth.ts` : retourner le même message 403 pour non-auth et non-admin
-
-- [ ] **Permissions-Policy complet** (15min)
-  - `next.config.mjs` : ajouter magnetometer, gyroscope, accelerometer, payment, usb
-
-- [ ] **Rate limit upload** (1h)
-  - `src/app/api/upload/route.ts` : ajouter 10 req/min par IP
+### LOW
 
 - [ ] **Rename `getSupabase()` → `getBrowserClient()`** (1h)
-  - `src/lib/supabase.ts` : clarifier l'intention, throw si appelé côté serveur
+  - `src/lib/supabase.ts` : clarifier l'intention (22 fichiers à renommer)
 
 ---
 
