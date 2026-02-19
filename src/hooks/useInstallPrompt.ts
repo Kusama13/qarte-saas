@@ -46,18 +46,21 @@ export function useInstallPrompt(manifestHref: string | undefined): UseInstallPr
 
     const existingLink = document.querySelector('link[rel="manifest"]');
     const originalHref = existingLink?.getAttribute('href') ?? null;
+    let createdLink: HTMLLinkElement | null = null;
 
     if (existingLink) {
       existingLink.setAttribute('href', manifestHref);
     } else {
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = manifestHref;
-      document.head.appendChild(link);
+      createdLink = document.createElement('link');
+      createdLink.rel = 'manifest';
+      createdLink.href = manifestHref;
+      document.head.appendChild(createdLink);
     }
 
     return () => {
-      if (existingLink && originalHref) {
+      if (createdLink) {
+        createdLink.remove();
+      } else if (existingLink && originalHref) {
         existingLink.setAttribute('href', originalHref);
       }
     };
