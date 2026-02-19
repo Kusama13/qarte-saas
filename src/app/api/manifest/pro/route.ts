@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const manifest = {
+    id: '/dashboard',
     name: 'Qarte Pro',
     short_name: 'Qarte Pro',
     description: 'Tableau de bord commerçant Qarte',

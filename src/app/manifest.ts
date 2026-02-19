@@ -2,10 +2,12 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
+    id: '/customer',
     name: 'Qarte',
     short_name: 'Qarte',
     description: 'Votre carte de fidélité digitale',
     start_url: '/customer/cards',
+    scope: '/customer',
     display: 'standalone',
     background_color: '#ffffff',
     theme_color: '#4f46e5',
