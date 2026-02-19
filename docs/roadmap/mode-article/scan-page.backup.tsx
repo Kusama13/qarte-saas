@@ -32,7 +32,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validateFrenchPhone, getTodayInParis } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTodayInParis } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
 import { isPushSupported, subscribeToPush, getPermissionStatus, isIOSDevice, isStandalonePWA, isIOSPushSupported, getIOSVersion } from '@/lib/push';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
@@ -101,7 +101,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       if (data) {
         setMerchant(data);
         // Track QR scan
-        trackQrScanned(data.id);
+        trackQrScanned({ merchant_id: data.id });
       }
       setLoading(false);
     };
@@ -155,7 +155,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         setAutoLoginAttempted(true);
         const formattedPhone = formatPhoneNumber(savedPhone);
 
-        if (validateFrenchPhone(formattedPhone)) {
+        if (validatePhone(formattedPhone)) {
           setSubmitting(true);
           try {
             const response = await fetch(`/api/customers/register?phone=${encodeURIComponent(formattedPhone)}&merchant_id=${merchant.id}`);
@@ -260,7 +260,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setError('');
 
     const formattedPhone = formatPhoneNumber(phoneNumber);
-    if (!validateFrenchPhone(formattedPhone)) {
+    if (!validatePhone(formattedPhone)) {
       setError('Veuillez entrer un numéro de téléphone valide');
       return;
     }
