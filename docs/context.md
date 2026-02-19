@@ -123,8 +123,9 @@ src/
 
 docs/
 ├── context.md            # Contexte projet (ce fichier)
-├── ROADMAP-AUDIT.md      # Roadmap, audit, emails, changelog (document unifie)
-└── PLAN-MARKETING.md     # Plan marketing & acquisition (audit CMO, phases 0→1000)
+├── AUDIT-SECURITE.md     # Audit sécurité complet (senior security engineer, score 78/100)
+├── AUDIT-MARKETING.md    # Audit marketing complet (CMO senior, score 5/10, plan 90j)
+└── AUDIT-SCALABILITE.md  # Audit scalabilité complet (senior backend, paliers 100→1000+)
 
 supabase/
 └── migrations/           # 39 migrations SQL
@@ -774,8 +775,9 @@ export const EMAIL_HEADERS = {
 | Fichier | Description |
 |---------|-------------|
 | `docs/context.md` | Contexte projet (ce fichier) |
-| `docs/ROADMAP-AUDIT.md` | Roadmap, audit, emails, changelog (document unifie) |
-| `docs/PLAN-MARKETING.md` | Plan marketing & acquisition (audit CMO, phases 0→1000) |
+| `docs/AUDIT-SECURITE.md` | Audit sécurité complet (score 78/100, 4 HIGH, 8 MEDIUM, 12 LOW) |
+| `docs/AUDIT-MARKETING.md` | Audit marketing complet (score 5/10, plan 90 jours, KPIs) |
+| `docs/AUDIT-SCALABILITE.md` | Audit scalabilité complet (paliers 100→1000+, plan optimisation) |
 
 ---
 
@@ -788,4 +790,4 @@ export const EMAIL_HEADERS = {
 | Push/envoi | ~100 (non optimise) |
 | Clients/marchand | ~2,000 |
 
-*Pour plus de details, voir `docs/ROADMAP-AUDIT.md` partie 3 (Scalabilite)*
+*Pour plus de details, voir `docs/AUDIT-SCALABILITE.md`*
