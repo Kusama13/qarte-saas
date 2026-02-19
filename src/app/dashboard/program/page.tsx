@@ -753,9 +753,34 @@ export default function ProgramPage() {
               <QrCode className="w-7 h-7 text-white" />
             </div>
 
-            <p className="text-gray-600 text-sm mb-6 leading-relaxed">
-              Votre carte est prête. Vos clients vont adorer.
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Votre programme est en ligne !
+            </h3>
+
+            <p className="text-gray-500 text-sm mb-4 leading-relaxed">
+              Découvrez ce que vos clients verront en scannant votre QR code :
             </p>
+
+            <div className="text-left space-y-2 mb-5 px-1">
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                </div>
+                <span className="text-sm text-gray-700">Carte de fidélité <strong>sans appli</strong></span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                </div>
+                <span className="text-sm text-gray-700">Rappels <strong>automatiques</strong> pour les faire revenir</span>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                </div>
+                <span className="text-sm text-gray-700">Parrainage intégré = <strong>nouveaux clients gratuits</strong></span>
+              </div>
+            </div>
 
             <a
               href={`/scan/${merchant.scan_code}`}
@@ -772,7 +797,7 @@ export default function ProgramPage() {
               className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <Smartphone className="w-5 h-5" />
-              Découvrir ma carte
+              Voir le parcours client
             </a>
 
             <button
