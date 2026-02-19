@@ -1,0 +1,279 @@
+'use client';
+
+import { motion } from 'framer-motion';
+import { Settings, QrCode, Heart, Gift, Bell, Zap, Smartphone, Clock } from 'lucide-react';
+import { useInView } from '@/hooks/useInView';
+
+/* ═══════════════════════════════════════════
+   Card 1 — Créez votre programme
+   ═══════════════════════════════════════════ */
+
+function SetupCard() {
+  return (
+    <div className="relative bg-white rounded-xl border border-violet-100/80 shadow-lg shadow-violet-100/30 p-5 w-full h-full">
+      {/* Numbered badge */}
+      <div className="absolute -top-3 -left-3 w-7 h-7 bg-violet-500 rounded-full flex items-center justify-center shadow-sm shadow-violet-500/30">
+        <span className="text-xs font-bold text-white">1</span>
+      </div>
+
+      {/* Tag */}
+      <div className="flex items-center gap-2 mb-3 ml-2">
+        <Settings className="w-4 h-4 text-violet-400" />
+        <span className="text-sm font-bold text-violet-400 uppercase tracking-wider">2 minutes</span>
+      </div>
+
+      {/* Title */}
+      <p className="text-lg font-bold text-gray-900 leading-snug">Vous créez votre programme</p>
+      <p className="text-base text-gray-400 mt-1 mb-4">Choisissez vos paliers et récompenses. On s&apos;occupe du QR code.</p>
+
+      {/* Mini mockup: stamp config */}
+      <div className="bg-gray-50 rounded-lg p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ma fidélité</span>
+          <span className="text-[10px] font-extrabold text-violet-500">0/10</span>
+        </div>
+        <div className="grid grid-cols-5 gap-1.5">
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className={`aspect-square rounded-lg flex items-center justify-center ${
+              i < 3
+                ? 'bg-gradient-to-br from-violet-400 to-indigo-500 shadow-sm shadow-violet-300/50'
+                : 'bg-white border-2 border-dashed border-gray-200'
+            }`}>
+              {i < 3 ? (
+                <Heart className="w-2.5 h-2.5 text-white fill-white" />
+              ) : (
+                <span className="text-[8px] font-bold text-gray-300">{i + 1}</span>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="mt-2 flex items-center gap-2 bg-violet-50 rounded-lg px-2.5 py-1.5">
+          <Gift className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
+          <span className="text-[10px] font-bold text-violet-700">Brushing offert</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   Card 2 — Votre client scanne
+   ═══════════════════════════════════════════ */
+
+function ScanCard() {
+  return (
+    <div className="relative bg-white rounded-xl border border-indigo-100/80 shadow-lg shadow-indigo-100/30 p-5 w-full h-full">
+      {/* Numbered badge */}
+      <div className="absolute -top-3 -left-3 w-7 h-7 bg-indigo-500 rounded-full flex items-center justify-center shadow-sm shadow-indigo-500/30">
+        <span className="text-xs font-bold text-white">2</span>
+      </div>
+
+      {/* Tag */}
+      <div className="flex items-center gap-2 mb-3 ml-2">
+        <QrCode className="w-4 h-4 text-indigo-400" />
+        <span className="text-sm font-bold text-indigo-400 uppercase tracking-wider">3 secondes</span>
+      </div>
+
+      {/* Title */}
+      <p className="text-lg font-bold text-gray-900 leading-snug">Votre client(e) scanne</p>
+      <p className="text-base text-gray-400 mt-1 mb-4">Son point est ajouté. Pas d&apos;app à télécharger.</p>
+
+      {/* Mini mockup: QR code + toast */}
+      <div className="bg-gray-50 rounded-lg p-3 flex flex-col items-center">
+        {/* QR Code SVG */}
+        <div className="relative w-20 h-20 bg-white rounded-xl border-2 border-indigo-200 p-2 mb-2">
+          <svg viewBox="0 0 100 100" className="w-full h-full">
+            {/* Simplified QR pattern */}
+            <rect x="5" y="5" width="25" height="25" rx="3" fill="#4f46e5" />
+            <rect x="70" y="5" width="25" height="25" rx="3" fill="#4f46e5" />
+            <rect x="5" y="70" width="25" height="25" rx="3" fill="#4f46e5" />
+            <rect x="10" y="10" width="15" height="15" rx="2" fill="white" />
+            <rect x="75" y="10" width="15" height="15" rx="2" fill="white" />
+            <rect x="10" y="75" width="15" height="15" rx="2" fill="white" />
+            <rect x="14" y="14" width="7" height="7" rx="1" fill="#4f46e5" />
+            <rect x="79" y="14" width="7" height="7" rx="1" fill="#4f46e5" />
+            <rect x="14" y="79" width="7" height="7" rx="1" fill="#4f46e5" />
+            {/* Data dots */}
+            <rect x="38" y="5" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="52" y="5" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="38" y="18" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="5" y="38" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="18" y="38" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="38" y="38" width="8" height="8" rx="1.5" fill="#6366f1" />
+            <rect x="52" y="38" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="70" y="38" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="85" y="38" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="38" y="52" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="52" y="52" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="70" y="52" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="38" y="70" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="52" y="70" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="70" y="70" width="8" height="8" rx="1.5" fill="#6366f1" />
+            <rect x="85" y="70" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="70" y="85" width="8" height="8" rx="1.5" fill="#4f46e5" />
+            <rect x="85" y="85" width="8" height="8" rx="1.5" fill="#4f46e5" />
+          </svg>
+          {/* Scan line animation */}
+          <div className="absolute inset-x-2 top-2 h-0.5 bg-indigo-400/60 rounded-full animate-pulse" />
+        </div>
+
+        {/* Toast "Point ajouté" */}
+        <div className="flex items-center gap-2 bg-white rounded-full px-3 py-1.5 shadow-md shadow-emerald-100/50 border border-emerald-100">
+          <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span className="text-[11px] font-bold text-gray-800">Point ajouté !</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   Card 3 — Il revient tout seul
+   ═══════════════════════════════════════════ */
+
+function RewardCard() {
+  return (
+    <div className="relative bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl border border-rose-200/60 shadow-lg shadow-rose-100/30 p-5 w-full h-full">
+      {/* Numbered badge */}
+      <div className="absolute -top-3 -left-3 w-7 h-7 bg-rose-500 rounded-full flex items-center justify-center shadow-sm shadow-rose-500/30">
+        <span className="text-xs font-bold text-white">3</span>
+      </div>
+
+      {/* Tag */}
+      <div className="flex items-center gap-2 mb-3 ml-2">
+        <Bell className="w-4 h-4 text-rose-400" />
+        <span className="text-sm font-bold text-rose-400 uppercase tracking-wider">Automatique</span>
+      </div>
+
+      {/* Title */}
+      <p className="text-lg font-bold text-gray-900 leading-snug">Il revient tout seul</p>
+      <p className="text-base text-gray-400 mt-1 mb-4">Rappels push, anniversaires, parrainage. Qarte fait le reste.</p>
+
+      {/* Mini mockup: filled card + reward */}
+      <div className="bg-white/80 rounded-lg p-3 space-y-2">
+        {/* Filled stamps */}
+        <div className="grid grid-cols-5 gap-1.5">
+          {[...Array(10)].map((_, i) => (
+            <div key={i} className="aspect-square rounded-lg flex items-center justify-center bg-gradient-to-br from-rose-400 to-pink-500 shadow-sm shadow-rose-300/50">
+              <Heart className="w-2.5 h-2.5 text-white fill-white" />
+            </div>
+          ))}
+        </div>
+
+        {/* Reward unlocked */}
+        <div className="relative bg-gradient-to-r from-rose-100 to-pink-100 border-2 border-rose-300/60 rounded-xl p-2.5 overflow-hidden">
+          {/* Shimmer effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_2s_ease-in-out_infinite]" />
+          <div className="relative flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-rose-400 to-pink-500 rounded-lg flex items-center justify-center shadow-md shadow-rose-400/40">
+              <Gift className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <p className="text-[11px] font-extrabold text-gray-900">Soin visage offert</p>
+              <p className="text-[9px] font-bold text-rose-600">Récompense débloquée !</p>
+            </div>
+            <span className="text-lg ml-auto">🎉</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
+   Main Section
+   ═══════════════════════════════════════════ */
+
+export function HowItWorksSection() {
+  const { ref, isInView } = useInView();
+
+  return (
+    <section className="py-24 md:py-32 bg-white overflow-hidden">
+      <div ref={ref} className="max-w-5xl mx-auto px-6">
+        {/* Header */}
+        <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            En 3 étapes,{' '}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+              c&apos;est tout.
+            </span>
+          </h2>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+            Pas de formation. Pas de matériel. Pas de carte papier.
+          </p>
+        </div>
+
+        {/* 3 Steps */}
+        <div className="grid md:grid-cols-3 gap-6 md:gap-5 max-w-4xl mx-auto mb-14">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="h-full"
+          >
+            <SetupCard />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.25 }}
+            className="h-full"
+          >
+            <ScanCard />
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="h-full"
+          >
+            <RewardCard />
+          </motion.div>
+        </div>
+
+        {/* Stats row */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.5, delay: 0.55 }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center">
+              <Clock className="w-6 h-6 text-violet-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-black text-gray-900">2 mn</p>
+              <p className="text-sm text-gray-500">pour tout configurer</p>
+            </div>
+          </div>
+          <div className="hidden sm:block w-px h-10 bg-gray-200" />
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center">
+              <Smartphone className="w-6 h-6 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-black text-gray-900">0 app</p>
+              <p className="text-sm text-gray-500">à installer côté client</p>
+            </div>
+          </div>
+          <div className="hidden sm:block w-px h-10 bg-gray-200" />
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center">
+              <Zap className="w-6 h-6 text-rose-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-black text-gray-900">100%</p>
+              <p className="text-sm text-gray-500">automatique</p>
+            </div>
+          </div>
+        </motion.div>
+
+      </div>
+    </section>
+  );
+}

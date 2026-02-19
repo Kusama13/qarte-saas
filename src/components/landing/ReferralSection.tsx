@@ -84,14 +84,18 @@ export function ReferralSection() {
       <div ref={ref} className="max-w-5xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-violet-50 border border-violet-100 rounded-full mb-6">
+            <Users className="w-4 h-4 text-violet-500" />
+            <span className="text-sm font-semibold text-violet-600 tracking-wide">Parrainage intégré</span>
+          </div>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Votre meilleure pub,{' '}
+            Chaque client vous en{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              c&apos;est vos clients
+              ramène un autre
             </span>
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Ils partagent. Ils gagnent. Les amis gagnent. Tout le monde y gagne.
+            Un lien, un partage, deux récompenses. Le bouche-à-oreille qui rapporte vraiment.
           </p>
         </div>
 

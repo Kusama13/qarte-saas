@@ -7,7 +7,7 @@ import {
   MobileStickyCta,
 } from '@/components/landing';
 import ClientShell from '@/components/landing/ClientShell';
-import { LazyReferralSection, LazyAIReengagementSection, LazyFAQSection } from '@/components/landing/LazySections';
+import { LazyHowItWorksSection, LazyReferralSection, LazyAIReengagementSection, LazyFAQSection } from '@/components/landing/LazySections';
 
 export default function LandingPageV4() {
   return (
@@ -16,6 +16,7 @@ export default function LandingPageV4() {
 
       <main className="overflow-hidden pb-24 md:pb-0">
         <HeroSection />
+        <LazyHowItWorksSection />
         <LazyReferralSection />
         <LazyAIReengagementSection />
         <TestimonialsSection />

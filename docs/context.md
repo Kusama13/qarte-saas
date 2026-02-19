@@ -15,7 +15,7 @@
 ## 2. Tech Stack
 
 ### Framework & Runtime
-- **Next.js** 15.5.9 (App Router)
+- **Next.js** 15.5.12 (App Router)
 - **React** 18.3.1
 - **TypeScript** 5.6.2
 
@@ -115,16 +115,22 @@ docs/
 └── AUDIT-SCALABILITE.md  # Audit scalabilite (DB, API, cron, frontend)
 
 supabase/
-└── migrations/           # 33 migrations SQL
+└── migrations/           # 48 migrations SQL
     ├── 001-025           # Schema initial + fixes
-    ├── 026               # Trial period 15 jours
-    ├── 027               # Spelling cancelled→canceled
-    ├── 028               # Reactivation email tracking
-    ├── 029               # Merchant country + E.164 phone migration
-    ├── 030               # Shield + divers
-    ├── 031               # last_seen_at column
-    ├── 032               # Fix updated_at trigger (exclut last_seen_at)
-    └── 033               # Add referral_code (parrainage merchant)
+    ├── 026-033           # Trial, spelling, reactivation, country, shield, referral
+    ├── 034               # Trial 7 jours (down from 15)
+    ├── 035               # Referrals table RLS
+    ├── 036               # Merchant no_contact + admin notes
+    ├── 037               # Birthday gift
+    ├── 038               # Restrict RLS policies
+    ├── 039               # Schema drift fix
+    ├── 040               # Push automation events
+    ├── 041               # Audit fixes
+    ├── 042               # Medium audit fixes
+    ├── 043               # PWA installed tracking
+    ├── 044               # Admin announcements
+    ├── 045               # Announcement link URL
+    └── 046               # Performance indexes v2
 
 public/
 ├── images/              # Images statiques (mockups, temoignages, email-banner)
@@ -464,7 +470,7 @@ npm run email
 | `src/app/api/referrals/route.ts` | API parrainage client (GET info + POST inscription) |
 | `src/app/api/vouchers/use/route.ts` | API consommation voucher + auto-creation parrain |
 | `src/app/dashboard/referrals/page.tsx` | Dashboard parrainage (config + stats + tableau) |
-| `supabase/migrations/` | 33 migrations SQL |
+| `supabase/migrations/` | 48 migrations SQL |
 
 ---
 
@@ -509,8 +515,8 @@ npm run email
 - **Essai gratuit:** 7 jours
 - **Abonnement mensuel:** 19€/mois
 - **Abonnement annuel:** 190€/an (equivalent ~15,83€/mois, -17%)
-- **Periode de grace:** 7 jours apres expiration (lecture seule)
-- **Suppression:** Donnees supprimees 7 jours apres expiration
+- **Periode de grace:** 3 jours apres expiration (lecture seule)
+- **Suppression:** Donnees supprimees 3 jours apres expiration
 
 ### Cible
 - Salons de coiffure, barbiers
@@ -721,9 +727,9 @@ export const EMAIL_HEADERS = {
 
 | Metrique | Capacite |
 |----------|----------|
-| Marchands | ~300-500 |
+| Marchands | ~500-800 (plafond : Supabase Free 10 connexions) |
 | Checkins/jour | ~20,000 |
-| Push/envoi | ~100 (non optimise) |
+| Push/envoi | ~5,000 (batch 50, pause 100ms) |
 | Clients/marchand | ~2,000 |
 
-*Pour plus de details, voir `docs/ROADMAP-AUDIT.md` partie 3 (Scalabilite)*
+*Pour plus de details, voir `docs/AUDIT-SCALABILITE.md`*

@@ -1,6 +1,6 @@
 # AUDIT SCALABILITÉ — Qarte SaaS
 
-**Score : 68/100** — Capacité actuelle ~300-500 merchants, point de rupture ~500
+**Score : 78/100** — Capacité actuelle ~500-800 merchants (plafond dur : Supabase Free 10 connexions)
 
 ---
 
@@ -9,9 +9,13 @@
 - Checkin parallélisé (Promise.all sur 3 étapes)
 - Stats dashboard optimisé (5 queries parallèles, groupBy en JS)
 - Singleton pattern Supabase admin
-- Cron sections isolées try/catch
+- Cron sections isolées try/catch + timeout + batch emails
 - Landing page CDN + RSC (illimité)
-- Bundle size acceptable (~100KB gzipped)
+- Bundle size optimisé (~70KB gzipped, lazy load Framer Motion)
+- 4 index DB ajoutés (visits, loyalty_cards, redemptions, vouchers)
+- Push notifications batchées par 50 avec pause 100ms
+- Scan page : fetch merchant + referral en parallèle
+- Page carte fidélité découpée en 5 composants (FCP amélioré)
 
 ---
 
