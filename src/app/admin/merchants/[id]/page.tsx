@@ -992,6 +992,7 @@ export default function MerchantDetailPage() {
                 [-103]: 'QR code & kit promo',
                 [-104]: 'Challenge complété',
                 [-105]: 'QR téléchargé',
+                [-108]: 'Kit réseaux téléchargé',
                 [-106]: 'Script 1er client (config +2j)',
                 [-107]: 'Relance 0 scan (config +4j)',
                 [-110]: 'Relance inactif J+7',

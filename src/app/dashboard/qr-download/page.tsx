@@ -79,6 +79,13 @@ export default function QRDownloadPage() {
       link.download = `${merchant.shop_name.toLowerCase().replace(/\s+/g, '-')}-fidelite.png`;
       link.href = image;
       link.click();
+      // Track social kit download (fire and forget)
+      fetch('/api/onboarding/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ step: 'social_kit' }),
+      }).catch(() => {});
+
       setSocialDownloadSuccess(true);
       setTimeout(() => setSocialDownloadSuccess(false), 3000);
     } catch (error) {

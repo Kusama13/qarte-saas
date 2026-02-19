@@ -161,8 +161,17 @@ export function CustomerAdjustTab({
             <div className="p-2.5 rounded-xl bg-indigo-50 border border-indigo-100">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-indigo-700 font-medium">Apres ajustement</span>
-                <span className={`font-bold ${adjustment > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {newStamps} points ({adjustment > 0 ? '+' : ''}{adjustment})
+                <span className="font-bold text-sm">
+                  <span className="text-gray-900">
+                    {newStamps < stampsRequired
+                      ? `${newStamps}/${stampsRequired} palier 1`
+                      : `${newStamps - stampsRequired}/${(tier2StampsRequired || 0) - stampsRequired} palier 2`
+                    }
+                  </span>
+                  {' '}
+                  <span className={adjustment > 0 ? 'text-green-600' : 'text-red-600'}>
+                    ({adjustment > 0 ? '+' : ''}{adjustment})
+                  </span>
                 </span>
               </div>
             </div>

@@ -29,13 +29,14 @@ export async function GET() {
       .from('pending_email_tracking')
       .select('reminder_day')
       .eq('merchant_id', merchant.id)
-      .in('reminder_day', [-105, -106]);
+      .in('reminder_day', [-105, -106, -108]);
 
     const flagDays = new Set((flags || []).map(f => f.reminder_day));
 
     return NextResponse.json({
       qrDownloaded: flagDays.has(-105),
       previewDone: flagDays.has(-106),
+      socialKitDownloaded: flagDays.has(-108),
     });
   } catch (error) {
     logger.error('Onboarding status error:', error);
@@ -73,7 +74,7 @@ export async function POST(request: Request) {
       // No body = default to qr (backward compat)
     }
 
-    const reminderDay = step === 'preview' ? -106 : -105;
+    const reminderDay = step === 'preview' ? -106 : step === 'social_kit' ? -108 : -105;
 
     // Upsert to avoid duplicates
     await supabaseAdmin.from('pending_email_tracking').upsert(
