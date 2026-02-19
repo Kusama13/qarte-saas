@@ -26,25 +26,7 @@ export default function InstallAppBanner() {
   const { merchant } = useMerchant();
   const [hasReceivedScan, setHasReceivedScan] = useState(false);
   const [dismissed, setDismissed] = useState(true); // default hidden to avoid flash
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  // Check if user is super admin (PWA merchant disabled for non-admins for now)
-  useEffect(() => {
-    if (!isMobile) return;
-    (async () => {
-      const supabase = getSupabase();
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-      const { data: row } = await supabase
-        .from('super_admins')
-        .select('user_id')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-      if (row) setIsSuperAdmin(true);
-    })();
-  }, [isMobile]);
-
-  // Only run PWA hook on mobile + super admin
   const {
     showInstallButton,
     isIOS,
@@ -52,7 +34,7 @@ export default function InstallAppBanner() {
     promptInstall,
     showIOSInstructions,
     setShowIOSInstructions,
-  } = useInstallPrompt(isMobile && isSuperAdmin ? '/api/manifest/pro' : undefined);
+  } = useInstallPrompt(isMobile ? '/api/manifest/pro' : undefined);
 
   // Check localStorage dismiss
   useEffect(() => {
@@ -62,7 +44,7 @@ export default function InstallAppBanner() {
 
   // Query visits only on mobile
   useEffect(() => {
-    if (!isMobile || !isSuperAdmin || !merchant?.id) return;
+    if (!isMobile || !merchant?.id) return;
     const supabase = getSupabase();
     supabase
       .from('visits')
@@ -73,15 +55,15 @@ export default function InstallAppBanner() {
       .then(({ count }: { count: number | null }) => {
         if ((count ?? 0) >= 1) setHasReceivedScan(true);
       });
-  }, [isMobile, isSuperAdmin, merchant?.id]);
+  }, [isMobile, merchant?.id]);
 
   const handleDismiss = () => {
     setDismissed(true);
     localStorage.setItem(DISMISS_KEY, 'true');
   };
 
-  // Don't render on desktop or non-admin
-  if (!isMobile || !isSuperAdmin) return null;
+  // Don't render on desktop
+  if (!isMobile) return null;
 
   const visible = hasReceivedScan && showInstallButton && !dismissed;
 
