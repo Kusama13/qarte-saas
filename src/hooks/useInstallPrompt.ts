@@ -10,6 +10,7 @@ interface BeforeInstallPromptEvent extends Event {
 interface UseInstallPromptReturn {
   showInstallButton: boolean;
   isIOS: boolean;
+  isIOSChrome: boolean;
   isInstalled: boolean;
   promptInstall: () => Promise<void>;
   showIOSInstructions: boolean;
@@ -19,6 +20,7 @@ interface UseInstallPromptReturn {
 const NOOP_RETURN: UseInstallPromptReturn = {
   showInstallButton: false,
   isIOS: false,
+  isIOSChrome: false,
   isInstalled: false,
   promptInstall: async () => {},
   showIOSInstructions: false,
@@ -34,6 +36,7 @@ export function useInstallPrompt(manifestHref: string | undefined): UseInstallPr
 
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
+  const [isIOSChrome, setIsIOSChrome] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
@@ -76,6 +79,7 @@ export function useInstallPrompt(manifestHref: string | undefined): UseInstallPr
       /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     setIsIOS(iOS);
+    setIsIOSChrome(iOS && /CriOS/i.test(navigator.userAgent));
 
     const standalone =
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -137,6 +141,7 @@ export function useInstallPrompt(manifestHref: string | undefined): UseInstallPr
   return {
     showInstallButton,
     isIOS,
+    isIOSChrome,
     isInstalled,
     promptInstall,
     showIOSInstructions,
