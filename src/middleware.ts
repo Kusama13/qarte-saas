@@ -8,6 +8,17 @@ const authRoutes = ['/auth/merchant', '/auth/merchant/signup'];
 const completeProfileRoute = '/auth/merchant/signup/complete';
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Serve the correct PWA manifest based on referer (dashboard → Qarte Pro, else → customer)
+  if (pathname === '/manifest.webmanifest') {
+    const referer = request.headers.get('referer') || '';
+    if (referer.includes('/dashboard')) {
+      return NextResponse.rewrite(new URL('/api/manifest/pro', request.url));
+    }
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -42,8 +53,6 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const session = user ? { user } : null;
-
-  const { pathname } = request.nextUrl;
 
   // Handle complete profile route (Phase 2 of signup)
   if (pathname === completeProfileRoute) {
@@ -124,6 +133,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/manifest.webmanifest',
     '/dashboard/:path*',
     '/admin/:path*',
     '/auth/merchant',

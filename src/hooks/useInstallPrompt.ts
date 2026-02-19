@@ -40,32 +40,6 @@ export function useInstallPrompt(manifestHref: string | undefined): UseInstallPr
   const [isInstalled, setIsInstalled] = useState(false);
   const [showIOSInstructions, setShowIOSInstructions] = useState(false);
 
-  // Inject the Pro manifest link (mobile only)
-  useEffect(() => {
-    if (!enabled || !manifestHref) return;
-
-    const existingLink = document.querySelector('link[rel="manifest"]');
-    const originalHref = existingLink?.getAttribute('href') ?? null;
-    let createdLink: HTMLLinkElement | null = null;
-
-    if (existingLink) {
-      existingLink.setAttribute('href', manifestHref);
-    } else {
-      createdLink = document.createElement('link');
-      createdLink.rel = 'manifest';
-      createdLink.href = manifestHref;
-      document.head.appendChild(createdLink);
-    }
-
-    return () => {
-      if (createdLink) {
-        createdLink.remove();
-      } else if (existingLink && originalHref) {
-        existingLink.setAttribute('href', originalHref);
-      }
-    };
-  }, [enabled, manifestHref]);
-
   // Register service worker scoped to /dashboard (needed for beforeinstallprompt)
   useEffect(() => {
     if (!enabled) return;
