@@ -124,8 +124,7 @@ src/
 docs/
 ├── context.md            # Contexte projet (ce fichier)
 ├── ROADMAP-AUDIT.md      # Roadmap, audit, emails, changelog (document unifie)
-├── PLAN-MARKETING.md     # Plan marketing & acquisition (audit CMO, phases 0→1000)
-└── roadmap/              # Backups code (scheduled push)
+└── PLAN-MARKETING.md     # Plan marketing & acquisition (audit CMO, phases 0→1000)
 
 supabase/
 └── migrations/           # 39 migrations SQL
