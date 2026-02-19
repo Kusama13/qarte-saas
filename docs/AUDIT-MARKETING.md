@@ -57,9 +57,9 @@
 |---|----------|----------|--------|
 | 5 | **Landing page structure incohérente** | Hero → Referral → AIReengagement → Testimonials → Pricing. Logique confuse (parrainage APRÈS avantages?), no "how it works" visual | Reorder: Hero → HowItWorks visual 3-step → Features → Testimonials → Pricing → Referral bonus section (bottom) → FAQ |
 | 6 | **Pricing page pas d'urgence/scarcity** | Standard pricing card, no countdown, no limited spots | Ajouter : "Offre introductoire" badge, countdown trial reduction, "100 premièrs = tarif figé 19€ à vie" |
-| 7 | **Heatmap/Clarity absent** | User behavior unknown, bounce points opaque | Install Microsoft Clarity (gratuit), configurer scroll tracking, click tracking, heatmaps |
+| ~~7~~ | ~~**Heatmap/Clarity**~~ | ~~User behavior unknown~~ | ✅ **FAIT** — Microsoft Clarity installé (vjx7g9ttax), heatmaps + session recordings actifs |
 | 8 | **Blog articles trop courts** | 3 articles blog (coiffure, onglerie, institut) ~1500 mots chacun, pas d'images, SEO fragile | Expand : 2500-3500 mots, +3-5 internal links, +3 images Unsplash, FAQ schema, word embeddings (semantique) |
-| 9 | **Pas de Google Search Console** | Meta tag commente dans layout.tsx, sitemap.xml existe mais non soumis | Verifier domaine GSC, soumettre sitemap, monitor impressions/CTR |
+| ~~9~~ | ~~**Google Search Console**~~ | ~~Meta tag commente~~ | ✅ **FAIT** — Domaine verifie (DNS TXT + meta tag), sitemap soumis |
 
 #### 🟡 P2 — Medium term (Impact -5% conversion)
 
@@ -400,13 +400,8 @@ Improvement:
 ✅ OpenGraph: Title, description, image, locale fr_FR
 ✅ Twitter Card: Present
 ✅ Robots: index/follow ✅
-⚠️ Google verification: COMMENTED OUT (needs activation)
+✅ Google verification: ACTIVE (meta tag + DNS TXT)
 ✅ Structured Data JSON-LD: Organization + SoftwareApplication
-
-Issues:
-❌ Google Search Console meta verification commented out
-→ Uncomment: <meta name="google-site-verification" content="..." />
-→ Verify domain in GSC, submit sitemap
 ```
 
 #### Per-Page Metadata
@@ -422,7 +417,7 @@ Issues:
 | `/blog/article-1` | ✅ Article specific | ✅ Article description | ✅ | ✅ |
 
 **Action Required:**
-- [ ] Verify Google Search Console + submit sitemap
+- [x] ~~Verify Google Search Console + submit sitemap~~ ✅ FAIT
 - [ ] Add missing keywords metadata to `/essai-gratuit` and `/ebook`
 - [ ] Create blog index page metadata
 
@@ -960,9 +955,9 @@ Current:
 | 4 | **Activate GTM + GA4 events** (landing, signup, conversion) | Measurement | 6h | Analytics/Dev |
 | 5 | **Add Facebook Pixel server-side** (Stripe webhook) | Attribution | 3h | Dev |
 | 6 | **Create exit-intent popup** (offer code / ebook) | Conversion +8% | 2h | Dev/Copy |
-| 7 | **Verify Google Search Console** (submit sitemap) | SEO | 1h | Growth |
+| ~~7~~ | ~~**Verify Google Search Console**~~ | ~~SEO~~ | ~~1h~~ | ✅ **FAIT** |
 
-**Total P0: ~19 hours = 2.5 days (doable this week)**
+**Total P0: ~18 hours restantes (GSC fait)**
 
 ---
 
@@ -973,7 +968,7 @@ Current:
 | 1 | Expand blog articles (1,500 → 3,000 words) | +15% organic | 2 weeks | 3 articles existing → target 2,500+ |
 | 2 | Add Article + FAQ schema to blog posts | +5% CTR | 2 days | JSON-LD markup |
 | 3 | Collect 3-5 real video testimonials | Conversion +10% | 1 week | 30s each, real merchants |
-| 4 | Create Clarity heatmap dashboard | UX insights | 1 day | Microsoft Clarity (free) |
+| ~~4~~ | ~~Create Clarity heatmap dashboard~~ | ~~UX insights~~ | ~~1 day~~ | ✅ **FAIT** — Clarity vjx7g9ttax installé |
 | 5 | Refactor landing page order (HowItWorks → Features earlier) | UX/Conversion | 1 day | Reorder sections |
 | 6 | Add competitor comparison footnote in Pricing | Justification | 2h | Show Qarte 60% cheaper |
 | 7 | Create 3-4 local landing pages (Paris, Lyon, Marseille) | +10% organic (local) | 3 days | New pages + metadata |
@@ -1145,7 +1140,7 @@ Apr 2026: ~100 merchants (target) → MRR 1,900€
 - [ ] Activate GTM + GA4 (all events)
 - [ ] Add Facebook Pixel server-side (Stripe)
 - [ ] Create exit-intent popup
-- [ ] Submit sitemap to Google Search Console
+- [x] ~~Submit sitemap to Google Search Console~~ ✅ FAIT
 
 **Impact:** Credibility fix, measurement foundation, +15% conversion potential
 
@@ -1155,7 +1150,7 @@ Apr 2026: ~100 merchants (target) → MRR 1,900€
 
 - [ ] Expand blog articles (1,500 → 3,000 words)
 - [ ] Add internal linking (blog → pricing)
-- [ ] Install Clarity heatmap
+- [x] ~~Install Clarity heatmap~~ ✅ FAIT
 - [ ] Refactor landing page (reorder sections)
 - [ ] Pricing section A/B test
 - [ ] Create 3-4 local landing pages

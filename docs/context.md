@@ -61,7 +61,7 @@ src/
 │   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
 │   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, ReviewPrompt, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep)
 │   ├── marketing/         # SocialMediaTemplate
-│   └── analytics/         # GTM, tracking, FacebookPixel
+│   └── analytics/         # GTM, tracking, FacebookPixel, MicrosoftClarity
 │
 ├── lib/                   # Utilitaires
 │   ├── supabase.ts       # Client Supabase
@@ -110,9 +110,9 @@ src/
 
 docs/
 ├── context.md            # Contexte projet (ce fichier)
-├── ROADMAP-AUDIT.md      # Roadmap, audit, emails, changelog (document unifie)
-├── PLAN-MARKETING.md     # Plan marketing & acquisition (audit CMO, phases 0→1000)
-└── roadmap/              # Backups code (mode article, scheduled push)
+├── AUDIT-MARKETING.md    # Audit marketing complet (CMO senior, landing, SEO, emails, analytics)
+├── AUDIT-SECURITE.md     # Audit securite (OWASP, RLS, auth, API)
+└── AUDIT-SCALABILITE.md  # Audit scalabilite (DB, API, cron, frontend)
 
 supabase/
 └── migrations/           # 33 migrations SQL
@@ -359,6 +359,8 @@ CONTACT_EMAIL=
 - **Google Tag Manager:** GTM-T5Z84DPV
 - **Google Analytics 4:** G-WM3XVQ38BD
 - **Facebook Pixel:** 1438158154679532
+- **Microsoft Clarity:** vjx7g9ttax (heatmaps, session recordings, scroll tracking)
+- **Google Search Console:** verifie (DNS TXT + meta tag)
 - **Vercel Analytics**
 
 ### Evenements Facebook Pixel
@@ -709,8 +711,9 @@ export const EMAIL_HEADERS = {
 | Fichier | Description |
 |---------|-------------|
 | `docs/context.md` | Contexte projet (ce fichier) |
-| `docs/ROADMAP-AUDIT.md` | Roadmap, audit, emails, changelog (document unifie) |
-| `docs/PLAN-MARKETING.md` | Plan marketing & acquisition (audit CMO, phases 0→1000) |
+| `docs/AUDIT-MARKETING.md` | Audit marketing complet (CMO senior, landing, SEO, emails, analytics) |
+| `docs/AUDIT-SECURITE.md` | Audit securite (OWASP, RLS, auth, API) |
+| `docs/AUDIT-SCALABILITE.md` | Audit scalabilite (DB, API, cron, frontend) |
 
 ---
 
