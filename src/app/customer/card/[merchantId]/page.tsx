@@ -349,9 +349,10 @@ export default function CustomerCardPage({
           setVouchers(data.vouchers);
         }
 
-        // Check if birthday already set
+        // Check if birthday already set — dismiss section immediately (no empty space)
         if (data.card.customer?.birth_month && data.card.customer?.birth_day) {
           setBirthdaySaved(true);
+          setBirthdayDismissed(true);
         }
 
         // Check if tier 1 has been redeemed in current cycle (for tier 2 enabled merchants)

@@ -302,172 +302,275 @@ export default function CustomersPage() {
         </div>
 
         {filteredCustomers.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-separate border-spacing-0">
-              <thead>
-                <tr className="bg-gray-50/50">
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100 first:rounded-tl-xl first:border-l last:rounded-tr-xl last:border-r">
-                    Client
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5" />
-                      Téléphone
-                    </div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <Gift className="w-3.5 h-3.5" />
-                      Progression
-                    </div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5" />
-                      Dernière visite
-                    </div>
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
-                    Inscription
-                  </th>
-                  <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100 first:border-l last:rounded-tr-xl last:border-r">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredCustomers.slice(0, displayCount).map((card) => {
-                  const isTier1Ready = card.current_stamps >= (merchant?.stamps_required || 10);
-                  const isTier2Ready = merchant?.tier2_enabled && merchant?.tier2_stamps_required && card.current_stamps >= merchant.tier2_stamps_required;
-                  const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
-                  const isPushSubscriber = subscriberIds.includes(card.customer_id);
+          <>
+            {/* Mobile card list */}
+            <div className="md:hidden space-y-2">
+              {filteredCustomers.slice(0, displayCount).map((card) => {
+                const isTier1Ready = card.current_stamps >= (merchant?.stamps_required || 10);
+                const isTier2Ready = merchant?.tier2_enabled && merchant?.tier2_stamps_required && card.current_stamps >= merchant.tier2_stamps_required;
+                const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
+                const isPushSubscriber = subscriberIds.includes(card.customer_id);
+                const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id));
 
-                  const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id));
-
-                  return (
-                    <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200 cursor-pointer" onClick={() => handleOpenAdjustModal(card)}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center gap-4">
-                          <div className={`relative flex items-center justify-center w-10 h-10 font-bold text-white rounded-xl shadow-md group-hover:scale-105 transition-transform ${
-                            isPushSubscriber
-                              ? 'bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-100'
-                              : 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-indigo-100'
-                          }`}>
-                            {card.customer?.first_name?.charAt(0) || 'C'}
-                            {badge && (
-                              <div className={`absolute -top-1 -right-1 w-3 h-3 border-2 border-white rounded-full animate-pulse ${isTier2Ready ? 'bg-violet-500' : 'bg-green-500'}`} />
-                            )}
-                            {isPushSubscriber && !badge && (
-                              <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow">
-                                <Bell className="w-2.5 h-2.5 text-amber-500" />
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="font-semibold text-gray-900">
-                                {card.customer?.first_name} {card.customer?.last_name}
-                              </p>
-                              {isPushSubscriber && (
-                                <Bell className="w-3.5 h-3.5 text-amber-500" />
-                              )}
-                            </div>
-                            {badge && (
-                              <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md ${badge.color}`}>
-                                {badge.text}
-                              </span>
-                            )}
-                          </div>
+                return (
+                  <button
+                    key={card.id}
+                    onClick={() => handleOpenAdjustModal(card)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-white border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/30 active:scale-[0.98] transition-all text-left"
+                  >
+                    {/* Avatar */}
+                    <div className={`relative flex items-center justify-center w-9 h-9 text-sm font-bold text-white rounded-lg shrink-0 ${
+                      isPushSubscriber
+                        ? 'bg-gradient-to-br from-amber-500 to-orange-500'
+                        : 'bg-gradient-to-br from-indigo-600 to-violet-600'
+                    }`}>
+                      {card.customer?.first_name?.charAt(0) || 'C'}
+                      {badge && (
+                        <div className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 border-[1.5px] border-white rounded-full ${isTier2Ready ? 'bg-violet-500' : 'bg-green-500'}`} />
+                      )}
+                      {isPushSubscriber && !badge && (
+                        <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-white rounded-full flex items-center justify-center shadow-sm">
+                          <Bell className="w-2 h-2 text-amber-500" />
                         </div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {displayPhoneNumber(card.customer?.phone_number || '', merchant?.country || 'FR')}
-                      </td>
-                      <td className="px-6 py-4">
-                        {merchant?.tier2_enabled && merchant?.tier2_stamps_required ? (
-                          /* Dual Tier Progress */
-                          <div className="space-y-2">
-                            {/* Tier 1 */}
-                            <div className="flex items-center gap-2">
-                              <Gift className={`w-3.5 h-3.5 shrink-0 ${card.current_stamps >= (merchant.stamps_required || 10) ? 'text-emerald-500' : 'text-indigo-400'}`} />
-                              <div className="flex-1 w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full transition-all duration-500 ease-out ${
-                                    card.current_stamps >= (merchant.stamps_required || 10)
-                                      ? 'bg-emerald-500'
-                                      : 'bg-gradient-to-r from-indigo-500 to-violet-500'
-                                  }`}
-                                  style={{ width: `${Math.min((card.current_stamps / (merchant.stamps_required || 10)) * 100, 100)}%` }}
-                                />
-                              </div>
-                              <span className={`text-[10px] font-bold tabular-nums ${card.current_stamps >= (merchant.stamps_required || 10) ? 'text-emerald-600' : 'text-gray-500'}`}>
-                                {Math.min(card.current_stamps, merchant.stamps_required || 10)}/{merchant.stamps_required}
-                              </span>
-                            </div>
-                            {/* Tier 2 */}
-                            <div className="flex items-center gap-2">
-                              <Trophy className={`w-3.5 h-3.5 shrink-0 ${card.current_stamps >= (merchant.tier2_stamps_required || 20) ? 'text-violet-500' : 'text-gray-300'}`} />
-                              <div className="flex-1 w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full transition-all duration-500 ease-out ${
-                                    card.current_stamps >= (merchant.tier2_stamps_required || 20)
-                                      ? 'bg-violet-500'
-                                      : 'bg-gradient-to-r from-gray-300 to-gray-400'
-                                  }`}
-                                  style={{ width: `${Math.min((card.current_stamps / (merchant.tier2_stamps_required || 20)) * 100, 100)}%` }}
-                                />
-                              </div>
-                              <span className={`text-[10px] font-bold tabular-nums ${card.current_stamps >= (merchant.tier2_stamps_required || 20) ? 'text-violet-600' : 'text-gray-400'}`}>
-                                {card.current_stamps}/{merchant.tier2_stamps_required}
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          /* Single Tier Progress */
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1 w-28 h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                      )}
+                    </div>
+
+                    {/* Name + badge */}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {card.customer?.first_name} {card.customer?.last_name}
+                      </p>
+                      {badge && (
+                        <span className={`inline-flex items-center px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded ${badge.color}`}>
+                          {badge.text}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Compact progress */}
+                    <div className="shrink-0 flex items-center gap-2">
+                      {merchant?.tier2_enabled && merchant?.tier2_stamps_required ? (
+                        <div className="flex flex-col gap-1 items-end">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-12 h-1 bg-gray-100 rounded-full overflow-hidden">
                               <div
-                                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500 ease-out"
-                                style={{ width: `${progress}%` }}
+                                className={`h-full rounded-full ${isTier1Ready ? 'bg-emerald-500' : 'bg-indigo-500'}`}
+                                style={{ width: `${Math.min((card.current_stamps / (merchant.stamps_required || 10)) * 100, 100)}%` }}
                               />
                             </div>
-                            <span className="text-xs font-bold text-gray-700 tabular-nums">
-                              {card.current_stamps}/{merchant?.stamps_required}
+                            <span className={`text-[10px] font-bold tabular-nums ${isTier1Ready ? 'text-emerald-600' : 'text-gray-500'}`}>
+                              {Math.min(card.current_stamps, merchant.stamps_required || 10)}/{merchant.stamps_required}
                             </span>
                           </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {card.last_visit_date ? formatDate(card.last_visit_date) : '-'}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {formatDate(card.created_at)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleOpenAdjustModal(card); }}
-                          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-600 bg-white border border-indigo-100 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm transition-all active:scale-95"
-                        >
-                          <SlidersHorizontal className="w-4 h-4" />
-                          Gérer
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {filteredCustomers.length > displayCount && (
-              <div className="flex justify-center mt-6">
-                <button
-                  onClick={() => setDisplayCount(prev => prev + 50)}
-                  className="px-6 py-2.5 text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-colors"
-                >
-                  Charger plus ({filteredCustomers.length - displayCount} restant{filteredCustomers.length - displayCount > 1 ? 's' : ''})
-                </button>
-              </div>
-            )}
-          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-12 h-1 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full rounded-full ${isTier2Ready ? 'bg-violet-500' : 'bg-gray-300'}`}
+                                style={{ width: `${Math.min((card.current_stamps / (merchant.tier2_stamps_required || 20)) * 100, 100)}%` }}
+                              />
+                            </div>
+                            <span className={`text-[10px] font-bold tabular-nums ${isTier2Ready ? 'text-violet-600' : 'text-gray-400'}`}>
+                              {card.current_stamps}/{merchant.tier2_stamps_required}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-14 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-bold text-gray-700 tabular-nums">
+                            {card.current_stamps}/{merchant?.stamps_required}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+              {filteredCustomers.length > displayCount && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => setDisplayCount(prev => prev + 50)}
+                    className="px-5 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-colors"
+                  >
+                    Charger plus ({filteredCustomers.length - displayCount} restant{filteredCustomers.length - displayCount > 1 ? 's' : ''})
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full border-separate border-spacing-0">
+                <thead>
+                  <tr className="bg-gray-50/50">
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100 first:rounded-tl-xl first:border-l last:rounded-tr-xl last:border-r">
+                      Client
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-3.5 h-3.5" />
+                        Téléphone
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <Gift className="w-3.5 h-3.5" />
+                        Progression
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5" />
+                        Dernière visite
+                      </div>
+                    </th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
+                      Inscription
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100 first:border-l last:rounded-tr-xl last:border-r">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {filteredCustomers.slice(0, displayCount).map((card) => {
+                    const isTier1Ready = card.current_stamps >= (merchant?.stamps_required || 10);
+                    const isTier2Ready = merchant?.tier2_enabled && merchant?.tier2_stamps_required && card.current_stamps >= merchant.tier2_stamps_required;
+                    const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
+                    const isPushSubscriber = subscriberIds.includes(card.customer_id);
+
+                    const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id));
+
+                    return (
+                      <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200 cursor-pointer" onClick={() => handleOpenAdjustModal(card)}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-4">
+                            <div className={`relative flex items-center justify-center w-10 h-10 font-bold text-white rounded-xl shadow-md group-hover:scale-105 transition-transform ${
+                              isPushSubscriber
+                                ? 'bg-gradient-to-br from-amber-500 to-orange-500 shadow-amber-100'
+                                : 'bg-gradient-to-br from-indigo-600 to-violet-600 shadow-indigo-100'
+                            }`}>
+                              {card.customer?.first_name?.charAt(0) || 'C'}
+                              {badge && (
+                                <div className={`absolute -top-1 -right-1 w-3 h-3 border-2 border-white rounded-full animate-pulse ${isTier2Ready ? 'bg-violet-500' : 'bg-green-500'}`} />
+                              )}
+                              {isPushSubscriber && !badge && (
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-white rounded-full flex items-center justify-center shadow">
+                                  <Bell className="w-2.5 h-2.5 text-amber-500" />
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-gray-900">
+                                  {card.customer?.first_name} {card.customer?.last_name}
+                                </p>
+                                {isPushSubscriber && (
+                                  <Bell className="w-3.5 h-3.5 text-amber-500" />
+                                )}
+                              </div>
+                              {badge && (
+                                <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-md ${badge.color}`}>
+                                  {badge.text}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {displayPhoneNumber(card.customer?.phone_number || '', merchant?.country || 'FR')}
+                        </td>
+                        <td className="px-6 py-4">
+                          {merchant?.tier2_enabled && merchant?.tier2_stamps_required ? (
+                            /* Dual Tier Progress */
+                            <div className="space-y-2">
+                              {/* Tier 1 */}
+                              <div className="flex items-center gap-2">
+                                <Gift className={`w-3.5 h-3.5 shrink-0 ${card.current_stamps >= (merchant.stamps_required || 10) ? 'text-emerald-500' : 'text-indigo-400'}`} />
+                                <div className="flex-1 w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-500 ease-out ${
+                                      card.current_stamps >= (merchant.stamps_required || 10)
+                                        ? 'bg-emerald-500'
+                                        : 'bg-gradient-to-r from-indigo-500 to-violet-500'
+                                    }`}
+                                    style={{ width: `${Math.min((card.current_stamps / (merchant.stamps_required || 10)) * 100, 100)}%` }}
+                                  />
+                                </div>
+                                <span className={`text-[10px] font-bold tabular-nums ${card.current_stamps >= (merchant.stamps_required || 10) ? 'text-emerald-600' : 'text-gray-500'}`}>
+                                  {Math.min(card.current_stamps, merchant.stamps_required || 10)}/{merchant.stamps_required}
+                                </span>
+                              </div>
+                              {/* Tier 2 */}
+                              <div className="flex items-center gap-2">
+                                <Trophy className={`w-3.5 h-3.5 shrink-0 ${card.current_stamps >= (merchant.tier2_stamps_required || 20) ? 'text-violet-500' : 'text-gray-300'}`} />
+                                <div className="flex-1 w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-500 ease-out ${
+                                      card.current_stamps >= (merchant.tier2_stamps_required || 20)
+                                        ? 'bg-violet-500'
+                                        : 'bg-gradient-to-r from-gray-300 to-gray-400'
+                                    }`}
+                                    style={{ width: `${Math.min((card.current_stamps / (merchant.tier2_stamps_required || 20)) * 100, 100)}%` }}
+                                  />
+                                </div>
+                                <span className={`text-[10px] font-bold tabular-nums ${card.current_stamps >= (merchant.tier2_stamps_required || 20) ? 'text-violet-600' : 'text-gray-400'}`}>
+                                  {card.current_stamps}/{merchant.tier2_stamps_required}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Single Tier Progress */
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 w-28 h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                                <div
+                                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500 ease-out"
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-bold text-gray-700 tabular-nums">
+                                {card.current_stamps}/{merchant?.stamps_required}
+                              </span>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {card.last_visit_date ? formatDate(card.last_visit_date) : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {formatDate(card.created_at)}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleOpenAdjustModal(card); }}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-600 bg-white border border-indigo-100 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm transition-all active:scale-95"
+                          >
+                            <SlidersHorizontal className="w-4 h-4" />
+                            Gérer
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              {filteredCustomers.length > displayCount && (
+                <div className="flex justify-center mt-6">
+                  <button
+                    onClick={() => setDisplayCount(prev => prev + 50)}
+                    className="px-6 py-2.5 text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-colors"
+                  >
+                    Charger plus ({filteredCustomers.length - displayCount} restant{filteredCustomers.length - displayCount > 1 ? 's' : ''})
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-gray-500">
             <Users className="w-16 h-16 mb-4 text-gray-300" />
@@ -509,6 +612,7 @@ export default function CustomersPage() {
           rewardDescription={merchant.reward_description || undefined}
           birthMonth={selectedCustomer.customer?.birth_month}
           birthDay={selectedCustomer.customer?.birth_day}
+          tier1Redeemed={tier1RedeemedCards.has(selectedCustomer.id)}
         />
       )}
 
