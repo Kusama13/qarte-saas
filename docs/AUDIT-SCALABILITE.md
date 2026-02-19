@@ -23,18 +23,6 @@
 
 ## Nécessite intervention externe
 
-### Migration DB (appliquer sur Supabase)
-
-- [ ] **6 index DB manquants** (1h)
-  - Créer migration avec :
-    - `idx_visits_customer_created` (customer_id, created_at)
-    - `idx_loyalty_cards_referral_code` (referral_code)
-    - `idx_redemptions_card_tier_date` (loyalty_card_id, tier, redeemed_at)
-    - `idx_pending_email_merchant_day` (merchant_id, reminder_day)
-    - `idx_vouchers_customer_merchant` (customer_id, merchant_id)
-    - `idx_banned_numbers_check` (merchant_id, phone_number)
-  - Gain : +30-50% perf queries
-
 ### Upstash Redis (~€15/mois)
 
 - [ ] **Rate limiter Map → Redis** (2h)
