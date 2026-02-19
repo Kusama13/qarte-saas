@@ -7,7 +7,7 @@
 - **URL:** getqarte.com
 - **Version:** 0.1.0
 - **Langue:** Francais
-- **Essai:** 7 jours gratuits
+- **Essai:** 15 jours gratuits
 - **Prix:** 19€/mois ou 190€/an
 
 ---
@@ -57,8 +57,8 @@ src/
 ├── components/
 │   ├── landing/           # 12 composants landing (Hero, Features, Pricing, FAQ...)
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
-│   ├── shared/            # Header, Footer, CookieBanner, QRScanner, IOSInstallInstructions
-│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal (+ 4 tabs: AdjustTab, RewardsTab, HistoryTab, DangerZone), StatusBanner, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
+│   ├── shared/            # Header, Footer, CookieBanner, QRScanner
+│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
 │   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, ReviewPrompt, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep)
 │   ├── marketing/         # SocialMediaTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel
@@ -66,15 +66,13 @@ src/
 ├── lib/                   # Utilitaires
 │   ├── supabase.ts       # Client Supabase
 │   ├── stripe.ts         # Client Stripe
-│   ├── analytics.ts      # Tracking events (factory createTracker())
-│   ├── api-helpers.ts    # authorizeAdmin() helper pour routes admin
-│   ├── email.ts          # Envoi emails (factory sendEmail<P>() + scheduleEmail<P>())
+│   ├── analytics.ts      # Tracking events
 │   ├── push.ts           # Notifications push
 │   ├── logger.ts         # Logger structuré
 │   ├── scripts.ts        # Scripts verbaux par shop_type (emails + dashboard)
 │   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode)
 │
-├── emails/               # Templates React Email (31 templates actifs + BaseLayout, WeeklyDigest desactive)
+├── emails/               # Templates React Email (26 templates + BaseLayout)
 │   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
 │   ├── WelcomeEmail.tsx           # Bienvenue (urgence + temoignage)
 │   ├── IncompleteSignupEmail.tsx  # Relance inscription +1h
@@ -91,59 +89,42 @@ src/
 │   ├── Day5CheckinEmail.tsx       # Check-in J+5
 │   ├── FirstRewardEmail.tsx       # Premiere recompense
 │   ├── Tier2UpsellEmail.tsx       # Upsell palier VIP
-│   ├── WeeklyDigestEmail.tsx      # Bilan hebdomadaire — DESACTIVE (frustrant si chiffres faibles)
+│   ├── WeeklyDigestEmail.tsx      # Bilan hebdomadaire
 │   ├── PendingPointsEmail.tsx     # Passages en attente (Shield)
 │   ├── QRCodeEmail.tsx            # QR code + kit reseaux sociaux (merged)
 │   ├── FirstClientScriptEmail.tsx # Script verbal J+2 post-config (par shop_type)
 │   ├── QuickCheckEmail.tsx        # Check-in J+4 post-config (0 scans)
-│   ├── ProductUpdateEmail.tsx     # Newsletter nouveautes produit (parrainage, reseaux, design)
 │   ├── SubscriptionConfirmedEmail.tsx # Confirmation abonnement (Stripe)
 │   ├── PaymentFailedEmail.tsx     # Echec paiement (Stripe)
 │   ├── SubscriptionCanceledEmail.tsx # Annulation abonnement (Stripe)
 │   ├── SubscriptionReactivatedEmail.tsx # Reactivation abonnement (canceling→active)
 │   ├── ReactivationEmail.tsx      # Win-back J+7/14/30 (codes promo)
-│   ├── EbookEmail.tsx             # Telechargement ebook
-│   ├── GuidedSignupEmail.tsx      # Relance auth-only T+24h (guide 3 etapes)
-│   ├── SetupForYouEmail.tsx       # Relance auth-only T+72h (done-for-you WhatsApp)
-│   ├── LastChanceSignupEmail.tsx   # Relance auth-only T+7j (urgence + promo 9€)
-│   ├── AutoSuggestRewardEmail.tsx  # Merchant sans programme J+5 (suggestion par shop_type)
-│   └── GracePeriodSetupEmail.tsx   # Grace period + pas configure (empathie + WhatsApp)
-│
-├── scripts/
-│   ├── send-test-email.ts        # Script test email unitaire
-│   └── send-product-update.ts    # Script envoi bulk ProductUpdateEmail
+│   └── EbookEmail.tsx             # Telechargement ebook
 │
 ├── hooks/
-│   ├── useInView.ts     # Hook IntersectionObserver (landing)
-│   └── useInstallPrompt.ts # Hook PWA install (beforeinstallprompt, iOS detection)
+│   └── useInView.ts     # Hook IntersectionObserver (landing)
 │
 ├── types/index.ts        # Types TypeScript
 ├── contexts/             # React contexts
-└── middleware.ts         # Auth middleware + PWA manifest rewrite (/dashboard → Qarte Pro)
+└── middleware.ts         # Auth middleware
 
 docs/
 ├── context.md            # Contexte projet (ce fichier)
-├── AUDIT-SECURITE.md     # Audit sécurité complet (senior security engineer, score 78/100)
-├── AUDIT-MARKETING.md    # Audit marketing complet (CMO senior, score 5/10, plan 90j)
-└── AUDIT-SCALABILITE.md  # Audit scalabilité complet (senior backend, paliers 100→1000+)
+├── ROADMAP-AUDIT.md      # Roadmap, audit, emails, changelog (document unifie)
+├── PLAN-MARKETING.md     # Plan marketing & acquisition (audit CMO, phases 0→1000)
+└── roadmap/              # Backups code (mode article, scheduled push)
 
 supabase/
-└── migrations/           # 39 migrations SQL
+└── migrations/           # 33 migrations SQL
     ├── 001-025           # Schema initial + fixes
-    ├── 026               # Trial period 15 jours (original)
+    ├── 026               # Trial period 15 jours
     ├── 027               # Spelling cancelled→canceled
     ├── 028               # Reactivation email tracking
     ├── 029               # Merchant country + E.164 phone migration
     ├── 030               # Shield + divers
     ├── 031               # last_seen_at column
     ├── 032               # Fix updated_at trigger (exclut last_seen_at)
-    ├── 033               # Add referral_code (parrainage merchant)
-    ├── 034               # Trial period 15j → 7j (nouveaux inscrits)
-    ├── 035               # Referrals table RLS policies
-    ├── 036               # no_contact + admin_notes columns
-    ├── 037               # Birthday gift (birthday_gift_enabled, birthday_gift_description, vouchers source + birth_month/birth_day)
-    ├── 038               # Restrict RLS policies (7 tables)
-    └── 039               # Schema drift fix (customers.merchant_id, loyalty_cards.rewards_earned)
+    └── 033               # Add referral_code (parrainage merchant)
 
 public/
 ├── images/              # Images statiques (mockups, temoignages, email-banner)
@@ -161,16 +142,13 @@ public/
 - `country` (MerchantCountry: 'FR' | 'BE' | 'CH' | 'LU', default 'FR')
 - `logo_url`, `primary_color`, `secondary_color`
 - `instagram_url`, `facebook_url`, `tiktok_url`, `booking_url`, `review_link`
-- `loyalty_mode` ('visit' — seul mode actif. 'article' existe en DB mais feature non implementee, voir F11 roadmap)
+- `loyalty_mode` ('visit' | 'article')
 - `stamps_required`, `reward_description`
 - `tier2_enabled`, `tier2_stamps_required`, `tier2_reward_description`
 - `referral_code` (VARCHAR 10, UNIQUE — ex: `QARTE-AB3K`)
 - `referral_program_enabled`, `referral_reward_referrer`, `referral_reward_referred`
-- `birthday_gift_enabled`, `birthday_gift_description`
 - `trial_ends_at`, `subscription_status`, `stripe_customer_id`, `stripe_subscription_id`
 - `shield_enabled` (Qarte Shield)
-- `no_contact` (boolean, default false — coupe toutes les communications)
-- `admin_notes` (text, nullable — notes admin libres)
 
 ### customers
 - `id`, `phone_number` (format E.164 sans +, ex: `33612345678`), `first_name`, `last_name`
@@ -186,17 +164,16 @@ public/
 - `status` ('confirmed' | 'pending' | 'rejected')
 - `ip_address`, `ip_hash`, `flagged_reason`
 
+### vouchers
+- `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
+- `reward_description`, `is_used`, `used_at`, `expires_at`
+
 ### referrals
 - `id`, `merchant_id`, `referrer_customer_id`, `referrer_card_id`
 - `referred_customer_id`, `referred_card_id`
 - `referred_voucher_id`, `referrer_voucher_id`
 - `status` ('pending' | 'completed')
 - UNIQUE `(merchant_id, referred_customer_id)` — 1 parrainage par filleul par merchant
-
-### vouchers
-- `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
-- `reward_description`, `is_used`, `used_at`, `expires_at`
-- `source` ('birthday' | 'referral') — origine du voucher
 
 ### Autres tables
 - `redemptions`, `point_adjustments`, `banned_numbers`
@@ -250,8 +227,8 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - `GET /api/stripe/payment-method` - Recuperer methode de paiement active
 
 ### Admin
-- `/api/admin/merchants/[id]` - Gestion commercants (GET stats, PATCH no_contact/admin_notes, DELETE)
-- `/api/admin/incomplete-signups` - Inscriptions incompletes (auth sans merchant, 30 jours)
+- `/api/admin/merchants/[id]` - Gestion commercants
+- `/api/admin/incomplete-signups` - Inscriptions incompletes (auth sans merchant, 48h)
 - `/api/admin/prospects` - Leads/prospects
 - `/api/admin/tasks` - Taches admin
 - `/api/admin/merchant-emails` - Emails merchants (auth admin)
@@ -264,7 +241,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Check-in par QR code (API parallelisee — 5 groupes Promise.all, ~300-600ms)
 - Accumulation de tampons/points
 - 2 paliers de recompenses
-- Mode visite (mode article prevu mais non implemente — F11 roadmap)
+- Mode visite ou mode article
 - Historique des passages
 - Suggestions de programme par type de commerce (MerchantSettingsForm)
 - 10 palettes couleurs (6 mobile + 4 desktop-only)
@@ -301,21 +278,12 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - **Email relance inscription incomplete:** Programme via Resend `scheduledAt` (+1h apres Phase 1)
   - Endpoint `/api/emails/schedule-incomplete` appele apres signUp
   - Email ID stocke dans `user_metadata`, annule si Phase 2 completee
-- Admin : suivi des inscriptions incompletes dans `/admin/leads` (fenetre 30 jours)
+- Admin : suivi des inscriptions incompletes dans `/admin/leads`
 
-### Marketing (2 onglets)
-- **Onglet "Envoyer"** : Push notifications manuelles + 5 templates beaute (creneau dispo, nouveau soin, offre beaute, offre duo, creneau calme)
-- **Onglet "Automatisations"** : Cadeau anniversaire (toggle + config description + cron J-3 voucher + push jour J), 3 placeholders "Bientot"
-- Push programmees (10h et 18h)
+### Marketing
+- Notifications push programmees (10h et 18h)
 - Kit reseaux sociaux (SocialMediaTemplate, visuel 4:5 + legendes Instagram)
 - Ebook telechargeable (lead generation)
-
-### Cadeau Anniversaire
-- Toggle activation dans Marketing > Automatisations
-- Client saisit sa date (mois + jour) sur la carte fidelite, section masquee apres enregistrement
-- Voucher anniversaire cree J-3 via cron morning
-- Notification push envoyee le jour J
-- Voucher utilisable en self-service sur la carte client
 
 ### Parrainage Client
 - Code parrainage unique par carte fidelite (`referral_code` 6 caracteres)
@@ -342,19 +310,6 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Page detail merchant (`/admin/merchants/[id]`) : section "Liens & Reseaux" (Instagram, Facebook, TikTok, reservation, avis Google) cliquables
 - Badge parrainage actif/inactif dans les badges statut
 - Section "Progression onboarding" : 5 items checklist + barre de progression par merchant
-- Menu WhatsApp repliable : 2 onglets Marketing (12 messages contextuels) + Tuto (10 messages explication fonctionnalites)
-- Toggle "Ne pas contacter" (`no_contact`) + champ "Notes admin" editables
-- Badge NC (rouge) dans la liste merchants si `no_contact = true`
-- WhatsApp masque automatiquement pour merchants `no_contact`
-- Crons emails : merchants `no_contact` exclus de toutes les communications (19 queries filtrees)
-
-### PWA Merchant (Qarte Pro)
-- Dashboard installable via manifest dedie `/api/manifest/pro`
-- Middleware rewrite : `/manifest.webmanifest` sert le manifest Pro si Referer contient `/dashboard`
-- Icone Q gradient indigo→rose avec badge "PRO"
-- Banner install sticky (mobile, apres 1er scan recu, dismiss localStorage)
-- Instructions iOS partagees (`IOSInstallInstructions`)
-- Service worker scope `/dashboard`
 
 ### Programmes Membres
 - Cartes de membre avec validite
@@ -491,25 +446,23 @@ npm run email
 
 | Fichier | Description |
 |---------|-------------|
-| `src/app/page.tsx` | Landing page (9 sections: Hero, Referral, AIReengagement, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer) |
-| `src/components/landing/` | 14 composants landing (Hero, Referral, AIReengagement, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer + utilitaires) |
-| `src/middleware.ts` | Protection routes authentifiees + manifest PWA rewrite |
+| `src/app/page.tsx` | Landing page (8 sections: Hero, Referral, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer) |
+| `src/components/landing/` | 13 composants landing (Hero, Referral, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer + utilitaires) |
+| `src/middleware.ts` | Protection routes authentifiees |
 | `src/lib/supabase.ts` | Client Supabase |
 | `src/lib/stripe.ts` | Client Stripe (mensuel + annuel) |
-| `src/lib/email.ts` | Envoi emails (Resend, factory `sendEmail<P>()` + `scheduleEmail<P>()`) |
-| `src/lib/api-helpers.ts` | Helper `authorizeAdmin()` (auth + rate limit) pour routes admin |
-| `src/lib/analytics.ts` | Tracking events (factory `createTracker()`, 25+ trackers) |
+| `src/lib/email.ts` | Envoi emails (Resend) |
 | `src/types/index.ts` | Definitions TypeScript |
 | `src/components/analytics/FacebookPixel.tsx` | Tracking FB |
 | `tailwind.config.ts` | Config Tailwind (couleurs, fonts) |
 | `next.config.mjs` | Config Next.js (securite, images) |
-| `src/app/api/cron/morning/route.ts` | Cron principal (sections isolees try/catch, helpers `processEmailSection()` + `runStandardEmailSection()`) |
+| `src/app/api/cron/morning/route.ts` | Cron principal (4 taches) |
 | `src/app/api/stripe/webhook/route.ts` | Webhook Stripe (5 events, machine d'etats) |
 | `src/app/api/stripe/checkout/route.ts` | Checkout Stripe (verification customer) |
 | `src/app/api/referrals/route.ts` | API parrainage client (GET info + POST inscription) |
 | `src/app/api/vouchers/use/route.ts` | API consommation voucher + auto-creation parrain |
 | `src/app/dashboard/referrals/page.tsx` | Dashboard parrainage (config + stats + tableau) |
-| `supabase/migrations/` | 39 migrations SQL |
+| `supabase/migrations/` | 33 migrations SQL |
 
 ---
 
@@ -551,11 +504,11 @@ npm run email
 ## 14. Business Model
 
 ### Tarification
-- **Essai gratuit:** 7 jours
+- **Essai gratuit:** 15 jours
 - **Abonnement mensuel:** 19€/mois
 - **Abonnement annuel:** 190€/an (equivalent ~15,83€/mois, -17%)
-- **Periode de grace:** 3 jours apres expiration (lecture seule)
-- **Suppression:** Donnees supprimees 3 jours apres expiration
+- **Periode de grace:** 7 jours apres expiration (lecture seule)
+- **Suppression:** Donnees supprimees 7 jours apres expiration
 
 ### Cible
 - Salons de coiffure, barbiers
@@ -594,10 +547,6 @@ npm run email
   - 3 cartes visuelles (Elle partage → Son amie rejoint → Les 2 recompensees)
   - Stats (x3 bouche-a-oreille, +25% nouveaux client(e)s, 0€ de pub)
   - CTA "Activer le parrainage"
-- AIReengagement : "Vos clients reviennent tous seuls"
-  - Mockup iPhone avec 3 notifications push animees (inactivite, anniversaire, Saint-Valentin)
-  - 3 feature rows (Relance inactivite, Anniversaires, Evenements speciaux)
-  - Badge "Autopilot IA"
 - Features : "Notifiez vos client(e)s au meilleur moment"
   - CSS Grid 3x3 desktop (4 step cards + stat 78% centre + fleches coins)
   - Mobile : flow vertical avec ChevronDown
@@ -606,7 +555,6 @@ npm run email
 - Testimonials, Pricing (10 features dont parrainage + reservation), FAQ (8 questions dont parrainage)
 - MobileStickyCta : barre sticky bottom mobile (indigo→violet)
 - ScrollToTopButton : bottom-24 mobile (au-dessus sticky), bottom-6 desktop
-- Footer : liens sociaux Instagram, Facebook, TikTok (icones SVG cliquables)
 - Ecriture inclusive : client(e)s partout
 - ComparisonSection retiree du flow (fichier conserve)
 - Blog SEO : 3 articles (coiffure, onglerie, institut) avec images
@@ -622,16 +570,12 @@ npm run email
 
 ### Admin (`/admin`)
 - Dashboard : metriques startup (MRR, churn, ARPU, LTV) + segments d'action lifecycle (trial expiring, inactive, canceling, past_due)
-- Merchants : liste, filtres par statut + pays, actions rapides, activite, alertes, export CSV
-- Leads : onglet Incompletes (30 jours) + Aujourd'hui + Messages
+- Merchants : liste, filtres par statut + pays, actions rapides, activite, alertes
+- Leads : onglet Incompletes + Aujourd'hui + Messages
 - Analytics, Metriques, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
 - Activity : vue "hier" (`?date=yesterday`) pour suivi activite merchants
-- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badges parrainage + anniversaire, progression onboarding, menu WhatsApp 2 onglets (Marketing 12 msg + Tuto 10 msg), toggle no_contact + notes admin
-- Merchant detail : cartes cadeau anniversaire (si actif) + parrainage (si actif) avec details config
-- Merchants liste : badge NC rouge si no_contact, WhatsApp masque, messages contextuels par lifecycle
-- Activity : suivi scans, inscriptions, recompenses, nouveaux clients, messages, vouchers (anniversaire + parrainage). Toutes les lignes avec merchant cliquables vers le detail.
-- Defi activation : section collapsible sur la homepage admin, merchants cliquables vers le detail
+- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badge parrainage, progression onboarding
 - **Toutes les stats excluent les comptes admin** (via `super_admins` table)
 
 ### Dashboard (`/dashboard`)
@@ -640,7 +584,7 @@ npm run email
 - Gestion programme fidelite (suggestions par shop_type, 10 palettes couleurs)
 - Page QR code & Kit promo (2 onglets : QR code + Kit reseaux sociaux avec SocialMediaTemplate)
 - Gestion clients
-- Marketing (2 onglets : Envoyer push / Automatisations avec cadeau anniversaire)
+- Marketing (push notifications)
 - Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe + prix journalier (0,63€/jour mensuel, 0,52€/jour annuel)
 - Parrainage merchant : encart en haut de Settings (code QARTE-XXXX + copier + partager via Web Share API)
 - Parrainage client : page `/dashboard/referrals` (toggle, config recompenses, stats, tableau de suivi)
@@ -696,13 +640,13 @@ import type { Merchant } from '@/types';
 
 | Cron | Horaire | Description |
 |------|---------|-------------|
-| `/api/cron/morning` | 09:00 UTC | Emails essai, rappel programme, relance auth-only, auto-suggest reward, grace period setup, rappels pending, push 10h |
+| `/api/cron/morning` | 09:00 UTC | Emails essai, rappel programme J+1, rappels pending, push 10h |
 | `/api/cron/evening` | 18:00 UTC | Push notifications programmees 18h |
 | `/api/cron/reactivation` | 10:00 UTC | Emails win-back J+7/14/30 |
 
 ---
 
-## 19. Emails Transactionnels (31 templates actifs)
+## 19. Emails Transactionnels (26 templates)
 
 ### Onboarding & Activation
 | Email | Declencheur |
@@ -710,17 +654,12 @@ import type { Merchant } from '@/types';
 | WelcomeEmail | Inscription commercant (Phase 2 completee) |
 | IncompleteSignupEmail | Phase 1 sans Phase 2 (+1h via Resend scheduledAt) |
 | IncompleteSignupReminder2Email | Relance #2 (+3h via Resend scheduledAt) |
-| GuidedSignupEmail | Auth-only T+24h, guide pas a pas (cron morning) |
-| SetupForYouEmail | Auth-only T+72h, done-for-you WhatsApp (cron morning) |
-| LastChanceSignupEmail | Auth-only T+7j, urgence + promo 9€ (cron morning) |
 | ProgramReminderEmail | Programme non configure J+1 (cron morning) |
 | ProgramReminderDay2Email | Programme non configure J+2, personnalise par shop_type (cron morning) |
 | ProgramReminderDay3Email | Programme non configure J+3, urgence + done-for-you (cron morning) |
 | QRCodeEmail | QR code + kit reseaux sociaux (apres config programme, endpoint `/api/emails/qr-code` + cron morning). Section kit conditionnelle sur `rewardDescription`. |
 | FirstClientScriptEmail | Script verbal personnalise par shop_type J+2 post-config (cron morning) |
 | QuickCheckEmail | Check-in J+4 si 0 scans — 3 options diagnostic (cron morning) |
-| AutoSuggestRewardEmail | Merchant sans programme J+5, suggestion par shop_type (cron morning) |
-| GracePeriodSetupEmail | Grace period + programme non configure, WhatsApp setup (cron morning) |
 
 ### Engagement & Milestones
 | Email | Declencheur |
@@ -729,7 +668,7 @@ import type { Merchant } from '@/types';
 | Day5CheckinEmail | Check-in J+5 — bilan premiere semaine, skip si 0 scans (cron morning) |
 | FirstRewardEmail | Premiere recompense debloquee (cron morning) |
 | Tier2UpsellEmail | Upsell palier 2 VIP — 10+ clients (cron morning) |
-| ~~WeeklyDigestEmail~~ | ~~Bilan hebdomadaire~~ — **DESACTIVE** (frustrant si chiffres faibles) |
+| WeeklyDigestEmail | Bilan hebdomadaire — scans, clients, recompenses (cron morning) |
 | PendingPointsEmail | Passages en attente J+0/1/2/3 — Shield (cron morning) |
 
 ### Retention & Trial
@@ -749,11 +688,6 @@ import type { Merchant } from '@/types';
 | SubscriptionCanceledEmail | customer.subscription.updated → canceling (webhook Stripe, date de fin Stripe) |
 | SubscriptionReactivatedEmail | customer.subscription.updated → canceling→active (webhook Stripe, reactivation via portail) |
 | ReactivationEmail | Win-back J+7/14/30 — codes promo QARTE50/QARTEBOOST/QARTELAST (cron reactivation) |
-
-### Newsletter
-| Email | Declencheur |
-|-------|-------------|
-| ProductUpdateEmail | Envoi manuel bulk (script `send-product-update.ts`). Annonce nouveautes : parrainage, reseaux sociaux, nouveau design, blog, code parrainage merchant. |
 
 ### Autre
 | Email | Declencheur |
@@ -775,9 +709,8 @@ export const EMAIL_HEADERS = {
 | Fichier | Description |
 |---------|-------------|
 | `docs/context.md` | Contexte projet (ce fichier) |
-| `docs/AUDIT-SECURITE.md` | Audit sécurité complet (score 78/100, 4 HIGH, 8 MEDIUM, 12 LOW) |
-| `docs/AUDIT-MARKETING.md` | Audit marketing complet (score 5/10, plan 90 jours, KPIs) |
-| `docs/AUDIT-SCALABILITE.md` | Audit scalabilité complet (paliers 100→1000+, plan optimisation) |
+| `docs/ROADMAP-AUDIT.md` | Roadmap, audit, emails, changelog (document unifie) |
+| `docs/PLAN-MARKETING.md` | Plan marketing & acquisition (audit CMO, phases 0→1000) |
 
 ---
 
@@ -790,4 +723,4 @@ export const EMAIL_HEADERS = {
 | Push/envoi | ~100 (non optimise) |
 | Clients/marchand | ~2,000 |
 
-*Pour plus de details, voir `docs/AUDIT-SCALABILITE.md`*
+*Pour plus de details, voir `docs/ROADMAP-AUDIT.md` partie 3 (Scalabilite)*

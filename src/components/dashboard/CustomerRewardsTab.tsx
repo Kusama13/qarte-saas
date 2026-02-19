@@ -279,7 +279,7 @@ export function CustomerRewardsTab({
                     <Trophy className={`w-3.5 h-3.5 ${canRedeemTier2 ? 'text-violet-600' : 'text-gray-400'}`} />
                     <span className="text-sm font-semibold text-gray-900">Palier 2</span>
                     <span className="text-xs text-gray-400">
-                      {currentStamps}/{tier2StampsRequired}
+                      {Math.max(0, Math.min(currentStamps - stampsRequired, tier2StampsRequired - stampsRequired))}/{tier2StampsRequired - stampsRequired}
                     </span>
                   </div>
                 </div>
@@ -290,7 +290,7 @@ export function CustomerRewardsTab({
                     className={`h-full rounded-full transition-all ${
                       canRedeemTier2 ? 'bg-violet-500' : 'bg-gray-300'
                     }`}
-                    style={{ width: `${Math.min((currentStamps / tier2StampsRequired) * 100, 100)}%` }}
+                    style={{ width: `${Math.min(Math.max(0, (currentStamps - stampsRequired) / (tier2StampsRequired - stampsRequired)) * 100, 100)}%` }}
                   />
                 </div>
 

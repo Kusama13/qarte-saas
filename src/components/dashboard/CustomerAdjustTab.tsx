@@ -88,8 +88,9 @@ export function CustomerAdjustTab({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const maxAdjustment = stampsRequired - 1 - currentStamps;
-  const newStamps = Math.min(Math.max(0, currentStamps + adjustment), stampsRequired - 1);
+  const effectiveMax = (tier2Enabled && tier2StampsRequired) ? tier2StampsRequired - 1 : stampsRequired - 1;
+  const maxAdjustment = effectiveMax - currentStamps;
+  const newStamps = Math.min(Math.max(0, currentStamps + adjustment), effectiveMax);
 
   const handleSubmit = async () => {
     if (adjustment === 0) {
@@ -148,8 +149,8 @@ export function CustomerAdjustTab({
             icon={<Trophy className={`w-4 h-4 ${currentStamps >= tier2StampsRequired ? 'text-violet-500' : 'text-gray-400'}`} />}
             label="Palier 2"
             description={tier2RewardDescription || 'Recompense palier 2'}
-            current={currentStamps}
-            required={tier2StampsRequired}
+            current={Math.max(0, Math.min(currentStamps - stampsRequired, tier2StampsRequired - stampsRequired))}
+            required={tier2StampsRequired - stampsRequired}
             reached={currentStamps >= tier2StampsRequired}
             reachedBadgeClass="text-violet-600 bg-violet-50"
             reachedTextClass="text-violet-600"
@@ -209,7 +210,7 @@ export function CustomerAdjustTab({
           className="text-center text-lg"
         />
         <p className="mt-1 text-xs text-gray-400">
-          Positif pour ajouter, negatif pour retirer (max {stampsRequired - 1} au total)
+          Positif pour ajouter, negatif pour retirer (max {effectiveMax} au total)
         </p>
       </div>
 

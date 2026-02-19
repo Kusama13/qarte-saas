@@ -366,11 +366,11 @@ export default function CustomersPage() {
                             <div className="w-12 h-1 bg-gray-100 rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full ${isTier2Ready ? 'bg-violet-500' : 'bg-gray-300'}`}
-                                style={{ width: `${Math.min((card.current_stamps / (merchant.tier2_stamps_required || 20)) * 100, 100)}%` }}
+                                style={{ width: `${Math.min(Math.max(0, (card.current_stamps - (merchant.stamps_required || 10)) / ((merchant.tier2_stamps_required || 20) - (merchant.stamps_required || 10))) * 100, 100)}%` }}
                               />
                             </div>
                             <span className={`text-[10px] font-bold tabular-nums ${isTier2Ready ? 'text-violet-600' : 'text-gray-400'}`}>
-                              {card.current_stamps}/{merchant.tier2_stamps_required}
+                              {Math.max(0, Math.min(card.current_stamps - (merchant.stamps_required || 10), (merchant.tier2_stamps_required || 20) - (merchant.stamps_required || 10)))}/{(merchant.tier2_stamps_required || 20) - (merchant.stamps_required || 10)}
                             </span>
                           </div>
                         </div>
@@ -516,11 +516,11 @@ export default function CustomersPage() {
                                         ? 'bg-violet-500'
                                         : 'bg-gradient-to-r from-gray-300 to-gray-400'
                                     }`}
-                                    style={{ width: `${Math.min((card.current_stamps / (merchant.tier2_stamps_required || 20)) * 100, 100)}%` }}
+                                    style={{ width: `${Math.min(Math.max(0, (card.current_stamps - (merchant.stamps_required || 10)) / ((merchant.tier2_stamps_required || 20) - (merchant.stamps_required || 10))) * 100, 100)}%` }}
                                   />
                                 </div>
                                 <span className={`text-[10px] font-bold tabular-nums ${card.current_stamps >= (merchant.tier2_stamps_required || 20) ? 'text-violet-600' : 'text-gray-400'}`}>
-                                  {card.current_stamps}/{merchant.tier2_stamps_required}
+                                  {Math.max(0, Math.min(card.current_stamps - (merchant.stamps_required || 10), (merchant.tier2_stamps_required || 20) - (merchant.stamps_required || 10)))}/{(merchant.tier2_stamps_required || 20) - (merchant.stamps_required || 10)}
                                 </span>
                               </div>
                             </div>

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('id, stamps_required')
+      .select('id, stamps_required, tier2_enabled, tier2_stamps_required')
       .eq('id', merchant_id)
       .eq('user_id', user.id)
       .single();
@@ -73,8 +73,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Cap: ajustement manuel ne doit jamais atteindre le seuil de recompense
-    if (adjustment > 0 && merchant.stamps_required && newStamps >= merchant.stamps_required) {
-      newStamps = merchant.stamps_required - 1;
+    const effectiveMax = (merchant.tier2_enabled && merchant.tier2_stamps_required)
+      ? merchant.tier2_stamps_required - 1
+      : (merchant.stamps_required ? merchant.stamps_required - 1 : Infinity);
+    if (adjustment > 0 && newStamps > effectiveMax) {
+      newStamps = effectiveMax;
     }
 
     const { error: updateError } = await supabase
