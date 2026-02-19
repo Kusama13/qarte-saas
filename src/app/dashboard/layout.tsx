@@ -219,7 +219,10 @@ function DashboardLayoutContent({
             </div>
           )}
 
-          <AdminAnnouncementBanner />
+          {/* Annonces admin — sidebar desktop uniquement */}
+          <div className="hidden lg:block">
+            <AdminAnnouncementBanner variant="sidebar" />
+          </div>
 
           <nav className="flex-1 px-3 py-3 lg:px-4 lg:py-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
@@ -286,7 +289,13 @@ function DashboardLayoutContent({
       </aside>
 
       <main className="lg:ml-72 min-h-screen">
-        <div className="px-4 pt-14 pb-20 lg:pt-8 lg:px-8 lg:pb-8">{children}</div>
+        <div className="px-4 pt-14 pb-20 lg:pt-8 lg:px-8 lg:pb-8">
+          {/* Annonces admin — banner mobile uniquement */}
+          <div className="lg:hidden">
+            <AdminAnnouncementBanner variant="banner" />
+          </div>
+          {children}
+        </div>
       </main>
 
       <InstallAppBanner />

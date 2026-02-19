@@ -10,7 +10,8 @@ CREATE TABLE IF NOT EXISTS admin_announcements (
   published_at TIMESTAMPTZ,
   duration_days INTEGER, -- NULL = no expiry
   expires_at TIMESTAMPTZ, -- computed on publish: published_at + duration_days
-  is_published BOOLEAN DEFAULT false
+  is_published BOOLEAN DEFAULT false,
+  link_url TEXT -- optional clickable link
 );
 
 CREATE INDEX IF NOT EXISTS idx_admin_announcements_published

@@ -14,6 +14,7 @@ import {
   EyeOff,
   X,
   Users,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +32,7 @@ interface Announcement {
   expires_at: string | null;
   is_published: boolean;
   dismissal_count: number;
+  link_url: string | null;
 }
 
 // ── Config ──
@@ -88,6 +90,7 @@ export default function AdminAnnouncementsPage() {
   const [type, setType] = useState<Announcement['type']>('info');
   const [targetFilter, setTargetFilter] = useState<Announcement['target_filter']>('all');
   const [durationDays, setDurationDays] = useState<number>(7);
+  const [linkUrl, setLinkUrl] = useState('');
 
   const fetchAnnouncements = useCallback(async () => {
     try {
@@ -120,6 +123,7 @@ export default function AdminAnnouncementsPage() {
           type,
           target_filter: targetFilter,
           duration_days: durationDays === 0 ? null : durationDays,
+          link_url: linkUrl.trim() || null,
         }),
       });
       if (!res.ok) {
@@ -132,6 +136,7 @@ export default function AdminAnnouncementsPage() {
       setType('info');
       setTargetFilter('all');
       setDurationDays(7);
+      setLinkUrl('');
       setShowForm(false);
       await fetchAnnouncements();
     } catch (err) {
@@ -259,6 +264,18 @@ export default function AdminAnnouncementsPage() {
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Lien (optionnel)</label>
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="https://exemple.com/page"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#5167fc]/20 focus:border-[#5167fc]"
+              />
+              <p className="text-xs text-gray-400 mt-1">L&apos;annonce sera cliquable et redirigera vers ce lien</p>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Type */}
               <div>
@@ -378,6 +395,17 @@ export default function AdminAnnouncementsPage() {
                       </span>
                     </div>
                     <p className="text-sm text-gray-600 mt-1 line-clamp-2">{a.body}</p>
+                    {a.link_url && (
+                      <a
+                        href={a.link_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 mt-1 text-xs text-[#5167fc] hover:underline"
+                      >
+                        <ExternalLink className="w-3 h-3" />
+                        {a.link_url.replace(/^https?:\/\//, '').slice(0, 40)}
+                      </a>
+                    )}
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
                       <span>Cible : {TARGET_LABELS[a.target_filter]}</span>
                       <span>·</span>

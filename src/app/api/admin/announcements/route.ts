@@ -15,6 +15,7 @@ const createAnnouncementSchema = z.object({
   type: z.enum(['info', 'warning', 'success', 'urgent']),
   target_filter: z.enum(['all', 'trial', 'active', 'pwa_installed', 'admin']),
   duration_days: z.number().int().positive().optional().nullable(),
+  link_url: z.string().url('URL invalide').optional().nullable(),
 });
 
 const updateAnnouncementSchema = z.object({
@@ -23,6 +24,7 @@ const updateAnnouncementSchema = z.object({
   type: z.enum(['info', 'warning', 'success', 'urgent']).optional(),
   target_filter: z.enum(['all', 'trial', 'active', 'pwa_installed', 'admin']).optional(),
   duration_days: z.number().int().positive().optional().nullable(),
+  link_url: z.string().url('URL invalide').optional().nullable(),
   is_published: z.boolean().optional(),
 });
 
@@ -119,6 +121,7 @@ export async function POST(request: NextRequest) {
         type: validation.data.type,
         target_filter: validation.data.target_filter,
         duration_days: validation.data.duration_days ?? null,
+        link_url: validation.data.link_url ?? null,
         is_published: false,
       })
       .select()
