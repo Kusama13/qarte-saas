@@ -14,7 +14,7 @@ import {
   Shield,
   MessageCircle,
   AlertTriangle,
-
+  Smartphone,
   CalendarX,
   Download,
 } from 'lucide-react';
@@ -149,7 +149,7 @@ function formatPhoneForWhatsApp(phone: string) {
 // --- Shared Sub-Components ---
 
 /** Badges shown next to merchant name (Admin, No-Contact, Pending points) */
-function MerchantBadges({ isAdmin, noContact, pending }: { isAdmin: boolean; noContact: boolean | null; pending: number }) {
+function MerchantBadges({ isAdmin, noContact, pending, pwaInstalled }: { isAdmin: boolean; noContact: boolean | null; pending: number; pwaInstalled: boolean }) {
   return (
     <>
       {isAdmin && (
@@ -169,6 +169,12 @@ function MerchantBadges({ isAdmin, noContact, pending }: { isAdmin: boolean; noC
         >
           <Shield className="w-3 h-3" />
           {pending}
+        </span>
+      )}
+      {pwaInstalled && (
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-green-100 text-green-700 rounded-full flex-shrink-0 flex items-center gap-0.5">
+          <Smartphone className="w-3 h-3" />
+          PWA
         </span>
       )}
     </>
@@ -259,6 +265,7 @@ export default function AdminMerchantsPage() {
   const [countryFilter, setCountryFilter] = useState<'all' | MerchantCountry>('all');
   const [shopTypeFilter, setShopTypeFilter] = useState<'all' | ShopType>('all');
   const [showAdmins, setShowAdmins] = useState(false);
+  const [pwaFilter, setPwaFilter] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -344,6 +351,11 @@ export default function AdminMerchantsPage() {
       filtered = filtered.filter((m) => m.shop_type === shopTypeFilter);
     }
 
+    // PWA filter
+    if (pwaFilter) {
+      filtered = filtered.filter((m) => !!m.pwa_installed_at);
+    }
+
     // Search (accent-insensitive)
     if (searchQuery) {
       const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -372,13 +384,13 @@ export default function AdminMerchantsPage() {
         if (a.lifecycle.urgency !== b.lifecycle.urgency) return a.lifecycle.urgency - b.lifecycle.urgency;
         return new Date(b.merchant.created_at).getTime() - new Date(a.merchant.created_at).getTime();
       });
-  }, [data, searchQuery, statusFilter, countryFilter, shopTypeFilter, showAdmins, superAdminIds]);
+  }, [data, searchQuery, statusFilter, countryFilter, shopTypeFilter, pwaFilter, showAdmins, superAdminIds]);
 
   const [waDropdown, setWaDropdown] = useState<string | null>(null);
   const [displayCount, setDisplayCount] = useState(50);
 
   // Reset pagination when filters change
-  useEffect(() => { setDisplayCount(50); }, [searchQuery, statusFilter, countryFilter, shopTypeFilter, showAdmins]);
+  useEffect(() => { setDisplayCount(50); }, [searchQuery, statusFilter, countryFilter, shopTypeFilter, pwaFilter, showAdmins]);
 
   const displayedMerchants = useMemo(() => sortedMerchants.slice(0, displayCount), [sortedMerchants, displayCount]);
 
@@ -578,6 +590,18 @@ export default function AdminMerchantsPage() {
               {c === 'all' ? 'Pays' : c}
             </button>
           ))}
+          <button
+            onClick={() => setPwaFilter(!pwaFilter)}
+            className={cn(
+              "px-3 py-2 text-xs sm:text-sm font-medium rounded-xl transition-colors whitespace-nowrap flex items-center gap-1.5 flex-shrink-0",
+              pwaFilter
+                ? "bg-green-600 text-white"
+                : "bg-white text-green-600 border border-green-200 hover:bg-green-50",
+            )}
+          >
+            <Smartphone className="w-3.5 h-3.5" />
+            PWA installée
+          </button>
           {stats.adminCount > 0 && (
             <button
               onClick={() => setShowAdmins(!showAdmins)}
@@ -650,7 +674,7 @@ export default function AdminMerchantsPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <p className="font-medium text-gray-900 truncate max-w-[200px]">{merchant.shop_name}</p>
-                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} />
+                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pwaInstalled={!!merchant.pwa_installed_at} />
                             </div>
                             {merchant.shop_address && (
                               <p className="text-xs text-gray-400 truncate max-w-[250px]">{merchant.shop_address}</p>
@@ -736,7 +760,7 @@ export default function AdminMerchantsPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-gray-900 truncate">{merchant.shop_name}</p>
-                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} />
+                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pwaInstalled={!!merchant.pwa_installed_at} />
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className={cn("px-2 py-0.5 text-[10px] font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>

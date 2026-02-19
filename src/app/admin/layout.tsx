@@ -18,6 +18,7 @@ import {
   Wallet,
   UserPlus,
   Activity,
+  Bell,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -29,6 +30,7 @@ const navItems = [
   { href: '/admin/activite', icon: Activity, label: 'Activité' },
   { href: '/admin/metriques', icon: TrendingUp, label: 'Métriques' },
   { href: '/admin/depenses', icon: Wallet, label: 'Dépenses' },
+  { href: '/admin/announcements', icon: Bell, label: 'Annonces' },
 ];
 
 export default function AdminLayout({

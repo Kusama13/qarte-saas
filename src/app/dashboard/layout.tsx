@@ -23,6 +23,8 @@ import { getSupabase } from '@/lib/supabase';
 import { getTrialStatus } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
+import InstallAppBanner from '@/components/dashboard/InstallAppBanner';
+import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBanner';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50' },
@@ -79,6 +81,7 @@ function DashboardLayoutContent({
       router.push('/dashboard/subscription');
     }
   }, [shouldRedirect, router]);
+
 
   if (loading) {
     return (
@@ -216,6 +219,8 @@ function DashboardLayoutContent({
             </div>
           )}
 
+          <AdminAnnouncementBanner />
+
           <nav className="flex-1 px-3 py-3 lg:px-4 lg:py-4 space-y-1 overflow-y-auto">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
@@ -283,6 +288,8 @@ function DashboardLayoutContent({
       <main className="lg:ml-72 min-h-screen">
         <div className="px-4 pt-14 pb-20 lg:pt-8 lg:px-8 lg:pb-8">{children}</div>
       </main>
+
+      <InstallAppBanner />
     </div>
   );
 }

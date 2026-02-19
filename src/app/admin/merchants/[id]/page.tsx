@@ -32,6 +32,7 @@ import {
   ChevronDown,
   Ban,
   StickyNote,
+  Smartphone,
   Loader2 as Loader2Icon,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -78,6 +79,8 @@ interface Merchant {
   // Admin
   no_contact: boolean;
   admin_notes: string | null;
+  // PWA
+  pwa_installed_at: string | null;
 }
 
 
@@ -922,7 +925,7 @@ export default function MerchantDetailPage() {
       </div>
 
       {/* Stats - Row 2: Push & Marketing */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
         <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-50">
@@ -953,6 +956,21 @@ export default function MerchantDetailPage() {
             <div>
               <p className={cn("text-2xl font-bold", stats.pendingPoints > 0 ? "text-amber-700" : "text-gray-900")}>{stats.pendingPoints}</p>
               <p className="text-sm text-gray-500">Points en attente</p>
+            </div>
+          </div>
+        </div>
+        <div className={cn("p-5 rounded-lg shadow-md border", merchant.pwa_installed_at ? "bg-green-50 border-green-200" : "bg-white border-gray-100")}>
+          <div className="flex items-center gap-3">
+            <div className={cn("flex items-center justify-center w-10 h-10 rounded-lg", merchant.pwa_installed_at ? "bg-green-100" : "bg-gray-50")}>
+              <Smartphone className={cn("w-5 h-5", merchant.pwa_installed_at ? "text-green-600" : "text-gray-400")} />
+            </div>
+            <div>
+              <p className={cn("text-2xl font-bold", merchant.pwa_installed_at ? "text-green-700" : "text-gray-900")}>
+                {merchant.pwa_installed_at
+                  ? new Date(merchant.pwa_installed_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+                  : '—'}
+              </p>
+              <p className="text-sm text-gray-500">PWA Pro {merchant.pwa_installed_at ? 'Installée' : 'Non installée'}</p>
             </div>
           </div>
         </div>

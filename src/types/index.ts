@@ -86,6 +86,7 @@ export interface Merchant {
   last_seen_at: string | null;
   no_contact: boolean;
   admin_notes: string | null;
+  pwa_installed_at: string | null;
 }
 
 export interface Customer {
