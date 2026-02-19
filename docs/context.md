@@ -7,7 +7,7 @@
 - **URL:** getqarte.com
 - **Version:** 0.1.0
 - **Langue:** Francais
-- **Essai:** 15 jours gratuits
+- **Essai:** 7 jours gratuits
 - **Prix:** 19€/mois ou 190€/an
 
 ---
@@ -506,7 +506,7 @@ npm run email
 ## 14. Business Model
 
 ### Tarification
-- **Essai gratuit:** 15 jours
+- **Essai gratuit:** 7 jours
 - **Abonnement mensuel:** 19€/mois
 - **Abonnement annuel:** 190€/an (equivalent ~15,83€/mois, -17%)
 - **Periode de grace:** 7 jours apres expiration (lecture seule)

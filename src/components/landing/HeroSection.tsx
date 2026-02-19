@@ -145,7 +145,7 @@ export function HeroSection() {
                 onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); }}
                 className="group relative flex items-center justify-center px-7 py-4 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
-                <span className="relative z-10">Essayer gratuitement</span>
+                <span className="relative z-10">Essayer 7 jours gratuit</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
               <p className="text-xs text-gray-400 font-medium mt-2 text-center">En 2 mn, sans CB.</p>
