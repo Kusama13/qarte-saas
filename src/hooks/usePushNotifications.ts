@@ -109,7 +109,7 @@ export function usePushNotifications({
         setPushSubscribed(true);
         setPushPermission('granted');
         localStorage.setItem('qarte_push_subscribed', 'true');
-        trackPushEnabled(customerId);
+        trackPushEnabled({ customer_id: customerId });
         setShowSuccessToast(true);
         setTimeout(() => setShowSuccessToast(false), 4000);
       } else {

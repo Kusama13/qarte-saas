@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { verifyAdminAuth } from '@/lib/admin-auth';
+import { authorizeAdmin } from '@/lib/api-helpers';
 import { sendQRCodeEmail } from '@/lib/email';
-import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
 import logger from '@/lib/logger';
 
-const supabaseAdmin = getSupabaseAdmin();
-
 export async function POST(request: NextRequest) {
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  const rateLimit = checkRateLimit(`admin-send-social-kit:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json({ error: 'Trop de requêtes' }, { status: 429 });
-  }
+  const auth = await authorizeAdmin(request, 'admin-send-social-kit');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const { merchantId } = await request.json();

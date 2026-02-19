@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { verifyAdminAuth } from '@/lib/admin-auth';
-import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { authorizeAdmin } from '@/lib/api-helpers';
 import { z } from 'zod';
 import logger from '@/lib/logger';
-
-const supabaseAdmin = getSupabaseAdmin();
 
 // ── Zod schemas ──
 
@@ -31,16 +27,9 @@ const updateAnnouncementSchema = z.object({
 // ── GET: List all announcements with dismissal counts ──
 
 export async function GET(request: NextRequest) {
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  const rateLimit = checkRateLimit(`admin-announcements:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)) } }
-    );
-  }
+  const auth = await authorizeAdmin(request, 'admin-announcements');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     // Fetch all announcements ordered by created_at DESC
@@ -91,16 +80,9 @@ export async function GET(request: NextRequest) {
 // ── POST: Create a new announcement ──
 
 export async function POST(request: NextRequest) {
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  const rateLimit = checkRateLimit(`admin-announcements:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)) } }
-    );
-  }
+  const auth = await authorizeAdmin(request, 'admin-announcements');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const body = await request.json();
@@ -142,16 +124,9 @@ export async function POST(request: NextRequest) {
 // ── PATCH: Update an announcement ──
 
 export async function PATCH(request: NextRequest) {
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  const rateLimit = checkRateLimit(`admin-announcements:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)) } }
-    );
-  }
+  const auth = await authorizeAdmin(request, 'admin-announcements');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const body = await request.json();
@@ -230,16 +205,9 @@ export async function PATCH(request: NextRequest) {
 // ── DELETE: Delete an announcement (only if not published) ──
 
 export async function DELETE(request: NextRequest) {
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  const rateLimit = checkRateLimit(`admin-announcements:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)) } }
-    );
-  }
+  const auth = await authorizeAdmin(request, 'admin-announcements');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const body = await request.json();

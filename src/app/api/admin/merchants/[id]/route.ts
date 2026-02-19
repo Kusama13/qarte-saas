@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { verifyAdminAuth } from '@/lib/admin-auth';
+import { authorizeAdmin } from '@/lib/api-helpers';
 import logger from '@/lib/logger';
 
 // GET - Récupérer toutes les données d'un merchant (H5: service_role pour bypasser RLS)
@@ -9,10 +8,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   // Vérifier que l'utilisateur est super admin
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
+  const auth = await authorizeAdmin(request);
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
-  const supabase = getSupabaseAdmin();
   const { id: merchantId } = await params;
 
   if (!merchantId) {
@@ -24,7 +23,7 @@ export async function GET(
 
   try {
     // Get full merchant data
-    const { data: merchant, error: merchantError } = await supabase
+    const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
       .select('*')
       .eq('id', merchantId)
@@ -38,7 +37,7 @@ export async function GET(
     let userEmail: string | null = null;
     if (merchant.user_id) {
       try {
-        const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(merchant.user_id);
         userEmail = userData?.user?.email || null;
       } catch {
         // Ignore auth errors
@@ -60,15 +59,15 @@ export async function GET(
       pushSentRes,
       loyaltyCardsRes,
     ] = await Promise.all([
-      supabase.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
-      supabase.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
-      supabase.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
-      supabase.from('redemptions').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
-      supabase.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('status', 'pending'),
-      supabase.from('member_programs').select('*, member_cards(count)').eq('merchant_id', merchantId).order('created_at', { ascending: false }),
-      supabase.from('pending_email_tracking').select('reminder_day, sent_at').eq('merchant_id', merchantId).order('sent_at', { ascending: false }),
-      supabase.from('push_history').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
-      supabase.from('loyalty_cards').select('customer_id, customers!inner(id, phone_number)').eq('merchant_id', merchantId),
+      supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
+      supabaseAdmin.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabaseAdmin.from('redemptions').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabaseAdmin.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('status', 'pending'),
+      supabaseAdmin.from('member_programs').select('*, member_cards(count)').eq('merchant_id', merchantId).order('created_at', { ascending: false }),
+      supabaseAdmin.from('pending_email_tracking').select('reminder_day, sent_at').eq('merchant_id', merchantId).order('sent_at', { ascending: false }),
+      supabaseAdmin.from('push_history').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabaseAdmin.from('loyalty_cards').select('customer_id, customers!inner(id, phone_number)').eq('merchant_id', merchantId),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -87,14 +86,14 @@ export async function GET(
       const phoneNumbers = [...phoneToCustomerId.keys()];
 
       if (phoneNumbers.length > 0) {
-        const { data: allCustomersWithPhone } = await supabase
+        const { data: allCustomersWithPhone } = await supabaseAdmin
           .from('customers')
           .select('id, phone_number')
           .in('phone_number', phoneNumbers);
 
         if (allCustomersWithPhone && allCustomersWithPhone.length > 0) {
           const allCustomerIds = allCustomersWithPhone.map(c => c.id);
-          const { data: subscriptions } = await supabase
+          const { data: subscriptions } = await supabaseAdmin
             .from('push_subscriptions')
             .select('customer_id')
             .in('customer_id', allCustomerIds);
@@ -146,10 +145,10 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
+  const auth = await authorizeAdmin(request);
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
-  const supabase = getSupabaseAdmin();
   const { id: merchantId } = await params;
 
   if (!merchantId) {
@@ -169,7 +168,7 @@ export async function PATCH(
 
     updates.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('merchants')
       .update(updates)
       .eq('id', merchantId)
@@ -193,10 +192,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   // Vérifier que l'utilisateur est super admin
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
+  const auth = await authorizeAdmin(request);
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
-  const supabase = getSupabaseAdmin();
   const { id: merchantId } = await params;
 
   if (!merchantId) {
@@ -208,7 +207,7 @@ export async function DELETE(
 
   try {
     // Vérifier que le merchant existe
-    const { data: merchant, error: fetchError } = await supabase
+    const { data: merchant, error: fetchError } = await supabaseAdmin
       .from('merchants')
       .select('id, shop_name, user_id')
       .eq('id', merchantId)
@@ -222,7 +221,7 @@ export async function DELETE(
     }
 
     // 1. Libérer la référence dans prospects (si existe)
-    await supabase
+    await supabaseAdmin
       .from('prospects')
       .update({ converted_merchant_id: null })
       .eq('converted_merchant_id', merchantId);
@@ -238,7 +237,7 @@ export async function DELETE(
     //    - point_adjustments
     //    - member_programs (et member_cards via cascade)
     //    - merchant_offers
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseAdmin
       .from('merchants')
       .delete()
       .eq('id', merchantId);

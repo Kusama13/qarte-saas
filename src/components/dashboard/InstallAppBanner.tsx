@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Download, Share, PlusSquare, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSupabase } from '@/lib/supabase';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
+import IOSInstallInstructions from '@/components/shared/IOSInstallInstructions';
 
 const DISMISS_KEY = 'qarte-pro-install-dismissed';
 
@@ -107,141 +108,15 @@ export default function InstallAppBanner() {
 
       {/* Instructions modal */}
       {showIOSInstructions && (
-        <>
-          {/* Animated arrows pointing to the right button */}
-          {isIOS && !isIOSChrome && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, y: [0, 8, 0] }}
-              transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
-              className="fixed bottom-3 right-3 z-[60] flex flex-col items-center"
-            >
-              <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
-                <ChevronDown className="w-6 h-6 text-blue-500" />
-              </div>
-            </motion.div>
-          )}
-
-          {isIOS && isIOSChrome && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, y: [0, -8, 0] }}
-              transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
-              className="fixed top-3 right-3 z-[60] flex flex-col items-center"
-            >
-              <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
-                <ChevronUp className="w-6 h-6 text-blue-500" />
-              </div>
-            </motion.div>
-          )}
-
-          {!isIOS && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1, y: [0, -8, 0] }}
-              transition={{ y: { duration: 0.8, repeat: Infinity }, opacity: { duration: 0.3 } }}
-              className="fixed top-3 right-3 z-[60] flex flex-col items-center"
-            >
-              <div className="bg-white rounded-full p-2 shadow-xl border-2 border-blue-500">
-                <ChevronUp className="w-6 h-6 text-blue-500" />
-              </div>
-            </motion.div>
-          )}
-
-          <div
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowIOSInstructions(false)}
-          >
-            <div
-              className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden animate-slide-up"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="px-4 py-4 text-center bg-gradient-to-r from-indigo-50 to-violet-50">
-                <button
-                  onClick={() => setShowIOSInstructions(false)}
-                  className="absolute top-3 right-3 p-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                >
-                  <X className="w-4 h-4 text-gray-500" />
-                </button>
-                <div className="flex items-center justify-center gap-2">
-                  <PlusSquare className="w-5 h-5 text-indigo-600" />
-                  <h3 className="text-base font-bold text-gray-900">Installer Qarte Pro</h3>
-                </div>
-                <p className="text-xs text-gray-500 mt-1">Accédez au tableau de bord en 1 tap</p>
-              </div>
-
-              <div className="px-4 py-3 space-y-2">
-                {isIOS && !isIOSChrome ? (
-                  <>
-                    <div className="flex items-center gap-3 p-2.5 bg-blue-50 rounded-xl border border-blue-200">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
-                        <span className="text-white font-bold">⋯</span>
-                      </div>
-                      <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>⋯</strong> en bas</p>
-                    </div>
-                    <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
-                        <Share className="w-4 h-4 text-white" />
-                      </div>
-                      <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> Puis <strong>Partager</strong></p>
-                    </div>
-                    <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
-                        <PlusSquare className="w-4 h-4 text-white" />
-                      </div>
-                      <p className="text-sm text-gray-800"><span className="font-semibold">3.</span> <strong>Sur l&apos;écran d&apos;accueil</strong></p>
-                    </div>
-                  </>
-                ) : isIOS && isIOSChrome ? (
-                  <>
-                    <div className="flex items-center gap-3 p-2.5 bg-blue-50 rounded-xl border border-blue-200">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
-                        <Share className="w-4 h-4 text-white" />
-                      </div>
-                      <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>Partager</strong> ↑</p>
-                    </div>
-                    <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
-                        <span className="text-white font-bold text-sm">⋯</span>
-                      </div>
-                      <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> Puis <strong>Plus...</strong></p>
-                    </div>
-                    <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
-                        <PlusSquare className="w-4 h-4 text-white" />
-                      </div>
-                      <p className="text-sm text-gray-800"><span className="font-semibold">3.</span> <strong>Sur l&apos;écran d&apos;accueil</strong></p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3 p-2.5 bg-blue-50 rounded-xl border border-blue-200">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
-                        <span className="text-white font-bold">⋮</span>
-                      </div>
-                      <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>⋮</strong> en haut</p>
-                    </div>
-                    <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
-                        <PlusSquare className="w-4 h-4 text-white" />
-                      </div>
-                      <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> <strong>Ajouter un raccourci</strong></p>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="px-4 pb-4 pt-2">
-                <button
-                  onClick={() => setShowIOSInstructions(false)}
-                  className="w-full py-3 rounded-xl font-semibold text-white text-sm bg-indigo-600 hover:bg-indigo-700 transition-colors"
-                >
-                  J&apos;ai compris
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
+        <IOSInstallInstructions
+          isIOS={isIOS}
+          isIOSChrome={isIOSChrome}
+          onClose={() => setShowIOSInstructions(false)}
+          title="Installer Qarte Pro"
+          subtitle="Accédez au tableau de bord en 1 tap"
+          iconColor="#4f46e5"
+          buttonClassName="bg-indigo-600 hover:bg-indigo-700"
+        />
       )}
     </>
   );

@@ -1,24 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { verifyAdminAuth } from '@/lib/admin-auth';
-import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
-
-const supabaseAdmin = getSupabaseAdmin();
+import { authorizeAdmin } from '@/lib/api-helpers';
 
 // GET - Retrieve admin notes
 export async function GET(request: NextRequest) {
-  // Verify admin authorization
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  // Rate limiting
-  const rateLimit = checkRateLimit(`admin-notes:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)) } }
-    );
-  }
+  const auth = await authorizeAdmin(request, 'admin-notes');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const { data, error } = await supabaseAdmin
@@ -39,18 +26,9 @@ export async function GET(request: NextRequest) {
 
 // PUT - Update admin notes
 export async function PUT(request: NextRequest) {
-  // Verify admin authorization
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  // Rate limiting
-  const rateLimit = checkRateLimit(`admin-notes:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)) } }
-    );
-  }
+  const auth = await authorizeAdmin(request, 'admin-notes');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const { content } = await request.json();

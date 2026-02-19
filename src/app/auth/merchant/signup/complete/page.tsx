@@ -144,7 +144,7 @@ export default function CompleteProfilePage() {
 
       // Track signup completed + merchant creation + FB CompleteRegistration
       trackSignupCompleted(userId!, 'email');
-      trackSetupCompleted(result.merchant?.id || userId!, formData.shopType || undefined);
+      trackSetupCompleted({ merchant_id: result.merchant?.id || userId!, business_type: formData.shopType || undefined });
       fbEvents.completeRegistration();
 
       // Redirect to program config

@@ -14,7 +14,6 @@ import {
   LogOut,
   Menu,
   X,
-  AlertTriangle,
   Megaphone,
   Crown,
   UserPlus,
@@ -25,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 import InstallAppBanner from '@/components/dashboard/InstallAppBanner';
 import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBanner';
+import StatusBanner from '@/components/dashboard/StatusBanner';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50' },
@@ -148,75 +148,49 @@ function DashboardLayoutContent({
 
           {/* Banner essai actif */}
           {trialStatus.isActive && (
-            <div
-              className={cn(
-                'mx-3 mt-3 p-3 rounded-xl text-sm',
-                trialStatus.daysRemaining <= 3
-                  ? 'bg-red-50 text-red-700'
-                  : 'bg-primary-50 text-primary-700'
-              )}
-            >
-              {trialStatus.daysRemaining <= 3 && <AlertTriangle className="w-4 h-4 inline mr-1.5" />}
-              <span className="font-medium">
-                {trialStatus.daysRemaining} jour{trialStatus.daysRemaining > 1 ? 's' : ''} d&apos;essai restant{trialStatus.daysRemaining > 1 ? 's' : ''}
-              </span>
-              <Link
-                href="/dashboard/subscription"
-                onClick={() => setSidebarOpen(false)}
-                className="block mt-1 text-xs underline hover:no-underline"
-              >
-                {merchant?.stripe_subscription_id ? 'Voir l\'abonnement' : 'Ajouter une carte bancaire'}
-              </Link>
-            </div>
+            <StatusBanner
+              variant="trial"
+              urgent={trialStatus.daysRemaining <= 3}
+              message={`${trialStatus.daysRemaining} jour${trialStatus.daysRemaining > 1 ? 's' : ''} d\u2019essai restant${trialStatus.daysRemaining > 1 ? 's' : ''}`}
+              linkText={merchant?.stripe_subscription_id ? 'Voir l\'abonnement' : 'Ajouter une carte bancaire'}
+              linkHref="/dashboard/subscription"
+              onLinkClick={() => setSidebarOpen(false)}
+            />
           )}
 
           {/* Banner période de grâce - URGENT */}
           {trialStatus.isInGracePeriod && (
-            <div className="mx-3 mt-3 p-3 rounded-xl text-sm bg-red-100 text-red-800 border border-red-300">
-              <AlertTriangle className="w-4 h-4 inline mr-1.5" />
-              <span className="font-bold">Essai expiré</span>
-              <p className="mt-1.5 text-red-700 text-xs">
-                Données supprimées dans{' '}
-                <strong>{trialStatus.daysUntilDeletion}j</strong>. Lecture seule.
-              </p>
-              <Link
-                href="/dashboard/subscription"
-                onClick={() => setSidebarOpen(false)}
-                className="block mt-2 px-3 py-1.5 bg-red-600 text-white text-center rounded-lg font-medium text-xs hover:bg-red-700"
-              >
-                Souscrire maintenant
-              </Link>
-            </div>
+            <StatusBanner
+              variant="grace"
+              message="Essai expiré"
+              description={`Données supprimées dans ${trialStatus.daysUntilDeletion}j. Lecture seule.`}
+              linkText="Souscrire maintenant"
+              linkHref="/dashboard/subscription"
+              onLinkClick={() => setSidebarOpen(false)}
+              linkAsButton
+            />
           )}
 
           {/* Banner annulation en cours */}
           {merchant?.subscription_status === 'canceling' && (
-            <div className="mx-3 mt-3 p-3 rounded-xl text-sm bg-orange-50 text-orange-700">
-              <AlertTriangle className="w-4 h-4 inline mr-1.5" />
-              <span className="font-medium">Annulation en fin de période</span>
-              <Link
-                href="/dashboard/subscription"
-                onClick={() => setSidebarOpen(false)}
-                className="block mt-1 text-xs underline hover:no-underline"
-              >
-                Annuler la résiliation
-              </Link>
-            </div>
+            <StatusBanner
+              variant="canceling"
+              message="Annulation en fin de période"
+              linkText="Annuler la résiliation"
+              linkHref="/dashboard/subscription"
+              onLinkClick={() => setSidebarOpen(false)}
+            />
           )}
 
           {/* Banner paiement échoué */}
           {merchant?.subscription_status === 'past_due' && (
-            <div className="mx-3 mt-3 p-3 rounded-xl text-sm bg-red-50 text-red-700 border border-red-200">
-              <AlertTriangle className="w-4 h-4 inline mr-1.5" />
-              <span className="font-medium">Paiement échoué</span>
-              <Link
-                href="/dashboard/subscription"
-                onClick={() => setSidebarOpen(false)}
-                className="block mt-1 text-xs underline hover:no-underline"
-              >
-                Mettre à jour le paiement
-              </Link>
-            </div>
+            <StatusBanner
+              variant="past_due"
+              message="Paiement échoué"
+              linkText="Mettre à jour le paiement"
+              linkHref="/dashboard/subscription"
+              onLinkClick={() => setSidebarOpen(false)}
+            />
           )}
 
           {/* Annonces admin — sidebar desktop uniquement */}

@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { verifyAdminAuth } from '@/lib/admin-auth';
-import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { authorizeAdmin } from '@/lib/api-helpers';
 import { z } from 'zod';
-
-const supabaseAdmin = getSupabaseAdmin();
 
 const prospectSchema = z.object({
   business_name: z.string().min(1, 'Nom requis'),
@@ -20,18 +16,9 @@ const prospectSchema = z.object({
 
 // GET - List all prospects with optional status filter
 export async function GET(request: NextRequest) {
-  // Verify admin authorization
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  // Rate limiting
-  const rateLimit = checkRateLimit(`admin-prospects:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)) } }
-    );
-  }
+  const auth = await authorizeAdmin(request, 'admin-prospects');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -81,18 +68,9 @@ export async function GET(request: NextRequest) {
 
 // POST - Create a new prospect
 export async function POST(request: NextRequest) {
-  // Verify admin authorization
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  // Rate limiting
-  const rateLimit = checkRateLimit(`admin-prospects:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)) } }
-    );
-  }
+  const auth = await authorizeAdmin(request, 'admin-prospects');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const body = await request.json();
@@ -128,18 +106,9 @@ export async function POST(request: NextRequest) {
 
 // PATCH - Update a prospect
 export async function PATCH(request: NextRequest) {
-  // Verify admin authorization
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  // Rate limiting
-  const rateLimit = checkRateLimit(`admin-prospects:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)) } }
-    );
-  }
+  const auth = await authorizeAdmin(request, 'admin-prospects');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const body = await request.json();
@@ -194,18 +163,9 @@ export async function PATCH(request: NextRequest) {
 
 // DELETE - Delete a prospect
 export async function DELETE(request: NextRequest) {
-  // Verify admin authorization
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  // Rate limiting
-  const rateLimit = checkRateLimit(`admin-prospects:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json(
-      { error: 'Trop de requêtes' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetTime - Date.now()) / 1000)) } }
-    );
-  }
+  const auth = await authorizeAdmin(request, 'admin-prospects');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const { searchParams } = new URL(request.url);

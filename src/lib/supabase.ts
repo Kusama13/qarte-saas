@@ -67,12 +67,6 @@ export const getSupabaseAdmin = (): SupabaseClient => {
 // Alias pour compatibilité avec l'ancien code
 export const supabaseAdmin = getSupabaseAdmin;
 
-// Client serveur pour les API routes (deprecated - utiliser getSupabaseAdmin)
-export const createServerClient = () => {
-  console.warn('createServerClient is deprecated, use getSupabaseAdmin() instead');
-  return getSupabaseAdmin();
-};
-
 // ============================================
 // ROUTE HANDLER CLIENT (for authentication in API routes)
 // Uses @supabase/ssr for Next.js 15 compatibility

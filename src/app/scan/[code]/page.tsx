@@ -100,7 +100,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       if (data) {
         setMerchant(data);
         // Track QR scan
-        trackQrScanned(data.id);
+        trackQrScanned({ merchant_id: data.id });
       }
       setLoading(false);
     };

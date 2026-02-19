@@ -323,13 +323,6 @@ export function displayPhoneNumber(phone: string, country: MerchantCountry = 'FR
   return cleaned.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
 }
 
-/** @deprecated Use validatePhone instead */
-export function validateFrenchPhone(phone: string): boolean {
-  // Permissif pour les pages sans contexte merchant
-  const cleaned = phone.replace(/\D/g, '');
-  return cleaned.length >= 9;
-}
-
 export function validateEmail(email: string): boolean {
   if (!email || email.length > 254) return false;
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;

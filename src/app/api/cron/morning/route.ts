@@ -49,6 +49,9 @@ if (vapidPublicKey && vapidPrivateKey) {
 const INITIAL_ALERT_DAYS = [0, 1];
 const REMINDER_DAYS = [2, 3];
 
+// Result counters type
+type SectionStats = { processed: number; sent: number; skipped: number; errors: number };
+
 // Helper: process items sequentially with 600ms pause between each (Resend rate limit: 2 req/s)
 async function batchProcess<T>(
   items: T[],
@@ -56,7 +59,7 @@ async function batchProcess<T>(
 ) {
   for (let i = 0; i < items.length; i++) {
     await fn(items[i]);
-    // Resend rate limit: 2 req/s — pause après chaque envoi
+    // Resend rate limit: 2 req/s — pause apres chaque envoi
     await new Promise(resolve => setTimeout(resolve, 600));
   }
 }
@@ -73,6 +76,72 @@ async function batchGetUserEmails(userIds: string[]): Promise<Map<string, string
     }));
   }
   return emailMap;
+}
+
+// Helper: fetch tracking records and build a Set of already-sent merchant IDs
+async function getAlreadySentSet(merchantIds: string[], trackingCode: number): Promise<Set<string>> {
+  const { data } = await supabase
+    .from('pending_email_tracking')
+    .select('merchant_id')
+    .in('merchant_id', merchantIds)
+    .eq('reminder_day', trackingCode);
+  return new Set((data || []).map(t => t.merchant_id));
+}
+
+// Helper: standard email section — handles the common pattern:
+// 1. batchProcess candidates
+// 2. Skip if already sent (via alreadySentSet)
+// 3. Skip if no email (via emailMap)
+// 4. Call sendFn, track on success, count results
+// Optional extraSkip: per-candidate custom skip logic (return true to skip)
+async function processEmailSection<T extends { id: string; user_id: string }>(opts: {
+  candidates: T[];
+  trackingCode: number;
+  emailMap: Map<string, string>;
+  alreadySentSet: Set<string>;
+  stats: SectionStats;
+  sendFn: (email: string, candidate: T) => Promise<{ success: boolean }>;
+  extraSkip?: (candidate: T) => boolean;
+}) {
+  const { candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip } = opts;
+
+  await batchProcess(candidates, async (candidate) => {
+    stats.processed++;
+
+    if (alreadySentSet.has(candidate.id)) { stats.skipped++; return; }
+    if (extraSkip && extraSkip(candidate)) { stats.skipped++; return; }
+
+    const email = emailMap.get(candidate.user_id);
+    if (!email) { stats.skipped++; return; }
+
+    try {
+      const result = await sendFn(email, candidate);
+      if (result.success) {
+        await supabase.from('pending_email_tracking').insert({
+          merchant_id: candidate.id, reminder_day: trackingCode, pending_count: 0,
+        });
+        stats.sent++;
+      } else { stats.errors++; }
+    } catch { stats.errors++; }
+  });
+}
+
+// Helper: query candidates, fetch tracking, fetch emails, then run processEmailSection
+// For sections that follow the full standard pattern end-to-end
+async function runStandardEmailSection<T extends { id: string; user_id: string }>(opts: {
+  candidates: T[] | null | undefined;
+  trackingCode: number;
+  stats: SectionStats;
+  sendFn: (email: string, candidate: T) => Promise<{ success: boolean }>;
+  extraSkip?: (candidate: T) => boolean;
+}) {
+  const { candidates, trackingCode, stats, sendFn, extraSkip } = opts;
+  if (!candidates || candidates.length === 0) return;
+
+  const emailMap = await batchGetUserEmails([...new Set(candidates.map(m => m.user_id))]);
+  const alreadySentSet = await getAlreadySentSet(candidates.map(m => m.id), trackingCode);
+
+  await processEmailSection({ candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip });
 }
 
 export async function GET(request: NextRequest) {
@@ -109,7 +178,7 @@ export async function GET(request: NextRequest) {
     },
   };
 
-  // Track section statuses for isolated error handling (C6 fix)
+  // Track section statuses for isolated error handling
   const sectionStatuses: Array<{ name: string; status: 'ok' | 'error'; error?: string }> = [];
 
   // Shared state across sections
@@ -117,7 +186,8 @@ export async function GET(request: NextRequest) {
   const merchantsSentTrialEmail = new Set<string>();
 
   // ==================== 1. TRIAL EMAILS ====================
-  // C7: Idempotent — tracked via pending_email_tracking with codes -201/-203 (ending) and -211/-212 (expired)
+  // Idempotent — tracked via pending_email_tracking with codes -201/-203 (ending) and -211/-212 (expired)
+  // (Custom: multiple tracking codes per merchant, branching logic — kept manual)
   try {
     const { data: merchants } = await supabase
       .from('merchants')
@@ -126,11 +196,9 @@ export async function GET(request: NextRequest) {
       .neq('no_contact', true);
 
     if (merchants && merchants.length > 0) {
-      // Batch fetch all user emails upfront
       const userIds = [...new Set(merchants.map(m => m.user_id))];
       const emailMap = await batchGetUserEmails(userIds);
 
-      // C7: Batch fetch existing trial email tracking
       const { data: existingTrialTracking } = await supabase
         .from('pending_email_tracking')
         .select('merchant_id, reminder_day')
@@ -178,8 +246,9 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 2: PROGRAM REMINDERS (J+1/J+2/J+3) ====================
-  // C7: Idempotent — tracked via pending_email_tracking with codes -301/-302/-303
+  // Idempotent — tracked via pending_email_tracking with codes -301/-302/-303
   try {
+    // 2a. PROGRAM REMINDER (J+1)
     const twentyFiveHoursAgo = new Date(now.getTime() - 25 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
@@ -192,28 +261,14 @@ export async function GET(request: NextRequest) {
       .gte('created_at', twentyFiveHoursAgo.toISOString())
       .neq('no_contact', true);
 
-    if (unconfiguredMerchants && unconfiguredMerchants.length > 0) {
-      const emailMap = await batchGetUserEmails([...new Set(unconfiguredMerchants.map(m => m.user_id))]);
-      const { data: existingJ1 } = await supabase.from('pending_email_tracking').select('merchant_id').in('merchant_id', unconfiguredMerchants.map(m => m.id)).eq('reminder_day', -301);
-      const alreadySentJ1 = new Set((existingJ1 || []).map(t => t.merchant_id));
+    await runStandardEmailSection({
+      candidates: unconfiguredMerchants,
+      trackingCode: -301,
+      stats: results.programReminders,
+      sendFn: (email, m) => sendProgramReminderEmail(email, m.shop_name),
+    });
 
-      await batchProcess(unconfiguredMerchants, async (merchant) => {
-        results.programReminders.processed++;
-        if (alreadySentJ1.has(merchant.id)) { results.programReminders.skipped++; return; }
-        const email = emailMap.get(merchant.user_id);
-        if (!email) { results.programReminders.skipped++; return; }
-
-        try {
-          const result = await sendProgramReminderEmail(email, merchant.shop_name);
-          if (result.success) {
-            await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -301, pending_count: 0 });
-            results.programReminders.sent++;
-          } else { results.programReminders.errors++; }
-        } catch { results.programReminders.errors++; }
-      });
-    }
-
-    // ==================== 2b. PROGRAM REMINDER (J+2) ====================
+    // 2b. PROGRAM REMINDER (J+2)
     const fortyNineHoursAgo = new Date(now.getTime() - 49 * 60 * 60 * 1000);
     const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
@@ -226,28 +281,14 @@ export async function GET(request: NextRequest) {
       .gte('created_at', fortyNineHoursAgo.toISOString())
       .neq('no_contact', true);
 
-    if (unconfiguredDay2 && unconfiguredDay2.length > 0) {
-      const emailMap = await batchGetUserEmails([...new Set(unconfiguredDay2.map(m => m.user_id))]);
-      const { data: existingJ2 } = await supabase.from('pending_email_tracking').select('merchant_id').in('merchant_id', unconfiguredDay2.map(m => m.id)).eq('reminder_day', -302);
-      const alreadySentJ2 = new Set((existingJ2 || []).map(t => t.merchant_id));
+    await runStandardEmailSection({
+      candidates: unconfiguredDay2,
+      trackingCode: -302,
+      stats: results.programRemindersDay2,
+      sendFn: (email, m) => sendProgramReminderDay2Email(email, m.shop_name, m.shop_type || ''),
+    });
 
-      await batchProcess(unconfiguredDay2, async (merchant) => {
-        results.programRemindersDay2.processed++;
-        if (alreadySentJ2.has(merchant.id)) { results.programRemindersDay2.skipped++; return; }
-        const email = emailMap.get(merchant.user_id);
-        if (!email) { results.programRemindersDay2.skipped++; return; }
-
-        try {
-          const result = await sendProgramReminderDay2Email(email, merchant.shop_name, merchant.shop_type || '');
-          if (result.success) {
-            await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -302, pending_count: 0 });
-            results.programRemindersDay2.sent++;
-          } else { results.programRemindersDay2.errors++; }
-        } catch { results.programRemindersDay2.errors++; }
-      });
-    }
-
-    // ==================== 2c. PROGRAM REMINDER (J+3) ====================
+    // 2c. PROGRAM REMINDER (J+3)
     const seventyThreeHoursAgo = new Date(now.getTime() - 73 * 60 * 60 * 1000);
     const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
 
@@ -260,94 +301,69 @@ export async function GET(request: NextRequest) {
       .gte('created_at', seventyThreeHoursAgo.toISOString())
       .neq('no_contact', true);
 
-    if (unconfiguredDay3 && unconfiguredDay3.length > 0) {
-      const emailMap = await batchGetUserEmails([...new Set(unconfiguredDay3.map(m => m.user_id))]);
-      const { data: existingJ3 } = await supabase.from('pending_email_tracking').select('merchant_id').in('merchant_id', unconfiguredDay3.map(m => m.id)).eq('reminder_day', -303);
-      const alreadySentJ3 = new Set((existingJ3 || []).map(t => t.merchant_id));
-
-      await batchProcess(unconfiguredDay3, async (merchant) => {
-        results.programRemindersDay3.processed++;
-
-        if (merchantsSentTrialEmail.has(merchant.id) || alreadySentJ3.has(merchant.id)) {
-          results.programRemindersDay3.skipped++;
-          return;
-        }
-
-        const email = emailMap.get(merchant.user_id);
-        if (!email) { results.programRemindersDay3.skipped++; return; }
-
-        try {
-          const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-          const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
-          const result = await sendProgramReminderDay3Email(email, merchant.shop_name, daysRemaining);
-          if (result.success) {
-            await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -303, pending_count: 0 });
-            results.programRemindersDay3.sent++;
-          } else { results.programRemindersDay3.errors++; }
-        } catch { results.programRemindersDay3.errors++; }
-      });
-    }
+    await runStandardEmailSection({
+      candidates: unconfiguredDay3,
+      trackingCode: -303,
+      stats: results.programRemindersDay3,
+      extraSkip: (m) => merchantsSentTrialEmail.has(m.id),
+      sendFn: (email, m) => {
+        const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
+        const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
+        return sendProgramReminderDay3Email(email, m.shop_name, daysRemaining);
+      },
+    });
   } catch (error) {
     sectionStatuses.push({ name: 'programReminders', status: 'error', error: String(error) });
   }
 
   // ==================== SECTION 3: ONBOARDING EMAILS ====================
   try {
-    // ==================== 2d. DAY 5 CHECKIN (programme configuré, J+5) ====================
-    // C7: Idempotent — tracked via pending_email_tracking with code -305
-    const oneTwentyOneHoursAgo = new Date(now.getTime() - 121 * 60 * 60 * 1000);
-    const oneTwentyHoursAgo = new Date(now.getTime() - 120 * 60 * 60 * 1000);
+    // 2d. DAY 5 CHECKIN (programme configure, J+5)
+    // Idempotent — tracked via pending_email_tracking with code -305
+    // (Custom: scan count check — uses processEmailSection with extraSkip)
+    {
+      const oneTwentyOneHoursAgo = new Date(now.getTime() - 121 * 60 * 60 * 1000);
+      const oneTwentyHoursAgo = new Date(now.getTime() - 120 * 60 * 60 * 1000);
 
-    const { data: day5Merchants } = await supabase
-      .from('merchants')
-      .select('id, shop_name, user_id')
-      .not('reward_description', 'is', null)
-      .neq('reward_description', '')
-      .in('subscription_status', ['trial', 'active'])
-      .lte('created_at', oneTwentyHoursAgo.toISOString())
-      .gte('created_at', oneTwentyOneHoursAgo.toISOString())
-      .neq('no_contact', true);
+      const { data: day5Merchants } = await supabase
+        .from('merchants')
+        .select('id, shop_name, user_id')
+        .not('reward_description', 'is', null)
+        .neq('reward_description', '')
+        .in('subscription_status', ['trial', 'active'])
+        .lte('created_at', oneTwentyHoursAgo.toISOString())
+        .gte('created_at', oneTwentyOneHoursAgo.toISOString())
+        .neq('no_contact', true);
 
-    if (day5Merchants && day5Merchants.length > 0) {
-      const emailMap = await batchGetUserEmails([...new Set(day5Merchants.map(m => m.user_id))]);
+      if (day5Merchants && day5Merchants.length > 0) {
+        const emailMap = await batchGetUserEmails([...new Set(day5Merchants.map(m => m.user_id))]);
+        const alreadySentDay5 = await getAlreadySentSet(day5Merchants.map(m => m.id), -305);
 
-      // C7: Check tracking
-      const { data: existingDay5 } = await supabase.from('pending_email_tracking').select('merchant_id').in('merchant_id', day5Merchants.map(m => m.id)).eq('reminder_day', -305);
-      const alreadySentDay5 = new Set((existingDay5 || []).map(t => t.merchant_id));
+        // Get scan counts for these merchants
+        const { data: day5Visits } = await supabase
+          .from('visits')
+          .select('merchant_id')
+          .in('merchant_id', day5Merchants.map(m => m.id))
+          .eq('status', 'confirmed');
 
-      // Get scan counts for these merchants
-      const day5Ids = day5Merchants.map(m => m.id);
-      const { data: day5Visits } = await supabase
-        .from('visits')
-        .select('merchant_id')
-        .in('merchant_id', day5Ids)
-        .eq('status', 'confirmed');
+        const scanCountMap = new Map<string, number>();
+        for (const v of day5Visits || []) {
+          scanCountMap.set(v.merchant_id, (scanCountMap.get(v.merchant_id) || 0) + 1);
+        }
 
-      const scanCountMap = new Map<string, number>();
-      for (const v of day5Visits || []) {
-        scanCountMap.set(v.merchant_id, (scanCountMap.get(v.merchant_id) || 0) + 1);
+        await processEmailSection({
+          candidates: day5Merchants,
+          trackingCode: -305,
+          emailMap,
+          alreadySentSet: alreadySentDay5,
+          stats: results.day5Checkin,
+          extraSkip: (m) => (scanCountMap.get(m.id) || 0) === 0,
+          sendFn: (email, m) => sendDay5CheckinEmail(email, m.shop_name, scanCountMap.get(m.id) || 0),
+        });
       }
-
-      await batchProcess(day5Merchants, async (merchant) => {
-        results.day5Checkin.processed++;
-        if (alreadySentDay5.has(merchant.id)) { results.day5Checkin.skipped++; return; }
-        const email = emailMap.get(merchant.user_id);
-        if (!email) { results.day5Checkin.skipped++; return; }
-
-        try {
-          const totalScans = scanCountMap.get(merchant.id) || 0;
-          if (totalScans === 0) { results.day5Checkin.skipped++; return; }
-          const result = await sendDay5CheckinEmail(email, merchant.shop_name, totalScans);
-          if (result.success) {
-            await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -305, pending_count: 0 });
-            results.day5Checkin.sent++;
-          }
-          else { results.day5Checkin.errors++; }
-        } catch { results.day5Checkin.errors++; }
-      });
     }
 
-    // ==================== 2e. QR CODE + KIT PROMO EMAIL (programme configuré, envoi unique) ====================
+    // 2e. QR CODE + KIT PROMO EMAIL (programme configure, envoi unique)
     {
       const { data: qrCandidates } = await supabase
         .from('merchants')
@@ -358,14 +374,7 @@ export async function GET(request: NextRequest) {
         .neq('no_contact', true);
 
       if (qrCandidates && qrCandidates.length > 0) {
-        // Check tracking to avoid sending twice
-        const { data: existingQr } = await supabase
-          .from('pending_email_tracking')
-          .select('merchant_id')
-          .in('merchant_id', qrCandidates.map(m => m.id))
-          .eq('reminder_day', -103);
-
-        const alreadySentQr = new Set((existingQr || []).map(t => t.merchant_id));
+        const alreadySentQr = await getAlreadySentSet(qrCandidates.map(m => m.id), -103);
         const qrToSend = qrCandidates.filter(m => !alreadySentQr.has(m.id));
         results.qrCode.processed = qrCandidates.length;
         results.qrCode.skipped = qrCandidates.length - qrToSend.length;
@@ -373,33 +382,26 @@ export async function GET(request: NextRequest) {
         if (qrToSend.length > 0) {
           const qrEmailMap = await batchGetUserEmails([...new Set(qrToSend.map(m => m.user_id))]);
 
-          await batchProcess(qrToSend, async (merchant) => {
-            const email = qrEmailMap.get(merchant.user_id);
-            if (!email) { results.qrCode.skipped++; return; }
-
-            try {
-              const result = await sendQRCodeEmail(
-                email, merchant.shop_name,
-                merchant.reward_description || undefined,
-                merchant.stamps_required, merchant.primary_color,
-                merchant.logo_url || undefined,
-                merchant.tier2_enabled, merchant.tier2_stamps_required, merchant.tier2_reward_description
-              );
-              if (result.success) {
-                await supabase.from('pending_email_tracking').insert({
-                  merchant_id: merchant.id, reminder_day: -103, pending_count: 0,
-                });
-                results.qrCode.sent++;
-              } else { results.qrCode.errors++; }
-            } catch { results.qrCode.errors++; }
+          await processEmailSection({
+            candidates: qrToSend,
+            trackingCode: -103,
+            emailMap: qrEmailMap,
+            alreadySentSet: new Set(), // already filtered above
+            stats: results.qrCode,
+            sendFn: (email, m) => sendQRCodeEmail(
+              email, m.shop_name,
+              m.reward_description || undefined,
+              m.stamps_required, m.primary_color,
+              m.logo_url || undefined,
+              m.tier2_enabled, m.tier2_stamps_required, m.tier2_reward_description
+            ),
           });
         }
       }
     }
 
-    // ==================== 2f. CHALLENGE COMPLETED (5 unique clients in 3 days) ====================
+    // 2f. CHALLENGE COMPLETED (5 unique clients in 3 days)
     {
-      // Find trial merchants created within last 10 days (generous window to catch late completions)
       const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
       const { data: challengeCandidates } = await supabase
         .from('merchants')
@@ -412,14 +414,7 @@ export async function GET(request: NextRequest) {
 
       if (challengeCandidates && challengeCandidates.length > 0) {
         const challengeIds = challengeCandidates.map(m => m.id);
-
-        // Check who already received the challenge email
-        const { data: existingChallenge } = await supabase
-          .from('pending_email_tracking')
-          .select('merchant_id')
-          .in('merchant_id', challengeIds)
-          .eq('reminder_day', -104);
-        const alreadySentChallenge = new Set((existingChallenge || []).map(t => t.merchant_id));
+        const alreadySentChallenge = await getAlreadySentSet(challengeIds, -104);
 
         // Get unique customers per merchant — count customers created within 3 days of merchant creation
         const { data: challengeCustomers } = await supabase
@@ -427,7 +422,6 @@ export async function GET(request: NextRequest) {
           .select('id, merchant_id, created_at')
           .in('merchant_id', challengeIds);
 
-        // Count unique customers created within 3 days of merchant creation
         const merchantCreatedMap = new Map(challengeCandidates.map(m => [m.id, new Date(m.created_at)]));
         const customerCountMap = new Map<string, number>();
         for (const customer of challengeCustomers || []) {
@@ -450,27 +444,20 @@ export async function GET(request: NextRequest) {
         if (challengeToSend.length > 0) {
           const challengeEmailMap = await batchGetUserEmails([...new Set(challengeToSend.map(m => m.user_id))]);
 
-          await batchProcess(challengeToSend, async (merchant) => {
-            const email = challengeEmailMap.get(merchant.user_id);
-            if (!email) { results.challengeCompleted.skipped++; return; }
-
-            try {
-              const result = await sendChallengeCompletedEmail(email, merchant.shop_name, 'QARTE50');
-              if (result.success) {
-                await supabase.from('pending_email_tracking').insert({
-                  merchant_id: merchant.id, reminder_day: -104, pending_count: 0,
-                });
-                results.challengeCompleted.sent++;
-              } else { results.challengeCompleted.errors++; }
-            } catch { results.challengeCompleted.errors++; }
+          await processEmailSection({
+            candidates: challengeToSend,
+            trackingCode: -104,
+            emailMap: challengeEmailMap,
+            alreadySentSet: new Set(), // already filtered above
+            stats: results.challengeCompleted,
+            sendFn: (email, m) => sendChallengeCompletedEmail(email, m.shop_name, 'QARTE50'),
           });
         }
       }
     }
 
-    // ==================== 2g. FIRST CLIENT SCRIPT EMAIL (J+2 après config, 0 scans) ====================
+    // 2g. FIRST CLIENT SCRIPT EMAIL (J+2 apres config, 0 scans)
     {
-      // Find merchants who got QR code email exactly 2 days ago
       const { data: scriptCandidates } = await supabase
         .from('merchants')
         .select('id, shop_name, user_id, shop_type, reward_description, stamps_required, trial_ends_at, subscription_status')
@@ -500,13 +487,7 @@ export async function GET(request: NextRequest) {
             .map(t => t.merchant_id)
         );
 
-        // Check who already got this email
-        const { data: existingScript } = await supabase
-          .from('pending_email_tracking')
-          .select('merchant_id')
-          .in('merchant_id', scriptIds)
-          .eq('reminder_day', -106);
-        const alreadySentScript = new Set((existingScript || []).map(t => t.merchant_id));
+        const alreadySentScript = await getAlreadySentSet(scriptIds, -106);
 
         // Check who has visits (exclude them)
         const { data: scriptVisits } = await supabase
@@ -526,30 +507,23 @@ export async function GET(request: NextRequest) {
         if (scriptToSend.length > 0) {
           const scriptEmailMap = await batchGetUserEmails([...new Set(scriptToSend.map(m => m.user_id))]);
 
-          await batchProcess(scriptToSend, async (merchant) => {
-            const email = scriptEmailMap.get(merchant.user_id);
-            if (!email) { results.firstClientScript.skipped++; return; }
-
-            if (!merchant.reward_description) { results.firstClientScript.skipped++; return; }
-
-            try {
-              const result = await sendFirstClientScriptEmail(
-                email, merchant.shop_name, merchant.shop_type || '',
-                merchant.reward_description, merchant.stamps_required
-              );
-              if (result.success) {
-                await supabase.from('pending_email_tracking').insert({
-                  merchant_id: merchant.id, reminder_day: -106, pending_count: 0,
-                });
-                results.firstClientScript.sent++;
-              } else { results.firstClientScript.errors++; }
-            } catch { results.firstClientScript.errors++; }
+          await processEmailSection({
+            candidates: scriptToSend,
+            trackingCode: -106,
+            emailMap: scriptEmailMap,
+            alreadySentSet: new Set(), // already filtered above
+            stats: results.firstClientScript,
+            extraSkip: (m) => !m.reward_description,
+            sendFn: (email, m) => sendFirstClientScriptEmail(
+              email, m.shop_name, m.shop_type || '',
+              m.reward_description, m.stamps_required
+            ),
           });
         }
       }
     }
 
-    // ==================== 2h. QUICK CHECK EMAIL (J+4 après config, 0 scans) ====================
+    // 2h. QUICK CHECK EMAIL (J+4 apres config, 0 scans)
     {
       const { data: qcCandidates } = await supabase
         .from('merchants')
@@ -580,13 +554,7 @@ export async function GET(request: NextRequest) {
             .map(t => t.merchant_id)
         );
 
-        // Check who already got this email
-        const { data: existingQc } = await supabase
-          .from('pending_email_tracking')
-          .select('merchant_id')
-          .in('merchant_id', qcIds)
-          .eq('reminder_day', -107);
-        const alreadySentQc = new Set((existingQc || []).map(t => t.merchant_id));
+        const alreadySentQc = await getAlreadySentSet(qcIds, -107);
 
         // Check who has visits
         const { data: qcVisits } = await supabase
@@ -606,21 +574,17 @@ export async function GET(request: NextRequest) {
         if (qcToSend.length > 0) {
           const qcEmailMap = await batchGetUserEmails([...new Set(qcToSend.map(m => m.user_id))]);
 
-          await batchProcess(qcToSend, async (merchant) => {
-            const email = qcEmailMap.get(merchant.user_id);
-            if (!email) { results.quickCheck.skipped++; return; }
-
-            try {
-              const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
+          await processEmailSection({
+            candidates: qcToSend,
+            trackingCode: -107,
+            emailMap: qcEmailMap,
+            alreadySentSet: new Set(), // already filtered above
+            stats: results.quickCheck,
+            sendFn: (email, m) => {
+              const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
               const daysRemaining = Math.max(trialStatus.daysRemaining, 1);
-              const result = await sendQuickCheckEmail(email, merchant.shop_name, daysRemaining);
-              if (result.success) {
-                await supabase.from('pending_email_tracking').insert({
-                  merchant_id: merchant.id, reminder_day: -107, pending_count: 0,
-                });
-                results.quickCheck.sent++;
-              } else { results.quickCheck.errors++; }
-            } catch { results.quickCheck.errors++; }
+              return sendQuickCheckEmail(email, m.shop_name, daysRemaining);
+            },
           });
         }
       }
@@ -631,7 +595,7 @@ export async function GET(request: NextRequest) {
 
   // ==================== SECTION 4: MILESTONE EMAILS ====================
   try {
-    // ==================== 2i. FIRST SCAN EMAIL ====================
+    // 2i. FIRST SCAN EMAIL
     // Merchants with exactly 2 confirmed visits (1st is always merchant's test, 2nd is first real client)
     const { data: allConfiguredMerchants } = await supabase
       .from('merchants')
@@ -660,38 +624,15 @@ export async function GET(request: NextRequest) {
       const firstScanMerchants = allConfiguredMerchants.filter(m => visitCountMap.get(m.id) === 2);
 
       if (firstScanMerchants.length > 0) {
-        // Check tracking to avoid sending twice
-        const { data: existingFirstScan } = await supabase
-          .from('pending_email_tracking')
-          .select('merchant_id')
-          .in('merchant_id', firstScanMerchants.map(m => m.id))
-          .eq('reminder_day', -100);
-
-        const alreadySent = new Set((existingFirstScan || []).map(t => t.merchant_id));
-
-        const emailMap = await batchGetUserEmails([...new Set(firstScanMerchants.map(m => m.user_id))]);
-
-        await batchProcess(firstScanMerchants, async (merchant) => {
-          results.firstScan.processed++;
-          if (alreadySent.has(merchant.id)) { results.firstScan.skipped++; return; }
-
-          const email = emailMap.get(merchant.user_id);
-          if (!email) { results.firstScan.skipped++; return; }
-
-          try {
-            const result = await sendFirstScanEmail(email, merchant.shop_name, merchant.referral_code);
-            if (result.success) {
-              await supabase.from('pending_email_tracking').insert({
-                merchant_id: merchant.id, reminder_day: -100, pending_count: 0,
-              });
-              results.firstScan.sent++;
-            } else { results.firstScan.errors++; }
-          } catch { results.firstScan.errors++; }
+        await runStandardEmailSection({
+          candidates: firstScanMerchants,
+          trackingCode: -100,
+          stats: results.firstScan,
+          sendFn: (email, m) => sendFirstScanEmail(email, m.shop_name, m.referral_code),
         });
       }
 
-      // ==================== 2f. FIRST REWARD EMAIL ====================
-      // Check for merchants where a customer has reached stamps_required
+      // 2f. FIRST REWARD EMAIL
       const { data: merchantsWithProgram } = await supabase
         .from('merchants')
         .select('id, shop_name, user_id, reward_description, stamps_required')
@@ -704,7 +645,7 @@ export async function GET(request: NextRequest) {
         const programIds = merchantsWithProgram.map(m => m.id);
         const merchantProgramMap = new Map(merchantsWithProgram.map(m => [m.id, m]));
 
-        // Get loyalty cards where current_stamps >= stamps_required (reward unlocked)
+        // Get loyalty cards where rewards_earned > 0 (reward unlocked)
         const { data: rewardCards } = await supabase
           .from('loyalty_cards')
           .select('merchant_id, rewards_earned')
@@ -723,14 +664,7 @@ export async function GET(request: NextRequest) {
           .map(([id]) => id);
 
         if (firstRewardMerchantIds.length > 0) {
-          // Check tracking
-          const { data: existingFirstReward } = await supabase
-            .from('pending_email_tracking')
-            .select('merchant_id')
-            .in('merchant_id', firstRewardMerchantIds)
-            .eq('reminder_day', -101);
-
-          const alreadySentReward = new Set((existingFirstReward || []).map(t => t.merchant_id));
+          const alreadySentReward = await getAlreadySentSet(firstRewardMerchantIds, -101);
 
           const rewardEmailMap = await batchGetUserEmails(
             [...new Set(firstRewardMerchantIds
@@ -739,6 +673,7 @@ export async function GET(request: NextRequest) {
               .filter(Boolean) as string[])]
           );
 
+          // This section iterates over IDs, not merchant objects — kept manual for type safety
           await batchProcess(firstRewardMerchantIds, async (merchantId) => {
             results.firstReward.processed++;
             if (alreadySentReward.has(merchantId)) { results.firstReward.skipped++; return; }
@@ -764,7 +699,7 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // ==================== 2g. TIER 2 UPSELL (50+ clients, tier2 pas activé) ====================
+      // 2g. TIER 2 UPSELL (50+ clients, tier2 pas active)
       const { data: tier2Candidates } = await supabase
         .from('merchants')
         .select('id, shop_name, user_id, reward_description, tier2_enabled')
@@ -797,34 +732,20 @@ export async function GET(request: NextRequest) {
         const tier2Eligible = tier2Candidates.filter(m => (customerCountMap.get(m.id) || 0) >= 50);
 
         if (tier2Eligible.length > 0) {
-          // Check tracking
-          const { data: existingTier2 } = await supabase
-            .from('pending_email_tracking')
-            .select('merchant_id')
-            .in('merchant_id', tier2Eligible.map(m => m.id))
-            .eq('reminder_day', -102);
-
-          const alreadySentTier2 = new Set((existingTier2 || []).map(t => t.merchant_id));
+          const alreadySentTier2 = await getAlreadySentSet(tier2Eligible.map(m => m.id), -102);
           const t2EmailMap = await batchGetUserEmails([...new Set(tier2Eligible.map(m => m.user_id))]);
 
-          await batchProcess(tier2Eligible, async (merchant) => {
-            results.tier2Upsell.processed++;
-            if (alreadySentTier2.has(merchant.id)) { results.tier2Upsell.skipped++; return; }
-
-            const email = t2EmailMap.get(merchant.user_id);
-            if (!email) { results.tier2Upsell.skipped++; return; }
-
-            try {
-              const totalCustomers = customerCountMap.get(merchant.id) || 0;
-              if (!merchant.reward_description) { results.tier2Upsell.skipped++; return; }
-              const result = await sendTier2UpsellEmail(email, merchant.shop_name, totalCustomers, merchant.reward_description);
-              if (result.success) {
-                await supabase.from('pending_email_tracking').insert({
-                  merchant_id: merchant.id, reminder_day: -102, pending_count: 0,
-                });
-                results.tier2Upsell.sent++;
-              } else { results.tier2Upsell.errors++; }
-            } catch { results.tier2Upsell.errors++; }
+          await processEmailSection({
+            candidates: tier2Eligible,
+            trackingCode: -102,
+            emailMap: t2EmailMap,
+            alreadySentSet: alreadySentTier2,
+            stats: results.tier2Upsell,
+            extraSkip: (m) => !m.reward_description,
+            sendFn: (email, m) => {
+              const totalCustomers = customerCountMap.get(m.id) || 0;
+              return sendTier2UpsellEmail(email, m.shop_name, totalCustomers, m.reward_description!);
+            },
           });
         }
       }
@@ -834,10 +755,11 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 5: WEEKLY DIGEST — DISABLED ====================
-  // Désactivé : risque de frustrer les merchants avec des chiffres faibles.
-  // Réactiver quand le merchant a assez d'activité (ex: seuil min 5 scans/semaine).
+  // Desactive : risque de frustrer les merchants avec des chiffres faibles.
+  // Reactiver quand le merchant a assez d'activite (ex: seuil min 5 scans/semaine).
 
   // ==================== SECTION 6: INACTIVE MERCHANTS ====================
+  // (Custom: multiple inactive days, complex tracking with compound keys — kept manual)
   try {
     const INACTIVE_DAYS = [7, 14, 30];
 
@@ -850,7 +772,6 @@ export async function GET(request: NextRequest) {
       .neq('no_contact', true);
 
     if (activeMerchants && activeMerchants.length > 0) {
-      // Batch fetch last visits for ALL active merchants in one query (instead of N queries)
       const merchantIds = activeMerchants.map(m => m.id);
       const { data: allLastVisits } = await supabase
         .from('visits')
@@ -859,7 +780,6 @@ export async function GET(request: NextRequest) {
         .eq('status', 'confirmed')
         .order('visited_at', { ascending: false });
 
-      // Build map: merchant_id -> last visit date
       const lastVisitMap = new Map<string, string>();
       for (const visit of allLastVisits || []) {
         if (!lastVisitMap.has(visit.merchant_id)) {
@@ -867,7 +787,6 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Filter to only merchants that match INACTIVE_DAYS
       const candidateMerchants = activeMerchants.filter(merchant => {
         const lastVisitDate = lastVisitMap.get(merchant.id);
         const referenceDate = lastVisitDate ? new Date(lastVisitDate) : new Date(merchant.created_at);
@@ -879,7 +798,6 @@ export async function GET(request: NextRequest) {
       results.inactiveMerchants.skipped = activeMerchants.length - candidateMerchants.length;
 
       if (candidateMerchants.length > 0) {
-        // Batch check existing tracking for candidates
         const { data: existingTrackings } = await supabase
           .from('pending_email_tracking')
           .select('merchant_id, reminder_day')
@@ -890,7 +808,6 @@ export async function GET(request: NextRequest) {
           (existingTrackings || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
         );
 
-        // Batch fetch emails
         const emailMap = await batchGetUserEmails([...new Set(candidateMerchants.map(m => m.user_id))]);
 
         await batchProcess(candidateMerchants, async (merchant) => {
@@ -960,6 +877,7 @@ export async function GET(request: NextRequest) {
   }
 
   // ==================== SECTION 7: REACTIVATION ====================
+  // (Custom: different tracking table, promo codes, days since cancellation — kept manual)
   try {
     const REACTIVATION_DAYS = [7, 14, 30];
 
@@ -970,7 +888,6 @@ export async function GET(request: NextRequest) {
       .neq('no_contact', true);
 
     if (canceledMerchants && canceledMerchants.length > 0) {
-      // Pre-filter to only merchants matching reactivation days
       const reactivationCandidates = canceledMerchants.filter(merchant => {
         const canceledAt = new Date(merchant.updated_at);
         const daysSince = Math.floor((now.getTime() - canceledAt.getTime()) / (1000 * 60 * 60 * 24));
@@ -981,7 +898,6 @@ export async function GET(request: NextRequest) {
       results.reactivation.skipped = canceledMerchants.length - reactivationCandidates.length;
 
       if (reactivationCandidates.length > 0) {
-        // Batch fetch existing tracking
         const { data: reactivationTrackings } = await supabase
           .from('reactivation_email_tracking')
           .select('merchant_id, day_sent')
@@ -991,12 +907,10 @@ export async function GET(request: NextRequest) {
           (reactivationTrackings || []).map(t => `${t.merchant_id}:${t.day_sent}`)
         );
 
-        // Batch fetch user emails
         const reactivationEmailMap = await batchGetUserEmails(
           [...new Set(reactivationCandidates.map(m => m.user_id))]
         );
 
-        // Batch fetch customer counts
         const { data: reactivationCards } = await supabase
           .from('loyalty_cards')
           .select('merchant_id')
@@ -1024,7 +938,7 @@ export async function GET(request: NextRequest) {
           const totalCustomers = reactivationCountMap.get(merchant.id) || 0;
 
           try {
-            // Codes promo progressifs : J+14 = 2 mois à 9€, J+30 = 3 mois à 9€
+            // Codes promo progressifs : J+14 = 2 mois a 9eur, J+30 = 3 mois a 9eur
             let promoCode: string | undefined;
             let promoMonths: number | undefined;
             if (daysSinceCancellation === 14) {
@@ -1058,9 +972,9 @@ export async function GET(request: NextRequest) {
 
   // ==================== SECTION 8: LIFECYCLE EMAILS ====================
   try {
-    // ==================== 3b. INCOMPLETE SIGNUP RELANCE (T+24h, T+72h, T+7j) ====================
+    // 3b. INCOMPLETE SIGNUP RELANCE (T+24h, T+72h, T+7j)
+    // (Custom: operates on auth users not merchants, multiple time windows — kept manual)
     {
-      // List all auth users without merchants (paginated to handle >500 users)
       let allAuthUsers: any[] = [];
       let page = 1;
       let hasMore = true;
@@ -1075,7 +989,6 @@ export async function GET(request: NextRequest) {
       const { data: superAdminList } = await supabase.from('super_admins').select('user_id');
       const superAdminSet = new Set((superAdminList || []).map((sa: { user_id: string }) => sa.user_id));
 
-      // Check existing tracking to avoid duplicates
       const incompleteUsers = (allAuthUsers || []).filter(u => {
         if (merchantUserIdSet.has(u.id)) return false;
         if (superAdminSet.has(u.id)) return false;
@@ -1084,7 +997,6 @@ export async function GET(request: NextRequest) {
       });
 
       if (incompleteUsers.length > 0) {
-        // Fetch tracking for these users (use user id as merchant_id in tracking)
         const { data: existingIncompleteTracking } = await supabase
           .from('pending_email_tracking')
           .select('merchant_id, reminder_day')
@@ -1095,45 +1007,32 @@ export async function GET(request: NextRequest) {
           (existingIncompleteTracking || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
         );
 
+        // Helper for the 3 incomplete signup email windows
+        const incompleteEmailWindows: Array<{
+          minHours: number; maxHours: number; trackingCode: number;
+          sendFn: (email: string) => Promise<{ success: boolean }>;
+        }> = [
+          { minHours: 23, maxHours: 25, trackingCode: -110, sendFn: sendGuidedSignupEmail },
+          { minHours: 71, maxHours: 73, trackingCode: -111, sendFn: sendSetupForYouEmail },
+          { minHours: 167, maxHours: 169, trackingCode: -112, sendFn: sendLastChanceSignupEmail },
+        ];
+
         await batchProcess(incompleteUsers, async (user) => {
           results.incompleteRelance.processed++;
           const createdAt = new Date(user.created_at);
           const hoursSince = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
 
-          // T+24h (23-25h window)
-          if (hoursSince >= 23 && hoursSince <= 25 && !incompleteTrackingSet.has(`${user.id}:-110`)) {
-            try {
-              const result = await sendGuidedSignupEmail(user.email!);
-              if (result.success) {
-                await supabase.from('pending_email_tracking').insert({ merchant_id: user.id, reminder_day: -110, pending_count: 0 });
-                results.incompleteRelance.sent++;
-              } else { results.incompleteRelance.errors++; }
-            } catch { results.incompleteRelance.errors++; }
-            return;
-          }
-
-          // T+72h (71-73h window)
-          if (hoursSince >= 71 && hoursSince <= 73 && !incompleteTrackingSet.has(`${user.id}:-111`)) {
-            try {
-              const result = await sendSetupForYouEmail(user.email!);
-              if (result.success) {
-                await supabase.from('pending_email_tracking').insert({ merchant_id: user.id, reminder_day: -111, pending_count: 0 });
-                results.incompleteRelance.sent++;
-              } else { results.incompleteRelance.errors++; }
-            } catch { results.incompleteRelance.errors++; }
-            return;
-          }
-
-          // T+7j (167-169h window)
-          if (hoursSince >= 167 && hoursSince <= 169 && !incompleteTrackingSet.has(`${user.id}:-112`)) {
-            try {
-              const result = await sendLastChanceSignupEmail(user.email!);
-              if (result.success) {
-                await supabase.from('pending_email_tracking').insert({ merchant_id: user.id, reminder_day: -112, pending_count: 0 });
-                results.incompleteRelance.sent++;
-              } else { results.incompleteRelance.errors++; }
-            } catch { results.incompleteRelance.errors++; }
-            return;
+          for (const window of incompleteEmailWindows) {
+            if (hoursSince >= window.minHours && hoursSince <= window.maxHours && !incompleteTrackingSet.has(`${user.id}:${window.trackingCode}`)) {
+              try {
+                const result = await window.sendFn(user.email!);
+                if (result.success) {
+                  await supabase.from('pending_email_tracking').insert({ merchant_id: user.id, reminder_day: window.trackingCode, pending_count: 0 });
+                  results.incompleteRelance.sent++;
+                } else { results.incompleteRelance.errors++; }
+              } catch { results.incompleteRelance.errors++; }
+              return;
+            }
           }
 
           results.incompleteRelance.skipped++;
@@ -1141,8 +1040,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ==================== 3c. AUTO-SUGGEST REWARD (J+5 merchant, programme non configuré) ====================
-    // C7: Idempotent — tracked via pending_email_tracking with code -120
+    // 3c. AUTO-SUGGEST REWARD (J+5 merchant, programme non configure)
+    // Idempotent — tracked via pending_email_tracking with code -120
     {
       const oneHundredTwentyOneHoursAgo = new Date(now.getTime() - 121 * 60 * 60 * 1000);
       const oneHundredTwentyHoursAgo = new Date(now.getTime() - 120 * 60 * 60 * 1000);
@@ -1156,37 +1055,20 @@ export async function GET(request: NextRequest) {
         .gte('created_at', oneHundredTwentyOneHoursAgo.toISOString())
         .neq('no_contact', true);
 
-      if (autoSuggestCandidates && autoSuggestCandidates.length > 0) {
-        const asEmailMap = await batchGetUserEmails([...new Set(autoSuggestCandidates.map(m => m.user_id))]);
-        const { data: existingAs } = await supabase.from('pending_email_tracking').select('merchant_id').in('merchant_id', autoSuggestCandidates.map(m => m.id)).eq('reminder_day', -120);
-        const alreadySentAs = new Set((existingAs || []).map(t => t.merchant_id));
-
-        await batchProcess(autoSuggestCandidates, async (merchant) => {
-          results.autoSuggestReward.processed++;
-
-          if (merchantsSentTrialEmail.has(merchant.id) || alreadySentAs.has(merchant.id)) {
-            results.autoSuggestReward.skipped++;
-            return;
-          }
-
-          const email = asEmailMap.get(merchant.user_id);
-          if (!email) { results.autoSuggestReward.skipped++; return; }
-
-          try {
-            const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-            const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
-            const result = await sendAutoSuggestRewardEmail(email, merchant.shop_name, merchant.shop_type || '', daysRemaining);
-            if (result.success) {
-              await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: -120, pending_count: 0 });
-              results.autoSuggestReward.sent++;
-            }
-            else { results.autoSuggestReward.errors++; }
-          } catch { results.autoSuggestReward.errors++; }
-        });
-      }
+      await runStandardEmailSection({
+        candidates: autoSuggestCandidates,
+        trackingCode: -120,
+        stats: results.autoSuggestReward,
+        extraSkip: (m) => merchantsSentTrialEmail.has(m.id),
+        sendFn: (email, m) => {
+          const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
+          const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
+          return sendAutoSuggestRewardEmail(email, m.shop_name, m.shop_type || '', daysRemaining);
+        },
+      });
     }
 
-    // ==================== 3d. GRACE PERIOD SETUP (programme non configuré + grace period) ====================
+    // 3d. GRACE PERIOD SETUP (programme non configure + grace period)
     {
       const { data: graceCandidates } = await supabase
         .from('merchants')
@@ -1195,52 +1077,26 @@ export async function GET(request: NextRequest) {
         .eq('subscription_status', 'trial')
         .neq('no_contact', true);
 
-      if (graceCandidates && graceCandidates.length > 0) {
-        // Check tracking to avoid sending twice
-        const { data: existingGrace } = await supabase
-          .from('pending_email_tracking')
-          .select('merchant_id')
-          .in('merchant_id', graceCandidates.map(m => m.id))
-          .eq('reminder_day', -113);
-        const alreadySentGrace = new Set((existingGrace || []).map(t => t.merchant_id));
-
-        const graceEmailMap = await batchGetUserEmails([...new Set(graceCandidates.map(m => m.user_id))]);
-
-        await batchProcess(graceCandidates, async (merchant) => {
-          results.gracePeriodSetup.processed++;
-
-          if (alreadySentGrace.has(merchant.id)) {
-            results.gracePeriodSetup.skipped++;
-            return;
-          }
-
-          const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-          // Only send during grace period (trial expired but not fully expired yet)
-          if (!trialStatus.isInGracePeriod) {
-            results.gracePeriodSetup.skipped++;
-            return;
-          }
-
-          const email = graceEmailMap.get(merchant.user_id);
-          if (!email) { results.gracePeriodSetup.skipped++; return; }
-
-          try {
-            const result = await sendGracePeriodSetupEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion);
-            if (result.success) {
-              await supabase.from('pending_email_tracking').insert({
-                merchant_id: merchant.id, reminder_day: -113, pending_count: 0,
-              });
-              results.gracePeriodSetup.sent++;
-            } else { results.gracePeriodSetup.errors++; }
-          } catch { results.gracePeriodSetup.errors++; }
-        });
-      }
+      await runStandardEmailSection({
+        candidates: graceCandidates,
+        trackingCode: -113,
+        stats: results.gracePeriodSetup,
+        extraSkip: (m) => {
+          const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
+          return !trialStatus.isInGracePeriod;
+        },
+        sendFn: (email, m) => {
+          const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
+          return sendGracePeriodSetupEmail(email, m.shop_name, trialStatus.daysUntilDeletion);
+        },
+      });
     }
   } catch (error) {
     sectionStatuses.push({ name: 'lifecycleEmails', status: 'error', error: String(error) });
   }
 
   // ==================== SECTION 9: PENDING REMINDERS ====================
+  // (Custom: visits-based, complex pending count logic — kept manual)
   try {
     const { data: merchantsWithPending } = await supabase
       .from('visits')
@@ -1251,7 +1107,6 @@ export async function GET(request: NextRequest) {
     const uniqueMerchantIds = [...new Set(merchantsWithPending?.map(v => v.merchant_id) || [])];
 
     if (uniqueMerchantIds.length > 0) {
-      // Batch fetch merchant data for all unique IDs (instead of N queries)
       const { data: merchantsData } = await supabase
         .from('merchants')
         .select('id, shop_name, user_id')
@@ -1262,12 +1117,10 @@ export async function GET(request: NextRequest) {
         (merchantsData || []).map(m => [m.id, m])
       );
 
-      // Batch fetch emails
       const emailMap = await batchGetUserEmails(
         [...new Set((merchantsData || []).map(m => m.user_id))]
       );
 
-      // Batch fetch all pending visits for these merchants (instead of N queries)
       const { data: allPendingVisits } = await supabase
         .from('visits')
         .select('id, merchant_id, visited_at')
@@ -1275,7 +1128,6 @@ export async function GET(request: NextRequest) {
         .eq('status', 'pending')
         .order('visited_at', { ascending: true });
 
-      // Group by merchant_id
       const pendingByMerchant = new Map<string, { id: string; visited_at: string }[]>();
       for (const visit of allPendingVisits || []) {
         if (!pendingByMerchant.has(visit.merchant_id)) {
@@ -1284,7 +1136,6 @@ export async function GET(request: NextRequest) {
         pendingByMerchant.get(visit.merchant_id)!.push(visit);
       }
 
-      // Batch fetch existing tracking
       const { data: existingTrackings } = await supabase
         .from('pending_email_tracking')
         .select('merchant_id, reminder_day')
@@ -1355,7 +1206,7 @@ export async function GET(request: NextRequest) {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     await supabase.from('pending_email_tracking').delete().lt('sent_at', sevenDaysAgo.toISOString()).gte('reminder_day', 0);
 
-    // C7: Clean up recurring email tracking (trial) older than 8 days so they can be re-sent
+    // Clean up recurring email tracking (trial) older than 8 days so they can be re-sent
     const eightDaysAgo = new Date();
     eightDaysAgo.setDate(eightDaysAgo.getDate() - 8);
     await supabase.from('pending_email_tracking').delete().lt('sent_at', eightDaysAgo.toISOString()).in('reminder_day', [-201, -203, -211, -212]);
@@ -1424,7 +1275,6 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        // Send notifications in parallel with Promise.allSettled (was sequential before)
         const pushResults = await Promise.allSettled(
           subscriptions.map(async (sub) => {
             await webpush.sendNotification(
@@ -1456,7 +1306,6 @@ export async function GET(request: NextRequest) {
           }
         });
 
-        // Batch delete expired subscriptions
         if (failedEndpoints.length > 0) {
           await supabase.from('push_subscriptions').delete().in('endpoint', failedEndpoints);
         }
@@ -1547,7 +1396,7 @@ export async function GET(request: NextRequest) {
             (existingBirthdayVouchers || []).map(v => `${v.customer_id}:${v.merchant_id}`)
           );
 
-          // Pre-fetch phone→customer_ids mapping to avoid N+1
+          // Pre-fetch phone->customer_ids mapping to avoid N+1
           const birthdayPhones = [...new Set(birthdayCustomers.map((c: any) => c.phone_number))];
           const { data: allPhoneCustomers } = await supabase
             .from('customers')
@@ -1607,7 +1456,6 @@ export async function GET(request: NextRequest) {
                       .in('customer_id', allCustIds);
 
                     if (pushSubs && pushSubs.length > 0) {
-                      // Dedup by endpoint to avoid sending twice to same device
                       const seen = new Set<string>();
                       const uniqueSubs = pushSubs.filter(sub => {
                         if (seen.has(sub.endpoint)) return false;
@@ -1690,7 +1538,6 @@ export async function GET(request: NextRequest) {
             .select('id, phone_number')
             .in('id', customerIds);
 
-          // Build message: custom offer text > active offer > default
           const automationRow = automationMerchants.find(a => a.merchant_id === merchant.id);
           const customOfferText = automationRow?.inactive_reminder_offer_text;
           const hasOffer = merchant.offer_active && merchant.offer_title &&
@@ -1723,7 +1570,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 12B. Rappel récompense (unused voucher 7+ days)
+    // 12B. Rappel recompense (unused voucher 7+ days)
     {
       const { data: automationMerchants } = await supabase
         .from('push_automations')
@@ -1755,7 +1602,6 @@ export async function GET(request: NextRequest) {
             .or(`expires_at.gt.${now.toISOString()},expires_at.is.null`);
 
           if (oldVouchers && oldVouchers.length > 0) {
-            // Deduplicate by customer+merchant
             const seen = new Set<string>();
             const uniqueVouchers = oldVouchers.filter(v => {
               const key = `${v.customer_id}:${v.merchant_id}`;
@@ -1796,9 +1642,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 12C. Événements (push 7 days before event)
+    // 12C. Evenements (push 7 days before event)
     {
-      // Use Paris-local date for event calendar check (avoids off-by-one at midnight)
       const nowParis = new Date(getTodayInParis() + 'T10:00:00');
       const upcomingEvent = getUpcomingEvent(nowParis);
 
@@ -1824,7 +1669,6 @@ export async function GET(request: NextRequest) {
             const offerText = offerTextMap.get(merchant.id);
             if (!offerText) continue;
 
-            // Get all customers with loyalty cards for this merchant
             const { data: loyaltyCards } = await supabase
               .from('loyalty_cards')
               .select('customer_id')

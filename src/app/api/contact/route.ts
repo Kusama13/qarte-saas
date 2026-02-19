@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/supabase';
 import { validateEmail } from '@/lib/utils';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const supabase = createServerClient();
+    const supabase = getSupabaseAdmin();
 
     const subjectLabels: Record<string, string> = {
       question: 'Question',

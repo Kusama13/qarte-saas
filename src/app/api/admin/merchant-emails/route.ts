@@ -1,19 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin } from '@/lib/supabase';
-import { verifyAdminAuth } from '@/lib/admin-auth';
-import { checkRateLimit, RATE_LIMITS } from '@/lib/rate-limit';
+import { authorizeAdmin } from '@/lib/api-helpers';
 import logger from '@/lib/logger';
 
-const supabaseAdmin = getSupabaseAdmin();
-
 export async function GET(request: NextRequest) {
-  const auth = await verifyAdminAuth(request);
-  if (!auth.authorized) return auth.error!;
-
-  const rateLimit = checkRateLimit(`admin-merchant-emails:${auth.userId}`, RATE_LIMITS.api);
-  if (!rateLimit.success) {
-    return NextResponse.json({ error: 'Trop de requêtes' }, { status: 429 });
-  }
+  const auth = await authorizeAdmin(request, 'admin-merchant-emails');
+  if (auth.response) return auth.response;
+  const { supabaseAdmin } = auth;
 
   try {
     const [{ data: merchants }, { data: { users } }] = await Promise.all([

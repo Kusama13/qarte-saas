@@ -10,7 +10,7 @@ import {
   Search,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { validateFrenchPhone } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone } from '@/lib/utils';
 
 interface CardData {
   merchant_id: string;
@@ -81,7 +81,7 @@ export default function CustomerDashboardPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateFrenchPhone(phoneNumber)) {
+    if (!validatePhone(formatPhoneNumber(phoneNumber))) {
       setError('Veuillez entrer un numéro de téléphone valide');
       return;
     }

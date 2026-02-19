@@ -16,6 +16,10 @@ export function trackEvent(eventName: string, params?: Record<string, unknown>) 
   });
 }
 
+// Factory for simple tracker functions (no custom logic, just forward params)
+const createTracker = (eventName: string) =>
+  (params?: Record<string, unknown>) => trackEvent(eventName, params);
+
 // ============================================
 // LANDING PAGE EVENTS
 // ============================================
@@ -57,44 +61,21 @@ export function trackSignupCompleted(userId: string, method: 'email' | 'google' 
   });
 }
 
-export function trackLoginCompleted(userId: string) {
-  trackEvent('login_completed', {
-    user_id: userId,
-  });
-}
+export const trackLoginCompleted = createTracker('login_completed');
 
 // ============================================
 // MERCHANT SETUP EVENTS
 // ============================================
 
-export function trackSetupStarted() {
-  trackEvent('merchant_setup_started');
-}
-
-export function trackSetupCompleted(merchantId: string, businessType?: string) {
-  trackEvent('merchant_setup_completed', {
-    merchant_id: merchantId,
-    business_type: businessType,
-  });
-}
-
-export function trackFirstCustomerAdded(merchantId: string) {
-  trackEvent('first_customer_added', {
-    merchant_id: merchantId,
-  });
-}
+export const trackSetupStarted = createTracker('merchant_setup_started');
+export const trackSetupCompleted = createTracker('merchant_setup_completed');
+export const trackFirstCustomerAdded = createTracker('first_customer_added');
 
 // ============================================
 // SUBSCRIPTION/PAYMENT EVENTS
 // ============================================
 
-export function trackSubscriptionStarted(plan: string, price: number) {
-  trackEvent('subscription_started', {
-    plan_name: plan,
-    plan_price: price,
-    currency: 'EUR',
-  });
-}
+export const trackSubscriptionStarted = createTracker('subscription_started');
 
 export function trackSubscriptionCompleted(plan: string, price: number, merchantId: string) {
   if (!plan || !merchantId || typeof price !== 'number' || price < 0) return;
@@ -110,81 +91,24 @@ export function trackSubscriptionCompleted(plan: string, price: number, merchant
   });
 }
 
-export function trackTrialStarted(merchantId: string) {
-  trackEvent('trial_started', {
-    merchant_id: merchantId,
-  });
-}
+export const trackTrialStarted = createTracker('trial_started');
 
 // ============================================
 // CUSTOMER (END-USER) EVENTS
 // ============================================
 
-export function trackQrScanned(merchantId: string) {
-  trackEvent('qr_scanned', {
-    merchant_id: merchantId,
-  });
-}
-
-export function trackCardCreated(merchantId: string, customerId: string) {
-  trackEvent('card_created', {
-    merchant_id: merchantId,
-    customer_id: customerId,
-  });
-}
-
-export function trackPwaInstalled(merchantId: string) {
-  trackEvent('pwa_installed', {
-    merchant_id: merchantId,
-  });
-}
-
-export function trackPushEnabled(customerId: string) {
-  trackEvent('push_enabled', {
-    customer_id: customerId,
-  });
-}
-
-export function trackPointEarned(merchantId: string, customerId: string, totalPoints: number) {
-  trackEvent('point_earned', {
-    merchant_id: merchantId,
-    customer_id: customerId,
-    total_points: totalPoints,
-  });
-}
-
-export function trackRewardRedeemed(merchantId: string, customerId: string, rewardName: string) {
-  trackEvent('reward_redeemed', {
-    merchant_id: merchantId,
-    customer_id: customerId,
-    reward_name: rewardName,
-  });
-}
+export const trackQrScanned = createTracker('qr_scanned');
+export const trackCardCreated = createTracker('card_created');
+export const trackPwaInstalled = createTracker('pwa_installed');
+export const trackPushEnabled = createTracker('push_enabled');
+export const trackPointEarned = createTracker('point_earned');
+export const trackRewardRedeemed = createTracker('reward_redeemed');
 
 // ============================================
 // ENGAGEMENT EVENTS
 // ============================================
 
-export function trackVideoPlayed(videoName: string) {
-  trackEvent('video_played', {
-    video_name: videoName,
-  });
-}
-
-export function trackFaqOpened(questionId: string) {
-  trackEvent('faq_opened', {
-    question_id: questionId,
-  });
-}
-
-export function trackContactFormSubmitted(source: string) {
-  trackEvent('contact_form_submitted', {
-    source: source,
-  });
-}
-
-export function trackWhatsAppClicked(source: string) {
-  trackEvent('whatsapp_clicked', {
-    source: source,
-  });
-}
+export const trackVideoPlayed = createTracker('video_played');
+export const trackFaqOpened = createTracker('faq_opened');
+export const trackContactFormSubmitted = createTracker('contact_form_submitted');
+export const trackWhatsAppClicked = createTracker('whatsapp_clicked');

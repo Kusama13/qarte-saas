@@ -393,7 +393,7 @@ export default function CustomerCardPage({
       const pwaTracked = localStorage.getItem('qarte_pwa_tracked');
       if (!pwaTracked) {
         localStorage.setItem('qarte_pwa_tracked', 'true');
-        trackPwaInstalled(merchantId);
+        trackPwaInstalled({ merchant_id: merchantId });
       }
     }
 
