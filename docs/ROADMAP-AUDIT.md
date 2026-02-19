@@ -55,7 +55,7 @@ Signup (email+password)
 | F9 | Parrainage merchant | 3h | ✅ FAIT — code QARTE-XXXX, Settings + FirstScanEmail, Web Share API |
 | F10 | Scratch & Win gamification | 6h | ❌ A FAIRE |
 | F21 | Parrainage client (filleul/parrain) | 8h | ✅ FAIT — APIs, scan ?ref=, carte client, dashboard /referrals |
-| F22 | PWA merchant (dashboard installable) | 1h | ❌ A FAIRE |
+| F22 | PWA merchant (dashboard installable) | 1h | ✅ FAIT — middleware manifest rewrite, "Qarte Pro", install banner mobile |
 | F11 | Mode articles (points par euro) | 4-5h | ❌ A FAIRE |
 | F12 | Export CSV/PDF enrichi | 5h | ❌ A FAIRE |
 | F13 | Push geolocalisee | 6-8h | ❌ A FAIRE |
@@ -86,7 +86,7 @@ Signup (email+password)
 | F10 | Scratch & Win | 6h | ★★ | ★★★★★ | **P2** |
 | F9 | ~~Parrainage merchant~~ | ~~3h~~ | ★★★★ | ★★★ | **✅ FAIT** |
 | F21 | ~~Parrainage client~~ | ~~8h~~ | ★★★★★ | ★★★★★ | **✅ FAIT** |
-| F22 | PWA merchant dashboard | 1h | ★★★ | ★★★★ | **P1** |
+| F22 | ~~PWA merchant dashboard~~ | ~~1h~~ | ★★★ | ★★★★ | **✅ FAIT** |
 | F11 | Mode articles | 4-5h | ★★ | ★★★ | **P2** |
 | F12 | Export CSV/PDF | 5h | ★ | ★★★ | **P2** |
 | F16 | Google Reviews auto | 1-2j | ★★★★ | ★★★★ | **P2** |
@@ -148,6 +148,23 @@ Audit complet du codebase (61 routes API, 11 pages dashboard, 3 crons, 37 migrat
 - [x] H15 : Migration 039 schema drift fix (customers.merchant_id, loyalty_cards.rewards_earned)
 - [x] H16 : Tests adjust-points (14 tests) + stripe-webhook (12 tests) → 55/55 tests
 - [x] L1-L12 : Backlog LOW/INFO (redirect useEffect, aria-labels, SVG accessible, CSV Firefox, etc.)
+
+### Phase 4 — Simplification code avancee (FAIT, 19 fev)
+**Net -2,335 lignes** (35 fichiers, -3,075 / +2,113)
+
+**P0 :**
+- [x] Factory `sendEmail<P>()` + `scheduleEmail<P>()` dans `lib/email.ts` (1350→616 lignes, -54%)
+- [x] Helpers `processEmailSection()` + `runStandardEmailSection()` + `getAlreadySentSet()` dans cron morning (1878→1722, -8%)
+- [x] Split `CustomerManagementModal` en 5 fichiers (1185→286 principal, +4 tabs)
+
+**P1 :**
+- [x] Helper `authorizeAdmin()` dans `lib/api-helpers.ts` (auth + rate limit, 12 routes admin)
+- [x] Factory `createTracker()` dans `lib/analytics.ts` (191→114 lignes, -40%)
+- [x] Composant partage `IOSInstallInstructions` (257 lignes dupliquees supprimees)
+
+**P2 :**
+- [x] Composant `StatusBanner` extrait du dashboard layout (4 variants trial/grace/canceling/past_due)
+- [x] Suppression deprecated `validateFrenchPhone()` et `createServerClient()`
 
 ### Migrations SQL appliquees
 - 038 : Restrict RLS policies (C1+C11)
@@ -429,7 +446,7 @@ ENGAGEMENT
   +5 jours             Day5CheckinEmail (skip si 0 scans)
   +1j apres 1ere rec.  FirstRewardEmail
   10+ clients          Tier2UpsellEmail
-  Hebdomadaire         WeeklyDigestEmail
+  ~~Hebdomadaire       WeeklyDigestEmail~~ — DESACTIVE
 
 INACTIVITE (programme configure, 0 check-in)
   +7 jours   InactiveMerchantDay7Email
@@ -574,7 +591,7 @@ SHIELD (points en attente)
 
 ## Semaine 2 (17-23 fev)
 - [ ] **F3** : Celebration premier scan (1h, reporte semaine 1)
-- [ ] **F22** : PWA merchant dashboard (1h) — manifest dedie `/dashboard`, nom "Qarte Pro", install prompt dashboard
+- [x] ~~**F22** : PWA merchant dashboard~~ — fait (middleware manifest rewrite, "Qarte Pro", install banner mobile)
 - [ ] **F6** : Templates push enrichis (2h)
 - [ ] **F4** : Stats enrichies carte client (2h)
 
@@ -598,6 +615,32 @@ SHIELD (points en attente)
 ---
 
 # PARTIE 6 : CHANGELOG
+
+## [2026-02-19] — PWA merchant "Qarte Pro", suppression weekly digest, refactoring majeur -2335 lignes
+
+### PWA Merchant "Qarte Pro"
+- **feat:** Manifest dedie `/api/manifest/pro` (Qarte Pro, scope /dashboard, icone Q+PRO)
+- **feat:** Middleware rewrite `/manifest.webmanifest` → manifest Pro si Referer contient `/dashboard`
+- **feat:** Banner install sticky mobile (apres 1er scan, dismiss localStorage)
+- **feat:** Instructions iOS partagees (`IOSInstallInstructions` composant shared)
+- **feat:** Service worker scope `/dashboard`
+- **feat:** Active pour tous les merchants (initialement super_admin only pour test)
+
+### Weekly digest desactive
+- **fix:** `WeeklyDigestEmail` supprime du cron morning (~116 lignes) — frustrant pour merchants avec peu d'activite
+- **note:** Template email conserve, reactiver avec seuil minimum activite
+
+### Refactoring majeur — Phase 4 simplification (-2,335 lignes nettes)
+- **refactor(P0):** Factory `sendEmail<P>()` + `scheduleEmail<P>()` dans `lib/email.ts` (1350→616, -54%)
+- **refactor(P0):** Helpers `processEmailSection()` + `runStandardEmailSection()` dans cron morning (1878→1722, -8%)
+- **refactor(P0):** Split `CustomerManagementModal` en 5 fichiers (1185→286 principal + 4 tabs)
+- **refactor(P1):** Helper `authorizeAdmin()` dans `lib/api-helpers.ts` — combine auth + rate limit pour 12 routes admin
+- **refactor(P1):** Factory `createTracker()` dans `lib/analytics.ts` (191→114, -40%)
+- **refactor(P1):** Composant partage `IOSInstallInstructions` — elimine 257 lignes dupliquees
+- **refactor(P2):** Composant `StatusBanner` extrait du dashboard layout (4 variants)
+- **refactor(P2):** Suppression deprecated `validateFrenchPhone()` + `createServerClient()`
+
+---
 
 ## [2026-02-18] — WhatsApp Marketing/Tuto, audit parrainage+anniversaire, admin activite cliquable, audit Stripe
 
@@ -1036,5 +1079,5 @@ SHIELD (points en attente)
 
 ---
 
-*Derniere mise a jour : 18 fevrier 2026*
-*Audit global complete (Phases 1-3). Migrations 038+039 appliquees. 55/55 tests. Birthday Club + referral bug fixes deployes. Phase 4 (Upstash, push batching, logger, Search Console) en backlog.*
+*Derniere mise a jour : 19 fevrier 2026*
+*Audit global complete (Phases 1-4). Migrations 038+039 appliquees. 55/55 tests. PWA merchant "Qarte Pro" deploye. Refactoring -2335 lignes (P0+P1+P2). Phase 5 (Upstash, push batching, logger, Search Console) en backlog.*

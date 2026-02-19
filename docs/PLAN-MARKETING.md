@@ -76,7 +76,7 @@
 
 | Canal | Part | Budget/mois | Detail |
 |-------|------|-------------|--------|
-| **Parrainage merchant amplifie** | 20% | 0€ (-10€ chacun) | ✅ Encart parrainage ajoute dans 9 emails (FirstScan, FirstReward, WeeklyDigest, SubConfirmed, SubReactivated, Day5, SocialKit, Tier2Upsell, QRCode). Reward : -10€ chacun. |
+| **Parrainage merchant amplifie** | 20% | 0€ (-10€ chacun) | ✅ Encart parrainage ajoute dans 8 emails (FirstScan, FirstReward, SubConfirmed, SubReactivated, Day5, Tier2Upsell, QRCode, InactiveMerchant). Reward : -10€ chacun. |
 | **Facebook Ads optimises** | 40% | 1,000-1,500€ | Lookalike audience sur 100 premiers, retargeting abandons, vrais temoignages video |
 | **Blog SEO** | 25% | 200€ (redacteur) | 4 articles/mois, SEO local (/carte-fidelite-paris, /carte-fidelite-lyon) |
 | **Partenariats distributeurs** | 15% | 0€ | Grossistes coiffure (L'Oreal Pro, Wella), newsletters partenaires |

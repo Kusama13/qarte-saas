@@ -57,8 +57,8 @@ src/
 ├── components/
 │   ├── landing/           # 12 composants landing (Hero, Features, Pricing, FAQ...)
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
-│   ├── shared/            # Header, Footer, CookieBanner, QRScanner
-│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
+│   ├── shared/            # Header, Footer, CookieBanner, QRScanner, IOSInstallInstructions
+│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal (+ 4 tabs: AdjustTab, RewardsTab, HistoryTab, DangerZone), StatusBanner, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
 │   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, ReviewPrompt, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep)
 │   ├── marketing/         # SocialMediaTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel
@@ -66,13 +66,15 @@ src/
 ├── lib/                   # Utilitaires
 │   ├── supabase.ts       # Client Supabase
 │   ├── stripe.ts         # Client Stripe
-│   ├── analytics.ts      # Tracking events
+│   ├── analytics.ts      # Tracking events (factory createTracker())
+│   ├── api-helpers.ts    # authorizeAdmin() helper pour routes admin
+│   ├── email.ts          # Envoi emails (factory sendEmail<P>() + scheduleEmail<P>())
 │   ├── push.ts           # Notifications push
 │   ├── logger.ts         # Logger structuré
 │   ├── scripts.ts        # Scripts verbaux par shop_type (emails + dashboard)
 │   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode)
 │
-├── emails/               # Templates React Email (32 templates + BaseLayout)
+├── emails/               # Templates React Email (31 templates actifs + BaseLayout, WeeklyDigest desactive)
 │   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
 │   ├── WelcomeEmail.tsx           # Bienvenue (urgence + temoignage)
 │   ├── IncompleteSignupEmail.tsx  # Relance inscription +1h
@@ -89,7 +91,7 @@ src/
 │   ├── Day5CheckinEmail.tsx       # Check-in J+5
 │   ├── FirstRewardEmail.tsx       # Premiere recompense
 │   ├── Tier2UpsellEmail.tsx       # Upsell palier VIP
-│   ├── WeeklyDigestEmail.tsx      # Bilan hebdomadaire
+│   ├── WeeklyDigestEmail.tsx      # Bilan hebdomadaire — DESACTIVE (frustrant si chiffres faibles)
 │   ├── PendingPointsEmail.tsx     # Passages en attente (Shield)
 │   ├── QRCodeEmail.tsx            # QR code + kit reseaux sociaux (merged)
 │   ├── FirstClientScriptEmail.tsx # Script verbal J+2 post-config (par shop_type)
@@ -112,11 +114,12 @@ src/
 │   └── send-product-update.ts    # Script envoi bulk ProductUpdateEmail
 │
 ├── hooks/
-│   └── useInView.ts     # Hook IntersectionObserver (landing)
+│   ├── useInView.ts     # Hook IntersectionObserver (landing)
+│   └── useInstallPrompt.ts # Hook PWA install (beforeinstallprompt, iOS detection)
 │
 ├── types/index.ts        # Types TypeScript
 ├── contexts/             # React contexts
-└── middleware.ts         # Auth middleware
+└── middleware.ts         # Auth middleware + PWA manifest rewrite (/dashboard → Qarte Pro)
 
 docs/
 ├── context.md            # Contexte projet (ce fichier)
@@ -125,7 +128,7 @@ docs/
 └── roadmap/              # Backups code (mode article, scheduled push)
 
 supabase/
-└── migrations/           # 37 migrations SQL
+└── migrations/           # 39 migrations SQL
     ├── 001-025           # Schema initial + fixes
     ├── 026               # Trial period 15 jours (original)
     ├── 027               # Spelling cancelled→canceled
@@ -138,7 +141,9 @@ supabase/
     ├── 034               # Trial period 15j → 7j (nouveaux inscrits)
     ├── 035               # Referrals table RLS policies
     ├── 036               # no_contact + admin_notes columns
-    └── 037               # Birthday gift (birthday_gift_enabled, birthday_gift_description, vouchers source + birth_month/birth_day)
+    ├── 037               # Birthday gift (birthday_gift_enabled, birthday_gift_description, vouchers source + birth_month/birth_day)
+    ├── 038               # Restrict RLS policies (7 tables)
+    └── 039               # Schema drift fix (customers.merchant_id, loyalty_cards.rewards_earned)
 
 public/
 ├── images/              # Images statiques (mockups, temoignages, email-banner)
@@ -156,7 +161,7 @@ public/
 - `country` (MerchantCountry: 'FR' | 'BE' | 'CH' | 'LU', default 'FR')
 - `logo_url`, `primary_color`, `secondary_color`
 - `instagram_url`, `facebook_url`, `tiktok_url`, `booking_url`, `review_link`
-- `loyalty_mode` ('visit' | 'article')
+- `loyalty_mode` ('visit' — seul mode actif. 'article' existe en DB mais feature non implementee, voir F11 roadmap)
 - `stamps_required`, `reward_description`
 - `tier2_enabled`, `tier2_stamps_required`, `tier2_reward_description`
 - `referral_code` (VARCHAR 10, UNIQUE — ex: `QARTE-AB3K`)
@@ -259,7 +264,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Check-in par QR code (API parallelisee — 5 groupes Promise.all, ~300-600ms)
 - Accumulation de tampons/points
 - 2 paliers de recompenses
-- Mode visite ou mode article
+- Mode visite (mode article prevu mais non implemente — F11 roadmap)
 - Historique des passages
 - Suggestions de programme par type de commerce (MerchantSettingsForm)
 - 10 palettes couleurs (6 mobile + 4 desktop-only)
@@ -342,6 +347,14 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Badge NC (rouge) dans la liste merchants si `no_contact = true`
 - WhatsApp masque automatiquement pour merchants `no_contact`
 - Crons emails : merchants `no_contact` exclus de toutes les communications (19 queries filtrees)
+
+### PWA Merchant (Qarte Pro)
+- Dashboard installable via manifest dedie `/api/manifest/pro`
+- Middleware rewrite : `/manifest.webmanifest` sert le manifest Pro si Referer contient `/dashboard`
+- Icone Q gradient indigo→rose avec badge "PRO"
+- Banner install sticky (mobile, apres 1er scan recu, dismiss localStorage)
+- Instructions iOS partagees (`IOSInstallInstructions`)
+- Service worker scope `/dashboard`
 
 ### Programmes Membres
 - Cartes de membre avec validite
@@ -480,21 +493,23 @@ npm run email
 |---------|-------------|
 | `src/app/page.tsx` | Landing page (9 sections: Hero, Referral, AIReengagement, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer) |
 | `src/components/landing/` | 14 composants landing (Hero, Referral, AIReengagement, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer + utilitaires) |
-| `src/middleware.ts` | Protection routes authentifiees |
+| `src/middleware.ts` | Protection routes authentifiees + manifest PWA rewrite |
 | `src/lib/supabase.ts` | Client Supabase |
 | `src/lib/stripe.ts` | Client Stripe (mensuel + annuel) |
-| `src/lib/email.ts` | Envoi emails (Resend) |
+| `src/lib/email.ts` | Envoi emails (Resend, factory `sendEmail<P>()` + `scheduleEmail<P>()`) |
+| `src/lib/api-helpers.ts` | Helper `authorizeAdmin()` (auth + rate limit) pour routes admin |
+| `src/lib/analytics.ts` | Tracking events (factory `createTracker()`, 25+ trackers) |
 | `src/types/index.ts` | Definitions TypeScript |
 | `src/components/analytics/FacebookPixel.tsx` | Tracking FB |
 | `tailwind.config.ts` | Config Tailwind (couleurs, fonts) |
 | `next.config.mjs` | Config Next.js (securite, images) |
-| `src/app/api/cron/morning/route.ts` | Cron principal (4 taches) |
+| `src/app/api/cron/morning/route.ts` | Cron principal (sections isolees try/catch, helpers `processEmailSection()` + `runStandardEmailSection()`) |
 | `src/app/api/stripe/webhook/route.ts` | Webhook Stripe (5 events, machine d'etats) |
 | `src/app/api/stripe/checkout/route.ts` | Checkout Stripe (verification customer) |
 | `src/app/api/referrals/route.ts` | API parrainage client (GET info + POST inscription) |
 | `src/app/api/vouchers/use/route.ts` | API consommation voucher + auto-creation parrain |
 | `src/app/dashboard/referrals/page.tsx` | Dashboard parrainage (config + stats + tableau) |
-| `supabase/migrations/` | 37 migrations SQL |
+| `supabase/migrations/` | 39 migrations SQL |
 
 ---
 
@@ -687,7 +702,7 @@ import type { Merchant } from '@/types';
 
 ---
 
-## 19. Emails Transactionnels (32 templates)
+## 19. Emails Transactionnels (31 templates actifs)
 
 ### Onboarding & Activation
 | Email | Declencheur |
@@ -714,7 +729,7 @@ import type { Merchant } from '@/types';
 | Day5CheckinEmail | Check-in J+5 — bilan premiere semaine, skip si 0 scans (cron morning) |
 | FirstRewardEmail | Premiere recompense debloquee (cron morning) |
 | Tier2UpsellEmail | Upsell palier 2 VIP — 10+ clients (cron morning) |
-| WeeklyDigestEmail | Bilan hebdomadaire — scans, clients, recompenses (cron morning) |
+| ~~WeeklyDigestEmail~~ | ~~Bilan hebdomadaire~~ — **DESACTIVE** (frustrant si chiffres faibles) |
 | PendingPointsEmail | Passages en attente J+0/1/2/3 — Shield (cron morning) |
 
 ### Retention & Trial
