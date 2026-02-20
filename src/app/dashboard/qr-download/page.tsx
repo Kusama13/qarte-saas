@@ -18,7 +18,7 @@ import {
   Gift,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { generateQRCode, getScanUrl } from '@/lib/utils';
+import { generateQRCodeSVG, getScanUrl } from '@/lib/utils';
 import { SocialMediaTemplate } from '@/components/marketing/SocialMediaTemplate';
 import { toPng } from 'html-to-image';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -28,7 +28,7 @@ type Tab = 'qr' | 'social';
 export default function QRDownloadPage() {
   const { merchant, loading } = useMerchant();
   const [activeTab, setActiveTab] = useState<Tab>('qr');
-  const [qrCodeUrl, setQrCodeUrl] = useState<string>('');
+  const [qrSvg, setQrSvg] = useState<string>('');
   const [scanUrl, setScanUrl] = useState<string>('');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [socialDownloadSuccess, setSocialDownloadSuccess] = useState(false);
@@ -42,7 +42,7 @@ export default function QRDownloadPage() {
     if (!merchant?.scan_code) return;
     const url = getScanUrl(merchant.scan_code);
     setScanUrl(url);
-    generateQRCode(url).then(setQrCodeUrl).catch(console.error);
+    generateQRCodeSVG(url).then(setQrSvg).catch(console.error);
   }, [merchant?.scan_code]);
 
   /** Convert data URL to File for Web Share API */
@@ -280,15 +280,14 @@ export default function QRDownloadPage() {
                         Ajoutez votre carte en 15 secondes
                       </p>
                       <div className="bg-white rounded-xl p-2 shadow-xl">
-                        {qrCodeUrl ? (
+                        {qrSvg ? (
                           <div
-                            style={{
-                              width: '120px',
-                              height: '120px',
-                              backgroundImage: `url(${qrCodeUrl})`,
-                              backgroundSize: 'contain',
-                              backgroundRepeat: 'no-repeat',
-                              backgroundPosition: 'center',
+                            style={{ width: '120px', height: '120px' }}
+                            dangerouslySetInnerHTML={{
+                              __html: qrSvg.replace(
+                                /<svg /,
+                                '<svg width="100%" height="100%" '
+                              ),
                             }}
                           />
                         ) : (
@@ -333,7 +332,7 @@ export default function QRDownloadPage() {
               )}
               <Button
                 onClick={saveQrImage}
-                disabled={!qrCodeUrl || !hasPalier1}
+                disabled={!qrSvg || !hasPalier1}
                 className="w-full h-12 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 {downloadSuccess ? (
