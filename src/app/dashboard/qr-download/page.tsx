@@ -283,7 +283,7 @@ export default function QRDownloadPage() {
                       <div className="flex-shrink-0 bg-white rounded-xl p-2 overflow-hidden">
                         {qrSvg ? (
                           <div
-                            style={{ width: '110px', height: '110px' }}
+                            style={{ width: '120px', height: '120px' }}
                             dangerouslySetInnerHTML={{
                               __html: qrSvg
                                 .replace(/width="[^"]*"/, 'width="100%"')
@@ -291,7 +291,7 @@ export default function QRDownloadPage() {
                             }}
                           />
                         ) : (
-                          <div className="w-[110px] h-[110px] flex items-center justify-center">
+                          <div className="w-[120px] h-[120px] flex items-center justify-center">
                             <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
                           </div>
                         )}
