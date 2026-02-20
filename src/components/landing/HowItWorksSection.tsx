@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Settings, QrCode, Heart, Gift, Bell, Zap, Smartphone, Clock } from 'lucide-react';
+import { QrCode, Heart, Gift, Bell } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 
 /* ═══════════════════════════════════════════
@@ -14,12 +14,6 @@ function SetupCard() {
       {/* Numbered badge */}
       <div className="absolute -top-3 -left-3 w-7 h-7 bg-violet-500 rounded-full flex items-center justify-center shadow-sm shadow-violet-500/30">
         <span className="text-xs font-bold text-white">1</span>
-      </div>
-
-      {/* Tag */}
-      <div className="flex items-center gap-2 mb-3 ml-2">
-        <Settings className="w-4 h-4 text-violet-400" />
-        <span className="text-sm font-bold text-violet-400 uppercase tracking-wider">2 minutes</span>
       </div>
 
       {/* Title */}
@@ -196,15 +190,12 @@ export function HowItWorksSection() {
       <div ref={ref} className="max-w-5xl mx-auto px-6">
         {/* Header */}
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            En 3 étapes,{' '}
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
+            Pour commencer,{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              c&apos;est tout.
+              rien de plus simple.
             </span>
           </h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Pas de formation. Pas de matériel. Pas de carte papier.
-          </p>
         </div>
 
         {/* 3 Steps */}
@@ -235,43 +226,6 @@ export function HowItWorksSection() {
           </motion.div>
         </div>
 
-        {/* Stats row */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: 0.55 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center">
-              <Clock className="w-6 h-6 text-violet-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-gray-900">2 mn</p>
-              <p className="text-sm text-gray-500">pour tout configurer</p>
-            </div>
-          </div>
-          <div className="hidden sm:block w-px h-10 bg-gray-200" />
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center">
-              <Smartphone className="w-6 h-6 text-indigo-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-gray-900">0 app</p>
-              <p className="text-sm text-gray-500">à installer côté client</p>
-            </div>
-          </div>
-          <div className="hidden sm:block w-px h-10 bg-gray-200" />
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-rose-100 rounded-2xl flex items-center justify-center">
-              <Zap className="w-6 h-6 text-rose-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-black text-gray-900">100%</p>
-              <p className="text-sm text-gray-500">automatique</p>
-            </div>
-          </div>
-        </motion.div>
 
       </div>
     </section>

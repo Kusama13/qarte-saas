@@ -52,13 +52,28 @@ export function HeroSection() {
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
             <a href="#pricing" className="hover:text-indigo-600 transition-colors link-underline">Tarifs</a>
             <a href="/contact" className="hover:text-indigo-600 transition-colors link-underline">Contact</a>
-            <a href="/auth/merchant" className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg">Espace Pro</a>
+            <a href="/auth/merchant" className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold border border-indigo-200 rounded-lg transition-colors">S&apos;identifier</a>
+            <a
+              href="/auth/merchant/signup"
+              onClick={() => { trackCtaClick('header_desktop_cta', 'navbar'); fbEvents.initiateCheckout(); }}
+              className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-lg transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"
+            >
+              Essai gratuit
+            </a>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile CTA + Menu Button */}
+          <div className="flex md:hidden items-center gap-2">
+            <a
+              href="/auth/merchant/signup"
+              onClick={() => { trackCtaClick('header_mobile_cta', 'navbar'); fbEvents.initiateCheckout(); }}
+              className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold rounded-lg shadow-sm"
+            >
+              Essai gratuit
+            </a>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
             aria-label="Menu"
           >
             {mobileMenuOpen ? (
@@ -69,6 +84,7 @@ export function HeroSection() {
               </svg>
             )}
           </button>
+          </div>
         </div>
 
         {/* Mobile Menu Dropdown */}
@@ -135,7 +151,8 @@ export function HeroSection() {
           </div>
 
           <p className="text-base lg:text-lg text-gray-600 max-w-lg leading-relaxed">
-            Conçu pour les <span className="text-gray-900 font-medium">instituts de beauté, ongleries et salons</span>. QR code, points, récompenses. <span className="text-gray-900 font-medium">Fini les cartes papier perdues</span>.
+            Conçu pour les <span className="text-gray-900 font-medium">instituts de beauté, ongleries et salons</span>. QR code, points, récompenses. <span className="text-gray-900 font-medium">Fini les cartes papier perdues</span>. La solution choisie par des centaines de{' '}
+            <span className="font-semibold text-indigo-600">professionnels de la beauté</span>.
           </p>
 
           <div className="flex flex-col sm:flex-row sm:items-start gap-3 lg:gap-4">
@@ -148,7 +165,7 @@ export function HeroSection() {
                 <span className="relative z-10">Essayez gratuitement</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
-              <p className="text-xs text-gray-400 font-medium mt-2 text-center">En 2 mn, sans CB.</p>
+              <p className="text-xs text-gray-400 font-medium mt-2 text-center">Aucune carte de crédit n'est requise :)</p>
             </div>
             <a
               href="/customer/card/demo-onglerie?preview=true&demo=true"
