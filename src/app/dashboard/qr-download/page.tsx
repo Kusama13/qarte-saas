@@ -42,20 +42,36 @@ export default function QRDownloadPage() {
     if (!merchant?.scan_code) return;
     const url = getScanUrl(merchant.scan_code);
     setScanUrl(url);
-    generateQRCode(url).then(setQrCodeUrl);
+    generateQRCode(url).then(setQrCodeUrl).catch(console.error);
   }, [merchant?.scan_code]);
+
+  /** Convert data URL to File for Web Share API */
+  const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    return new File([blob], filename, { type: 'image/png' });
+  };
+
+  /** Share or download a PNG — uses native share sheet on mobile, fallback to download on desktop */
+  const shareOrDownload = async (dataUrl: string, filename: string) => {
+    const file = await dataUrlToFile(dataUrl, filename);
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file] });
+    } else {
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = dataUrl;
+      link.click();
+    }
+  };
 
   const saveQrImage = async () => {
     if (!qrCardRef.current || !merchant) return;
     try {
       const image = await toPng(qrCardRef.current, {
         pixelRatio: 4,
-        cacheBust: true,
       });
-      const link = document.createElement('a');
-      link.download = `qr-${merchant.slug}.png`;
-      link.href = image;
-      link.click();
+      await shareOrDownload(image, `qr-${merchant.slug}.png`);
 
       // Track QR download for onboarding checklist (fire and forget)
       fetch('/api/onboarding/status', { method: 'POST' }).catch(() => {});
@@ -73,12 +89,9 @@ export default function QRDownloadPage() {
     try {
       const image = await toPng(socialExportRef.current, {
         pixelRatio: 2,
-        cacheBust: true,
       });
-      const link = document.createElement('a');
-      link.download = `${merchant.shop_name.toLowerCase().replace(/\s+/g, '-')}-fidelite.png`;
-      link.href = image;
-      link.click();
+      await shareOrDownload(image, `${merchant.shop_name.toLowerCase().replace(/\s+/g, '-')}-fidelite.png`);
+
       // Track social kit download (fire and forget)
       fetch('/api/onboarding/status', {
         method: 'POST',
