@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     // Stamps par défaut selon le type de commerce (récompense laissée null pour forcer la config)
     const defaultStamps: Record<string, number> = {
       coiffeur: 10, barbier: 10, institut_beaute: 10, onglerie: 10,
-      spa: 8, estheticienne: 10, massage: 8, epilation: 8, autre: 10,
+      spa: 8, estheticienne: 10, tatouage: 8, autre: 10,
     };
 
     const { data, error } = await supabaseAdmin

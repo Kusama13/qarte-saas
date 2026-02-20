@@ -558,7 +558,7 @@ export default function AdminMerchantsPage() {
           {([
             { label: 'Type', value: 'all' as const },
             ...Object.entries(SHOP_TYPES).map(([value, label]) => ({
-              label: label.replace('Salon de ', '').replace('Centre d\'', '').replace(' / Nail bar', '').replace(' & Bien-être', ''),
+              label: label.replace('Salon de ', '').replace(' / Nail bar', '').replace(' / Bien-être / Massage', ''),
               value: value as ShopType,
             })),
           ]).map((btn) => (

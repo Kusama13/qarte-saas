@@ -47,17 +47,11 @@ const REWARD_SUGGESTIONS: Record<ShopType, string[]> = {
     '1 épilation offerte',
     '1 modelage offert',
   ],
-  massage: [
-    '1 massage 30min offert',
-    '-20% sur une séance',
-    '30min offertes en plus',
-    '1 massage duo offert',
-  ],
-  epilation: [
-    '1 zone offerte',
-    '-20% sur la prochaine séance',
-    '1 séance visage offerte',
-    '1 forfait aisselles offert',
+  tatouage: [
+    '1 retouche offerte',
+    '-10% sur le prochain tatouage',
+    '1 piercing offert',
+    '1 consultation design offerte',
   ],
   autre: [
     '1 prestation offerte',
@@ -75,8 +69,7 @@ const STAMPS_SUGGESTIONS: Record<ShopType, number[]> = {
   onglerie: [5, 8, 10],
   spa: [5, 8, 10],
   estheticienne: [5, 8, 10],
-  massage: [5, 8, 10],
-  epilation: [5, 8, 10],
+  tatouage: [5, 8, 10],
   autre: [5, 8, 10],
 };
 

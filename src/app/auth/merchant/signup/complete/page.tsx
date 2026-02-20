@@ -259,7 +259,7 @@ export default function CompleteProfilePage() {
                 required
               />
 
-              <div className="grid grid-cols-[100px_1fr] gap-2">
+              <div className="grid grid-cols-[120px_1fr] gap-2">
                 <Select
                   label="Pays"
                   options={countryOptions}

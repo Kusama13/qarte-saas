@@ -22,8 +22,7 @@ const SCRIPTS: Record<string, string> = {
   institut_beaute: "Pendant qu'on pose le masque, vous voulez scanner le QR code pour la carte de fidélité ? Ça prend 5 secondes",
   spa: "Avant de repartir, scannez le QR code pour votre carte de fidélité — ça prend 5 secondes",
   estheticienne: "Pendant la pause, vous voulez scanner le QR code pour la carte de fidélité ? Ça prend 5 secondes",
-  massage: "Avant de repartir, scannez le QR code pour votre carte de fidélité — ça prend 5 secondes",
-  epilation: "Pendant qu'on prépare la cire, vous voulez scanner le QR code pour la carte de fidélité ? Ça prend 5 secondes",
+  tatouage: "Pendant la consultation, proposez à vos clients de scanner le QR code pour la carte de fidélité — ça prend 5 secondes",
 };
 
 const DEFAULT_SCRIPT = "Avant de partir, scannez le QR code pour la carte de fidélité — 5 secondes et c'est fait";

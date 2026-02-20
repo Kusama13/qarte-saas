@@ -82,17 +82,11 @@ const TIER2_REWARD_SUGGESTIONS: Record<string, string[]> = {
     '1 soin anti-âge offert',
     '-30% sur une prestation au choix',
   ],
-  massage: [
-    '1 massage 1h offert',
-    '1 massage duo offert',
-    '1 séance shiatsu offerte',
-    '-30% sur un forfait',
-  ],
-  epilation: [
-    '1 forfait demi-jambes offert',
-    '1 zone au choix offerte',
-    '1 séance laser offerte',
-    '-30% sur un forfait intégral',
+  tatouage: [
+    '1 retouche complète offerte',
+    '1 piercing offert',
+    '-20% sur le prochain tatouage',
+    '1 consultation design offerte',
   ],
   autre: [
     '1 prestation premium offerte',

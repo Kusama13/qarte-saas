@@ -21,7 +21,7 @@ const REWARD_IDEAS: Record<string, { reward: string; visits: string }> = {
   institut_beaute: { reward: '1 soin visage offert', visits: '10 séances' },
   spa: { reward: '1 soin visage offert', visits: '10 séances' },
   estheticienne: { reward: '1 séance offerte', visits: '10 rendez-vous' },
-  epilation: { reward: '1 séance offerte', visits: '10 rendez-vous' },
+  tatouage: { reward: '1 retouche offerte', visits: '8 séances' },
   restaurant: { reward: '1 dessert offert', visits: '5 repas' },
   boulangerie: { reward: '1 viennoiserie offerte', visits: '8 passages' },
   cafe: { reward: '1 boisson offerte', visits: '8 passages' },

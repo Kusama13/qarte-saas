@@ -5,8 +5,7 @@ export type ShopType =
   | 'onglerie'
   | 'spa'
   | 'estheticienne'
-  | 'massage'
-  | 'epilation'
+  | 'tatouage'
   | 'autre';
 
 export const SHOP_TYPES: Record<ShopType, string> = {
@@ -14,10 +13,9 @@ export const SHOP_TYPES: Record<ShopType, string> = {
   barbier: 'Barbier',
   institut_beaute: 'Institut de beauté',
   onglerie: 'Onglerie / Nail bar',
-  spa: 'Spa & Bien-être',
+  spa: 'Spa / Bien-être / Massage',
   estheticienne: 'Esthéticienne',
-  massage: 'Salon de massage',
-  epilation: 'Centre d\'épilation',
+  tatouage: 'Salon de tatouage',
   autre: 'Autre',
 };
 
