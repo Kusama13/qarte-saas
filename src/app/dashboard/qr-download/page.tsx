@@ -279,15 +279,14 @@ export default function QRDownloadPage() {
                       <p className="text-[11px] text-white/70 font-medium mb-2.5">
                         Ajoutez votre carte en 15 secondes
                       </p>
-                      <div className="bg-white rounded-xl p-2 shadow-xl">
+                      <div className="bg-white rounded-xl p-2 shadow-xl overflow-hidden">
                         {qrSvg ? (
                           <div
                             style={{ width: '120px', height: '120px' }}
                             dangerouslySetInnerHTML={{
-                              __html: qrSvg.replace(
-                                /<svg /,
-                                '<svg width="100%" height="100%" '
-                              ),
+                              __html: qrSvg
+                                .replace(/width="[^"]*"/, 'width="100%"')
+                                .replace(/height="[^"]*"/, 'height="100%"'),
                             }}
                           />
                         ) : (
