@@ -248,11 +248,11 @@ export default function QRDownloadPage() {
                   <div className="absolute -bottom-6 -left-6 w-16 h-16 rounded-full bg-white/[0.07]" />
                   <div className="absolute top-1/2 -right-4 w-10 h-10 rounded-full bg-white/[0.05]" />
 
-                  <div className="relative h-full px-5 py-5 flex flex-col items-center justify-between text-center">
-                    {/* Top: Logo + Name */}
-                    <div className="flex flex-col items-center">
+                  <div className="relative h-full px-5 py-4 flex flex-col items-center text-center">
+                    {/* Top: Logo + Name — fixed size */}
+                    <div className="flex-shrink-0 flex flex-col items-center">
                       {merchant.logo_url ? (
-                        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white/30">
+                        <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30">
                           <img
                             src={merchant.logo_url}
                             alt={merchant.shop_name}
@@ -261,13 +261,13 @@ export default function QRDownloadPage() {
                           />
                         </div>
                       ) : (
-                        <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center">
-                          <span className="text-base font-black text-white">
+                        <div className="w-9 h-9 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center">
+                          <span className="text-sm font-black text-white">
                             {merchant.shop_name[0]?.toUpperCase()}
                           </span>
                         </div>
                       )}
-                      <h2 className="mt-1.5 text-base font-black text-white tracking-tight leading-tight">
+                      <h2 className="mt-1 text-sm font-black text-white tracking-tight leading-tight">
                         {merchant.shop_name}
                       </h2>
                       <p className="mt-0.5 text-[7px] text-white/50 font-semibold uppercase tracking-[0.2em]">
@@ -275,15 +275,15 @@ export default function QRDownloadPage() {
                       </p>
                     </div>
 
-                    {/* Center: CTA + QR + Scannez-moi */}
-                    <div className="flex flex-col items-center">
-                      <p className="text-[11px] text-white/70 font-medium mb-2.5">
+                    {/* Center: CTA + QR + Scannez-moi — takes remaining space */}
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-0">
+                      <p className="text-[11px] text-white/70 font-medium mb-2">
                         Ajoutez votre carte en 15 secondes
                       </p>
-                      <div className="bg-white rounded-xl p-2 overflow-hidden">
+                      <div className="flex-shrink-0 bg-white rounded-xl p-2 overflow-hidden">
                         {qrSvg ? (
                           <div
-                            style={{ width: '120px', height: '120px' }}
+                            style={{ width: '110px', height: '110px' }}
                             dangerouslySetInnerHTML={{
                               __html: qrSvg
                                 .replace(/width="[^"]*"/, 'width="100%"')
@@ -291,18 +291,18 @@ export default function QRDownloadPage() {
                             }}
                           />
                         ) : (
-                          <div className="w-[120px] h-[120px] flex items-center justify-center">
+                          <div className="w-[110px] h-[110px] flex items-center justify-center">
                             <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
                           </div>
                         )}
                       </div>
-                      <p className="mt-2.5 text-sm font-black text-white tracking-tight">
+                      <p className="mt-2 text-sm font-black text-white tracking-tight">
                         Scannez-moi !
                       </p>
                     </div>
 
-                    {/* Bottom: Branding */}
-                    <div className="px-3 py-1 rounded-full bg-white/90 shadow-sm">
+                    {/* Bottom: Branding — fixed size */}
+                    <div className="flex-shrink-0 px-3 py-1 rounded-full bg-white/90">
                       <p className="text-[7px] text-gray-400 font-medium">
                         Propulsé par <span className="font-bold text-gray-600">getqarte.com</span>
                       </p>
