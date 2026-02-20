@@ -281,7 +281,16 @@ export default function QRDownloadPage() {
                       </p>
                       <div className="bg-white rounded-xl p-2 shadow-xl">
                         {qrCodeUrl ? (
-                          <img src={qrCodeUrl} alt="QR Code" className="w-[120px] h-[120px]" />
+                          <div
+                            style={{
+                              width: '120px',
+                              height: '120px',
+                              backgroundImage: `url(${qrCodeUrl})`,
+                              backgroundSize: 'contain',
+                              backgroundRepeat: 'no-repeat',
+                              backgroundPosition: 'center',
+                            }}
+                          />
                         ) : (
                           <div className="w-[120px] h-[120px] flex items-center justify-center">
                             <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
