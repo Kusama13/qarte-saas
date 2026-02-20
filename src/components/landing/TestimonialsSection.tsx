@@ -66,32 +66,6 @@ const testimonials: Testimonial[] = [
   },
   {
     platform: 'whatsapp',
-    name: 'La Canopée des Sens',
-    initials: 'CS',
-    dayLabel: 'HIER',
-    messages: [
-      { from: 'qarte', text: "Coucou ! 4 mois avec Qarte, ca se passe comment de votre côté ? 😊", time: '11:03' },
-      { from: 'them', text: "Au début j'avai peur que mes clientes de 50+ ans galèrent", timeBreak: '14:22' },
-      { from: 'them', text: "En fait elles scannent le QR avec l'appareil photo et c'est tout" },
-      { from: 'them', text: "Même ma mère y arrive 😅" },
-      { from: 'them', text: "Par contre je retrouve plus mon code de parainage vous pouvez me le renvoyer ?", time: '14:25' },
-    ],
-  },
-  {
-    platform: 'imessage',
-    name: 'Autres Regards',
-    initials: 'AR',
-    dayLabel: 'Vendredi 17:21',
-    readStatus: 'Lu 19:48',
-    messages: [
-      { from: 'qarte', text: "Salut ! 2 mois avec Qarte, un petit retour ? 🙏" },
-      { from: 'them', text: "J'ai mis 10 min a tout configurer franchement", timeBreak: '19:43' },
-      { from: 'them', text: "Le côté zero papier ca correspond a l'image du salon 🌿" },
-      { from: 'them', text: "Et les push notifs ca marche trop bien mes clientes reviennent plus souvent" },
-    ],
-  },
-  {
-    platform: 'whatsapp',
     name: 'Le Comptoir du Visage',
     initials: 'CV',
     dayLabel: 'MERCREDI',
@@ -112,8 +86,6 @@ const scatterClasses = [
   'md:rotate-[1.5deg] md:z-20 md:mt-10',
   'md:rotate-[1deg] md:z-30 md:-mt-8',
   'md:-rotate-[1.2deg] md:z-20 md:-mt-10',
-  'md:-rotate-[0.8deg] md:z-10 md:-mt-6',
-  'md:rotate-[1.8deg] md:z-30 md:-mt-12',
 ];
 
 /* ─── WhatsApp double check ──────────────────────────── */
