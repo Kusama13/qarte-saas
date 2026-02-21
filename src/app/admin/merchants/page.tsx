@@ -200,13 +200,13 @@ function WhatsAppDropdown({
   dropdownId: string;
   waDropdown: string | null;
   setWaDropdown: (id: string | null) => void;
-  getMessages: (name: string, lifecycle: LifecycleStage, customers: number) => { label: string; text: string }[];
+  getMessages: (merchant: Merchant, lifecycle: LifecycleStage, customers: number) => { label: string; text: string }[];
   getTutoMessages: (name: string) => { label: string; text: string }[];
   onSend: (phone: string, message: string) => void;
 }) {
   const [tab, setTab] = useState<'marketing' | 'tuto'>('marketing');
   const msgs = tab === 'marketing'
-    ? getMessages(merchant.shop_name, lifecycle, customers)
+    ? getMessages(merchant, lifecycle, customers)
     : getTutoMessages(merchant.shop_name);
 
   return (
@@ -406,17 +406,15 @@ export default function AdminMerchantsPage() {
 
   const displayedMerchants = useMemo(() => sortedMerchants.slice(0, displayCount), [sortedMerchants, displayCount]);
 
-  function getWhatsAppMessages(name: string, lifecycle: LifecycleStage, customers: number): { label: string; text: string }[] {
+  function getWhatsAppMessages(merchant: Merchant, lifecycle: LifecycleStage, customers: number): { label: string; text: string }[] {
+    const name = merchant.shop_name;
     const msgs: { label: string; text: string }[] = [];
     const l = lifecycle.label.toLowerCase();
 
     if (l.includes('config programme')) {
       msgs.push({ label: 'Aide config', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. J'ai vu que votre programme n'était pas encore finalisé — c'est rapide, 30 secondes top chrono ! Je peux le faire avec vous si vous voulez 😊` });
-      msgs.push({ label: 'Relance douce', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Votre compte est prêt, il manque juste la récompense pour vos clients. Dites-moi ce que vous offrez habituellement et je configure tout pour vous !` });
     } else if (l.includes('1er scan')) {
       msgs.push({ label: '1er scan', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Votre carte est prête, il ne reste plus qu'à tester ! Scannez votre propre QR code pour voir comment ça marche côté client. Ça prend 10 secondes 😊` });
-      msgs.push({ label: 'Premier pas', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Votre carte est magnifique ! L'astuce : montrez le QR code à vos 3 prochains clients au moment de payer. C'est tout, ils adorent ! 😍` });
-      msgs.push({ label: 'Challenge', text: `Hello ${name} ! Petit défi du jour : montrez votre QR Qarte à 5 clients aujourd'hui. Vous allez voir, la réaction est toujours la même : "ah trop bien !" 😄` });
     } else if (l.includes('essai j-')) {
       msgs.push({ label: 'Fin essai', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME}. Votre essai Qarte se termine bientôt${customers > 0 ? ` et vos ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. Ça vous dit ? 😊` });
       msgs.push({ label: 'Accompagnement', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Comment ça se passe de votre côté ? Si vous avez des questions avant la fin de l'essai, je suis là ! On peut s'appeler 2 min si vous voulez 📞` });
@@ -433,6 +431,19 @@ export default function AdminMerchantsPage() {
         msgs.push({ label: 'Bravo', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Bravo, ${customers} clients utilisent déjà votre carte ! Vous savez que vous pouvez aussi envoyer des notifications push pour les faire revenir ? Je vous montre si vous voulez 🚀` });
       }
       msgs.push({ label: 'Affichage QR', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Petite astuce qui change tout : imprimez le QR code et collez-le près de la caisse ou sur le comptoir. Les clients le scannent d'eux-mêmes, sans que vous ayez à y penser ! 📱` });
+    }
+
+    // Messages contextuels — réseaux, avis, pending
+    const hasSocial = merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url;
+    if (!hasSocial) {
+      msgs.push({ label: 'Réseaux manquants', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Petite astuce : ajoutez votre lien Instagram (ou Facebook/TikTok) dans votre dashboard → Mon Programme → Vos réseaux sociaux. Vos clients le verront directement sur leur carte de fidélité, c'est de la visibilité gratuite ! 📲` });
+    }
+    if (!merchant.review_link) {
+      msgs.push({ label: 'Avis Google manquant', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Vous pouvez ajouter votre lien d'avis Google dans dashboard → Mon Programme → Avis Google. Vos clients verront un bouton "Laisser un avis" sur leur carte, juste après leur passage. C'est le meilleur moment pour collecter des avis ! ⭐` });
+    }
+    const pending = data?.pendingPoints[merchant.id] || 0;
+    if (pending > 0) {
+      msgs.push({ label: `${pending} point${pending > 1 ? 's' : ''} en attente`, text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Vous avez ${pending} passage${pending > 1 ? 's' : ''} en attente de validation dans votre dashboard → Clients. C'est le Qarte Shield : quand un client scanne 2 fois le même jour, le 2ème passage attend votre validation. Un clic pour valider ou refuser ! ✅` });
     }
 
     // Toujours un message libre en dernier
@@ -452,6 +463,8 @@ export default function AdminMerchantsPage() {
       { label: 'Le kit promo', text: `Hello ${name} ! On vous a envoyé par email un kit avec votre QR code en haute qualité + des visuels prêts pour Instagram. Vous pouvez aussi le retrouver dans votre dashboard → QR code & Supports 🖼️` },
       { label: 'Personnaliser la carte', text: `Hello ${name} ! Vous pouvez personnaliser votre carte dans dashboard → Mon Programme : logo, couleur, récompense, nombre de tampons. Vos clients voient les changements en temps réel sur leur carte 🎨` },
       { label: 'Les réseaux sociaux', text: `Hello ${name} ! Pensez à ajouter vos liens Instagram, Facebook ou TikTok dans votre dashboard → Mon Programme (section Liens & Réseaux). Vos clients les verront directement sur leur carte de fidélité, ça vous fait de la visibilité gratuite 📲` },
+      { label: 'Les points en attente', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Petite info : quand un client scanne 2 fois le même jour, le 2ème passage est mis "en attente" (c'est le Qarte Shield, une protection anti-fraude). Vous le retrouvez dans votre dashboard → Clients, et vous pouvez le valider ou le refuser en un clic. Le 1er passage du jour est toujours validé automatiquement ✅` },
+      { label: 'Avis Google', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Astuce : ajoutez votre lien d'avis Google dans dashboard → Mon Programme (section Avis Google). Vos clients verront un bouton "Laisser un avis" directement sur leur carte de fidélité. C'est le meilleur moment pour leur demander, ils viennent de vivre l'expérience ! ⭐` },
       { label: "L'abonnement", text: `Hello ${name} ! L'abonnement Qarte c'est 19€/mois sans engagement, clients illimités. Vous pouvez gérer votre abonnement à tout moment depuis votre dashboard → Abonnement 💳` },
     ];
   }
