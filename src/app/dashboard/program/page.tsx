@@ -21,6 +21,8 @@ import {
   Globe,
   QrCode,
   Smartphone,
+  TrendingUp,
+  Users as UsersIcon,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -29,6 +31,17 @@ import { compressLogo } from '@/lib/image-compression';
 import { useMerchant } from '@/contexts/MerchantContext';
 import type { Merchant } from '@/types';
 
+
+const SHOP_TYPE_LABELS: Record<string, string> = {
+  coiffeur: 'salons de coiffure',
+  barbier: 'barber shops',
+  institut_beaute: 'instituts de beauté',
+  onglerie: 'nail bars',
+  spa: 'spas et centres bien-être',
+  estheticienne: 'esthéticiennes',
+  tatouage: 'studios de tatouage',
+  autre: 'commerces',
+};
 
 // 6 palettes mobile (3x2) + 4 desktop-only (2x5)
 const COLOR_PALETTES = [
@@ -130,6 +143,8 @@ export default function ProgramPage() {
   const [showStampsWarning, setShowStampsWarning] = useState(false);
   const [tier2Error, setTier2Error] = useState('');
   const [socialOpen, setSocialOpen] = useState(searchParams.get('section') === 'social');
+  const [reviewsOpen, setReviewsOpen] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
 
   // Auto-scroll to social section when coming from onboarding checklist
@@ -354,6 +369,23 @@ export default function ProgramPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
+      {/* Incentive banner */}
+      <div className="mb-5 md:mb-8 p-4 md:p-5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-md">
+            <TrendingUp className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-900">
+              <span className="text-amber-600">1 client sur 3</span> ne revient jamais sans programme de fidélité
+            </p>
+            <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+              Des centaines de <strong className="text-gray-700">{SHOP_TYPE_LABELS[merchant?.shop_type || 'autre']}</strong> fidélisent déjà leurs clients avec <strong className="text-gray-700">Qarte</strong>.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="mb-5 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
           Mon Programme
@@ -506,7 +538,7 @@ export default function ProgramPage() {
                   <Trophy className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm md:text-lg font-bold text-gray-900">2ème Palier</h3>
+                  <h3 className="text-sm md:text-lg font-bold text-gray-900">2ème Palier <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
                   <p className="text-[11px] md:text-xs text-gray-500">Points cumulés sans remise à zéro</p>
                 </div>
               </div>
@@ -618,7 +650,7 @@ export default function ProgramPage() {
             )}
           </div>
 
-          {/* Réseaux, Avis & Liens — Collapsible */}
+          {/* Vos réseaux sociaux — Collapsible */}
           <div id="social-section" className="bg-white/80 backdrop-blur-xl border border-pink-100 rounded-2xl shadow-sm overflow-hidden">
             <button
               type="button"
@@ -627,9 +659,9 @@ export default function ProgramPage() {
             >
               <div className="flex items-center gap-2 md:gap-3">
                 <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center shadow-md">
-                  <Globe className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
+                  <Instagram className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
                 </div>
-                <h3 className="text-sm md:text-lg font-bold text-gray-900">Réseaux, Avis & Liens</h3>
+                <h3 className="text-sm md:text-lg font-bold text-gray-900">Vos réseaux sociaux <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
               </div>
               <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${socialOpen ? 'rotate-180' : ''}`} />
             </button>
@@ -667,25 +699,34 @@ export default function ProgramPage() {
                       onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })}
                     />
                   </div>
-                  <div className="border-t border-gray-100 my-1" />
+                  <p className="text-xs text-gray-500">
+                    Vos réseaux seront affichés sur la carte de fidélité de vos clients.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Avis Google — Collapsible */}
+          <div className="bg-white/80 backdrop-blur-xl border border-amber-100 rounded-2xl shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setReviewsOpen(!reviewsOpen)}
+              className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+            >
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md">
+                  <Star className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
+                </div>
+                <h3 className="text-sm md:text-lg font-bold text-gray-900">Avis Google <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${reviewsOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <div className={`grid transition-all duration-300 ease-in-out ${reviewsOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+              <div className="overflow-hidden">
+                <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
-                      <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
-                      Lien de réservation
-                    </label>
-                    <Input
-                      type="url"
-                      className="bg-white border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 h-11 text-sm rounded-xl w-full"
-                      placeholder="https://planity.com/votre-salon"
-                      value={formData.bookingUrl}
-                      onChange={(e) => setFormData({ ...formData, bookingUrl: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600 flex items-center gap-1.5">
-                      <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                      Avis Google
-                    </label>
                     <Input
                       type="url"
                       className="bg-white border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 h-11 text-sm rounded-xl w-full"
@@ -695,7 +736,43 @@ export default function ProgramPage() {
                     />
                   </div>
                   <p className="text-xs text-gray-500">
-                    Ces liens seront affichés sur la carte de fidélité de vos clients.
+                    Vos clients pourront laisser un avis directement depuis leur carte.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Lien de réservation — Collapsible */}
+          <div className="bg-white/80 backdrop-blur-xl border border-indigo-100 rounded-2xl shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setBookingOpen(!bookingOpen)}
+              className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+            >
+              <div className="flex items-center gap-2 md:gap-3">
+                <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-md">
+                  <CalendarDays className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
+                </div>
+                <h3 className="text-sm md:text-lg font-bold text-gray-900">Votre lien de réservation <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${bookingOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <div className={`grid transition-all duration-300 ease-in-out ${bookingOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+              <div className="overflow-hidden">
+                <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
+                  <div className="space-y-1.5">
+                    <Input
+                      type="url"
+                      className="bg-white border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 h-11 text-sm rounded-xl w-full"
+                      placeholder="https://planity.com/votre-salon"
+                      value={formData.bookingUrl}
+                      onChange={(e) => setFormData({ ...formData, bookingUrl: e.target.value })}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Vos clients pourront réserver directement depuis leur carte.
                   </p>
                 </div>
               </div>

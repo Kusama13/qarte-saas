@@ -16,6 +16,11 @@ import {
   Share2,
   AlertTriangle,
   Gift,
+  Cake,
+  Users,
+  Bell,
+  ChevronDown,
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { generateQRCodeSVG, getScanUrl } from '@/lib/utils';
@@ -34,6 +39,8 @@ export default function QRDownloadPage() {
   const [socialDownloadSuccess, setSocialDownloadSuccess] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedCaption, setCopiedCaption] = useState<number | null>(null);
+  const [howOpen, setHowOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const socialExportRef = useRef<HTMLDivElement>(null);
   const qrCardRef = useRef<HTMLDivElement>(null);
 
@@ -154,6 +161,34 @@ export default function QRDownloadPage() {
 
   return (
     <div className="max-w-lg lg:max-w-5xl mx-auto">
+      {/* Incentive banner */}
+      <div className="mb-5 md:mb-8 p-4 md:p-5 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/60">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0 shadow-md">
+            <TrendingUp className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-900">
+              <span className="text-emerald-600">Un seul geste</span> pour transformer vos clients en habitu&eacute;s
+            </p>
+            <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+              Montrez ce QR code au moment de payer — <strong className="text-gray-700">Qarte</strong> fid&eacute;lise vos clients et augmente votre chiffre d&apos;affaires automatiquement, sans effort.
+            </p>
+            <a
+              href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20avec%20Qarte"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+              Besoin d&apos;aide ? &Eacute;crivez-nous
+            </a>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <h1 className="text-xl md:text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
@@ -162,6 +197,93 @@ export default function QRDownloadPage() {
         <p className="mt-1 text-sm text-gray-500 font-medium">
           Votre QR code et vos visuels marketing en un seul endroit
         </p>
+      </div>
+
+      {/* Comment ça marche + Allez plus loin — collapsible */}
+      <div className="mb-6 grid md:grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <button type="button" onClick={() => setHowOpen(!howOpen)} className="w-full flex items-center justify-between p-4 text-left">
+            <h3 className="text-sm font-bold text-gray-900">Comment &ccedil;a marche ?</h3>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${howOpen ? 'rotate-180' : ''}`} />
+          </button>
+          <div className="grid transition-all duration-200" style={{ gridTemplateRows: howOpen ? '1fr' : '0fr' }}>
+            <div className="overflow-hidden">
+              <div className="px-4 pb-4 space-y-3" style={{ opacity: howOpen ? 1 : 0, transition: 'opacity 200ms' }}>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <QrCode className="w-4 h-4 text-indigo-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">QR code dans votre t&eacute;l&eacute;phone</p>
+                    <p className="text-xs text-gray-500">Vos clients scannent votre QR code &agrave; chaque passage pour cumuler des points.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Gift className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">R&eacute;compense automatique</p>
+                    <p className="text-xs text-gray-500">Une fois le nombre de passages atteint, le client re&ccedil;oit sa r&eacute;compense directement sur sa carte.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Smartphone className="w-4 h-4 text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Sans appli, 100% mobile</p>
+                    <p className="text-xs text-gray-500">Aucune application &agrave; installer. La carte s&apos;affiche dans le navigateur et peut s&apos;ajouter &agrave; l&apos;&eacute;cran d&apos;accueil.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <button type="button" onClick={() => setMoreOpen(!moreOpen)} className="w-full flex items-center justify-between p-4 text-left">
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Allez plus loin</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Les m&ecirc;mes outils que les grandes enseignes.</p>
+            </div>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0 ${moreOpen ? 'rotate-180' : ''}`} />
+          </button>
+          <div className="grid transition-all duration-200" style={{ gridTemplateRows: moreOpen ? '1fr' : '0fr' }}>
+            <div className="overflow-hidden">
+              <div className="px-4 pb-4 space-y-3" style={{ opacity: moreOpen ? 1 : 0, transition: 'opacity 200ms' }}>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-pink-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Cake className="w-4 h-4 text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Cadeaux d&apos;anniversaire</p>
+                    <p className="text-xs text-gray-500">Offrez automatiquement un cadeau &agrave; vos clients pour leur anniversaire.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Users className="w-4 h-4 text-violet-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Parrainage client</p>
+                    <p className="text-xs text-gray-500">Vos clients existants ram&egrave;nent de nouveaux clients, r&eacute;compens&eacute;s des deux c&ocirc;t&eacute;s.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Bell className="w-4 h-4 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">Notifications automatiques</p>
+                    <p className="text-xs text-gray-500">Relancez les clients inactifs et informez-les de vos offres sans rien faire.</p>
+                  </div>
+                </div>
+                <p className="mt-1 text-[11px] text-gray-400 text-center">Activez ces fonctionnalit&eacute;s depuis votre tableau de bord.</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Challenge banner — trial only */}
