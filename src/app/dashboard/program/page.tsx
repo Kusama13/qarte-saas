@@ -21,6 +21,7 @@ import {
   Globe,
   QrCode,
   Smartphone,
+  TrendingUp,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -361,6 +362,23 @@ export default function ProgramPage() {
         <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
           Personnalisez votre programme de fidélité
         </p>
+      </div>
+
+      {/* Incentive banner */}
+      <div className="mb-5 md:mb-8 p-4 md:p-5 rounded-2xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/60">
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-md">
+            <TrendingUp className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-900">
+              Un client fidélisé dépense <span className="text-emerald-600">67% de plus</span> qu&apos;un nouveau client
+            </p>
+            <p className="mt-1 text-xs text-gray-500 leading-relaxed">
+              Avec Qarte, il s&apos;inscrit en 15 secondes — sans application, sans carte à oublier. Configurez votre récompense et montrez votre QR code dès aujourd&apos;hui.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-3 md:gap-8">
