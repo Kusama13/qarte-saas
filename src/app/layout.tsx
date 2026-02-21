@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, Playfair_Display } from 'next/font/google';
+import { Inter, Playfair_Display, Poppins } from 'next/font/google';
 import './globals.css';
 import CookieBanner from '@/components/shared/CookieBanner';
 import { Analytics } from '@vercel/analytics/react';
@@ -7,6 +7,7 @@ import { MicrosoftClarity } from '@/components/analytics/MicrosoftClarity';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
+const poppins = Poppins({ subsets: ['latin'], weight: ['600', '700', '800', '900'], variable: '--font-poppins' });
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
@@ -67,7 +68,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="fr" className={`${inter.variable} ${playfair.variable} ${poppins.variable}`}>
       <head>
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

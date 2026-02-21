@@ -17,6 +17,7 @@ import {
   UserPlus,
   CheckCircle2,
   PartyPopper,
+  Sparkles,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sparkleGrand } from '@/lib/sparkles';
@@ -143,7 +144,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             if (data.existsForMerchant && data.customer) {
               // Customer exists for this merchant → direct checkin
               setCustomer(data.customer);
-              await processCheckin(data.customer);
+              await processCheckin(data.customer, data.phone);
               localStorage.setItem(`qarte_checkin_${code}`, today);
             } else if (data.existsGlobally && data.customer) {
               // Customer exists globally → create for this merchant
@@ -160,7 +161,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               const createData = await createResponse.json();
               if (createResponse.ok && createData.customer) {
                 setCustomer(createData.customer);
-                await processCheckin(createData.customer);
+                await processCheckin(createData.customer, data.phone);
                 localStorage.setItem(`qarte_checkin_${code}`, today);
               }
             }
@@ -323,13 +324,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     }
   };
 
-  const processCheckin = async (customerInfo: { first_name: string; last_name?: string | null }) => {
+  const processCheckin = async (customerInfo: { first_name: string; last_name?: string | null }, overridePhone?: string) => {
     if (!merchant) return;
 
     setStep('checkin');
 
     try {
-      const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
+      const formattedPhone = formatPhoneNumber(overridePhone || phoneNumber, merchant?.country || 'FR');
 
       // Use the /api/checkin endpoint with Qarte Shield
       const response = await fetch('/api/checkin', {
@@ -645,68 +646,105 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
         {step === 'register' && (
           <div className="animate-fade-in">
-            <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden">
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4" style={{ backgroundColor: `${primaryColor}15` }}>
-                  <User className="w-8 h-8" style={{ color: primaryColor }} />
-                </div>
-                <h2 className="text-2xl font-black text-gray-900">Bienvenue !</h2>
-                <p className="mt-2 text-gray-500">
+            <style>{`
+              @keyframes shimmer {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
+              }
+              .glamour-input:focus {
+                box-shadow: 0 0 0 3px ${primaryColor}25, 0 0 12px ${primaryColor}15;
+                border-color: ${primaryColor}50;
+              }
+            `}</style>
+            <div className="relative bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden">
+              {/* Immersive gradient header with decorative elements */}
+              <div
+                className="relative px-8 pt-10 pb-8 text-center overflow-hidden"
+                style={{ background: `linear-gradient(135deg, ${primaryColor}18, ${secondaryColor || primaryColor}12, ${primaryColor}08)` }}
+              >
+                {/* Decorative circles */}
+                <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full opacity-20" style={{ background: primaryColor }} />
+                <div className="absolute -bottom-4 -left-4 w-16 h-16 rounded-full opacity-15" style={{ background: secondaryColor || primaryColor }} />
+                <div className="absolute top-1/2 right-4 w-8 h-8 rounded-full opacity-10" style={{ background: primaryColor }} />
+
+                {merchant.logo_url ? (
+                  <div className="relative inline-flex w-20 h-20 rounded-2xl overflow-hidden border-2 shadow-lg mb-4" style={{ borderColor: `${primaryColor}30` }}>
+                    <img src={merchant.logo_url} alt={merchant.shop_name} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 shadow-lg" style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}>
+                    <span className="text-3xl font-black text-white">{merchant.shop_name[0]?.toUpperCase()}</span>
+                  </div>
+                )}
+                <h2 className="text-2xl font-black text-gray-900 flex items-center justify-center gap-2" style={{ fontFamily: 'var(--font-poppins), sans-serif' }}>
+                  <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
+                  À vous les privilèges
+                  <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
+                </h2>
+                <p className="mt-2 text-gray-500 text-sm">
                   {referralInfo
-                    ? `Finalisez votre inscription pour recevoir votre récompense`
-                    : 'Créez votre carte en quelques secondes'}
+                    ? 'Finalisez votre inscription pour recevoir votre récompense'
+                    : `Votre carte fidélité ${merchant.shop_name} vous attend`}
                 </p>
               </div>
 
-              <form onSubmit={handleRegisterSubmit} className="space-y-5">
-                {error && (
-                  <div className="p-4 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl">
-                    {error}
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1">Prénom</label>
-                  <Input
-                    type="text"
-                    placeholder="Votre prénom"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    required
-                    autoFocus
-                    className="h-14 text-lg bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-gray-700 ml-1">
-                    Nom <span className="text-gray-400 font-normal">(optionnel)</span>
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Votre nom"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="h-12 bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 rounded-2xl"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={submitting || (!!refCode && referralLoading)}
-                  className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                  style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
-                >
-                  {submitting || (!!refCode && referralLoading) ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                      Créer mon compte
-                      <ArrowRight className="w-5 h-5" />
-                    </>
+              <div className="px-8 pb-8 pt-5">
+                <form onSubmit={handleRegisterSubmit} className="space-y-5">
+                  {error && (
+                    <div className="p-4 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl">
+                      {error}
+                    </div>
                   )}
-                </button>
-              </form>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 ml-1">Prénom</label>
+                    <Input
+                      type="text"
+                      placeholder="Votre prénom"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                      autoFocus
+                      className="glamour-input h-14 text-lg border-gray-200 rounded-2xl transition-all outline-none"
+                      style={{ backgroundColor: `${primaryColor}06` }}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-gray-700 ml-1">Nom</label>
+                    <Input
+                      type="text"
+                      placeholder="Votre nom"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="glamour-input h-12 border-gray-200 rounded-2xl transition-all outline-none"
+                      style={{ backgroundColor: `${primaryColor}06` }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting || (!!refCode && referralLoading)}
+                    className="relative w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 overflow-hidden"
+                    style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
+                  >
+                    {/* Shimmer on button */}
+                    <div className="absolute inset-0 overflow-hidden">
+                      <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)', animation: 'shimmer 2.5s infinite' }} />
+                    </div>
+                    <span className="relative flex items-center gap-2">
+                      {submitting || (!!refCode && referralLoading) ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <>
+                          {"C'est parti !"}
+                          <ArrowRight className="w-5 h-5" />
+                        </>
+                      )}
+                    </span>
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         )}
