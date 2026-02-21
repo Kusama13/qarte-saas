@@ -28,6 +28,7 @@ import {
 } from '@/lib/email';
 import { getTrialStatus, getTodayInParis } from '@/lib/utils';
 import { sendAutomationPush, getUpcomingEvent } from '@/lib/push-automation';
+import { resend, EMAIL_FROM, EMAIL_REPLY_TO, EMAIL_HEADERS } from '@/lib/resend';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -1386,7 +1387,7 @@ export async function GET(request: NextRequest) {
 
       const { data: birthdayMerchants } = await supabase
         .from('merchants')
-        .select('id, shop_name, birthday_gift_description')
+        .select('id, user_id, shop_name, birthday_gift_description')
         .eq('birthday_gift_enabled', true)
         .neq('no_contact', true)
         .in('subscription_status', ['trial', 'active']);
@@ -1416,10 +1417,10 @@ export async function GET(request: NextRequest) {
             cardMap.set(`${lc.customer_id}:${lc.merchant_id}`, lc.id);
           }
 
-          // Dedup: check existing birthday vouchers this year
-          const currentYear = now.getFullYear();
-          const yearStart = new Date(currentYear, 0, 1).toISOString();
-          const yearEnd = new Date(currentYear + 1, 0, 1).toISOString();
+          // Dedup: check existing birthday vouchers this year (use Paris timezone for consistency)
+          const currentYear = parseInt(todayParis.split('-')[0], 10);
+          const yearStart = `${currentYear}-01-01T00:00:00.000Z`;
+          const yearEnd = `${currentYear + 1}-01-01T00:00:00.000Z`;
 
           const { data: existingBirthdayVouchers } = await supabase
             .from('vouchers')
@@ -1460,6 +1461,9 @@ export async function GET(request: NextRequest) {
             }
           }
 
+          // Track birthday clients per merchant for merchant notification
+          const birthdayByMerchant = new Map<string, string[]>();
+
           for (const customer of birthdayCustomers) {
             const key = `${customer.id}:${customer.merchant_id}`;
             const bMerchant = merchantMap.get(customer.merchant_id);
@@ -1485,6 +1489,7 @@ export async function GET(request: NextRequest) {
                   customer_id: customer.id,
                   reward_description: bMerchant.birthday_gift_description || 'Cadeau anniversaire',
                   source: 'birthday',
+                  tier: 1,
                   expires_at: expiresAt.toISOString(),
                 });
 
@@ -1495,7 +1500,12 @@ export async function GET(request: NextRequest) {
 
               results.birthdayVouchers.created++;
 
-              // Push notification (fire-and-forget, dedup by endpoint) — uses pre-fetched data
+              // Collect client name for merchant notification
+              const clientName = customer.first_name || 'Un client';
+              if (!birthdayByMerchant.has(customer.merchant_id)) birthdayByMerchant.set(customer.merchant_id, []);
+              birthdayByMerchant.get(customer.merchant_id)!.push(clientName);
+
+              // Push notification to customer (fire-and-forget, dedup by endpoint)
               if (vapidPublicKey && vapidPrivateKey) {
                 try {
                   const allCustIds = customersByPhone.get(customer.phone_number) || [];
@@ -1520,7 +1530,7 @@ export async function GET(request: NextRequest) {
                             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
                             JSON.stringify({
                               title: bMerchant.shop_name,
-                              body: `Joyeux anniversaire bientôt ! 🎂 ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
+                              body: `Joyeux anniversaire bientôt ! ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
                               icon: '/icon-192.png',
                               url: `/customer/card/${customer.merchant_id}`,
                               tag: `qarte-birthday-${customer.merchant_id}`,
@@ -1541,6 +1551,53 @@ export async function GET(request: NextRequest) {
               }
             } catch {
               results.birthdayVouchers.errors++;
+            }
+          }
+
+          // Notify merchants about upcoming client birthdays (email, fire-and-forget)
+          if (resend && birthdayByMerchant.size > 0) {
+            const merchantUserIds = [...birthdayByMerchant.keys()]
+              .map(mid => merchantMap.get(mid))
+              .filter(Boolean)
+              .map(m => m!.user_id);
+            const emailMap = await batchGetUserEmails(merchantUserIds);
+
+            for (const [merchantId, clientNames] of birthdayByMerchant) {
+              try {
+                const bm = merchantMap.get(merchantId);
+                if (!bm) continue;
+                const merchantEmail = emailMap.get(bm.user_id);
+                if (!merchantEmail) continue;
+
+                const targetDateFormatted = `${targetDay}/${targetMonth < 10 ? '0' + targetMonth : targetMonth}`;
+                const clientList = clientNames.length === 1
+                  ? clientNames[0]
+                  : clientNames.slice(0, -1).join(', ') + ' et ' + clientNames[clientNames.length - 1];
+                const plural = clientNames.length > 1;
+
+                await resend.emails.send({
+                  from: EMAIL_FROM,
+                  to: merchantEmail,
+                  replyTo: EMAIL_REPLY_TO,
+                  subject: `Anniversaire client${plural ? 's' : ''} le ${targetDateFormatted}`,
+                  headers: EMAIL_HEADERS,
+                  html: `
+                    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;padding:24px">
+                      <p style="font-size:15px;color:#111;margin:0 0 12px">Bonjour,</p>
+                      <p style="font-size:15px;color:#111;margin:0 0 12px">
+                        <strong>${clientList}</strong> ${plural ? 'fêtent leur' : 'fête son'} anniversaire le <strong>${targetDateFormatted}</strong>.
+                      </p>
+                      <p style="font-size:15px;color:#111;margin:0 0 12px">
+                        Un cadeau anniversaire leur a été attribué automatiquement.
+                        Pensez à leur envoyer un petit message personnel pour marquer le coup !
+                      </p>
+                      <p style="font-size:13px;color:#888;margin:24px 0 0">— Qarte</p>
+                    </div>
+                  `,
+                });
+              } catch {
+                // Never let merchant notification crash the cron
+              }
             }
           }
         }

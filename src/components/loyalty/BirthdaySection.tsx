@@ -43,6 +43,11 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
       if (res.ok) {
         setBirthdaySaved(true);
         setTimeout(() => setBirthdayDismissed(true), 4000);
+      } else if (res.status === 409) {
+        setBirthdaySaved(true);
+        setTimeout(() => setBirthdayDismissed(true), 4000);
+      } else {
+        setBirthdayError('Une erreur est survenue, veuillez réessayer');
       }
     } catch (err) {
       console.error('Birthday save error:', err);
@@ -85,7 +90,7 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
                 </div>
                 <div>
                   <p className="font-bold text-gray-900 text-sm">Recevez un cadeau pour votre anniversaire !</p>
-                  <p className="text-xs text-gray-500">Ajoutez votre date de naissance (non modifiable)</p>
+                  <p className="text-xs text-gray-500">Renseignez votre date une seule fois, elle ne pourra plus être changée</p>
                 </div>
               </div>
               <div className="flex gap-2 mb-3">
