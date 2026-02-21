@@ -467,7 +467,10 @@ export default function CustomerCardPage({
 
     const m = card.merchant;
     const url = `${window.location.origin}/scan/${m.scan_code}?ref=${referralCode}`;
-    const text = `Je te recommande ${m.shop_name} ! Inscris-toi avec mon lien et on reçoit chacun une récompense :`;
+    const reward = m.referral_reward_referred;
+    const text = reward
+      ? `Je te recommande ${m.shop_name} ! Inscris-toi avec mon lien et reçois "${reward}" :`
+      : `Je te recommande ${m.shop_name} ! Inscris-toi avec mon lien et on reçoit chacun une récompense :`;
 
     if (navigator.share) {
       try {

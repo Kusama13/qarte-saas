@@ -17,6 +17,7 @@ import {
   Smartphone,
   CalendarX,
   Download,
+  ArrowUpDown,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -266,6 +267,7 @@ export default function AdminMerchantsPage() {
   const [shopTypeFilter, setShopTypeFilter] = useState<'all' | ShopType>('all');
   const [showAdmins, setShowAdmins] = useState(false);
   const [pwaFilter, setPwaFilter] = useState(false);
+  const [sortBy, setSortBy] = useState<'urgency' | 'clients'>('urgency');
 
   const fetchData = useCallback(async () => {
     try {
@@ -356,15 +358,19 @@ export default function AdminMerchantsPage() {
       filtered = filtered.filter((m) => !!m.pwa_installed_at);
     }
 
-    // Search (accent-insensitive)
+    // Search (accent-insensitive, email, local phone)
     if (searchQuery) {
       const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
       const q = normalize(searchQuery);
+      // Convert local phone (06xxx) to E.164 (336xxx) for matching
+      const phoneQ = q.replace(/\s/g, '');
+      const phoneE164 = phoneQ.startsWith('0') ? '33' + phoneQ.substring(1) : phoneQ;
       filtered = filtered.filter(
         (m) =>
           normalize(m.shop_name).includes(q) ||
-          m.phone.includes(q) ||
-          (m.shop_address && normalize(m.shop_address).includes(q)),
+          m.phone.includes(phoneE164) ||
+          (m.shop_address && normalize(m.shop_address).includes(q)) ||
+          (data.userEmails[m.user_id] && normalize(data.userEmails[m.user_id]).includes(q)),
       );
     }
 
@@ -381,10 +387,16 @@ export default function AdminMerchantsPage() {
         isAdmin: superAdminIds.has(m.user_id),
       }))
       .sort((a, b) => {
+        if (sortBy === 'clients') {
+          const ca = data.customerCounts[a.merchant.id] || 0;
+          const cb = data.customerCounts[b.merchant.id] || 0;
+          if (ca !== cb) return cb - ca;
+          return new Date(b.merchant.created_at).getTime() - new Date(a.merchant.created_at).getTime();
+        }
         if (a.lifecycle.urgency !== b.lifecycle.urgency) return a.lifecycle.urgency - b.lifecycle.urgency;
         return new Date(b.merchant.created_at).getTime() - new Date(a.merchant.created_at).getTime();
       });
-  }, [data, searchQuery, statusFilter, countryFilter, shopTypeFilter, pwaFilter, showAdmins, superAdminIds]);
+  }, [data, searchQuery, statusFilter, countryFilter, shopTypeFilter, pwaFilter, showAdmins, superAdminIds, sortBy]);
 
   const [waDropdown, setWaDropdown] = useState<string | null>(null);
   const [displayCount, setDisplayCount] = useState(50);
@@ -522,7 +534,7 @@ export default function AdminMerchantsPage() {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher nom, téléphone, adresse..."
+              placeholder="Rechercher nom, email, téléphone, adresse..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#5167fc] focus:border-transparent"
@@ -651,7 +663,15 @@ export default function AdminMerchantsPage() {
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Étape</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Activité</th>
                   <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Auj.</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Clients</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide">
+                    <button
+                      onClick={() => setSortBy(sortBy === 'clients' ? 'urgency' : 'clients')}
+                      className={cn("inline-flex items-center gap-1 hover:text-gray-900 transition-colors", sortBy === 'clients' ? "text-[#5167fc]" : "text-gray-500")}
+                    >
+                      Clients
+                      <ArrowUpDown className="w-3 h-3" />
+                    </button>
+                  </th>
 
                   <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
                 </tr>
