@@ -82,7 +82,8 @@ export async function POST(request: Request) {
             });
           }
         }
-        await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate).catch((err) => {
+        const billingInterval = session.metadata?.plan === 'annual' ? 'annual' : 'monthly';
+        await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate, billingInterval).catch((err) => {
           logger.error('Failed to send subscription email', err);
         });
       }

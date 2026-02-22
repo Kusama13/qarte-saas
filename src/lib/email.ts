@@ -238,9 +238,10 @@ export async function sendNewMerchantNotification(
 export async function sendSubscriptionConfirmedEmail(
   to: string,
   shopName: string,
-  nextBillingDate?: string
+  nextBillingDate?: string,
+  billingInterval?: 'monthly' | 'annual'
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName} - Votre abonnement Qarte est actif`, SubscriptionConfirmedEmail, { shopName, nextBillingDate }, {
+  return sendEmail(to, `${shopName} - Votre abonnement Qarte est actif`, SubscriptionConfirmedEmail, { shopName, nextBillingDate, billingInterval }, {
     logLabel: 'Subscription confirmed email',
   });
 }

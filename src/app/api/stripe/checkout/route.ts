@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?canceled=true`,
       metadata: {
         merchant_id: merchant.id,
+        plan: selectedPriceId === PLAN_ANNUAL.priceId ? 'annual' : 'monthly',
       },
       subscription_data: {
         metadata: {

@@ -10,14 +10,16 @@ import { BaseLayout } from './BaseLayout';
 interface SubscriptionConfirmedEmailProps {
   shopName: string;
   nextBillingDate?: string;
+  billingInterval?: 'monthly' | 'annual';
   referralCode?: string;
 }
 
-export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, referralCode }: SubscriptionConfirmedEmailProps) {
+export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingInterval, referralCode }: SubscriptionConfirmedEmailProps) {
+  const planLabel = billingInterval === 'annual' ? 'Pro Annuel' : 'Pro Mensuel';
   return (
     <BaseLayout preview="Votre abonnement Qarte est activé !">
       <Heading style={heading}>
-        🎉 Bienvenue parmi nos abonnés !
+        Bienvenue parmi nos abonnés !
       </Heading>
 
       <Text style={paragraph}>
@@ -30,21 +32,14 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, referral
 
       <Section style={confirmBox}>
         <Text style={confirmTitle}>✓ Abonnement confirmé</Text>
-        <Text style={confirmDetail}>Plan Pro</Text>
+        <Text style={confirmDetail}>Plan {planLabel}</Text>
         <Text style={confirmNote}>
           {nextBillingDate
             ? `Prochain prélèvement le ${nextBillingDate}`
-            : 'Prochain prélèvement dans 30 jours'}
+            : billingInterval === 'annual'
+              ? 'Prochain prélèvement dans 1 an'
+              : 'Prochain prélèvement dans 30 jours'}
         </Text>
-      </Section>
-
-      <Section style={features}>
-        <Text style={featureTitle}>Vous avez accès à :</Text>
-        <Text style={featureItem}>✓ Programme de fidélité illimité</Text>
-        <Text style={featureItem}>✓ Clients illimités</Text>
-        <Text style={featureItem}>✓ Statistiques en temps réel</Text>
-        <Text style={featureItem}>✓ Support prioritaire</Text>
-        <Text style={featureItem}>✓ Mises à jour gratuites</Text>
       </Section>
 
       <Section style={buttonContainer}>
@@ -120,27 +115,6 @@ const confirmDetail = {
 const confirmNote = {
   color: '#6b7280',
   fontSize: '13px',
-  margin: '0',
-};
-
-const features = {
-  backgroundColor: '#f8f9fa',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-};
-
-const featureTitle = {
-  color: '#1a1a1a',
-  fontSize: '14px',
-  fontWeight: '600',
-  margin: '0 0 12px 0',
-};
-
-const featureItem = {
-  color: '#4a5568',
-  fontSize: '14px',
-  lineHeight: '1.8',
   margin: '0',
 };
 
