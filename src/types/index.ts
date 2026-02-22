@@ -68,6 +68,7 @@ export interface Merchant {
   trial_ends_at: string;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  billing_interval: 'monthly' | 'annual';
   subscription_status: SubscriptionStatus;
   onboarding_completed: boolean;
   shield_enabled: boolean;

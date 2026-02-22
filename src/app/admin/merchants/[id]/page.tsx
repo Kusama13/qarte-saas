@@ -976,12 +976,12 @@ export default function MerchantDetailPage() {
         </div>
       </div>
 
-      {/* Emails envoyés */}
+      {/* Activité */}
       {emailTrackings.length > 0 && (
         <div className="bg-white rounded-lg shadow-md border border-gray-100 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Mail className="w-5 h-5 text-[#5167fc]" />
-            Emails envoyés ({emailTrackings.length})
+            Activité ({emailTrackings.length})
           </h3>
           <div className="space-y-2">
             {emailTrackings.map((t, i) => {

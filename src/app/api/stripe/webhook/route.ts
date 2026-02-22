@@ -52,6 +52,7 @@ export async function POST(request: Request) {
         .from('merchants')
         .update({
           subscription_status: 'active',
+          billing_interval: session.metadata?.plan === 'annual' ? 'annual' : 'monthly',
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: session.subscription as string,
           updated_at: new Date().toISOString(),
