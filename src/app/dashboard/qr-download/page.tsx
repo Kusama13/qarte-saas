@@ -298,10 +298,7 @@ export default function QRDownloadPage() {
                 Défi : 5 clients en 3 jours
               </h3>
               <p className="mt-0.5 text-sm text-amber-800 font-medium">
-                Obtenez votre <span className="font-extrabold text-orange-600">premier mois à 9€ seulement</span> au lieu de 19€
-              </p>
-              <p className="mt-1.5 text-xs text-amber-600">
-                Montrez ce QR code à vos clients au moment de payer — c&apos;est tout !
+                Obtenez votre <span className="font-extrabold text-orange-600">premier mois à 9€ seulement</span> au lieu de 19€ en faisant scanner 5 clients dans les 3 prochains jours. Votre code de réduction vous sera envoyé par email.
               </p>
             </div>
           </div>
