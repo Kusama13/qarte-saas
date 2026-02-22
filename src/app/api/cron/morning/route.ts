@@ -25,10 +25,10 @@ import {
   sendLastChanceSignupEmail,
   sendAutoSuggestRewardEmail,
   sendGracePeriodSetupEmail,
+  sendBirthdayNotificationEmail,
 } from '@/lib/email';
 import { getTrialStatus, getTodayInParis } from '@/lib/utils';
 import { sendAutomationPush, getUpcomingEvent } from '@/lib/push-automation';
-import { resend, EMAIL_FROM, EMAIL_REPLY_TO, EMAIL_HEADERS } from '@/lib/resend';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -1381,7 +1381,7 @@ export async function GET(request: NextRequest) {
     {
       const todayParis = getTodayInParis(); // YYYY-MM-DD in Paris timezone
       const targetDate = new Date(todayParis + 'T12:00:00');
-      targetDate.setDate(targetDate.getDate() + 3);
+      targetDate.setDate(targetDate.getDate());
       const targetMonth = targetDate.getMonth() + 1;
       const targetDay = targetDate.getDate();
 
@@ -1530,7 +1530,7 @@ export async function GET(request: NextRequest) {
                             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
                             JSON.stringify({
                               title: bMerchant.shop_name,
-                              body: `Joyeux anniversaire bientôt ! ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
+                              body: `Joyeux anniversaire ! ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
                               icon: '/icon-192.png',
                               url: `/customer/card/${customer.merchant_id}`,
                               tag: `qarte-birthday-${customer.merchant_id}`,
@@ -1554,8 +1554,8 @@ export async function GET(request: NextRequest) {
             }
           }
 
-          // Notify merchants about upcoming client birthdays (email, fire-and-forget)
-          if (resend && birthdayByMerchant.size > 0) {
+          // Notify merchants about client birthdays (email, fire-and-forget)
+          if (birthdayByMerchant.size > 0) {
             const merchantUserIds = [...birthdayByMerchant.keys()]
               .map(mid => merchantMap.get(mid))
               .filter(Boolean)
@@ -1569,31 +1569,13 @@ export async function GET(request: NextRequest) {
                 const merchantEmail = emailMap.get(bm.user_id);
                 if (!merchantEmail) continue;
 
-                const targetDateFormatted = `${targetDay}/${targetMonth < 10 ? '0' + targetMonth : targetMonth}`;
-                const clientList = clientNames.length === 1
-                  ? clientNames[0]
-                  : clientNames.slice(0, -1).join(', ') + ' et ' + clientNames[clientNames.length - 1];
-                const plural = clientNames.length > 1;
-
-                await resend.emails.send({
-                  from: EMAIL_FROM,
-                  to: merchantEmail,
-                  replyTo: EMAIL_REPLY_TO,
-                  subject: `Anniversaire client${plural ? 's' : ''} le ${targetDateFormatted}`,
-                  headers: EMAIL_HEADERS,
-                  html: `
-                    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:480px;margin:0 auto;padding:24px">
-                      <p style="font-size:15px;color:#111;margin:0 0 12px">Bonjour,</p>
-                      <p style="font-size:15px;color:#111;margin:0 0 12px">
-                        <strong>${clientList}</strong> ${plural ? 'fêtent leur' : 'fête son'} anniversaire le <strong>${targetDateFormatted}</strong>.
-                      </p>
-                      <p style="font-size:15px;color:#111;margin:0 0 12px">
-                        Un cadeau anniversaire leur a été attribué automatiquement.
-                        Pensez à leur envoyer un petit message personnel pour marquer le coup !
-                      </p>
-                      <p style="font-size:13px;color:#888;margin:24px 0 0">— Qarte</p>
-                    </div>
-                  `,
+                await sendBirthdayNotificationEmail(
+                  merchantEmail,
+                  bm.shop_name,
+                  clientNames,
+                  bm.birthday_gift_description || 'Cadeau anniversaire'
+                ).catch(() => {
+                  // Never let merchant notification crash the cron
                 });
               } catch {
                 // Never let merchant notification crash the cron

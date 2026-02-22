@@ -16,7 +16,7 @@ export function ProgramReminderEmail({ shopName }: ProgramReminderEmailProps) {
   return (
     <BaseLayout preview={`${shopName}, votre programme de fidélité n'attend plus que vous`}>
       <Heading style={heading}>
-        Votre programme n&apos;est pas encore configuré
+        Plus qu&apos;une étape pour fidéliser vos clients
       </Heading>
 
       <Text style={paragraph}>
@@ -24,72 +24,29 @@ export function ProgramReminderEmail({ shopName }: ProgramReminderEmailProps) {
       </Text>
 
       <Text style={paragraph}>
-        Vous avez créé votre compte Qarte hier, mais votre programme de
-        fidélité n&apos;est pas encore en place. Vos clients passent chez vous
-        aujourd&apos;hui — et chaque passage sans fidélisation, c&apos;est une
-        occasion manquée.
+        Votre compte Qarte est prêt. Il ne manque plus que votre récompense
+        pour lancer votre programme de fidélité.
       </Text>
 
       <Text style={highlightBox}>
-        En <strong>3 minutes</strong>, vous pouvez avoir un programme
-        opérationnel. Il suffit de choisir votre récompense et d&apos;afficher
-        votre QR code.
+        Choisissez ce que vous offrez à vos clients fidèles, et votre QR code
+        sera généré automatiquement. Ça prend <strong>3 minutes</strong>.
+        Vous pourrez modifier votre récompense à tout moment.
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/program">
-          Configurer mon programme maintenant
+          Configurer mon programme
         </Button>
       </Section>
 
-      <Hr style={divider} />
-
-      <Heading as="h2" style={subheading}>
-        Vous ne savez pas quoi offrir ? Voici des idées :
-      </Heading>
-
-      <Section style={ideasBox}>
-        <Text style={ideaItem}>
-          💅 <strong>Onglerie :</strong> &quot;1 pose offerte après 10 passages&quot;
-        </Text>
-        <Text style={ideaItem}>
-          💇 <strong>Coiffeur :</strong> &quot;1 brushing offert après 8 visites&quot;
-        </Text>
-        <Text style={ideaItem}>
-          💆 <strong>Institut :</strong> &quot;1 soin visage offert après 10 passages&quot;
-        </Text>
-        <Text style={ideaItem}>
-          🍕 <strong>Restaurant :</strong> &quot;1 dessert offert après 5 repas&quot;
-        </Text>
-      </Section>
-
       <Text style={paragraph}>
-        Pas besoin d&apos;être parfait du premier coup — vous pourrez modifier
-        votre récompense à tout moment.
+        Vous ne savez pas quoi offrir ? On vous suggère la meilleure récompense
+        pour votre activité directement dans la page de configuration.
       </Text>
 
-      <Hr style={divider} />
-
-      <Section style={testimonialBox}>
-        <Text style={testimonialQuote}>
-          &quot;J&apos;ai hésité 2 jours, puis j&apos;ai configuré mon
-          programme en 5 minutes. Dès le lendemain, mes clientes scannaient
-          le QR code.&quot;
-        </Text>
-        <Text style={testimonialAuthor}>
-          — Élodie, Nail Salon by Elodie
-        </Text>
-      </Section>
-
-      <Section style={buttonContainer}>
-        <Button style={buttonSecondary} href="https://getqarte.com/dashboard/program">
-          Lancer mon programme
-        </Button>
-      </Section>
-
       <Text style={paragraph}>
-        Besoin d&apos;aide ? Répondez à cet email ou contactez-nous directement
-        sur WhatsApp, on vous guide en 5 minutes.
+        Besoin d&apos;aide ? On peut le faire pour vous en 5 minutes sur WhatsApp.
       </Text>
 
       <Section style={buttonContainer}>

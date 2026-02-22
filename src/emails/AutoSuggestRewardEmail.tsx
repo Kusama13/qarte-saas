@@ -36,7 +36,7 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
   return (
     <BaseLayout preview={`${shopName}, on a choisi la meilleure récompense pour vous — 1 clic pour activer`}>
       <Heading style={heading}>
-        On a choisi la meilleure r&eacute;compense pour vous
+        On a choisi la meilleure récompense pour vous
       </Heading>
 
       <Text style={paragraph}>
@@ -44,24 +44,24 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
       </Text>
 
       <Text style={paragraph}>
-        Cela fait 5 jours que votre compte est cr&eacute;&eacute;. On sait que choisir
-        une r&eacute;compense peut &ecirc;tre un blocage &mdash; alors on l&apos;a fait pour vous.
+        Cela fait 5 jours que votre compte est créé. On sait que choisir
+        une récompense peut être un blocage — alors on l&apos;a fait pour vous.
       </Text>
 
       <Section style={recommendationBox}>
-        <Text style={recommendationLabel}>R&eacute;compense recommand&eacute;e pour votre activit&eacute; :</Text>
+        <Text style={recommendationLabel}>Récompense recommandée pour votre activité :</Text>
         <Text style={recommendationText}>
-          &quot;<strong>{suggestion.reward}</strong> apr&egrave;s <strong>{suggestion.visits}</strong>&quot;
+          &quot;<strong>{suggestion.reward}</strong> après <strong>{suggestion.visits}</strong>&quot;
         </Text>
         <Text style={recommendationNote}>
-          Cliquez ci-dessous et elle sera configur&eacute;e automatiquement.
-          Vous pourrez la modifier &agrave; tout moment.
+          Cliquez ci-dessous pour la configurer.
+          Vous pourrez la modifier à tout moment.
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/program">
-          Activer cette r&eacute;compense en 1 clic
+          Activer cette récompense
         </Button>
       </Section>
 
@@ -69,7 +69,6 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
         <Section style={urgencyBox}>
           <Text style={urgencyText}>
             Il vous reste <strong>{daysRemaining} jour{daysRemaining > 1 ? 's' : ''}</strong> d&apos;essai gratuit.
-            Chaque jour sans programme = des clients qui repartent sans raison de revenir.
           </Text>
         </Section>
       )}
@@ -77,8 +76,7 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
       <Hr style={divider} />
 
       <Text style={paragraph}>
-        Vous pr&eacute;f&eacute;rez qu&apos;on le fasse pour vous ? R&eacute;pondez &agrave; cet email
-        avec votre r&eacute;compense souhait&eacute;e, ou contactez-nous sur WhatsApp :
+        Vous préférez qu&apos;on le fasse pour vous ? Contactez-nous sur WhatsApp :
       </Text>
 
       <Section style={buttonContainer}>
@@ -88,7 +86,7 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
       </Section>
 
       <Text style={signature}>
-        L&apos;&eacute;quipe Qarte
+        L&apos;équipe Qarte
       </Text>
     </BaseLayout>
   );

@@ -17,7 +17,7 @@ export function WelcomeEmail({ shopName, trialDays = 7 }: WelcomeEmailProps) {
   return (
     <BaseLayout preview={`${shopName}, votre programme de fidélité est prêt en 3 minutes`}>
       <Heading style={heading}>
-        {shopName}, vos clients n&apos;attendent que vous
+        Bienvenue {shopName} !
       </Heading>
 
       <Text style={paragraph}>
@@ -26,85 +26,34 @@ export function WelcomeEmail({ shopName, trialDays = 7 }: WelcomeEmailProps) {
 
       <Text style={paragraph}>
         Votre compte Qarte est créé. Vous avez <strong>{trialDays} jours gratuits</strong> pour
-        lancer votre programme de fidélité — et ça prend <strong>3 minutes</strong>.
+        lancer votre programme de fidélité.
       </Text>
 
       <Text style={highlightBox}>
-        Chaque jour sans programme, c&apos;est des clients qui passent chez vous
-        sans être fidélisés. Ne laissez pas passer cette opportunité.
+        Configurez votre programme en <strong>3 minutes</strong> : choisissez votre récompense,
+        affichez votre QR code, et vos clients commencent à cumuler des points.
       </Text>
-
-      <Section style={buttonContainer}>
-        <Button style={button} href="https://getqarte.com/dashboard/program">
-          Créer mon programme en 3 minutes
-        </Button>
-      </Section>
-
-      <Hr style={divider} />
-
-      <Heading as="h2" style={subheading}>
-        3 étapes et c&apos;est parti :
-      </Heading>
 
       <Section style={stepsBox}>
         <Text style={stepItem}>
           <strong>1.</strong> Choisissez votre récompense (ex: &quot;1 soin offert après 10 passages&quot;)
         </Text>
         <Text style={stepItem}>
-          <strong>2.</strong> Imprimez votre QR code et affichez-le en caisse
+          <strong>2.</strong> Affichez votre QR code près de la caisse
         </Text>
         <Text style={stepItem}>
           <strong>3.</strong> Vos clients scannent à chaque visite — c&apos;est tout
         </Text>
       </Section>
 
-      <Section style={challengeBox}>
-        <Text style={challengeTitle}>Défi activation</Text>
-        <Text style={challengeText}>
-          Faites scanner <strong>5 clients en 3 jours</strong> et obtenez
-          votre <strong>premier mois à 9€ seulement</strong> au lieu de 19€.
-        </Text>
-        <Text style={challengeHint}>
-          Montrez simplement votre QR code au moment de payer — c&apos;est tout !
-        </Text>
-      </Section>
-
-      <Hr style={divider} />
-
-      <Section style={benefitsBox}>
-        <Text style={benefitsTitle}>Pourquoi les commerçants adorent Qarte :</Text>
-        <Text style={benefitItem}>+40% de clients réguliers en moyenne</Text>
-        <Text style={benefitItem}>Aucune app à télécharger pour vos clients</Text>
-        <Text style={benefitItem}>Tableau de bord pour suivre vos visites</Text>
-        <Text style={benefitItem}>Fonctionne dès le premier scan</Text>
-      </Section>
-
-      <Hr style={divider} />
-
-      <Section style={testimonialBox}>
-        <Text style={testimonialQuote}>
-          &quot;J&apos;ai configuré mon programme en 5 minutes. Dès le lendemain, mes
-          clientes scannaient le QR code. Maintenant elles reviennent toutes les
-          3 semaines.&quot;
-        </Text>
-        <Text style={testimonialAuthor}>
-          — Élodie, Nail Salon by Elodie
-        </Text>
-      </Section>
-
-      <Text style={urgencyText}>
-        Vos {trialDays} jours d&apos;essai ont commencé — profitez-en maintenant.
-      </Text>
-
       <Section style={buttonContainer}>
-        <Button style={buttonSecondary} href="https://getqarte.com/dashboard/program">
-          Lancer mon programme
+        <Button style={button} href="https://getqarte.com/dashboard/program">
+          Créer mon programme
         </Button>
       </Section>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? Répondez à cet email ou contactez-nous directement
-        sur WhatsApp, on vous guide en 5 minutes.
+        Besoin d&apos;aide ? On vous guide en 5 minutes sur WhatsApp.
       </Text>
 
       <Section style={buttonContainer}>

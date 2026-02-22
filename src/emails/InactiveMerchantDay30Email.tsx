@@ -13,9 +13,9 @@ interface InactiveMerchantDay30EmailProps {
 
 export function InactiveMerchantDay30Email({ shopName }: InactiveMerchantDay30EmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, un mois sans utiliser Qarte — on peut vous aider ?`}>
+    <BaseLayout preview={`${shopName}, on aimerait comprendre ce qui vous bloque`}>
       <Heading style={heading}>
-        Un mois sans utiliser Qarte
+        On prend de vos nouvelles
       </Heading>
 
       <Text style={paragraph}>
@@ -23,46 +23,26 @@ export function InactiveMerchantDay30Email({ shopName }: InactiveMerchantDay30Em
       </Text>
 
       <Text style={paragraph}>
-        C&apos;est l&apos;équipe Qarte. On voit que votre programme
-        de fidélité n&apos;a pas encore eu de passages ce mois-ci. Je voulais
-        simplement prendre des nouvelles.
+        C&apos;est l&apos;équipe Qarte. Votre programme de fidélité
+        n&apos;a pas eu de scans ce mois-ci.
       </Text>
 
-      <Section style={optionsBox}>
-        <Text style={optionsTitle}>
-          Dites-nous comment on peut vous aider :
-        </Text>
+      <Text style={paragraph}>
+        On aimerait comprendre ce qui vous bloque. Si vous avez 2 minutes,
+        envoyez-nous un message — on peut configurer ou ajuster votre
+        programme ensemble.
+      </Text>
 
-        <Text style={optionItem}>
-          <strong>A)</strong> Vous n&apos;avez pas eu le temps ?
-          <br />
-          Répondez &quot;A&quot; et on planifie un appel de 5 min pour tout mettre
-          en place ensemble.
-        </Text>
-
-        <Text style={optionItem}>
-          <strong>B)</strong> Quelque chose ne fonctionne pas ?
-          <br />
-          Répondez &quot;B&quot; et on regarde votre compte ensemble.
-        </Text>
-
-        <Text style={optionItem}>
-          <strong>C)</strong> Qarte ne correspond pas à vos besoins ?
-          <br />
-          Répondez &quot;C&quot; et dites-nous pourquoi, ça nous aide énormément.
-        </Text>
+      <Section style={buttonContainer}>
+        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%20Qarte%2C%20j%27aimerais%20discuter%20de%20mon%20compte">
+          Nous écrire sur WhatsApp
+        </Button>
       </Section>
 
       <Text style={paragraph}>
         Pas de pression. On veut juste que chaque commerçant qui nous fait
         confiance obtienne des résultats.
       </Text>
-
-      <Section style={buttonContainer}>
-        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%20Qarte%2C%20j%27aimerais%20discuter%20de%20mon%20compte">
-          R&eacute;pondre sur WhatsApp
-        </Button>
-      </Section>
 
       <Text style={signatureBlock}>
         L&apos;équipe Qarte
@@ -86,29 +66,6 @@ const paragraph = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '0 0 16px 0',
-};
-
-const optionsBox = {
-  backgroundColor: '#f8f9fa',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '24px 0',
-};
-
-const optionsTitle = {
-  color: '#1a1a1a',
-  fontSize: '16px',
-  fontWeight: '600',
-  margin: '0 0 20px 0',
-};
-
-const optionItem = {
-  color: '#4a5568',
-  fontSize: '15px',
-  lineHeight: '1.6',
-  margin: '0 0 16px 0',
-  paddingBottom: '16px',
-  borderBottom: '1px solid #e8e8e8',
 };
 
 const buttonContainer = {

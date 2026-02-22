@@ -31,3 +31,4 @@ export { SetupForYouEmail } from './SetupForYouEmail';
 export { LastChanceSignupEmail } from './LastChanceSignupEmail';
 export { AutoSuggestRewardEmail } from './AutoSuggestRewardEmail';
 export { GracePeriodSetupEmail } from './GracePeriodSetupEmail';
+export { BirthdayNotificationEmail } from './BirthdayNotificationEmail';

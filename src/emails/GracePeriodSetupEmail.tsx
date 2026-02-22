@@ -15,9 +15,9 @@ interface GracePeriodSetupEmailProps {
 
 export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeriodSetupEmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, on garde vos données encore ${daysUntilDeletion} jours — configurez votre programme`}>
+    <BaseLayout preview={`${shopName}, votre essai est terminé — on peut encore vous aider`}>
       <Heading style={heading}>
-        On garde vos donn&eacute;es {daysUntilDeletion} jour{daysUntilDeletion > 1 ? 's' : ''} de plus
+        Votre essai est terminé — il n&apos;est pas trop tard
       </Heading>
 
       <Text style={paragraph}>
@@ -25,14 +25,13 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
       </Text>
 
       <Text style={paragraph}>
-        Votre essai est termin&eacute;, mais votre programme de fid&eacute;lit&eacute;
-        n&apos;a jamais &eacute;t&eacute; configur&eacute;. On comprend que le quotidien passe vite.
+        Votre essai est terminé, mais votre programme de fidélité
+        n&apos;a jamais été configuré. On comprend que le quotidien passe vite.
       </Text>
 
-      <Section style={urgencyBox}>
-        <Text style={urgencyText}>
-          Vos donn&eacute;es seront <strong>supprim&eacute;es dans {daysUntilDeletion} jour{daysUntilDeletion > 1 ? 's' : ''}</strong>.
-          <br />Mais il n&apos;est pas trop tard.
+      <Section style={infoBox}>
+        <Text style={infoText}>
+          Vos données sont conservées encore <strong>{daysUntilDeletion} jour{daysUntilDeletion > 1 ? 's' : ''}</strong>.
         </Text>
       </Section>
 
@@ -41,12 +40,12 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
       <Section style={offerBox}>
         <Text style={offerTitle}>On le fait ensemble en 2 minutes</Text>
         <Text style={offerText}>
-          Envoyez-nous un message WhatsApp maintenant, et on configure
-          votre programme <strong>pendant que vous &ecirc;tes avec vos clients</strong>.
+          Envoyez-nous un message WhatsApp et on configure
+          votre programme <strong>pendant que vous êtes avec vos clients</strong>.
           Tout ce qu&apos;on a besoin :
         </Text>
         <Text style={offerList}>
-          &bull; Quelle r&eacute;compense offrir (ex: &quot;1 soin offert apr&egrave;s 10 visites&quot;)<br />
+          &bull; Quelle récompense offrir (ex: &quot;1 soin offert après 10 visites&quot;)<br />
           &bull; C&apos;est tout. On s&apos;occupe du reste.
         </Text>
       </Section>
@@ -58,7 +57,7 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
       </Section>
 
       <Text style={paragraph}>
-        Ou faites-le vous-m&ecirc;me en 3 minutes :
+        Ou faites-le vous-même en 3 minutes :
       </Text>
 
       <Section style={buttonContainer}>
@@ -69,16 +68,15 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
 
       <Section style={reassuranceBox}>
         <Text style={reassuranceText}>
-          Apr&egrave;s configuration, vous pourrez r&eacute;activer votre abonnement &agrave;
-          <strong> 9&euro;/mois le premier mois</strong> (au lieu de 19&euro;).
-          Vos donn&eacute;es seront pr&eacute;serv&eacute;es.
+          Après configuration, vous pourrez réactiver votre abonnement à
+          <strong> 9€/mois le premier mois</strong> (au lieu de 19€).
         </Text>
       </Section>
 
       <Text style={signature}>
-        On est l&agrave; pour vous,
+        On est là pour vous,
         <br />
-        L&apos;&eacute;quipe Qarte
+        L&apos;équipe Qarte
       </Text>
     </BaseLayout>
   );
@@ -99,16 +97,16 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const urgencyBox = {
-  backgroundColor: '#fef2f2',
+const infoBox = {
+  backgroundColor: '#fef3c7',
   borderRadius: '8px',
   padding: '16px 20px',
   margin: '24px 0',
-  border: '1px solid #fecaca',
+  border: '1px solid #fde68a',
 };
 
-const urgencyText = {
-  color: '#991b1b',
+const infoText = {
+  color: '#92400e',
   fontSize: '15px',
   lineHeight: '1.6',
   margin: '0',

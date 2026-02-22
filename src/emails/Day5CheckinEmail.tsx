@@ -13,13 +13,13 @@ interface Day5CheckinEmailProps {
   referralCode?: string;
 }
 
-export function Day5CheckinEmail({ shopName, totalScans, referralCode }: Day5CheckinEmailProps) {
+export function Day5CheckinEmail({ shopName, totalScans }: Day5CheckinEmailProps) {
   const hasScans = totalScans > 0;
 
   return (
     <BaseLayout preview={`${shopName}, comment se passe votre 1ère semaine ?`}>
       <Heading style={heading}>
-        Comment se passe votre premi&egrave;re semaine ?
+        Comment se passe votre première semaine ?
       </Heading>
 
       <Text style={paragraph}>
@@ -29,38 +29,38 @@ export function Day5CheckinEmail({ shopName, totalScans, referralCode }: Day5Che
       {hasScans ? (
         <>
           <Text style={paragraph}>
-            Vous avez d&eacute;j&agrave; <strong>{totalScans} scan{totalScans > 1 ? 's' : ''}</strong> cette
-            semaine, bravo ! Continuez comme &ccedil;a, les r&eacute;sultats suivent.
+            Vous avez déjà <strong>{totalScans} scan{totalScans > 1 ? 's' : ''}</strong> cette
+            semaine, bravo ! Continuez comme ça.
           </Text>
 
           <Section style={successBox}>
-            <Text style={successTitle}>Prochaine &eacute;tape</Text>
+            <Text style={successTitle}>Prochaine étape</Text>
             <Text style={successText}>
-              Partagez votre programme sur vos r&eacute;seaux sociaux pour toucher
-              encore plus de clients. Votre kit est pr&ecirc;t dans votre espace.
+              Partagez votre programme sur vos réseaux sociaux pour toucher
+              encore plus de clients. Votre kit est prêt dans votre espace.
             </Text>
           </Section>
 
           <Section style={buttonContainer}>
             <Button style={button} href="https://getqarte.com/dashboard/qr-download?tab=social">
-              T&eacute;l&eacute;charger mon kit r&eacute;seaux sociaux
+              Télécharger mon kit réseaux sociaux
             </Button>
           </Section>
         </>
       ) : (
         <>
           <Text style={paragraph}>
-            Votre programme est configur&eacute; et votre QR code est pr&ecirc;t.
+            Votre programme est configuré et votre QR code est prêt.
             Il ne manque plus que vos clients !
           </Text>
 
           <Section style={actionBox}>
-            <Text style={actionTitle}>3 actions pour d&eacute;marrer aujourd&apos;hui :</Text>
+            <Text style={actionTitle}>3 actions pour démarrer aujourd&apos;hui :</Text>
             <Text style={actionItem}>
-              <strong>1.</strong> Imprimez votre QR code et placez-le pr&egrave;s de la caisse
+              <strong>1.</strong> Imprimez votre QR code et placez-le près de la caisse
             </Text>
             <Text style={actionItem}>
-              <strong>2.</strong> Proposez le scan &agrave; vos 5 prochains clients
+              <strong>2.</strong> Proposez le scan à vos 5 prochains clients
             </Text>
             <Text style={actionItem}>
               <strong>3.</strong> Partagez sur Instagram / Facebook
@@ -69,35 +69,21 @@ export function Day5CheckinEmail({ shopName, totalScans, referralCode }: Day5Che
 
           <Section style={buttonContainer}>
             <Button style={button} href="https://getqarte.com/dashboard/qr-download">
-              Acc&eacute;der &agrave; mon QR code
+              Accéder à mon QR code
             </Button>
           </Section>
         </>
       )}
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ou de conseils ? On est l&agrave; :
+        Besoin d&apos;aide ou de conseils ? On est là :
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20mon%20programme%20Qarte">
-          &Eacute;crire sur WhatsApp
+          Écrire sur WhatsApp
         </Button>
       </Section>
-
-      {referralCode && (
-        <Section style={referralBox}>
-          <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
-          <Text style={referralText}>
-            Vous connaissez un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommandez-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
-          </Text>
-          <Text style={referralCode_style}>Votre code : <strong>{referralCode}</strong></Text>
-          <Text style={referralHint}>
-            Votre filleul nous communique votre code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
-          </Text>
-        </Section>
-      )}
 
       <Text style={signature}>
         À très vite,
@@ -198,48 +184,6 @@ const signature = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '24px 0 0 0',
-};
-
-const referralBox = {
-  backgroundColor: '#faf5ff',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-  border: '1px solid #e9d5ff',
-};
-
-const referralTitle = {
-  color: '#4b0082',
-  fontSize: '16px',
-  fontWeight: '700',
-  margin: '0 0 8px 0',
-};
-
-const referralText = {
-  color: '#4a5568',
-  fontSize: '14px',
-  lineHeight: '1.6',
-  margin: '0 0 12px 0',
-};
-
-const referralCode_style = {
-  color: '#4b0082',
-  fontSize: '18px',
-  fontWeight: '700',
-  fontFamily: 'monospace',
-  textAlign: 'center' as const,
-  margin: '0 0 8px 0',
-  padding: '8px',
-  backgroundColor: '#ffffff',
-  borderRadius: '8px',
-  border: '1px dashed #c4b5fd',
-};
-
-const referralHint = {
-  color: '#9ca3af',
-  fontSize: '12px',
-  textAlign: 'center' as const,
-  margin: '0',
 };
 
 export default Day5CheckinEmail;

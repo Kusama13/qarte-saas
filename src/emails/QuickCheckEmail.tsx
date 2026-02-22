@@ -14,9 +14,9 @@ interface QuickCheckEmailProps {
 
 export function QuickCheckEmail({ shopName, daysRemaining }: QuickCheckEmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, une question rapide sur votre programme`}>
+    <BaseLayout preview={`${shopName}, votre QR code est prêt — il ne manque que le premier scan`}>
       <Heading style={heading}>
-        Une question rapide
+        Votre QR code est prêt ?
       </Heading>
 
       <Text style={paragraph}>
@@ -24,40 +24,40 @@ export function QuickCheckEmail({ shopName, daysRemaining }: QuickCheckEmailProp
       </Text>
 
       <Text style={paragraph}>
-        Cela fait 4 jours que votre programme de fidélité est en place, mais nous
-        n&apos;avons toujours pas de scan. Est-ce que quelque chose vous bloque ?
+        Votre programme est configuré depuis 4 jours, mais on n&apos;a pas encore
+        de scan. Le plus souvent, c&apos;est parce que le QR code n&apos;est
+        pas encore imprimé ou pas assez visible.
       </Text>
 
-      <Section style={optionBox}>
-        <Text style={optionLabel}>Je n&apos;ai pas encore imprimé le QR code</Text>
-        <Section style={buttonContainer}>
-          <Button style={button} href="https://getqarte.com/dashboard/qr-download">
-            Télécharger mon QR code
-          </Button>
-        </Section>
-      </Section>
-
-      <Section style={optionBox}>
-        <Text style={optionLabel}>Je ne sais pas comment le présenter</Text>
-        <Section style={buttonContainer}>
-          <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20pr%C3%A9senter%20le%20QR%20code%20%C3%A0%20mes%20client(e)s">
-            On vous aide sur WhatsApp
-          </Button>
-        </Section>
-      </Section>
-
-      <Section style={optionBox}>
-        <Text style={optionLabel}>J&apos;ai un autre problème</Text>
-        <Text style={optionDescription}>
-          Répondez simplement à cet email, on vous répond dans la journée.
+      <Section style={tipBox}>
+        <Text style={tipTitle}>Le bon réflexe</Text>
+        <Text style={tipText}>
+          Imprimez votre QR code et placez-le à hauteur des yeux, près de la caisse.
+          Puis dites à vos prochains clients : &quot;Scannez ce QR code pour votre
+          carte de fidélité, c&apos;est gratuit !&quot;
         </Text>
+      </Section>
+
+      <Section style={buttonContainer}>
+        <Button style={button} href="https://getqarte.com/dashboard/qr-download">
+          Télécharger mon QR code
+        </Button>
       </Section>
 
       <Section style={urgencyBox}>
         <Text style={urgencyText}>
-          Il vous reste <strong>{daysRemaining} jours</strong> d&apos;essai.
-          On veut vraiment que vous voyiez des résultats avant la fin.
+          Il vous reste <strong>{daysRemaining} jours</strong> d&apos;essai gratuit.
         </Text>
+      </Section>
+
+      <Text style={paragraph}>
+        Besoin d&apos;aide ? On est disponible sur WhatsApp.
+      </Text>
+
+      <Section style={buttonContainer}>
+        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20pr%C3%A9senter%20le%20QR%20code%20%C3%A0%20mes%20client(e)s">
+          Nous écrire sur WhatsApp
+        </Button>
       </Section>
 
       <Text style={signature}>
@@ -82,21 +82,21 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const optionBox = {
+const tipBox = {
   backgroundColor: '#f8f9fa',
   borderRadius: '12px',
   padding: '20px 24px',
-  margin: '0 0 12px 0',
+  margin: '24px 0',
 };
 
-const optionLabel = {
+const tipTitle = {
   color: '#1a1a1a',
-  fontSize: '16px',
+  fontSize: '15px',
   fontWeight: '600',
   margin: '0 0 8px 0',
 };
 
-const optionDescription = {
+const tipText = {
   color: '#4a5568',
   fontSize: '14px',
   lineHeight: '1.6',
@@ -105,7 +105,7 @@ const optionDescription = {
 
 const buttonContainer = {
   textAlign: 'center' as const,
-  margin: '12px 0 0 0',
+  margin: '28px 0',
 };
 
 const button = {

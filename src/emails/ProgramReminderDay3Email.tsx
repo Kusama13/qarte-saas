@@ -3,7 +3,6 @@ import {
   Heading,
   Text,
   Section,
-  Hr,
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
@@ -17,7 +16,7 @@ export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramRem
   return (
     <BaseLayout preview={`${shopName}, il vous reste ${daysRemaining} jours d'essai — configurez votre programme`}>
       <Heading style={heading}>
-        Dernier rappel : votre programme attend toujours
+        Votre programme attend toujours
       </Heading>
 
       <Text style={paragraph}>
@@ -25,26 +24,20 @@ export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramRem
       </Text>
 
       <Text style={paragraph}>
-        Cela fait 3 jours que votre compte est créé. Si vous recevez 10 clients
-        par jour, ce sont déjà <strong>30 clients qui auraient pu être fidélisés</strong>.
+        Votre compte a été créé il y a 3 jours. Configurer votre programme
+        prend 3 minutes et votre QR code sera prêt immédiatement.
       </Text>
 
       <Section style={urgencyBox}>
         <Text style={urgencyText}>
-          Votre essai de 7 jours avance — il vous reste <strong>{daysRemaining} jours</strong>.
+          Il vous reste <strong>{daysRemaining} jours</strong> d&apos;essai gratuit.
         </Text>
       </Section>
 
-      <Hr style={divider} />
-
-      <Heading as="h2" style={subheading}>
-        Deux options pour démarrer :
-      </Heading>
-
       <Section style={optionBox}>
-        <Text style={optionLabel}>Option A — Faites-le vous-même (3 min)</Text>
+        <Text style={optionLabel}>Faites-le vous-même (3 min)</Text>
         <Text style={optionDescription}>
-          Cliquez ci-dessous, tapez votre récompense, et votre programme est en ligne.
+          Choisissez votre récompense et votre programme est en ligne.
         </Text>
         <Section style={buttonContainer}>
           <Button style={button} href="https://getqarte.com/dashboard/program">
@@ -54,10 +47,10 @@ export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramRem
       </Section>
 
       <Section style={optionBox}>
-        <Text style={optionLabel}>Option B — On le fait pour vous</Text>
+        <Text style={optionLabel}>On le fait pour vous</Text>
         <Text style={optionDescription}>
-          Répondez à cet email avec le nom de votre récompense
-          (ex: &quot;1 brushing offert après 8 visites&quot;) et on configure tout pour vous.
+          Dites-nous votre récompense (ex: &quot;1 brushing offert après 8 visites&quot;)
+          et on configure tout.
         </Text>
         <Section style={buttonContainer}>
           <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20pouvez-vous%20configurer%20mon%20programme%20Qarte%20pour%20moi%20%3F">
@@ -67,29 +60,12 @@ export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramRem
       </Section>
 
       <Section style={challengeBox}>
-        <Text style={challengeTitle}>Défi : 5 clients en 3 jours = premier mois à 9€</Text>
+        <Text style={challengeTitle}>5 clients en 3 jours = premier mois à 9€</Text>
         <Text style={challengeText}>
-          Configurez votre programme maintenant, faites scanner <strong>5 clients en 3 jours</strong>,
-          et obtenez votre <strong>premier mois à 9€ seulement</strong> au lieu de 19€.
+          Configurez votre programme, faites scanner <strong>5 clients en 3 jours</strong>,
+          et obtenez votre <strong>premier mois à 9€</strong> au lieu de 19€.
         </Text>
       </Section>
-
-      <Hr style={divider} />
-
-      <Section style={testimonialBox}>
-        <Text style={testimonialQuote}>
-          &quot;J&apos;avais pas le temps de m&apos;en occuper, je leur ai envoyé
-          un message et 10 minutes après mon programme était en ligne.&quot;
-        </Text>
-        <Text style={testimonialAuthor}>
-          — Sarah, Institut Beauté Zen
-        </Text>
-      </Section>
-
-      <Text style={paragraph}>
-        Pas de pression — mais chaque jour qui passe, ce sont des clients
-        qui repartent sans raison de revenir.
-      </Text>
 
       <Text style={signature}>
         L&apos;équipe Qarte
@@ -104,14 +80,6 @@ const heading = {
   fontWeight: '700',
   lineHeight: '1.3',
   margin: '0 0 24px 0',
-};
-
-const subheading = {
-  color: '#1a1a1a',
-  fontSize: '18px',
-  fontWeight: '600',
-  lineHeight: '1.3',
-  margin: '0 0 20px 0',
 };
 
 const paragraph = {
@@ -135,11 +103,6 @@ const urgencyText = {
   lineHeight: '1.6',
   margin: '0',
   textAlign: 'center' as const,
-};
-
-const divider = {
-  borderColor: '#e8e8e8',
-  margin: '28px 0',
 };
 
 const optionBox = {
@@ -188,27 +151,6 @@ const whatsappButton = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '12px 28px',
-};
-
-const testimonialBox = {
-  borderLeft: '3px solid #4b0082',
-  paddingLeft: '20px',
-  margin: '0 0 24px 0',
-};
-
-const testimonialQuote = {
-  color: '#4a5568',
-  fontSize: '15px',
-  fontStyle: 'italic',
-  lineHeight: '1.6',
-  margin: '0 0 8px 0',
-};
-
-const testimonialAuthor = {
-  color: '#4b0082',
-  fontSize: '14px',
-  fontWeight: '600',
-  margin: '0',
 };
 
 const challengeBox = {

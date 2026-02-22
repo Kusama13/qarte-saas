@@ -3,7 +3,6 @@ import {
   Heading,
   Text,
   Section,
-  Hr,
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
@@ -20,9 +19,9 @@ export function InactiveMerchantDay14Email({
   stampsRequired,
 }: InactiveMerchantDay14EmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, 2 semaines sans passage — voici comment relancer`}>
+    <BaseLayout preview={`${shopName}, on peut débloquer vos premiers scans ensemble`}>
       <Heading style={heading}>
-        Comment vos concurrents fidélisent leurs clients
+        2 semaines — on peut vous aider ?
       </Heading>
 
       <Text style={paragraph}>
@@ -30,18 +29,9 @@ export function InactiveMerchantDay14Email({
       </Text>
 
       <Text style={paragraph}>
-        Saviez-vous que les commerces utilisant un programme de fidélité digital
-        voient <strong>+40% de retour client</strong> en moyenne ? Votre programme est prêt
-        — il ne manque que l&apos;habitude.
+        Votre programme de fidélité est en place, mais pas encore de scan.
+        Souvent, il suffit de trouver les bons mots pour le proposer à vos clients.
       </Text>
-
-      <Section style={challengeBox}>
-        <Text style={challengeTitle}>Le défi de la semaine</Text>
-        <Text style={challengeText}>
-          Proposez à chaque client de scanner votre QR code.
-          Objectif : <strong>10 premiers scans d&apos;ici vendredi</strong>.
-        </Text>
-      </Section>
 
       <Section style={scriptBox}>
         <Text style={scriptTitle}>Que dire à vos clients ?</Text>
@@ -53,8 +43,6 @@ export function InactiveMerchantDay14Email({
           }. C&apos;est rapide et sans app à télécharger.&quot;
         </Text>
       </Section>
-
-      <Hr style={divider} />
 
       {rewardDescription && (
         <Section style={rewardBox}>
@@ -68,13 +56,12 @@ export function InactiveMerchantDay14Email({
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard">
-          Voir mon programme et mes statistiques
+          Voir mon tableau de bord
         </Button>
       </Section>
 
       <Text style={paragraph}>
-        Vous n&apos;osez pas le proposer ? On vous aide à trouver les mots
-        — répondez à cet email ou écrivez-nous sur WhatsApp.
+        On peut aussi vous aider à trouver les mots — écrivez-nous sur WhatsApp.
       </Text>
 
       <Section style={buttonContainer}>
@@ -105,31 +92,6 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const challengeBox = {
-  backgroundColor: '#f0edfc',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-  border: '2px solid #4b0082',
-};
-
-const challengeTitle = {
-  color: '#4b0082',
-  fontSize: '13px',
-  fontWeight: '600',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.05em',
-  margin: '0 0 12px 0',
-};
-
-const challengeText = {
-  color: '#1a1a1a',
-  fontSize: '16px',
-  lineHeight: '1.6',
-  margin: '0',
-};
-
 const scriptBox = {
   backgroundColor: '#f8f9fa',
   borderRadius: '12px',
@@ -151,11 +113,6 @@ const scriptText = {
   fontStyle: 'italic',
   lineHeight: '1.6',
   margin: '0',
-};
-
-const divider = {
-  borderColor: '#e8e8e8',
-  margin: '28px 0',
 };
 
 const rewardBox = {

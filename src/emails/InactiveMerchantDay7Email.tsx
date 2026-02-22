@@ -13,9 +13,9 @@ interface InactiveMerchantDay7EmailProps {
 
 export function InactiveMerchantDay7Email({ shopName }: InactiveMerchantDay7EmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, aucun passage cette semaine — on peut vous aider`}>
+    <BaseLayout preview={`${shopName}, on peut vous aider à obtenir vos premiers scans`}>
       <Heading style={heading}>
-        Aucun passage depuis 7 jours, tout va bien ?
+        Vos premiers scans sont à portée de main
       </Heading>
 
       <Text style={paragraph}>
@@ -23,22 +23,21 @@ export function InactiveMerchantDay7Email({ shopName }: InactiveMerchantDay7Emai
       </Text>
 
       <Text style={paragraph}>
-        Votre programme de fidélité est prêt, mais nous n&apos;avons enregistré
-        aucun passage cette semaine. Pas de panique — c&apos;est souvent un
-        problème d&apos;affichage.
+        Votre programme de fidélité est prêt. Pour obtenir vos premiers scans,
+        il suffit souvent d&apos;un petit ajustement.
       </Text>
 
       <Section style={checklistBox}>
-        <Text style={checklistTitle}>Vérifiez ces 3 points :</Text>
+        <Text style={checklistTitle}>Checklist rapide :</Text>
         <Text style={checklistItem}>
-          <strong>1.</strong> Votre QR code est-il imprimé et affiché près de la caisse ?
+          <strong>1.</strong> Affichez votre QR code à hauteur des yeux, près de la caisse
         </Text>
         <Text style={checklistItem}>
-          <strong>2.</strong> Vos clients savent-ils qu&apos;ils peuvent scanner ?
-          Mentionnez-le simplement : &quot;Scannez pour votre carte de fidélité !&quot;
+          <strong>2.</strong> Dites à vos prochains clients : &quot;Scannez ce QR code
+          pour votre carte de fidélité, c&apos;est gratuit !&quot;
         </Text>
         <Text style={checklistItem}>
-          <strong>3.</strong> Avez-vous testé le scan vous-même avec votre téléphone ?
+          <strong>3.</strong> Testez le scan vous-même pour voir ce que vos clients verront
         </Text>
       </Section>
 
@@ -49,22 +48,19 @@ export function InactiveMerchantDay7Email({ shopName }: InactiveMerchantDay7Emai
       </Section>
 
       <Section style={tipBox}>
-        <Text style={tipTitle}>Astuce rapide</Text>
+        <Text style={tipTitle}>Le secret</Text>
         <Text style={tipText}>
-          Demandez à vos <strong>3 prochains clients</strong> de scanner.
-          Vous verrez le résultat dans votre tableau de bord en temps réel.
-          Les commerçants qui affichent leur QR code à hauteur des yeux, près
-          de la caisse, obtiennent 3x plus de scans.
+          Proposez le scan à vos <strong>3 prochains clients</strong> aujourd&apos;hui.
+          Vous verrez les résultats apparaître en temps réel dans votre tableau de bord.
         </Text>
       </Section>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide pour l&apos;affichage ? On vous envoie des conseils
-        personnalisés — répondez à cet email.
+        On est disponible si vous avez besoin d&apos;un coup de main.
       </Text>
 
       <Section style={buttonContainer}>
-        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20afficher%20mon%20QR%20code%20Qarte">
+        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20lancer%20mon%20programme%20Qarte">
           Nous contacter sur WhatsApp
         </Button>
       </Section>

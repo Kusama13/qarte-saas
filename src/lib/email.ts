@@ -33,6 +33,7 @@ import {
   LastChanceSignupEmail,
   AutoSuggestRewardEmail,
   GracePeriodSetupEmail,
+  BirthdayNotificationEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -611,5 +612,18 @@ export async function sendGracePeriodSetupEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, `${shopName}, on garde vos données encore ${daysUntilDeletion} jours`, GracePeriodSetupEmail, { shopName, daysUntilDeletion }, {
     logLabel: 'Grace period setup email',
+  });
+}
+
+// Email notification anniversaire client (envoyé au merchant)
+export async function sendBirthdayNotificationEmail(
+  to: string,
+  shopName: string,
+  clientNames: string[],
+  giftDescription: string
+): Promise<SendEmailResult> {
+  const plural = clientNames.length > 1;
+  return sendEmail(to, `Anniversaire client${plural ? 's' : ''} aujourd'hui`, BirthdayNotificationEmail, { shopName, clientNames, giftDescription }, {
+    logLabel: 'Birthday notification email',
   });
 }
