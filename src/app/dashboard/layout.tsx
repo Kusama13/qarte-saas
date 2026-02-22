@@ -104,9 +104,10 @@ function DashboardLayoutContent({
       <button
         onClick={() => setSidebarOpen(true)}
         aria-label="Ouvrir le menu"
-        className="fixed z-40 p-2.5 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg top-3 left-3 lg:hidden hover:scale-105 active:scale-95 transition-all duration-200"
+        className="fixed z-40 flex items-center gap-1.5 px-3 py-2 bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg top-3 left-3 lg:hidden hover:scale-105 active:scale-95 transition-all duration-200"
       >
         <Menu className="w-5 h-5 text-indigo-600" />
+        <span className="text-sm font-medium text-indigo-600">Menu</span>
       </button>
 
       {/* Backdrop — always rendered, animated opacity */}

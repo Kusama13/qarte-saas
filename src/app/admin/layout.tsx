@@ -52,9 +52,10 @@ export default function AdminLayout({
       {/* Mobile menu button */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="fixed z-40 p-2.5 bg-white border border-gray-100 rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95 top-4 left-4 lg:hidden"
+        className="fixed z-40 flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-100 rounded-lg shadow-md hover:shadow-lg transition-all active:scale-95 top-4 left-4 lg:hidden"
       >
         <Menu className="w-6 h-6 text-[#5167fc]" />
+        <span className="text-sm font-medium text-[#5167fc]">Menu</span>
       </button>
 
       {/* Backdrop mobile */}
