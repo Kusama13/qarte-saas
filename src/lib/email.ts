@@ -547,9 +547,9 @@ export async function sendQuickCheckEmail(
 export async function sendChallengeCompletedEmail(
   to: string,
   shopName: string,
-  promoCode: string = 'QARTE50'
+  promoCode: string = 'QARTECHALLENGE2026'
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, défi réussi — votre code promo QARTE50`, ChallengeCompletedEmail, { shopName, promoCode }, {
+  return sendEmail(to, `${shopName}, défi réussi — vos codes promo sont prêts`, ChallengeCompletedEmail, { shopName, promoCode }, {
     logLabel: 'Challenge completed email',
   });
 }

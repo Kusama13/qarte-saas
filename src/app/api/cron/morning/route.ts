@@ -481,7 +481,7 @@ export async function GET(request: NextRequest) {
             emailMap: challengeEmailMap,
             alreadySentSet: new Set(), // already filtered above
             stats: results.challengeCompleted,
-            sendFn: (email, m) => sendChallengeCompletedEmail(email, m.shop_name, 'QARTE50'),
+            sendFn: (email, m) => sendChallengeCompletedEmail(email, m.shop_name, 'QARTECHALLENGE2026'),
           });
         }
       }

@@ -30,19 +30,33 @@ export function ChallengeCompletedEmail({ shopName, promoCode }: ChallengeComple
       </Text>
 
       <Section style={promoBox}>
-        <Text style={promoLabel}>Votre code promo</Text>
+        <Text style={promoLabel}>Offre mensuelle</Text>
         <Text style={promoCodeStyle}>{promoCode}</Text>
         <Text style={promoValue}>
           Premier mois à <strong>9€</strong> au lieu de 19€
         </Text>
         <Text style={promoExpiry}>
-          Ce code est valable <strong>24 heures seulement</strong>
+          Valable <strong>24 heures seulement</strong>
+        </Text>
+      </Section>
+
+      <Section style={annualBox}>
+        <Text style={promoLabel}>Offre annuelle</Text>
+        <Text style={annualCodeStyle}>QARTEPROEHJT</Text>
+        <Text style={promoValue}>
+          <strong>20€ de réduction</strong> sur l&apos;abonnement annuel
+        </Text>
+        <Text style={annualDetail}>
+          170€/an au lieu de 190€ — soit <strong>14,17€/mois</strong>
+        </Text>
+        <Text style={promoExpiry}>
+          Valable <strong>24 heures seulement</strong>
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          Activer mon abonnement à 9€
+          Choisir mon abonnement
         </Button>
       </Section>
 
@@ -62,8 +76,8 @@ export function ChallengeCompletedEmail({ shopName, promoCode }: ChallengeComple
 
       <Section style={urgencyBox}>
         <Text style={urgencyText}>
-          Le code <strong>{promoCode}</strong> expire dans 24h.
-          Après ça, l&apos;abonnement sera au tarif normal de 19€/mois.
+          Ces codes expirent dans <strong>24h</strong>.
+          Après ça, l&apos;abonnement sera au tarif normal.
         </Text>
       </Section>
 
@@ -133,6 +147,29 @@ const promoExpiry = {
   fontSize: '14px',
   fontWeight: '600',
   margin: '0',
+};
+
+const annualBox = {
+  backgroundColor: '#f0fdf4',
+  borderRadius: '12px',
+  padding: '24px',
+  margin: '0 0 24px 0',
+  border: '2px solid #16a34a',
+  textAlign: 'center' as const,
+};
+
+const annualCodeStyle = {
+  color: '#16a34a',
+  fontSize: '28px',
+  fontWeight: '800',
+  letterSpacing: '0.1em',
+  margin: '0 0 12px 0',
+};
+
+const annualDetail = {
+  color: '#4a5568',
+  fontSize: '15px',
+  margin: '0 0 8px 0',
 };
 
 const buttonContainer = {
