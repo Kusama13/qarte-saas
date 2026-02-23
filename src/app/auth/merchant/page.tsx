@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getSupabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { CheckCircle2, CreditCard } from 'lucide-react';
+import { suggestEmailCorrection } from '@/lib/utils';
 
 function MerchantLoginContent() {
   const router = useRouter();
@@ -16,6 +17,7 @@ function MerchantLoginContent() {
   const [error, setError] = useState('');
   const [verified, setVerified] = useState(false);
   const [fromVerification, setFromVerification] = useState(false);
+  const [emailSuggestion, setEmailSuggestion] = useState('');
 
   useEffect(() => {
     if (searchParams.get('verified') === 'true') {
@@ -33,6 +35,14 @@ function MerchantLoginContent() {
     e.preventDefault();
     setLoading(true);
     setError('');
+
+    // Typo safety net
+    const correction = suggestEmailCorrection(email);
+    if (correction && !emailSuggestion) {
+      setEmailSuggestion(correction);
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
@@ -121,12 +131,25 @@ function MerchantLoginContent() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setEmailSuggestion(''); }}
                 className="w-full px-4 py-3.5 bg-white/50 border border-gray-200/80 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-gray-400"
                 placeholder="contact@boutique.fr"
                 required
                 disabled={loading}
               />
+              {emailSuggestion && (
+                <p className="mt-1.5 text-sm text-amber-700">
+                  Vouliez-vous dire{' '}
+                  <button
+                    type="button"
+                    className="font-semibold underline hover:text-amber-900"
+                    onClick={() => { setEmail(emailSuggestion); setEmailSuggestion(''); }}
+                  >
+                    {emailSuggestion}
+                  </button>
+                  {' '}?
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">

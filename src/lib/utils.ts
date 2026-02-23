@@ -329,6 +329,50 @@ export function validateEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
+export const EMAIL_DOMAINS = [
+  'gmail.com', 'hotmail.com', 'hotmail.fr', 'outlook.com', 'outlook.fr',
+  'yahoo.com', 'yahoo.fr', 'orange.fr', 'sfr.fr', 'free.fr',
+  'laposte.net', 'wanadoo.fr', 'icloud.com', 'live.fr', 'msn.com',
+];
+
+const TYPO_DOMAINS: Record<string, string> = {
+  // Gmail
+  'gmial.com': 'gmail.com', 'gmal.com': 'gmail.com', 'gmaill.com': 'gmail.com',
+  'gamil.com': 'gmail.com', 'gmil.com': 'gmail.com', 'gmai.com': 'gmail.com',
+  'gnail.com': 'gmail.com', 'gmaol.com': 'gmail.com', 'gmali.com': 'gmail.com',
+  'gmail.fr': 'gmail.com', 'gmail.con': 'gmail.com', 'gmail.co': 'gmail.com',
+  'gmail.cm': 'gmail.com', 'gmail.om': 'gmail.com', 'gemail.com': 'gmail.com',
+  'gmail.comp': 'gmail.com', 'gmail.cpm': 'gmail.com', 'gmail.cmo': 'gmail.com',
+  // Hotmail
+  'hotmal.com': 'hotmail.com', 'hotmial.com': 'hotmail.com', 'hotamil.com': 'hotmail.com',
+  'hotmail.con': 'hotmail.com', 'hotmai.com': 'hotmail.com', 'hotmaill.com': 'hotmail.com',
+  'hotmil.com': 'hotmail.com', 'hotmail.comp': 'hotmail.com', 'hotmail.cpm': 'hotmail.com',
+  'hotmail.cmo': 'hotmail.com',
+  // Outlook
+  'outloo.com': 'outlook.com', 'outlok.com': 'outlook.com', 'outloock.com': 'outlook.com',
+  'outlook.con': 'outlook.com', 'outlook.fr': 'outlook.com', 'outlook.comp': 'outlook.com',
+  'outlook.cpm': 'outlook.com', 'outlook.cmo': 'outlook.com',
+  // Yahoo
+  'yahooo.com': 'yahoo.com', 'yaho.com': 'yahoo.com', 'yahoo.con': 'yahoo.com',
+  'yaoo.com': 'yahoo.com', 'yhoo.com': 'yahoo.com',
+  // Orange / SFR / Free (FAI français)
+  'ornage.fr': 'orange.fr', 'oraneg.fr': 'orange.fr', 'orange.con': 'orange.fr',
+  'sfr.con': 'sfr.fr', 'free.con': 'free.fr', 'fre.fr': 'free.fr',
+  // iCloud
+  'iclou.com': 'icloud.com', 'icoud.com': 'icloud.com', 'icloud.con': 'icloud.com',
+  // Wanadoo / LaPoste
+  'wanadoo.con': 'wanadoo.fr', 'laposte.con': 'laposte.net',
+};
+
+export function suggestEmailCorrection(email: string): string | null {
+  if (!email || !email.includes('@')) return null;
+  const [local, domain] = email.toLowerCase().split('@');
+  if (!domain) return null;
+  const correction = TYPO_DOMAINS[domain];
+  if (correction) return `${local}@${correction}`;
+  return null;
+}
+
 export function truncate(str: string, maxLength: number): string {
   if (str.length <= maxLength) return str;
   return str.slice(0, maxLength - 3) + '...';

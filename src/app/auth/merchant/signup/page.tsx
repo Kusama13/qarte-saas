@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
-import { validateEmail } from '@/lib/utils';
+import { validateEmail, suggestEmailCorrection } from '@/lib/utils';
 import { trackPageView, trackSignupStarted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
 
@@ -26,6 +26,7 @@ export default function MerchantSignupPage() {
     email: '',
     password: '',
   });
+  const [emailSuggestion, setEmailSuggestion] = useState('');
 
   // Track page view
   useEffect(() => {
@@ -42,6 +43,14 @@ export default function MerchantSignupPage() {
 
     if (!validateEmail(formData.email)) {
       setError('Veuillez entrer une adresse email valide');
+      setLoading(false);
+      return;
+    }
+
+    // Typo safety net — suggest correction before sending to Supabase
+    const correction = suggestEmailCorrection(formData.email);
+    if (correction && !emailSuggestion) {
+      setEmailSuggestion(correction);
       setLoading(false);
       return;
     }
@@ -145,16 +154,35 @@ export default function MerchantSignupPage() {
                 </div>
               )}
 
-              <Input
-                type="email"
-                label="Email"
-                placeholder="votre@email.fr"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                required
-              />
+              <div>
+                <Input
+                  type="email"
+                  label="Email"
+                  placeholder="votre@email.fr"
+                  value={formData.email}
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    setEmailSuggestion('');
+                  }}
+                  required
+                />
+                {emailSuggestion && (
+                  <p className="mt-1.5 text-sm text-amber-700">
+                    Vouliez-vous dire{' '}
+                    <button
+                      type="button"
+                      className="font-semibold underline hover:text-amber-900"
+                      onClick={() => {
+                        setFormData({ ...formData, email: emailSuggestion });
+                        setEmailSuggestion('');
+                      }}
+                    >
+                      {emailSuggestion}
+                    </button>
+                    {' '}?
+                  </p>
+                )}
+              </div>
 
               <div className="relative">
                 <Input
