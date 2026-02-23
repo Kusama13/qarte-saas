@@ -182,7 +182,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
               </div>
               <div>
                 <h3 className="text-xl font-bold text-gray-900">Qarte Shield</h3>
-                <p className="text-sm text-gray-500">Protection anti-fraude</p>
+                <p className="text-sm text-gray-500">Vérification automatique</p>
               </div>
             </div>
 
@@ -194,7 +194,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
               <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
                 <div className="flex items-center gap-2 mb-2">
                   <Footprints className="w-5 h-5 text-indigo-600" />
-                  <h4 className="font-bold text-indigo-900">Protection anti-fraude</h4>
+                  <h4 className="font-bold text-indigo-900">Vérification automatique</h4>
                 </div>
                 <p className="text-sm text-indigo-700">
                   Un client ne peut valider qu&apos;<strong>1 passage par jour</strong>. Toute tentative supplémentaire sera mise en quarantaine pour validation manuelle.
@@ -203,7 +203,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
 
               <div className="p-4 bg-gray-50 rounded-2xl">
                 <p className="text-sm text-gray-600">
-                  <strong>Validez</strong> si le client était réellement présent. <strong>Refusez</strong> en cas de doute ou de fraude suspectée.
+                  <strong>Validez</strong> si le client était réellement présent. <strong>Refusez</strong> si le passage vous semble inhabituel.
                 </p>
               </div>
             </div>

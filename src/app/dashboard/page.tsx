@@ -509,7 +509,7 @@ export default function DashboardPage() {
                 Qarte Shield {shieldEnabled ? 'actif' : 'inactif'}
               </p>
               <p className="text-xs text-gray-500">
-                {shieldEnabled ? 'Protection anti-fraude activée' : 'Protection désactivée'}
+                {shieldEnabled ? 'Protection automatique activée' : 'Protection désactivée'}
               </p>
             </div>
           </div>

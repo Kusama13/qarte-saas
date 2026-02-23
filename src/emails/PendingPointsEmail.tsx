@@ -43,8 +43,7 @@ export function PendingPointsEmail({
         </Text>
       ) : (
         <Text style={paragraph}>
-          Notre système anti-fraude a détecté <strong>{pendingCount} nouveau{pendingCount > 1 ? 'x' : ''} point{pendingCount > 1 ? 's' : ''}</strong> suspect{pendingCount > 1 ? 's' : ''}
-          nécessitant votre validation.
+          Notre système a détecté <strong>{pendingCount} passage{pendingCount > 1 ? 's' : ''} inhabituel{pendingCount > 1 ? 's' : ''}</strong> nécessitant votre validation.
         </Text>
       )}
 
@@ -59,7 +58,7 @@ export function PendingPointsEmail({
       <Text style={paragraph}>
         Ces points ont été mis en quarantaine car ils correspondent à des passages multiples
         d&apos;un même client dans la journée. Validez-les si le client était bien présent,
-        ou refusez-les en cas de fraude.
+        ou refusez-les si le client n&apos;était pas présent.
       </Text>
 
       <Section style={buttonContainer}>
