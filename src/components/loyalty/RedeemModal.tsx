@@ -1,8 +1,7 @@
 'use client';
 
 import { Check, Gift, Trophy } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { Button, Modal } from '@/components/ui';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface RedeemModalProps {
   isOpen: boolean;
@@ -14,19 +13,10 @@ interface RedeemModalProps {
   success: boolean;
   redeeming: boolean;
   merchantColor: string;
+  secondaryColor?: string;
+  shopName: string;
   onRedeem: (tier: 1 | 2) => void;
   onDone: () => void;
-}
-
-function getModalTitle(success: boolean, tier: 1 | 2): string {
-  if (success) return tier === 2 ? 'Privilège Débloqué !' : 'Cadeau Validé !';
-  return tier === 2 ? 'Privilège Débloqué !' : 'Cadeau Validé !';
-}
-
-function getModalDescription(success: boolean, tier: 1 | 2, tier2Enabled: boolean | number | null): string {
-  if (!success) return 'Présentez ce coupon digital au commerçant pour profiter de votre offre.';
-  if (tier === 2 || !tier2Enabled) return 'Votre fidélité a été récompensée. À très bientôt !';
-  return 'Vos points sont préservés. Le palier 2 vous attend !';
 }
 
 export default function RedeemModal({
@@ -39,123 +29,127 @@ export default function RedeemModal({
   success,
   redeeming,
   merchantColor,
+  secondaryColor,
+  shopName,
   onRedeem,
   onDone,
 }: RedeemModalProps) {
   const TierIcon = tier === 2 ? Trophy : Gift;
+  const gradient = tier === 2
+    ? 'linear-gradient(135deg, #7C3AED, #6D28D9)'
+    : `linear-gradient(135deg, ${merchantColor}, ${secondaryColor || merchantColor})`;
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={() => !success && onClose()}
-      title={success ? "Félicitations !" : `Récompense ${tier2Enabled ? `Palier ${tier}` : ''}`}
-    >
-      <div className="relative overflow-hidden rounded-2xl p-1">
-        {/* Ambient Background Particles */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 rounded-full bg-white/40"
-              animate={{
-                y: [0, -100],
-                x: [0, Math.sin(i) * 50],
-                opacity: [0, 1, 0],
-                scale: [0, 1.5, 0],
-              }}
-              transition={{
-                duration: 3 + i,
-                repeat: Infinity,
-                delay: i * 0.5,
-                ease: "easeOut"
-              }}
-              style={{
-                left: `${15 + i * 15}%`,
-                bottom: "-10%",
-              }}
-            />
-          ))}
-        </div>
-
+    <AnimatePresence>
+      {isOpen && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`relative z-10 p-6 rounded-xl border border-white/40 backdrop-blur-xl shadow-2xl overflow-hidden
-            ${tier === 2
-              ? 'bg-gradient-to-br from-violet-500/10 via-white/80 to-amber-500/10'
-              : 'bg-white/80'
-            }`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
+          onClick={() => !success && onClose()}
         >
-          {/* Animated Shine Effect */}
           <motion.div
-            initial={{ x: "-150%" }}
-            animate={{ x: "200%" }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 2 }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-12 pointer-events-none"
-          />
-
-          <div className="text-center">
+            initial={{ opacity: 0, y: 100, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 100, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-sm mx-4 mb-4 sm:mb-0 rounded-3xl overflow-hidden shadow-2xl"
+            style={{ background: gradient }}
+          >
+            {/* Shimmer sweep */}
             <motion.div
-              initial={{ scale: 0.8 }}
-              animate={{ scale: [0.8, 1.1, 1], rotate: [0, -5, 5, 0] }}
-              transition={{ duration: 0.5, type: "spring" }}
-              className="relative inline-block mb-6"
-            >
-              {/* Glow Ring */}
+              animate={{ x: ['-150%', '200%'] }}
+              transition={{ duration: 3, repeat: Infinity, repeatDelay: 3, ease: 'easeInOut' }}
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-12 pointer-events-none"
+            />
+            {/* Ambient glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent)] pointer-events-none" />
+
+            <div className="relative z-10 px-8 pt-10 pb-8 text-center">
+              {/* Icon */}
               <motion.div
-                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-                className={`absolute inset-0 rounded-full blur-xl ${tier === 2 ? 'bg-violet-400' : ''}`}
-                style={{ backgroundColor: tier !== 2 ? `${merchantColor}40` : undefined }}
-              />
-
-              <div className={`relative flex items-center justify-center w-20 h-20 rounded-2xl shadow-lg
-                ${tier === 2 ? 'bg-gradient-to-br from-violet-600 to-indigo-600' : 'border border-white/20'}`}
-                style={{ backgroundColor: tier !== 2 ? merchantColor : undefined }}
+                initial={{ scale: 0.5 }}
+                animate={{ scale: [0.5, 1.15, 1] }}
+                transition={{ duration: 0.5, type: 'spring' }}
+                className="inline-block mb-6"
               >
-                {success ? (
-                  <Check className="w-10 h-10 text-white" />
-                ) : (
-                  <TierIcon className="w-10 h-10 text-white" />
-                )}
-              </div>
-            </motion.div>
+                <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
+                  {success ? (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: 0.2, type: 'spring' }}
+                    >
+                      <Check className="w-10 h-10 text-white" />
+                    </motion.div>
+                  ) : (
+                    <TierIcon className="w-10 h-10 text-white" />
+                  )}
+                </div>
+              </motion.div>
 
-            <div className="space-y-2 mb-8">
-              <h3 className={`text-2xl font-black tracking-tight ${tier === 2 ? 'text-violet-900' : 'text-gray-900'}`}>
+              {/* Tier label */}
+              {tier2Enabled && (
+                <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">
+                  Palier {tier}
+                </p>
+              )}
+
+              {/* Main text */}
+              <h3 className="text-2xl font-black text-white leading-tight mb-2">
                 {success
-                  ? getModalTitle(success, tier)
+                  ? 'Un grand merci pour votre fidélité !'
                   : (tier === 2 ? tier2Reward : rewardDescription)
                 }
               </h3>
-              <p className="text-gray-600 font-medium px-4 leading-relaxed">
-                {getModalDescription(success, tier, tier2Enabled)}
+
+              <p className="text-white/70 text-sm font-medium leading-relaxed mb-8">
+                {success
+                  ? (tier === 1 && tier2Enabled
+                      ? 'Vos points sont préservés. Le palier 2 vous attend !'
+                      : 'Merci pour votre fidélité. À très bientôt !')
+                  : `Présentez ce coupon à ${shopName} pour en profiter.`
+                }
               </p>
-            </div>
 
-            <div className="space-y-3">
-              <Button
-                onClick={() => success ? onDone() : onRedeem(tier)}
-                loading={redeeming}
-                className={`w-full h-14 text-lg font-bold rounded-xl transition-all duration-300 transform active:scale-95 shadow-xl hover:shadow-2xl hover:-translate-y-0.5
-                  ${tier === 2 ? 'bg-gradient-to-r from-violet-600 to-indigo-600 border-none' : ''}`}
-                style={{ backgroundColor: tier !== 2 ? merchantColor : undefined }}
-              >
-                {success ? 'Fermer' : 'Valider maintenant'}
-              </Button>
-
-              {!success && (
-                <button
-                  onClick={onClose}
-                  className="w-full py-2 text-sm font-semibold text-gray-400 hover:text-gray-600 transition-colors"
+              {/* Buttons */}
+              <div className="space-y-3">
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  onClick={() => success ? onDone() : onRedeem(tier)}
+                  disabled={redeeming}
+                  className="w-full h-14 rounded-2xl text-base font-bold shadow-lg transition-all disabled:opacity-60"
+                  style={{
+                    backgroundColor: 'white',
+                    color: tier === 2 ? '#7C3AED' : merchantColor,
+                  }}
                 >
-                  Plus tard
-                </button>
-              )}
+                  {redeeming ? (
+                    <span className="inline-flex items-center gap-2">
+                      <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-25" />
+                        <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                      </svg>
+                      Validation...
+                    </span>
+                  ) : success ? 'Fermer' : 'Valider maintenant'}
+                </motion.button>
+
+                {!success && (
+                  <button
+                    onClick={onClose}
+                    className="w-full py-2 text-sm font-semibold text-white/50 hover:text-white/80 transition-colors"
+                  >
+                    Plus tard
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
-      </div>
-    </Modal>
+      )}
+    </AnimatePresence>
   );
 }

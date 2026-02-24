@@ -1,6 +1,6 @@
 'use client';
 
-import { Gift, Trophy } from 'lucide-react';
+import { Gift, Trophy, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface RewardCardProps {
@@ -11,6 +11,7 @@ interface RewardCardProps {
   remaining: number;
   merchantColor: string;
   secondaryColor?: string;
+  onRedeem?: () => void;
 }
 
 function getTierGradient(showingTier2: boolean, primary: string, secondary?: string): string {
@@ -51,6 +52,7 @@ export default function RewardCard({
   remaining,
   merchantColor,
   secondaryColor,
+  onRedeem,
 }: RewardCardProps) {
   const TierIcon = showingTier2 ? Trophy : Gift;
   const gradient = getTierGradient(showingTier2, merchantColor, secondaryColor);
@@ -65,8 +67,13 @@ export default function RewardCard({
       }`}
     >
       {ready ? (
-        /* ═══ REWARD READY — celebration mode ═══ */
-        <div className="relative p-5 overflow-hidden" style={{ background: gradient }}>
+        /* ═══ REWARD READY — celebration mode (clickable) ═══ */
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={onRedeem}
+          className="relative w-full p-5 overflow-hidden text-left"
+          style={{ background: gradient }}
+        >
           {/* Shimmer sweep */}
           <motion.div
             animate={{ x: ['-150%', '200%'] }}
@@ -91,11 +98,12 @@ export default function RewardCard({
                 {description}
               </p>
               <p className="text-white/80 text-xs font-semibold mt-1">
-                Réclamez-la maintenant !
+                Réclamez-la maintenant
               </p>
             </div>
+            <ChevronRight className="w-5 h-5 text-white/50 shrink-0" />
           </div>
-        </div>
+        </motion.button>
       ) : (
         /* ═══ NOT READY — motivational preview ═══ */
         <div className="p-4">

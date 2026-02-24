@@ -36,7 +36,6 @@ import {
   StampsSection,
   RewardCard,
   RedeemModal,
-  StickyRedeemBar,
   SocialLinks,
   CardSkeleton,
   CardHeader,
@@ -551,7 +550,6 @@ export default function CustomerCardPage({
     isRewardReady,
     isTier2Ready,
     effectiveTier1Redeemed,
-    isRewardSticky,
     isMemberCardActive,
     rewardShowingTier2,
     rewardCardReady,
@@ -564,7 +562,6 @@ export default function CustomerCardPage({
         isRewardReady: false,
         isTier2Ready: false,
         effectiveTier1Redeemed: false,
-        isRewardSticky: false,
         isMemberCardActive: false,
         rewardShowingTier2: false,
         rewardCardReady: false,
@@ -582,7 +579,6 @@ export default function CustomerCardPage({
     const _isRewardReady = _currentStamps >= _tier1Required;
     const _isTier2Ready = !!_tier2Enabled && _currentStamps >= _tier2Required;
     const _effectiveTier1Redeemed = tier1RedeemedInCycle && _currentStamps >= _tier1Required;
-    const _isRewardSticky = !redeemSuccess && ((_isRewardReady && !_effectiveTier1Redeemed) || (!!_tier2Enabled && _isTier2Ready));
     const _isMemberCardActive = !!memberCard && new Date(memberCard.valid_until) > new Date();
     const _showingTier2 = !!_tier2Enabled && _effectiveTier1Redeemed;
 
@@ -590,7 +586,6 @@ export default function CustomerCardPage({
       isRewardReady: _isRewardReady,
       isTier2Ready: _isTier2Ready,
       effectiveTier1Redeemed: _effectiveTier1Redeemed,
-      isRewardSticky: _isRewardSticky,
       isMemberCardActive: _isMemberCardActive,
       rewardShowingTier2: _showingTier2,
       rewardCardReady: _showingTier2 ? !!_isTier2Ready : _isRewardReady,
@@ -604,7 +599,7 @@ export default function CustomerCardPage({
         ? (_showingTier2 ? 'Palier 2' : 'Palier 1')
         : '',
     };
-  }, [card, tier1RedeemedInCycle, redeemSuccess, memberCard]);
+  }, [card, tier1RedeemedInCycle, memberCard]);
 
   const triggerSparkles = useCallback(() => {
     const m = card?.merchant;
@@ -977,6 +972,10 @@ export default function CustomerCardPage({
           remaining={rewardCardRemaining}
           merchantColor={merchant.primary_color}
           secondaryColor={merchant.secondary_color}
+          onRedeem={() => {
+            setRedeemTier(rewardShowingTier2 ? 2 : 1);
+            setShowRedeemModal(true);
+          }}
         />
 
         {/* Voucher rewards (referral) */}
@@ -1112,24 +1111,9 @@ export default function CustomerCardPage({
           </a>
         </footer>
 
-        {/* Spacer for sticky redeem button */}
-        {isRewardSticky && (
-          <div className="h-20" />
-        )}
-      </main>
 
-      {/* Sticky Redeem Buttons */}
-      <StickyRedeemBar
-        visible={isRewardSticky}
-        isRewardReady={isRewardReady}
-        effectiveTier1Redeemed={effectiveTier1Redeemed}
-        isTier2Ready={isTier2Ready}
-        tier2Enabled={tier2Enabled}
-        merchantColor={merchant.primary_color}
-        secondaryColor={merchant.secondary_color}
-        onRedeemTier1={() => { setRedeemTier(1); setShowRedeemModal(true); }}
-        onRedeemTier2={() => { setRedeemTier(2); setShowRedeemModal(true); }}
-      />
+
+      </main>
 
       {/* Redeem Modal */}
       <RedeemModal
@@ -1139,9 +1123,11 @@ export default function CustomerCardPage({
         tier2Enabled={tier2Enabled}
         rewardDescription={merchant.reward_description || ''}
         tier2Reward={tier2Reward}
+        shopName={merchant.shop_name}
         success={redeemSuccess}
         redeeming={redeeming}
         merchantColor={merchant.primary_color}
+        secondaryColor={merchant.secondary_color}
         onRedeem={handleRedeem}
         onDone={() => { setShowRedeemModal(false); setRedeemSuccess(false); }}
       />
@@ -1165,7 +1151,7 @@ export default function CustomerCardPage({
         isIOSChrome={push.isIOSChrome}
         isMobile={isMobile}
         isStandalone={push.isStandalone}
-        showInstallBar={showInstallBar && !isRewardSticky}
+        showInstallBar={showInstallBar}
         onDismissInstallBar={handleDismissInstallBar}
         deferredPrompt={deferredPrompt}
         onClearDeferredPrompt={() => setDeferredPrompt(null)}
