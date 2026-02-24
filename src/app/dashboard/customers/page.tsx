@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Users,
@@ -16,6 +16,8 @@ import {
   UserPlus,
   Trophy,
   Cake,
+  Clock,
+  Target,
 } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
@@ -59,6 +61,7 @@ export default function CustomersPage() {
   const [filterPushOnly, setFilterPushOnly] = useState(false);
   const [tier1RedeemedCards, setTier1RedeemedCards] = useState<Set<string>>(new Set());
   const [displayCount, setDisplayCount] = useState(50);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'inactive' | 'close' | 'reward'>('all');
 
   // Create customer modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -203,12 +206,51 @@ export default function CustomersPage() {
     }
   }, [merchant, merchantLoading, fetchData]);
 
+  const inactiveCount = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 21);
+    return customers.filter(c => !c.last_visit_date || new Date(c.last_visit_date) < cutoff).length;
+  }, [customers]);
+
+  const closeCount = useMemo(() => {
+    const required = merchant?.stamps_required || 10;
+    return customers.filter(c => {
+      const remaining = required - c.current_stamps;
+      return remaining >= 1 && remaining <= 2;
+    }).length;
+  }, [customers, merchant]);
+
+  const rewardCount = useMemo(() => {
+    const required = merchant?.stamps_required || 10;
+    return customers.filter(c => c.current_stamps >= required).length;
+  }, [customers, merchant]);
+
   useEffect(() => {
     let filtered = customers;
 
     // Apply push filter
     if (filterPushOnly) {
       filtered = filtered.filter((card) => subscriberIds.includes(card.customer_id));
+    }
+
+    // Apply status filter
+    if (activeFilter === 'inactive') {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 21);
+      filtered = filtered.filter((card) => {
+        if (!card.last_visit_date) return true;
+        return new Date(card.last_visit_date) < cutoff;
+      });
+    } else if (activeFilter === 'close') {
+      const required = merchant?.stamps_required || 10;
+      filtered = filtered.filter((card) => {
+        const remaining = required - card.current_stamps;
+        return remaining >= 1 && remaining <= 2;
+      });
+    } else if (activeFilter === 'reward') {
+      filtered = filtered.filter((card) => {
+        return card.current_stamps >= (merchant?.stamps_required || 10);
+      });
     }
 
     // Apply search filter
@@ -223,7 +265,7 @@ export default function CustomersPage() {
 
     setFilteredCustomers(filtered);
     setDisplayCount(50); // Reset pagination on filter change
-  }, [searchQuery, customers, filterPushOnly, subscriberIds]);
+  }, [searchQuery, customers, filterPushOnly, subscriberIds, activeFilter, merchant]);
 
   if (loading || merchantLoading) {
     return (
@@ -283,20 +325,72 @@ export default function CustomersPage() {
               className="pl-12 h-12 bg-white/50 border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 placeholder:text-gray-400"
             />
           </div>
+        </div>
+
+        {/* Status filters */}
+        <div className="flex flex-wrap gap-2 mb-6 md:mb-8">
           <button
             onClick={() => setFilterPushOnly(!filterPushOnly)}
-            className={`inline-flex items-center gap-2 px-4 h-12 rounded-2xl border transition-all duration-200 font-medium ${
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
               filterPushOnly
-                ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-200'
+                ? 'bg-violet-500 text-white border-violet-500 shadow-md shadow-violet-200'
+                : 'bg-white/50 text-gray-600 border-gray-200 hover:border-violet-300 hover:bg-violet-50'
+            }`}
+          >
+            <Bell className={`w-3.5 h-3.5 ${filterPushOnly ? 'text-white' : 'text-violet-500'}`} />
+            <span>Notifiables</span>
+            <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
+              filterPushOnly ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-700'
+            }`}>
+              {subscriberIds.length}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveFilter(activeFilter === 'inactive' ? 'all' : 'inactive')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+              activeFilter === 'inactive'
+                ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-200'
+                : 'bg-white/50 text-gray-600 border-gray-200 hover:border-rose-300 hover:bg-rose-50'
+            }`}
+          >
+            <Clock className={`w-3.5 h-3.5 ${activeFilter === 'inactive' ? 'text-white' : 'text-rose-500'}`} />
+            <span>Inactifs 21j+</span>
+            <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
+              activeFilter === 'inactive' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'
+            }`}>
+              {inactiveCount}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveFilter(activeFilter === 'close' ? 'all' : 'close')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+              activeFilter === 'close'
+                ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-200'
                 : 'bg-white/50 text-gray-600 border-gray-200 hover:border-amber-300 hover:bg-amber-50'
             }`}
           >
-            <Bell className={`w-4 h-4 ${filterPushOnly ? 'text-white' : 'text-amber-500'}`} />
-            <span>Abonnés push</span>
-            <span className={`px-2 py-0.5 text-xs font-bold rounded-full ${
-              filterPushOnly ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+            <Target className={`w-3.5 h-3.5 ${activeFilter === 'close' ? 'text-white' : 'text-amber-500'}`} />
+            <span>Proches</span>
+            <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
+              activeFilter === 'close' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
             }`}>
-              {subscriberIds.length}
+              {closeCount}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveFilter(activeFilter === 'reward' ? 'all' : 'reward')}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+              activeFilter === 'reward'
+                ? 'bg-emerald-500 text-white border-emerald-500 shadow-md shadow-emerald-200'
+                : 'bg-white/50 text-gray-600 border-gray-200 hover:border-emerald-300 hover:bg-emerald-50'
+            }`}
+          >
+            <Gift className={`w-3.5 h-3.5 ${activeFilter === 'reward' ? 'text-white' : 'text-emerald-500'}`} />
+            <span>Récompense</span>
+            <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
+              activeFilter === 'reward' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'
+            }`}>
+              {rewardCount}
             </span>
           </button>
         </div>
@@ -574,10 +668,10 @@ export default function CustomersPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-gray-500">
             <Users className="w-16 h-16 mb-4 text-gray-300" />
-            {searchQuery ? (
+            {searchQuery || activeFilter !== 'all' || filterPushOnly ? (
               <>
                 <p className="text-lg font-medium">Aucun résultat</p>
-                <p className="text-sm">Essayez une autre recherche</p>
+                <p className="text-sm">Essayez de modifier vos filtres</p>
               </>
             ) : (
               <>
