@@ -1,4 +1,5 @@
 export { HeroSection } from './HeroSection';
+export { SocialProofSection } from './SocialProofSection';
 export { TestimonialsSection } from './TestimonialsSection';
 export { ReferralSection } from './ReferralSection';
 export { AIReengagementSection } from './AIReengagementSection';

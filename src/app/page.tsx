@@ -1,5 +1,6 @@
 import {
   HeroSection,
+  SocialProofSection,
   TestimonialsSection,
   PricingSection,
   FooterSection,
@@ -15,6 +16,7 @@ export default function LandingPageV4() {
 
       <main className="overflow-hidden">
         <HeroSection />
+        <SocialProofSection />
         <LazyHowItWorksSection />
         <LazyReferralSection />
         <LazyAIReengagementSection />

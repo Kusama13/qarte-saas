@@ -244,7 +244,28 @@
   }
 
   .animate-marquee {
-    animation: marquee 25s linear infinite;
+    animation: marquee 15s linear infinite;
+  }
+
+  @media (min-width: 640px) {
+    .animate-marquee {
+      animation: marquee 25s linear infinite;
+    }
+  }
+
+  .animate-marquee-reverse {
+    animation: marquee-reverse 18s linear infinite;
+  }
+
+  @media (min-width: 640px) {
+    .animate-marquee-reverse {
+      animation: marquee-reverse 28s linear infinite;
+    }
+  }
+
+  @keyframes marquee-reverse {
+    0% { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
   }
 
   .animate-marquee-fast {
