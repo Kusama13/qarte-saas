@@ -692,7 +692,8 @@ export default function CustomersPage() {
             setAdjustModalOpen(false);
             setSelectedCustomer(null);
           }}
-          customerName={`${selectedCustomer.customer?.first_name || ''} ${selectedCustomer.customer?.last_name || ''}`.trim()}
+          firstName={selectedCustomer.customer?.first_name || ''}
+          lastName={selectedCustomer.customer?.last_name || ''}
           customerId={selectedCustomer.customer_id}
           merchantId={merchant.id}
           loyaltyCardId={selectedCustomer.id}

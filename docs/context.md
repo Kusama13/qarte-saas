@@ -58,7 +58,7 @@ src/
 │   ├── landing/           # 12 composants landing (Hero, Features, Pricing, FAQ...)
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
-│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
+│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal (inline name/birthday edit, pills header), CustomerRewardsTab, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
 │   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, ReviewPrompt, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep)
 │   ├── marketing/         # SocialMediaTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel, MicrosoftClarity
@@ -213,6 +213,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - `POST /api/customers/register` - Inscription client
 - `GET /api/customers/card` - Carte de fidelite
 - `GET /api/customers/cards` - Toutes les cartes
+- `PUT /api/customers/update-name` - Modifier nom/prenom client (merchant auth + ownership check)
 
 ### Commercants
 - `POST /api/merchants/create` - Creer commercant (pre-remplit `stamps_required` selon shop_type, `reward_description` laisse null)
@@ -596,7 +597,7 @@ npm run email
 - Statistiques temps reel + comparaison semaine precedente
 - Gestion programme fidelite (suggestions par shop_type, 10 palettes couleurs)
 - Page QR code & Kit promo (2 onglets : QR code + Kit reseaux sociaux avec SocialMediaTemplate)
-- Gestion clients — 4 filtres (Notifiables, Inactifs 21j+, Proches recompense, Recompense dispo) + recherche nom/telephone
+- Gestion clients — 4 filtres (Notifiables, Inactifs 21j+, Proches recompense, Recompense dispo) + recherche nom/telephone + edit inline nom/prenom/anniversaire
 - Marketing (push notifications)
 - Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe + prix journalier (0,63€/jour mensuel, 0,52€/jour annuel)
 - Parrainage merchant : encart en haut de Settings (code QARTE-XXXX + copier + partager via Web Share API)

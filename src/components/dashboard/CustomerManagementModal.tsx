@@ -11,6 +11,7 @@ import {
   Gift,
   Cake,
   Phone,
+  Pencil,
 } from 'lucide-react';
 import { displayPhoneNumber } from '@/lib/utils';
 import { CustomerAdjustTab } from './CustomerAdjustTab';
@@ -21,7 +22,8 @@ import { CustomerDangerZone } from './CustomerDangerZone';
 interface CustomerManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
-  customerName: string;
+  firstName: string;
+  lastName: string;
   customerId: string;
   merchantId: string;
   loyaltyCardId: string;
@@ -46,7 +48,8 @@ type Tab = 'adjust' | 'rewards' | 'history' | 'danger';
 export function CustomerManagementModal({
   isOpen,
   onClose,
-  customerName,
+  firstName,
+  lastName,
   customerId,
   merchantId,
   loyaltyCardId,
@@ -66,11 +69,19 @@ export function CustomerManagementModal({
   const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Name edit state
+  const [editingName, setEditingName] = useState(false);
+  const [editFirstName, setEditFirstName] = useState(firstName);
+  const [editLastName, setEditLastName] = useState(lastName);
+  const [savingName, setSavingName] = useState(false);
+
   // Birthday edit state
   const [editBirthDay, setEditBirthDay] = useState(birthDay?.toString() || '');
   const [editBirthMonth, setEditBirthMonth] = useState(birthMonth?.toString() || '');
   const [savingBirthday, setSavingBirthday] = useState(false);
   const [editingBirthday, setEditingBirthday] = useState(false);
+
+  const customerName = `${editFirstName} ${editLastName}`.trim();
 
   const showSuccess = (message: string) => {
     setSuccess(true);
@@ -79,6 +90,31 @@ export function CustomerManagementModal({
       onSuccess();
       handleClose();
     }, 1500);
+  };
+
+  const handleSaveName = async () => {
+    const trimmed = editFirstName.trim();
+    if (!trimmed) return;
+    setSavingName(true);
+    try {
+      const res = await fetch('/api/customers/update-name', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_id: customerId,
+          first_name: trimmed,
+          last_name: editLastName.trim(),
+        }),
+      });
+      if (res.ok) {
+        setEditingName(false);
+        onSuccess();
+      }
+    } catch {
+      // ignore
+    } finally {
+      setSavingName(false);
+    }
   };
 
   const handleSaveBirthday = async () => {
@@ -131,63 +167,110 @@ export function CustomerManagementModal({
         </button>
 
         {/* Header */}
-        <div className="px-4 pt-3.5 pb-3 border-b border-gray-100">
-          <div className="flex items-center gap-2.5 pr-7">
-            <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-xs font-bold text-indigo-600">
+        <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+          <div className="flex items-start gap-3.5 pr-7">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <span className="text-sm font-bold text-white">
                 {customerName.charAt(0).toUpperCase()}
               </span>
             </div>
-            <div className="min-w-0 flex-1">
-              <h2 className="text-base font-bold text-gray-900 truncate">{customerName}</h2>
-              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
-                <span className="flex items-center gap-1 text-sm text-gray-500">
-                  <Phone className="w-3 h-3" />
+            <div className="min-w-0 flex-1 space-y-2">
+              {/* Name */}
+              {!editingName ? (
+                <button
+                  onClick={() => { setEditFirstName(firstName); setEditLastName(lastName); setEditingName(true); }}
+                  className="flex items-center gap-1.5 group -mt-0.5"
+                >
+                  <h2 className="text-lg font-bold text-gray-900 truncate leading-tight">{customerName}</h2>
+                  <Pencil className="w-3 h-3 text-gray-300 group-hover:text-indigo-500 transition-colors flex-shrink-0" />
+                </button>
+              ) : (
+                <div className="flex items-center gap-1.5 -mt-0.5">
+                  <input
+                    value={editFirstName}
+                    onChange={(e) => setEditFirstName(e.target.value)}
+                    placeholder="Prénom"
+                    className="w-24 px-2 py-1 rounded-lg border border-gray-200 text-sm font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
+                  />
+                  <input
+                    value={editLastName}
+                    onChange={(e) => setEditLastName(e.target.value)}
+                    placeholder="Nom"
+                    className="w-24 px-2 py-1 rounded-lg border border-gray-200 text-sm font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
+                  />
+                  <button
+                    onClick={handleSaveName}
+                    disabled={savingName || !editFirstName.trim()}
+                    className="p-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+                  >
+                    {savingName ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                  </button>
+                  <button
+                    onClick={() => setEditingName(false)}
+                    className="p-1.5 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+
+              {/* Info pills */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 text-xs font-medium text-gray-600">
+                  <Phone className="w-3 h-3 text-gray-400" />
                   {displayPhoneNumber(phoneNumber)}
                 </span>
+
                 {!editingBirthday ? (
                   <button
                     onClick={() => setEditingBirthday(true)}
-                    className="flex items-center gap-1 text-sm text-gray-400 hover:text-pink-500 transition-colors"
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                      birthMonth && birthDay
+                        ? 'bg-pink-50 text-pink-600 hover:bg-pink-100'
+                        : 'bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                    }`}
                   >
                     <Cake className="w-3 h-3" />
                     {birthMonth && birthDay
                       ? `${birthDay} ${MONTHS_SHORT[birthMonth - 1]}`
                       : 'Anniversaire'}
+                    <Pencil className="w-2.5 h-2.5 opacity-40" />
                   </button>
                 ) : (
-                  <div className="flex items-center gap-1">
-                    <Cake className="w-3 h-3 text-pink-400" />
-                    <select
-                      value={editBirthDay}
-                      onChange={(e) => setEditBirthDay(e.target.value)}
-                      className="px-1.5 py-0.5 rounded border border-gray-200 text-xs bg-white"
-                    >
-                      <option value="">Jour</option>
-                      {Array.from({ length: 31 }, (_, i) => (
-                        <option key={i + 1} value={i + 1}>{i + 1}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={editBirthMonth}
-                      onChange={(e) => setEditBirthMonth(e.target.value)}
-                      className="px-1.5 py-0.5 rounded border border-gray-200 text-xs bg-white"
-                    >
-                      <option value="">Mois</option>
-                      {MONTHS_PICKER.map((m, i) => (
-                        <option key={i + 1} value={i + 1}>{m}</option>
-                      ))}
-                    </select>
+                  <div className="flex items-center gap-1.5">
+                    <div className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-pink-50">
+                      <Cake className="w-3 h-3 text-pink-400" />
+                      <select
+                        value={editBirthDay}
+                        onChange={(e) => setEditBirthDay(e.target.value)}
+                        className="px-1 py-0 rounded border-0 text-xs bg-transparent text-pink-700 focus:outline-none focus:ring-0"
+                      >
+                        <option value="">Jour</option>
+                        {Array.from({ length: 31 }, (_, i) => (
+                          <option key={i + 1} value={i + 1}>{i + 1}</option>
+                        ))}
+                      </select>
+                      <select
+                        value={editBirthMonth}
+                        onChange={(e) => setEditBirthMonth(e.target.value)}
+                        className="px-1 py-0 rounded border-0 text-xs bg-transparent text-pink-700 focus:outline-none focus:ring-0"
+                      >
+                        <option value="">Mois</option>
+                        {MONTHS_PICKER.map((m, i) => (
+                          <option key={i + 1} value={i + 1}>{m}</option>
+                        ))}
+                      </select>
+                    </div>
                     <button
                       onClick={handleSaveBirthday}
                       disabled={savingBirthday}
-                      className="p-1 bg-indigo-500 text-white rounded hover:bg-indigo-600 disabled:opacity-50"
+                      className="p-1.5 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:opacity-50 transition-colors"
                     >
                       {savingBirthday ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                     </button>
                     <button
                       onClick={() => setEditingBirthday(false)}
-                      className="p-1 bg-gray-100 text-gray-500 rounded hover:bg-gray-200"
+                      className="p-1.5 bg-gray-100 text-gray-500 rounded-lg hover:bg-gray-200 transition-colors"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -248,7 +331,6 @@ export function CustomerManagementModal({
               {activeTab === 'rewards' && (
                 <CustomerRewardsTab
                   loyaltyCardId={loyaltyCardId}
-                  merchantId={merchantId}
                   currentStamps={currentStamps}
                   stampsRequired={stampsRequired}
                   tier2Enabled={tier2Enabled}
@@ -256,8 +338,6 @@ export function CustomerManagementModal({
                   tier2RewardDescription={tier2RewardDescription}
                   rewardDescription={rewardDescription}
                   tier1Redeemed={tier1Redeemed}
-                  birthMonth={birthMonth}
-                  birthDay={birthDay}
                   onSuccess={showSuccess}
                 />
               )}
