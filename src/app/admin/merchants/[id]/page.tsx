@@ -998,7 +998,7 @@ export default function MerchantDetailPage() {
                 [-110]: 'Relance inactif J+7',
                 [-111]: 'Relance inactif J+14',
                 [-112]: 'Relance inactif J+30',
-                [-113]: 'Mise à jour produit',
+                [-113]: 'Relance grace period',
                 [-120]: 'Auto-suggestion récompense',
                 [-200]: 'Email de bienvenue',
                 [-201]: 'Trial expire J-1',
@@ -1009,7 +1009,6 @@ export default function MerchantDetailPage() {
                 [-302]: 'Rappel config programme J+2',
                 [-303]: 'Rappel config programme J+3',
                 [-305]: 'Check-in J+5',
-                [-400]: 'Digest hebdo',
               };
               const label = labels[t.reminder_day] || `Code ${t.reminder_day}`;
               const date = new Date(t.sent_at).toLocaleDateString('fr-FR', {

@@ -848,7 +848,8 @@ export async function GET(request: NextRequest) {
           const referenceDate = lastVisitDate ? new Date(lastVisitDate) : new Date(merchant.created_at);
           const daysInactive = Math.floor((now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
 
-          if (trackingSet.has(`${merchant.id}:${-daysInactive}`)) {
+          const inactiveTrackingCode = daysInactive === 7 ? -110 : daysInactive === 14 ? -111 : -112;
+          if (trackingSet.has(`${merchant.id}:${inactiveTrackingCode}`)) {
             results.inactiveMerchants.skipped++;
             return;
           }
@@ -892,7 +893,7 @@ export async function GET(request: NextRequest) {
             if (result.success) {
               await supabase.from('pending_email_tracking').insert({
                 merchant_id: merchant.id,
-                reminder_day: -daysInactive,
+                reminder_day: inactiveTrackingCode,
                 pending_count: 0,
               });
               results.inactiveMerchants.sent++;
