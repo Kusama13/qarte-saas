@@ -346,7 +346,7 @@ export default function SubscriptionPage() {
                   <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-lg sm:text-xl font-black text-gray-900">Plan Pro</p>
+                  <p className="text-lg sm:text-xl font-black text-gray-900">Plan Pro {billingPlan === 'annual' ? 'Annuel' : 'Mensuel'}</p>
                   <p className="text-xs text-gray-400 font-medium">Tout inclus</p>
                 </div>
               </div>
