@@ -73,20 +73,25 @@ export function isStandalonePWA(): boolean {
     navigator.standalone === true;
 }
 
-// Check iOS version (returns 0 if not iOS or can't detect)
+// Check iOS version (returns [major, minor], e.g. [16, 4])
 export function getIOSVersion(): number {
   if (typeof window === 'undefined') return 0;
   const match = navigator.userAgent.match(/OS (\d+)_/);
   return match ? parseInt(match[1], 10) : 0;
 }
 
+export function getIOSFullVersion(): [number, number] {
+  if (typeof window === 'undefined') return [0, 0];
+  const match = navigator.userAgent.match(/OS (\d+)_(\d+)/);
+  return match ? [parseInt(match[1], 10), parseInt(match[2], 10)] : [0, 0];
+}
+
 // Check if iOS PWA push is supported (iOS 16.4+)
 export function isIOSPushSupported(): boolean {
   if (!isIOSDevice()) return false;
   if (!isStandalonePWA()) return false;
-  const version = getIOSVersion();
-  // iOS 16.4+ supports push in PWA
-  return version >= 16;
+  const [major, minor] = getIOSFullVersion();
+  return major > 16 || (major === 16 && minor >= 4);
 }
 
 // Get current permission status
@@ -100,7 +105,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   if (!('serviceWorker' in navigator)) return null;
 
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/customer' });
+    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     return registration;
   } catch (error) {
     console.error('Service Worker registration failed:', error);

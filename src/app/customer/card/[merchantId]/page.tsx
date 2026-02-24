@@ -1056,18 +1056,28 @@ export default function CustomerCardPage({
           </motion.button>
         )}
 
-        {/* Push Error */}
+        {/* Push Error / iOS Settings Guidance */}
         {push.pushError && (
-          <div className="w-full rounded-2xl p-4 bg-red-50 border border-red-200 flex items-start gap-3 mb-4">
-            <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
-            <div>
-              <p className="font-semibold text-red-800 text-sm">Erreur d&apos;activation</p>
-              <p className="text-xs text-red-600 mt-1">{push.pushError}</p>
-              {push.isIOS && (
-                <p className="text-xs text-red-500 mt-2">iOS {push.iOSVersion || '?'} &bull; {push.isStandalone ? 'Mode PWA' : 'Navigateur'}</p>
-              )}
+          push.isIOS && push.isStandalone && push.pushPermission === 'denied' ? (
+            <div className="w-full rounded-2xl p-4 bg-amber-50 border border-amber-200 flex items-start gap-3 mb-4">
+              <Bell className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-amber-800 text-sm">Notifications desactivees</p>
+                <p className="text-xs text-amber-700 mt-1">{push.pushError}</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="w-full rounded-2xl p-4 bg-red-50 border border-red-200 flex items-start gap-3 mb-4">
+              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+              <div>
+                <p className="font-semibold text-red-800 text-sm">Erreur d&apos;activation</p>
+                <p className="text-xs text-red-600 mt-1">{push.pushError}</p>
+                {push.isIOS && (
+                  <p className="text-xs text-red-500 mt-2">iOS {push.iOSVersion || '?'} &bull; {push.isStandalone ? 'Mode PWA' : 'Navigateur'}</p>
+                )}
+              </div>
+            </div>
+          )
         )}
 
         {/* Historique */}

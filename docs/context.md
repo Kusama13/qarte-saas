@@ -70,9 +70,9 @@ src/
 │   ├── push.ts           # Notifications push
 │   ├── logger.ts         # Logger structuré
 │   ├── scripts.ts        # Scripts verbaux par shop_type (emails + dashboard)
-│   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode)
+│   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode, suggestEmailCorrection, EMAIL_DOMAINS)
 │
-├── emails/               # Templates React Email (26 templates + BaseLayout)
+├── emails/               # Templates React Email (28 templates + BaseLayout)
 │   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
 │   ├── WelcomeEmail.tsx           # Bienvenue (urgence + temoignage)
 │   ├── IncompleteSignupEmail.tsx  # Relance inscription +1h
@@ -98,6 +98,9 @@ src/
 │   ├── PaymentFailedEmail.tsx     # Echec paiement (Stripe)
 │   ├── SubscriptionCanceledEmail.tsx # Annulation abonnement (Stripe)
 │   ├── SubscriptionReactivatedEmail.tsx # Reactivation abonnement (canceling→active)
+│   ├── ChallengeCompletedEmail.tsx # Defi reussi 5 clients/3 jours (codes promo)
+│   ├── GuidedSignupEmail.tsx      # Relance inscription incomplete T+24h
+│   ├── LastChanceSignupEmail.tsx   # Derniere chance inscription
 │   ├── ReactivationEmail.tsx      # Win-back J+7/14/30 (codes promo)
 │   └── EbookEmail.tsx             # Telechargement ebook
 │
@@ -154,6 +157,7 @@ public/
 - `referral_code` (VARCHAR 10, UNIQUE — ex: `QARTE-AB3K`)
 - `referral_program_enabled`, `referral_reward_referrer`, `referral_reward_referred`
 - `trial_ends_at`, `subscription_status`, `stripe_customer_id`, `stripe_subscription_id`
+- `billing_interval` ('monthly' | 'annual', default 'monthly')
 - `shield_enabled` (Qarte Shield)
 
 ### customers
@@ -265,14 +269,15 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Selecteur pays a l'onboarding merchant
 - Backward-compatible : default `'FR'` pour anciens numeros
 
-### Qarte Shield (Anti-fraude)
-- Quarantaine des visites suspectes
+### Qarte Shield (Verification automatique)
+- Quarantaine des visites inhabituelles (2+ scans/jour meme client)
 - Detection IP duplicates
-- Moderation manuelle
+- Moderation manuelle (valider/refuser)
 - Bannissement numeros
+- Wording merchant-facing : "verification automatique" (pas "anti-fraude")
 
 ### Inscription 2 Phases & Onboarding
-- **Phase 1:** Email + mot de passe (page `/auth/merchant/signup`)
+- **Phase 1:** Email + mot de passe (page `/auth/merchant/signup`) — filet typo email au submit ("Vouliez-vous dire X ?")
 - **Phase 2:** Infos commerce (page `/auth/merchant/signup/complete`)
 - **Flux post-inscription:** Phase 2 → `/dashboard/program` → sauvegarde → preview carte → `/dashboard/qr-download`
   - Premiere config programme redirige vers la preview carte client (`?preview=true&onboarding=true`)
@@ -591,7 +596,7 @@ npm run email
 - Statistiques temps reel + comparaison semaine precedente
 - Gestion programme fidelite (suggestions par shop_type, 10 palettes couleurs)
 - Page QR code & Kit promo (2 onglets : QR code + Kit reseaux sociaux avec SocialMediaTemplate)
-- Gestion clients
+- Gestion clients — 4 filtres (Notifiables, Inactifs 21j+, Proches recompense, Recompense dispo) + recherche nom/telephone
 - Marketing (push notifications)
 - Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe + prix journalier (0,63€/jour mensuel, 0,52€/jour annuel)
 - Parrainage merchant : encart en haut de Settings (code QARTE-XXXX + copier + partager via Web Share API)
@@ -654,7 +659,7 @@ import type { Merchant } from '@/types';
 
 ---
 
-## 19. Emails Transactionnels (26 templates)
+## 19. Emails Transactionnels (28 templates)
 
 ### Onboarding & Activation
 | Email | Declencheur |
@@ -668,6 +673,7 @@ import type { Merchant } from '@/types';
 | QRCodeEmail | QR code + kit reseaux sociaux (apres config programme, endpoint `/api/emails/qr-code` + cron morning). Section kit conditionnelle sur `rewardDescription`. |
 | FirstClientScriptEmail | Script verbal personnalise par shop_type J+2 post-config (cron morning) |
 | QuickCheckEmail | Check-in J+4 si 0 scans — 3 options diagnostic (cron morning) |
+| ChallengeCompletedEmail | Defi reussi 5 clients/3 jours — codes QARTECHALLENGE2026 + QARTEPROEHJT (cron morning) |
 
 ### Engagement & Milestones
 | Email | Declencheur |
@@ -691,7 +697,7 @@ import type { Merchant } from '@/types';
 ### Stripe & Paiement
 | Email | Declencheur |
 |-------|-------------|
-| SubscriptionConfirmedEmail | checkout.session.completed + invoice.payment_succeeded recovery (webhook Stripe) |
+| SubscriptionConfirmedEmail | checkout.session.completed + invoice.payment_succeeded recovery (webhook Stripe). Affiche plan mensuel/annuel via `billingInterval`. |
 | PaymentFailedEmail | invoice.payment_failed (webhook Stripe) |
 | SubscriptionCanceledEmail | customer.subscription.updated → canceling (webhook Stripe, date de fin Stripe) |
 | SubscriptionReactivatedEmail | customer.subscription.updated → canceling→active (webhook Stripe, reactivation via portail) |
@@ -701,6 +707,8 @@ import type { Merchant } from '@/types';
 | Email | Declencheur |
 |-------|-------------|
 | EbookEmail | Telechargement ebook |
+| GuidedSignupEmail | Relance inscription incomplete T+24h (cron morning) |
+| LastChanceSignupEmail | Derniere chance inscription (cron morning) |
 
 ### Headers Anti-spam
 ```typescript

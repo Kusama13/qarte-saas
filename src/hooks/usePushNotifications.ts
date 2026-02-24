@@ -117,6 +117,10 @@ export function usePushNotifications({
         setPushError(result.error || 'Erreur inconnue');
         if (result.error === 'Permission refusée') {
           setPushPermission('denied');
+          if (isIOS && isStandalone) {
+            setPushError('Ouvrez Réglages > Qarte > Notifications et activez-les, puis réessayez.');
+            return;
+          }
         }
         if (isIOS && isStandalone && result.error === 'Push non supporté sur ce navigateur') {
           setShowIOSVersionWarning(true);
