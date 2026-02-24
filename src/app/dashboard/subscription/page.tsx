@@ -120,6 +120,9 @@ export default function SubscriptionPage() {
 
       if (data) {
         setMerchant(data);
+        if (data.billing_interval === 'annual') {
+          setBillingPlan('annual');
+        }
         if (data.stripe_subscription_id) {
           fetchPaymentMethod();
         }
@@ -160,6 +163,7 @@ export default function SubscriptionPage() {
         data.stripe_subscription_id !== initialStripeId
       )) {
         setMerchant(data);
+        if (data.billing_interval === 'annual') setBillingPlan('annual');
         refetchContext();
         if (data.stripe_subscription_id) fetchPaymentMethod();
         setPolling(false);
@@ -169,6 +173,7 @@ export default function SubscriptionPage() {
       if (attempts >= 10) {
         if (data) {
           setMerchant(data);
+          if (data.billing_interval === 'annual') setBillingPlan('annual');
           refetchContext();
           if (data.stripe_subscription_id) fetchPaymentMethod();
         }
