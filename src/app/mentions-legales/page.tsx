@@ -26,77 +26,124 @@ export default function LegalMentionsPage() {
       </header>
 
       <main className="px-4 py-12 mx-auto max-w-4xl">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Mentions Légales
         </h1>
+        <p className="text-gray-500 mb-10">
+          Dernière mise à jour : Février 2026
+        </p>
 
-        <div className="prose prose-gray max-w-none">
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <div className="prose prose-gray max-w-none space-y-8">
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
               Éditeur du site
             </h2>
             <p className="text-gray-600">
-              Qarte<br />
-              [Adresse à compléter]<br />
-              Email : contact@getqarte.com<br />
-              Téléphone : [À compléter]
+              <strong>Qarte</strong><br />
+              [Forme juridique — à compléter : SAS, SARL, EI, etc.]<br />
+              Capital social : [à compléter]<br />
+              Siège social : [adresse complète — à compléter]<br />
+              SIRET : [à compléter]<br />
+              RCS : [ville — à compléter]<br />
+              N° TVA intracommunautaire : [à compléter]<br />
+              <br />
+              Email :{' '}
+              <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
+                contact@getqarte.com
+              </a><br />
+              Téléphone : [à compléter]
             </p>
           </section>
 
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
               Directeur de la publication
             </h2>
-            <p className="text-gray-600">[Nom du directeur de publication]</p>
+            <p className="text-gray-600">
+              [Nom et prénom du directeur de publication — à compléter]
+            </p>
           </section>
 
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
               Hébergement
             </h2>
             <p className="text-gray-600">
+              <strong>Application web :</strong><br />
               Vercel Inc.<br />
-              340 S Lemon Ave #4133<br />
-              Walnut, CA 91789<br />
-              États-Unis
+              440 N Barranca Ave #4133<br />
+              Covina, CA 91723<br />
+              États-Unis<br />
+              <a href="https://vercel.com" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline">vercel.com</a>
             </p>
             <p className="text-gray-600 mt-4">
-              Base de données hébergée par :<br />
+              <strong>Base de données :</strong><br />
               Supabase Inc.<br />
               970 Toa Payoh North #07-04<br />
-              Singapore 318992
+              Singapore 318992<br />
+              Données hébergées en Union Européenne (AWS eu-central-1, Francfort)<br />
+              <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline">supabase.com</a>
             </p>
           </section>
 
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
               Propriété intellectuelle
             </h2>
             <p className="text-gray-600">
-              L&apos;ensemble du contenu de ce site (textes, images, logos, graphismes)
-              est la propriété exclusive de Qarte et est protégé par les lois
-              françaises et internationales relatives à la propriété intellectuelle.
+              L&apos;ensemble du contenu de ce site (textes, images, logos, graphismes, code source, interface utilisateur) est la propriété exclusive de Qarte et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle.
+            </p>
+            <p className="text-gray-600 mt-2">
+              Toute reproduction, représentation, modification, publication ou adaptation de tout ou partie du contenu du site, quel que soit le moyen ou le procédé utilisé, est interdite sans autorisation écrite préalable de Qarte.
             </p>
           </section>
 
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
               Limitation de responsabilité
             </h2>
             <p className="text-gray-600">
-              Qarte ne saurait être tenu responsable des dommages directs ou
-              indirects résultant de l&apos;utilisation du service. Le service est
-              fourni &quot;en l&apos;état&quot; sans garantie d&apos;aucune sorte.
+              Qarte s&apos;efforce d&apos;assurer l&apos;exactitude des informations diffusées sur ce site. Toutefois, Qarte ne peut garantir l&apos;exactitude, la complétude ou l&apos;actualité des informations mises à disposition.
+            </p>
+            <p className="text-gray-600 mt-2">
+              Qarte ne saurait être tenue responsable des dommages directs ou indirects résultant de l&apos;accès au site ou de l&apos;utilisation du service. Pour les conditions détaillées, consultez nos{' '}
+              <Link href="/cgv" className="text-indigo-600 hover:text-indigo-800 underline">
+                Conditions Générales de Vente
+              </Link>.
             </p>
           </section>
 
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              Données personnelles
+            </h2>
+            <p className="text-gray-600">
+              Qarte collecte et traite des données personnelles dans le cadre de son activité. Pour en savoir plus sur la collecte, l&apos;utilisation et la protection de vos données, consultez notre{' '}
+              <Link href="/politique-confidentialite" className="text-indigo-600 hover:text-indigo-800 underline">
+                Politique de Confidentialité
+              </Link>.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              Cookies
+            </h2>
+            <p className="text-gray-600">
+              Ce site utilise des cookies. Pour en savoir plus sur les cookies utilisés et gérer vos préférences, consultez notre{' '}
+              <Link href="/politique-confidentialite#cookies" className="text-indigo-600 hover:text-indigo-800 underline">
+                section Cookies de la Politique de Confidentialité
+              </Link>.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
               Droit applicable
             </h2>
             <p className="text-gray-600">
               Les présentes mentions légales sont soumises au droit français.
-              En cas de litige, les tribunaux français seront seuls compétents.
+              En cas de litige, et après tentative de résolution amiable, les tribunaux français seront seuls compétents.
             </p>
           </section>
         </div>
