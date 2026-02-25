@@ -336,13 +336,13 @@ export function TestimonialsSection() {
         {/* Header */}
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            On leur a demandé{' '}
+            Elles en parlent{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              ce qu&apos;elles en pensent
+              mieux que nous
             </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Leurs retours, dans leurs mots.
+            Des vraies conversations, sans filtre.
           </p>
         </div>
 

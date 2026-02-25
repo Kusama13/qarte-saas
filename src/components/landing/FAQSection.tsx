@@ -8,7 +8,7 @@ import { useInView } from '@/hooks/useInView';
 const faqs = [
   {
     question: "Et si mes clients n'ont pas de smartphone ?",
-    answer: "99% de vos clients en ont un. Pour les autres, notez les points manuellement et ajoutez-les plus tard.",
+    answer: "99% de vos clients en ont un. Pour les rares exceptions, notez les points et ajoutez-les plus tard, tout simplement.",
   },
   {
     question: "Combien de temps pour être opérationnel ?",
@@ -20,11 +20,11 @@ const faqs = [
   },
   {
     question: "Mes clients vont trouver ça compliqué ?",
-    answer: "Elles scannent le QR code avec leur appareil photo, c'est tout. Pas d'app à télécharger, pas de compte à créer.",
+    answer: "Elles scannent le QR code avec leur appareil photo et c'est tout. Pas d'app, pas de compte à créer. Ultra simple.",
   },
   {
     question: "Que se passe-t-il si j'arrête Qarte ?",
-    answer: "Export CSV de toutes vos données en 1 clic. Pas de piège, pas d'engagement.",
+    answer: "Vos données vous appartiennent. Export CSV en 1 clic. Pas de piège, pas d'engagement.",
   },
   {
     question: "Comment fonctionne le parrainage ?",
@@ -32,15 +32,15 @@ const faqs = [
   },
   {
     question: "19€/mois, c'est trop cher ?",
-    answer: "0,63€/jour. Un seul client fidélisé en plus = abonnement remboursé. Et vous économisez ~200€/an de cartes papier.",
+    answer: "Ça fait 0,63€/jour. Un seul client fidélisé en plus et c'est remboursé. Sans compter les ~200€/an de cartes papier en moins.",
   },
   {
     question: "Mes données sont-elles protégées (RGPD) ?",
-    answer: "100% conforme RGPD. Hébergé en Europe, chiffré. Vos données restent les vôtres. Aucune revente, jamais.",
+    answer: "100% conforme RGPD, hébergé en Europe, chiffré. Vos données restent les vôtres. On ne revend rien, jamais.",
   },
   {
     question: "Ça s'intègre avec mon logiciel de salon ?",
-    answer: "Qarte fonctionne de façon indépendante. Rien à modifier dans votre organisation actuelle.",
+    answer: "Qarte fonctionne tout seul, à côté de vos outils actuels. Rien à changer dans votre organisation.",
   },
   {
     question: "Le prix change après les 7 jours gratuits ?",
@@ -137,13 +137,13 @@ export function FAQSection() {
         {/* Header */}
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Une question ?{' '}
+            On répond à{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              On vous répond
+              toutes vos questions
             </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Tout ce qu&apos;il faut savoir avant de lancer votre fidélité digitale.
+            Tout ce que vous devez savoir avant de vous lancer.
           </p>
         </div>
 

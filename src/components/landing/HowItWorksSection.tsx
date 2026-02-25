@@ -18,7 +18,7 @@ function SetupCard() {
 
       {/* Title */}
       <p className="text-lg font-bold text-gray-900 leading-snug">Vous créez votre programme</p>
-      <p className="text-base text-gray-400 mt-1 mb-4">Choisissez vos paliers et récompenses. On s&apos;occupe du QR code.</p>
+      <p className="text-base text-gray-400 mt-1 mb-4">Vos paliers, vos récompenses. On s&apos;occupe du reste.</p>
 
       {/* Mini mockup: stamp config */}
       <div className="bg-gray-50 rounded-lg p-3">
@@ -70,7 +70,7 @@ function ScanCard() {
 
       {/* Title */}
       <p className="text-lg font-bold text-gray-900 leading-snug">Votre client(e) scanne</p>
-      <p className="text-base text-gray-400 mt-1 mb-4">Son point est ajouté. Pas d&apos;app à télécharger.</p>
+      <p className="text-base text-gray-400 mt-1 mb-4">Un point en plus, sans rien télécharger.</p>
 
       {/* Mini mockup: QR code + toast */}
       <div className="bg-gray-50 rounded-lg p-3 flex flex-col items-center">
@@ -145,7 +145,7 @@ function RewardCard() {
 
       {/* Title */}
       <p className="text-lg font-bold text-gray-900 leading-snug">Il revient tout seul</p>
-      <p className="text-base text-gray-400 mt-1 mb-4">Rappels push, anniversaires, parrainage. Qarte fait le reste.</p>
+      <p className="text-base text-gray-400 mt-1 mb-4">Rappels, anniversaires, parrainage. On gère pour vous.</p>
 
       {/* Mini mockup: filled card + reward */}
       <div className="bg-white/80 rounded-lg p-3 space-y-2">

@@ -152,8 +152,7 @@ export function HeroSection() {
           </div>
 
           <p className="text-base lg:text-lg text-gray-600 max-w-lg leading-relaxed">
-            Conçu pour les <span className="text-gray-900 font-medium">instituts de beauté, ongleries et salons</span>. QR code, points, récompenses. <span className="text-gray-900 font-medium">Fini les cartes papier perdues</span>. La solution choisie par des centaines de{' '}
-            <span className="font-semibold text-indigo-600">professionnels de la beauté</span>.
+            Fini les cartes papier perdues. QR code, points, récompenses — tout est automatique. Pensé pour les <span className="text-gray-900 font-medium">instituts, ongleries et salons</span> qui veulent fidéliser sans se compliquer la vie.
           </p>
 
           <div className="flex flex-col sm:flex-row sm:items-start gap-3 lg:gap-4">
@@ -166,7 +165,7 @@ export function HeroSection() {
                 <span className="relative z-10">Essayez gratuitement</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
-              <p className="text-xs text-gray-400 font-medium mt-2 text-center">Aucune carte de crédit n'est requise :)</p>
+              <p className="text-xs text-gray-400 font-medium mt-2 text-center">Sans carte bancaire, c&apos;est promis :)</p>
             </div>
             <a
               href="/customer/card/demo-onglerie?preview=true&demo=true"

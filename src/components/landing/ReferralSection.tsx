@@ -95,7 +95,7 @@ export function ReferralSection() {
             </span>
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Un lien, un partage, deux récompenses. Le bouche-à-oreille qui rapporte vraiment.
+            Un lien, un partage, deux récompenses. Du bouche-à-oreille qui rapporte vraiment.
           </p>
         </div>
 

@@ -575,25 +575,26 @@ npm run email
 ## 16. Pages Principales
 
 ### Landing (`/`)
-- Hero : "Le programme de fidelite qui fait revenir vos client(e)s."
-  - CTA primaire : "Essayer gratuitement" → signup (indigo→violet)
+- Hero : "Le programme de fidelite qui fait revenir vos clients."
+  - Sous-titre : "Fini les cartes papier perdues. QR code, points, recompenses — tout est automatique."
+  - CTA primaire : "Essayez gratuitement" → signup (indigo→violet)
   - CTA secondaire : "Voir une demo" → demo onglerie (ghost button, border indigo)
+  - Note CTA : "Sans carte bancaire, c'est promis :)"
   - Mockup iPhone carte fidelite (coeurs, reward card rose)
   - Badges flottants : avis Google, point ajoute, parrainage, notification push
-  - Menu desktop/mobile : Tarifs, Contact, Espace Pro (Solutions retire)
-- Referral : "Vos client(e)s recrutent pour vous"
+  - Menu desktop/mobile : Tarifs, Contact, Espace Pro
+- SocialProof : "Elles fidelisent avec Qarte" (bandeau defilant top merchants)
+- HowItWorks : "Pour commencer, rien de plus simple." (3 etapes)
+- Referral : "Chaque client vous en ramene un autre"
   - 3 cartes visuelles (Elle partage → Son amie rejoint → Les 2 recompensees)
-  - Stats (x3 bouche-a-oreille, +25% nouveaux client(e)s, 0€ de pub)
-  - CTA "Activer le parrainage"
-- Features : "Notifiez vos client(e)s au meilleur moment"
-  - CSS Grid 3x3 desktop (4 step cards + stat 78% centre + fleches coins)
-  - Mobile : flow vertical avec ChevronDown
-  - Subtitle : notifications push
-- HowItWorks : 2 etapes (Creez votre programme, Affichez le QR Code)
-- Testimonials, Pricing (10 features dont parrainage + reservation), FAQ (8 questions dont parrainage)
-- MobileStickyCta : barre sticky bottom mobile (indigo→violet)
+  - Stats (1 clic, x2 recompensees, 0€ de pub)
+- AIReengagement : "Vos clients oublient ? Ils reviennent quand meme" (relance, anniversaires, evenements)
+- Testimonials : "Elles en parlent mieux que nous" (4 conversations WhatsApp/iMessage/Instagram)
+- Pricing : "Un prix, tout inclus" — 19€/mois, CTA "Lancer mon essai gratuit"
+- FAQ : "On repond a toutes vos questions" (11 questions dont parrainage) + WhatsApp CTA
+- Footer : CTA "Rejoignez les pros qui fidelisent avec Qarte" + dark footer 4 colonnes (Logo, Support contact/WhatsApp, Liens rapides, Reseaux sociaux)
 - ScrollToTopButton : bottom-24 mobile (au-dessus sticky), bottom-6 desktop
-- Ecriture inclusive : client(e)s partout
+- Ton amical et direct ("On s'occupe du reste", "On gere pour vous", "c'est promis")
 - ComparisonSection retiree du flow (fichier conserve)
 - Blog SEO : 3 articles (coiffure, onglerie, institut) avec images
 - Page comparatif `/qarte-vs-carte-papier`

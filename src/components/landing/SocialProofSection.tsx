@@ -129,7 +129,7 @@ export async function SocialProofSection() {
       <div className="flex items-center justify-center gap-2 mb-6">
         <div className="h-px w-8 bg-gray-200" />
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
-          Ils fidélisent avec Qarte
+          Elles fidélisent avec Qarte
         </p>
         <div className="h-px w-8 bg-gray-200" />
       </div>

@@ -237,7 +237,7 @@ export function AIReengagementSection() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="text-lg text-gray-500 mb-10 max-w-md leading-relaxed"
             >
-              Elle oublie de revenir ? Qarte lui rappelle au bon moment. Vous ne touchez à rien.
+              Qarte rappelle vos clients au bon moment. Vous, vous ne touchez à rien.
             </motion.p>
 
             {/* Feature rows */}
@@ -251,19 +251,19 @@ export function AIReengagementSection() {
                 icon={<Clock className="w-5 h-5 text-indigo-600" />}
                 iconBg="bg-indigo-100"
                 title="Relance inactivité"
-                description="Un client ne vient plus ? Qarte le détecte et lui envoie une notification au bon moment."
+                description="Un client ne vient plus ? On le détecte et on lui envoie un petit rappel au bon moment."
               />
               <FeatureRow
                 icon={<Cake className="w-5 h-5 text-rose-600" />}
                 iconBg="bg-rose-100"
                 title="Anniversaires"
-                description="Offre surprise envoyée automatiquement le jour J. Sans jamais oublier."
+                description="Une offre surprise le jour J, envoyée automatiquement. Vous n'oubliez plus jamais."
               />
               <FeatureRow
                 icon={<CalendarHeart className="w-5 h-5 text-emerald-600" />}
                 iconBg="bg-emerald-100"
                 title="Événements spéciaux"
-                description="Saint-Valentin, Noël, fête des mères... Campagnes programmées automatiquement."
+                description="Saint-Valentin, Noël, fête des mères... On programme tout pour vous."
               />
             </motion.div>
 

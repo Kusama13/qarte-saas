@@ -158,11 +158,33 @@ export default function CGVPage() {
               <li>Informer le Client de toute interruption programmée du Service</li>
               <li>Mettre en œuvre les moyens nécessaires pour assurer la disponibilité du Service</li>
             </ul>
+            <p className="text-gray-600 mt-3">
+              Les obligations du Prestataire constituent des obligations de moyens. Le Prestataire s&apos;engage à fournir le Service avec diligence et selon les règles de l&apos;art, à l&apos;exclusion de toute obligation de résultat.
+            </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">
-              9. Disponibilité du Service
+              9. Suspension et résiliation par le Prestataire
+            </h2>
+            <p className="text-gray-600">
+              Le Prestataire se réserve le droit de suspendre ou de résilier l&apos;accès au Service, sans préavis ni indemnité, dans les cas suivants :
+            </p>
+            <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
+              <li>Non-respect des présentes CGV</li>
+              <li>Utilisation frauduleuse ou abusive du Service</li>
+              <li>Fourniture d&apos;informations fausses ou incomplètes lors de l&apos;inscription</li>
+              <li>Activité illicite ou portant atteinte aux droits de tiers</li>
+              <li>Non-paiement après notification restée sans effet pendant huit (8) jours</li>
+            </ul>
+            <p className="text-gray-600 mt-2">
+              En cas de résiliation pour faute du Client, aucun remboursement ne sera dû. Le Prestataire informera le Client par email de la suspension ou de la résiliation de son compte.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              10. Disponibilité et évolution du Service
             </h2>
             <p className="text-gray-600">
               Le Prestataire s&apos;efforce de maintenir le Service accessible 24 heures sur 24, 7 jours sur 7, avec un objectif de disponibilité de 99,5% par mois, hors périodes de maintenance programmée.
@@ -173,11 +195,14 @@ export default function CGVPage() {
             <p className="text-gray-600 mt-2">
               Les interruptions du Service ne sauraient ouvrir droit à une indemnisation au profit du Client.
             </p>
+            <p className="text-gray-600 mt-2">
+              Le Prestataire se réserve le droit de faire évoluer les fonctionnalités du Service (ajout, modification ou suppression de fonctionnalités) afin d&apos;en améliorer la qualité. Ces évolutions ne constituent pas une modification des conditions contractuelles dès lors qu&apos;elles n&apos;altèrent pas substantiellement le Service souscrit.
+            </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">
-              10. Propriété intellectuelle
+              11. Propriété intellectuelle
             </h2>
             <p className="text-gray-600">
               Le Prestataire conserve l&apos;intégralité des droits de propriété intellectuelle sur le Service, y compris le code source, l&apos;interface utilisateur, les algorithmes, la documentation et les marques associées.
@@ -192,7 +217,7 @@ export default function CGVPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">
-              11. Limitation de responsabilité
+              12. Limitation de responsabilité
             </h2>
             <p className="text-gray-600">
               Le Prestataire ne pourra être tenu responsable que des dommages directs, personnels et certains subis par le Client, à l&apos;exclusion expresse de tout dommage indirect, notamment le manque à gagner, la perte de clientèle, la perte de données, ou l&apos;atteinte à l&apos;image de marque.
@@ -207,7 +232,7 @@ export default function CGVPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">
-              12. Force majeure
+              13. Force majeure
             </h2>
             <p className="text-gray-600">
               Le Prestataire ne pourra être tenu responsable de tout manquement à ses obligations contractuelles résultant d&apos;un événement de force majeure au sens de l&apos;article 1218 du Code civil, notamment : catastrophes naturelles, pandémies, incendies, grèves, guerres, défaillances des réseaux de télécommunications, attaques informatiques, décisions gouvernementales, ou toute autre circonstance échappant au contrôle raisonnable du Prestataire.
@@ -219,7 +244,7 @@ export default function CGVPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">
-              13. Protection des données
+              14. Protection des données
             </h2>
             <p className="text-gray-600">
               Le Prestataire s&apos;engage à protéger les données personnelles conformément au Règlement Général sur la Protection des Données (RGPD) et à la loi Informatique et Libertés. Pour plus d&apos;informations sur la collecte, le traitement et la conservation de vos données, consultez notre{' '}
@@ -231,18 +256,38 @@ export default function CGVPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">
-              14. Médiation et règlement des litiges
+              15. Programme de parrainage entre commerçants
             </h2>
             <p className="text-gray-600">
-              En cas de litige, les parties s&apos;engagent à rechercher une solution amiable avant toute action judiciaire.
+              Qarte propose un programme de parrainage permettant à tout Client disposant d&apos;un abonnement actif (mensuel ou annuel) de recommander le Service à d&apos;autres commerçants.
+            </p>
+            <p className="text-gray-600 font-medium mt-3">Conditions :</p>
+            <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
+              <li>Lorsqu&apos;un commerçant parrainé souscrit un abonnement payant, le parrain bénéficie d&apos;un crédit de 10€ HT appliqué automatiquement sur sa prochaine facture.</li>
+              <li>Ce crédit est limité à un (1) parrainage récompensé par mois calendaire.</li>
+              <li>Le crédit n&apos;est pas convertible en numéraire et ne peut donner lieu à un remboursement.</li>
+            </ul>
+            <p className="text-gray-600 font-medium mt-3">Abonnement annuel :</p>
+            <p className="text-gray-600 mt-1">
+              Pour les Clients titulaires d&apos;un abonnement annuel, les crédits de parrainage s&apos;accumulent sur le solde client et sont déduits automatiquement lors du renouvellement de l&apos;abonnement.
+            </p>
+            <p className="text-gray-600 mt-3">
+              Le Prestataire se réserve le droit de modifier ou de suspendre le programme de parrainage à tout moment, sous réserve d&apos;en informer les Clients. Les crédits déjà acquis restent valables.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              16. Médiation et règlement des litiges
+            </h2>
+            <p className="text-gray-600">
+              En cas de litige, le Client est invité à adresser une réclamation écrite au Prestataire par email à{' '}
+              <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
+                contact@getqarte.com
+              </a>.
             </p>
             <p className="text-gray-600 mt-2">
-              Conformément aux articles L611-1 et R612-1 du Code de la consommation, le Client peut recourir gratuitement à un service de médiation. Le médiateur de la consommation compétent est :
-            </p>
-            <p className="text-gray-600 mt-2 font-medium">
-              [Nom du médiateur — à compléter]<br />
-              [Adresse — à compléter]<br />
-              [Site internet — à compléter]
+              Conformément aux articles L611-1 et suivants du Code de la consommation, le Client peut recourir à un médiateur de la consommation ou à tout mode alternatif de règlement des différends en vue de la résolution amiable du litige.
             </p>
             <p className="text-gray-600 mt-2">
               Le Client peut également recourir à la plateforme européenne de résolution des litiges en ligne :{' '}
@@ -250,11 +295,14 @@ export default function CGVPage() {
                 https://ec.europa.eu/consumers/odr/
               </a>
             </p>
+            <p className="text-gray-600 mt-2">
+              À défaut de résolution amiable, le litige sera soumis aux tribunaux compétents dans les conditions de droit commun.
+            </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">
-              15. Loi applicable et juridiction
+              17. Loi applicable et juridiction
             </h2>
             <p className="text-gray-600">
               Les présentes CGV sont soumises au droit français. À défaut de résolution amiable dans un délai de soixante (60) jours, le litige sera soumis aux tribunaux compétents du ressort du siège social du Prestataire.
@@ -263,7 +311,33 @@ export default function CGVPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-3">
-              16. Contact
+              18. Dispositions générales
+            </h2>
+            <p className="text-gray-600 font-medium">Modification des CGV :</p>
+            <p className="text-gray-600 mt-1">
+              Le Prestataire se réserve le droit de modifier les présentes CGV à tout moment, notamment pour se conformer à toute évolution législative ou réglementaire, ou pour tenir compte de l&apos;évolution du Service. Le Client sera informé par email de toute modification substantielle au moins trente (30) jours avant son entrée en vigueur. La poursuite de l&apos;utilisation du Service après cette date vaut acceptation des nouvelles CGV.
+            </p>
+            <p className="text-gray-600 font-medium mt-3">Cession :</p>
+            <p className="text-gray-600 mt-1">
+              Le Client ne peut céder ou transférer ses droits et obligations au titre des présentes CGV à un tiers sans l&apos;accord préalable écrit du Prestataire.
+            </p>
+            <p className="text-gray-600 font-medium mt-3">Communications électroniques :</p>
+            <p className="text-gray-600 mt-1">
+              Le Client accepte de recevoir les communications relatives au Service (notifications, factures, informations sur les évolutions du Service) par voie électronique à l&apos;adresse email renseignée lors de son inscription.
+            </p>
+            <p className="text-gray-600 font-medium mt-3">Divisibilité :</p>
+            <p className="text-gray-600 mt-1">
+              Si l&apos;une quelconque des stipulations des présentes CGV est déclarée nulle ou inapplicable, les autres stipulations resteront en vigueur et de plein effet.
+            </p>
+            <p className="text-gray-600 font-medium mt-3">Non-renonciation :</p>
+            <p className="text-gray-600 mt-1">
+              Le fait pour le Prestataire de ne pas exercer un droit ou une disposition des présentes CGV ne constitue pas une renonciation à ce droit ou à cette disposition, sauf accord écrit exprès.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 mb-3">
+              19. Contact
             </h2>
             <p className="text-gray-600">
               Pour toute question concernant les présentes CGV, contactez-nous à{' '}

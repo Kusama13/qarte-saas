@@ -30,7 +30,7 @@ export function PricingSection() {
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Un prix, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">tout inclus</span>
           </h2>
-          <p className="text-xl text-gray-600">Pas de surprise, pas de frais cachés. Pensé pour les instituts et salons.</p>
+          <p className="text-xl text-gray-600">Pas de surprise, pas de frais cachés. Pensé pour vous.</p>
         </div>
 
         {/* 2-column layout */}
@@ -78,7 +78,7 @@ export function PricingSection() {
                 onClick={() => { trackCtaClick('pricing_cta_2', 'pricing_section_2'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
                 className="block w-full py-5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 text-center uppercase tracking-wider text-sm shadow-md shadow-indigo-500/15"
               >
-                Commencer mon essai gratuit
+                Lancer mon essai gratuit
               </a>
 
               <p className="text-center text-gray-400 text-[10px] font-bold mt-6 uppercase tracking-[0.2em]">
