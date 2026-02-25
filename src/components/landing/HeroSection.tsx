@@ -17,6 +17,7 @@ import {
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 export function HeroSection() {
   const { ref, isInView } = useInView();
@@ -55,7 +56,7 @@ export function HeroSection() {
             <a href="/auth/merchant" className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold border border-indigo-200 rounded-lg transition-colors">S&apos;identifier</a>
             <a
               href="/auth/merchant/signup"
-              onClick={() => { trackCtaClick('header_desktop_cta', 'navbar'); fbEvents.initiateCheckout(); }}
+              onClick={() => { trackCtaClick('header_desktop_cta', 'navbar'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
               className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-lg transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"
             >
               Essai gratuit
@@ -66,7 +67,7 @@ export function HeroSection() {
           <div className="flex md:hidden items-center gap-2">
             <a
               href="/auth/merchant/signup"
-              onClick={() => { trackCtaClick('header_mobile_cta', 'navbar'); fbEvents.initiateCheckout(); }}
+              onClick={() => { trackCtaClick('header_mobile_cta', 'navbar'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
               className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold rounded-lg shadow-sm"
             >
               Essai gratuit
@@ -159,7 +160,7 @@ export function HeroSection() {
             <div>
               <a
                 href="/auth/merchant/signup"
-                onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); }}
+                onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
                 className="group relative flex items-center justify-center px-7 py-4 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <span className="relative z-10">Essayez gratuitement</span>

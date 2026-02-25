@@ -2,6 +2,7 @@
 
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 export function FooterSection() {
   return (
@@ -14,7 +15,7 @@ export function FooterSection() {
           </h2>
           <a
             href="/auth/merchant/signup"
-            onClick={() => { trackCtaClick('footer_cta', 'footer_section'); fbEvents.initiateCheckout(); }}
+            onClick={() => { trackCtaClick('footer_cta', 'footer_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
             className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
           >
             Créer ma carte gratuite

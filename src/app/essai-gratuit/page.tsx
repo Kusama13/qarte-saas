@@ -48,7 +48,7 @@ function StickyMobileCTA() {
 
   const handleClick = () => {
     fbEvents.initiateCheckout();
-    ttEvents.initiateCheckout();
+    ttEvents.clickButton();
   };
 
   return (
@@ -74,7 +74,7 @@ function StickyMobileCTA() {
 export default function OffreSpecialePage() {
   const handleCTAClick = () => {
     fbEvents.initiateCheckout();
-    ttEvents.initiateCheckout();
+    ttEvents.clickButton();
   };
 
   return (

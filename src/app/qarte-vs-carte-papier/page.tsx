@@ -17,6 +17,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -59,7 +60,7 @@ export default function QarteVsCartePapierPage() {
           </Link>
           <Link
             href="/auth/merchant/signup"
-            onClick={() => fbEvents.initiateCheckout()}
+            onClick={() => { fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
             className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
           >
             Essai gratuit
@@ -323,7 +324,7 @@ export default function QarteVsCartePapierPage() {
             </p>
             <Link
               href="/auth/merchant/signup"
-              onClick={() => fbEvents.initiateCheckout()}
+              onClick={() => { fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-600 font-bold rounded-2xl hover:shadow-2xl hover:shadow-black/20 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 text-lg"
             >
               Demarrer mon essai gratuit

@@ -391,9 +391,9 @@ CONTACT_EMAIL=
 
 ### Evenements TikTok Pixel (client-side)
 - `PageView` - automatique (`ttq.page()`, re-fire sur chaque route SPA)
+- `ClickButton` - clic CTA (landing, essai-gratuit, comparatif, avec content params)
 - `CompleteRegistration` - inscription terminee (avec content params)
 - `StartTrial` - debut essai (fire avec CompleteRegistration)
-- `InitiateCheckout` - clic signup (essai-gratuit)
 - `Subscribe` - souscription Stripe (value, currency, content_name par plan)
 - `ttq.identify()` - advanced matching (email, phone, externalId hashes SHA-256)
 

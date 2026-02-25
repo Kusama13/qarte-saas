@@ -103,7 +103,12 @@ export const ttEvents = {
       value: 0,
       currency: 'EUR',
     }),
-  initiateCheckout: () => trackTTEvent('InitiateCheckout'),
+  clickButton: (label?: string) =>
+    trackTTEvent('ClickButton', {
+      ...qarteContent(),
+      value: 0,
+      currency: 'EUR',
+    }),
   subscribe: (value: number, plan: 'monthly' | 'annual' = 'monthly') =>
     trackTTEvent('Subscribe', {
       ...qarteContent(plan),
