@@ -18,7 +18,7 @@ import { generateSlug, formatPhoneNumber, validatePhone, PHONE_CONFIG } from '@/
 import { SHOP_TYPES, type ShopType, COUNTRIES, type MerchantCountry } from '@/types';
 import { trackPageView, trackSetupCompleted, trackSignupCompleted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
-import { ttEvents } from '@/components/analytics/TikTokPixel';
+import { ttEvents, ttIdentify } from '@/components/analytics/TikTokPixel';
 
 const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
   value,
@@ -37,6 +37,7 @@ export default function CompleteProfilePage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [error, setError] = useState('');
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
@@ -81,6 +82,7 @@ export default function CompleteProfilePage() {
       }
 
       setUserId(user.id);
+      setUserEmail(user.email || null);
       setAccessToken(token || null);
       setCheckingAuth(false);
     };
@@ -147,7 +149,10 @@ export default function CompleteProfilePage() {
       trackSignupCompleted(userId!, 'email');
       trackSetupCompleted({ merchant_id: result.merchant?.id || userId!, business_type: formData.shopType || undefined });
       fbEvents.completeRegistration();
+      // TikTok: identify user + CompleteRegistration + StartTrial
+      ttIdentify({ email: userEmail || undefined, phone: formattedPhone, externalId: userId || undefined });
       ttEvents.completeRegistration();
+      ttEvents.startTrial();
 
       // Redirect to program config
       window.location.href = '/dashboard/program';

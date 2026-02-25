@@ -6,6 +6,12 @@ import { usePathname } from 'next/navigation';
 
 const TT_PIXEL_ID = 'D6FCUKBC77UC649NN2J0';
 
+declare global {
+  interface Window {
+    ttq: any;
+  }
+}
+
 export function TikTokPixel() {
   return (
     <Script id="tt-pixel" strategy="afterInteractive">
@@ -30,8 +36,8 @@ export function TikTokPageTracker() {
   useEffect(() => {
     if (pathname !== prevPathRef.current) {
       prevPathRef.current = pathname;
-      if (typeof window !== 'undefined' && (window as any).ttq) {
-        (window as any).ttq.page();
+      if (typeof window !== 'undefined' && window.ttq) {
+        window.ttq.page();
       }
     }
   }, [pathname]);
@@ -39,23 +45,77 @@ export function TikTokPageTracker() {
   return null;
 }
 
-// Helper to track events
-export function trackTTEvent(eventName: string, params?: Record<string, any>) {
-  if (typeof window !== 'undefined' && (window as any).ttq) {
+// SHA-256 hash (client-side, for identify)
+async function sha256(value: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(value.trim().toLowerCase());
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+// Identify user for advanced matching (call before track events)
+export async function ttIdentify(params: { email?: string; phone?: string; externalId?: string }) {
+  if (typeof window === 'undefined' || !window.ttq) return;
+  const data: Record<string, string> = {};
+  if (params.email) data.email = await sha256(params.email);
+  if (params.phone) data.phone_number = await sha256(params.phone);
+  if (params.externalId) data.external_id = await sha256(params.externalId);
+  if (Object.keys(data).length > 0) {
+    window.ttq.identify(data);
+  }
+}
+
+// Helper to track events with standard parameters
+function trackTTEvent(eventName: string, params?: Record<string, any>) {
+  if (typeof window !== 'undefined' && window.ttq) {
     if (params) {
-      (window as any).ttq.track(eventName, params);
+      window.ttq.track(eventName, params);
     } else {
-      (window as any).ttq.track(eventName);
+      window.ttq.track(eventName);
     }
   }
 }
 
+// Qarte SaaS content descriptor
+function qarteContent(plan?: 'monthly' | 'annual') {
+  return {
+    contents: [{
+      content_id: plan === 'annual' ? 'qarte_pro_annual' : 'qarte_pro',
+      content_type: 'product',
+      content_name: plan === 'annual' ? 'Qarte Pro Annuel' : 'Qarte Pro',
+    }],
+  };
+}
+
 // Standard events mapped for Qarte
 export const ttEvents = {
-  completeRegistration: () => trackTTEvent('CompleteRegistration'),
+  completeRegistration: () =>
+    trackTTEvent('CompleteRegistration', {
+      ...qarteContent(),
+      value: 0,
+      currency: 'EUR',
+    }),
+  startTrial: () =>
+    trackTTEvent('StartTrial', {
+      ...qarteContent(),
+      value: 0,
+      currency: 'EUR',
+    }),
   initiateCheckout: () => trackTTEvent('InitiateCheckout'),
-  completePayment: (value?: number) =>
-    trackTTEvent('CompletePayment', value ? { value, currency: 'EUR' } : undefined),
-  subscribe: (value?: number) =>
-    trackTTEvent('Subscribe', value ? { value, currency: 'EUR' } : undefined),
+  subscribe: (value: number, plan: 'monthly' | 'annual' = 'monthly') =>
+    trackTTEvent('Subscribe', {
+      ...qarteContent(plan),
+      value,
+      currency: 'EUR',
+    }),
+  viewContent: (contentName: string) =>
+    trackTTEvent('ViewContent', {
+      contents: [{
+        content_id: 'qarte_landing',
+        content_type: 'product',
+        content_name: contentName,
+      }],
+    }),
 };

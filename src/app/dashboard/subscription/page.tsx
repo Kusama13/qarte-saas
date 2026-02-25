@@ -76,8 +76,9 @@ export default function SubscriptionPage() {
       // Facebook Pixel — Purchase event (dedup with server-side CAPI)
       const plan = searchParams.get('plan');
       const price = plan === 'annual' ? 190 : 19;
+      const planType: 'monthly' | 'annual' = plan === 'annual' ? 'annual' : 'monthly';
       fbEvents.subscribe(price);
-      ttEvents.completePayment(price);
+      ttEvents.subscribe(price, planType);
       router.replace('/dashboard/subscription', { scroll: false });
     } else if (searchParams.get('canceled') === 'true') {
       setToast({ type: 'error', message: 'Paiement annulé.' });
