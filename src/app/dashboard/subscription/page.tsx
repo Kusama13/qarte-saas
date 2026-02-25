@@ -19,6 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
 import type { Merchant } from '@/types';
 import { useMerchant } from '@/contexts/MerchantContext';
+import { fbEvents } from '@/components/analytics/FacebookPixel';
 
 interface PaymentMethod {
   brand: string;
@@ -71,6 +72,10 @@ export default function SubscriptionPage() {
     if (searchParams.get('success') === 'true') {
       setToast({ type: 'success', message: 'Abonnement actif !' });
       setPolling(true);
+      // Facebook Pixel — Purchase event (dedup with server-side CAPI)
+      const plan = searchParams.get('plan');
+      const price = plan === 'annual' ? 190 : 19;
+      fbEvents.subscribe(price);
       router.replace('/dashboard/subscription', { scroll: false });
     } else if (searchParams.get('canceled') === 'true') {
       setToast({ type: 'error', message: 'Paiement annulé.' });

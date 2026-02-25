@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
 import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail } from '@/lib/email';
+import { sendCapiPurchaseEvent } from '@/lib/facebook-capi';
 import type { SubscriptionStatus } from '@/types';
 
 const supabase = createClient(
@@ -86,6 +87,18 @@ export async function POST(request: Request) {
         const billingInterval = session.metadata?.plan === 'annual' ? 'annual' : 'monthly';
         await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate, billingInterval).catch((err) => {
           logger.error('Failed to send subscription email', err);
+        });
+
+        // Facebook CAPI — Purchase event (dedup with client-side Pixel via event_id)
+        const isAnnual = session.metadata?.plan === 'annual';
+        const eventId = `sub_${merchantId}_${Date.now()}`;
+        await sendCapiPurchaseEvent({
+          email: userData.user.email,
+          value: isAnnual ? 190 : 19,
+          contentName: isAnnual ? 'Qarte Pro Annuel' : 'Qarte Pro',
+          eventId,
+        }).catch((err) => {
+          logger.error('Failed to send CAPI purchase event', err);
         });
       }
 

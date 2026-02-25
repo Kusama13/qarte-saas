@@ -359,6 +359,10 @@ CRON_SECRET=
 NEXT_PUBLIC_GTM_ID=
 NEXT_PUBLIC_GA4_ID=
 
+# Facebook Conversions API
+FACEBOOK_CAPI_ACCESS_TOKEN=
+# FACEBOOK_CAPI_TEST_CODE=  # Pour test dans Events Manager
+
 # App
 NEXT_PUBLIC_APP_URL=
 CONTACT_EMAIL=
@@ -375,14 +379,23 @@ CONTACT_EMAIL=
 - **Google Search Console:** verifie (DNS TXT + meta tag)
 - **Vercel Analytics**
 
-### Evenements Facebook Pixel
+### Evenements Facebook Pixel (client-side)
 - `PageView` - automatique
 - `Lead` - generation lead
 - `CompleteRegistration` - inscription terminee
 - `StartTrial` - debut essai
-- `Subscribe` - abonnement
+- `Purchase` - souscription Stripe (avec `eventID` pour dedup CAPI)
 - `InitiateCheckout` - clic signup
 - `ScrollDepth` - profondeur scroll
+
+### Facebook Conversions API (CAPI, server-side)
+- **Fichier:** `src/lib/facebook-capi.ts`
+- **Declencheur:** Webhook Stripe `checkout.session.completed`
+- **Event:** `Purchase` (19€ mensuel / 190€ annuel)
+- **Dedup:** `event_id` = `sub_{merchant_id}_{timestamp}` (partage entre Pixel client + CAPI serveur)
+- **User data:** Email hashe SHA256 (conforme RGPD)
+- **Env var:** `FACEBOOK_CAPI_ACCESS_TOKEN` (genere dans Facebook Business Manager)
+- **Pattern:** Fire-and-forget avec `.catch()` (ne bloque jamais le webhook)
 
 ---
 
@@ -467,7 +480,8 @@ npm run email
 | `src/lib/stripe.ts` | Client Stripe (mensuel + annuel) |
 | `src/lib/email.ts` | Envoi emails (Resend) |
 | `src/types/index.ts` | Definitions TypeScript |
-| `src/components/analytics/FacebookPixel.tsx` | Tracking FB |
+| `src/components/analytics/FacebookPixel.tsx` | Tracking FB Pixel (client-side, avec eventID dedup) |
+| `src/lib/facebook-capi.ts` | Facebook Conversions API (server-side Purchase) |
 | `tailwind.config.ts` | Config Tailwind (couleurs, fonts) |
 | `next.config.mjs` | Config Next.js (securite, images) |
 | `src/app/api/cron/morning/route.ts` | Cron principal (4 taches) |

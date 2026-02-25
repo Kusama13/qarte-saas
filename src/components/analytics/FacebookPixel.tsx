@@ -37,9 +37,11 @@ export function FacebookPixel() {
 }
 
 // Helper function to track events
-export function trackFBEvent(eventName: string, params?: Record<string, any>) {
+export function trackFBEvent(eventName: string, params?: Record<string, any>, options?: { eventID?: string }) {
   if (typeof window !== "undefined" && (window as any).fbq) {
-    if (params) {
+    if (params && options) {
+      (window as any).fbq("track", eventName, params, options);
+    } else if (params) {
       (window as any).fbq("track", eventName, params);
     } else {
       (window as any).fbq("track", eventName);
@@ -52,7 +54,12 @@ export const fbEvents = {
   lead: () => trackFBEvent("Lead"),
   completeRegistration: () => trackFBEvent("CompleteRegistration"),
   startTrial: () => trackFBEvent("StartTrial"),
-  subscribe: (value?: number) => trackFBEvent("Subscribe", value ? { value, currency: "EUR" } : undefined),
+  subscribe: (value?: number, eventId?: string) =>
+    trackFBEvent(
+      "Purchase",
+      value ? { value, currency: "EUR" } : undefined,
+      eventId ? { eventID: eventId } : undefined,
+    ),
   scrollDepth: (percent: number) => trackFBEvent("ScrollDepth", { percent }),
   initiateCheckout: () => trackFBEvent("InitiateCheckout"), // Clic signup
 };

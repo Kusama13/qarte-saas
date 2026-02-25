@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?success=true`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?success=true&plan=${selectedPriceId === PLAN_ANNUAL.priceId ? 'annual' : 'monthly'}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?canceled=true`,
       metadata: {
         merchant_id: merchant.id,
