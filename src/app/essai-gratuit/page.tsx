@@ -14,6 +14,7 @@ import {
   Gift,
 } from 'lucide-react';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 // Animation variants
 const fadeInUp = {
@@ -47,6 +48,7 @@ function StickyMobileCTA() {
 
   const handleClick = () => {
     fbEvents.initiateCheckout();
+    ttEvents.initiateCheckout();
   };
 
   return (
@@ -72,6 +74,7 @@ function StickyMobileCTA() {
 export default function OffreSpecialePage() {
   const handleCTAClick = () => {
     fbEvents.initiateCheckout();
+    ttEvents.initiateCheckout();
   };
 
   return (

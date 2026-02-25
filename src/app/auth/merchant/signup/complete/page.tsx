@@ -18,6 +18,7 @@ import { generateSlug, formatPhoneNumber, validatePhone, PHONE_CONFIG } from '@/
 import { SHOP_TYPES, type ShopType, COUNTRIES, type MerchantCountry } from '@/types';
 import { trackPageView, trackSetupCompleted, trackSignupCompleted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
   value,
@@ -146,6 +147,7 @@ export default function CompleteProfilePage() {
       trackSignupCompleted(userId!, 'email');
       trackSetupCompleted({ merchant_id: result.merchant?.id || userId!, business_type: formData.shopType || undefined });
       fbEvents.completeRegistration();
+      ttEvents.completeRegistration();
 
       // Redirect to program config
       window.location.href = '/dashboard/program';

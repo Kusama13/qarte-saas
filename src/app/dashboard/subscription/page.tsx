@@ -20,6 +20,7 @@ import { getTrialStatus, formatDate } from '@/lib/utils';
 import type { Merchant } from '@/types';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 interface PaymentMethod {
   brand: string;
@@ -76,6 +77,7 @@ export default function SubscriptionPage() {
       const plan = searchParams.get('plan');
       const price = plan === 'annual' ? 190 : 19;
       fbEvents.subscribe(price);
+      ttEvents.completePayment(price);
       router.replace('/dashboard/subscription', { scroll: false });
     } else if (searchParams.get('canceled') === 'true') {
       setToast({ type: 'error', message: 'Paiement annulé.' });

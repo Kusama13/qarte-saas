@@ -2,6 +2,7 @@
 
 import { LandingAnalytics } from '@/components/analytics/LandingAnalytics';
 import { FacebookPixel, FacebookScrollTracker } from '@/components/analytics/FacebookPixel';
+import { TikTokPixel, TikTokPageTracker } from '@/components/analytics/TikTokPixel';
 
 export default function ClientShell() {
   return (
@@ -9,6 +10,8 @@ export default function ClientShell() {
       <LandingAnalytics />
       <FacebookPixel />
       <FacebookScrollTracker />
+      <TikTokPixel />
+      <TikTokPageTracker />
     </>
   );
 }

@@ -375,6 +375,7 @@ CONTACT_EMAIL=
 - **Google Tag Manager:** GTM-T5Z84DPV
 - **Google Analytics 4:** G-WM3XVQ38BD
 - **Facebook Pixel:** 1438158154679532
+- **TikTok Pixel:** D6FCUKBC77UC649NN2J0
 - **Microsoft Clarity:** vjx7g9ttax (heatmaps, session recordings, scroll tracking)
 - **Google Search Console:** verifie (DNS TXT + meta tag)
 - **Vercel Analytics**
@@ -387,6 +388,12 @@ CONTACT_EMAIL=
 - `Purchase` - souscription Stripe (avec `eventID` pour dedup CAPI)
 - `InitiateCheckout` - clic signup
 - `ScrollDepth` - profondeur scroll
+
+### Evenements TikTok Pixel (client-side)
+- `PageView` - automatique (`ttq.page()`, re-fire sur chaque route SPA)
+- `CompleteRegistration` - inscription terminee
+- `InitiateCheckout` - clic signup (essai-gratuit)
+- `CompletePayment` - souscription Stripe (avec value/currency)
 
 ### Facebook Conversions API (CAPI, server-side)
 - **Fichier:** `src/lib/facebook-capi.ts`
@@ -481,6 +488,7 @@ npm run email
 | `src/lib/email.ts` | Envoi emails (Resend) |
 | `src/types/index.ts` | Definitions TypeScript |
 | `src/components/analytics/FacebookPixel.tsx` | Tracking FB Pixel (client-side, avec eventID dedup) |
+| `src/components/analytics/TikTokPixel.tsx` | Tracking TikTok Pixel (client-side, SPA page tracker) |
 | `src/lib/facebook-capi.ts` | Facebook Conversions API (server-side Purchase) |
 | `tailwind.config.ts` | Config Tailwind (couleurs, fonts) |
 | `next.config.mjs` | Config Next.js (securite, images) |
