@@ -11,7 +11,7 @@ export function FooterSection() {
       <div className="bg-gray-50 border-t border-gray-200 py-16">
         <div className="max-w-6xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-            Rejoignez les pros qui fidélisent avec Qarte
+            Rejoins les pros qui fidélisent avec Qarte
           </h2>
           <a
             href="/auth/merchant/signup"

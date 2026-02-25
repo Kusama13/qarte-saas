@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import { Noto_Sans, Playfair_Display, Poppins } from 'next/font/google';
+import { Plus_Jakarta_Sans, Playfair_Display, Poppins } from 'next/font/google';
 import './globals.css';
 import CookieBanner from '@/components/shared/CookieBanner';
 import { Analytics } from '@vercel/analytics/react';
 import { MicrosoftClarity } from '@/components/analytics/MicrosoftClarity';
 
-const notoSans = Noto_Sans({ subsets: ['latin'], variable: '--font-inter' });
+const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-inter' });
 const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' });
 const poppins = Poppins({ subsets: ['latin'], weight: ['600', '700', '800', '900'], variable: '--font-poppins' });
 
@@ -68,7 +68,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className={`${notoSans.variable} ${playfair.variable} ${poppins.variable}`}>
+    <html lang="fr" className={`${plusJakarta.variable} ${playfair.variable} ${poppins.variable}`}>
       <head>
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

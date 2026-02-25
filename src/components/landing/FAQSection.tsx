@@ -7,8 +7,8 @@ import { useInView } from '@/hooks/useInView';
 
 const faqs = [
   {
-    question: "Et si mes clients n'ont pas de smartphone ?",
-    answer: "99% de vos clients en ont un. Pour les rares exceptions, notez les points et ajoutez-les plus tard, tout simplement.",
+    question: "Et si mes clientes n'ont pas de smartphone ?",
+    answer: "99% en ont un. Pour les rares exceptions, note les points et ajoute-les plus tard.",
   },
   {
     question: "Combien de temps pour être opérationnel ?",
@@ -16,19 +16,19 @@ const faqs = [
   },
   {
     question: "Ça marche pour les prestations à domicile ?",
-    answer: "Oui. Montrez le QR code sur votre téléphone, la cliente scanne, son point est validé.",
+    answer: "Oui. Montre le QR code sur ton téléphone, ta cliente scanne, son point est validé.",
   },
   {
-    question: "Mes clients vont trouver ça compliqué ?",
+    question: "Mes clientes vont trouver ça compliqué ?",
     answer: "Elles scannent le QR code avec leur appareil photo et c'est tout. Pas d'app, pas de compte à créer. Ultra simple.",
   },
   {
     question: "Que se passe-t-il si j'arrête Qarte ?",
-    answer: "Vos données vous appartiennent. Export CSV en 1 clic. Pas de piège, pas d'engagement.",
+    answer: "Tes données t'appartiennent. Export CSV en 1 clic. Pas de piège, pas d'engagement.",
   },
   {
     question: "Comment fonctionne le parrainage ?",
-    answer: "Votre cliente partage son lien. Quand une amie fait son premier passage, les deux sont récompensées. Automatique.",
+    answer: "Ta cliente partage son lien. Quand une amie fait son premier passage, les deux sont récompensées. Automatique.",
   },
   {
     question: "19€/mois, c'est trop cher ?",
@@ -36,11 +36,11 @@ const faqs = [
   },
   {
     question: "Mes données sont-elles protégées (RGPD) ?",
-    answer: "100% conforme RGPD, hébergé en Europe, chiffré. Vos données restent les vôtres. On ne revend rien, jamais.",
+    answer: "100% conforme RGPD, hébergé en Europe, chiffré. Tes données restent les tiennes. On ne revend rien, jamais.",
   },
   {
     question: "Ça s'intègre avec mon logiciel de salon ?",
-    answer: "Qarte fonctionne tout seul, à côté de vos outils actuels. Rien à changer dans votre organisation.",
+    answer: "Qarte fonctionne tout seul, à côté de tes outils actuels. Rien à changer dans ton organisation.",
   },
   {
     question: "Le prix change après les 7 jours gratuits ?",
@@ -48,7 +48,7 @@ const faqs = [
   },
   {
     question: "Je suis esthéticienne indépendante, c'est pour moi ?",
-    answer: "Absolument. Créez votre programme en 5 minutes, gérez vos clientes, développez le bouche-à-oreille.",
+    answer: "Absolument. Crée ton programme en 5 minutes, gère tes clientes, développe le bouche-à-oreille.",
   },
 ];
 
@@ -79,29 +79,26 @@ function AccordionItem({
       >
         <button
           onClick={onToggle}
-          className="group w-full flex items-center gap-4 sm:gap-5 p-4 sm:p-6 md:p-7 text-left cursor-pointer"
+          className="group w-full flex items-center gap-4 p-5 sm:p-6 text-left cursor-pointer"
           aria-expanded={isOpen}
         >
-          {/* Question */}
           <h3
-            className={`flex-1 text-lg md:text-xl font-bold leading-snug transition-colors duration-300 ${
+            className={`flex-1 text-lg md:text-xl font-semibold leading-snug transition-colors duration-300 ${
               isOpen ? 'text-gray-900' : 'text-gray-700 group-hover:text-gray-900'
             }`}
           >
             {faq.question}
           </h3>
 
-          {/* Bouton toggle coloré */}
           <motion.div
             animate={{ rotate: isOpen ? 180 : 0 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-            className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 transition-shadow duration-300"
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="flex-shrink-0 text-gray-400 group-hover:text-gray-600 transition-colors duration-300"
           >
             <ChevronDown className="w-5 h-5" />
           </motion.div>
         </button>
 
-        {/* Réponse animée */}
         <AnimatePresence initial={false}>
           {isOpen && (
             <motion.div
@@ -111,9 +108,9 @@ function AccordionItem({
               transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
               className="overflow-hidden"
             >
-              <div className="px-6 md:px-7 pb-7">
-                <div className="pt-4 border-t border-gray-100">
-                  <p className="text-base md:text-[17px] text-gray-500 leading-relaxed">
+              <div className="px-4 sm:px-5 pb-5">
+                <div className="pt-3 border-t border-gray-100">
+                  <p className="text-base text-gray-500 leading-relaxed">
                     {faq.answer}
                   </p>
                 </div>
@@ -131,24 +128,23 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="relative py-24 md:py-32 overflow-hidden bg-white">
+    <section id="faq" className="relative py-16 md:py-24 overflow-hidden bg-white">
 
       <div ref={ref} className="relative max-w-4xl mx-auto px-6">
         {/* Header */}
-        <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+        <div className={`text-center mb-10 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             On répond à{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              toutes vos questions
+              toutes tes questions
             </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Tout ce que vous devez savoir avant de vous lancer.
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Tout ce que tu dois savoir avant de te lancer.
           </p>
         </div>
 
-        {/* Accordion */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2.5">
           {faqs.map((faq, index) => (
             <AccordionItem
               key={index}
@@ -165,7 +161,7 @@ export function FAQSection() {
           initial={{ opacity: 0, y: 16 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="mt-10 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50/80 to-white p-5 md:p-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6"
+          className="mt-8 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50/80 to-white p-4 md:p-5 flex flex-col sm:flex-row items-center gap-3 sm:gap-5"
         >
           <div className="flex items-center gap-3 flex-1 min-w-0">
             <div className="relative flex-shrink-0">
@@ -177,7 +173,7 @@ export function FAQSection() {
               <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-gray-900">Une question ? Écrivez-nous directement.</p>
+              <p className="text-sm font-bold text-gray-900">Une question ? Écris-nous directement.</p>
               <p className="text-xs text-gray-400">Réponse en moins d&apos;1h</p>
             </div>
           </div>

@@ -7,7 +7,7 @@ import {
   ScrollToTopButton,
 } from '@/components/landing';
 import ClientShell from '@/components/landing/ClientShell';
-import { LazyHowItWorksSection, LazyReferralSection, LazyAIReengagementSection, LazyFAQSection } from '@/components/landing/LazySections';
+import { LazyBentoFeaturesSection, LazyFAQSection } from '@/components/landing/LazySections';
 
 export default function LandingPageV4() {
   return (
@@ -17,9 +17,7 @@ export default function LandingPageV4() {
       <main className="overflow-hidden">
         <HeroSection />
         <SocialProofSection />
-        <LazyHowItWorksSection />
-        <LazyReferralSection />
-        <LazyAIReengagementSection />
+        <LazyBentoFeaturesSection />
         <TestimonialsSection />
         <PricingSection />
         <LazyFAQSection />

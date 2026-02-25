@@ -8,24 +8,20 @@ interface ChatMsg {
   from: 'qarte' | 'them';
   text: string;
   time?: string;
-  timeBreak?: string; // time separator shown BEFORE this message (shows delay)
+  timeBreak?: string;
 }
 
 interface Testimonial {
-  platform: 'whatsapp' | 'imessage' | 'instagram';
   name: string;
   initials: string;
   dayLabel: string;
   messages: ChatMsg[];
-  handle?: string;
-  readStatus?: string;
 }
 
-/* ─── Data (noms du bandeau défilant) ────────────────── */
+/* ─── Data ────────────────────────────────────────────── */
 
 const testimonials: Testimonial[] = [
   {
-    platform: 'whatsapp',
     name: 'Lunzia Studio',
     initials: 'LS',
     dayLabel: 'SAMEDI',
@@ -38,34 +34,29 @@ const testimonials: Testimonial[] = [
     ],
   },
   {
-    platform: 'imessage',
     name: 'Doux Regard',
     initials: 'DR',
-    dayLabel: 'Jeudi 16:48',
-    readStatus: 'Lu',
+    dayLabel: 'JEUDI',
     messages: [
-      { from: 'qarte', text: "Hello ! 6 semaines sur Qarte, vous en pensez quoi ? 😊" },
+      { from: 'qarte', text: "Hello ! 6 semaines sur Qarte, vous en pensez quoi ? 😊", time: '16:48' },
       { from: 'them', text: "Ah oui j'adore", timeBreak: '19:12' },
       { from: 'them', text: "Honnêtement en 2 semaines j'avais deja recupéré le prix de l'abonnement" },
-      { from: 'them', text: "Y'a une cliente qui est revenue 3 fois juste pour remplir sa carte 😂" },
+      { from: 'them', text: "Y'a une cliente qui est revenue 3 fois juste pour remplir sa carte 😂", time: '19:13' },
     ],
   },
   {
-    platform: 'instagram',
     name: 'Nour Beauté',
-    handle: 'nour.beaute',
     initials: 'NB',
-    dayLabel: '',
+    dayLabel: 'MARDI',
     messages: [
-      { from: 'qarte', text: "Hey ! 2 mois sur Qarte, on peut avoir votre retour ? 🙏" },
-      { from: 'them', text: "Le truc qui change tout c'est la notif auto", timeBreak: 'jeu. 14:33' },
+      { from: 'qarte', text: "Hey ! 2 mois sur Qarte, on peut avoir votre retour ? 🙏", time: '11:20' },
+      { from: 'them', text: "Le truc qui change tout c'est la notif auto", timeBreak: '14:33' },
       { from: 'them', text: "Mes clientes me disent \"ah oui faut que je revienne\" 😂" },
       { from: 'them', text: "Honnêtement j'aurais du prendre avant" },
-      { from: 'them', text: "D'ailleurs merci Camélia elle repond super vite a mes questions 🙏" },
+      { from: 'them', text: "D'ailleurs merci Camélia elle repond super vite a mes questions 🙏", time: '14:35' },
     ],
   },
   {
-    platform: 'whatsapp',
     name: 'Le Comptoir du Visage',
     initials: 'CV',
     dayLabel: 'MERCREDI',
@@ -77,15 +68,6 @@ const testimonials: Testimonial[] = [
       { from: 'them', text: "Et en plus elles recoivent une notif quand elles ont la récompense 👏", time: '13:04' },
     ],
   },
-];
-
-/* ─── Scatter layout (desktop only) ──────────────────── */
-
-const scatterClasses = [
-  'md:-rotate-[2deg] md:z-10',
-  'md:rotate-[1.5deg] md:z-20 md:mt-10',
-  'md:rotate-[1deg] md:z-30 md:-mt-8',
-  'md:-rotate-[1.2deg] md:z-20 md:-mt-10',
 ];
 
 /* ─── WhatsApp double check ──────────────────────────── */
@@ -107,7 +89,7 @@ function DoubleCheck() {
   );
 }
 
-/* ─── WhatsApp ───────────────────────────────────────── */
+/* ─── WhatsApp Chat ──────────────────────────────────── */
 
 function WhatsAppChat({ data }: { data: Testimonial }) {
   return (
@@ -175,155 +157,6 @@ function WhatsAppChat({ data }: { data: Testimonial }) {
   );
 }
 
-/* ─── iMessage ───────────────────────────────────────── */
-
-function IMessageChat({ data }: { data: Testimonial }) {
-  return (
-    <div className="rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/5 bg-white">
-      {/* Header */}
-      <div className="px-3 pt-2 pb-2.5 border-b border-[#C6C6C8]/40 bg-[#F2F2F7]">
-        <div className="flex items-center justify-between mb-1.5">
-          <svg className="w-5 h-5 text-[#007AFF]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          <span className="text-[10px] text-[#8E8E93] font-medium">iMessage</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <div className="w-10 h-10 rounded-full bg-[#C7C7CC] flex items-center justify-center text-white text-[15px] font-semibold">
-            {data.initials}
-          </div>
-          <p className="text-[13px] font-semibold text-black mt-1">{data.name}</p>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="px-3 py-3 flex flex-col gap-[5px]">
-        {data.dayLabel && (
-          <p className="text-[11px] text-[#8E8E93] text-center mb-1">{data.dayLabel}</p>
-        )}
-
-        {data.messages.map((msg, i) => {
-          const isQarte = msg.from === 'qarte';
-          return (
-            <div key={i}>
-              {/* Time gap label */}
-              {msg.timeBreak && (
-                <p className="text-[11px] text-[#8E8E93] text-center my-2">{msg.timeBreak}</p>
-              )}
-
-              <div className={`flex ${isQarte ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[78%] px-3 py-[6px] rounded-[18px] ${
-                  isQarte
-                    ? 'bg-[#007AFF] text-white rounded-br-[6px]'
-                    : 'bg-[#E9E9EB] text-black rounded-bl-[6px]'
-                }`}>
-                  <p className="text-[15.5px] leading-[20px]">{msg.text}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-
-        {data.readStatus && (
-          <p className="text-[10.5px] text-[#8E8E93] text-right mr-1 mt-0.5">{data.readStatus}</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Instagram DM ───────────────────────────────────── */
-
-function InstagramChat({ data }: { data: Testimonial }) {
-  const lastThemIdx = (() => {
-    for (let i = data.messages.length - 1; i >= 0; i--) {
-      if (data.messages[i].from === 'them') return i;
-    }
-    return -1;
-  })();
-
-  return (
-    <div className="rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/5 bg-white">
-      {/* Header */}
-      <div className="px-3 py-2.5 flex items-center gap-2.5 border-b border-[#DBDBDB]/60">
-        <svg className="w-5 h-5 text-[#262626]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-        <div className="relative">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] p-[2px]">
-            <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-[10px] font-bold text-[#262626]">
-              {data.initials}
-            </div>
-          </div>
-          <div className="absolute -bottom-0.5 -right-0.5 w-[9px] h-[9px] bg-[#1CD14F] rounded-full border-[1.5px] border-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-[#262626] leading-tight truncate">{data.handle || data.name}</p>
-          <p className="text-[11px] text-[#8E8E93] leading-tight">Active maintenant</p>
-        </div>
-        <div className="flex items-center gap-3 text-[#262626]">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" /></svg>
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
-        </div>
-      </div>
-
-      {/* Messages */}
-      <div className="px-3 py-3 flex flex-col gap-[5px]">
-        {data.messages.map((msg, i) => {
-          const isQarte = msg.from === 'qarte';
-          const isLastThem = i === lastThemIdx;
-
-          return (
-            <div key={i}>
-              {/* Time gap label */}
-              {msg.timeBreak && (
-                <p className="text-[10.5px] text-[#8E8E93] text-center my-2">{msg.timeBreak}</p>
-              )}
-
-              {isQarte ? (
-                <div className="flex justify-end">
-                  <div className="max-w-[75%] px-3 py-2 bg-[#3797F0] text-white rounded-[22px] rounded-br-[6px]">
-                    <p className="text-[14px] leading-[18px]">{msg.text}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-start items-end gap-1.5">
-                  {isLastThem ? (
-                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] p-[1px] flex-shrink-0">
-                      <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-[6px] font-bold text-[#262626]">
-                        {data.initials}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-5 flex-shrink-0" />
-                  )}
-                  <div className="max-w-[75%] px-3 py-2 bg-[#EFEFEF] text-[#262626] rounded-[22px] rounded-bl-[6px]">
-                    <p className="text-[14px] leading-[18px]">{msg.text}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-        <p className="text-[10.5px] text-[#8E8E93] text-right mr-1 mt-0.5">Vu</p>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Dispatcher ─────────────────────────────────────── */
-
-function ChatCard({ data }: { data: Testimonial }) {
-  switch (data.platform) {
-    case 'whatsapp':
-      return <WhatsAppChat data={data} />;
-    case 'imessage':
-      return <IMessageChat data={data} />;
-    case 'instagram':
-      return <InstagramChat data={data} />;
-  }
-}
-
 /* ─── Section ────────────────────────────────────────── */
 
 export function TestimonialsSection() {
@@ -346,17 +179,16 @@ export function TestimonialsSection() {
           </p>
         </div>
 
-        {/* Grille éparpillée de captures */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-x-5 md:gap-y-0 items-start">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-6 items-start">
           {testimonials.map((t, i) => (
             <div
               key={i}
-              className={`relative transition-all duration-500 cursor-default md:hover:!rotate-0 md:hover:scale-[1.02] md:hover:!z-50 ${
+              className={`transition-all duration-500 ${
                 isInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-              } ${scatterClasses[i]}`}
+              }`}
               style={{ transitionDelay: isInView ? `${i * 100}ms` : '0ms' }}
             >
-              <ChatCard data={t} />
+              <WhatsAppChat data={t} />
             </div>
           ))}
         </div>

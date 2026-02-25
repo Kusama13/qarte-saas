@@ -30,7 +30,7 @@ export function PricingSection() {
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Un prix, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">tout inclus</span>
           </h2>
-          <p className="text-xl text-gray-600">Pas de surprise, pas de frais cachés. Pensé pour vous.</p>
+          <p className="text-xl text-gray-600">Pas de surprise, pas de frais cachés. Pensé pour toi.</p>
         </div>
 
         {/* 2-column layout */}
@@ -97,10 +97,8 @@ export function PricingSection() {
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
               />
-              {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-              {/* Citation overlay */}
               <div className="absolute bottom-0 left-0 right-0 p-8">
                 <Quote className="w-8 h-8 text-white/40 mb-3 rotate-180" />
                 <p className="text-white text-lg font-medium leading-relaxed mb-4">

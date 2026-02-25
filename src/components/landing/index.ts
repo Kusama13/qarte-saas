@@ -1,3 +1,4 @@
+export { BentoFeaturesSection } from './BentoFeaturesSection';
 export { HeroSection } from './HeroSection';
 export { SocialProofSection } from './SocialProofSection';
 export { TestimonialsSection } from './TestimonialsSection';

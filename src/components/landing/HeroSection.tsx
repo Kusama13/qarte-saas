@@ -28,7 +28,7 @@ export function HeroSection() {
       {/* Sticky Top Banner - Customer Card Recovery */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gray-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-center gap-2 text-sm">
-          <span className="text-gray-500 hidden sm:inline">Vous avez déjà une carte de fidélité ?</span>
+          <span className="text-gray-500 hidden sm:inline">Tu as déjà une carte de fidélité ?</span>
           <span className="text-gray-500 sm:hidden">Déjà client ?</span>
           <a
             href="/customer/cards"
@@ -143,10 +143,10 @@ export function HeroSection() {
         <div className={`space-y-6 lg:space-y-8 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
-            <h1 className="relative text-4xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+            <h1 className="relative text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
               Le programme de fidélité qui fait{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
-                revenir vos clients.
+                revenir tes clientes.
               </span>
             </h1>
           </div>
@@ -162,7 +162,7 @@ export function HeroSection() {
                 onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
                 className="group relative flex items-center justify-center px-7 py-4 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
-                <span className="relative z-10">Essayez gratuitement</span>
+                <span className="relative z-10">Essaie gratuitement</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
               <p className="text-xs text-gray-400 font-medium mt-2 text-center">Sans carte bancaire, c&apos;est promis :)</p>
@@ -335,7 +335,7 @@ export function HeroSection() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[9px] font-bold text-indigo-600 uppercase tracking-wider">Qarte</p>
-                  <p className="text-[10px] font-semibold text-gray-800 leading-tight">-20% sur votre prochain soin cette semaine !</p>
+                  <p className="text-[10px] font-semibold text-gray-800 leading-tight">-20% sur ton prochain soin cette semaine !</p>
                   <p className="text-[8px] text-gray-400 mt-0.5">Il y a 2 min</p>
                 </div>
               </div>
