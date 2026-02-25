@@ -175,7 +175,7 @@ export default function SubscriptionPage() {
         return;
       }
 
-      if (attempts >= 10) {
+      if (attempts >= 15) {
         if (data) {
           setMerchant(data);
           if (data.billing_interval === 'annual') setBillingPlan('annual');
@@ -186,12 +186,12 @@ export default function SubscriptionPage() {
         return;
       }
 
-      // Exponential backoff: 3s, 4.5s, 6.75s, ...
-      const delay = 3000 * Math.pow(1.5, attempts - 1);
+      // Fast polls first (1s x5), then slow down (3s, 4.5s, 6.75s...)
+      const delay = attempts <= 5 ? 1000 : 3000 * Math.pow(1.5, attempts - 6);
       timeoutId = setTimeout(poll, delay);
     };
 
-    timeoutId = setTimeout(poll, 3000);
+    timeoutId = setTimeout(poll, 1000);
     return () => {
       cancelled = true;
       clearTimeout(timeoutId);
@@ -450,9 +450,12 @@ export default function SubscriptionPage() {
           {/* Syncing indicator */}
           {polling && (
             <div className="rounded-2xl shadow-xl overflow-hidden relative p-4 sm:p-5 bg-gradient-to-r from-indigo-600 to-violet-600 shadow-indigo-100">
-              <div className="relative z-10 flex items-center justify-center gap-3 text-white">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span className="text-sm font-bold">Synchronisation de votre abonnement...</span>
+              <div className="relative z-10 flex flex-col items-center justify-center gap-1.5 text-white">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span className="text-sm font-bold">Synchronisation de votre abonnement...</span>
+                </div>
+                <p className="text-xs text-white/70">Quelques secondes, tout est en ordre.</p>
               </div>
               <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-white/5 skew-x-12 translate-x-10" />
             </div>
