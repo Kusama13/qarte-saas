@@ -47,13 +47,13 @@ const SHOP_TYPE_LABELS: Record<string, string> = {
 const COLOR_PALETTES = [
   { primary: '#1e293b', secondary: '#475569', name: 'Élégant', icon: '✂️' },
   { primary: '#db2777', secondary: '#f472b6', name: 'Glamour', icon: '💅' },
-  { primary: '#7c3aed', secondary: '#a78bfa', name: 'Moderne', icon: '💜' },
+  { primary: '#7c3aed', secondary: '#a78bfa', name: 'Moderne', icon: '💜', desktopOnly: true },
   { primary: '#059669', secondary: '#10b981', name: 'Zen', icon: '🧘' },
-  { primary: '#0891b2', secondary: '#22d3ee', name: 'Frais', icon: '💎' },
+  { primary: '#92704f', secondary: '#c8a97e', name: 'Sable', icon: '🏖️' },
   { primary: '#b45309', secondary: '#f59e0b', name: 'Doré', icon: '👑' },
-  { primary: '#9f1239', secondary: '#e11d48', name: 'Rosé', icon: '🌸', desktopOnly: true },
+  { primary: '#0891b2', secondary: '#22d3ee', name: 'Frais', icon: '💎', desktopOnly: true },
   { primary: '#0f766e', secondary: '#2dd4bf', name: 'Menthe', icon: '🍃', desktopOnly: true },
-  { primary: '#6d28d9', secondary: '#c084fc', name: 'Orchidée', icon: '🪻', desktopOnly: true },
+  { primary: '#6d28d9', secondary: '#c084fc', name: 'Orchidée', icon: '🪻' },
   { primary: '#be185d', secondary: '#fb7185', name: 'Corail', icon: '🌺', desktopOnly: true },
 ];
 
