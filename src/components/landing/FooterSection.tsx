@@ -30,12 +30,9 @@ export function FooterSection() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-12">
             {/* Col 1 : Logo + tagline */}
             <div className="md:col-span-1">
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">Q</span>
-                </div>
-                <span className="text-xl font-bold">Qarte</span>
-              </div>
+              <a href="/" className="inline-block text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400 mb-4">
+                Qarte
+              </a>
               <p className="text-gray-400 text-base leading-relaxed">
                 La carte de fidélité digitale pour les pros de la beauté et du bien-être.
               </p>

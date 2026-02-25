@@ -14,7 +14,11 @@ import {
   Cake,
   CalendarHeart,
   MousePointer2,
+  ArrowRight,
 } from 'lucide-react';
+import { trackCtaClick } from '@/lib/analytics';
+import { fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -575,6 +579,24 @@ export function BentoFeaturesSection() {
             delay={0.05}
           />
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: EASE }}
+          className="mt-20 text-center"
+        >
+          <a
+            href="/auth/merchant/signup"
+            onClick={() => { trackCtaClick('bento_cta', 'bento_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+          >
+            Essaie gratuitement
+            <ArrowRight className="w-5 h-5" />
+          </a>
+          <p className="text-sm text-gray-400 mt-3">7 jours gratuits, sans carte bancaire</p>
+        </motion.div>
       </div>
     </section>
   );
