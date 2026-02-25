@@ -70,11 +70,6 @@ export function FooterSection() {
                   </a>
                 </li>
                 <li>
-                  <a href="/qarte-vs-carte-papier" className="text-gray-300 hover:text-white transition-colors text-sm underline underline-offset-4 decoration-gray-600 hover:decoration-white">
-                    Qarte vs Carte papier
-                  </a>
-                </li>
-                <li>
                   <a href="/mentions-legales" className="text-gray-300 hover:text-white transition-colors text-sm underline underline-offset-4 decoration-gray-600 hover:decoration-white">
                     Mentions légales
                   </a>

@@ -47,7 +47,7 @@ export default function AugmenterRecurrenceInstitutPage() {
               Qarte
             </Link>
             <Link
-              href="/essai-gratuit"
+              href="/auth/merchant/signup"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
             >
               Essai gratuit
@@ -801,7 +801,7 @@ export default function AugmenterRecurrenceInstitutPage() {
                 19 euros/mois &middot; Sans engagement &middot; Prêt en 2 minutes
               </p>
               <Link
-                href="/essai-gratuit"
+                href="/auth/merchant/signup"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-700 font-bold rounded-2xl hover:bg-indigo-50 transition-colors text-lg"
               >
                 Essayer gratuitement

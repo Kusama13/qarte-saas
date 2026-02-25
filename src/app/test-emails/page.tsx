@@ -1,31 +1,25 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-
-type EmailType = 'ebook' | 'qrcode';
+import { useState, useEffect } from 'react';
 
 export default function TestEmailsPage() {
-  const [selectedEmail, setSelectedEmail] = useState<EmailType>('ebook');
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
-  const loadEmail = useCallback(async (type: EmailType) => {
-    setSelectedEmail(type);
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/test-emails?type=${type}`);
-      const data = await res.json();
-      setHtmlContent(data.html);
-    } catch (error) {
-      console.error('Error loading email:', error);
-      setHtmlContent('<p>Erreur lors du chargement</p>');
-    }
-    setLoading(false);
-  }, []);
-
   useEffect(() => {
-    loadEmail('ebook');
-  }, [loadEmail]);
+    async function loadEmail() {
+      try {
+        const res = await fetch('/api/test-emails?type=qrcode');
+        const data = await res.json();
+        setHtmlContent(data.html);
+      } catch (error) {
+        console.error('Error loading email:', error);
+        setHtmlContent('<p>Erreur lors du chargement</p>');
+      }
+      setLoading(false);
+    }
+    loadEmail();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -41,32 +35,8 @@ export default function TestEmailsPage() {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Email Preview */}
       <div className="max-w-5xl mx-auto px-4 mt-6">
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => loadEmail('ebook')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              selectedEmail === 'ebook'
-                ? 'bg-violet-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-            }`}
-          >
-            📚 Ebook Email
-          </button>
-          <button
-            onClick={() => loadEmail('qrcode')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              selectedEmail === 'qrcode'
-                ? 'bg-violet-600 text-white'
-                : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-            }`}
-          >
-            📱 QR Code Email
-          </button>
-        </div>
-
-        {/* Email Preview */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Email Header Info */}
           <div className="bg-gray-50 border-b px-6 py-4">
@@ -77,22 +47,13 @@ export default function TestEmailsPage() {
               </div>
               <div>
                 <span className="text-gray-500">Subject:</span>{' '}
-                <span className="text-gray-900">
-                  {selectedEmail === 'ebook'
-                    ? '📚 Votre guide de fidelisation est pret !'
-                    : '📱 Votre QR code fidelite est pret !'}
-                </span>
+                <span className="text-gray-900">Votre QR code fidelite est pret !</span>
               </div>
             </div>
           </div>
 
           {/* Email Content */}
           <div className="p-6">
-            {!htmlContent && !loading && (
-              <div className="text-center py-20 text-gray-500">
-                Cliquez sur un template pour le previsualiser
-              </div>
-            )}
             {loading && (
               <div className="text-center py-20 text-gray-500">
                 Chargement...

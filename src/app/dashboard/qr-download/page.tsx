@@ -41,6 +41,7 @@ export default function QRDownloadPage() {
   const [copiedCaption, setCopiedCaption] = useState<number | null>(null);
   const [howOpen, setHowOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const socialExportRef = useRef<HTMLDivElement>(null);
   const qrCardRef = useRef<HTMLDivElement>(null);
 
@@ -51,6 +52,22 @@ export default function QRDownloadPage() {
     setScanUrl(url);
     generateQRCodeSVG(url).then(setQrSvg).catch(console.error);
   }, [merchant?.scan_code]);
+
+  // Pre-fetch logo as base64 to avoid CORS issues with html-to-image export
+  useEffect(() => {
+    if (!merchant?.logo_url) return;
+    const img = new window.Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext('2d')!.drawImage(img, 0, 0);
+      setLogoDataUrl(canvas.toDataURL('image/png'));
+    };
+    img.onerror = () => setLogoDataUrl(null);
+    img.src = merchant.logo_url;
+  }, [merchant?.logo_url]);
 
   /** Convert data URL to File for Web Share API */
   const dataUrlToFile = async (dataUrl: string, filename: string): Promise<File> => {
@@ -362,7 +379,7 @@ export default function QRDownloadPage() {
                       {merchant.logo_url ? (
                         <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30">
                           <img
-                            src={merchant.logo_url}
+                            src={logoDataUrl || merchant.logo_url}
                             alt={merchant.shop_name}
                             className="w-full h-full object-cover"
                             crossOrigin="anonymous"
@@ -538,7 +555,7 @@ export default function QRDownloadPage() {
                   shopName={merchant.shop_name}
                   primaryColor={merchant.primary_color}
                   secondaryColor={merchant.secondary_color}
-                  logoUrl={merchant.logo_url || undefined}
+                  logoUrl={logoDataUrl || merchant.logo_url || undefined}
                   rewardDescription={merchant.reward_description || 'Récompense fidélité'}
                   stampsRequired={merchant.stamps_required}
                   scale={0.7}
@@ -693,7 +710,7 @@ export default function QRDownloadPage() {
             shopName={merchant.shop_name}
             primaryColor={merchant.primary_color}
             secondaryColor={merchant.secondary_color}
-            logoUrl={merchant.logo_url || undefined}
+            logoUrl={logoDataUrl || merchant.logo_url || undefined}
             rewardDescription={merchant.reward_description || 'Récompense fidélité'}
             stampsRequired={merchant.stamps_required}
             scale={2.7}

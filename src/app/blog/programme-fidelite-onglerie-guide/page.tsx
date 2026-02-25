@@ -47,7 +47,7 @@ export default function ProgrammeFideliteOngleriePage() {
               Qarte
             </Link>
             <Link
-              href="/essai-gratuit"
+              href="/auth/merchant/signup"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
             >
               Essai gratuit
@@ -815,7 +815,7 @@ export default function ProgrammeFideliteOngleriePage() {
                 19 &euro;/mois &middot; 7 jours d&apos;essai gratuit &middot; Sans engagement
               </p>
               <Link
-                href="/essai-gratuit"
+                href="/auth/merchant/signup"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-white text-indigo-700 font-bold rounded-2xl hover:bg-indigo-50 transition-colors text-lg"
               >
                 Essayer Qarte gratuitement

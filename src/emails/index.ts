@@ -3,7 +3,6 @@ export { TrialEndingEmail } from './TrialEndingEmail';
 export { TrialExpiredEmail } from './TrialExpiredEmail';
 export { SubscriptionConfirmedEmail } from './SubscriptionConfirmedEmail';
 export { PendingPointsEmail } from './PendingPointsEmail';
-export { EbookEmail } from './EbookEmail';
 export { QRCodeEmail } from './QRCodeEmail';
 export { PaymentFailedEmail } from './PaymentFailedEmail';
 export { SubscriptionCanceledEmail } from './SubscriptionCanceledEmail';

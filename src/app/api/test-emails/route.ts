@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { render } from '@react-email/render';
-import { EbookEmail, QRCodeEmail } from '@/emails';
+import { QRCodeEmail } from '@/emails';
 import {
   sendWelcomeEmail,
   sendTrialEndingEmail,
@@ -19,11 +19,7 @@ export async function GET(request: NextRequest) {
   try {
     let html: string;
 
-    if (type === 'ebook') {
-      html = await render(EbookEmail({
-        downloadUrl: 'https://getqarte.com/ebooks/guide-fidelisation.pdf',
-      }));
-    } else if (type === 'qrcode') {
+    if (type === 'qrcode') {
       html = await render(QRCodeEmail({
         shopName: 'Le Salon de Clara',
         rewardDescription: '1 brushing offert',
@@ -35,7 +31,7 @@ export async function GET(request: NextRequest) {
         tier2RewardDescription: '1 soin complet offert',
       }));
     } else {
-      return NextResponse.json({ error: 'Invalid email type. Use ?type=ebook or ?type=qrcode' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid email type. Use ?type=qrcode' }, { status: 400 });
     }
 
     return NextResponse.json({ html });
