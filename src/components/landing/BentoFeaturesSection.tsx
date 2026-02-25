@@ -16,7 +16,7 @@ import {
   MousePointer2,
 } from 'lucide-react';
 
-const EASE = [0.23, 1, 0.32, 1];
+const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
 /* ── FeatureBlock ── */
 
