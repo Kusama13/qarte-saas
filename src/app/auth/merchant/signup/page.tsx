@@ -15,6 +15,7 @@ import { getSupabase } from '@/lib/supabase';
 import { validateEmail, suggestEmailCorrection } from '@/lib/utils';
 import { trackPageView, trackSignupStarted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
+import { TikTokPixel } from '@/components/analytics/TikTokPixel';
 
 export default function MerchantSignupPage() {
   const router = useRouter();
@@ -111,6 +112,7 @@ export default function MerchantSignupPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50 relative overflow-hidden">
       <FacebookPixel />
+      <TikTokPixel />
 
       {/* Background decorative blobs — blue/pink */}
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/25 to-purple-400/20 rounded-full blur-3xl -translate-x-1/3 -translate-y-1/3" />
@@ -118,11 +120,8 @@ export default function MerchantSignupPage() {
       <div className="absolute bottom-0 left-1/3 w-[350px] h-[350px] bg-gradient-to-br from-violet-400/15 to-pink-400/20 rounded-full blur-3xl translate-y-1/4" />
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
-        <Link href="/" className="flex items-center gap-2 mb-8 group">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200/40 group-hover:scale-110 transition-transform duration-300">
-            <CreditCard className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Qarte</span>
+        <Link href="/" className="mb-8 inline-block text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+          Qarte
         </Link>
 
         <div className="w-full max-w-md">

@@ -79,11 +79,8 @@ function MerchantLoginContent() {
       <div className="max-w-md w-full mx-4 z-10">
         {/* Logo */}
         <div className="text-center mb-10">
-          <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25 group-hover:scale-110 transition-transform duration-300">
-              <CreditCard className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-3xl font-bold text-gray-900">Qarte</span>
+          <Link href="/" className="inline-block text-4xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
+            Qarte
           </Link>
         </div>
 

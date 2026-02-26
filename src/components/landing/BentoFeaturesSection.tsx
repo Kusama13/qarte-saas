@@ -40,7 +40,7 @@ function FeatureBlock({
   delay?: number;
 }) {
   return (
-    <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-8 md:gap-10 lg:gap-20`}>
+    <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-6 md:gap-10 lg:gap-24`}>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -48,13 +48,13 @@ function FeatureBlock({
         transition={{ duration: 0.7, delay, ease: EASE }}
         className="flex-1 text-center lg:text-left"
       >
-        <h3 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight mb-5">
+        <h3 className="text-2xl md:text-5xl font-bold text-gray-900 leading-tight mb-3 md:mb-5">
           {title}{' '}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500 font-extrabold">
             {titleBold}
           </span>
         </h3>
-        <p className="text-lg md:text-xl text-gray-500 leading-relaxed max-w-md mx-auto lg:mx-0">
+        <p className="text-base md:text-xl text-gray-500 leading-relaxed max-w-md mx-auto lg:mx-0">
           {description}
         </p>
       </motion.div>
@@ -479,7 +479,7 @@ export function BentoFeaturesSection() {
         }}
       />
 
-      <div className="relative max-w-6xl mx-auto px-6">
+      <div className="relative max-w-7xl mx-auto px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -498,7 +498,7 @@ export function BentoFeaturesSection() {
           </p>
         </motion.div>
 
-        <div className="flex flex-col gap-8 md:gap-10 lg:gap-12">
+        <div className="flex flex-col gap-6 md:gap-10 lg:gap-12">
           <FeatureBlock
             title="Récompense tes clientes"
             titleBold="les plus fidèles."
