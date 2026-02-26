@@ -119,28 +119,17 @@ export default function MerchantSignupPage() {
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12">
         <Link href="/" className="flex items-center gap-2 mb-8 group">
-          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/25 group-hover:scale-110 transition-transform duration-300">
+          <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200/40 group-hover:scale-110 transition-transform duration-300">
             <CreditCard className="w-6 h-6 text-white" />
           </div>
-          <span className="text-3xl font-bold text-gray-900">Qarte</span>
+          <span className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Qarte</span>
         </Link>
 
         <div className="w-full max-w-md">
           <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
-            {/* Progress bar */}
-            <div className="flex items-center justify-center gap-2 mb-5">
-              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-white text-xs font-bold">
-                1
-              </div>
-              <div className="w-10 h-0.5 bg-gray-200 rounded-full" />
-              <div className="flex items-center justify-center w-7 h-7 rounded-full bg-gray-200 text-gray-400 text-xs font-bold">
-                2
-              </div>
-            </div>
-
             <div className="text-center mb-5">
               <h1 className="text-2xl font-bold text-gray-900">
-                Créer votre compte
+                Rejoignez les centaines de salons qui fidélisent avec Qarte
               </h1>
               <p className="mt-2 text-gray-600">
                 Commencez votre essai gratuit de 7 jours
@@ -209,26 +198,15 @@ export default function MerchantSignupPage() {
                 </button>
               </div>
 
-              <Button type="submit" loading={loading} className="w-full">
+              <Button type="submit" loading={loading} className="w-full bg-gradient-to-r from-indigo-600 to-pink-500 hover:from-indigo-700 hover:to-pink-600 shadow-lg shadow-indigo-200/50">
                 Continuer
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </form>
 
-            <div className="mt-6 space-y-2">
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Check className="w-4 h-4 text-green-500" />
-                <span>Essai gratuit 7 jours</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Check className="w-4 h-4 text-green-500" />
-                <span>Configuration en moins d&apos;1 minute</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-600">
-                <Check className="w-4 h-4 text-green-500" />
-                <span>Support disponible 7j/7</span>
-              </div>
-            </div>
+            <p className="mt-4 text-center text-xs text-gray-400">
+              Vos clientes meritent mieux qu&apos;une carte en carton.
+            </p>
 
             <div className="mt-6 text-center">
               <p className="text-gray-600">
