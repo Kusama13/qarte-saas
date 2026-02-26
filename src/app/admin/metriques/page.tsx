@@ -52,6 +52,18 @@ type MerchantData = {
   created_at: string;
   reward_description: string | null;
   trial_ends_at: string | null;
+  logo_url: string | null;
+  referral_program_enabled: boolean;
+  birthday_gift_enabled: boolean;
+  instagram_url: string | null;
+  facebook_url: string | null;
+  tiktok_url: string | null;
+  booking_url: string | null;
+  review_link: string | null;
+  shield_enabled: boolean;
+  tier2_enabled: boolean;
+  pwa_installed_at: string | null;
+  offer_active: boolean;
 };
 
 export default function MetriquesPage() {
@@ -153,7 +165,7 @@ export default function MetriquesPage() {
         { count: endingSoonCount },
         { data: snapshots },
       ] = await Promise.all([
-        supabase.from('merchants').select('id, user_id, subscription_status, billing_interval, created_at, reward_description, trial_ends_at'),
+        supabase.from('merchants').select('id, user_id, subscription_status, billing_interval, created_at, reward_description, trial_ends_at, logo_url, referral_program_enabled, birthday_gift_enabled, instagram_url, facebook_url, tiktok_url, booking_url, review_link, shield_enabled, tier2_enabled, pwa_installed_at, offer_active'),
         supabase.from('super_admins').select('user_id'),
         supabase.from('visits').select('merchant_id, visited_at'),
         supabase.from('loyalty_cards').select('merchant_id, created_at'),
@@ -466,6 +478,32 @@ export default function MetriquesPage() {
     ? Math.round((revenue.mrr / revenue.activeSubscribers) * 100) / 100
     : MONTHLY_PRICE;
 
+  const featureAdoption = useMemo(() => {
+    const eligible = funnelMerchants.filter(
+      m => m.subscription_status === 'active' || m.subscription_status === 'trial'
+    );
+    const total = eligible.length;
+    if (total === 0) return [];
+
+    const features = [
+      { label: 'Programme configure', count: eligible.filter(m => m.reward_description !== null).length, pct: 0 },
+      { label: 'Logo', count: eligible.filter(m => !!m.logo_url).length, pct: 0 },
+      { label: 'Reseaux sociaux', count: eligible.filter(m => m.instagram_url || m.facebook_url || m.tiktok_url).length, pct: 0 },
+      { label: 'Parrainage', count: eligible.filter(m => m.referral_program_enabled).length, pct: 0 },
+      { label: 'Cadeau anniversaire', count: eligible.filter(m => m.birthday_gift_enabled).length, pct: 0 },
+      { label: 'Lien reservation', count: eligible.filter(m => !!m.booking_url).length, pct: 0 },
+      { label: 'Avis Google', count: eligible.filter(m => !!m.review_link).length, pct: 0 },
+      { label: 'Offre active', count: eligible.filter(m => m.offer_active).length, pct: 0 },
+      { label: 'PWA installee', count: eligible.filter(m => !!m.pwa_installed_at).length, pct: 0 },
+      { label: 'Shield', count: eligible.filter(m => m.shield_enabled).length, pct: 0 },
+      { label: 'Palier 2', count: eligible.filter(m => m.tier2_enabled).length, pct: 0 },
+    ];
+
+    features.forEach(f => { f.pct = Math.round((f.count / total) * 100); });
+    features.sort((a, b) => b.pct - a.pct);
+    return features;
+  }, [funnelMerchants]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -517,6 +555,26 @@ export default function MetriquesPage() {
             color="red"
           />
         </div>
+
+        {/* Split mensuel / annuel */}
+        {(revenue.monthlyCount > 0 || revenue.annualCount > 0) && (
+          <div className="grid grid-cols-2 gap-4 mt-3">
+            <div className="bg-white/80 px-4 py-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">Mensuel</p>
+                <p className="text-lg font-bold text-gray-900">{revenue.monthlyCount}</p>
+              </div>
+              <p className="text-sm font-semibold text-[#5167fc]">{revenue.monthlyCount * MONTHLY_PRICE}€/mois</p>
+            </div>
+            <div className="bg-white/80 px-4 py-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
+              <div>
+                <p className="text-xs font-medium text-gray-500">Annuel</p>
+                <p className="text-lg font-bold text-gray-900">{revenue.annualCount}</p>
+              </div>
+              <p className="text-sm font-semibold text-purple-600">{Math.round(revenue.annualCount * ANNUAL_MONTHLY_EQUIV)}€/mois</p>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 2. CONVERSION */}
@@ -644,6 +702,35 @@ export default function MetriquesPage() {
           <MetricCard label="Inscrits 30j" value={activity.signupsThisMonth} icon={UserPlus} color="purple" />
         </div>
       </section>
+
+      {/* 4b. ADOPTION DES FONCTIONNALITES */}
+      {featureAdoption.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-[#5167fc]" />
+            Adoption des fonctionnalites
+          </h2>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="grid grid-cols-1 divide-y divide-gray-100">
+              {featureAdoption.map((feature) => (
+                <div key={feature.label} className="flex items-center justify-between px-5 py-3">
+                  <span className="text-sm font-medium text-gray-700">{feature.label}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-32 bg-gray-100 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700 bg-[#5167fc]"
+                        style={{ width: `${Math.max(feature.pct, 2)}%` }}
+                      />
+                    </div>
+                    <span className="text-sm font-bold text-gray-900 w-10 text-right">{feature.pct}%</span>
+                    <span className="text-xs text-gray-400 w-6 text-right">{feature.count}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 5. GRAPHIQUES & PROJECTIONS */}
       <section className="space-y-6">
