@@ -50,45 +50,43 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
           width: `${width}px`,
           height: `${height}px`,
           fontFamily: 'system-ui, -apple-system, sans-serif',
+          background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+          clipPath: 'inset(0px)',
         }}
       >
-        {/* Background Gradient */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
-          }}
-        />
 
         {/* Decorative Elements */}
         <div
-          className="absolute rounded-full opacity-20"
           style={{
+            position: 'absolute',
             width: `${120 * scale}px`,
             height: `${120 * scale}px`,
             top: `${-30 * scale}px`,
             right: `${-30 * scale}px`,
-            backgroundColor: 'white',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(255,255,255,0.2)',
           }}
         />
         <div
-          className="absolute rounded-full opacity-10"
           style={{
+            position: 'absolute',
             width: `${80 * scale}px`,
             height: `${80 * scale}px`,
             bottom: `${80 * scale}px`,
             left: `${-20 * scale}px`,
-            backgroundColor: 'white',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(255,255,255,0.1)',
           }}
         />
         <div
-          className="absolute rounded-full opacity-15"
           style={{
+            position: 'absolute',
             width: `${50 * scale}px`,
             height: `${50 * scale}px`,
             top: `${200 * scale}px`,
             right: `${-10 * scale}px`,
-            backgroundColor: 'white',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(255,255,255,0.15)',
           }}
         />
 
@@ -101,28 +99,37 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
           <div className="flex flex-col items-center text-center">
             {logoUrl ? (
               <div
-                className="rounded-full overflow-hidden border-4 border-white/30 shadow-lg"
                 style={{
                   width: `${64 * scale}px`,
                   height: `${64 * scale}px`,
                   marginBottom: `${10 * scale}px`,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  clipPath: 'circle(50%)',
+                  border: `${2 * scale}px solid rgba(255,255,255,0.3)`,
+                  flexShrink: 0,
                 }}
               >
                 <img
                   src={logoUrl}
                   alt={shopName}
-                  className="w-full h-full object-cover"
-                  crossOrigin="anonymous"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
               </div>
             ) : (
               <div
-                className="rounded-full flex items-center justify-center border-4 border-white/30 shadow-lg"
                 style={{
                   width: `${64 * scale}px`,
                   height: `${64 * scale}px`,
                   marginBottom: `${10 * scale}px`,
+                  borderRadius: '50%',
+                  overflow: 'hidden',
+                  clipPath: 'circle(50%)',
                   backgroundColor: 'rgba(255,255,255,0.2)',
+                  border: `${2 * scale}px solid rgba(255,255,255,0.3)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 <span
@@ -287,8 +294,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
               style={{
                 padding: `${14 * scale}px ${20 * scale}px`,
                 borderRadius: `${16 * scale}px`,
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                backdropFilter: 'blur(10px)',
+                backgroundColor: 'rgba(255,255,255,0.25)',
                 border: '1px solid rgba(255,255,255,0.3)',
               }}
             >
