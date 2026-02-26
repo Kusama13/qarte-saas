@@ -87,12 +87,9 @@ function MerchantLoginContent() {
         <div className="bg-white/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-primary/10 p-8 border border-white/40">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Connexion Commerçant
+            <h1 className="text-2xl font-bold text-gray-900">
+              Ravi de te revoir.
             </h1>
-            <p className="text-gray-500">
-              Gérez votre programme de fidélité
-            </p>
           </div>
 
           {/* Success Message - Email verified */}
@@ -176,7 +173,7 @@ function MerchantLoginContent() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-primary via-primary to-secondary text-white py-4 px-4 rounded-2xl font-bold shadow-lg shadow-primary/25 hover:shadow-primary/30 hover:translate-y-[-1px] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+              className="w-full bg-gradient-to-r from-indigo-600 to-pink-500 hover:from-indigo-700 hover:to-pink-600 text-white py-4 px-4 rounded-2xl font-bold shadow-lg shadow-indigo-200/50 hover:shadow-indigo-300/50 hover:translate-y-[-1px] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

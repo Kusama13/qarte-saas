@@ -26,8 +26,8 @@ export default function CookieBanner() {
       <div className="flex flex-col gap-4 mx-auto max-w-4xl md:flex-row md:items-center md:justify-between">
         <div className="flex-1 pr-8">
           <p className="text-sm text-gray-600">
-            Ce site utilise uniquement des cookies essentiels pour son fonctionnement
-            (authentification, préférences). Aucun cookie publicitaire n&apos;est utilisé.{' '}
+            Ce site utilise des cookies pour son fonctionnement et pour mesurer son audience
+            (Google Analytics, Meta, TikTok).{' '}
             <Link
               href="/politique-confidentialite"
               className="text-primary hover:underline"
@@ -39,9 +39,9 @@ export default function CookieBanner() {
         <div className="flex items-center gap-3">
           <button
             onClick={acceptCookies}
-            className="px-6 py-2.5 text-sm font-medium text-white bg-primary rounded-xl hover:bg-primary-600 transition-colors"
+            className="px-6 py-2.5 text-sm font-medium text-white bg-primary rounded-xl hover:bg-primary-600 transition-colors whitespace-nowrap"
           >
-            Accepter
+            OK, compris
           </button>
         </div>
         <button
