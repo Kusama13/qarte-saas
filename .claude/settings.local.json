@@ -59,7 +59,8 @@
       "WebFetch(domain:getqarte.com)",
       "Bash(for url in \"https://getqarte.com\" \"https://getqarte.com/pricing\" \"https://getqarte.com/essai-gratuit\" \"https://getqarte.com/qarte-vs-carte-papier\" \"https://getqarte.com/blog\" \"https://getqarte.com/blog/fideliser-clientes-salon-coiffure\" \"https://getqarte.com/blog/programme-fidelite-onglerie-guide\" \"https://getqarte.com/blog/augmenter-recurrence-client-institut-beaute\" \"https://getqarte.com/ebook\" \"https://getqarte.com/contact\" \"https://getqarte.com/cgv\" \"https://getqarte.com/mentions-legales\" \"https://getqarte.com/politique-confidentialite\")",
       "Bash(do echo -n \"$url → \")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(fidéliser et augmenter ton C.A.\":*)"
     ]
   }
 }

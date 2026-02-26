@@ -488,9 +488,9 @@ export function BentoFeaturesSection() {
           className="text-center mb-14 md:mb-16"
         >
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Tous les outils pour{' '}
+            Encore plus d&apos;outils pour fidéliser{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              fidéliser tes clientes.
+              et augmenter ton C.A.
             </span>
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
@@ -499,15 +499,6 @@ export function BentoFeaturesSection() {
         </motion.div>
 
         <div className="flex flex-col gap-8 md:gap-10 lg:gap-12">
-          <FeatureBlock
-            title="Tamponne en"
-            titleBold="5 secondes."
-            description="Affiche ton QR code, ta cliente scanne avec son téléphone, le point est validé. Pas d'appli à télécharger, pas de compte à créer."
-            visual={<QRCodeVisual />}
-          />
-
-          <Separator />
-
           <FeatureBlock
             title="Récompense tes clientes"
             titleBold="les plus fidèles."

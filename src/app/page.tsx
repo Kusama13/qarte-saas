@@ -1,6 +1,7 @@
 import {
   HeroSection,
   SocialProofSection,
+  ScanMethodsSection,
   TestimonialsSection,
   PricingSection,
   FooterSection,
@@ -17,6 +18,7 @@ export default function LandingPageV4() {
       <main className="overflow-hidden">
         <HeroSection />
         <SocialProofSection />
+        <ScanMethodsSection />
         <LazyBentoFeaturesSection />
         <TestimonialsSection />
         <PricingSection />
