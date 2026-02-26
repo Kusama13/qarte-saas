@@ -58,7 +58,7 @@ src/
 │   ├── landing/           # 12 composants landing (Hero, Features, Pricing, FAQ...)
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
-│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal (inline name/birthday edit, pills header), CustomerRewardsTab, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach, MerchantPushSubscriber
+│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal (inline name/birthday edit, pills header), CustomerRewardsTab, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
 │   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, ReviewPrompt, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep)
 │   ├── marketing/         # SocialMediaTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel, MicrosoftClarity
@@ -68,7 +68,6 @@ src/
 │   ├── stripe.ts         # Client Stripe
 │   ├── analytics.ts      # Tracking events
 │   ├── push.ts           # Notifications push (clients)
-│   ├── merchant-push.ts  # Notifications push (merchants — abonnement silencieux)
 │   ├── logger.ts         # Logger structuré
 │   ├── scripts.ts        # Scripts verbaux par shop_type (emails + dashboard)
 │   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode, suggestEmailCorrection, EMAIL_DOMAINS)
@@ -188,7 +187,7 @@ public/
 
 ### Autres tables
 - `redemptions`, `point_adjustments`, `banned_numbers`
-- `push_subscriptions`, `push_history`, `scheduled_push`, `merchant_push_subscriptions`
+- `push_subscriptions`, `push_history`, `scheduled_push`
 - `pending_email_tracking`
 - `member_programs`, `member_cards`
 - `super_admins`, `admin_expenses`, `admin_fixed_costs`
@@ -230,8 +229,6 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 ### Push & Marketing
 - `POST /api/push/subscribe` - S'abonner aux push (clients)
 - `POST /api/push/send` - Envoyer notification (sent_count = clients uniques dedupliques par telephone)
-- `POST /api/merchants/push/subscribe` - S'abonner aux push (merchants — silencieux via MerchantPushSubscriber)
-- `DELETE /api/merchants/push/subscribe` - Se desabonner des push (merchants)
 - `GET /api/offers` - Offres promotionnelles
 
 ### Paiements
@@ -242,7 +239,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 
 ### Admin
 - `/api/admin/merchants/[id]` - Gestion commercants (GET stats + weeklyScans + lastVisitDate + healthScore, PATCH no_contact/admin_notes)
-- `/api/admin/announcements` - CRUD annonces (GET/POST/PATCH/DELETE) — push auto aux merchants a la publication
+- `/api/admin/announcements` - CRUD annonces (GET/POST/PATCH/DELETE)
   - target_filter: `all` | `trial` | `active` | `pwa_installed` | `pwa_trial` | `admin`
 - `/api/admin/incomplete-signups` - Inscriptions incompletes (auth sans merchant, 48h)
 - `/api/admin/prospects` - Leads/prospects
@@ -299,8 +296,6 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 
 ### Marketing & Push
 - Notifications push clients : programmees (10h et 18h), manuelles, automations (welcome, close_to_reward, reward_ready, inactive, reward_reminder)
-- Notifications push merchants : abonnement silencieux via `MerchantPushSubscriber` (si permission deja accordee), push auto a la publication d'annonces admin
-- Tables push : `push_subscriptions` (clients, par customer_id), `merchant_push_subscriptions` (merchants, par merchant_id)
 - Kit reseaux sociaux (SocialMediaTemplate, visuel 4:5 + legendes Instagram)
 - Ebook telechargeable (lead generation)
 
@@ -619,7 +614,7 @@ npm run email
 - Metriques : split mensuel/annuel sous MRR + adoption des fonctionnalites (11 features avec barres de progression)
 - Merchants : liste cliquable (navigation vers detail), filtres par statut + pays + shop type + PWA, tri sur toutes les colonnes (urgence, activite, auj., clients, sante)
 - Merchants : health score 0-100 (dot colore + score numerique, tri + export CSV)
-- Annonces : bannières in-app pour merchants + push auto a la publication + filtre combine PWA+Essai
+- Annonces : bannières in-app pour merchants + filtre combine PWA+Essai
 - Leads : onglet Incompletes + Aujourd'hui + Messages
 - Analytics, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
