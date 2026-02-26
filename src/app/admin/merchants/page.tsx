@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Search,
   Store,
@@ -301,6 +301,7 @@ function WhatsAppDropdown({
 // --- Component ---
 
 export default function AdminMerchantsPage() {
+  const router = useRouter();
   const supabase = getSupabase();
   const [data, setData] = useState<MerchantsDataResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -310,7 +311,7 @@ export default function AdminMerchantsPage() {
   const [shopTypeFilter, setShopTypeFilter] = useState<'all' | ShopType>('all');
   const [showAdmins, setShowAdmins] = useState(false);
   const [pwaFilter, setPwaFilter] = useState(false);
-  const [sortBy, setSortBy] = useState<'urgency' | 'clients' | 'health'>('urgency');
+  const [sortBy, setSortBy] = useState<'urgency' | 'clients' | 'health' | 'activity' | 'today'>('urgency');
 
   const fetchData = useCallback(async () => {
     try {
@@ -444,6 +445,20 @@ export default function AdminMerchantsPage() {
           const ca = data.customerCounts[a.merchant.id] || 0;
           const cb = data.customerCounts[b.merchant.id] || 0;
           if (ca !== cb) return cb - ca;
+          return new Date(b.merchant.created_at).getTime() - new Date(a.merchant.created_at).getTime();
+        }
+        if (sortBy === 'activity') {
+          const la = data.lastVisitDates[a.merchant.id] || '';
+          const lb = data.lastVisitDates[b.merchant.id] || '';
+          if (la && !lb) return -1;
+          if (!la && lb) return 1;
+          if (la !== lb) return lb.localeCompare(la);
+          return new Date(b.merchant.created_at).getTime() - new Date(a.merchant.created_at).getTime();
+        }
+        if (sortBy === 'today') {
+          const ta = data.todayScans[a.merchant.id] || 0;
+          const tb = data.todayScans[b.merchant.id] || 0;
+          if (ta !== tb) return tb - ta;
           return new Date(b.merchant.created_at).getTime() - new Date(a.merchant.created_at).getTime();
         }
         if (a.lifecycle.urgency !== b.lifecycle.urgency) return a.lifecycle.urgency - b.lifecycle.urgency;
@@ -738,8 +753,24 @@ export default function AdminMerchantsPage() {
                 <tr className="border-b border-gray-100 bg-gray-50/50">
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Commerçant</th>
                   <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Étape</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Activité</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Auj.</th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide">
+                    <button
+                      onClick={() => setSortBy(sortBy === 'activity' ? 'urgency' : 'activity')}
+                      className={cn("inline-flex items-center gap-1 hover:text-gray-900 transition-colors", sortBy === 'activity' ? "text-[#5167fc]" : "text-gray-500")}
+                    >
+                      Activité
+                      <ArrowUpDown className="w-3 h-3" />
+                    </button>
+                  </th>
+                  <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide">
+                    <button
+                      onClick={() => setSortBy(sortBy === 'today' ? 'urgency' : 'today')}
+                      className={cn("inline-flex items-center gap-1 hover:text-gray-900 transition-colors", sortBy === 'today' ? "text-[#5167fc]" : "text-gray-500")}
+                    >
+                      Auj.
+                      <ArrowUpDown className="w-3 h-3" />
+                    </button>
+                  </th>
                   <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide">
                     <button
                       onClick={() => setSortBy(sortBy === 'clients' ? 'urgency' : 'clients')}
@@ -770,7 +801,7 @@ export default function AdminMerchantsPage() {
                   const customers = data?.customerCounts[merchant.id] || 0;
                   const pending = data?.pendingPoints[merchant.id] || 0;
                   return (
-                    <tr key={merchant.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <tr key={merchant.id} onClick={() => router.push(`/admin/merchants/${merchant.id}`)} className="hover:bg-gray-50/50 transition-colors group cursor-pointer">
                       {/* Commercant */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -840,13 +871,12 @@ export default function AdminMerchantsPage() {
                               onSend={openWhatsApp}
                             />
                           )}
-                          <Link
-                            href={`/admin/merchants/${merchant.id}`}
+                          <span
                             className="p-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                             title="Détail"
                           >
                             <ChevronRight className="w-4 h-4" />
-                          </Link>
+                          </span>
                         </div>
                       </td>
                     </tr>
@@ -865,7 +895,7 @@ export default function AdminMerchantsPage() {
               const customers = data?.customerCounts[merchant.id] || 0;
               const pending = data?.pendingPoints[merchant.id] || 0;
               return (
-                <div key={merchant.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3">
+                <div key={merchant.id} onClick={() => router.push(`/admin/merchants/${merchant.id}`)} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 cursor-pointer">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-lg bg-[#5167fc] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
@@ -898,12 +928,11 @@ export default function AdminMerchantsPage() {
                           onSend={openWhatsApp}
                         />
                       )}
-                      <Link
-                        href={`/admin/merchants/${merchant.id}`}
+                      <span
                         className="p-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                       >
                         <ChevronRight className="w-4 h-4" />
-                      </Link>
+                      </span>
                     </div>
                   </div>
 

@@ -25,7 +25,7 @@ interface Announcement {
   title: string;
   body: string;
   type: 'info' | 'warning' | 'success' | 'urgent';
-  target_filter: 'all' | 'trial' | 'active' | 'pwa_installed';
+  target_filter: 'all' | 'trial' | 'active' | 'pwa_installed' | 'pwa_trial';
   created_at: string;
   published_at: string | null;
   duration_days: number | null;
@@ -49,6 +49,7 @@ const TARGET_LABELS: Record<string, string> = {
   trial: 'En essai',
   active: 'Abonnés actifs',
   pwa_installed: 'PWA installée',
+  pwa_trial: 'PWA + Essai',
   admin: 'Admin (test)',
 };
 
@@ -313,6 +314,7 @@ export default function AdminAnnouncementsPage() {
                   <option value="trial">En essai</option>
                   <option value="active">Abonnés actifs</option>
                   <option value="pwa_installed">PWA installée</option>
+                  <option value="pwa_trial">PWA installée + En essai</option>
                   <option value="admin">Admin (test)</option>
                 </select>
               </div>

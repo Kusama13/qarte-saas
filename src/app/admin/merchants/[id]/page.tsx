@@ -92,6 +92,8 @@ interface Stats {
   pushSubscribers: number;
   pushSent: number;
   pendingPoints: number;
+  weeklyScans: number;
+  lastVisitDate: string | null;
 }
 
 interface MemberProgram {
@@ -102,6 +104,54 @@ interface MemberProgram {
   is_active: boolean;
   created_at: string;
   member_cards: { count: number }[];
+}
+
+// --- Health Score ---
+
+function computeHealthScore(
+  merchant: Merchant,
+  totalCustomers: number,
+  weeklyScans: number,
+  lastVisitDate: string | null,
+): number {
+  let score = 0;
+  if (merchant.reward_description) score += 15;
+  if (merchant.logo_url) score += 10;
+  if (merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url) score += 5;
+  if (merchant.review_link) score += 5;
+  if (merchant.booking_url) score += 5;
+  if (totalCustomers >= 21) score += 20;
+  else if (totalCustomers >= 6) score += 15;
+  else if (totalCustomers >= 1) score += 10;
+  if (weeklyScans > 0) score += 15;
+  if (lastVisitDate) {
+    const daysSince = Math.floor((Date.now() - new Date(lastVisitDate).getTime()) / (1000 * 60 * 60 * 24));
+    if (daysSince < 7) score += 10;
+    else if (daysSince < 14) score += 5;
+  }
+  if (merchant.referral_program_enabled) score += 5;
+  if (merchant.tier2_enabled) score += 5;
+  return Math.min(score, 100);
+}
+
+function HealthDot({ score }: { score: number }) {
+  const color =
+    score >= 81 ? 'bg-green-500' :
+    score >= 61 ? 'bg-lime-500' :
+    score >= 31 ? 'bg-orange-400' :
+    'bg-red-500';
+  const label =
+    score >= 81 ? 'Excellent' :
+    score >= 61 ? 'Bon' :
+    score >= 31 ? 'Moyen' :
+    'Faible';
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={cn('inline-block w-2.5 h-2.5 rounded-full', color)} />
+      <span className="text-sm font-medium text-gray-600">{score}/100</span>
+      <span className="text-xs text-gray-400">({label})</span>
+    </span>
+  );
 }
 
 export default function MerchantDetailPage() {
@@ -117,6 +167,8 @@ export default function MerchantDetailPage() {
     pushSubscribers: 0,
     pushSent: 0,
     pendingPoints: 0,
+    weeklyScans: 0,
+    lastVisitDate: null,
   });
   const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -380,6 +432,7 @@ export default function MerchantDetailPage() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {getStatusBadge(merchant)}
+            <HealthDot score={computeHealthScore(merchant, stats.totalCustomers, stats.weeklyScans, stats.lastVisitDate)} />
             {stats.totalCustomers === 0 && (
               <span className="px-2 py-1 text-xs font-medium text-red-700 bg-red-100 rounded-full flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" /> 0 client

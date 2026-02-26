@@ -25,6 +25,7 @@ import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 import InstallAppBanner from '@/components/dashboard/InstallAppBanner';
 import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBanner';
 import StatusBanner from '@/components/dashboard/StatusBanner';
+import MerchantPushSubscriber from '@/components/dashboard/MerchantPushSubscriber';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50' },
@@ -274,6 +275,7 @@ function DashboardLayoutContent({
       </main>
 
       <InstallAppBanner />
+      <MerchantPushSubscriber />
     </div>
   );
 }

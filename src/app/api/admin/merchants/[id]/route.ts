@@ -46,6 +46,8 @@ export async function GET(
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     // Parallel: counts + member programs + email trackings + push stats
     const [
@@ -58,6 +60,8 @@ export async function GET(
       emailTrackingsRes,
       pushSentRes,
       loyaltyCardsRes,
+      weeklyScansRes,
+      lastVisitRes,
     ] = await Promise.all([
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
@@ -68,6 +72,8 @@ export async function GET(
       supabaseAdmin.from('pending_email_tracking').select('reminder_day, sent_at').eq('merchant_id', merchantId).order('sent_at', { ascending: false }),
       supabaseAdmin.from('push_history').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('customer_id, customers!inner(id, phone_number)').eq('merchant_id', merchantId),
+      supabaseAdmin.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('created_at', sevenDaysAgo.toISOString()),
+      supabaseAdmin.from('visits').select('created_at').eq('merchant_id', merchantId).order('created_at', { ascending: false }).limit(1),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -127,6 +133,8 @@ export async function GET(
         pendingPoints: pendingPointsRes.count || 0,
         pushSubscribers,
         pushSent: pushSentRes.count || 0,
+        weeklyScans: weeklyScansRes.count || 0,
+        lastVisitDate: lastVisitRes.data?.[0]?.created_at || null,
       },
       memberPrograms: memberProgramsRes.data || [],
       emailTrackings: emailTrackingsRes.data || [],

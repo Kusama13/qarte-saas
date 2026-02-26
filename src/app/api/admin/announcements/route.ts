@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
 import { z } from 'zod';
+import webpush from 'web-push';
 import logger from '@/lib/logger';
 
 // ── Zod schemas ──
@@ -9,7 +10,7 @@ const createAnnouncementSchema = z.object({
   title: z.string().min(1, 'Le titre est requis'),
   body: z.string().min(1, 'Le contenu est requis'),
   type: z.enum(['info', 'warning', 'success', 'urgent']),
-  target_filter: z.enum(['all', 'trial', 'active', 'pwa_installed', 'admin']),
+  target_filter: z.enum(['all', 'trial', 'active', 'pwa_installed', 'pwa_trial', 'admin']),
   duration_days: z.number().int().positive().optional().nullable(),
   link_url: z.string().url('URL invalide').optional().nullable(),
 });
@@ -18,7 +19,7 @@ const updateAnnouncementSchema = z.object({
   title: z.string().min(1).optional(),
   body: z.string().min(1).optional(),
   type: z.enum(['info', 'warning', 'success', 'urgent']).optional(),
-  target_filter: z.enum(['all', 'trial', 'active', 'pwa_installed', 'admin']).optional(),
+  target_filter: z.enum(['all', 'trial', 'active', 'pwa_installed', 'pwa_trial', 'admin']).optional(),
   duration_days: z.number().int().positive().optional().nullable(),
   link_url: z.string().url('URL invalide').optional().nullable(),
   is_published: z.boolean().optional(),
@@ -145,13 +146,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updates: Record<string, unknown> = { ...validation.data };
+    let isNewPublish = false;
 
     // Special behavior when publishing
     if (updates.is_published === true) {
       // Fetch current record to check if it was already published
       const { data: current, error: fetchError } = await supabaseAdmin
         .from('admin_announcements')
-        .select('is_published, duration_days')
+        .select('is_published, duration_days, target_filter, title, body, type')
         .eq('id', id)
         .single();
 
@@ -166,6 +168,7 @@ export async function PATCH(request: NextRequest) {
 
       // Only set published_at when transitioning from unpublished to published
       if (!current.is_published) {
+        isNewPublish = true;
         const now = new Date().toISOString();
         updates.published_at = now;
 
@@ -193,6 +196,13 @@ export async function PATCH(request: NextRequest) {
     if (error) {
       logger.error('Error updating announcement:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Send push notifications to matching merchants (fire-and-forget)
+    if (isNewPublish) {
+      sendAnnouncementPush(supabaseAdmin, data).catch((err) => {
+        logger.error('Error sending announcement push:', err);
+      });
     }
 
     return NextResponse.json({ announcement: data });
@@ -255,4 +265,121 @@ export async function DELETE(request: NextRequest) {
     logger.error('Error in DELETE /api/admin/announcements:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
+}
+
+// ── Push helper: send notification to merchants matching the announcement target ──
+
+interface AnnouncementData {
+  id: string;
+  title: string;
+  body: string;
+  type: string;
+  target_filter: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function sendAnnouncementPush(supabaseAdmin: any, announcement: AnnouncementData) {
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    logger.warn('VAPID keys not configured — skipping announcement push');
+    return;
+  }
+
+  webpush.setVapidDetails('mailto:contact@qarte.fr', vapidPublicKey, vapidPrivateKey);
+
+  // 1. Find merchants matching the target filter
+  let merchantQuery = supabaseAdmin
+    .from('merchants')
+    .select('id, subscription_status, pwa_installed_at, user_id');
+
+  const filter = announcement.target_filter;
+  if (filter === 'trial') {
+    merchantQuery = merchantQuery.eq('subscription_status', 'trial');
+  } else if (filter === 'active') {
+    merchantQuery = merchantQuery.eq('subscription_status', 'active');
+  } else if (filter === 'pwa_installed') {
+    merchantQuery = merchantQuery.not('pwa_installed_at', 'is', null);
+  } else if (filter === 'pwa_trial') {
+    merchantQuery = merchantQuery.eq('subscription_status', 'trial').not('pwa_installed_at', 'is', null);
+  } else if (filter === 'admin') {
+    // Admin-only: get super admin user_ids first
+    const { data: superAdmins } = await supabaseAdmin.from('super_admins').select('user_id');
+    if (!superAdmins || superAdmins.length === 0) return;
+    merchantQuery = merchantQuery.in('user_id', superAdmins.map((sa: { user_id: string }) => sa.user_id));
+  }
+  // 'all' → no filter
+
+  const { data: merchants, error: merchantError } = await merchantQuery;
+  if (merchantError || !merchants || merchants.length === 0) {
+    if (merchantError) logger.error('Error querying merchants for push:', merchantError);
+    return;
+  }
+
+  const merchantIds = merchants.map((m: { id: string }) => m.id);
+
+  // 2. Get push subscriptions for these merchants
+  const { data: subscriptions, error: subError } = await supabaseAdmin
+    .from('merchant_push_subscriptions')
+    .select('endpoint, p256dh, auth, merchant_id')
+    .in('merchant_id', merchantIds);
+
+  if (subError || !subscriptions || subscriptions.length === 0) {
+    if (subError) logger.error('Error querying merchant push subscriptions:', subError);
+    return;
+  }
+
+  // 3. Send push in batches of 50
+  const payload = JSON.stringify({
+    title: announcement.title,
+    body: announcement.body,
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/icon-72x72.png',
+    data: { url: '/dashboard' },
+  });
+
+  let sent = 0;
+  let failed = 0;
+  const staleEndpoints: string[] = [];
+
+  for (let i = 0; i < subscriptions.length; i += 50) {
+    const batch = subscriptions.slice(i, i + 50);
+
+    await Promise.allSettled(
+      batch.map(async (sub: { endpoint: string; p256dh: string; auth: string }) => {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: { p256dh: sub.p256dh, auth: sub.auth },
+            },
+            payload
+          );
+          sent++;
+        } catch (err: unknown) {
+          failed++;
+          const statusCode = (err as { statusCode?: number })?.statusCode;
+          if (statusCode === 404 || statusCode === 410) {
+            staleEndpoints.push(sub.endpoint);
+          }
+        }
+      })
+    );
+
+    // Pause between batches
+    if (i + 50 < subscriptions.length) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }
+
+  // 4. Cleanup stale subscriptions
+  if (staleEndpoints.length > 0) {
+    await supabaseAdmin
+      .from('merchant_push_subscriptions')
+      .delete()
+      .in('endpoint', staleEndpoints);
+  }
+
+  logger.info(`Announcement push: ${sent} sent, ${failed} failed, ${staleEndpoints.length} cleaned`);
 }

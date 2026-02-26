@@ -67,6 +67,8 @@ export async function GET() {
           return merchant.subscription_status === 'active';
         case 'pwa_installed':
           return merchant.pwa_installed_at != null;
+        case 'pwa_trial':
+          return merchant.subscription_status === 'trial' && merchant.pwa_installed_at != null;
         case 'admin':
           return isSuperAdmin;
         default:
