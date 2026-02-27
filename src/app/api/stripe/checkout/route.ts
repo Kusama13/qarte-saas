@@ -96,10 +96,10 @@ export async function POST(request: NextRequest) {
     if (merchant.trial_ends_at) {
       const trialEndsAt = new Date(merchant.trial_ends_at);
       const now = new Date();
+      // Stripe requires trial_end to be at least 2 days in the future
+      const twoDaysFromNow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
 
-      // Only set trial_end if trial hasn't expired yet
-      if (trialEndsAt > now) {
-        // Stripe requires Unix timestamp in seconds
+      if (trialEndsAt > twoDaysFromNow) {
         trialEnd = Math.floor(trialEndsAt.getTime() / 1000);
       }
     }
