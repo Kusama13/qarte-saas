@@ -12,7 +12,9 @@ import {
   CheckCircle2,
   XCircle,
   ArrowLeft,
+  Sparkles,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -597,6 +599,88 @@ export default function SubscriptionPage() {
           )}
         </div>
       </div>
+
+      {/* ===== Carte NFC Section ===== */}
+      {(() => {
+        const isAnnual = isPaid ? merchant?.billing_interval === 'annual' : billingPlan === 'annual';
+
+        return (
+          <div className="mt-6 bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-stretch gap-0">
+
+              {/* Image */}
+              <div className="w-full sm:w-56 shrink-0 flex items-center justify-center bg-gradient-to-br from-violet-50 to-indigo-50 p-8">
+                <div className="relative">
+                  <Image
+                    src="/images/Carte NFC QARTE .png"
+                    alt="Carte NFC Qarte"
+                    width={180}
+                    height={113}
+                    className="rounded-2xl shadow-2xl"
+                  />
+                  {isAnnual && (
+                    <div className="absolute -top-2.5 -right-2.5 bg-emerald-500 text-white text-[10px] font-black rounded-full px-2.5 py-1 shadow-md tracking-wide">
+                      INCLUS
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 p-6 sm:p-8 flex flex-col justify-center">
+                <p className="text-[10px] font-black uppercase tracking-widest text-violet-500 mb-2">
+                  Carte NFC · en complément de votre QR code
+                </p>
+                <h3 className="text-lg sm:text-xl font-black text-gray-900 leading-tight mb-3">
+                  Aussi belle dans votre salon<br className="hidden sm:block" /> qu&apos;efficace pour vos clientes.
+                </h3>
+                <p className="text-sm text-gray-500 leading-relaxed mb-5">
+                  Votre cliente approche son téléphone de la carte — un lien apparaît sur son écran, elle appuie, et le tampon est validé. Sans QR code à scanner, sans explication. À poser sur le comptoir ou à porter autour du cou.
+                </p>
+
+                {isAnnual ? (
+                  <div className="space-y-2">
+                    <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold rounded-xl px-4 py-2">
+                      <Check className="w-4 h-4 shrink-0" />
+                      Incluse dans votre abonnement annuel · Livraison comprise
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Votre carte est préparée avec votre commande et vous est expédiée automatiquement — rien à faire de votre côté. Livraison sous 1 à 2 semaines.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <div className="inline-flex items-center gap-2 bg-gray-100 text-gray-500 text-sm font-medium rounded-xl px-3 py-1.5">
+                      En option · 20 €
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Pour commander votre carte NFC, contactez-nous par{' '}
+                      <a href="mailto:contact@getqarte.com" className="font-semibold text-gray-600 underline underline-offset-2 hover:text-gray-900 transition-colors">
+                        email
+                      </a>
+                      {' '}ou sur{' '}
+                      <a href="https://wa.me/33607447420" target="_blank" rel="noopener noreferrer" className="font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-800 transition-colors">
+                        WhatsApp
+                      </a>
+                      {' '}— on s&apos;en occupe pour vous. Livraison sous 1 à 2 semaines.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Annual upsell bar — monthly only */}
+            {!isAnnual && (
+              <div className="border-t border-violet-100 bg-violet-50/50 px-6 sm:px-8 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <Sparkles className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+                <span className="text-xs font-bold text-violet-700">
+                  Passez à l&apos;annuel : carte NFC offerte + 38 € économisés — soit 58 € de plus dans votre poche chaque année.
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Footer reassurance — desktop only */}
       <div className="hidden sm:flex items-center justify-center gap-6 mt-6 text-xs text-gray-400">

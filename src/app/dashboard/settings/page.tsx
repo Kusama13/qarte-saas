@@ -357,11 +357,6 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-5 rounded-2xl bg-white/50 border border-gray-100 shadow-sm transition-all hover:border-indigo-100">
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Identifiant unique</p>
-            <p className="text-sm text-indigo-600 font-mono font-medium">{merchant?.slug}</p>
-          </div>
-
-          <div className="p-5 rounded-2xl bg-white/50 border border-gray-100 shadow-sm transition-all hover:border-indigo-100">
             <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Pays</p>
             <p className="text-sm text-gray-700 font-medium">{COUNTRIES[merchant?.country || 'FR']}</p>
           </div>
