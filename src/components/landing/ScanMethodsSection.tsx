@@ -94,15 +94,15 @@ export function ScanMethodsSection() {
 
   return (
     <section className="py-20 bg-white overflow-hidden">
-      <div ref={ref} className="max-w-4xl mx-auto px-6">
+      <div ref={ref} className="px-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12"
+          className="text-center mb-12 max-w-6xl mx-auto"
         >
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 md:whitespace-nowrap">
             Deux façons de tamponner,{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-pink-500">
               zéro prise de tête.
@@ -114,7 +114,7 @@ export function ScanMethodsSection() {
         </motion.div>
 
         {/* Two cards */}
-        <div className="flex flex-col md:flex-row gap-6 items-stretch">
+        <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-6 items-stretch">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={isInView ? { opacity: 1, x: 0 } : {}}

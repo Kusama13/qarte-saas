@@ -7,8 +7,16 @@ const adminRoutes = ['/admin'];
 const authRoutes = ['/auth/merchant', '/auth/merchant/signup'];
 const completeProfileRoute = '/auth/merchant/signup/complete';
 
+const BLOCKED_IPS = (process.env.BLOCKED_IPS || '').split(',').map(ip => ip.trim()).filter(Boolean);
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // IP blocklist
+  const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim();
+  if (ip && BLOCKED_IPS.includes(ip)) {
+    return new NextResponse('Accès refusé.', { status: 403 });
+  }
 
   // Serve the correct PWA manifest based on referer (dashboard → Qarte Pro, else → customer)
   if (pathname === '/manifest.webmanifest') {

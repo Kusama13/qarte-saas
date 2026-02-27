@@ -132,7 +132,7 @@ export default function PrivacyPolicyPage() {
                     <td className="py-2">Consentement (art. 6.1.a)</td>
                   </tr>
                   <tr>
-                    <td className="py-2 pr-4">Publicité ciblée (Facebook Pixel)</td>
+                    <td className="py-2 pr-4">Publicité ciblée (Facebook Pixel, TikTok Pixel)</td>
                     <td className="py-2">Consentement (art. 6.1.a)</td>
                   </tr>
                 </tbody>
@@ -199,6 +199,12 @@ export default function PrivacyPolicyPage() {
                     <td className="py-2 pr-4">Analyse comportementale (Clarity)</td>
                     <td className="py-2 pr-4">USA</td>
                     <td className="py-2">EU-US DPF + CCT</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-4 font-medium">TikTok Inc. (ByteDance)</td>
+                    <td className="py-2 pr-4">Publicité et mesure de conversion (TikTok Pixel)</td>
+                    <td className="py-2 pr-4">USA / Singapour</td>
+                    <td className="py-2">CCT</td>
                   </tr>
                 </tbody>
               </table>
@@ -292,6 +298,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Google Analytics 4 (GA4)</strong> — mesure d&apos;audience et analyse de la fréquentation du site</li>
               <li><strong>Google Tag Manager (GTM)</strong> — gestion technique des traceurs</li>
               <li><strong>Facebook Pixel (Meta)</strong> — mesure de conversion publicitaire et audiences personnalisées</li>
+              <li><strong>TikTok Pixel</strong> — mesure de conversion publicitaire et ciblage d&apos;audiences sur TikTok</li>
               <li><strong>Microsoft Clarity</strong> — enregistrement de sessions et cartes de chaleur pour l&apos;amélioration de l&apos;interface</li>
             </ul>
 
