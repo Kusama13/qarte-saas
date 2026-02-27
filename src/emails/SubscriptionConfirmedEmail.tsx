@@ -48,6 +48,35 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
         </Button>
       </Section>
 
+      {billingInterval === 'annual' && (
+        <Section style={nfcBox}>
+          <Text style={nfcTitle}>Votre carte NFC est comprise dans votre abonnement</Text>
+          <Text style={nfcText}>
+            Une carte vous est offerte et vous sera expédiée automatiquement sous 1 à 2 semaines — rien à faire de votre côté.
+          </Text>
+          <Text style={nfcText}>
+            Besoin d&apos;une carte supplémentaire ? Répondez simplement à cet email ou contactez-nous sur{' '}
+            <a href="https://wa.me/33607447420" style={nfcLinkWa}>WhatsApp</a>.
+          </Text>
+        </Section>
+      )}
+
+      {billingInterval === 'monthly' && (
+        <Section style={nfcBox}>
+          <Text style={nfcTitle}>La carte NFC Qarte — en option (20 €)</Text>
+          <Text style={nfcText}>
+            Commander directement en ligne, ou contactez-nous sur{' '}
+            <a href="https://wa.me/33607447420?text=Bonjour%2C%20je%20souhaite%20commander%20ma%20carte%20NFC%20Qarte." style={nfcLinkWa}>WhatsApp</a>
+            {' '}/ en répondant à cet email. Livraison sous 1 à 2 semaines.
+          </Text>
+          <Section style={{ textAlign: 'center' as const, margin: '12px 0 0 0' }}>
+            <Button style={nfcButton} href="https://buy.stripe.com/4gM7sN6DYccX75dduH7g401">
+              Commander ma carte NFC — 20 €
+            </Button>
+          </Section>
+        </Section>
+      )}
+
       <Text style={paragraph}>
         Une question sur votre abonnement ? Répondez à cet email, nous sommes là pour vous.
       </Text>
@@ -181,6 +210,51 @@ const referralHint = {
   fontSize: '12px',
   textAlign: 'center' as const,
   margin: '0',
+};
+
+const nfcBox = {
+  backgroundColor: '#faf5ff',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '24px 0',
+  border: '1px solid #e9d5ff',
+};
+
+const nfcTitle = {
+  color: '#4b0082',
+  fontSize: '15px',
+  fontWeight: '700',
+  margin: '0 0 10px 0',
+};
+
+const nfcText = {
+  color: '#4a5568',
+  fontSize: '14px',
+  lineHeight: '1.6',
+  margin: '0 0 8px 0',
+};
+
+const nfcLinkWa = {
+  color: '#16a34a',
+  fontWeight: '600',
+  textDecoration: 'underline',
+};
+
+const nfcLinkEmail = {
+  color: '#4b0082',
+  fontWeight: '600',
+  textDecoration: 'underline',
+};
+
+const nfcButton = {
+  backgroundColor: '#4b0082',
+  borderRadius: '8px',
+  color: '#ffffff',
+  fontSize: '14px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  padding: '12px 24px',
 };
 
 export default SubscriptionConfirmedEmail;

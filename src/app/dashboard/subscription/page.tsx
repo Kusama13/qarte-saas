@@ -601,7 +601,7 @@ export default function SubscriptionPage() {
       </div>
 
       {/* ===== Carte NFC Section ===== */}
-      {(() => {
+      {!isPaid && (() => {
         const isAnnual = isPaid ? merchant?.billing_interval === 'annual' : billingPlan === 'annual';
 
         return (
@@ -609,14 +609,14 @@ export default function SubscriptionPage() {
             <div className="flex flex-col sm:flex-row items-stretch gap-0">
 
               {/* Image */}
-              <div className="w-full sm:w-56 shrink-0 flex items-center justify-center bg-gradient-to-br from-violet-50 to-indigo-50 p-8">
+              <div className="w-full sm:w-60 shrink-0 flex items-center justify-center bg-gradient-to-br from-violet-50 to-indigo-50 p-6 sm:p-8">
                 <div className="relative">
                   <Image
                     src="/images/Carte NFC QARTE .png"
                     alt="Carte NFC Qarte"
                     width={180}
                     height={113}
-                    className="rounded-2xl shadow-2xl"
+                    className="rounded-2xl shadow-2xl max-w-full h-auto"
                   />
                   {isAnnual && (
                     <div className="absolute -top-2.5 -right-2.5 bg-emerald-500 text-white text-[10px] font-black rounded-full px-2.5 py-1 shadow-md tracking-wide">
