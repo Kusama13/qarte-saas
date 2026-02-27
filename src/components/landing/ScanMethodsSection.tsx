@@ -66,7 +66,7 @@ function NFCCard() {
       <div className="relative mb-6">
         <Image
           src="/images/Carte NFC QARTE .png"
-          alt="Badge NFC Qarte"
+          alt="Carte NFC Qarte"
           width={220}
           height={140}
           className="rounded-2xl shadow-lg shadow-violet-200/40"
@@ -76,7 +76,7 @@ function NFCCard() {
         <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-violet-400/40 animate-ping" style={{ animationDuration: '1.8s', animationDelay: '0.4s' }} />
       </div>
 
-      <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Badge NFC</h3>
+      <h3 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3">Carte NFC</h3>
       <p className="text-lg text-gray-500 leading-relaxed">
         Pose-le sur le comptoir. Ta cliente approche son téléphone — le point est validé instantanément. Pas de manipulation, pas d&apos;explication.
       </p>
@@ -109,7 +109,7 @@ export function ScanMethodsSection() {
             </span>
           </h2>
           <p className="mt-3 text-gray-500 text-lg">
-            QR code inclus. Badge NFC disponible. Aucune application à télécharger — ni pour toi, ni pour ta cliente.
+            QR code inclus. Carte NFC disponible. Aucune application à télécharger — ni pour toi, ni pour ta cliente.
           </p>
         </motion.div>
 

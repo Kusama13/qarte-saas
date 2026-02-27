@@ -82,9 +82,14 @@ export async function POST(request: NextRequest) {
     results.push({ type: 'trial_expired', ...trialExpired });
     await delay(600);
 
-    // 5. Email confirmation abonnement
-    const subscription = await sendSubscriptionConfirmedEmail(email, 'Boulangerie Test');
-    results.push({ type: 'subscription_confirmed', ...subscription });
+    // 5. Email confirmation abonnement mensuel
+    const subscription = await sendSubscriptionConfirmedEmail(email, 'Boulangerie Test', undefined, 'monthly');
+    results.push({ type: 'subscription_confirmed_monthly', ...subscription });
+    await delay(600);
+
+    // 5b. Email confirmation abonnement annuel
+    const subscriptionAnnual = await sendSubscriptionConfirmedEmail(email, 'Boulangerie Test', undefined, 'annual');
+    results.push({ type: 'subscription_confirmed_annual', ...subscriptionAnnual });
     await delay(600);
 
     // 6. Email essai expiré AVEC code promo QARTE50

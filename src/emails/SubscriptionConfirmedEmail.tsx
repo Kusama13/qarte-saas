@@ -1,6 +1,7 @@
 import {
   Button,
   Heading,
+  Img,
   Text,
   Section,
 } from '@react-email/components';
@@ -50,6 +51,14 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
 
       {billingInterval === 'annual' && (
         <Section style={nfcBox}>
+          <Section style={nfcImgContainer}>
+            <Img
+              src="https://getqarte.com/images/Carte%20NFC%20QARTE%20.png"
+              alt="Carte NFC Qarte"
+              width={160}
+              style={nfcImg}
+            />
+          </Section>
           <Text style={nfcTitle}>Votre carte NFC est comprise dans votre abonnement</Text>
           <Text style={nfcText}>
             Une carte vous est offerte et vous sera expédiée automatiquement sous 1 à 2 semaines — rien à faire de votre côté.
@@ -63,11 +72,19 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
 
       {billingInterval === 'monthly' && (
         <Section style={nfcBox}>
+          <Section style={nfcImgContainer}>
+            <Img
+              src="https://getqarte.com/images/Carte%20NFC%20QARTE%20.png"
+              alt="Carte NFC Qarte"
+              width={160}
+              style={nfcImg}
+            />
+          </Section>
           <Text style={nfcTitle}>La carte NFC Qarte — en option (20 €)</Text>
           <Text style={nfcText}>
-            Commander directement en ligne, ou contactez-nous sur{' '}
+            Passez commande via le bouton ci-dessous, ou contactez-nous sur{' '}
             <a href="https://wa.me/33607447420?text=Bonjour%2C%20je%20souhaite%20commander%20ma%20carte%20NFC%20Qarte." style={nfcLinkWa}>WhatsApp</a>
-            {' '}/ en répondant à cet email. Livraison sous 1 à 2 semaines.
+            {' '}ou en répondant à cet email. Livraison sous 1 à 2 semaines.
           </Text>
           <Section style={{ textAlign: 'center' as const, margin: '12px 0 0 0' }}>
             <Button style={nfcButton} href="https://buy.stripe.com/4gM7sN6DYccX75dduH7g401">
@@ -240,10 +257,15 @@ const nfcLinkWa = {
   textDecoration: 'underline',
 };
 
-const nfcLinkEmail = {
-  color: '#4b0082',
-  fontWeight: '600',
-  textDecoration: 'underline',
+const nfcImgContainer = {
+  textAlign: 'center' as const,
+  margin: '0 0 16px 0',
+};
+
+const nfcImg = {
+  borderRadius: '10px',
+  display: 'block',
+  margin: '0 auto',
 };
 
 const nfcButton = {
