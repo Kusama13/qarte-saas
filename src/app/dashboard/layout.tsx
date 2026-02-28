@@ -233,8 +233,11 @@ function DashboardLayoutContent({
               onClick={() => setSidebarOpen(false)}
               className="flex items-center gap-2.5 px-2.5 py-2 mb-2 bg-white rounded-xl border border-gray-100 shadow-sm hover:border-indigo-200 hover:shadow-md transition-all duration-200 group"
             >
-              <div className="flex items-center justify-center w-9 h-9 font-bold text-white text-sm rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md shadow-indigo-200/50 shrink-0">
-                {merchant?.shop_name?.charAt(0) || 'M'}
+              <div className="flex items-center justify-center w-9 h-9 font-bold text-white text-sm rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md shadow-indigo-200/50 shrink-0 overflow-hidden">
+                {merchant?.logo_url
+                  ? <img src={merchant.logo_url} alt={merchant.shop_name || ''} className="w-full h-full object-cover" />
+                  : merchant?.shop_name?.charAt(0) || 'M'
+                }
               </div>
               <p className="font-semibold text-gray-900 truncate text-sm flex-1 min-w-0 group-hover:text-indigo-600 transition-colors">
                 {merchant?.shop_name}

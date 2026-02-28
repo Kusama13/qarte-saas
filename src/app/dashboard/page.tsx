@@ -632,18 +632,22 @@ export default function DashboardPage() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Clients inscrits"
-          value={stats.totalCustomers}
-          icon={Users}
-          color="#654EDA"
-        />
-        <StatsCard
-          title="Clients actifs (30j)"
-          value={stats.activeCustomers}
-          icon={UserCheck}
-          color="#10B981"
-        />
+        <Link href="/dashboard/customers" className="block">
+          <StatsCard
+            title="Clients inscrits"
+            value={stats.totalCustomers}
+            icon={Users}
+            color="#654EDA"
+          />
+        </Link>
+        <Link href="/dashboard/customers" className="block">
+          <StatsCard
+            title="Clients actifs (30j)"
+            value={stats.activeCustomers}
+            icon={UserCheck}
+            color="#10B981"
+          />
+        </Link>
         <StatsCard
           title="Visites ce mois"
           value={stats.visitsThisMonth}
