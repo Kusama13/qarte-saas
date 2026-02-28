@@ -119,15 +119,15 @@ export default function OnboardingChecklist() {
     fetchSteps();
   }, [merchant, supabase]);
 
-  // Fire confetti when all steps complete
+  // Fire confetti when all steps complete (une seule fois, persisté en localStorage)
   useEffect(() => {
-    if (steps.length === 0 || confettiFired) return;
+    if (steps.length === 0 || confettiFired || !merchant) return;
+    const alreadyFired = !!localStorage.getItem(`${COMPLETED_KEY}_${merchant.id}`);
+    if (alreadyFired) { setConfettiFired(true); return; }
     const allDone = steps.every(s => s.done);
     if (allDone) {
       setConfettiFired(true);
-      if (merchant) {
-        localStorage.setItem(`${COMPLETED_KEY}_${merchant.id}`, Date.now().toString());
-      }
+      localStorage.setItem(`${COMPLETED_KEY}_${merchant.id}`, Date.now().toString());
       confetti({
         particleCount: 100,
         spread: 70,
