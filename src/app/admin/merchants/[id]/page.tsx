@@ -76,6 +76,8 @@ interface Merchant {
   offer_description: string | null;
   offer_expires_at: string | null;
   offer_created_at: string | null;
+  // Billing
+  billing_interval: 'monthly' | 'annual';
   // Admin
   no_contact: boolean;
   admin_notes: string | null;
