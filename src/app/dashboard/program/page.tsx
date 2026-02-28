@@ -736,7 +736,7 @@ export default function ProgramPage() {
                     />
                   </div>
                   <p className="text-xs text-gray-500">
-                    Vos clients pourront laisser un avis directement depuis leur carte.
+                    Après chaque récompense ou bon utilisé, vos clients verront automatiquement une invitation à laisser un avis Google.
                   </p>
                 </div>
               </div>

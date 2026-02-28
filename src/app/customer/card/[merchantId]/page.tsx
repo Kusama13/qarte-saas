@@ -32,7 +32,7 @@ import {
   ExclusiveOffer,
   MemberCardModal,
   InstallPrompts,
-  ReviewPrompt,
+  ReviewModal,
   StampsSection,
   RewardCard,
   RedeemModal,
@@ -118,6 +118,7 @@ export default function CustomerCardPage({
   const [loading, setLoading] = useState(true);
   const [redeeming, setRedeeming] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
   const [redeemSuccess, setRedeemSuccess] = useState(false);
   const [redeemError, setRedeemError] = useState<string | null>(null);
   const [redeemTier, setRedeemTier] = useState<1 | 2>(1);
@@ -1094,17 +1095,10 @@ export default function CustomerCardPage({
         {/* Réseaux sociaux */}
         <SocialLinks merchant={merchant} />
 
-        {/* Avis Google */}
-        {merchant.review_link && merchant.review_link.trim() !== '' && (
-          <ReviewPrompt merchantId={merchantId} shopName={merchant.shop_name} reviewLink={merchant.review_link} />
-        )}
 
         <footer className="py-6 text-center">
           <a href="https://www.qarte.fr" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
             <span className="text-xs text-gray-400 group-hover:text-gray-500">Propulsé par</span>
-            <div className="w-4 h-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-sm flex items-center justify-center">
-              <span className="text-white text-[8px] font-black italic">Q</span>
-            </div>
             <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
               Qarte
             </span>
@@ -1129,7 +1123,7 @@ export default function CustomerCardPage({
         merchantColor={merchant.primary_color}
         secondaryColor={merchant.secondary_color}
         onRedeem={handleRedeem}
-        onDone={() => { setShowRedeemModal(false); setRedeemSuccess(false); }}
+        onDone={() => { setShowRedeemModal(false); setRedeemSuccess(false); if (merchant.review_link) setShowReviewModal(true); }}
       />
 
       {/* Member Card Modal */}
@@ -1214,8 +1208,19 @@ export default function CustomerCardPage({
         onCloseDetail={() => { setShowVoucherDetail(false); setSelectedVoucher(null); }}
         showCelebration={showVoucherCelebration}
         celebrationData={voucherCelebrationData}
-        onCloseCelebration={() => setShowVoucherCelebration(false)}
+        onCloseCelebration={() => { setShowVoucherCelebration(false); if (merchant.review_link) setShowReviewModal(true); }}
       />
+
+      {/* Review Modal — affiché après utilisation d'une récompense ou d'un bon */}
+      {merchant.review_link && (
+        <ReviewModal
+          isOpen={showReviewModal}
+          onClose={() => setShowReviewModal(false)}
+          reviewLink={merchant.review_link}
+          shopName={merchant.shop_name}
+          merchantId={merchantId}
+        />
+      )}
     </div>
   );
 }

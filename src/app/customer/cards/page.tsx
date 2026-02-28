@@ -3,15 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import {
-  CreditCard,
-  Gift,
-  ChevronRight,
-  Loader2,
-  RefreshCw,
-  Trophy,
-} from 'lucide-react';
-// Phone is handled server-side via HttpOnly cookie
+import { motion } from 'framer-motion';
+import { ChevronRight, CreditCard, LogOut, Trophy, Gift } from 'lucide-react';
 
 interface LoyaltyCardWithMerchant {
   merchant_id: string;
@@ -32,6 +25,7 @@ interface LoyaltyCardWithMerchant {
 export default function CustomerCardsPage() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [firstName, setFirstName] = useState('');
   const [cards, setCards] = useState<LoyaltyCardWithMerchant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -44,355 +38,284 @@ export default function CustomerCardsPage() {
   const fetchCards = async () => {
     setLoading(true);
     setError('');
-
     try {
-      // Phone is read from HttpOnly cookie server-side
       const response = await fetch('/api/customers/cards', { method: 'POST' });
-
-      if (response.status === 401) {
-        // Not authenticated — redirect to login
-        router.replace('/customer');
-        return;
-      }
-
+      if (response.status === 401) { router.replace('/customer'); return; }
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Erreur serveur');
-      }
-
+      if (!response.ok) throw new Error(data.error || 'Erreur serveur');
       if (data.phone) setPhoneNumber(data.phone);
+      if (data.first_name) setFirstName(data.first_name);
+      if (!data.found || data.cards.length === 0) { setCards([]); setLoading(false); return; }
 
-      if (!data.found || data.cards.length === 0) {
-        setCards([]);
-        setLoading(false);
-        return;
-      }
-
-      const formattedCards: LoyaltyCardWithMerchant[] = data.cards
-        .sort((a: LoyaltyCardWithMerchant, b: LoyaltyCardWithMerchant) => {
-          const aHasUnclaimedReward = (a.current_stamps >= a.stamps_required && !a.tier1_redeemed) ||
-            (a.tier2_enabled && a.current_stamps >= (a.tier2_stamps_required || a.stamps_required * 2));
-          const bHasUnclaimedReward = (b.current_stamps >= b.stamps_required && !b.tier1_redeemed) ||
-            (b.tier2_enabled && b.current_stamps >= (b.tier2_stamps_required || b.stamps_required * 2));
-
-          if (aHasUnclaimedReward && !bHasUnclaimedReward) return -1;
-          if (!aHasUnclaimedReward && bHasUnclaimedReward) return 1;
-          if (!a.last_visit_date && !b.last_visit_date) return 0;
-          if (!a.last_visit_date) return 1;
-          if (!b.last_visit_date) return -1;
-          return new Date(b.last_visit_date).getTime() - new Date(a.last_visit_date).getTime();
-        });
-
-      setCards(formattedCards);
+      const sorted: LoyaltyCardWithMerchant[] = data.cards.sort((a: LoyaltyCardWithMerchant, b: LoyaltyCardWithMerchant) => {
+        const aReady = (a.current_stamps >= a.stamps_required && !a.tier1_redeemed) ||
+          (a.tier2_enabled && a.current_stamps >= (a.tier2_stamps_required || a.stamps_required * 2));
+        const bReady = (b.current_stamps >= b.stamps_required && !b.tier1_redeemed) ||
+          (b.tier2_enabled && b.current_stamps >= (b.tier2_stamps_required || b.stamps_required * 2));
+        if (aReady && !bReady) return -1;
+        if (!aReady && bReady) return 1;
+        if (!a.last_visit_date && !b.last_visit_date) return 0;
+        if (!a.last_visit_date) return 1;
+        if (!b.last_visit_date) return -1;
+        return new Date(b.last_visit_date).getTime() - new Date(a.last_visit_date).getTime();
+      });
+      setCards(sorted);
     } catch (err) {
-      console.error('Error fetching cards:', err);
+      console.error(err);
       setError('Erreur lors de la recherche');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChangeNumber = async () => {
-    // Clear HttpOnly cookie via API
+  const handleLogout = async () => {
     await fetch('/api/customers/logout', { method: 'POST' });
     router.push('/customer');
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        {/* Skeleton Header */}
-        <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-gray-100/50">
-          <div className="flex items-center justify-between px-6 py-4 mx-auto max-w-4xl">
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600" />
-              <div className="w-16 h-5 bg-gray-200 rounded animate-pulse" />
-            </div>
-            <div className="w-32 h-4 bg-gray-200 rounded animate-pulse" />
-          </div>
-        </header>
-        <main className="px-4 py-8 mx-auto max-w-4xl">
-          <div className="mb-8">
-            <div className="w-32 h-8 bg-gray-200 rounded animate-pulse mb-2" />
-            <div className="w-24 h-4 bg-gray-100 rounded animate-pulse" />
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-14 h-14 rounded-2xl bg-gray-200 animate-pulse" />
-                  <div>
-                    <div className="w-24 h-5 bg-gray-200 rounded animate-pulse mb-2" />
-                    <div className="w-16 h-3 bg-gray-100 rounded animate-pulse" />
-                  </div>
-                </div>
-                <div className="space-y-3">
-                  <div className="w-full h-3 bg-gray-100 rounded-full animate-pulse" />
-                  <div className="flex gap-1.5">
-                    {[1, 2, 3, 4, 5].map((j) => (
-                      <div key={j} className="w-2 h-2 rounded-full bg-gray-200 animate-pulse" />
-                    ))}
-                  </div>
-                </div>
+      <div className="min-h-screen bg-[#f7f6fb]">
+        <div className="py-5 px-6 max-w-4xl mx-auto flex items-center justify-between">
+          <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Qarte</span>
+          <div className="w-24 h-3 bg-gray-200 rounded-full animate-pulse" />
+        </div>
+        <div className="px-6 pt-2 pb-8 max-w-4xl mx-auto">
+          <div className="w-24 h-3 bg-gray-200 rounded-full animate-pulse mb-3" />
+          <div className="w-52 h-10 bg-gray-200 rounded-xl animate-pulse mb-2" />
+          <div className="w-32 h-3 bg-gray-200 rounded-full animate-pulse" />
+        </div>
+        <div className="px-4 max-w-4xl mx-auto grid gap-4 sm:grid-cols-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-3xl overflow-hidden shadow-sm">
+              <div className="h-[88px] bg-gray-200 animate-pulse" />
+              <div className="bg-white px-4 py-4">
+                <div className="h-1.5 bg-gray-100 rounded-full animate-pulse mb-2" />
+                <div className="w-40 h-3 bg-gray-100 rounded-full animate-pulse" />
               </div>
-            ))}
-          </div>
-        </main>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden">
-      {/* Dynamic Brand Background Blobs */}
-      <div className="absolute top-[-10%] -left-[10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-10%] -right-[10%] w-[50%] h-[50%] bg-violet-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+    <div className="min-h-screen bg-[#f7f6fb]">
 
-      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-md border-b border-gray-100/50">
-        <div className="flex items-center justify-between px-6 py-4 mx-auto max-w-4xl">
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200">
-              <span className="text-white font-black italic text-lg">Q</span>
-            </div>
-            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Qarte</span>
+      {/* Header */}
+      <div className="py-5 px-6 max-w-4xl mx-auto flex items-center justify-between">
+        <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+          Qarte
+        </span>
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-2 text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          <span className="text-xs font-medium">{phoneNumber}</span>
+          <LogOut className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      {/* Greeting */}
+      <div className="px-6 pt-2 pb-8 max-w-4xl mx-auto">
+        {firstName && (
+          <p className="text-base text-gray-400 font-medium mb-1">Bonjour,</p>
+        )}
+        <h1 className="text-4xl font-black text-gray-900 leading-none mb-2">
+          {firstName ? `${firstName}.` : 'Mes cartes.'}
+        </h1>
+        <p className="text-sm text-gray-400 font-medium">
+          {cards.length > 0
+            ? `${cards.length} carte${cards.length > 1 ? 's' : ''} de fidélité`
+            : 'Aucun programme actif'}
+        </p>
+      </div>
+
+      {/* Cards grid */}
+      <main className="px-4 pb-16 max-w-4xl mx-auto">
+        {error && (
+          <div className="mb-4 p-4 bg-red-50 border border-red-100 rounded-2xl text-sm text-red-600 font-medium">
+            {error}
           </div>
-          <div className="text-right">
-            <button
-              onClick={handleChangeNumber}
-              className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Changer de numéro
-            </button>
-            <p className="text-xs font-medium text-gray-400 mt-0.5">{phoneNumber}</p>
-          </div>
-        </div>
-      </header>
+        )}
 
-      <main className="relative z-10 px-4 py-8 mx-auto max-w-4xl">
-        <div className="animate-fade-in space-y-8">
-            <div className="flex items-end justify-between">
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-200">
-                    <CreditCard className="w-5 h-5 text-white" />
-                  </div>
-                  <h1 className="text-2xl font-black tracking-tight text-gray-900">
-                    Mes cartes de fidélité
-                  </h1>
-                </div>
-                <p className="mt-2 text-sm font-medium text-gray-500 ml-[52px]">
-                  {cards.length > 0
-                    ? `${cards.length} programme${cards.length > 1 ? 's' : ''} actif${cards.length > 1 ? 's' : ''}`
-                    : 'Aucun programme actif'}
-                </p>
-              </div>
-            </div>
+        {cards.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {cards.map((card, index) => {
+              const tier1Required = card.stamps_required;
+              const tier2Enabled = card.tier2_enabled;
+              const tier2Required = card.tier2_stamps_required || tier1Required * 2;
 
-            {cards.length > 0 ? (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {cards.map((card, index) => {
-                  const tier1Required = card.stamps_required;
-                  const tier2Enabled = card.tier2_enabled;
-                  const tier2Required = card.tier2_stamps_required || tier1Required * 2;
-                  const maxRequired = tier2Enabled ? tier2Required : tier1Required;
+              const isTier1Ready = card.current_stamps >= tier1Required;
+              const isTier2Ready = !!tier2Enabled && card.current_stamps >= tier2Required;
+              const effectiveTier1Redeemed = !!card.tier1_redeemed && card.current_stamps >= tier1Required;
+              const hasUnclaimedReward = (isTier1Ready && !effectiveTier1Redeemed) || isTier2Ready;
 
-                  const isTier1Ready = card.current_stamps >= tier1Required;
-                  const isTier2Ready = tier2Enabled && card.current_stamps >= tier2Required;
-                  const tier1Redeemed = card.tier1_redeemed;
+              const cardGlow = hasUnclaimedReward
+                ? `0 0 0 2px ${card.primary_color}80, 0 8px 30px ${card.primary_color}25`
+                : '0 2px 12px rgba(0,0,0,0.06)';
 
-                  // Effective tier 1 redeemed - only consider redeemed if points still support it
-                  // If points were reduced below tier1_required, treat as if not redeemed
-                  const effectiveTier1Redeemed = tier1Redeemed && card.current_stamps >= tier1Required;
-
-                  // Show badge only if there's an unclaimed reward
-                  const hasUnclaimedReward = (isTier1Ready && !effectiveTier1Redeemed) || isTier2Ready;
-
-                  const progress = (card.current_stamps / maxRequired) * 100;
-
-                  return (
-                    <Link
-                      key={index}
-                      href={`/customer/card/${card.merchant_id}`}
-                      className="block group"
+              return (
+                <motion.div
+                  key={card.merchant_id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: index * 0.07, ease: 'easeOut' }}
+                >
+                  <Link href={`/customer/card/${card.merchant_id}`} className="block group">
+                    <div
+                      className="rounded-3xl overflow-hidden transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-2xl"
+                      style={{ boxShadow: cardGlow }}
                     >
-                      <div className="relative bg-white rounded-3xl p-6 shadow-sm border border-gray-100 transition-all duration-300 group-hover:shadow-xl group-hover:scale-[1.02] group-hover:border-indigo-100">
-                        <div className="flex items-start justify-between mb-6">
-                          <div className="flex items-center gap-4">
-                            {card.logo_url ? (
-                              <img
-                                src={card.logo_url}
-                                alt={card.shop_name}
-                                className="w-14 h-14 rounded-2xl object-cover shadow-sm ring-1 ring-gray-100"
-                              />
-                            ) : (
-                              <div
-                                className="flex items-center justify-center w-14 h-14 rounded-2xl text-white font-bold text-xl shadow-inner"
-                                style={{ backgroundColor: card.primary_color }}
-                              >
-                                {card.shop_name.charAt(0)}
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <h3 className="font-bold text-gray-900 truncate leading-tight">
-                                {card.shop_name}
-                              </h3>
-                              <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                Fidélité
-                              </span>
-                            </div>
+                      {/* Colored header */}
+                      <div
+                        className="p-4 flex items-center gap-3"
+                        style={{
+                          background: `linear-gradient(135deg, ${card.primary_color}, ${card.primary_color}cc)`,
+                          minHeight: '88px',
+                        }}
+                      >
+                        {/* Logo */}
+                        {card.logo_url ? (
+                          <img
+                            src={card.logo_url}
+                            alt={card.shop_name}
+                            className="w-12 h-12 rounded-2xl object-cover ring-2 ring-white/30 shadow-lg shrink-0"
+                          />
+                        ) : (
+                          <div
+                            className="w-12 h-12 rounded-2xl flex items-center justify-center text-white font-black text-xl ring-2 ring-white/20 shadow-inner shrink-0"
+                            style={{ backgroundColor: `${card.primary_color}99`, backdropFilter: 'brightness(0.85)' }}
+                          >
+                            {card.shop_name.charAt(0)}
                           </div>
-                          <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
-                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-indigo-600 transition-colors" />
-                          </div>
+                        )}
+
+                        {/* Name */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[15px] font-black text-white leading-tight truncate">
+                            {card.shop_name}
+                          </p>
+                          <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mt-0.5">
+                            Fidélité
+                          </p>
                         </div>
 
-                        <div className="space-y-4">
-                          {tier2Enabled ? (
-                            /* DUAL TIER DESIGN */
-                            <div className="space-y-4">
-                              {/* Tier 1 Section */}
-                              <div className={`space-y-2 p-3 rounded-xl border transition-all ${isTier1Ready && !effectiveTier1Redeemed ? 'bg-emerald-50/50 border-emerald-100 ring-1 ring-emerald-500/20' : effectiveTier1Redeemed ? 'bg-gray-50/30 border-gray-100 opacity-60' : 'bg-gray-50/30 border-gray-100'}`}>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Palier 1</span>
-                                  {isTier1Ready && !effectiveTier1Redeemed && (
-                                    <span className="flex items-center gap-1 text-[10px] font-extrabold text-emerald-600 px-2 py-0.5 bg-white rounded-full shadow-sm animate-pulse">
-                                      <Gift className="w-2.5 h-2.5" /> Prêt !
-                                    </span>
-                                  )}
-                                  {effectiveTier1Redeemed && <span className="text-[10px] font-bold text-gray-400 italic">Validé</span>}
-                                  {!isTier1Ready && (
-                                    <span className="text-[10px] font-bold text-gray-400">
-                                      {card.current_stamps}/{tier1Required}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="relative w-full h-2 bg-gray-200/60 rounded-full overflow-hidden">
-                                  <div
-                                    className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
-                                    style={{
-                                      width: `${Math.min((card.current_stamps / tier1Required) * 100, 100)}%`,
-                                      backgroundColor: effectiveTier1Redeemed ? '#D1D5DB' : isTier1Ready ? '#10B981' : card.primary_color
-                                    }}
-                                  />
-                                </div>
-                                <p className="text-center text-[11px] font-medium text-gray-500 truncate">{card.reward_description || 'Cadeau fidélité'}</p>
-                              </div>
+                        {/* Right side */}
+                        {hasUnclaimedReward ? (
+                          <span className="shrink-0 px-2.5 py-1 rounded-full bg-white/20 border border-white/30 text-[11px] font-black text-white">
+                            Prêt !
+                          </span>
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-white/40 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
+                        )}
+                      </div>
 
-                              {/* Tier 2 Section */}
-                              <div className={`space-y-2 p-3 rounded-xl border transition-all ${isTier2Ready ? 'bg-violet-50/50 border-violet-100 ring-1 ring-violet-500/20' : !effectiveTier1Redeemed ? 'bg-gray-50/10 border-gray-50 opacity-40' : 'bg-gray-50/30 border-gray-100'}`}>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                                    <Trophy className="w-2.5 h-2.5" /> Palier 2
-                                  </span>
-                                  {isTier2Ready && (
-                                    <span className="flex items-center gap-1 text-[10px] font-extrabold text-violet-600 px-2 py-0.5 bg-white rounded-full shadow-sm animate-pulse">
-                                      <Trophy className="w-2.5 h-2.5" /> Prêt !
-                                    </span>
-                                  )}
-                                  {!isTier2Ready && effectiveTier1Redeemed && (
-                                    <span className="text-[10px] font-bold text-gray-400">
-                                      {Math.max(0, card.current_stamps - tier1Required)}/{tier2Required - tier1Required}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="relative w-full h-2 bg-gray-200/60 rounded-full overflow-hidden">
-                                  <div
-                                    className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
-                                    style={{
-                                      width: `${Math.min((Math.max(0, card.current_stamps - tier1Required) / (tier2Required - tier1Required)) * 100, 100)}%`,
-                                      backgroundColor: isTier2Ready ? '#8B5CF6' : '#A78BFA'
-                                    }}
-                                  />
-                                </div>
-                                <p className="text-center text-[11px] font-medium text-gray-500 truncate">{card.tier2_reward_description || 'Récompense premium'}</p>
-                              </div>
-                            </div>
-                          ) : (
-                            /* SINGLE TIER DESIGN - Larger, no "Palier 1" label */
-                            <div className="space-y-4">
-                              <div className="flex items-end justify-between">
-                                <span className="text-2xl font-black tracking-tight" style={{ color: card.primary_color }}>
-                                  {card.current_stamps}<span className="text-gray-300 text-base mx-0.5">/</span><span className="text-gray-400 text-lg">{tier1Required}</span>
+                      {/* White progress section */}
+                      <div className="bg-white px-4 py-3.5">
+                        {tier2Enabled ? (
+                          <div className="space-y-2.5">
+                            {/* Tier 1 */}
+                            <div>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                                  Palier 1
                                 </span>
-                                {tier1Required - card.current_stamps <= 2 && tier1Required - card.current_stamps > 0 && (
-                                  <span className="bg-amber-500 text-white text-[10px] font-black px-2 py-1 rounded-full shadow-lg shadow-amber-200 animate-bounce">
-                                    PRESQUE !
-                                  </span>
-                                )}
-                                {isTier1Ready && (
-                                  <span className="bg-emerald-500 text-white text-[10px] font-black px-2.5 py-1 rounded-full shadow-lg shadow-emerald-200 animate-pulse flex items-center gap-1">
-                                    <Gift className="w-3 h-3" /> PRÊT !
-                                  </span>
-                                )}
+                                <span className="text-[10px] font-bold text-gray-400">
+                                  {Math.min(card.current_stamps, tier1Required)}/{tier1Required}
+                                </span>
                               </div>
-
-                              {/* Larger progress bar */}
-                              <div className="relative w-full h-3.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
                                 <div
-                                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+                                  className="h-full rounded-full transition-all duration-700"
                                   style={{
-                                    width: `${progress}%`,
-                                    background: `linear-gradient(90deg, ${card.primary_color}, ${card.primary_color}cc)`
+                                    width: `${Math.min((card.current_stamps / tier1Required) * 100, 100)}%`,
+                                    background: effectiveTier1Redeemed
+                                      ? '#D1D5DB'
+                                      : `linear-gradient(90deg, ${card.primary_color}, ${card.primary_color}bb)`,
                                   }}
                                 />
                               </div>
-
-                              {/* Larger stamp dots centered */}
-                              <div className="flex flex-wrap justify-center gap-2">
-                                {[...Array(Math.min(tier1Required, 12))].map((_, i) => (
-                                  <div
-                                    key={i}
-                                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                                      i < card.current_stamps
-                                        ? 'shadow-[0_0_8px_rgba(0,0,0,0.12)]'
-                                        : 'bg-gray-200'
-                                    }`}
-                                    style={{
-                                      backgroundColor: i < card.current_stamps ? card.primary_color : undefined
-                                    }}
-                                  />
-                                ))}
-                                {tier1Required > 12 && (
-                                  <span className="text-[9px] font-bold text-gray-400">+{tier1Required - 12}</span>
-                                )}
-                              </div>
-
-                              {/* Centered reward description */}
-                              <p className="text-center text-xs font-semibold text-gray-600 bg-gray-50 py-2.5 px-3 rounded-xl border border-gray-100">
-                                {card.reward_description || 'Votre récompense fidélité'}
+                              <p className="text-[10px] text-gray-400 font-medium mt-1 truncate">
+                                {card.reward_description || 'Cadeau fidélité'}
                               </p>
                             </div>
-                          )}
-                        </div>
+
+                            {/* Tier 2 */}
+                            <div className={effectiveTier1Redeemed ? '' : 'opacity-40'}>
+                              <div className="flex items-center justify-between mb-1.5">
+                                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                                  <Trophy className="w-2.5 h-2.5" /> Palier 2
+                                </span>
+                                <span className="text-[10px] font-bold text-gray-400">
+                                  {Math.min(Math.max(0, card.current_stamps - tier1Required), tier2Required - tier1Required)}/{tier2Required - tier1Required}
+                                </span>
+                              </div>
+                              <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-700"
+                                  style={{
+                                    width: `${Math.min((Math.max(0, card.current_stamps - tier1Required) / (tier2Required - tier1Required)) * 100, 100)}%`,
+                                    background: 'linear-gradient(90deg, #8B5CF6, #7C3AED)',
+                                  }}
+                                />
+                              </div>
+                              <p className="text-[10px] text-gray-400 font-medium mt-1 truncate">
+                                {card.tier2_reward_description || 'Récompense premium'}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className="text-[10px] font-bold text-gray-500">
+                                {card.current_stamps} sur {tier1Required} passages
+                              </span>
+                              {isTier1Ready && (
+                                <span className="flex items-center gap-1 text-[10px] font-bold" style={{ color: card.primary_color }}>
+                                  <Gift className="w-3 h-3" />
+                                  Disponible
+                                </span>
+                              )}
+                            </div>
+                            <div className="h-1.5 bg-black/5 rounded-full overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all duration-700"
+                                style={{
+                                  width: `${Math.min((card.current_stamps / tier1Required) * 100, 100)}%`,
+                                  background: `linear-gradient(90deg, ${card.primary_color}, ${card.primary_color}bb)`,
+                                }}
+                              />
+                            </div>
+                            <p className="text-[10px] text-gray-400 font-medium mt-1.5 truncate">
+                              {card.reward_description || 'Votre récompense fidélité'}
+                            </p>
+                          </div>
+                        )}
                       </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-gray-100">
-                <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl bg-gray-50 text-gray-300">
-                  <CreditCard className="w-10 h-10" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  Aucune carte trouvée
-                </h2>
-                <p className="text-gray-500 max-w-xs mx-auto text-sm leading-relaxed">
-                  Scannez un QR code chez un commerçant pour ajouter votre première carte de fidélité.
-                </p>
-              </div>
-            )}
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
+        ) : (
+          <div className="text-center py-20 bg-white rounded-[2rem] border-2 border-dashed border-gray-200">
+            <div className="inline-flex items-center justify-center w-16 h-16 mb-5 rounded-2xl bg-gray-50">
+              <CreditCard className="w-8 h-8 text-gray-200" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">Aucune carte trouvée</h2>
+            <p className="text-gray-400 max-w-xs mx-auto text-sm leading-relaxed">
+              Scannez un QR code chez un commerçant pour ajouter votre première carte de fidélité.
+            </p>
+          </div>
+        )}
       </main>
 
       <footer className="py-8 text-center">
         <a href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
-          <span className="text-xs text-gray-400 group-hover:text-gray-500">Créé avec ❤️ par</span>
-          <div className="w-4 h-4 bg-gradient-to-br from-indigo-600 to-violet-600 rounded-sm flex items-center justify-center">
-            <span className="text-white text-[8px] font-black italic">Q</span>
-          </div>
+          <span className="text-xs text-gray-300 group-hover:text-gray-400">Créé avec ❤️ par</span>
           <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
             Qarte
           </span>
