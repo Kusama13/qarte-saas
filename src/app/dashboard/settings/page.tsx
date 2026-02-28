@@ -14,7 +14,9 @@ import {
   Copy,
   Share2,
   Download,
+  Crown,
 } from 'lucide-react';
+import Link from 'next/link';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validatePhone, formatDate, PHONE_CONFIG } from '@/lib/utils';
@@ -371,6 +373,31 @@ export default function SettingsPage() {
               })}
             </p>
           </div>
+
+          {(merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling') && (
+            <div className="col-span-1 md:col-span-2 p-5 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 shadow-sm flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-200/50">
+                  <Crown className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">Abonnement</p>
+                  <p className="text-sm font-bold text-gray-900">
+                    Pro {merchant?.billing_interval === 'annual' ? 'Annuel' : 'Mensuel'}
+                    {merchant?.subscription_status === 'canceling' && (
+                      <span className="ml-2 text-[11px] font-semibold text-orange-500">· Annulation en cours</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/dashboard/subscription"
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors shrink-0"
+              >
+                Gérer →
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
