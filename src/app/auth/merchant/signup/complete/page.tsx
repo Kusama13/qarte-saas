@@ -145,10 +145,11 @@ export default function CompleteProfilePage() {
         return;
       }
 
-      // Track signup completed + merchant creation + FB CompleteRegistration
+      // Track signup completed + merchant creation + FB CompleteRegistration + StartTrial
       trackSignupCompleted(userId!, 'email');
       trackSetupCompleted({ merchant_id: result.merchant?.id || userId!, business_type: formData.shopType || undefined });
       fbEvents.completeRegistration();
+      fbEvents.startTrial();
       // TikTok: identify user (await pour que le hash soit prêt) + CompleteRegistration + StartTrial
       await ttIdentify({ email: userEmail || undefined, phone: formattedPhone, externalId: userId || undefined });
       ttEvents.completeRegistration();
