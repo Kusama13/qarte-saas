@@ -40,9 +40,9 @@ export default function LegalMentionsPage() {
             </h2>
             <p className="text-gray-600">
               <strong>Qarte</strong><br />
-              [Forme juridique — à compléter : SAS, SARL, EI, etc.]<br />
-              Capital social : [à compléter]<br />
-              Siège social : [adresse complète — à compléter]<br />
+              SAS Tenga Labs<br />
+              Capital social : 5 000 €<br />
+              Siège social : 60 rue François 1er, 75008 Paris<br />
               SIRET : [à compléter]<br />
               RCS : [ville — à compléter]<br />
               N° TVA intracommunautaire : [à compléter]<br />
@@ -51,7 +51,7 @@ export default function LegalMentionsPage() {
               <a href="mailto:contact@getqarte.com" className="text-indigo-600 hover:text-indigo-800 underline">
                 contact@getqarte.com
               </a><br />
-              Téléphone : [à compléter]
+              Téléphone : +33 6 07 44 74 20
             </p>
           </section>
 
