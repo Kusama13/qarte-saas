@@ -263,7 +263,7 @@ export default function MerchantDetailPage() {
       case 'active':
         return (
           <span className="px-3 py-1.5 text-sm font-medium text-green-700 bg-green-100 rounded-full">
-            Abonné actif
+            Actif {merchant.billing_interval === 'annual' ? 'annuel' : 'mensuel'}
           </span>
         );
       case 'canceled':
