@@ -147,6 +147,14 @@ export default function SubscriptionPage() {
   useEffect(() => {
     if (!polling || !merchant) return;
 
+    // If webhook already processed before we loaded the page, stop immediately
+    if (merchant.subscription_status === 'active' || merchant.subscription_status === 'canceling') {
+      refetchContext();
+      if (merchant.stripe_subscription_id) fetchPaymentMethod();
+      setPolling(false);
+      return;
+    }
+
     const initialStatus = merchant.subscription_status;
     const initialStripeId = merchant.stripe_subscription_id;
     let attempts = 0;
@@ -170,7 +178,9 @@ export default function SubscriptionPage() {
 
       if (data && (
         data.subscription_status !== initialStatus ||
-        data.stripe_subscription_id !== initialStripeId
+        data.stripe_subscription_id !== initialStripeId ||
+        data.subscription_status === 'active' ||
+        data.subscription_status === 'canceling'
       )) {
         setMerchant(data);
         if (data.billing_interval === 'annual') setBillingPlan('annual');
@@ -180,7 +190,7 @@ export default function SubscriptionPage() {
         return;
       }
 
-      if (attempts >= 15) {
+      if (attempts >= 30) {
         if (data) {
           setMerchant(data);
           if (data.billing_interval === 'annual') setBillingPlan('annual');
@@ -191,12 +201,11 @@ export default function SubscriptionPage() {
         return;
       }
 
-      // Fast polls first (1s x5), then slow down (3s, 4.5s, 6.75s...)
-      const delay = attempts <= 5 ? 1000 : 3000 * Math.pow(1.5, attempts - 6);
-      timeoutId = setTimeout(poll, delay);
+      timeoutId = setTimeout(poll, 1000);
     };
 
-    timeoutId = setTimeout(poll, 1000);
+    // First poll immediately, then every 1s
+    timeoutId = setTimeout(poll, 0);
     return () => {
       cancelled = true;
       clearTimeout(timeoutId);
