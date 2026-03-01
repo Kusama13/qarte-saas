@@ -43,9 +43,9 @@ export function GuidedSignupEmail({ email }: GuidedSignupEmailProps) {
 
       <Section style={stepsBox}>
         <Text style={stepsTitle}>Ce qui se passe ensuite :</Text>
-        <Text style={stepItem}>1&xFE0F;&x20E3; Vous remplissez 4 champs</Text>
-        <Text style={stepItem}>2&xFE0F;&x20E3; Vous choisissez une r&eacute;compense (on vous sugg&egrave;re la meilleure)</Text>
-        <Text style={stepItem}>3&xFE0F;&x20E3; Votre QR code est pr&ecirc;t &mdash; vos clients peuvent scanner</Text>
+        <Text style={stepItem}>1️⃣ Vous remplissez 4 champs</Text>
+        <Text style={stepItem}>2️⃣ Vous choisissez une r&eacute;compense (on vous sugg&egrave;re la meilleure)</Text>
+        <Text style={stepItem}>3️⃣ Votre QR code est pr&ecirc;t &mdash; vos clients peuvent scanner</Text>
       </Section>
 
       <Text style={paragraph}>

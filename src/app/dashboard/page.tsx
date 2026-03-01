@@ -773,8 +773,8 @@ export default function DashboardPage() {
 
         {/* Activity Card */}
         <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
-          <div className="p-5 md:p-8">
-            <div className="flex items-center justify-between mb-5 md:mb-8">
+          <div className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-3">
               <h2 className="text-base md:text-xl font-bold tracking-tight text-gray-900">
                 Activité récente
               </h2>
@@ -787,62 +787,37 @@ export default function DashboardPage() {
             </div>
 
             {recentCustomers.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 {recentCustomers.map((customer) => {
                   const stampsReq1 = merchant?.stamps_required || 1;
+                  const stamps = Math.min(customer.stamps, stampsReq1);
                   const progress1 = Math.min((customer.stamps / stampsReq1) * 100, 100);
-                  const hasTier2 = merchant?.tier2_enabled && merchant?.tier2_stamps_required;
-                  const stampsReq2 = merchant?.tier2_stamps_required || 1;
-                  const progress2 = hasTier2 ? Math.min((customer.stamps / stampsReq2) * 100, 100) : 0;
 
                   return (
                     <Link
                       key={customer.id}
                       href="/dashboard/customers"
-                      className="group/item flex items-center justify-between p-4 rounded-2xl bg-indigo-50/30 border border-transparent hover:bg-white hover:border-indigo-100 hover:shadow-md hover:shadow-indigo-100/50 transition-all duration-200 cursor-pointer"
+                      className="group/item flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50/80 border border-transparent hover:bg-white hover:border-indigo-100 hover:shadow-sm transition-all duration-150 cursor-pointer"
                     >
-                      <div className="flex items-center gap-3 md:gap-4">
-                        <div className="flex items-center justify-center w-9 h-9 md:w-12 md:h-12 text-sm md:text-base font-bold text-white rounded-xl md:rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200/50">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="flex items-center justify-center w-8 h-8 shrink-0 text-xs font-bold text-white rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600">
                           {customer.name.charAt(0)}
                         </div>
-                        <div>
-                          <p className="text-sm md:text-base font-bold text-gray-900">{customer.name}</p>
-                          <p className="text-sm text-gray-500">
-                            {customer.lastVisit
-                              ? formatRelativeTime(customer.lastVisit)
-                              : 'Nouveau client'}
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{customer.name}</p>
+                          <p className="text-[11px] text-gray-400 leading-none mt-0.5">
+                            {customer.lastVisit ? formatRelativeTime(customer.lastVisit) : 'Nouveau client'}
                           </p>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1.5">
-                        {/* Palier 1 */}
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-baseline gap-1">
-                            <span className="text-base md:text-lg font-bold text-indigo-600">{Math.min(customer.stamps, stampsReq1)}</span>
-                            <span className="text-xs font-semibold text-gray-400">/ {stampsReq1}</span>
-                          </div>
-                          <div className="h-1.5 w-16 bg-gray-200/50 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full transition-all duration-500"
-                              style={{ width: `${progress1}%` }}
-                            />
-                          </div>
+                      <div className="flex items-center gap-2 shrink-0 ml-3">
+                        <div className="h-1 w-14 bg-gray-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full"
+                            style={{ width: `${progress1}%` }}
+                          />
                         </div>
-                        {/* Palier 2 */}
-                        {hasTier2 && (
-                          <div className="flex items-center gap-2">
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-sm font-bold text-violet-500">{Math.min(customer.stamps, stampsReq2)}</span>
-                              <span className="text-[10px] font-semibold text-gray-400">/ {stampsReq2}</span>
-                            </div>
-                            <div className="h-1.5 w-16 bg-gray-200/50 rounded-full overflow-hidden">
-                              <div
-                                className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-500"
-                                style={{ width: `${progress2}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
+                        <span className="text-xs font-bold text-indigo-600 w-8 text-right">{stamps}<span className="text-gray-300 font-normal">/{stampsReq1}</span></span>
                       </div>
                     </Link>
                   );
