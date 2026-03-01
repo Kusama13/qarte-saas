@@ -9,6 +9,7 @@
 - **Langue:** Francais
 - **Essai:** 7 jours gratuits
 - **Prix:** 19€/mois ou 190€/an
+- **Entite juridique:** SAS Tenga Labs — 60 rue François 1er, 75008 Paris — Capital 5 000€ — +33 6 07 44 74 20
 
 ---
 
@@ -59,7 +60,7 @@ src/
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
 │   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal (inline name/birthday edit, pills header), CustomerRewardsTab, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
-│   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, ReviewPrompt, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep)
+│   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep, CardSkeleton, CardHeader, BirthdaySection, VoucherRewards, VoucherModals, ReviewModal)
 │   ├── marketing/         # SocialMediaTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel, MicrosoftClarity
 │
@@ -133,7 +134,8 @@ supabase/
     ├── 043               # PWA installed tracking
     ├── 044               # Admin announcements
     ├── 045               # Announcement link URL
-    └── 046               # Performance indexes v2
+    ├── 046               # Performance indexes v2
+    └── 048               # Double stamp days (double_days_enabled, double_days_of_week)
 
 public/
 ├── images/              # Images statiques (mockups, temoignages, email-banner)
@@ -151,7 +153,7 @@ public/
 - `country` (MerchantCountry: 'FR' | 'BE' | 'CH' | 'LU', default 'FR')
 - `logo_url`, `primary_color`, `secondary_color`
 - `instagram_url`, `facebook_url`, `tiktok_url`, `booking_url`, `review_link`
-- `loyalty_mode` ('visit' | 'article')
+- `loyalty_mode` ('visit') — mode article supprimé
 - `stamps_required`, `reward_description`
 - `tier2_enabled`, `tier2_stamps_required`, `tier2_reward_description`
 - `referral_code` (VARCHAR 10, UNIQUE — ex: `QARTE-AB3K`)
@@ -159,6 +161,9 @@ public/
 - `trial_ends_at`, `subscription_status`, `stripe_customer_id`, `stripe_subscription_id`
 - `billing_interval` ('monthly' | 'annual', default 'monthly')
 - `shield_enabled` (Qarte Shield)
+- `birthday_gift_enabled`, `birthday_gift_description`
+- `double_days_enabled` (BOOLEAN DEFAULT false) — jours x2 actifs
+- `double_days_of_week` (TEXT DEFAULT '[]') — JSON array JS getDay() values (0=Dim, 1=Lun…6=Sam)
 
 ### customers
 - `id`, `phone_number` (format E.164 sans +, ex: `33612345678`), `first_name`, `last_name`
@@ -193,6 +198,10 @@ public/
 - `super_admins`, `admin_expenses`, `admin_fixed_costs`
 - `admin_notes`, `admin_tasks`, `prospects`
 
+### REGLES DE SECURITE IMPERATIVE — QR CODE & LIEN DE SCAN
+**Le QR code et l'URL `/scan/[code]` ne doivent JAMAIS apparaître sur une page publique.**
+Toute implémentation de page publique (bio réseaux sociaux, landing programme, partage...) doit être dépourvue de tout lien ou QR code de scan. Le scan est réservé au merchant (affiché en boutique). Exposer le lien permettrait à n'importe qui de s'octroyer des tampons frauduleusement.
+
 ### Securite RLS
 Toutes les tables ont **Row Level Security (RLS)** active avec policies appropriees :
 - Tables publiques : `customers`, `loyalty_cards`, `visits`, `referrals`, `vouchers` (lecture/ecriture via scan)
@@ -212,7 +221,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 ### Clients
 - `POST /api/customers/register` - Inscription client
 - `GET /api/customers/card` - Carte de fidelite
-- `GET /api/customers/cards` - Toutes les cartes
+- `POST /api/customers/cards` - Toutes les cartes (auth via cookie, rate limit 10/min)
 - `PUT /api/customers/update-name` - Modifier nom/prenom client (merchant auth + ownership check)
 
 ### Commercants
@@ -254,13 +263,14 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Check-in par QR code (API parallelisee — 5 groupes Promise.all, ~300-600ms)
 - Accumulation de tampons/points
 - 2 paliers de recompenses
-- Mode visite ou mode article
 - Historique des passages
 - Suggestions de programme par type de commerce (MerchantSettingsForm)
 - 10 palettes couleurs (6 mobile + 4 desktop-only)
 - Preview carte client avec donnees simulees (`?preview=true`)
 - Reward card dual-tier : celebration mode (gradient + shimmer + pulsing) quand recompense prete, motivational preview sinon
-- Footer "Propulse par Qarte" avec lien vers landing
+- Footer "Propulse par Qarte" avec lien vers landing (texte seul, sans icone)
+- **ReviewModal** : modal glamour post-recompense (avis Google) — declenchee apres utilisation d'un bon de recompense ou d'un voucher parrainage, si `review_link` renseigne. 5 etoiles animees amber, anti-spam 90 jours via localStorage (`qarte_review_asked_${merchantId}`). z-index 60.
+- **Jours x2 (Double Stamp Days)** : le merchant configure des jours de la semaine ou chaque passage compte double (2 tampons au lieu de 1). `double_days_enabled` + `double_days_of_week` (JSON array getDay()). Calcul dans `getPointsEarned()` (module-level dans checkin/route.ts, timezone Paris). Affiché dans ScanSuccessStep (message "Jour x{N}" + badge amber) et sous la grille de tampons dans StampsSection. Configurable dans dashboard /program (section collapsible en bas de page). Helpers centralises dans utils.ts : `parseDoubleDays()`, `formatDoubleDays()`, `DAY_LABELS`, `WEEK_ORDER`.
 
 ### Support Multi-Pays
 - Pays supportes : France (FR), Belgique (BE), Suisse (CH), Luxembourg (LU)
@@ -316,7 +326,7 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 ### Onboarding Checklist (Dashboard)
 - 6 etapes : programme, logo, reseau social, preview client, QR code, 2 premiers scans
 - Deep-link `?section=social` auto-ouvre le collapse reseaux sociaux dans la page programme
-- Confetti a la completion de toutes les etapes
+- Confetti a la completion de toutes les etapes (une seule fois — persiste via `qarte_checklist_completed_at_${merchantId}` en localStorage, verifie avant de re-tirer)
 - Auto-dismiss 3 jours apres completion, dismiss session via bouton X
 - Visible uniquement en periode d'essai (`subscription_status === 'trial'`)
 
@@ -385,8 +395,8 @@ CONTACT_EMAIL=
 ### Evenements Facebook Pixel (client-side)
 - `PageView` - automatique
 - `Lead` - generation lead
-- `CompleteRegistration` - inscription terminee
-- `StartTrial` - debut essai
+- `CompleteRegistration` - inscription terminee (Phase 2 completee)
+- `StartTrial` - debut essai (fire avec CompleteRegistration apres Phase 2)
 - `Purchase` - souscription Stripe (avec `eventID` pour dedup CAPI)
 - `InitiateCheckout` - clic signup
 - `ScrollDepth` - profondeur scroll
@@ -603,6 +613,15 @@ npm run email
 - JSON-LD structured data : Organization + SoftwareApplication (layout.tsx)
 - Sitemap : /, /pricing, /essai-gratuit, /qarte-vs-carte-papier, /blog, 3 articles blog, /ebook, /contact, /cgv, /mentions-legales, /politique-confidentialite
 
+### Wallet Client (`/customer/cards`)
+- Design premium inspire Apple Wallet — fond `bg-[#f7f6fb]` (blanc tinte lavande)
+- Header minimal : "Qarte" gradient text `text-2xl font-black` + telephone + `LogOut` discret
+- Greeting typographique : "Bonjour," (`text-base text-gray-400`) + "Prenom." (`text-4xl font-black`) sur deux lignes, point editorial. Fallback "Mes cartes." si pas de prenom.
+- Grille max 2 colonnes (`sm:grid-cols-2`), Framer Motion stagger `delay: index * 0.07`
+- Chaque carte : header colore merchant (`linear-gradient(135deg, primary_color, primary_colorcc)`) + section blanche progress bar + texte "X sur Y passages · reward_description"
+- Etat "recompense prete" : glow couleur merchant via `boxShadow` inline + badge "Pret !" dans header (remplace ChevronRight)
+- Dual tier : 2 barres empilees avec labels Palier 1 / Palier 2 (Trophy icon)
+
 ### Demo (`/demo`)
 - Galerie 3 cartes fictives : coiffeur, onglerie, institut
 - Selecteur de type de commerce
@@ -619,17 +638,20 @@ npm run email
 - Analytics, Revenus, Depenses
 - Marketing, Prospects, Notes, Taches
 - Activity : vue "hier" (`?date=yesterday`) pour suivi activite merchants
-- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badge parrainage, progression onboarding, badge sante
+- Merchant detail : section "Liens & Reseaux" (social links, booking, avis Google), badge parrainage, progression onboarding, badge sante, billing_interval affiché dans badge statut (Actif mensuel/annuel)
 - **Toutes les stats excluent les comptes admin** (via `super_admins` table)
 
 ### Dashboard (`/dashboard`)
 - Sidebar navigation (bottom sheet mobile, sidebar desktop)
+- Sidebar : logo merchant affiché en haut (logo_url si disponible, sinon initiale du nom) + pill PRO pour abonnés
 - Statistiques temps reel + comparaison semaine precedente
+- Stats "Clients inscrits" et "Clients actifs (30j)" cliquables → `/dashboard/customers`
 - Gestion programme fidelite (suggestions par shop_type, 10 palettes couleurs)
 - Page QR code & Kit promo (2 onglets : QR code + Kit reseaux sociaux avec SocialMediaTemplate)
 - Gestion clients — 4 filtres (Notifiables, Inactifs 21j+, Proches recompense, Recompense dispo) + recherche nom/telephone + edit inline nom/prenom/anniversaire
 - Marketing (push notifications)
-- Page abonnement avec countdown timer + polling 1s apres retour checkout/portail Stripe + prix journalier (0,63€/jour mensuel, 0,52€/jour annuel)
+- Page abonnement avec countdown timer + polling 1s (30 tentatives max, early exit si deja active) apres retour checkout/portail Stripe + prix journalier (0,63€/jour mensuel, 0,52€/jour annuel)
+- Settings : badge abonnement Pro (Crown icon, mensuel/annuel, lien Gérer → /dashboard/subscription)
 - Parrainage merchant : encart en haut de Settings (code QARTE-XXXX + copier + partager via Web Share API)
 - Parrainage client : page `/dashboard/referrals` (toggle, config recompenses, stats, tableau de suivi)
 - Headers harmonises (violet #4b0082)
@@ -684,8 +706,8 @@ import type { Merchant } from '@/types';
 
 | Cron | Horaire | Description |
 |------|---------|-------------|
-| `/api/cron/morning` | 09:00 UTC | Emails essai, rappel programme J+1, rappels pending, push 10h |
-| `/api/cron/evening` | 18:00 UTC | Push notifications programmees 18h |
+| `/api/cron/morning` | 09:00 UTC (= 10h Paris hiver / 11h Paris été) | Emails essai, rappel programme J+1, rappels pending, push 10h, vouchers anniversaire |
+| `/api/cron/evening` | 17:00 UTC (= 18h Paris hiver / 19h Paris été) | Push notifications programmees 18h |
 | `/api/cron/reactivation` | 10:00 UTC | Emails win-back J+7/14/30 |
 
 ---
@@ -728,7 +750,7 @@ import type { Merchant } from '@/types';
 ### Stripe & Paiement
 | Email | Declencheur |
 |-------|-------------|
-| SubscriptionConfirmedEmail | checkout.session.completed + invoice.payment_succeeded recovery (webhook Stripe). Affiche plan mensuel/annuel via `billingInterval`. |
+| SubscriptionConfirmedEmail | checkout.session.completed + invoice.payment_succeeded recovery (webhook Stripe). Affiche plan mensuel/annuel via `billingInterval`. Image carte NFC incluse. Section NFC mensuel (bouton achat 20€) vs annuel (carte offerte, expédition auto). |
 | PaymentFailedEmail | invoice.payment_failed (webhook Stripe) |
 | SubscriptionCanceledEmail | customer.subscription.updated → canceling (webhook Stripe, date de fin Stripe) |
 | SubscriptionReactivatedEmail | customer.subscription.updated → canceling→active (webhook Stripe, reactivation via portail) |

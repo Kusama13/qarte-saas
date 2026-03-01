@@ -13,6 +13,7 @@ interface CardHeaderProps {
   isDemo: boolean;
   merchantId: string;
   onShowMemberCard: () => void;
+  hideBackButton?: boolean;
 }
 
 export default function CardHeader({
@@ -23,6 +24,7 @@ export default function CardHeader({
   isDemo,
   merchantId,
   onShowMemberCard,
+  hideBackButton = false,
 }: CardHeaderProps) {
   return (
     <header className="relative w-full overflow-hidden">
@@ -35,18 +37,20 @@ export default function CardHeader({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent)]" />
 
         {/* Back button */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="absolute top-4 left-4 z-20"
-        >
-          <Link
-            href={isDemo ? '/' : isPreview ? '/dashboard/program' : '/customer/cards'}
-            className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 transition-all hover:bg-white/30 active:scale-90"
+        {!hideBackButton && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute top-4 left-4 z-20"
           >
-            <ArrowLeft className="w-5 h-5 text-white" />
-          </Link>
-        </motion.div>
+            <Link
+              href={isDemo ? '/' : isPreview ? '/dashboard/program' : '/customer/cards'}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 transition-all hover:bg-white/30 active:scale-90"
+            >
+              <ArrowLeft className="w-5 h-5 text-white" />
+            </Link>
+          </motion.div>
+        )}
 
         {/* Centered content */}
         <div className="relative flex flex-col items-center pt-10 pb-10 px-5">
