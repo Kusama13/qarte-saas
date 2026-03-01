@@ -3,7 +3,7 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, Clock, Sparkles } from 'lucide-react';
+import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, Clock, Sparkles, QrCode, Crown, UserPlus, Megaphone, CreditCard, Settings } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTrialStatus } from '@/lib/utils';
 import { Button } from '@/components/ui';
@@ -573,6 +573,32 @@ export default function DashboardPage() {
         onShieldToggle={handleShieldToggle}
       />
 
+      {/* Raccourcis rapides — mobile uniquement */}
+      <div className="md:hidden space-y-2">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 px-1">Raccourcis</p>
+        <div className="grid grid-cols-3 gap-2.5">
+          {[
+            { href: '/dashboard/program', icon: Gift, label: 'Programme', color: 'text-pink-500', bg: 'bg-pink-50' },
+            { href: '/dashboard/qr-download', icon: QrCode, label: 'QR Code', color: 'text-violet-500', bg: 'bg-violet-50' },
+            { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+            { href: '/dashboard/referrals', icon: UserPlus, label: 'Parrainage', color: 'text-blue-500', bg: 'bg-blue-50' },
+            { href: '/dashboard/subscription', icon: CreditCard, label: 'Abonnement', color: 'text-teal-500', bg: 'bg-teal-50' },
+            { href: '/dashboard/settings', icon: Settings, label: 'Paramètres', color: 'text-gray-500', bg: 'bg-gray-100' },
+          ].map(({ href, icon: Icon, label, color, bg }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex flex-col items-center gap-2 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition-transform"
+            >
+              <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center`}>
+                <Icon className={`w-5 h-5 ${color}`} />
+              </div>
+              <span className="text-[11px] font-semibold text-gray-600 text-center leading-tight">{label}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {/* Shield Disable Warning Modal */}
       {showShieldWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -631,7 +657,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Link href="/dashboard/customers" className="block">
           <StatsCard
             title="Clients inscrits"
