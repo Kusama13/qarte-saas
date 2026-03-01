@@ -23,6 +23,7 @@ import {
   Smartphone,
   TrendingUp,
   Users as UsersIcon,
+  Zap,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -136,6 +137,9 @@ export default function ProgramPage() {
     tier2Enabled: false,
     tier2StampsRequired: 0,
     tier2RewardDescription: '',
+    // Double stamp days
+    doubleDaysEnabled: false,
+    doubleDaysOfWeek: [] as number[],
   });
 
   // Track original stamps required for warning
@@ -143,6 +147,7 @@ export default function ProgramPage() {
   const [showStampsWarning, setShowStampsWarning] = useState(false);
   const [tier2Error, setTier2Error] = useState('');
   const [socialOpen, setSocialOpen] = useState(searchParams.get('section') === 'social');
+  const [doubleDaysOpen, setDoubleDaysOpen] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
@@ -186,6 +191,8 @@ export default function ProgramPage() {
           tier2Enabled: data.tier2_enabled || false,
           tier2StampsRequired: data.tier2_stamps_required || 0,
           tier2RewardDescription: data.tier2_reward_description || '',
+          doubleDaysEnabled: data.double_days_enabled || false,
+          doubleDaysOfWeek: (() => { try { return JSON.parse(data.double_days_of_week || '[]'); } catch { return []; } })(),
         });
         setOriginalStampsRequired(data.stamps_required || 5);
         if (!data.reward_description) {
@@ -272,6 +279,9 @@ export default function ProgramPage() {
     }
     setTier2Error('');
 
+    // Sanitize double days: if enabled but no day selected, disable silently
+    const doubleDaysEnabled = formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length > 0;
+
     setSaving(true);
     try {
       const { error } = await supabase
@@ -293,6 +303,8 @@ export default function ProgramPage() {
           tier2_enabled: formData.tier2Enabled,
           tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
           tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null,
+          double_days_enabled: doubleDaysEnabled,
+          double_days_of_week: JSON.stringify(formData.doubleDaysOfWeek),
         })
         .eq('id', merchant.id);
 
@@ -316,6 +328,8 @@ export default function ProgramPage() {
           tier2_enabled: formData.tier2Enabled,
           tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
           tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null,
+          double_days_enabled: doubleDaysEnabled,
+          double_days_of_week: JSON.stringify(formData.doubleDaysOfWeek),
         };
         const { stripe_subscription_id, stripe_customer_id, scan_code, user_id, ...safeMerchant } = updatedMerchant;
         localStorage.setItem('qarte_merchant_cache', JSON.stringify({
@@ -774,6 +788,102 @@ export default function ProgramPage() {
                   <p className="text-xs text-gray-500">
                     Vos clients pourront réserver directement depuis leur carte.
                   </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Jours x2 — Collapsible */}
+          <div className="bg-white/80 backdrop-blur-xl border border-amber-100 rounded-2xl shadow-sm overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setDoubleDaysOpen(!doubleDaysOpen)}
+              className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-amber-50 border border-amber-100">
+                  <Zap className="w-4 h-4 text-amber-500" />
+                </div>
+                <div className="text-left">
+                  <h3 className="text-sm md:text-lg font-bold text-gray-900">Jours x2 <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
+                  <p className="text-[11px] md:text-xs text-gray-500">Certains jours, chaque passage compte double</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${doubleDaysOpen ? 'rotate-180' : ''}`} />
+            </button>
+            <div className={`grid transition-all duration-300 ease-in-out ${doubleDaysOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+              <div className="overflow-hidden">
+                <div className="px-3 md:px-5 pb-5 space-y-4">
+                  {/* Tip */}
+                  <p className="text-xs text-gray-500 pt-1 border-t border-amber-50 pb-1">
+                    Si vous avez des jours creux, les points doubles peuvent inciter vos clients à revenir précisément ces jours-là.
+                  </p>
+
+                  {/* Toggle */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-700">Activer les jours x2</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={formData.doubleDaysEnabled}
+                      onClick={() => setFormData({ ...formData, doubleDaysEnabled: !formData.doubleDaysEnabled })}
+                      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 ${
+                        formData.doubleDaysEnabled ? 'bg-amber-400' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.doubleDaysEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+
+                  {/* Day picker */}
+                  {(() => {
+                    const DAYS = [
+                      { label: 'Lun', value: 1 },
+                      { label: 'Mar', value: 2 },
+                      { label: 'Mer', value: 3 },
+                      { label: 'Jeu', value: 4 },
+                      { label: 'Ven', value: 5 },
+                      { label: 'Sam', value: 6 },
+                      { label: 'Dim', value: 0 },
+                    ];
+                    const toggleDay = (day: number) => {
+                      const current = formData.doubleDaysOfWeek;
+                      const updated = current.includes(day) ? current.filter(d => d !== day) : [...current, day];
+                      setFormData({ ...formData, doubleDaysOfWeek: updated });
+                    };
+                    const selectedDays = DAYS.filter(d => formData.doubleDaysOfWeek.includes(d.value));
+                    return (
+                      <div className={`space-y-3 ${!formData.doubleDaysEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                        <div className="flex gap-1.5 flex-wrap">
+                          {DAYS.map(day => {
+                            const active = formData.doubleDaysOfWeek.includes(day.value);
+                            return (
+                              <button
+                                key={day.value}
+                                type="button"
+                                onClick={() => toggleDay(day.value)}
+                                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 border ${
+                                  active
+                                    ? 'bg-amber-400 border-amber-400 text-white shadow-sm'
+                                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600'
+                                }`}
+                              >
+                                {day.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length === 0 && (
+                          <p className="text-xs text-amber-600 font-medium">Cochez au moins un jour</p>
+                        )}
+                        {selectedDays.length > 0 && (
+                          <p className="text-xs text-gray-500">
+                            <span className="font-semibold text-amber-600">{selectedDays.map(d => d.label).join(', ')}</span> — chaque scan = 2 tampons
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>

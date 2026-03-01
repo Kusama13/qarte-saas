@@ -59,6 +59,18 @@ function getTodayStartParis(): string {
 // Quarantine threshold: 1 visit per day confirmed, 2nd+ pending
 const QUARANTINE_THRESHOLD = 1;
 
+// Double days: 2 stamps if today is a configured double-stamp day (Paris timezone)
+function getPointsEarned(m: { double_days_enabled: boolean; double_days_of_week: string }): number {
+  if (!m.double_days_enabled) return 1;
+  try {
+    const days = JSON.parse(m.double_days_of_week || '[]') as number[];
+    const parisDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+    return days.includes(parisDate.getDay()) ? 2 : 1;
+  } catch {
+    return 1;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
@@ -265,13 +277,13 @@ export async function POST(request: NextRequest) {
         tier2_reward_description: merchant.tier2_reward_description,
         customer_name: customer.first_name,
         flagged_reason: recentVisit.flagged_reason,
-        points_earned: recentVisit.points_earned || 1,
+        points_earned: getPointsEarned(merchant),
       });
     }
 
     // ── Step 5: Qarte Shield — determine visit status
     const today = getTodayInParis();
-    const pointsEarned = 1;
+    const pointsEarned = getPointsEarned(merchant);
     let visitStatus: VisitStatus = 'confirmed';
     let flaggedReason: string | null = null;
 

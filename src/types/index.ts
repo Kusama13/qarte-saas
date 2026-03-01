@@ -80,6 +80,9 @@ export interface Merchant {
   // Birthday gift
   birthday_gift_enabled: boolean;
   birthday_gift_description: string | null;
+  // Double stamp days
+  double_days_enabled: boolean;
+  double_days_of_week: string; // JSON array of JS getDay() values ex: "[1,3]"
   created_at: string;
   updated_at: string;
   last_seen_at: string | null;

@@ -393,3 +393,35 @@ export function generateReferralCode(): string {
   for (let i = 0; i < 6; i++) code += chars[randomBytes[i] % chars.length];
   return code;
 }
+
+// ── Double stamp days helpers ─────────────────────────────────────────────────
+
+/** Week order Mon→Sun (French business convention). */
+export const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0] as const;
+
+/** Short day labels keyed by JS getDay() value. */
+export const DAY_LABELS: Record<number, string> = {
+  0: 'Dim', 1: 'Lun', 2: 'Mar', 3: 'Mer', 4: 'Jeu', 5: 'Ven', 6: 'Sam',
+};
+
+/**
+ * Parse a JSON string of JS getDay() values (0–6).
+ * Filters out any values outside 0–6. Returns [] on error.
+ */
+export function parseDoubleDays(json: string | null | undefined): number[] {
+  try {
+    const parsed = JSON.parse(json || '[]') as unknown[];
+    return parsed.filter((d): d is number => typeof d === 'number' && d >= 0 && d <= 6);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Returns double days sorted Mon→Sun and formatted as "Lun · Mer".
+ * Returns empty string if none.
+ */
+export function formatDoubleDays(json: string | null | undefined): string {
+  const days = parseDoubleDays(json);
+  return WEEK_ORDER.filter(d => days.includes(d)).map(d => DAY_LABELS[d]).join(' · ');
+}

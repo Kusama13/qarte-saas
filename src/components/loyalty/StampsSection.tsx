@@ -2,6 +2,7 @@
 
 import { Gift, Heart, Trophy, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { parseDoubleDays, formatDoubleDays } from '@/lib/utils';
 
 const LoyaltyIcon = Heart;
 
@@ -14,9 +15,10 @@ interface StampsSectionProps {
   isTier2Ready: boolean;
   effectiveTier1Redeemed: boolean;
   merchantColor: string;
-  secondaryColor?: string;
   rewardDescription: string;
   tier2Reward: string;
+  doubleDaysEnabled?: boolean;
+  doubleDaysOfWeek?: string;
 }
 
 function getDualStampClass(isEarned: boolean, isGreyed: boolean, isLast: boolean): string {
@@ -63,10 +65,14 @@ export default function StampsSection({
   isTier2Ready,
   effectiveTier1Redeemed,
   merchantColor,
-  secondaryColor,
   rewardDescription,
   tier2Reward,
+  doubleDaysEnabled,
+  doubleDaysOfWeek,
 }: StampsSectionProps) {
+  const doubleDays = parseDoubleDays(doubleDaysOfWeek);
+  const showDoubleDaysHint = doubleDaysEnabled && doubleDays.length > 0;
+  const formattedDoubleDays = showDoubleDaysHint ? formatDoubleDays(doubleDaysOfWeek) : '';
   if (tier2Enabled) {
     return (
       <div className="space-y-5">
@@ -166,13 +172,22 @@ export default function StampsSection({
             {tier2Reward || 'Récompense Premium'}
           </p>
         </div>
+
+        {showDoubleDaysHint && (
+          <div className="flex items-center justify-center gap-1.5 pt-1">
+            <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+            <span className="text-[11px] text-gray-400 font-medium">
+              Les {formattedDoubleDays}, chaque passage compte double
+            </span>
+          </div>
+        )}
       </div>
     );
   }
 
   /* ═══════════════ SINGLE TIER ═══════════════ */
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Ma fidélité</span>
         {isRewardReady ? (
@@ -220,6 +235,15 @@ export default function StampsSection({
           );
         })}
       </div>
+
+      {showDoubleDaysHint && (
+        <div className="flex items-center justify-center gap-1.5">
+          <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+          <span className="text-[11px] text-gray-400 font-medium">
+            Les {formattedDoubleDays}, chaque passage compte double
+          </span>
+        </div>
+      )}
     </div>
   );
 }

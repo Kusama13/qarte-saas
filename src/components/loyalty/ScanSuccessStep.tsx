@@ -60,8 +60,18 @@ function getCelebrationMessage(
   previousStamps: number,
   stampsRequired: number,
   customerName?: string,
+  lastCheckinPoints?: number,
 ): { title: string; subtitle: string; emoji: string } {
   const remaining = stampsRequired - currentStamps;
+
+  // Double day — highest priority
+  if (lastCheckinPoints && lastCheckinPoints > 1) {
+    return {
+      title: `Jour x${lastCheckinPoints}\u00a0!`,
+      subtitle: `Aujourd\u2019hui chaque passage compte x${lastCheckinPoints}${customerName ? `, ${customerName}` : ''}\u00a0!`,
+      emoji: '\u26a1',
+    };
+  }
 
   // First scan ever
   if (previousStamps === 0) {
@@ -121,6 +131,7 @@ export default function ScanSuccessStep({
     previousStamps,
     stampsRequired,
     customer?.first_name,
+    lastCheckinPoints,
   );
 
   // Active tier target
@@ -226,7 +237,7 @@ export default function ScanSuccessStep({
           <AnimatedCheckmark color={primaryColor} />
         </div>
 
-        {/* +1 flying up */}
+        {/* +N flying up */}
         <motion.div
           className="absolute font-black text-2xl"
           style={{ color: primaryColor, right: -4, top: 8 }}
@@ -244,6 +255,18 @@ export default function ScanSuccessStep({
         >
           +{lastCheckinPoints}
         </motion.div>
+
+        {/* x2 badge — shown on double day */}
+        {lastCheckinPoints > 1 && (
+          <motion.div
+            className="absolute -bottom-2 -right-6 px-2 py-0.5 rounded-full bg-amber-400 text-white text-[10px] font-black uppercase tracking-wide shadow-lg"
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.8, type: 'spring', stiffness: 400 }}
+          >
+            x{lastCheckinPoints}
+          </motion.div>
+        )}
       </div>
 
       {/* === Content: message + counter + progress === */}
