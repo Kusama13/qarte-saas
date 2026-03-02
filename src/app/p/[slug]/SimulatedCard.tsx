@@ -66,9 +66,7 @@ export default function SimulatedCard({
 
     // Fire sparkles from the component center
     if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
       sparkleSubtle([p, s, '#FFD700', '#FFFFFF'].filter(Boolean));
-      void rect; // sparkleSubtle uses default origin which is fine
     }
 
     timeoutRef.current = setTimeout(() => setPhase('done'), 600);

@@ -1,5 +1,3 @@
-'use client';
-
 import MerchantCard from './MerchantCard';
 
 export interface InspirationMerchant {

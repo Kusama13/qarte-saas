@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { unstable_cache } from 'next/cache';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { FooterSection, ScrollToTopButton } from '@/components/landing';
@@ -23,35 +22,34 @@ const getInspirationMerchants = unstable_cache(
   async (): Promise<InspirationMerchant[]> => {
     const supabaseAdmin = getSupabaseAdmin();
 
-    // 1. Exclure admins
-    const { data: admins } = await supabaseAdmin
-      .from('super_admins')
-      .select('user_id');
+    // 1. Exclure admins (parallélisé avec la query merchants)
+    const [{ data: admins }, baseQuery] = await Promise.all([
+      supabaseAdmin.from('super_admins').select('user_id'),
+      supabaseAdmin
+        .from('merchants')
+        .select(
+          'slug, shop_name, shop_type, logo_url, primary_color, secondary_color, ' +
+          'reward_description, instagram_url, facebook_url, tiktok_url, user_id, subscription_status'
+        )
+        .not('logo_url', 'is', null)
+        .not('reward_description', 'is', null)
+        .neq('reward_description', '')
+        .in('subscription_status', ['active', 'trial'])
+        .or('instagram_url.not.is.null,facebook_url.not.is.null,tiktok_url.not.is.null'),
+    ]);
+
     const adminIds = (admins || []).map((a: { user_id: string }) => a.user_id);
-
-    // 2. Query avec filtres
-    let query = supabaseAdmin
-      .from('merchants')
-      .select(
-        'slug, shop_name, shop_type, logo_url, primary_color, secondary_color, ' +
-        'reward_description, instagram_url, facebook_url, tiktok_url, user_id, subscription_status'
-      )
-      .not('logo_url', 'is', null)
-      .not('reward_description', 'is', null)
-      .neq('reward_description', '')
-      .in('subscription_status', ['active', 'trial']);
-
-    if (adminIds.length > 0) {
-      query = query.not('user_id', 'in', `(${adminIds.join(',')})`);
-    }
-
-    const { data } = await query;
-    const merchants = (data ?? []) as unknown as (InspirationMerchant & { user_id: string; subscription_status: string })[];
+    let merchants = (baseQuery.data ?? []) as unknown as (InspirationMerchant & { user_id: string; subscription_status: string })[];
     if (!merchants.length) return [];
 
-    // 3. Filtrer (au moins 1 réseau social), scorer et trier
+    // 2. Exclure admins côté JS (le filtre NOT IN nécessite les adminIds)
+    if (adminIds.length > 0) {
+      const adminSet = new Set(adminIds);
+      merchants = merchants.filter((m) => !adminSet.has(m.user_id));
+    }
+
+    // 3. Scorer et trier
     return merchants
-      .filter((m) => m.instagram_url || m.facebook_url || m.tiktok_url)
       .map(({ user_id: _uid, subscription_status, ...rest }) => {
         // Score de complétude
         let score = 0;
