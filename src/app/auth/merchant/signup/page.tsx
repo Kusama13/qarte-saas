@@ -203,10 +203,6 @@ export default function MerchantSignupPage() {
               </Button>
             </form>
 
-            <p className="mt-4 text-center text-xs text-gray-400">
-              Vos clientes meritent mieux qu&apos;une carte en carton.
-            </p>
-
             <div className="mt-6 text-center">
               <p className="text-gray-600">
                 Déjà un compte ?{' '}

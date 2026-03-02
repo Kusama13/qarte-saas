@@ -1,8 +1,10 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { Gift, Users, Zap, Trophy, CalendarDays } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
+import SimulatedCard from './SimulatedCard';
+import { useInView } from '@/hooks/useInView';
 import { formatDoubleDays } from '@/lib/utils';
 import type { Merchant } from '@/types';
 
@@ -48,11 +50,29 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
 
   const hasBooking = !!(merchant.booking_url && merchant.booking_url.trim());
 
+  // Scroll-triggered refs
+  const { ref: topCtaRef, isInView: topCtaVisible } = useInView({ once: false });
+  const { ref: tier2Ref, isInView: tier2InView } = useInView();
+  const { ref: advantagesRef, isInView: advantagesInView } = useInView();
+  const { ref: socialRef, isInView: socialInView } = useInView();
+
   return (
-    <div className="min-h-screen bg-[#f7f6fb]">
+    <div className="min-h-screen bg-[#f7f6fb] relative">
+
+      {/* ── AMBIENT BACKGROUND BLOBS ── */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div
+          className="animate-blob absolute -top-20 -left-20 w-72 h-72 rounded-full blur-3xl opacity-[0.12]"
+          style={{ backgroundColor: p }}
+        />
+        <div
+          className="animate-blob absolute -bottom-20 -right-20 w-72 h-72 rounded-full blur-3xl opacity-[0.08]"
+          style={{ backgroundColor: s, animationDelay: '3s' }}
+        />
+      </div>
 
       {/* ── HERO ── */}
-      <section className="lg:mx-auto lg:max-w-lg">
+      <section className="lg:mx-auto lg:max-w-lg relative">
         <div className="flex flex-col items-center pt-12 pb-6 px-6 text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.82, y: 10 }}
@@ -81,10 +101,21 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
             {merchant.shop_name}
           </motion.h1>
 
+          {/* Badge exclusif */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.15, duration: 0.3 }}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-gray-100 shadow-sm mb-2"
+          >
+            <Sparkles className="w-3 h-3" style={{ color: p }} />
+            <span className="text-[11px] font-bold text-gray-500">Programme de fidélité exclusif</span>
+          </motion.div>
+
           <motion.p
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18, duration: 0.4 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
             className="text-[14px] text-gray-500 leading-relaxed max-w-[270px] font-medium"
           >
             {heroTagline}
@@ -93,17 +124,18 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
       </section>
 
       {/* ── CONTENU ── */}
-      <div className="mx-auto lg:max-w-lg px-4 pb-12 space-y-3">
+      <div className="mx-auto lg:max-w-lg px-4 pb-20 space-y-3 relative">
 
-        {/* CTA principal — visible avant tout défilement */}
+        {/* CTA principal */}
         {hasBooking && (
           <motion.a
+            ref={topCtaRef as unknown as React.Ref<HTMLAnchorElement>}
             href={merchant.booking_url!}
             target="_blank"
             rel="noopener noreferrer"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
+            transition={{ delay: 0.25, duration: 0.4 }}
             className="flex items-center justify-center gap-2.5 w-full py-4 rounded-2xl text-white font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.98]"
             style={{
               background: `linear-gradient(135deg, ${p}, ${s})`,
@@ -115,74 +147,37 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
           </motion.a>
         )}
 
-        {/* Accroche fidélité */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.4 }}
-          className="bg-white rounded-2xl px-5 py-4 border border-gray-100 shadow-[0_2px_16px_rgba(0,0,0,0.05)]"
-        >
-          <p className="text-[14px] text-gray-600 leading-relaxed">
-            Dès votre première visite, votre carte démarre.
-            {' '}À chaque passage, vous accumulez des avantages — jusqu'à une récompense offerte, rien que pour vous.
-            {merchant.tier2_enabled && ' Plus vous revenez, plus les récompenses sont généreuses.'}
-          </p>
-        </motion.div>
-
-        {/* Section label */}
+        {/* Label carte simulée */}
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.28, duration: 0.35 }}
+          transition={{ delay: 0.3, duration: 0.35 }}
           className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1 pt-2"
         >
-          Vos récompenses
+          Votre future carte
         </motion.p>
 
-        {/* Tier 1 */}
+        {/* SimulatedCard — LE centerpiece */}
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.33, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="relative rounded-2xl overflow-hidden"
-          style={{
-            background: `linear-gradient(135deg, ${p}, ${s})`,
-            boxShadow: `0 4px 28px ${p}45`,
-          }}
+          transition={{ delay: 0.35, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          <motion.div
-            animate={{ x: ['-150%', '200%'] }}
-            transition={{ duration: 2.2, repeat: Infinity, repeatDelay: 4, ease: 'easeInOut' }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent skew-x-12 pointer-events-none"
+          <SimulatedCard
+            stampsRequired={merchant.stamps_required}
+            rewardDescription={merchant.reward_description || 'Récompense fidélité'}
+            primaryColor={p}
+            secondaryColor={s}
           />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_40%,rgba(255,255,255,0.16),transparent_60%)] pointer-events-none" />
-
-          <span
-            className="absolute right-3 -bottom-2 text-[96px] font-black leading-none pointer-events-none select-none"
-            style={{ color: 'rgba(255,255,255,0.08)' }}
-          >
-            {merchant.stamps_required}
-          </span>
-
-          <div className="relative px-6 pt-6 pb-7">
-            <p className="text-[10px] font-bold text-white/55 mb-2 uppercase tracking-widest">
-              Après {merchant.stamps_required} visites
-            </p>
-            <p className="text-[22px] font-black text-white leading-snug max-w-[72%] tracking-tight">
-              {merchant.reward_description || 'Récompense fidélité'}
-            </p>
-            <p className="text-[12px] text-white/60 mt-2 font-medium">
-              Offert, rien que pour vous.
-            </p>
-          </div>
         </motion.div>
 
         {/* Tier 2 */}
         {merchant.tier2_enabled && merchant.tier2_reward_description && (
           <motion.div
+            ref={tier2Ref}
             initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            animate={tier2InView ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="relative rounded-2xl overflow-hidden"
             style={{
               background: `linear-gradient(135deg, #100c22, ${p}85)`,
@@ -226,9 +221,10 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
         {/* ── AVANTAGES EXCLUSIFS ── */}
         {hasAdvantages && (
           <motion.div
+            ref={advantagesRef}
             initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.46, duration: 0.45, ease: 'easeOut' }}
+            animate={advantagesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
             className="bg-white rounded-2xl overflow-hidden border border-gray-100/80 shadow-[0_2px_20px_rgba(0,0,0,0.06)]"
           >
             <div className="px-5 pt-4 pb-1">
@@ -294,9 +290,10 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
 
         {/* ── RÉSEAUX SOCIAUX ── */}
         <motion.div
+          ref={socialRef}
           initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.54, duration: 0.4, ease: 'easeOut' }}
+          animate={socialInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
+          transition={{ duration: 0.4, ease: 'easeOut' }}
           className="pt-1"
         >
           <SocialLinks merchant={merchant as Merchant} />
@@ -321,6 +318,38 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
         </motion.p>
 
       </div>
+
+      {/* ── STICKY CTA BAR ── */}
+      <AnimatePresence>
+        {hasBooking && !topCtaVisible && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-xl border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          >
+            <div className="flex items-center gap-3 px-4 py-3 max-w-lg mx-auto">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate">{merchant.shop_name}</p>
+              </div>
+              <a
+                href={merchant.booking_url!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
+                style={{
+                  background: `linear-gradient(135deg, ${p}, ${s})`,
+                  boxShadow: `0 4px 14px ${p}30`,
+                }}
+              >
+                Réserver
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
