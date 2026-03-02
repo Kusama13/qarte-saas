@@ -163,7 +163,7 @@ export async function SocialProofSection() {
 
       <div className="flex justify-center mt-6">
         <a
-          href="/inspiration"
+          href="/pros"
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-indigo-200 text-indigo-600 text-sm font-bold rounded-xl transition-all hover:border-indigo-400 hover:bg-indigo-50 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
         >
           Voir leur programme de fidélité →

@@ -299,6 +299,20 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
           <SocialLinks merchant={merchant as Merchant} />
         </motion.div>
 
+        {/* ── CTA MERCHANT ── */}
+        <motion.a
+          href="https://getqarte.com/auth/merchant/signup"
+          target="_blank"
+          rel="noopener noreferrer"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.4 }}
+          className="block text-center py-4 px-5 rounded-2xl bg-white border border-gray-100/80 shadow-[0_2px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all"
+        >
+          <p className="text-[13px] font-bold text-gray-800">Vous aussi, fidélisez vos clients</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">Essai gratuit 7 jours — getqarte.com</p>
+        </motion.a>
+
         {/* ── FOOTER ── */}
         <motion.p
           initial={{ opacity: 0 }}

@@ -180,6 +180,13 @@ export function ReactivationEmail({
         </Text>
       )}
 
+      <Section style={socialProofBox}>
+        <Text style={socialProofText}>
+          Pendant ce temps, des centaines de pros continuent de fidéliser avec Qarte.{' '}
+          <a href="https://getqarte.com/pros" style={socialProofLink}>Voir leurs programmes &#8594;</a>
+        </Text>
+      </Section>
+
       <Text style={paragraph}>
         {isLastChance
           ? 'Des questions ? Écrivez-nous, on répond en quelques minutes.'
@@ -367,6 +374,27 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
+};
+
+const socialProofBox = {
+  backgroundColor: '#f5f3ff',
+  borderRadius: '10px',
+  padding: '16px 20px',
+  margin: '24px 0',
+  textAlign: 'center' as const,
+};
+
+const socialProofText = {
+  color: '#6b7280',
+  fontSize: '13px',
+  lineHeight: '1.6',
+  margin: '0',
+};
+
+const socialProofLink = {
+  color: '#4b0082',
+  fontWeight: '600' as const,
+  textDecoration: 'underline',
 };
 
 const signature = {

@@ -676,6 +676,18 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
+      {/* Social proof */}
+      {showSubscribeCTA && (
+        <div className="mt-6 py-4 text-center">
+          <p className="text-xs text-gray-400">
+            Des centaines de professionnels fidélisent déjà avec Qarte.{' '}
+            <a href="/pros" className="font-semibold text-indigo-500 hover:text-indigo-700 underline underline-offset-2 transition-colors">
+              Voir leurs programmes
+            </a>
+          </p>
+        </div>
+      )}
+
       {/* Footer reassurance — desktop only */}
       <div className="hidden sm:flex items-center justify-center gap-6 mt-6 text-xs text-gray-400">
         <span>Sans engagement</span>

@@ -3,7 +3,7 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, Clock, Sparkles, QrCode, Crown, UserPlus, Megaphone, CreditCard, Settings } from 'lucide-react';
+import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, Clock, Sparkles, QrCode, Crown, UserPlus, Megaphone, CreditCard, Settings, ExternalLink } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTrialStatus } from '@/lib/utils';
 import { Button } from '@/components/ui';
@@ -445,6 +445,17 @@ export default function DashboardPage() {
         <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
           Voici un aperçu de votre programme de fidélité
         </p>
+        {merchant?.slug && merchant?.reward_description && (
+          <a
+            href={`/p/${merchant.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100 text-xs font-semibold text-indigo-600 hover:bg-indigo-100 transition-colors"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Votre programme en ligne
+          </a>
+        )}
       </div>
 
       {/* Trial Countdown Banner — J-3 */}

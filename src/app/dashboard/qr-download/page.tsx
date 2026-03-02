@@ -660,7 +660,7 @@ export default function QRDownloadPage() {
               </ul>
             </div>
 
-            {/* LIEN BIO — désactivé temporairement, prêt à réactiver
+            {/* LIEN BIO — masqué temporairement
             <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               <Link2 className="w-3.5 h-3.5" />
               Lien en bio
@@ -668,7 +668,7 @@ export default function QRDownloadPage() {
             <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
               <p className="text-sm font-bold text-gray-900 mb-0.5">Partagez votre programme en bio</p>
               <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-                Mettez ce lien dans la bio de vos réseaux — vos abonnés découvrent vos récompenses et peuvent réserver directement.
+                Ajoutez ce lien dans votre bio Instagram, TikTok ou Facebook pour que vos abonnés voient votre programme de fidélité.
               </p>
               <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <p className="text-[13px] text-gray-700 font-mono flex-1 truncate">

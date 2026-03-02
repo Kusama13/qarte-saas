@@ -112,6 +112,13 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
         </Section>
       )}
 
+      <Section style={socialProofBox}>
+        <Text style={socialProofText}>
+          Découvrez ce que font les autres pros sur Qarte.{' '}
+          <a href="https://getqarte.com/pros" style={socialProofLink}>Voir la communauté &#8594;</a>
+        </Text>
+      </Section>
+
       <Text style={signature}>
         Merci de faire grandir Qarte avec nous !<br />
         L&apos;équipe Qarte
@@ -277,6 +284,27 @@ const nfcButton = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '12px 24px',
+};
+
+const socialProofBox = {
+  backgroundColor: '#f5f3ff',
+  borderRadius: '10px',
+  padding: '16px 20px',
+  margin: '24px 0',
+  textAlign: 'center' as const,
+};
+
+const socialProofText = {
+  color: '#6b7280',
+  fontSize: '13px',
+  lineHeight: '1.6',
+  margin: '0',
+};
+
+const socialProofLink = {
+  color: '#4b0082',
+  fontWeight: '600' as const,
+  textDecoration: 'underline',
 };
 
 export default SubscriptionConfirmedEmail;

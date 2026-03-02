@@ -65,6 +65,13 @@ export function TrialEndingEmail({ shopName, daysRemaining, promoCode }: TrialEn
         </Button>
       </Section>
 
+      <Section style={socialProofBox}>
+        <Text style={socialProofText}>
+          Des centaines de professionnels de la beauté fidélisent déjà avec Qarte.{' '}
+          <a href="https://getqarte.com/pros" style={socialProofLink}>Voir leurs programmes &#8594;</a>
+        </Text>
+      </Section>
+
       <Text style={paragraph}>
         Merci de faire confiance à Qarte pour fidéliser vos clients.
       </Text>
@@ -210,6 +217,27 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
+};
+
+const socialProofBox = {
+  backgroundColor: '#f5f3ff',
+  borderRadius: '10px',
+  padding: '16px 20px',
+  margin: '24px 0',
+  textAlign: 'center' as const,
+};
+
+const socialProofText = {
+  color: '#6b7280',
+  fontSize: '13px',
+  lineHeight: '1.6',
+  margin: '0',
+};
+
+const socialProofLink = {
+  color: '#4b0082',
+  fontWeight: '600' as const,
+  textDecoration: 'underline',
 };
 
 const signature = {

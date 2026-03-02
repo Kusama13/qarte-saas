@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     title: 'Ils fidélisent avec Qarte',
     description:
       'Découvrez les pros de la beauté qui fidélisent avec Qarte. Rejoignez la communauté.',
-    url: 'https://getqarte.com/inspiration',
+    url: 'https://getqarte.com/pros',
   },
 };
 

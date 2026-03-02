@@ -73,6 +73,13 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
         </Text>
       </Section>
 
+      <Section style={socialProofBox}>
+        <Text style={socialProofText}>
+          Des centaines de pros ont déjà configuré leur programme en quelques minutes.{' '}
+          <a href="https://getqarte.com/pros" style={socialProofLink}>Voir leurs programmes &#8594;</a>
+        </Text>
+      </Section>
+
       <Text style={signature}>
         On est là pour vous,
         <br />
@@ -195,6 +202,27 @@ const signature = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '24px 0 0 0',
+};
+
+const socialProofBox = {
+  backgroundColor: '#f5f3ff',
+  borderRadius: '10px',
+  padding: '16px 20px',
+  margin: '24px 0',
+  textAlign: 'center' as const,
+};
+
+const socialProofText = {
+  color: '#6b7280',
+  fontSize: '13px',
+  lineHeight: '1.6',
+  margin: '0',
+};
+
+const socialProofLink = {
+  color: '#4b0082',
+  fontWeight: '600' as const,
+  textDecoration: 'underline',
 };
 
 export default GracePeriodSetupEmail;
