@@ -109,7 +109,7 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
             className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-gray-100 shadow-sm mb-2"
           >
             <Sparkles className="w-3 h-3" style={{ color: p }} />
-            <span className="text-[11px] font-bold text-gray-500">Programme de fidélité exclusif</span>
+            <span className="text-[11px] font-bold text-gray-500">Qarte — La fidélité digitale des pros de la beauté</span>
           </motion.div>
 
           <motion.p
@@ -143,7 +143,7 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
             }}
           >
             <CalendarDays className="w-5 h-5" />
-            Réserver ma première visite
+            Prendre rendez-vous
           </motion.a>
         )}
 
@@ -170,6 +170,16 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
             secondaryColor={s}
           />
         </motion.div>
+
+        {/* Note carte fidélité */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45, duration: 0.4 }}
+          className="text-center text-[11px] text-gray-400 font-medium -mt-1"
+        >
+          Pas encore de carte ? Pas de panique, {merchant.shop_name} vous la créera sur place en 30 secondes.
+        </motion.p>
 
         {/* Tier 2 */}
         {merchant.tier2_enabled && merchant.tier2_reward_description && (
