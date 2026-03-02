@@ -1,7 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-import { Check, Headphones, CreditCard, Zap, Quote } from 'lucide-react';
+import { Check, Headphones, CreditCard, Zap } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
@@ -33,10 +32,8 @@ export function PricingSection() {
           <p className="text-xl text-gray-600">Pas de surprise, pas de frais cachés. Pensé pour toi.</p>
         </div>
 
-        {/* 2-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-14 items-center">
-
-          {/* Left: Pricing Card */}
+        {/* Pricing Card */}
+        <div className="max-w-xl mx-auto">
           <div className={`relative group transition-all duration-500 hover:-translate-y-2 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
             {/* Trial Badge */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
@@ -84,36 +81,6 @@ export function PricingSection() {
               <p className="text-center text-gray-400 text-[10px] font-bold mt-6 uppercase tracking-[0.2em]">
                 Annulation possible à tout moment
               </p>
-            </div>
-          </div>
-
-          {/* Right: Photo + Citation */}
-          <div className={`relative ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.4s' }}>
-            <div className="relative h-[300px] lg:h-[580px] rounded-3xl lg:rounded-[2.5rem] overflow-hidden shadow-2xl">
-              <Image
-                src="/images/mockup-beaute.jpg"
-                alt="Professionnelle de beauté utilisant Qarte"
-                fill
-                className="object-cover"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-
-              <div className="absolute bottom-0 left-0 right-0 p-8">
-                <Quote className="w-8 h-8 text-white/40 mb-3 rotate-180" />
-                <p className="text-white text-lg font-medium leading-relaxed mb-4">
-                  Mes clientes adorent scanner leur carte. En 2 mois, j&apos;ai doublé mes visites régulières.
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-bold text-sm">
-                    S
-                  </div>
-                  <div>
-                    <p className="text-white font-semibold text-sm">Sarah M.</p>
-                    <p className="text-white/70 text-xs">Gérante — Lunzia Studio, Paris</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
