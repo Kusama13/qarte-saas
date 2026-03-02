@@ -34,9 +34,12 @@ import {
   StickyNote,
   Smartphone,
   Loader2 as Loader2Icon,
+  Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl } from '@/lib/utils';
+import { SHOP_TYPES } from '@/types';
+import type { ShopType, MerchantCountry } from '@/types';
 
 interface Merchant {
   id: string;
@@ -51,6 +54,14 @@ interface Merchant {
   reward_description: string;
   loyalty_mode: 'visit' | 'article';
   scan_code: string;
+  slug: string;
+  shop_type: ShopType;
+  country: MerchantCountry;
+  secondary_color: string;
+  shield_enabled: boolean;
+  double_days_enabled: boolean;
+  double_days_of_week: string;
+  last_seen_at: string | null;
   // Tier 2 fields
   tier2_enabled: boolean;
   tier2_stamps_required: number | null;
@@ -179,6 +190,7 @@ export default function MerchantDetailPage() {
   const [emailCopied, setEmailCopied] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [emailTrackings, setEmailTrackings] = useState<{ reminder_day: number; sent_at: string }[]>([]);
+  const [qrOpen, setQrOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -398,7 +410,15 @@ export default function MerchantDetailPage() {
               {merchant.shop_name.charAt(0)}
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{merchant.shop_name}</h1>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{merchant.shop_name}</h1>
+                <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#5167fc]/10 text-[#5167fc]">
+                  {SHOP_TYPES[merchant.shop_type] || merchant.shop_type}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {{ FR: '🇫🇷', BE: '🇧🇪', CH: '🇨🇭', LU: '🇱🇺' }[merchant.country] || ''} {merchant.country}
+                </span>
+              </div>
               {merchant.shop_address && (
                 <p className="text-gray-600 flex items-center gap-1 mt-1">
                   <MapPin className="w-4 h-4" />
@@ -428,6 +448,15 @@ export default function MerchantDetailPage() {
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   Inscrit le {formatDate(merchant.created_at)}
+                </span>
+                <span className="flex items-center gap-1 text-xs">
+                  <Clock className="w-3.5 h-3.5" />
+                  {merchant.last_seen_at
+                    ? (() => {
+                        const days = Math.floor((Date.now() - new Date(merchant.last_seen_at).getTime()) / (1000 * 60 * 60 * 24));
+                        return days === 0 ? 'Vu aujourd\'hui' : `Vu il y a ${days}j`;
+                      })()
+                    : 'Jamais connecté'}
                 </span>
               </div>
             </div>
@@ -472,6 +501,27 @@ export default function MerchantDetailPage() {
               <span className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full flex items-center gap-1">
                 <Shield className="w-3 h-3" />
                 {stats.pendingPoints} point{stats.pendingPoints > 1 ? 's' : ''} en attente
+              </span>
+            )}
+            <span className={cn(
+              "px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1",
+              merchant.shield_enabled
+                ? "text-green-700 bg-green-100"
+                : "text-gray-500 bg-gray-100"
+            )}>
+              <Shield className="w-3 h-3" />
+              Shield {merchant.shield_enabled ? 'actif' : 'inactif'}
+            </span>
+            {merchant.double_days_enabled && (
+              <span className="px-2 py-1 text-xs font-medium text-amber-700 bg-amber-100 rounded-full flex items-center gap-1">
+                <Zap className="w-3 h-3" />
+                Jours x2 : {(() => {
+                  try {
+                    const days = JSON.parse(merchant.double_days_of_week || '[]') as number[];
+                    const labels = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+                    return days.map((d: number) => labels[d]).join(', ');
+                  } catch { return '—'; }
+                })()}
               </span>
             )}
           </div>
@@ -808,13 +858,24 @@ export default function MerchantDetailPage() {
         })()}
 
         {/* Liens & Réseaux */}
-        {(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.booking_url || merchant.review_link) && (
+        {(merchant.slug || merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.booking_url || merchant.review_link) && (
           <div className="mt-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
               <ExternalLink className="w-5 h-5 text-[#5167fc]" />
               Liens & Réseaux
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {merchant.slug && (
+                <a
+                  href={`/p/${merchant.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#5167fc]/30 bg-[#5167fc]/5 hover:bg-[#5167fc]/10 text-sm text-[#5167fc] font-medium transition-colors"
+                >
+                  <Share2 className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">Page programme</span>
+                </a>
+              )}
               {merchant.instagram_url && (
                 <a
                   href={merchant.instagram_url}
@@ -881,56 +942,64 @@ export default function MerchantDetailPage() {
         )}
       </div>
 
-      {/* QR Code Section */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-100 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <QrCode className="w-5 h-5 text-[#5167fc]" />
-          QR Code de scan
-        </h3>
-        <div className="flex flex-col sm:flex-row gap-6 items-start">
-          {/* QR Code */}
-          <div className="flex-shrink-0">
-            {qrCodeUrl ? (
-              <div className="p-3 bg-white border-2 border-gray-200 rounded-xl">
-                <img
-                  src={qrCodeUrl}
-                  alt={`QR Code pour ${merchant.shop_name}`}
-                  className="w-40 h-40"
-                />
-              </div>
-            ) : (
-              <div className="w-40 h-40 bg-gray-100 rounded-xl flex items-center justify-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#5167fc]" />
-              </div>
-            )}
-          </div>
-
-          {/* Link Info */}
-          <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-600 mb-3">
-              Lien de scan client pour ce commerce :
-            </p>
-            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <code className="text-sm text-[#5167fc] font-mono truncate flex-1">
-                {getScanUrl(merchant.scan_code)}
-              </code>
-              <button
-                onClick={handleCopyLink}
-                className="flex-shrink-0 p-2 hover:bg-gray-200 rounded-lg transition-colors"
-                title="Copier le lien"
-              >
-                {copied ? (
-                  <Check className="w-4 h-4 text-green-600" />
-                ) : (
-                  <Copy className="w-4 h-4 text-gray-600" />
-                )}
-              </button>
+      {/* QR Code Section — repliable */}
+      <div className="bg-white rounded-lg shadow-md border border-gray-100">
+        <button
+          onClick={() => setQrOpen(!qrOpen)}
+          className="w-full flex items-center justify-between p-6 text-left"
+        >
+          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <QrCode className="w-5 h-5 text-[#5167fc]" />
+            QR Code de scan
+          </h3>
+          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${qrOpen ? 'rotate-180' : ''}`} />
+        </button>
+        {qrOpen && (
+          <div className="px-6 pb-6 flex flex-col sm:flex-row gap-6 items-start">
+            {/* QR Code */}
+            <div className="flex-shrink-0">
+              {qrCodeUrl ? (
+                <div className="p-3 bg-white border-2 border-gray-200 rounded-xl">
+                  <img
+                    src={qrCodeUrl}
+                    alt={`QR Code pour ${merchant.shop_name}`}
+                    className="w-40 h-40"
+                  />
+                </div>
+              ) : (
+                <div className="w-40 h-40 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#5167fc]" />
+                </div>
+              )}
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Code de scan : <span className="font-mono font-medium">{merchant.scan_code}</span>
-            </p>
+
+            {/* Link Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm text-gray-600 mb-3">
+                Lien de scan client pour ce commerce :
+              </p>
+              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <code className="text-sm text-[#5167fc] font-mono truncate flex-1">
+                  {getScanUrl(merchant.scan_code)}
+                </code>
+                <button
+                  onClick={handleCopyLink}
+                  className="flex-shrink-0 p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                  title="Copier le lien"
+                >
+                  {copied ? (
+                    <Check className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Copy className="w-4 h-4 text-gray-600" />
+                  )}
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Code de scan : <span className="font-mono font-medium">{merchant.scan_code}</span>
+              </p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Stats - Row 1 */}
