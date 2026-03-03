@@ -298,6 +298,9 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
   - Bouton CTA sticky "Valider et generer mon QR code" redirige vers `/dashboard/qr-download`
   - Cache merchant mis a jour avant redirect (chargement QR instantane)
   - Page QR utilise `useMerchant()` (contexte partage, pas de fetch duplique)
+  - Modal post-QR download (one-shot localStorage) : "Annoncez la nouvelle !" → redirige vers Kit reseaux
+  - Modal post-social download (one-shot localStorage) : "Des centaines de salons cartonnent" → lien /pros
+- **Score programme:** Cercle sticky (disparait a 100%) affichant le % de completion base sur 7 criteres (recompense 25pts, logo 20pts, reseaux 15pts, avis 15pts, reservation 10pts, palier2 10pts, jours x2 5pts)
 - **Pre-remplissage programme:** A la creation du merchant, seul `stamps_required` est pre-rempli selon le `shop_type`. `reward_description` reste `null` pour que les emails ProgramReminder J+1/2/3 se declenchent et guident le merchant vers la configuration
 - **Email relance inscription incomplete:** Programme via Resend `scheduledAt` (+1h apres Phase 1)
   - Endpoint `/api/emails/schedule-incomplete` appele apres signUp
@@ -665,6 +668,13 @@ npm run email
 - Placeholder telephone dynamique selon pays merchant
 - Detection `?ref=` : banner parrain, inscription filleul via `/api/referrals`, ecran succes referral
 
+### Page Pros (`/pros`)
+- Page publique social proof : grille de merchants avec logo, couleurs, recompense, liens reseaux
+- Donnees cachees 3 jours (`unstable_cache`, `revalidate: 259200`)
+- Exclut admins (`super_admins`) et merchants inscrits depuis moins de 3 jours
+- Tri : abonnes actifs d'abord, puis par score de completude decroissant
+- Accessible depuis le Kit reseaux (`/dashboard/qr-download` onglet social) et modal post-download
+
 ---
 
 ## 17. Conventions de Code
@@ -750,7 +760,7 @@ import type { Merchant } from '@/types';
 ### Stripe & Paiement
 | Email | Declencheur |
 |-------|-------------|
-| SubscriptionConfirmedEmail | checkout.session.completed + invoice.payment_succeeded recovery (webhook Stripe). Affiche plan mensuel/annuel via `billingInterval`. Image carte NFC incluse. Section NFC mensuel (bouton achat 20€) vs annuel (carte offerte, expédition auto). |
+| SubscriptionConfirmedEmail | checkout.session.completed + invoice.payment_succeeded recovery (webhook Stripe). Affiche plan mensuel/annuel via `billingInterval`. Section NFC universelle : carte en option 20€ avec bouton Stripe pour tous (mensuel et annuel). |
 | PaymentFailedEmail | invoice.payment_failed (webhook Stripe) |
 | SubscriptionCanceledEmail | customer.subscription.updated → canceling (webhook Stripe, date de fin Stripe) |
 | SubscriptionReactivatedEmail | customer.subscription.updated → canceling→active (webhook Stripe, reactivation via portail) |

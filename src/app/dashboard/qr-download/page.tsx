@@ -19,6 +19,7 @@ import {
   Bell,
   ChevronDown,
   Link2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { generateQRCodeSVG, getScanUrl } from '@/lib/utils';
@@ -41,6 +42,8 @@ export default function QRDownloadPage() {
   const [howOpen, setHowOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [showPostDownloadModal, setShowPostDownloadModal] = useState(false);
+  const [showSocialModal, setShowSocialModal] = useState(false);
   const socialExportRef = useRef<HTMLDivElement>(null);
   const qrCardRef = useRef<HTMLDivElement>(null);
 
@@ -101,6 +104,13 @@ export default function QRDownloadPage() {
 
       setDownloadSuccess(true);
       setTimeout(() => setDownloadSuccess(false), 3000);
+
+      // Show post-download modal (one-shot via localStorage, delayed for UX)
+      const POST_QR_KEY = 'qarte_post_qr_seen';
+      if (!localStorage.getItem(POST_QR_KEY)) {
+        localStorage.setItem(POST_QR_KEY, '1');
+        setTimeout(() => setShowPostDownloadModal(true), 1200);
+      }
     } catch (error) {
       console.error('Error generating QR image:', error);
     }
@@ -124,6 +134,13 @@ export default function QRDownloadPage() {
 
       setSocialDownloadSuccess(true);
       setTimeout(() => setSocialDownloadSuccess(false), 3000);
+
+      // Show pros modal after social download (one-shot, delayed)
+      const SOCIAL_PROS_KEY = 'qarte_social_pros_seen';
+      if (!localStorage.getItem(SOCIAL_PROS_KEY)) {
+        localStorage.setItem(SOCIAL_PROS_KEY, '1');
+        setTimeout(() => setShowSocialModal(true), 1200);
+      }
     } catch (error) {
       console.error('Error generating PNG:', error);
     } finally {
@@ -186,8 +203,8 @@ export default function QRDownloadPage() {
         </p>
       </div>
 
-      {/* Comment ça marche + Allez plus loin — collapsible */}
-      <div className="mb-6 grid md:grid-cols-2 gap-4">
+      {/* Comment ça marche + Allez plus loin — collapsible (QR tab only) */}
+      {activeTab === 'qr' && <div className="mb-6 grid md:grid-cols-2 gap-4">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <button type="button" onClick={() => setHowOpen(!howOpen)} className="w-full flex items-center justify-between p-4 text-left">
             <h3 className="text-sm font-bold text-gray-900">Comment &ccedil;a marche ?</h3>
@@ -271,7 +288,7 @@ export default function QRDownloadPage() {
             </div>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Challenge banner — trial only */}
       {merchant.subscription_status === 'trial' && (
@@ -313,7 +330,7 @@ export default function QRDownloadPage() {
               : 'text-purple-600 bg-purple-50 hover:bg-purple-100 ring-1 ring-purple-200'
           }`}
         >
-          <Image className={`w-4 h-4 ${activeTab === 'social' ? 'text-purple-500' : 'text-purple-500'}`} />
+          <Image className="w-4 h-4 text-purple-500" />
           Kit réseaux
           {activeTab !== 'social' && (
             <span className="px-1.5 py-0.5 text-[10px] font-bold bg-purple-600 text-white rounded-full">NEW</span>
@@ -448,13 +465,13 @@ export default function QRDownloadPage() {
                 )}
                 {downloadSuccess ? 'Enregistré !' : 'Enregistrer l\'image'}
               </Button>
-              <p className="text-center text-xs text-gray-400">
-                Format PNG — gardez-le sur votre téléphone
+              <p className="text-center text-xs text-gray-500">
+                Gardez-le sur votre t&eacute;l&eacute;phone et montrez-le &agrave; vos client(e)s au moment de payer
               </p>
               <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
                 <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-red-700 font-medium leading-relaxed">
-                  Ne publiez pas votre QR code sur les réseaux sociaux — vos clients doivent le scanner <span className="font-bold">en magasin uniquement</span>. Pour vos réseaux, utilisez l&apos;onglet Kit réseaux !
+                  Ne publiez pas votre QR code sur les r&eacute;seaux sociaux — vos clients doivent le scanner <span className="font-bold">sur place uniquement</span>. Pour vos r&eacute;seaux, utilisez l&apos;onglet Kit r&eacute;seaux !
                 </p>
               </div>
             </div>
@@ -473,45 +490,24 @@ export default function QRDownloadPage() {
                       body: JSON.stringify({ step: 'preview' }),
                     }).catch(() => {});
                   }}
-                  className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border-2 border-indigo-200 hover:border-indigo-400 rounded-xl text-indigo-700 font-bold text-sm transition-all hover:shadow-md active:scale-[0.98]"
+                  className="flex flex-col items-center justify-center w-full py-3 px-4 bg-white border-2 border-indigo-200 hover:border-indigo-400 rounded-xl transition-all hover:shadow-md active:scale-[0.98]"
                 >
-                  <Play className="w-4 h-4" />
-                  Tester l&apos;expérience client
+                  <span className="flex items-center gap-2 text-indigo-700 font-bold text-sm">
+                    <Play className="w-4 h-4" />
+                    Tester l&apos;exp&eacute;rience client
+                  </span>
+                  <span className="text-[11px] text-gray-400 mt-0.5">Vivez le parcours de vos clients lors du scan</span>
                 </a>
               ) : (
-                <div className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border-2 border-gray-200 rounded-xl text-gray-400 font-bold text-sm opacity-50 cursor-not-allowed">
-                  <Play className="w-4 h-4" />
-                  Tester l&apos;expérience client
+                <div className="flex flex-col items-center justify-center w-full py-3 px-4 bg-white border-2 border-gray-200 rounded-xl opacity-50 cursor-not-allowed">
+                  <span className="flex items-center gap-2 text-gray-400 font-bold text-sm">
+                    <Play className="w-4 h-4" />
+                    Tester l&apos;exp&eacute;rience client
+                  </span>
+                  <span className="text-[11px] text-gray-300 mt-0.5">Vivez le parcours de vos clients lors du scan</span>
                 </div>
               )
             )}
-
-            {/* Tip */}
-            <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                  <Smartphone className="w-4 h-4 text-indigo-600" />
-                </div>
-                <div>
-                  <h4 className="font-bold text-indigo-900 text-sm mb-0.5">Astuce</h4>
-                  <p className="text-sm text-indigo-700 leading-relaxed">
-                    Gardez-le sur votre téléphone et montrez-le à vos client(e)s au moment de payer
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick stats */}
-            <div className="hidden lg:grid grid-cols-2 gap-3">
-              <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm text-center">
-                <div className="text-2xl font-black text-indigo-600">15s</div>
-                <p className="text-xs text-gray-500 mt-1 font-medium">Pour s&apos;inscrire</p>
-              </div>
-              <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm text-center">
-                <div className="text-2xl font-black text-violet-600">0 appli</div>
-                <p className="text-xs text-gray-500 mt-1 font-medium">Rien à installer</p>
-              </div>
-            </div>
           </div>
         </div>
       )}
@@ -586,9 +582,6 @@ export default function QRDownloadPage() {
                 )}
                 {socialDownloadSuccess ? 'Téléchargé !' : 'Télécharger l\'image HD'}
               </Button>
-              <p className="text-center text-xs text-gray-400">
-                Format 4:5 — idéal pour Instagram, Facebook et WhatsApp
-              </p>
             </div>
 
           </div>
@@ -660,6 +653,23 @@ export default function QRDownloadPage() {
               </ul>
             </div>
 
+            {/* Page pros */}
+            <a
+              href="/pros"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-900">D&eacute;couvrez les pros qui cartonnent</p>
+                <p className="text-xs text-gray-500">Leurs strat&eacute;gies, leurs r&eacute;sultats</p>
+              </div>
+              <span className="text-gray-300 group-hover:text-indigo-500 group-hover:translate-x-0.5 transition-all">&rarr;</span>
+            </a>
+
             {/* LIEN BIO — masqué temporairement
             <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               <Link2 className="w-3.5 h-3.5" />
@@ -709,6 +719,84 @@ export default function QRDownloadPage() {
             tier2StampsRequired={merchant.tier2_stamps_required}
             tier2RewardDescription={merchant.tier2_reward_description}
           />
+        </div>
+      )}
+
+      {/* Social pros modal */}
+      {showSocialModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowSocialModal(false)} />
+          <div className="relative w-full max-w-xs bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-center">
+            <button
+              onClick={() => setShowSocialModal(false)}
+              className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              <X className="w-3.5 h-3.5 text-gray-400" />
+            </button>
+            <div className="px-6 pt-8 pb-6">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
+                <Users className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-lg font-black text-gray-900">Des centaines de salons cartonnent</p>
+              <p className="mt-2 text-sm text-gray-500 leading-relaxed">
+                Gr&acirc;ce &agrave; leur programme de fid&eacute;lit&eacute;, ils fid&eacute;lisent plus et remplissent leur agenda. D&eacute;couvrez leurs pages pro.
+              </p>
+              <a
+                href="/pros"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowSocialModal(false)}
+                className="mt-5 w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-indigo-200 inline-block"
+              >
+                Voir les pages pro
+              </a>
+              <button
+                onClick={() => setShowSocialModal(false)}
+                className="mt-2 text-xs text-gray-300 hover:text-gray-500 transition-colors block mx-auto"
+              >
+                Plus tard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Post-download modal */}
+      {showPostDownloadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowPostDownloadModal(false)} />
+          <div className="relative w-full max-w-xs bg-gradient-to-br from-purple-600 via-violet-600 to-indigo-700 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-center">
+            <button
+              onClick={() => setShowPostDownloadModal(false)}
+              className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <X className="w-3.5 h-3.5 text-white/70" />
+            </button>
+            <div className="px-6 pt-8 pb-6">
+              <div className="w-12 h-12 mx-auto rounded-2xl bg-white/15 flex items-center justify-center mb-4">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <p className="text-lg font-black text-white">Annoncez la nouvelle !</p>
+              <p className="mt-2 text-sm text-white/70 leading-relaxed">
+                Vos followers ne savent pas encore que vous avez un programme de fid&eacute;lit&eacute;. Partagez-le sur vos r&eacute;seaux en un clic.
+              </p>
+              <button
+                onClick={() => {
+                  setShowPostDownloadModal(false);
+                  setActiveTab('social');
+                }}
+                className="mt-5 w-full py-3 bg-white text-violet-700 font-bold text-sm rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all shadow-lg"
+              >
+                Voir le kit r&eacute;seaux sociaux
+              </button>
+              <button
+                onClick={() => setShowPostDownloadModal(false)}
+                className="mt-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+              >
+                Plus tard
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

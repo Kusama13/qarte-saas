@@ -29,7 +29,7 @@ const getInspirationMerchants = unstable_cache(
         .from('merchants')
         .select(
           'slug, shop_name, shop_type, logo_url, primary_color, secondary_color, ' +
-          'reward_description, instagram_url, facebook_url, tiktok_url, user_id, subscription_status'
+          'reward_description, instagram_url, facebook_url, tiktok_url, user_id, subscription_status, created_at'
         )
         .not('logo_url', 'is', null)
         .not('reward_description', 'is', null)
@@ -39,7 +39,7 @@ const getInspirationMerchants = unstable_cache(
     ]);
 
     const adminIds = (admins || []).map((a: { user_id: string }) => a.user_id);
-    let merchants = (baseQuery.data ?? []) as unknown as (InspirationMerchant & { user_id: string; subscription_status: string })[];
+    let merchants = (baseQuery.data ?? []) as unknown as (InspirationMerchant & { user_id: string; subscription_status: string; created_at: string })[];
     if (!merchants.length) return [];
 
     // 2. Exclure admins côté JS (le filtre NOT IN nécessite les adminIds)
@@ -48,9 +48,13 @@ const getInspirationMerchants = unstable_cache(
       merchants = merchants.filter((m) => !adminSet.has(m.user_id));
     }
 
-    // 3. Scorer et trier
+    // 3. Exclure merchants inscrits depuis moins de 3 jours
+    const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+    merchants = merchants.filter((m) => new Date(m.created_at).getTime() <= threeDaysAgo);
+
+    // 4. Scorer et trier
     return merchants
-      .map(({ user_id: _uid, subscription_status, ...rest }) => {
+      .map(({ user_id: _uid, subscription_status, created_at: _ca, ...rest }) => {
         // Score de complétude
         let score = 0;
         if (rest.logo_url) score++;
@@ -73,7 +77,7 @@ const getInspirationMerchants = unstable_cache(
       .map(({ _score: _s, _isActive: _a, ...rest }) => rest);
   },
   ['inspiration-merchants'],
-  { revalidate: 3600 }
+  { revalidate: 259200 }
 );
 
 export default async function InspirationPage() {

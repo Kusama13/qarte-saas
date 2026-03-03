@@ -49,50 +49,27 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
         </Button>
       </Section>
 
-      {billingInterval === 'annual' && (
-        <Section style={nfcBox}>
-          <Section style={nfcImgContainer}>
-            <Img
-              src="https://getqarte.com/images/Carte%20NFC%20QARTE%20.png"
-              alt="Carte NFC Qarte"
-              width={160}
-              style={nfcImg}
-            />
-          </Section>
-          <Text style={nfcTitle}>Votre carte NFC est comprise dans votre abonnement</Text>
-          <Text style={nfcText}>
-            Une carte vous est offerte et vous sera expédiée automatiquement sous 1 à 2 semaines — rien à faire de votre côté.
-          </Text>
-          <Text style={nfcText}>
-            Besoin d&apos;une carte supplémentaire ? Répondez simplement à cet email ou contactez-nous sur{' '}
-            <a href="https://wa.me/33607447420" style={nfcLinkWa}>WhatsApp</a>.
-          </Text>
+      <Section style={nfcBox}>
+        <Section style={nfcImgContainer}>
+          <Img
+            src="https://getqarte.com/images/Carte%20NFC%20QARTE%20.png"
+            alt="Carte NFC Qarte"
+            width={160}
+            style={nfcImg}
+          />
         </Section>
-      )}
-
-      {billingInterval === 'monthly' && (
-        <Section style={nfcBox}>
-          <Section style={nfcImgContainer}>
-            <Img
-              src="https://getqarte.com/images/Carte%20NFC%20QARTE%20.png"
-              alt="Carte NFC Qarte"
-              width={160}
-              style={nfcImg}
-            />
-          </Section>
-          <Text style={nfcTitle}>La carte NFC Qarte — en option (20 €)</Text>
-          <Text style={nfcText}>
-            Passez commande via le bouton ci-dessous, ou contactez-nous sur{' '}
-            <a href="https://wa.me/33607447420?text=Bonjour%2C%20je%20souhaite%20commander%20ma%20carte%20NFC%20Qarte." style={nfcLinkWa}>WhatsApp</a>
-            {' '}ou en répondant à cet email. Livraison sous 1 à 2 semaines.
-          </Text>
-          <Section style={{ textAlign: 'center' as const, margin: '12px 0 0 0' }}>
-            <Button style={nfcButton} href="https://buy.stripe.com/4gM7sN6DYccX75dduH7g401">
-              Commander ma carte NFC — 20 €
-            </Button>
-          </Section>
+        <Text style={nfcTitle}>La carte NFC Qarte — en option (20 &euro;)</Text>
+        <Text style={nfcText}>
+          Passez commande via le bouton ci-dessous, ou contactez-nous sur{' '}
+          <a href="https://wa.me/33607447420?text=Bonjour%2C%20je%20souhaite%20commander%20ma%20carte%20NFC%20Qarte." style={nfcLinkWa}>WhatsApp</a>
+          {' '}ou en r&eacute;pondant &agrave; cet email. Livraison sous 1 &agrave; 2 semaines.
+        </Text>
+        <Section style={{ textAlign: 'center' as const, margin: '12px 0 0 0' }}>
+          <Button style={nfcButton} href="https://buy.stripe.com/4gM7sN6DYccX75dduH7g401">
+            Commander ma carte NFC — 20 &euro;
+          </Button>
         </Section>
-      )}
+      </Section>
 
       <Text style={paragraph}>
         Une question sur votre abonnement ? Répondez à cet email, nous sommes là pour vous.

@@ -15,6 +15,7 @@
   body {
     @apply antialiased text-gray-900 bg-white;
     overscroll-behavior-y: none;
+    overflow-x: hidden;
   }
 
   /* Ensure smooth scrolling on mobile */

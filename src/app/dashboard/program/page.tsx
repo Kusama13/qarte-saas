@@ -21,7 +21,6 @@ import {
   Globe,
   QrCode,
   Smartphone,
-  TrendingUp,
   Users as UsersIcon,
   Zap,
 } from 'lucide-react';
@@ -32,17 +31,6 @@ import { compressLogo } from '@/lib/image-compression';
 import { useMerchant } from '@/contexts/MerchantContext';
 import type { Merchant } from '@/types';
 
-
-const SHOP_TYPE_LABELS: Record<string, string> = {
-  coiffeur: 'salons de coiffure',
-  barbier: 'barber shops',
-  institut_beaute: 'instituts de beauté',
-  onglerie: 'nail bars',
-  spa: 'spas et centres bien-être',
-  estheticienne: 'esthéticiennes',
-  tatouage: 'studios de tatouage',
-  autre: 'commerces',
-};
 
 // 6 palettes mobile (3x2) + 4 desktop-only (2x5)
 const COLOR_PALETTES = [
@@ -383,23 +371,6 @@ export default function ProgramPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      {/* Incentive banner */}
-      <div className="mb-5 md:mb-8 p-4 md:p-5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60">
-        <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-md">
-            <TrendingUp className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-gray-900">
-              <span className="text-amber-600">1 client sur 3</span> ne revient jamais sans programme de fidélité
-            </p>
-            <p className="mt-1 text-xs text-gray-500 leading-relaxed">
-              Des centaines de <strong className="text-gray-700">{SHOP_TYPE_LABELS[merchant?.shop_type || 'autre']}</strong> fidélisent déjà leurs clients avec <strong className="text-gray-700">Qarte</strong>.
-            </p>
-          </div>
-        </div>
-      </div>
-
       <div className="mb-5 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
           Mon Programme
@@ -408,6 +379,51 @@ export default function ProgramPage() {
           Personnalisez votre programme de fidélité
         </p>
       </div>
+
+      {/* Programme Score */}
+      {(() => {
+        const scoreItems = [
+          { done: !!formData.rewardDescription, pts: 25, label: 'Récompense' },
+          { done: !!formData.logoUrl, pts: 20, label: 'Logo' },
+          { done: !!(formData.instagramUrl || formData.facebookUrl || formData.tiktokUrl), pts: 15, label: 'Réseaux sociaux' },
+          { done: !!formData.reviewLink, pts: 15, label: 'Avis Google' },
+          { done: !!formData.bookingUrl, pts: 10, label: 'Lien réservation' },
+          { done: formData.tier2Enabled && !!formData.tier2RewardDescription, pts: 10, label: '2ème palier' },
+          { done: formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length > 0, pts: 5, label: 'Jours x2' },
+        ];
+        const score = scoreItems.reduce((sum, i) => sum + (i.done ? i.pts : 0), 0);
+        const r = 17;
+        const circumference = 2 * Math.PI * r;
+        const offset = circumference - (score / 100) * circumference;
+        const strokeColor = score < 50 ? '#f59e0b' : score < 80 ? '#7c3aed' : '#10b981';
+        const message = score === 100
+          ? 'Programme complet — vos clients vont adorer'
+          : score >= 80
+            ? 'Presque parfait !'
+            : score >= 50
+              ? 'Bon début, quelques ajouts feront la différence'
+              : 'Votre programme peut faire beaucoup plus';
+
+        return score < 100 ? (
+          <div className="sticky top-16 z-20 mb-4 md:mb-6 flex items-center gap-3 px-4 py-2.5 bg-white/80 backdrop-blur-xl border border-gray-100 rounded-xl shadow-sm">
+            <div className="flex-shrink-0 relative w-10 h-10">
+              <svg viewBox="0 0 40 40" className="w-full h-full -rotate-90">
+                <circle cx="20" cy="20" r={r} fill="none" stroke="#f3f4f6" strokeWidth="3" />
+                <circle
+                  cx="20" cy="20" r={r} fill="none"
+                  stroke={strokeColor} strokeWidth="3" strokeLinecap="round"
+                  strokeDasharray={circumference} strokeDashoffset={offset}
+                  style={{ transition: 'stroke-dashoffset 700ms ease-out, stroke 300ms' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="text-[11px] font-black" style={{ color: strokeColor }}>{score}%</span>
+              </div>
+            </div>
+            <p className="text-sm font-semibold text-gray-700">{message}</p>
+          </div>
+        ) : null;
+      })()}
 
       <div className="grid gap-3 md:gap-8">
         <div className="space-y-3 md:space-y-6">
