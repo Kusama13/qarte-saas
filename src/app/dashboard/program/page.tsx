@@ -405,7 +405,7 @@ export default function ProgramPage() {
               : 'Votre programme peut faire beaucoup plus';
 
         return score < 100 ? (
-          <div className="sticky top-16 z-20 mb-4 md:mb-6 flex items-center gap-3 px-4 py-2.5 bg-white/80 backdrop-blur-xl border border-gray-100 rounded-xl shadow-sm">
+          <div className="mb-4 md:mb-6 flex items-center gap-3 px-4 py-2.5 bg-white/80 backdrop-blur-xl border border-gray-100 rounded-xl shadow-sm">
             <div className="flex-shrink-0 relative w-10 h-10">
               <svg viewBox="0 0 40 40" className="w-full h-full -rotate-90">
                 <circle cx="20" cy="20" r={r} fill="none" stroke="#f3f4f6" strokeWidth="3" />
