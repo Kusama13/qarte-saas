@@ -3,7 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse, RATE_LIMITS } from '@/lib/rate-limit';
 import { sendWelcomeEmail, sendNewMerchantNotification, cancelScheduledEmail } from '@/lib/email';
-import { generateScanCode, generateReferralCode, formatPhoneNumber } from '@/lib/utils';
+import { generateSlug, generateScanCode, generateReferralCode, formatPhoneNumber } from '@/lib/utils';
 import type { MerchantCountry } from '@/types';
 
 // Client avec service role (bypass RLS)
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { user_id, slug, shop_name, shop_type, shop_address, phone, country } = body;
+    const { user_id, shop_name, shop_type, shop_address, phone, country } = body;
     const trimmedShopName = shop_name?.trim() || '';
     const trimmedAddress = shop_address?.trim() || '';
     const merchantCountry: MerchantCountry = country || 'FR';
@@ -61,6 +61,19 @@ export async function POST(request: NextRequest) {
         { error: 'Non autorisé' },
         { status: 403 }
       );
+    }
+
+    // Générer un slug unique (dédupliqué si déjà pris)
+    let slug = generateSlug(trimmedShopName);
+    const { data: existingSlug } = await supabaseAdmin
+      .from('merchants')
+      .select('id')
+      .eq('slug', slug)
+      .single();
+
+    if (existingSlug) {
+      const suffix = Math.random().toString(36).substring(2, 6);
+      slug = `${slug}-${suffix}`;
     }
 
     // Générer un code de scan unique

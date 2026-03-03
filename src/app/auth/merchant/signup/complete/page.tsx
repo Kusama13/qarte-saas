@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
-import { generateSlug, formatPhoneNumber, validatePhone, PHONE_CONFIG } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, PHONE_CONFIG } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType, COUNTRIES, type MerchantCountry } from '@/types';
 import { trackPageView, trackSetupCompleted, trackSignupCompleted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
@@ -116,8 +116,6 @@ export default function CompleteProfilePage() {
     }
 
     try {
-      const slug = generateSlug(formData.shopName);
-
       const response = await fetch('/api/merchants/create', {
         method: 'POST',
         headers: {
@@ -128,7 +126,6 @@ export default function CompleteProfilePage() {
         },
         body: JSON.stringify({
           user_id: userId,
-          slug,
           shop_name: formData.shopName,
           shop_type: formData.shopType,
           shop_address: null,
