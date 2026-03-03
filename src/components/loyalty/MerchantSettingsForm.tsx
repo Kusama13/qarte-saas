@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   Gift,
@@ -74,10 +73,10 @@ const STAMPS_SUGGESTIONS: Record<ShopType, number[]> = {
 };
 
 interface MerchantSettingsFormProps {
-  initialStampsRequired?: number;
-  initialRewardDescription?: string;
+  stampsRequired: number;
+  rewardDescription: string;
   shopType?: ShopType;
-  onChange?: (settings: LoyaltySettings) => void;
+  onChange: (settings: LoyaltySettings) => void;
 }
 
 export interface LoyaltySettings {
@@ -86,39 +85,11 @@ export interface LoyaltySettings {
 }
 
 export function MerchantSettingsForm({
-  initialStampsRequired = 5,
-  initialRewardDescription = '',
+  stampsRequired,
+  rewardDescription,
   shopType = 'autre',
   onChange,
 }: MerchantSettingsFormProps) {
-  const [stampsRequired, setStampsRequired] = useState(initialStampsRequired);
-  const [rewardDescription, setRewardDescription] = useState(initialRewardDescription || '');
-
-  // Use ref for onChange to avoid infinite loops
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
-
-  // Track if this is the initial mount
-  const isInitialMount = useRef(true);
-
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-    setStampsRequired(initialStampsRequired);
-    setRewardDescription(initialRewardDescription || '');
-  }, [initialStampsRequired, initialRewardDescription]);
-
-  // Notify parent of changes for real-time preview updates
-  useEffect(() => {
-    const settings = {
-      stamps_required: stampsRequired,
-      reward_description: rewardDescription,
-    };
-    onChangeRef.current?.(settings);
-  }, [stampsRequired, rewardDescription]);
-
   const rewardSuggestions = REWARD_SUGGESTIONS[shopType] || REWARD_SUGGESTIONS.autre;
   const stampsSuggestions = STAMPS_SUGGESTIONS[shopType] || STAMPS_SUGGESTIONS.autre;
 
@@ -135,7 +106,7 @@ export function MerchantSettingsForm({
           min="1"
           max="50"
           value={stampsRequired}
-          onChange={(e) => setStampsRequired(Number(e.target.value))}
+          onChange={(e) => onChange({ stamps_required: Number(e.target.value), reward_description: rewardDescription })}
           className="text-center font-bold text-lg h-12 border-2 max-w-[120px]"
         />
         <div className="flex items-center gap-2">
@@ -144,7 +115,7 @@ export function MerchantSettingsForm({
             <button
               key={n}
               type="button"
-              onClick={() => setStampsRequired(n)}
+              onClick={() => onChange({ stamps_required: n, reward_description: rewardDescription })}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
                 stampsRequired === n
                   ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
@@ -165,7 +136,7 @@ export function MerchantSettingsForm({
         </label>
         <Input
           value={rewardDescription}
-          onChange={(e) => setRewardDescription(e.target.value)}
+          onChange={(e) => onChange({ stamps_required: stampsRequired, reward_description: e.target.value })}
           placeholder="Ex: Un soin offert, -20%, Une coupe gratuite..."
           className="h-11"
         />
@@ -174,7 +145,7 @@ export function MerchantSettingsForm({
             <button
               key={suggestion}
               type="button"
-              onClick={() => setRewardDescription(suggestion)}
+              onClick={() => onChange({ stamps_required: stampsRequired, reward_description: suggestion })}
               className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
                 rewardDescription === suggestion
                   ? 'bg-indigo-100 border-indigo-300 text-indigo-700'

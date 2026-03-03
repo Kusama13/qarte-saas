@@ -134,6 +134,7 @@ export default function ProgramPage() {
   const [originalStampsRequired, setOriginalStampsRequired] = useState(10);
   const [showStampsWarning, setShowStampsWarning] = useState(false);
   const [tier2Error, setTier2Error] = useState('');
+  const [rewardError, setRewardError] = useState(false);
   const [socialOpen, setSocialOpen] = useState(searchParams.get('section') === 'social');
   const [doubleDaysOpen, setDoubleDaysOpen] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
@@ -248,7 +249,11 @@ export default function ProgramPage() {
 
   const handleSave = async () => {
     if (!merchant) return;
-    if (!formData.rewardDescription.trim()) return;
+    if (!formData.rewardDescription.trim()) {
+      setRewardError(true);
+      return;
+    }
+    setRewardError(false);
 
     // Validate tier 2
     if (formData.tier2Enabled) {
@@ -352,6 +357,7 @@ export default function ProgramPage() {
       stampsRequired: settings.stamps_required,
       rewardDescription: settings.reward_description,
     }));
+    if (settings.reward_description.trim()) setRewardError(false);
 
     // Show warning if stamps required increased
     if (settings.stamps_required > originalStampsRequired) {
@@ -405,7 +411,7 @@ export default function ProgramPage() {
               : 'Votre programme peut faire beaucoup plus';
 
         return score < 100 ? (
-          <div className="mb-4 md:mb-6 flex items-center gap-3 px-4 py-2.5 bg-white/80 backdrop-blur-xl border border-gray-100 rounded-xl shadow-sm">
+          <div className="mb-4 md:mb-6 flex items-center gap-3 px-4 py-2.5 sticky top-0 lg:top-2 z-20 bg-white backdrop-blur-xl border border-gray-200 rounded-xl shadow-md">
             <div className="flex-shrink-0 relative w-10 h-10">
               <svg viewBox="0 0 40 40" className="w-full h-full -rotate-90">
                 <circle cx="20" cy="20" r={r} fill="none" stroke="#f3f4f6" strokeWidth="3" />
@@ -539,11 +545,14 @@ export default function ProgramPage() {
               </div>
             </div>
             <MerchantSettingsForm
-              initialStampsRequired={formData.stampsRequired}
-              initialRewardDescription={formData.rewardDescription}
+              stampsRequired={formData.stampsRequired}
+              rewardDescription={formData.rewardDescription}
               shopType={merchant?.shop_type}
               onChange={handleLoyaltySettingsChange}
             />
+            {rewardError && (
+              <p className="mt-2 text-sm text-red-600 font-medium">Veuillez entrer la r&eacute;compense avant d&apos;enregistrer</p>
+            )}
 
             {/* Warning when increasing stamps required */}
             {showStampsWarning && (
