@@ -107,6 +107,9 @@ interface Stats {
   pendingPoints: number;
   weeklyScans: number;
   lastVisitDate: string | null;
+  totalReferrals: number;
+  pendingReferrals: number;
+  completedReferrals: number;
 }
 
 interface MemberProgram {
@@ -182,6 +185,9 @@ export default function MerchantDetailPage() {
     pendingPoints: 0,
     weeklyScans: 0,
     lastVisitDate: null,
+    totalReferrals: 0,
+    pendingReferrals: 0,
+    completedReferrals: 0,
   });
   const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -730,6 +736,31 @@ export default function MerchantDetailPage() {
                   <span className="text-sm text-gray-700">{merchant.referral_reward_referred}</span>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Stats parrainage */}
+        {stats.totalReferrals > 0 && (
+          <div className="mt-4 p-4 bg-violet-50/50 rounded-lg border border-violet-100">
+            <div className="flex items-center gap-2 mb-3">
+              <Share2 className="w-5 h-5 text-violet-600" />
+              <span className="font-medium text-gray-900">Parrainages</span>
+              <span className="text-xs text-gray-500">({stats.totalReferrals} au total)</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="text-center p-2.5 bg-white rounded-lg">
+                <p className="text-xl font-bold text-violet-700">{stats.totalReferrals}</p>
+                <p className="text-[11px] text-gray-500 font-medium">Total</p>
+              </div>
+              <div className="text-center p-2.5 bg-white rounded-lg">
+                <p className="text-xl font-bold text-amber-600">{stats.pendingReferrals}</p>
+                <p className="text-[11px] text-gray-500 font-medium">En cours</p>
+              </div>
+              <div className="text-center p-2.5 bg-white rounded-lg">
+                <p className="text-xl font-bold text-green-600">{stats.completedReferrals}</p>
+                <p className="text-[11px] text-gray-500 font-medium">Finalisés</p>
+              </div>
             </div>
           </div>
         )}

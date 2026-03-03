@@ -62,6 +62,9 @@ export async function GET(
       loyaltyCardsRes,
       weeklyScansRes,
       lastVisitRes,
+      totalReferralsRes,
+      pendingReferralsRes,
+      completedReferralsRes,
     ] = await Promise.all([
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
@@ -74,6 +77,9 @@ export async function GET(
       supabaseAdmin.from('loyalty_cards').select('customer_id, customers!inner(id, phone_number)').eq('merchant_id', merchantId),
       supabaseAdmin.from('visits').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('created_at', sevenDaysAgo.toISOString()),
       supabaseAdmin.from('visits').select('created_at').eq('merchant_id', merchantId).order('created_at', { ascending: false }).limit(1),
+      supabaseAdmin.from('referrals').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabaseAdmin.from('referrals').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('status', 'pending'),
+      supabaseAdmin.from('referrals').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('status', 'completed'),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -135,6 +141,9 @@ export async function GET(
         pushSent: pushSentRes.count || 0,
         weeklyScans: weeklyScansRes.count || 0,
         lastVisitDate: lastVisitRes.data?.[0]?.created_at || null,
+        totalReferrals: totalReferralsRes.count || 0,
+        pendingReferrals: pendingReferralsRes.count || 0,
+        completedReferrals: completedReferralsRes.count || 0,
       },
       memberPrograms: memberProgramsRes.data || [],
       emailTrackings: emailTrackingsRes.data || [],
