@@ -185,11 +185,9 @@ export function QRCodeEmail({
 
       <Hr style={divider} />
 
-      <Section style={ctaContainer}>
-        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20lancer%20mon%20programme">
-          Besoin d&apos;aide ? Contactez-nous sur WhatsApp
-        </Button>
-      </Section>
+      <Text style={paragraph}>
+        Besoin d&apos;aide ? R&eacute;pondez &agrave; cet email, on vous r&eacute;pond rapidement.
+      </Text>
 
       <Text style={signature}>
         L&apos;&eacute;quipe Qarte
@@ -347,17 +345,6 @@ const ctaButton = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 36px',
-};
-
-const whatsappButton = {
-  backgroundColor: '#25D366',
-  borderRadius: '10px',
-  color: '#ffffff',
-  fontSize: '14px',
-  fontWeight: '600',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  padding: '12px 28px',
 };
 
 const tipBox = {

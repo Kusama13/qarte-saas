@@ -46,14 +46,8 @@ export function ProgramReminderEmail({ shopName }: ProgramReminderEmailProps) {
       </Text>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? On peut le faire pour vous en 5 minutes sur WhatsApp.
+        Besoin d&apos;aide ? Répondez à cet email, on peut le faire pour vous en 5 minutes.
       </Text>
-
-      <Section style={buttonContainer}>
-        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20configurer%20mon%20programme%20Qarte">
-          Nous contacter sur WhatsApp
-        </Button>
-      </Section>
 
       <Text style={signature}>
         L&apos;équipe Qarte
@@ -161,17 +155,6 @@ const testimonialAuthor = {
   fontSize: '14px',
   fontWeight: '600',
   margin: '0',
-};
-
-const whatsappButton = {
-  backgroundColor: '#25D366',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '15px',
-  fontWeight: '600',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  padding: '12px 28px',
 };
 
 const signature = {

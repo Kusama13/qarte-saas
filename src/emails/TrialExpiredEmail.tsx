@@ -72,14 +72,8 @@ export function TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode }: Tr
       </Text>
 
       <Text style={paragraph}>
-        Des questions ? Répondez à cet email ou écrivez-nous sur WhatsApp.
+        Des questions ? Répondez à cet email, on vous répond rapidement.
       </Text>
-
-      <Section style={buttonContainer}>
-        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20mon%20essai%20Qarte%20est%20termin%C3%A9%20et%20j%27aimerais%20en%20discuter">
-          Nous écrire sur WhatsApp
-        </Button>
-      </Section>
 
       <Text style={signature}>
         À très vite,
@@ -163,17 +157,6 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
-};
-
-const whatsappButton = {
-  backgroundColor: '#25D366',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '15px',
-  fontWeight: '600',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  padding: '12px 28px',
 };
 
 const promoBox = {

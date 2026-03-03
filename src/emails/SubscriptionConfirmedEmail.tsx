@@ -60,9 +60,7 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
         </Section>
         <Text style={nfcTitle}>La carte NFC Qarte — en option (20 &euro;)</Text>
         <Text style={nfcText}>
-          Passez commande via le bouton ci-dessous, ou contactez-nous sur{' '}
-          <a href="https://wa.me/33607447420?text=Bonjour%2C%20je%20souhaite%20commander%20ma%20carte%20NFC%20Qarte." style={nfcLinkWa}>WhatsApp</a>
-          {' '}ou en r&eacute;pondant &agrave; cet email. Livraison sous 1 &agrave; 2 semaines.
+          Passez commande via le bouton ci-dessous, ou en r&eacute;pondant &agrave; cet email. Livraison sous 1 &agrave; 2 semaines.
         </Text>
         <Section style={{ textAlign: 'center' as const, margin: '12px 0 0 0' }}>
           <Button style={nfcButton} href="https://buy.stripe.com/4gM7sN6DYccX75dduH7g401">
@@ -226,12 +224,6 @@ const nfcText = {
   fontSize: '14px',
   lineHeight: '1.6',
   margin: '0 0 8px 0',
-};
-
-const nfcLinkWa = {
-  color: '#16a34a',
-  fontWeight: '600',
-  textDecoration: 'underline',
 };
 
 const nfcImgContainer = {

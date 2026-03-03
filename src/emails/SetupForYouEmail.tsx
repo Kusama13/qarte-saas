@@ -35,7 +35,7 @@ export function SetupForYouEmail({ email }: SetupForYouEmailProps) {
       <Section style={offerBox}>
         <Text style={offerTitle}>On s&apos;en occupe pour vous</Text>
         <Text style={offerText}>
-          R&eacute;pondez &agrave; cet email ou envoyez-nous un message WhatsApp avec :
+          R&eacute;pondez &agrave; cet email avec :
         </Text>
         <Text style={offerList}>
           &bull; Le nom de votre commerce<br />
@@ -48,12 +48,6 @@ export function SetupForYouEmail({ email }: SetupForYouEmailProps) {
         </Text>
       </Section>
 
-      <Section style={buttonContainer}>
-        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20pouvez-vous%20configurer%20mon%20compte%20Qarte%20pour%20moi%20%3F%20Voici%20mes%20infos%20%3A">
-          Envoyer mes infos sur WhatsApp
-        </Button>
-      </Section>
-
       <Text style={paragraph}>
         Ou si vous pr&eacute;f&eacute;rez le faire vous-m&ecirc;me, c&apos;est
         toujours possible :
@@ -63,16 +57,6 @@ export function SetupForYouEmail({ email }: SetupForYouEmailProps) {
         <Button style={button} href="https://getqarte.com/auth/merchant/signup/complete">
           Finaliser mon inscription
         </Button>
-      </Section>
-
-      <Section style={testimonialBox}>
-        <Text style={testimonialQuote}>
-          &laquo; Je leur ai envoy&eacute; un message WhatsApp, et 10 minutes apr&egrave;s
-          mon programme &eacute;tait en ligne. Trop facile. &raquo;
-        </Text>
-        <Text style={testimonialAuthor}>
-          &mdash; Sarah, Institut Beaut&eacute; Zen
-        </Text>
       </Section>
 
       <Text style={signature}>
@@ -143,38 +127,6 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
-};
-
-const whatsappButton = {
-  backgroundColor: '#25D366',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '16px',
-  fontWeight: '600',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  padding: '14px 32px',
-};
-
-const testimonialBox = {
-  borderLeft: '3px solid #4b0082',
-  paddingLeft: '20px',
-  margin: '24px 0',
-};
-
-const testimonialQuote = {
-  color: '#4a5568',
-  fontSize: '15px',
-  fontStyle: 'italic' as const,
-  lineHeight: '1.6',
-  margin: '0 0 8px 0',
-};
-
-const testimonialAuthor = {
-  color: '#4b0082',
-  fontSize: '14px',
-  fontWeight: '600',
-  margin: '0',
 };
 
 const signature = {

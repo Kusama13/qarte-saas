@@ -49,14 +49,9 @@ export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramRem
       <Section style={optionBox}>
         <Text style={optionLabel}>On le fait pour vous</Text>
         <Text style={optionDescription}>
-          Dites-nous votre récompense (ex: &quot;1 brushing offert après 8 visites&quot;)
+          Répondez à cet email avec votre récompense (ex: &quot;1 brushing offert après 8 visites&quot;)
           et on configure tout.
         </Text>
-        <Section style={buttonContainer}>
-          <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20pouvez-vous%20configurer%20mon%20programme%20Qarte%20pour%20moi%20%3F">
-            Nous écrire sur WhatsApp
-          </Button>
-        </Section>
       </Section>
 
       <Section style={challengeBox}>
@@ -140,17 +135,6 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
-};
-
-const whatsappButton = {
-  backgroundColor: '#25D366',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '15px',
-  fontWeight: '600',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  padding: '12px 28px',
 };
 
 const challengeBox = {

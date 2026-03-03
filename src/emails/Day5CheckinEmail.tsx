@@ -76,14 +76,8 @@ export function Day5CheckinEmail({ shopName, totalScans }: Day5CheckinEmailProps
       )}
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ou de conseils ? On est là :
+        Besoin d&apos;aide ou de conseils ? Répondez à cet email.
       </Text>
-
-      <Section style={buttonContainer}>
-        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20une%20question%20sur%20mon%20programme%20Qarte">
-          Écrire sur WhatsApp
-        </Button>
-      </Section>
 
       <Text style={signature}>
         À très vite,
@@ -166,17 +160,6 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
-};
-
-const whatsappButton = {
-  backgroundColor: '#25D366',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '15px',
-  fontWeight: '600',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  padding: '12px 28px',
 };
 
 const signature = {

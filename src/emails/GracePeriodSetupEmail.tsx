@@ -40,7 +40,7 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
       <Section style={offerBox}>
         <Text style={offerTitle}>On le fait ensemble en 2 minutes</Text>
         <Text style={offerText}>
-          Envoyez-nous un message WhatsApp et on configure
+          Répondez à cet email et on configure
           votre programme <strong>pendant que vous êtes avec vos clients</strong>.
           Tout ce qu&apos;on a besoin :
         </Text>
@@ -48,12 +48,6 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
           &bull; Quelle récompense offrir (ex: &quot;1 soin offert après 10 visites&quot;)<br />
           &bull; C&apos;est tout. On s&apos;occupe du reste.
         </Text>
-      </Section>
-
-      <Section style={buttonContainer}>
-        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20mon%20essai%20Qarte%20est%20termin%C3%A9%20mais%20j%27aimerais%20configurer%20mon%20programme.%20Pouvez-vous%20m%27aider%20%3F">
-          Configurer avec nous sur WhatsApp
-        </Button>
       </Section>
 
       <Text style={paragraph}>
@@ -162,17 +156,6 @@ const buttonContainer = {
 
 const button = {
   backgroundColor: '#4b0082',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '16px',
-  fontWeight: '600',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  padding: '14px 32px',
-};
-
-const whatsappButton = {
-  backgroundColor: '#25D366',
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '16px',

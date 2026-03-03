@@ -80,14 +80,8 @@ export function ProgramReminderDay2Email({ shopName, shopType }: ProgramReminder
       </Section>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? Répondez à cet email ou contactez-nous sur WhatsApp.
+        Besoin d&apos;aide ? Répondez à cet email.
       </Text>
-
-      <Section style={buttonContainer}>
-        <Button style={whatsappButton} href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20pour%20choisir%20ma%20r%C3%A9compense%20Qarte">
-          Nous contacter sur WhatsApp
-        </Button>
-      </Section>
 
       <Text style={signature}>
         L&apos;équipe Qarte
@@ -183,17 +177,6 @@ const tipText = {
   fontSize: '14px',
   lineHeight: '1.6',
   margin: '0',
-};
-
-const whatsappButton = {
-  backgroundColor: '#25D366',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '15px',
-  fontWeight: '600',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  padding: '12px 28px',
 };
 
 const signature = {
