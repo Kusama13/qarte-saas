@@ -16,3 +16,4 @@ export { default as BirthdaySection } from './BirthdaySection';
 export { default as VoucherRewards } from './VoucherRewards';
 export { default as VoucherModals } from './VoucherModals';
 export { default as ReviewModal } from './ReviewModal';
+export { default as ReviewCard } from './ReviewCard';

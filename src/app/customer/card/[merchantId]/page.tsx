@@ -33,6 +33,7 @@ import {
   MemberCardModal,
   InstallPrompts,
   ReviewModal,
+  ReviewCard,
   StampsSection,
   RewardCard,
   RedeemModal,
@@ -1096,6 +1097,14 @@ export default function CustomerCardPage({
         {/* Réseaux sociaux */}
         <SocialLinks merchant={merchant} />
 
+        {/* Encart avis Google — affiché si review_link configuré */}
+        {merchant.review_link && !isPreview && (
+          <ReviewCard
+            reviewLink={merchant.review_link}
+            shopName={merchant.shop_name}
+            merchantId={merchantId}
+          />
+        )}
 
         <footer className="py-6 text-center">
           <a href="https://www.qarte.fr" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
