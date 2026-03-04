@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 import type { Metadata } from 'next';
+import NoRightClick from '@/components/NoRightClick';
 
 export const metadata: Metadata = {
   title: 'Conditions Générales de Vente | Qarte',
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 
 export default function CGVPage() {
   return (
+    <NoRightClick>
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100">
         <div className="flex items-center justify-between px-4 py-4 mx-auto max-w-4xl">
@@ -349,5 +351,6 @@ export default function CGVPage() {
         </div>
       </main>
     </div>
+    </NoRightClick>
   );
 }
