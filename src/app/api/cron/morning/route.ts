@@ -19,7 +19,6 @@ import {
   sendReactivationEmail,
   sendFirstClientScriptEmail,
   sendQuickCheckEmail,
-  sendChallengeCompletedEmail,
   sendGuidedSignupEmail,
   sendSetupForYouEmail,
   sendLastChanceSignupEmail,
@@ -186,7 +185,6 @@ export async function GET(request: NextRequest) {
     firstReward: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     tier2Upsell: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     inactiveMerchants: { processed: 0, sent: 0, skipped: 0, errors: 0 },
-    challengeCompleted: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     reactivation: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     incompleteRelance: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     autoSuggestReward: { processed: 0, sent: 0, skipped: 0, errors: 0 },
@@ -426,62 +424,6 @@ export async function GET(request: NextRequest) {
               m.logo_url || undefined,
               m.tier2_enabled, m.tier2_stamps_required, m.tier2_reward_description
             ),
-          });
-        }
-      }
-    }
-
-    // 2f. CHALLENGE COMPLETED (5 unique clients in 3 days)
-    {
-      const tenDaysAgo = new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000);
-      const { data: challengeCandidates } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id, created_at')
-        .eq('subscription_status', 'trial')
-        .not('reward_description', 'is', null)
-        .neq('reward_description', '')
-        .gte('created_at', tenDaysAgo.toISOString())
-        .neq('no_contact', true);
-
-      if (challengeCandidates && challengeCandidates.length > 0) {
-        const challengeIds = challengeCandidates.map(m => m.id);
-        const alreadySentChallenge = await getAlreadySentSet(challengeIds, -104);
-
-        // Get unique customers per merchant — count customers created within 3 days of merchant creation
-        const { data: challengeCustomers } = await supabase
-          .from('customers')
-          .select('id, merchant_id, created_at')
-          .in('merchant_id', challengeIds);
-
-        const merchantCreatedMap = new Map(challengeCandidates.map(m => [m.id, new Date(m.created_at)]));
-        const customerCountMap = new Map<string, number>();
-        for (const customer of challengeCustomers || []) {
-          const merchantCreated = merchantCreatedMap.get(customer.merchant_id);
-          if (!merchantCreated) continue;
-          const threeDaysAfter = new Date(merchantCreated.getTime() + 3 * 24 * 60 * 60 * 1000);
-          if (new Date(customer.created_at) <= threeDaysAfter) {
-            customerCountMap.set(customer.merchant_id, (customerCountMap.get(customer.merchant_id) || 0) + 1);
-          }
-        }
-
-        // Filter to merchants with >= 5 unique clients and not already sent
-        const challengeToSend = challengeCandidates.filter(
-          m => !alreadySentChallenge.has(m.id) && (customerCountMap.get(m.id) || 0) >= 5
-        );
-
-        results.challengeCompleted.processed = challengeCandidates.length;
-        results.challengeCompleted.skipped = challengeCandidates.length - challengeToSend.length;
-
-        if (challengeToSend.length > 0) {
-          const challengeEmailMap = await batchGetUserEmails([...new Set(challengeToSend.map(m => m.user_id))]);
-
-          await processEmailSection({
-            candidates: challengeToSend,
-            trackingCode: -104,
-            emailMap: challengeEmailMap,
-            alreadySentSet: new Set(), // already filtered above
-            stats: results.challengeCompleted,
-            sendFn: (email, m) => sendChallengeCompletedEmail(email, m.shop_name, 'QARTECHALLENGE2026'),
           });
         }
       }

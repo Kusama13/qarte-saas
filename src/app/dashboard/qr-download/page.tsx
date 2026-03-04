@@ -290,25 +290,6 @@ export default function QRDownloadPage() {
         </div>
       </div>}
 
-      {/* Challenge banner — trial only */}
-      {merchant.subscription_status === 'trial' && (
-        <div className="mb-6 p-4 md:p-5 rounded-2xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-md">
-              <Gift className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-gray-900 text-sm md:text-base">
-                Défi : 5 clients en 3 jours
-              </h3>
-              <p className="mt-0.5 text-sm text-amber-800 font-medium">
-                Obtenez votre <span className="font-extrabold text-orange-600">premier mois à 9€ seulement</span> au lieu de 19€ en faisant scanner 5 clients dans les 3 prochains jours. Votre code de réduction vous sera envoyé par email.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="flex gap-1.5 p-1.5 bg-gray-100/80 rounded-2xl mb-6 lg:max-w-md border border-gray-200/60">
         <button
