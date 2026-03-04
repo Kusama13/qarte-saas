@@ -63,6 +63,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Guard: si un merchant existe déjà pour ce user_id, le retourner sans recréer
+    const { data: existingMerchant } = await supabaseAdmin
+      .from('merchants')
+      .select()
+      .eq('user_id', user_id)
+      .single();
+
+    if (existingMerchant) {
+      logger.info(`Merchant already exists for user ${user_id}, returning existing`);
+      return NextResponse.json({ merchant: existingMerchant });
+    }
+
     // Générer un slug unique (dédupliqué si déjà pris)
     let slug = generateSlug(trimmedShopName);
     const { data: existingSlug } = await supabaseAdmin
@@ -134,6 +146,20 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      // Race condition: UNIQUE violation = un autre appel a créé le merchant entre-temps
+      if (error.code === '23505') {
+        const { data: raceExisting } = await supabaseAdmin
+          .from('merchants')
+          .select()
+          .eq('user_id', user_id)
+          .single();
+
+        if (raceExisting) {
+          logger.info(`Merchant created by race condition for user ${user_id}, returning existing`);
+          return NextResponse.json({ merchant: raceExisting });
+        }
+      }
+
       logger.error('Merchant creation error', error);
       return NextResponse.json(
         { error: error.message },
