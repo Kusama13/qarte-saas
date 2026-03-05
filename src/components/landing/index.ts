@@ -7,6 +7,6 @@ export { AIReengagementSection } from './AIReengagementSection';
 export { PricingSection } from './PricingSection';
 export { FAQSection } from './FAQSection';
 export { FooterSection, FooterCta, FooterDark } from './FooterSection';
-export { ScanMethodsSection } from './ScanMethodsSection';
+export { LoyaltyModesSection } from './LoyaltyModesSection';
 export { ScrollToTopButton } from './ScrollToTopButton';
 export { MobileStickyCta } from './MobileStickyCta';

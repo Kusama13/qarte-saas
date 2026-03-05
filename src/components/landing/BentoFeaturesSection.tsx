@@ -1,6 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import {
   QrCode,
   Bell,
@@ -15,6 +16,7 @@ import {
   CalendarHeart,
   MousePointer2,
   ArrowRight,
+  Nfc,
 } from 'lucide-react';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
@@ -78,35 +80,46 @@ function Separator() {
 
 /* ── Visuals ── */
 
-/* ── Visual: QR Code Scan ── */
-function QRCodeVisual() {
+/* ── Visual: QR + NFC compact ── */
+function ScanMethodsVisual() {
   return (
-    <div className="relative w-full max-w-[300px] mx-auto">
-      <div className="absolute inset-0 -m-4 bg-indigo-100/50 rounded-3xl blur-[60px] pointer-events-none" />
-
-      <div className="relative bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-6 flex flex-col items-center justify-center">
-        <div className="w-36 h-36 bg-white rounded-2xl border-2 border-indigo-100 p-4 shadow-sm mb-4">
-          <svg viewBox="0 0 100 100" className="w-full h-full">
-            <rect x="5" y="5" width="25" height="25" rx="3" fill="#4f46e5" />
-            <rect x="70" y="5" width="25" height="25" rx="3" fill="#4f46e5" />
-            <rect x="5" y="70" width="25" height="25" rx="3" fill="#4f46e5" />
-            <rect x="10" y="10" width="15" height="15" rx="2" fill="white" />
-            <rect x="75" y="10" width="15" height="15" rx="2" fill="white" />
-            <rect x="10" y="75" width="15" height="15" rx="2" fill="white" />
-            <rect x="14" y="14" width="7" height="7" rx="1" fill="#4f46e5" />
-            <rect x="79" y="14" width="7" height="7" rx="1" fill="#4f46e5" />
-            <rect x="14" y="79" width="7" height="7" rx="1" fill="#4f46e5" />
-            <rect x="38" y="5" width="8" height="8" rx="1.5" fill="#4f46e5" />
-            <rect x="52" y="5" width="8" height="8" rx="1.5" fill="#4f46e5" />
-            <rect x="38" y="38" width="8" height="8" rx="1.5" fill="#6366f1" />
-            <rect x="52" y="38" width="8" height="8" rx="1.5" fill="#4f46e5" />
-            <rect x="70" y="38" width="8" height="8" rx="1.5" fill="#4f46e5" />
-            <rect x="38" y="70" width="8" height="8" rx="1.5" fill="#4f46e5" />
-            <rect x="70" y="70" width="8" height="8" rx="1.5" fill="#6366f1" />
-            <rect x="85" y="85" width="8" height="8" rx="1.5" fill="#4f46e5" />
-          </svg>
+    <div className="relative w-full max-w-[340px] mx-auto">
+      <div className="flex gap-4">
+        {/* QR Code mini */}
+        <div className="flex-1 bg-white rounded-2xl shadow-lg shadow-gray-200/40 border border-gray-100 p-4 flex flex-col items-center">
+          <div className="w-16 h-16 bg-white rounded-xl border-2 border-indigo-100 p-2 shadow-sm mb-3">
+            <svg viewBox="0 0 100 100" className="w-full h-full">
+              <rect x="5" y="5" width="25" height="25" rx="3" fill="#4f46e5" />
+              <rect x="70" y="5" width="25" height="25" rx="3" fill="#4f46e5" />
+              <rect x="5" y="70" width="25" height="25" rx="3" fill="#4f46e5" />
+              <rect x="10" y="10" width="15" height="15" rx="2" fill="white" />
+              <rect x="75" y="10" width="15" height="15" rx="2" fill="white" />
+              <rect x="10" y="75" width="15" height="15" rx="2" fill="white" />
+              <rect x="14" y="14" width="7" height="7" rx="1" fill="#4f46e5" />
+              <rect x="79" y="14" width="7" height="7" rx="1" fill="#4f46e5" />
+              <rect x="14" y="79" width="7" height="7" rx="1" fill="#4f46e5" />
+              <rect x="38" y="38" width="8" height="8" rx="1.5" fill="#6366f1" />
+              <rect x="70" y="70" width="8" height="8" rx="1.5" fill="#6366f1" />
+            </svg>
+          </div>
+          <p className="text-xs font-bold text-gray-800">QR Code</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">Inclus</p>
         </div>
-        <p className="text-sm font-semibold text-gray-700">Scannez pour tamponner</p>
+
+        {/* NFC mini */}
+        <div className="flex-1 bg-gradient-to-br from-violet-50 to-pink-50 rounded-2xl shadow-lg shadow-violet-100/30 border border-violet-100 p-4 flex flex-col items-center">
+          <div className="relative mb-3">
+            <Image
+              src="/images/Carte NFC QARTE .png"
+              alt="Carte NFC Qarte"
+              width={80}
+              height={52}
+              className="rounded-lg shadow-md shadow-violet-200/40"
+            />
+          </div>
+          <p className="text-xs font-bold text-gray-800">Carte NFC</p>
+          <p className="text-[10px] text-gray-400 mt-0.5">En option</p>
+        </div>
       </div>
 
       <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-emerald-100 animate-float-subtle">
@@ -500,11 +513,21 @@ export function BentoFeaturesSection() {
 
         <div className="flex flex-col gap-6 md:gap-10 lg:gap-12">
           <FeatureBlock
+            title="QR code ou NFC,"
+            titleBold="zéro prise de tête."
+            description="QR code prêt en 2 minutes sur ton téléphone. Carte NFC en option sur le comptoir. Aucune appli à télécharger — ni pour toi, ni pour ta cliente."
+            visual={<ScanMethodsVisual />}
+            reverse
+            delay={0.05}
+          />
+
+          <Separator />
+
+          <FeatureBlock
             title="Récompense tes clientes"
             titleBold="les plus fidèles."
             description="Crée ton programme en 2 minutes. Paliers, récompenses, couleurs — tout s'adapte à ton image."
             visual={<LoyaltyCardVisual />}
-            reverse
             delay={0.05}
           />
 
@@ -515,6 +538,7 @@ export function BentoFeaturesSection() {
             titleBold="ton image."
             description="Tes couleurs, ton ambiance. Une carte aux couleurs de ton institut donne un effet premium — tes clientes reviennent plus, dépensent plus."
             visual={<BrandVisual />}
+            reverse
             delay={0.05}
           />
 
