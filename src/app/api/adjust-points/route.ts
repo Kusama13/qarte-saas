@@ -108,6 +108,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Auto-build reason if not provided
+    let finalReason = reason || null;
+    if (!reason && amount_adjustment !== undefined && amount_adjustment !== 0) {
+      const parts: string[] = [];
+      if (adjustment !== 0) parts.push(`${adjustment > 0 ? '+' : ''}${adjustment} passage${Math.abs(adjustment) > 1 ? 's' : ''}`);
+      parts.push(`${amount_adjustment > 0 ? '+' : ''}${amount_adjustment.toFixed(2).replace('.', ',')} € cumul`);
+      finalReason = parts.join(' · ');
+    }
+
     const { error: auditError } = await supabase
       .from('point_adjustments')
       .insert({
@@ -115,7 +124,7 @@ export async function POST(request: NextRequest) {
         merchant_id,
         customer_id,
         adjustment,
-        reason: reason || null,
+        reason: finalReason,
         adjusted_by: user.id,
       });
 

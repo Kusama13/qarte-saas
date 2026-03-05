@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         merchant_id: merchant.id,
         customer_id: loyaltyCard.customer_id,
         adjustment: 0,
-        reason: `Annulation récompense palier ${lastRedemption.tier}`,
+        reason: `Annulation récompense palier ${lastRedemption.tier}${shouldRestoreAmount ? ` · ${Number(lastRedemption.amount_accumulated).toFixed(2).replace('.', ',')} € restitué` : ''}`,
         adjusted_by: user.id,
       });
 
