@@ -38,10 +38,14 @@ interface CustomerManagementModalProps {
   birthMonth?: number | null;
   birthDay?: number | null;
   tier1Redeemed?: boolean;
+  isCagnotte?: boolean;
+  currentAmount?: number;
+  cagnottePercent?: number;
+  cagnotteTier2Percent?: number | null;
 }
 
-const MONTHS_SHORT = ['janv.','fev.','mars','avr.','mai','juin','juil.','aout','sept.','oct.','nov.','dec.'];
-const MONTHS_PICKER = ['Jan','Fev','Mar','Avr','Mai','Juin','Juil','Aout','Sep','Oct','Nov','Dec'];
+const MONTHS_SHORT = ['janv.','fév.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+const MONTHS_PICKER = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
 
 type Tab = 'adjust' | 'rewards' | 'history' | 'danger';
 
@@ -64,6 +68,10 @@ export function CustomerManagementModal({
   birthMonth,
   birthDay,
   tier1Redeemed = false,
+  isCagnotte = false,
+  currentAmount = 0,
+  cagnottePercent = 0,
+  cagnotteTier2Percent,
 }: CustomerManagementModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('adjust');
   const [success, setSuccess] = useState(false);
@@ -161,7 +169,7 @@ export function CustomerManagementModal({
       <div className="relative w-full max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col sm:mx-4">
         <button
           onClick={handleClose}
-          className="absolute p-1.5 transition-colors rounded-lg top-2.5 right-2.5 hover:bg-gray-100 z-10"
+          className="absolute p-2.5 transition-colors rounded-lg top-2 right-2 hover:bg-gray-100 z-10"
         >
           <X className="w-4 h-4 text-gray-500" />
         </button>
@@ -190,13 +198,13 @@ export function CustomerManagementModal({
                     value={editFirstName}
                     onChange={(e) => setEditFirstName(e.target.value)}
                     placeholder="Prénom"
-                    className="w-24 px-2 py-1 rounded-lg border border-gray-200 text-sm font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
+                    className="flex-1 min-w-0 px-2 py-1 rounded-lg border border-gray-200 text-sm font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
                   />
                   <input
                     value={editLastName}
                     onChange={(e) => setEditLastName(e.target.value)}
                     placeholder="Nom"
-                    className="w-24 px-2 py-1 rounded-lg border border-gray-200 text-sm font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
+                    className="flex-1 min-w-0 px-2 py-1 rounded-lg border border-gray-200 text-sm font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
                   />
                   <button
                     onClick={handleSaveName}
@@ -287,7 +295,8 @@ export function CustomerManagementModal({
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap min-w-0 ${
+              aria-label={tab.label}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap min-w-0 ${
                 activeTab === tab.key
                   ? `${tab.activeColor} border-b-2`
                   : 'text-gray-400 hover:text-gray-600'
@@ -325,6 +334,11 @@ export function CustomerManagementModal({
                   loyaltyCardId={loyaltyCardId}
                   onSuccess={showSuccess}
                   onClose={handleClose}
+                  isCagnotte={isCagnotte}
+                  currentAmount={currentAmount}
+                  cagnottePercent={cagnottePercent}
+                  cagnotteTier2Percent={cagnotteTier2Percent}
+                  tier1Redeemed={tier1Redeemed}
                 />
               )}
 
@@ -339,13 +353,16 @@ export function CustomerManagementModal({
                   rewardDescription={rewardDescription}
                   tier1Redeemed={tier1Redeemed}
                   onSuccess={showSuccess}
+                  isCagnotte={isCagnotte}
                 />
               )}
 
               {activeTab === 'history' && (
                 <CustomerHistoryTab
                   loyaltyCardId={loyaltyCardId}
+                  merchantId={merchantId}
                   tier2Enabled={tier2Enabled}
+                  isCagnotte={isCagnotte}
                 />
               )}
 

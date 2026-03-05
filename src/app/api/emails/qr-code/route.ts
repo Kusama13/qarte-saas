@@ -19,7 +19,7 @@ export async function POST() {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description')
+      .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode')
       .eq('user_id', user.id)
       .single();
 
@@ -59,7 +59,8 @@ export async function POST() {
       merchant.logo_url || undefined,
       merchant.tier2_enabled,
       merchant.tier2_stamps_required,
-      merchant.tier2_reward_description
+      merchant.tier2_reward_description,
+      merchant.loyalty_mode || undefined
     );
 
     if (!result.success) {

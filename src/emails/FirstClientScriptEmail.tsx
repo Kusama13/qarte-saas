@@ -13,6 +13,7 @@ interface FirstClientScriptEmailProps {
   shopType: string;
   rewardDescription: string;
   stampsRequired: number;
+  loyaltyMode?: 'visit' | 'cagnotte';
 }
 
 const SCRIPTS: Record<string, string> = {
@@ -27,7 +28,7 @@ const SCRIPTS: Record<string, string> = {
 
 const DEFAULT_SCRIPT = "Avant de partir, scannez le QR code pour la carte de fidélité — 5 secondes et c'est fait";
 
-export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, stampsRequired }: FirstClientScriptEmailProps) {
+export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, stampsRequired, loyaltyMode = 'visit' }: FirstClientScriptEmailProps) {
   const normalized = shopType?.toLowerCase().replace(/[\s-]/g, '_') || '';
   const script = SCRIPTS[normalized] || DEFAULT_SCRIPT;
 
@@ -50,8 +51,8 @@ export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, 
       <Section style={scriptBox}>
         <Text style={scriptLabel}>Dites simplement :</Text>
         <Text style={scriptText}>
-          &quot;{script} — après <strong>{stampsRequired} passages</strong> c&apos;est{' '}
-          <strong>{rewardDescription}</strong>.&quot;
+          &quot;{script} — apr&egrave;s <strong>{stampsRequired} passages</strong> c&apos;est{' '}
+          <strong>{rewardDescription}</strong>{loyaltyMode === 'cagnotte' ? ' sur leurs d\u00e9penses' : ''}.&quot;
         </Text>
       </Section>
 

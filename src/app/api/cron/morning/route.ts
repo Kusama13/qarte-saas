@@ -396,7 +396,7 @@ export async function GET(request: NextRequest) {
     {
       const { data: qrCandidates } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description')
+        .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
@@ -422,7 +422,8 @@ export async function GET(request: NextRequest) {
               m.reward_description || undefined,
               m.stamps_required, m.primary_color,
               m.logo_url || undefined,
-              m.tier2_enabled, m.tier2_stamps_required, m.tier2_reward_description
+              m.tier2_enabled, m.tier2_stamps_required, m.tier2_reward_description,
+              m.loyalty_mode || undefined
             ),
           });
         }
@@ -433,7 +434,7 @@ export async function GET(request: NextRequest) {
     {
       const { data: scriptCandidates } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id, shop_type, reward_description, stamps_required, trial_ends_at, subscription_status')
+        .select('id, shop_name, user_id, shop_type, reward_description, stamps_required, trial_ends_at, subscription_status, loyalty_mode')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
@@ -489,7 +490,8 @@ export async function GET(request: NextRequest) {
             extraSkip: (m) => !m.reward_description,
             sendFn: (email, m) => sendFirstClientScriptEmail(
               email, m.shop_name, m.shop_type || '',
-              m.reward_description, m.stamps_required
+              m.reward_description, m.stamps_required,
+              m.loyalty_mode || undefined
             ),
           });
         }
@@ -609,7 +611,7 @@ export async function GET(request: NextRequest) {
       // 2f. FIRST REWARD EMAIL
       const { data: merchantsWithProgram } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id, reward_description, stamps_required')
+        .select('id, shop_name, user_id, reward_description, stamps_required, loyalty_mode')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
@@ -661,7 +663,7 @@ export async function GET(request: NextRequest) {
             if (!merchant.reward_description) { results.firstReward.skipped++; return; }
 
             try {
-              const result = await sendFirstRewardEmail(email, merchant.shop_name, merchant.reward_description);
+              const result = await sendFirstRewardEmail(email, merchant.shop_name, merchant.reward_description, merchant.loyalty_mode === 'cagnotte');
               if (result.success) {
                 await supabase.from('pending_email_tracking').insert({
                   merchant_id: merchantId, reminder_day: -101, pending_count: 0,

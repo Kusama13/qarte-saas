@@ -30,7 +30,14 @@ export const COUNTRIES: Record<MerchantCountry, string> = {
 
 export type SubscriptionStatus = 'trial' | 'active' | 'canceled' | 'canceling' | 'past_due';
 
-export type LoyaltyMode = 'visit' | 'article';
+export type LoyaltyMode = 'visit' | 'cagnotte';
+
+export interface CagnotteData {
+  currentAmount: number;
+  amountAdded: number;
+  rewardValue: number | null;
+  rewardPercent: number | null;
+}
 
 // Qarte Shield: Visit quarantine status
 export type VisitStatus = 'confirmed' | 'pending' | 'rejected';
@@ -57,8 +64,6 @@ export interface Merchant {
   tiktok_url: string | null;
   booking_url: string | null;
   loyalty_mode: LoyaltyMode;
-  product_name: string | null;
-  max_quantity_per_scan: number;
   stamps_required: number;
   reward_description: string | null;
   // 2nd tier reward (cumulative, points don't reset)
@@ -80,6 +85,9 @@ export interface Merchant {
   // Birthday gift
   birthday_gift_enabled: boolean;
   birthday_gift_description: string | null;
+  // Cagnotte (cashback) mode
+  cagnotte_percent: number | null;
+  cagnotte_tier2_percent: number | null;
   // Double stamp days
   double_days_enabled: boolean;
   double_days_of_week: string; // JSON array of JS getDay() values ex: "[1,3]"
@@ -107,6 +115,7 @@ export interface LoyaltyCard {
   customer_id: string;
   merchant_id: string;
   current_stamps: number;
+  current_amount: number; // Accumulated EUR for cagnotte mode
   stamps_target: number; // Grandfathering: target when card was created
   last_visit_date: string | null;
   referral_code: string | null;
@@ -135,6 +144,7 @@ export interface Visit {
   merchant_id: string;
   customer_id: string;
   points_earned: number;
+  amount_spent: number | null; // Amount spent in EUR (cagnotte mode)
   visited_at: string;
   ip_address: string | null;
   // Qarte Shield fields
@@ -157,6 +167,10 @@ export interface Redemption {
   redeemed_at: string;
   stamps_used: number;
   tier: 1 | 2;
+  // Cagnotte audit trail
+  amount_accumulated: number | null;
+  reward_percent: number | null;
+  reward_value: number | null;
 }
 
 export interface ContactMessage {

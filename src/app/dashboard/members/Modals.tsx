@@ -220,6 +220,11 @@ interface AssignModalProps {
   setNewCustomerLastName: (v: string) => void;
   newCustomerPhone: string;
   setNewCustomerPhone: (v: string) => void;
+  newCustomerStartAmount?: string;
+  setNewCustomerStartAmount?: (v: string) => void;
+  newCustomerStartStamps?: string;
+  setNewCustomerStartStamps?: (v: string) => void;
+  isCagnotte?: boolean;
   creatingCustomer: boolean;
   onCreateCustomer: () => void;
 }
@@ -243,6 +248,11 @@ export function AssignModal({
   setNewCustomerLastName,
   newCustomerPhone,
   setNewCustomerPhone,
+  newCustomerStartAmount,
+  setNewCustomerStartAmount,
+  newCustomerStartStamps,
+  setNewCustomerStartStamps,
+  isCagnotte,
   creatingCustomer,
   onCreateCustomer,
 }: AssignModalProps) {
@@ -341,6 +351,26 @@ export function AssignModal({
               value={newCustomerPhone}
               onChange={(e) => setNewCustomerPhone(e.target.value)}
             />
+            {setNewCustomerStartStamps && (
+              <Input
+                placeholder="Tampons de d&eacute;part (optionnel)"
+                type="number"
+                min="0"
+                step="1"
+                value={newCustomerStartStamps || ''}
+                onChange={(e) => setNewCustomerStartStamps(e.target.value)}
+              />
+            )}
+            {isCagnotte && setNewCustomerStartAmount && (
+              <Input
+                placeholder="Montant d&eacute;j&agrave; d&eacute;pens&eacute; (optionnel)"
+                type="number"
+                min="0"
+                step="0.01"
+                value={newCustomerStartAmount || ''}
+                onChange={(e) => setNewCustomerStartAmount(e.target.value)}
+              />
+            )}
 
             <Button
               onClick={onCreateCustomer}

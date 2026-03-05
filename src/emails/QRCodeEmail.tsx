@@ -19,6 +19,7 @@ interface QRCodeEmailProps {
   tier2StampsRequired?: number | null;
   tier2RewardDescription?: string | null;
   referralCode?: string;
+  loyaltyMode?: 'visit' | 'cagnotte';
 }
 
 // Lighten a hex color by mixing with white
@@ -43,6 +44,7 @@ export function QRCodeEmail({
   tier2StampsRequired,
   tier2RewardDescription,
   referralCode,
+  loyaltyMode = 'visit',
 }: QRCodeEmailProps) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
   const dashboardUrl = `${appUrl}/dashboard/qr-download`;
@@ -107,7 +109,7 @@ export function QRCodeEmail({
                 )}
                 <Text style={previewShopName}>{shopName}</Text>
                 <Section style={previewRewardBox}>
-                  <Text style={{ ...previewRewardLabel, color: primaryColor }}>Votre r&eacute;compense</Text>
+                  <Text style={{ ...previewRewardLabel, color: primaryColor }}>{loyaltyMode === 'cagnotte' ? 'Votre cagnotte' : 'Votre r\u00e9compense'}</Text>
                   <Text style={previewRewardText}>{rewardDescription}</Text>
                   {stampsRequired && (
                     <Text style={{ ...previewRewardStamps, color: primaryColor }}>
@@ -136,22 +138,30 @@ export function QRCodeEmail({
             <Section style={captionBox}>
               <Text style={captionLabel}>Option 1 — Simple et efficace</Text>
               <Text style={captionText}>
-                Votre fid&eacute;lit&eacute; m&eacute;rite d&apos;&ecirc;tre r&eacute;compens&eacute;e ! &#127873; Apr&egrave;s {stampsRequired} passages chez {shopName}, recevez {rewardDescription}.
+                {loyaltyMode === 'cagnotte' ? (
+                  <>Votre fid&eacute;lit&eacute; m&eacute;rite d&apos;&ecirc;tre r&eacute;compens&eacute;e ! &#127873; {stampsRequired} passages chez {shopName} = {rewardDescription} sur vos d&eacute;penses.{' '}Demandez &agrave; scanner le QR code ! #fid&eacute;lit&eacute; #{shopName.replace(/\s+/g, '')}</>
+                ) : (
+                  <>Votre fid&eacute;lit&eacute; m&eacute;rite d&apos;&ecirc;tre r&eacute;compens&eacute;e ! &#127873; Apr&egrave;s {stampsRequired} passages chez {shopName}, recevez {rewardDescription}.
                 {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
                   <> Et apr&egrave;s {tier2StampsRequired} passages : {tier2RewardDescription} !</>
                 )}
-                {' '}Demandez &agrave; scanner le QR code ! #fid&eacute;lit&eacute; #{shopName.replace(/\s+/g, '')}
+                {' '}Demandez &agrave; scanner le QR code ! #fid&eacute;lit&eacute; #{shopName.replace(/\s+/g, '')}</>
+                )}
               </Text>
             </Section>
 
             <Section style={captionBox}>
               <Text style={captionLabel}>Option 2 — Engageante</Text>
               <Text style={captionText}>
-                NOUVEAU chez {shopName} ! &#10024; On lance notre carte de fid&eacute;lit&eacute; digitale. Pas d&apos;appli, pas de carte &agrave; perdre &mdash; juste un scan rapide. Votre r&eacute;compense ? {rewardDescription} !
+                {loyaltyMode === 'cagnotte' ? (
+                  <>NOUVEAU chez {shopName} ! &#10024; On lance notre programme de fid&eacute;lit&eacute; digitale. Pas d&apos;appli, pas de carte &agrave; perdre &mdash; juste un scan rapide. {stampsRequired} passages = {rewardDescription} sur vos d&eacute;penses ! &Agrave; bient&ocirc;t &#128156;</>
+                ) : (
+                  <>NOUVEAU chez {shopName} ! &#10024; On lance notre carte de fid&eacute;lit&eacute; digitale. Pas d&apos;appli, pas de carte &agrave; perdre &mdash; juste un scan rapide. Votre r&eacute;compense ? {rewardDescription} !
                 {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
                   <> Et {tier2RewardDescription} apr&egrave;s {tier2StampsRequired} passages !</>
                 )}
-                {' '}&Agrave; bient&ocirc;t &#128156;
+                {' '}&Agrave; bient&ocirc;t &#128156;</>
+                )}
               </Text>
             </Section>
           </Section>

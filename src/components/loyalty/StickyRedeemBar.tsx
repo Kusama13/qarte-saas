@@ -1,6 +1,6 @@
 'use client';
 
-import { Gift, Trophy } from 'lucide-react';
+import { Gift, Trophy, Coins } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui';
 
@@ -14,6 +14,8 @@ interface StickyRedeemBarProps {
   secondaryColor?: string;
   onRedeemTier1: () => void;
   onRedeemTier2: () => void;
+  isCagnotte?: boolean;
+  cashbackAmount?: number;
 }
 
 export default function StickyRedeemBar({
@@ -26,6 +28,8 @@ export default function StickyRedeemBar({
   secondaryColor,
   onRedeemTier1,
   onRedeemTier2,
+  isCagnotte,
+  cashbackAmount,
 }: StickyRedeemBarProps) {
   if (!visible) return null;
 
@@ -42,11 +46,15 @@ export default function StickyRedeemBar({
           onClick={onRedeemTier1}
           className="w-full h-12 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all"
           style={{
-            background: `linear-gradient(135deg, ${merchantColor}, ${secondaryColor || merchantColor})`
+            background: isCagnotte
+              ? 'linear-gradient(135deg, #10b981, #059669)'
+              : `linear-gradient(135deg, ${merchantColor}, ${secondaryColor || merchantColor})`
           }}
         >
-          <Gift className="w-4 h-4 mr-2" />
-          Profiter de ma récompense
+          {isCagnotte ? <Coins className="w-4 h-4 mr-2" /> : <Gift className="w-4 h-4 mr-2" />}
+          {isCagnotte && cashbackAmount != null
+            ? `Récupérer ${cashbackAmount.toFixed(2).replace('.', ',')} € sur ma cagnotte`
+            : 'Profiter de ma récompense'}
         </Button>
       )}
       {tier2Enabled && isTier2Ready && (
@@ -57,8 +65,8 @@ export default function StickyRedeemBar({
             background: 'linear-gradient(135deg, #8B5CF6, #7C3AED)'
           }}
         >
-          <Trophy className="w-4 h-4 mr-2" />
-          Profiter de ma récompense palier 2
+          {isCagnotte ? <Coins className="w-4 h-4 mr-2" /> : <Trophy className="w-4 h-4 mr-2" />}
+          {isCagnotte ? 'Récupérer ma cagnotte palier 2' : 'Profiter de ma récompense palier 2'}
         </Button>
       )}
     </motion.div>

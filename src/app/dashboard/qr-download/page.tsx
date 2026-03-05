@@ -179,15 +179,23 @@ export default function QRDownloadPage() {
 
   const hasPalier1 = !!merchant.reward_description;
 
-  const tier2Text = merchant.tier2_enabled && merchant.tier2_reward_description
-    ? ` Et ce n'est pas tout : après ${merchant.tier2_stamps_required} passages, recevez ${merchant.tier2_reward_description} !`
+  const isCagnotte = merchant.loyalty_mode === 'cagnotte';
+
+  const tier2Text = merchant.tier2_enabled && (merchant.tier2_reward_description || (isCagnotte && merchant.cagnotte_tier2_percent))
+    ? isCagnotte
+      ? ` Et ce n'est pas tout : après ${merchant.tier2_stamps_required} passages, profitez de ${merchant.cagnotte_tier2_percent}% sur votre cagnotte fidélité !`
+      : ` Et ce n'est pas tout : après ${merchant.tier2_stamps_required} passages, recevez ${merchant.tier2_reward_description} !`
     : '';
+
+  const captionText = isCagnotte
+    ? `Votre fidélité mérite d'être récompensée ! 🎁 Après ${merchant.stamps_required} passages chez ${merchant.shop_name}, profitez de ${merchant.cagnotte_percent}% sur votre cagnotte fidélité.${tier2Text} Demandez à scanner le QR code lors de votre prochain rendez-vous ! #fidélité #${merchant.shop_name.replace(/\s+/g, '')}`
+    : `Votre fidélité mérite d'être récompensée ! 🎁 Après ${merchant.stamps_required} passages chez ${merchant.shop_name}, recevez ${merchant.reward_description}.${tier2Text} Demandez à scanner le QR code lors de votre prochain rendez-vous ! #fidélité #${merchant.shop_name.replace(/\s+/g, '')}`;
 
   const captions = [
     {
       label: 'Simple et efficace',
       icon: '✨',
-      text: `Votre fidélité mérite d'être récompensée ! 🎁 Après ${merchant.stamps_required} passages chez ${merchant.shop_name}, recevez ${merchant.reward_description}.${tier2Text} Demandez à scanner le QR code lors de votre prochain rendez-vous ! #fidélité #${merchant.shop_name.replace(/\s+/g, '')}`,
+      text: captionText,
     },
   ];
 
@@ -535,6 +543,9 @@ export default function QRDownloadPage() {
                   tier2Enabled={merchant.tier2_enabled}
                   tier2StampsRequired={merchant.tier2_stamps_required}
                   tier2RewardDescription={merchant.tier2_reward_description}
+                  loyaltyMode={merchant.loyalty_mode}
+                  cagnottePercent={merchant.cagnotte_percent}
+                  cagnotteTier2Percent={merchant.cagnotte_tier2_percent}
                 />
               </div>
             </div>
@@ -684,6 +695,9 @@ export default function QRDownloadPage() {
             tier2Enabled={merchant.tier2_enabled}
             tier2StampsRequired={merchant.tier2_stamps_required}
             tier2RewardDescription={merchant.tier2_reward_description}
+            loyaltyMode={merchant.loyalty_mode}
+            cagnottePercent={merchant.cagnotte_percent}
+            cagnotteTier2Percent={merchant.cagnotte_tier2_percent}
           />
         </div>
       )}

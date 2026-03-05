@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   const { data: merchant, error } = await supabaseAdmin
     .from('merchants')
-    .select('id, shop_name, shop_type, logo_url, primary_color, secondary_color, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, product_name, review_link, referral_program_enabled, referral_reward_referrer, referral_reward_referred, booking_url, instagram_url, facebook_url, tiktok_url, country')
+    .select('id, shop_name, shop_type, logo_url, primary_color, secondary_color, stamps_required, reward_description, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, review_link, referral_program_enabled, referral_reward_referrer, referral_reward_referred, booking_url, instagram_url, facebook_url, tiktok_url, country, cagnotte_percent, cagnotte_tier2_percent')
     .eq('id', id)
     .maybeSingle();
 

@@ -433,7 +433,8 @@ export async function sendQRCodeEmail(
   logoUrl?: string,
   tier2Enabled?: boolean,
   tier2StampsRequired?: number | null,
-  tier2RewardDescription?: string | null
+  tier2RewardDescription?: string | null,
+  loyaltyMode?: 'visit' | 'cagnotte'
 ): Promise<SendEmailResult> {
   return sendEmail(to, `${shopName}, tout est prêt — lancez votre programme !`, QRCodeEmail, {
     shopName,
@@ -444,6 +445,7 @@ export async function sendQRCodeEmail(
     tier2Enabled,
     tier2StampsRequired,
     tier2RewardDescription,
+    loyaltyMode,
   }, {
     logLabel: 'QR code email',
   });
@@ -475,9 +477,10 @@ export async function sendFirstScanEmail(
 export async function sendFirstRewardEmail(
   to: string,
   shopName: string,
-  rewardDescription: string
+  rewardDescription: string,
+  isCagnotte?: boolean
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `1ère récompense débloquée !`, FirstRewardEmail, { shopName, rewardDescription }, {
+  return sendEmail(to, `1ère récompense débloquée !`, FirstRewardEmail, { shopName, rewardDescription, isCagnotte }, {
     logLabel: 'First reward email',
   });
 }
@@ -525,9 +528,10 @@ export async function sendFirstClientScriptEmail(
   shopName: string,
   shopType: string,
   rewardDescription: string,
-  stampsRequired: number
+  stampsRequired: number,
+  loyaltyMode?: 'visit' | 'cagnotte'
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `La phrase exacte à dire à vos client(e)s`, FirstClientScriptEmail, { shopName, shopType, rewardDescription, stampsRequired }, {
+  return sendEmail(to, `La phrase exacte à dire à vos client(e)s`, FirstClientScriptEmail, { shopName, shopType, rewardDescription, stampsRequired, loyaltyMode }, {
     logLabel: 'First client script email',
   });
 }

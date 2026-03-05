@@ -11,9 +11,10 @@ interface FirstRewardEmailProps {
   shopName: string;
   rewardDescription: string;
   referralCode?: string;
+  isCagnotte?: boolean;
 }
 
-export function FirstRewardEmail({ shopName, rewardDescription, referralCode }: FirstRewardEmailProps) {
+export function FirstRewardEmail({ shopName, rewardDescription, referralCode, isCagnotte }: FirstRewardEmailProps) {
   return (
     <BaseLayout preview={`${shopName}, un client a gagné sa récompense !`}>
       <Heading style={heading}>
@@ -36,8 +37,10 @@ export function FirstRewardEmail({ shopName, rewardDescription, referralCode }: 
       </Section>
 
       <Text style={paragraph}>
-        Ce client reviendra pour utiliser sa r&eacute;compense &mdash; et recommencera
-        &agrave; cumuler des points. C&apos;est le cercle vertueux de la fid&eacute;lit&eacute;.
+        {isCagnotte
+          ? <>Ce client reviendra pour profiter de son avantage &mdash; et continuera &agrave; cumuler. C&apos;est le cercle vertueux de la fid&eacute;lit&eacute;.</>
+          : <>Ce client reviendra pour utiliser sa r&eacute;compense &mdash; et recommencera &agrave; cumuler des points. C&apos;est le cercle vertueux de la fid&eacute;lit&eacute;.</>
+        }
       </Text>
 
       <Section style={statsBox}>

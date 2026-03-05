@@ -7,14 +7,14 @@ import type { VisitStatus, MerchantCountry } from '@/types';
 import { setPhoneCookie } from '@/lib/customer-auth';
 import logger from '@/lib/logger';
 
-// Use singleton admin client for server-side operations
 const supabaseAdmin = getSupabaseAdmin();
 
-const checkinSchema = z.object({
+const cagnotteCheckinSchema = z.object({
   scan_code: z.string().min(1),
   phone_number: z.string().min(1),
   first_name: z.string().nullable().optional(),
   last_name: z.string().nullable().optional(),
+  amount: z.number().min(0.01).max(99999),
 });
 
 // Rate limiting
@@ -40,7 +40,6 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// Hash IP for GDPR compliance - use dedicated salt (not secret keys)
 function getIPHashSalt(): string {
   return process.env.IP_HASH_SALT || 'qarte-default-ip-salt';
 }
@@ -48,7 +47,6 @@ function hashIP(ip: string): string {
   return createHash('sha256').update(ip + getIPHashSalt()).digest('hex');
 }
 
-// Get today's start timestamp in Paris timezone
 function getTodayStartParis(): string {
   const now = new Date();
   const parisTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
@@ -56,20 +54,7 @@ function getTodayStartParis(): string {
   return parisTime.toISOString();
 }
 
-// Quarantine threshold: 1 visit per day confirmed, 2nd+ pending
 const QUARANTINE_THRESHOLD = 1;
-
-// Double days: 2 stamps if today is a configured double-stamp day (Paris timezone)
-function getPointsEarned(m: { double_days_enabled: boolean; double_days_of_week: string }): number {
-  if (!m.double_days_enabled) return 1;
-  try {
-    const days = JSON.parse(m.double_days_of_week || '[]') as number[];
-    const parisDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
-    return days.includes(parisDate.getDay()) ? 2 : 1;
-  } catch {
-    return 1;
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -83,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const parsed = checkinSchema.safeParse(body);
+    const parsed = cagnotteCheckinSchema.safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -92,9 +77,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { scan_code, phone_number, first_name, last_name } = parsed.data;
+    const { scan_code, phone_number, first_name, last_name, amount } = parsed.data;
 
-    // ── Step 1: Fetch merchant (required for phone formatting + all subsequent queries)
+    // ── Step 1: Fetch merchant
     const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
       .select('*')
@@ -108,10 +93,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Cagnotte merchants must use /api/cagnotte/checkin
-    if (merchant.loyalty_mode === 'cagnotte') {
+    // Verify cagnotte mode
+    if (merchant.loyalty_mode !== 'cagnotte') {
       return NextResponse.json(
-        { error: 'Ce commerce utilise le mode cagnotte. Veuillez utiliser le bon endpoint.' },
+        { error: 'Ce commerce n\'utilise pas le mode cagnotte' },
         { status: 400 }
       );
     }
@@ -126,16 +111,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check trial status (no DB call, just logic)
+    // Check trial status
     const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
 
-    // Scans autorisés pendant la grâce, bloqués après
     if (trialStatus.isFullyExpired) {
       return NextResponse.json(
-        {
-          error: 'Ce commerce n\'accepte plus les passages pour le moment.',
-          trial_expired: true
-        },
+        { error: 'Ce commerce n\'accepte plus les passages pour le moment.', trial_expired: true },
         { status: 403 }
       );
     }
@@ -158,10 +139,7 @@ export async function POST(request: NextRequest) {
 
     if (bannedResult.data) {
       return NextResponse.json(
-        {
-          error: 'Ce numéro n\'est plus autorisé à utiliser ce programme de fidélité.',
-          banned: true
-        },
+        { error: 'Ce numéro n\'est plus autorisé à utiliser ce programme de fidélité.', banned: true },
         { status: 403 }
       );
     }
@@ -171,7 +149,6 @@ export async function POST(request: NextRequest) {
     if (customerResult.data) {
       customer = customerResult.data;
     } else {
-      // New customer for this merchant - need first_name
       if (!first_name) {
         return NextResponse.json(
           { error: 'Le prénom est requis pour créer un compte', needs_registration: true },
@@ -214,7 +191,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle(),
       supabaseAdmin
         .from('visits')
-        .select('id, status, points_earned, flagged_reason')
+        .select('id, status, points_earned, flagged_reason, amount_spent')
         .eq('customer_id', customer.id)
         .eq('merchant_id', merchant.id)
         .gte('created_at', threeMinAgo)
@@ -244,6 +221,7 @@ export async function POST(request: NextRequest) {
           customer_id: customer.id,
           merchant_id: merchant.id,
           current_stamps: 0,
+          current_amount: 0,
           stamps_target: merchant.stamps_required,
           referral_code: generateReferralCode(),
         })
@@ -273,25 +251,26 @@ export async function POST(request: NextRequest) {
         loyalty_card_id: loyaltyCard.id,
         message: 'Passage déjà enregistré',
         current_stamps: loyaltyCard.current_stamps,
-        pending_stamps: recentVisit.status === 'pending' ? (recentVisit.points_earned || 1) : 0,
+        current_amount: Number(loyaltyCard.current_amount),
+        amount_added: Number(recentVisit.amount_spent || 0),
         pending_count: 0,
         required_stamps: merchant.stamps_required,
         reward_unlocked: false,
         reward_tier: null,
         tier1_redeemed: false,
-        tier2_redeemed: false,
         tier2_enabled: tier2Enabled,
         tier2_stamps_required: merchant.tier2_stamps_required || 0,
-        tier2_reward_description: merchant.tier2_reward_description,
+        cagnotte_percent: Number(merchant.cagnotte_percent),
+        cagnotte_tier2_percent: merchant.cagnotte_tier2_percent ? Number(merchant.cagnotte_tier2_percent) : null,
         customer_name: customer.first_name,
         flagged_reason: recentVisit.flagged_reason,
-        points_earned: getPointsEarned(merchant),
       });
     }
 
     // ── Step 5: Qarte Shield — determine visit status
     const today = getTodayInParis();
-    const pointsEarned = getPointsEarned(merchant);
+    // No double days in cagnotte mode — always 1 point
+    const pointsEarned = 1;
     let visitStatus: VisitStatus = 'confirmed';
     let flaggedReason: string | null = null;
 
@@ -305,10 +284,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Hash IP for GDPR
     const ipHash = hashIP(ip);
 
-    // ── Step 6: Insert visit record
+    // ── Step 6: Insert visit with amount_spent
     const { data: visitData, error: visitError } = await supabaseAdmin
       .from('visits')
       .insert({
@@ -317,6 +295,7 @@ export async function POST(request: NextRequest) {
         customer_id: customer.id,
         ip_hash: ipHash,
         points_earned: pointsEarned,
+        amount_spent: amount,
         status: visitStatus,
         flagged_reason: flaggedReason,
       })
@@ -324,29 +303,31 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (visitError) {
-      logger.error('Visit insert error:', visitError);
+      logger.error('Cagnotte visit insert error:', visitError);
       return NextResponse.json(
         { error: 'Erreur lors de l\'enregistrement du passage' },
         { status: 500 }
       );
     }
 
-    // ── Step 7: Update stamps if confirmed
+    // ── Step 7: Update stamps + amount if confirmed
     let newStamps = loyaltyCard.current_stamps;
+    let newAmount = Number(loyaltyCard.current_amount);
 
     if (visitStatus === 'confirmed') {
       newStamps = loyaltyCard.current_stamps + pointsEarned;
+      newAmount = Number(loyaltyCard.current_amount) + amount;
 
       const { error: updateError } = await supabaseAdmin
         .from('loyalty_cards')
         .update({
           current_stamps: newStamps,
+          current_amount: newAmount,
           last_visit_date: today,
         })
         .eq('id', loyaltyCard.id);
 
       if (updateError) {
-        // Rollback visit
         await supabaseAdmin.from('visits').delete().eq('id', visitData.id);
         return NextResponse.json(
           { error: 'Erreur lors de la mise à jour de la carte' },
@@ -355,7 +336,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Step 8: Parallel — pending count + tier 2 redemption check
+    // ── Step 8: Parallel — pending count + tier checks
     const [pendingCountResult, lastTier2Result] = await Promise.all([
       supabaseAdmin
         .from('visits')
@@ -376,7 +357,7 @@ export async function POST(request: NextRequest) {
     const pendingCount = pendingCountResult.count;
     const lastTier2Redemption = lastTier2Result.data;
 
-    // ── Step 9: Tier 1 in cycle check (depends on tier 2 result)
+    // ── Step 9: Tier 1 in cycle check
     let tier1Query = supabaseAdmin
       .from('redemptions')
       .select('id')
@@ -390,33 +371,28 @@ export async function POST(request: NextRequest) {
     const { data: tier1InCycle } = await tier1Query.limit(1).maybeSingle();
     const tier1Redeemed = !!tier1InCycle;
 
-    // Tier 2 redeemed status: check if current stamps warrant showing tier 2
-    // If tier 2 was just redeemed (last redemption), we're in a new cycle
-    const tier2Redeemed = false; // Tier 2 is never "redeemed" in terms of blocking - it just resets the cycle
-
-    // Calculate tier reward unlocks
+    // Calculate tier reward unlocks (same logic as stamps but reward is %)
     const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
     const tier1Threshold = merchant.stamps_required;
     const tier2Threshold = merchant.tier2_stamps_required || 0;
 
-    // Tier 1: unlocked if stamps >= tier1 threshold AND not already redeemed
     const tier1RewardUnlocked = newStamps >= tier1Threshold && !tier1Redeemed;
-    // Tier 2: unlocked if tier2 enabled AND stamps >= tier2 threshold AND not already redeemed
-    const tier2RewardUnlocked = tier2Enabled && newStamps >= tier2Threshold && !tier2Redeemed;
+    const tier2RewardUnlocked = tier2Enabled && newStamps >= tier2Threshold;
 
-    // Determine which reward to show (prioritize tier 2 if both unlocked)
     let rewardUnlocked = false;
     let rewardTier: number | null = null;
+    let rewardValue: number | null = null;
 
-    if (tier2RewardUnlocked) {
+    if (tier2RewardUnlocked && merchant.cagnotte_tier2_percent) {
       rewardUnlocked = true;
       rewardTier = 2;
-    } else if (tier1RewardUnlocked) {
+      rewardValue = Math.round(newAmount * Number(merchant.cagnotte_tier2_percent)) / 100;
+    } else if (tier1RewardUnlocked && merchant.cagnotte_percent) {
       rewardUnlocked = true;
       rewardTier = 1;
+      rewardValue = Math.round(newAmount * Number(merchant.cagnotte_percent)) / 100;
     }
 
-    // Build response
     const response = {
       success: true,
       customer_id: customer.id,
@@ -426,29 +402,30 @@ export async function POST(request: NextRequest) {
       message: visitStatus === 'pending'
         ? 'Passage en cours de vérification'
         : rewardUnlocked
-          ? 'Félicitations ! Vous avez débloqué votre récompense !'
+          ? 'Félicitations ! Votre cagnotte fidélité est prête !'
           : 'Passage enregistré avec succès',
       current_stamps: newStamps,
-      pending_stamps: visitStatus === 'pending' ? pointsEarned : 0,
+      current_amount: newAmount,
+      amount_added: amount,
       pending_count: pendingCount || 0,
       required_stamps: merchant.stamps_required,
       reward_unlocked: rewardUnlocked && visitStatus === 'confirmed',
       reward_tier: rewardTier,
+      reward_value: rewardValue,
       tier1_redeemed: tier1Redeemed,
-      tier2_redeemed: tier2Redeemed,
       tier2_enabled: tier2Enabled,
       tier2_stamps_required: tier2Threshold,
-      tier2_reward_description: merchant.tier2_reward_description,
+      cagnotte_percent: Number(merchant.cagnotte_percent),
+      cagnotte_tier2_percent: merchant.cagnotte_tier2_percent ? Number(merchant.cagnotte_tier2_percent) : null,
       customer_name: customer.first_name,
       flagged_reason: flaggedReason,
-      points_earned: pointsEarned,
     };
 
     const jsonResponse = NextResponse.json(response);
     setPhoneCookie(jsonResponse, formattedPhone);
     return jsonResponse;
   } catch (error) {
-    logger.error('Checkin error:', error);
+    logger.error('Cagnotte checkin error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

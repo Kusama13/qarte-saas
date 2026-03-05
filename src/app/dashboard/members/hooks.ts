@@ -193,6 +193,8 @@ export function useAssignCustomer(
   const [newCustomerFirstName, setNewCustomerFirstName] = useState('');
   const [newCustomerLastName, setNewCustomerLastName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerStartAmount, setNewCustomerStartAmount] = useState('');
+  const [newCustomerStartStamps, setNewCustomerStartStamps] = useState('');
   const [creatingCustomer, setCreatingCustomer] = useState(false);
 
   const handleCreateCustomer = async () => {
@@ -219,14 +221,19 @@ export function useAssignCustomer(
       }
 
       // Create loyalty card for this customer
+      const initialStamps = newCustomerStartStamps ? parseInt(newCustomerStartStamps) : 0;
+      const cardInsert: Record<string, unknown> = {
+        customer_id: newCustomer.id,
+        merchant_id: merchant.id,
+        current_stamps: initialStamps > 0 ? initialStamps : 0,
+        stamps_target: merchant.stamps_required,
+      };
+      if (merchant.loyalty_mode === 'cagnotte' && newCustomerStartAmount && Number(newCustomerStartAmount) > 0) {
+        cardInsert.current_amount = Number(newCustomerStartAmount);
+      }
       const { data: newCard, error: cardError } = await supabase
         .from('loyalty_cards')
-        .insert({
-          customer_id: newCustomer.id,
-          merchant_id: merchant.id,
-          current_stamps: 0,
-          stamps_target: merchant.stamps_required,
-        })
+        .insert(cardInsert)
         .select(`
           id,
           customer_id,
@@ -241,6 +248,24 @@ export function useAssignCustomer(
         return;
       }
 
+      // Record creation in history
+      const isCagnotte = merchant.loyalty_mode === 'cagnotte';
+      const parts: string[] = ['Création du client'];
+      if (initialStamps > 0) parts.push(`${initialStamps} passage${initialStamps > 1 ? 's' : ''}`);
+      if (isCagnotte && newCustomerStartAmount && Number(newCustomerStartAmount) > 0) {
+        parts.push(`${Number(newCustomerStartAmount).toFixed(2).replace('.', ',')} € cumulés`);
+      }
+      await supabase
+        .from('point_adjustments')
+        .insert({
+          loyalty_card_id: newCard.id,
+          merchant_id: merchant.id,
+          customer_id: newCustomer.id,
+          adjustment: initialStamps,
+          reason: parts.join(' · '),
+          adjusted_by: merchant.user_id,
+        });
+
       // Transform and select the new customer
       const transformedCard = {
         ...newCard,
@@ -253,6 +278,8 @@ export function useAssignCustomer(
       setNewCustomerFirstName('');
       setNewCustomerLastName('');
       setNewCustomerPhone('');
+      setNewCustomerStartAmount('');
+      setNewCustomerStartStamps('');
     } catch (error) {
       console.error('Error:', error);
     }
@@ -327,6 +354,10 @@ export function useAssignCustomer(
     setNewCustomerLastName,
     newCustomerPhone,
     setNewCustomerPhone,
+    newCustomerStartAmount,
+    setNewCustomerStartAmount,
+    newCustomerStartStamps,
+    setNewCustomerStartStamps,
     creatingCustomer,
     handleCreateCustomer,
     handleAssignCustomer,

@@ -3,7 +3,7 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, Crown, UserPlus, Megaphone, CreditCard, Settings, ExternalLink } from 'lucide-react';
+import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, Crown, UserPlus, Megaphone, CreditCard, Settings, ExternalLink, Coins } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
@@ -110,6 +110,7 @@ const initialRecentCustomers: Array<{
   id: string;
   name: string;
   stamps: number;
+  currentAmount: number;
   lastVisit: string;
 }> = [];
 
@@ -132,6 +133,7 @@ export default function DashboardPage() {
     id: string;
     name: string;
     stamps: number;
+    currentAmount: number;
     lastVisit: string;
   }>>(() => {
     if (merchant?.id) {
@@ -147,6 +149,8 @@ export default function DashboardPage() {
     }
     return initialWeeklyData;
   });
+
+  const [cagnotteStats, setCagnotteStats] = useState({ totalCumul: 0, totalCashback: 0 });
 
   // If we have cached data, don't show loading state
   const [loading, setLoading] = useState(() => {
@@ -240,6 +244,7 @@ export default function DashboardPage() {
           recentCardsResult,
           thisWeekVisitsResult,
           lastWeekVisitsResult,
+          cagnotteCardsResult,
         ] = await Promise.all([
           // Stats queries
           supabase
@@ -267,6 +272,7 @@ export default function DashboardPage() {
             .select(`
               id,
               current_stamps,
+              current_amount,
               last_visit_date,
               customer:customers (
                 first_name,
@@ -289,7 +295,23 @@ export default function DashboardPage() {
             .eq('merchant_id', merchant.id)
             .gte('visited_at', fourteenDaysAgo.toISOString())
             .lt('visited_at', sevenDaysAgo.toISOString()),
+          // Cagnotte: fetch all current_amount values
+          merchant.loyalty_mode === 'cagnotte'
+            ? supabase
+                .from('loyalty_cards')
+                .select('current_amount')
+                .eq('merchant_id', merchant.id)
+            : Promise.resolve({ data: null }),
         ]);
+
+        // Compute cagnotte stats
+        if (merchant.loyalty_mode === 'cagnotte' && cagnotteCardsResult.data) {
+          const amounts = cagnotteCardsResult.data as { current_amount: number }[];
+          const totalCumul = amounts.reduce((sum, c) => sum + Number(c.current_amount || 0), 0);
+          const percent = Number(merchant.cagnotte_percent || 0);
+          const totalCashback = Math.round(totalCumul * percent) / 100;
+          setCagnotteStats({ totalCumul, totalCashback });
+        }
 
         // Set stats
         setStats({
@@ -302,12 +324,13 @@ export default function DashboardPage() {
         // Set recent customers
         if (recentCardsResult.data) {
           setRecentCustomers(
-            recentCardsResult.data.map((card: { id: string; customer: { first_name?: string; last_name?: string } | { first_name?: string; last_name?: string }[]; current_stamps: number; last_visit_date?: string }) => {
+            recentCardsResult.data.map((card: { id: string; customer: { first_name?: string; last_name?: string } | { first_name?: string; last_name?: string }[]; current_stamps: number; current_amount?: number; last_visit_date?: string }) => {
               const customer = Array.isArray(card.customer) ? card.customer[0] : card.customer;
               return {
                 id: card.id,
                 name: `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Client',
                 stamps: card.current_stamps,
+                currentAmount: Number(card.current_amount || 0),
                 lastVisit: card.last_visit_date || '',
               };
             })
@@ -329,12 +352,13 @@ export default function DashboardPage() {
           redemptionsThisMonth: redemptionsThisMonthResult.count || 0,
         };
         const newRecentCustomers = recentCardsResult.data
-          ? recentCardsResult.data.map((card: { id: string; customer: { first_name?: string; last_name?: string } | { first_name?: string; last_name?: string }[]; current_stamps: number; last_visit_date?: string }) => {
+          ? recentCardsResult.data.map((card: { id: string; customer: { first_name?: string; last_name?: string } | { first_name?: string; last_name?: string }[]; current_stamps: number; current_amount?: number; last_visit_date?: string }) => {
               const customer = Array.isArray(card.customer) ? card.customer[0] : card.customer;
               return {
                 id: card.id,
                 name: `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Client',
                 stamps: card.current_stamps,
+                currentAmount: Number(card.current_amount || 0),
                 lastVisit: card.last_visit_date || '',
               };
             })
@@ -649,6 +673,23 @@ export default function DashboardPage() {
         />
       </div>
 
+      {merchant?.loyalty_mode === 'cagnotte' && (
+        <div className="grid grid-cols-2 gap-3">
+          <StatsCard
+            title="Cumul clients"
+            value={`${cagnotteStats.totalCumul.toFixed(2).replace('.', ',')} €`}
+            icon={Coins}
+            color="#059669"
+          />
+          <StatsCard
+            title="Cagnotte en cours"
+            value={`${cagnotteStats.totalCashback.toFixed(2).replace('.', ',')} €`}
+            icon={Gift}
+            color="#D97706"
+          />
+        </div>
+      )}
+
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         {/* Weekly Comparison Card */}
         <div className="group relative overflow-hidden bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
@@ -779,6 +820,11 @@ export default function DashboardPage() {
                           />
                         </div>
                         <span className="text-xs font-bold text-indigo-600 w-8 text-right">{stamps}<span className="text-gray-300 font-normal">/{stampsReq1}</span></span>
+                        {merchant?.loyalty_mode === 'cagnotte' && customer.currentAmount > 0 && (
+                          <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                            {customer.currentAmount.toFixed(2).replace('.', ',')} €
+                          </span>
+                        )}
                       </div>
                     </Link>
                   );

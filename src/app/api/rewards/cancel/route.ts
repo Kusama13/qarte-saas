@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     // Get loyalty card with merchant info
     const { data: loyaltyCard } = await supabase
       .from('loyalty_cards')
-      .select('*, merchant:merchants(id, user_id, tier2_enabled, stamps_required, tier2_stamps_required)')
+      .select('*, merchant:merchants(id, user_id, tier2_enabled, stamps_required, tier2_stamps_required, loyalty_mode)')
       .eq('id', loyalty_card_id)
       .maybeSingle();
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     // Find the last redemption for this card
     const { data: lastRedemption } = await supabase
       .from('redemptions')
-      .select('id, tier, stamps_used, redeemed_at')
+      .select('id, tier, stamps_used, amount_accumulated, redeemed_at')
       .eq('loyalty_card_id', loyalty_card_id)
       .order('redeemed_at', { ascending: false })
       .limit(1)
@@ -75,13 +75,25 @@ export async function POST(request: NextRequest) {
     // Tier 2 or tier 1 without tier2: stamps WERE reset to 0, restore them
     const shouldRestoreStamps = lastRedemption.tier === 2 || !merchant.tier2_enabled;
 
-    if (shouldRestoreStamps) {
+    // Cagnotte mode: current_amount is ALWAYS reset to 0 on any redeem, so always restore it
+    const shouldRestoreAmount = merchant.loyalty_mode === 'cagnotte' && lastRedemption.amount_accumulated;
+
+    if (shouldRestoreStamps || shouldRestoreAmount) {
+      const updateData: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (shouldRestoreStamps) {
+        updateData.current_stamps = lastRedemption.stamps_used;
+      }
+
+      if (shouldRestoreAmount) {
+        updateData.current_amount = lastRedemption.amount_accumulated;
+      }
+
       const { error: updateError } = await supabase
         .from('loyalty_cards')
-        .update({
-          current_stamps: lastRedemption.stamps_used,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', loyalty_card_id);
 
       if (updateError) {
@@ -124,6 +136,9 @@ export async function POST(request: NextRequest) {
       message: `Récompense palier ${lastRedemption.tier} annulée`,
       tier: lastRedemption.tier,
       stamps_restored: shouldRestoreStamps ? lastRedemption.stamps_used : null,
+      amount_restored: (shouldRestoreStamps && merchant.loyalty_mode === 'cagnotte')
+        ? lastRedemption.amount_accumulated
+        : null,
     });
   } catch (error) {
     logger.error('Cancel reward error:', error);

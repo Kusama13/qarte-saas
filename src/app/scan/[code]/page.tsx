@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, useCallback } from 'react';
+import { useState, useEffect, useRef, use, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -30,7 +30,7 @@ import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { ScanSuccessStep } from '@/components/loyalty';
 import { WelcomeBanner, ScanRewardScreen, ScanAlreadyCheckedScreen, ScanPendingScreen } from '@/components/scan';
 
-type Step = 'phone' | 'register' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'pending' | 'banned' | 'referral-success';
+type Step = 'phone' | 'register' | 'amount' | 'amount-confirm' | 'checkin' | 'success' | 'already-checked' | 'error' | 'reward' | 'pending' | 'banned' | 'referral-success';
 
 interface ReferralInfo {
   valid: boolean;
@@ -76,6 +76,20 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   // How it works accordion
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
+  // Cagnotte mode
+  const [amountInput, setAmountInput] = useState('');
+  const [cagnotteData, setCagnotteData] = useState<{
+    currentAmount: number;
+    amountAdded: number;
+    rewardValue: number | null;
+    rewardPercent: number | null;
+  } | null>(null);
+
+  // Amount confirm countdown
+  const [confirmProgress, setConfirmProgress] = useState(0);
+  const confirmTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const confirmStartRef = useRef<number>(0);
+
   // Push notifications (via shared hook)
   const push = usePushNotifications({ customerId: customer?.id });
 
@@ -89,6 +103,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
   // Previous stamps for success animation (old → new)
   const [previousStamps, setPreviousStamps] = useState(0);
+
+  // Cleanup confirm timer on unmount
+  useEffect(() => {
+    return () => {
+      if (confirmTimerRef.current) clearInterval(confirmTimerRef.current);
+    };
+  }, []);
 
   // Fetch merchant + referral info in parallel
   useEffect(() => {
@@ -142,12 +163,14 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             setPhoneNumber(data.phone);
 
             if (data.existsForMerchant && data.customer) {
-              // Customer exists for this merchant → direct checkin
               setCustomer(data.customer);
-              await processCheckin(data.customer, data.phone);
-              localStorage.setItem(`qarte_checkin_${code}`, today);
+              if (merchant.loyalty_mode === 'cagnotte') {
+                setStep('amount');
+              } else {
+                await processCheckin(data.customer, data.phone);
+                localStorage.setItem(`qarte_checkin_${code}`, today);
+              }
             } else if (data.existsGlobally && data.customer) {
-              // Customer exists globally → create for this merchant
               const createResponse = await fetch('/api/customers/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -161,8 +184,12 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               const createData = await createResponse.json();
               if (createResponse.ok && createData.customer) {
                 setCustomer(createData.customer);
-                await processCheckin(createData.customer, data.phone);
-                localStorage.setItem(`qarte_checkin_${code}`, today);
+                if (merchant.loyalty_mode === 'cagnotte') {
+                  setStep('amount');
+                } else {
+                  await processCheckin(createData.customer, data.phone);
+                  localStorage.setItem(`qarte_checkin_${code}`, today);
+                }
               }
             }
           }
@@ -224,9 +251,12 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             setSubmitting(false);
             return;
           }
-          // Client existe pour ce commerçant → checkin direct (cookie set by register API)
           setCustomer(data.customer);
-          await processCheckin(data.customer);
+          if (merchant.loyalty_mode === 'cagnotte') {
+            setStep('amount');
+          } else {
+            await processCheckin(data.customer);
+          }
         } else if (data.existsGlobally) {
           // Client exists globally but not for this merchant
           if (refCode && referralInfo) {
@@ -235,7 +265,6 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             setLastName('');
             setStep('register');
           } else {
-            // Normal flow: create for this merchant
             const createResponse = await fetch('/api/customers/register', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -250,7 +279,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
             if (createResponse.ok && createData.customer) {
               setCustomer(createData.customer);
-              await processCheckin(createData.customer);
+              if (merchant.loyalty_mode === 'cagnotte') {
+                setStep('amount');
+              } else {
+                await processCheckin(createData.customer);
+              }
             } else {
               console.error('Create failed:', createData);
               setError(createData.error || 'Erreur lors de l\'inscription');
@@ -315,7 +348,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       }
 
       // Skip register API — checkin creates customer + card + visit in one call
-      await processCheckin({ first_name: firstName.trim(), last_name: lastName.trim() || null });
+      if (merchant?.loyalty_mode === 'cagnotte') {
+        setStep('amount');
+      } else {
+        await processCheckin({ first_name: firstName.trim(), last_name: lastName.trim() || null });
+      }
     } catch (err) {
       console.error(err);
       setError('Erreur lors de l\'inscription');
@@ -324,24 +361,89 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     }
   };
 
-  const processCheckin = async (customerInfo: { first_name: string; last_name?: string | null }, overridePhone?: string) => {
+  const handleAmountSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    const amount = parseFloat(amountInput.replace(',', '.'));
+    if (!amount || amount < 0.01 || amount > 99999) {
+      setError('Veuillez entrer un montant valide');
+      return;
+    }
+
+    // Go to confirmation step with 5-second countdown
+    setConfirmProgress(0);
+    setStep('amount-confirm');
+    confirmStartRef.current = Date.now();
+
+    confirmTimerRef.current = setInterval(() => {
+      const elapsed = Date.now() - confirmStartRef.current;
+      const progress = Math.min(elapsed / 5000, 1);
+      setConfirmProgress(progress);
+
+      if (progress >= 1) {
+        if (confirmTimerRef.current) clearInterval(confirmTimerRef.current);
+        confirmTimerRef.current = null;
+        submitAmount();
+      }
+    }, 50);
+  };
+
+  const submitAmount = async () => {
+    if (submitting) return;
+    if (confirmTimerRef.current) {
+      clearInterval(confirmTimerRef.current);
+      confirmTimerRef.current = null;
+    }
+
+    const amount = parseFloat(amountInput.replace(',', '.'));
+    setSubmitting(true);
+    try {
+      const customerInfo = customer
+        ? { first_name: customer.first_name, last_name: customer.last_name }
+        : { first_name: firstName.trim(), last_name: lastName.trim() || null };
+      await processCheckin(customerInfo, undefined, amount);
+    } catch (err) {
+      console.error(err);
+      setError('Erreur lors de l\'enregistrement');
+      setStep('amount');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const cancelAmountConfirm = () => {
+    if (confirmTimerRef.current) {
+      clearInterval(confirmTimerRef.current);
+      confirmTimerRef.current = null;
+    }
+    setStep('amount');
+  };
+
+  const processCheckin = async (customerInfo: { first_name: string; last_name?: string | null }, overridePhone?: string, amount?: number) => {
     if (!merchant) return;
 
     setStep('checkin');
 
     try {
       const formattedPhone = formatPhoneNumber(overridePhone || phoneNumber, merchant?.country || 'FR');
+      const isCagnotteMode = merchant.loyalty_mode === 'cagnotte';
+      const endpoint = isCagnotteMode ? '/api/cagnotte/checkin' : '/api/checkin';
 
-      // Use the /api/checkin endpoint with Qarte Shield
-      const response = await fetch('/api/checkin', {
+      const body: Record<string, unknown> = {
+        scan_code: code,
+        phone_number: formattedPhone,
+        first_name: customerInfo.first_name,
+        last_name: customerInfo.last_name,
+      };
+      if (isCagnotteMode && amount) {
+        body.amount = amount;
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          scan_code: code,
-          phone_number: formattedPhone,
-          first_name: customerInfo.first_name,
-          last_name: customerInfo.last_name,
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -370,12 +472,23 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         created_at: new Date().toISOString(),
       } as Customer);
 
+      // Store cagnotte-specific data
+      if (isCagnotteMode) {
+        setCagnotteData({
+          currentAmount: data.current_amount ?? 0,
+          amountAdded: data.amount_added ?? 0,
+          rewardValue: data.reward_value ?? null,
+          rewardPercent: data.cagnotte_percent ?? null,
+        });
+      }
+
       // Create updated card object
       const updatedCard = {
         id: data.loyalty_card_id,
         customer_id: data.customer_id,
         merchant_id: merchant.id,
         current_stamps: data.current_stamps,
+        current_amount: data.current_amount ?? 0,
         stamps_target: merchant.stamps_required,
         last_visit_date: getTodayInParis(),
         created_at: new Date().toISOString(),
@@ -418,10 +531,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
     try {
       const tierToRedeem = rewardTier || 1;
-      const formattedPhone = formatPhoneNumber(phoneNumber, merchant.country || 'FR');
+      const isCagnotteMode = merchant.loyalty_mode === 'cagnotte';
+      const endpoint = isCagnotteMode ? '/api/cagnotte/redeem-public' : '/api/redeem-public';
 
-      // Use server-side API instead of direct Supabase (auth + atomic + race-safe)
-      const response = await fetch('/api/redeem-public', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -439,10 +552,14 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         return;
       }
 
-      // Update local state from API response
-      if (data.stamps_reset) {
-        setLoyaltyCard({ ...loyaltyCard, current_stamps: 0 });
-      }
+      // Single functional update to avoid state race
+      setLoyaltyCard(prev => {
+        if (!prev) return prev;
+        const updates: Partial<typeof prev> = {};
+        if (data.stamps_reset) updates.current_stamps = 0;
+        if (data.stamps_reset || isCagnotteMode) updates.current_amount = 0;
+        return { ...prev, ...updates };
+      });
 
       if (tierToRedeem === 1) {
         setTier1Redeemed(true);
@@ -488,6 +605,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
   const primaryColor = merchant.primary_color;
   const secondaryColor = merchant.secondary_color;
+  const isCagnotte = merchant.loyalty_mode === 'cagnotte';
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(135deg, white, ${primaryColor}12)` }}>
@@ -564,15 +682,21 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                         {[
                           {
                             icon: <Star className="w-4 h-4" />,
-                            title: "Cumulez vos points",
-                            description: "Chaque passage validé vous rapproche de votre récompense."
+                            title: isCagnotte ? "Cumulez vos dépenses" : "Cumulez vos points",
+                            description: isCagnotte
+                              ? "Chaque passage enregistre vos dépenses sur votre cagnotte fidélité."
+                              : "Chaque passage validé vous rapproche de votre récompense."
                           },
                           {
                             icon: <Gift className="w-4 h-4" />,
-                            title: "Recevez vos cadeaux",
-                            description: merchant.tier2_enabled && merchant.tier2_stamps_required
-                              ? `Palier 1 (${merchant.stamps_required} pts) : ${merchant.reward_description} • Palier 2 (${merchant.tier2_stamps_required} pts) : ${merchant.tier2_reward_description}`
-                              : `Après ${merchant.stamps_required} passages, obtenez : ${merchant.reward_description}`
+                            title: isCagnotte ? "Profitez de votre cagnotte" : "Recevez vos cadeaux",
+                            description: isCagnotte
+                              ? merchant.tier2_enabled && merchant.tier2_stamps_required
+                                ? `Palier 1 (${merchant.stamps_required} passages) : ${merchant.cagnotte_percent}% sur votre cagnotte fidélité • Palier 2 (${merchant.tier2_stamps_required} passages) : le taux passe à ${merchant.cagnotte_tier2_percent}%`
+                                : `Après ${merchant.stamps_required} passages : ${merchant.cagnotte_percent}% sur votre cagnotte fidélité`
+                              : merchant.tier2_enabled && merchant.tier2_stamps_required
+                                ? `Palier 1 (${merchant.stamps_required} pts) : ${merchant.reward_description} • Palier 2 (${merchant.tier2_stamps_required} pts) : ${merchant.tier2_reward_description}`
+                                : `Après ${merchant.stamps_required} passages, obtenez : ${merchant.reward_description}`
                           }
                         ].map((step, idx) => (
                           <motion.div
@@ -749,6 +873,120 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           </div>
         )}
 
+        {step === 'amount' && (
+          <div className="animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 overflow-hidden">
+              <div className="text-center mb-5">
+                <div
+                  className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3"
+                  style={{ backgroundColor: `${primaryColor}12` }}
+                >
+                  <span className="text-2xl">💰</span>
+                </div>
+                <h2 className="text-lg font-bold text-gray-900">Montant de la prestation</h2>
+                <p className="text-sm text-gray-500 mt-1">Saisissez le montant de votre prestation</p>
+              </div>
+              <form onSubmit={handleAmountSubmit} className="space-y-4">
+                {error && (
+                  <div className="p-3 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl">
+                    {error}
+                  </div>
+                )}
+                <div className="relative">
+                  <Input
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    value={amountInput}
+                    onChange={(e) => setAmountInput(e.target.value)}
+                    required
+                    autoFocus
+                    className="h-16 text-3xl font-bold text-center pr-14 bg-gray-50/50 border-gray-200 rounded-2xl"
+                  />
+                  <span className="absolute right-5 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-300">€</span>
+                </div>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full h-12 text-base font-bold rounded-xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
+                >
+                  {submitting ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      Valider mon passage
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {step === 'amount-confirm' && (() => {
+          const parsedConfirmAmount = parseFloat(amountInput.replace(',', '.')) || 0;
+          const remainingSeconds = Math.max(1, Math.ceil(5 - confirmProgress * 5));
+          return (
+            <div className="animate-fade-in">
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 text-center">
+                <div
+                  className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3"
+                  style={{ backgroundColor: `${primaryColor}12` }}
+                >
+                  <CheckCircle2 className="w-7 h-7" style={{ color: primaryColor }} />
+                </div>
+                {customer && (
+                  <p className="text-sm font-semibold text-gray-700 mb-1">
+                    {customer.first_name} {customer.last_name}
+                  </p>
+                )}
+                <p className="text-xs text-gray-400 mb-1">Montant a enregistrer</p>
+                <p className="text-4xl font-black text-gray-900 mb-4">
+                  {parsedConfirmAmount.toFixed(2).replace('.', ',')} €
+                </p>
+
+                {/* Progress bar countdown */}
+                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-3">
+                  <div
+                    className="h-full rounded-full transition-none"
+                    style={{
+                      width: `${confirmProgress * 100}%`,
+                      background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mb-5">
+                  Validation automatique dans {remainingSeconds}s
+                </p>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={cancelAmountConfirm}
+                    disabled={submitting}
+                    className="flex-1 h-11 text-sm font-bold rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                  >
+                    Modifier
+                  </button>
+                  <button
+                    onClick={submitAmount}
+                    disabled={submitting}
+                    className="flex-1 h-11 text-sm font-bold rounded-xl text-white shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
+                    style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
+                  >
+                    {submitting ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      'Confirmer'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {step === 'checkin' && (
           <div className="flex flex-col items-center justify-center py-16 animate-fade-in">
             <Loader2
@@ -768,6 +1006,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             previousStamps={previousStamps}
             tier1Redeemed={tier1Redeemed}
             tier2Redeemed={tier2Redeemed}
+            cagnotteData={isCagnotte ? cagnotteData : undefined}
           />
         )}
 
@@ -780,6 +1019,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             primaryColor={primaryColor}
             onRedeem={handleRedeemReward}
             onSkip={() => router.replace(`/customer/card/${merchant?.id}?scan_success=1`)}
+            cagnotteData={isCagnotte ? cagnotteData : undefined}
           />
         )}
 

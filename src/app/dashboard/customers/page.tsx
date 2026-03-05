@@ -35,6 +35,8 @@ function getCardBadge(
   isTier2Ready: boolean,
   tier2Enabled: boolean,
   tier1Redeemed: boolean,
+  isCagnotte?: boolean,
+  cashbackValue?: number,
 ): { text: string; color: string } | null {
   if (tier2Enabled) {
     if (isTier2Ready) return { text: 'Palier 2 prêt', color: 'text-violet-700 bg-violet-100' };
@@ -43,6 +45,9 @@ function getCardBadge(
       return { text: 'Palier 1 prêt', color: 'text-emerald-700 bg-emerald-100' };
     }
   } else if (isTier1Ready) {
+    if (isCagnotte && cashbackValue !== undefined) {
+      return { text: `Cagnotte prête : ${cashbackValue.toFixed(2).replace('.', ',')} €`, color: 'text-green-700 bg-green-100' };
+    }
     return { text: 'Récompense prête', color: 'text-green-700 bg-green-100' };
   }
   return null;
@@ -70,6 +75,8 @@ export default function CustomersPage() {
   const [newPhone, setNewPhone] = useState('');
   const [newBirthDay, setNewBirthDay] = useState('');
   const [newBirthMonth, setNewBirthMonth] = useState('');
+  const [newStartAmount, setNewStartAmount] = useState('');
+  const [newStartStamps, setNewStartStamps] = useState('');
   const [creatingCustomer, setCreatingCustomer] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -173,6 +180,8 @@ export default function CustomersPage() {
           phone_number: formatPhoneNumber(newPhone.trim(), merchant.country || 'FR'),
           birth_month: newBirthMonth ? parseInt(newBirthMonth) : null,
           birth_day: newBirthDay ? parseInt(newBirthDay) : null,
+          ...(merchant.loyalty_mode === 'cagnotte' && newStartAmount ? { initial_amount: parseFloat(newStartAmount) } : {}),
+          ...(newStartStamps ? { initial_stamps: parseInt(newStartStamps) } : {}),
         }),
       });
 
@@ -191,6 +200,8 @@ export default function CustomersPage() {
       setNewPhone('');
       setNewBirthDay('');
       setNewBirthMonth('');
+      setNewStartAmount('');
+      setNewStartStamps('');
       setCreateError(null);
       await fetchData();
     } catch (error) {
@@ -400,11 +411,13 @@ export default function CustomersPage() {
             {/* Mobile card list */}
             <div className="md:hidden space-y-2">
               {filteredCustomers.slice(0, displayCount).map((card) => {
+                const isCagnotte = merchant?.loyalty_mode === 'cagnotte';
                 const isTier1Ready = card.current_stamps >= (merchant?.stamps_required || 10);
                 const isTier2Ready = merchant?.tier2_enabled && merchant?.tier2_stamps_required && card.current_stamps >= merchant.tier2_stamps_required;
                 const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
                 const isPushSubscriber = subscriberIds.includes(card.customer_id);
-                const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id));
+                const cashbackValue = isCagnotte && merchant?.cagnotte_percent ? (card.current_amount * merchant.cagnotte_percent / 100) : 0;
+                const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id), isCagnotte, cashbackValue);
 
                 return (
                   <button
@@ -437,6 +450,11 @@ export default function CustomersPage() {
                       {badge && (
                         <span className={`inline-flex items-center px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded ${badge.color}`}>
                           {badge.text}
+                        </span>
+                      )}
+                      {isCagnotte && !badge && (
+                        <span className="text-[10px] font-medium text-gray-500">
+                          {card.current_amount.toFixed(2).replace('.', ',')} € cumulés
                         </span>
                       )}
                     </div>
@@ -533,12 +551,14 @@ export default function CustomersPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {filteredCustomers.slice(0, displayCount).map((card) => {
+                    const isCagnotte = merchant?.loyalty_mode === 'cagnotte';
                     const isTier1Ready = card.current_stamps >= (merchant?.stamps_required || 10);
                     const isTier2Ready = merchant?.tier2_enabled && merchant?.tier2_stamps_required && card.current_stamps >= merchant.tier2_stamps_required;
                     const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
                     const isPushSubscriber = subscriberIds.includes(card.customer_id);
+                    const cashbackValue = isCagnotte && merchant?.cagnotte_percent ? (card.current_amount * merchant.cagnotte_percent / 100) : 0;
 
-                    const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id));
+                    const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id), isCagnotte, cashbackValue);
 
                     return (
                       <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200 cursor-pointer" onClick={() => handleOpenAdjustModal(card)}>
@@ -620,16 +640,23 @@ export default function CustomersPage() {
                             </div>
                           ) : (
                             /* Single Tier Progress */
-                            <div className="flex items-center gap-3">
-                              <div className="flex-1 w-28 h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                                <div
-                                  className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500 ease-out"
-                                  style={{ width: `${progress}%` }}
-                                />
+                            <div>
+                              <div className="flex items-center gap-3">
+                                <div className="flex-1 w-28 h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                                  <div
+                                    className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500 ease-out"
+                                    style={{ width: `${progress}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs font-bold text-gray-700 tabular-nums">
+                                  {card.current_stamps}/{merchant?.stamps_required}
+                                </span>
                               </div>
-                              <span className="text-xs font-bold text-gray-700 tabular-nums">
-                                {card.current_stamps}/{merchant?.stamps_required}
-                              </span>
+                              {isCagnotte && (
+                                <p className="text-[10px] font-medium text-gray-500 mt-1">
+                                  {card.current_amount.toFixed(2).replace('.', ',')} € cumulés
+                                </p>
+                              )}
                             </div>
                           )}
                         </td>
@@ -708,6 +735,10 @@ export default function CustomersPage() {
           birthMonth={selectedCustomer.customer?.birth_month}
           birthDay={selectedCustomer.customer?.birth_day}
           tier1Redeemed={tier1RedeemedCards.has(selectedCustomer.id)}
+          isCagnotte={merchant.loyalty_mode === 'cagnotte'}
+          currentAmount={Number(selectedCustomer.current_amount || 0)}
+          cagnottePercent={Number(merchant.cagnotte_percent || 0)}
+          cagnotteTier2Percent={merchant.cagnotte_tier2_percent ? Number(merchant.cagnotte_tier2_percent) : null}
         />
       )}
 
@@ -719,6 +750,8 @@ export default function CustomersPage() {
           setNewFirstName('');
           setNewLastName('');
           setNewPhone('');
+          setNewStartAmount('');
+          setNewStartStamps('');
           setCreateError(null);
         }}
         title="Nouveau client"
@@ -777,6 +810,26 @@ export default function CustomersPage() {
               </select>
             </div>
           </div>
+          <Input
+            label="Tampons de départ (optionnel)"
+            type="number"
+            min="0"
+            step="1"
+            placeholder="0"
+            value={newStartStamps}
+            onChange={(e) => setNewStartStamps(e.target.value)}
+          />
+          {merchant?.loyalty_mode === 'cagnotte' && (
+            <Input
+              label="Montant déjà dépensé (optionnel)"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              value={newStartAmount}
+              onChange={(e) => setNewStartAmount(e.target.value)}
+            />
+          )}
           <Button
             onClick={handleCreateCustomer}
             disabled={!newFirstName.trim() || !newPhone.trim() || creatingCustomer}

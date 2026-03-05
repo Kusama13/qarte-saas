@@ -8,6 +8,7 @@ const adjustPointsSchema = z.object({
   merchant_id: z.string().uuid(),
   loyalty_card_id: z.string().uuid(),
   adjustment: z.number().int(),
+  amount_adjustment: z.number().optional(),
   reason: z.string().max(100).optional(),
 });
 
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { customer_id, merchant_id, loyalty_card_id, adjustment, reason } = parsed.data;
+    const { customer_id, merchant_id, loyalty_card_id, adjustment, amount_adjustment, reason } = parsed.data;
 
     const { data: merchant } = await supabase
       .from('merchants')
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     const { data: loyaltyCard, error: cardError } = await supabase
       .from('loyalty_cards')
-      .select('current_stamps')
+      .select('current_stamps, current_amount')
       .eq('id', loyalty_card_id)
       .eq('customer_id', customer_id)
       .eq('merchant_id', merchant_id)
@@ -80,12 +81,23 @@ export async function POST(request: NextRequest) {
       newStamps = effectiveMax;
     }
 
+    // Build update payload
+    const updatePayload: Record<string, unknown> = {
+      current_stamps: newStamps,
+      updated_at: new Date().toISOString(),
+    };
+
+    // Handle amount adjustment for cagnotte mode
+    const currentAmount = Number(loyaltyCard.current_amount ?? 0);
+    let newAmount = currentAmount;
+    if (amount_adjustment !== undefined) {
+      newAmount = Math.max(0, currentAmount + amount_adjustment);
+      updatePayload.current_amount = newAmount;
+    }
+
     const { error: updateError } = await supabase
       .from('loyalty_cards')
-      .update({
-        current_stamps: newStamps,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq('id', loyalty_card_id);
 
     if (updateError) {
@@ -116,6 +128,11 @@ export async function POST(request: NextRequest) {
       previous_stamps: currentStamps,
       new_stamps: newStamps,
       adjustment,
+      ...(amount_adjustment !== undefined && {
+        previous_amount: currentAmount,
+        new_amount: newAmount,
+        amount_adjustment,
+      }),
     });
   } catch (error) {
     logger.error('Adjust points error:', error);

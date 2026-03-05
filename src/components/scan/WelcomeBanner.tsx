@@ -10,6 +10,7 @@ interface WelcomeBannerProps {
 }
 
 export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }: WelcomeBannerProps) {
+  const isCagnotte = merchant.loyalty_mode === 'cagnotte';
   return (
     <div className="relative mb-4 overflow-hidden rounded-3xl shadow-xl border border-gray-100">
       {/* Logo/Image Section */}
@@ -35,7 +36,7 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
             <img
               src={merchant.logo_url}
               alt={merchant.shop_name}
-              className="relative w-28 h-28 rounded-2xl object-cover shadow-2xl border-3 border-white/90"
+              className="relative w-28 h-28 rounded-2xl object-cover shadow-2xl border-[3px] border-white/90"
             />
           </div>
         ) : (
@@ -45,7 +46,7 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
               style={{ backgroundColor: primaryColor }}
             />
             <div
-              className="relative w-28 h-28 rounded-full flex items-center justify-center shadow-2xl border-3 border-white/90"
+              className="relative w-28 h-28 rounded-full flex items-center justify-center shadow-2xl border-[3px] border-white/90"
               style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
             >
               <span className="text-5xl font-black text-white drop-shadow-lg">{merchant.shop_name[0]}</span>
@@ -87,26 +88,28 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
                 </span>
               </div>
               <p className="text-base font-extrabold text-gray-900 text-center">
-                {merchant.reward_description}
+                {isCagnotte ? `${merchant.cagnotte_percent}% sur votre cagnotte fidélité` : merchant.reward_description}
               </p>
               <p className="text-xs font-bold text-center mt-1" style={{ color: primaryColor }}>
-                Après {merchant.stamps_required} passage{merchant.stamps_required > 1 ? 's' : ''}
+                {isCagnotte
+                  ? `Après ${merchant.stamps_required} passage${merchant.stamps_required > 1 ? 's' : ''} · sur vos dépenses`
+                  : `Après ${merchant.stamps_required} passage${merchant.stamps_required > 1 ? 's' : ''}`}
               </p>
             </div>
 
-            {merchant.tier2_enabled && merchant.tier2_stamps_required && merchant.tier2_reward_description && (
+            {merchant.tier2_enabled && merchant.tier2_stamps_required && (merchant.tier2_reward_description || (isCagnotte && merchant.cagnotte_tier2_percent)) && (
               <div className="rounded-2xl p-3.5 border-2 border-amber-200 bg-amber-50/60 shadow-md">
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Trophy className="w-4 h-4 text-amber-500" />
                   <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
-                    Palier 2 — Récompense
+                    {isCagnotte ? 'Palier 2 — Taux amélioré' : 'Palier 2 — Récompense Premium'}
                   </span>
                 </div>
                 <p className="text-base font-extrabold text-gray-900 text-center">
-                  {merchant.tier2_reward_description}
+                  {isCagnotte ? `${merchant.cagnotte_tier2_percent}% sur votre cagnotte fidélité` : merchant.tier2_reward_description}
                 </p>
                 <p className="text-xs font-bold text-center mt-1 text-amber-600">
-                  Après {merchant.tier2_stamps_required} passage{merchant.tier2_stamps_required > 1 ? 's' : ''}
+                  Après {merchant.tier2_stamps_required} passage{merchant.tier2_stamps_required! > 1 ? 's' : ''}
                 </p>
               </div>
             )}

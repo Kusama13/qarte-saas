@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     // Get merchant for this user
     const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
-      .select('id, stamps_required, country')
+      .select('id, stamps_required, country, loyalty_mode')
       .eq('user_id', user.id)
       .single();
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { first_name, last_name, phone_number, birth_month, birth_day } = await request.json();
+    const { first_name, last_name, phone_number, birth_month, birth_day, initial_amount, initial_stamps } = await request.json();
 
     if (!first_name?.trim() || !phone_number?.trim()) {
       return NextResponse.json(
@@ -100,14 +100,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Create loyalty card for this customer
+    const stampCount = initial_stamps && Number(initial_stamps) > 0 ? Number(initial_stamps) : 0;
+    const cardInsert: Record<string, unknown> = {
+      customer_id: customerId,
+      merchant_id: merchant.id,
+      current_stamps: stampCount,
+      stamps_target: merchant.stamps_required,
+    };
+    if (merchant.loyalty_mode === 'cagnotte' && initial_amount && Number(initial_amount) > 0) {
+      cardInsert.current_amount = Number(initial_amount);
+    }
     const { data: card, error: cardError } = await supabaseAdmin
       .from('loyalty_cards')
-      .insert({
-        customer_id: customerId,
-        merchant_id: merchant.id,
-        current_stamps: 0,
-        stamps_target: merchant.stamps_required,
-      })
+      .insert(cardInsert)
       .select()
       .single();
 
@@ -118,6 +123,26 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Record creation in history (point_adjustment with reason)
+    const isCagnotte = merchant.loyalty_mode === 'cagnotte';
+    const parts: string[] = ['Création du client'];
+    if (stampCount > 0) parts.push(`${stampCount} passage${stampCount > 1 ? 's' : ''}`);
+    if (isCagnotte && initial_amount && Number(initial_amount) > 0) {
+      parts.push(`${Number(initial_amount).toFixed(2).replace('.', ',')} € cumulés`);
+    }
+    const reason = parts.join(' · ');
+
+    await supabaseAdmin
+      .from('point_adjustments')
+      .insert({
+        loyalty_card_id: card.id,
+        merchant_id: merchant.id,
+        customer_id: customerId,
+        adjustment: stampCount,
+        reason,
+        adjusted_by: user.id,
+      });
 
     return NextResponse.json({
       success: true,

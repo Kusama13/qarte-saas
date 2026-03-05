@@ -26,6 +26,7 @@ interface ProgramDetailViewProps {
   programMembers: MemberCard[];
   loadingMembers: boolean;
   onBack: () => void;
+  isCagnotte?: boolean;
   // Assign modal
   assign: {
     assignModalOpen: boolean;
@@ -47,6 +48,10 @@ interface ProgramDetailViewProps {
     setNewCustomerLastName: (v: string) => void;
     newCustomerPhone: string;
     setNewCustomerPhone: (v: string) => void;
+    newCustomerStartAmount: string;
+    setNewCustomerStartAmount: (v: string) => void;
+    newCustomerStartStamps: string;
+    setNewCustomerStartStamps: (v: string) => void;
     creatingCustomer: boolean;
     handleCreateCustomer: () => void;
     filteredCustomers: CustomerWithCard[];
@@ -81,6 +86,7 @@ export default function ProgramDetailView({
   programMembers,
   loadingMembers,
   onBack,
+  isCagnotte,
   assign,
   actions,
 }: ProgramDetailViewProps) {
@@ -127,7 +133,7 @@ export default function ProgramDetailView({
               className="bg-amber-500 hover:bg-amber-600 text-white flex-1 sm:flex-none text-sm sm:text-base"
             >
               <UserPlus className="w-4 h-4 mr-1 sm:mr-2" />
-              <span className="hidden xs:inline">Ajouter un</span> membre
+              <span className="hidden sm:inline">Ajouter un</span> membre
             </Button>
             <Button
               variant="outline"
@@ -211,6 +217,11 @@ export default function ProgramDetailView({
         setNewCustomerLastName={assign.setNewCustomerLastName}
         newCustomerPhone={assign.newCustomerPhone}
         setNewCustomerPhone={assign.setNewCustomerPhone}
+        newCustomerStartAmount={assign.newCustomerStartAmount}
+        setNewCustomerStartAmount={assign.setNewCustomerStartAmount}
+        newCustomerStartStamps={assign.newCustomerStartStamps}
+        setNewCustomerStartStamps={assign.setNewCustomerStartStamps}
+        isCagnotte={isCagnotte}
         creatingCustomer={assign.creatingCustomer}
         onCreateCustomer={assign.handleCreateCustomer}
       />

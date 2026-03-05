@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Gift, Trophy } from 'lucide-react';
+import { Gift, Trophy, Coins } from 'lucide-react';
 import { Button, Input, Textarea } from '@/components/ui';
+import { formatEUR, calculateCashback } from '@/lib/utils';
 
 interface TierProgressProps {
   icon: React.ReactNode;
@@ -68,6 +69,11 @@ export interface CustomerAdjustTabProps {
   loyaltyCardId: string;
   onSuccess: (message: string) => void;
   onClose: () => void;
+  isCagnotte?: boolean;
+  currentAmount?: number;
+  cagnottePercent?: number;
+  cagnotteTier2Percent?: number | null;
+  tier1Redeemed?: boolean;
 }
 
 export function CustomerAdjustTab({
@@ -82,8 +88,14 @@ export function CustomerAdjustTab({
   loyaltyCardId,
   onSuccess,
   onClose,
+  isCagnotte = false,
+  currentAmount = 0,
+  cagnottePercent = 0,
+  cagnotteTier2Percent,
+  tier1Redeemed = false,
 }: CustomerAdjustTabProps) {
   const [adjustment, setAdjustment] = useState<number>(0);
+  const [amountAdjustment, setAmountAdjustment] = useState('');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -92,8 +104,11 @@ export function CustomerAdjustTab({
   const maxAdjustment = effectiveMax - currentStamps;
   const newStamps = Math.min(Math.max(0, currentStamps + adjustment), effectiveMax);
 
+  const parsedAmountAdj = parseFloat(amountAdjustment.replace(',', '.')) || 0;
+  const newAmount = Math.max(0, currentAmount + parsedAmountAdj);
+
   const handleSubmit = async () => {
-    if (adjustment === 0) {
+    if (adjustment === 0 && (!isCagnotte || parsedAmountAdj === 0)) {
       setError('Veuillez saisir un ajustement');
       return;
     }
@@ -110,6 +125,7 @@ export function CustomerAdjustTab({
           merchant_id: merchantId,
           loyalty_card_id: loyaltyCardId,
           adjustment,
+          amount_adjustment: isCagnotte ? parsedAmountAdj : undefined,
           reason: reason.trim() || undefined,
         }),
       });
@@ -120,7 +136,7 @@ export function CustomerAdjustTab({
         throw new Error(data.error || 'Erreur lors de l\'ajustement');
       }
 
-      onSuccess('Points ajustes !');
+      onSuccess(isCagnotte ? 'Ajustement effectué !' : 'Points ajustés !');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'ajustement');
     } finally {
@@ -130,13 +146,49 @@ export function CustomerAdjustTab({
 
   return (
     <div className="space-y-3.5">
+      {/* Cagnotte display */}
+      {isCagnotte && (() => {
+        const tier1Reached = currentStamps >= stampsRequired;
+        const tier2Reached = tier2Enabled && tier2StampsRequired && currentStamps >= tier2StampsRequired;
+        // Palier 2 percent only applies AFTER tier1 has been redeemed (current_amount resets to 0 at T1 redeem)
+        const activePercent = (tier2Reached || (tier1Redeemed && tier2Enabled)) ? (cagnotteTier2Percent || cagnottePercent) : cagnottePercent;
+        const activeValue = formatEUR(calculateCashback(currentAmount, activePercent));
+        return (
+          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <Coins className="w-4 h-4 text-emerald-600" />
+                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Cagnotte</span>
+              </div>
+              {tier1Reached && (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${tier2Reached ? 'text-violet-600 bg-violet-100' : 'text-emerald-600 bg-emerald-100'}`}>
+                  {tier2Reached ? 'Palier 2 atteint' : 'Palier 1 atteint'}
+                </span>
+              )}
+            </div>
+            <p className="text-2xl font-black text-emerald-800">
+              {activeValue} €
+              <span className="text-sm font-bold text-emerald-600 ml-1">({activePercent}%)</span>
+            </p>
+            {tier2Enabled && cagnotteTier2Percent && !tier2Reached && tier1Redeemed && (
+              <p className="text-xs text-violet-600 mt-0.5">
+                Palier 2 ({cagnotteTier2Percent}%) : {formatEUR(calculateCashback(currentAmount, cagnotteTier2Percent))} €
+              </p>
+            )}
+            <p className="text-xs text-emerald-600 mt-1">
+              Total dépensé : {formatEUR(currentAmount)} €
+            </p>
+          </div>
+        );
+      })()}
+
       {/* Progress display */}
       {tier2Enabled && tier2StampsRequired ? (
         <div className="space-y-2">
           <TierProgress
             icon={<Gift className={`w-4 h-4 ${currentStamps >= stampsRequired ? 'text-emerald-500' : 'text-indigo-500'}`} />}
             label="Palier 1"
-            description={rewardDescription || 'Recompense'}
+            description={rewardDescription || 'Récompense'}
             current={Math.min(currentStamps, stampsRequired)}
             required={stampsRequired}
             reached={currentStamps >= stampsRequired}
@@ -148,7 +200,7 @@ export function CustomerAdjustTab({
           <TierProgress
             icon={<Trophy className={`w-4 h-4 ${currentStamps >= tier2StampsRequired ? 'text-violet-500' : 'text-gray-400'}`} />}
             label="Palier 2"
-            description={tier2RewardDescription || 'Recompense palier 2'}
+            description={tier2RewardDescription || 'Récompense palier 2'}
             current={Math.max(0, Math.min(currentStamps - stampsRequired, tier2StampsRequired - stampsRequired))}
             required={tier2StampsRequired - stampsRequired}
             reached={currentStamps >= tier2StampsRequired}
@@ -160,7 +212,7 @@ export function CustomerAdjustTab({
           {adjustment !== 0 && (
             <div className="p-2.5 rounded-xl bg-indigo-50 border border-indigo-100">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-indigo-700 font-medium">Apres ajustement</span>
+                <span className="text-indigo-700 font-medium">Après ajustement</span>
                 <span className="font-bold text-sm">
                   <span className="text-gray-900">
                     {newStamps < stampsRequired
@@ -187,7 +239,7 @@ export function CustomerAdjustTab({
           </div>
           {adjustment !== 0 && (
             <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t border-gray-200">
-              <span className="text-gray-600">Apres ajustement</span>
+              <span className="text-gray-600">Après ajustement</span>
               <span className={`font-semibold ${adjustment > 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {newStamps} / {stampsRequired} passages
               </span>
@@ -204,7 +256,7 @@ export function CustomerAdjustTab({
 
       <div>
         <label className="block mb-1.5 text-sm font-medium text-gray-700">
-          Nombre de points
+          Nombre de passages
         </label>
         <Input
           type="number"
@@ -219,9 +271,33 @@ export function CustomerAdjustTab({
           className="text-center text-lg"
         />
         <p className="mt-1 text-xs text-gray-400">
-          Positif pour ajouter, negatif pour retirer (max {effectiveMax} au total)
+          Positif pour ajouter, négatif pour retirer (max {effectiveMax} au total)
         </p>
       </div>
+
+      {isCagnotte && (
+        <div>
+          <label className="block mb-1.5 text-sm font-medium text-gray-700">
+            Ajuster le cumul (€)
+          </label>
+          <Input
+            type="text"
+            inputMode="decimal"
+            placeholder="Ex: 25 ou -10"
+            value={amountAdjustment}
+            onChange={(e) => setAmountAdjustment(e.target.value)}
+            className="text-center text-lg"
+          />
+          {parsedAmountAdj !== 0 && (
+            <div className="mt-1 text-xs text-gray-500 space-y-0.5">
+              <p>Nouveau cumul : <span className="font-semibold">{formatEUR(newAmount)} €</span></p>
+              <p>Nouvelle cagnotte : <span className="font-semibold text-emerald-600">{formatEUR(calculateCashback(newAmount, cagnottePercent))} € ({cagnottePercent}%)</span>
+                {cagnotteTier2Percent && tier1Redeemed ? <span className="text-violet-600 ml-1">/ {formatEUR(calculateCashback(newAmount, cagnotteTier2Percent))} € ({cagnotteTier2Percent}%)</span> : ''}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       <Textarea
         label="Raison (optionnel)"
@@ -236,7 +312,7 @@ export function CustomerAdjustTab({
         <Button variant="ghost" onClick={onClose} className="flex-1" disabled={loading}>
           Annuler
         </Button>
-        <Button onClick={handleSubmit} loading={loading} disabled={adjustment === 0} className="flex-1">
+        <Button onClick={handleSubmit} loading={loading} disabled={adjustment === 0 && (!isCagnotte || parsedAmountAdj === 0)} className="flex-1">
           Valider
         </Button>
       </div>

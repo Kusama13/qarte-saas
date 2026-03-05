@@ -11,7 +11,8 @@ export interface DemoMerchant {
   tier2_stamps_required: number | null;
   tier2_reward_description: string | null;
   loyalty_mode: string;
-  product_name: string | null;
+  cagnotte_percent: number | null;
+  cagnotte_tier2_percent: number | null;
   review_link: string | null;
   instagram_url: string | null;
   facebook_url: string | null;
@@ -24,37 +25,28 @@ export interface DemoMerchant {
 }
 
 export const DEMO_MERCHANTS: Record<string, DemoMerchant> = {
-  'demo-coiffeur': {
-    id: 'demo-coiffeur', shop_name: 'Le Salon de Clara', shop_type: 'coiffeur',
-    logo_url: null, primary_color: '#D97706', secondary_color: '#F59E0B',
-    stamps_required: 10, reward_description: 'Un brushing offert',
-    tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
-    loyalty_mode: 'visit', product_name: null, review_link: 'https://getqarte.com',
-    instagram_url: 'https://www.instagram.com/qarte.app', facebook_url: 'https://www.facebook.com/profile.php?id=61587048661028', tiktok_url: 'https://www.tiktok.com/@getqarte',
-    booking_url: 'https://getqarte.com',
-    referral_program_enabled: true, referral_reward_referrer: 'Un brushing offert', referral_reward_referred: '-20% sur votre 1ère coupe',
-    scan_code: 'demo-coiffeur',
-  },
   'demo-onglerie': {
     id: 'demo-onglerie', shop_name: 'Nails & Beauty', shop_type: 'onglerie',
     logo_url: null, primary_color: '#EC4899', secondary_color: '#F472B6',
     stamps_required: 8, reward_description: 'Une pose gel offerte',
     tier2_enabled: true, tier2_stamps_required: 15, tier2_reward_description: 'Un soin complet des mains offert',
-    loyalty_mode: 'visit', product_name: null, review_link: 'https://getqarte.com',
+    loyalty_mode: 'visit', cagnotte_percent: null, cagnotte_tier2_percent: null,
+    review_link: 'https://getqarte.com',
     instagram_url: 'https://www.instagram.com/qarte.app', facebook_url: 'https://www.facebook.com/profile.php?id=61587048661028', tiktok_url: 'https://www.tiktok.com/@getqarte',
     booking_url: 'https://getqarte.com',
     referral_program_enabled: true, referral_reward_referrer: 'Une pose gel offerte', referral_reward_referred: '-15% sur votre 1ère pose',
     scan_code: 'demo-onglerie',
   },
-  'demo-institut': {
-    id: 'demo-institut', shop_name: 'Institut Éclat', shop_type: 'institut_beaute',
-    logo_url: null, primary_color: '#8B5CF6', secondary_color: '#A78BFA',
-    stamps_required: 8, reward_description: 'Un soin visage offert',
-    tier2_enabled: false, tier2_stamps_required: null, tier2_reward_description: null,
-    loyalty_mode: 'visit', product_name: null, review_link: 'https://getqarte.com',
+  'demo-barbier': {
+    id: 'demo-barbier', shop_name: 'Chez Marco', shop_type: 'barbier',
+    logo_url: null, primary_color: '#059669', secondary_color: '#10B981',
+    stamps_required: 10, reward_description: '5% sur votre cagnotte fidélité',
+    tier2_enabled: true, tier2_stamps_required: 20, tier2_reward_description: '10% sur votre cagnotte fidélité',
+    loyalty_mode: 'cagnotte', cagnotte_percent: 5, cagnotte_tier2_percent: 10,
+    review_link: 'https://getqarte.com',
     instagram_url: 'https://www.instagram.com/qarte.app', facebook_url: 'https://www.facebook.com/profile.php?id=61587048661028', tiktok_url: 'https://www.tiktok.com/@getqarte',
     booking_url: 'https://getqarte.com',
-    referral_program_enabled: true, referral_reward_referrer: 'Un soin visage offert', referral_reward_referred: '-10% sur votre 1er soin',
-    scan_code: 'demo-institut',
+    referral_program_enabled: true, referral_reward_referrer: 'Une coupe offerte', referral_reward_referred: '-20% sur votre 1ère coupe',
+    scan_code: 'demo-barbier',
   },
 };

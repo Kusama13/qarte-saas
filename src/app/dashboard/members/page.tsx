@@ -59,6 +59,7 @@ export default function MembersPage() {
           data.setSelectedProgram(null);
           data.setProgramMembers([]);
         }}
+        isCagnotte={data.merchant?.loyalty_mode === 'cagnotte'}
         assign={assign}
         actions={actions}
       />

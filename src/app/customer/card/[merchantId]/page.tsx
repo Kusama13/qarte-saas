@@ -35,6 +35,7 @@ import {
   ReviewModal,
   ReviewCard,
   StampsSection,
+  CagnotteSection,
   RewardCard,
   RedeemModal,
   SocialLinks,
@@ -206,11 +207,13 @@ export default function CustomerCardPage({
           // Simulate ~80% progress on tier 1 (shows "almost there" state)
           const tier1 = m.stamps_required || 10;
           const demoStamps = Math.max(1, tier1 - 2);
+          const isCagnotteDemo = m.loyalty_mode === 'cagnotte';
           setCard({
             id: 'preview',
             customer_id: 'preview',
             merchant_id: merchantId,
             current_stamps: demoStamps,
+            current_amount: isCagnotteDemo ? 247.50 : 0,
             stamps_target: tier1,
             last_visit_date: new Date().toISOString(),
             referral_code: m.referral_program_enabled ? 'DEMO01' : null,
@@ -226,7 +229,6 @@ export default function CustomerCardPage({
               program_name: null,
               welcome_message: null,
               promo_message: null,
-              max_quantity_per_scan: 1,
               trial_ends_at: '',
               stripe_customer_id: null,
               subscription_status: 'active',
@@ -287,6 +289,7 @@ export default function CustomerCardPage({
             merchant_id: merchantId,
             customer_id: 'preview',
             points_earned: 1,
+            amount_spent: null,
             visited_at: new Date(Date.now() - daysAgo * 86400000).toISOString(),
             ip_address: null,
             ip_hash: null,
@@ -517,6 +520,7 @@ export default function CustomerCardPage({
               merchant_id: card.merchant_id,
               customer_id: card.customer_id,
               points_earned: 1,
+              amount_spent: null,
               visited_at: new Date().toISOString(),
               ip_address: null,
               ip_hash: null,
@@ -558,6 +562,8 @@ export default function CustomerCardPage({
     rewardCardDescription,
     rewardCardRemaining,
     rewardCardTierLabel,
+    rewardCashbackAmount,
+    rewardCashbackPercent,
   } = useMemo(() => {
     if (!card) {
       return {
@@ -570,6 +576,8 @@ export default function CustomerCardPage({
         rewardCardDescription: '',
         rewardCardRemaining: 0,
         rewardCardTierLabel: '',
+        rewardCashbackAmount: 0,
+        rewardCashbackPercent: 0,
       };
     }
     const _currentStamps = card.current_stamps;
@@ -583,6 +591,11 @@ export default function CustomerCardPage({
     const _effectiveTier1Redeemed = tier1RedeemedInCycle && _currentStamps >= _tier1Required;
     const _isMemberCardActive = !!memberCard && new Date(memberCard.valid_until) > new Date();
     const _showingTier2 = !!_tier2Enabled && _effectiveTier1Redeemed;
+
+    const _isCagnotte = card.merchant.loyalty_mode === 'cagnotte';
+    const _currentAmount = Number(card.current_amount || 0);
+    const _cagnottePercent = Number(_showingTier2 ? card.merchant.cagnotte_tier2_percent : card.merchant.cagnotte_percent || 0);
+    const _cashbackAmount = _isCagnotte ? Math.round(_currentAmount * _cagnottePercent) / 100 : 0;
 
     return {
       isRewardReady: _isRewardReady,
@@ -600,6 +613,8 @@ export default function CustomerCardPage({
       rewardCardTierLabel: _tier2Enabled
         ? (_showingTier2 ? 'Palier 2' : 'Palier 1')
         : '',
+      rewardCashbackAmount: _cashbackAmount,
+      rewardCashbackPercent: _cagnottePercent,
     };
   }, [card, tier1RedeemedInCycle, memberCard]);
 
@@ -618,7 +633,10 @@ export default function CustomerCardPage({
     setRedeemError(null);
 
     try {
-      const response = await fetch('/api/redeem-public', {
+      const isCagnotteMode = card.merchant.loyalty_mode === 'cagnotte';
+      const endpoint = isCagnotteMode ? '/api/cagnotte/redeem-public' : '/api/redeem-public';
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -631,10 +649,14 @@ export default function CustomerCardPage({
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Only reset stamps if tier 2 or if tier 2 is not enabled
-        if (data.stamps_reset) {
-          setCard({ ...card, current_stamps: 0 });
-        }
+        // Single functional update to avoid state race
+        setCard(prev => {
+          if (!prev) return prev;
+          const updates: Partial<typeof prev> = {};
+          if (data.stamps_reset) updates.current_stamps = 0;
+          if (data.stamps_reset || isCagnotteMode) updates.current_amount = 0;
+          return { ...prev, ...updates };
+        });
         // Mark tier 1 as redeemed in cycle
         if (tier === 1) {
           setTier1RedeemedInCycle(true);
@@ -713,9 +735,8 @@ export default function CustomerCardPage({
         <div className="sticky top-[42px] z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 py-2 px-4">
           <div className="flex items-center justify-center gap-2">
             {[
-              { id: 'demo-coiffeur', label: 'Coiffeur', emoji: '💇‍♀️' },
-              { id: 'demo-onglerie', label: 'Onglerie', emoji: '💅' },
-              { id: 'demo-institut', label: 'Institut', emoji: '✨' },
+              { id: 'demo-onglerie', label: 'Mode passage', emoji: '💅' },
+              { id: 'demo-barbier', label: 'Mode cagnotte', emoji: '💰' },
             ].map((demo) => (
               <Link
                 key={demo.id}
@@ -863,12 +884,7 @@ export default function CustomerCardPage({
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-gray-900 text-sm">
-                    {pendingCount} {merchant.loyalty_mode === 'visit'
-                      ? (pendingCount > 1 ? 'passages' : 'passage')
-                      : (merchant.product_name
-                          ? (pendingCount > 1 ? `${merchant.product_name}s` : merchant.product_name)
-                          : (pendingCount > 1 ? 'articles' : 'article'))
-                    } en attente
+                    {pendingCount} {pendingCount > 1 ? 'passages' : 'passage'} en attente
                   </p>
                   <p className="text-xs text-gray-500">
                     Validation par {merchant.shop_name} en cours
@@ -943,27 +959,42 @@ export default function CustomerCardPage({
         {/* Offre Exclusive */}
         {offer && <ExclusiveOffer offer={offer} merchantColor={merchant.primary_color} isPreview={isPreview} />}
 
-        {/* Stamps Section */}
+        {/* Stamps / Cagnotte Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.35 }}
           className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/80 p-5 mb-4"
         >
-          <StampsSection
-            currentStamps={currentStamps}
-            tier1Required={tier1Required}
-            tier2Enabled={tier2Enabled}
-            tier2Required={tier2Required}
-            isRewardReady={isRewardReady}
-            isTier2Ready={isTier2Ready}
-            effectiveTier1Redeemed={effectiveTier1Redeemed}
-            merchantColor={merchant.primary_color}
-            rewardDescription={merchant.reward_description || ''}
-            tier2Reward={tier2Reward}
-            doubleDaysEnabled={merchant.double_days_enabled}
-            doubleDaysOfWeek={merchant.double_days_of_week}
-          />
+          {merchant.loyalty_mode === 'cagnotte' ? (
+            <CagnotteSection
+              currentStamps={currentStamps}
+              tier1Required={tier1Required}
+              tier2Enabled={!!tier2Enabled}
+              tier2Required={tier2Required}
+              isRewardReady={isRewardReady}
+              isTier2Ready={isTier2Ready}
+              effectiveTier1Redeemed={effectiveTier1Redeemed}
+              merchantColor={merchant.primary_color}
+              rewardDescription={merchant.reward_description || ''}
+              tier2RewardDescription={merchant.tier2_reward_description || ''}
+            />
+          ) : (
+            <StampsSection
+              currentStamps={currentStamps}
+              tier1Required={tier1Required}
+              tier2Enabled={tier2Enabled}
+              tier2Required={tier2Required}
+              isRewardReady={isRewardReady}
+              isTier2Ready={isTier2Ready}
+              effectiveTier1Redeemed={effectiveTier1Redeemed}
+              merchantColor={merchant.primary_color}
+              rewardDescription={merchant.reward_description || ''}
+              tier2Reward={tier2Reward}
+              doubleDaysEnabled={merchant.double_days_enabled}
+              doubleDaysOfWeek={merchant.double_days_of_week}
+            />
+          )}
         </motion.div>
 
         {/* Reward card */}
@@ -975,6 +1006,9 @@ export default function CustomerCardPage({
           remaining={rewardCardRemaining}
           merchantColor={merchant.primary_color}
           secondaryColor={merchant.secondary_color}
+          isCagnotte={merchant.loyalty_mode === 'cagnotte'}
+          cashbackAmount={rewardCashbackAmount}
+          cashbackPercent={rewardCashbackPercent}
           onRedeem={() => {
             setRedeemTier(rewardShowingTier2 ? 2 : 1);
             setShowRedeemModal(true);
@@ -1134,6 +1168,10 @@ export default function CustomerCardPage({
         secondaryColor={merchant.secondary_color}
         onRedeem={handleRedeem}
         onDone={() => { setShowRedeemModal(false); setRedeemSuccess(false); if (merchant.review_link) setShowReviewModal(true); }}
+        isCagnotte={merchant.loyalty_mode === 'cagnotte'}
+        cashbackAmount={merchant.loyalty_mode === 'cagnotte'
+          ? Math.round(Number(card.current_amount || 0) * Number(redeemTier === 2 ? merchant.cagnotte_tier2_percent : merchant.cagnotte_percent)) / 100
+          : undefined}
       />
 
       {/* Member Card Modal */}

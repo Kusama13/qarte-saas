@@ -31,15 +31,20 @@ type MerchantPublic = Pick<
   | 'instagram_url'
   | 'facebook_url'
   | 'tiktok_url'
+  | 'loyalty_mode'
+  | 'cagnotte_percent'
+  | 'cagnotte_tier2_percent'
 >;
 
 export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }) {
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
+  const isCagnotte = merchant.loyalty_mode === 'cagnotte';
 
   const reward = merchant.reward_description || '';
-  const heroTagline =
-    reward.length > 0 && reward.length <= 38
+  const heroTagline = isCagnotte
+    ? `${merchant.stamps_required} passages = ${merchant.cagnotte_percent}% sur votre cagnotte fidélité.`
+    : reward.length > 0 && reward.length <= 38
       ? `Chaque visite vous rapproche de ${reward.charAt(0).toLowerCase() + reward.slice(1)}.`
       : 'Revenez, et laissez-nous vous récompenser.';
 
@@ -165,7 +170,11 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
         >
           <SimulatedCard
             stampsRequired={merchant.stamps_required}
-            rewardDescription={merchant.reward_description || 'Récompense fidélité'}
+            rewardDescription={
+              isCagnotte
+                ? `${merchant.cagnotte_percent}% sur votre cagnotte fidélité`
+                : (merchant.reward_description || 'Récompense fidélité')
+            }
             primaryColor={p}
             secondaryColor={s}
           />
@@ -182,7 +191,7 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
         </motion.p>
 
         {/* Tier 2 */}
-        {merchant.tier2_enabled && merchant.tier2_reward_description && (
+        {merchant.tier2_enabled && (merchant.tier2_reward_description || (isCagnotte && merchant.cagnotte_tier2_percent)) && (
           <motion.div
             ref={tier2Ref}
             initial={{ opacity: 0, y: 18 }}
@@ -219,7 +228,9 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
                 </p>
               </div>
               <p className="text-[22px] font-black text-white leading-snug max-w-[72%] tracking-tight">
-                {merchant.tier2_reward_description}
+                {isCagnotte
+                  ? `${merchant.cagnotte_tier2_percent}% sur votre cagnotte fidélité`
+                  : merchant.tier2_reward_description}
               </p>
               <p className="text-[12px] text-white/50 mt-2 font-medium">
                 Pour les plus fidèles d'entre vous.

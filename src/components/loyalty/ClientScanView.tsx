@@ -91,7 +91,6 @@ export function ClientScanView({
         setCanUndo(true);
         setUndoTimer(8);
 
-        // Reset quantity for article mode
         setQuantity(1);
       } else {
         setError('Une erreur est survenue. Veuillez réessayer.');

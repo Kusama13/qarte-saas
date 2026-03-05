@@ -35,6 +35,7 @@ import {
   Smartphone,
   Loader2 as Loader2Icon,
   Zap,
+  Wallet,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl } from '@/lib/utils';
@@ -52,7 +53,7 @@ interface Merchant {
   created_at: string;
   stamps_required: number;
   reward_description: string;
-  loyalty_mode: 'visit' | 'article';
+  loyalty_mode: 'visit' | 'cagnotte';
   scan_code: string;
   slug: string;
   shop_type: ShopType;
@@ -62,6 +63,9 @@ interface Merchant {
   double_days_enabled: boolean;
   double_days_of_week: string;
   last_seen_at: string | null;
+  // Cagnotte fields
+  cagnotte_percent: number | null;
+  cagnotte_tier2_percent: number | null;
   // Tier 2 fields
   tier2_enabled: boolean;
   tier2_stamps_required: number | null;
@@ -424,6 +428,11 @@ export default function MerchantDetailPage() {
                 <span className="text-xs text-gray-500">
                   {{ FR: '🇫🇷', BE: '🇧🇪', CH: '🇨🇭', LU: '🇱🇺' }[merchant.country] || ''} {merchant.country}
                 </span>
+                {merchant.loyalty_mode === 'cagnotte' && (
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                    Mode cagnotte
+                  </span>
+                )}
               </div>
               {merchant.shop_address && (
                 <p className="text-gray-600 flex items-center gap-1 mt-1">
@@ -649,17 +658,41 @@ export default function MerchantDetailPage() {
         {/* Programme de fidélité */}
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           {/* Palier 1 */}
-          <div className="p-4 bg-[#5167fc]/5 rounded-lg border border-[#5167fc]/10">
+          <div className={cn(
+            "p-4 rounded-lg border",
+            merchant.loyalty_mode === 'cagnotte'
+              ? "bg-purple-50 border-purple-200"
+              : "bg-[#5167fc]/5 border-[#5167fc]/10"
+          )}>
             <div className="flex items-center gap-2 mb-2">
-              <Gift className="w-5 h-5 text-[#5167fc]" />
+              {merchant.loyalty_mode === 'cagnotte'
+                ? <Wallet className="w-5 h-5 text-purple-600" />
+                : <Gift className="w-5 h-5 text-[#5167fc]" />
+              }
               <span className="font-medium text-gray-900">Palier 1</span>
             </div>
-            <p className="text-gray-700">
-              <span className="font-semibold">{merchant.stamps_required} passages</span> pour obtenir : {merchant.reward_description || 'Non configuré'}
-            </p>
+            {merchant.loyalty_mode === 'cagnotte' ? (
+              <>
+                <p className="text-gray-700">
+                  <span className="font-semibold">{merchant.cagnotte_percent ?? 0}% de cagnotte</span> sur chaque passage
+                </p>
+                <p className="text-gray-700 mt-1">
+                  Reward : {merchant.reward_description || 'Non configuré'}
+                </p>
+              </>
+            ) : (
+              <p className="text-gray-700">
+                <span className="font-semibold">{merchant.stamps_required} passages</span> pour obtenir : {merchant.reward_description || 'Non configuré'}
+              </p>
+            )}
             <div className="mt-2 flex items-center gap-2">
-              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-[#5167fc]/10 text-[#5167fc]">
-                Mode: Par visite
+              <span className={cn(
+                "px-2 py-0.5 text-xs font-medium rounded-full",
+                merchant.loyalty_mode === 'cagnotte'
+                  ? "bg-purple-100 text-purple-700"
+                  : "bg-[#5167fc]/10 text-[#5167fc]"
+              )}>
+                {merchant.loyalty_mode === 'cagnotte' ? 'Mode: Cagnotte' : 'Mode: Par visite'}
               </span>
             </div>
           </div>
@@ -668,15 +701,29 @@ export default function MerchantDetailPage() {
           {merchant.tier2_enabled && merchant.tier2_stamps_required && (
             <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
               <div className="flex items-center gap-2 mb-2">
-                <Gift className="w-5 h-5 text-amber-600" />
+                {merchant.loyalty_mode === 'cagnotte'
+                  ? <Wallet className="w-5 h-5 text-amber-600" />
+                  : <Gift className="w-5 h-5 text-amber-600" />
+                }
                 <span className="font-medium text-gray-900">Palier 2</span>
                 <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-amber-100 text-amber-700">
                   Actif
                 </span>
               </div>
-              <p className="text-gray-700">
-                <span className="font-semibold">{merchant.tier2_stamps_required} passages</span> pour obtenir : {merchant.tier2_reward_description || 'Non configuré'}
-              </p>
+              {merchant.loyalty_mode === 'cagnotte' ? (
+                <>
+                  <p className="text-gray-700">
+                    <span className="font-semibold">{merchant.cagnotte_tier2_percent ?? 0}% de cagnotte</span> sur chaque passage
+                  </p>
+                  <p className="text-gray-700 mt-1">
+                    Reward : {merchant.tier2_reward_description || 'Non configuré'}
+                  </p>
+                </>
+              ) : (
+                <p className="text-gray-700">
+                  <span className="font-semibold">{merchant.tier2_stamps_required} passages</span> pour obtenir : {merchant.tier2_reward_description || 'Non configuré'}
+                </p>
+              )}
             </div>
           )}
 

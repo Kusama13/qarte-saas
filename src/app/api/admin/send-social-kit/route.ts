@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     // Fetch merchant data
     const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description')
+      .select('id, user_id, shop_name, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode')
       .eq('id', merchantId)
       .single();
 
@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
       merchant.logo_url,
       merchant.tier2_enabled,
       merchant.tier2_stamps_required,
-      merchant.tier2_reward_description
+      merchant.tier2_reward_description,
+      merchant.loyalty_mode || undefined
     );
 
     if (!result.success) {

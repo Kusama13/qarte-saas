@@ -115,10 +115,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
-    // Get the visit
+    // Get the visit + merchant loyalty_mode
     const { data: visit, error: visitError } = await supabaseAdmin
       .from('visits')
-      .select('*, loyalty_card:loyalty_cards (*)')
+      .select('*, loyalty_card:loyalty_cards (*), merchant:merchants (loyalty_mode)')
       .eq('id', visit_id)
       .eq('merchant_id', merchant_id)
       .eq('status', 'pending')
@@ -150,12 +150,19 @@ export async function POST(request: NextRequest) {
     if (action === 'confirm' && visit.loyalty_card) {
       const newStamps = (visit.loyalty_card.current_stamps || 0) + (visit.points_earned || 1);
 
+      const updateData: Record<string, unknown> = {
+        current_stamps: newStamps,
+        last_visit_date: new Date().toISOString().split('T')[0],
+      };
+
+      // Cagnotte mode: also increment current_amount
+      if (visit.merchant?.loyalty_mode === 'cagnotte' && visit.amount_spent) {
+        updateData.current_amount = (visit.loyalty_card.current_amount || 0) + visit.amount_spent;
+      }
+
       const { error: updateCardError } = await supabaseAdmin
         .from('loyalty_cards')
-        .update({
-          current_stamps: newStamps,
-          last_visit_date: new Date().toISOString().split('T')[0],
-        })
+        .update(updateData)
         .eq('id', visit.loyalty_card_id);
 
       if (updateCardError) {
@@ -221,10 +228,10 @@ export async function PUT(request: NextRequest) {
     let successCount = 0;
     let errorCount = 0;
 
-    // Fetch all pending visits in one query
+    // Fetch all pending visits + merchant loyalty_mode in one query
     const { data: pendingVisits, error: fetchError } = await supabaseAdmin
       .from('visits')
-      .select('*, loyalty_card:loyalty_cards (*)')
+      .select('*, loyalty_card:loyalty_cards (*), merchant:merchants (loyalty_mode)')
       .in('id', visit_ids)
       .eq('merchant_id', merchant_id)
       .eq('status', 'pending');
@@ -255,13 +262,19 @@ export async function PUT(request: NextRequest) {
     const notFoundCount = visit_ids.length - validIds.length;
     let cardErrorCount = 0;
 
-    // If confirmed, group points by loyalty card to avoid stale reads
+    // If confirmed, group points (and amounts for cagnotte) by loyalty card to avoid stale reads
     if (action === 'confirm') {
       const pointsByCard = new Map<string, number>();
+      const amountsByCard = new Map<string, number>();
+      const isCagnotte = pendingVisits[0]?.merchant?.loyalty_mode === 'cagnotte';
+
       for (const visit of pendingVisits) {
         if (visit.loyalty_card) {
           const cardId = visit.loyalty_card_id;
           pointsByCard.set(cardId, (pointsByCard.get(cardId) || 0) + (visit.points_earned || 1));
+          if (isCagnotte && visit.amount_spent) {
+            amountsByCard.set(cardId, (amountsByCard.get(cardId) || 0) + visit.amount_spent);
+          }
         }
       }
 
@@ -269,7 +282,7 @@ export async function PUT(request: NextRequest) {
         // Fresh read of current stamps to avoid stale data
         const { data: freshCard, error: readError } = await supabaseAdmin
           .from('loyalty_cards')
-          .select('current_stamps')
+          .select('current_stamps, current_amount')
           .eq('id', cardId)
           .single();
 
@@ -286,12 +299,20 @@ export async function PUT(request: NextRequest) {
 
         const newStamps = (freshCard.current_stamps || 0) + totalPoints;
 
+        const updateData: Record<string, unknown> = {
+          current_stamps: newStamps,
+          last_visit_date: new Date().toISOString().split('T')[0],
+        };
+
+        // Cagnotte mode: also increment current_amount
+        const totalAmount = amountsByCard.get(cardId);
+        if (isCagnotte && totalAmount) {
+          updateData.current_amount = (freshCard.current_amount || 0) + totalAmount;
+        }
+
         const { error: updateCardError } = await supabaseAdmin
           .from('loyalty_cards')
-          .update({
-            current_stamps: newStamps,
-            last_visit_date: new Date().toISOString().split('T')[0],
-          })
+          .update(updateData)
           .eq('id', cardId);
 
         if (updateCardError) {

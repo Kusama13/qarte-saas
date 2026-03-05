@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Gift, Trophy } from 'lucide-react';
+import { Check, Gift, Trophy, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface RedeemModalProps {
@@ -17,6 +17,8 @@ interface RedeemModalProps {
   shopName: string;
   onRedeem: (tier: 1 | 2) => void;
   onDone: () => void;
+  isCagnotte?: boolean;
+  cashbackAmount?: number;
 }
 
 export default function RedeemModal({
@@ -33,11 +35,17 @@ export default function RedeemModal({
   shopName,
   onRedeem,
   onDone,
+  isCagnotte,
+  cashbackAmount,
 }: RedeemModalProps) {
-  const TierIcon = tier === 2 ? Trophy : Gift;
-  const gradient = tier === 2
-    ? 'linear-gradient(135deg, #7C3AED, #6D28D9)'
-    : `linear-gradient(135deg, ${merchantColor}, ${secondaryColor || merchantColor})`;
+  const TierIcon = isCagnotte ? Coins : (tier === 2 ? Trophy : Gift);
+  const gradient = isCagnotte
+    ? (tier === 2
+      ? 'linear-gradient(135deg, #7C3AED, #6D28D9)'
+      : `linear-gradient(135deg, #10b981, #059669)`)
+    : (tier === 2
+      ? 'linear-gradient(135deg, #7C3AED, #6D28D9)'
+      : `linear-gradient(135deg, ${merchantColor}, ${secondaryColor || merchantColor})`);
 
   return (
     <AnimatePresence>
@@ -97,20 +105,39 @@ export default function RedeemModal({
                 </p>
               )}
 
+              {/* Cashback amount for cagnotte */}
+              {isCagnotte && !success && cashbackAmount != null && (
+                <motion.p
+                  initial={{ scale: 0.8 }}
+                  animate={{ scale: 1 }}
+                  className="text-4xl font-black text-white mb-2"
+                >
+                  {cashbackAmount.toFixed(2).replace('.', ',')} €
+                </motion.p>
+              )}
+
               {/* Main text */}
               <h3 className="text-2xl font-black text-white leading-tight mb-2">
                 {success
-                  ? 'Un grand merci pour votre fidélité !'
-                  : (tier === 2 ? tier2Reward : rewardDescription)
+                  ? (isCagnotte ? 'Cagnotte validée !' : 'Un grand merci pour votre fidélité !')
+                  : isCagnotte
+                    ? 'Votre cagnotte est prête'
+                    : (tier === 2 ? tier2Reward : rewardDescription)
                 }
               </h3>
 
               <p className="text-white/70 text-sm font-medium leading-relaxed mb-8">
                 {success
-                  ? (tier === 1 && tier2Enabled
-                      ? 'Vos points sont préservés. Le palier 2 vous attend !'
-                      : 'Merci pour votre fidélité. À très bientôt !')
-                  : `Présentez ce coupon à ${shopName} pour en profiter.`
+                  ? (isCagnotte
+                      ? (tier === 1 && tier2Enabled
+                          ? 'Votre cumul repart à zéro. Continuez pour un taux encore meilleur !'
+                          : 'Merci pour votre fidélité. Votre cumul repart à zéro !')
+                      : (tier === 1 && tier2Enabled
+                          ? 'Vos points sont préservés. Le palier 2 vous attend !'
+                          : 'Merci pour votre fidélité. À très bientôt !'))
+                  : isCagnotte
+                    ? `${tier === 2 ? tier2Reward : rewardDescription} sur vos dépenses cumulées`
+                    : `Présentez ce coupon à ${shopName} pour en profiter.`
                 }
               </p>
 
@@ -123,7 +150,7 @@ export default function RedeemModal({
                   className="w-full h-14 rounded-2xl text-base font-bold shadow-lg transition-all disabled:opacity-60"
                   style={{
                     backgroundColor: 'white',
-                    color: tier === 2 ? '#7C3AED' : merchantColor,
+                    color: isCagnotte ? (tier === 2 ? '#7C3AED' : '#059669') : (tier === 2 ? '#7C3AED' : merchantColor),
                   }}
                 >
                   {redeeming ? (
@@ -134,7 +161,7 @@ export default function RedeemModal({
                       </svg>
                       Validation...
                     </span>
-                  ) : success ? 'Fermer' : 'Valider maintenant'}
+                  ) : success ? 'Fermer' : (isCagnotte ? 'Récupérer ma cagnotte' : 'Valider maintenant')}
                 </motion.button>
 
                 {!success && (

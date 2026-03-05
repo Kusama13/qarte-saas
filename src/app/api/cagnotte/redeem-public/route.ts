@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limit: 5 per minute per IP
     const ip = getClientIP(request);
-    const rateLimit = checkRateLimit(`redeem-public:${ip}`, { maxRequests: 5, windowMs: 60 * 1000 });
+    const rateLimit = checkRateLimit(`cagnotte-redeem-public:${ip}`, { maxRequests: 5, windowMs: 60 * 1000 });
     if (!rateLimit.success) {
       return rateLimitResponse(rateLimit.resetTime);
     }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get the loyalty card with merchant info — verify customer_id matches
+    // Get the loyalty card with merchant info
     const { data: loyaltyCard, error: cardError } = await supabase
       .from('loyalty_cards')
       .select('*, merchant:merchants(*)')
@@ -73,18 +73,17 @@ export async function POST(request: NextRequest) {
 
     const merchant = loyaltyCard.merchant;
 
-    // Cagnotte merchants must use /api/cagnotte/redeem-public
-    if (merchant.loyalty_mode === 'cagnotte') {
+    // Verify cagnotte mode
+    if (merchant.loyalty_mode !== 'cagnotte') {
       return NextResponse.json(
-        { error: 'Ce commerce utilise le mode cagnotte. Veuillez utiliser le bon endpoint.' },
+        { error: 'Ce commerce n\'utilise pas le mode cagnotte' },
         { status: 400 }
       );
     }
 
     const stampsRequired = tier === 2 ? (merchant.tier2_stamps_required ?? merchant.stamps_required) : merchant.stamps_required;
-    const rewardDescription = tier === 2 ? merchant.tier2_reward_description : merchant.reward_description;
 
-    // Check if tier 2 is enabled when trying to redeem tier 2
+    // Check if tier 2 is enabled
     if (tier === 2 && !merchant.tier2_enabled) {
       return NextResponse.json(
         { error: 'Le palier 2 n\'est pas activé pour ce commerce' },
@@ -92,21 +91,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has enough stamps for the requested tier
+    // Check if user has enough stamps
     if (loyaltyCard.current_stamps < stampsRequired) {
       return NextResponse.json(
-        {
-          error: `Pas assez de passages pour le palier ${tier}`,
-          current_stamps: loyaltyCard.current_stamps,
-          required_stamps: stampsRequired,
-        },
+        { error: `Pas assez de passages pour le palier ${tier}`, current_stamps: loyaltyCard.current_stamps, required_stamps: stampsRequired },
         { status: 400 }
       );
     }
 
     // For tier 1 with tier 2 enabled, check if already redeemed in current cycle
     if (tier === 1 && merchant.tier2_enabled) {
-      // Get the last tier 2 redemption date (which resets the cycle)
       const { data: lastTier2Redemption } = await supabase
         .from('redemptions')
         .select('redeemed_at')
@@ -116,7 +110,6 @@ export async function POST(request: NextRequest) {
         .limit(1)
         .maybeSingle();
 
-      // Check if tier 1 was already redeemed in current cycle
       let tier1Query = supabase
         .from('redemptions')
         .select('id')
@@ -131,40 +124,56 @@ export async function POST(request: NextRequest) {
 
       if (existingTier1) {
         return NextResponse.json(
-          { error: 'Vous avez déjà réclamé la récompense du palier 1. Continuez vers le palier 2 !' },
+          { error: 'Vous avez déjà réclamé la cagnotte du palier 1. Continuez vers le palier 2 !' },
           { status: 400 }
         );
       }
     }
 
-    // Only reset stamps to 0 for tier 2 (or tier 1 if tier 2 is not enabled)
+    // Calculate reward value
+    const currentAmount = Number(loyaltyCard.current_amount);
+    const rawPercent = tier === 2 ? merchant.cagnotte_tier2_percent : merchant.cagnotte_percent;
+    if (rawPercent == null || Number(rawPercent) <= 0) {
+      return NextResponse.json(
+        { error: `Le pourcentage cagnotte du palier ${tier} n'est pas configuré` },
+        { status: 400 }
+      );
+    }
+    const percent = Number(rawPercent);
+    const rewardValue = Math.round(currentAmount * percent) / 100;
+
+    // Cagnotte: ALWAYS reset current_amount to 0
+    // Stamps: reset to 0 only for tier 2 (or tier 1 if tier 2 is not enabled)
     const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
+    const updateData: Record<string, number> = { current_amount: 0 };
     if (shouldResetStamps) {
-      // Atomic stamp update FIRST to prevent orphaned redemptions on race condition
-      const { data: updated, error: updateError } = await supabase
-        .from('loyalty_cards')
-        .update({ current_stamps: 0 })
-        .eq('id', loyaltyCard.id)
-        .gte('current_stamps', stampsRequired)
-        .select('id');
-
-      if (updateError) {
-        logger.error('Update stamps error:', updateError);
-        return NextResponse.json(
-          { error: 'Erreur lors de la mise à jour de la carte' },
-          { status: 500 }
-        );
-      }
-      if (!updated || updated.length === 0) {
-        return NextResponse.json(
-          { error: 'Récompense déjà récupérée' },
-          { status: 409 }
-        );
-      }
+      updateData.current_stamps = 0;
     }
 
-    // Record the redemption (after stamp update to avoid orphans)
+    // Atomic update with race protection
+    const { data: updated, error: updateError } = await supabase
+      .from('loyalty_cards')
+      .update(updateData)
+      .eq('id', loyaltyCard.id)
+      .gte('current_stamps', stampsRequired)
+      .select('id');
+
+    if (updateError) {
+      logger.error('Update card error:', updateError);
+      return NextResponse.json(
+        { error: 'Erreur lors de la mise à jour de la carte' },
+        { status: 500 }
+      );
+    }
+    if (!updated || updated.length === 0) {
+      return NextResponse.json(
+        { error: 'Récompense déjà récupérée' },
+        { status: 409 }
+      );
+    }
+
+    // Record the redemption with cagnotte audit trail
     const { error: redemptionError } = await supabase
       .from('redemptions')
       .insert({
@@ -173,6 +182,9 @@ export async function POST(request: NextRequest) {
         customer_id: loyaltyCard.customer_id,
         stamps_used: loyaltyCard.current_stamps,
         tier: tier,
+        amount_accumulated: currentAmount,
+        reward_percent: percent,
+        reward_value: rewardValue,
       });
 
     if (redemptionError) {
@@ -185,13 +197,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Récompense palier ${tier} utilisée avec succès`,
-      reward_description: rewardDescription,
+      message: `Cagnotte palier ${tier} utilisée avec succès`,
+      reward_value: rewardValue,
+      reward_percent: percent,
+      amount_accumulated: currentAmount,
       tier: tier,
       stamps_reset: shouldResetStamps,
     });
   } catch (error) {
-    logger.error('Redeem public error:', error);
+    logger.error('Cagnotte redeem public error:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

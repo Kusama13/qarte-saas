@@ -76,6 +76,7 @@ export default function HistorySection({
       tier: undefined as number | undefined,
       reward_description: undefined as string | undefined,
       source: null as string | null,
+      amount_spent: v.amount_spent ?? null,
     })),
     ...adjustments.map((a) => ({
       type: 'adjustment' as const,
@@ -87,6 +88,7 @@ export default function HistorySection({
       tier: undefined as number | undefined,
       reward_description: undefined as string | undefined,
       source: null as string | null,
+      amount_spent: null as number | null,
     })),
     ...redemptions.map((r) => ({
       type: 'redemption' as const,
@@ -98,6 +100,7 @@ export default function HistorySection({
       tier: r.tier as number | undefined,
       reward_description: undefined as string | undefined,
       source: null as string | null,
+      amount_spent: null as number | null,
     })),
     ...usedVouchers.map((v) => ({
       type: 'voucher_used' as const,
@@ -109,6 +112,7 @@ export default function HistorySection({
       tier: undefined as number | undefined,
       reward_description: v.reward_description,
       source: v.source || null,
+      amount_spent: null as number | null,
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 30);
 
@@ -173,13 +177,16 @@ export default function HistorySection({
                 if (isBonusParrainage) return '🎉 Bonus parrainage +1';
                 if (isRedemption) {
                   const tierLabel = merchant.tier2_enabled ? ` palier ${item.tier}` : '';
-                  return `🎁 Cadeau${tierLabel} utilisé`;
+                  const isCagnotte = merchant.loyalty_mode === 'cagnotte';
+                  return isCagnotte ? `💰 Cagnotte${tierLabel} récupérée` : `🎁 Cadeau${tierLabel} utilisé`;
                 }
                 if (isAdjustment) return 'Ajustement';
                 if (isPending) return 'En attente';
                 if (isRejected) return 'Refusé';
-                if (merchant.loyalty_mode === 'visit') return 'Passage validé';
-                return `${item.points} ${merchant.product_name || 'article'}${item.points > 1 ? 's' : ''}`;
+                if (item.amount_spent != null && item.amount_spent > 0) {
+                  return `Passage validé · ${Number(item.amount_spent).toFixed(2).replace('.', ',')} €`;
+                }
+                return 'Passage validé';
               };
 
               return (

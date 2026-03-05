@@ -77,6 +77,7 @@ interface MerchantSettingsFormProps {
   rewardDescription: string;
   shopType?: ShopType;
   onChange: (settings: LoyaltySettings) => void;
+  hiddenReward?: boolean;
 }
 
 export interface LoyaltySettings {
@@ -89,6 +90,7 @@ export function MerchantSettingsForm({
   rewardDescription,
   shopType = 'autre',
   onChange,
+  hiddenReward,
 }: MerchantSettingsFormProps) {
   const rewardSuggestions = REWARD_SUGGESTIONS[shopType] || REWARD_SUGGESTIONS.autre;
   const stampsSuggestions = STAMPS_SUGGESTIONS[shopType] || STAMPS_SUGGESTIONS.autre;
@@ -129,34 +131,36 @@ export function MerchantSettingsForm({
       </div>
 
       {/* Reward Description */}
-      <div className="space-y-2.5">
-        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-          <Gift className="w-4 h-4 text-indigo-500" />
-          Récompense offerte
-        </label>
-        <Input
-          value={rewardDescription}
-          onChange={(e) => onChange({ stamps_required: stampsRequired, reward_description: e.target.value })}
-          placeholder="Ex: Un soin offert, -20%, Une coupe gratuite..."
-          className="h-11"
-        />
-        <div className="flex flex-wrap gap-1.5">
-          {rewardSuggestions.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => onChange({ stamps_required: stampsRequired, reward_description: suggestion })}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
-                rewardDescription === suggestion
-                  ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
-                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600'
-              }`}
-            >
-              {suggestion}
-            </button>
-          ))}
+      {!hiddenReward && (
+        <div className="space-y-2.5">
+          <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+            <Gift className="w-4 h-4 text-indigo-500" />
+            Récompense offerte
+          </label>
+          <Input
+            value={rewardDescription}
+            onChange={(e) => onChange({ stamps_required: stampsRequired, reward_description: e.target.value })}
+            placeholder="Ex: Un soin offert, -20%, Une coupe gratuite..."
+            className="h-11"
+          />
+          <div className="flex flex-wrap gap-1.5">
+            {rewardSuggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => onChange({ stamps_required: stampsRequired, reward_description: suggestion })}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                  rewardDescription === suggestion
+                    ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-indigo-50 hover:border-indigo-200 hover:text-indigo-600'
+                }`}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Summary */}
       {rewardDescription && (

@@ -51,16 +51,17 @@ src/
 │   ├── admin/             # Dashboard admin
 │   ├── customer/          # Pages client
 │   ├── scan/[code]/       # Scan QR dynamique
+│   ├── boutique/          # Page boutique carte NFC (presentation + lien Stripe)
 │   ├── essai-gratuit/     # Landing offre essai (Facebook Ads)
 │   ├── ebook/             # Landing ebook (lead generation)
 │   └── page.tsx           # Landing page (composition de composants)
 │
 ├── components/
-│   ├── landing/           # 12 composants landing (Hero, Features, Pricing, FAQ...)
+│   ├── landing/           # 12 composants landing (Hero, Features, Pricing, FAQ, FooterCta, FooterDark...)
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
 │   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal (inline name/birthday edit, pills header), CustomerRewardsTab, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
-│   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep, CardSkeleton, CardHeader, BirthdaySection, VoucherRewards, VoucherModals, ReviewModal)
+│   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep, CardSkeleton, CardHeader, BirthdaySection, VoucherRewards, VoucherModals, ReviewModal, ReviewCard)
 │   ├── marketing/         # SocialMediaTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel, MicrosoftClarity
 │
@@ -119,7 +120,7 @@ docs/
 └── AUDIT-SCALABILITE.md  # Audit scalabilite (DB, API, cron, frontend)
 
 supabase/
-└── migrations/           # 48 migrations SQL
+└── migrations/           # 51 migrations SQL
     ├── 001-025           # Schema initial + fixes
     ├── 026-033           # Trial, spelling, reactivation, country, shield, referral
     ├── 034               # Trial 7 jours (down from 15)
@@ -135,7 +136,10 @@ supabase/
     ├── 044               # Admin announcements
     ├── 045               # Announcement link URL
     ├── 046               # Performance indexes v2
-    └── 048               # Double stamp days (double_days_enabled, double_days_of_week)
+    ├── 047               # Shop type refactor
+    ├── 048               # Double stamp days (double_days_enabled, double_days_of_week)
+    ├── 049               # UNIQUE constraint on merchants.user_id (fix duplicate signups)
+    └── 050               # Cagnotte mode (loyalty_mode, cagnotte_percent, cagnotte_tier2_percent, current_amount, amount_spent)
 
 public/
 ├── images/              # Images statiques (mockups, temoignages, email-banner)
@@ -148,12 +152,12 @@ public/
 ## 4. Base de Donnees (Tables Principales)
 
 ### merchants
-- `id`, `user_id`, `slug`, `scan_code`
+- `id`, `user_id` (UNIQUE), `slug`, `scan_code`
 - `shop_name`, `shop_type`, `shop_address`, `phone`
 - `country` (MerchantCountry: 'FR' | 'BE' | 'CH' | 'LU', default 'FR')
 - `logo_url`, `primary_color`, `secondary_color`
 - `instagram_url`, `facebook_url`, `tiktok_url`, `booking_url`, `review_link`
-- `loyalty_mode` ('visit') — mode article supprimé
+- `loyalty_mode` ('visit' | 'cagnotte') — mode fidelite (visit = tampons, cagnotte = cashback %)
 - `stamps_required`, `reward_description`
 - `tier2_enabled`, `tier2_stamps_required`, `tier2_reward_description`
 - `referral_code` (VARCHAR 10, UNIQUE — ex: `QARTE-AB3K`)
@@ -162,6 +166,8 @@ public/
 - `billing_interval` ('monthly' | 'annual', default 'monthly')
 - `shield_enabled` (Qarte Shield)
 - `birthday_gift_enabled`, `birthday_gift_description`
+- `cagnotte_percent` (NUMERIC 5,2) — pourcentage cashback palier 1
+- `cagnotte_tier2_percent` (NUMERIC 5,2) — pourcentage cashback palier 2
 - `double_days_enabled` (BOOLEAN DEFAULT false) — jours x2 actifs
 - `double_days_of_week` (TEXT DEFAULT '[]') — JSON array JS getDay() values (0=Dim, 1=Lun…6=Sam)
 
@@ -170,12 +176,12 @@ public/
 
 ### loyalty_cards
 - `id`, `customer_id`, `merchant_id`
-- `current_stamps`, `stamps_target`, `last_visit_date`
+- `current_stamps`, `stamps_target`, `last_visit_date`, `current_amount` (NUMERIC 10,2 — cumul EUR cagnotte)
 - `referral_code` (VARCHAR 8, UNIQUE — code parrainage client)
 
 ### visits
 - `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
-- `points_earned`, `visited_at`
+- `points_earned`, `visited_at`, `amount_spent` (NUMERIC 10,2 — montant depense cagnotte)
 - `status` ('confirmed' | 'pending' | 'rejected')
 - `ip_address`, `ip_hash`, `flagged_reason`
 
@@ -190,8 +196,14 @@ public/
 - `status` ('pending' | 'completed')
 - UNIQUE `(merchant_id, referred_customer_id)` — 1 parrainage par filleul par merchant
 
+### redemptions
+- `id`, `loyalty_card_id`, `merchant_id`, `customer_id`, `stamps_used`, `tier`
+- `amount_accumulated` (NUMERIC 10,2 — cumul au moment du redeem, cagnotte)
+- `reward_percent` (NUMERIC 5,2 — % applique, cagnotte)
+- `reward_value` (NUMERIC 10,2 — valeur EUR calculee, cagnotte)
+
 ### Autres tables
-- `redemptions`, `point_adjustments`, `banned_numbers`
+- `point_adjustments`, `banned_numbers`
 - `push_subscriptions`, `push_history`, `scheduled_push`
 - `pending_email_tracking`
 - `member_programs`, `member_cards`
@@ -213,19 +225,26 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 
 ## 5. Routes API Principales
 
-### Fidelite
-- `POST /api/checkin` - Enregistrer un passage (parallelise: 5 groupes Promise.all, cree customer+card si besoin)
-- `POST /api/redeem` - Utiliser un bon
-- `POST /api/adjust-points` - Ajustement manuel
+### Fidelite (mode visit)
+- `POST /api/checkin` - Enregistrer un passage (parallelise: 5 groupes Promise.all, cree customer+card si besoin). Rejette les merchants cagnotte.
+- `POST /api/redeem` - Utiliser un bon (merchant auth). Rejette les merchants cagnotte.
+- `POST /api/redeem-public` - Utiliser un bon (client auth cookie). Rejette les merchants cagnotte.
+- `POST /api/adjust-points` - Ajustement manuel (stamps + amount_adjustment pour cagnotte)
+
+### Fidelite (mode cagnotte)
+- `POST /api/cagnotte/checkin` - Enregistrer un passage + montant depense. Calcule cashback tier 1/tier 2. Shield compatible.
+- `POST /api/cagnotte/redeem` - Utiliser cashback (merchant auth). Calcule reward_value = current_amount * percent. Reset current_amount.
+- `POST /api/cagnotte/redeem-public` - Utiliser cashback (client auth cookie). Meme logique.
 
 ### Clients
+- `POST /api/customers/create` - Creer client + carte fidelite (merchant auth, dedup telephone, historique creation dans point_adjustments)
 - `POST /api/customers/register` - Inscription client
 - `GET /api/customers/card` - Carte de fidelite
 - `POST /api/customers/cards` - Toutes les cartes (auth via cookie, rate limit 10/min)
 - `PUT /api/customers/update-name` - Modifier nom/prenom client (merchant auth + ownership check)
 
 ### Commercants
-- `POST /api/merchants/create` - Creer commercant (pre-remplit `stamps_required` selon shop_type, `reward_description` laisse null)
+- `POST /api/merchants/create` - Creer commercant (pre-remplit `stamps_required` selon shop_type, `reward_description` laisse null). Idempotent : retourne le merchant existant si deja cree (guard + catch UNIQUE 23505)
 - `GET /api/merchants/preview` - Donnees publiques merchant (preview carte)
 - `GET /api/merchant/stats` - Statistiques
 
@@ -261,8 +280,8 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 
 ### Systeme de Fidelite
 - Check-in par QR code (API parallelisee — 5 groupes Promise.all, ~300-600ms)
-- Accumulation de tampons/points
-- 2 paliers de recompenses
+- Accumulation de tampons/points (mode visit) ou montant depense (mode cagnotte)
+- 2 paliers de recompenses (visit : cadeau libre, cagnotte : % cashback)
 - Historique des passages
 - Suggestions de programme par type de commerce (MerchantSettingsForm)
 - 10 palettes couleurs (6 mobile + 4 desktop-only)
@@ -270,6 +289,10 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - Reward card dual-tier : celebration mode (gradient + shimmer + pulsing) quand recompense prete, motivational preview sinon
 - Footer "Propulse par Qarte" avec lien vers landing (texte seul, sans icone)
 - **ReviewModal** : modal glamour post-recompense (avis Google) — declenchee apres utilisation d'un bon de recompense ou d'un voucher parrainage, si `review_link` renseigne. 5 etoiles animees amber, anti-spam 90 jours via localStorage (`qarte_review_asked_${merchantId}`). z-index 60.
+- **ReviewCard** : encart avis Google en bas de la carte fidelite (entre SocialLinks et footer). Design amber compact, 5 etoiles, CTA "Laisser un avis", dismiss "J'ai deja laisse un avis" (90j cooldown localStorage `qarte_review_card_dismissed_${merchantId}`). Cache en preview. Independant du ReviewModal.
+- **Mode Cagnotte** : alternative au mode tampons. Le client cumule ses depenses en EUR. Apres N passages, il recoit X% de cashback sur le montant cumule. Configurable dans `/dashboard/program` (toggle visit/cagnotte, slider %). Scan page demande le montant depense. `CagnotteSection` affiche le cumul + grille de tampons visuels. Emails et page publique adaptent automatiquement le texte ("cashback" vs "cadeau"). Routes API separees (`/api/cagnotte/*`), les routes standards rejettent les merchants cagnotte.
+- **Aide choix de mode** : bouton `?` (HelpCircle) sur chaque mode dans `/dashboard/program`. Ouvre un modal (bottom-sheet mobile, centre desktop) avec explication detaillee en 4 etapes numerotees + exemples concrets. Bouton `?` en `div role="button"` (pas `<button>`) pour eviter le nesting interdit par HTML spec.
+- **Historique creation client** : a la creation d'un client (via `/api/customers/create` ou depuis la page membres), un `point_adjustment` est insere avec reason "Creation du client" + details (passages, montant cagnotte).
 - **Jours x2 (Double Stamp Days)** : le merchant configure des jours de la semaine ou chaque passage compte double (2 tampons au lieu de 1). `double_days_enabled` + `double_days_of_week` (JSON array getDay()). Calcul dans `getPointsEarned()` (module-level dans checkin/route.ts, timezone Paris). Affiché dans ScanSuccessStep (message "Jour x{N}" + badge amber) et sous la grille de tampons dans StampsSection. Configurable dans dashboard /program (section collapsible en bas de page). Helpers centralises dans utils.ts : `parseDoubleDays()`, `formatDoubleDays()`, `DAY_LABELS`, `WEEK_ORDER`.
 
 ### Support Multi-Pays
@@ -515,7 +538,11 @@ npm run email
 | `src/app/api/referrals/route.ts` | API parrainage client (GET info + POST inscription) |
 | `src/app/api/vouchers/use/route.ts` | API consommation voucher + auto-creation parrain |
 | `src/app/dashboard/referrals/page.tsx` | Dashboard parrainage (config + stats + tableau) |
-| `supabase/migrations/` | 48 migrations SQL |
+| `supabase/migrations/` | 51 migrations SQL |
+| `src/app/api/cagnotte/checkin/route.ts` | API checkin cagnotte (montant + cashback) |
+| `src/app/api/cagnotte/redeem/route.ts` | API redeem cagnotte (merchant auth) |
+| `src/app/api/cagnotte/redeem-public/route.ts` | API redeem cagnotte (client auth) |
+| `src/components/loyalty/CagnotteSection.tsx` | Affichage cumul + grille stamps cagnotte |
 
 ---
 
@@ -607,14 +634,15 @@ npm run email
 - Testimonials : "Elles en parlent mieux que nous" (4 conversations WhatsApp/iMessage/Instagram)
 - Pricing : "Un prix, tout inclus" — 19€/mois, CTA "Lancer mon essai gratuit"
 - FAQ : "On repond a toutes vos questions" (11 questions dont parrainage) + WhatsApp CTA
-- Footer : CTA "Rejoignez les pros qui fidelisent avec Qarte" + dark footer 4 colonnes (Logo, Support contact/WhatsApp, Liens rapides, Reseaux sociaux)
+- Footer : compose de `FooterCta` (CTA "Rejoignez les pros") + `FooterDark` (dark footer 4 colonnes : Logo, Support contact, Liens rapides, Reseaux sociaux). Les 2 composants sont reutilisables independamment.
 - ScrollToTopButton : bottom-24 mobile (au-dessus sticky), bottom-6 desktop
 - Ton amical et direct ("On s'occupe du reste", "On gere pour vous", "c'est promis")
 - ComparisonSection retiree du flow (fichier conserve)
 - Blog SEO : 3 articles (coiffure, onglerie, institut) avec images
 - Page comparatif `/qarte-vs-carte-papier`
 - JSON-LD structured data : Organization + SoftwareApplication (layout.tsx)
-- Sitemap : /, /pricing, /essai-gratuit, /qarte-vs-carte-papier, /blog, 3 articles blog, /ebook, /contact, /cgv, /mentions-legales, /politique-confidentialite
+- Sitemap : /, /pricing, /essai-gratuit, /qarte-vs-carte-papier, /blog, 3 articles blog, /ebook, /contact, /boutique, /cgv, /mentions-legales, /politique-confidentialite
+- Pages legales (cgv, mentions-legales, politique-confidentialite) : clic droit desactive via `NoRightClick` wrapper
 
 ### Wallet Client (`/customer/cards`)
 - Design premium inspire Apple Wallet — fond `bg-[#f7f6fb]` (blanc tinte lavande)
@@ -667,6 +695,13 @@ npm run email
 - Utilisation recompense
 - Placeholder telephone dynamique selon pays merchant
 - Detection `?ref=` : banner parrain, inscription filleul via `/api/referrals`, ecran succes referral
+
+### Boutique Carte NFC (`/boutique`)
+- Page de presentation et achat de la carte NFC Qarte (20€ livraison comprise)
+- Lien Stripe direct pour l'achat
+- 3 etapes : poser la carte (comptoir ou cou), cliente approche son tel, page s'ouvre et elle valide
+- Utilise `LandingNav minimal` + `FooterDark` (pas FooterCta)
+- Layout separe pour metadata SEO (page client component)
 
 ### Page Pros (`/pros`)
 - Page publique social proof : grille de merchants avec logo, couleurs, recompense, liens reseaux
@@ -736,7 +771,7 @@ import type { Merchant } from '@/types';
 | QRCodeEmail | QR code + kit reseaux sociaux (apres config programme, endpoint `/api/emails/qr-code` + cron morning). Section kit conditionnelle sur `rewardDescription`. |
 | FirstClientScriptEmail | Script verbal personnalise par shop_type J+2 post-config (cron morning) |
 | QuickCheckEmail | Check-in J+4 si 0 scans — 3 options diagnostic (cron morning) |
-| ChallengeCompletedEmail | Defi reussi 5 clients/3 jours — codes QARTECHALLENGE2026 + QARTEPROEHJT (cron morning) |
+| ChallengeCompletedEmail | ~~Defi reussi 5 clients/3 jours~~ — **DESACTIVE** (template conserve, logique cron supprimee) |
 
 ### Engagement & Milestones
 | Email | Declencheur |
@@ -773,13 +808,14 @@ import type { Merchant } from '@/types';
 | GuidedSignupEmail | Relance inscription incomplete T+24h (cron morning) |
 | LastChanceSignupEmail | Derniere chance inscription (cron morning) |
 
-### Headers Anti-spam
+### Headers Anti-spam & Delivrabilite
 ```typescript
 export const EMAIL_HEADERS = {
   'List-Unsubscribe': '<mailto:unsubscribe@getqarte.com?subject=unsubscribe>',
   'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
 };
 ```
+- **WhatsApp retire de tous les emails** (mars 2025) pour ameliorer la delivrabilite. Remplace par "Repondez a cet email". Seule exception : QRCodeEmail (contexte partage reseaux sociaux).
 
 ---
 

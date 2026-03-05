@@ -23,6 +23,10 @@ import {
   Smartphone,
   Users as UsersIcon,
   Zap,
+  Euro,
+  Stamp,
+  HelpCircle,
+  X,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -119,8 +123,12 @@ export default function ProgramPage() {
     facebookUrl: '',
     tiktokUrl: '',
     bookingUrl: '',
+    loyaltyMode: 'visit' as 'visit' | 'cagnotte',
     stampsRequired: 5,
     rewardDescription: '',
+    // Cagnotte mode
+    cagnottePercent: 10,
+    cagnotteTier2Percent: 15,
     // 2nd tier reward
     tier2Enabled: false,
     tier2StampsRequired: 0,
@@ -130,7 +138,8 @@ export default function ProgramPage() {
     doubleDaysOfWeek: [] as number[],
   });
 
-  // Track original stamps required for warning
+  // Track original values for warnings
+  const [originalLoyaltyMode, setOriginalLoyaltyMode] = useState<'visit' | 'cagnotte'>('visit');
   const [originalStampsRequired, setOriginalStampsRequired] = useState(10);
   const [showStampsWarning, setShowStampsWarning] = useState(false);
   const [tier2Error, setTier2Error] = useState('');
@@ -140,6 +149,8 @@ export default function ProgramPage() {
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
+  const [pendingModeSwitch, setPendingModeSwitch] = useState<'visit' | 'cagnotte' | null>(null);
+  const [modeHelp, setModeHelp] = useState<'visit' | 'cagnotte' | null>(null);
 
   // Auto-scroll to social section when coming from onboarding checklist
   useEffect(() => {
@@ -175,16 +186,20 @@ export default function ProgramPage() {
           facebookUrl: data.facebook_url || '',
           tiktokUrl: data.tiktok_url || '',
           bookingUrl: data.booking_url || '',
+          loyaltyMode: data.loyalty_mode || 'visit',
           stampsRequired: data.stamps_required || 5,
           rewardDescription: data.reward_description || '',
+          cagnottePercent: data.cagnotte_percent || 10,
+          cagnotteTier2Percent: data.cagnotte_tier2_percent || 15,
           tier2Enabled: data.tier2_enabled || false,
           tier2StampsRequired: data.tier2_stamps_required || 0,
           tier2RewardDescription: data.tier2_reward_description || '',
           doubleDaysEnabled: data.double_days_enabled || false,
           doubleDaysOfWeek: (() => { try { return JSON.parse(data.double_days_of_week || '[]'); } catch { return []; } })(),
         });
+        setOriginalLoyaltyMode(data.loyalty_mode || 'visit');
         setOriginalStampsRequired(data.stamps_required || 5);
-        if (!data.reward_description) {
+        if (!data.reward_description && !data.cagnotte_percent) {
           setIsFirstSetup(true);
         }
       }
@@ -249,7 +264,7 @@ export default function ProgramPage() {
 
   const handleSave = async () => {
     if (!merchant) return;
-    if (!formData.rewardDescription.trim()) {
+    if (formData.loyaltyMode !== 'cagnotte' && !formData.rewardDescription.trim()) {
       setRewardError(true);
       return;
     }
@@ -257,7 +272,7 @@ export default function ProgramPage() {
 
     // Validate tier 2
     if (formData.tier2Enabled) {
-      if (!formData.tier2RewardDescription.trim()) {
+      if (formData.loyaltyMode !== 'cagnotte' && !formData.tier2RewardDescription.trim()) {
         setTier2Error('Veuillez entrer la récompense du palier 2');
         return;
       }
@@ -277,6 +292,12 @@ export default function ProgramPage() {
 
     setSaving(true);
     try {
+      // Auto-generate reward_description for cagnotte mode (email compatibility)
+      const isCagnotte = formData.loyaltyMode === 'cagnotte';
+      const effectiveRewardDescription = isCagnotte
+        ? `${formData.cagnottePercent}% sur votre cagnotte fidélité`
+        : formData.rewardDescription.trim();
+
       const { error } = await supabase
         .from('merchants')
         .update({
@@ -289,15 +310,17 @@ export default function ProgramPage() {
           tiktok_url: normalizeSocialUrl(formData.tiktokUrl, 'tiktok') || null,
           booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
-          reward_description: formData.rewardDescription.trim(),
-          loyalty_mode: 'visit',
-          product_name: null,
-          max_quantity_per_scan: 1,
+          reward_description: effectiveRewardDescription,
+          loyalty_mode: formData.loyaltyMode,
+          cagnotte_percent: isCagnotte ? formData.cagnottePercent : null,
+          cagnotte_tier2_percent: isCagnotte && formData.tier2Enabled ? formData.cagnotteTier2Percent : null,
           tier2_enabled: formData.tier2Enabled,
           tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
-          tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null,
-          double_days_enabled: doubleDaysEnabled,
-          double_days_of_week: JSON.stringify(formData.doubleDaysOfWeek),
+          tier2_reward_description: isCagnotte
+            ? (formData.tier2Enabled ? `${formData.cagnotteTier2Percent}% sur votre cagnotte fidélité` : null)
+            : (formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null),
+          double_days_enabled: isCagnotte ? false : doubleDaysEnabled,
+          double_days_of_week: isCagnotte ? '[]' : JSON.stringify(formData.doubleDaysOfWeek),
         })
         .eq('id', merchant.id);
 
@@ -316,13 +339,17 @@ export default function ProgramPage() {
           tiktok_url: normalizeSocialUrl(formData.tiktokUrl, 'tiktok') || null,
           booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
-          reward_description: formData.rewardDescription.trim(),
-          loyalty_mode: 'visit',
+          reward_description: effectiveRewardDescription,
+          loyalty_mode: formData.loyaltyMode,
+          cagnotte_percent: isCagnotte ? formData.cagnottePercent : null,
+          cagnotte_tier2_percent: isCagnotte && formData.tier2Enabled ? formData.cagnotteTier2Percent : null,
           tier2_enabled: formData.tier2Enabled,
           tier2_stamps_required: formData.tier2Enabled ? formData.tier2StampsRequired : null,
-          tier2_reward_description: formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null,
-          double_days_enabled: doubleDaysEnabled,
-          double_days_of_week: JSON.stringify(formData.doubleDaysOfWeek),
+          tier2_reward_description: isCagnotte
+            ? (formData.tier2Enabled ? `${formData.cagnotteTier2Percent}% sur votre cagnotte fidélité` : null)
+            : (formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null),
+          double_days_enabled: isCagnotte ? false : doubleDaysEnabled,
+          double_days_of_week: isCagnotte ? '[]' : JSON.stringify(formData.doubleDaysOfWeek),
         };
         const { stripe_subscription_id, stripe_customer_id, scan_code, user_id, ...safeMerchant } = updatedMerchant;
         localStorage.setItem('qarte_merchant_cache', JSON.stringify({
@@ -528,7 +555,79 @@ export default function ProgramPage() {
 
           </div>
 
+          {/* Mode selector */}
           <div className="flex items-center gap-3 mt-4 mb-1">
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+            <h2 className="text-sm md:text-base font-bold text-gray-500 uppercase tracking-wider">Mode de fidélité</h2>
+            <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            {[
+              { mode: 'visit' as const, label: 'Passages', desc: 'Après un nombre de visites défini, votre client reçoit un cadeau de votre choix', icon: <Stamp className="w-5 h-5" /> },
+              { mode: 'cagnotte' as const, label: 'Cagnotte', desc: 'Les dépenses de votre client s\'accumulent sur une cagnotte fidélité', icon: <Euro className="w-5 h-5" /> },
+            ].map(({ mode, label, desc, icon }) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => {
+                  if (mode !== formData.loyaltyMode && !isFirstSetup && originalLoyaltyMode !== mode) {
+                    setPendingModeSwitch(mode);
+                    return;
+                  }
+                  setFormData({ ...formData, loyaltyMode: mode });
+                }}
+                className={`relative p-4 pb-10 rounded-2xl border-2 text-left transition-all duration-200 h-full ${
+                  formData.loyaltyMode === mode
+                    ? 'border-violet-500 bg-violet-50/60 shadow-md'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                {formData.loyaltyMode === mode && (
+                  <div className="absolute top-2 right-2">
+                    <div className="p-0.5 bg-violet-600 rounded-full">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+                )}
+                <div className={`p-2 rounded-xl w-fit mb-2 ${formData.loyaltyMode === mode ? 'bg-violet-100 text-violet-600' : 'bg-gray-100 text-gray-400'}`}>
+                  {icon}
+                </div>
+                <h3 className={`font-bold text-sm ${formData.loyaltyMode === mode ? 'text-gray-900' : 'text-gray-600'}`}>{label}</h3>
+                <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{desc}</p>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setModeHelp(mode);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      setModeHelp(mode);
+                    }
+                  }}
+                  className="absolute bottom-2 right-2 p-1.5 rounded-full text-gray-300 hover:text-violet-500 hover:bg-violet-50 transition-colors cursor-pointer"
+                  aria-label={`En savoir plus sur le mode ${label}`}
+                >
+                  <HelpCircle className="w-4 h-4" />
+                </div>
+              </button>
+            ))}
+          </div>
+
+          {!isFirstSetup && formData.loyaltyMode !== originalLoyaltyMode && (
+            <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5">
+              <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-800 leading-relaxed">
+                <strong>Changement de mode.</strong> Les passages de vos clientes sont conservés. En mode cagnotte, leur cumul EUR démarrera à 0.
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 mb-1">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
             <h2 className="text-sm md:text-base font-bold text-gray-500 uppercase tracking-wider">Récompenses</h2>
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
@@ -544,14 +643,70 @@ export default function ProgramPage() {
                 <p className="text-[11px] md:text-xs text-gray-500">Soyez généreux, nous conseillons 5 passages</p>
               </div>
             </div>
-            <MerchantSettingsForm
-              stampsRequired={formData.stampsRequired}
-              rewardDescription={formData.rewardDescription}
-              shopType={merchant?.shop_type}
-              onChange={handleLoyaltySettingsChange}
-            />
-            {rewardError && (
-              <p className="mt-2 text-sm text-red-600 font-medium">Veuillez entrer la r&eacute;compense avant d&apos;enregistrer</p>
+            {formData.loyaltyMode === 'cagnotte' ? (
+              <>
+                <MerchantSettingsForm
+                  stampsRequired={formData.stampsRequired}
+                  rewardDescription={`${formData.cagnottePercent}% sur votre cagnotte fidélité`}
+                  shopType={merchant?.shop_type}
+                  onChange={(v: LoyaltySettings) => {
+                  setFormData(prev => ({ ...prev, stampsRequired: v.stamps_required }));
+                  if (v.stamps_required > originalStampsRequired) setShowStampsWarning(true);
+                  else setShowStampsWarning(false);
+                }}
+                  hiddenReward
+                />
+                <div className="space-y-2.5 mt-4">
+                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-indigo-500" />
+                    Pourcentage cagnotte
+                  </label>
+                  <div className="relative w-fit">
+                    <Input
+                      type="number"
+                      min={1}
+                      max={100}
+                      step={1}
+                      value={formData.cagnottePercent}
+                      onChange={(e) => setFormData({ ...formData, cagnottePercent: parseInt(e.target.value) || 0 })}
+                      className="text-center font-bold text-lg h-12 border-2 w-[100px] pr-8"
+                    />
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400 pointer-events-none">%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-400">Suggestions :</span>
+                    {[5, 10, 15, 20].map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, cagnottePercent: n })}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                          formData.cagnottePercent === n
+                            ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-indigo-50'
+                        }`}
+                      >
+                        {n}%
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Après {formData.stampsRequired} passages, la cliente reçoit {formData.cagnottePercent}% sur sa cagnotte fidélité
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <MerchantSettingsForm
+                  stampsRequired={formData.stampsRequired}
+                  rewardDescription={formData.rewardDescription}
+                  shopType={merchant?.shop_type}
+                  onChange={handleLoyaltySettingsChange}
+                />
+                {rewardError && (
+                  <p className="mt-2 text-sm text-red-600 font-medium">Veuillez entrer la r&eacute;compense avant d&apos;enregistrer</p>
+                )}
+              </>
             )}
 
             {/* Warning when increasing stamps required */}
@@ -578,7 +733,9 @@ export default function ProgramPage() {
                 </div>
                 <div>
                   <h3 className="text-sm md:text-lg font-bold text-gray-900">2ème Palier <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
-                  <p className="text-[11px] md:text-xs text-gray-500">Points cumulés sans remise à zéro</p>
+                  <p className="text-[11px] md:text-xs text-gray-500">
+                    {formData.loyaltyMode === 'cagnotte' ? 'Un taux de cagnotte plus élevé après plus de passages' : 'Les passages continuent de compter après le 1er palier'}
+                  </p>
                 </div>
               </div>
               <button
@@ -604,10 +761,17 @@ export default function ProgramPage() {
                 <div className="p-4 rounded-xl bg-violet-50/50 border border-violet-100">
                   <p className="text-sm text-violet-700 flex items-start gap-2">
                     <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                    <span>
-                      <strong>Exemple :</strong> Si le 1er palier est à {formData.stampsRequired} points et le 2ème à {formData.tier2StampsRequired || '?'} points,
-                      le client débloque la 1ère récompense à {formData.stampsRequired} pts puis la 2ème à {formData.tier2StampsRequired || '?'} pts (cumul continu).
-                    </span>
+                    {formData.loyaltyMode === 'cagnotte' ? (
+                      <span>
+                        <strong>Comment ça marche :</strong> À {formData.stampsRequired} passages, la cliente reçoit {formData.cagnottePercent}% sur sa cagnotte fidélité.
+                        Son cumul repart à zéro, ses passages continuent. À {formData.tier2StampsRequired || '?'} passages, elle reçoit {formData.cagnotteTier2Percent}% (taux plus élevé).
+                      </span>
+                    ) : (
+                      <span>
+                        <strong>Exemple :</strong> Le client débloque la 1ère récompense à {formData.stampsRequired} passages, puis continue
+                        jusqu&apos;à {formData.tier2StampsRequired || '?'} passages pour la 2ème (cumul continu, sans remise à zéro).
+                      </span>
+                    )}
                   </p>
                 </div>
 
@@ -656,35 +820,76 @@ export default function ProgramPage() {
                   )}
                 </div>
 
-                <div className="space-y-2.5">
-                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <Gift className="w-4 h-4 text-violet-500" />
-                    Récompense offerte
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="Ex: Un menu offert, -30% sur votre commande..."
-                    value={formData.tier2RewardDescription}
-                    onChange={(e) => setFormData({ ...formData, tier2RewardDescription: e.target.value })}
-                    className="h-11"
-                  />
-                  <div className="flex flex-wrap gap-1.5">
-                    {(TIER2_REWARD_SUGGESTIONS[merchant?.shop_type || 'autre'] || TIER2_REWARD_SUGGESTIONS.autre).map((suggestion) => (
-                      <button
-                        key={suggestion}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, tier2RewardDescription: suggestion })}
-                        className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
-                          formData.tier2RewardDescription === suggestion
-                            ? 'bg-violet-100 border-violet-300 text-violet-700'
-                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600'
-                        }`}
-                      >
-                        {suggestion}
-                      </button>
-                    ))}
+                {formData.loyaltyMode === 'cagnotte' ? (
+                  <div className="space-y-2.5">
+                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-violet-500" />
+                      Pourcentage cagnotte palier 2
+                    </label>
+                    <div className="relative w-fit">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={100}
+                        step={1}
+                        value={formData.cagnotteTier2Percent}
+                        onChange={(e) => setFormData({ ...formData, cagnotteTier2Percent: parseInt(e.target.value) || 0 })}
+                        className="text-center font-bold text-lg h-12 border-2 w-[100px] pr-8"
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400 pointer-events-none">%</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">Suggestions :</span>
+                      {[10, 15, 20, 25].map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, cagnotteTier2Percent: n })}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                            formData.cagnotteTier2Percent === n
+                              ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                              : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-indigo-50'
+                          }`}
+                        >
+                          {n}%
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Après {formData.tier2StampsRequired || '?'} passages, la cagnotte passe à {formData.cagnotteTier2Percent}% (le cumul repart de zéro après le palier 1)
+                    </p>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                      <Gift className="w-4 h-4 text-violet-500" />
+                      Récompense offerte
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Ex: Un menu offert, -30% sur votre commande..."
+                      value={formData.tier2RewardDescription}
+                      onChange={(e) => setFormData({ ...formData, tier2RewardDescription: e.target.value })}
+                      className="h-11"
+                    />
+                    <div className="flex flex-wrap gap-1.5">
+                      {(TIER2_REWARD_SUGGESTIONS[merchant?.shop_type || 'autre'] || TIER2_REWARD_SUGGESTIONS.autre).map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, tier2RewardDescription: suggestion })}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                            formData.tier2RewardDescription === suggestion
+                              ? 'bg-violet-100 border-violet-300 text-violet-700'
+                              : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600'
+                          }`}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -818,8 +1023,8 @@ export default function ProgramPage() {
             </div>
           </div>
 
-          {/* Jours x2 — Collapsible */}
-          <div className="bg-white/80 backdrop-blur-xl border border-amber-100 rounded-2xl shadow-sm overflow-hidden">
+          {/* Jours x2 — Collapsible (hidden in cagnotte mode) */}
+          <div className={`bg-white/80 backdrop-blur-xl border border-amber-100 rounded-2xl shadow-sm overflow-hidden ${formData.loyaltyMode === 'cagnotte' ? 'hidden' : ''}`}>
             <button
               type="button"
               onClick={() => setDoubleDaysOpen(!doubleDaysOpen)}
@@ -952,6 +1157,108 @@ export default function ProgramPage() {
       <div className="hidden md:block h-16" />
 
       {/* Test Scan Modal — shown after first program save */}
+      {/* Mode switch confirmation modal */}
+      {pendingModeSwitch && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 text-center animate-in zoom-in-95 duration-300">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-200/50">
+              <AlertTriangle className="w-7 h-7 text-white" />
+            </div>
+
+            <h3 className="text-lg font-bold text-gray-900 mb-2">
+              Changer de mode ?
+            </h3>
+
+            <p className="text-gray-500 text-sm mb-2 leading-relaxed">
+              Passer en mode <strong>{pendingModeSwitch === 'cagnotte' ? 'Cagnotte' : 'Passages'}</strong> affectera l&apos;affichage pour vos clients existants.
+            </p>
+
+            <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-5">
+              <p className="text-xs text-amber-800 leading-relaxed">
+                Les passages de vos clients sont <strong>conservés</strong>.
+                {pendingModeSwitch === 'cagnotte'
+                  ? ' Leur cumul en euros démarrera à 0 €.'
+                  : ' Leur cumul en euros sera perdu.'}
+              </p>
+            </div>
+
+            <button
+              onClick={() => {
+                setFormData({ ...formData, loyaltyMode: pendingModeSwitch });
+                setPendingModeSwitch(null);
+              }}
+              className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Confirmer le changement
+            </button>
+
+            <button
+              onClick={() => setPendingModeSwitch(null)}
+              className="mt-3 w-full py-2.5 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Mode help modal */}
+      {modeHelp && (
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setModeHelp(null)}>
+          <div
+            className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl p-5 sm:p-6 animate-in slide-in-from-bottom sm:zoom-in-95 duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-lg shadow-violet-200/50">
+                  {modeHelp === 'visit' ? <Stamp className="w-5 h-5 text-white" /> : <Euro className="w-5 h-5 text-white" />}
+                </div>
+                <h3 className="text-base font-bold text-gray-900">
+                  {modeHelp === 'visit' ? 'Mode Passages' : 'Mode Cagnotte'}
+                </h3>
+              </div>
+              <button
+                onClick={() => setModeHelp(null)}
+                className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm font-semibold text-violet-700 mb-3">Comment ça marche ?</p>
+
+            <ul className="space-y-3 mb-5">
+              {(modeHelp === 'visit' ? [
+                { text: 'Chaque visite = 1 tampon sur la carte de votre client' },
+                { text: 'Après X passages (ex : 10), il débloque un cadeau que vous définissez' },
+                { text: 'Exemples de cadeaux : un brushing offert, -30% sur une prestation, un soin gratuit' },
+                { text: 'Simple et efficace — idéal si vos prestations ont des prix variés' },
+              ] : [
+                { text: 'Chaque visite, le montant dépensé par le client est enregistré' },
+                { text: 'Après X passages, il reçoit un % de ses dépenses cumulées en réduction' },
+                { text: 'Exemple : après 8 passages et 320 € dépensés, avec 10% de cagnotte → 32 € de réduction' },
+                { text: 'Plus le client dépense, plus sa récompense est élevée — idéal pour encourager les gros paniers' },
+              ]).map((item, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-bold text-violet-600">{i + 1}</span>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">{item.text}</p>
+                </li>
+              ))}
+            </ul>
+
+            <button
+              onClick={() => setModeHelp(null)}
+              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Compris
+            </button>
+          </div>
+        </div>
+      )}
+
       {showTestModal && merchant && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl p-6 text-center animate-in zoom-in-95 duration-300">

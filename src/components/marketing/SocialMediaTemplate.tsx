@@ -15,6 +15,10 @@ interface SocialMediaTemplateProps {
   tier2Enabled?: boolean;
   tier2StampsRequired?: number | null;
   tier2RewardDescription?: string | null;
+  // Cagnotte
+  loyaltyMode?: 'visit' | 'cagnotte';
+  cagnottePercent?: number | null;
+  cagnotteTier2Percent?: number | null;
 }
 
 export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplateProps>(
@@ -30,13 +34,19 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
       tier2Enabled = false,
       tier2StampsRequired,
       tier2RewardDescription,
+      loyaltyMode = 'visit',
+      cagnottePercent,
+      cagnotteTier2Percent,
     },
     ref
   ) => {
     // 4:5 ratio (Instagram portrait)
     const width = 400 * scale;
     const height = 500 * scale;
-    const hasTwoTiers = tier2Enabled && tier2StampsRequired && tier2RewardDescription;
+    const isCagnotte = loyaltyMode === 'cagnotte';
+    const hasTwoTiers = tier2Enabled && tier2StampsRequired && (tier2RewardDescription || (isCagnotte && cagnotteTier2Percent));
+    const displayReward = isCagnotte ? `${cagnottePercent}% sur votre cagnotte fidélité` : rewardDescription;
+    const displayTier2Reward = isCagnotte ? `${cagnotteTier2Percent}% sur votre cagnotte fidélité` : tier2RewardDescription;
 
     const getStampsText = (stamps: number) => {
       return `${stamps} passage${stamps > 1 ? 's' : ''}`;
@@ -213,7 +223,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                       marginBottom: `${4 * scale}px`,
                     }}
                   >
-                    {rewardDescription}
+                    {displayReward}
                   </p>
                   <p
                     className="font-bold"
@@ -240,7 +250,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                     >
                       Palier 2
                     </span>
-                    <span style={{ fontSize: `${8 * scale}px` }}>⭐</span>
+                    <span style={{ fontSize: `${8 * scale}px` }}>&#11088;</span>
                   </div>
                   <p
                     className="font-black leading-tight"
@@ -251,7 +261,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                       marginBottom: `${4 * scale}px`,
                     }}
                   >
-                    {tier2RewardDescription}
+                    {displayTier2Reward}
                   </p>
                   <p
                     className="font-bold"
@@ -272,7 +282,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                     margin: '0 auto',
                   }}
                 >
-                  {rewardDescription}
+                  {displayReward}
                 </p>
                 <p
                   className="font-bold mt-2"

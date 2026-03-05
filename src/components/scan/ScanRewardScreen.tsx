@@ -1,8 +1,8 @@
 'use client';
 
-import { Gift, Trophy, Loader2 } from 'lucide-react';
+import { Gift, Trophy, Loader2, Coins } from 'lucide-react';
 import { motion } from 'framer-motion';
-import type { Merchant, LoyaltyCard } from '@/types';
+import type { Merchant, LoyaltyCard, CagnotteData } from '@/types';
 
 interface ScanRewardScreenProps {
   merchant: Merchant;
@@ -12,6 +12,7 @@ interface ScanRewardScreenProps {
   primaryColor: string;
   onRedeem: () => void;
   onSkip: () => void;
+  cagnotteData?: CagnotteData | null;
 }
 
 export default function ScanRewardScreen({
@@ -22,7 +23,9 @@ export default function ScanRewardScreen({
   primaryColor,
   onRedeem,
   onSkip,
+  cagnotteData,
 }: ScanRewardScreenProps) {
+  const isCagnotte = !!cagnotteData;
   const isTier2 = rewardTier === 2;
   const gradient = isTier2
     ? 'linear-gradient(135deg, #8b5cf6, #6d28d9)'
@@ -31,13 +34,21 @@ export default function ScanRewardScreen({
   const shadow = isTier2
     ? '0 8px 24px -4px rgba(139,92,246,0.4)'
     : '0 8px 24px -4px rgba(16,185,129,0.4)';
-  const TierIcon = isTier2 ? Trophy : Gift;
-  const rewardLabel = isTier2
-    ? 'Palier 2 — Votre récompense'
-    : merchant.tier2_enabled
-      ? 'Palier 1 — Votre récompense'
-      : 'Votre récompense';
-  const rewardText = isTier2 ? merchant.tier2_reward_description : merchant.reward_description;
+  const TierIcon = isCagnotte ? Coins : (isTier2 ? Trophy : Gift);
+  const rewardLabel = isCagnotte
+    ? (isTier2
+      ? 'Palier 2 — Votre cagnotte'
+      : merchant.tier2_enabled
+        ? 'Palier 1 — Votre cagnotte'
+        : 'Votre cagnotte')
+    : (isTier2
+      ? 'Palier 2 — Votre récompense'
+      : merchant.tier2_enabled
+        ? 'Palier 1 — Votre récompense'
+        : 'Votre récompense');
+  const rewardText = isCagnotte && cagnotteData.rewardValue
+    ? `${cagnotteData.rewardValue.toFixed(2).replace('.', ',')} € sur votre cagnotte fidélité`
+    : isTier2 ? merchant.tier2_reward_description : merchant.reward_description;
   const stampsRequired = isTier2 ? merchant.tier2_stamps_required : merchant.stamps_required;
 
   return (
@@ -121,12 +132,14 @@ export default function ScanRewardScreen({
             ) : (
               <>
                 <TierIcon className="w-6 h-6" />
-                Utiliser ma récompense
+                {isCagnotte ? 'Récupérer ma cagnotte' : 'Utiliser ma récompense'}
               </>
             )}
           </button>
 
-          <p className="mt-4 text-sm text-gray-400">Montrez cet écran au commerçant</p>
+          <p className="mt-4 text-sm text-gray-400">
+            {isCagnotte ? 'Présentez cet écran pour valider votre cagnotte' : 'Montrez cet écran au commerçant'}
+          </p>
         </div>
       </motion.div>
 

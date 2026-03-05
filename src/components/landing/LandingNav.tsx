@@ -42,7 +42,6 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
             {!minimal && (
               <>
-                <a href="/pros" className="hover:text-indigo-600 transition-colors link-underline">Pros sur Qarte</a>
                 <a href="/#pricing" className="hover:text-indigo-600 transition-colors link-underline">Tarifs</a>
                 <a href="/contact" className="hover:text-indigo-600 transition-colors link-underline">Contact</a>
                 <a href="/auth/merchant" className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold border border-indigo-200 rounded-lg transition-colors">S&apos;identifier</a>
@@ -96,13 +95,6 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
                 className="md:hidden bg-white border-t border-gray-100 overflow-hidden"
               >
                 <div className="px-6 py-4 space-y-3">
-                  <a
-                    href="/pros"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block py-2 text-gray-600 hover:text-indigo-600 font-medium transition-colors"
-                  >
-                    Pros sur Qarte
-                  </a>
                   <a
                     href="/#pricing"
                     onClick={() => setMobileMenuOpen(false)}

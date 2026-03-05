@@ -49,6 +49,9 @@ function DashboardLayoutContent({
   const supabase = getSupabase();
   const { merchant, loading } = useMerchant();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => { setHasMounted(true); }, []);
 
   // Swipe-to-close
   const SWIPE_CLOSE_THRESHOLD = 60;
@@ -84,7 +87,7 @@ function DashboardLayoutContent({
   }, [shouldRedirect, router]);
 
 
-  if (loading) {
+  if (!hasMounted || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

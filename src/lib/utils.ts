@@ -76,6 +76,14 @@ export function formatDateTime(date: string | Date): string {
   return format(d, 'dd/MM/yyyy à HH:mm', { locale: fr });
 }
 
+export function formatEUR(amount: number): string {
+  return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+export function calculateCashback(amount: number, percent: number): number {
+  return Math.round(amount * percent) / 100;
+}
+
 export function formatRelativeTime(date: string | Date): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return formatDistanceToNow(d, { addSuffix: true, locale: fr });

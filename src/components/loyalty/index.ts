@@ -6,6 +6,7 @@ export { default as MemberCardModal } from './MemberCardModal';
 export { default as InstallPrompts } from './InstallPrompts';
 export { default as ScanSuccessStep } from './ScanSuccessStep';
 export { default as StampsSection } from './StampsSection';
+export { default as CagnotteSection } from './CagnotteSection';
 export { default as RewardCard } from './RewardCard';
 export { default as RedeemModal } from './RedeemModal';
 export { default as StickyRedeemBar } from './StickyRedeemBar';

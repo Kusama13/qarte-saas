@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { CreditCard, Gift, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sparkle, sparkleGrand, sparkleMedium, sparkleSubtle } from '@/lib/sparkles';
-import type { Merchant, LoyaltyCard, Customer } from '@/types';
+import type { Merchant, LoyaltyCard, Customer, CagnotteData } from '@/types';
 
 interface ScanSuccessStepProps {
   merchant: Merchant;
@@ -16,6 +16,7 @@ interface ScanSuccessStepProps {
   previousStamps: number;
   tier1Redeemed: boolean;
   tier2Redeemed: boolean;
+  cagnotteData?: CagnotteData | null;
 }
 
 // --- Animated SVG Checkmark ---
@@ -116,12 +117,14 @@ export default function ScanSuccessStep({
   previousStamps,
   tier1Redeemed,
   tier2Redeemed,
+  cagnotteData,
 }: ScanSuccessStepProps) {
   const router = useRouter();
   const primaryColor = merchant.primary_color;
   const secondaryColor = merchant.secondary_color;
   const currentStamps = loyaltyCard.current_stamps;
   const stampsRequired = merchant.stamps_required || 10;
+  const isCagnotte = !!cagnotteData;
 
   const [showContent, setShowContent] = useState(false);
   const [displayedStamps, setDisplayedStamps] = useState(previousStamps);
@@ -301,9 +304,18 @@ export default function ScanSuccessStep({
                 <span className="text-xl font-bold text-gray-300">/{displayTarget}</span>
               </div>
 
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-5">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
                 Passages cumulés{tier2On && tier1Done ? ' · Palier 2' : tier2On ? ' · Palier 1' : ''}
               </p>
+
+              {isCagnotte && (
+                <p className="text-sm font-bold mb-4" style={{ color: primaryColor }}>
+                  {cagnotteData.currentAmount.toFixed(2).replace('.', ',')} € cumulés
+                  <span className="text-gray-400 font-normal"> (+{cagnotteData.amountAdded.toFixed(2).replace('.', ',')} €)</span>
+                </p>
+              )}
+
+              {!isCagnotte && <div className="mb-5" />}
 
               {/* Progress bar that animates forward */}
               <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">

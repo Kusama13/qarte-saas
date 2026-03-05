@@ -25,6 +25,7 @@ import {
   Loader2,
   X,
   Trophy,
+  Wallet,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button, Input, Modal } from '@/components/ui';
@@ -45,6 +46,7 @@ interface Merchant {
   created_at: string;
   reward_description: string | null;
   logo_url: string | null;
+  loyalty_mode: 'visit' | 'cagnotte';
 }
 
 interface ActionMerchant extends Merchant {
@@ -113,6 +115,7 @@ export default function AdminDashboardPage() {
     totalCustomers: 0,
     weeklyActiveMerchants: 0,
     activationRate: 0,
+    cagnotteMerchants: 0,
   });
   const [recentMerchants, setRecentMerchants] = useState<Merchant[]>([]);
 
@@ -173,10 +176,10 @@ export default function AdminDashboardPage() {
       { data: allVisits },
       { data: recentMerchantsList },
     ] = await Promise.all([
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, trial_ends_at, created_at, reward_description, logo_url'),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode'),
       supabase.from('super_admins').select('user_id'),
       supabase.from('visits').select('merchant_id, visited_at'),
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, trial_ends_at, created_at, reward_description, logo_url').order('created_at', { ascending: false }).limit(10),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode').order('created_at', { ascending: false }).limit(10),
     ]);
 
     // Fetch merchant emails via API
@@ -242,6 +245,8 @@ export default function AdminDashboardPage() {
     const recentActivated = recentCreated.filter((m: Merchant) => scans30dSet.has(m.id));
     const activationRate = recentCreated.length > 0 ? Math.round((recentActivated.length / recentCreated.length) * 100) : 0;
 
+    const cagnotte = merchants.filter((m: Merchant) => m.loyalty_mode === 'cagnotte');
+
     setStats({
       totalMerchants: merchants.length,
       trialMerchants: trial.length,
@@ -250,6 +255,7 @@ export default function AdminDashboardPage() {
       totalCustomers: totalCustomers || 0,
       weeklyActiveMerchants: weeklyActive.size,
       activationRate,
+      cagnotteMerchants: cagnotte.length,
     });
 
     // Helper to enrich merchant for action segments
@@ -637,13 +643,14 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         <StatCard label="Commerçants" value={stats.totalMerchants} icon={Store} color="emerald" />
         <StatCard label="MRR" value={`${stats.activeMerchants * 19}€`} icon={CreditCard} color="pink" />
         <StatCard label="Activation 30j" value={`${stats.activationRate}%`} icon={TrendingUp} color="indigo" />
         <StatCard label="Actifs 7j" value={stats.weeklyActiveMerchants} icon={Users} color="blue" />
         <StatCard label="En essai" value={stats.trialMerchants} icon={Clock} color="amber" />
         <StatCard label="Conversion" value={`${conversionRate}%`} icon={Percent} color="green" />
+        <StatCard label="Cagnotte" value={stats.cagnotteMerchants} icon={Wallet} color="purple" />
       </div>
 
       {/* Challenge progress */}
@@ -1176,7 +1183,7 @@ function StatCard({
   label: string;
   value: string | number;
   icon: React.ElementType;
-  color: 'emerald' | 'amber' | 'indigo' | 'pink' | 'blue' | 'green';
+  color: 'emerald' | 'amber' | 'indigo' | 'pink' | 'blue' | 'green' | 'purple';
 }) {
   const colorMap = {
     emerald: 'bg-emerald-50 text-emerald-600',
@@ -1185,6 +1192,7 @@ function StatCard({
     pink: 'bg-pink-50 text-pink-600',
     blue: 'bg-blue-50 text-blue-600',
     green: 'bg-green-50 text-green-600',
+    purple: 'bg-purple-50 text-purple-600',
   };
 
   return (
