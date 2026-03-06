@@ -58,7 +58,7 @@ src/
 │   ├── landing/           # 17 composants landing (Hero, SocialProof, LoyaltyModes, BentoFeatures, Testimonials, Pricing, FAQ, Footer...)
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
-│   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal (inline name/birthday edit, pills header), CustomerRewardsTab, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
+│   ├── dashboard/         # CustomerManagementModal (inline name/birthday edit, pills header, stepper +/- ajustement, banner succes inline), CustomerAdjustTab, CustomerRewardsTab, CustomerHistoryTab, CustomerDangerZone, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
 │   ├── loyalty/           # Composants fidelite (InstallPrompts, HistorySection, ExclusiveOffer, MemberCardModal, StampsSection, RewardCard, RedeemModal, StickyRedeemBar, SocialLinks, ScanSuccessStep, CardSkeleton, CardHeader, BirthdaySection, VoucherRewards, VoucherModals, ReviewModal, ReviewCard)
 │   ├── marketing/         # SocialMediaTemplate
 │   └── analytics/         # GTM, tracking, FacebookPixel, MicrosoftClarity
@@ -203,8 +203,14 @@ public/
 - `reward_percent` (NUMERIC 5,2 — % applique, cagnotte)
 - `reward_value` (NUMERIC 10,2 — valeur EUR calculee, cagnotte)
 
+### point_adjustments
+- `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
+- `adjustment` (INTEGER), `reason` (TEXT)
+- `adjusted_by` (UUID), `adjusted_at` (TIMESTAMPTZ)
+- Note: colonne `adjusted_at` (pas `created_at`)
+
 ### Autres tables
-- `point_adjustments`, `banned_numbers`
+- `banned_numbers`
 - `push_subscriptions`, `push_history`, `scheduled_push`
 - `pending_email_tracking`
 - `member_programs`, `member_cards`
@@ -672,6 +678,7 @@ npm run email
 - Gestion programme fidelite (suggestions par shop_type, 10 palettes couleurs)
 - Page QR code & Kit promo (2 onglets : QR code + Kit reseaux sociaux avec SocialMediaTemplate)
 - Gestion clients — 4 filtres (Notifiables, Inactifs 21j+, Proches recompense, Recompense dispo) + recherche nom/telephone + edit inline nom/prenom/anniversaire
+- CustomerManagementModal : 4 onglets (Points, Cadeaux, Historique, Supprimer). Stepper +/- pour ajustement points, input raison, banner succes inline 2s (modal reste ouvert). Delete/ban ferme le modal. Historique combine visits + adjustments + redemptions trie par date, editable (visits).
 - Marketing (push notifications)
 - Page abonnement avec countdown timer + polling 1s (30 tentatives max, early exit si deja active) apres retour checkout/portail Stripe + prix journalier (0,63€/jour mensuel, 0,52€/jour annuel)
 - Settings : badge abonnement Pro (Crown icon, mensuel/annuel, lien Gérer → /dashboard/subscription)
