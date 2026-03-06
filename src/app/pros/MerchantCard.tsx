@@ -31,7 +31,7 @@ export default function MerchantCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, delay: Math.min(index * 0.07, 1.4), ease: 'easeOut' }}
     >
-      <Link href={`/p/${slug}`} className="block group">
+      <Link href={`/p/${slug}`} rel="nofollow" className="block group">
         <div
           className="rounded-2xl overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-xl"
           style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}

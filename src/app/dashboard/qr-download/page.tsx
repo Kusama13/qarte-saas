@@ -717,18 +717,18 @@ export default function QRDownloadPage() {
               <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
                 <Users className="w-6 h-6 text-white" />
               </div>
-              <p className="text-lg font-black text-gray-900">Des centaines de salons cartonnent</p>
+              <p className="text-lg font-black text-gray-900">Votre page pro est en ligne</p>
               <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-                Gr&acirc;ce &agrave; leur programme de fid&eacute;lit&eacute;, ils fid&eacute;lisent plus et remplissent leur agenda. D&eacute;couvrez leurs pages pro.
+                Vos clients peuvent d&eacute;couvrir votre programme et vos r&eacute;compenses. Partagez-la sur vos r&eacute;seaux.
               </p>
               <a
-                href="/pros"
+                href={`/p/${merchant.slug}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setShowSocialModal(false)}
                 className="mt-5 w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-indigo-200 inline-block"
               >
-                Voir les pages pro
+                Voir ma page pro
               </a>
               <button
                 onClick={() => setShowSocialModal(false)}

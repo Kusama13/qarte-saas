@@ -52,12 +52,10 @@ src/
 │   ├── customer/          # Pages client
 │   ├── scan/[code]/       # Scan QR dynamique
 │   ├── boutique/          # Page boutique carte NFC (presentation + lien Stripe)
-│   ├── essai-gratuit/     # Landing offre essai (Facebook Ads)
-│   ├── ebook/             # Landing ebook (lead generation)
 │   └── page.tsx           # Landing page (composition de composants)
 │
 ├── components/
-│   ├── landing/           # 12 composants landing (Hero, Features, Pricing, FAQ, FooterCta, FooterDark...)
+│   ├── landing/           # 17 composants landing (Hero, SocialProof, LoyaltyModes, BentoFeatures, Testimonials, Pricing, FAQ, Footer...)
 │   ├── ui/                # Composants UI (Button, Input, Modal, Select...)
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
 │   ├── dashboard/         # AdjustPointsModal, CustomerManagementModal (inline name/birthday edit, pills header), CustomerRewardsTab, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
@@ -74,7 +72,7 @@ src/
 │   ├── scripts.ts        # Scripts verbaux par shop_type (emails + dashboard)
 │   └── utils.ts          # Helpers (PHONE_CONFIG, formatPhoneNumber, validatePhone, displayPhoneNumber, generateReferralCode, suggestEmailCorrection, EMAIL_DOMAINS)
 │
-├── emails/               # Templates React Email (28 templates + BaseLayout)
+├── emails/               # Templates React Email (33 templates + BaseLayout)
 │   ├── BaseLayout.tsx             # Layout de base (header violet, footer)
 │   ├── WelcomeEmail.tsx           # Bienvenue (urgence + temoignage)
 │   ├── IncompleteSignupEmail.tsx  # Relance inscription +1h
@@ -104,7 +102,11 @@ src/
 │   ├── GuidedSignupEmail.tsx      # Relance inscription incomplete T+24h
 │   ├── LastChanceSignupEmail.tsx   # Derniere chance inscription
 │   ├── ReactivationEmail.tsx      # Win-back J+7/14/30 (codes promo)
-│   └── EbookEmail.tsx             # Telechargement ebook
+│   ├── AutoSuggestRewardEmail.tsx  # Suggestion recompense J+5 si non configuree (par shop_type)
+│   ├── BirthdayNotificationEmail.tsx # Notification merchant : clients fetant leur anniversaire (cron)
+│   ├── GracePeriodSetupEmail.tsx   # Grace period : offre setup done-for-you (J+10)
+│   ├── ProductUpdateEmail.tsx      # Newsletter produit hebdomadaire
+│   └── SetupForYouEmail.tsx        # Setup assiste T+72h si inscription incomplete
 │
 ├── hooks/
 │   └── useInView.ts     # Hook IntersectionObserver (landing)
@@ -120,7 +122,7 @@ docs/
 └── AUDIT-SCALABILITE.md  # Audit scalabilite (DB, API, cron, frontend)
 
 supabase/
-└── migrations/           # 51 migrations SQL
+└── migrations/           # 52 migrations SQL
     ├── 001-025           # Schema initial + fixes
     ├── 026-033           # Trial, spelling, reactivation, country, shield, referral
     ├── 034               # Trial 7 jours (down from 15)
@@ -143,7 +145,6 @@ supabase/
 
 public/
 ├── images/              # Images statiques (mockups, temoignages, email-banner)
-├── ebooks/              # Ressources ebook
 └── sw.js                # Service worker PWA
 ```
 
@@ -520,8 +521,8 @@ npm run email
 
 | Fichier | Description |
 |---------|-------------|
-| `src/app/page.tsx` | Landing page (8 sections: Hero, Referral, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer) |
-| `src/components/landing/` | 13 composants landing (Hero, Referral, Features, HowItWorks, Testimonials, Pricing, FAQ, Footer + utilitaires) |
+| `src/app/page.tsx` | Landing page (8 sections: Hero, SocialProof, LoyaltyModes, BentoFeatures, Testimonials, Pricing, FAQ, Footer) |
+| `src/components/landing/` | 13 composants landing (Hero, SocialProof, LoyaltyModes, BentoFeatures, Testimonials, Pricing, FAQ, Footer + utilitaires) |
 | `src/middleware.ts` | Protection routes authentifiees |
 | `src/lib/supabase.ts` | Client Supabase |
 | `src/lib/stripe.ts` | Client Stripe (mensuel + annuel) |
@@ -538,7 +539,7 @@ npm run email
 | `src/app/api/referrals/route.ts` | API parrainage client (GET info + POST inscription) |
 | `src/app/api/vouchers/use/route.ts` | API consommation voucher + auto-creation parrain |
 | `src/app/dashboard/referrals/page.tsx` | Dashboard parrainage (config + stats + tableau) |
-| `supabase/migrations/` | 51 migrations SQL |
+| `supabase/migrations/` | 52 migrations SQL |
 | `src/app/api/cagnotte/checkin/route.ts` | API checkin cagnotte (montant + cashback) |
 | `src/app/api/cagnotte/redeem/route.ts` | API redeem cagnotte (merchant auth) |
 | `src/app/api/cagnotte/redeem-public/route.ts` | API redeem cagnotte (client auth) |
@@ -626,22 +627,19 @@ npm run email
   - Badges flottants : avis Google, point ajoute, parrainage, notification push
   - Menu desktop/mobile : Tarifs, Contact, Espace Pro
 - SocialProof : "Elles fidelisent avec Qarte" (bandeau defilant top merchants)
-- HowItWorks : "Pour commencer, rien de plus simple." (3 etapes)
-- Referral : "Chaque client vous en ramene un autre"
-  - 3 cartes visuelles (Elle partage → Son amie rejoint → Les 2 recompensees)
-  - Stats (1 clic, x2 recompensees, 0€ de pub)
-- AIReengagement : "Vos clients oublient ? Ils reviennent quand meme" (relance, anniversaires, evenements)
+- LoyaltyModes : "Un programme qui s'adapte a ton salon."
+  - 2 cartes : Mode Passages (grille tampons, brushing offert) vs Mode Cagnotte (barre progres, 10% cagnotte cumulee, icone Wallet + badge €)
+  - CTA "Essayer gratuitement pendant 7 jours" + "Sans carte bancaire"
+- BentoFeatures : grille bento (QR/NFC compact, carte fidelite, personnalisation, relance inactifs, etc.)
 - Testimonials : "Elles en parlent mieux que nous" (4 conversations WhatsApp/iMessage/Instagram)
 - Pricing : "Un prix, tout inclus" — 19€/mois, CTA "Lancer mon essai gratuit"
 - FAQ : "On repond a toutes vos questions" (11 questions dont parrainage) + WhatsApp CTA
 - Footer : compose de `FooterCta` (CTA "Rejoignez les pros") + `FooterDark` (dark footer 4 colonnes : Logo, Support contact, Liens rapides, Reseaux sociaux). Les 2 composants sont reutilisables independamment.
 - ScrollToTopButton : bottom-24 mobile (au-dessus sticky), bottom-6 desktop
 - Ton amical et direct ("On s'occupe du reste", "On gere pour vous", "c'est promis")
-- ComparisonSection retiree du flow (fichier conserve)
 - Blog SEO : 3 articles (coiffure, onglerie, institut) avec images
-- Page comparatif `/qarte-vs-carte-papier`
 - JSON-LD structured data : Organization + SoftwareApplication (layout.tsx)
-- Sitemap : /, /pricing, /essai-gratuit, /qarte-vs-carte-papier, /blog, 3 articles blog, /ebook, /contact, /boutique, /cgv, /mentions-legales, /politique-confidentialite
+- Sitemap : /, /pricing, /blog, 3 articles blog, /contact, /pros, /auth/merchant/signup (9 pages)
 - Pages legales (cgv, mentions-legales, politique-confidentialite) : clic droit desactive via `NoRightClick` wrapper
 
 ### Wallet Client (`/customer/cards`)
@@ -652,12 +650,6 @@ npm run email
 - Chaque carte : header colore merchant (`linear-gradient(135deg, primary_color, primary_colorcc)`) + section blanche progress bar + texte "X sur Y passages · reward_description"
 - Etat "recompense prete" : glow couleur merchant via `boxShadow` inline + badge "Pret !" dans header (remplace ChevronRight)
 - Dual tier : 2 barres empilees avec labels Palier 1 / Palier 2 (Trophy icon)
-
-### Demo (`/demo`)
-- Galerie 3 cartes fictives : coiffeur, onglerie, institut
-- Selecteur de type de commerce
-- Lien vers preview carte (`/customer/card/demo-{type}?preview=true&demo=true`)
-- CTA "Creer mon programme gratuit"
 
 ### Admin (`/admin`)
 - Dashboard : metriques startup (MRR, churn, ARPU, LTV) + segments d'action lifecycle (trial expiring, inactive, canceling, past_due)
@@ -757,7 +749,7 @@ import type { Merchant } from '@/types';
 
 ---
 
-## 19. Emails Transactionnels (28 templates)
+## 19. Emails Transactionnels (33 templates)
 
 ### Onboarding & Activation
 | Email | Declencheur |
@@ -804,9 +796,13 @@ import type { Merchant } from '@/types';
 ### Autre
 | Email | Declencheur |
 |-------|-------------|
-| EbookEmail | Telechargement ebook |
 | GuidedSignupEmail | Relance inscription incomplete T+24h (cron morning) |
 | LastChanceSignupEmail | Derniere chance inscription (cron morning) |
+| AutoSuggestRewardEmail | Suggestion recompense J+5 si non configuree, par shop_type (cron morning) |
+| BirthdayNotificationEmail | Notification merchant : clients fetant leur anniversaire aujourd'hui (cron morning) |
+| GracePeriodSetupEmail | Grace period : offre setup done-for-you J+10 (cron morning) |
+| ProductUpdateEmail | Newsletter produit hebdomadaire |
+| SetupForYouEmail | Setup assiste T+72h si inscription incomplete (cron morning) |
 
 ### Headers Anti-spam & Delivrabilite
 ```typescript
