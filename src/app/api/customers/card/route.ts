@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
         .from('point_adjustments')
         .select('*')
         .eq('loyalty_card_id', card.id)
-        .order('created_at', { ascending: false })
+        .order('adjusted_at', { ascending: false })
         .limit(20),
 
       // Member card with program info

@@ -26,7 +26,7 @@ interface Visit {
 
 interface PointAdjustment {
   id: string;
-  created_at: string;
+  adjusted_at: string;
   adjustment: number;
   reason: string | null;
 }
@@ -79,9 +79,9 @@ export function CustomerHistoryTab({
           .limit(50),
         supabase
           .from('point_adjustments')
-          .select('id, created_at, adjustment, reason')
+          .select('id, adjusted_at, adjustment, reason')
           .eq('loyalty_card_id', loyaltyCardId)
-          .order('created_at', { ascending: false })
+          .order('adjusted_at', { ascending: false })
           .limit(50),
         supabase
           .from('redemptions')
@@ -152,7 +152,7 @@ export function CustomerHistoryTab({
     ...visits.map((v) => ({ type: 'visit' as const, date: v.visited_at, points: v.points_earned, id: v.id, tier: undefined as number | undefined, reason: undefined as string | null | undefined, amount_spent: v.amount_spent })),
     ...adjustments.map((a) => ({
       type: 'adjustment' as const,
-      date: a.created_at,
+      date: a.adjusted_at,
       points: a.adjustment,
       reason: a.reason,
       id: a.id,

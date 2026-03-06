@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Gift, Trophy, Coins } from 'lucide-react';
-import { Button, Input, Textarea } from '@/components/ui';
+import { Gift, Trophy, Coins, Minus, Plus } from 'lucide-react';
+import { Button, Input } from '@/components/ui';
 import { formatEUR, calculateCashback } from '@/lib/utils';
 
 interface TierProgressProps {
@@ -136,6 +136,9 @@ export function CustomerAdjustTab({
         throw new Error(data.error || 'Erreur lors de l\'ajustement');
       }
 
+      setAdjustment(0);
+      setAmountAdjustment('');
+      setReason('');
       onSuccess(isCagnotte ? 'Ajustement effectué !' : 'Points ajustés !');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'ajustement');
@@ -258,21 +261,50 @@ export function CustomerAdjustTab({
         <label className="block mb-1.5 text-sm font-medium text-gray-700">
           Nombre de passages
         </label>
-        <Input
-          type="number"
-          placeholder="Ex: 2 ou -3"
-          value={adjustment === 0 ? '' : adjustment}
-          onChange={(e) => {
-            let val = parseInt(e.target.value) || 0;
-            if (val < -currentStamps) val = -currentStamps;
-            if (val > maxAdjustment) val = maxAdjustment;
-            setAdjustment(val);
-          }}
-          className="text-center text-lg"
-        />
-        <p className="mt-1 text-xs text-gray-400">
-          Positif pour ajouter, négatif pour retirer (max {effectiveMax} au total)
-        </p>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              const next = adjustment - 1;
+              if (next >= -currentStamps) setAdjustment(next);
+            }}
+            disabled={adjustment <= -currentStamps}
+            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0"
+          >
+            <Minus className="w-4 h-4 text-gray-600" />
+          </button>
+          <Input
+            type="number"
+            placeholder="0"
+            value={adjustment === 0 ? '' : adjustment}
+            onChange={(e) => {
+              let val = parseInt(e.target.value) || 0;
+              if (val < -currentStamps) val = -currentStamps;
+              if (val > maxAdjustment) val = maxAdjustment;
+              setAdjustment(val);
+            }}
+            className="text-center text-lg font-semibold"
+          />
+          <button
+            onClick={() => {
+              const next = adjustment + 1;
+              if (next <= maxAdjustment) setAdjustment(next);
+            }}
+            disabled={adjustment >= maxAdjustment}
+            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100 flex items-center justify-center transition-colors shrink-0"
+          >
+            <Plus className="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+        {adjustment !== 0 && (
+          <p className="mt-1.5 text-xs text-center">
+            <span className="text-gray-500">{currentStamps}</span>
+            <span className="text-gray-400 mx-1.5">&rarr;</span>
+            <span className={`font-semibold ${adjustment > 0 ? 'text-green-600' : 'text-red-600'}`}>
+              {newStamps}
+            </span>
+            <span className="text-gray-400 ml-0.5">/ {effectiveMax}</span>
+          </p>
+        )}
       </div>
 
       {isCagnotte && (
@@ -299,13 +331,11 @@ export function CustomerAdjustTab({
         </div>
       )}
 
-      <Textarea
-        label="Raison (optionnel)"
-        placeholder="Ex: Erreur de scan, geste commercial..."
+      <Input
+        placeholder="Raison (optionnel)"
         value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        maxLength={100}
-        showCount
+        onChange={(e) => setReason(e.target.value.slice(0, 100))}
+        className="text-sm"
       />
 
       <div className="flex gap-3">

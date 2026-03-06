@@ -74,7 +74,6 @@ export function CustomerManagementModal({
   cagnotteTier2Percent,
 }: CustomerManagementModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('adjust');
-  const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
   // Name edit state
@@ -92,12 +91,16 @@ export function CustomerManagementModal({
   const customerName = `${editFirstName} ${editLastName}`.trim();
 
   const showSuccess = (message: string) => {
-    setSuccess(true);
     setSuccessMessage(message);
+    onSuccess();
     setTimeout(() => {
-      onSuccess();
-      handleClose();
-    }, 1500);
+      setSuccessMessage('');
+    }, 2000);
+  };
+
+  const showSuccessAndClose = (message: string) => {
+    onSuccess();
+    handleClose();
   };
 
   const handleSaveName = async () => {
@@ -149,7 +152,6 @@ export function CustomerManagementModal({
   };
 
   const handleClose = () => {
-    setSuccess(false);
     setSuccessMessage('');
     setActiveTab('adjust');
     onClose();
@@ -310,17 +312,13 @@ export function CustomerManagementModal({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4">
-          {success ? (
-            <div className="text-center py-6">
-              <div className="inline-flex items-center justify-center w-12 h-12 mb-2 rounded-full bg-green-100">
-                <Check className="w-6 h-6 text-green-600" />
-              </div>
-              <p className="text-sm font-medium text-gray-900">
-                {successMessage}
-              </p>
+          {successMessage && (
+            <div className="flex items-center gap-2 p-2.5 mb-3 rounded-xl bg-green-50 border border-green-100 animate-in fade-in duration-200">
+              <Check className="w-4 h-4 text-green-600 shrink-0" />
+              <p className="text-sm font-medium text-green-700">{successMessage}</p>
             </div>
-          ) : (
-            <>
+          )}
+
               {activeTab === 'adjust' && (
                 <CustomerAdjustTab
                   currentStamps={currentStamps}
@@ -371,11 +369,9 @@ export function CustomerManagementModal({
                   loyaltyCardId={loyaltyCardId}
                   phoneNumber={phoneNumber}
                   customerName={customerName}
-                  onSuccess={showSuccess}
+                  onSuccess={showSuccessAndClose}
                 />
               )}
-            </>
-          )}
         </div>
       </div>
     </div>

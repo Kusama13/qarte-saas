@@ -100,6 +100,7 @@ export function CustomerRewardsTab({
       }
 
       const label = isCagnotte ? 'Cagnotte' : 'Récompense';
+      fetchLastRedemption();
       onSuccess(tier2Enabled ? `${label} palier ${tier} validée !` : `${label} validée !`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la validation');
@@ -132,6 +133,8 @@ export function CustomerRewardsTab({
         throw new Error(data.error || 'Erreur lors de l\'annulation');
       }
 
+      setCancelConfirm(false);
+      fetchLastRedemption();
       onSuccess(isCagnotte ? 'Cagnotte annulée !' : 'Récompense annulée !');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de l\'annulation');
