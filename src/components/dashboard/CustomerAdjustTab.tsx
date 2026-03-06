@@ -100,7 +100,7 @@ export function CustomerAdjustTab({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const effectiveMax = (tier2Enabled && tier2StampsRequired) ? tier2StampsRequired - 1 : stampsRequired - 1;
+  const effectiveMax = (tier2Enabled && tier2StampsRequired) ? tier2StampsRequired : stampsRequired;
   const maxAdjustment = effectiveMax - currentStamps;
   const newStamps = Math.min(Math.max(0, currentStamps + adjustment), effectiveMax);
 

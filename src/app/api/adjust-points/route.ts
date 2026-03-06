@@ -73,10 +73,10 @@ export async function POST(request: NextRequest) {
       newStamps = 0;
     }
 
-    // Cap: ajustement manuel ne doit jamais atteindre le seuil de recompense
+    // Cap: ajustement manuel peut atteindre le seuil (récompense dispo) mais pas le dépasser
     const effectiveMax = (merchant.tier2_enabled && merchant.tier2_stamps_required)
-      ? merchant.tier2_stamps_required - 1
-      : (merchant.stamps_required ? merchant.stamps_required - 1 : Infinity);
+      ? merchant.tier2_stamps_required
+      : (merchant.stamps_required || Infinity);
     if (adjustment > 0 && newStamps > effectiveMax) {
       newStamps = effectiveMax;
     }
