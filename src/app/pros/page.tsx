@@ -29,13 +29,13 @@ const getInspirationMerchants = unstable_cache(
         .from('merchants')
         .select(
           'slug, shop_name, shop_type, logo_url, primary_color, secondary_color, ' +
-          'reward_description, instagram_url, facebook_url, tiktok_url, user_id, subscription_status, created_at'
+          'reward_description, instagram_url, facebook_url, tiktok_url, snapchat_url, user_id, subscription_status, created_at'
         )
         .not('logo_url', 'is', null)
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['active', 'trial'])
-        .or('instagram_url.not.is.null,facebook_url.not.is.null,tiktok_url.not.is.null'),
+        .or('instagram_url.not.is.null,facebook_url.not.is.null,tiktok_url.not.is.null,snapchat_url.not.is.null'),
     ]);
 
     const adminIds = (admins || []).map((a: { user_id: string }) => a.user_id);

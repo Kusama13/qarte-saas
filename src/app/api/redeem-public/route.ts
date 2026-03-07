@@ -171,7 +171,7 @@ export async function POST(request: NextRequest) {
         loyalty_card_id: loyaltyCard.id,
         merchant_id: loyaltyCard.merchant_id,
         customer_id: loyaltyCard.customer_id,
-        stamps_used: loyaltyCard.current_stamps,
+        stamps_used: stampsRequired,
         tier: tier,
       });
 

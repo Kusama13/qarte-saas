@@ -1699,39 +1699,47 @@ export async function GET(request: NextRequest) {
             .in('subscription_status', ['trial', 'active'])
             .neq('no_contact', true);
 
-          for (const merchant of merchants || []) {
-            const offerText = offerTextMap.get(merchant.id);
-            if (!offerText) continue;
+          // Batch fetch all loyalty cards + customers for all merchants (avoid N+1)
+          const validMerchants = (merchants || []).filter(m => offerTextMap.get(m.id));
+          const validMerchantIds = validMerchants.map(m => m.id);
 
-            const { data: loyaltyCards } = await supabase
-              .from('loyalty_cards')
-              .select('customer_id')
-              .eq('merchant_id', merchant.id);
+          if (validMerchantIds.length > 0) {
+            const [{ data: allCards }, { data: allCustomers }] = await Promise.all([
+              supabase.from('loyalty_cards').select('merchant_id, customer_id').in('merchant_id', validMerchantIds),
+              supabase.from('customers').select('id, phone_number').in('merchant_id', validMerchantIds),
+            ]);
 
-            if (!loyaltyCards || loyaltyCards.length === 0) continue;
+            // Build merchant -> customer phone map
+            const cardsByMerchant = new Map<string, Set<string>>();
+            for (const card of allCards || []) {
+              if (!cardsByMerchant.has(card.merchant_id)) cardsByMerchant.set(card.merchant_id, new Set());
+              cardsByMerchant.get(card.merchant_id)!.add(card.customer_id);
+            }
+            const customersById = new Map((allCustomers || []).map(c => [c.id, c]));
 
-            const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
-            const { data: customers } = await supabase
-              .from('customers')
-              .select('id, phone_number')
-              .in('id', customerIds);
+            for (const merchant of validMerchants) {
+              const offerText = offerTextMap.get(merchant.id);
+              const customerIdSet = cardsByMerchant.get(merchant.id);
+              if (!offerText || !customerIdSet || customerIdSet.size === 0) continue;
 
-            for (const customer of customers || []) {
-              if (!customer.phone_number) continue;
+              for (const customerId of customerIdSet) {
+                const customer = customersById.get(customerId);
+                if (!customer?.phone_number) continue;
 
-              const sent = await sendAutomationPush({
-                supabase,
-                merchantId: merchant.id,
-                customerId: customer.id,
-                customerPhone: customer.phone_number,
-                automationType: `event_${upcomingEvent.id}`,
-                title: merchant.shop_name,
-                body: `C'est bientôt ${upcomingEvent.name} ! ${offerText}`,
-                url: `/customer/card/${merchant.id}`,
-              });
+                const sent = await sendAutomationPush({
+                  supabase,
+                  merchantId: merchant.id,
+                  customerId: customer.id,
+                  customerPhone: customer.phone_number,
+                  automationType: `event_${upcomingEvent.id}`,
+                  title: merchant.shop_name,
+                  body: `C'est bientôt ${upcomingEvent.name} ! ${offerText}`,
+                  url: `/customer/card/${merchant.id}`,
+                });
 
-              if (sent) results.pushAutomations.events.sent++;
-              else results.pushAutomations.events.skipped++;
+                if (sent) results.pushAutomations.events.sent++;
+                else results.pushAutomations.events.skipped++;
+              }
             }
           }
         }

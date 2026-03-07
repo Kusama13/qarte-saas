@@ -19,7 +19,7 @@ export default async function ProgrammePage({
       'birthday_gift_enabled, birthday_gift_description, ' +
       'referral_program_enabled, referral_reward_referrer, referral_reward_referred, ' +
       'double_days_enabled, double_days_of_week, ' +
-      'booking_url, instagram_url, facebook_url, tiktok_url, ' +
+      'booking_url, instagram_url, facebook_url, tiktok_url, snapchat_url, ' +
       'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent'
     )
     .eq('slug', slug)

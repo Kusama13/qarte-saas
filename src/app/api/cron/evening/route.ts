@@ -51,29 +51,39 @@ export async function GET(request: NextRequest) {
       .eq('scheduled_time', '18:00')
       .eq('status', 'pending');
 
+    // Batch fetch all merchants, loyalty cards, and push subscriptions upfront (avoid N+1)
+    const pushMerchantIds = [...new Set((scheduledPushes || []).map(p => p.merchant_id))];
+    const [{ data: allMerchants }, { data: allCards }, { data: allSubs }] = await Promise.all([
+      supabase.from('merchants').select('id, shop_name').in('id', pushMerchantIds),
+      supabase.from('loyalty_cards').select('merchant_id, customer_id').in('merchant_id', pushMerchantIds),
+      supabase.from('push_subscriptions').select('*').in('merchant_id', pushMerchantIds),
+    ]);
+
+    const merchantMap = new Map((allMerchants || []).map(m => [m.id, m]));
+    const cardsByMerchant = new Map<string, Set<string>>();
+    for (const card of allCards || []) {
+      if (!cardsByMerchant.has(card.merchant_id)) cardsByMerchant.set(card.merchant_id, new Set());
+      cardsByMerchant.get(card.merchant_id)!.add(card.customer_id);
+    }
+    const subsByCustomer = new Map<string, NonNullable<typeof allSubs>>();
+    for (const sub of allSubs || []) {
+      if (!subsByCustomer.has(sub.customer_id)) subsByCustomer.set(sub.customer_id, []);
+      subsByCustomer.get(sub.customer_id)!.push(sub);
+    }
+
     for (const push of scheduledPushes || []) {
       results.processed++;
 
       try {
-        // Get merchant info
-        const { data: merchant } = await supabase
-          .from('merchants')
-          .select('shop_name')
-          .eq('id', push.merchant_id)
-          .maybeSingle();
+        const merchant = merchantMap.get(push.merchant_id);
 
         if (!merchant) {
           await supabase.from('scheduled_push').update({ status: 'sent', sent_at: new Date().toISOString(), sent_count: 0 }).eq('id', push.id);
           continue;
         }
 
-        // Get subscribers
-        const { data: loyaltyCards } = await supabase
-          .from('loyalty_cards')
-          .select('customer_id')
-          .eq('merchant_id', push.merchant_id);
-
-        if (!loyaltyCards || loyaltyCards.length === 0) {
+        const customerIdSet = cardsByMerchant.get(push.merchant_id);
+        if (!customerIdSet || customerIdSet.size === 0) {
           await supabase.from('scheduled_push').update({
             status: 'sent',
             sent_at: new Date().toISOString(),
@@ -82,12 +92,12 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
-
-        const { data: subscriptions } = await supabase
-          .from('push_subscriptions')
-          .select('*')
-          .in('customer_id', customerIds);
+        // Collect subscriptions for this merchant's customers
+        const subscriptions: NonNullable<typeof allSubs> = [];
+        for (const custId of customerIdSet) {
+          const custSubs = subsByCustomer.get(custId);
+          if (custSubs) subscriptions.push(...custSubs);
+        }
 
         if (!subscriptions || subscriptions.length === 0) {
           await supabase.from('scheduled_push').update({

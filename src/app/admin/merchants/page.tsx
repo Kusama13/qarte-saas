@@ -150,7 +150,7 @@ function computeHealthScore(
   let score = 0;
   if (merchant.reward_description !== null) score += 15;
   if (merchant.logo_url) score += 10;
-  if (merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url) score += 5;
+  if (merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url) score += 5;
   if (merchant.review_link) score += 5;
   if (merchant.booking_url) score += 5;
   if (customerCount >= 21) score += 20;

@@ -122,6 +122,7 @@ export default function ProgramPage() {
     instagramUrl: '',
     facebookUrl: '',
     tiktokUrl: '',
+    snapchatUrl: '',
     bookingUrl: '',
     loyaltyMode: 'visit' as 'visit' | 'cagnotte',
     stampsRequired: 5,
@@ -185,6 +186,7 @@ export default function ProgramPage() {
           instagramUrl: data.instagram_url || '',
           facebookUrl: data.facebook_url || '',
           tiktokUrl: data.tiktok_url || '',
+          snapchatUrl: data.snapchat_url || '',
           bookingUrl: data.booking_url || '',
           loyaltyMode: data.loyalty_mode || 'visit',
           stampsRequired: data.stamps_required || 5,
@@ -246,7 +248,7 @@ export default function ProgramPage() {
     return `https://${trimmed}`;
   };
 
-  const normalizeSocialUrl = (value: string, platform: 'instagram' | 'facebook' | 'tiktok') => {
+  const normalizeSocialUrl = (value: string, platform: 'instagram' | 'facebook' | 'tiktok' | 'snapchat') => {
     const trimmed = value.trim();
     if (!trimmed) return '';
     // Already a URL
@@ -259,6 +261,7 @@ export default function ProgramPage() {
       case 'instagram': return `https://instagram.com/${username}`;
       case 'facebook': return `https://facebook.com/${username}`;
       case 'tiktok': return `https://tiktok.com/@${username}`;
+      case 'snapchat': return `https://snapchat.com/add/${username}`;
     }
   };
 
@@ -308,6 +311,7 @@ export default function ProgramPage() {
           instagram_url: normalizeSocialUrl(formData.instagramUrl, 'instagram') || null,
           facebook_url: normalizeSocialUrl(formData.facebookUrl, 'facebook') || null,
           tiktok_url: normalizeSocialUrl(formData.tiktokUrl, 'tiktok') || null,
+          snapchat_url: normalizeSocialUrl(formData.snapchatUrl, 'snapchat') || null,
           booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
           reward_description: effectiveRewardDescription,
@@ -337,6 +341,7 @@ export default function ProgramPage() {
           instagram_url: normalizeSocialUrl(formData.instagramUrl, 'instagram') || null,
           facebook_url: normalizeSocialUrl(formData.facebookUrl, 'facebook') || null,
           tiktok_url: normalizeSocialUrl(formData.tiktokUrl, 'tiktok') || null,
+          snapchat_url: normalizeSocialUrl(formData.snapchatUrl, 'snapchat') || null,
           booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
           reward_description: effectiveRewardDescription,
@@ -418,7 +423,7 @@ export default function ProgramPage() {
         const scoreItems = [
           { done: !!formData.rewardDescription, pts: 25, label: 'Récompense' },
           { done: !!formData.logoUrl, pts: 20, label: 'Logo' },
-          { done: !!(formData.instagramUrl || formData.facebookUrl || formData.tiktokUrl), pts: 15, label: 'Réseaux sociaux' },
+          { done: !!(formData.instagramUrl || formData.facebookUrl || formData.tiktokUrl || formData.snapchatUrl), pts: 15, label: 'Réseaux sociaux' },
           { done: !!formData.reviewLink, pts: 15, label: 'Avis Google' },
           { done: !!formData.bookingUrl, pts: 10, label: 'Lien réservation' },
           { done: formData.tier2Enabled && !!formData.tier2RewardDescription, pts: 10, label: '2ème palier' },
@@ -941,6 +946,16 @@ export default function ProgramPage() {
                       placeholder="@votre-commerce ou lien complet"
                       value={formData.tiktokUrl}
                       onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-gray-600">Snapchat</label>
+                    <Input
+                      type="text"
+                      className="bg-white border border-gray-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 h-11 text-sm rounded-xl w-full"
+                      placeholder="votre-pseudo ou lien complet"
+                      value={formData.snapchatUrl}
+                      onChange={(e) => setFormData({ ...formData, snapchatUrl: e.target.value })}
                     />
                   </div>
                   <p className="text-xs text-gray-500">
