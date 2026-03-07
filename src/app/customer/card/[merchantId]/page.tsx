@@ -1170,7 +1170,7 @@ export default function CustomerCardPage({
         onDone={() => { setShowRedeemModal(false); setRedeemSuccess(false); if (merchant.review_link) setShowReviewModal(true); }}
         isCagnotte={merchant.loyalty_mode === 'cagnotte'}
         cashbackAmount={merchant.loyalty_mode === 'cagnotte'
-          ? Math.round(Number(card.current_amount || 0) * Number(redeemTier === 2 ? merchant.cagnotte_tier2_percent : merchant.cagnotte_percent)) / 100
+          ? Math.round(Number(card.current_amount || 0) * Number((redeemTier === 2 ? merchant.cagnotte_tier2_percent : merchant.cagnotte_percent) || 0)) / 100
           : undefined}
       />
 

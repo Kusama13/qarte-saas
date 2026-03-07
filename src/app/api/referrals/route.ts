@@ -179,6 +179,7 @@ export async function POST(request: NextRequest) {
         customer_id: newCustomer.id,
         merchant_id: merchant.id,
         current_stamps: 0,
+        current_amount: 0,
         stamps_target: merchant.stamps_required,
         referral_code: generateReferralCode(),
       })

@@ -217,8 +217,8 @@ export async function POST(request: NextRequest) {
         .select('id, status, points_earned, flagged_reason')
         .eq('customer_id', customer.id)
         .eq('merchant_id', merchant.id)
-        .gte('created_at', threeMinAgo)
-        .order('created_at', { ascending: false })
+        .gte('visited_at', threeMinAgo)
+        .order('visited_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
       shieldEnabled
@@ -244,6 +244,7 @@ export async function POST(request: NextRequest) {
           customer_id: customer.id,
           merchant_id: merchant.id,
           current_stamps: 0,
+          current_amount: 0,
           stamps_target: merchant.stamps_required,
           referral_code: generateReferralCode(),
         })

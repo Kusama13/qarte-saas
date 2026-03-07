@@ -105,11 +105,11 @@ export async function POST(request: NextRequest) {
       customer_id: customerId,
       merchant_id: merchant.id,
       current_stamps: stampCount,
+      current_amount: merchant.loyalty_mode === 'cagnotte' && initial_amount && Number(initial_amount) > 0
+        ? Number(initial_amount)
+        : 0,
       stamps_target: merchant.stamps_required,
     };
-    if (merchant.loyalty_mode === 'cagnotte' && initial_amount && Number(initial_amount) > 0) {
-      cardInsert.current_amount = Number(initial_amount);
-    }
     const { data: card, error: cardError } = await supabaseAdmin
       .from('loyalty_cards')
       .insert(cardInsert)
