@@ -697,7 +697,7 @@ export default function MerchantDetailPage() {
             {merchant.loyalty_mode === 'cagnotte' ? (
               <>
                 <p className="text-gray-700">
-                  <span className="font-semibold">{merchant.cagnotte_percent ?? 0}% de cagnotte</span> sur chaque passage
+                  <span className="font-semibold">{merchant.stamps_required} passages</span> pour obtenir <span className="font-semibold">{merchant.cagnotte_percent ?? 0}%</span> de cagnotte
                 </p>
                 <p className="text-gray-700 mt-1">
                   Reward : {merchant.reward_description || 'Non configuré'}
@@ -736,7 +736,7 @@ export default function MerchantDetailPage() {
               {merchant.loyalty_mode === 'cagnotte' ? (
                 <>
                   <p className="text-gray-700">
-                    <span className="font-semibold">{merchant.cagnotte_tier2_percent ?? 0}% de cagnotte</span> sur chaque passage
+                    <span className="font-semibold">{merchant.tier2_stamps_required} passages</span> pour obtenir <span className="font-semibold">{merchant.cagnotte_tier2_percent ?? 0}%</span> de cagnotte
                   </p>
                   <p className="text-gray-700 mt-1">
                     Reward : {merchant.tier2_reward_description || 'Non configuré'}
@@ -1021,9 +1021,9 @@ export default function MerchantDetailPage() {
                   href={merchant.snapchat_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-yellow-300 bg-yellow-50 hover:bg-yellow-100 text-sm text-gray-700 hover:text-yellow-700 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#FFFC00] bg-[#FFFC00] hover:bg-[#e6e300] text-sm text-gray-900 transition-colors"
                 >
-                  <svg className="w-4 h-4 flex-shrink-0 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
+                  <svg className="w-4 h-4 flex-shrink-0 text-gray-900" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12.206.793c.99 0 4.347.276 5.93 3.821.529 1.193.403 3.219.299 4.847l-.003.06c-.012.18-.022.345-.03.51.075.045.203.09.401.09.3-.016.659-.12.953-.268.18-.088.33-.12.48-.12.36 0 .659.211.659.51a.685.685 0 01-.315.614c-.21.12-1.11.57-1.725.676-.18.03-.36.074-.54.074-.18 0-.36-.03-.54-.074a4.14 4.14 0 00-.315-.044c-.209 0-.375.06-.504.18-.09.088-.15.195-.195.315-.045.12-.06.255-.06.39 0 .24.015.465.045.69.105.63.33 1.065.614 1.395.24.27.54.48.87.63.27.12.57.21.87.255.12.015.24.03.36.06a.685.685 0 01.555.66c0 .33-.24.63-.735.795-.57.195-1.32.3-2.1.33-.24.015-.39.21-.54.45-.195.315-.42.69-1.005.69-.06 0-.12 0-.195-.015-.42-.045-.765-.18-1.17-.33-.6-.21-1.275-.45-2.34-.45s-1.74.24-2.34.45c-.405.15-.75.285-1.17.33-.075.015-.135.015-.195.015-.585 0-.81-.375-1.005-.69-.15-.24-.3-.435-.54-.45-.78-.03-1.53-.135-2.1-.33C1.32 16.5 1.08 16.2 1.08 15.87c0-.33.21-.6.555-.66.12-.03.24-.045.36-.06.3-.045.6-.135.87-.255.33-.15.63-.36.87-.63.285-.33.51-.765.614-1.395.03-.225.045-.45.045-.69 0-.135-.015-.27-.06-.39a.753.753 0 00-.195-.315c-.13-.12-.295-.18-.504-.18a4.14 4.14 0 00-.315.044c-.18.044-.36.074-.54.074s-.36-.044-.54-.074c-.615-.106-1.515-.556-1.725-.676A.685.685 0 01.2 10.007c0-.3.3-.51.659-.51.15 0 .3.032.48.12.294.148.653.252.953.268.198 0 .326-.045.401-.09a6.21 6.21 0 01-.03-.51l-.003-.06c-.104-1.628-.23-3.654.299-4.847C4.647 1.07 8.004.793 8.994.793h.12z" />
                   </svg>
                   <span className="truncate">@{extractPseudo(merchant.snapchat_url)}</span>
