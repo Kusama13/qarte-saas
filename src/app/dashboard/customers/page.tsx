@@ -416,7 +416,7 @@ export default function CustomersPage() {
                 const isTier2Ready = merchant?.tier2_enabled && merchant?.tier2_stamps_required && card.current_stamps >= merchant.tier2_stamps_required;
                 const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
                 const isPushSubscriber = subscriberIds.includes(card.customer_id);
-                const cashbackValue = isCagnotte && merchant?.cagnotte_percent ? (card.current_amount * merchant.cagnotte_percent / 100) : 0;
+                const cashbackValue = isCagnotte && merchant?.cagnotte_percent ? (Number(card.current_amount || 0) * merchant.cagnotte_percent / 100) : 0;
                 const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id), isCagnotte, cashbackValue);
 
                 return (
@@ -454,7 +454,7 @@ export default function CustomersPage() {
                       )}
                       {isCagnotte && !badge && (
                         <span className="text-[10px] font-medium text-gray-500">
-                          {card.current_amount.toFixed(2).replace('.', ',')} € cumulés
+                          {Number(card.current_amount || 0).toFixed(2).replace('.', ',')} € cumulés
                         </span>
                       )}
                     </div>
@@ -556,7 +556,7 @@ export default function CustomersPage() {
                     const isTier2Ready = merchant?.tier2_enabled && merchant?.tier2_stamps_required && card.current_stamps >= merchant.tier2_stamps_required;
                     const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
                     const isPushSubscriber = subscriberIds.includes(card.customer_id);
-                    const cashbackValue = isCagnotte && merchant?.cagnotte_percent ? (card.current_amount * merchant.cagnotte_percent / 100) : 0;
+                    const cashbackValue = isCagnotte && merchant?.cagnotte_percent ? (Number(card.current_amount || 0) * merchant.cagnotte_percent / 100) : 0;
 
                     const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id), isCagnotte, cashbackValue);
 
@@ -654,7 +654,7 @@ export default function CustomersPage() {
                               </div>
                               {isCagnotte && (
                                 <p className="text-[10px] font-medium text-gray-500 mt-1">
-                                  {card.current_amount.toFixed(2).replace('.', ',')} € cumulés
+                                  {Number(card.current_amount || 0).toFixed(2).replace('.', ',')} € cumulés
                                 </p>
                               )}
                             </div>

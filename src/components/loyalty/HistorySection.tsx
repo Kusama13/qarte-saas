@@ -20,7 +20,7 @@ import type { Merchant, Visit, VisitStatus } from '@/types';
 
 interface PointAdjustment {
   id: string;
-  created_at: string;
+  adjusted_at: string;
   adjustment: number;
   reason: string | null;
 }
@@ -80,7 +80,7 @@ export default function HistorySection({
     })),
     ...adjustments.map((a) => ({
       type: 'adjustment' as const,
-      date: a.created_at,
+      date: a.adjusted_at,
       points: a.adjustment,
       id: a.id,
       status: 'confirmed' as const,

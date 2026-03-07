@@ -48,7 +48,7 @@ import {
 
 interface PointAdjustment {
   id: string;
-  created_at: string;
+  adjusted_at: string;
   adjustment: number;
   reason: string | null;
 }
@@ -594,7 +594,7 @@ export default function CustomerCardPage({
 
     const _isCagnotte = card.merchant.loyalty_mode === 'cagnotte';
     const _currentAmount = Number(card.current_amount || 0);
-    const _cagnottePercent = Number(_showingTier2 ? card.merchant.cagnotte_tier2_percent : card.merchant.cagnotte_percent || 0);
+    const _cagnottePercent = Number((_showingTier2 ? card.merchant.cagnotte_tier2_percent : card.merchant.cagnotte_percent) || 0);
     const _cashbackAmount = _isCagnotte ? Math.round(_currentAmount * _cagnottePercent) / 100 : 0;
 
     return {
