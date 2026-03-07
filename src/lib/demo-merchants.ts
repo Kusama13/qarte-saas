@@ -17,6 +17,7 @@ export interface DemoMerchant {
   instagram_url: string | null;
   facebook_url: string | null;
   tiktok_url: string | null;
+  snapchat_url: string | null;
   booking_url: string | null;
   referral_program_enabled: boolean;
   referral_reward_referrer: string | null;

@@ -505,7 +505,7 @@ export default function AdminMerchantsPage() {
     }
 
     // Messages contextuels
-    const hasSocial = merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url;
+    const hasSocial = merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url;
     if (!hasSocial) {
       msgs.push({ label: 'Reseaux manquants', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Ajoutez votre lien Instagram (ou Facebook/TikTok) dans dashboard → Mon Programme → Liens & Reseaux. Vos clients le verront sur leur carte — c'est de la visibilite gratuite ! 📲` });
     }
@@ -594,24 +594,23 @@ export default function AdminMerchantsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-3 lg:grid-cols-6 lg:gap-4">
+      <div className="grid grid-cols-3 gap-2 lg:grid-cols-6 lg:gap-3">
         {[
           { label: 'Total', value: stats.total, icon: Store, iconBg: 'bg-[#5167fc]/10', iconColor: 'text-[#5167fc]', extra: stats.adminCount > 0 ? `+${stats.adminCount} admin` : undefined },
           { label: 'En essai', value: stats.trial, icon: Clock, iconBg: 'bg-amber-50', iconColor: 'text-amber-600' },
-          { label: 'Expirés', value: stats.trialExpired, icon: CalendarX, iconBg: 'bg-orange-50', iconColor: 'text-orange-600' },
+          { label: 'Expires', value: stats.trialExpired, icon: CalendarX, iconBg: 'bg-orange-50', iconColor: 'text-orange-600' },
           { label: 'Actifs', value: stats.active, icon: CheckCircle, iconBg: 'bg-green-50', iconColor: 'text-green-600' },
           { label: 'Annulation', value: stats.canceling, icon: AlertTriangle, iconBg: 'bg-purple-50', iconColor: 'text-purple-600' },
           { label: 'Churned', value: stats.canceled, icon: XCircle, iconBg: 'bg-red-50', iconColor: 'text-red-600' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white p-3 sm:p-4 rounded-xl border border-gray-100 shadow-sm">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className={cn("w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center", stat.iconBg)}>
-                <stat.icon className={cn("w-4 h-4 sm:w-5 sm:h-5", stat.iconColor)} />
+          <div key={stat.label} className="bg-white px-3 py-2 rounded-xl border border-gray-100 shadow-sm">
+            <div className="flex items-center gap-2">
+              <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center", stat.iconBg)}>
+                <stat.icon className={cn("w-3.5 h-3.5", stat.iconColor)} />
               </div>
               <div>
-                <p className="text-lg sm:text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-[10px] sm:text-xs text-gray-500">{stat.label}</p>
-                {stat.extra && <p className="text-[10px] text-purple-600">{stat.extra}</p>}
+                <p className="text-lg font-bold text-gray-900 leading-tight">{stat.value}</p>
+                <p className="text-[10px] text-gray-500">{stat.label}{stat.extra ? ` (${stat.extra})` : ''}</p>
               </div>
             </div>
           </div>
@@ -751,46 +750,45 @@ export default function AdminMerchantsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Commerçant</th>
-                  <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Étape</th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide">
+                  <th className="text-left px-3 py-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Commercant</th>
+                  <th className="text-left px-3 py-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Etape</th>
+                  <th className="text-center px-3 py-2 text-[11px] font-semibold uppercase tracking-wide">
                     <button
                       onClick={() => setSortBy(sortBy === 'activity' ? 'urgency' : 'activity')}
-                      className={cn("inline-flex items-center gap-1 hover:text-gray-900 transition-colors", sortBy === 'activity' ? "text-[#5167fc]" : "text-gray-500")}
+                      className={cn("inline-flex items-center gap-0.5 hover:text-gray-900 transition-colors", sortBy === 'activity' ? "text-[#5167fc]" : "text-gray-500")}
                     >
-                      Activité
-                      <ArrowUpDown className="w-3 h-3" />
+                      Activite
+                      <ArrowUpDown className="w-2.5 h-2.5" />
                     </button>
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide">
+                  <th className="text-center px-3 py-2 text-[11px] font-semibold uppercase tracking-wide">
                     <button
                       onClick={() => setSortBy(sortBy === 'today' ? 'urgency' : 'today')}
-                      className={cn("inline-flex items-center gap-1 hover:text-gray-900 transition-colors", sortBy === 'today' ? "text-[#5167fc]" : "text-gray-500")}
+                      className={cn("inline-flex items-center gap-0.5 hover:text-gray-900 transition-colors", sortBy === 'today' ? "text-[#5167fc]" : "text-gray-500")}
                     >
                       Auj.
-                      <ArrowUpDown className="w-3 h-3" />
+                      <ArrowUpDown className="w-2.5 h-2.5" />
                     </button>
                   </th>
-                  <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide">
+                  <th className="text-center px-3 py-2 text-[11px] font-semibold uppercase tracking-wide">
                     <button
                       onClick={() => setSortBy(sortBy === 'clients' ? 'urgency' : 'clients')}
-                      className={cn("inline-flex items-center gap-1 hover:text-gray-900 transition-colors", sortBy === 'clients' ? "text-[#5167fc]" : "text-gray-500")}
+                      className={cn("inline-flex items-center gap-0.5 hover:text-gray-900 transition-colors", sortBy === 'clients' ? "text-[#5167fc]" : "text-gray-500")}
                     >
                       Clients
-                      <ArrowUpDown className="w-3 h-3" />
+                      <ArrowUpDown className="w-2.5 h-2.5" />
                     </button>
                   </th>
-
-                  <th className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wide">
+                  <th className="text-center px-3 py-2 text-[11px] font-semibold uppercase tracking-wide">
                     <button
                       onClick={() => setSortBy(sortBy === 'health' ? 'urgency' : 'health')}
-                      className={cn("inline-flex items-center gap-1 hover:text-gray-900 transition-colors", sortBy === 'health' ? "text-[#5167fc]" : "text-gray-500")}
+                      className={cn("inline-flex items-center gap-0.5 hover:text-gray-900 transition-colors", sortBy === 'health' ? "text-[#5167fc]" : "text-gray-500")}
                     >
                       Sante
-                      <ArrowUpDown className="w-3 h-3" />
+                      <ArrowUpDown className="w-2.5 h-2.5" />
                     </button>
                   </th>
-                  <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                  <th className="text-right px-3 py-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wide"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -803,39 +801,42 @@ export default function AdminMerchantsPage() {
                   return (
                     <tr key={merchant.id} onClick={() => router.push(`/admin/merchants/${merchant.id}`)} className="hover:bg-gray-50/50 transition-colors group cursor-pointer">
                       {/* Commercant */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-lg bg-[#5167fc] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                      <td className="px-3 py-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-[#5167fc] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                             {merchant.shop_name.charAt(0)}
                           </div>
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-gray-900 truncate max-w-[200px]">{merchant.shop_name}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-medium text-gray-900 truncate max-w-[180px] text-sm">{merchant.shop_name}</p>
                               <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pwaInstalled={!!merchant.pwa_installed_at} />
                             </div>
-                            {merchant.shop_address && (
-                              <p className="text-xs text-gray-400 truncate max-w-[250px]">{merchant.shop_address}</p>
-                            )}
+                            <div className="flex items-center gap-2 text-[11px] text-gray-400">
+                              {data?.userEmails[merchant.user_id] && (
+                                <span className="truncate max-w-[160px]">{data.userEmails[merchant.user_id]}</span>
+                              )}
+                              <span className="truncate">{SHOP_TYPES[merchant.shop_type]?.replace('Salon de ', '').replace(' / Nail bar', '').replace(' / Bien-être / Massage', '') || merchant.shop_type}</span>
+                            </div>
                           </div>
                         </div>
                       </td>
 
                       {/* Etape */}
-                      <td className="px-4 py-3">
-                        <span className={cn("px-2.5 py-1 text-xs font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>
+                      <td className="px-3 py-2">
+                        <span className={cn("px-2 py-0.5 text-[11px] font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>
                           {lifecycle.label}
                         </span>
                       </td>
 
                       {/* Activite */}
-                      <td className="px-4 py-3 text-center">
-                        <span className={cn("text-sm font-medium", activity.color)}>{activity.text}</span>
+                      <td className="px-3 py-2 text-center">
+                        <span className={cn("text-xs font-medium", activity.color)}>{activity.text}</span>
                       </td>
 
                       {/* Scans aujourd'hui */}
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-3 py-2 text-center">
                         <span className={cn(
-                          "text-sm font-bold",
+                          "text-xs font-bold",
                           today > 0 ? "text-green-600" : "text-gray-300",
                         )}>
                           {today}
@@ -843,21 +844,21 @@ export default function AdminMerchantsPage() {
                       </td>
 
                       {/* Clients */}
-                      <td className="px-4 py-3 text-center">
-                        <span className="text-sm font-medium text-gray-700">{customers}</span>
+                      <td className="px-3 py-2 text-center">
+                        <span className="text-xs font-medium text-gray-700">{customers}</span>
                       </td>
 
                       {/* Sante */}
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
+                      <td className="px-3 py-2 text-center">
+                        <div className="flex items-center justify-center gap-1">
                           <HealthDot score={healthScore} />
-                          <span className="text-xs font-medium text-gray-500">{healthScore}</span>
+                          <span className="text-[11px] font-medium text-gray-500">{healthScore}</span>
                         </div>
                       </td>
 
                       {/* Actions */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-1.5 relative">
+                      <td className="px-3 py-2">
+                        <div className="flex items-center justify-end gap-1 relative">
                           {merchant.phone && !isAdmin && !merchant.no_contact && (
                             <WhatsAppDropdown
                               merchant={merchant}
@@ -872,10 +873,10 @@ export default function AdminMerchantsPage() {
                             />
                           )}
                           <span
-                            className="p-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+                            className="p-1 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                             title="Détail"
                           >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-3.5 h-3.5" />
                           </span>
                         </div>
                       </td>
@@ -887,7 +888,7 @@ export default function AdminMerchantsPage() {
           </div>
 
           {/* Mobile Cards */}
-          <div className="lg:hidden space-y-2">
+          <div className="lg:hidden space-y-1.5">
             {displayedMerchants.map(({ merchant, lifecycle, isAdmin, healthScore }) => {
               const lastVisit = data?.lastVisitDates[merchant.id] || null;
               const activity = getActivityLabel(lastVisit);
@@ -895,26 +896,32 @@ export default function AdminMerchantsPage() {
               const customers = data?.customerCounts[merchant.id] || 0;
               const pending = data?.pendingPoints[merchant.id] || 0;
               return (
-                <div key={merchant.id} onClick={() => router.push(`/admin/merchants/${merchant.id}`)} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 cursor-pointer">
+                <div key={merchant.id} onClick={() => router.push(`/admin/merchants/${merchant.id}`)} className="bg-white rounded-xl border border-gray-100 shadow-sm px-3 py-2 cursor-pointer">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-[#5167fc] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-[#5167fc] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
                         {merchant.shop_name.charAt(0)}
                       </div>
                       <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium text-gray-900 truncate">{merchant.shop_name}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-medium text-gray-900 truncate text-sm">{merchant.shop_name}</p>
                           <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pwaInstalled={!!merchant.pwa_installed_at} />
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className={cn("px-2 py-0.5 text-[10px] font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>
+                          <span className={cn("px-1.5 py-0.5 text-[10px] font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>
                             {lifecycle.label}
                           </span>
-                          <span className={cn("text-xs font-medium", activity.color)}>{activity.text}</span>
+                          <span className={cn("text-[11px] font-medium", activity.color)}>{activity.text}</span>
+                          <span className={cn("text-[11px] font-bold", today > 0 ? "text-green-600" : "text-gray-300")}>
+                            {today} auj
+                          </span>
+                          <span className="text-[11px] text-gray-400">
+                            <Users className="w-3 h-3 inline mr-0.5" />{customers}
+                          </span>
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       {merchant.phone && !isAdmin && !merchant.no_contact && (
                         <WhatsAppDropdown
                           merchant={merchant}
@@ -928,26 +935,8 @@ export default function AdminMerchantsPage() {
                           onSend={openWhatsApp}
                         />
                       )}
-                      <span
-                        className="p-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </span>
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
                     </div>
-                  </div>
-
-                  {/* Bottom row: metrics */}
-                  <div className="flex items-center gap-4 mt-2 pl-12 text-xs text-gray-500">
-                    <span className={cn("font-medium", today > 0 ? "text-green-600" : "text-gray-400")}>
-                      Auj: {today}
-                    </span>
-                    <span>
-                      <Users className="w-3 h-3 inline mr-0.5" />{customers}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <HealthDot score={healthScore} />
-                      <span className="text-xs text-gray-400">{healthScore}</span>
-                    </span>
                   </div>
                 </div>
               );
