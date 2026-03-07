@@ -174,21 +174,27 @@ public/
 
 ### customers
 - `id`, `phone_number` (format E.164 sans +, ex: `33612345678`), `first_name`, `last_name`
+- `birth_month` (INTEGER), `birth_day` (INTEGER)
+- `merchant_id` (UUID, ajout 039)
 
 ### loyalty_cards
 - `id`, `customer_id`, `merchant_id`
-- `current_stamps`, `stamps_target`, `last_visit_date`, `current_amount` (NUMERIC 10,2 — cumul EUR cagnotte)
+- `current_stamps` (INTEGER), `stamps_target` (INTEGER), `last_visit_date` (DATE)
+- `current_amount` (NUMERIC 10,2 DEFAULT 0 — cumul EUR cagnotte, toujours initialise a 0)
 - `referral_code` (VARCHAR 8, UNIQUE — code parrainage client)
+- `created_at` (TIMESTAMPTZ)
 
 ### visits
 - `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
-- `points_earned`, `visited_at`, `amount_spent` (NUMERIC 10,2 — montant depense cagnotte)
+- `points_earned` (INTEGER), `visited_at` (TIMESTAMPTZ — PAS `created_at`), `amount_spent` (NUMERIC 10,2)
 - `status` ('confirmed' | 'pending' | 'rejected')
 - `ip_address`, `ip_hash`, `flagged_reason`
 
 ### vouchers
 - `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
-- `reward_description`, `is_used`, `used_at`, `expires_at`
+- `reward_description`, `is_used` (BOOLEAN), `used_at` (TIMESTAMPTZ), `expires_at` (TIMESTAMPTZ)
+- `source` ('birthday' | 'referral' | 'redemption' | null), `tier` (INTEGER)
+- `created_at` (TIMESTAMPTZ)
 
 ### referrals
 - `id`, `merchant_id`, `referrer_customer_id`, `referrer_card_id`
@@ -198,7 +204,8 @@ public/
 - UNIQUE `(merchant_id, referred_customer_id)` — 1 parrainage par filleul par merchant
 
 ### redemptions
-- `id`, `loyalty_card_id`, `merchant_id`, `customer_id`, `stamps_used`, `tier`
+- `id`, `loyalty_card_id`, `merchant_id`, `customer_id`, `stamps_used` (INTEGER), `tier` (INTEGER)
+- `redeemed_at` (TIMESTAMPTZ — PAS `created_at`)
 - `amount_accumulated` (NUMERIC 10,2 — cumul au moment du redeem, cagnotte)
 - `reward_percent` (NUMERIC 5,2 — % applique, cagnotte)
 - `reward_value` (NUMERIC 10,2 — valeur EUR calculee, cagnotte)
@@ -206,8 +213,18 @@ public/
 ### point_adjustments
 - `id`, `loyalty_card_id`, `merchant_id`, `customer_id`
 - `adjustment` (INTEGER), `reason` (TEXT)
-- `adjusted_by` (UUID), `adjusted_at` (TIMESTAMPTZ)
-- Note: colonne `adjusted_at` (pas `created_at`)
+- `adjusted_by` (UUID), `adjusted_at` (TIMESTAMPTZ — PAS `created_at`)
+
+### REGLES IMPERATIVES — NOMS DE COLONNES DATE
+**Les colonnes date varient selon les tables. Ne JAMAIS presumer `created_at` :**
+- `visits` → `visited_at`
+- `redemptions` → `redeemed_at`
+- `point_adjustments` → `adjusted_at`
+- `loyalty_cards`, `vouchers`, `customers`, `merchants` → `created_at`
+
+**Lors de la creation d'une `loyalty_card`, TOUJOURS initialiser `current_amount: 0`** (pas NULL), meme en mode visit, pour eviter les TypeError au switch de mode.
+
+**Valeurs potentiellement NULL en mode cagnotte :** `cagnotte_percent`, `cagnotte_tier2_percent`, `current_amount`. Toujours wrapper avec `Number(value || 0)` avant calcul ou `.toFixed()`.
 
 ### Autres tables
 - `banned_numbers`
@@ -298,6 +315,13 @@ Toutes les tables ont **Row Level Security (RLS)** active avec policies appropri
 - **ReviewModal** : modal glamour post-recompense (avis Google) — declenchee apres utilisation d'un bon de recompense ou d'un voucher parrainage, si `review_link` renseigne. 5 etoiles animees amber, anti-spam 90 jours via localStorage (`qarte_review_asked_${merchantId}`). z-index 60.
 - **ReviewCard** : encart avis Google en bas de la carte fidelite (entre SocialLinks et footer). Design amber compact, 5 etoiles, CTA "Laisser un avis", dismiss "J'ai deja laisse un avis" (90j cooldown localStorage `qarte_review_card_dismissed_${merchantId}`). Cache en preview. Independant du ReviewModal.
 - **Mode Cagnotte** : alternative au mode tampons. Le client cumule ses depenses en EUR. Apres N passages, il recoit X% de cashback sur le montant cumule. Configurable dans `/dashboard/program` (toggle visit/cagnotte, slider %). Scan page demande le montant depense. `CagnotteSection` affiche le cumul + grille de tampons visuels. Emails et page publique adaptent automatiquement le texte ("cashback" vs "cadeau"). Routes API separees (`/api/cagnotte/*`), les routes standards rejettent les merchants cagnotte.
+- **Switch de mode (visit <-> cagnotte)** : le merchant peut changer de mode dans `/dashboard/program`. Regles imperatives :
+  - Les `loyalty_cards` existantes NE SONT PAS modifiees au switch — `current_stamps` et `current_amount` persistent
+  - `current_amount` doit TOUJOURS etre initialise a 0 (pas NULL) dans toute creation de carte (checkin, referrals, customers/create)
+  - Les API checkin/redeem rejettent les requetes du mauvais mode (visit vs cagnotte)
+  - Au switch vers cagnotte : `double_days_enabled` est desactive, `cagnotte_percent` doit etre configure
+  - Au switch vers visit : `cagnotte_percent` et `cagnotte_tier2_percent` sont mis a NULL
+  - Tout calcul avec `cagnotte_percent` / `cagnotte_tier2_percent` / `current_amount` doit utiliser `Number(value || 0)` pour eviter NaN
 - **Aide choix de mode** : bouton `?` (HelpCircle) sur chaque mode dans `/dashboard/program`. Ouvre un modal (bottom-sheet mobile, centre desktop) avec explication detaillee en 4 etapes numerotees + exemples concrets. Bouton `?` en `div role="button"` (pas `<button>`) pour eviter le nesting interdit par HTML spec.
 - **Historique creation client** : a la creation d'un client (via `/api/customers/create` ou depuis la page membres), un `point_adjustment` est insere avec reason "Creation du client" + details (passages, montant cagnotte).
 - **Jours x2 (Double Stamp Days)** : le merchant configure des jours de la semaine ou chaque passage compte double (2 tampons au lieu de 1). `double_days_enabled` + `double_days_of_week` (JSON array getDay()). Calcul dans `getPointsEarned()` (module-level dans checkin/route.ts, timezone Paris). Affiché dans ScanSuccessStep (message "Jour x{N}" + badge amber) et sous la grille de tampons dans StampsSection. Configurable dans dashboard /program (section collapsible en bas de page). Helpers centralises dans utils.ts : `parseDoubleDays()`, `formatDoubleDays()`, `DAY_LABELS`, `WEEK_ORDER`.
