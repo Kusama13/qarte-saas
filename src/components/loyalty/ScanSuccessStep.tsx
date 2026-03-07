@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { CreditCard, Gift, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { sparkle, sparkleGrand, sparkleMedium, sparkleSubtle } from '@/lib/sparkles';
+import { sparkleMedium, sparkleSubtle } from '@/lib/sparkles';
 import type { Merchant, LoyaltyCard, Customer, CagnotteData } from '@/types';
 
 interface ScanSuccessStepProps {
@@ -77,9 +77,9 @@ function getCelebrationMessage(
   // First scan ever
   if (previousStamps === 0) {
     return {
-      title: 'Bienvenue dans la famille !',
-      subtitle: `Votre carte est lanc\u00e9e${customerName ? `, ${customerName}` : ''} !`,
-      emoji: '\ud83c\udf89',
+      title: customerName ? `${customerName}, c\u2019est le d\u00e9but d\u2019une belle histoire` : 'C\u2019est le d\u00e9but d\u2019une belle histoire',
+      subtitle: 'Votre carte fid\u00e9lit\u00e9 est maintenant active',
+      emoji: '\u2728',
     };
   }
 
@@ -150,7 +150,7 @@ export default function ScanSuccessStep({
     const remaining = stampsRequired - currentStamps;
 
     if (previousStamps === 0) {
-      sparkleGrand(colors);
+      sparkleSubtle(colors);
     } else if (remaining > 0 && remaining <= 2) {
       sparkleMedium(colors);
     } else if (currentStamps === Math.ceil(stampsRequired / 2)) {
