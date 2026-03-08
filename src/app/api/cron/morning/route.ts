@@ -1204,12 +1204,10 @@ export async function GET(request: NextRequest) {
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
     await supabase.from('reactivation_email_tracking').delete().lt('sent_at', sixtyDaysAgo.toISOString());
 
-    // Clean up old demo/tool leads and contact messages (> 1 year)
+    // Clean up old contact messages (> 1 year)
     const oneYearAgo = new Date();
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     const oneYearAgoISO = oneYearAgo.toISOString();
-    await supabase.from('demo_leads').delete().lt('created_at', oneYearAgoISO);
-    await supabase.from('tool_leads').delete().lt('created_at', oneYearAgoISO);
     await supabase.from('contact_messages').delete().lt('created_at', oneYearAgoISO);
   } catch (error) {
     sectionStatuses.push({ name: 'pendingReminders', status: 'error', error: String(error) });
