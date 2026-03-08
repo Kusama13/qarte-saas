@@ -106,7 +106,7 @@ export function MerchantSettingsForm({
         <Input
           type="number"
           min="1"
-          max="50"
+          max="15"
           value={stampsRequired}
           onChange={(e) => onChange({ stamps_required: Number(e.target.value), reward_description: rewardDescription })}
           className="text-center font-bold text-lg h-12 border-2 max-w-[120px]"

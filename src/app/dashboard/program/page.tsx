@@ -273,6 +273,11 @@ export default function ProgramPage() {
     }
     setRewardError(false);
 
+    // Validate stamps limits
+    if (formData.stampsRequired < 1 || formData.stampsRequired > 15) {
+      return;
+    }
+
     // Validate tier 2
     if (formData.tier2Enabled) {
       if (formData.loyaltyMode !== 'cagnotte' && !formData.tier2RewardDescription.trim()) {
@@ -285,6 +290,10 @@ export default function ProgramPage() {
       }
       if (formData.tier2StampsRequired <= formData.stampsRequired) {
         setTier2Error(`Le palier 2 doit être supérieur au palier 1 (${formData.stampsRequired})`);
+        return;
+      }
+      if (formData.tier2StampsRequired > 30) {
+        setTier2Error('Le palier 2 ne peut pas dépasser 30 passages');
         return;
       }
     }
@@ -788,6 +797,7 @@ export default function ProgramPage() {
                   <Input
                     type="number"
                     min={1}
+                    max={30}
                     placeholder={`Ex: ${formData.stampsRequired * 2}`}
                     value={formData.tier2StampsRequired || ''}
                     onChange={(e) => {
@@ -801,7 +811,7 @@ export default function ProgramPage() {
                   />
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-gray-400">Suggestions :</span>
-                    {[10, 15, 20].map((n) => (
+                    {[15, 20, 30].map((n) => (
                       <button
                         key={n}
                         type="button"
