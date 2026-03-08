@@ -112,6 +112,15 @@ export async function DELETE(request: NextRequest) {
   const supabase = getSupabase();
 
   try {
+    // SECURITY: Verify caller is authenticated via phone cookie
+    const phone = getAuthenticatedPhone(request);
+    if (!phone) {
+      return NextResponse.json(
+        { error: 'Non autorisé' },
+        { status: 401 }
+      );
+    }
+
     const { endpoint } = await request.json();
 
     if (!endpoint) {
@@ -119,6 +128,29 @@ export async function DELETE(request: NextRequest) {
         { error: 'Endpoint requis' },
         { status: 400 }
       );
+    }
+
+    // Only delete subscription if it belongs to a customer with this phone
+    const { data: sub } = await supabase
+      .from('push_subscriptions')
+      .select('customer_id')
+      .eq('endpoint', endpoint)
+      .maybeSingle();
+
+    if (sub) {
+      const { data: customer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('id', sub.customer_id)
+        .eq('phone_number', phone)
+        .maybeSingle();
+
+      if (!customer) {
+        return NextResponse.json(
+          { error: 'Non autorisé' },
+          { status: 403 }
+        );
+      }
     }
 
     const { error } = await supabase

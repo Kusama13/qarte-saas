@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import webpush from 'web-push';
 import { containsForbiddenWords } from '@/lib/content-moderation';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import logger from '@/lib/logger';
 
 interface PushSubscriptionRecord {
@@ -22,6 +23,13 @@ interface PushPayload {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 10 push sends per hour per merchant (by IP)
+  const ip = getClientIP(request);
+  const rateLimit = checkRateLimit(`push-send:${ip}`, { maxRequests: 10, windowMs: 60 * 60 * 1000 });
+  if (!rateLimit.success) {
+    return rateLimitResponse(rateLimit.resetTime);
+  }
+
   try {
     // Check environment variables
     const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;

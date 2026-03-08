@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest) {
     if (pointsDiff !== 0 || amountDiff !== 0) {
       const { data: card } = await supabase
         .from('loyalty_cards')
-        .select('current_stamps, current_amount')
+        .select('current_stamps, current_amount, customer_id')
         .eq('id', loyalty_card_id)
         .single();
 
@@ -104,6 +104,27 @@ export async function PUT(request: NextRequest) {
 
         if (cardUpdateError) {
           logger.error('Update card error:', cardUpdateError);
+        }
+
+        // Audit log: record visit edit in point_adjustments
+        const reasonParts: string[] = [];
+        if (pointsDiff !== 0) reasonParts.push(`${pointsDiff > 0 ? '+' : ''}${pointsDiff} passage${Math.abs(pointsDiff) > 1 ? 's' : ''}`);
+        if (amountDiff !== 0) reasonParts.push(`${amountDiff > 0 ? '+' : ''}${amountDiff.toFixed(2).replace('.', ',')} €`);
+        const auditReason = `Modification visite : ${reasonParts.join(' · ')}`;
+
+        const { error: auditError } = await supabase
+          .from('point_adjustments')
+          .insert({
+            loyalty_card_id,
+            merchant_id,
+            customer_id: card.customer_id,
+            adjustment: pointsDiff,
+            reason: auditReason,
+            adjusted_by: user.id,
+          });
+
+        if (auditError) {
+          logger.error('Visit edit audit log error:', auditError);
         }
       }
     }
