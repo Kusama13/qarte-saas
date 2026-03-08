@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
           .select('id, merchant_id, customer_id, redeemed_at, tier')
           .gte('redeemed_at', periodStart);
         if (periodEnd) q = q.lt('redeemed_at', periodEnd);
-        return q.order('redeemed_at', { ascending: false });
+        return q.order('redeemed_at', { ascending: false }).limit(500);
       })(),
       (() => {
         let q = supabaseAdmin
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
           .select('id, merchant_id, customer_id, created_at')
           .gte('created_at', periodStart);
         if (periodEnd) q = q.lt('created_at', periodEnd);
-        return q.order('created_at', { ascending: false });
+        return q.order('created_at', { ascending: false }).limit(1000);
       })(),
       (() => {
         let q = supabaseAdmin
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
           .select('id, name, email, subject, created_at')
           .gte('created_at', periodStart);
         if (periodEnd) q = q.lt('created_at', periodEnd);
-        return q.order('created_at', { ascending: false });
+        return q.order('created_at', { ascending: false }).limit(100);
       })(),
       (() => {
         let q = supabaseAdmin
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
           .eq('is_used', true)
           .gte('used_at', periodStart);
         if (periodEnd) q = q.lt('used_at', periodEnd);
-        return q.order('used_at', { ascending: false });
+        return q.order('used_at', { ascending: false }).limit(200);
       })(),
       supabaseAdmin
         .from('merchants')

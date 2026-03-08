@@ -35,19 +35,19 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('merchants').select('*').order('created_at', { ascending: false }),
       supabaseAdmin.from('super_admins').select('user_id'),
       supabaseAdmin.from('visits').select('merchant_id, visited_at').gte('visited_at', thirtyDaysAgo),
-      supabaseAdmin.from('loyalty_cards').select('merchant_id'),
-      supabaseAdmin.from('pending_email_tracking').select('merchant_id, reminder_day'),
-      supabaseAdmin.from('reactivation_email_tracking').select('merchant_id, day_sent'),
-      supabaseAdmin.from('visits').select('merchant_id').eq('status', 'pending'),
+      supabaseAdmin.rpc('get_loyalty_card_counts_per_merchant'),
+      supabaseAdmin.from('pending_email_tracking').select('merchant_id, reminder_day').limit(10000),
+      supabaseAdmin.from('reactivation_email_tracking').select('merchant_id, day_sent').limit(10000),
+      supabaseAdmin.from('visits').select('merchant_id').eq('status', 'pending').limit(10000),
     ]);
 
     // Super admin user_ids
     const superAdminIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
 
-    // Customer counts per merchant
+    // Customer counts per merchant (from RPC aggregation)
     const customerCounts: Record<string, number> = {};
-    (loyaltyCards || []).forEach((card: { merchant_id: string }) => {
-      customerCounts[card.merchant_id] = (customerCounts[card.merchant_id] || 0) + 1;
+    (loyaltyCards || []).forEach((row: { merchant_id: string; card_count: number }) => {
+      customerCounts[row.merchant_id] = Number(row.card_count);
     });
 
     // Visit aggregations

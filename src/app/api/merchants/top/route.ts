@@ -28,17 +28,13 @@ export async function GET() {
     return NextResponse.json({ merchants: [] });
   }
 
-  // Count loyalty cards per merchant
-  const merchantIds = merchants.map(m => m.id);
-  const { data: counts } = await supabaseAdmin
-    .from('loyalty_cards')
-    .select('merchant_id')
-    .in('merchant_id', merchantIds);
+  // Count loyalty cards per merchant (RPC aggregation instead of loading all cards)
+  const { data: cardCounts } = await supabaseAdmin.rpc('get_loyalty_card_counts_per_merchant');
 
   const countMap: Record<string, number> = {};
-  if (counts) {
-    for (const row of counts) {
-      countMap[row.merchant_id] = (countMap[row.merchant_id] || 0) + 1;
+  if (cardCounts) {
+    for (const row of cardCounts) {
+      countMap[row.merchant_id] = Number(row.card_count);
     }
   }
 

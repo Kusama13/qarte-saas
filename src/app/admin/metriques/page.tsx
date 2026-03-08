@@ -160,15 +160,15 @@ export default function MetriquesPage() {
       const [
         { data: allMerchants },
         { data: superAdmins },
-        { data: allVisitsData },
-        { data: allLoyaltyCards },
+        { data: firstVisitsRpc },
+        { data: tenthCardsRpc },
         { count: endingSoonCount },
         { data: snapshots },
       ] = await Promise.all([
         supabase.from('merchants').select('id, user_id, subscription_status, billing_interval, created_at, reward_description, trial_ends_at, logo_url, referral_program_enabled, birthday_gift_enabled, instagram_url, facebook_url, tiktok_url, booking_url, review_link, shield_enabled, tier2_enabled, pwa_installed_at, offer_active'),
         supabase.from('super_admins').select('user_id'),
-        supabase.from('visits').select('merchant_id, visited_at'),
-        supabase.from('loyalty_cards').select('merchant_id, created_at'),
+        supabase.rpc('get_first_visit_per_merchant'),
+        supabase.rpc('get_tenth_card_date_per_merchant'),
         supabase.from('merchants')
           .select('*', { count: 'exact', head: true })
           .eq('subscription_status', 'trial')
@@ -362,24 +362,11 @@ export default function MetriquesPage() {
       setMonthlyComparison(comparisonData);
 
       // ====== ACTIVATION + FUNNEL ======
+      // Build first visit map from RPC (1 row per merchant instead of all visits)
       const firstVisitPerMerchant = new Map<string, Date>();
-
-      (allVisitsData || []).forEach((v: { merchant_id: string; visited_at: string }) => {
-        const vDate = new Date(v.visited_at);
-        const existing = firstVisitPerMerchant.get(v.merchant_id);
-        if (!existing || vDate < existing) {
-          firstVisitPerMerchant.set(v.merchant_id, vDate);
-        }
+      (firstVisitsRpc || []).forEach((row: { merchant_id: string; first_visit_date: string }) => {
+        firstVisitPerMerchant.set(row.merchant_id, new Date(row.first_visit_date));
       });
-
-      const cardDatesPerMerchant = new Map<string, Date[]>();
-      (allLoyaltyCards || []).forEach((c: { merchant_id: string; created_at: string }) => {
-        if (!cardDatesPerMerchant.has(c.merchant_id)) {
-          cardDatesPerMerchant.set(c.merchant_id, []);
-        }
-        cardDatesPerMerchant.get(c.merchant_id)!.push(new Date(c.created_at));
-      });
-      cardDatesPerMerchant.forEach((dates) => dates.sort((a, b) => a.getTime() - b.getTime()));
 
       const recentCreated = merchants.filter(m => new Date(m.created_at) >= oneMonthAgo);
       const recentActivated = recentCreated.filter(m => firstVisitPerMerchant.has(m.id));
@@ -397,16 +384,15 @@ export default function MetriquesPage() {
       });
       const avgTimeToFirstScan = countWithFirst > 0 ? Math.round((totalDaysToFirst / countWithFirst) * 10) / 10 : 0;
 
+      // Build avg time to 10 customers from RPC (1 row per merchant with 10+ cards)
       let totalDaysTo10 = 0;
       let countWith10 = 0;
-      cardDatesPerMerchant.forEach((dates, merchantId) => {
-        if (dates.length >= 10) {
-          const merchant = merchants.find(m => m.id === merchantId);
-          if (merchant) {
-            const days = (dates[9].getTime() - new Date(merchant.created_at).getTime()) / (1000 * 60 * 60 * 24);
-            totalDaysTo10 += Math.max(0, days);
-            countWith10++;
-          }
+      (tenthCardsRpc || []).forEach((row: { merchant_id: string; tenth_card_date: string }) => {
+        const merchant = merchants.find(m => m.id === row.merchant_id);
+        if (merchant) {
+          const days = (new Date(row.tenth_card_date).getTime() - new Date(merchant.created_at).getTime()) / (1000 * 60 * 60 * 24);
+          totalDaysTo10 += Math.max(0, days);
+          countWith10++;
         }
       });
       const avgTimeTo10 = countWith10 > 0 ? Math.round((totalDaysTo10 / countWith10) * 10) / 10 : 0;

@@ -200,7 +200,8 @@ export async function GET(request: NextRequest) {
           .select('loyalty_card_id, visited_at')
           .in('loyalty_card_id', cardIds)
           .eq('status', 'confirmed')
-          .order('visited_at', { ascending: false });
+          .order('visited_at', { ascending: false })
+          .limit(50000);
 
         visitData = visits || [];
       }

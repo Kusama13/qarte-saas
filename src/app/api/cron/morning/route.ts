@@ -118,13 +118,15 @@ async function processEmailSection<T extends { id: string; user_id: string }>(op
   stats: SectionStats;
   sendFn: (email: string, candidate: T) => Promise<{ success: boolean }>;
   extraSkip?: (candidate: T) => boolean;
+  superAdminUserIds?: Set<string>;
 }) {
-  const { candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip } = opts;
+  const { candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip, superAdminUserIds } = opts;
   const trackingBatch: Array<{ merchant_id: string; reminder_day: number; pending_count: number }> = [];
 
   await batchProcess(candidates, async (candidate) => {
     stats.processed++;
 
+    if (superAdminUserIds?.has(candidate.user_id)) { stats.skipped++; return; }
     if (alreadySentSet.has(candidate.id)) { stats.skipped++; return; }
     if (extraSkip && extraSkip(candidate)) { stats.skipped++; return; }
 
@@ -155,14 +157,15 @@ async function runStandardEmailSection<T extends { id: string; user_id: string }
   stats: SectionStats;
   sendFn: (email: string, candidate: T) => Promise<{ success: boolean }>;
   extraSkip?: (candidate: T) => boolean;
+  superAdminUserIds?: Set<string>;
 }) {
-  const { candidates, trackingCode, stats, sendFn, extraSkip } = opts;
+  const { candidates, trackingCode, stats, sendFn, extraSkip, superAdminUserIds } = opts;
   if (!candidates || candidates.length === 0) return;
 
   const emailMap = await batchGetUserEmails([...new Set(candidates.map(m => m.user_id))]);
   const alreadySentSet = await getAlreadySentSet(candidates.map(m => m.id), trackingCode);
 
-  await processEmailSection({ candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip });
+  await processEmailSection({ candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip, superAdminUserIds });
 }
 
 export async function GET(request: NextRequest) {
@@ -210,6 +213,10 @@ export async function GET(request: NextRequest) {
   // Shared state across sections
   const now = new Date();
   const merchantsSentTrialEmail = new Set<string>();
+
+  // Load super admin user IDs once — exclude from ALL automated emails
+  const { data: superAdminList } = await supabase.from('super_admins').select('user_id');
+  const superAdminUserIds = new Set((superAdminList || []).map((sa: { user_id: string }) => sa.user_id));
 
   // ==================== 1. TRIAL EMAILS ====================
   // Idempotent — tracked via pending_email_tracking with codes -201/-203 (ending) and -211/-212 (expired)
@@ -1238,7 +1245,8 @@ export async function GET(request: NextRequest) {
         const { data: loyaltyCards } = await supabase
           .from('loyalty_cards')
           .select('customer_id')
-          .eq('merchant_id', push.merchant_id);
+          .eq('merchant_id', push.merchant_id)
+          .limit(5000);
 
         if (!loyaltyCards || loyaltyCards.length === 0) {
           await supabase.from('scheduled_push').update({ status: 'sent', sent_at: new Date().toISOString(), sent_count: 0 }).eq('id', push.id);
@@ -1250,7 +1258,8 @@ export async function GET(request: NextRequest) {
         const { data: subscriptions } = await supabase
           .from('push_subscriptions')
           .select('*')
-          .in('customer_id', customerIds);
+          .in('customer_id', customerIds)
+          .limit(10000);
 
         if (!subscriptions || subscriptions.length === 0) {
           await supabase.from('scheduled_push').update({ status: 'sent', sent_at: new Date().toISOString(), sent_count: 0 }).eq('id', push.id);
@@ -1562,7 +1571,8 @@ export async function GET(request: NextRequest) {
             .from('loyalty_cards')
             .select('customer_id')
             .eq('merchant_id', merchant.id)
-            .or(`last_visit_date.lte.${thirtyDaysAgo},last_visit_date.is.null`);
+            .or(`last_visit_date.lte.${thirtyDaysAgo},last_visit_date.is.null`)
+            .limit(5000);
 
           if (!inactiveCards || inactiveCards.length === 0) continue;
 
@@ -1570,7 +1580,8 @@ export async function GET(request: NextRequest) {
           const { data: customers } = await supabase
             .from('customers')
             .select('id, phone_number')
-            .in('id', customerIds);
+            .in('id', customerIds)
+            .limit(5000);
 
           const automationRow = automationMerchants.find(a => a.merchant_id === merchant.id);
           const customOfferText = automationRow?.inactive_reminder_offer_text;
@@ -1699,47 +1710,47 @@ export async function GET(request: NextRequest) {
             .in('subscription_status', ['trial', 'active'])
             .neq('no_contact', true);
 
-          // Batch fetch all loyalty cards + customers for all merchants (avoid N+1)
+          // Process merchant by merchant to avoid loading all cards + customers at once
           const validMerchants = (merchants || []).filter(m => offerTextMap.get(m.id));
-          const validMerchantIds = validMerchants.map(m => m.id);
 
-          if (validMerchantIds.length > 0) {
-            const [{ data: allCards }, { data: allCustomers }] = await Promise.all([
-              supabase.from('loyalty_cards').select('merchant_id, customer_id').in('merchant_id', validMerchantIds),
-              supabase.from('customers').select('id, phone_number').in('merchant_id', validMerchantIds),
-            ]);
+          for (const merchant of validMerchants) {
+            if (isTimedOut()) break;
 
-            // Build merchant -> customer phone map
-            const cardsByMerchant = new Map<string, Set<string>>();
-            for (const card of allCards || []) {
-              if (!cardsByMerchant.has(card.merchant_id)) cardsByMerchant.set(card.merchant_id, new Set());
-              cardsByMerchant.get(card.merchant_id)!.add(card.customer_id);
-            }
-            const customersById = new Map((allCustomers || []).map(c => [c.id, c]));
+            const offerText = offerTextMap.get(merchant.id);
+            if (!offerText) continue;
 
-            for (const merchant of validMerchants) {
-              const offerText = offerTextMap.get(merchant.id);
-              const customerIdSet = cardsByMerchant.get(merchant.id);
-              if (!offerText || !customerIdSet || customerIdSet.size === 0) continue;
+            // Load cards for this merchant only
+            const { data: cards } = await supabase
+              .from('loyalty_cards')
+              .select('customer_id')
+              .eq('merchant_id', merchant.id)
+              .limit(5000);
 
-              for (const customerId of customerIdSet) {
-                const customer = customersById.get(customerId);
-                if (!customer?.phone_number) continue;
+            if (!cards || cards.length === 0) continue;
 
-                const sent = await sendAutomationPush({
-                  supabase,
-                  merchantId: merchant.id,
-                  customerId: customer.id,
-                  customerPhone: customer.phone_number,
-                  automationType: `event_${upcomingEvent.id}`,
-                  title: merchant.shop_name,
-                  body: `C'est bientôt ${upcomingEvent.name} ! ${offerText}`,
-                  url: `/customer/card/${merchant.id}`,
-                });
+            const customerIds = [...new Set(cards.map(c => c.customer_id))];
+            const { data: customers } = await supabase
+              .from('customers')
+              .select('id, phone_number')
+              .in('id', customerIds)
+              .limit(5000);
 
-                if (sent) results.pushAutomations.events.sent++;
-                else results.pushAutomations.events.skipped++;
-              }
+            for (const customer of customers || []) {
+              if (!customer.phone_number) continue;
+
+              const sent = await sendAutomationPush({
+                supabase,
+                merchantId: merchant.id,
+                customerId: customer.id,
+                customerPhone: customer.phone_number,
+                automationType: `event_${upcomingEvent.id}`,
+                title: merchant.shop_name,
+                body: `C'est bientôt ${upcomingEvent.name} ! ${offerText}`,
+                url: `/customer/card/${merchant.id}`,
+              });
+
+              if (sent) results.pushAutomations.events.sent++;
+              else results.pushAutomations.events.skipped++;
             }
           }
         }
