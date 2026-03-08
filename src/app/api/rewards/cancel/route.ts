@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       message: `Récompense palier ${lastRedemption.tier} annulée`,
       tier: lastRedemption.tier,
       stamps_restored: shouldRestoreStamps ? lastRedemption.stamps_used : null,
-      amount_restored: (shouldRestoreStamps && merchant.loyalty_mode === 'cagnotte')
+      amount_restored: shouldRestoreAmount
         ? lastRedemption.amount_accumulated
         : null,
     });
