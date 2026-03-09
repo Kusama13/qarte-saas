@@ -1,6 +1,6 @@
 # AUDIT SÉCURITÉ — Qarte SaaS
 
-**Score : 89/100** — 0 critical, 0 high, 4 medium, 1 low
+**Score : 93/100** — 0 critical, 0 high, 4 medium, 1 low
 
 ---
 
@@ -16,6 +16,14 @@
 - Cookie customer HttpOnly + SameSite=Strict
 - Admin auth centralisée (`verifyAdminAuth()`) — messages d'erreur uniformes
 - Cron protégé par `CRON_SECRET` (comparaison timing-safe)
+
+### Corrections déployées (mars 2026)
+
+- **Push subscribe DELETE** : auth cookie phone + vérification ownership client (était ouvert sans auth)
+- **Push send** : rate limit 10 envois/heure par IP (n'avait pas de rate limit)
+- **RPCs admin-only** : migration 052 restreint les 3 fonctions RPC à `service_role` ou `super_admin` (plpgsql auth guard)
+- **Audit log visits/edit** : modifications de visites tracées dans `point_adjustments` (raison, auteur, diff)
+- **Stamps limits** : migration 054 — palier 1 max 15 (etait 50), palier 2 max 30 (etait illimite) + validation frontend/JS
 
 ---
 
@@ -45,6 +53,8 @@
 ## Nécessite intervention externe
 
 ### Migration DB (appliquer sur Supabase)
+
+- [x] **Migration 052 — RPCs admin-only** : code déployé, **à exécuter dans Supabase SQL Editor**
 
 - [ ] **Webhook idempotency** (3h)
   - Créer table `webhook_events` (stripe_event_id unique)
@@ -76,4 +86,4 @@
 
 ---
 
-*Audit effectué le 19 février 2026*
+*Audit initial : 19 février 2026 — Mis à jour : 8 mars 2026*

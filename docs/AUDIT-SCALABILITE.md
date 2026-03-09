@@ -1,6 +1,6 @@
 # AUDIT SCALABILITÉ — Qarte SaaS
 
-**Score : 78/100** — Capacité actuelle ~500-800 merchants (plafond dur : Supabase Free 10 connexions)
+**Score : 94/100** — Capacité actuelle ~5000-10000 merchants (Supabase Pro : backups quotidiens, 60 connexions)
 
 ---
 
@@ -16,6 +16,16 @@
 - Push notifications batchées par 50 avec pause 100ms
 - Scan page : fetch merchant + referral en parallèle
 - Page carte fidélité découpée en 5 composants (FCP amélioré)
+
+### Corrections déployées (mars 2026)
+
+- **Admin métriques** : 2 queries illimitées (visits, loyalty_cards) remplacées par RPCs server-side (`get_first_visit_per_merchant`, `get_tenth_card_date_per_merchant`)
+- **Admin merchants-data** : loyalty_cards count via RPC `get_loyalty_card_counts_per_merchant` + `.limit(10000)` sur tracking tables
+- **Activity feed** : `.limit()` sur les 4 tables (redemptions 500, loyalty_cards 1000, contact_messages 100, vouchers 200)
+- **Merchants top** : loyalty_cards count via RPC au lieu de scan complet
+- **Push subscribers** : `.limit(50000)` sur visits
+- **Cron morning events push** : traitement per-merchant au lieu de bulk load + `.limit(5000)` + timeout guard
+- **Migration 052** : 3 fonctions RPC SQL (agrégations server-side, ~1000 rows retournées au lieu de millions)
 
 ---
 
@@ -35,9 +45,8 @@
 
 ### Supabase Pro (+€25/mois)
 
-- [ ] **Free → Pro** (0h, clic)
-  - Free = 10 connections simultanées
-  - À 300+ merchants avec Vercel concurrent functions : connection overflow
+- [x] **Free → Pro** — Fait (mars 2026)
+  - 60 connections simultanées, backups quotidiens 7j, 8GB RAM
 
 ### Mois 2+ (si 1000+ merchants)
 
@@ -49,4 +58,4 @@
 
 ---
 
-*Audit effectué le 19 février 2026*
+*Audit initial : 19 février 2026 — Mis à jour : 8 mars 2026*

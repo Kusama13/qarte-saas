@@ -9,6 +9,9 @@ import {
   EyeOff,
   ArrowRight,
   Check,
+  Clock,
+  Shield,
+  Zap,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
@@ -127,11 +130,11 @@ export default function MerchantSignupPage() {
         <div className="w-full max-w-md">
           <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
             <div className="text-center mb-5">
-              <h1 className="text-2xl font-bold text-gray-900">
-                Rejoignez les centaines de salons qui fidélisent avec Qarte
+              <h1 className="text-xl font-bold text-gray-900">
+                Rejoins les centaines de <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">salons de beauté</span> qui fidélisent avec Qarte
               </h1>
               <p className="mt-2 text-gray-600">
-                Commencez votre essai gratuit de 7 jours
+                Commence ton essai gratuit de 7 jours
               </p>
             </div>
 
@@ -198,9 +201,20 @@ export default function MerchantSignupPage() {
               </div>
 
               <Button type="submit" loading={loading} className="w-full bg-gradient-to-r from-indigo-600 to-pink-500 hover:from-indigo-700 hover:to-pink-600 shadow-lg shadow-indigo-200/50">
-                Continuer
+                Commencer gratuitement
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
+
+              <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500 font-medium">
+                <span className="flex items-center gap-1">
+                  <CreditCard className="w-3.5 h-3.5" />
+                  Sans carte bancaire
+                </span>
+                <span className="flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" />
+                  Pret en 2 min
+                </span>
+              </div>
             </form>
 
             <div className="mt-6 text-center">

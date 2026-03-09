@@ -60,10 +60,10 @@ docs/
 ├── context.md            # Ce fichier
 ├── supabase-context.md   # Schema DB complet (source unique)
 ├── AUDIT-MARKETING.md    # Score 67/100
-├── AUDIT-SECURITE.md     # Score 89/100
-└── AUDIT-SCALABILITE.md  # Score 78/100
+├── AUDIT-SECURITE.md     # Score 93/100
+└── AUDIT-SCALABILITE.md  # Score 94/100
 
-supabase/migrations/      # 50 migrations SQL (001-050)
+supabase/migrations/      # 54 migrations SQL (001-054)
 ```
 
 ---
@@ -210,7 +210,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `POST /api/cagnotte/redeem-public` — Redeem cashback (client auth cookie). Rejette visit.
 
 ### Commun aux deux modes
-- `POST /api/adjust-points` — Ajustement stamps + amount_adjustment (cagnotte)
+- `POST /api/adjust-points` — Ajustement stamps + amount_adjustment (cagnotte). Audit log dans `point_adjustments`.
+- `PUT /api/visits/edit` — Modifier points/montant d'une visite. Audit log dans `point_adjustments`.
 - `POST /api/rewards/cancel` — Annulation dernier redeem (gere les deux modes)
 - `POST /api/visits/moderate` — Valider/rejeter quarantaine
 
@@ -233,8 +234,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `POST /api/merchants/referral-config` — Config parrainage (merchant auth)
 
 ### Push & Marketing
-- `POST /api/push/subscribe` — Abonnement push
-- `POST /api/push/send` — Envoi notification
+- `POST /api/push/subscribe` — Abonnement push (auth cookie phone)
+- `DELETE /api/push/subscribe` — Desabonnement push (auth cookie phone + ownership)
+- `POST /api/push/send` — Envoi notification (rate limit 10/h par IP)
 - `GET /api/offers` — Offres promo
 
 ### Stripe
@@ -434,7 +436,7 @@ Le scan est reserve au merchant (affiche en boutique). Exposer le lien permettra
 
 | Metrique | Capacite |
 |----------|----------|
-| Marchands | ~500-800 |
+| Marchands | ~2000-5000 |
 | Checkins/jour | ~20,000 |
 | Push/envoi | ~5,000 |
 | Clients/marchand | ~2,000 |

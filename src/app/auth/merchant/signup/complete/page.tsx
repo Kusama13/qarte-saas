@@ -11,6 +11,7 @@ import {
   Check,
   Shield,
   Gift,
+  Clock,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
@@ -188,7 +189,7 @@ export default function CompleteProfilePage() {
           <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
             <div className="text-center mb-5">
               <h1 className="text-2xl font-bold text-gray-900">
-                Créez votre carte de fidélité
+                Crée ta carte de fidélité
               </h1>
               <p className="mt-2 text-gray-500 text-sm">
                 3 infos et c&apos;est parti
@@ -280,13 +281,15 @@ export default function CompleteProfilePage() {
             </form>
 
             {/* Reassurance */}
-            <div className="mt-4 flex items-center justify-center gap-3 text-xs text-gray-400">
+            <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500 font-medium">
               <span className="flex items-center gap-1">
-                <Shield className="w-3.5 h-3.5" />
+                <CreditCard className="w-3.5 h-3.5" />
                 Sans carte bancaire
               </span>
-              <span>·</span>
-              <span>Annulation en 1 clic</span>
+              <span className="flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" />
+                Pret en 2 min
+              </span>
             </div>
 
             {/* Back link */}

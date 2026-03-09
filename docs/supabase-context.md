@@ -37,7 +37,7 @@
 | program_name | TEXT | NULL | |
 | welcome_message | TEXT | NULL | |
 | promo_message | TEXT | NULL | |
-| stamps_required | INTEGER | `10` | CHECK (1..50) |
+| stamps_required | INTEGER | `10` | CHECK (1..15) — mig 054 (etait 1..50) |
 | reward_description | TEXT | NULL | NULL = isFirstSetup |
 | trial_ends_at | TIMESTAMPTZ | `NOW() + 7 days` | mig 034 (etait 14j, corrige a 7j mig 026+034) |
 | stripe_customer_id | TEXT | NULL | |
@@ -49,7 +49,7 @@
 | review_link | TEXT | NULL | mig 003 |
 | scan_code | TEXT | NULL | UNIQUE, mig 008b |
 | tier2_enabled | BOOLEAN | `FALSE` | mig 016 |
-| tier2_stamps_required | INTEGER | NULL | CHECK > stamps_required si tier2_enabled |
+| tier2_stamps_required | INTEGER | NULL | CHECK > stamps_required AND <= 30 — mig 054 |
 | tier2_reward_description | TEXT | NULL | mig 016 |
 | cagnotte_percent | NUMERIC(5,2) | NULL | mig 050 |
 | cagnotte_tier2_percent | NUMERIC(5,2) | NULL | mig 050 |
@@ -357,37 +357,9 @@
 
 ---
 
-### 2.17 demo_leads (mig 010)
+### ~~2.17 demo_leads~~ — SUPPRIMEE (mig 053)
 
-| Colonne | Type | Default |
-|---------|------|---------|
-| id | UUID PK | `gen_random_uuid()` |
-| phone_number | TEXT | NOT NULL |
-| converted | BOOLEAN | `FALSE` |
-| converted_at | TIMESTAMPTZ | NULL |
-| notes | TEXT | NULL |
-| created_at | TIMESTAMPTZ | `NOW()` |
-
-**Indexes** : `idx_demo_leads_phone`, `idx_demo_leads_created`, `idx_demo_leads_converted`
-**Unique** : `idx_demo_leads_phone_unique` on phone_number
-
----
-
-### 2.18 tool_leads (mig 011)
-
-| Colonne | Type | Default |
-|---------|------|---------|
-| id | UUID PK | `gen_random_uuid()` |
-| email | TEXT | NOT NULL |
-| source | TEXT | NOT NULL | (qr-menu, google-review, ebook) |
-| business_name | TEXT | NULL |
-| generated_value | TEXT | NULL |
-| converted | BOOLEAN | `FALSE` |
-| converted_at | TIMESTAMPTZ | NULL |
-| notes | TEXT | NULL |
-| created_at | TIMESTAMPTZ | `NOW()` |
-
-**Unique** : (email, source)
+### ~~2.18 tool_leads~~ — SUPPRIMEE (mig 053)
 
 ---
 
@@ -547,9 +519,7 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | created_at | TIMESTAMPTZ | `NOW()` | |
 | updated_at | TIMESTAMPTZ | `NOW()` | |
 
-### 2.29 push_automation_events (mig 040)
-
-Table pour tracker les envois d'automatisations push (id, automation_id, customer_id, merchant_id, sent_at)
+### ~~2.29 push_automation_events~~ — SUPPRIMEE (mig 053)
 
 ### 2.30 revenue_snapshots (mig 051)
 
@@ -642,7 +612,7 @@ Voir `docs/context.md` section 4.7 pour les regles completes. Resume DB :
 | push_history | SELECT (merchant own) | Full |
 | push_subscriptions | — (mig 038 restricted) | Full |
 | pending_email_tracking | — | Full |
-| demo_leads/tool_leads | INSERT (public) | Full |
+| ~~demo_leads/tool_leads~~ | SUPPRIMEES (mig 053) | — |
 | admin_announcements | SELECT (authenticated, published) | Full |
 | admin_announcement_dismissals | INSERT/SELECT (merchant own) | Full |
 | contact_messages | INSERT (public) | Full |
@@ -670,6 +640,13 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 - `increment_push_automation_stat(p_merchant_id, p_stat_column)` — Incremente atomiquement un compteur push, mig 041
 - `update_updated_at_column()` — SET NEW.updated_at = NOW() (sauf si seul last_seen_at change, mig 032)
 
+### Fonctions RPC admin (mig 052) :
+- `get_first_visit_per_merchant()` → TABLE(merchant_id uuid, first_visit_date timestamptz) — MIN(visited_at) par merchant
+- `get_tenth_card_date_per_merchant()` → TABLE(merchant_id uuid, tenth_card_date timestamptz) — Date de la 10eme carte par merchant
+- `get_loyalty_card_counts_per_merchant()` → TABLE(merchant_id uuid, card_count bigint) — COUNT(*) loyalty_cards par merchant
+
+**Securite** : plpgsql STABLE SECURITY DEFINER. Chaque fonction verifie `current_setting('role') = 'service_role'` OU `auth.uid() IN super_admins`. Sinon → `RAISE EXCEPTION 'Acces refuse'`.
+
 ---
 
 ## 8. Indexes de performance (mig 014 + 046)
@@ -692,10 +669,10 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 
 | Table | Contrainte | Valeur |
 |-------|-----------|--------|
-| merchants | `stamps_required` | 1..50 |
+| merchants | `stamps_required` | 1..15 (mig 054) |
 | merchants | `loyalty_mode` | 'visit', 'cagnotte' |
 | merchants | `subscription_status` | 'trial', 'active', 'canceled', 'canceling', 'past_due' |
-| merchants | `tier2_stamps_check` | tier2_stamps_required > stamps_required |
+| merchants | `tier2_stamps_check` | tier2_stamps_required > stamps_required AND <= 30 (mig 054) |
 | visits | `status` | 'confirmed', 'pending', 'rejected' |
 | redemptions | `tier` | 1, 2 |
 | vouchers | `tier` | 1, 2 |
@@ -707,7 +684,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 
 ---
 
-## 10. Migrations (001 → 050)
+## 10. Migrations (001 → 054)
 
 | # | Fichier | Resume |
 |---|---------|--------|
@@ -763,6 +740,9 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 049 | unique_merchant_user_id | UNIQUE constraint on merchants.user_id |
 | 050 | cagnotte_mode | cagnotte fields, purge mode article |
 | 051 | schema_drift_fix_v2 | social links, billing_interval, revenue_snapshots |
+| 052 | admin_metrics_rpc | 3 fonctions RPC admin (first_visit, tenth_card, card_counts) — plpgsql, SECURITY DEFINER, auth guard super_admin/service_role |
+| 053 | cleanup_unused_tables | DROP demo_leads, tool_leads, push_automation_events |
+| 054 | stamps_limits | stamps_required CHECK 1..15 (etait 1..50), tier2_stamps_required CHECK <= 30 (etait illimite) |
 
 ---
 
