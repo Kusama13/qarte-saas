@@ -184,7 +184,7 @@ export function useAssignCustomer(
 ) {
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState('');
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithCard | null>(null);
+  const [selectedCustomers, setSelectedCustomers] = useState<CustomerWithCard[]>([]);
   const [assigning, setAssigning] = useState(false);
   const [assignError, setAssignError] = useState<string | null>(null);
 
@@ -273,7 +273,7 @@ export function useAssignCustomer(
       } as CustomerWithCard;
 
       setCustomers(prev => [transformedCard, ...prev]);
-      setSelectedCustomer(transformedCard);
+      setSelectedCustomers(prev => [...prev, transformedCard]);
       setShowNewCustomerForm(false);
       setNewCustomerFirstName('');
       setNewCustomerLastName('');
@@ -286,41 +286,64 @@ export function useAssignCustomer(
     setCreatingCustomer(false);
   };
 
+  const toggleCustomerSelection = (customer: CustomerWithCard) => {
+    setSelectedCustomers(prev => {
+      const exists = prev.some(c => c.id === customer.id);
+      if (exists) return prev.filter(c => c.id !== customer.id);
+      return [...prev, customer];
+    });
+  };
+
   const handleAssignCustomer = async () => {
-    if (!selectedCustomer || !selectedProgram) return;
+    if (selectedCustomers.length === 0 || !selectedProgram) return;
 
     setAssigning(true);
     setAssignError(null);
-    try {
-      const response = await fetch('/api/member-cards', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          program_id: selectedProgram.id,
-          customer_id: selectedCustomer.customer.id,
-        }),
-      });
+    const errors: string[] = [];
+    let successCount = 0;
 
-      if (response.ok) {
-        setAssignModalOpen(false);
-        setSelectedCustomer(null);
-        setCustomerSearch('');
-        await fetchProgramMembers(selectedProgram.id);
-        await fetchPrograms();
-      } else {
-        const data = await response.json();
-        setAssignError(data.error || 'Erreur lors de l\'assignation');
+    for (const customer of selectedCustomers) {
+      try {
+        const response = await fetch('/api/member-cards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            program_id: selectedProgram.id,
+            customer_id: customer.customer.id,
+          }),
+        });
+
+        if (response.ok) {
+          successCount++;
+        } else {
+          const data = await response.json();
+          const name = `${customer.customer.first_name || ''} ${customer.customer.last_name || ''}`.trim();
+          errors.push(`${name}: ${data.error || 'erreur'}`);
+        }
+      } catch {
+        const name = `${customer.customer.first_name || ''} ${customer.customer.last_name || ''}`.trim();
+        errors.push(`${name}: erreur de connexion`);
       }
-    } catch (error) {
-      console.error('Error assigning customer:', error);
-      setAssignError('Erreur de connexion');
+    }
+
+    if (successCount > 0) {
+      await fetchProgramMembers(selectedProgram.id);
+      await fetchPrograms();
+    }
+
+    if (errors.length > 0) {
+      setAssignError(errors.join(' · '));
+    } else {
+      setAssignModalOpen(false);
+      setSelectedCustomers([]);
+      setCustomerSearch('');
     }
     setAssigning(false);
   };
 
   const closeAssignModal = () => {
     setAssignModalOpen(false);
-    setSelectedCustomer(null);
+    setSelectedCustomers([]);
     setCustomerSearch('');
     setShowNewCustomerForm(false);
     setAssignError(null);
@@ -341,8 +364,8 @@ export function useAssignCustomer(
     setAssignModalOpen,
     customerSearch,
     setCustomerSearch,
-    selectedCustomer,
-    setSelectedCustomer,
+    selectedCustomers,
+    toggleCustomerSelection,
     assigning,
     assignError,
     setAssignError,

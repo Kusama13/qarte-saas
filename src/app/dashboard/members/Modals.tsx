@@ -158,8 +158,9 @@ export function CreateProgramModal({
                 type="number"
                 min="1"
                 max={durationUnit === 'day' ? 365 : durationUnit === 'week' ? 52 : 120}
-                value={durationNumber}
-                onChange={(e) => setDurationNumber(Math.max(1, parseInt(e.target.value) || 1))}
+                value={durationNumber || ''}
+                onChange={(e) => setDurationNumber(parseInt(e.target.value) || 0)}
+                onBlur={() => { if (durationNumber < 1) setDurationNumber(1); }}
                 className="w-full h-12 px-4 text-center text-lg font-semibold border-2 border-gray-100 rounded-xl focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition-all"
               />
             </div>
@@ -207,8 +208,8 @@ interface AssignModalProps {
   customerSearch: string;
   setCustomerSearch: (v: string) => void;
   filteredCustomers: CustomerWithCard[];
-  selectedCustomer: CustomerWithCard | null;
-  setSelectedCustomer: (c: CustomerWithCard) => void;
+  selectedCustomers: CustomerWithCard[];
+  toggleCustomerSelection: (c: CustomerWithCard) => void;
   assigning: boolean;
   assignError?: string | null;
   onAssign: () => void;
@@ -235,8 +236,8 @@ export function AssignModal({
   customerSearch,
   setCustomerSearch,
   filteredCustomers,
-  selectedCustomer,
-  setSelectedCustomer,
+  selectedCustomers,
+  toggleCustomerSelection,
   assigning,
   assignError,
   onAssign,
@@ -276,27 +277,35 @@ export function AssignModal({
             </div>
 
             <div className="max-h-64 overflow-y-auto space-y-2">
-              {filteredCustomers.slice(0, 10).map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedCustomer(c)}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
-                    selectedCustomer?.id === c.id
-                      ? 'bg-amber-50 border-2 border-amber-300'
-                      : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
-                  }`}
-                >
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold">
-                    {c.customer?.first_name?.charAt(0) || '?'}
-                  </div>
-                  <div className="text-left flex-1">
-                    <p className="font-semibold text-gray-900">
-                      {c.customer?.first_name} {c.customer?.last_name}
-                    </p>
-                    <p className="text-sm text-gray-500">{c.customer?.phone_number}</p>
-                  </div>
-                </button>
-              ))}
+              {filteredCustomers.slice(0, 20).map((c) => {
+                const isSelected = selectedCustomers.some(s => s.id === c.id);
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => toggleCustomerSelection(c)}
+                    className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
+                      isSelected
+                        ? 'bg-amber-50 border-2 border-amber-300'
+                        : 'bg-gray-50 border-2 border-transparent hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                      isSelected ? 'bg-amber-500 border-amber-500' : 'border-gray-300'
+                    }`}>
+                      {isSelected && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold shrink-0">
+                      {c.customer?.first_name?.charAt(0) || '?'}
+                    </div>
+                    <div className="text-left flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">
+                        {c.customer?.first_name} {c.customer?.last_name}
+                      </p>
+                      <p className="text-sm text-gray-500">{c.customer?.phone_number}</p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             <button
@@ -315,7 +324,7 @@ export function AssignModal({
 
             <Button
               onClick={onAssign}
-              disabled={!selectedCustomer || assigning}
+              disabled={selectedCustomers.length === 0 || assigning}
               className="w-full bg-amber-500 hover:bg-amber-600 text-white"
             >
               {assigning ? (
@@ -323,7 +332,9 @@ export function AssignModal({
               ) : (
                 <UserPlus className="w-4 h-4 mr-2" />
               )}
-              Ajouter au programme
+              {selectedCustomers.length > 1
+                ? `Ajouter ${selectedCustomers.length} membres`
+                : 'Ajouter au programme'}
             </Button>
           </>
         ) : (
@@ -347,7 +358,8 @@ export function AssignModal({
               onChange={(e) => setNewCustomerLastName(e.target.value)}
             />
             <Input
-              placeholder="T&eacute;l&eacute;phone *"
+              placeholder="06 12 34 56 78"
+              type="tel"
               value={newCustomerPhone}
               onChange={(e) => setNewCustomerPhone(e.target.value)}
             />
@@ -468,8 +480,9 @@ export function ExtendModal({
                 type="number"
                 min="1"
                 max={extendDurationUnit === 'day' ? 365 : extendDurationUnit === 'week' ? 52 : 120}
-                value={extendDurationNumber}
-                onChange={(e) => setExtendDurationNumber(Math.max(1, parseInt(e.target.value) || 1))}
+                value={extendDurationNumber || ''}
+                onChange={(e) => setExtendDurationNumber(parseInt(e.target.value) || 0)}
+                onBlur={() => { if (extendDurationNumber < 1) setExtendDurationNumber(1); }}
                 className="w-full h-12 px-4 text-center text-lg font-semibold border-2 border-gray-100 rounded-xl focus:border-amber-400 focus:ring-2 focus:ring-amber-100 outline-none transition-all"
               />
             </div>

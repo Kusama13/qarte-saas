@@ -33,8 +33,8 @@ interface ProgramDetailViewProps {
     setAssignModalOpen: (v: boolean) => void;
     customerSearch: string;
     setCustomerSearch: (v: string) => void;
-    selectedCustomer: CustomerWithCard | null;
-    setSelectedCustomer: (c: CustomerWithCard) => void;
+    selectedCustomers: CustomerWithCard[];
+    toggleCustomerSelection: (c: CustomerWithCard) => void;
     assigning: boolean;
     assignError: string | null;
     setAssignError: (v: string | null) => void;
@@ -204,8 +204,8 @@ export default function ProgramDetailView({
         customerSearch={assign.customerSearch}
         setCustomerSearch={assign.setCustomerSearch}
         filteredCustomers={assign.filteredCustomers}
-        selectedCustomer={assign.selectedCustomer}
-        setSelectedCustomer={assign.setSelectedCustomer}
+        selectedCustomers={assign.selectedCustomers}
+        toggleCustomerSelection={assign.toggleCustomerSelection}
         assigning={assign.assigning}
         assignError={assign.assignError}
         onAssign={assign.handleAssignCustomer}
