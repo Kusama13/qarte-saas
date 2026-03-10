@@ -29,10 +29,10 @@ export default function EmptyState({ onCreateProgram }: EmptyStateProps) {
 
       <div className="relative z-10 px-5 md:px-8">
         <h3 className="text-xl md:text-3xl font-bold text-gray-900 mb-2 md:mb-3 tracking-tight">
-          Inaugurez votre <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">Exp&eacute;rience Elite</span>
+          Inaugure ton <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-600 to-orange-600">Exp&eacute;rience Elite</span>
         </h3>
         <p className="text-gray-500 mb-6 md:mb-10 max-w-md mx-auto text-sm md:text-lg leading-relaxed">
-          Transformez vos clients fid&egrave;les en membres privil&eacute;gi&eacute;s. Commencez par cr&eacute;er votre premier programme.
+          Transforme tes clients fid&egrave;les en membres privil&eacute;gi&eacute;s. Commence par cr&eacute;er ton premier programme.
         </p>
         <Button
           onClick={onCreateProgram}

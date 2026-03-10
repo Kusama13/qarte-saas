@@ -226,7 +226,7 @@ export default function SendTab(props: SendTabProps) {
                       <textarea
                         value={offerDescription}
                         onChange={(e) => setOfferDescription(e.target.value)}
-                        placeholder="Décrivez votre offre en détail..."
+                        placeholder="Décris ton offre en détail..."
                         maxLength={300}
                         rows={2}
                         className="w-full px-3 py-2.5 rounded-xl border border-gray-200 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 transition-all outline-none resize-none text-sm"
@@ -346,7 +346,7 @@ export default function SendTab(props: SendTabProps) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-gray-900">{merchantShopName || 'Votre commerce'}</span>
+                      <span className="text-[10px] font-bold text-gray-900">{merchantShopName || 'Ton commerce'}</span>
                       <span className="text-[9px] text-gray-400">Maint.</span>
                     </div>
                     <p className="text-[10px] font-semibold text-gray-800 truncate">{title || 'Titre...'}</p>

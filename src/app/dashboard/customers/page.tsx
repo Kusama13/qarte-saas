@@ -698,13 +698,13 @@ export default function CustomersPage() {
             {searchQuery || activeFilter !== 'all' || filterPushOnly ? (
               <>
                 <p className="text-lg font-medium">Aucun résultat</p>
-                <p className="text-sm">Essayez de modifier vos filtres</p>
+                <p className="text-sm">Essaie de modifier tes filtres</p>
               </>
             ) : (
               <>
                 <p className="text-lg font-medium">Aucun client pour le moment</p>
                 <p className="text-sm">
-                  Vos clients apparaîtront ici après leur premier scan
+                  Tes clients apparaîtront ici après leur premier scan
                 </p>
               </>
             )}

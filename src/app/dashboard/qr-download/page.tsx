@@ -207,7 +207,7 @@ export default function QRDownloadPage() {
           Mon QR code & Kit promo
         </h1>
         <p className="mt-1 text-sm text-gray-500 font-medium">
-          Votre QR code et vos visuels marketing en un seul endroit
+          Ton QR code et tes visuels marketing en un seul endroit
         </p>
       </div>
 
@@ -226,8 +226,8 @@ export default function QRDownloadPage() {
                     <QrCode className="w-4 h-4 text-indigo-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">QR code dans votre t&eacute;l&eacute;phone</p>
-                    <p className="text-xs text-gray-500">Vos clients scannent votre QR code &agrave; chaque passage pour cumuler des points.</p>
+                    <p className="text-sm font-semibold text-gray-900">QR code dans ton t&eacute;l&eacute;phone</p>
+                    <p className="text-xs text-gray-500">Tes clients scannent ton QR code &agrave; chaque passage pour cumuler des points.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -270,7 +270,7 @@ export default function QRDownloadPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Cadeaux d&apos;anniversaire</p>
-                    <p className="text-xs text-gray-500">Offrez automatiquement un cadeau &agrave; vos clients pour leur anniversaire.</p>
+                    <p className="text-xs text-gray-500">Offre automatiquement un cadeau &agrave; tes clients pour leur anniversaire.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -279,7 +279,7 @@ export default function QRDownloadPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Parrainage client</p>
-                    <p className="text-xs text-gray-500">Vos clients existants ram&egrave;nent de nouveaux clients, r&eacute;compens&eacute;s des deux c&ocirc;t&eacute;s.</p>
+                    <p className="text-xs text-gray-500">Tes clients existants ram&egrave;nent de nouveaux clients, r&eacute;compens&eacute;s des deux c&ocirc;t&eacute;s.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -288,10 +288,10 @@ export default function QRDownloadPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-gray-900">Notifications automatiques</p>
-                    <p className="text-xs text-gray-500">Relancez les clients inactifs et informez-les de vos offres sans rien faire.</p>
+                    <p className="text-xs text-gray-500">Relance les clients inactifs et informe-les de tes offres sans rien faire.</p>
                   </div>
                 </div>
-                <p className="mt-1 text-[11px] text-gray-400 text-center">Activez ces fonctionnalit&eacute;s depuis votre tableau de bord.</p>
+                <p className="mt-1 text-[11px] text-gray-400 text-center">Active ces fonctionnalit&eacute;s depuis ton tableau de bord.</p>
               </div>
             </div>
           </div>
@@ -438,7 +438,7 @@ export default function QRDownloadPage() {
                 <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                   <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
                   <p className="text-xs text-amber-700 font-medium">
-                    Configurez votre programme de fidélité (palier 1) avant de télécharger.
+                    Configure ton programme de fidélité (palier 1) avant de télécharger.
                   </p>
                 </div>
               )}
@@ -455,12 +455,12 @@ export default function QRDownloadPage() {
                 {downloadSuccess ? 'Enregistré !' : 'Enregistrer l\'image'}
               </Button>
               <p className="text-center text-xs text-gray-500">
-                Gardez-le sur votre t&eacute;l&eacute;phone et montrez-le &agrave; vos client(e)s au moment de payer
+                Garde-le sur ton t&eacute;l&eacute;phone et montre-le &agrave; tes client(e)s au moment de payer
               </p>
               <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
                 <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-red-700 font-medium leading-relaxed">
-                  Ne publiez pas votre QR code sur les r&eacute;seaux sociaux — vos clients doivent le scanner <span className="font-bold">sur place uniquement</span>. Pour vos r&eacute;seaux, utilisez l&apos;onglet Kit r&eacute;seaux !
+                  Ne publie pas ton QR code sur les r&eacute;seaux sociaux — tes clients doivent le scanner <span className="font-bold">sur place uniquement</span>. Pour tes r&eacute;seaux, utilise l&apos;onglet Kit r&eacute;seaux !
                 </p>
               </div>
             </div>
@@ -485,7 +485,7 @@ export default function QRDownloadPage() {
                     <Play className="w-4 h-4" />
                     Tester l&apos;exp&eacute;rience client
                   </span>
-                  <span className="text-[11px] text-gray-400 mt-0.5">Vivez le parcours de vos clients lors du scan</span>
+                  <span className="text-[11px] text-gray-400 mt-0.5">Vis le parcours de tes clients lors du scan</span>
                 </a>
               ) : (
                 <div className="flex flex-col items-center justify-center w-full py-3 px-4 bg-white border-2 border-gray-200 rounded-xl opacity-50 cursor-not-allowed">
@@ -493,7 +493,7 @@ export default function QRDownloadPage() {
                     <Play className="w-4 h-4" />
                     Tester l&apos;exp&eacute;rience client
                   </span>
-                  <span className="text-[11px] text-gray-300 mt-0.5">Vivez le parcours de vos clients lors du scan</span>
+                  <span className="text-[11px] text-gray-300 mt-0.5">Vis le parcours de tes clients lors du scan</span>
                 </div>
               )
             )}
@@ -510,7 +510,7 @@ export default function QRDownloadPage() {
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
-              Visuel pour vos réseaux
+              Visuel pour tes réseaux
               <div className="flex items-center gap-1 ml-1">
                 <span className="w-5 h-5 rounded-md bg-gradient-to-br from-pink-500 via-red-500 to-yellow-400 flex items-center justify-center">
                   <Instagram className="w-3 h-3 text-white" />
@@ -556,7 +556,7 @@ export default function QRDownloadPage() {
                 <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                   <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
                   <p className="text-xs text-amber-700 font-medium">
-                    Configurez votre programme de fidélité (palier 1) avant de télécharger.
+                    Configure ton programme de fidélité (palier 1) avant de télécharger.
                   </p>
                 </div>
               )}
@@ -632,7 +632,7 @@ export default function QRDownloadPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold text-purple-500 mt-0.5">2.</span>
-                  Épinglez la publication en haut de votre profil
+                  Épingle la publication en haut de ton profil
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold text-purple-500 mt-0.5">3.</span>
@@ -640,7 +640,7 @@ export default function QRDownloadPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="font-bold text-purple-500 mt-0.5">4.</span>
-                  Envoyez l&apos;image dans vos groupes WhatsApp
+                  Envoie l&apos;image dans tes groupes WhatsApp
                 </li>
               </ul>
             </div>
@@ -653,9 +653,9 @@ export default function QRDownloadPage() {
               Lien en bio
             </div>
             <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-              <p className="text-sm font-bold text-gray-900 mb-0.5">Partagez votre programme en bio</p>
+              <p className="text-sm font-bold text-gray-900 mb-0.5">Partage ton programme en bio</p>
               <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-                Ajoutez ce lien dans votre bio Instagram, TikTok ou Facebook pour que vos abonnés voient votre programme de fidélité.
+                Ajoute ce lien dans ta bio Instagram, TikTok ou Facebook pour que tes abonnés voient ton programme de fidélité.
               </p>
               <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <p className="text-[13px] text-gray-700 font-mono flex-1 truncate">
@@ -719,7 +719,7 @@ export default function QRDownloadPage() {
               </div>
               <p className="text-lg font-black text-gray-900">Attirez de nouveaux clients</p>
               <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-                Plus votre page est compl&egrave;te (photos, adresse, r&eacute;seaux), plus elle remonte sur Google et attire de nouveaux clients.
+                Plus ta page est compl&egrave;te (photos, adresse, r&eacute;seaux), plus elle remonte sur Google et attire de nouveaux clients.
               </p>
               <a
                 href={`/p/${merchant.slug}`}
@@ -758,7 +758,7 @@ export default function QRDownloadPage() {
               </div>
               <p className="text-lg font-black text-white">Annoncez la nouvelle !</p>
               <p className="mt-2 text-sm text-white/70 leading-relaxed">
-                Vos followers ne savent pas encore que vous avez un programme de fid&eacute;lit&eacute;. Partagez-le sur vos r&eacute;seaux en un clic.
+                Tes followers ne savent pas encore que tu as un programme de fid&eacute;lit&eacute;. Partage-le sur tes r&eacute;seaux en un clic.
               </p>
               <button
                 onClick={() => {

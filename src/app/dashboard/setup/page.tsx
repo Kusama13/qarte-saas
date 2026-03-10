@@ -191,13 +191,13 @@ export default function OnboardingPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {currentStep === 1
-                  ? 'Personnalisez votre identité'
-                  : 'Configurez votre programme'}
+                  ? 'Personnalise ton identité'
+                  : 'Configure ton programme'}
               </h1>
               <p className="mt-2 text-gray-600">
                 {currentStep === 1
-                  ? 'Ajoutez votre logo et choisissez vos couleurs pour une expérience personnalisée.'
-                  : 'Définissez les règles de votre programme de fidélité.'}
+                  ? 'Ajoute ton logo et choisis tes couleurs pour une expérience personnalisée.'
+                  : 'Définis les règles de ton programme de fidélité.'}
               </p>
             </div>
 
@@ -211,7 +211,7 @@ export default function OnboardingPage() {
 
                   <div className="space-y-4">
                     <div>
-                      <label className="label">Télécharger votre logo</label>
+                      <label className="label">Ajoute ton logo</label>
                       <div className="flex items-center gap-4">
                         <label className="flex items-center justify-center w-20 h-20 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary transition-colors">
                           {uploading ? (
@@ -470,7 +470,7 @@ export default function OnboardingPage() {
                           />
                         ) : (
                           <span className="text-lg font-bold text-white">
-                            {merchant?.shop_name || 'Votre Commerce'}
+                            {merchant?.shop_name || 'Ton Commerce'}
                           </span>
                         )}
                       </div>

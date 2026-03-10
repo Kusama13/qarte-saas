@@ -73,7 +73,7 @@ export default function MembersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <div>
           <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">Programmes Membres</h1>
-          <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">Cr&eacute;ez des programmes VIP pour vos clients</p>
+          <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">Cr&eacute;e des programmes VIP pour tes clients</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <button

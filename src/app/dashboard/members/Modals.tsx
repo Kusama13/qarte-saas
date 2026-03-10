@@ -538,7 +538,7 @@ export function DeleteMemberModal({
     >
       <div className="space-y-4">
         <p className="text-gray-600">
-          &Ecirc;tes-vous s&ucirc;r de vouloir retirer{' '}
+          Es-tu s&ucirc;r de vouloir retirer{' '}
           <strong>
             {selectedMember?.customer?.first_name} {selectedMember?.customer?.last_name}
           </strong>{' '}
@@ -593,7 +593,7 @@ export function DeleteProgramModal({
     >
       <div className="space-y-4">
         <p className="text-gray-600">
-          &Ecirc;tes-vous s&ucirc;r de vouloir supprimer le programme{' '}
+          Es-tu s&ucirc;r de vouloir supprimer le programme{' '}
           <strong>{programName}</strong> ?
         </p>
         <p className="text-sm text-red-600">

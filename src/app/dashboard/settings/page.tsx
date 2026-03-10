@@ -177,7 +177,7 @@ export default function SettingsPage() {
             Paramètres
           </h1>
           <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
-            Gérez les informations de votre commerce
+            Gère les informations de ton commerce
           </p>
         </div>
         <Button
@@ -224,12 +224,12 @@ export default function SettingsPage() {
           </div>
 
           <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-            Vous connaissez un(e) <strong className="text-gray-800">coiffeur, barbier, esth&eacute;ticien(ne), g&eacute;rant(e) d&apos;institut de beaut&eacute;, d&apos;onglerie ou de spa</strong> ? Recommandez-lui Qarte et recevez chacun <strong className="text-emerald-600">10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+            Tu connais un(e) <strong className="text-gray-800">coiffeur, barbier, esth&eacute;ticien(ne), g&eacute;rant(e) d&apos;institut de beaut&eacute;, d&apos;onglerie ou de spa</strong> ? Recommande-lui Qarte et recevez chacun <strong className="text-emerald-600">10&euro; de r&eacute;duction</strong> sur ton prochain mois.
           </p>
 
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/80 border border-emerald-100 mb-4">
             <div className="flex-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Votre code parrainage</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Ton code parrainage</p>
               <p className="text-lg font-mono font-bold text-[#4b0082]">{merchant.referral_code}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -267,7 +267,7 @@ export default function SettingsPage() {
           </div>
 
           <p className="text-xs text-gray-500">
-            Votre filleul nous communique votre code apr&egrave;s son inscription sur Qarte et nous appliquons la r&eacute;duction de 10&euro; &agrave; chacun de vous.
+            Ton filleul nous communique ton code apr&egrave;s son inscription sur Qarte et nous appliquons la r&eacute;duction de 10&euro; &agrave; chacun.
           </p>
         </div>
       )}
@@ -403,10 +403,10 @@ export default function SettingsPage() {
 
       <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
         <h2 className="mb-2 text-base md:text-xl font-bold text-gray-900">
-          Vos données
+          Tes données
         </h2>
         <p className="mb-4 text-sm text-gray-600 leading-relaxed">
-          Exportez la liste de vos clients au format CSV.
+          Exporte la liste de tes clients au format CSV.
         </p>
         <Button
           variant="outline"
@@ -424,7 +424,7 @@ export default function SettingsPage() {
           Zone de danger
         </h2>
         <p className="mb-6 text-sm text-red-700 leading-relaxed">
-          La suppression du compte est irréversible. Toutes vos données,
+          La suppression du compte est irréversible. Toutes tes données,
           points de fidélité clients et historiques seront définitivement supprimés.
         </p>
         <a

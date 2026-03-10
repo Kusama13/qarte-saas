@@ -113,7 +113,7 @@ export default function ReferralsPage() {
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       console.error('Save error:', err);
-      setSaveError('Erreur réseau. Vérifiez votre connexion.');
+      setSaveError('Erreur réseau. Vérifie ta connexion.');
     } finally {
       setSaving(false);
     }
@@ -143,7 +143,7 @@ export default function ReferralsPage() {
           </h1>
         </div>
         <p className="mt-1 text-gray-500 font-medium">
-          Configurez votre programme de parrainage et suivez les résultats
+          Configure ton programme de parrainage et suis les résultats
         </p>
       </div>
 
@@ -165,7 +165,7 @@ export default function ReferralsPage() {
           <div>
             <p className="font-semibold text-gray-900">Activer le parrainage</p>
             <p className="text-sm text-gray-500">
-              Vos clients pourront partager un lien pour inviter leurs proches
+              Tes clients pourront partager un lien pour inviter leurs proches
             </p>
           </div>
           <button
@@ -191,7 +191,7 @@ export default function ReferralsPage() {
             <div className="flex gap-3 p-3.5 rounded-xl bg-amber-50 border border-amber-100">
               <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800 leading-relaxed">
-                <span className="font-semibold">Astuce :</span> Offrez des récompenses généreuses pour inciter vos clients à parrainer leurs proches. Plus l&apos;offre est attractive, plus ils partageront !
+                <span className="font-semibold">Astuce :</span> Offrez des récompenses généreuses pour inciter tes clients à parrainer leurs proches. Plus l&apos;offre est attractive, plus ils partageront !
               </p>
             </div>
             <div>
@@ -241,7 +241,7 @@ export default function ReferralsPage() {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-400 mt-1.5">Ce que reçoit votre client quand son filleul utilise sa récompense</p>
+              <p className="text-xs text-gray-400 mt-1.5">Ce que reçoit ton client quand son filleul utilise sa récompense</p>
             </div>
           </div>
         )}
@@ -318,7 +318,7 @@ export default function ReferralsPage() {
                 <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500 font-medium">Aucun parrainage pour le moment</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Vos clients pourront partager leur lien depuis leur carte de fidélité
+                  Tes clients pourront partager leur lien depuis leur carte de fidélité
                 </p>
               </div>
             ) : (
@@ -401,7 +401,7 @@ export default function ReferralsPage() {
             <div className="space-y-4 text-sm text-gray-600">
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">1</span>
-                <p>Votre client partage son <span className="font-semibold text-gray-900">lien de parrainage</span> depuis sa carte de fidélité.</p>
+                <p>Ton client partage son <span className="font-semibold text-gray-900">lien de parrainage</span> depuis sa carte de fidélité.</p>
               </div>
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">2</span>
@@ -415,7 +415,7 @@ export default function ReferralsPage() {
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 font-bold text-xs flex items-center justify-center">
                   <Check className="w-3 h-3" />
                 </span>
-                <p>Tout est <span className="font-semibold text-gray-900">automatique</span> — aucune action de votre part n&apos;est nécessaire !</p>
+                <p>Tout est <span className="font-semibold text-gray-900">automatique</span> — aucune action de ta part n&apos;est nécessaire !</p>
               </div>
             </div>
 

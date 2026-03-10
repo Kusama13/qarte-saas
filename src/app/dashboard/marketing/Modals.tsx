@@ -44,7 +44,7 @@ export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
 
             <div className="space-y-4 text-sm text-gray-700">
               {[
-                { title: 'Rédigez votre notification', desc: 'Titre court et accrocheur + message clair' },
+                { title: 'Rédige ta notification', desc: 'Titre court et accrocheur + message clair' },
                 { title: 'Ajoutez les détails de l\'offre', desc: 'Description visible sur la carte fidélité du client' },
                 { title: 'Choisissez la durée', desc: 'L\'offre disparaît automatiquement après expiration' },
                 { title: 'Envoyez !', desc: 'Immédiatement ou programmez pour plus tard' },

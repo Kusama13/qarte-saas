@@ -509,7 +509,7 @@ export default function ProgramPage() {
           Mon Programme
         </h1>
         <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
-          Personnalisez votre programme de fidélité
+          Personnalise ton programme de fidélité
         </p>
       </div>
 
@@ -532,12 +532,12 @@ export default function ProgramPage() {
         const offset = circumference - (score / 100) * circumference;
         const strokeColor = score < 50 ? '#f59e0b' : score < 80 ? '#7c3aed' : '#10b981';
         const message = score === 100
-          ? 'Programme complet — vos clients vont adorer'
+          ? 'Programme complet — tes clients vont adorer'
           : score >= 80
             ? 'Presque parfait !'
             : score >= 50
               ? 'Bon début, quelques ajouts feront la différence'
-              : 'Votre programme peut faire beaucoup plus';
+              : 'Ton programme peut faire beaucoup plus';
 
         return score < 100 ? (
           <div className="mb-4 md:mb-6 flex items-center gap-3 px-4 py-2.5 sticky top-12 lg:top-2 z-20 bg-violet-50/90 backdrop-blur-xl border border-violet-200/60 rounded-xl shadow-sm">
@@ -572,7 +572,7 @@ export default function ProgramPage() {
               <div className="flex items-center justify-center w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200">
                 <Upload className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
               </div>
-              Téléchargez votre logo ou une image de votre activité
+              Ajoute ton logo ou une image de ton activité
             </h3>
 
             <div className="relative space-y-4 md:space-y-6">
@@ -623,7 +623,7 @@ export default function ProgramPage() {
             </h3>
 
             <div className="space-y-3 md:space-y-4">
-              <label className="text-xs md:text-sm font-semibold tracking-wide text-gray-700 uppercase">Choisissez l&apos;ambiance de votre carte</label>
+              <label className="text-xs md:text-sm font-semibold tracking-wide text-gray-700 uppercase">Choisis l&apos;ambiance de ta carte</label>
               <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 md:gap-2">
                 {COLOR_PALETTES.map((palette, index) => (
                   <button
@@ -671,8 +671,8 @@ export default function ProgramPage() {
 
           <div className="grid grid-cols-2 gap-3 mb-4">
             {[
-              { mode: 'visit' as const, label: 'Passages', desc: 'Après un nombre de visites défini, votre client reçoit un cadeau de votre choix', icon: <Stamp className="w-5 h-5" /> },
-              { mode: 'cagnotte' as const, label: 'Cagnotte', desc: 'Les dépenses de votre client s\'accumulent sur une cagnotte fidélité', icon: <Euro className="w-5 h-5" /> },
+              { mode: 'visit' as const, label: 'Passages', desc: 'Après un nombre de visites défini, ton client reçoit un cadeau de ton choix', icon: <Stamp className="w-5 h-5" /> },
+              { mode: 'cagnotte' as const, label: 'Cagnotte', desc: 'Les dépenses de ton client s\'accumulent sur une cagnotte fidélité', icon: <Euro className="w-5 h-5" /> },
             ].map(({ mode, label, desc, icon }) => (
               <button
                 key={mode}
@@ -729,7 +729,7 @@ export default function ProgramPage() {
             <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5">
               <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800 leading-relaxed">
-                <strong>Changement de mode.</strong> Les passages de vos clientes sont conservés. En mode cagnotte, leur cumul EUR démarrera à 0.
+                <strong>Changement de mode.</strong> Les passages de tes clientes sont conservés. En mode cagnotte, leur cumul EUR démarrera à 0.
               </p>
             </div>
           )}
@@ -975,7 +975,7 @@ export default function ProgramPage() {
                     </label>
                     <Input
                       type="text"
-                      placeholder="Ex: Un menu offert, -30% sur votre commande..."
+                      placeholder="Ex: Un menu offert, -30% sur ta commande..."
                       value={formData.tier2RewardDescription}
                       onChange={(e) => setFormData({ ...formData, tier2RewardDescription: e.target.value })}
                       className="h-11"
@@ -1098,7 +1098,7 @@ export default function ProgramPage() {
                         onChange={(e) => setFormData({ ...formData, reviewLink: e.target.value })}
                       />
                       <p className="text-xs text-gray-500">
-                        Après chaque récompense, vos clients verront une invitation à laisser un avis.
+                        Après chaque récompense, tes clients verront une invitation à laisser un avis.
                       </p>
                     </div>
                   </div>
@@ -1131,10 +1131,10 @@ export default function ProgramPage() {
                         onChange={(e) => setFormData({ ...formData, shopAddress: e.target.value })}
                       />
                       <p className="text-xs text-gray-500">
-                        Améliore votre référencement local sur Google.
+                        Améliore ton référencement local sur Google.
                       </p>
                       <p className="text-xs text-gray-400 italic">
-                        Vous exercez à domicile ? Indiquez simplement votre ville et code postal pour préserver votre vie privée.
+                        Tu exerces à domicile ? Indique simplement ta ville et code postal pour préserver ta vie privée.
                       </p>
                     </div>
                   </div>
@@ -1154,7 +1154,7 @@ export default function ProgramPage() {
                     </div>
                     <div className="text-left">
                       <h3 className="text-sm md:text-base font-bold text-gray-900">Mes réalisations <span className="text-gray-400 font-normal text-xs">(6 photos max)</span></h3>
-                      <p className="text-[11px] text-gray-400">Visibles sur votre page — vos futurs clients vous découvrent d&apos;un coup d&apos;oeil</p>
+                      <p className="text-[11px] text-gray-400">Visibles sur ta page — tes futurs clients te découvrent d&apos;un coup d&apos;oeil</p>
                     </div>
                   </div>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${photosOpen ? 'rotate-180' : ''}`} />
@@ -1241,7 +1241,7 @@ export default function ProgramPage() {
                         onChange={(e) => setFormData({ ...formData, bookingUrl: e.target.value })}
                       />
                       <p className="text-xs text-gray-500">
-                        Vos clients pourront réserver directement depuis leur carte.
+                        Tes clients pourront réserver directement depuis leur carte.
                       </p>
                     </div>
                   </div>
@@ -1270,7 +1270,7 @@ export default function ProgramPage() {
                   <div className="overflow-hidden">
                     <div className="px-3 md:px-5 pb-5 space-y-4">
                       <p className="text-xs text-gray-500 pt-1 border-t border-gray-100 pb-1">
-                        Si vous avez des jours creux, les points doubles peuvent inciter vos clients à revenir précisément ces jours-là.
+                        Si tu as des jours creux, les points doubles peuvent inciter tes clients à revenir précisément ces jours-là.
                       </p>
 
                       <div className="flex items-center justify-between">
@@ -1354,7 +1354,7 @@ export default function ProgramPage() {
                     </div>
                     <div className="text-left">
                       <h3 className="text-sm md:text-base font-bold text-gray-900">Cadeau anniversaire</h3>
-                      <p className="text-[11px] text-gray-400">Envoi automatique 3 jours avant</p>
+                      <p className="text-[11px] text-gray-400">Envoi automatique le jour J</p>
                     </div>
                   </div>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${birthdayOpen ? 'rotate-180' : ''}`} />
@@ -1381,12 +1381,12 @@ export default function ProgramPage() {
                           <textarea
                             value={formData.birthdayGiftDescription}
                             onChange={(e) => setFormData({ ...formData, birthdayGiftDescription: e.target.value })}
-                            placeholder="Ex: Un brushing offert pour votre anniversaire !"
+                            placeholder="Ex: Un brushing offert pour ton anniversaire !"
                             maxLength={200}
                             rows={2}
                             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"
                           />
-                          <p className="text-xs text-gray-400">Valable 14 jours — vos clients le recoivent par notification</p>
+                          <p className="text-xs text-gray-400">Valable 14 jours — tes clients le recoivent par notification</p>
                         </div>
                       )}
                     </div>
@@ -1429,7 +1429,7 @@ export default function ProgramPage() {
                         onChange={(e) => setFormData({ ...formData, bookingUrl: e.target.value })}
                       />
                       <p className="text-xs text-gray-500">
-                        Vos clients pourront réserver directement depuis leur carte.
+                        Tes clients pourront réserver directement depuis leur carte.
                       </p>
                     </div>
                   </div>
@@ -1449,7 +1449,7 @@ export default function ProgramPage() {
                     </div>
                     <div className="text-left">
                       <h3 className="text-sm md:text-base font-bold text-gray-900">Cadeau anniversaire</h3>
-                      <p className="text-[11px] text-gray-400">Envoi automatique 3 jours avant</p>
+                      <p className="text-[11px] text-gray-400">Envoi automatique le jour J</p>
                     </div>
                   </div>
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${birthdayOpen ? 'rotate-180' : ''}`} />
@@ -1476,12 +1476,12 @@ export default function ProgramPage() {
                           <textarea
                             value={formData.birthdayGiftDescription}
                             onChange={(e) => setFormData({ ...formData, birthdayGiftDescription: e.target.value })}
-                            placeholder="Ex: Un brushing offert pour votre anniversaire !"
+                            placeholder="Ex: Un brushing offert pour ton anniversaire !"
                             maxLength={200}
                             rows={2}
                             className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"
                           />
-                          <p className="text-xs text-gray-400">Valable 14 jours — vos clients le recoivent par notification</p>
+                          <p className="text-xs text-gray-400">Valable 14 jours — tes clients le recoivent par notification</p>
                         </div>
                       )}
                     </div>
@@ -1544,12 +1544,12 @@ export default function ProgramPage() {
             </h3>
 
             <p className="text-gray-500 text-sm mb-2 leading-relaxed">
-              Passer en mode <strong>{pendingModeSwitch === 'cagnotte' ? 'Cagnotte' : 'Passages'}</strong> affectera l&apos;affichage pour vos clients existants.
+              Passer en mode <strong>{pendingModeSwitch === 'cagnotte' ? 'Cagnotte' : 'Passages'}</strong> affectera l&apos;affichage pour tes clients existants.
             </p>
 
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-5">
               <p className="text-xs text-amber-800 leading-relaxed">
-                Les passages de vos clients sont <strong>conservés</strong>.
+                Les passages de tes clients sont <strong>conservés</strong>.
                 {pendingModeSwitch === 'cagnotte'
                   ? ' Leur cumul en euros démarrera à 0 €.'
                   : ' Leur cumul en euros sera perdu.'}
@@ -1604,10 +1604,10 @@ export default function ProgramPage() {
 
             <ul className="space-y-3 mb-5">
               {(modeHelp === 'visit' ? [
-                { text: 'Chaque visite = 1 tampon sur la carte de votre client' },
-                { text: 'Après X passages (ex : 10), il débloque un cadeau que vous définissez' },
+                { text: 'Chaque visite = 1 tampon sur la carte de ton client' },
+                { text: 'Après X passages (ex : 10), il débloque un cadeau que tu définis' },
                 { text: 'Exemples de cadeaux : un brushing offert, -30% sur une prestation, un soin gratuit' },
-                { text: 'Simple et efficace — idéal si vos prestations ont des prix variés' },
+                { text: 'Simple et efficace — idéal si tes prestations ont des prix variés' },
               ] : [
                 { text: 'Chaque visite, le montant dépensé par le client est enregistré' },
                 { text: 'Après X passages, il reçoit un % de ses dépenses cumulées en réduction' },
@@ -1641,11 +1641,11 @@ export default function ProgramPage() {
             </div>
 
             <h3 className="text-lg font-bold text-gray-900 mb-2">
-              Votre programme est en ligne !
+              Ton programme est en ligne !
             </h3>
 
             <p className="text-gray-500 text-sm mb-4 leading-relaxed">
-              Découvrez ce que vos clients verront en scannant votre QR code :
+              Découvre ce que tes clients verront en scannant ton QR code :
             </p>
 
             <div className="text-left space-y-2 mb-5 px-1">

@@ -9,7 +9,7 @@
 **Qarte** — Plateforme SaaS de cartes de fidelite digitales via QR/NFC.
 
 - **URL:** getqarte.com | **Deploiement:** Vercel
-- **Langue:** Francais | **Version:** 0.1.0
+- **Langue:** Francais (tutoiement dans le dashboard merchant, vouvoiement pour les textes client-facing) | **Version:** 0.1.0
 - **Essai:** 7 jours | **Prix:** 19€/mois ou 190€/an
 - **Cible:** Salons de beaute (coiffeurs, barbiers, instituts, ongleries, spas, estheticiennes)
 - **Entite:** SAS Tenga Labs — 60 rue Francois 1er, 75008 Paris

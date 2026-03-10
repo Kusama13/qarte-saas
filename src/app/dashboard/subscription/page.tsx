@@ -335,7 +335,7 @@ export default function SubscriptionPage() {
           </div>
           {trialStatus.isFullyExpired && (
             <p className="text-xs font-normal text-white/80 ml-6">
-              Vos clients ne peuvent plus tamponner leur carte. Abonnez-vous pour réactiver votre programme.
+              Tes clients ne peuvent plus tamponner leur carte. Abonne-toi pour réactiver ton programme.
             </p>
           )}
         </div>
@@ -467,7 +467,7 @@ export default function SubscriptionPage() {
               <div className="relative z-10 flex flex-col items-center justify-center gap-1.5 text-white">
                 <div className="flex items-center gap-3">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span className="text-sm font-bold">Synchronisation de votre abonnement...</span>
+                  <span className="text-sm font-bold">Synchronisation de ton abonnement...</span>
                 </div>
                 <p className="text-xs text-white/70">Quelques secondes, tout est en ordre.</p>
               </div>
@@ -545,7 +545,7 @@ export default function SubscriptionPage() {
                 <div className="space-y-4">
                   <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100">
                     <p className="text-sm text-indigo-800 font-medium">
-                      Votre essai est toujours actif. Souscrivez pour continuer sans interruption.
+                      Ton essai est toujours actif. Souscris pour continuer sans interruption.
                     </p>
                   </div>
                   <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100">

@@ -206,7 +206,7 @@ export default function AutomationsTab({
                   <textarea
                     value={birthdayGiftDescription}
                     onChange={(e) => setBirthdayGiftDescription(e.target.value)}
-                    placeholder="Ex: Un brushing offert pour votre anniversaire !"
+                    placeholder="Ex: Un brushing offert pour ton anniversaire !"
                     maxLength={200}
                     rows={2}
                     className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"
@@ -320,18 +320,18 @@ export default function AutomationsTab({
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Votre offre de relance (optionnel)
+                      Ton offre de relance (optionnel)
                     </label>
                     <textarea
                       value={inactiveOfferText}
                       onChange={(e) => setInactiveOfferText(e.target.value)}
-                      placeholder="Ex: -15% pour votre retour !"
+                      placeholder="Ex: -15% pour ton retour !"
                       maxLength={200}
                       rows={2}
                       className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
                     />
                     <p className="text-[10px] text-gray-400 mt-1">
-                      Sans offre : &quot;{'{'}boutique{'}'} vous manque ! Revenez vite.&quot;
+                      Sans offre : &quot;{'{'}boutique{'}'} te manque ! Revenez vite.&quot;
                     </p>
                   </div>
                   <button
@@ -453,7 +453,7 @@ export default function AutomationsTab({
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Votre offre pour les événements
+                      Ton offre pour les événements
                     </label>
                     <textarea
                       value={eventsOfferText}

@@ -456,7 +456,7 @@ export default function DashboardPage() {
           </span>
         </h1>
         <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
-          Voici un aperçu de votre programme de fidélité
+          Voici un aperçu de ton programme de fidélité
         </p>
         {merchant?.slug && merchant?.reward_description && (
           <a
@@ -466,7 +466,7 @@ export default function DashboardPage() {
             className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100 text-xs font-semibold text-indigo-600 hover:bg-indigo-100 transition-colors"
           >
             <ExternalLink className="w-3 h-3" />
-            Votre programme en ligne
+            Ton programme en ligne
           </a>
         )}
       </div>
@@ -542,10 +542,10 @@ export default function DashboardPage() {
               </button>
             </div>
             <p className="text-xs text-gray-600 leading-relaxed">
-              Qarte Shield détecte automatiquement les scans suspects (ex : un même client qui scanne plusieurs fois dans la journée) et met les points en attente de votre validation.
+              Qarte Shield détecte automatiquement les scans suspects (ex : un même client qui scanne plusieurs fois dans la journée) et met les points en attente de ta validation.
             </p>
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              Vous gardez le contrôle : validez ou refusez chaque visite suspecte depuis le widget ci-dessous.
+              Tu gardes le contrôle : valide ou refuse chaque visite suspecte depuis le widget ci-dessous.
             </p>
           </div>
         )}
@@ -594,7 +594,7 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h4 className="text-lg font-bold text-gray-900">Désactiver Qarte Shield ?</h4>
-                <p className="text-sm text-gray-500">Cette action expose votre programme</p>
+                <p className="text-sm text-gray-500">Cette action expose ton programme</p>
               </div>
               <button
                 onClick={() => setShowShieldWarning(false)}
@@ -767,7 +767,7 @@ export default function DashboardPage() {
                   <Calendar className="w-10 h-10 text-indigo-200" />
                 </div>
                 <p className="font-medium text-gray-900">Aucune visite enregistrée</p>
-                <p className="text-sm">Les données apparaîtront après vos premiers scans</p>
+                <p className="text-sm">Les données apparaîtront après tes premiers scans</p>
               </div>
             )}
           </div>
@@ -838,7 +838,7 @@ export default function DashboardPage() {
                   <Users className="w-10 h-10 text-indigo-200" />
                 </div>
                 <p className="font-medium text-gray-900">Aucun client pour le moment</p>
-                <p className="text-sm">Affichez votre QR code pour commencer !</p>
+                <p className="text-sm">Affiche ton QR code pour commencer !</p>
               </div>
             )}
           </div>
