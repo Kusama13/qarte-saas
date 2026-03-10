@@ -18,10 +18,8 @@ import {
   ChevronDown,
   Instagram,
   CalendarDays,
-  Globe,
   QrCode,
   Smartphone,
-  Users as UsersIcon,
   Zap,
   Euro,
   Stamp,
@@ -31,6 +29,7 @@ import {
   MapPin,
   Plus,
   Trash2,
+  Cake,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
@@ -144,6 +143,9 @@ export default function ProgramPage() {
     // Double stamp days
     doubleDaysEnabled: false,
     doubleDaysOfWeek: [] as number[],
+    // Birthday gift
+    birthdayGiftEnabled: false,
+    birthdayGiftDescription: '',
   });
 
   // Track original values for warnings
@@ -158,6 +160,7 @@ export default function ProgramPage() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [addressOpen, setAddressOpen] = useState(false);
   const [photosOpen, setPhotosOpen] = useState(false);
+  const [birthdayOpen, setBirthdayOpen] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [pendingModeSwitch, setPendingModeSwitch] = useState<'visit' | 'cagnotte' | null>(null);
   const [modeHelp, setModeHelp] = useState<'visit' | 'cagnotte' | null>(null);
@@ -207,6 +210,8 @@ export default function ProgramPage() {
           tier2RewardDescription: data.tier2_reward_description || '',
           doubleDaysEnabled: data.double_days_enabled || false,
           doubleDaysOfWeek: (() => { try { return JSON.parse(data.double_days_of_week || '[]'); } catch { return []; } })(),
+          birthdayGiftEnabled: data.birthday_gift_enabled || false,
+          birthdayGiftDescription: data.birthday_gift_description || '',
         });
         setOriginalLoyaltyMode(data.loyalty_mode || 'visit');
         setOriginalStampsRequired(data.stamps_required || 5);
@@ -410,6 +415,8 @@ export default function ProgramPage() {
             : (formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null),
           double_days_enabled: isCagnotte ? false : doubleDaysEnabled,
           double_days_of_week: isCagnotte ? '[]' : JSON.stringify(formData.doubleDaysOfWeek),
+          birthday_gift_enabled: formData.birthdayGiftEnabled,
+          birthday_gift_description: formData.birthdayGiftDescription.trim() || null,
         })
         .eq('id', merchant.id);
 
@@ -441,6 +448,8 @@ export default function ProgramPage() {
             : (formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null),
           double_days_enabled: isCagnotte ? false : doubleDaysEnabled,
           double_days_of_week: isCagnotte ? '[]' : JSON.stringify(formData.doubleDaysOfWeek),
+          birthday_gift_enabled: formData.birthdayGiftEnabled,
+          birthday_gift_description: formData.birthdayGiftDescription.trim() || null,
         };
         const { stripe_subscription_id, stripe_customer_id, scan_code, user_id, ...safeMerchant } = updatedMerchant;
         localStorage.setItem('qarte_merchant_cache', JSON.stringify({
@@ -1332,6 +1341,59 @@ export default function ProgramPage() {
                 </div>
               </div>
 
+              {/* Cadeau anniversaire */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setBirthdayOpen(!birthdayOpen)}
+                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center">
+                      <Cake className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-sm md:text-base font-bold text-gray-900">Cadeau anniversaire</h3>
+                      <p className="text-[11px] text-gray-400">Envoi automatique 3 jours avant</p>
+                    </div>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${birthdayOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${birthdayOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-700">Activer</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={formData.birthdayGiftEnabled}
+                          onClick={() => setFormData({ ...formData, birthdayGiftEnabled: !formData.birthdayGiftEnabled })}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 ${
+                            formData.birthdayGiftEnabled ? 'bg-pink-500' : 'bg-gray-200'
+                          }`}
+                        >
+                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.birthdayGiftEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
+                      {formData.birthdayGiftEnabled && (
+                        <div className="space-y-2">
+                          <textarea
+                            value={formData.birthdayGiftDescription}
+                            onChange={(e) => setFormData({ ...formData, birthdayGiftDescription: e.target.value })}
+                            placeholder="Ex: Un brushing offert pour votre anniversaire !"
+                            maxLength={200}
+                            rows={2}
+                            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"
+                          />
+                          <p className="text-xs text-gray-400">Valable 14 jours — vos clients le recoivent par notification</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -1373,6 +1435,60 @@ export default function ProgramPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Cadeau anniversaire (cagnotte) */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setBirthdayOpen(!birthdayOpen)}
+                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center">
+                      <Cake className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-sm md:text-base font-bold text-gray-900">Cadeau anniversaire</h3>
+                      <p className="text-[11px] text-gray-400">Envoi automatique 3 jours avant</p>
+                    </div>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${birthdayOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${birthdayOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-700">Activer</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={formData.birthdayGiftEnabled}
+                          onClick={() => setFormData({ ...formData, birthdayGiftEnabled: !formData.birthdayGiftEnabled })}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 ${
+                            formData.birthdayGiftEnabled ? 'bg-pink-500' : 'bg-gray-200'
+                          }`}
+                        >
+                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.birthdayGiftEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
+                      {formData.birthdayGiftEnabled && (
+                        <div className="space-y-2">
+                          <textarea
+                            value={formData.birthdayGiftDescription}
+                            onChange={(e) => setFormData({ ...formData, birthdayGiftDescription: e.target.value })}
+                            placeholder="Ex: Un brushing offert pour votre anniversaire !"
+                            maxLength={200}
+                            rows={2}
+                            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"
+                          />
+                          <p className="text-xs text-gray-400">Valable 14 jours — vos clients le recoivent par notification</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
           )}
