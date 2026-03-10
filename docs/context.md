@@ -245,6 +245,10 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `POST /api/stripe/portal` — Portail client Stripe
 - `GET /api/stripe/payment-method` — Methode de paiement active
 
+### Photos merchant
+- `POST /api/photos` — Upload photo realisation (auth, magic bytes, max 6, compress client via `compressOfferImage`)
+- `DELETE /api/photos` — Supprimer photo + fichier storage (auth, ownership)
+
 ### Admin
 - `/api/admin/merchants/[id]` — GET stats/PATCH notes
 - `/api/admin/announcements` — CRUD annonces
@@ -342,6 +346,10 @@ Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, ann
 
 ### Page Publique Programme (`/p/[slug]`)
 Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page.
+- Galerie photos realisations (lightbox, grid 3 cols, max 6 photos depuis `merchant_photos`)
+- Adresse merchant (MapPin, conditionnel sur `shop_address`)
+- JSON-LD `LocalBusiness` (name, address, image, url, makesOffer)
+- SEO: `generateMetadata()` avec og:image (1ere photo ou logo), description dynamique
 
 ---
 
@@ -362,7 +370,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 
 ### SEO
 - Title: "Qarte - Carte de fidelite digitale pour salons de beaute"
-- JSON-LD: Organization + SoftwareApplication
+- JSON-LD: Organization + SoftwareApplication (landing), LocalBusiness (page /p/[slug])
 - Sitemap: 9 pages (/, /pricing, /blog, 3 articles, /contact, /pros, /signup)
 
 ---
