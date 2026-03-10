@@ -522,6 +522,21 @@ Single-row table : id, content (TEXT, default ''), updated_at
 ### ~~2.29 push_automation_events~~ — SUPPRIMEE (mig 053)
 
 ### 2.30 revenue_snapshots (mig 051)
+### 2.31 merchant_photos (mig 055)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
+| url | TEXT | NOT NULL | |
+| position | SMALLINT | `1` | CHECK (1..6) |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**RLS** : SELECT public, INSERT/UPDATE/DELETE merchant own
+**Index** : `idx_merchant_photos_merchant`, UNIQUE(merchant_id, position)
+**Max** : 6 photos par merchant
+
+
 
 | Colonne | Type | Default | Contrainte |
 |---------|------|---------|------------|
@@ -616,6 +631,7 @@ Voir `docs/context.md` section 4.7 pour les regles completes. Resume DB :
 | admin_announcements | SELECT (authenticated, published) | Full |
 | admin_announcement_dismissals | INSERT/SELECT (merchant own) | Full |
 | contact_messages | INSERT (public) | Full |
+| merchant_photos | SELECT (public), INSERT/UPDATE/DELETE (merchant own) | Full |
 
 **Note** : Mig 038 a restreint les acces publics. Les INSERT/SELECT publics sur customers, loyalty_cards, visits, vouchers, push_subscriptions ont ete remplaces par des policies scoped au merchant.
 
@@ -684,7 +700,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 
 ---
 
-## 10. Migrations (001 → 054)
+## 10. Migrations (001 → 055)
 
 | # | Fichier | Resume |
 |---|---------|--------|
@@ -743,6 +759,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 052 | admin_metrics_rpc | 3 fonctions RPC admin (first_visit, tenth_card, card_counts) — plpgsql, SECURITY DEFINER, auth guard super_admin/service_role |
 | 053 | cleanup_unused_tables | DROP demo_leads, tool_leads, push_automation_events |
 | 054 | stamps_limits | stamps_required CHECK 1..15 (etait 1..50), tier2_stamps_required CHECK <= 30 (etait illimite) |
+| 055 | merchant_photos | Table merchant_photos (id, merchant_id, url, position 1-6), UNIQUE(merchant_id, position), RLS public read + merchant CRUD |
 
 ---
 

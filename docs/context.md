@@ -63,7 +63,7 @@ docs/
 ├── AUDIT-SECURITE.md     # Score 93/100
 └── AUDIT-SCALABILITE.md  # Score 94/100
 
-supabase/migrations/      # 54 migrations SQL (001-054)
+supabase/migrations/      # 55 migrations SQL (001-055)
 ```
 
 ---

@@ -717,9 +717,9 @@ export default function QRDownloadPage() {
               <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
                 <Users className="w-6 h-6 text-white" />
               </div>
-              <p className="text-lg font-black text-gray-900">Votre page pro est en ligne</p>
+              <p className="text-lg font-black text-gray-900">Attirez de nouveaux clients</p>
               <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-                Vos clients peuvent d&eacute;couvrir votre programme et vos r&eacute;compenses. Partagez-la sur vos r&eacute;seaux.
+                Plus votre page est compl&egrave;te (photos, adresse, r&eacute;seaux), plus elle remonte sur Google et attire de nouveaux clients.
               </p>
               <a
                 href={`/p/${merchant.slug}`}

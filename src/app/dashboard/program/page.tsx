@@ -27,11 +27,15 @@ import {
   Stamp,
   HelpCircle,
   X,
+  Camera,
+  MapPin,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { MerchantSettingsForm, type LoyaltySettings } from '@/components/loyalty';
-import { compressLogo } from '@/lib/image-compression';
+import { compressLogo, compressOfferImage } from '@/lib/image-compression';
 import { useMerchant } from '@/contexts/MerchantContext';
 import type { Merchant } from '@/types';
 
@@ -110,6 +114,8 @@ export default function ProgramPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState<number | null>(null);
+  const [photos, setPhotos] = useState<Array<{ id: string; url: string; position: number }>>([]);
   const [saved, setSaved] = useState(false);
   const [isFirstSetup, setIsFirstSetup] = useState(false);
 
@@ -124,6 +130,7 @@ export default function ProgramPage() {
     tiktokUrl: '',
     snapchatUrl: '',
     bookingUrl: '',
+    shopAddress: '',
     loyaltyMode: 'visit' as 'visit' | 'cagnotte',
     stampsRequired: 5,
     rewardDescription: '',
@@ -149,10 +156,11 @@ export default function ProgramPage() {
   const [doubleDaysOpen, setDoubleDaysOpen] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
+  const [addressOpen, setAddressOpen] = useState(false);
+  const [photosOpen, setPhotosOpen] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [pendingModeSwitch, setPendingModeSwitch] = useState<'visit' | 'cagnotte' | null>(null);
   const [modeHelp, setModeHelp] = useState<'visit' | 'cagnotte' | null>(null);
-
   // Auto-scroll to social section when coming from onboarding checklist
   useEffect(() => {
     if (searchParams.get('section') === 'social' && !loading) {
@@ -188,6 +196,7 @@ export default function ProgramPage() {
           tiktokUrl: data.tiktok_url || '',
           snapchatUrl: data.snapchat_url || '',
           bookingUrl: data.booking_url || '',
+          shopAddress: data.shop_address || '',
           loyaltyMode: data.loyalty_mode || 'visit',
           stampsRequired: data.stamps_required || 5,
           rewardDescription: data.reward_description || '',
@@ -203,6 +212,18 @@ export default function ProgramPage() {
         setOriginalStampsRequired(data.stamps_required || 5);
         if (!data.reward_description && !data.cagnotte_percent) {
           setIsFirstSetup(true);
+        }
+
+        // Fetch merchant photos (non-blocking if table doesn't exist yet)
+        try {
+          const { data: photosData } = await supabase
+            .from('merchant_photos')
+            .select('id, url, position')
+            .eq('merchant_id', data.id)
+            .order('position');
+          if (photosData) setPhotos(photosData);
+        } catch {
+          // Table may not exist yet — ignore
         }
       }
       setLoading(false);
@@ -238,6 +259,60 @@ export default function ProgramPage() {
       console.error('Error uploading file:', error);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !merchant) return;
+
+    // Find available positions (slots not yet taken)
+    const takenPositions = new Set(photos.map(p => p.position));
+    const availablePositions = [1, 2, 3, 4, 5, 6].filter(p => !takenPositions.has(p));
+    const filesToUpload = Array.from(files).slice(0, availablePositions.length);
+
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const file = filesToUpload[i];
+      const position = availablePositions[i];
+      setUploadingPhoto(position);
+      try {
+        const compressed = await compressOfferImage(file);
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', compressed);
+        formDataUpload.append('merchantId', merchant.id);
+        formDataUpload.append('position', String(position));
+
+        const res = await fetch('/api/photos', {
+          method: 'POST',
+          body: formDataUpload,
+        });
+
+        const result = await res.json();
+        if (res.ok && result.photo) {
+          setPhotos(prev => [...prev.filter(p => p.position !== position), result.photo].sort((a, b) => a.position - b.position));
+        }
+      } catch (error) {
+        console.error('Photo upload error:', error);
+      }
+    }
+    setUploadingPhoto(null);
+    // Reset input so same files can be re-selected
+    e.target.value = '';
+  };
+
+  const handlePhotoDelete = async (photoId: string) => {
+    if (!merchant) return;
+    try {
+      const res = await fetch('/api/photos', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId, merchantId: merchant.id }),
+      });
+      if (res.ok) {
+        setPhotos(prev => prev.filter(p => p.id !== photoId));
+      }
+    } catch (error) {
+      console.error('Photo delete error:', error);
     }
   };
 
@@ -316,6 +391,7 @@ export default function ProgramPage() {
           logo_url: formData.logoUrl || null,
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
+          shop_address: formData.shopAddress.trim() || null,
           review_link: normalizeUrl(formData.reviewLink) || null,
           instagram_url: normalizeSocialUrl(formData.instagramUrl, 'instagram') || null,
           facebook_url: normalizeSocialUrl(formData.facebookUrl, 'facebook') || null,
@@ -346,6 +422,7 @@ export default function ProgramPage() {
           logo_url: formData.logoUrl || null,
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
+          shop_address: formData.shopAddress.trim() || null,
           review_link: normalizeUrl(formData.reviewLink) || null,
           instagram_url: normalizeSocialUrl(formData.instagramUrl, 'instagram') || null,
           facebook_url: normalizeSocialUrl(formData.facebookUrl, 'facebook') || null,
@@ -430,13 +507,15 @@ export default function ProgramPage() {
       {/* Programme Score */}
       {(() => {
         const scoreItems = [
-          { done: !!formData.rewardDescription, pts: 25, label: 'Récompense' },
-          { done: !!formData.logoUrl, pts: 20, label: 'Logo' },
+          { done: !!formData.rewardDescription, pts: 20, label: 'Récompense' },
+          { done: !!formData.logoUrl, pts: 15, label: 'Logo' },
+          { done: photos.length >= 1, pts: 10, label: 'Photos' },
+          { done: !!formData.shopAddress, pts: 10, label: 'Adresse' },
           { done: !!(formData.instagramUrl || formData.facebookUrl || formData.tiktokUrl || formData.snapchatUrl), pts: 15, label: 'Réseaux sociaux' },
-          { done: !!formData.reviewLink, pts: 15, label: 'Avis Google' },
+          { done: !!formData.reviewLink, pts: 10, label: 'Avis Google' },
           { done: !!formData.bookingUrl, pts: 10, label: 'Lien réservation' },
-          { done: formData.tier2Enabled && !!formData.tier2RewardDescription, pts: 10, label: '2ème palier' },
-          { done: formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length > 0, pts: 5, label: 'Jours x2' },
+          { done: formData.tier2Enabled && (formData.loyaltyMode === 'cagnotte' || !!formData.tier2RewardDescription), pts: 5, label: '2ème palier' },
+          ...(formData.loyaltyMode !== 'cagnotte' ? [{ done: formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length > 0, pts: 5, label: 'Jours x2' }] : []),
         ];
         const score = scoreItems.reduce((sum, i) => sum + (i.done ? i.pts : 0), 0);
         const r = 17;
@@ -474,6 +553,9 @@ export default function ProgramPage() {
 
       <div className="grid gap-3 md:gap-8">
         <div className="space-y-3 md:space-y-6">
+
+          {/* Logo */}
+
           <div className="p-3 md:p-6 bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl shadow-indigo-100/40 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 transition-transform duration-500 rounded-full bg-gradient-to-br from-indigo-50/50 to-violet-50/50 blur-3xl group-hover:scale-110" />
 
@@ -514,8 +596,7 @@ export default function ProgramPage() {
                     />
                   </label>
                   <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-700">Format Recommandé</span>
-                    <p className="text-xs text-gray-500">PNG, JPG ou SVG (max 2MB)</p>
+                    <span className="text-sm font-medium text-gray-700">Cliquez pour choisir une image</span>
                   </div>
                 </div>
               </div>
@@ -523,6 +604,7 @@ export default function ProgramPage() {
             </div>
           </div>
 
+          {/* Ambiance */}
           <div className="p-3 md:p-6 bg-white/60 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg shadow-indigo-100/50">
             <h3 className="flex items-center gap-2 md:gap-3 mb-3 md:mb-6 text-sm md:text-lg font-semibold text-gray-900">
               <div className="p-1.5 md:p-2.5 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30">
@@ -568,6 +650,8 @@ export default function ProgramPage() {
             </div>
 
           </div>
+
+          {/* ===== PROGRAMME ===== */}
 
           {/* Mode selector */}
           <div className="flex items-center gap-3 mt-4 mb-1">
@@ -909,240 +993,389 @@ export default function ProgramPage() {
             )}
           </div>
 
-          {/* Vos réseaux sociaux — Collapsible */}
-          <div id="social-section" className="bg-white/80 backdrop-blur-xl border border-pink-100 rounded-2xl shadow-sm overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setSocialOpen(!socialOpen)}
-              className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-            >
-              <div className="flex items-center gap-2 md:gap-3">
-                <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center shadow-md">
-                  <Instagram className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
-                </div>
-                <h3 className="text-sm md:text-lg font-bold text-gray-900">Vos réseaux sociaux <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${socialOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            <div className={`grid transition-all duration-300 ease-in-out ${socialOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-              <div className="overflow-hidden">
-                <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600">Instagram</label>
-                    <Input
-                      type="text"
-                      className="bg-white border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 h-11 text-sm rounded-xl w-full"
-                      placeholder="@votre-commerce ou lien complet"
-                      value={formData.instagramUrl}
-                      onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600">Facebook</label>
-                    <Input
-                      type="text"
-                      className="bg-white border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 h-11 text-sm rounded-xl w-full"
-                      placeholder="votre-page ou lien complet"
-                      value={formData.facebookUrl}
-                      onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600">TikTok</label>
-                    <Input
-                      type="text"
-                      className="bg-white border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/20 h-11 text-sm rounded-xl w-full"
-                      placeholder="@votre-commerce ou lien complet"
-                      value={formData.tiktokUrl}
-                      onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-gray-600">Snapchat</label>
-                    <Input
-                      type="text"
-                      className="bg-white border border-gray-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 h-11 text-sm rounded-xl w-full"
-                      placeholder="votre-pseudo ou lien complet"
-                      value={formData.snapchatUrl}
-                      onChange={(e) => setFormData({ ...formData, snapchatUrl: e.target.value })}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Vos réseaux seront affichés sur la carte de fidélité de vos clients.
-                  </p>
-                </div>
-              </div>
+          {/* ═══════ GROUPE : MA VITRINE ═══════ */}
+          <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-3 md:px-5 pt-3 md:pt-4 pb-1">
+              <p className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.18em]">Compléter ma page</p>
             </div>
-          </div>
+            <div className="divide-y divide-gray-100/80">
 
-          {/* Avis Google — Collapsible */}
-          <div className="bg-white/80 backdrop-blur-xl border border-amber-100 rounded-2xl shadow-sm overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setReviewsOpen(!reviewsOpen)}
-              className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-            >
-              <div className="flex items-center gap-2 md:gap-3">
-                <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md">
-                  <Star className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
-                </div>
-                <h3 className="text-sm md:text-lg font-bold text-gray-900">Avis Google <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${reviewsOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            <div className={`grid transition-all duration-300 ease-in-out ${reviewsOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-              <div className="overflow-hidden">
-                <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                  <div className="space-y-1.5">
-                    <Input
-                      type="url"
-                      className="bg-white border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 h-11 text-sm rounded-xl w-full"
-                      placeholder="https://g.page/r/votre-commerce/review"
-                      value={formData.reviewLink}
-                      onChange={(e) => setFormData({ ...formData, reviewLink: e.target.value })}
-                    />
+              {/* Réseaux sociaux */}
+              <div id="social-section">
+                <button
+                  type="button"
+                  onClick={() => setSocialOpen(!socialOpen)}
+                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center">
+                      <Instagram className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                    </div>
+                    <h3 className="text-sm md:text-base font-bold text-gray-900">Réseaux sociaux</h3>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    Après chaque récompense ou bon utilisé, vos clients verront automatiquement une invitation à laisser un avis Google.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Lien de réservation — Collapsible */}
-          <div className="bg-white/80 backdrop-blur-xl border border-indigo-100 rounded-2xl shadow-sm overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setBookingOpen(!bookingOpen)}
-              className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-            >
-              <div className="flex items-center gap-2 md:gap-3">
-                <div className="w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shadow-md">
-                  <CalendarDays className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
-                </div>
-                <h3 className="text-sm md:text-lg font-bold text-gray-900">Votre lien de réservation <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${bookingOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            <div className={`grid transition-all duration-300 ease-in-out ${bookingOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-              <div className="overflow-hidden">
-                <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                  <div className="space-y-1.5">
-                    <Input
-                      type="url"
-                      className="bg-white border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 h-11 text-sm rounded-xl w-full"
-                      placeholder="https://planity.com/votre-salon"
-                      value={formData.bookingUrl}
-                      onChange={(e) => setFormData({ ...formData, bookingUrl: e.target.value })}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    Vos clients pourront réserver directement depuis leur carte.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Jours x2 — Collapsible (hidden in cagnotte mode) */}
-          <div className={`bg-white/80 backdrop-blur-xl border border-amber-100 rounded-2xl shadow-sm overflow-hidden ${formData.loyaltyMode === 'cagnotte' ? 'hidden' : ''}`}>
-            <button
-              type="button"
-              onClick={() => setDoubleDaysOpen(!doubleDaysOpen)}
-              className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-amber-50 border border-amber-100">
-                  <Zap className="w-4 h-4 text-amber-500" />
-                </div>
-                <div className="text-left">
-                  <h3 className="text-sm md:text-lg font-bold text-gray-900">Jours x2 <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
-                  <p className="text-[11px] md:text-xs text-gray-500">Certains jours, chaque passage compte double</p>
-                </div>
-              </div>
-              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${doubleDaysOpen ? 'rotate-180' : ''}`} />
-            </button>
-            <div className={`grid transition-all duration-300 ease-in-out ${doubleDaysOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-              <div className="overflow-hidden">
-                <div className="px-3 md:px-5 pb-5 space-y-4">
-                  {/* Tip */}
-                  <p className="text-xs text-gray-500 pt-1 border-t border-amber-50 pb-1">
-                    Si vous avez des jours creux, les points doubles peuvent inciter vos clients à revenir précisément ces jours-là.
-                  </p>
-
-                  {/* Toggle */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-700">Activer les jours x2</span>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={formData.doubleDaysEnabled}
-                      onClick={() => setFormData({ ...formData, doubleDaysEnabled: !formData.doubleDaysEnabled })}
-                      className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 ${
-                        formData.doubleDaysEnabled ? 'bg-amber-400' : 'bg-gray-200'
-                      }`}
-                    >
-                      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.doubleDaysEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                    </button>
-                  </div>
-
-                  {/* Day picker */}
-                  {(() => {
-                    const DAYS = [
-                      { label: 'Lun', value: 1 },
-                      { label: 'Mar', value: 2 },
-                      { label: 'Mer', value: 3 },
-                      { label: 'Jeu', value: 4 },
-                      { label: 'Ven', value: 5 },
-                      { label: 'Sam', value: 6 },
-                      { label: 'Dim', value: 0 },
-                    ];
-                    const toggleDay = (day: number) => {
-                      const current = formData.doubleDaysOfWeek;
-                      const updated = current.includes(day) ? current.filter(d => d !== day) : [...current, day];
-                      setFormData({ ...formData, doubleDaysOfWeek: updated });
-                    };
-                    const selectedDays = DAYS.filter(d => formData.doubleDaysOfWeek.includes(d.value));
-                    return (
-                      <div className={`space-y-3 ${!formData.doubleDaysEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
-                        <div className="flex gap-1.5 flex-wrap">
-                          {DAYS.map(day => {
-                            const active = formData.doubleDaysOfWeek.includes(day.value);
-                            return (
-                              <button
-                                key={day.value}
-                                type="button"
-                                onClick={() => toggleDay(day.value)}
-                                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 border ${
-                                  active
-                                    ? 'bg-amber-400 border-amber-400 text-white shadow-sm'
-                                    : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600'
-                                }`}
-                              >
-                                {day.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        {formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length === 0 && (
-                          <p className="text-xs text-amber-600 font-medium">Cochez au moins un jour</p>
-                        )}
-                        {selectedDays.length > 0 && (
-                          <p className="text-xs text-gray-500">
-                            <span className="font-semibold text-amber-600">{selectedDays.map(d => d.label).join(', ')}</span> — chaque scan = 2 tampons
-                          </p>
-                        )}
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${socialOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${socialOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-gray-600">Instagram</label>
+                        <Input
+                          type="text"
+                          className="bg-white border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 h-11 text-sm rounded-xl w-full"
+                          placeholder="@votre-commerce ou lien complet"
+                          value={formData.instagramUrl}
+                          onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
+                        />
                       </div>
-                    );
-                  })()}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-gray-600">Facebook</label>
+                        <Input
+                          type="text"
+                          className="bg-white border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 h-11 text-sm rounded-xl w-full"
+                          placeholder="votre-page ou lien complet"
+                          value={formData.facebookUrl}
+                          onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-gray-600">TikTok</label>
+                        <Input
+                          type="text"
+                          className="bg-white border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/20 h-11 text-sm rounded-xl w-full"
+                          placeholder="@votre-commerce ou lien complet"
+                          value={formData.tiktokUrl}
+                          onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-gray-600">Snapchat</label>
+                        <Input
+                          type="text"
+                          className="bg-white border border-gray-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 h-11 text-sm rounded-xl w-full"
+                          placeholder="votre-pseudo ou lien complet"
+                          value={formData.snapchatUrl}
+                          onChange={(e) => setFormData({ ...formData, snapchatUrl: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Avis Google */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setReviewsOpen(!reviewsOpen)}
+                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                      <Star className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                    </div>
+                    <h3 className="text-sm md:text-base font-bold text-gray-900">Avis Google</h3>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${reviewsOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${reviewsOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
+                      <Input
+                        type="url"
+                        className="bg-white border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 h-11 text-sm rounded-xl w-full"
+                        placeholder="https://g.page/r/votre-commerce/review"
+                        value={formData.reviewLink}
+                        onChange={(e) => setFormData({ ...formData, reviewLink: e.target.value })}
+                      />
+                      <p className="text-xs text-gray-500">
+                        Après chaque récompense, vos clients verront une invitation à laisser un avis.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Adresse */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setAddressOpen(!addressOpen)}
+                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                      <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                    </div>
+                    <h3 className="text-sm md:text-base font-bold text-gray-900">Adresse</h3>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${addressOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${addressOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
+                      <Input
+                        type="text"
+                        className="bg-white border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 h-11 text-sm rounded-xl w-full"
+                        placeholder="12 rue de la Paix, 75002 Paris"
+                        value={formData.shopAddress}
+                        onChange={(e) => setFormData({ ...formData, shopAddress: e.target.value })}
+                      />
+                      <p className="text-xs text-gray-500">
+                        Améliore votre référencement local sur Google.
+                      </p>
+                      <p className="text-xs text-gray-400 italic">
+                        Vous exercez à domicile ? Indiquez simplement votre ville et code postal pour préserver votre vie privée.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Photos / Réalisations */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setPhotosOpen(!photosOpen)}
+                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
+                      <Camera className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-sm md:text-base font-bold text-gray-900">Mes réalisations <span className="text-gray-400 font-normal text-xs">(6 photos max)</span></h3>
+                      <p className="text-[11px] text-gray-400">Visibles sur votre page — vos futurs clients vous découvrent d&apos;un coup d&apos;oeil</p>
+                    </div>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${photosOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${photosOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {[1, 2, 3, 4, 5, 6].map((position) => {
+                          const photo = photos.find(p => p.position === position);
+                          const isUploading = uploadingPhoto === position;
+                          return (
+                            <div key={position} className="relative aspect-square rounded-lg overflow-hidden bg-gray-50 border border-dashed border-gray-200">
+                              {isUploading ? (
+                                <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                                  <Loader2 className="w-4 h-4 text-pink-500 animate-spin" />
+                                </div>
+                              ) : photo ? (
+                                <>
+                                  <img src={photo.url} alt={`Réalisation ${position}`} className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => handlePhotoDelete(photo.id)}
+                                    aria-label="Supprimer la photo"
+                                    className="absolute top-0.5 right-0.5 p-0.5 bg-black/60 rounded-full text-white hover:bg-black/80 transition-colors"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </>
+                              ) : (
+                                <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
+                                  <Plus className="w-4 h-4 text-gray-400" />
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={handlePhotoUpload}
+                                  />
+                                </label>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* ═══════ GROUPE : BOOSTER MON PROGRAMME ═══════ */}
+          <div className={`bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden ${formData.loyaltyMode === 'cagnotte' ? 'hidden' : ''}`}>
+            <div className="px-3 md:px-5 pt-3 md:pt-4 pb-1">
+              <p className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.18em]">Aller plus loin</p>
+            </div>
+            <div className="divide-y divide-gray-100/80">
+
+              {/* Lien de réservation */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setBookingOpen(!bookingOpen)}
+                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center">
+                      <CalendarDays className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                    </div>
+                    <h3 className="text-sm md:text-base font-bold text-gray-900">Lien de réservation</h3>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${bookingOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${bookingOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
+                      <Input
+                        type="url"
+                        className="bg-white border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 h-11 text-sm rounded-xl w-full"
+                        placeholder="https://planity.com/votre-salon"
+                        value={formData.bookingUrl}
+                        onChange={(e) => setFormData({ ...formData, bookingUrl: e.target.value })}
+                      />
+                      <p className="text-xs text-gray-500">
+                        Vos clients pourront réserver directement depuis leur carte.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Jours x2 */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setDoubleDaysOpen(!doubleDaysOpen)}
+                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                      <Zap className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="text-sm md:text-base font-bold text-gray-900">Jours x2</h3>
+                      <p className="text-[11px] text-gray-400">Certains jours, chaque passage compte double</p>
+                    </div>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${doubleDaysOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${doubleDaysOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-3 md:px-5 pb-5 space-y-4">
+                      <p className="text-xs text-gray-500 pt-1 border-t border-gray-100 pb-1">
+                        Si vous avez des jours creux, les points doubles peuvent inciter vos clients à revenir précisément ces jours-là.
+                      </p>
+
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-700">Activer les jours x2</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={formData.doubleDaysEnabled}
+                          onClick={() => setFormData({ ...formData, doubleDaysEnabled: !formData.doubleDaysEnabled })}
+                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 ${
+                            formData.doubleDaysEnabled ? 'bg-amber-400' : 'bg-gray-200'
+                          }`}
+                        >
+                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.doubleDaysEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
+
+                      {(() => {
+                        const DAYS = [
+                          { label: 'Lun', value: 1 },
+                          { label: 'Mar', value: 2 },
+                          { label: 'Mer', value: 3 },
+                          { label: 'Jeu', value: 4 },
+                          { label: 'Ven', value: 5 },
+                          { label: 'Sam', value: 6 },
+                          { label: 'Dim', value: 0 },
+                        ];
+                        const toggleDay = (day: number) => {
+                          const current = formData.doubleDaysOfWeek;
+                          const updated = current.includes(day) ? current.filter(d => d !== day) : [...current, day];
+                          setFormData({ ...formData, doubleDaysOfWeek: updated });
+                        };
+                        const selectedDays = DAYS.filter(d => formData.doubleDaysOfWeek.includes(d.value));
+                        return (
+                          <div className={`space-y-3 ${!formData.doubleDaysEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                            <div className="flex gap-1.5 flex-wrap">
+                              {DAYS.map(day => {
+                                const active = formData.doubleDaysOfWeek.includes(day.value);
+                                return (
+                                  <button
+                                    key={day.value}
+                                    type="button"
+                                    onClick={() => toggleDay(day.value)}
+                                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 border ${
+                                      active
+                                        ? 'bg-amber-400 border-amber-400 text-white shadow-sm'
+                                        : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600'
+                                    }`}
+                                  >
+                                    {day.label}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length === 0 && (
+                              <p className="text-xs text-amber-600 font-medium">Cochez au moins un jour</p>
+                            )}
+                            {selectedDays.length > 0 && (
+                              <p className="text-xs text-gray-500">
+                                <span className="font-semibold text-amber-600">{selectedDays.map(d => d.label).join(', ')}</span> — chaque scan = 2 tampons
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Groupe Booster — mode cagnotte (réservation seule, sans jours x2) */}
+          {formData.loyaltyMode === 'cagnotte' && (
+          <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+            <div className="px-3 md:px-5 pt-3 md:pt-4 pb-1">
+              <p className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.18em]">Aller plus loin</p>
+            </div>
+            <div className="divide-y divide-gray-100/80">
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setBookingOpen(!bookingOpen)}
+                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                >
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center">
+                      <CalendarDays className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                    </div>
+                    <h3 className="text-sm md:text-base font-bold text-gray-900">Lien de réservation</h3>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${bookingOpen ? 'rotate-180' : ''}`} />
+                </button>
+                <div className={`grid transition-all duration-300 ease-in-out ${bookingOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                  <div className="overflow-hidden">
+                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
+                      <Input
+                        type="url"
+                        className="bg-white border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 h-11 text-sm rounded-xl w-full"
+                        placeholder="https://planity.com/votre-salon"
+                        value={formData.bookingUrl}
+                        onChange={(e) => setFormData({ ...formData, bookingUrl: e.target.value })}
+                      />
+                      <p className="text-xs text-gray-500">
+                        Vos clients pourront réserver directement depuis leur carte.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+          )}
 
         </div>
 

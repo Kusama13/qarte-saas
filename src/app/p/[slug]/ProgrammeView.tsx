@@ -1,17 +1,23 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles } from 'lucide-react';
+import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
 import { formatDoubleDays } from '@/lib/utils';
 import type { Merchant } from '@/types';
 
+type Photo = { id: string; url: string; position: number };
+
 type MerchantPublic = Pick<
   Merchant,
   | 'id'
+  | 'slug'
   | 'shop_name'
+  | 'shop_type'
+  | 'shop_address'
   | 'logo_url'
   | 'primary_color'
   | 'secondary_color'
@@ -37,10 +43,29 @@ type MerchantPublic = Pick<
   | 'cagnotte_tier2_percent'
 >;
 
-export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }) {
+export default function ProgrammeView({ merchant, photos = [] }: { merchant: MerchantPublic; photos?: Photo[] }) {
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  // Keyboard navigation for lightbox
+  const handleLightboxKey = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape') setLightboxIndex(null);
+    if (e.key === 'ArrowLeft') setLightboxIndex(prev => prev === null ? null : (prev - 1 + photos.length) % photos.length);
+    if (e.key === 'ArrowRight') setLightboxIndex(prev => prev === null ? null : (prev + 1) % photos.length);
+  }, [photos.length]);
+
+  useEffect(() => {
+    if (lightboxIndex !== null) {
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', handleLightboxKey);
+      return () => {
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', handleLightboxKey);
+      };
+    }
+  }, [lightboxIndex, handleLightboxKey]);
 
   const reward = merchant.reward_description || '';
   const heroTagline = isCagnotte
@@ -106,6 +131,18 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
           >
             {merchant.shop_name}
           </motion.h1>
+
+          {merchant.shop_address && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.12, duration: 0.35 }}
+              className="flex items-center gap-1 text-[12px] text-gray-400 font-medium mb-2"
+            >
+              <MapPin className="w-3 h-3 shrink-0" />
+              <span>{merchant.shop_address}</span>
+            </motion.div>
+          )}
 
           {/* Badge exclusif */}
           <motion.div
@@ -321,6 +358,38 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
           <SocialLinks merchant={merchant as Merchant} />
         </motion.div>
 
+        {/* ── GALERIE PHOTOS ── */}
+        {photos.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55, duration: 0.4 }}
+            className="bg-white rounded-2xl overflow-hidden border border-gray-100/80 shadow-[0_2px_20px_rgba(0,0,0,0.06)] p-4"
+          >
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-3">
+              Nos réalisations
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {photos.map((photo, idx) => (
+                <button
+                  key={photo.id}
+                  type="button"
+                  onClick={() => setLightboxIndex(idx)}
+                  className="aspect-square rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  style={{ '--tw-ring-color': p } as React.CSSProperties}
+                >
+                  <img
+                    src={photo.url}
+                    alt={`${merchant.shop_name} - réalisation ${photo.position}`}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* ── CTA MERCHANT ── */}
         <motion.a
           href="https://getqarte.com/auth/merchant/signup"
@@ -386,6 +455,95 @@ export default function ProgrammeView({ merchant }: { merchant: MerchantPublic }
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── LIGHTBOX ── */}
+      <AnimatePresence>
+        {lightboxIndex !== null && photos[lightboxIndex] && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            onClick={() => setLightboxIndex(null)}
+          >
+            <button
+              type="button"
+              aria-label="Fermer"
+              className="absolute top-4 right-4 p-2 text-white/80 hover:text-white transition-colors z-10"
+              onClick={() => setLightboxIndex(null)}
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {photos.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  aria-label="Photo précédente"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white transition-colors z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIndex(prev => prev === null ? null : (prev - 1 + photos.length) % photos.length);
+                  }}
+                >
+                  <ChevronLeft className="w-8 h-8" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Photo suivante"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white transition-colors z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIndex(prev => prev === null ? null : (prev + 1) % photos.length);
+                  }}
+                >
+                  <ChevronRight className="w-8 h-8" />
+                </button>
+              </>
+            )}
+
+            <motion.img
+              key={lightboxIndex}
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.2 }}
+              src={photos[lightboxIndex].url}
+              alt={`${merchant.shop_name} - réalisation ${photos[lightboxIndex].position}`}
+              className="max-w-[90vw] max-h-[85vh] object-contain rounded-xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── JSON-LD STRUCTURED DATA ── */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'LocalBusiness',
+            name: merchant.shop_name,
+            ...(merchant.shop_address && {
+              address: {
+                '@type': 'PostalAddress',
+                streetAddress: merchant.shop_address,
+              },
+            }),
+            ...(photos.length > 0 && {
+              image: photos.map(ph => ph.url),
+            }),
+            ...(merchant.logo_url && { logo: merchant.logo_url }),
+            url: `https://getqarte.com/p/${merchant.slug}`,
+            makesOffer: {
+              '@type': 'Offer',
+              description: 'Programme de fidélité digitale',
+            },
+          }),
+        }}
+      />
     </div>
   );
 }

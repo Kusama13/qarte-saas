@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Check, ChevronRight, Sparkles, X, Gift, QrCode, Users, ImageIcon, Share2, Eye } from 'lucide-react';
+import { Check, Sparkles, X, Gift, QrCode, Users, ImageIcon, Share2, Eye, MapPin, Camera } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
 import confetti from 'canvas-confetti';
@@ -20,7 +20,6 @@ const COMPLETED_KEY = 'qarte_checklist_completed_at';
 
 export default function OnboardingChecklist() {
   const { merchant } = useMerchant();
-  const supabase = getSupabase();
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -48,6 +47,7 @@ export default function OnboardingChecklist() {
       }
     }
 
+    const supabase = getSupabase();
     const fetchSteps = async () => {
       try {
         const [visitsResult, onboardingRes] = await Promise.all([
@@ -60,6 +60,16 @@ export default function OnboardingChecklist() {
             .then(r => r.json())
             .catch(() => ({ qrEmailSent: false })),
         ]);
+
+        // Isolated query — merchant_photos table may not exist yet
+        let photosCount = 0;
+        try {
+          const photosResult = await supabase
+            .from('merchant_photos')
+            .select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id);
+          photosCount = photosResult.count || 0;
+        } catch { /* table may not exist */ }
 
         const visitsCount = visitsResult.count || 0;
         const qrDownloaded = onboardingRes.qrDownloaded === true;
@@ -82,10 +92,24 @@ export default function OnboardingChecklist() {
           },
           {
             id: 'social',
-            label: 'Ajouter au moins un réseau social',
+            label: 'Ajouter un réseau social',
             done: !!(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url),
             href: '/dashboard/program?section=social',
             icon: Share2,
+          },
+          {
+            id: 'address',
+            label: 'Renseigner votre adresse',
+            done: !!merchant.shop_address,
+            href: '/dashboard/program',
+            icon: MapPin,
+          },
+          {
+            id: 'photos',
+            label: 'Ajouter une photo',
+            done: photosCount >= 1,
+            href: '/dashboard/program',
+            icon: Camera,
           },
           {
             id: 'preview',
@@ -117,7 +141,7 @@ export default function OnboardingChecklist() {
     };
 
     fetchSteps();
-  }, [merchant, supabase]);
+  }, [merchant]);
 
   // Fire confetti when all steps complete (une seule fois, persisté en localStorage)
   useEffect(() => {
