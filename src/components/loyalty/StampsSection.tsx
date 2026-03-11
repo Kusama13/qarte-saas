@@ -130,8 +130,8 @@ export default function StampsSection({
                     borderColor: isLast && !isEarned ? `${merchantColor}40` : undefined,
                   }}
                 >
-                  {isLast && !isEarned ? (
-                    <Gift className="w-4 h-4" style={{ color: `${merchantColor}60` }} />
+                  {isLast ? (
+                    <Gift className="w-4 h-4" style={!isEarned && !isGreyed ? { color: `${merchantColor}60` } : undefined} />
                   ) : (
                     <LoyaltyIcon className="w-4 h-4" />
                   )}
@@ -181,7 +181,7 @@ export default function StampsSection({
                     isEarned ? 'bg-violet-600 text-white shadow-md' : isLast ? 'bg-gray-50 border-2 border-dashed border-violet-200 text-violet-300' : 'bg-gray-50 text-gray-300 border border-gray-100'
                   }`}
                 >
-                  {isLast && !isEarned ? <Trophy className="w-4 h-4" /> : <LoyaltyIcon className="w-4 h-4" />}
+                  {isLast ? <Trophy className="w-4 h-4" /> : <LoyaltyIcon className="w-4 h-4" />}
                 </motion.div>
               );
             })}
@@ -243,8 +243,8 @@ export default function StampsSection({
                     : undefined,
               }}
             >
-              {isLast && !isEarned ? (
-                <Gift className="w-5 h-5" style={{ color: `${merchantColor}60` }} />
+              {isLast ? (
+                <Gift className={isEarned ? 'w-6 h-6' : 'w-5 h-5'} style={!isEarned ? { color: `${merchantColor}60` } : undefined} />
               ) : isNext ? (
                 <LoyaltyIcon className="w-5 h-5" style={{ color: `${merchantColor}30` }} />
               ) : (

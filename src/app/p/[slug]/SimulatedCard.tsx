@@ -131,13 +131,17 @@ export default function SimulatedCard({
                   borderColor: isLast && !isFilled ? `${p}40` : undefined,
                 }}
               >
-                {isLast && !isFilled ? (
-                  <motion.div
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  >
-                    <Gift className="w-4 h-4" style={{ color: `${p}60` }} />
-                  </motion.div>
+                {isLast ? (
+                  isFilled ? (
+                    <Gift className="w-5 h-5" />
+                  ) : (
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                    >
+                      <Gift className="w-4 h-4" style={{ color: `${p}60` }} />
+                    </motion.div>
+                  )
                 ) : (
                   <Heart className={isFilled ? 'w-5 h-5' : 'w-4 h-4'} />
                 )}
