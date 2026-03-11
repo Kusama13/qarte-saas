@@ -18,7 +18,7 @@ function PassagesCard() {
 
       <h3 className="text-2xl font-bold text-gray-900 mb-2">Mode Passages</h3>
       <p className="text-base text-gray-500 leading-relaxed mb-6">
-        Chaque visite = un tampon. Au bout de X passages, ta cliente reçoit son cadeau. Simple, visuel, addictif.
+        Chaque visite = un tampon. Au bout de X passages, ton client reçoit son cadeau. Simple, visuel, addictif.
       </p>
 
       {/* Mini mockup: stamp grid */}

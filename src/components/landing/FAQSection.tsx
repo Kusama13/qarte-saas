@@ -7,7 +7,7 @@ import { useInView } from '@/hooks/useInView';
 
 const faqs = [
   {
-    question: "Et si mes clientes n'ont pas de smartphone ?",
+    question: "Et si mes clients n'ont pas de smartphone ?",
     answer: "99% en ont un. Pour les rares exceptions, note les points et ajoute-les plus tard.",
   },
   {
@@ -16,11 +16,11 @@ const faqs = [
   },
   {
     question: "Ça marche pour les prestations à domicile ?",
-    answer: "Oui. Montre le QR code sur ton téléphone, ta cliente scanne, son point est validé.",
+    answer: "Oui. Montre le QR code sur ton téléphone, ton client scanne, son point est validé.",
   },
   {
-    question: "Mes clientes vont trouver ça compliqué ?",
-    answer: "Elles scannent le QR code avec leur appareil photo et c'est tout. Pas d'app, pas de compte à créer. Ultra simple.",
+    question: "Mes clients vont trouver ça compliqué ?",
+    answer: "Ils scannent le QR code avec leur appareil photo et c'est tout. Pas d'app, pas de compte à créer. Ultra simple.",
   },
   {
     question: "Que se passe-t-il si j'arrête Qarte ?",
@@ -28,7 +28,7 @@ const faqs = [
   },
   {
     question: "Comment fonctionne le parrainage ?",
-    answer: "Ta cliente partage son lien. Quand une amie fait son premier passage, les deux sont récompensées. Automatique.",
+    answer: "Ton client partage son lien. Quand un ami fait son premier passage, les deux sont récompensés. Automatique.",
   },
   {
     question: "19€/mois, c'est trop cher ?",
@@ -48,7 +48,7 @@ const faqs = [
   },
   {
     question: "Je suis esthéticienne indépendante, c'est pour moi ?",
-    answer: "Absolument. Crée ton programme en 5 minutes, gère tes clientes, développe le bouche-à-oreille.",
+    answer: "Absolument. Crée ton programme en 5 minutes, gère tes clients, développe le bouche-à-oreille.",
   },
 ];
 

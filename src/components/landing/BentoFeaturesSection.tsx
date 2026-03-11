@@ -524,7 +524,7 @@ export function BentoFeaturesSection() {
           <Separator />
 
           <FeatureBlock
-            title="Récompense tes clientes"
+            title="Récompense tes clients"
             titleBold="les plus fidèles."
             description="Crée ton programme en 2 minutes. Paliers, récompenses, couleurs — tout s'adapte à ton image."
             visual={<LoyaltyCardVisual />}
@@ -536,7 +536,7 @@ export function BentoFeaturesSection() {
           <FeatureBlock
             title="Adapte ta carte à"
             titleBold="ton image."
-            description="Tes couleurs, ton ambiance. Une carte aux couleurs de ton institut donne un effet premium — tes clientes reviennent plus, dépensent plus."
+            description="Tes couleurs, ton ambiance. Une carte aux couleurs de ton institut donne un effet premium — tes clients reviennent plus, dépensent plus."
             visual={<BrandVisual />}
             reverse
             delay={0.05}
@@ -545,9 +545,9 @@ export function BentoFeaturesSection() {
           <Separator />
 
           <FeatureBlock
-            title="Relance les clientes"
+            title="Relance les clients"
             titleBold="qui s'éloignent."
-            description="Une cliente ne vient plus ? On la détecte et on lui envoie un rappel au bon moment. Chaque relance, c'est du chiffre d'affaires récupéré."
+            description="Un client ne vient plus ? On le détecte et on lui envoie un rappel au bon moment. Chaque relance, c'est du chiffre d'affaires récupéré."
             visual={<InactivityVisual />}
             delay={0.05}
           />
@@ -557,7 +557,7 @@ export function BentoFeaturesSection() {
           <FeatureBlock
             title="N'oublie plus jamais un"
             titleBold="anniversaire."
-            description="Une offre surprise le jour J, envoyée automatiquement. Résultat : elles reviennent et dépensent en moyenne 30% de plus."
+            description="Une offre surprise le jour J, envoyée automatiquement. Résultat : ils reviennent et dépensent en moyenne 30% de plus."
             visual={<BirthdayVisual />}
             reverse
             delay={0.05}
@@ -576,9 +576,9 @@ export function BentoFeaturesSection() {
           <Separator />
 
           <FeatureBlock
-            title="Transforme tes clientes en"
-            titleBold="ambassadrices."
-            description="Un lien, un partage, deux récompenses. Chaque cliente satisfaite te rapporte de nouvelles clientes — sans pub, sans budget."
+            title="Transforme tes clients en"
+            titleBold="ambassadeurs."
+            description="Un lien, un partage, deux récompenses. Chaque client satisfait te rapporte de nouveaux clients — sans pub, sans budget."
             visual={<ReferralVisual />}
             reverse
             delay={0.05}
@@ -589,7 +589,7 @@ export function BentoFeaturesSection() {
           <FeatureBlock
             title="Booste tes"
             titleBold="avis Google."
-            description="On demande un avis au bon moment. Tes clientes satisfaites deviennent tes meilleures ambassadrices en ligne."
+            description="On demande un avis au bon moment. Tes clients satisfaits deviennent tes meilleurs ambassadeurs en ligne."
             visual={<GoogleReviewsVisual />}
             delay={0.05}
           />

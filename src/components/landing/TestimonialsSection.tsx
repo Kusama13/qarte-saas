@@ -28,7 +28,7 @@ const testimonials: Testimonial[] = [
     messages: [
       { from: 'qarte', text: "Salut ! Ca fait 3 mois que vous êtes sur Qarte, vous pouvez nous faire un petit retour ? 🙏", time: '14:32' },
       { from: 'them', text: "Franchement au top 🔥", timeBreak: '16:45' },
-      { from: 'them', text: "Mes clientes perdait toujours leurs cartes avant" },
+      { from: 'them', text: "Mes clients perdaient toujours leurs cartes avant" },
       { from: 'them', text: "Maintenant tout est sur leur tel elles adorent la notif quand la pose offerte est dispo 💅" },
       { from: 'them', text: "ah et merci pour les stickers ils sont trop beaux 😍", time: '16:47' },
     ],
@@ -41,7 +41,7 @@ const testimonials: Testimonial[] = [
       { from: 'qarte', text: "Hello ! 6 semaines sur Qarte, vous en pensez quoi ? 😊", time: '16:48' },
       { from: 'them', text: "Ah oui j'adore", timeBreak: '19:12' },
       { from: 'them', text: "Honnêtement en 2 semaines j'avais deja recupéré le prix de l'abonnement" },
-      { from: 'them', text: "Y'a une cliente qui est revenue 3 fois juste pour remplir sa carte 😂", time: '19:13' },
+      { from: 'them', text: "Y'a un client qui est revenu 3 fois juste pour remplir sa carte 😂", time: '19:13' },
     ],
   },
   {
@@ -51,7 +51,7 @@ const testimonials: Testimonial[] = [
     messages: [
       { from: 'qarte', text: "Hey ! 2 mois sur Qarte, on peut avoir votre retour ? 🙏", time: '11:20' },
       { from: 'them', text: "Le truc qui change tout c'est la notif auto", timeBreak: '14:33' },
-      { from: 'them', text: "Mes clientes me disent \"ah oui faut que je revienne\" 😂" },
+      { from: 'them', text: "Mes clients me disent \"ah oui faut que je revienne\" 😂" },
       { from: 'them', text: "Honnêtement j'aurais du prendre avant" },
       { from: 'them', text: "D'ailleurs merci Camélia elle repond super vite a mes questions 🙏", time: '14:35' },
     ],
@@ -63,7 +63,7 @@ const testimonials: Testimonial[] = [
     messages: [
       { from: 'qarte', text: "Bonjour ! Bientôt 2 mois sur Qarte, comment ça se passe pour vous ? 😊", time: '09:47' },
       { from: 'them', text: "Coucou !", timeBreak: '13:02' },
-      { from: 'them', text: "Très contente moi je galérais avec les cartes en carton mes clientes les oubliait tout le temps" },
+      { from: 'them', text: "Très contente moi je galérais avec les cartes en carton mes clients les oubliaient tout le temps" },
       { from: 'them', text: "La c'est simple elles scan et c'est bon" },
       { from: 'them', text: "Et en plus elles recoivent une notif quand elles ont la récompense 👏", time: '13:04' },
     ],

@@ -729,7 +729,7 @@ export default function ProgramPage() {
             <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5">
               <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800 leading-relaxed">
-                <strong>Changement de mode.</strong> Les passages de tes clientes sont conservés. En mode cagnotte, leur cumul EUR démarrera à 0.
+                <strong>Changement de mode.</strong> Les passages de tes clients sont conservés. En mode cagnotte, leur cumul EUR démarrera à 0.
               </p>
             </div>
           )}

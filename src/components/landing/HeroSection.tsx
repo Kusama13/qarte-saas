@@ -44,7 +44,7 @@ export function HeroSection() {
             <h1 className="relative text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
               Le programme de fidélité qui fait{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
-                revenir tes clientes.
+                revenir tes clients.
               </span>
             </h1>
           </div>

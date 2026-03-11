@@ -18,7 +18,7 @@ export function CaseStudySection() {
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
             Comment Nail Salon by Elodie a{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500">
-              doublé ses clientes régulières
+              doublé ses clients réguliers
             </span>
           </h2>
         </div>
@@ -47,7 +47,7 @@ export function CaseStudySection() {
               </div>
 
               <blockquote className="text-lg text-gray-700 leading-relaxed mb-6 italic border-l-4 border-rose-200 pl-4">
-                &quot;Mes clientes perdaient toujours leurs cartes tampons. Avec Qarte, tout est sur leur téléphone. Elles adorent recevoir une notif quand leur pose gratuite est disponible !&quot;
+                &quot;Mes clients perdaient toujours leurs cartes tampons. Avec Qarte, tout est sur leur téléphone. Ils adorent recevoir une notif quand leur pose gratuite est disponible !&quot;
               </blockquote>
 
               <div className="flex items-center gap-3 mb-8">
@@ -93,7 +93,7 @@ export function CaseStudySection() {
                     <span className="text-5xl font-black">+127%</span>
                     <TrendingUp className="w-6 h-6 text-emerald-300" />
                   </div>
-                  <p className="text-indigo-200 mt-1">de clientes régulières</p>
+                  <p className="text-indigo-200 mt-1">de clients réguliers</p>
                 </div>
 
                 <div>
