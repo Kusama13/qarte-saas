@@ -43,9 +43,12 @@ export default function InstallAppBanner() {
     setDismissed(localStorage.getItem(DISMISS_KEY) === 'true');
   }, [isMobile]);
 
-  // Query visits only on mobile
+  // Query visits only on mobile — delay until merchant account is > 1 hour old
+  // to avoid showing the install banner during initial setup
   useEffect(() => {
     if (!isMobile || !merchant?.id) return;
+    const accountAgeMs = Date.now() - new Date(merchant.created_at).getTime();
+    if (accountAgeMs < 3600_000) return;
     const supabase = getSupabase();
     supabase
       .from('visits')
@@ -56,7 +59,7 @@ export default function InstallAppBanner() {
       .then(({ count }: { count: number | null }) => {
         if ((count ?? 0) >= 1) setHasReceivedScan(true);
       });
-  }, [isMobile, merchant?.id]);
+  }, [isMobile, merchant?.id, merchant?.created_at]);
 
   const handleDismiss = () => {
     setDismissed(true);
