@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+
 import {
   Search,
   Store,
@@ -301,7 +301,6 @@ function WhatsAppDropdown({
 // --- Component ---
 
 export default function AdminMerchantsPage() {
-  const router = useRouter();
   const supabase = getSupabase();
   const [data, setData] = useState<MerchantsDataResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -799,7 +798,7 @@ export default function AdminMerchantsPage() {
                   const customers = data?.customerCounts[merchant.id] || 0;
                   const pending = data?.pendingPoints[merchant.id] || 0;
                   return (
-                    <tr key={merchant.id} onClick={() => router.push(`/admin/merchants/${merchant.id}`)} className="hover:bg-gray-50/50 transition-colors group cursor-pointer">
+                    <tr key={merchant.id} onClick={() => window.open(`/admin/merchants/${merchant.id}`, '_blank')} className="hover:bg-gray-50/50 transition-colors group cursor-pointer">
                       {/* Commercant */}
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2.5">
@@ -896,7 +895,7 @@ export default function AdminMerchantsPage() {
               const customers = data?.customerCounts[merchant.id] || 0;
               const pending = data?.pendingPoints[merchant.id] || 0;
               return (
-                <div key={merchant.id} onClick={() => router.push(`/admin/merchants/${merchant.id}`)} className="bg-white rounded-xl border border-gray-100 shadow-sm px-3 py-2 cursor-pointer">
+                <div key={merchant.id} onClick={() => window.open(`/admin/merchants/${merchant.id}`, '_blank')} className="bg-white rounded-xl border border-gray-100 shadow-sm px-3 py-2 cursor-pointer">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-8 h-8 rounded-lg bg-[#5167fc] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
