@@ -48,7 +48,7 @@ export default function InstallAppBanner() {
   useEffect(() => {
     if (!isMobile || !merchant?.id) return;
     const accountAgeMs = Date.now() - new Date(merchant.created_at).getTime();
-    if (accountAgeMs < 3600_000) return;
+    if (accountAgeMs < 900_000) return;
     const supabase = getSupabase();
     supabase
       .from('visits')
