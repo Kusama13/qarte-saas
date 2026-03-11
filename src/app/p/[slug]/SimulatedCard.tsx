@@ -6,6 +6,20 @@ import { Heart, Gift } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { sparkleSubtle } from '@/lib/sparkles';
 
+function getGridCols(total: number): string {
+  if (total <= 3) return 'grid-cols-3';
+  if (total <= 4) return 'grid-cols-4';
+  if (total <= 5) return 'grid-cols-5';
+  if (total === 6) return 'grid-cols-3';
+  if (total === 7) return 'grid-cols-4';
+  if (total === 8) return 'grid-cols-4';
+  if (total === 9) return 'grid-cols-5';
+  if (total === 10) return 'grid-cols-5';
+  if (total === 11) return 'grid-cols-4';
+  if (total === 12) return 'grid-cols-4';
+  return 'grid-cols-5';
+}
+
 interface SimulatedCardProps {
   stampsRequired: number;
   rewardDescription: string;
@@ -86,7 +100,7 @@ export default function SimulatedCard({
         className="bg-white rounded-2xl p-5 border border-gray-100 shadow-[0_2px_20px_rgba(0,0,0,0.06)] overflow-hidden"
       >
         {/* Stamp grid */}
-        <div className="grid grid-cols-5 gap-2.5 mb-4">
+        <div className={`grid ${getGridCols(displayStamps)} gap-2.5 mb-4`}>
           {Array.from({ length: displayStamps }).map((_, i) => {
             const isLast = i === displayStamps - 1;
             const isFilled = i < filled;

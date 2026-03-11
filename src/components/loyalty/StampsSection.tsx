@@ -6,6 +6,25 @@ import { parseDoubleDays, formatDoubleDays } from '@/lib/utils';
 
 const LoyaltyIcon = Heart;
 
+/** Returns optimal grid columns for a balanced stamp layout */
+function getGridCols(total: number): string {
+  if (total <= 3) return 'grid-cols-3';
+  if (total <= 4) return 'grid-cols-4';
+  if (total <= 5) return 'grid-cols-5';
+  // For 6+, pick cols that avoid orphan rows (1 item alone)
+  if (total === 6) return 'grid-cols-3';
+  if (total === 7) return 'grid-cols-4';
+  if (total === 8) return 'grid-cols-4';
+  if (total === 9) return 'grid-cols-5';
+  if (total === 10) return 'grid-cols-5';
+  if (total === 11) return 'grid-cols-4';
+  if (total === 12) return 'grid-cols-4';
+  if (total === 13) return 'grid-cols-5';
+  if (total === 14) return 'grid-cols-5';
+  if (total === 15) return 'grid-cols-5';
+  return 'grid-cols-5';
+}
+
 interface StampsSectionProps {
   currentStamps: number;
   tier1Required: number;
@@ -94,7 +113,7 @@ export default function StampsSection({
             {getTier1StatusBadge(effectiveTier1Redeemed, isRewardReady, tier1Required - currentStamps)}
           </div>
 
-          <div className="grid grid-cols-5 gap-2.5 mb-3">
+          <div className={`grid ${getGridCols(tier1Required)} gap-2.5 mb-3`}>
             {Array.from({ length: tier1Required }).map((_, i) => {
               const isEarned = i < currentStamps;
               const isGreyed = effectiveTier1Redeemed;
@@ -148,7 +167,7 @@ export default function StampsSection({
             )}
           </div>
 
-          <div className="grid grid-cols-5 gap-2.5 mb-3">
+          <div className={`grid ${getGridCols(tier2Required - tier1Required)} gap-2.5 mb-3`}>
             {Array.from({ length: tier2Required - tier1Required }).map((_, i) => {
               const isEarned = currentStamps >= (tier1Required + i + 1);
               const isLast = i === (tier2Required - tier1Required - 1);
@@ -203,7 +222,7 @@ export default function StampsSection({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-5 gap-3">
+      <div className={`grid ${getGridCols(tier1Required)} gap-3`}>
         {Array.from({ length: tier1Required }).map((_, i) => {
           const isEarned = i < currentStamps;
           const isLast = i === tier1Required - 1;

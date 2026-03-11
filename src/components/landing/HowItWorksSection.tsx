@@ -27,19 +27,26 @@ function SetupCard() {
           <span className="text-[10px] font-extrabold text-violet-500">0/10</span>
         </div>
         <div className="grid grid-cols-5 gap-1.5">
-          {[...Array(10)].map((_, i) => (
+          {[...Array(10)].map((_, i) => {
+            const isLast = i === 9;
+            return (
             <div key={i} className={`aspect-square rounded-lg flex items-center justify-center ${
               i < 3
                 ? 'bg-gradient-to-br from-violet-400 to-indigo-500 shadow-sm shadow-violet-300/50'
-                : 'bg-white border-2 border-dashed border-gray-200'
+                : isLast
+                  ? 'bg-white border-2 border-dashed border-violet-200'
+                  : 'bg-white border-2 border-dashed border-gray-200'
             }`}>
               {i < 3 ? (
                 <Heart className="w-2.5 h-2.5 text-white fill-white" />
+              ) : isLast ? (
+                <Gift className="w-2.5 h-2.5 text-violet-300" />
               ) : (
                 <span className="text-[8px] font-bold text-gray-300">{i + 1}</span>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
         <div className="mt-2 flex items-center gap-2 bg-violet-50 rounded-lg px-2.5 py-1.5">
           <Gift className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
@@ -153,7 +160,11 @@ function RewardCard() {
         <div className="grid grid-cols-5 gap-1.5">
           {[...Array(10)].map((_, i) => (
             <div key={i} className="aspect-square rounded-lg flex items-center justify-center bg-gradient-to-br from-rose-400 to-pink-500 shadow-sm shadow-rose-300/50">
-              <Heart className="w-2.5 h-2.5 text-white fill-white" />
+              {i === 9 ? (
+                <Gift className="w-2.5 h-2.5 text-white" />
+              ) : (
+                <Heart className="w-2.5 h-2.5 text-white fill-white" />
+              )}
             </div>
           ))}
         </div>
