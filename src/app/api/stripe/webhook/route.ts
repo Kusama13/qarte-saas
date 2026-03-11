@@ -76,7 +76,7 @@ export async function POST(request: Request) {
         let nextBillingDate: string | undefined;
         if (session.subscription) {
           try {
-            const sub = await stripe.subscriptions.retrieve(session.subscription as string);
+            const sub = await stripe.subscriptions.retrieve(session.subscription as string) as unknown as { current_period_end: number };
             if (sub.current_period_end) {
               nextBillingDate = new Date(sub.current_period_end * 1000).toLocaleDateString('fr-FR', {
                 day: 'numeric',
