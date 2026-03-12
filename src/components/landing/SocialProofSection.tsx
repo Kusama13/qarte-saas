@@ -129,7 +129,7 @@ export async function SocialProofSection() {
       <div className="flex items-center justify-center gap-2 mb-6">
         <div className="h-px w-8 bg-gray-200" />
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
-          Elles fidélisent avec Qarte
+          Elles attirent et fidélisent avec Qarte
         </p>
         <div className="h-px w-8 bg-gray-200" />
       </div>
@@ -161,14 +161,6 @@ export async function SocialProofSection() {
         </div>
       </div>
 
-      <div className="flex justify-center mt-6">
-        <a
-          href="/pros"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-white border-2 border-indigo-200 text-indigo-600 text-sm font-bold rounded-xl transition-all hover:border-indigo-400 hover:bg-indigo-50 hover:scale-[1.02] active:scale-[0.98] shadow-sm"
-        >
-          Voir leur programme de fidélité →
-        </a>
-      </div>
     </section>
   );
 }

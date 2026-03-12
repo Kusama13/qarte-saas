@@ -24,7 +24,7 @@ import { isIOSDevice, isStandalonePWA } from '@/lib/push';
 import { trackPwaInstalled } from '@/lib/analytics';
 import { ensureTextContrast } from '@/lib/utils';
 import { sparkleGrand } from '@/lib/sparkles';
-import { DEMO_MERCHANTS } from '@/lib/demo-merchants';
+import { DEMO_MERCHANTS_FLAT as DEMO_MERCHANTS } from '@/lib/demo-merchants';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard, Voucher } from '@/types';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import {

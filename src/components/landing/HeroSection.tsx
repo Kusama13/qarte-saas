@@ -4,12 +4,13 @@ import {
   Star,
   ChevronDown,
   Eye,
-  Gift,
-  Check,
   Sparkles,
   Heart,
   Bell,
   Users,
+  MapPin,
+  Calendar,
+  UserPlus,
 } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -42,15 +43,15 @@ export function HeroSection() {
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
             <h1 className="relative text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Le programme de fidélité qui fait{' '}
+              Attire de nouveaux clients.{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
-                revenir tes clients.
+                Fidélise-les pour de bon.
               </span>
             </h1>
           </div>
 
           <p className="text-base lg:text-lg text-gray-600 max-w-lg leading-relaxed">
-            Fini les cartes papier perdues. QR code, points, récompenses — tout est automatique. Pensé pour les <span className="text-gray-900 font-medium">instituts, ongleries et salons</span> qui veulent fidéliser sans se compliquer la vie.
+            Une page pro qui attire de nouvelles clientes sur Google. Un programme fidélité qui les fait revenir. <span className="text-gray-900 font-medium">Tout dans un seul outil, en 5 minutes.</span>
           </p>
 
           <div className="flex flex-col sm:flex-row sm:items-start gap-3 lg:gap-4">
@@ -60,13 +61,13 @@ export function HeroSection() {
                 onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
                 className="group relative flex items-center justify-center px-7 py-4 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
-                <span className="relative z-10">Essaie gratuitement</span>
+                <span className="relative z-10">Booste ton salon en 5 min</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
               <p className="text-xs text-gray-400 font-medium mt-2 text-center">Sans carte bancaire, c&apos;est promis :)</p>
             </div>
             <a
-              href="/customer/card/demo-onglerie?preview=true&demo=true"
+              href="/p/demo-onglerie"
               onClick={() => trackCtaClick('hero_demo', 'hero_section')}
               className="flex items-center justify-center gap-2 px-7 py-4 lg:px-9 lg:py-4 bg-white border-2 border-indigo-200 text-indigo-600 font-bold rounded-xl transition-all duration-300 text-center hover:border-indigo-400 hover:bg-indigo-50 hover:scale-[1.02] active:scale-[0.98]"
             >
@@ -93,94 +94,81 @@ export function HeroSection() {
                   <div className="relative overflow-hidden">
                     <div className="absolute inset-0 bg-gradient-to-br from-rose-500 via-pink-500 to-violet-500" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2),transparent)]" />
-                    <div className="relative px-5 pt-10 pb-5 text-white text-center">
-                      <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto mb-2.5 flex items-center justify-center text-xl font-bold border border-white/30 shadow-lg shadow-black/10">
+                    <div className="relative px-5 pt-10 pb-4 text-white text-center">
+                      <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto mb-2 flex items-center justify-center text-lg font-bold border border-white/30 shadow-lg shadow-black/10">
                         E
                       </div>
-                      <p className="font-bold text-[15px] tracking-tight">
-                        Elodie Nails Studio
-                      </p>
+                      <p className="font-bold text-[14px] tracking-tight">Elodie Nails Studio</p>
+                      <div className="flex items-center justify-center gap-1 mt-1">
+                        <MapPin className="w-2.5 h-2.5 text-white/70" />
+                        <span className="text-[9px] text-white/70">Paris 11e</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Points section */}
-                  <div className="px-4 pt-4 pb-2">
-                    <div className="flex items-center justify-between mb-2.5">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ma fidélité</span>
-                      <span className="text-[11px] font-extrabold text-rose-500">7/10</span>
+                  {/* Booking CTA */}
+                  <div className="px-4 pt-3 pb-2">
+                    <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-xl px-3 py-2.5 flex items-center justify-center gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-white" />
+                      <span className="text-[11px] font-bold text-white">Prendre rendez-vous</span>
                     </div>
+                  </div>
 
-                    {/* Stamp grid - 2 rows of 5 */}
-                    <div className="grid grid-cols-5 gap-2">
-                      {[...Array(10)].map((_, i) => (
-                        <div key={i} className="relative">
-                          <div className={`aspect-square rounded-xl flex items-center justify-center ${
-                            i < 7
-                              ? 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-md shadow-rose-300/50'
-                              : 'bg-gray-50 border-2 border-dashed border-gray-200'
-                          }`}>
-                            {i < 7 ? (
-                              <Heart className="w-3.5 h-3.5 text-white fill-white" />
-                            ) : (
-                              <span className="text-[9px] font-bold text-gray-300">{i + 1}</span>
-                            )}
-                          </div>
-                          {i === 6 && (
-                            <div className="absolute -top-1 -right-1">
-                              <Sparkles className="w-3 h-3 text-rose-400" />
-                            </div>
+                  {/* Photo grid - 3 thumbnails */}
+                  <div className="px-4 py-1.5">
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {[0, 1, 2].map((i) => (
+                        <div key={i} className="aspect-square rounded-lg bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center overflow-hidden">
+                          <Sparkles className="w-3 h-3 text-gray-300" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Services preview */}
+                  <div className="px-4 py-2">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Prestations</p>
+                    <div className="space-y-1.5">
+                      {[
+                        { name: 'Pose complète gel', price: '45' },
+                        { name: 'Manucure semi-permanent', price: '30' },
+                      ].map((s, i) => (
+                        <div key={i} className="flex items-center justify-between py-1.5 px-2 bg-gray-50/80 rounded-lg">
+                          <span className="text-[10px] font-semibold text-gray-700">{s.name}</span>
+                          <span className="text-[10px] font-bold text-gray-900">{s.price} EUR</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Loyalty card compact */}
+                  <div className="px-4 py-2">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Fidelite</p>
+                    <div className="grid grid-cols-8 gap-1">
+                      {[...Array(8)].map((_, i) => (
+                        <div key={i} className={`aspect-square rounded-md flex items-center justify-center ${
+                          i < 5
+                            ? 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-sm shadow-rose-300/50'
+                            : 'bg-gray-50 border border-dashed border-gray-200'
+                        }`}>
+                          {i < 5 ? (
+                            <Heart className="w-2.5 h-2.5 text-white fill-white" />
+                          ) : (
+                            <span className="text-[7px] font-bold text-gray-300">{i + 1}</span>
                           )}
                         </div>
                       ))}
                     </div>
-
-                    {/* Progress bar */}
-                    <div className="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-full w-[70%] bg-gradient-to-r from-rose-400 to-pink-500 rounded-full" />
-                    </div>
                   </div>
 
-                  {/* Reward card - 3D pop out */}
-                  <div className="px-4 py-2 relative" style={{ perspective: 600 }}>
-                    <div
-                      className="relative bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-300/60 rounded-2xl p-3.5 shadow-xl shadow-rose-300/30 scale-[1.08]"
-                      style={{ transformStyle: 'preserve-3d', transform: 'translateZ(20px)' }}
-                    >
-                      <div className="absolute -inset-1 bg-gradient-to-r from-rose-200/40 to-pink-200/40 rounded-2xl blur-md -z-10" />
-                      <div className="absolute top-0 right-0 w-20 h-20 bg-rose-200/30 rounded-full -mr-8 -mt-8 blur-xl" />
-                      <div className="relative flex items-center gap-3">
-                        <div className="w-11 h-11 bg-gradient-to-br from-rose-400 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-rose-400/40">
-                          <Gift className="w-5 h-5 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-extrabold text-gray-900">Soin visage offert</p>
-                          <p className="text-[10px] text-rose-600 font-bold">Plus que 3 visites !</p>
-                        </div>
-                        <span className="text-xl">🎁</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Recent visits */}
+                  {/* Welcome offer */}
                   <div className="px-4 py-2 flex-1">
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Historique</p>
-                    <div className="space-y-1.5">
-                      {[
-                        { date: "Auj.", label: 'Manucure semi-permanent', emoji: '💅' },
-                        { date: '12 jan.', label: 'Pose gel + nail art', emoji: '✨' },
-                        { date: '28 déc.', label: 'Soin du visage', emoji: '🧖‍♀️' },
-                      ].map((visit, i) => (
-                        <div key={i} className="flex items-center gap-2.5 p-2 bg-gray-50/80 rounded-xl">
-                          <span className="text-sm">{visit.emoji}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-semibold text-gray-700 truncate">{visit.label}</p>
-                            <p className="text-[8px] text-gray-400">{visit.date}</p>
-                          </div>
-                          <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-50 rounded-full">
-                            <span className="text-[8px] font-extrabold text-emerald-600">+1</span>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="bg-gradient-to-r from-violet-50 to-pink-50 border border-violet-200/60 rounded-xl p-3">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Sparkles className="w-3 h-3 text-violet-500" />
+                        <span className="text-[8px] font-bold text-violet-500 uppercase tracking-wider">Offre de bienvenue</span>
+                      </div>
+                      <p className="text-[11px] font-bold text-gray-800">-20% sur votre premiere visite</p>
                     </div>
                   </div>
                 </div>
@@ -190,19 +178,19 @@ export function HeroSection() {
 
             {/* === Floating elements around phone === */}
 
-            {/* Toast "Point ajouté" */}
-            <div className="flex absolute top-28 right-0 translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100 items-center gap-2 z-30">
+            {/* Toast "Nouvelle cliente" */}
+            <div className="hidden sm:flex absolute top-28 right-0 translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100 items-center gap-2 z-30">
               <div className="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center">
-                <Check className="w-3.5 h-3.5 text-white" />
+                <UserPlus className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-800">Point ajouté !</p>
-                <p className="text-[8px] text-gray-400">Manucure semi-permanent</p>
+                <p className="text-[10px] font-bold text-gray-800">Nouvelle cliente !</p>
+                <p className="text-[8px] text-gray-400">Sophie M. via Google</p>
               </div>
             </div>
 
             {/* Floating star rating badge */}
-            <div className="absolute top-12 left-0 -translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-amber-200/50 border border-amber-200 z-30">
+            <div className="hidden sm:block absolute top-12 left-0 -translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-amber-200/50 border border-amber-200 z-30">
               <div className="flex gap-0.5 mb-1">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
@@ -213,7 +201,7 @@ export function HeroSection() {
             </div>
 
             {/* Floating referral badge */}
-            <div className="absolute bottom-32 left-0 -translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-violet-200/40 border border-violet-100 z-30">
+            <div className="hidden sm:block absolute bottom-44 left-0 -translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-violet-200/40 border border-violet-100 z-30">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-pink-500 rounded-full flex items-center justify-center shadow-md shadow-violet-300/40">
                   <Users className="w-3.5 h-3.5 text-white" />
@@ -226,7 +214,7 @@ export function HeroSection() {
             </div>
 
             {/* Push notification Qarte */}
-            <div className="absolute bottom-28 right-0 translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-indigo-200/40 border border-indigo-100 z-30 max-w-[200px]">
+            <div className="hidden sm:block absolute bottom-28 right-0 translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-indigo-200/40 border border-indigo-100 z-30 max-w-[200px]">
               <div className="flex items-start gap-2.5">
                 <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-300/40">
                   <Bell className="w-4 h-4 text-white" />
@@ -247,7 +235,7 @@ export function HeroSection() {
             ].map((p, i) => (
               <div
                 key={i}
-                className={`absolute ${p.size} text-rose-300/50 z-0`}
+                className={`absolute ${p.size} text-rose-300/50 z-0 hidden sm:block`}
                 style={{ left: p.left, top: p.top }}
               >
                 <Heart className="w-full h-full fill-current" />

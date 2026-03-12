@@ -6,65 +6,48 @@ import { ChevronDown, MessageCircle } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 
 const faqs = [
-  {
-    question: "Et si mes clients n'ont pas de smartphone ?",
-    answer: "99% en ont un. Pour les rares exceptions, note les points et ajoute-les plus tard.",
-  },
+  // --- Produit ---
   {
     question: "Combien de temps pour être opérationnel ?",
     answer: "5 minutes. Compte, logo, récompense, QR code. C'est prêt.",
-  },
-  {
-    question: "Ça marche pour les prestations à domicile ?",
-    answer: "Oui. Montre le QR code sur ton téléphone, ton client scanne, son point est validé.",
-  },
-  {
-    question: "Mes clients vont trouver ça compliqué ?",
-    answer: "Ils scannent le QR code avec leur appareil photo et c'est tout. Pas d'app, pas de compte à créer. Ultra simple.",
-  },
-  {
-    question: "Que se passe-t-il si j'arrête Qarte ?",
-    answer: "Tes données t'appartiennent. Export CSV en 1 clic. Pas de piège, pas d'engagement.",
-  },
-  {
-    question: "Comment fonctionne le parrainage ?",
-    answer: "Ton client partage son lien. Quand un ami fait son premier passage, les deux sont récompensés. Automatique.",
-  },
-  {
-    question: "19€/mois, c'est trop cher ?",
-    answer: "Ça fait 0,63€/jour. Un seul client fidélisé en plus et c'est remboursé. Sans compter les ~200€/an de cartes papier en moins.",
-  },
-  {
-    question: "Mes données sont-elles protégées (RGPD) ?",
-    answer: "100% conforme RGPD, hébergé en Europe, chiffré. Tes données restent les tiennes. On ne revend rien, jamais.",
-  },
-  {
-    question: "Ça s'intègre avec mon logiciel de salon ?",
-    answer: "Qarte fonctionne tout seul, à côté de tes outils actuels. Rien à changer dans ton organisation.",
-  },
-  {
-    question: "Le prix change après les 7 jours gratuits ?",
-    answer: "Non. 19€/mois, point final. Mêmes fonctionnalités pendant l'essai et après. Zéro surprise.",
-  },
-  {
-    question: "Je suis esthéticienne indépendante, c'est pour moi ?",
-    answer: "Absolument. Crée ton programme en 5 minutes, gère tes clients, développe le bouche-à-oreille.",
   },
   {
     question: "Tampons ou cagnotte, lequel choisir ?",
     answer: "Prestations à prix fixe (ongles, cils, barbe) → mode passages. Montants variables (coiffure, spa) → mode cagnotte. Tu peux changer à tout moment.",
   },
   {
-    question: "C'est quoi la page publique ?",
-    answer: "Un lien unique pour ta bio Instagram. Tes clientes y trouvent ton salon, tes prestations, tes tarifs, la prise de rendez-vous et ton programme fidélité. Tout en un.",
-  },
-  {
-    question: "Comment fonctionne l'offre de bienvenue ?",
-    answer: "Tu configures une offre (ex : -20% première visite). Elle s'affiche sur ta page publique. Le nouveau client clique, s'inscrit et reçoit son bon automatiquement.",
-  },
-  {
     question: "Les notifications push, ça marche comment ?",
     answer: "Tes clients reçoivent des rappels directement sur leur téléphone — sans app. Relances automatiques, récompenses à récupérer, anniversaires. Zéro effort de ton côté.",
+  },
+  // --- UX / Objections ---
+  {
+    question: "Mes clients vont trouver ça compliqué ?",
+    answer: "Ils scannent le QR code avec leur appareil photo et c'est tout. Pas d'app, pas de compte à créer. Ultra simple.",
+  },
+  {
+    question: "Ça marche pour les prestations à domicile ?",
+    answer: "Oui. Montre le QR code sur ton téléphone, ton client scanne, son point est validé.",
+  },
+  {
+    question: "Je suis esthéticienne indépendante, c'est pour moi ?",
+    answer: "Absolument. Crée ton programme en 5 minutes, gère tes clients, développe le bouche-à-oreille.",
+  },
+  // --- Prix / Confiance ---
+  {
+    question: "19€/mois, c'est trop cher ?",
+    answer: "Ça fait 0,63€/jour. Une seule nouvelle cliente grâce à ta page pro et c'est remboursé. Sans compter les ~200€/an de cartes papier en moins.",
+  },
+  {
+    question: "Le prix change après les 7 jours gratuits ?",
+    answer: "Non. 19€/mois, point final. Mêmes fonctionnalités pendant l'essai et après. Zéro surprise.",
+  },
+  {
+    question: "Mes données sont-elles protégées (RGPD) ?",
+    answer: "100% conforme RGPD, hébergé en Europe, chiffré. Tes données restent les tiennes. On ne revend rien, jamais.",
+  },
+  {
+    question: "Que se passe-t-il si j'arrête Qarte ?",
+    answer: "Tes données t'appartiennent. Export CSV en 1 clic. Pas de piège, pas d'engagement.",
   },
 ];
 

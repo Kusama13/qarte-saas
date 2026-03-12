@@ -9,14 +9,14 @@ export function FooterCta() {
     <div className="bg-gray-50 border-t border-gray-200 py-16">
       <div className="max-w-6xl mx-auto px-6 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-          Rejoins les pros qui fidélisent avec Qarte
+          Rejoins les pros qui attirent et fidélisent avec Qarte
         </h2>
         <a
           href="/auth/merchant/signup"
           onClick={() => { trackCtaClick('footer_cta', 'footer_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
           className="group inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
         >
-          Créer ma carte gratuite
+          Commence maintenant — c&apos;est gratuit
         </a>
       </div>
     </div>

@@ -49,7 +49,7 @@ type MerchantPublic = Pick<
   | 'cagnotte_tier2_percent'
 >;
 
-export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [] }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[] }) {
+export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], isDemo = false }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; isDemo?: boolean }) {
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
@@ -88,6 +88,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     merchant.double_days_enabled;
 
   const hasBooking = !!(merchant.booking_url && merchant.booking_url.trim());
+  const noOp = (e: React.MouseEvent) => { e.preventDefault(); };
 
   // Services: pre-compute outside JSX
   const hasCategories = serviceCategories.length > 0;
@@ -185,9 +186,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         {hasBooking && (
           <motion.a
             ref={topCtaRef as unknown as React.Ref<HTMLAnchorElement>}
-            href={merchant.booking_url!}
-            target="_blank"
-            rel="noopener noreferrer"
+            href={isDemo ? '#' : merchant.booking_url!}
+            target={isDemo ? undefined : '_blank'}
+            rel={isDemo ? undefined : 'noopener noreferrer'}
+            onClick={isDemo ? noOp : undefined}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.4 }}
@@ -205,7 +207,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         {/* ── OFFRE DE BIENVENUE ── */}
         {merchant.welcome_offer_enabled && merchant.welcome_offer_description && merchant.welcome_referral_code && merchant.scan_code && (
           <motion.a
-            href={`/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`}
+            href={isDemo ? '#' : `/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`}
+            onClick={isDemo ? noOp : undefined}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.28, ease: 'easeOut' }}
@@ -605,9 +608,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <p className="text-sm font-bold text-gray-900 truncate">{merchant.shop_name}</p>
               </div>
               <a
-                href={merchant.booking_url!}
-                target="_blank"
-                rel="noopener noreferrer"
+                href={isDemo ? '#' : merchant.booking_url!}
+                target={isDemo ? undefined : '_blank'}
+                rel={isDemo ? undefined : 'noopener noreferrer'}
+                onClick={isDemo ? noOp : undefined}
                 className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
                 style={{
                   background: `linear-gradient(135deg, ${p}, ${s})`,

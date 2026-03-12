@@ -50,7 +50,7 @@ src/
 │   ├── loyalty/           # StampsSection, CagnotteSection, RewardCard, RedeemModal, StickyRedeemBar, HistorySection, VoucherRewards, VoucherModals, ReviewModal, ReviewCard, BirthdaySection, SocialLinks, CardHeader, InstallPrompts
 │   └── analytics/         # GTM, FacebookPixel, TikTokPixel, MicrosoftClarity
 │
-├── emails/               # 33 templates React Email + BaseLayout
+├── emails/               # 34 templates React Email + BaseLayout
 ├── lib/                  # supabase.ts, stripe.ts, utils.ts, scripts.ts, push.ts, logger.ts, analytics.ts, facebook-capi.ts, email.ts
 ├── types/index.ts        # Merchant, LoyaltyCard, Visit, Customer, etc.
 ├── contexts/             # MerchantContext
@@ -319,7 +319,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ---
 
-## 9. Emails (33 templates)
+## 9. Emails (34 templates)
 
 ### Onboarding
 WelcomeEmail, IncompleteSignupEmail (+1h), IncompleteSignupReminder2Email (+3h), ProgramReminderEmail (J+1), ProgramReminderDay2Email (J+2, par shop_type), ProgramReminderDay3Email (J+3), QRCodeEmail, FirstClientScriptEmail (J+2 post-config), QuickCheckEmail (J+4 si 0 scans), ChallengeCompletedEmail (DESACTIVE)
@@ -334,7 +334,7 @@ TrialEndingEmail (J-5/3/1), TrialExpiredEmail (J+1/3/5), InactiveMerchantDay7/14
 SubscriptionConfirmedEmail, PaymentFailedEmail, SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30 codes promo)
 
 ### Autres
-GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, SetupForYouEmail
+GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, SetupForYouEmail, AnnouncementMaPageEmail
 
 ### Cron Jobs
 | Cron | Horaire | Description |
@@ -353,7 +353,9 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ## 10. Pages Principales
 
 ### Landing (`/`)
-Hero → SocialProof → LoyaltyModes (2 cartes: Passages vs Cagnotte) → BentoFeatures (bento grid) → Testimonials (WhatsApp/iMessage) → Pricing (19€/mois) → FAQ (11 questions) → Footer (FooterCta + FooterDark)
+Hero (mockup page pro + floating badges) → SocialProof → LoyaltyModes (4 cartes: SEO Google, Offre bienvenue, Avis Google, Parrainage) → BentoFeatures (bento grid) → Testimonials (WhatsApp/iMessage) → Pricing (19€/mois) → FAQ (11 questions) → Footer (FooterCta + FooterDark)
+
+CTA uniforme : "Booste ton salon en 5 min" (toutes sections). Positionnement : page pro (acquisition) + programme fidelite (retention) = un seul outil.
 
 ### Login Client (`/customer`)
 Fond gradient mesh anime (orbes indigo/violet/rose), 4 mini cartes de fidelite flottantes (Framer Motion), formulaire glass-morphism (`bg-white/70 backdrop-blur-2xl`), footer "Propulse par Qarte en France"
@@ -375,7 +377,7 @@ Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 fi
 - **QR Code & Supports** (`/dashboard/qr-download`) : QR code + Kit reseaux sociaux (image HD, legendes, grille 2x2 coloree de 4 tips + lien cross-promo vers Ma Page). Post-QR modal redirige vers Ma Page.
 
 ### Admin (`/admin`)
-Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses. **Exclut les comptes admin** des stats.
+Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses. **Exclut les comptes admin** des stats. Feature adoption : 15 features trackees (programme, logo, reseaux, parrainage, anniversaire, reservation, avis, offre active, PWA, shield, palier 2, offre bienvenue, double jours, adresse, mode cagnotte). Health score : /100 (programme +15, logo +10, reseaux +5, avis +5, reservation +5, clients +10-20, activite +15, recence +5-10, parrainage +5, shield +5, palier2 +5, bienvenue +5, anniversaire +3, double jours +2). Badges merchants : Admin, NC, Shield pending, PWA, Bienvenue, Cagnotte.
 
 ### Page Publique Programme (`/p/[slug]`)
 Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre bienvenue → `/scan/{code}?welcome=`).

@@ -3,11 +3,17 @@ import { notFound } from 'next/navigation';
 import ProgrammeView from './ProgrammeView';
 import { SHOP_TYPES } from '@/types';
 import type { Metadata } from 'next';
+import { isDemoSlug, getDemoMerchantData } from '@/lib/demo-merchants';
+import DemoNav from './DemoNav';
 
 import { cache } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; photos: any[]; services: any[]; serviceCategories: any[] } | null> => {
+  // Demo merchants: return hardcoded data without DB query
+  const demo = getDemoMerchantData(slug);
+  if (demo) return demo;
+
   const supabaseAdmin = getSupabaseAdmin();
 
   const { data: merchant } = await supabaseAdmin
@@ -89,6 +95,13 @@ export default async function ProgrammePage({
 
   if (!result) notFound();
 
+  const isDemo = isDemoSlug(slug);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} />;
+  return (
+    <>
+      {isDemo && <DemoNav current={slug} />}
+      <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} isDemo={isDemo} />
+    </>
+  );
 }
