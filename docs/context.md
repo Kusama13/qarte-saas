@@ -332,6 +332,9 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ### Landing (`/`)
 Hero → SocialProof → LoyaltyModes (2 cartes: Passages vs Cagnotte) → BentoFeatures (bento grid) → Testimonials (WhatsApp/iMessage) → Pricing (19€/mois) → FAQ (11 questions) → Footer (FooterCta + FooterDark)
 
+### Login Client (`/customer`)
+Fond gradient mesh anime (orbes indigo/violet/rose), 4 mini cartes de fidelite flottantes (Framer Motion), formulaire glass-morphism (`bg-white/70 backdrop-blur-2xl`), footer "Propulse par Qarte en France"
+
 ### Wallet Client (`/customer/cards`)
 Design Apple Wallet, fond `bg-[#f7f6fb]`, greeting typographique, cartes avec header merchant colore, glow reward-ready, dual tier barres
 

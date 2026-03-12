@@ -2,15 +2,98 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import {
   Phone,
   Search,
-  Wallet,
   Loader2,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { formatPhoneNumber, validatePhone } from '@/lib/utils';
 
+/* ── Floating loyalty card ─────────────────────────────── */
+function FloatingCard({
+  color,
+  initials,
+  stamps,
+  total,
+  delay,
+  x,
+  y,
+  rotate,
+}: {
+  color: string;
+  initials: string;
+  stamps: number;
+  total: number;
+  delay: number;
+  x: string;
+  y: string;
+  rotate: number;
+}) {
+  return (
+    <motion.div
+      className="absolute pointer-events-none select-none"
+      style={{ left: x, top: y }}
+      initial={{ opacity: 0, scale: 0.8, rotate: rotate - 5 }}
+      animate={{
+        opacity: [0, 0.55, 0.55, 0],
+        scale: [0.8, 1, 1, 0.9],
+        rotate: [rotate - 5, rotate, rotate + 3, rotate],
+        y: [0, -18, -18, 0],
+      }}
+      transition={{
+        duration: 8,
+        delay,
+        repeat: Infinity,
+        repeatDelay: 2,
+        ease: 'easeInOut',
+      }}
+    >
+      <div
+        className="w-[160px] h-[100px] rounded-2xl shadow-2xl overflow-hidden"
+        style={{
+          background: `linear-gradient(135deg, ${color}, ${color}bb)`,
+        }}
+      >
+        {/* Card header */}
+        <div className="flex items-center gap-2 px-3 pt-3">
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-white font-black text-[11px] ring-1 ring-white/20"
+            style={{ backgroundColor: `${color}99` }}
+          >
+            {initials}
+          </div>
+          <div className="flex-1">
+            <div className="h-1.5 w-14 bg-white/30 rounded-full" />
+            <div className="h-1 w-8 bg-white/20 rounded-full mt-1" />
+          </div>
+        </div>
+        {/* Stamp dots */}
+        <div className="flex items-center gap-1 px-3 mt-3">
+          {Array.from({ length: total }).map((_, i) => (
+            <div
+              key={i}
+              className="w-2.5 h-2.5 rounded-full"
+              style={{
+                backgroundColor: i < stamps ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.2)',
+              }}
+            />
+          ))}
+        </div>
+        {/* Progress bar */}
+        <div className="mx-3 mt-2 h-1 bg-white/15 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-white/60 rounded-full"
+            style={{ width: `${(stamps / total) * 100}%` }}
+          />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ── Main page ─────────────────────────────────────────── */
 export default function CustomerLoginPage() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -75,49 +158,132 @@ export default function CustomerLoginPage() {
 
   if (checking) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+      <div className="flex items-center justify-center min-h-screen bg-[#f7f6fb]">
         <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 relative overflow-hidden flex flex-col">
-      {/* Background decorations */}
-      <div className="absolute top-[-10%] -left-[10%] w-[50%] h-[50%] bg-indigo-600/10 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-10%] -right-[10%] w-[50%] h-[50%] bg-violet-600/10 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '2s' }} />
+    <div className="min-h-screen bg-[#f7f6fb] relative overflow-hidden flex flex-col">
 
-      {/* Header */}
-      <header className="relative z-10 py-6 px-4">
-        <div className="flex items-center justify-center gap-2.5">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200">
-            <span className="text-white font-black italic text-lg">Q</span>
-          </div>
-          <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">Qarte</span>
+      {/* ── Animated gradient mesh background ── */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div
+          className="absolute w-[600px] h-[600px] rounded-full blur-[160px] opacity-30"
+          style={{
+            background: 'radial-gradient(circle, #818cf8, #7c3aed)',
+            top: '-15%',
+            left: '-10%',
+            animation: 'drift1 12s ease-in-out infinite alternate',
+          }}
+        />
+        <div
+          className="absolute w-[500px] h-[500px] rounded-full blur-[140px] opacity-20"
+          style={{
+            background: 'radial-gradient(circle, #c084fc, #e879f9)',
+            bottom: '-10%',
+            right: '-15%',
+            animation: 'drift2 14s ease-in-out infinite alternate',
+          }}
+        />
+        <div
+          className="absolute w-[400px] h-[400px] rounded-full blur-[120px] opacity-15"
+          style={{
+            background: 'radial-gradient(circle, #6366f1, #8b5cf6)',
+            top: '40%',
+            left: '50%',
+            animation: 'drift3 10s ease-in-out infinite alternate',
+          }}
+        />
+      </div>
+
+      {/* ── Floating loyalty cards ── */}
+      <div className="absolute inset-0 overflow-hidden">
+        <FloatingCard
+          color="#654EDA"
+          initials="L"
+          stamps={6}
+          total={8}
+          delay={0}
+          x="5%"
+          y="12%"
+          rotate={-12}
+        />
+        <FloatingCard
+          color="#e879f9"
+          initials="S"
+          stamps={4}
+          total={10}
+          delay={3}
+          x="68%"
+          y="8%"
+          rotate={8}
+        />
+        <FloatingCard
+          color="#f59e0b"
+          initials="B"
+          stamps={9}
+          total={10}
+          delay={5.5}
+          x="72%"
+          y="65%"
+          rotate={-6}
+        />
+        <FloatingCard
+          color="#10b981"
+          initials="M"
+          stamps={3}
+          total={6}
+          delay={1.5}
+          x="-2%"
+          y="60%"
+          rotate={10}
+        />
+      </div>
+
+      {/* ── Header ── */}
+      <header className="relative z-10 py-5 px-6">
+        <div className="flex items-center justify-center">
+          <span className="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+            Qarte
+          </span>
         </div>
       </header>
 
-      {/* Main content */}
+      {/* ── Main content ── */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md animate-fade-in">
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-[2rem] bg-white shadow-2xl shadow-indigo-100 text-indigo-600 ring-1 ring-gray-100">
-              <Wallet className="w-10 h-10" />
-            </div>
-            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">
-              Mes cartes de fidélité
+        <motion.div
+          className="w-full max-w-md"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-black text-gray-900 leading-none mb-3">
+              Mes cartes.
             </h1>
-            <p className="mt-3 text-lg text-gray-500 font-medium">
-              Entrez votre numéro pour retrouver vos cartes de fidélité
+            <p className="text-base text-gray-400 font-medium">
+              Retrouvez toutes vos cartes de fidélité
             </p>
           </div>
 
-          <div className="p-8 bg-white/80 backdrop-blur-2xl border border-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[2.5rem]">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Glass card form */}
+          <motion.div
+            className="p-8 bg-white/70 backdrop-blur-2xl border border-white/80 shadow-[0_8px_60px_rgba(99,102,241,0.10)] rounded-[2.5rem]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2, ease: 'easeOut' }}
+          >
+            <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
-                <div className="p-4 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-4 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-2xl"
+                >
                   {error}
-                </div>
+                </motion.div>
               )}
 
               <div className="space-y-2">
@@ -130,7 +296,7 @@ export default function CustomerLoginPage() {
                     onChange={(e) => setPhoneNumber(e.target.value)}
                     required
                     autoFocus
-                    className="h-14 text-lg pl-12 bg-white/50 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-2xl transition-all shadow-sm"
+                    className="h-14 text-lg pl-12 bg-white/60 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-2xl transition-all shadow-sm"
                   />
                   <Phone className="absolute w-5 h-5 text-gray-400 left-4 top-1/2 transform -translate-y-1/2 group-focus-within:text-indigo-600 transition-colors" />
                 </div>
@@ -139,31 +305,53 @@ export default function CustomerLoginPage() {
               <Button
                 type="submit"
                 loading={loading}
-                className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Search className="w-5 h-5 mr-2" />
                 Continuer
               </Button>
             </form>
-          </div>
+          </motion.div>
 
-          <div className="mt-12 p-6 rounded-3xl bg-emerald-50/50 border border-emerald-100/50 text-center">
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Nouveau ici ? <span className="font-bold text-emerald-600">Scannez un QR code</span> chez un commerçant partenaire pour créer votre première carte.
+          <motion.div
+            className="mt-10 p-5 rounded-3xl bg-white/40 backdrop-blur-lg border border-white/60 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+          >
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Nouveau ici ? <span className="font-bold text-indigo-600">Scannez un QR code</span> chez un commerçant partenaire pour créer votre première carte.
             </p>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </main>
 
-      {/* Footer */}
+      {/* ── Footer ── */}
       <footer className="relative z-10 py-8 text-center">
-        <div className="flex items-center justify-center gap-1.5 mb-2">
-          <span className="text-[11px] font-medium text-gray-400">Créé avec</span>
-          <span className="text-sm">❤️</span>
-          <span className="text-[11px] font-medium text-gray-400">en France</span>
-        </div>
-        <span className="text-xs font-medium text-gray-300">Qarte • Fidélisez mieux</span>
+        <a href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
+          <span className="text-xs text-gray-400 group-hover:text-gray-500">Propulsé par</span>
+          <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+            Qarte
+          </span>
+          <span className="text-xs text-gray-400 group-hover:text-gray-500">en France 🇫🇷</span>
+        </a>
       </footer>
+
+      {/* ── CSS keyframes for gradient drift ── */}
+      <style jsx global>{`
+        @keyframes drift1 {
+          0% { transform: translate(0, 0) scale(1); }
+          100% { transform: translate(80px, 60px) scale(1.15); }
+        }
+        @keyframes drift2 {
+          0% { transform: translate(0, 0) scale(1); }
+          100% { transform: translate(-70px, -50px) scale(1.1); }
+        }
+        @keyframes drift3 {
+          0% { transform: translate(-50%, 0) scale(1); }
+          100% { transform: translate(calc(-50% + 40px), -40px) scale(1.2); }
+        }
+      `}</style>
     </div>
   );
 }
