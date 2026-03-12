@@ -60,6 +60,9 @@
 | referral_program_enabled | BOOLEAN | `FALSE` | mig 035 |
 | referral_reward_referrer | TEXT | NULL | mig 035 |
 | referral_reward_referred | TEXT | NULL | mig 035 |
+| welcome_offer_enabled | BOOLEAN | `FALSE` | mig 056 |
+| welcome_offer_description | TEXT | NULL | mig 056 |
+| welcome_referral_code | TEXT | NULL | UNIQUE partial, mig 056 |
 | double_days_enabled | BOOLEAN | `FALSE` | mig 048 |
 | double_days_of_week | TEXT | `'[]'` | JSON array JS getDay() values, mig 048 |
 | country | VARCHAR(2) | `'FR'` | mig 029 |
@@ -211,7 +214,7 @@
 | customer_id | UUID FK → customers | NOT NULL | ON DELETE CASCADE |
 | reward_description | TEXT | NOT NULL | |
 | tier | INTEGER | `1` | CHECK (1, 2) |
-| source | TEXT | NULL | CHECK (birthday, referral, redemption), mig 037 |
+| source | TEXT | NULL | CHECK (birthday, referral, redemption, welcome), mig 037 |
 | is_used | BOOLEAN | `FALSE` | |
 | used_at | TIMESTAMPTZ | NULL | |
 | expires_at | TIMESTAMPTZ | NULL | |
@@ -314,8 +317,8 @@
 |---------|------|---------|------------|
 | id | UUID PK | `gen_random_uuid()` | |
 | merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
-| referrer_customer_id | UUID FK → customers | NOT NULL | ON DELETE CASCADE |
-| referrer_card_id | UUID FK → loyalty_cards | NOT NULL | ON DELETE CASCADE |
+| referrer_customer_id | UUID FK → customers | NULL | ON DELETE CASCADE, NULL = Qarte (welcome offer), mig 056 |
+| referrer_card_id | UUID FK → loyalty_cards | NULL | ON DELETE CASCADE, NULL = Qarte (welcome offer), mig 056 |
 | referred_customer_id | UUID FK → customers | NOT NULL | ON DELETE CASCADE |
 | referred_card_id | UUID FK → loyalty_cards | NOT NULL | ON DELETE CASCADE |
 | referred_voucher_id | UUID FK → vouchers | NULL | ON DELETE SET NULL |
@@ -536,6 +539,34 @@ Single-row table : id, content (TEXT, default ''), updated_at
 **Index** : `idx_merchant_photos_merchant`, UNIQUE(merchant_id, position)
 **Max** : 6 photos par merchant
 
+### 2.32 merchant_service_categories (mig 057)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
+| name | TEXT | NOT NULL | |
+| position | INTEGER | `0` | |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**RLS** : SELECT public, ALL merchant own
+**Index** : `idx_merchant_service_categories_merchant`
+
+### 2.33 merchant_services (mig 057)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
+| category_id | UUID FK → merchant_service_categories | NULL | ON DELETE SET NULL |
+| name | TEXT | NOT NULL | |
+| price | DECIMAL(10,2) | NOT NULL | |
+| position | INTEGER | `0` | |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**RLS** : SELECT public, ALL merchant own
+**Index** : `idx_merchant_services_merchant`, `idx_merchant_services_category`
+
 
 
 | Colonne | Type | Default | Contrainte |
@@ -632,6 +663,8 @@ Voir `docs/context.md` section 4.7 pour les regles completes. Resume DB :
 | admin_announcement_dismissals | INSERT/SELECT (merchant own) | Full |
 | contact_messages | INSERT (public) | Full |
 | merchant_photos | SELECT (public), INSERT/UPDATE/DELETE (merchant own) | Full |
+| merchant_service_categories | SELECT (public), ALL (merchant own) | Full |
+| merchant_services | SELECT (public), ALL (merchant own) | Full |
 
 **Note** : Mig 038 a restreint les acces publics. Les INSERT/SELECT publics sur customers, loyalty_cards, visits, vouchers, push_subscriptions ont ete remplaces par des policies scoped au merchant.
 
@@ -692,7 +725,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | visits | `status` | 'confirmed', 'pending', 'rejected' |
 | redemptions | `tier` | 1, 2 |
 | vouchers | `tier` | 1, 2 |
-| vouchers | `source` | 'birthday', 'referral', 'redemption' |
+| vouchers | `source` | 'birthday', 'referral', 'redemption', 'welcome' |
 | customers | `birth_month` | 1..12 |
 | customers | `birth_day` | 1..31 |
 | customers | `phone_number` | regex `^\d{9,15}$`, mig 042 |
@@ -700,7 +733,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 
 ---
 
-## 10. Migrations (001 → 055)
+## 10. Migrations (001 → 056)
 
 | # | Fichier | Resume |
 |---|---------|--------|
@@ -760,6 +793,8 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 053 | cleanup_unused_tables | DROP demo_leads, tool_leads, push_automation_events |
 | 054 | stamps_limits | stamps_required CHECK 1..15 (etait 1..50), tier2_stamps_required CHECK <= 30 (etait illimite) |
 | 055 | merchant_photos | Table merchant_photos (id, merchant_id, url, position 1-6), UNIQUE(merchant_id, position), RLS public read + merchant CRUD |
+| 056 | welcome_offer | welcome_offer_enabled/description/welcome_referral_code sur merchants, vouchers source CHECK +welcome, referrals referrer nullable |
+| 057 | merchant_services | Tables merchant_service_categories + merchant_services, RLS public read + merchant CRUD, indexes merchant_id + category_id |
 
 ---
 

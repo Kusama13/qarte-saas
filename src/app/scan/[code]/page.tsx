@@ -41,6 +41,15 @@ interface ReferralInfo {
   primary_color: string;
 }
 
+interface WelcomeInfo {
+  valid: boolean;
+  is_welcome: true;
+  shop_name: string;
+  merchant_id: string;
+  welcome_offer_description: string;
+  primary_color: string;
+}
+
 // Phone cookie is now HttpOnly, set server-side by register/checkin APIs
 
 export default function ScanPage({ params }: { params: Promise<{ code: string }> }) {
@@ -48,6 +57,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const router = useRouter();
   const searchParams = useSearchParams();
   const refCode = searchParams.get('ref');
+  const welcomeCode = searchParams.get('welcome');
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [step, setStep] = useState<Step>('phone');
   const [loading, setLoading] = useState(true);
@@ -62,6 +72,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const [referralInfo, setReferralInfo] = useState<ReferralInfo | null>(null);
   const [referralLoading, setReferralLoading] = useState(!!searchParams.get('ref'));
   const [referralResult, setReferralResult] = useState<{ referrer_name: string; referred_reward: string; merchant_id: string } | null>(null);
+
+  // Welcome offer state
+  const [welcomeInfo, setWelcomeInfo] = useState<WelcomeInfo | null>(null);
+  const [welcomeLoading, setWelcomeLoading] = useState(!!searchParams.get('welcome'));
+  const [welcomeResult, setWelcomeResult] = useState<{ shop_name: string; welcome_reward: string; merchant_id: string } | null>(null);
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loyaltyCard, setLoyaltyCard] = useState<LoyaltyCard | null>(null);
@@ -124,7 +139,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         ? fetch(`/api/referrals?code=${encodeURIComponent(refCode)}`).then(r => r.json()).catch(() => null)
         : Promise.resolve(null);
 
-      const [merchantResult, referralData] = await Promise.all([merchantPromise, referralPromise]);
+      const welcomePromise = welcomeCode
+        ? fetch(`/api/welcome?code=${encodeURIComponent(welcomeCode)}`).then(r => r.json()).catch(() => null)
+        : Promise.resolve(null);
+
+      const [merchantResult, referralData, welcomeData] = await Promise.all([merchantPromise, referralPromise, welcomePromise]);
 
       if (merchantResult.data) {
         setMerchant(merchantResult.data);
@@ -134,17 +153,21 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       if (referralData?.valid) {
         setReferralInfo(referralData);
       }
+      if (welcomeData?.valid) {
+        setWelcomeInfo(welcomeData);
+      }
       setReferralLoading(false);
+      setWelcomeLoading(false);
       setLoading(false);
     };
 
     init();
-  }, [code, refCode]);
+  }, [code, refCode, welcomeCode]);
 
   // Auto-login effect: check HttpOnly cookie via /api/customers/me
   useEffect(() => {
     const autoLogin = async () => {
-      if (autoLoginAttempted || loading || !merchant || submitting || refCode) return;
+      if (autoLoginAttempted || loading || !merchant || submitting || refCode || welcomeCode) return;
 
       // Guard: skip auto-login if already auto-checked-in today for this scan code
       const lastAutoCheckin = localStorage.getItem(`qarte_checkin_${code}`);
@@ -264,6 +287,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             setFirstName(data.customer.first_name || '');
             setLastName('');
             setStep('register');
+          } else if (welcomeCode && welcomeInfo) {
+            // Welcome flow: pre-fill name and go to register
+            setFirstName(data.customer.first_name || '');
+            setLastName('');
+            setStep('register');
           } else {
             const createResponse = await fetch('/api/customers/register', {
               method: 'POST',
@@ -310,14 +338,43 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       return;
     }
 
-    // Block submission while referral info is loading
+    // Block submission while referral/welcome info is loading
     if (refCode && referralLoading) return;
+    if (welcomeCode && welcomeLoading) return;
 
     setSubmitting(true);
 
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
       // Cookie is set server-side by register/checkin APIs
+
+      // Welcome flow: call /api/welcome instead of /api/checkin
+      if (welcomeCode && welcomeInfo) {
+        const res = await fetch('/api/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            welcome_code: welcomeCode,
+            phone_number: formattedPhone,
+            first_name: firstName.trim(),
+            last_name: lastName.trim() || null,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setWelcomeResult({
+            shop_name: data.shop_name,
+            welcome_reward: data.welcome_reward,
+            merchant_id: data.merchant_id,
+          });
+          setCustomer({ id: data.customer_id } as Customer);
+          triggerSparkles();
+          setStep('referral-success');
+        } else {
+          setError(data.error || 'Erreur lors de l\'inscription');
+        }
+        return;
+      }
 
       // Referral flow: call /api/referrals instead of /api/checkin
       if (refCode && referralInfo) {
@@ -613,6 +670,39 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         {step === 'phone' && (
           <div className="animate-fade-in">
             <WelcomeBanner merchant={merchant} primaryColor={primaryColor} secondaryColor={secondaryColor} />
+
+            {/* Welcome Offer Banner */}
+            {welcomeInfo && !referralInfo && (
+              <div className="mb-4">
+                <div
+                  className="rounded-2xl p-4 border shadow-md"
+                  style={{
+                    background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}08)`,
+                    borderColor: `${primaryColor}30`,
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: `${primaryColor}20` }}
+                    >
+                      <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm">
+                        Offre de bienvenue chez {merchant.shop_name}
+                      </p>
+                      <p className="text-gray-600 text-xs mt-0.5">
+                        Inscrivez-vous et recevez :
+                      </p>
+                      <p className="font-bold text-sm mt-1" style={{ color: primaryColor }}>
+                        {welcomeInfo.welcome_offer_description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Referral Banner */}
             {referralInfo && (
@@ -1044,23 +1134,29 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           />
         )}
 
-        {/* Referral Success */}
-        {step === 'referral-success' && referralResult && (
+        {/* Referral / Welcome Success */}
+        {step === 'referral-success' && (referralResult || welcomeResult) && (
           <div className="animate-fade-in">
             <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
               <div
                 className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl"
                 style={{ backgroundColor: `${primaryColor}15` }}
               >
-                <PartyPopper className="w-10 h-10" style={{ color: primaryColor }} />
+                {welcomeResult ? (
+                  <Sparkles className="w-10 h-10" style={{ color: primaryColor }} />
+                ) : (
+                  <PartyPopper className="w-10 h-10" style={{ color: primaryColor }} />
+                )}
               </div>
 
               <h2 className="text-2xl font-black text-gray-900 mb-2">
-                Bienvenue !
+                {welcomeResult ? `Bienvenue chez ${welcomeResult.shop_name} !` : 'Bienvenue !'}
               </h2>
-              <p className="text-gray-500 mb-4">
-                Parrainé{'\u00B7'}e par <span className="font-bold text-gray-900">{referralResult.referrer_name}</span>
-              </p>
+              {referralResult && (
+                <p className="text-gray-500 mb-4">
+                  Parrainé{'\u00B7'}e par <span className="font-bold text-gray-900">{referralResult.referrer_name}</span>
+                </p>
+              )}
 
               <div
                 className="rounded-2xl p-4 mb-6"
@@ -1068,19 +1164,23 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Gift className="w-4 h-4" style={{ color: primaryColor }} />
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Votre récompense</span>
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    {welcomeResult ? 'Votre offre de bienvenue' : 'Votre récompense'}
+                  </span>
                 </div>
                 <p className="font-bold text-lg" style={{ color: primaryColor }}>
-                  {referralResult.referred_reward}
+                  {welcomeResult ? welcomeResult.welcome_reward : referralResult?.referred_reward}
                 </p>
               </div>
 
               <p className="text-xs text-gray-400 mb-6">
-                Votre récompense est disponible sur votre carte de fidélité.
+                {welcomeResult
+                  ? 'Présentez ce bon lors de votre première visite.'
+                  : 'Votre récompense est disponible sur votre carte de fidélité.'}
               </p>
 
               <button
-                onClick={() => router.push(`/customer/card/${referralResult.merchant_id}`)}
+                onClick={() => router.push(`/customer/card/${welcomeResult?.merchant_id || referralResult?.merchant_id}`)}
                 className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
               >

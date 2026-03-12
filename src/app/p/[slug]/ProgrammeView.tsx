@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, X, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
@@ -10,6 +10,8 @@ import { formatDoubleDays } from '@/lib/utils';
 import type { Merchant } from '@/types';
 
 type Photo = { id: string; url: string; position: number };
+type ServiceCategory = { id: string; name: string; position: number };
+type Service = { id: string; name: string; price: number; position: number; category_id: string | null };
 
 type MerchantPublic = Pick<
   Merchant,
@@ -31,6 +33,10 @@ type MerchantPublic = Pick<
   | 'referral_program_enabled'
   | 'referral_reward_referrer'
   | 'referral_reward_referred'
+  | 'welcome_offer_enabled'
+  | 'welcome_offer_description'
+  | 'welcome_referral_code'
+  | 'scan_code'
   | 'double_days_enabled'
   | 'double_days_of_week'
   | 'booking_url'
@@ -43,11 +49,13 @@ type MerchantPublic = Pick<
   | 'cagnotte_tier2_percent'
 >;
 
-export default function ProgrammeView({ merchant, photos = [] }: { merchant: MerchantPublic; photos?: Photo[] }) {
+export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [] }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[] }) {
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [servicesOpen, setServicesOpen] = useState(false);
+  const glassCard = 'rounded-2xl overflow-hidden bg-white/70 backdrop-blur-sm border border-white/60 shadow-lg shadow-gray-200/40';
 
   // Keyboard navigation for lightbox
   const handleLightboxKey = useCallback((e: KeyboardEvent) => {
@@ -80,6 +88,10 @@ export default function ProgrammeView({ merchant, photos = [] }: { merchant: Mer
     merchant.double_days_enabled;
 
   const hasBooking = !!(merchant.booking_url && merchant.booking_url.trim());
+
+  // Services: pre-compute outside JSX
+  const hasCategories = serviceCategories.length > 0;
+  const uncategorized = services.filter(svc => !svc.category_id || !serviceCategories.find(c => c.id === svc.category_id));
 
   // Scroll-triggered refs
   const { ref: topCtaRef, isInView: topCtaVisible } = useInView({ once: false });
@@ -152,7 +164,7 @@ export default function ProgrammeView({ merchant, photos = [] }: { merchant: Mer
             className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-gray-100 shadow-sm mb-2"
           >
             <Sparkles className="w-3 h-3" style={{ color: p }} />
-            <span className="text-[11px] font-bold text-gray-500">Qarte — La fidélité digitale des pros de la beauté</span>
+            <span className="text-[11px] font-bold text-gray-500">Qarte — La fidélité digitale des pros de la beauté et du bien-être</span>
           </motion.div>
 
           <motion.p
@@ -187,6 +199,52 @@ export default function ProgrammeView({ merchant, photos = [] }: { merchant: Mer
           >
             <CalendarDays className="w-5 h-5" />
             Prendre rendez-vous
+          </motion.a>
+        )}
+
+        {/* ── OFFRE DE BIENVENUE ── */}
+        {merchant.welcome_offer_enabled && merchant.welcome_offer_description && merchant.welcome_referral_code && merchant.scan_code && (
+          <motion.a
+            href={`/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.28, ease: 'easeOut' }}
+            className="block rounded-2xl overflow-hidden border-2 shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            style={{ borderColor: `${p}40`, boxShadow: `0 4px 24px ${p}20` }}
+          >
+            <div
+              className="px-5 py-5 flex items-center gap-4"
+              style={{ background: `linear-gradient(135deg, ${p}12, ${p}06)` }}
+            >
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
+                style={{ background: `${p}20` }}
+              >
+                <Sparkles className="w-6 h-6" style={{ color: p }} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-0.5" style={{ color: p }}>
+                  Offre de bienvenue
+                </p>
+                <p className="text-[15px] font-bold text-gray-800 leading-tight">
+                  {merchant.welcome_offer_description}
+                </p>
+                <p className="text-[12px] text-gray-500 mt-1">
+                  Inscrivez-vous pour en profiter
+                </p>
+              </div>
+              <div
+                className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white"
+                style={{ background: p }}
+              >
+                En profiter
+              </div>
+            </div>
+            <div className="px-5 pb-4" style={{ background: `linear-gradient(135deg, ${p}06, transparent)` }}>
+              <p className="text-[12px] text-gray-500 leading-relaxed">
+                Créez votre compte pour recevoir votre bon. Présentez-le lors de votre prochain rendez-vous pour en bénéficier.
+              </p>
+            </div>
           </motion.a>
         )}
 
@@ -284,7 +342,7 @@ export default function ProgrammeView({ merchant, photos = [] }: { merchant: Mer
             initial={{ opacity: 0, y: 16 }}
             animate={advantagesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
             transition={{ duration: 0.45, ease: 'easeOut' }}
-            className="bg-white rounded-2xl overflow-hidden border border-gray-100/80 shadow-[0_2px_20px_rgba(0,0,0,0.06)]"
+            className={glassCard}
           >
             <div className="px-5 pt-4 pb-1">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em]">
@@ -347,6 +405,113 @@ export default function ProgrammeView({ merchant, photos = [] }: { merchant: Mer
           </motion.div>
         )}
 
+        {/* ── PRESTATIONS ── */}
+        {services.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.15, ease: 'easeOut' }}
+            className={glassCard}
+          >
+            <button
+              type="button"
+              onClick={() => setServicesOpen(!servicesOpen)}
+              className="w-full px-5 pt-5 pb-4 flex items-center justify-between cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: `${p}15` }}
+                >
+                  <Sparkles className="w-5 h-5" style={{ color: p }} />
+                </div>
+                <div>
+                  <p className="text-[15px] font-bold text-gray-900">
+                    Nos prestations
+                  </p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    {services.length} prestation{services.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+              <motion.div
+                animate={{ rotate: servicesOpen ? 180 : 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <ChevronDown className="w-4 h-4 text-gray-400" />
+              </motion.div>
+            </button>
+
+            <AnimatePresence initial={false}>
+              {servicesOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-5 pb-4">
+                    {hasCategories ? (
+                      <>
+                        {serviceCategories.map((cat) => {
+                          const catServices = services.filter(svc => svc.category_id === cat.id);
+                          if (catServices.length === 0) return null;
+                          return (
+                            <div key={cat.id} className="mb-3 last:mb-0">
+                              <p className="text-[11px] font-bold uppercase tracking-wider mb-1 pt-2" style={{ color: p }}>
+                                {cat.name}
+                              </p>
+                              {catServices.map((svc, idx) => (
+                                <div
+                                  key={svc.id}
+                                  className={`flex items-center justify-between py-3 ${idx < catServices.length - 1 ? 'border-b border-gray-100/80' : ''}`}
+                                >
+                                  <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
+                                  <p className="text-[13px] font-bold text-gray-900 shrink-0 ml-4">
+                                    {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                        {uncategorized.length > 0 && (
+                          <div className="mt-1">
+                            {uncategorized.map((svc, idx) => (
+                              <div
+                                key={svc.id}
+                                className={`flex items-center justify-between py-3 ${idx < uncategorized.length - 1 ? 'border-b border-gray-100/80' : ''}`}
+                              >
+                                <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
+                                <p className="text-[13px] font-bold text-gray-900 shrink-0 ml-4">
+                                  {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      services.map((svc, idx) => (
+                        <div
+                          key={svc.id}
+                          className={`flex items-center justify-between py-3 ${idx < services.length - 1 ? 'border-b border-gray-100/80' : ''}`}
+                        >
+                          <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
+                          <p className="text-[13px] font-bold text-gray-900 shrink-0 ml-4">
+                            {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+
         {/* ── RÉSEAUX SOCIAUX ── */}
         <motion.div
           ref={socialRef}
@@ -364,7 +529,7 @@ export default function ProgrammeView({ merchant, photos = [] }: { merchant: Mer
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.55, duration: 0.4 }}
-            className="bg-white rounded-2xl overflow-hidden border border-gray-100/80 shadow-[0_2px_20px_rgba(0,0,0,0.06)] p-4"
+            className={`${glassCard} p-4`}
           >
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-3">
               Nos réalisations
@@ -449,7 +614,7 @@ export default function ProgrammeView({ merchant, photos = [] }: { merchant: Mer
                   boxShadow: `0 4px 14px ${p}30`,
                 }}
               >
-                Réserver
+                Prendre rendez-vous
               </a>
             </div>
           </motion.div>

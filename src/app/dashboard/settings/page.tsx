@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import {
   Store,
   Phone,
-  MapPin,
   Mail,
   Save,
   Check,
@@ -39,9 +38,7 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false);
 
   const [formData, setFormData] = useState({
-    shopName: '',
     shopType: '' as ShopType | '',
-    shopAddress: '',
     phone: '',
   });
   const [userEmail, setUserEmail] = useState('');
@@ -65,9 +62,7 @@ export default function SettingsPage() {
       if (data) {
         setMerchant(data);
         setFormData({
-          shopName: data.shop_name || '',
           shopType: data.shop_type || '',
-          shopAddress: data.shop_address || '',
           phone: data.phone || '',
         });
       }
@@ -79,11 +74,6 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setError('');
-
-    if (!formData.shopName.trim()) {
-      setError('Le nom du commerce est requis');
-      return;
-    }
 
     if (!merchant) return;
 
@@ -98,9 +88,7 @@ export default function SettingsPage() {
       const { error: updateError } = await supabase
         .from('merchants')
         .update({
-          shop_name: formData.shopName,
           shop_type: formData.shopType,
-          shop_address: formData.shopAddress || null,
           phone: formattedPhone,
         })
         .eq('id', merchant.id);
@@ -184,10 +172,10 @@ export default function SettingsPage() {
           onClick={handleSave}
           loading={saving}
           disabled={saved}
-          className={`px-4 md:px-6 h-10 md:h-12 rounded-xl md:rounded-2xl transition-all duration-300 shadow-lg text-sm ${
+          className={`px-4 md:px-6 h-10 md:h-12 rounded-xl transition-all duration-300 text-sm ${
             saved
-              ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-emerald-100'
-              : 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:shadow-indigo-200 hover:scale-[1.02] active:scale-[0.98]'
+              ? 'bg-emerald-600 text-white'
+              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
           }`}
         >
           {saved ? (
@@ -283,19 +271,6 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="group transition-all">
-            <Input
-              label="Nom du commerce"
-              placeholder="Ex: Boulangerie Martin"
-              value={formData.shopName}
-              onChange={(e) =>
-                setFormData({ ...formData, shopName: e.target.value })
-              }
-              required
-              className="bg-white/50 border-gray-200 focus:border-indigo-500 transition-colors"
-            />
-          </div>
-
           <div className="relative group">
             <Input
               label="Adresse email"
@@ -337,18 +312,6 @@ export default function SettingsPage() {
             <Phone className="absolute w-4 h-4 text-gray-400 right-4 top-[42px] group-focus-within:text-indigo-500 transition-colors" />
           </div>
 
-          <div className="relative group">
-            <Input
-              label="Adresse"
-              placeholder="123 rue du Commerce, Paris"
-              value={formData.shopAddress}
-              onChange={(e) =>
-                setFormData({ ...formData, shopAddress: e.target.value })
-              }
-              className="bg-white/50 border-gray-200"
-            />
-            <MapPin className="absolute w-4 h-4 text-gray-400 right-4 top-[42px] group-focus-within:text-indigo-500 transition-colors" />
-          </div>
         </div>
       </div>
 

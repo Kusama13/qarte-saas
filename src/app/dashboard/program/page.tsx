@@ -17,7 +17,6 @@ import {
   Target,
   ChevronDown,
   Instagram,
-  CalendarDays,
   QrCode,
   Smartphone,
   Zap,
@@ -25,16 +24,12 @@ import {
   Stamp,
   HelpCircle,
   X,
-  Camera,
-  MapPin,
-  Plus,
-  Trash2,
   Cake,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { MerchantSettingsForm, type LoyaltySettings } from '@/components/loyalty';
-import { compressLogo, compressOfferImage } from '@/lib/image-compression';
+import { compressLogo } from '@/lib/image-compression';
 import { useMerchant } from '@/contexts/MerchantContext';
 import type { Merchant } from '@/types';
 
@@ -113,8 +108,6 @@ export default function ProgramPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState<number | null>(null);
-  const [photos, setPhotos] = useState<Array<{ id: string; url: string; position: number }>>([]);
   const [saved, setSaved] = useState(false);
   const [isFirstSetup, setIsFirstSetup] = useState(false);
 
@@ -128,8 +121,6 @@ export default function ProgramPage() {
     facebookUrl: '',
     tiktokUrl: '',
     snapchatUrl: '',
-    bookingUrl: '',
-    shopAddress: '',
     loyaltyMode: 'visit' as 'visit' | 'cagnotte',
     stampsRequired: 5,
     rewardDescription: '',
@@ -157,9 +148,6 @@ export default function ProgramPage() {
   const [socialOpen, setSocialOpen] = useState(searchParams.get('section') === 'social');
   const [doubleDaysOpen, setDoubleDaysOpen] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
-  const [bookingOpen, setBookingOpen] = useState(false);
-  const [addressOpen, setAddressOpen] = useState(false);
-  const [photosOpen, setPhotosOpen] = useState(false);
   const [birthdayOpen, setBirthdayOpen] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [pendingModeSwitch, setPendingModeSwitch] = useState<'visit' | 'cagnotte' | null>(null);
@@ -198,8 +186,6 @@ export default function ProgramPage() {
           facebookUrl: data.facebook_url || '',
           tiktokUrl: data.tiktok_url || '',
           snapchatUrl: data.snapchat_url || '',
-          bookingUrl: data.booking_url || '',
-          shopAddress: data.shop_address || '',
           loyaltyMode: data.loyalty_mode || 'visit',
           stampsRequired: data.stamps_required || 5,
           rewardDescription: data.reward_description || '',
@@ -219,17 +205,6 @@ export default function ProgramPage() {
           setIsFirstSetup(true);
         }
 
-        // Fetch merchant photos (non-blocking if table doesn't exist yet)
-        try {
-          const { data: photosData } = await supabase
-            .from('merchant_photos')
-            .select('id, url, position')
-            .eq('merchant_id', data.id)
-            .order('position');
-          if (photosData) setPhotos(photosData);
-        } catch {
-          // Table may not exist yet — ignore
-        }
       }
       setLoading(false);
     };
@@ -267,59 +242,6 @@ export default function ProgramPage() {
     }
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0 || !merchant) return;
-
-    // Find available positions (slots not yet taken)
-    const takenPositions = new Set(photos.map(p => p.position));
-    const availablePositions = [1, 2, 3, 4, 5, 6].filter(p => !takenPositions.has(p));
-    const filesToUpload = Array.from(files).slice(0, availablePositions.length);
-
-    for (let i = 0; i < filesToUpload.length; i++) {
-      const file = filesToUpload[i];
-      const position = availablePositions[i];
-      setUploadingPhoto(position);
-      try {
-        const compressed = await compressOfferImage(file);
-        const formDataUpload = new FormData();
-        formDataUpload.append('file', compressed);
-        formDataUpload.append('merchantId', merchant.id);
-        formDataUpload.append('position', String(position));
-
-        const res = await fetch('/api/photos', {
-          method: 'POST',
-          body: formDataUpload,
-        });
-
-        const result = await res.json();
-        if (res.ok && result.photo) {
-          setPhotos(prev => [...prev.filter(p => p.position !== position), result.photo].sort((a, b) => a.position - b.position));
-        }
-      } catch (error) {
-        console.error('Photo upload error:', error);
-      }
-    }
-    setUploadingPhoto(null);
-    // Reset input so same files can be re-selected
-    e.target.value = '';
-  };
-
-  const handlePhotoDelete = async (photoId: string) => {
-    if (!merchant) return;
-    try {
-      const res = await fetch('/api/photos', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photoId, merchantId: merchant.id }),
-      });
-      if (res.ok) {
-        setPhotos(prev => prev.filter(p => p.id !== photoId));
-      }
-    } catch (error) {
-      console.error('Photo delete error:', error);
-    }
-  };
 
   const normalizeUrl = (url: string) => {
     const trimmed = url.trim();
@@ -396,13 +318,11 @@ export default function ProgramPage() {
           logo_url: formData.logoUrl || null,
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
-          shop_address: formData.shopAddress.trim() || null,
           review_link: normalizeUrl(formData.reviewLink) || null,
           instagram_url: normalizeSocialUrl(formData.instagramUrl, 'instagram') || null,
           facebook_url: normalizeSocialUrl(formData.facebookUrl, 'facebook') || null,
           tiktok_url: normalizeSocialUrl(formData.tiktokUrl, 'tiktok') || null,
           snapchat_url: normalizeSocialUrl(formData.snapchatUrl, 'snapchat') || null,
-          booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
           reward_description: effectiveRewardDescription,
           loyalty_mode: formData.loyaltyMode,
@@ -429,13 +349,11 @@ export default function ProgramPage() {
           logo_url: formData.logoUrl || null,
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
-          shop_address: formData.shopAddress.trim() || null,
           review_link: normalizeUrl(formData.reviewLink) || null,
           instagram_url: normalizeSocialUrl(formData.instagramUrl, 'instagram') || null,
           facebook_url: normalizeSocialUrl(formData.facebookUrl, 'facebook') || null,
           tiktok_url: normalizeSocialUrl(formData.tiktokUrl, 'tiktok') || null,
           snapchat_url: normalizeSocialUrl(formData.snapchatUrl, 'snapchat') || null,
-          booking_url: normalizeUrl(formData.bookingUrl) || null,
           stamps_required: formData.stampsRequired,
           reward_description: effectiveRewardDescription,
           loyalty_mode: formData.loyaltyMode,
@@ -516,13 +434,11 @@ export default function ProgramPage() {
       {/* Programme Score */}
       {(() => {
         const scoreItems = [
-          { done: !!formData.rewardDescription, pts: 20, label: 'Récompense' },
-          { done: !!formData.logoUrl, pts: 15, label: 'Logo' },
-          { done: photos.length >= 1, pts: 10, label: 'Photos' },
-          { done: !!formData.shopAddress, pts: 10, label: 'Adresse' },
+          { done: !!formData.rewardDescription, pts: 25, label: 'Récompense' },
+          { done: !!formData.logoUrl, pts: 20, label: 'Logo' },
           { done: !!(formData.instagramUrl || formData.facebookUrl || formData.tiktokUrl || formData.snapchatUrl), pts: 15, label: 'Réseaux sociaux' },
           { done: !!formData.reviewLink, pts: 10, label: 'Avis Google' },
-          { done: !!formData.bookingUrl, pts: 10, label: 'Lien réservation' },
+          { done: !!merchant?.booking_url, pts: 10, label: 'Lien réservation' },
           { done: formData.tier2Enabled && (formData.loyaltyMode === 'cagnotte' || !!formData.tier2RewardDescription), pts: 5, label: '2ème palier' },
           ...(formData.loyaltyMode !== 'cagnotte' ? [{ done: formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length > 0, pts: 5, label: 'Jours x2' }] : []),
         ];
@@ -1105,105 +1021,7 @@ export default function ProgramPage() {
                 </div>
               </div>
 
-              {/* Adresse */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setAddressOpen(!addressOpen)}
-                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                      <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
-                    </div>
-                    <h3 className="text-sm md:text-base font-bold text-gray-900">Adresse</h3>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${addressOpen ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-all duration-300 ease-in-out ${addressOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                      <Input
-                        type="text"
-                        className="bg-white border border-gray-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 h-11 text-sm rounded-xl w-full"
-                        placeholder="12 rue de la Paix, 75002 Paris"
-                        value={formData.shopAddress}
-                        onChange={(e) => setFormData({ ...formData, shopAddress: e.target.value })}
-                      />
-                      <p className="text-xs text-gray-500">
-                        Améliore ton référencement local sur Google.
-                      </p>
-                      <p className="text-xs text-gray-400 italic">
-                        Tu exerces à domicile ? Indique simplement ta ville et code postal pour préserver ta vie privée.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Photos / Réalisations */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setPhotosOpen(!photosOpen)}
-                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center">
-                      <Camera className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-sm md:text-base font-bold text-gray-900">Mes réalisations <span className="text-gray-400 font-normal text-xs">(6 photos max)</span></h3>
-                      <p className="text-[11px] text-gray-400">Visibles sur ta page — tes futurs clients te découvrent d&apos;un coup d&apos;oeil</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${photosOpen ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-all duration-300 ease-in-out ${photosOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                      <div className="grid grid-cols-3 gap-1.5">
-                        {[1, 2, 3, 4, 5, 6].map((position) => {
-                          const photo = photos.find(p => p.position === position);
-                          const isUploading = uploadingPhoto === position;
-                          return (
-                            <div key={position} className="relative aspect-square rounded-lg overflow-hidden bg-gray-50 border border-dashed border-gray-200">
-                              {isUploading ? (
-                                <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-                                  <Loader2 className="w-4 h-4 text-pink-500 animate-spin" />
-                                </div>
-                              ) : photo ? (
-                                <>
-                                  <img src={photo.url} alt={`Réalisation ${position}`} className="w-full h-full object-cover" />
-                                  <button
-                                    type="button"
-                                    onClick={() => handlePhotoDelete(photo.id)}
-                                    aria-label="Supprimer la photo"
-                                    className="absolute top-0.5 right-0.5 p-0.5 bg-black/60 rounded-full text-white hover:bg-black/80 transition-colors"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                </>
-                              ) : (
-                                <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors">
-                                  <Plus className="w-4 h-4 text-gray-400" />
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    multiple
-                                    className="hidden"
-                                    onChange={handlePhotoUpload}
-                                  />
-                                </label>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
             </div>
           </div>
@@ -1214,39 +1032,6 @@ export default function ProgramPage() {
               <p className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.18em]">Aller plus loin</p>
             </div>
             <div className="divide-y divide-gray-100/80">
-
-              {/* Lien de réservation */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setBookingOpen(!bookingOpen)}
-                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center">
-                      <CalendarDays className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
-                    </div>
-                    <h3 className="text-sm md:text-base font-bold text-gray-900">Lien de réservation</h3>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${bookingOpen ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-all duration-300 ease-in-out ${bookingOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                      <Input
-                        type="url"
-                        className="bg-white border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 h-11 text-sm rounded-xl w-full"
-                        placeholder="https://planity.com/votre-salon"
-                        value={formData.bookingUrl}
-                        onChange={(e) => setFormData({ ...formData, bookingUrl: e.target.value })}
-                      />
-                      <p className="text-xs text-gray-500">
-                        Tes clients pourront réserver directement depuis leur carte.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
               {/* Jours x2 */}
               <div>
@@ -1404,38 +1189,6 @@ export default function ProgramPage() {
               <p className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.18em]">Aller plus loin</p>
             </div>
             <div className="divide-y divide-gray-100/80">
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setBookingOpen(!bookingOpen)}
-                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center">
-                      <CalendarDays className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
-                    </div>
-                    <h3 className="text-sm md:text-base font-bold text-gray-900">Lien de réservation</h3>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${bookingOpen ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-all duration-300 ease-in-out ${bookingOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                      <Input
-                        type="url"
-                        className="bg-white border border-gray-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/20 h-11 text-sm rounded-xl w-full"
-                        placeholder="https://planity.com/votre-salon"
-                        value={formData.bookingUrl}
-                        onChange={(e) => setFormData({ ...formData, bookingUrl: e.target.value })}
-                      />
-                      <p className="text-xs text-gray-500">
-                        Tes clients pourront réserver directement depuis leur carte.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
               {/* Cadeau anniversaire (cagnotte) */}
               <div>
                 <button
@@ -1506,8 +1259,8 @@ export default function ProgramPage() {
             className={`
               w-full md:w-auto h-11 md:h-10 px-6 rounded-xl font-semibold text-sm inline-flex items-center justify-center gap-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed
               ${saved
-                ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200/50'
-                : 'bg-gradient-to-r from-pink-500 to-indigo-500 text-white shadow-md shadow-pink-200/50 hover:from-pink-600 hover:to-indigo-600 hover:shadow-lg'}
+                ? 'bg-emerald-600 text-white'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white'}
             `}
           >
             {saving ? (

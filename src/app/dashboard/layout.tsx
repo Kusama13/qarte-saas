@@ -7,6 +7,7 @@ import {
   CreditCard,
   Home,
   Gift,
+  Globe,
   QrCode,
   Users,
   Wallet,
@@ -15,7 +16,6 @@ import {
   Menu,
   X,
   Megaphone,
-  Crown,
   UserPlus,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
@@ -29,10 +29,10 @@ import StatusBanner from '@/components/dashboard/StatusBanner';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Accueil', color: 'text-indigo-500', bg: 'bg-indigo-50' },
-  { href: '/dashboard/program', icon: Gift, label: 'Mon Programme', color: 'text-pink-500', bg: 'bg-pink-50' },
+  { href: '/dashboard/program', icon: Gift, label: 'Programme de fidélité', color: 'text-pink-500', bg: 'bg-pink-50' },
+  { href: '/dashboard/public-page', icon: Globe, label: 'Ma Page', color: 'text-violet-500', bg: 'bg-violet-50' },
   { href: '/dashboard/qr-download', icon: QrCode, label: 'QR code & Supports', color: 'text-violet-500', bg: 'bg-violet-50' },
   { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
-  { href: '/dashboard/members', icon: Crown, label: 'Membres', color: 'text-amber-500', bg: 'bg-amber-50' },
   { href: '/dashboard/referrals', icon: UserPlus, label: 'Parrainage', color: 'text-blue-500', bg: 'bg-blue-50' },
   { href: '/dashboard/marketing', icon: Megaphone, label: 'Notifications', color: 'text-orange-500', bg: 'bg-orange-50' },
   { href: '/dashboard/subscription', icon: Wallet, label: 'Abonnement', color: 'text-teal-500', bg: 'bg-teal-50' },

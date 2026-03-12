@@ -374,7 +374,7 @@ export default function OnboardingPage() {
                         <Input
                           type="number"
                           min={2}
-                          max={50}
+                          max={15}
                           value={formData.stampsRequired}
                           onChange={(e) =>
                             setFormData({

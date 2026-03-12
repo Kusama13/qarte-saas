@@ -83,6 +83,10 @@ export interface Merchant {
   referral_program_enabled: boolean;
   referral_reward_referrer: string | null;
   referral_reward_referred: string | null;
+  // Welcome offer
+  welcome_offer_enabled: boolean;
+  welcome_offer_description: string | null;
+  welcome_referral_code: string | null;
   // Birthday gift
   birthday_gift_enabled: boolean;
   birthday_gift_description: string | null;
@@ -132,7 +136,7 @@ export interface Voucher {
   merchant_id: string;
   customer_id: string;
   reward_description: string;
-  source: 'birthday' | 'referral' | 'redemption' | null;
+  source: 'birthday' | 'referral' | 'redemption' | 'welcome' | null;
   is_used: boolean;
   used_at: string | null;
   created_at: string;
@@ -270,8 +274,8 @@ export type ReferralStatus = 'pending' | 'completed';
 export interface Referral {
   id: string;
   merchant_id: string;
-  referrer_customer_id: string;
-  referrer_card_id: string;
+  referrer_customer_id: string | null;
+  referrer_card_id: string | null;
   referred_customer_id: string;
   referred_card_id: string;
   referred_voucher_id: string | null;

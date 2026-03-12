@@ -41,7 +41,7 @@ export interface UsedVoucher {
   id: string;
   used_at: string;
   reward_description: string;
-  source?: 'birthday' | 'referral' | 'redemption' | null;
+  source?: 'birthday' | 'referral' | 'redemption' | 'welcome' | null;
 }
 
 interface HistorySectionProps {

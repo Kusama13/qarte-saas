@@ -18,7 +18,6 @@ import {
   Users,
   Bell,
   ChevronDown,
-  Link2,
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
@@ -38,12 +37,11 @@ export default function QRDownloadPage() {
   const [socialDownloadSuccess, setSocialDownloadSuccess] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedCaption, setCopiedCaption] = useState<number | null>(null);
-  const [copiedLink, setCopiedLink] = useState(false);
   const [howOpen, setHowOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
   const [showPostDownloadModal, setShowPostDownloadModal] = useState(false);
-  const [showSocialModal, setShowSocialModal] = useState(false);
+
   const socialExportRef = useRef<HTMLDivElement>(null);
   const qrCardRef = useRef<HTMLDivElement>(null);
 
@@ -135,12 +133,6 @@ export default function QRDownloadPage() {
       setSocialDownloadSuccess(true);
       setTimeout(() => setSocialDownloadSuccess(false), 3000);
 
-      // Show pros modal after social download (one-shot, delayed)
-      const SOCIAL_PROS_KEY = 'qarte_social_pros_seen';
-      if (!localStorage.getItem(SOCIAL_PROS_KEY)) {
-        localStorage.setItem(SOCIAL_PROS_KEY, '1');
-        setTimeout(() => setShowSocialModal(true), 1200);
-      }
     } catch (error) {
       console.error('Error generating PNG:', error);
     } finally {
@@ -148,14 +140,6 @@ export default function QRDownloadPage() {
     }
   };
 
-  const copyProgrammeLink = async () => {
-    const url = `https://getqarte.com/p/${merchant?.slug}`;
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch { /* noop */ }
-    setCopiedLink(true);
-    setTimeout(() => setCopiedLink(false), 2000);
-  };
 
   const copyCaption = async (text: string, index: number) => {
     try {
@@ -623,59 +607,34 @@ export default function QRDownloadPage() {
             </div>
 
             {/* Tips */}
-            <div className="p-4 bg-purple-50 rounded-2xl border border-purple-100">
-              <h3 className="font-bold text-purple-900 mb-2.5 text-sm">Conseils pour maximiser l&apos;impact</h3>
-              <ul className="space-y-2 text-sm text-purple-800">
-                <li className="flex items-start gap-2">
-                  <span className="font-bold text-purple-500 mt-0.5">1.</span>
-                  Postez en story ET en publication
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-bold text-purple-500 mt-0.5">2.</span>
-                  Épingle la publication en haut de ton profil
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-bold text-purple-500 mt-0.5">3.</span>
-                  Parlez-en à chaque client(e) en caisse
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="font-bold text-purple-500 mt-0.5">4.</span>
-                  Envoie l&apos;image dans tes groupes WhatsApp
-                </li>
-              </ul>
-            </div>
-
-
-
-            {/* LIEN BIO — masqué temporairement
-            <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-              <Link2 className="w-3.5 h-3.5" />
-              Lien en bio
-            </div>
-            <div className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
-              <p className="text-sm font-bold text-gray-900 mb-0.5">Partage ton programme en bio</p>
-              <p className="text-xs text-gray-500 mb-3 leading-relaxed">
-                Ajoute ce lien dans ta bio Instagram, TikTok ou Facebook pour que tes abonnés voient ton programme de fidélité.
-              </p>
-              <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                <p className="text-[13px] text-gray-700 font-mono flex-1 truncate">
-                  getqarte.com/p/{merchant.slug}
-                </p>
-                <button
-                  onClick={copyProgrammeLink}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex-shrink-0"
-                  style={
-                    copiedLink
-                      ? { backgroundColor: '#d1fae5', color: '#059669' }
-                      : { backgroundColor: '#f3f4f6', color: '#6b7280' }
-                  }
-                >
-                  {copiedLink ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                  {copiedLink ? 'Copié !' : 'Copier'}
-                </button>
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Comment bien partager</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="p-3 bg-pink-50 rounded-xl border border-pink-100">
+                  <p className="text-xs font-semibold text-pink-900">Story + publication</p>
+                  <p className="text-[11px] text-pink-600 mt-0.5">&Eacute;pingle-la en haut de ton profil</p>
+                </div>
+                <div className="p-3 bg-violet-50 rounded-xl border border-violet-100">
+                  <p className="text-xs font-semibold text-violet-900">Lien en bio</p>
+                  <p className="text-[11px] text-violet-600 mt-0.5">Ajoute ta page Qarte dans ta bio</p>
+                </div>
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-100">
+                  <p className="text-xs font-semibold text-amber-900">En caisse</p>
+                  <p className="text-[11px] text-amber-600 mt-0.5">Parles-en &agrave; chaque client</p>
+                </div>
+                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                  <p className="text-xs font-semibold text-emerald-900">WhatsApp</p>
+                  <p className="text-[11px] text-emerald-600 mt-0.5">Envoie l&apos;image dans tes groupes</p>
+                </div>
               </div>
+              <a href="/dashboard/public-page" className="block p-3 bg-indigo-50 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-colors">
+                <p className="text-xs font-semibold text-indigo-700">Compl&egrave;te ta page pour plus de r&eacute;sultats</p>
+                <p className="text-[11px] text-indigo-500 mt-0.5">Offre de bienvenue, lien de r&eacute;servation, photos...</p>
+              </a>
             </div>
-            */}
+
+
+
           </div>
         </div>
       )}
@@ -702,13 +661,13 @@ export default function QRDownloadPage() {
         </div>
       )}
 
-      {/* Social pros modal */}
-      {showSocialModal && (
+      {/* Post-download modal */}
+      {showPostDownloadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowSocialModal(false)} />
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowPostDownloadModal(false)} />
           <div className="relative w-full max-w-xs bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-center">
             <button
-              onClick={() => setShowSocialModal(false)}
+              onClick={() => setShowPostDownloadModal(false)}
               className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
             >
               <X className="w-3.5 h-3.5 text-gray-400" />
@@ -717,61 +676,20 @@ export default function QRDownloadPage() {
               <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
                 <Users className="w-6 h-6 text-white" />
               </div>
-              <p className="text-lg font-black text-gray-900">Attirez de nouveaux clients</p>
+              <p className="text-lg font-black text-gray-900">Aide-nous &agrave; te rendre visible</p>
               <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-                Plus ta page est compl&egrave;te (photos, adresse, r&eacute;seaux), plus elle remonte sur Google et attire de nouveaux clients.
+                Qarte cr&eacute;e une page pour ton salon, r&eacute;f&eacute;renc&eacute;e sur Google. Plus elle est compl&egrave;te, plus tu as de chances d&apos;attirer de nouveaux clients.
               </p>
               <a
-                href={`/p/${merchant.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setShowSocialModal(false)}
+                href="/dashboard/public-page"
+                onClick={() => setShowPostDownloadModal(false)}
                 className="mt-5 w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-indigo-200 inline-block"
               >
-                Voir ma page pro
+                Compl&eacute;ter ma page
               </a>
               <button
-                onClick={() => setShowSocialModal(false)}
-                className="mt-2 text-xs text-gray-300 hover:text-gray-500 transition-colors block mx-auto"
-              >
-                Plus tard
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Post-download modal */}
-      {showPostDownloadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowPostDownloadModal(false)} />
-          <div className="relative w-full max-w-xs bg-gradient-to-br from-purple-600 via-violet-600 to-indigo-700 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 text-center">
-            <button
-              onClick={() => setShowPostDownloadModal(false)}
-              className="absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors"
-            >
-              <X className="w-3.5 h-3.5 text-white/70" />
-            </button>
-            <div className="px-6 pt-8 pb-6">
-              <div className="w-12 h-12 mx-auto rounded-2xl bg-white/15 flex items-center justify-center mb-4">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
-              <p className="text-lg font-black text-white">Annoncez la nouvelle !</p>
-              <p className="mt-2 text-sm text-white/70 leading-relaxed">
-                Tes followers ne savent pas encore que tu as un programme de fid&eacute;lit&eacute;. Partage-le sur tes r&eacute;seaux en un clic.
-              </p>
-              <button
-                onClick={() => {
-                  setShowPostDownloadModal(false);
-                  setActiveTab('social');
-                }}
-                className="mt-5 w-full py-3 bg-white text-violet-700 font-bold text-sm rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all shadow-lg"
-              >
-                Voir le kit r&eacute;seaux sociaux
-              </button>
-              <button
                 onClick={() => setShowPostDownloadModal(false)}
-                className="mt-2 text-xs text-white/40 hover:text-white/60 transition-colors"
+                className="mt-2 text-xs text-gray-300 hover:text-gray-500 transition-colors block mx-auto"
               >
                 Plus tard
               </button>

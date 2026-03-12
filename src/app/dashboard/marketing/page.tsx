@@ -43,19 +43,14 @@ export default function MarketingPushPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-4 flex items-center justify-between p-4 md:p-5 rounded-2xl bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100/60">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-sm">
-            <Megaphone className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-lg md:text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-violet-600">
-              Marketing
-            </h1>
-            <p className="text-xs text-gray-500 font-medium">
-              Notifications push & automatisations
-            </p>
-          </div>
+      <div className="mb-4 flex items-center justify-between p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
+        <div>
+          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
+            Notifications
+          </h1>
+          <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
+            Notifications push & automatisations
+          </p>
         </div>
         <button
           onClick={() => setShowHowItWorks(true)}

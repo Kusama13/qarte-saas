@@ -15,6 +15,7 @@ import {
   Plus,
   UserPlus,
   Trophy,
+  Crown,
   Cake,
   Clock,
   Target,
@@ -308,6 +309,15 @@ export default function CustomersPage() {
             <UserPlus className="w-3.5 h-3.5 mr-1.5" />
             Nouveau
           </Button>
+          <Link href="/dashboard/members">
+            <Button
+              variant="outline"
+              className="h-9 px-3 text-sm border-amber-200 hover:border-amber-300 hover:bg-amber-50/50 text-amber-700 rounded-lg transition-all duration-200 shadow-sm"
+            >
+              <Crown className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+              Programmes VIP
+            </Button>
+          </Link>
           <Link href="/dashboard/marketing?tab=automations">
             <Button
               variant="outline"

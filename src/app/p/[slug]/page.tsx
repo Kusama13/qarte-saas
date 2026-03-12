@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 import { cache } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; photos: any[] } | null> => {
+const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; photos: any[]; services: any[]; serviceCategories: any[] } | null> => {
   const supabaseAdmin = getSupabaseAdmin();
 
   const { data: merchant } = await supabaseAdmin
@@ -18,6 +18,7 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
       'tier2_enabled, tier2_stamps_required, tier2_reward_description, ' +
       'birthday_gift_enabled, birthday_gift_description, ' +
       'referral_program_enabled, referral_reward_referrer, referral_reward_referred, ' +
+      'welcome_offer_enabled, welcome_offer_description, welcome_referral_code, scan_code, ' +
       'double_days_enabled, double_days_of_week, ' +
       'booking_url, instagram_url, facebook_url, tiktok_url, snapchat_url, ' +
       'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent'
@@ -27,13 +28,30 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
 
   if (!merchant) return null;
 
-  const { data: photos } = await supabaseAdmin
-    .from('merchant_photos')
-    .select('id, url, position')
-    .eq('merchant_id', (merchant as any).id)
-    .order('position');
+  const [photosResult, servicesResult, categoriesResult] = await Promise.all([
+    supabaseAdmin
+      .from('merchant_photos')
+      .select('id, url, position')
+      .eq('merchant_id', (merchant as any).id)
+      .order('position'),
+    supabaseAdmin
+      .from('merchant_services')
+      .select('id, name, price, position, category_id')
+      .eq('merchant_id', (merchant as any).id)
+      .order('position'),
+    supabaseAdmin
+      .from('merchant_service_categories')
+      .select('id, name, position')
+      .eq('merchant_id', (merchant as any).id)
+      .order('position'),
+  ]);
 
-  return { merchant, photos: (photos as any[]) || [] };
+  return {
+    merchant,
+    photos: (photosResult.data as any[]) || [],
+    services: (servicesResult.data as any[]) || [],
+    serviceCategories: (categoriesResult.data as any[]) || [],
+  };
 });
 
 export async function generateMetadata({
@@ -72,5 +90,5 @@ export default async function ProgrammePage({
   if (!result) notFound();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return <ProgrammeView merchant={result.merchant as any} photos={result.photos} />;
+  return <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} />;
 }

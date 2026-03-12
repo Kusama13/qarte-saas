@@ -10,16 +10,18 @@ export function PricingSection() {
   const { ref, isInView } = useInView();
 
   const features = [
-    'Clientes illimitées',
-    'QR Code perso',
+    'Clients illimités',
+    'Mode passages ou cagnotte',
+    'QR Code perso + Kit promo',
+    'Page publique personnalisée',
+    'Tarifs et prestations',
+    'Offre de bienvenue',
+    'Programme de parrainage',
     'Notifications push',
-    'Programmation envois',
     'Dashboard analytics',
     'Avis Google',
-    'Programme de parrainage',
     'Lien de réservation',
-    'Support prioritaire',
-    'Zéro commission'
+    'Zéro commission',
   ];
 
   return (

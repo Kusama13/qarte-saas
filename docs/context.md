@@ -63,7 +63,7 @@ docs/
 ├── AUDIT-SECURITE.md     # Score 93/100
 └── AUDIT-SCALABILITE.md  # Score 94/100
 
-supabase/migrations/      # 55 migrations SQL (001-055)
+supabase/migrations/      # 57 migrations SQL (001-057)
 ```
 
 ---
@@ -178,6 +178,16 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Statuts : `pending` → `completed` (filleul consomme)
 - Dashboard `/dashboard/referrals` : toggle, config recompenses, stats, tableau
 
+### Offre de Bienvenue (mig 056)
+- Code welcome par merchant (`welcome_referral_code`, genere a l'activation)
+- Lien `/scan/{code}?welcome={welcome_code}` → banner "Offre de bienvenue" + inscription
+- API separee `/api/welcome` (GET validation + POST inscription) — zero impact sur `/api/referrals`
+- Referral cree avec `referrer=null` (parrain virtuel = Qarte), `status='completed'`
+- Voucher `source='welcome'`, expire 30 jours
+- CTA visible sur page publique `/p/[slug]` si active
+- Config dans Ma Page (`/dashboard/public-page`), banner lecture seule dans Parrainage
+- Dashboard parrainage : "Qarte" badge violet dans le tableau pour referrals welcome
+
 ### Birthday Gift
 - `birth_month` / `birth_day` sur customers, voucher source='birthday'
 - Cron morning genere les vouchers anniversaire
@@ -231,7 +241,11 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `GET /api/referrals?code=` — Info code parrainage
 - `POST /api/referrals` — Inscription filleul (cree customer + carte + voucher)
 - `POST /api/vouchers/use` — Consommer voucher (auto-cree voucher parrain si referral)
-- `POST /api/merchants/referral-config` — Config parrainage (merchant auth)
+- `POST /api/merchants/referral-config` — Config parrainage + offre bienvenue (merchant auth)
+
+### Offre de bienvenue
+- `GET /api/welcome?code=` — Valider code welcome (public)
+- `POST /api/welcome` — Inscription via offre bienvenue (cree customer + carte + voucher welcome + referral Qarte)
 
 ### Push & Marketing
 - `POST /api/push/subscribe` — Abonnement push (auth cookie phone)
@@ -249,6 +263,10 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `POST /api/photos` — Upload photo realisation (auth, magic bytes, max 6, compress client via `compressOfferImage`)
 - `DELETE /api/photos` — Supprimer photo + fichier storage (auth, ownership)
 
+### Prestations
+- `GET /api/services?merchantId=` — Liste services + categories (public)
+- `POST /api/services` — CRUD services et categories (merchant auth, type discrimine: 'service' | 'category')
+
 ### Admin
 - `/api/admin/merchants/[id]` — GET stats/PATCH notes
 - `/api/admin/announcements` — CRUD annonces
@@ -261,13 +279,18 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 1. **Phase 1:** Email + password (`/auth/merchant/signup`) — filet typo email
 2. **Phase 2:** Infos commerce (`/auth/merchant/signup/complete`)
 3. `/dashboard/program` → config (couleurs, stamps, reward)
-4. Premiere sauvegarde → preview carte (`?preview=true&onboarding=true`) → `/dashboard/qr-download`
-5. `isFirstSetup` = true quand `reward_description` is null
-6. Email QR code envoye a la premiere config
+4. Premiere sauvegarde → modal "Ton programme est en ligne !" → "Voir le parcours client" (`/scan/{code}`) ou "Plus tard" → `/dashboard/qr-download`
+5. QR download → modal (1x) "Aide-nous a te rendre visible" → "Completer ma page" (`/dashboard/public-page`)
+6. `isFirstSetup` = true quand `reward_description` is null
+7. Email QR code envoye a la premiere config
 
-**OnboardingChecklist** : 6 etapes, confetti a la completion (one-shot localStorage), auto-dismiss 3 jours apres. Visible seulement en trial.
+**OnboardingChecklist** : 8 etapes (programme, logo, reseau social, adresse, photo, simuler experience, QR download, 2 premiers scans), confetti a la completion (one-shot localStorage), auto-dismiss 3 jours apres. Visible seulement en trial.
 
 **Score programme** : cercle sticky 0-100% (recompense 25pts, logo 20pts, reseaux 15pts, avis 15pts, reservation 10pts, palier2 10pts, jours x2 5pts)
+
+**Boutons save unifies** : tous `bg-indigo-600 hover:bg-indigo-700` (default), `bg-emerald-600` (saved), `rounded-xl`, icone Check/Loader2. Coherent sur Ma Page, Programme, Parrainage, Parametres.
+
+**Headers unifies** : tous `bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]` avec titre gradient `from-indigo-600 to-violet-600`.
 
 ---
 
@@ -342,15 +365,35 @@ Design Apple Wallet, fond `bg-[#f7f6fb]`, greeting typographique, cartes avec he
 Inscription rapide, validation passage, progression fidelite, detection `?ref=` pour parrainage
 
 ### Dashboard (`/dashboard`)
-Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 4 onglets), push notifications, abonnement, parrainage, settings
+Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 4 onglets), push notifications, abonnement, parrainage, parametres. Raccourcis mobile : Ma Page (gradient indigo-violet), Clients, QR Code, Parrainage, Kit Reseaux, Parametres.
+
+**Navigation sidebar** : Accueil, Programme de fidelite, Ma Page, QR code & Supports, Clients, Parrainage, Notifications, Abonnement, Parametres
+- **Membres** (`/dashboard/members`) : retire de la nav, accessible via bouton "Programmes VIP" dans Clients
+- **Ma Page** (`/dashboard/public-page`) : gere nom du salon, adresse, lien reservation, offre bienvenue, photos, prestations/categories. Bouton d'aide (?) expliquant l'interet pour attirer de nouveaux clients.
+- **Parametres** (`/dashboard/settings`) : email (lecture seule), type commerce, telephone, infos compte, export CSV, zone danger. Nom et adresse geres dans Ma Page uniquement.
+- **Parrainage** (`/dashboard/referrals`) : config parrainage uniquement. Offre bienvenue = banner lecture seule renvoyant vers Ma Page.
+- **QR Code & Supports** (`/dashboard/qr-download`) : QR code + Kit reseaux sociaux (image HD, legendes, grille 2x2 coloree de 4 tips + lien cross-promo vers Ma Page). Post-QR modal redirige vers Ma Page.
 
 ### Admin (`/admin`)
 Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses. **Exclut les comptes admin** des stats.
 
 ### Page Publique Programme (`/p/[slug]`)
-Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page.
-- Galerie photos realisations (lightbox, grid 3 cols, max 6 photos depuis `merchant_photos`)
-- Adresse merchant (MapPin, conditionnel sur `shop_address`)
+Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre bienvenue → `/scan/{code}?welcome=`).
+
+**Ordre des sections :**
+1. Hero (logo, nom, adresse, badge Qarte, tagline fidelite)
+2. CTA "Prendre rendez-vous" (conditionnel sur `booking_url`) + sticky bar quand hors viewport
+3. Offre de bienvenue (CTA conditionnel si `welcome_offer_enabled`, pointe vers `/scan/{code}?welcome=`)
+4. Carte fidelite simulee ("Votre future carte")
+5. Palier 2 (si `tier2_enabled`)
+6. Avantages exclusifs (anniversaire, parrainage, jours bonus)
+7. Prestations (collapsible, ferme par defaut, depuis `merchant_services` + `merchant_service_categories`)
+8. Reseaux sociaux (icones Instagram/Facebook/TikTok/Snapchat, sans bouton booking)
+9. Galerie photos realisations (lightbox, grid 3 cols, max 6 photos depuis `merchant_photos`)
+10. CTA merchant ("Vous aussi, fidelisez vos clients")
+
+**Design :** glassmorphism (`bg-white/70 backdrop-blur-sm border-white/60`) sur sections avantages, prestations, photos. Badge hero : "Qarte — La fidelite digitale des pros de la beaute et du bien-etre".
+
 - JSON-LD `LocalBusiness` (name, address, image, url, makesOffer)
 - SEO: `generateMetadata()` avec og:image (1ere photo ou logo), description dynamique
 

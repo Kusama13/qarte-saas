@@ -3,7 +3,7 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, Crown, UserPlus, Megaphone, CreditCard, Settings, ExternalLink, Coins } from 'lucide-react';
+import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, Crown, UserPlus, Megaphone, CreditCard, Settings, Coins, Globe } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
@@ -458,17 +458,6 @@ export default function DashboardPage() {
         <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
           Voici un aperçu de ton programme de fidélité
         </p>
-        {merchant?.slug && merchant?.reward_description && (
-          <a
-            href={`/p/${merchant.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-100 text-xs font-semibold text-indigo-600 hover:bg-indigo-100 transition-colors"
-          >
-            <ExternalLink className="w-3 h-3" />
-            Ton programme en ligne
-          </a>
-        )}
       </div>
 
       {/* Onboarding Checklist */}
@@ -563,22 +552,26 @@ export default function DashboardPage() {
         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 px-1">Raccourcis</p>
         <div className="grid grid-cols-3 gap-2.5">
           {[
-            { href: '/dashboard/program', icon: Gift, label: 'Programme', color: 'text-pink-500', bg: 'bg-pink-50' },
+            { href: '/dashboard/public-page', icon: Globe, label: 'Ma Page', color: 'text-white', bg: 'bg-white/20', gradient: true },
             { href: '/dashboard/qr-download', icon: QrCode, label: 'QR Code', color: 'text-violet-500', bg: 'bg-violet-50' },
             { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
             { href: '/dashboard/referrals', icon: UserPlus, label: 'Parrainage', color: 'text-blue-500', bg: 'bg-blue-50' },
             { href: '/dashboard/subscription', icon: CreditCard, label: 'Abonnement', color: 'text-teal-500', bg: 'bg-teal-50' },
             { href: '/dashboard/settings', icon: Settings, label: 'Paramètres', color: 'text-gray-500', bg: 'bg-gray-100' },
-          ].map(({ href, icon: Icon, label, color, bg }) => (
+          ].map(({ href, icon: Icon, label, color, bg, gradient }: { href: string; icon: React.ElementType; label: string; color: string; bg: string; gradient?: boolean }) => (
             <Link
               key={href}
               href={href}
-              className="flex flex-col items-center gap-2 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-95 transition-transform"
+              className={`flex flex-col items-center gap-2 p-3 rounded-2xl shadow-sm active:scale-95 transition-transform ${
+                gradient
+                  ? 'bg-gradient-to-br from-indigo-600 to-violet-600 border border-indigo-500/20'
+                  : 'bg-white border border-gray-100'
+              }`}
             >
               <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center`}>
                 <Icon className={`w-5 h-5 ${color}`} />
               </div>
-              <span className="text-[11px] font-semibold text-gray-600 text-center leading-tight">{label}</span>
+              <span className={`text-[11px] font-semibold text-center leading-tight ${gradient ? 'text-white' : 'text-gray-600'}`}>{label}</span>
             </Link>
           ))}
         </div>
