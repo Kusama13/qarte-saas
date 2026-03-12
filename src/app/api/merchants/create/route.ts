@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Welcome email en priorité (Resend API call #2)
-      await sendWelcomeEmail(userData.user.email, trimmedShopName).catch((err) => {
+      await sendWelcomeEmail(userData.user.email, trimmedShopName, slug).catch((err) => {
         logger.error('Failed to send welcome email', err);
       });
 

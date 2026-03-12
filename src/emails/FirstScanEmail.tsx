@@ -10,9 +10,11 @@ import { BaseLayout } from './BaseLayout';
 interface FirstScanEmailProps {
   shopName: string;
   referralCode?: string;
+  slug?: string;
 }
 
-export function FirstScanEmail({ shopName }: FirstScanEmailProps) {
+export function FirstScanEmail({ shopName, slug }: FirstScanEmailProps) {
+  const publicPageUrl = slug ? `https://getqarte.com/p/${slug}` : null;
 
   return (
     <BaseLayout preview={`${shopName}, votre 1er client a scanné !`}>
@@ -50,12 +52,20 @@ export function FirstScanEmail({ shopName }: FirstScanEmailProps) {
         </Button>
       </Section>
 
-      <Section style={socialProofBox}>
-        <Text style={socialProofText}>
-          Vous faites maintenant partie des centaines de pros qui fidélisent avec Qarte.{' '}
-          <a href="https://getqarte.com/pros" style={socialProofLink}>Voir la communauté &#8594;</a>
-        </Text>
-      </Section>
+      {publicPageUrl && (
+        <Section style={pageProBox}>
+          <Text style={pageProTitle}>Partagez votre page pro</Text>
+          <Text style={pageProText}>
+            Ajoutez votre page publique dans votre bio Instagram. Vos clientes y retrouvent
+            votre salon, vos prestations et votre carte fidélité — tout en un lien.
+          </Text>
+          <Section style={buttonContainerSmall}>
+            <Button style={buttonSecondary} href={publicPageUrl}>
+              Voir ma page publique
+            </Button>
+          </Section>
+        </Section>
+      )}
 
       <Text style={signature}>
         L&apos;équipe Qarte
@@ -144,25 +154,41 @@ const button = {
   padding: '14px 32px',
 };
 
-const socialProofBox = {
-  backgroundColor: '#f5f3ff',
-  borderRadius: '10px',
-  padding: '16px 20px',
+const pageProBox = {
+  backgroundColor: '#f0edfc',
+  borderRadius: '12px',
+  padding: '20px 24px',
   margin: '24px 0',
-  textAlign: 'center' as const,
 };
 
-const socialProofText = {
-  color: '#6b7280',
-  fontSize: '13px',
+const pageProTitle = {
+  color: '#1a1a1a',
+  fontSize: '15px',
+  fontWeight: '600',
+  margin: '0 0 8px 0',
+};
+
+const pageProText = {
+  color: '#4a5568',
+  fontSize: '14px',
   lineHeight: '1.6',
   margin: '0',
 };
 
-const socialProofLink = {
-  color: '#4b0082',
-  fontWeight: '600' as const,
-  textDecoration: 'underline',
+const buttonContainerSmall = {
+  textAlign: 'center' as const,
+  margin: '16px 0 0 0',
+};
+
+const buttonSecondary = {
+  backgroundColor: '#1a1a1a',
+  borderRadius: '8px',
+  color: '#ffffff',
+  fontSize: '15px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  padding: '12px 28px',
 };
 
 const signature = {

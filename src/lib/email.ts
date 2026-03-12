@@ -34,6 +34,7 @@ import {
   AutoSuggestRewardEmail,
   GracePeriodSetupEmail,
   BirthdayNotificationEmail,
+  AnnouncementMaPageEmail,
 } from '@/emails';
 import logger from './logger';
 
@@ -150,9 +151,10 @@ async function scheduleEmail<P extends Record<string, unknown>>(
 // Email de bienvenue
 export async function sendWelcomeEmail(
   to: string,
-  shopName: string
+  shopName: string,
+  slug?: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `Bienvenue ${shopName} !`, WelcomeEmail, { shopName }, { logLabel: 'Welcome email' });
+  return sendEmail(to, `Bienvenue ${shopName} !`, WelcomeEmail, { shopName, slug }, { logLabel: 'Welcome email' });
 }
 
 // Email fin d'essai imminente
@@ -373,9 +375,10 @@ export async function sendReactivationEmail(
 export async function sendProgramReminderDay2Email(
   to: string,
   shopName: string,
-  shopType: string
+  shopType: string,
+  slug?: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `Quelle récompense choisir ?`, ProgramReminderDay2Email, { shopName, shopType }, {
+  return sendEmail(to, `Quelle récompense choisir ?`, ProgramReminderDay2Email, { shopName, shopType, slug }, {
     logLabel: 'Program reminder day 2 email',
   });
 }
@@ -466,9 +469,10 @@ export async function scheduleIncompleteSignupReminder2Email(
 export async function sendFirstScanEmail(
   to: string,
   shopName: string,
-  referralCode?: string
+  referralCode?: string,
+  slug?: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, votre 1er client !`, FirstScanEmail, { shopName, referralCode }, {
+  return sendEmail(to, `${shopName}, votre 1er client !`, FirstScanEmail, { shopName, referralCode, slug }, {
     logLabel: 'First scan email',
   });
 }
@@ -630,5 +634,17 @@ export async function sendBirthdayNotificationEmail(
   const plural = clientNames.length > 1;
   return sendEmail(to, `Anniversaire client${plural ? 's' : ''} aujourd'hui`, BirthdayNotificationEmail, { shopName, clientNames, giftDescription }, {
     logLabel: 'Birthday notification email',
+  });
+}
+
+// Email annonce Ma Page + offre de bienvenue
+export async function sendAnnouncementMaPageEmail(
+  to: string,
+  shopName: string,
+  slug: string,
+  isSubscribed: boolean = true
+): Promise<SendEmailResult> {
+  return sendEmail(to, `${shopName}, découvre ce qu'on a préparé pour toi`, AnnouncementMaPageEmail, { shopName, slug, isSubscribed }, {
+    logLabel: 'Announcement Ma Page email',
   });
 }

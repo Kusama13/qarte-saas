@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
     // 1. Email de bienvenue
-    const welcome = await sendWelcomeEmail(email, 'Boulangerie Test');
+    const welcome = await sendWelcomeEmail(email, 'Boulangerie Test', 'boulangerie-test');
     results.push({ type: 'welcome', ...welcome });
     await delay(600);
 

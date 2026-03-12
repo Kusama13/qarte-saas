@@ -11,6 +11,7 @@ import { BaseLayout } from './BaseLayout';
 interface ProgramReminderDay2EmailProps {
   shopName: string;
   shopType: string;
+  slug?: string;
 }
 
 const REWARD_IDEAS: Record<string, { reward: string; visits: string }> = {
@@ -28,9 +29,10 @@ const REWARD_IDEAS: Record<string, { reward: string; visits: string }> = {
 
 const DEFAULT_REWARD = { reward: '1 prestation offerte', visits: '10 passages' };
 
-export function ProgramReminderDay2Email({ shopName, shopType }: ProgramReminderDay2EmailProps) {
+export function ProgramReminderDay2Email({ shopName, shopType, slug }: ProgramReminderDay2EmailProps) {
   const normalizedType = shopType?.toLowerCase().replace(/[\s-]/g, '_') || '';
   const suggestion = REWARD_IDEAS[normalizedType] || DEFAULT_REWARD;
+  const publicPageUrl = slug ? `https://getqarte.com/p/${slug}` : null;
 
   return (
     <BaseLayout preview={`${shopName}, on a trouvé la récompense idéale pour votre activité`}>
@@ -65,19 +67,31 @@ export function ProgramReminderDay2Email({ shopName, shopType }: ProgramReminder
 
       <Hr style={divider} />
 
+      {publicPageUrl && (
+        <>
+          <Section style={tipBox}>
+            <Text style={tipTitle}>Votre page publique est prête</Text>
+            <Text style={tipText}>
+              Votre page pro est déjà en ligne. Ajoutez-la dans votre bio Instagram pour que vos clientes
+              retrouvent votre salon, vos prestations et votre programme fidélité en un clic.
+            </Text>
+          </Section>
+
+          <Section style={buttonContainer}>
+            <Button style={buttonSecondary} href={publicPageUrl}>
+              Voir ma page publique
+            </Button>
+          </Section>
+
+          <Hr style={divider} />
+        </>
+      )}
+
       <Text style={paragraph}>
         Vous pourrez modifier votre récompense à tout moment. L&apos;important,
         c&apos;est de démarrer — chaque jour sans programme, ce sont des clients
         qui repartent sans être fidélisés.
       </Text>
-
-      <Section style={tipBox}>
-        <Text style={tipTitle}>Le saviez-vous ?</Text>
-        <Text style={tipText}>
-          Les commerçants qui lancent leur programme dans les 48h après
-          inscription ont <strong>3x plus de scans</strong> le premier mois.
-        </Text>
-      </Section>
 
       <Text style={paragraph}>
         Besoin d&apos;aide ? Répondez à cet email.
@@ -156,6 +170,17 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
+};
+
+const buttonSecondary = {
+  backgroundColor: '#1a1a1a',
+  borderRadius: '8px',
+  color: '#ffffff',
+  fontSize: '15px',
+  fontWeight: '600',
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  padding: '12px 28px',
 };
 
 const tipBox = {

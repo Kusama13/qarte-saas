@@ -39,6 +39,10 @@ export function TrialEndingEmail({ shopName, daysRemaining, promoCode }: TrialEn
             ? 'Pour continuer à utiliser Qarte et conserver vos données clients, ajoutez une carte bancaire dès maintenant.'
             : 'Pour continuer à fidéliser vos clients sans interruption, pensez à ajouter votre carte bancaire.'}
         </Text>
+        <Text style={{ ...boxText, marginTop: '12px' }}>
+          Sans abonnement, vous perdez l&apos;accès à votre programme fidélité, votre page publique,
+          vos relances automatiques et vos données clients.
+        </Text>
       </Section>
 
       <Section style={priceSection}>

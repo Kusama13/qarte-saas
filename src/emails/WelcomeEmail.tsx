@@ -10,10 +10,13 @@ import { BaseLayout } from './BaseLayout';
 
 interface WelcomeEmailProps {
   shopName: string;
+  slug?: string;
   trialDays?: number;
 }
 
-export function WelcomeEmail({ shopName, trialDays = 7 }: WelcomeEmailProps) {
+export function WelcomeEmail({ shopName, slug, trialDays = 7 }: WelcomeEmailProps) {
+  const publicPageUrl = slug ? `https://getqarte.com/p/${slug}` : null;
+
   return (
     <BaseLayout preview={`${shopName}, votre programme de fidélité est prêt en 3 minutes`}>
       <Heading style={heading}>
@@ -26,20 +29,19 @@ export function WelcomeEmail({ shopName, trialDays = 7 }: WelcomeEmailProps) {
 
       <Text style={paragraph}>
         Votre compte Qarte est créé. Vous avez <strong>{trialDays} jours gratuits</strong> pour
-        lancer votre programme de fidélité.
+        tout tester — sans engagement, sans carte bancaire.
       </Text>
 
-      <Text style={highlightBox}>
-        Configurez votre programme en <strong>3 minutes</strong> : choisissez votre récompense,
-        affichez votre QR code, et vos clients commencent à cumuler des points.
+      <Text style={subheading}>
+        Lancez-vous en 3 étapes
       </Text>
 
       <Section style={stepsBox}>
         <Text style={stepItem}>
-          <strong>1.</strong> Choisissez votre récompense (ex: &quot;1 soin offert après 10 passages&quot;)
+          <strong>1.</strong> Choisissez votre mode de fidélité (tampons ou cagnotte) et votre récompense
         </Text>
         <Text style={stepItem}>
-          <strong>2.</strong> Affichez votre QR code près de la caisse
+          <strong>2.</strong> Imprimez ou affichez votre QR code près de la caisse
         </Text>
         <Text style={stepItem}>
           <strong>3.</strong> Vos clients scannent à chaque visite — c&apos;est tout
@@ -48,9 +50,37 @@ export function WelcomeEmail({ shopName, trialDays = 7 }: WelcomeEmailProps) {
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/program">
-          Créer mon programme
+          Configurer mon programme
         </Button>
       </Section>
+
+      <Hr style={divider} />
+
+      <Text style={subheading}>
+        Votre page publique est déjà en ligne
+      </Text>
+
+      <Text style={paragraph}>
+        Vous avez une <strong>page pro accessible en un lien</strong>. Vos clientes y retrouvent
+        votre salon, vos prestations, votre programme de fidélité et la prise de rendez-vous.
+        Ajoutez-la dans votre bio Instagram — c&apos;est mieux qu&apos;un Linktree.
+      </Text>
+
+      {publicPageUrl && (
+        <Section style={buttonContainer}>
+          <Button style={buttonSecondary} href={publicPageUrl}>
+            Voir ma page publique
+          </Button>
+        </Section>
+      )}
+
+      <Text style={highlightBox}>
+        <strong>Astuce :</strong> Configurez une offre de bienvenue (ex : -20% première visite)
+        depuis votre tableau de bord. Elle s&apos;affichera automatiquement sur votre page publique
+        pour attirer de nouveaux clients — sans dépenser en publicité.
+      </Text>
+
+      <Hr style={divider} />
 
       <Text style={paragraph}>
         Besoin d&apos;aide ? Répondez à cet email, on vous guide.

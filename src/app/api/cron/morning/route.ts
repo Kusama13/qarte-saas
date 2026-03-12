@@ -309,7 +309,7 @@ export async function GET(request: NextRequest) {
 
     const { data: unconfiguredDay2 } = await supabase
       .from('merchants')
-      .select('id, shop_name, shop_type, user_id')
+      .select('id, shop_name, shop_type, slug, user_id')
       .is('reward_description', null)
       .in('subscription_status', ['trial', 'active'])
       .lte('created_at', fortyEightHoursAgo.toISOString())
@@ -320,7 +320,7 @@ export async function GET(request: NextRequest) {
       candidates: unconfiguredDay2,
       trackingCode: -302,
       stats: results.programRemindersDay2,
-      sendFn: (email, m) => sendProgramReminderDay2Email(email, m.shop_name, m.shop_type || ''),
+      sendFn: (email, m) => sendProgramReminderDay2Email(email, m.shop_name, m.shop_type || '', m.slug),
     });
 
     // 2c. PROGRAM REMINDER (J+3)
@@ -582,7 +582,7 @@ export async function GET(request: NextRequest) {
     // Merchants with exactly 2 confirmed visits (1st is always merchant's test, 2nd is first real client)
     const { data: allConfiguredMerchants } = await supabase
       .from('merchants')
-      .select('id, shop_name, user_id, referral_code')
+      .select('id, shop_name, user_id, referral_code, slug')
       .not('reward_description', 'is', null)
       .neq('reward_description', '')
       .in('subscription_status', ['trial', 'active'])
@@ -611,7 +611,7 @@ export async function GET(request: NextRequest) {
           candidates: firstScanMerchants,
           trackingCode: -100,
           stats: results.firstScan,
-          sendFn: (email, m) => sendFirstScanEmail(email, m.shop_name, m.referral_code),
+          sendFn: (email, m) => sendFirstScanEmail(email, m.shop_name, m.referral_code, m.slug),
         });
       }
 
