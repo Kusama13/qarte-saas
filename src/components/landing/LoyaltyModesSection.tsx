@@ -4,6 +4,9 @@ import { motion } from 'framer-motion';
 import { Heart, Wallet, Gift, Percent, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { useInView } from '@/hooks/useInView';
+import { trackCtaClick } from '@/lib/analytics';
+import { fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -16,9 +19,10 @@ function PassagesCard() {
         <Heart className="w-6 h-6 text-white fill-white" />
       </div>
 
-      <h3 className="text-2xl font-bold text-gray-900 mb-2">Mode Passages</h3>
+      <h3 className="text-2xl font-bold text-gray-900 mb-1">Mode Passages</h3>
+      <p className="text-sm font-semibold text-indigo-500 mb-3">Idéal pour les prestations à prix fixe</p>
       <p className="text-base text-gray-500 leading-relaxed mb-6">
-        Chaque visite = un tampon. Au bout de X passages, ton client reçoit son cadeau. Simple, visuel, addictif.
+        Tes clientes voient leur carte se remplir à chaque visite. L&apos;effet visuel est addictif — elles reviennent plus vite pour atteindre la récompense. Parfait pour les prothésistes ongulaires, les cils et les barbiers.
       </p>
 
       {/* Mini mockup: stamp grid */}
@@ -61,9 +65,10 @@ function CagnotteCard() {
         <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white text-violet-600 text-[10px] font-black flex items-center justify-center shadow-sm">&euro;</span>
       </div>
 
-      <h3 className="text-2xl font-bold text-gray-900 mb-2">Mode Cagnotte</h3>
+      <h3 className="text-2xl font-bold text-gray-900 mb-1">Mode Cagnotte</h3>
+      <p className="text-sm font-semibold text-violet-500 mb-3">Idéal quand les montants varient</p>
       <p className="text-base text-gray-500 leading-relaxed mb-6">
-        Chaque visite, le montant dépensé est enregistré. Au palier, cashback sur le total cumulé. Plus elle dépense, plus elle gagne.
+        Plus ta cliente dépense, plus sa cagnotte grossit. Elle est récompensée à la hauteur de sa fidélité — et ton panier moyen augmente naturellement. Parfait pour les coiffeurs et les spas.
       </p>
 
       {/* Mini mockup: cagnotte progress */}
@@ -159,9 +164,10 @@ export function LoyaltyModesSection() {
         >
           <Link
             href="/auth/merchant/signup"
+            onClick={() => { trackCtaClick('loyalty_modes_cta', 'loyalty_modes_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-lg rounded-2xl shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-300/50 transition-all duration-300 hover:-translate-y-0.5"
           >
-            Essayer gratuitement pendant 7 jours
+            Essaie gratuitement pendant 7 jours
             <ArrowRight className="w-5 h-5" />
           </Link>
           <p className="mt-3 text-sm text-gray-400">Sans carte bancaire</p>

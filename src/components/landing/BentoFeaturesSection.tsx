@@ -17,6 +17,10 @@ import {
   MousePointer2,
   ArrowRight,
   Nfc,
+  Link2,
+  MapPin,
+  UserPlus,
+  Zap,
 } from 'lucide-react';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
@@ -132,68 +136,23 @@ function ScanMethodsVisual() {
   );
 }
 
-/* ── Visual: Loyalty Card ── */
-function LoyaltyCardVisual() {
-  return (
-    <div className="relative w-full max-w-[340px] mx-auto pt-6">
-      <div className="absolute inset-0 -m-4 bg-violet-100/50 rounded-3xl blur-[60px] pointer-events-none" />
-
-      <div className="relative bg-gradient-to-br from-indigo-500 via-violet-500 to-purple-600 rounded-3xl p-6 shadow-xl shadow-indigo-200/40">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <p className="text-white/70 text-xs font-medium">Programme fidélité</p>
-            <p className="text-white font-bold text-lg">Mon Salon</p>
-          </div>
-          <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-            <Heart className="w-4 h-4 text-white fill-white" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-5 gap-2 mb-4">
-          {[...Array(10)].map((_, i) => (
-            <div
-              key={i}
-              className={`w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center ${
-                i < 6
-                  ? 'bg-white/25 backdrop-blur-sm'
-                  : 'border-2 border-dashed border-white/20'
-              }`}
-            >
-              {i < 6 && <Heart className="w-4 h-4 text-white fill-white" />}
-            </div>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2 backdrop-blur-sm">
-          <Gift className="w-4 h-4 text-white" />
-          <span className="text-white text-xs font-semibold">Brushing offert</span>
-          <ChevronRight className="w-3 h-3 text-white/60 ml-auto" />
-        </div>
-      </div>
-
-      <div className="absolute -top-2 right-0 flex items-center gap-1.5 bg-white rounded-2xl px-4 py-2 shadow-lg shadow-gray-200/40 border border-violet-100 animate-float-subtle">
-        <Heart className="w-3.5 h-3.5 text-violet-500 fill-violet-500" />
-        <span className="text-sm font-bold text-gray-800">6/10 tampons</span>
-      </div>
-    </div>
-  );
-}
-
-/* ── Visual: Brand Customization (DA) ── */
-function BrandVisual() {
+/* ── Visual: Program + Brand (fusionné) ── */
+function ProgramBrandVisual() {
   const colors = [
-    { bg: 'bg-gradient-to-br from-indigo-400 to-violet-500', ring: 'ring-indigo-300' },
-    { bg: 'bg-gradient-to-br from-pink-300 to-rose-400', ring: 'ring-pink-200' },
-    { bg: 'bg-gradient-to-br from-rose-600 to-pink-700', ring: 'ring-rose-400' },
-    { bg: 'bg-gradient-to-br from-amber-200 to-yellow-300', ring: 'ring-amber-200' },
-    { bg: 'bg-gradient-to-br from-stone-400 to-stone-500', ring: 'ring-stone-300' },
-    { bg: 'bg-gradient-to-br from-gray-800 to-gray-900', ring: 'ring-gray-600', active: true },
+    { bg: 'bg-gradient-to-br from-indigo-400 to-violet-500' },
+    { bg: 'bg-gradient-to-br from-pink-300 to-rose-400' },
+    { bg: 'bg-gradient-to-br from-rose-600 to-pink-700' },
+    { bg: 'bg-gradient-to-br from-amber-200 to-yellow-300' },
+    { bg: 'bg-gradient-to-br from-gray-800 to-gray-900', active: true },
   ];
 
   return (
     <div className="relative w-full max-w-[340px] mx-auto">
-      <div className="relative bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-6">
-        <div className="flex items-center justify-center gap-3 mb-5">
+      <div className="absolute inset-0 -m-4 bg-violet-100/50 rounded-3xl blur-[60px] pointer-events-none" />
+
+      <div className="relative bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-5">
+        {/* Color picker */}
+        <div className="flex items-center justify-center gap-2.5 mb-4">
           {colors.map((color, i) => (
             <motion.div
               key={i}
@@ -203,14 +162,15 @@ function BrandVisual() {
               transition={{ duration: 0.4, delay: 0.1 + i * 0.06, ease: EASE }}
               className="relative"
             >
-              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full ${color.bg} ${color.active ? `ring-2 ${color.ring} ring-offset-2` : ''} shadow-sm`} />
+              <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full ${color.bg} ${color.active ? 'ring-2 ring-gray-600 ring-offset-2' : ''} shadow-sm`} />
               {color.active && (
-                <MousePointer2 className="absolute -bottom-2 -right-2 w-5 h-5 text-gray-700 drop-shadow-sm" />
+                <MousePointer2 className="absolute -bottom-1.5 -right-1.5 w-4 h-4 text-gray-700 drop-shadow-sm" />
               )}
             </motion.div>
           ))}
         </div>
 
+        {/* Card preview */}
         <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-4 shadow-lg">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -218,25 +178,151 @@ function BrandVisual() {
               <p className="text-white font-bold text-sm">Ton Salon</p>
             </div>
             <div className="w-7 h-7 bg-white/15 rounded-lg flex items-center justify-center">
-              <Star className="w-3.5 h-3.5 text-white fill-white" />
+              <Heart className="w-3.5 h-3.5 text-white fill-white" />
             </div>
           </div>
-          <div className="grid grid-cols-5 gap-1.5">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className={`h-6 rounded-md ${i < 3 ? 'bg-white/20' : 'border border-dashed border-white/15'}`} />
+          <div className="grid grid-cols-5 gap-1.5 mb-3">
+            {[...Array(10)].map((_, i) => (
+              <div
+                key={i}
+                className={`h-6 rounded-md flex items-center justify-center ${
+                  i < 6 ? 'bg-white/20' : 'border border-dashed border-white/15'
+                }`}
+              >
+                {i < 6 && <Heart className="w-3 h-3 text-white fill-white" />}
+              </div>
             ))}
+          </div>
+          <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
+            <Gift className="w-3.5 h-3.5 text-white" />
+            <span className="text-white text-[11px] font-semibold">Brushing offert</span>
+            <ChevronRight className="w-3 h-3 text-white/40 ml-auto" />
           </div>
         </div>
 
-        <div className="flex items-center justify-center gap-2 mt-4">
+        <div className="flex items-center justify-center gap-2 mt-3">
           <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-          <span className="text-xs font-semibold text-gray-500">Aperçu en temps réel</span>
+          <span className="text-[11px] font-semibold text-gray-500">Aperçu en temps réel</span>
+        </div>
+      </div>
+
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-violet-100 animate-float-subtle">
+        <Heart className="w-3.5 h-3.5 text-violet-500 fill-violet-500" />
+        <span className="text-xs font-bold text-gray-800">6/10 tampons</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Visual: Public Page (Ma Page) ── */
+function PublicPageVisual() {
+  return (
+    <div className="relative w-full max-w-[280px] mx-auto">
+      <div className="absolute inset-0 -m-4 bg-violet-100/50 rounded-3xl blur-[60px] pointer-events-none" />
+
+      <div className="relative bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-5">
+        {/* Header merchant */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center">
+            <span className="text-white font-bold text-sm">L</span>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-900">L&apos;Atelier</p>
+            <div className="flex items-center gap-1">
+              <MapPin className="w-3 h-3 text-gray-400" />
+              <span className="text-[10px] text-gray-400">Paris 11e</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Booking CTA */}
+        <div className="w-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-xl px-3 py-2.5 flex items-center justify-center gap-2 mb-4">
+          <CalendarHeart className="w-3.5 h-3.5 text-white" />
+          <span className="text-xs font-bold text-white">Prendre rendez-vous</span>
+        </div>
+
+        {/* Photo grid */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center">
+              <Sparkles className="w-3 h-3 text-gray-300" />
+            </div>
+          ))}
+        </div>
+
+        {/* Services preview */}
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-gray-600">Brushing</span>
+            <span className="text-[10px] font-bold text-gray-800">35 &euro;</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-gray-600">Couleur</span>
+            <span className="text-[10px] font-bold text-gray-800">65 &euro;</span>
+          </div>
+        </div>
+
+        {/* Social icons */}
+        <div className="flex items-center justify-center gap-3">
+          <div className="w-7 h-7 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full" />
+          <div className="w-7 h-7 bg-gray-900 rounded-full" />
+          <div className="w-7 h-7 bg-blue-500 rounded-full" />
         </div>
       </div>
 
       <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-indigo-100 animate-float-subtle">
-        <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-        <span className="text-xs font-bold text-gray-800">Effet premium</span>
+        <Link2 className="w-3.5 h-3.5 text-indigo-500" />
+        <span className="text-xs font-bold text-gray-800">Lien en bio</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Visual: Welcome Offer ── */
+function WelcomeOfferVisual() {
+  return (
+    <div className="relative w-full max-w-[300px] mx-auto">
+      {/* Welcome offer card */}
+      <div className="bg-gradient-to-br from-violet-50 to-pink-50 rounded-3xl shadow-xl shadow-violet-100/30 border border-violet-100 p-6 mb-3">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-pink-500 rounded-xl flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-[10px] font-bold text-violet-500 uppercase tracking-wider">Offre de bienvenue</span>
+        </div>
+        <p className="text-sm font-bold text-gray-800 mb-3">-20% sur votre première visite</p>
+        <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-xl px-4 py-2.5 text-center mb-2">
+          <span className="text-xs font-bold text-white">En profiter</span>
+        </div>
+        <p className="text-[10px] text-gray-400 text-center">Inscrivez-vous pour en profiter</p>
+      </div>
+
+      {/* Result card */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.5, delay: 0.3, ease: EASE }}
+        className="bg-white rounded-2xl p-3 shadow-lg shadow-gray-200/40 border border-emerald-100 flex items-center gap-3"
+      >
+        <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center flex-shrink-0">
+          <Check className="w-4 h-4 text-white" />
+        </div>
+        <div>
+          <p className="text-xs font-bold text-gray-800">Sophie M.</p>
+          <p className="text-[10px] text-gray-400">Nouvelle cliente inscrite</p>
+        </div>
+      </motion.div>
+
+      {/* Floating badges */}
+      <div className="absolute -top-3 -left-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-emerald-100 animate-float-subtle">
+        <Zap className="w-3.5 h-3.5 text-emerald-500" />
+        <span className="text-xs font-bold text-gray-800">0 &euro; de pub</span>
+      </div>
+
+      <div className="absolute -bottom-1 -right-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-pink-100 animate-float-subtle" style={{ animationDelay: '0.5s' }}>
+        <UserPlus className="w-3.5 h-3.5 text-pink-500" />
+        <span className="text-xs font-bold text-gray-800">+1 cliente</span>
       </div>
     </div>
   );
@@ -295,67 +381,18 @@ function InactivityVisual() {
   );
 }
 
-/* ── Visual: Birthday ── */
-function BirthdayVisual() {
-  return (
-    <div className="relative w-full max-w-[300px] mx-auto">
-      <div className="absolute inset-0 -m-4 bg-rose-100/50 rounded-3xl blur-[60px] pointer-events-none" />
-
-      <div className="relative bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-6">
-        <div className="bg-gradient-to-br from-rose-50 to-pink-50 rounded-2xl p-5 mb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-rose-500 rounded-xl flex items-center justify-center">
-              <Cake className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Joyeux anniversaire !</p>
-              <p className="text-xs text-gray-500">Sophie M.</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-xl px-4 py-3 border border-rose-100">
-            <p className="text-sm font-semibold text-gray-800">-20% sur ton prochain soin</p>
-            <p className="text-xs text-gray-400 mt-0.5">Valable 7 jours</p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between text-center">
-          <div>
-            <p className="text-lg font-bold text-gray-900">12</p>
-            <p className="text-[10px] text-gray-400 font-medium">Ce mois</p>
-          </div>
-          <div className="w-px h-8 bg-gray-100" />
-          <div>
-            <p className="text-lg font-bold text-gray-900">87%</p>
-            <p className="text-[10px] text-gray-400 font-medium">Reviennent</p>
-          </div>
-          <div className="w-px h-8 bg-gray-100" />
-          <div>
-            <p className="text-lg font-bold text-gray-900">Auto</p>
-            <p className="text-[10px] text-gray-400 font-medium">Envoi</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-rose-100 animate-float-subtle">
-        <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
-        <span className="text-xs font-bold text-gray-800">Automatique</span>
-      </div>
-    </div>
-  );
-}
-
-/* ── Visual: Special Events ── */
-function EventsVisual() {
-  const events = [
-    { name: 'Saint-Valentin', date: '14 fév.', color: 'bg-pink-500', icon: <Heart className="w-4 h-4 text-white fill-white" /> },
-    { name: 'Fête des mères', date: '25 mai', color: 'bg-violet-500', icon: <CalendarHeart className="w-4 h-4 text-white" /> },
-    { name: 'Noël', date: '25 déc.', color: 'bg-emerald-500', icon: <Sparkles className="w-4 h-4 text-white" /> },
+/* ── Visual: Auto Offers (anniversaires + événements fusionnés) ── */
+function AutoOffersVisual() {
+  const offers = [
+    { name: 'Anniversaire de Sophie', label: '-20% soin', color: 'bg-rose-500', icon: <Cake className="w-4 h-4 text-white" />, badge: 'Auto' },
+    { name: 'Saint-Valentin', label: 'Offre duo', color: 'bg-pink-500', icon: <Heart className="w-4 h-4 text-white fill-white" />, badge: 'Programmé' },
+    { name: 'Fête des mères', label: '-15% coffret', color: 'bg-violet-500', icon: <CalendarHeart className="w-4 h-4 text-white" />, badge: 'Programmé' },
   ];
 
   return (
     <div className="relative w-full max-w-[320px] mx-auto">
       <div className="space-y-3">
-        {events.map((event, i) => (
+        {offers.map((offer, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 16 }}
@@ -364,24 +401,37 @@ function EventsVisual() {
             transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: EASE }}
             className="flex items-center gap-3 bg-white rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
           >
-            <div className={`w-10 h-10 ${event.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
-              {event.icon}
+            <div className={`w-10 h-10 ${offer.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+              {offer.icon}
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-bold text-gray-900">{event.name}</p>
-              <p className="text-xs text-gray-400">{event.date}</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-gray-900 truncate">{offer.name}</p>
+              <p className="text-xs text-gray-400">{offer.label}</p>
             </div>
-            <div className="flex items-center gap-1 bg-emerald-50 rounded-full px-2.5 py-1">
+            <div className="flex items-center gap-1 bg-emerald-50 rounded-full px-2.5 py-1 flex-shrink-0">
               <Check className="w-3 h-3 text-emerald-500" />
-              <span className="text-[10px] font-bold text-emerald-600">Programmé</span>
+              <span className="text-[10px] font-bold text-emerald-600">{offer.badge}</span>
             </div>
           </motion.div>
         ))}
       </div>
 
-      <div className="absolute -bottom-3 left-0 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-emerald-100 animate-float-subtle">
+      {/* Stats bar */}
+      <div className="mt-3 flex items-center justify-center gap-6 text-center">
+        <div>
+          <p className="text-lg font-bold text-gray-900">87%</p>
+          <p className="text-[10px] text-gray-400 font-medium">Reviennent</p>
+        </div>
+        <div className="w-px h-8 bg-gray-200" />
+        <div>
+          <p className="text-lg font-bold text-gray-900">+30%</p>
+          <p className="text-[10px] text-gray-400 font-medium">Dépensent</p>
+        </div>
+      </div>
+
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-emerald-100 animate-float-subtle">
         <CalendarHeart className="w-4 h-4 text-emerald-500" />
-        <span className="text-xs font-bold text-gray-800">On s'occupe de tout</span>
+        <span className="text-xs font-bold text-gray-800">100% auto</span>
       </div>
     </div>
   );
@@ -507,7 +557,7 @@ export function BentoFeaturesSection() {
             </span>
           </h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-            Chaque fonctionnalité a été pensée pour te simplifier la vie. Pas de superflu.
+            Créé en France 🇫🇷 par des pros de la beauté et du bien-être. Chaque fonctionnalité est pensée pour te simplifier la vie.
           </p>
         </motion.div>
 
@@ -524,21 +574,31 @@ export function BentoFeaturesSection() {
           <Separator />
 
           <FeatureBlock
-            title="Récompense tes clients"
-            titleBold="les plus fidèles."
-            description="Crée ton programme en 2 minutes. Paliers, récompenses, couleurs — tout s'adapte à ton image."
-            visual={<LoyaltyCardVisual />}
+            title="Crée ton programme à"
+            titleBold="ton image."
+            description="Paliers, récompenses, couleurs — tout se configure en 2 minutes. Une carte aux couleurs de ton salon donne un effet premium. Tes clientes la montrent, en parlent, reviennent."
+            visual={<ProgramBrandVisual />}
             delay={0.05}
           />
 
           <Separator />
 
           <FeatureBlock
-            title="Adapte ta carte à"
-            titleBold="ton image."
-            description="Tes couleurs, ton ambiance. Une carte aux couleurs de ton institut donne un effet premium — tes clients reviennent plus, dépensent plus."
-            visual={<BrandVisual />}
+            title="Ta page pro,"
+            titleBold="en un lien."
+            description="Un seul lien dans ta bio Instagram et tes clientes retrouvent tout : ton salon, tes prestations, ta carte fidélité, la prise de rendez-vous. Mieux qu'un Linktree."
+            visual={<PublicPageVisual />}
             reverse
+            delay={0.05}
+          />
+
+          <Separator />
+
+          <FeatureBlock
+            title="Attire de nouveaux clients"
+            titleBold="sans dépenser en pub."
+            description="Configure ton offre de bienvenue en 30 secondes. Tes nouvelles clientes la découvrent sur ta page, s'inscrivent et reviennent. 0 € de publicité."
+            visual={<WelcomeOfferVisual />}
             delay={0.05}
           />
 
@@ -549,16 +609,6 @@ export function BentoFeaturesSection() {
             titleBold="qui s'éloignent."
             description="Un client ne vient plus ? On le détecte et on lui envoie un rappel au bon moment. Chaque relance, c'est du chiffre d'affaires récupéré."
             visual={<InactivityVisual />}
-            delay={0.05}
-          />
-
-          <Separator />
-
-          <FeatureBlock
-            title="N'oublie plus jamais un"
-            titleBold="anniversaire."
-            description="Une offre surprise le jour J, envoyée automatiquement. Résultat : ils reviennent et dépensent en moyenne 30% de plus."
-            visual={<BirthdayVisual />}
             reverse
             delay={0.05}
           />
@@ -566,10 +616,10 @@ export function BentoFeaturesSection() {
           <Separator />
 
           <FeatureBlock
-            title="Saint-Valentin, Noël,"
-            titleBold="fête des mères..."
-            description="Programme tes offres à l'avance pour chaque événement. On s'occupe de l'envoi au bon moment."
-            visual={<EventsVisual />}
+            title="Anniversaires, Noël, fête des mères —"
+            titleBold="tout est automatique."
+            description="Offre surprise le jour J, promos événementielles programmées à l'avance. On s'occupe de tout — tes clientes reviennent et dépensent 30% de plus."
+            visual={<AutoOffersVisual />}
             delay={0.05}
           />
 

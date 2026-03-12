@@ -50,6 +50,22 @@ const faqs = [
     question: "Je suis esthéticienne indépendante, c'est pour moi ?",
     answer: "Absolument. Crée ton programme en 5 minutes, gère tes clients, développe le bouche-à-oreille.",
   },
+  {
+    question: "Tampons ou cagnotte, lequel choisir ?",
+    answer: "Prestations à prix fixe (ongles, cils, barbe) → mode passages. Montants variables (coiffure, spa) → mode cagnotte. Tu peux changer à tout moment.",
+  },
+  {
+    question: "C'est quoi la page publique ?",
+    answer: "Un lien unique pour ta bio Instagram. Tes clientes y trouvent ton salon, tes prestations, tes tarifs, la prise de rendez-vous et ton programme fidélité. Tout en un.",
+  },
+  {
+    question: "Comment fonctionne l'offre de bienvenue ?",
+    answer: "Tu configures une offre (ex : -20% première visite). Elle s'affiche sur ta page publique. Le nouveau client clique, s'inscrit et reçoit son bon automatiquement.",
+  },
+  {
+    question: "Les notifications push, ça marche comment ?",
+    answer: "Tes clients reçoivent des rappels directement sur leur téléphone — sans app. Relances automatiques, récompenses à récupérer, anniversaires. Zéro effort de ton côté.",
+  },
 ];
 
 function AccordionItem({
