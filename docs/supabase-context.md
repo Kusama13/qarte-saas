@@ -193,7 +193,7 @@
 | customer_id | UUID FK → customers | NOT NULL | ON DELETE CASCADE |
 | adjustment | INTEGER | NOT NULL | |
 | reason | TEXT | NULL | |
-| adjusted_by | UUID FK → auth.users | NOT NULL | |
+| adjusted_by | UUID FK → auth.users | NOT NULL | ON DELETE CASCADE |
 | created_at | TIMESTAMPTZ | `NOW()` | Migration dit `created_at` |
 
 **ATTENTION — Divergence schema** : La migration 002 definit `created_at`, mais la colonne reelle en prod est `adjusted_at` (renommee manuellement). Le code utilise `adjusted_at` partout.
@@ -795,6 +795,8 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 055 | merchant_photos | Table merchant_photos (id, merchant_id, url, position 1-6), UNIQUE(merchant_id, position), RLS public read + merchant CRUD |
 | 056 | welcome_offer | welcome_offer_enabled/description/welcome_referral_code sur merchants, vouchers source CHECK +welcome, referrals referrer nullable |
 | 057 | merchant_services | Tables merchant_service_categories + merchant_services, RLS public read + merchant CRUD, indexes merchant_id + category_id |
+| 058 | services_duration_description | Ajout duration + description sur merchant_services |
+| 059 | point_adjustments_cascade_delete | FK adjusted_by → auth.users passe de RESTRICT a ON DELETE CASCADE |
 
 ---
 
