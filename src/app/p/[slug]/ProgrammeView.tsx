@@ -12,6 +12,7 @@ import type { Merchant } from '@/types';
 type Photo = { id: string; url: string; position: number };
 type ServiceCategory = { id: string; name: string; position: number };
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
+type PromoOffer = { id: string; title: string; description: string; expires_at: string | null };
 
 type MerchantPublic = Pick<
   Merchant,
@@ -55,6 +56,18 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
+
+  // Fetch active promo offer
+  useEffect(() => {
+    if (isDemo) return;
+    fetch(`/api/merchant-offers?merchantId=${merchant.id}&public=true`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.offers?.length > 0) setPromoOffer(data.offers[0]);
+      })
+      .catch(() => {});
+  }, [merchant.id, isDemo]);
   const glassCard = 'rounded-2xl overflow-hidden bg-white/70 backdrop-blur-sm border border-white/60 shadow-lg shadow-gray-200/40';
 
   // Keyboard navigation for lightbox
@@ -211,7 +224,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           </motion.a>
         )}
 
-        {/* ── OFFRE DE BIENVENUE ── */}
+        {/* ── OFFRE DE BIENVENUE (nouveaux clients) ── */}
         {merchant.welcome_offer_enabled && merchant.welcome_offer_description && merchant.welcome_referral_code && merchant.scan_code && (
           <motion.a
             href={isDemo ? '#' : `/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`}
@@ -258,6 +271,49 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           </motion.a>
         )}
 
+        {/* ── OFFRE PROMO (tout le monde) — style amber distinct ── */}
+        {promoOffer && merchant.scan_code && (
+          <motion.a
+            href={`/scan/${merchant.scan_code}?offer=${promoOffer.id}`}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.32, ease: 'easeOut' }}
+            className="block rounded-2xl overflow-hidden border-2 shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            style={{ borderColor: '#f59e0b40', boxShadow: '0 4px 24px #f59e0b20' }}
+          >
+            <div
+              className="px-5 py-5 flex items-center gap-4"
+              style={{ background: 'linear-gradient(135deg, #f59e0b12, #f59e0b06)' }}
+            >
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-amber-100">
+                <Gift className="w-6 h-6 text-amber-600" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-0.5 text-amber-600">
+                  {promoOffer.title}
+                </p>
+                <p className="text-[15px] font-bold text-gray-800 leading-tight">
+                  {promoOffer.description}
+                </p>
+                <p className="text-[12px] text-gray-500 mt-1">
+                  Offre ouverte a tous
+                </p>
+              </div>
+              <div className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white bg-amber-500">
+                En profiter
+              </div>
+            </div>
+            <div className="px-5 pb-4" style={{ background: 'linear-gradient(135deg, #f59e0b06, transparent)' }}>
+              <p className="text-[12px] text-gray-500 leading-relaxed">
+                Inscrivez-vous pour recevoir votre bon. Présentez-le lors de votre prochain rendez-vous.
+                {promoOffer.expires_at && (
+                  <span className="font-semibold text-amber-700"> Valable jusqu&apos;au {new Date(promoOffer.expires_at).toLocaleDateString('fr-FR')}.</span>
+                )}
+              </p>
+            </div>
+          </motion.a>
+        )}
+
         {/* Label carte simulée */}
         <motion.p
           initial={{ opacity: 0, y: 8 }}
@@ -265,7 +321,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           transition={{ delay: 0.3, duration: 0.35 }}
           className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1 pt-2"
         >
-          Votre future carte
+          Carte de fidelite
         </motion.p>
 
         {/* SimulatedCard — LE centerpiece */}
@@ -293,7 +349,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           transition={{ delay: 0.45, duration: 0.4 }}
           className="text-center text-[11px] text-gray-400 font-medium -mt-1"
         >
-          Pas encore de carte ? Pas de panique, {merchant.shop_name} vous la créera sur place en 30 secondes.
+          En devenant client, vous recevez votre carte de fidelite et cumulez des recompenses a chaque passage.
         </motion.p>
 
         {/* Tier 2 */}

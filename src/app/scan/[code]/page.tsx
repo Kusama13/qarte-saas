@@ -50,6 +50,17 @@ interface WelcomeInfo {
   primary_color: string;
 }
 
+interface OfferInfo {
+  valid: boolean;
+  is_offer: true;
+  offer_id: string;
+  offer_title: string;
+  offer_description: string;
+  shop_name: string;
+  merchant_id: string;
+  primary_color: string;
+}
+
 // Phone cookie is now HttpOnly, set server-side by register/checkin APIs
 
 export default function ScanPage({ params }: { params: Promise<{ code: string }> }) {
@@ -58,6 +69,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const searchParams = useSearchParams();
   const refCode = searchParams.get('ref');
   const welcomeCode = searchParams.get('welcome');
+  const offerId = searchParams.get('offer');
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [step, setStep] = useState<Step>('phone');
   const [loading, setLoading] = useState(true);
@@ -77,6 +89,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const [welcomeInfo, setWelcomeInfo] = useState<WelcomeInfo | null>(null);
   const [welcomeLoading, setWelcomeLoading] = useState(!!searchParams.get('welcome'));
   const [welcomeResult, setWelcomeResult] = useState<{ shop_name: string; welcome_reward: string; merchant_id: string } | null>(null);
+
+  // Promo offer state
+  const [offerInfo, setOfferInfo] = useState<OfferInfo | null>(null);
+  const [offerLoading, setOfferLoading] = useState(!!searchParams.get('offer'));
+  const [offerResult, setOfferResult] = useState<{ shop_name: string; offer_title: string; offer_description: string; merchant_id: string } | null>(null);
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loyaltyCard, setLoyaltyCard] = useState<LoyaltyCard | null>(null);
@@ -143,7 +160,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         ? fetch(`/api/welcome?code=${encodeURIComponent(welcomeCode)}`).then(r => r.json()).catch(() => null)
         : Promise.resolve(null);
 
-      const [merchantResult, referralData, welcomeData] = await Promise.all([merchantPromise, referralPromise, welcomePromise]);
+      const offerPromise = offerId
+        ? fetch(`/api/merchant-offers/claim?offerId=${encodeURIComponent(offerId)}`).then(r => r.json()).catch(() => null)
+        : Promise.resolve(null);
+
+      const [merchantResult, referralData, welcomeData, offerData] = await Promise.all([merchantPromise, referralPromise, welcomePromise, offerPromise]);
 
       if (merchantResult.data) {
         setMerchant(merchantResult.data);
@@ -156,18 +177,22 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       if (welcomeData?.valid) {
         setWelcomeInfo(welcomeData);
       }
+      if (offerData?.valid) {
+        setOfferInfo(offerData);
+      }
       setReferralLoading(false);
       setWelcomeLoading(false);
+      setOfferLoading(false);
       setLoading(false);
     };
 
     init();
-  }, [code, refCode, welcomeCode]);
+  }, [code, refCode, welcomeCode, offerId]);
 
   // Auto-login effect: check HttpOnly cookie via /api/customers/me
   useEffect(() => {
     const autoLogin = async () => {
-      if (autoLoginAttempted || loading || !merchant || submitting || refCode || welcomeCode) return;
+      if (autoLoginAttempted || loading || !merchant || submitting || refCode || welcomeCode || offerId) return;
 
       // Guard: skip auto-login if already auto-checked-in today for this scan code
       const lastAutoCheckin = localStorage.getItem(`qarte_checkin_${code}`);
@@ -274,6 +299,36 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             setSubmitting(false);
             return;
           }
+          // Offer flow: claim directly for existing customer
+          if (offerId && offerInfo) {
+            const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
+            const res = await fetch('/api/merchant-offers/claim', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                offer_id: offerId,
+                phone_number: formattedPhone,
+                first_name: data.customer.first_name,
+                last_name: data.customer.last_name || null,
+              }),
+            });
+            const claimData = await res.json();
+            if (res.ok && claimData.success) {
+              setOfferResult({
+                shop_name: claimData.shop_name,
+                offer_title: claimData.offer_title,
+                offer_description: claimData.offer_description,
+                merchant_id: claimData.merchant_id,
+              });
+              setCustomer(data.customer);
+              triggerSparkles();
+              setStep('referral-success');
+            } else {
+              setError(claimData.error || 'Erreur lors de la récupération de l\'offre');
+            }
+            setSubmitting(false);
+            return;
+          }
           setCustomer(data.customer);
           if (merchant.loyalty_mode === 'cagnotte') {
             setStep('amount');
@@ -289,6 +344,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             setStep('register');
           } else if (welcomeCode && welcomeInfo) {
             // Welcome flow: pre-fill name and go to register
+            setFirstName(data.customer.first_name || '');
+            setLastName('');
+            setStep('register');
+          } else if (offerId && offerInfo) {
+            // Offer flow: pre-fill name and go to register
             setFirstName(data.customer.first_name || '');
             setLastName('');
             setStep('register');
@@ -347,6 +407,35 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     try {
       const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
       // Cookie is set server-side by register/checkin APIs
+
+      // Offer flow: call /api/merchant-offers/claim
+      if (offerId && offerInfo) {
+        const res = await fetch('/api/merchant-offers/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            offer_id: offerId,
+            phone_number: formattedPhone,
+            first_name: firstName.trim(),
+            last_name: lastName.trim() || null,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setOfferResult({
+            shop_name: data.shop_name,
+            offer_title: data.offer_title,
+            offer_description: data.offer_description,
+            merchant_id: data.merchant_id,
+          });
+          setCustomer({ id: data.customer_id } as Customer);
+          triggerSparkles();
+          setStep('referral-success');
+        } else {
+          setError(data.error || 'Erreur lors de l\'inscription');
+        }
+        return;
+      }
 
       // Welcome flow: call /api/welcome instead of /api/checkin
       if (welcomeCode && welcomeInfo) {
@@ -671,8 +760,41 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           <div className="animate-fade-in">
             <WelcomeBanner merchant={merchant} primaryColor={primaryColor} secondaryColor={secondaryColor} />
 
+            {/* Promo Offer Banner */}
+            {offerInfo && !welcomeInfo && !referralInfo && (
+              <div className="mb-4">
+                <div
+                  className="rounded-2xl p-4 border shadow-md"
+                  style={{
+                    background: `linear-gradient(135deg, ${primaryColor}15, ${primaryColor}08)`,
+                    borderColor: `${primaryColor}30`,
+                  }}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center"
+                      style={{ backgroundColor: `${primaryColor}20` }}
+                    >
+                      <Gift className="w-5 h-5" style={{ color: primaryColor }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 text-sm">
+                        {offerInfo.offer_title}
+                      </p>
+                      <p className="text-gray-600 text-xs mt-0.5">
+                        Inscrivez-vous et recevez :
+                      </p>
+                      <p className="font-bold text-sm mt-1" style={{ color: primaryColor }}>
+                        {offerInfo.offer_description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Welcome Offer Banner */}
-            {welcomeInfo && !referralInfo && (
+            {welcomeInfo && !referralInfo && !offerInfo && (
               <div className="mb-4">
                 <div
                   className="rounded-2xl p-4 border shadow-md"
@@ -1134,15 +1256,15 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           />
         )}
 
-        {/* Referral / Welcome Success */}
-        {step === 'referral-success' && (referralResult || welcomeResult) && (
+        {/* Referral / Welcome / Offer Success */}
+        {step === 'referral-success' && (referralResult || welcomeResult || offerResult) && (
           <div className="animate-fade-in">
             <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
               <div
                 className="inline-flex items-center justify-center w-20 h-20 mb-6 rounded-3xl"
                 style={{ backgroundColor: `${primaryColor}15` }}
               >
-                {welcomeResult ? (
+                {(welcomeResult || offerResult) ? (
                   <Sparkles className="w-10 h-10" style={{ color: primaryColor }} />
                 ) : (
                   <PartyPopper className="w-10 h-10" style={{ color: primaryColor }} />
@@ -1150,7 +1272,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </div>
 
               <h2 className="text-2xl font-black text-gray-900 mb-2">
-                {welcomeResult ? `Bienvenue chez ${welcomeResult.shop_name} !` : 'Bienvenue !'}
+                {offerResult ? `${offerResult.offer_title}` : welcomeResult ? `Bienvenue chez ${welcomeResult.shop_name} !` : 'Bienvenue !'}
               </h2>
               {referralResult && (
                 <p className="text-gray-500 mb-4">
@@ -1165,22 +1287,24 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Gift className="w-4 h-4" style={{ color: primaryColor }} />
                   <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    {welcomeResult ? 'Votre offre de bienvenue' : 'Votre récompense'}
+                    {offerResult ? offerResult.offer_title : welcomeResult ? 'Votre offre de bienvenue' : 'Votre récompense'}
                   </span>
                 </div>
                 <p className="font-bold text-lg" style={{ color: primaryColor }}>
-                  {welcomeResult ? welcomeResult.welcome_reward : referralResult?.referred_reward}
+                  {offerResult ? offerResult.offer_description : welcomeResult ? welcomeResult.welcome_reward : referralResult?.referred_reward}
                 </p>
               </div>
 
               <p className="text-xs text-gray-400 mb-6">
-                {welcomeResult
-                  ? 'Présentez ce bon lors de votre première visite.'
-                  : 'Votre récompense est disponible sur votre carte de fidélité.'}
+                {offerResult
+                  ? 'Présentez ce bon lors de votre prochaine visite.'
+                  : welcomeResult
+                    ? 'Présentez ce bon lors de votre première visite.'
+                    : 'Votre récompense est disponible sur votre carte de fidélité.'}
               </p>
 
               <button
-                onClick={() => router.push(`/customer/card/${welcomeResult?.merchant_id || referralResult?.merchant_id}`)}
+                onClick={() => router.push(`/customer/card/${offerResult?.merchant_id || welcomeResult?.merchant_id || referralResult?.merchant_id}`)}
                 className="w-full h-14 text-lg font-bold rounded-2xl text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
               >

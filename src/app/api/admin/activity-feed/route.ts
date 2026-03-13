@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
     });
 
     (usedVouchers || []).forEach((v: { used_at: string; merchant_id: string; source: string; reward_description: string | null }) => {
-      const sourceLabel = v.source === 'birthday' ? 'Anniversaire' : 'Parrainage';
+      const sourceLabel = v.source === 'birthday' ? 'Anniversaire' : v.source === 'welcome' ? 'Bienvenue' : v.source === 'offer' ? 'Offre promo' : 'Parrainage';
       events.push({
         type: 'voucher',
         timestamp: v.used_at,

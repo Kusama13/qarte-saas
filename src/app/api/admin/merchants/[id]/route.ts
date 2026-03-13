@@ -68,6 +68,7 @@ export async function GET(
       servicesCountRes,
       photosCountRes,
       welcomeVouchersRes,
+      offerVouchersRes,
     ] = await Promise.all([
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
@@ -86,6 +87,7 @@ export async function GET(
       supabaseAdmin.from('merchant_services').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('merchant_photos').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('vouchers').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('source', 'welcome'),
+      supabaseAdmin.from('vouchers').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('source', 'offer'),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -153,6 +155,7 @@ export async function GET(
         servicesCount: servicesCountRes.count || 0,
         photosCount: photosCountRes.count || 0,
         welcomeVouchers: welcomeVouchersRes.count || 0,
+        offerVouchers: offerVouchersRes.count || 0,
       },
       memberPrograms: memberProgramsRes.data || [],
       emailTrackings: emailTrackingsRes.data || [],

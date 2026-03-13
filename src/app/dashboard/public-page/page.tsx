@@ -30,6 +30,7 @@ import { Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { compressOfferImage } from '@/lib/image-compression';
+// MerchantOffer type used via API only
 
 interface ServiceCategory {
   id: string;
@@ -112,6 +113,15 @@ export default function PublicPageDashboard() {
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
   const [editCategoryName, setEditCategoryName] = useState('');
 
+  // Promo offer (single)
+  const [promoEnabled, setPromoEnabled] = useState(false);
+  const [promoTitle, setPromoTitle] = useState('');
+  const [promoDescription, setPromoDescription] = useState('');
+  const [promoExpiresAt, setPromoExpiresAt] = useState('');
+  const [promoOfferId, setPromoOfferId] = useState<string | null>(null);
+  const [savingPromo, setSavingPromo] = useState(false);
+  const [savedPromo, setSavedPromo] = useState(false);
+
   // Collapsed categories
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
   const [prestationsOpen, setPrestationsOpen] = useState(false);
@@ -153,8 +163,26 @@ export default function PublicPageDashboard() {
       }
     };
 
+    const fetchOffers = async () => {
+      try {
+        const res = await fetch(`/api/merchant-offers?merchantId=${merchant.id}`);
+        const data = await res.json();
+        if (res.ok && data.offers?.length > 0) {
+          const offer = data.offers[0];
+          setPromoOfferId(offer.id);
+          setPromoTitle(offer.title);
+          setPromoDescription(offer.description);
+          setPromoExpiresAt(offer.expires_at ? offer.expires_at.split('T')[0] : '');
+          // Auto-detect expired offers
+          const isExpired = offer.expires_at && new Date(offer.expires_at) < new Date();
+          setPromoEnabled(offer.active && !isExpired);
+        }
+      } catch { /* silent */ }
+    };
+
     fetchPhotos();
     fetchServices();
+    fetchOffers();
   }, [merchant, merchantLoading, supabase]);
 
   const servicesByCategory = useMemo(() => {
@@ -314,6 +342,61 @@ export default function PublicPageDashboard() {
   };
 
   // ── Category handlers ──
+  // ── Promo offer save ──
+  const handleSavePromo = async () => {
+    if (!merchant) return;
+    if (promoEnabled && (!promoTitle.trim() || !promoDescription.trim())) return;
+
+    setSavingPromo(true);
+    try {
+      if (promoEnabled) {
+        if (promoOfferId) {
+          // Update existing
+          await fetch('/api/merchant-offers', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              offerId: promoOfferId,
+              merchantId: merchant.id,
+              active: true,
+              title: promoTitle.trim(),
+              description: promoDescription.trim(),
+              expires_at: promoExpiresAt || null,
+            }),
+          });
+        } else {
+          // Create new
+          const res = await fetch('/api/merchant-offers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              merchantId: merchant.id,
+              title: promoTitle.trim(),
+              description: promoDescription.trim(),
+              expiresAt: promoExpiresAt || null,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && data.offer) {
+            setPromoOfferId(data.offer.id);
+          }
+        }
+      } else if (promoOfferId) {
+        // Disable
+        await fetch('/api/merchant-offers', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ offerId: promoOfferId, merchantId: merchant.id, active: false }),
+        });
+      }
+
+      setSavedPromo(true);
+      setTimeout(() => setSavedPromo(false), 3000);
+    } catch { /* silent */ } finally {
+      setSavingPromo(false);
+    }
+  };
+
   const handleAddCategory = async () => {
     if (!merchant || !newCategoryName.trim()) return;
     setAddingCategory(true);
@@ -904,6 +987,115 @@ export default function PublicPageDashboard() {
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             {saved ? 'Enregistré !' : 'Enregistrer'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── OFFRE PROMO ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center">
+              <Tag className="w-4 h-4 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">Offre promotionnelle</h2>
+              <p className="text-xs text-gray-400">Offre ponctuelle visible sur ta page (ex: offre de printemps)</p>
+            </div>
+          </div>
+          {promoExpiresAt && new Date(promoExpiresAt) < new Date(new Date().toISOString().split('T')[0]) && (
+            <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-lg">Expirée</span>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="font-semibold text-gray-900 text-sm">Activer l&apos;offre</p>
+            <p className="text-xs text-gray-500 mt-0.5">Tous les visiteurs verront l&apos;offre sur ta page publique</p>
+          </div>
+          <button
+            role="switch"
+            aria-checked={promoEnabled}
+            onClick={() => setPromoEnabled(!promoEnabled)}
+            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full transition-colors ${
+              promoEnabled ? 'bg-amber-500' : 'bg-gray-200'
+            }`}
+          >
+            <span className={`pointer-events-none absolute top-[2px] left-[2px] h-6 w-6 rounded-full bg-white shadow-md transition-transform ${promoEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </div>
+
+        {promoEnabled && (
+          <div className="space-y-3 pt-4 border-t border-gray-100">
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                Titre de l&apos;offre <span className="text-red-400">*</span>
+              </label>
+              <Input
+                placeholder="Ex: Offre de printemps"
+                value={promoTitle}
+                onChange={(e) => setPromoTitle(e.target.value)}
+                className="h-11"
+              />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {['Offre de printemps', 'Offre sp\u00e9ciale', 'Offre du moment', 'Black Friday', 'Offre de rentr\u00e9e'].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setPromoTitle(s)}
+                    className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-colors"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                Description de l&apos;offre <span className="text-red-400">*</span>
+              </label>
+              <Input
+                placeholder="Ex: -20% sur les balayages, Un soin offert..."
+                value={promoDescription}
+                onChange={(e) => setPromoDescription(e.target.value)}
+                className="h-11"
+              />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {['-10% sur toutes les prestations', '-20% sur un service', 'Un soin offert'].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setPromoDescription(s)}
+                    className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-colors"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Date d&apos;expiration (optionnel)</label>
+              <Input
+                type="date"
+                value={promoExpiresAt}
+                onChange={(e) => setPromoExpiresAt(e.target.value)}
+                className="h-11"
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleSavePromo}
+            disabled={savingPromo || (promoEnabled && (!promoTitle.trim() || !promoDescription.trim()))}
+            className={`px-5 py-2.5 font-semibold rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm ${
+              savedPromo ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+          >
+            {savingPromo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+            {savedPromo ? 'Enregistr\u00e9 !' : 'Enregistrer'}
           </button>
         </div>
       </div>

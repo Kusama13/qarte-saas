@@ -567,6 +567,32 @@ Single-row table : id, content (TEXT, default ''), updated_at
 **RLS** : SELECT public, ALL merchant own
 **Index** : `idx_merchant_services_merchant`, `idx_merchant_services_category`
 
+---
+
+### 2.34 merchant_offers (mig 060)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
+| title | TEXT | NOT NULL | |
+| description | TEXT | NOT NULL | |
+| active | BOOLEAN | `true` | |
+| starts_at | TIMESTAMPTZ | `NOW()` | |
+| expires_at | TIMESTAMPTZ | NULL | |
+| max_claims | INTEGER | NULL | |
+| claim_count | INTEGER | `0` | |
+| offer_code | TEXT | NOT NULL | `encode(gen_random_bytes(6), 'hex')` |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**RLS** : SELECT public (active + non-expired), ALL merchant own
+**Index** : `idx_merchant_offers_merchant`, `idx_merchant_offers_active` (partial)
+
+**vouchers.offer_id** : UUID FK → merchant_offers(id) ON DELETE SET NULL (nullable, only for source='offer')
+**vouchers.source CHECK** : `('birthday', 'referral', 'redemption', 'welcome', 'offer')`
+
+---
+
 
 
 | Colonne | Type | Default | Contrainte |
@@ -797,6 +823,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 057 | merchant_services | Tables merchant_service_categories + merchant_services, RLS public read + merchant CRUD, indexes merchant_id + category_id |
 | 058 | services_duration_description | Ajout duration + description sur merchant_services |
 | 059 | point_adjustments_cascade_delete | FK adjusted_by → auth.users passe de RESTRICT a ON DELETE CASCADE |
+| 060 | merchant_offers | Table merchant_offers (promo), vouchers.offer_id FK, source CHECK +offer, RLS public read active + merchant CRUD |
 
 ---
 

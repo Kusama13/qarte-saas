@@ -63,7 +63,7 @@ docs/
 ├── AUDIT-SECURITE.md     # Score 93/100
 └── AUDIT-SCALABILITE.md  # Score 94/100
 
-supabase/migrations/      # 59 migrations SQL (001-059)
+supabase/migrations/      # 60 migrations SQL (001-060)
 ```
 
 ---
@@ -389,7 +389,8 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 1. Hero (logo, nom, adresse, badge Qarte, tagline fidelite)
 2. CTA "Prendre rendez-vous" (conditionnel sur `booking_url`) + sticky bar quand hors viewport
 3. Offre de bienvenue (CTA conditionnel si `welcome_offer_enabled`, pointe vers `/scan/{code}?welcome=`)
-4. Carte fidelite simulee ("Votre future carte")
+3b. Offre promo (amber, depuis `merchant_offers`, CTA vers `/scan/{code}?offer={id}`)
+4. Carte fidelite simulee ("Carte de fidelite" + texte explicatif recompenses)
 5. Palier 2 (si `tier2_enabled`)
 6. Avantages exclusifs (anniversaire, parrainage, jours bonus)
 7. Prestations (collapsible, ferme par defaut, depuis `merchant_services` + `merchant_service_categories`)

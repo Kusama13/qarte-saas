@@ -125,6 +125,7 @@ interface Stats {
   servicesCount: number;
   photosCount: number;
   welcomeVouchers: number;
+  offerVouchers: number;
 }
 
 interface MemberProgram {
@@ -232,6 +233,7 @@ export default function MerchantDetailPage() {
     servicesCount: 0,
     photosCount: 0,
     welcomeVouchers: 0,
+    offerVouchers: 0,
   });
   const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1295,6 +1297,17 @@ export default function MerchantDetailPage() {
             <div>
               <p className="text-2xl font-bold text-gray-900">{stats.welcomeVouchers}</p>
               <p className="text-sm text-gray-500">Vouchers bienvenue</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-amber-50">
+              <Tag className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.offerVouchers}</p>
+              <p className="text-sm text-gray-500">Vouchers promo</p>
             </div>
           </div>
         </div>

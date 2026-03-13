@@ -104,6 +104,20 @@ export interface Merchant {
   pwa_installed_at: string | null;
 }
 
+export interface MerchantOffer {
+  id: string;
+  merchant_id: string;
+  title: string;
+  description: string;
+  active: boolean;
+  starts_at: string;
+  expires_at: string | null;
+  max_claims: number | null;
+  claim_count: number;
+  offer_code: string;
+  created_at: string;
+}
+
 export interface Customer {
   id: string;
   merchant_id: string;
