@@ -94,7 +94,7 @@ export default function OnboardingChecklist() {
             id: 'social',
             label: 'Ajouter un réseau social',
             done: !!(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url),
-            href: '/dashboard/program?section=social',
+            href: '/dashboard/public-page',
             icon: Share2,
           },
           {

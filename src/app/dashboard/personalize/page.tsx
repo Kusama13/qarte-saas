@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Camera, Check, ArrowRight, Loader2, Palette } from 'lucide-react';
+import { Camera, Check, ArrowRight, Loader2, Palette, ArrowLeft } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
 import { compressLogo } from '@/lib/image-compression';
@@ -19,8 +19,10 @@ const COLOR_PALETTES = [
   { primary: '#be185d', secondary: '#fb7185', name: 'Corail' },
 ];
 
-export default function PersonalizePage() {
+function PersonalizeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const from = searchParams.get('from');
   const supabase = getSupabase();
   const { merchant, loading, refetch } = useMerchant();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -80,7 +82,13 @@ export default function PersonalizePage() {
       }).eq('id', merchant.id);
 
       await refetch();
-      router.push('/dashboard/welcome');
+      if (from === 'program') {
+        router.push('/dashboard/program');
+      } else if (from === 'public-page') {
+        router.push('/dashboard/public-page');
+      } else {
+        router.push('/dashboard/welcome');
+      }
     } catch (error) {
       console.error('Error saving:', error);
     } finally {
@@ -98,6 +106,19 @@ export default function PersonalizePage() {
 
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center px-4 py-12 max-w-md mx-auto">
+      {/* Back button when coming from another page */}
+      {from && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          onClick={() => router.push(from === 'program' ? '/dashboard/program' : '/dashboard/public-page')}
+          className="self-start mb-4 flex items-center gap-1.5 text-sm text-gray-500 hover:text-indigo-600 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Retour
+        </motion.button>
+      )}
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -106,11 +127,11 @@ export default function PersonalizePage() {
         className="text-center mb-8"
       >
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
-          Ajoute{' '}
+          {from ? 'Modifie' : 'Ajoute'}{' '}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">ta touche perso</span>
         </h1>
         <p className="text-gray-500 mt-2 text-sm">
-          Ton logo et tes couleurs, en 30 secondes. Tu pourras les modifier a tout moment.
+          {from ? 'Ton logo et tes couleurs, modifiables a tout moment.' : 'Ton logo et tes couleurs, en 30 secondes. Tu pourras les modifier a tout moment.'}
         </p>
       </motion.div>
 
@@ -225,6 +246,11 @@ export default function PersonalizePage() {
         >
           {saving ? (
             <Loader2 className="w-5 h-5 animate-spin" />
+          ) : from ? (
+            <>
+              <Check className="w-5 h-5" />
+              Enregistrer
+            </>
           ) : (
             <>
               Continuer
@@ -234,5 +260,17 @@ export default function PersonalizePage() {
         </button>
       </motion.div>
     </div>
+  );
+}
+
+export default function PersonalizePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+      </div>
+    }>
+      <PersonalizeContent />
+    </Suspense>
   );
 }

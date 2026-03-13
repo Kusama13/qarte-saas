@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Globe,
   ExternalLink,
@@ -23,6 +24,7 @@ import {
   LayoutList,
   Tag,
   Instagram,
+  Palette,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
@@ -47,6 +49,7 @@ interface Service {
 }
 
 export default function PublicPageDashboard() {
+  const router = useRouter();
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const supabase = getSupabase();
 
@@ -596,22 +599,24 @@ export default function PublicPageDashboard() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* Header */}
-      <div className="mb-8 p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Globe className="w-7 h-7 text-violet-600" />
+      <div className="mb-6 p-5 md:p-6 rounded-2xl bg-violet-50/40 border border-violet-100">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-sm">
+              <Globe className="w-5 h-5 text-white" />
+            </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
+              <h1 className="text-xl md:text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
                 Ma Page
               </h1>
-              <p className="mt-1 text-sm text-gray-500 font-medium">
-                Personnalise ta page publique visible par tes futurs clients
+              <p className="mt-1 text-sm text-gray-500">
+                Ta vitrine en ligne — visible sur Google et partageable partout
               </p>
             </div>
           </div>
           <button
             onClick={() => setShowHelp(true)}
-            className="shrink-0 w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-violet-600 hover:border-violet-200 transition-colors"
+            className="shrink-0 w-9 h-9 rounded-xl bg-white border border-violet-200 flex items-center justify-center text-gray-400 hover:text-violet-600 hover:border-violet-300 transition-colors"
           >
             <HelpCircle className="w-5 h-5" />
           </button>
@@ -620,8 +625,8 @@ export default function PublicPageDashboard() {
 
       {/* Help modal */}
       {showHelp && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowHelp(false)}>
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setShowHelp(false)}>
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => setShowHelp(false)}
               className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -633,37 +638,37 @@ export default function PublicPageDashboard() {
               <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-violet-600" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Attire de nouveaux clients</h3>
+              <h3 className="text-lg font-bold text-gray-900">A quoi sert cette page ?</h3>
             </div>
 
             <p className="text-sm text-gray-500 mb-4">
-              Ta page publique est ta vitrine en ligne. Plus elle est soign&eacute;e, plus elle attire de nouveaux clients.
+              Configure ta page en quelques minutes. Qarte s&apos;occupe du reste : visibilit&eacute; Google, acquisition de nouveaux clients et fid&eacute;lisation.
             </p>
 
             <div className="space-y-4 text-sm text-gray-600">
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center">1</span>
-                <p>Remplis <span className="font-semibold text-gray-900">chaque section</span> avec soin : nom, adresse, photos, prestations.</p>
+                <p>Qarte <span className="font-semibold text-gray-900">cr&eacute;e ta page pro</span> automatiquement avec tes infos, photos et prestations.</p>
               </div>
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center">2</span>
-                <p>Active l&apos;<span className="font-semibold text-gray-900">offre de bienvenue</span> pour donner une raison de venir.</p>
+                <p>Qarte <span className="font-semibold text-gray-900">te r&eacute;f&eacute;rence sur Google</span> pour que les clients de ta ville te trouvent.</p>
               </div>
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center">3</span>
-                <p>Partage le <span className="font-semibold text-gray-900">lien de ta page</span> sur tes r&eacute;seaux et en bio Instagram.</p>
+                <p>Qarte <span className="font-semibold text-gray-900">convertit les visiteurs</span> gr&acirc;ce &agrave; l&apos;offre de bienvenue et la carte de fid&eacute;lit&eacute;.</p>
               </div>
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 font-bold text-xs flex items-center justify-center">
                   <Check className="w-3 h-3" />
                 </span>
-                <p>Ta page <span className="font-semibold text-gray-900">remonte sur Google</span> et attire des clients, m&ecirc;me quand tu ne fais rien.</p>
+                <p>Toi, tu te concentres sur <span className="font-semibold text-gray-900">ton m&eacute;tier</span>. Qarte g&egrave;re l&apos;acquisition et la fid&eacute;lisation.</p>
               </div>
             </div>
 
             <button
               onClick={() => setShowHelp(false)}
-              className="w-full mt-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+              className="w-full mt-6 py-2.5 bg-violet-600 text-white font-semibold rounded-xl hover:bg-violet-700 transition-colors"
             >
               Compris !
             </button>
@@ -671,38 +676,153 @@ export default function PublicPageDashboard() {
         </div>
       )}
 
-      {/* ── LIEN PAGE PUBLIQUE ── */}
-      {merchant?.slug && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Lien de ta page</h2>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono text-gray-600 truncate">
-              getqarte.com/p/{merchant.slug}
-            </div>
-            <button
-              onClick={handleCopy}
-              className={`shrink-0 px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all ${
-                copied ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
-              }`}
-            >
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              {copied ? 'Copié' : 'Copier'}
-            </button>
-            <a
-              href={`/p/${merchant.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 px-4 py-3 rounded-xl font-semibold text-sm bg-gray-50 border border-gray-200 text-gray-600 hover:bg-gray-100 transition-colors flex items-center gap-2"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Voir
-            </a>
+      {/* ── LOGO & AMBIANCE REMINDER ── */}
+      {merchant && (
+        <button
+          type="button"
+          onClick={() => router.push('/dashboard/personalize?from=public-page')}
+          className="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:border-indigo-100 transition-all group mb-6"
+        >
+          <div className="shrink-0 w-11 h-11 md:w-14 md:h-14 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
+            {merchant.logo_url ? (
+              <img src={merchant.logo_url} alt="Logo" className="w-full h-full object-cover rounded-xl" />
+            ) : (
+              <Palette className="w-5 h-5 text-gray-300" />
+            )}
           </div>
-          <p className="text-xs text-gray-400 mt-2.5">
-            Partage ce lien sur tes réseaux sociaux, ta bio Instagram, ou en lien de réservation
-          </p>
-        </div>
+          <div className="flex-1 min-w-0 text-left">
+            <p className="text-sm font-semibold text-gray-800">
+              {merchant.logo_url ? 'Logo & Ambiance' : 'Ajoute ton logo et choisis ton ambiance'}
+            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="flex gap-0.5">
+                <div className="w-4 h-4 rounded-l-sm" style={{ backgroundColor: merchant.primary_color || '#654EDA' }} />
+                <div className="w-4 h-4 rounded-r-sm" style={{ backgroundColor: merchant.secondary_color || '#9D8FE8' }} />
+              </div>
+              <span className="text-xs text-gray-400">Ambiance de ta carte</span>
+            </div>
+          </div>
+          <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-semibold group-hover:bg-indigo-100 transition-colors">
+            <Pencil className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Modifier</span>
+          </div>
+        </button>
       )}
+
+      {/* ── INFOS PRATIQUES ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+            <MapPin className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">Infos pratiques</h2>
+            <p className="text-xs text-gray-400">Visibles sur ta page publique</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Nom du salon</label>
+            <Input
+              placeholder="Mon Salon, Chez Marie..."
+              value={shopName}
+              onChange={(e) => setShopName(e.target.value)}
+              className="h-11"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Adresse</label>
+            <Input
+              placeholder="12 rue de la Paix, 75002 Paris"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="h-11"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block flex items-center gap-1.5">
+              <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
+              Lien de réservation
+            </label>
+            <Input
+              placeholder="https://calendly.com/monsalon ou lien Planity, Treatwell..."
+              value={bookingUrl}
+              onChange={(e) => setBookingUrl(e.target.value)}
+              className="h-11"
+            />
+            <p className="text-xs text-gray-400 mt-1">Si rempli, un bouton &quot;Prendre rendez-vous&quot; apparaîtra sur ta page. Sinon, tes futurs clients pourront te contacter via tes réseaux sociaux.</p>
+          </div>
+        </div>
+
+        {/* Réseaux sociaux */}
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center">
+              <Instagram className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Réseaux sociaux</h3>
+              <p className="text-xs text-gray-400">Liens affichés sur ta page publique</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Instagram</label>
+              <Input
+                type="text"
+                className="bg-white border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 h-11 text-sm rounded-xl w-full"
+                placeholder="@votre-commerce ou lien complet"
+                value={instagramUrl}
+                onChange={(e) => setInstagramUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Facebook</label>
+              <Input
+                type="text"
+                className="bg-white border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 h-11 text-sm rounded-xl w-full"
+                placeholder="votre-page ou lien complet"
+                value={facebookUrl}
+                onChange={(e) => setFacebookUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">TikTok</label>
+              <Input
+                type="text"
+                className="bg-white border border-gray-200 focus:border-gray-600 focus:ring-2 focus:ring-gray-400/20 h-11 text-sm rounded-xl w-full"
+                placeholder="@votre-commerce ou lien complet"
+                value={tiktokUrl}
+                onChange={(e) => setTiktokUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Snapchat</label>
+              <Input
+                type="text"
+                className="bg-white border border-gray-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 h-11 text-sm rounded-xl w-full"
+                placeholder="votre-pseudo ou lien complet"
+                value={snapchatUrl}
+                onChange={(e) => setSnapchatUrl(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleSaveInfo}
+            disabled={savingInfo}
+            className={`px-5 py-2.5 font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 text-sm ${
+              savedInfo ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+          >
+            {savingInfo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+            {savedInfo ? 'Enregistré !' : 'Enregistrer'}
+          </button>
+        </div>
+      </div>
 
       {/* ── OFFRE NOUVEAU CLIENT ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
@@ -721,7 +841,7 @@ export default function PublicPageDashboard() {
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-indigo-600 bg-gray-50 rounded-lg hover:bg-indigo-50 transition-colors"
           >
             <HelpCircle className="w-3.5 h-3.5" />
-            Comment ca marche ?
+            Comment ça marche ?
           </button>
         </div>
 
@@ -784,121 +904,6 @@ export default function PublicPageDashboard() {
           >
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
             {saved ? 'Enregistré !' : 'Enregistrer'}
-          </button>
-        </div>
-      </div>
-
-      {/* ── INFOS PRATIQUES ── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
-            <MapPin className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-gray-900">Infos pratiques</h2>
-            <p className="text-xs text-gray-400">Visibles sur ta page publique</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Nom du salon</label>
-            <Input
-              placeholder="Mon Salon, Chez Marie..."
-              value={shopName}
-              onChange={(e) => setShopName(e.target.value)}
-              className="h-11"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Adresse</label>
-            <Input
-              placeholder="12 rue de la Paix, 75002 Paris"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="h-11"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block flex items-center gap-1.5">
-              <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
-              Lien de réservation
-            </label>
-            <Input
-              placeholder="https://calendly.com/monsalon ou lien Planity, Treatwell..."
-              value={bookingUrl}
-              onChange={(e) => setBookingUrl(e.target.value)}
-              className="h-11"
-            />
-            <p className="text-xs text-gray-400 mt-1">Si rempli, un bouton &quot;Prendre rendez-vous&quot; apparaîtra sur ta page</p>
-          </div>
-        </div>
-
-        {/* Réseaux sociaux */}
-        <div className="mt-6 pt-6 border-t border-gray-100">
-          <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center">
-              <Instagram className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-gray-900">Réseaux sociaux</h3>
-              <p className="text-xs text-gray-400">Liens affichés sur ta page publique</p>
-            </div>
-          </div>
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-600">Instagram</label>
-              <Input
-                type="text"
-                className="bg-white border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 h-11 text-sm rounded-xl w-full"
-                placeholder="@votre-commerce ou lien complet"
-                value={instagramUrl}
-                onChange={(e) => setInstagramUrl(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-600">Facebook</label>
-              <Input
-                type="text"
-                className="bg-white border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 h-11 text-sm rounded-xl w-full"
-                placeholder="votre-page ou lien complet"
-                value={facebookUrl}
-                onChange={(e) => setFacebookUrl(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-600">TikTok</label>
-              <Input
-                type="text"
-                className="bg-white border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/20 h-11 text-sm rounded-xl w-full"
-                placeholder="@votre-commerce ou lien complet"
-                value={tiktokUrl}
-                onChange={(e) => setTiktokUrl(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-gray-600">Snapchat</label>
-              <Input
-                type="text"
-                className="bg-white border border-gray-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 h-11 text-sm rounded-xl w-full"
-                placeholder="votre-pseudo ou lien complet"
-                value={snapchatUrl}
-                onChange={(e) => setSnapchatUrl(e.target.value)}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={handleSaveInfo}
-            disabled={savingInfo}
-            className={`px-5 py-2.5 font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 text-sm ${
-              savedInfo ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            }`}
-          >
-            {savingInfo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            {savedInfo ? 'Enregistré !' : 'Enregistrer'}
           </button>
         </div>
       </div>
@@ -1206,12 +1211,50 @@ export default function PublicPageDashboard() {
         </div>{/* grid collapse wrapper */}
       </div>
 
+      {/* ── LIEN PAGE PUBLIQUE ── */}
+      {merchant?.slug && (
+        <div className="bg-gradient-to-br from-indigo-50/80 to-violet-50/80 rounded-2xl border border-indigo-100 p-6 mb-6">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-sm">
+              <Globe className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">Lien de ta page</h2>
+              <p className="text-xs text-gray-500">Partage-le sur tes réseaux, ta bio Instagram ou en lien de réservation</p>
+            </div>
+          </div>
+          <div className="mb-3 px-4 py-2.5 bg-white/70 border border-indigo-100 rounded-xl text-sm font-mono text-gray-600 truncate">
+            getqarte.com/p/{merchant.slug}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleCopy}
+              className={`flex-1 py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all ${
+                copied ? 'bg-emerald-500 text-white shadow-sm' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm'
+              }`}
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              {copied ? 'Lien copié !' : 'Copier le lien'}
+            </button>
+            <a
+              href={`/p/${merchant.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-3 rounded-xl font-semibold text-sm bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 shadow-sm"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Voir ma page
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* ── WELCOME HELP MODAL ── */}
       {showWelcomeHelp && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setShowWelcomeHelp(false)}>
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Comment ca marche ?</h3>
+              <h3 className="text-lg font-bold text-gray-900">Comment ça marche ?</h3>
               <button onClick={() => setShowWelcomeHelp(false)} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
                 <X className="w-5 h-5 text-gray-500" />
               </button>

@@ -3,11 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Upload,
   Palette,
   Save,
   Loader2,
-  Image as ImageIcon,
   Check,
   Star,
   AlertTriangle,
@@ -23,11 +21,11 @@ import {
   HelpCircle,
   X,
   Cake,
+  Pencil,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { MerchantSettingsForm, type LoyaltySettings } from '@/components/loyalty';
-import { compressLogo } from '@/lib/image-compression';
 import { useMerchant } from '@/contexts/MerchantContext';
 import type { Merchant } from '@/types';
 
@@ -111,7 +109,6 @@ export default function ProgramPage() {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [isFirstSetup, setIsFirstSetup] = useState(false);
 
@@ -194,37 +191,6 @@ export default function ProgramPage() {
 
     fetchMerchant();
   }, [router]);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      // Compress logo before upload
-      const compressedFile = await compressLogo(file);
-
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${merchant?.id}-${Date.now()}.${fileExt}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('logos')
-        .upload(fileName, compressedFile);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('logos')
-        .getPublicUrl(fileName);
-
-      setFormData({ ...formData, logoUrl: publicUrl });
-    } catch (error) {
-      console.error('Error uploading file:', error);
-    } finally {
-      setUploading(false);
-    }
-  };
-
 
   const normalizeUrl = (url: string) => {
     const trimmed = url.trim();
@@ -392,102 +358,43 @@ export default function ProgramPage() {
       <div className="grid gap-3 md:gap-8">
         <div className="space-y-3 md:space-y-6">
 
-          {/* Logo */}
+          {/* Logo & Ambiance reminder */}
+          <button
+            type="button"
+            onClick={() => router.push('/dashboard/personalize?from=program')}
+            className="w-full flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-white/60 backdrop-blur-xl border border-white/20 rounded-2xl shadow-sm hover:shadow-md hover:border-indigo-100 transition-all group"
+          >
+            {/* Logo preview */}
+            <div className="shrink-0 w-11 h-11 md:w-14 md:h-14 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 flex items-center justify-center overflow-hidden">
+              {formData.logoUrl ? (
+                <img src={formData.logoUrl} alt="Logo" className="w-full h-full object-cover rounded-xl" />
+              ) : (
+                <Palette className="w-5 h-5 text-gray-300" />
+              )}
+            </div>
 
-          <div className="p-3 md:p-6 bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-xl shadow-indigo-100/40 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 -mr-8 -mt-8 transition-transform duration-500 rounded-full bg-gradient-to-br from-indigo-50/50 to-violet-50/50 blur-3xl group-hover:scale-110" />
-
-            <h3 className="relative flex items-center gap-2 md:gap-3 mb-3 md:mb-6 text-sm md:text-lg font-bold text-gray-900">
-              <div className="flex items-center justify-center w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200">
-                <Upload className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
-              </div>
-              Ajoute ton logo ou une image de ton activité
-            </h3>
-
-            <div className="relative space-y-4 md:space-y-6">
-              <div className="space-y-2 md:space-y-3">
-                <div className="flex items-center gap-3 md:gap-5 p-3 md:p-4 transition-all border border-indigo-50 rounded-xl md:rounded-2xl bg-indigo-50/30 hover:bg-indigo-50/50">
-                  <label className="relative flex items-center justify-center w-16 h-16 md:w-20 md:h-20 transition-all duration-300 bg-white border-2 border-dashed border-indigo-200 shadow-sm rounded-xl md:rounded-2xl cursor-pointer hover:border-indigo-500 hover:shadow-md group/upload">
-                    {uploading ? (
-                      <Loader2 className="w-7 h-7 text-indigo-500 animate-spin" />
-                    ) : formData.logoUrl ? (
-                      <div className="relative w-full h-full p-1">
-                        <img
-                          src={formData.logoUrl}
-                          alt="Logo"
-                          className="object-cover w-full h-full shadow-inner rounded-xl"
-                        />
-                        <div className="absolute inset-0 transition-opacity bg-black/10 opacity-0 group-hover/upload:opacity-100 rounded-xl flex items-center justify-center">
-                          <ImageIcon className="w-5 h-5 text-white" />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-1">
-                        <ImageIcon className="w-6 h-6 text-indigo-300 group-hover/upload:text-indigo-500 transition-colors" />
-                      </div>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                    />
-                  </label>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-700">Cliquez pour choisir une image</span>
-                  </div>
+            {/* Info */}
+            <div className="flex-1 min-w-0 text-left">
+              <p className="text-sm font-semibold text-gray-800">
+                {formData.logoUrl ? 'Logo & Ambiance' : 'Ajoute ton logo et choisis ton ambiance'}
+              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex gap-0.5">
+                  <div className="w-4 h-4 rounded-l-sm" style={{ backgroundColor: formData.primaryColor }} />
+                  <div className="w-4 h-4 rounded-r-sm" style={{ backgroundColor: formData.secondaryColor }} />
                 </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Ambiance */}
-          <div className="p-3 md:p-6 bg-white/60 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg shadow-indigo-100/50">
-            <h3 className="flex items-center gap-2 md:gap-3 mb-3 md:mb-6 text-sm md:text-lg font-semibold text-gray-900">
-              <div className="p-1.5 md:p-2.5 rounded-lg md:rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/30">
-                <Palette className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
-              </div>
-              Ambiance
-            </h3>
-
-            <div className="space-y-3 md:space-y-4">
-              <label className="text-xs md:text-sm font-semibold tracking-wide text-gray-700 uppercase">Choisis l&apos;ambiance de ta carte</label>
-              <div className="grid grid-cols-3 sm:grid-cols-5 gap-1.5 md:gap-2">
-                {COLOR_PALETTES.map((palette, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, primaryColor: palette.primary, secondaryColor: palette.secondary })}
-                    className={`relative p-2 rounded-xl border-2 transition-all duration-300 group/palette ${
-                      'desktopOnly' in palette && palette.desktopOnly ? 'hidden sm:block' : ''
-                    } ${
-                      formData.primaryColor === palette.primary && formData.secondaryColor === palette.secondary
-                        ? 'border-indigo-600 ring-4 ring-indigo-500/10 shadow-lg'
-                        : 'border-gray-100 hover:border-indigo-200 hover:shadow-md'
-                    }`}
-                  >
-                    <div className="flex flex-col items-center gap-1.5">
-                      <div className="flex gap-0.5">
-                        <div className="w-5 h-5 rounded-l-md" style={{ backgroundColor: palette.primary }} />
-                        <div className="w-5 h-5 rounded-r-md" style={{ backgroundColor: palette.secondary }} />
-                      </div>
-                      <span className="text-sm">{palette.icon}</span>
-                      <span className="text-[8px] font-bold text-gray-500 uppercase tracking-wide">{palette.name}</span>
-                    </div>
-                    {formData.primaryColor === palette.primary && formData.secondaryColor === palette.secondary && (
-                      <div className="absolute -top-1 -right-1">
-                        <div className="p-0.5 bg-indigo-600 rounded-full shadow-sm">
-                          <Check className="w-2.5 h-2.5 text-white" />
-                        </div>
-                      </div>
-                    )}
-                  </button>
-                ))}
+                <span className="text-xs text-gray-400">
+                  {COLOR_PALETTES.find(p => p.primary === formData.primaryColor && p.secondary === formData.secondaryColor)?.name || 'Personnalise'}
+                </span>
               </div>
             </div>
 
-          </div>
+            {/* Edit button */}
+            <div className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-semibold group-hover:bg-indigo-100 transition-colors">
+              <Pencil className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Modifier</span>
+            </div>
+          </button>
 
           {/* ===== PROGRAMME ===== */}
 

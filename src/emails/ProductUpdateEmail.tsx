@@ -58,7 +58,7 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode }: Produ
       </Section>
 
       <Section style={buttonContainer}>
-        <Button style={buttonBlue} href="https://getqarte.com/dashboard/program?section=social">
+        <Button style={buttonBlue} href="https://getqarte.com/dashboard/public-page">
           Ajouter mes r&eacute;seaux
         </Button>
       </Section>
