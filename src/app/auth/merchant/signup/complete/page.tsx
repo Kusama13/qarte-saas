@@ -153,8 +153,8 @@ export default function CompleteProfilePage() {
       ttEvents.completeRegistration();
       ttEvents.startTrial();
 
-      // Redirect to program config
-      window.location.href = '/dashboard/program';
+      // Redirect to personalize screen
+      window.location.href = '/dashboard/personalize';
     } catch {
       setError('Une erreur est survenue. Veuillez réessayer.');
     } finally {

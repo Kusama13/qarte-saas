@@ -3,7 +3,7 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, Crown, UserPlus, Megaphone, CreditCard, Settings, Coins, Globe } from 'lucide-react';
+import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, Crown, UserPlus, Megaphone, CreditCard, Settings, Coins, Globe, Heart } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
@@ -553,18 +553,18 @@ export default function DashboardPage() {
         <div className="grid grid-cols-3 gap-2.5">
           {[
             { href: '/dashboard/public-page', icon: Globe, label: 'Ma Page', color: 'text-white', bg: 'bg-white/20', gradient: true },
+            { href: '/dashboard/program', icon: Heart, label: 'Fidélité', color: 'text-white', bg: 'bg-white/20', gradient: true, gradientColors: 'from-pink-500 to-rose-500 border-pink-400/20' },
             { href: '/dashboard/qr-download', icon: QrCode, label: 'QR Code', color: 'text-violet-500', bg: 'bg-violet-50' },
             { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
             { href: '/dashboard/referrals', icon: UserPlus, label: 'Parrainage', color: 'text-blue-500', bg: 'bg-blue-50' },
             { href: '/dashboard/subscription', icon: CreditCard, label: 'Abonnement', color: 'text-teal-500', bg: 'bg-teal-50' },
-            { href: '/dashboard/settings', icon: Settings, label: 'Paramètres', color: 'text-gray-500', bg: 'bg-gray-100' },
-          ].map(({ href, icon: Icon, label, color, bg, gradient }: { href: string; icon: React.ElementType; label: string; color: string; bg: string; gradient?: boolean }) => (
+          ].map(({ href, icon: Icon, label, color, bg, gradient, gradientColors }: { href: string; icon: React.ElementType; label: string; color: string; bg: string; gradient?: boolean; gradientColors?: string }) => (
             <Link
               key={href}
               href={href}
               className={`flex flex-col items-center gap-2 p-3 rounded-2xl shadow-sm active:scale-95 transition-transform ${
                 gradient
-                  ? 'bg-gradient-to-br from-indigo-600 to-violet-600 border border-indigo-500/20'
+                  ? `bg-gradient-to-br ${gradientColors || 'from-indigo-600 to-violet-600 border-indigo-500/20'} border`
                   : 'bg-white border border-gray-100'
               }`}
             >

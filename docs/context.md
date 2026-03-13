@@ -33,7 +33,7 @@ src/
 ├── app/
 │   ├── api/               # Routes API (voir section 6)
 │   ├── auth/              # Signup 2 phases + login
-│   ├── dashboard/         # Dashboard merchant (protected)
+│   ├── dashboard/         # Dashboard merchant (protected) + onboarding (personalize, welcome)
 │   ├── admin/             # Dashboard admin (super_admins)
 │   ├── customer/          # Carte fidelite + wallet
 │   ├── scan/[code]/       # Scan QR (page publique)
@@ -63,7 +63,7 @@ docs/
 ├── AUDIT-SECURITE.md     # Score 93/100
 └── AUDIT-SCALABILITE.md  # Score 94/100
 
-supabase/migrations/      # 57 migrations SQL (001-057)
+supabase/migrations/      # 58 migrations SQL (001-058)
 ```
 
 ---
@@ -264,8 +264,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `DELETE /api/photos` — Supprimer photo + fichier storage (auth, ownership)
 
 ### Prestations
-- `GET /api/services?merchantId=` — Liste services + categories (public)
+- `GET /api/services?merchantId=` — Liste services + categories (public). Champs: name, price, position, category_id, duration, description, price_from
 - `POST /api/services` — CRUD services et categories (merchant auth, type discrimine: 'service' | 'category')
+- Services: duration (int, min, nullable), description (text, nullable), price_from (bool, "a partir de")
 
 ### Admin
 - `/api/admin/merchants/[id]` — GET stats/PATCH notes
@@ -278,11 +279,13 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 1. **Phase 1:** Email + password (`/auth/merchant/signup`) — filet typo email
 2. **Phase 2:** Infos commerce (`/auth/merchant/signup/complete`)
-3. `/dashboard/program` → config (couleurs, stamps, reward)
-4. Premiere sauvegarde → modal "Ton programme est en ligne !" → "Voir le parcours client" (`/scan/{code}`) ou "Plus tard" → `/dashboard/qr-download`
-5. QR download → modal (1x) "Aide-nous a te rendre visible" → "Completer ma page" (`/dashboard/public-page`)
-6. `isFirstSetup` = true quand `reward_description` is null
-7. Email QR code envoye a la premiere config
+3. **Personnalisation** (`/dashboard/personalize`) — logo + ambiance couleurs (8 palettes). Sauvegarde `logo_url`, `primary_color`, `secondary_color` puis redirige vers welcome. Page onboarding-only (pas dans la sidebar).
+4. **Welcome** (`/dashboard/welcome`) — "Qarte t'offre deux super-pouvoirs" : 2 cartes (Programme fidelite → `/dashboard/program`, Ma page pro → `/dashboard/public-page`) + "Je verrai plus tard" → `/dashboard`. Auto-redirect vers `/dashboard` si merchant deja configure et pas venu de l'onboarding. Page onboarding-only (pas dans la sidebar).
+5. `/dashboard/program` → config (couleurs, stamps, reward)
+6. Premiere sauvegarde → modal "Ton programme est en ligne !" → "Voir le parcours client" (`/scan/{code}`) ou "Plus tard" → `/dashboard/qr-download`
+7. QR download → modal (1x) "Aide-nous a te rendre visible" → "Completer ma page" (`/dashboard/public-page`)
+8. `isFirstSetup` = true quand `reward_description` is null
+9. Email QR code envoye a la premiere config
 
 **OnboardingChecklist** : 8 etapes (programme, logo, reseau social, adresse, photo, simuler experience, QR download, 2 premiers scans), confetti a la completion (one-shot localStorage), auto-dismiss 3 jours apres. Visible seulement en trial.
 
@@ -367,7 +370,7 @@ Design Apple Wallet, fond `bg-[#f7f6fb]`, greeting typographique, cartes avec he
 Inscription rapide, validation passage, progression fidelite, detection `?ref=` pour parrainage
 
 ### Dashboard (`/dashboard`)
-Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 4 onglets), push notifications, abonnement, parrainage, parametres. Raccourcis mobile : Ma Page (gradient indigo-violet), Clients, QR Code, Parrainage, Kit Reseaux, Parametres.
+Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 4 onglets), push notifications, abonnement, parrainage, parametres. Raccourcis mobile : Ma Page (gradient indigo-violet), Fidelite (gradient pink-rose), QR Code, Clients, Parrainage, Abonnement.
 
 **Navigation sidebar** : Accueil, Programme de fidelite, Ma Page, QR code & Supports, Clients, Parrainage, Notifications, Abonnement, Parametres
 - **Membres** (`/dashboard/members`) : retire de la nav, accessible via bouton "Programmes VIP" dans Clients

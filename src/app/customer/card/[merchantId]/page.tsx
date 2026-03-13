@@ -369,6 +369,20 @@ export default function CustomerCardPage({
 
           setTier1RedeemedInCycle(tier1RedemptionsAfterTier2.length > 0);
         }
+
+        // Show review modal at 3rd stamp (if review_link configured and not already dismissed)
+        if (
+          data.card?.current_stamps === 3 &&
+          data.card?.merchant?.review_link &&
+          !isPreview
+        ) {
+          const dismissKey = `qarte_review_card_dismissed_${merchantId}`;
+          const stored = localStorage.getItem(dismissKey);
+          const alreadyDismissed = stored && (Date.now() - parseInt(stored)) / (1000 * 60 * 60 * 24) < 90;
+          if (!alreadyDismissed) {
+            setTimeout(() => setShowReviewModal(true), 1500);
+          }
+        }
       } catch (error) {
         console.error('Error fetching card:', error);
         router.push('/customer/cards');

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, X, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
+import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, X, ChevronLeft, ChevronRight, ChevronDown, Clock } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
@@ -11,7 +11,7 @@ import type { Merchant } from '@/types';
 
 type Photo = { id: string; url: string; position: number };
 type ServiceCategory = { id: string; name: string; position: number };
-type Service = { id: string; name: string; price: number; position: number; category_id: string | null };
+type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 
 type MerchantPublic = Pick<
   Merchant,
@@ -93,6 +93,13 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   // Services: pre-compute outside JSX
   const hasCategories = serviceCategories.length > 0;
   const uncategorized = services.filter(svc => !svc.category_id || !serviceCategories.find(c => c.id === svc.category_id));
+
+  const fmtDuration = (min: number) => {
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+  };
 
   // Scroll-triggered refs
   const { ref: topCtaRef, isInView: topCtaVisible } = useInView({ once: false });
@@ -468,12 +475,26 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                               {catServices.map((svc, idx) => (
                                 <div
                                   key={svc.id}
-                                  className={`flex items-center justify-between py-3 ${idx < catServices.length - 1 ? 'border-b border-gray-100/80' : ''}`}
+                                  className={`py-3 ${idx < catServices.length - 1 ? 'border-b border-gray-100/80' : ''}`}
                                 >
-                                  <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
-                                  <p className="text-[13px] font-bold text-gray-900 shrink-0 ml-4">
-                                    {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
-                                  </p>
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
+                                    <div className="flex items-center gap-2 shrink-0 ml-4">
+                                      {svc.duration && (
+                                        <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                                          <Clock className="w-3 h-3" />
+                                          {fmtDuration(svc.duration)}
+                                        </span>
+                                      )}
+                                      <p className="text-[13px] font-bold text-gray-900">
+                                        {svc.price_from && <span className="text-[11px] font-normal text-gray-400">dès </span>}
+                                        {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
+                                      </p>
+                                    </div>
+                                  </div>
+                                  {svc.description && (
+                                    <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{svc.description}</p>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -484,12 +505,26 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                             {uncategorized.map((svc, idx) => (
                               <div
                                 key={svc.id}
-                                className={`flex items-center justify-between py-3 ${idx < uncategorized.length - 1 ? 'border-b border-gray-100/80' : ''}`}
+                                className={`py-3 ${idx < uncategorized.length - 1 ? 'border-b border-gray-100/80' : ''}`}
                               >
-                                <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
-                                <p className="text-[13px] font-bold text-gray-900 shrink-0 ml-4">
-                                  {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
-                                </p>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
+                                  <div className="flex items-center gap-2 shrink-0 ml-4">
+                                    {svc.duration && (
+                                      <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                                        <Clock className="w-3 h-3" />
+                                        {fmtDuration(svc.duration)}
+                                      </span>
+                                    )}
+                                    <p className="text-[13px] font-bold text-gray-900">
+                                      {svc.price_from && <span className="text-[11px] font-normal text-gray-400">dès </span>}
+                                      {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
+                                    </p>
+                                  </div>
+                                </div>
+                                {svc.description && (
+                                  <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{svc.description}</p>
+                                )}
                               </div>
                             ))}
                           </div>
@@ -499,12 +534,26 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                       services.map((svc, idx) => (
                         <div
                           key={svc.id}
-                          className={`flex items-center justify-between py-3 ${idx < services.length - 1 ? 'border-b border-gray-100/80' : ''}`}
+                          className={`py-3 ${idx < services.length - 1 ? 'border-b border-gray-100/80' : ''}`}
                         >
-                          <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
-                          <p className="text-[13px] font-bold text-gray-900 shrink-0 ml-4">
-                            {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
-                          </p>
+                          <div className="flex items-center justify-between">
+                            <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
+                            <div className="flex items-center gap-2 shrink-0 ml-4">
+                              {svc.duration && (
+                                <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                                  <Clock className="w-3 h-3" />
+                                  {fmtDuration(svc.duration)}
+                                </span>
+                              )}
+                              <p className="text-[13px] font-bold text-gray-900">
+                                {svc.price_from && <span className="text-[11px] font-normal text-gray-400">dès </span>}
+                                {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
+                              </p>
+                            </div>
+                          </div>
+                          {svc.description && (
+                            <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{svc.description}</p>
+                          )}
                         </div>
                       ))
                     )}

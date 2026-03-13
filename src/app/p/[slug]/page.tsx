@@ -42,7 +42,7 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
       .order('position'),
     supabaseAdmin
       .from('merchant_services')
-      .select('id, name, price, position, category_id')
+      .select('id, name, price, position, category_id, duration, description, price_from')
       .eq('merchant_id', (merchant as any).id)
       .order('position'),
     supabaseAdmin

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Upload,
   Palette,
@@ -15,8 +15,6 @@ import {
   Trophy,
   Gift,
   Target,
-  ChevronDown,
-  Instagram,
   QrCode,
   Smartphone,
   Zap,
@@ -100,9 +98,15 @@ const TIER2_REWARD_SUGGESTIONS: Record<string, string[]> = {
   ],
 };
 
+const BIRTHDAY_SUGGESTIONS = [
+  '-10% sur ton prochain passage',
+  '-15% sur ton prochain passage',
+  '-20% sur ton prochain passage',
+  '-30% sur ton prochain passage',
+];
+
 export default function ProgramPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { refetch: refetchMerchantContext } = useMerchant();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -117,10 +121,6 @@ export default function ProgramPage() {
     primaryColor: '#654EDA',
     secondaryColor: '#9D8FE8',
     reviewLink: '',
-    instagramUrl: '',
-    facebookUrl: '',
-    tiktokUrl: '',
-    snapchatUrl: '',
     loyaltyMode: 'visit' as 'visit' | 'cagnotte',
     stampsRequired: 5,
     rewardDescription: '',
@@ -145,22 +145,9 @@ export default function ProgramPage() {
   const [showStampsWarning, setShowStampsWarning] = useState(false);
   const [tier2Error, setTier2Error] = useState('');
   const [rewardError, setRewardError] = useState(false);
-  const [socialOpen, setSocialOpen] = useState(searchParams.get('section') === 'social');
-  const [doubleDaysOpen, setDoubleDaysOpen] = useState(false);
-  const [reviewsOpen, setReviewsOpen] = useState(false);
-  const [birthdayOpen, setBirthdayOpen] = useState(false);
   const [showTestModal, setShowTestModal] = useState(false);
   const [pendingModeSwitch, setPendingModeSwitch] = useState<'visit' | 'cagnotte' | null>(null);
   const [modeHelp, setModeHelp] = useState<'visit' | 'cagnotte' | null>(null);
-  // Auto-scroll to social section when coming from onboarding checklist
-  useEffect(() => {
-    if (searchParams.get('section') === 'social' && !loading) {
-      requestAnimationFrame(() => {
-        document.getElementById('social-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      });
-    }
-  }, [searchParams, loading]);
-
   useEffect(() => {
     const fetchMerchant = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -182,10 +169,6 @@ export default function ProgramPage() {
           primaryColor: data.primary_color || '#654EDA',
           secondaryColor: data.secondary_color || '#9D8FE8',
           reviewLink: data.review_link || '',
-          instagramUrl: data.instagram_url || '',
-          facebookUrl: data.facebook_url || '',
-          tiktokUrl: data.tiktok_url || '',
-          snapchatUrl: data.snapchat_url || '',
           loyaltyMode: data.loyalty_mode || 'visit',
           stampsRequired: data.stamps_required || 5,
           rewardDescription: data.reward_description || '',
@@ -250,23 +233,6 @@ export default function ProgramPage() {
     return `https://${trimmed}`;
   };
 
-  const normalizeSocialUrl = (value: string, platform: 'instagram' | 'facebook' | 'tiktok' | 'snapchat') => {
-    const trimmed = value.trim();
-    if (!trimmed) return '';
-    // Already a URL
-    if (/^https?:\/\//i.test(trimmed) || trimmed.includes('.com') || trimmed.includes('.fr')) {
-      return normalizeUrl(trimmed);
-    }
-    // Username → build URL
-    const username = trimmed.replace(/^@/, '');
-    switch (platform) {
-      case 'instagram': return `https://instagram.com/${username}`;
-      case 'facebook': return `https://facebook.com/${username}`;
-      case 'tiktok': return `https://tiktok.com/@${username}`;
-      case 'snapchat': return `https://snapchat.com/add/${username}`;
-    }
-  };
-
   const handleSave = async () => {
     if (!merchant) return;
     if (formData.loyaltyMode !== 'cagnotte' && !formData.rewardDescription.trim()) {
@@ -319,10 +285,6 @@ export default function ProgramPage() {
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
           review_link: normalizeUrl(formData.reviewLink) || null,
-          instagram_url: normalizeSocialUrl(formData.instagramUrl, 'instagram') || null,
-          facebook_url: normalizeSocialUrl(formData.facebookUrl, 'facebook') || null,
-          tiktok_url: normalizeSocialUrl(formData.tiktokUrl, 'tiktok') || null,
-          snapchat_url: normalizeSocialUrl(formData.snapchatUrl, 'snapchat') || null,
           stamps_required: formData.stampsRequired,
           reward_description: effectiveRewardDescription,
           loyalty_mode: formData.loyaltyMode,
@@ -350,10 +312,6 @@ export default function ProgramPage() {
           primary_color: formData.primaryColor,
           secondary_color: formData.secondaryColor,
           review_link: normalizeUrl(formData.reviewLink) || null,
-          instagram_url: normalizeSocialUrl(formData.instagramUrl, 'instagram') || null,
-          facebook_url: normalizeSocialUrl(formData.facebookUrl, 'facebook') || null,
-          tiktok_url: normalizeSocialUrl(formData.tiktokUrl, 'tiktok') || null,
-          snapchat_url: normalizeSocialUrl(formData.snapchatUrl, 'snapchat') || null,
           stamps_required: formData.stampsRequired,
           reward_description: effectiveRewardDescription,
           loyalty_mode: formData.loyaltyMode,
@@ -424,57 +382,12 @@ export default function ProgramPage() {
     <div className="max-w-3xl mx-auto">
       <div className="mb-5 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
-          Mon Programme
+          Programme fidélité
         </h1>
         <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
-          Personnalise ton programme de fidélité
+          Configure le programme de fidélité de tes clients existants
         </p>
       </div>
-
-      {/* Programme Score */}
-      {(() => {
-        const scoreItems = [
-          { done: !!formData.rewardDescription, pts: 25, label: 'Récompense' },
-          { done: !!formData.logoUrl, pts: 20, label: 'Logo' },
-          { done: !!(formData.instagramUrl || formData.facebookUrl || formData.tiktokUrl || formData.snapchatUrl), pts: 15, label: 'Réseaux sociaux' },
-          { done: !!formData.reviewLink, pts: 10, label: 'Avis Google' },
-          { done: !!merchant?.booking_url, pts: 10, label: 'Lien réservation' },
-          { done: formData.tier2Enabled && (formData.loyaltyMode === 'cagnotte' || !!formData.tier2RewardDescription), pts: 5, label: '2ème palier' },
-          ...(formData.loyaltyMode !== 'cagnotte' ? [{ done: formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length > 0, pts: 5, label: 'Jours x2' }] : []),
-        ];
-        const score = scoreItems.reduce((sum, i) => sum + (i.done ? i.pts : 0), 0);
-        const r = 17;
-        const circumference = 2 * Math.PI * r;
-        const offset = circumference - (score / 100) * circumference;
-        const strokeColor = score < 50 ? '#f59e0b' : score < 80 ? '#7c3aed' : '#10b981';
-        const message = score === 100
-          ? 'Programme complet — tes clients vont adorer'
-          : score >= 80
-            ? 'Presque parfait !'
-            : score >= 50
-              ? 'Bon début, quelques ajouts feront la différence'
-              : 'Ton programme peut faire beaucoup plus';
-
-        return score < 100 ? (
-          <div className="mb-4 md:mb-6 flex items-center gap-3 px-4 py-2.5 sticky top-12 lg:top-2 z-20 bg-violet-50/90 backdrop-blur-xl border border-violet-200/60 rounded-xl shadow-sm">
-            <div className="flex-shrink-0 relative w-10 h-10">
-              <svg viewBox="0 0 40 40" className="w-full h-full -rotate-90">
-                <circle cx="20" cy="20" r={r} fill="none" stroke="#f3f4f6" strokeWidth="3" />
-                <circle
-                  cx="20" cy="20" r={r} fill="none"
-                  stroke={strokeColor} strokeWidth="3" strokeLinecap="round"
-                  strokeDasharray={circumference} strokeDashoffset={offset}
-                  style={{ transition: 'stroke-dashoffset 700ms ease-out, stroke 300ms' }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-[11px] font-black" style={{ color: strokeColor }}>{score}%</span>
-              </div>
-            </div>
-            <p className="text-sm font-semibold text-gray-700">{message}</p>
-          </div>
-        ) : null;
-      })()}
 
       <div className="grid gap-3 md:gap-8">
         <div className="space-y-3 md:space-y-6">
@@ -918,333 +831,160 @@ export default function ProgramPage() {
             )}
           </div>
 
-          {/* ═══════ GROUPE : MA VITRINE ═══════ */}
+          {/* ═══════ AVIS GOOGLE ═══════ */}
           <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-3 md:px-5 pt-3 md:pt-4 pb-1">
-              <p className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.18em]">Compléter ma page</p>
-            </div>
-            <div className="divide-y divide-gray-100/80">
-
-              {/* Réseaux sociaux */}
-              <div id="social-section">
-                <button
-                  type="button"
-                  onClick={() => setSocialOpen(!socialOpen)}
-                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center">
-                      <Instagram className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
-                    </div>
-                    <h3 className="text-sm md:text-base font-bold text-gray-900">Réseaux sociaux</h3>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${socialOpen ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-all duration-300 ease-in-out ${socialOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-600">Instagram</label>
-                        <Input
-                          type="text"
-                          className="bg-white border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 h-11 text-sm rounded-xl w-full"
-                          placeholder="@votre-commerce ou lien complet"
-                          value={formData.instagramUrl}
-                          onChange={(e) => setFormData({ ...formData, instagramUrl: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-600">Facebook</label>
-                        <Input
-                          type="text"
-                          className="bg-white border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 h-11 text-sm rounded-xl w-full"
-                          placeholder="votre-page ou lien complet"
-                          value={formData.facebookUrl}
-                          onChange={(e) => setFormData({ ...formData, facebookUrl: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-600">TikTok</label>
-                        <Input
-                          type="text"
-                          className="bg-white border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/20 h-11 text-sm rounded-xl w-full"
-                          placeholder="@votre-commerce ou lien complet"
-                          value={formData.tiktokUrl}
-                          onChange={(e) => setFormData({ ...formData, tiktokUrl: e.target.value })}
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-600">Snapchat</label>
-                        <Input
-                          type="text"
-                          className="bg-white border border-gray-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 h-11 text-sm rounded-xl w-full"
-                          placeholder="votre-pseudo ou lien complet"
-                          value={formData.snapchatUrl}
-                          onChange={(e) => setFormData({ ...formData, snapchatUrl: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </div>
+            <div className="p-3 md:p-5">
+              <div className="flex items-center gap-2 md:gap-3 mb-3">
+                <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                  <Star className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">Avis Google</span> <span className="font-normal text-gray-400">— Demande automatique au 3e passage et à chaque récompense</span></h3>
                 </div>
               </div>
-
-              {/* Avis Google */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setReviewsOpen(!reviewsOpen)}
-                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-                      <Star className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
-                    </div>
-                    <h3 className="text-sm md:text-base font-bold text-gray-900">Avis Google</h3>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${reviewsOpen ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-all duration-300 ease-in-out ${reviewsOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                      <Input
-                        type="url"
-                        className="bg-white border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 h-11 text-sm rounded-xl w-full"
-                        placeholder="https://g.page/r/votre-commerce/review"
-                        value={formData.reviewLink}
-                        onChange={(e) => setFormData({ ...formData, reviewLink: e.target.value })}
-                      />
-                      <p className="text-xs text-gray-500">
-                        Après chaque récompense, tes clients verront une invitation à laisser un avis.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-
-
+              <Input
+                type="url"
+                className="bg-white border border-gray-200 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 h-11 text-sm rounded-xl w-full"
+                placeholder="https://g.page/r/votre-commerce/review"
+                value={formData.reviewLink}
+                onChange={(e) => setFormData({ ...formData, reviewLink: e.target.value })}
+              />
             </div>
           </div>
 
-          {/* ═══════ GROUPE : BOOSTER MON PROGRAMME ═══════ */}
-          <div className={`bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden ${formData.loyaltyMode === 'cagnotte' ? 'hidden' : ''}`}>
-            <div className="px-3 md:px-5 pt-3 md:pt-4 pb-1">
-              <p className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.18em]">Aller plus loin</p>
-            </div>
-            <div className="divide-y divide-gray-100/80">
-
-              {/* Jours x2 */}
-              <div>
+          {/* ═══════ JOURS x2 (passage uniquement) ═══════ */}
+          {formData.loyaltyMode !== 'cagnotte' && (
+          <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-3 md:p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                    <Zap className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">Jours x2</span> <span className="font-normal text-gray-400">— Incite tes clients à venir les jours creux</span></h3>
+                  </div>
+                </div>
                 <button
                   type="button"
-                  onClick={() => setDoubleDaysOpen(!doubleDaysOpen)}
-                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
+                  role="switch"
+                  aria-checked={formData.doubleDaysEnabled}
+                  onClick={() => setFormData({ ...formData, doubleDaysEnabled: !formData.doubleDaysEnabled })}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 ${
+                    formData.doubleDaysEnabled ? 'bg-amber-400' : 'bg-gray-200'
+                  }`}
                 >
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center">
-                      <Zap className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-sm md:text-base font-bold text-gray-900">Jours x2</h3>
-                      <p className="text-[11px] text-gray-400">Certains jours, chaque passage compte double</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${doubleDaysOpen ? 'rotate-180' : ''}`} />
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.doubleDaysEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
                 </button>
-                <div className={`grid transition-all duration-300 ease-in-out ${doubleDaysOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-3 md:px-5 pb-5 space-y-4">
-                      <p className="text-xs text-gray-500 pt-1 border-t border-gray-100 pb-1">
-                        Si tu as des jours creux, les points doubles peuvent inciter tes clients à revenir précisément ces jours-là.
-                      </p>
+              </div>
 
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-700">Activer les jours x2</span>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={formData.doubleDaysEnabled}
-                          onClick={() => setFormData({ ...formData, doubleDaysEnabled: !formData.doubleDaysEnabled })}
-                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 ${
-                            formData.doubleDaysEnabled ? 'bg-amber-400' : 'bg-gray-200'
-                          }`}
-                        >
-                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.doubleDaysEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                        </button>
-                      </div>
-
-                      {(() => {
-                        const DAYS = [
-                          { label: 'Lun', value: 1 },
-                          { label: 'Mar', value: 2 },
-                          { label: 'Mer', value: 3 },
-                          { label: 'Jeu', value: 4 },
-                          { label: 'Ven', value: 5 },
-                          { label: 'Sam', value: 6 },
-                          { label: 'Dim', value: 0 },
-                        ];
-                        const toggleDay = (day: number) => {
-                          const current = formData.doubleDaysOfWeek;
-                          const updated = current.includes(day) ? current.filter(d => d !== day) : [...current, day];
-                          setFormData({ ...formData, doubleDaysOfWeek: updated });
-                        };
-                        const selectedDays = DAYS.filter(d => formData.doubleDaysOfWeek.includes(d.value));
+              {(() => {
+                const DAYS = [
+                  { label: 'Lun', value: 1 },
+                  { label: 'Mar', value: 2 },
+                  { label: 'Mer', value: 3 },
+                  { label: 'Jeu', value: 4 },
+                  { label: 'Ven', value: 5 },
+                  { label: 'Sam', value: 6 },
+                  { label: 'Dim', value: 0 },
+                ];
+                const toggleDay = (day: number) => {
+                  const current = formData.doubleDaysOfWeek;
+                  const updated = current.includes(day) ? current.filter(d => d !== day) : [...current, day];
+                  setFormData({ ...formData, doubleDaysOfWeek: updated });
+                };
+                const selectedDays = DAYS.filter(d => formData.doubleDaysOfWeek.includes(d.value));
+                return (
+                  <div className={`space-y-3 ${!formData.doubleDaysEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {DAYS.map(day => {
+                        const active = formData.doubleDaysOfWeek.includes(day.value);
                         return (
-                          <div className={`space-y-3 ${!formData.doubleDaysEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
-                            <div className="flex gap-1.5 flex-wrap">
-                              {DAYS.map(day => {
-                                const active = formData.doubleDaysOfWeek.includes(day.value);
-                                return (
-                                  <button
-                                    key={day.value}
-                                    type="button"
-                                    onClick={() => toggleDay(day.value)}
-                                    className={`px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 border ${
-                                      active
-                                        ? 'bg-amber-400 border-amber-400 text-white shadow-sm'
-                                        : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600'
-                                    }`}
-                                  >
-                                    {day.label}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                            {formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length === 0 && (
-                              <p className="text-xs text-amber-600 font-medium">Cochez au moins un jour</p>
-                            )}
-                            {selectedDays.length > 0 && (
-                              <p className="text-xs text-gray-500">
-                                <span className="font-semibold text-amber-600">{selectedDays.map(d => d.label).join(', ')}</span> — chaque scan = 2 tampons
-                              </p>
-                            )}
-                          </div>
+                          <button
+                            key={day.value}
+                            type="button"
+                            onClick={() => toggleDay(day.value)}
+                            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 border ${
+                              active
+                                ? 'bg-amber-400 border-amber-400 text-white shadow-sm'
+                                : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-amber-300 hover:text-amber-600'
+                            }`}
+                          >
+                            {day.label}
+                          </button>
                         );
-                      })()}
+                      })}
                     </div>
+                    {formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length === 0 && (
+                      <p className="text-xs text-amber-600 font-medium">Cochez au moins un jour</p>
+                    )}
+                    {selectedDays.length > 0 && (
+                      <p className="text-xs text-gray-500">
+                        <span className="font-semibold text-amber-600">{selectedDays.map(d => d.label).join(', ')}</span> — chaque scan = 2 tampons
+                      </p>
+                    )}
                   </div>
-                </div>
-              </div>
-
-              {/* Cadeau anniversaire */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setBirthdayOpen(!birthdayOpen)}
-                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center">
-                      <Cake className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-sm md:text-base font-bold text-gray-900">Cadeau anniversaire</h3>
-                      <p className="text-[11px] text-gray-400">Envoi automatique le jour J</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${birthdayOpen ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-all duration-300 ease-in-out ${birthdayOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-700">Activer</span>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={formData.birthdayGiftEnabled}
-                          onClick={() => setFormData({ ...formData, birthdayGiftEnabled: !formData.birthdayGiftEnabled })}
-                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 ${
-                            formData.birthdayGiftEnabled ? 'bg-pink-500' : 'bg-gray-200'
-                          }`}
-                        >
-                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.birthdayGiftEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                        </button>
-                      </div>
-                      {formData.birthdayGiftEnabled && (
-                        <div className="space-y-2">
-                          <textarea
-                            value={formData.birthdayGiftDescription}
-                            onChange={(e) => setFormData({ ...formData, birthdayGiftDescription: e.target.value })}
-                            placeholder="Ex: Un brushing offert pour ton anniversaire !"
-                            maxLength={200}
-                            rows={2}
-                            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"
-                          />
-                          <p className="text-xs text-gray-400">Valable 14 jours — tes clients le recoivent par notification</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* Groupe Booster — mode cagnotte (réservation seule, sans jours x2) */}
-          {formData.loyaltyMode === 'cagnotte' && (
-          <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
-            <div className="px-3 md:px-5 pt-3 md:pt-4 pb-1">
-              <p className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-[0.18em]">Aller plus loin</p>
-            </div>
-            <div className="divide-y divide-gray-100/80">
-              {/* Cadeau anniversaire (cagnotte) */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setBirthdayOpen(!birthdayOpen)}
-                  className="w-full p-3 md:p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
-                >
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center">
-                      <Cake className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
-                    </div>
-                    <div className="text-left">
-                      <h3 className="text-sm md:text-base font-bold text-gray-900">Cadeau anniversaire</h3>
-                      <p className="text-[11px] text-gray-400">Envoi automatique le jour J</p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${birthdayOpen ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`grid transition-all duration-300 ease-in-out ${birthdayOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                  <div className="overflow-hidden">
-                    <div className="px-3 pb-3 md:px-5 md:pb-5 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold text-gray-700">Activer</span>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={formData.birthdayGiftEnabled}
-                          onClick={() => setFormData({ ...formData, birthdayGiftEnabled: !formData.birthdayGiftEnabled })}
-                          className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 ${
-                            formData.birthdayGiftEnabled ? 'bg-pink-500' : 'bg-gray-200'
-                          }`}
-                        >
-                          <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.birthdayGiftEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                        </button>
-                      </div>
-                      {formData.birthdayGiftEnabled && (
-                        <div className="space-y-2">
-                          <textarea
-                            value={formData.birthdayGiftDescription}
-                            onChange={(e) => setFormData({ ...formData, birthdayGiftDescription: e.target.value })}
-                            placeholder="Ex: Un brushing offert pour ton anniversaire !"
-                            maxLength={200}
-                            rows={2}
-                            className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"
-                          />
-                          <p className="text-xs text-gray-400">Valable 14 jours — tes clients le recoivent par notification</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+                );
+              })()}
             </div>
           </div>
           )}
+
+          {/* ═══════ CADEAU ANNIVERSAIRE ═══════ */}
+          <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-3 md:p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center">
+                    <Cake className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">Cadeau anniversaire</span> <span className="font-normal text-gray-400">— Envoi automatique le jour J, valable 14 jours</span></h3>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.birthdayGiftEnabled}
+                  onClick={() => setFormData({ ...formData, birthdayGiftEnabled: !formData.birthdayGiftEnabled })}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 ${
+                    formData.birthdayGiftEnabled ? 'bg-pink-500' : 'bg-gray-200'
+                  }`}
+                >
+                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.birthdayGiftEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+              {formData.birthdayGiftEnabled && (
+                <div className="space-y-2">
+                  <textarea
+                    value={formData.birthdayGiftDescription}
+                    onChange={(e) => setFormData({ ...formData, birthdayGiftDescription: e.target.value })}
+                    placeholder="Ex: Un brushing offert pour ton anniversaire !"
+                    maxLength={200}
+                    rows={2}
+                    className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"
+                  />
+                  <div className="flex flex-wrap gap-1.5">
+                    {BIRTHDAY_SUGGESTIONS.map((suggestion) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, birthdayGiftDescription: suggestion })}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                          formData.birthdayGiftDescription === suggestion
+                            ? 'bg-pink-100 border-pink-300 text-pink-700'
+                            : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-pink-50 hover:border-pink-200 hover:text-pink-600'
+                        }`}
+                      >
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
 
         </div>
 

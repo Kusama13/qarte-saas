@@ -18,9 +18,12 @@ import {
   MapPin,
   CalendarDays,
   ChevronRight,
+  ChevronDown,
+  Clock,
   LayoutList,
   Tag,
   GripVertical,
+  Instagram,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
@@ -39,6 +42,9 @@ interface Service {
   price: number;
   position: number;
   category_id: string | null;
+  duration: number | null;
+  description: string | null;
+  price_from: boolean;
 }
 
 export default function PublicPageDashboard() {
@@ -50,10 +56,14 @@ export default function PublicPageDashboard() {
   // Link copy
   const [copied, setCopied] = useState(false);
 
-  // Shop name + Address + booking
+  // Shop name + Address + booking + socials
   const [shopName, setShopName] = useState('');
   const [address, setAddress] = useState('');
   const [bookingUrl, setBookingUrl] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [facebookUrl, setFacebookUrl] = useState('');
+  const [tiktokUrl, setTiktokUrl] = useState('');
+  const [snapchatUrl, setSnapchatUrl] = useState('');
   const [savingInfo, setSavingInfo] = useState(false);
   const [savedInfo, setSavedInfo] = useState(false);
 
@@ -77,6 +87,9 @@ export default function PublicPageDashboard() {
   // Add service form
   const [newServiceName, setNewServiceName] = useState('');
   const [newServicePrice, setNewServicePrice] = useState('');
+  const [newServiceDuration, setNewServiceDuration] = useState('');
+  const [newServiceDescription, setNewServiceDescription] = useState('');
+  const [newServicePriceFrom, setNewServicePriceFrom] = useState(false);
   const [newServiceCategoryId, setNewServiceCategoryId] = useState<string | null>(null);
   const [addingService, setAddingService] = useState(false);
 
@@ -89,6 +102,9 @@ export default function PublicPageDashboard() {
   const [editingService, setEditingService] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState('');
+  const [editDuration, setEditDuration] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPriceFrom, setEditPriceFrom] = useState(false);
 
   // Edit category
   const [editingCategory, setEditingCategory] = useState<string | null>(null);
@@ -96,6 +112,7 @@ export default function PublicPageDashboard() {
 
   // Collapsed categories
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
+  const [prestationsOpen, setPrestationsOpen] = useState(false);
 
   useEffect(() => {
     if (merchantLoading || !merchant) return;
@@ -105,6 +122,10 @@ export default function PublicPageDashboard() {
     setShopName(merchant.shop_name || '');
     setAddress(merchant.shop_address || '');
     setBookingUrl(merchant.booking_url || '');
+    setInstagramUrl(merchant.instagram_url || '');
+    setFacebookUrl(merchant.facebook_url || '');
+    setTiktokUrl(merchant.tiktok_url || '');
+    setSnapchatUrl(merchant.snapchat_url || '');
 
     const fetchPhotos = async () => {
       const { data } = await supabase
@@ -158,7 +179,20 @@ export default function PublicPageDashboard() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // ── Save address + booking ──
+  const normalizeSocialUrl = (value: string, platform: 'instagram' | 'facebook' | 'tiktok' | 'snapchat') => {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    const username = trimmed.replace(/^@/, '');
+    switch (platform) {
+      case 'instagram': return `https://instagram.com/${username}`;
+      case 'facebook': return `https://facebook.com/${username}`;
+      case 'tiktok': return `https://tiktok.com/@${username}`;
+      case 'snapchat': return `https://snapchat.com/add/${username}`;
+    }
+  };
+
+  // ── Save address + booking + socials ──
   const handleSaveInfo = async () => {
     if (!merchant) return;
     setSavingInfo(true);
@@ -173,6 +207,10 @@ export default function PublicPageDashboard() {
           shop_name: shopName.trim() || null,
           shop_address: address.trim() || null,
           booking_url: normalizedUrl,
+          instagram_url: normalizeSocialUrl(instagramUrl, 'instagram') || null,
+          facebook_url: normalizeSocialUrl(facebookUrl, 'facebook') || null,
+          tiktok_url: normalizeSocialUrl(tiktokUrl, 'tiktok') || null,
+          snapchat_url: normalizeSocialUrl(snapchatUrl, 'snapchat') || null,
         })
         .eq('id', merchant.id);
 
@@ -357,6 +395,9 @@ export default function PublicPageDashboard() {
           category_id: newServiceCategoryId,
           name: newServiceName.trim(),
           price,
+          duration: newServiceDuration ? parseInt(newServiceDuration) : null,
+          description: newServiceDescription.trim() || null,
+          price_from: newServicePriceFrom,
         }),
       });
       const data = await res.json();
@@ -364,6 +405,9 @@ export default function PublicPageDashboard() {
         setServices(prev => [...prev, data.service]);
         setNewServiceName('');
         setNewServicePrice('');
+        setNewServiceDuration('');
+        setNewServiceDescription('');
+        setNewServicePriceFrom(false);
       }
     } catch {
       // silent
@@ -387,6 +431,9 @@ export default function PublicPageDashboard() {
           merchant_id: merchant.id,
           name: editName.trim(),
           price,
+          duration: editDuration ? parseInt(editDuration) : null,
+          description: editDescription.trim() || null,
+          price_from: editPriceFrom,
         }),
       });
       const data = await res.json();
@@ -425,44 +472,96 @@ export default function PublicPageDashboard() {
   };
 
   // ── Render service row ──
+  const formatDuration = (min: number) => {
+    if (min < 60) return `${min} min`;
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
+  };
+
   const renderServiceRow = (service: Service) => (
-    <div key={service.id} className="group flex items-center gap-3 px-3.5 py-3 rounded-xl hover:bg-gray-50/80 transition-colors">
+    <div key={service.id} className="group px-3.5 py-3 rounded-xl hover:bg-gray-50/80 transition-colors">
       {editingService === service.id ? (
-        <>
-          <input
-            value={editName}
-            onChange={(e) => setEditName(e.target.value)}
-            className="flex-1 text-sm font-medium bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-            placeholder="Nom"
-            onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
-            autoFocus
-          />
-          <div className="relative w-24">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
             <input
-              value={editPrice}
-              onChange={(e) => setEditPrice(e.target.value)}
-              type="number"
-              step="0.01"
-              min="0"
-              className="w-full text-sm font-bold bg-white border border-gray-200 rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="flex-1 text-sm font-medium bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+              placeholder="Nom"
               onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
+              autoFocus
             />
-            <Euro className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            <div className="relative w-24">
+              <input
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+                type="number"
+                step="0.01"
+                min="0"
+                className="w-full text-sm font-bold bg-white border border-gray-200 rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+                onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
+              />
+              <Euro className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            </div>
+            <div className="relative w-20">
+              <input
+                value={editDuration}
+                onChange={(e) => setEditDuration(e.target.value)}
+                type="number"
+                min="1"
+                max="600"
+                placeholder="min"
+                className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+              />
+              <Clock className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+            </div>
           </div>
-          <button onClick={() => handleUpdateService(service.id)} className="p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
-            <Check className="w-3.5 h-3.5" />
-          </button>
-          <button onClick={() => setEditingService(null)} className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </>
+          <div className="flex items-center gap-2">
+            <input
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              placeholder="Description (optionnel)"
+              className="flex-1 text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+            />
+            <label className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors shrink-0">
+              <input
+                type="checkbox"
+                checked={editPriceFrom}
+                onChange={(e) => setEditPriceFrom(e.target.checked)}
+                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30"
+              />
+              <span className="text-[11px] text-gray-500 whitespace-nowrap">A partir de</span>
+            </label>
+          </div>
+          <div className="flex items-center gap-1.5 justify-end">
+            <button onClick={() => handleUpdateService(service.id)} className="p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
+              <Check className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => setEditingService(null)} className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
       ) : (
-        <>
+        <div className="flex items-center gap-3">
           <GripVertical className="w-3.5 h-3.5 text-gray-300 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium text-gray-700 truncate">{service.name}</p>
+            <div className="flex items-center gap-2 mt-0.5">
+              {service.duration && (
+                <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                  <Clock className="w-3 h-3" />
+                  {formatDuration(service.duration)}
+                </span>
+              )}
+              {service.description && (
+                <span className="text-[11px] text-gray-400 truncate max-w-[200px]">{service.description}</span>
+              )}
+            </div>
           </div>
           <p className="text-[13px] font-bold text-gray-900 shrink-0 tabular-nums">
+            {service.price_from && <span className="text-[11px] font-normal text-gray-400 mr-0.5">dès </span>}
             {Number(service.price).toFixed(2).replace('.', ',')} &euro;
           </p>
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -471,6 +570,9 @@ export default function PublicPageDashboard() {
                 setEditingService(service.id);
                 setEditName(service.name);
                 setEditPrice(String(service.price));
+                setEditDuration(service.duration ? String(service.duration) : '');
+                setEditDescription(service.description || '');
+                setEditPriceFrom(service.price_from || false);
               }}
               className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
             >
@@ -480,7 +582,7 @@ export default function PublicPageDashboard() {
               <Trash2 className="w-3 h-3" />
             </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
@@ -604,74 +706,17 @@ export default function PublicPageDashboard() {
         </div>
       )}
 
-      {/* ── INFOS PRATIQUES ── */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
-            <MapPin className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-gray-900">Infos pratiques</h2>
-            <p className="text-xs text-gray-400">Visibles sur ta page publique</p>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Nom du salon</label>
-            <Input
-              placeholder="Mon Salon, Chez Marie..."
-              value={shopName}
-              onChange={(e) => setShopName(e.target.value)}
-              className="h-11"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Adresse</label>
-            <Input
-              placeholder="12 rue de la Paix, 75002 Paris"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="h-11"
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block flex items-center gap-1.5">
-              <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
-              Lien de réservation
-            </label>
-            <Input
-              placeholder="https://calendly.com/monsalon ou lien Planity, Treatwell..."
-              value={bookingUrl}
-              onChange={(e) => setBookingUrl(e.target.value)}
-              className="h-11"
-            />
-            <p className="text-xs text-gray-400 mt-1">Si rempli, un bouton &quot;Prendre rendez-vous&quot; apparaîtra sur ta page</p>
-          </div>
-        </div>
-
-        <div className="mt-4 flex justify-end">
-          <button
-            onClick={handleSaveInfo}
-            disabled={savingInfo}
-            className={`px-5 py-2.5 font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 text-sm ${
-              savedInfo ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            }`}
-          >
-            {savingInfo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            {savedInfo ? 'Enregistré !' : 'Enregistrer'}
-          </button>
-        </div>
-      </div>
-
-      {/* ── OFFRE DE BIENVENUE ── */}
+      {/* ── OFFRE NOUVEAU CLIENT ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-violet-50 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-violet-600" />
             </div>
-            <h2 className="text-sm font-bold text-gray-900">Offre de bienvenue</h2>
+            <div>
+              <h2 className="text-sm font-bold text-gray-900">Offre nouveau client</h2>
+              <p className="text-xs text-gray-400">Attire les clients qui te d&eacute;couvrent pour la premi&egrave;re fois</p>
+            </div>
           </div>
           <button
             onClick={() => setShowWelcomeHelp(true)}
@@ -684,7 +729,7 @@ export default function PublicPageDashboard() {
 
         <div className="flex items-center justify-between mb-4">
           <div>
-            <p className="font-semibold text-gray-900 text-sm">Activer l&apos;offre de bienvenue</p>
+            <p className="font-semibold text-gray-900 text-sm">Activer l&apos;offre</p>
             <p className="text-xs text-gray-500 mt-0.5">Les nouveaux visiteurs verront l&apos;offre sur ta page publique</p>
           </div>
           <button
@@ -745,6 +790,121 @@ export default function PublicPageDashboard() {
         </div>
       </div>
 
+      {/* ── INFOS PRATIQUES ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+            <MapPin className="w-4 h-4 text-emerald-600" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">Infos pratiques</h2>
+            <p className="text-xs text-gray-400">Visibles sur ta page publique</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Nom du salon</label>
+            <Input
+              placeholder="Mon Salon, Chez Marie..."
+              value={shopName}
+              onChange={(e) => setShopName(e.target.value)}
+              className="h-11"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Adresse</label>
+            <Input
+              placeholder="12 rue de la Paix, 75002 Paris"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="h-11"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block flex items-center gap-1.5">
+              <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
+              Lien de réservation
+            </label>
+            <Input
+              placeholder="https://calendly.com/monsalon ou lien Planity, Treatwell..."
+              value={bookingUrl}
+              onChange={(e) => setBookingUrl(e.target.value)}
+              className="h-11"
+            />
+            <p className="text-xs text-gray-400 mt-1">Si rempli, un bouton &quot;Prendre rendez-vous&quot; apparaîtra sur ta page</p>
+          </div>
+        </div>
+
+        {/* Réseaux sociaux */}
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 flex items-center justify-center">
+              <Instagram className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-gray-900">Réseaux sociaux</h3>
+              <p className="text-xs text-gray-400">Liens affichés sur ta page publique</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Instagram</label>
+              <Input
+                type="text"
+                className="bg-white border border-gray-200 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 h-11 text-sm rounded-xl w-full"
+                placeholder="@votre-commerce ou lien complet"
+                value={instagramUrl}
+                onChange={(e) => setInstagramUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Facebook</label>
+              <Input
+                type="text"
+                className="bg-white border border-gray-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 h-11 text-sm rounded-xl w-full"
+                placeholder="votre-page ou lien complet"
+                value={facebookUrl}
+                onChange={(e) => setFacebookUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">TikTok</label>
+              <Input
+                type="text"
+                className="bg-white border border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-400/20 h-11 text-sm rounded-xl w-full"
+                placeholder="@votre-commerce ou lien complet"
+                value={tiktokUrl}
+                onChange={(e) => setTiktokUrl(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-gray-600">Snapchat</label>
+              <Input
+                type="text"
+                className="bg-white border border-gray-200 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 h-11 text-sm rounded-xl w-full"
+                placeholder="votre-pseudo ou lien complet"
+                value={snapchatUrl}
+                onChange={(e) => setSnapchatUrl(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleSaveInfo}
+            disabled={savingInfo}
+            className={`px-5 py-2.5 font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 text-sm ${
+              savedInfo ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+          >
+            {savingInfo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+            {savedInfo ? 'Enregistré !' : 'Enregistrer'}
+          </button>
+        </div>
+      </div>
+
       {/* ── PHOTOS ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
         <div className="flex items-center gap-2.5 mb-4">
@@ -793,8 +953,11 @@ export default function PublicPageDashboard() {
 
       {/* ── PRESTATIONS ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 pb-0">
+        {/* Header — clickable to toggle */}
+        <button
+          onClick={() => setPrestationsOpen(!prestationsOpen)}
+          className="flex items-center justify-between w-full p-6 text-left"
+        >
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center">
               <LayoutList className="w-4 h-4 text-indigo-600" />
@@ -809,18 +972,12 @@ export default function PublicPageDashboard() {
               </p>
             </div>
           </div>
-          {!showAddCategory && categories.length < 10 && (
-            <button
-              onClick={() => setShowAddCategory(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 hover:border-indigo-200 transition-all shadow-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Ajouter une catégorie
-            </button>
-          )}
-        </div>
+          <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${prestationsOpen ? 'rotate-180' : ''}`} />
+        </button>
 
-        <div className="p-6 pt-4">
+        <div className={`grid transition-all duration-300 ${prestationsOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+        <div className="overflow-hidden">
+        <div className="p-6 pt-0">
           {servicesLoading ? (
             <div className="flex justify-center py-8">
               <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
@@ -966,6 +1123,18 @@ export default function PublicPageDashboard() {
                       />
                       <Euro className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                     </div>
+                    <div className="relative w-20">
+                      <input
+                        value={newServiceDuration}
+                        onChange={(e) => setNewServiceDuration(e.target.value)}
+                        type="number"
+                        min="1"
+                        max="600"
+                        placeholder="min"
+                        className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
+                      />
+                      <Clock className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    </div>
                     <button
                       onClick={handleAddService}
                       disabled={addingService || !newServiceName.trim() || !newServicePrice}
@@ -974,6 +1143,23 @@ export default function PublicPageDashboard() {
                       {addingService ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                       Ajouter
                     </button>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2">
+                    <input
+                      value={newServiceDescription}
+                      onChange={(e) => setNewServiceDescription(e.target.value)}
+                      placeholder="Description (optionnel)"
+                      className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
+                    />
+                    <label className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 cursor-pointer hover:bg-white transition-all shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={newServicePriceFrom}
+                        onChange={(e) => setNewServicePriceFrom(e.target.checked)}
+                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30"
+                      />
+                      <span className="text-[11px] text-gray-500 whitespace-nowrap">A partir de</span>
+                    </label>
                   </div>
                   {categories.length > 0 && (
                     <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
@@ -1005,9 +1191,21 @@ export default function PublicPageDashboard() {
                   )}
                 </div>
               )}
+              {/* Add category button — inside collapsible */}
+              {!showAddCategory && categories.length < 10 && (
+                <button
+                  onClick={() => setShowAddCategory(true)}
+                  className="mt-4 flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 hover:border-indigo-200 transition-all shadow-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Ajouter une catégorie
+                </button>
+              )}
             </>
           )}
         </div>
+        </div>{/* overflow-hidden */}
+        </div>{/* grid collapse wrapper */}
       </div>
 
       {/* ── WELCOME HELP MODAL ── */}

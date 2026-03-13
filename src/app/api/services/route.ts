@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         .order('position'),
       supabase
         .from('merchant_services')
-        .select('id, name, price, position, category_id')
+        .select('id, name, price, position, category_id, duration, description, price_from')
         .eq('merchant_id', merchantId)
         .order('position'),
     ]);
@@ -61,6 +61,9 @@ const createServiceSchema = z.object({
   category_id: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(100),
   price: z.number().min(0).max(99999),
+  duration: z.number().int().min(1).max(600).nullable().optional(),
+  description: z.string().max(500).nullable().optional(),
+  price_from: z.boolean().optional(),
 });
 
 const createCategorySchema = z.object({
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
     // Try service
     const serviceParsed = createServiceSchema.safeParse(body);
     if (serviceParsed.success) {
-      const { merchant_id, name, price, category_id } = serviceParsed.data;
+      const { merchant_id, name, price, category_id, duration, description, price_from } = serviceParsed.data;
 
       if (!await verifyOwnership(supabase, merchant_id, user.id)) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -138,6 +141,9 @@ export async function POST(request: NextRequest) {
           name: name.trim(),
           price,
           position: (count || 0) + 1,
+          duration: duration || null,
+          description: description?.trim() || null,
+          price_from: price_from || false,
         })
         .select()
         .single();
@@ -165,6 +171,9 @@ const updateServiceSchema = z.object({
   category_id: z.string().uuid().nullable().optional(),
   name: z.string().min(1).max(100),
   price: z.number().min(0).max(99999),
+  duration: z.number().int().min(1).max(600).nullable().optional(),
+  description: z.string().max(500).nullable().optional(),
+  price_from: z.boolean().optional(),
 });
 
 const updateCategorySchema = z.object({
@@ -211,7 +220,7 @@ export async function PUT(request: NextRequest) {
 
     const serviceParsed = updateServiceSchema.safeParse(body);
     if (serviceParsed.success) {
-      const { id, merchant_id, name, price, category_id } = serviceParsed.data;
+      const { id, merchant_id, name, price, category_id, duration, description, price_from } = serviceParsed.data;
 
       if (!await verifyOwnership(supabase, merchant_id, user.id)) {
         return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -220,6 +229,15 @@ export async function PUT(request: NextRequest) {
       const updateData: Record<string, unknown> = { name: name.trim(), price };
       if (category_id !== undefined) {
         updateData.category_id = category_id;
+      }
+      if (duration !== undefined) {
+        updateData.duration = duration;
+      }
+      if (description !== undefined) {
+        updateData.description = description?.trim() || null;
+      }
+      if (price_from !== undefined) {
+        updateData.price_from = price_from;
       }
 
       const { data: service, error } = await supabase
