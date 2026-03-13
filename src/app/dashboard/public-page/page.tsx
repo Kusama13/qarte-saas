@@ -22,7 +22,6 @@ import {
   Clock,
   LayoutList,
   Tag,
-  GripVertical,
   Instagram,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
@@ -483,47 +482,40 @@ export default function PublicPageDashboard() {
     <div key={service.id} className="group px-3.5 py-3 rounded-xl hover:bg-gray-50/80 transition-colors">
       {editingService === service.id ? (
         <div className="space-y-2">
+          <input
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            className="w-full text-sm font-medium bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+            placeholder="Nom"
+            onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
+            autoFocus
+          />
           <div className="flex items-center gap-2">
-            <input
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              className="flex-1 text-sm font-medium bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-              placeholder="Nom"
-              onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
-              autoFocus
-            />
-            <div className="relative w-24">
+            <div className="relative flex-1">
               <input
                 value={editPrice}
                 onChange={(e) => setEditPrice(e.target.value)}
                 type="number"
                 step="0.01"
                 min="0"
+                placeholder="Prix"
                 className="w-full text-sm font-bold bg-white border border-gray-200 rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
                 onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
               />
               <Euro className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             </div>
-            <div className="relative w-20">
+            <div className="relative flex-1">
               <input
                 value={editDuration}
                 onChange={(e) => setEditDuration(e.target.value)}
                 type="number"
                 min="1"
                 max="600"
-                placeholder="min"
+                placeholder="Durée (min)"
                 className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
               />
               <Clock className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
-              placeholder="Description (optionnel)"
-              className="flex-1 text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-            />
             <label className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors shrink-0">
               <input
                 type="checkbox"
@@ -531,21 +523,27 @@ export default function PublicPageDashboard() {
                 onChange={(e) => setEditPriceFrom(e.target.checked)}
                 className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30"
               />
-              <span className="text-[11px] text-gray-500 whitespace-nowrap">A partir de</span>
+              <span className="text-[11px] text-gray-500 whitespace-nowrap">Dès</span>
             </label>
           </div>
+          <input
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            placeholder="Description (optionnel)"
+            className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
+          />
           <div className="flex items-center gap-1.5 justify-end">
-            <button onClick={() => handleUpdateService(service.id)} className="p-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors">
-              <Check className="w-3.5 h-3.5" />
+            <button onClick={() => setEditingService(null)} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 transition-colors">
+              Annuler
             </button>
-            <button onClick={() => setEditingService(null)} className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors">
-              <X className="w-3.5 h-3.5" />
+            <button onClick={() => handleUpdateService(service.id)} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5" />
+              Enregistrer
             </button>
           </div>
         </div>
       ) : (
         <div className="flex items-center gap-3">
-          <GripVertical className="w-3.5 h-3.5 text-gray-300 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-medium text-gray-700 truncate">{service.name}</p>
             <div className="flex items-center gap-2 mt-0.5">
@@ -564,7 +562,7 @@ export default function PublicPageDashboard() {
             {service.price_from && <span className="text-[11px] font-normal text-gray-400 mr-0.5">dès </span>}
             {Number(service.price).toFixed(2).replace('.', ',')} &euro;
           </p>
-          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <button
               onClick={() => {
                 setEditingService(service.id);
@@ -1043,7 +1041,7 @@ export default function PublicPageDashboard() {
                               <p className="text-sm font-bold text-gray-900">{cat.name}</p>
                               <span className="px-1.5 py-0.5 text-[10px] font-semibold text-indigo-600 bg-indigo-50 rounded-md tabular-nums">{catServices.length}</span>
                             </div>
-                            <div className="flex items-center gap-0.5 opacity-0 group-hover/cat:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover/cat:opacity-100 transition-opacity">
                               <button
                                 onClick={() => { setEditingCategory(cat.id); setEditCategoryName(cat.name); }}
                                 className="p-1.5 rounded-lg text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
@@ -1102,64 +1100,64 @@ export default function PublicPageDashboard() {
               {services.length < 50 && (
                 <div className={`mt-5 pt-5 border-t border-gray-100 ${services.length === 0 && categories.length === 0 ? 'mt-0 pt-0 border-0' : ''}`}>
                   <p className="text-xs font-semibold text-gray-500 mb-2.5">Ajouter une prestation</p>
-                  <div className="flex items-center gap-2">
+                  <div className="space-y-2">
                     <input
                       value={newServiceName}
                       onChange={(e) => setNewServiceName(e.target.value)}
                       placeholder="Nom de la prestation"
-                      className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
+                      className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
                       onKeyDown={(e) => e.key === 'Enter' && handleAddService()}
                     />
-                    <div className="relative w-24">
-                      <input
-                        value={newServicePrice}
-                        onChange={(e) => setNewServicePrice(e.target.value)}
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="Prix"
-                        className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
-                        onKeyDown={(e) => e.key === 'Enter' && handleAddService()}
-                      />
-                      <Euro className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          value={newServicePrice}
+                          onChange={(e) => setNewServicePrice(e.target.value)}
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="Prix"
+                          className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
+                          onKeyDown={(e) => e.key === 'Enter' && handleAddService()}
+                        />
+                        <Euro className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                      </div>
+                      <div className="relative flex-1">
+                        <input
+                          value={newServiceDuration}
+                          onChange={(e) => setNewServiceDuration(e.target.value)}
+                          type="number"
+                          min="1"
+                          max="600"
+                          placeholder="Durée (min)"
+                          className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
+                        />
+                        <Clock className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                      </div>
+                      <label className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 cursor-pointer hover:bg-white transition-all shrink-0">
+                        <input
+                          type="checkbox"
+                          checked={newServicePriceFrom}
+                          onChange={(e) => setNewServicePriceFrom(e.target.checked)}
+                          className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30"
+                        />
+                        <span className="text-[11px] text-gray-500 whitespace-nowrap">Dès</span>
+                      </label>
                     </div>
-                    <div className="relative w-20">
-                      <input
-                        value={newServiceDuration}
-                        onChange={(e) => setNewServiceDuration(e.target.value)}
-                        type="number"
-                        min="1"
-                        max="600"
-                        placeholder="min"
-                        className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
-                      />
-                      <Clock className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
-                    </div>
-                    <button
-                      onClick={handleAddService}
-                      disabled={addingService || !newServiceName.trim() || !newServicePrice}
-                      className="shrink-0 px-4 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 shadow-sm"
-                    >
-                      {addingService ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                      Ajouter
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
                     <input
                       value={newServiceDescription}
                       onChange={(e) => setNewServiceDescription(e.target.value)}
                       placeholder="Description (optionnel)"
-                      className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
+                      className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
                     />
-                    <label className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 cursor-pointer hover:bg-white transition-all shrink-0">
-                      <input
-                        type="checkbox"
-                        checked={newServicePriceFrom}
-                        onChange={(e) => setNewServicePriceFrom(e.target.checked)}
-                        className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30"
-                      />
-                      <span className="text-[11px] text-gray-500 whitespace-nowrap">A partir de</span>
-                    </label>
+                    <button
+                      onClick={handleAddService}
+                      disabled={addingService || !newServiceName.trim() || !newServicePrice}
+                      className="w-full py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      {addingService ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                      Ajouter la prestation
+                    </button>
                   </div>
                   {categories.length > 0 && (
                     <div className="flex flex-wrap items-center gap-1.5 mt-2.5">

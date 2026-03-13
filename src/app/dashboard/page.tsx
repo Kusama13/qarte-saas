@@ -3,7 +3,7 @@
 import { useState, useEffect, memo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, Crown, UserPlus, Megaphone, CreditCard, Settings, Coins, Globe, Heart } from 'lucide-react';
+import { Users, UserCheck, Calendar, Gift, TrendingUp, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, UserPlus, CreditCard, Coins, Globe, Heart } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
@@ -151,6 +151,8 @@ export default function DashboardPage() {
   });
 
   const [cagnotteStats, setCagnotteStats] = useState({ totalCumul: 0, totalCashback: 0 });
+  const [pendingReferrals, setPendingReferrals] = useState(0);
+  const [welcomeVouchers, setWelcomeVouchers] = useState(0);
 
   // If we have cached data, don't show loading state
   const [loading, setLoading] = useState(() => {
@@ -245,6 +247,8 @@ export default function DashboardPage() {
           thisWeekVisitsResult,
           lastWeekVisitsResult,
           cagnotteCardsResult,
+          pendingReferralsResult,
+          welcomeVouchersResult,
         ] = await Promise.all([
           // Stats queries
           supabase
@@ -302,7 +306,27 @@ export default function DashboardPage() {
                 .select('current_amount')
                 .eq('merchant_id', merchant.id)
             : Promise.resolve({ data: null }),
+          // Pending referrals
+          merchant.referral_program_enabled
+            ? supabase
+                .from('referrals')
+                .select('*', { count: 'exact', head: true })
+                .eq('merchant_id', merchant.id)
+                .eq('status', 'pending')
+            : Promise.resolve({ count: 0 }),
+          // Welcome offer voucher signups
+          merchant.welcome_offer_enabled
+            ? supabase
+                .from('vouchers')
+                .select('*', { count: 'exact', head: true })
+                .eq('merchant_id', merchant.id)
+                .eq('source', 'welcome')
+            : Promise.resolve({ count: 0 }),
         ]);
+
+        // Set pending referrals + welcome vouchers
+        setPendingReferrals(pendingReferralsResult.count || 0);
+        setWelcomeVouchers(welcomeVouchersResult.count || 0);
 
         // Compute cagnotte stats
         if (merchant.loyalty_mode === 'cagnotte' && cagnotteCardsResult.data) {
@@ -456,98 +480,18 @@ export default function DashboardPage() {
           </span>
         </h1>
         <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
-          Voici un aperçu de ton programme de fidélité
+          {stats.totalCustomers === 0
+            ? 'Lance-toi, affiche ton QR code et inscris ta premiere cliente !'
+            : stats.activeCustomers > 0
+              ? `${stats.activeCustomers} cliente${stats.activeCustomers > 1 ? 's' : ''} active${stats.activeCustomers > 1 ? 's' : ''} ce mois — continue comme ca !`
+              : 'Tes clientes t\'attendent, relance ton programme !'}
         </p>
       </div>
 
       {/* Onboarding Checklist */}
       <OnboardingChecklist />
 
-      {/* Qarte Shield Status Bar */}
-      <div className="relative">
-        <div className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
-          shieldEnabled
-            ? 'bg-emerald-50/50 border-emerald-100'
-            : 'bg-gray-50 border-gray-200'
-        }`}>
-          <div className="flex items-center gap-3">
-            <div className={`p-2 rounded-lg ${shieldEnabled ? 'bg-emerald-100' : 'bg-gray-200'}`}>
-              {shieldEnabled ? (
-                <Shield className="w-4 h-4 text-emerald-600" />
-              ) : (
-                <ShieldOff className="w-4 h-4 text-gray-400" />
-              )}
-            </div>
-            <div>
-              <p className={`text-sm font-semibold ${shieldEnabled ? 'text-emerald-800' : 'text-gray-600'}`}>
-                Qarte Shield {shieldEnabled ? 'actif' : 'inactif'}
-              </p>
-              <p className="text-xs text-gray-500">
-                {shieldEnabled ? 'Protection automatique activée' : 'Protection désactivée'}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setShowShieldHelp(!showShieldHelp)}
-              className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-              aria-label="En savoir plus sur Qarte Shield"
-            >
-              <HelpCircle className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={shieldEnabled}
-              aria-label="Activer ou désactiver Qarte Shield"
-              onClick={() => handleShieldToggle(!shieldEnabled)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                shieldEnabled ? 'bg-emerald-500' : 'bg-gray-300'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                  shieldEnabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-          </div>
-        </div>
-
-        {/* Shield Help Tooltip */}
-        {showShieldHelp && (
-          <div className="absolute right-0 top-full mt-2 z-20 w-[calc(100vw-3rem)] sm:w-80 rounded-xl border border-gray-200 bg-white p-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
-            <div className="flex items-start justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-indigo-600" />
-                <h4 className="text-sm font-bold text-gray-900">Qarte Shield</h4>
-              </div>
-              <button
-                onClick={() => setShowShieldHelp(false)}
-                className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <p className="text-xs text-gray-600 leading-relaxed">
-              Qarte Shield détecte automatiquement les scans suspects (ex : un même client qui scanne plusieurs fois dans la journée) et met les points en attente de ta validation.
-            </p>
-            <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              Tu gardes le contrôle : valide ou refuse chaque visite suspecte depuis le widget ci-dessous.
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Qarte Shield - Points en attente */}
-      <PendingPointsWidget
-        merchantId={merchant.id}
-        shieldEnabled={shieldEnabled}
-        onShieldToggle={handleShieldToggle}
-      />
-
-      {/* Raccourcis rapides — mobile uniquement */}
+      {/* Raccourcis rapides */}
       <div className="md:hidden space-y-2">
         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 px-1">Raccourcis</p>
         <div className="grid grid-cols-3 gap-2.5">
@@ -681,6 +625,119 @@ export default function DashboardPage() {
             color="#D97706"
           />
         </div>
+      )}
+
+      {/* Referrals + Welcome offer highlights */}
+      {(pendingReferrals > 0 || welcomeVouchers > 0) && (
+        <div className="grid grid-cols-2 gap-3">
+          {pendingReferrals > 0 && (
+            <Link href="/dashboard/referrals" className="block">
+              <StatsCard
+                title="Parrainages en cours"
+                value={pendingReferrals}
+                icon={UserPlus}
+                color="#3B82F6"
+              />
+            </Link>
+          )}
+          {welcomeVouchers > 0 && (
+            <Link href="/dashboard/customers" className="block">
+              <StatsCard
+                title="Offre bienvenue"
+                value={welcomeVouchers}
+                icon={Gift}
+                color="#8B5CF6"
+              />
+            </Link>
+          )}
+        </div>
+      )}
+
+      {/* Qarte Shield — only show when merchant has at least 1 client */}
+      {stats.totalCustomers > 0 && (
+        <>
+          <div className="relative">
+            <div className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
+              shieldEnabled
+                ? 'bg-emerald-50/50 border-emerald-100'
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${shieldEnabled ? 'bg-emerald-100' : 'bg-gray-200'}`}>
+                  {shieldEnabled ? (
+                    <Shield className="w-4 h-4 text-emerald-600" />
+                  ) : (
+                    <ShieldOff className="w-4 h-4 text-gray-400" />
+                  )}
+                </div>
+                <div>
+                  <p className={`text-sm font-semibold ${shieldEnabled ? 'text-emerald-800' : 'text-gray-600'}`}>
+                    Qarte Shield {shieldEnabled ? 'actif' : 'inactif'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {shieldEnabled ? 'Protection automatique activée' : 'Protection désactivée'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowShieldHelp(!showShieldHelp)}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                  aria-label="En savoir plus sur Qarte Shield"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={shieldEnabled}
+                  aria-label="Activer ou désactiver Qarte Shield"
+                  onClick={() => handleShieldToggle(!shieldEnabled)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                    shieldEnabled ? 'bg-emerald-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
+                      shieldEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Shield Help Tooltip */}
+            {showShieldHelp && (
+              <div className="absolute right-0 top-full mt-2 z-20 w-[calc(100vw-3rem)] sm:w-80 rounded-xl border border-gray-200 bg-white p-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-indigo-600" />
+                    <h4 className="text-sm font-bold text-gray-900">Qarte Shield</h4>
+                  </div>
+                  <button
+                    onClick={() => setShowShieldHelp(false)}
+                    className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  Qarte Shield détecte automatiquement les scans suspects (ex : un même client qui scanne plusieurs fois dans la journée) et met les points en attente de ta validation.
+                </p>
+                <p className="text-xs text-gray-500 mt-2 leading-relaxed">
+                  Tu gardes le contrôle : valide ou refuse chaque visite suspecte depuis le widget ci-dessous.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <PendingPointsWidget
+            merchantId={merchant.id}
+            shieldEnabled={shieldEnabled}
+            onShieldToggle={handleShieldToggle}
+          />
+        </>
       )}
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">

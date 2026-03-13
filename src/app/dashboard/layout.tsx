@@ -136,11 +136,16 @@ function DashboardLayoutContent({
           <div className="flex items-center justify-between px-5 py-4 lg:px-6 lg:py-5 border-b border-gray-100/50 bg-white/40 backdrop-blur-md sticky top-0 z-10">
             <Link href="/dashboard" onClick={() => setSidebarOpen(false)} className="flex items-center gap-3 group">
               <div className="flex items-center justify-center w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-200/40 transition-transform group-hover:scale-105 duration-200">
-                <CreditCard className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
+                <span className="text-sm lg:text-base font-black text-white">Q</span>
               </div>
-              <span className="text-lg lg:text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-                Qarte
-              </span>
+              <div className="flex flex-col">
+                <span className="text-lg lg:text-xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600 leading-none">
+                  Qarte
+                </span>
+                <span className="text-[10px] font-semibold text-gray-400 tracking-wider uppercase leading-none mt-0.5">
+                  Espace pro
+                </span>
+              </div>
             </Link>
             <button
               onClick={() => setSidebarOpen(false)}
