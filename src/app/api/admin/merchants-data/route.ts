@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
       { data: emailTracking },
       { data: reactivationTracking },
       { data: pendingVisits },
+      { data: servicesList },
+      { data: photosList },
     ] = await Promise.all([
       supabaseAdmin.from('merchants').select('*').order('created_at', { ascending: false }),
       supabaseAdmin.from('super_admins').select('user_id'),
@@ -39,6 +41,8 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('pending_email_tracking').select('merchant_id, reminder_day').limit(10000),
       supabaseAdmin.from('reactivation_email_tracking').select('merchant_id, day_sent').limit(10000),
       supabaseAdmin.from('visits').select('merchant_id').eq('status', 'pending').limit(10000),
+      supabaseAdmin.from('merchant_services').select('merchant_id').limit(10000),
+      supabaseAdmin.from('merchant_photos').select('merchant_id').limit(10000),
     ]);
 
     // Super admin user_ids
@@ -99,6 +103,18 @@ export async function GET(request: NextRequest) {
       pendingPoints[v.merchant_id] = (pendingPoints[v.merchant_id] || 0) + 1;
     });
 
+    // Services counts per merchant
+    const servicesCounts: Record<string, number> = {};
+    (servicesList || []).forEach((s: { merchant_id: string }) => {
+      servicesCounts[s.merchant_id] = (servicesCounts[s.merchant_id] || 0) + 1;
+    });
+
+    // Photos counts per merchant
+    const photosCounts: Record<string, number> = {};
+    (photosList || []).forEach((p: { merchant_id: string }) => {
+      photosCounts[p.merchant_id] = (photosCounts[p.merchant_id] || 0) + 1;
+    });
+
     // User emails mapping (uses paginated allUsers from C10 fix)
     const userEmails: Record<string, string> = {};
     allUsers.forEach((u) => {
@@ -116,6 +132,8 @@ export async function GET(request: NextRequest) {
       reactivationTracking: reactivationMap,
       pendingPoints,
       userEmails,
+      servicesCounts,
+      photosCounts,
     });
   } catch (error) {
     logger.error('Merchants data API error:', error);

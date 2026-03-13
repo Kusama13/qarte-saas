@@ -65,6 +65,9 @@ export async function GET(
       totalReferralsRes,
       pendingReferralsRes,
       completedReferralsRes,
+      servicesCountRes,
+      photosCountRes,
+      welcomeVouchersRes,
     ] = await Promise.all([
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
@@ -80,6 +83,9 @@ export async function GET(
       supabaseAdmin.from('referrals').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('referrals').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('status', 'pending'),
       supabaseAdmin.from('referrals').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('status', 'completed'),
+      supabaseAdmin.from('merchant_services').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabaseAdmin.from('merchant_photos').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
+      supabaseAdmin.from('vouchers').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('source', 'welcome'),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -144,6 +150,9 @@ export async function GET(
         totalReferrals: totalReferralsRes.count || 0,
         pendingReferrals: pendingReferralsRes.count || 0,
         completedReferrals: completedReferralsRes.count || 0,
+        servicesCount: servicesCountRes.count || 0,
+        photosCount: photosCountRes.count || 0,
+        welcomeVouchers: welcomeVouchersRes.count || 0,
       },
       memberPrograms: memberProgramsRes.data || [],
       emailTrackings: emailTrackingsRes.data || [],

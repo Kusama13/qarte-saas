@@ -64,6 +64,11 @@ type MerchantData = {
   tier2_enabled: boolean;
   pwa_installed_at: string | null;
   offer_active: boolean;
+  welcome_offer_enabled: boolean;
+  double_days_enabled: boolean;
+  shop_address: string | null;
+  loyalty_mode: 'visit' | 'cagnotte';
+  slug: string | null;
 };
 
 export default function MetriquesPage() {
@@ -113,6 +118,8 @@ export default function MetriquesPage() {
   const [funnelMerchants, setFunnelMerchants] = useState<MerchantData[]>([]);
   const [funnelFirstVisitMap, setFunnelFirstVisitMap] = useState<Map<string, Date>>(new Map());
   const [funnelPeriod, setFunnelPeriod] = useState<'7' | '30' | '90' | 'all'>('all');
+  const [merchantsWithServices, setMerchantsWithServices] = useState<Set<string>>(new Set());
+  const [merchantsWithPhotos, setMerchantsWithPhotos] = useState<Set<string>>(new Set());
 
   // Computed funnel based on period (with visit date filtering)
   const funnel = useMemo(() => {
@@ -164,8 +171,10 @@ export default function MetriquesPage() {
         { data: tenthCardsRpc },
         { count: endingSoonCount },
         { data: snapshots },
+        { data: servicesList },
+        { data: photosList },
       ] = await Promise.all([
-        supabase.from('merchants').select('id, user_id, subscription_status, billing_interval, created_at, reward_description, trial_ends_at, logo_url, referral_program_enabled, birthday_gift_enabled, instagram_url, facebook_url, tiktok_url, booking_url, review_link, shield_enabled, tier2_enabled, pwa_installed_at, offer_active'),
+        supabase.from('merchants').select('id, user_id, subscription_status, billing_interval, created_at, reward_description, trial_ends_at, logo_url, referral_program_enabled, birthday_gift_enabled, instagram_url, facebook_url, tiktok_url, booking_url, review_link, shield_enabled, tier2_enabled, pwa_installed_at, offer_active, welcome_offer_enabled, double_days_enabled, shop_address, loyalty_mode, slug'),
         supabase.from('super_admins').select('user_id'),
         supabase.rpc('get_first_visit_per_merchant'),
         supabase.rpc('get_tenth_card_date_per_merchant'),
@@ -178,6 +187,8 @@ export default function MetriquesPage() {
           .select('*')
           .order('snapshot_date', { ascending: true })
           .limit(12),
+        supabase.from('merchant_services').select('merchant_id').limit(10000),
+        supabase.from('merchant_photos').select('merchant_id').limit(10000),
       ]);
 
       // Get super admin user_ids
@@ -404,6 +415,15 @@ export default function MetriquesPage() {
         recentMerchantCount: recentCreated.length,
       });
 
+      // Build services/photos sets for feature adoption
+      const servicesSet = new Set<string>();
+      (servicesList || []).forEach((s: { merchant_id: string }) => servicesSet.add(s.merchant_id));
+      setMerchantsWithServices(servicesSet);
+
+      const photosSet = new Set<string>();
+      (photosList || []).forEach((p: { merchant_id: string }) => photosSet.add(p.merchant_id));
+      setMerchantsWithPhotos(photosSet);
+
       // Store raw data for funnel period filtering
       setFunnelMerchants(merchants);
       setFunnelFirstVisitMap(firstVisitPerMerchant);
@@ -471,7 +491,7 @@ export default function MetriquesPage() {
     const total = eligible.length;
     if (total === 0) return [];
 
-    const features = [
+    const features: { label: string; count: number; pct: number }[] = [
       { label: 'Programme configure', count: eligible.filter(m => m.reward_description !== null).length, pct: 0 },
       { label: 'Logo', count: eligible.filter(m => !!m.logo_url).length, pct: 0 },
       { label: 'Reseaux sociaux', count: eligible.filter(m => m.instagram_url || m.facebook_url || m.tiktok_url).length, pct: 0 },
@@ -483,12 +503,18 @@ export default function MetriquesPage() {
       { label: 'PWA installee', count: eligible.filter(m => !!m.pwa_installed_at).length, pct: 0 },
       { label: 'Shield', count: eligible.filter(m => m.shield_enabled).length, pct: 0 },
       { label: 'Palier 2', count: eligible.filter(m => m.tier2_enabled).length, pct: 0 },
+      { label: 'Offre bienvenue', count: eligible.filter(m => m.welcome_offer_enabled).length, pct: 0 },
+      { label: 'Double jours', count: eligible.filter(m => m.double_days_enabled).length, pct: 0 },
+      { label: 'Adresse', count: eligible.filter(m => !!m.shop_address).length, pct: 0 },
+      { label: 'Mode cagnotte', count: eligible.filter(m => m.loyalty_mode === 'cagnotte').length, pct: 0 },
+      { label: 'Prestations', count: eligible.filter(m => merchantsWithServices.has(m.id)).length, pct: 0 },
+      { label: 'Photos', count: eligible.filter(m => merchantsWithPhotos.has(m.id)).length, pct: 0 },
     ];
 
     features.forEach(f => { f.pct = Math.round((f.count / total) * 100); });
     features.sort((a, b) => b.pct - a.pct);
     return features;
-  }, [funnelMerchants]);
+  }, [funnelMerchants, merchantsWithServices, merchantsWithPhotos]);
 
   if (loading) {
     return (

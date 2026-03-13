@@ -40,6 +40,8 @@ interface MerchantsDataResponse {
 
   pendingPoints: Record<string, number>;
   userEmails: Record<string, string>;
+  servicesCounts: Record<string, number>;
+  photosCounts: Record<string, number>;
 }
 
 interface LifecycleStage {
@@ -165,6 +167,9 @@ function computeHealthScore(
   if (merchant.referral_program_enabled) score += 5;
   if (merchant.shield_enabled) score += 5;
   if (merchant.tier2_enabled) score += 5;
+  if (merchant.welcome_offer_enabled) score += 5;
+  if (merchant.birthday_gift_enabled) score += 3;
+  if (merchant.double_days_enabled) score += 2;
   return Math.min(score, 100);
 }
 
@@ -192,8 +197,8 @@ function formatPhoneForWhatsApp(phone: string) {
 
 // --- Shared Sub-Components ---
 
-/** Badges shown next to merchant name (Admin, No-Contact, Pending points) */
-function MerchantBadges({ isAdmin, noContact, pending, pwaInstalled }: { isAdmin: boolean; noContact: boolean | null; pending: number; pwaInstalled: boolean }) {
+/** Badges shown next to merchant name */
+function MerchantBadges({ isAdmin, noContact, pending, pwaInstalled, welcomeOffer, cagnotte, pageRemplie }: { isAdmin: boolean; noContact: boolean | null; pending: number; pwaInstalled: boolean; welcomeOffer: boolean; cagnotte: boolean; pageRemplie: boolean }) {
   return (
     <>
       {isAdmin && (
@@ -219,6 +224,22 @@ function MerchantBadges({ isAdmin, noContact, pending, pwaInstalled }: { isAdmin
         <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-green-100 text-green-700 rounded-full flex-shrink-0 flex items-center gap-0.5">
           <Smartphone className="w-3 h-3" />
           PWA
+        </span>
+      )}
+      {welcomeOffer && (
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-indigo-100 text-indigo-700 rounded-full flex-shrink-0" title="Offre de bienvenue active">
+          Bienvenue
+        </span>
+      )}
+      {cagnotte && (
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-violet-100 text-violet-700 rounded-full flex-shrink-0" title="Mode cagnotte">
+          Cagnotte
+        </span>
+      )}
+      {pageRemplie && (
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full flex-shrink-0 flex items-center gap-0.5" title="Page pro remplie (services + photos + adresse)">
+          <CheckCircle className="w-3 h-3" />
+          Page
         </span>
       )}
     </>
@@ -808,7 +829,7 @@ export default function AdminMerchantsPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                               <p className="font-medium text-gray-900 truncate max-w-[180px] text-sm">{merchant.shop_name}</p>
-                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pwaInstalled={!!merchant.pwa_installed_at} />
+                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} />
                             </div>
                             <div className="flex items-center gap-2 text-[11px] text-gray-400">
                               {data?.userEmails[merchant.user_id] && (
@@ -904,7 +925,7 @@ export default function AdminMerchantsPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="font-medium text-gray-900 truncate text-sm">{merchant.shop_name}</p>
-                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pwaInstalled={!!merchant.pwa_installed_at} />
+                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} />
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className={cn("px-1.5 py-0.5 text-[10px] font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>

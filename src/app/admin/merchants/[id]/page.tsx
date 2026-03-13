@@ -36,6 +36,9 @@ import {
   Loader2 as Loader2Icon,
   Zap,
   Wallet,
+  Image,
+  Scissors,
+  UserPlus,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl } from '@/lib/utils';
@@ -99,6 +102,10 @@ interface Merchant {
   admin_notes: string | null;
   // PWA
   pwa_installed_at: string | null;
+  // Welcome offer
+  welcome_offer_enabled: boolean;
+  welcome_offer_description: string | null;
+  welcome_referral_code: string | null;
 }
 
 
@@ -115,6 +122,9 @@ interface Stats {
   totalReferrals: number;
   pendingReferrals: number;
   completedReferrals: number;
+  servicesCount: number;
+  photosCount: number;
+  welcomeVouchers: number;
 }
 
 interface MemberProgram {
@@ -173,7 +183,11 @@ function computeHealthScore(
     else if (daysSince < 14) score += 5;
   }
   if (merchant.referral_program_enabled) score += 5;
+  if (merchant.shield_enabled) score += 5;
   if (merchant.tier2_enabled) score += 5;
+  if (merchant.welcome_offer_enabled) score += 5;
+  if (merchant.birthday_gift_enabled) score += 3;
+  if (merchant.double_days_enabled) score += 2;
   return Math.min(score, 100);
 }
 
@@ -215,6 +229,9 @@ export default function MerchantDetailPage() {
     totalReferrals: 0,
     pendingReferrals: 0,
     completedReferrals: 0,
+    servicesCount: 0,
+    photosCount: 0,
+    welcomeVouchers: 0,
   });
   const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -562,6 +579,15 @@ export default function MerchantDetailPage() {
                 })()}
               </span>
             )}
+            <span className={cn(
+              "px-2 py-1 text-xs font-medium rounded-full flex items-center gap-1",
+              merchant.welcome_offer_enabled
+                ? "text-indigo-700 bg-indigo-100"
+                : "text-gray-500 bg-gray-100"
+            )}>
+              <Gift className="w-3 h-3" />
+              Bienvenue {merchant.welcome_offer_enabled ? 'active' : 'inactive'}
+            </span>
           </div>
         </div>
 
@@ -832,6 +858,27 @@ export default function MerchantDetailPage() {
                 <p className="text-[11px] text-gray-500 font-medium">Finalisés</p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Offre de bienvenue */}
+        {merchant.welcome_offer_enabled && (
+          <div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+            <div className="flex items-center gap-2 mb-3">
+              <Gift className="w-5 h-5 text-indigo-600" />
+              <span className="font-medium text-gray-900">Offre de bienvenue</span>
+              <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 text-indigo-700">
+                Active
+              </span>
+            </div>
+            <p className="text-sm text-gray-700 mb-2">
+              {merchant.welcome_offer_description || 'Description non configurée'}
+            </p>
+            {merchant.welcome_referral_code && (
+              <p className="text-xs text-gray-500">
+                Code : <span className="font-mono font-semibold text-indigo-700">{merchant.welcome_referral_code}</span>
+              </p>
+            )}
           </div>
         )}
 
@@ -1211,6 +1258,54 @@ export default function MerchantDetailPage() {
                   : '—'}
               </p>
               <p className="text-sm text-gray-500">PWA Pro {merchant.pwa_installed_at ? 'Installée' : 'Non installée'}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats - Row 3: Page pro */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-violet-50">
+              <Scissors className="w-5 h-5 text-violet-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.servicesCount}</p>
+              <p className="text-sm text-gray-500">Prestations</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-cyan-50">
+              <Image className="w-5 h-5 text-cyan-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.photosCount}</p>
+              <p className="text-sm text-gray-500">Photos</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-50">
+              <UserPlus className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.welcomeVouchers}</p>
+              <p className="text-sm text-gray-500">Vouchers bienvenue</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 bg-white rounded-lg shadow-md border border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-50">
+              <TrendingUp className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-gray-900">{stats.weeklyScans}</p>
+              <p className="text-sm text-gray-500">Scans (7j)</p>
             </div>
           </div>
         </div>
