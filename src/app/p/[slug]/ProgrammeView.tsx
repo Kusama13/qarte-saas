@@ -413,6 +413,12 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 </div>
               </div>
             ))}
+
+            {planningSlots.length >= 3 && (
+              <p className="text-[11px] text-gray-400 text-center mt-2">
+                Et plus de créneaux disponibles — contactez-nous
+              </p>
+            )}
           </motion.div>
         )}
 

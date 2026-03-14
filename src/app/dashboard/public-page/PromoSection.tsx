@@ -1,23 +1,22 @@
 'use client';
 
-import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Tag,
+  Loader2,
+  Check,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { getTodayInParis } from '@/lib/utils';
+import { useDashboardSave } from '@/hooks/useDashboardSave';
 import type { Merchant } from '@/types';
-
-export interface PromoSectionHandle {
-  save: () => Promise<void>;
-}
 
 interface PromoSectionProps {
   merchant: Merchant;
-  onDirty?: () => void;
 }
 
-const PromoSection = forwardRef<PromoSectionHandle, PromoSectionProps>(function PromoSection({ merchant, onDirty }, ref) {
+export default function PromoSection({ merchant }: PromoSectionProps) {
+  const { saving, saved, save } = useDashboardSave();
   const [promoEnabled, setPromoEnabled] = useState(false);
   const [promoTitle, setPromoTitle] = useState('');
   const [promoDescription, setPromoDescription] = useState('');
@@ -35,7 +34,6 @@ const PromoSection = forwardRef<PromoSectionHandle, PromoSectionProps>(function 
           setPromoTitle(offer.title);
           setPromoDescription(offer.description);
           setPromoExpiresAt(offer.expires_at ? offer.expires_at.split('T')[0] : '');
-          // Auto-detect expired offers
           const isExpired = offer.expires_at && new Date(offer.expires_at) < new Date();
           setPromoEnabled(offer.active && !isExpired);
         }
@@ -44,49 +42,49 @@ const PromoSection = forwardRef<PromoSectionHandle, PromoSectionProps>(function 
     fetchOffers();
   }, [merchant]);
 
-  const save = async () => {
-    if (promoEnabled && (!promoTitle.trim() || !promoDescription.trim())) throw new Error('Titre et description requis');
+  const handleSave = () => {
+    save(async () => {
+      if (promoEnabled && (!promoTitle.trim() || !promoDescription.trim())) throw new Error('Titre et description requis');
 
-    if (promoEnabled) {
-      if (promoOfferId) {
+      if (promoEnabled) {
+        if (promoOfferId) {
+          await fetch('/api/merchant-offers', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              offerId: promoOfferId,
+              merchantId: merchant.id,
+              active: true,
+              title: promoTitle.trim(),
+              description: promoDescription.trim(),
+              expires_at: promoExpiresAt || null,
+            }),
+          });
+        } else {
+          const res = await fetch('/api/merchant-offers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              merchantId: merchant.id,
+              title: promoTitle.trim(),
+              description: promoDescription.trim(),
+              expiresAt: promoExpiresAt || null,
+            }),
+          });
+          const data = await res.json();
+          if (res.ok && data.offer) {
+            setPromoOfferId(data.offer.id);
+          }
+        }
+      } else if (promoOfferId) {
         await fetch('/api/merchant-offers', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            offerId: promoOfferId,
-            merchantId: merchant.id,
-            active: true,
-            title: promoTitle.trim(),
-            description: promoDescription.trim(),
-            expires_at: promoExpiresAt || null,
-          }),
+          body: JSON.stringify({ offerId: promoOfferId, merchantId: merchant.id, active: false }),
         });
-      } else {
-        const res = await fetch('/api/merchant-offers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            merchantId: merchant.id,
-            title: promoTitle.trim(),
-            description: promoDescription.trim(),
-            expiresAt: promoExpiresAt || null,
-          }),
-        });
-        const data = await res.json();
-        if (res.ok && data.offer) {
-          setPromoOfferId(data.offer.id);
-        }
       }
-    } else if (promoOfferId) {
-      await fetch('/api/merchant-offers', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ offerId: promoOfferId, merchantId: merchant.id, active: false }),
-      });
-    }
+    });
   };
-
-  useImperativeHandle(ref, () => ({ save }));
 
   return (
     <div className="pt-5 border-t border-gray-100">
@@ -101,7 +99,7 @@ const PromoSection = forwardRef<PromoSectionHandle, PromoSectionProps>(function 
         <button
           role="switch"
           aria-checked={promoEnabled}
-          onClick={() => { setPromoEnabled(!promoEnabled); onDirty?.(); }}
+          onClick={() => setPromoEnabled(!promoEnabled)}
           className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
             promoEnabled ? 'bg-amber-500' : 'bg-gray-200'
           }`}
@@ -119,7 +117,7 @@ const PromoSection = forwardRef<PromoSectionHandle, PromoSectionProps>(function 
             <Input
               placeholder="Ex: Offre de printemps"
               value={promoTitle}
-              onChange={(e) => { setPromoTitle(e.target.value); onDirty?.(); }}
+              onChange={(e) => setPromoTitle(e.target.value)}
               className="h-10 text-sm"
             />
             <div className="flex flex-wrap gap-1.5 mt-2">
@@ -127,7 +125,7 @@ const PromoSection = forwardRef<PromoSectionHandle, PromoSectionProps>(function 
                 <button
                   key={s}
                   type="button"
-                  onClick={() => { setPromoTitle(s); onDirty?.(); }}
+                  onClick={() => setPromoTitle(s)}
                   className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-colors"
                 >
                   {s}
@@ -142,7 +140,7 @@ const PromoSection = forwardRef<PromoSectionHandle, PromoSectionProps>(function 
             <Input
               placeholder="Ex: -20% sur les balayages, Un soin offert..."
               value={promoDescription}
-              onChange={(e) => { setPromoDescription(e.target.value); onDirty?.(); }}
+              onChange={(e) => setPromoDescription(e.target.value)}
               className="h-10 text-sm"
             />
             <div className="flex flex-wrap gap-1.5 mt-2">
@@ -150,7 +148,7 @@ const PromoSection = forwardRef<PromoSectionHandle, PromoSectionProps>(function 
                 <button
                   key={s}
                   type="button"
-                  onClick={() => { setPromoDescription(s); onDirty?.(); }}
+                  onClick={() => setPromoDescription(s)}
                   className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 transition-colors"
                 >
                   {s}
@@ -163,7 +161,7 @@ const PromoSection = forwardRef<PromoSectionHandle, PromoSectionProps>(function 
             <Input
               type="date"
               value={promoExpiresAt}
-              onChange={(e) => { setPromoExpiresAt(e.target.value); onDirty?.(); }}
+              onChange={(e) => setPromoExpiresAt(e.target.value)}
               className="h-10 text-sm"
               min={getTodayInParis()}
             />
@@ -171,8 +169,22 @@ const PromoSection = forwardRef<PromoSectionHandle, PromoSectionProps>(function 
         </div>
       )}
 
+      {/* ── Save button for Acquisition section ── */}
+      <div className="mt-5 pt-5 border-t border-gray-100">
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={saving}
+          className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+            saved
+              ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+              : 'bg-violet-600 text-white hover:bg-violet-700 shadow-sm'
+          }`}
+        >
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : null}
+          {saving ? 'Sauvegarde...' : saved ? 'Sauvegard\u00e9' : 'Enregistrer'}
+        </button>
+      </div>
     </div>
   );
-});
-
-export default PromoSection;
+}

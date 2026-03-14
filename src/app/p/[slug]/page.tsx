@@ -37,7 +37,7 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
   if (!merchant) return null;
 
   const today = new Date().toISOString().split('T')[0];
-  const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
   const [photosResult, servicesResult, categoriesResult, planningResult] = await Promise.all([
     supabaseAdmin
@@ -62,7 +62,7 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
           .eq('merchant_id', (merchant as any).id)
           .is('client_name', null)
           .gte('slot_date', today)
-          .lte('slot_date', thirtyDaysLater)
+          .lte('slot_date', sevenDaysLater)
           .order('slot_date')
           .order('start_time')
       : Promise.resolve({ data: [] }),

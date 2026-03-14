@@ -1,25 +1,24 @@
 'use client';
 
-import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Sparkles,
   HelpCircle,
+  Loader2,
+  Check,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
+import { useDashboardSave } from '@/hooks/useDashboardSave';
 import type { Merchant } from '@/types';
-
-export interface WelcomeSectionHandle {
-  save: () => Promise<void>;
-}
 
 interface WelcomeSectionProps {
   merchant: Merchant;
   refetch: () => Promise<void>;
-  onDirty?: () => void;
   onShowHelp?: () => void;
 }
 
-const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(function WelcomeSection({ merchant, refetch, onDirty, onShowHelp }, ref) {
+export default function WelcomeSection({ merchant, refetch, onShowHelp }: WelcomeSectionProps) {
+  const { saving, saved, save } = useDashboardSave();
   const [welcomeEnabled, setWelcomeEnabled] = useState(false);
   const [welcomeDescription, setWelcomeDescription] = useState('');
   const [saveError, setSaveError] = useState('');
@@ -29,32 +28,32 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
     setWelcomeDescription(merchant.welcome_offer_description || '');
   }, [merchant]);
 
-  const save = async () => {
-    if (welcomeEnabled && !welcomeDescription.trim()) throw new Error('Description requise');
+  const handleSave = () => {
+    save(async () => {
+      if (welcomeEnabled && !welcomeDescription.trim()) throw new Error('Description requise');
 
-    setSaveError('');
-    const res = await fetch('/api/merchants/referral-config', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        merchant_id: merchant.id,
-        referral_program_enabled: merchant.referral_program_enabled,
-        referral_reward_referrer: merchant.referral_reward_referrer,
-        referral_reward_referred: merchant.referral_reward_referred,
-        welcome_offer_enabled: welcomeEnabled,
-        welcome_offer_description: welcomeEnabled ? welcomeDescription.trim() : null,
-      }),
+      setSaveError('');
+      const res = await fetch('/api/merchants/referral-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          merchant_id: merchant.id,
+          referral_program_enabled: merchant.referral_program_enabled,
+          referral_reward_referrer: merchant.referral_reward_referrer,
+          referral_reward_referred: merchant.referral_reward_referred,
+          welcome_offer_enabled: welcomeEnabled,
+          welcome_offer_description: welcomeEnabled ? welcomeDescription.trim() : null,
+        }),
+      });
+
+      if (!res.ok) {
+        setSaveError('Erreur lors de la sauvegarde');
+        throw new Error('save failed');
+      }
+
+      await refetch();
     });
-
-    if (!res.ok) {
-      setSaveError('Erreur lors de la sauvegarde');
-      throw new Error('save failed');
-    }
-
-    await refetch();
   };
-
-  useImperativeHandle(ref, () => ({ save }));
 
   return (
     <>
@@ -75,7 +74,7 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
           <button
             role="switch"
             aria-checked={welcomeEnabled}
-            onClick={() => { setWelcomeEnabled(!welcomeEnabled); onDirty?.(); }}
+            onClick={() => setWelcomeEnabled(!welcomeEnabled)}
             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
               welcomeEnabled ? 'bg-violet-600' : 'bg-gray-200'
             }`}
@@ -93,7 +92,7 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
               <Input
                 placeholder="Ex: -20% sur votre premiere visite"
                 value={welcomeDescription}
-                onChange={(e) => { setWelcomeDescription(e.target.value); onDirty?.(); }}
+                onChange={(e) => setWelcomeDescription(e.target.value)}
                 className="h-10 text-sm"
               />
               <div className="flex flex-wrap gap-1.5 mt-2">
@@ -101,7 +100,7 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
                   <button
                     key={s}
                     type="button"
-                    onClick={() => { setWelcomeDescription(s); onDirty?.(); }}
+                    onClick={() => setWelcomeDescription(s)}
                     className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-colors"
                   >
                     {s}
@@ -115,10 +114,25 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
         {saveError && (
           <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{saveError}</div>
         )}
+
+        {/* ── Save button ── */}
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+              saved
+                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
+                : 'bg-violet-600 text-white hover:bg-violet-700 shadow-sm'
+            }`}
+          >
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : null}
+            {saving ? 'Sauvegarde...' : saved ? 'Sauvegard\u00e9' : 'Enregistrer'}
+          </button>
+        </div>
       </div>
 
     </>
   );
-});
-
-export default WelcomeSection;
+}

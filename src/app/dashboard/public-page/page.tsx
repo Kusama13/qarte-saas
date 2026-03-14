@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Globe,
@@ -9,58 +9,26 @@ import {
   Check,
   Sparkles,
   HelpCircle,
-  Loader2,
   X,
   Pencil,
   Palette,
   MapPin,
   Camera,
   ChevronDown,
+  Loader2,
 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
-import { useDashboardSave } from '@/hooks/useDashboardSave';
-import InfoSection, { type InfoSectionHandle } from './InfoSection';
+import InfoSection from './InfoSection';
 import PhotosSection from './PhotosSection';
-import WelcomeSection, { type WelcomeSectionHandle } from './WelcomeSection';
+import WelcomeSection from './WelcomeSection';
 import ServicesSection from './ServicesSection';
-import PromoSection, { type PromoSectionHandle } from './PromoSection';
+import PromoSection from './PromoSection';
 
 type SectionId = 'salon' | 'contenu' | 'acquisition';
 
 export default function PublicPageDashboard() {
   const router = useRouter();
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
-
-  // Section refs for global save
-  const infoRef = useRef<InfoSectionHandle>(null);
-  const welcomeRef = useRef<WelcomeSectionHandle>(null);
-  const promoRef = useRef<PromoSectionHandle>(null);
-  const { saving, saved, save } = useDashboardSave();
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
-  const savingRef = useRef(false);
-
-  const triggerSave = useCallback(() => {
-    if (savingRef.current) return;
-    savingRef.current = true;
-    save(async () => {
-      const results = await Promise.allSettled([
-        infoRef.current?.save(),
-        welcomeRef.current?.save(),
-        promoRef.current?.save(),
-      ]);
-      const failed = results.some(r => r.status === 'rejected');
-      if (failed) throw new Error('partial');
-    }).finally(() => { savingRef.current = false; });
-  }, [save]);
-
-  const handleDirty = useCallback(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(triggerSave, 1500);
-  }, [triggerSave]);
-
-  useEffect(() => {
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, []);
 
   // Collapsible sections — all open by default
   const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set(['salon', 'contenu', 'acquisition']));
@@ -349,7 +317,7 @@ export default function PublicPageDashboard() {
                   <Pencil className="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
                 </button>
 
-                <InfoSection ref={infoRef} merchant={merchant} refetch={refetch} onDirty={handleDirty} />
+                <InfoSection merchant={merchant} refetch={refetch} />
               </div>
             )}
           </div>
@@ -400,23 +368,12 @@ export default function PublicPageDashboard() {
 
             {openSections.has('acquisition') && (
               <div className="px-4 md:px-5 pb-5 space-y-0">
-                <WelcomeSection ref={welcomeRef} merchant={merchant} refetch={refetch} onDirty={handleDirty} onShowHelp={() => setShowWelcomeHelp(true)} />
-                <PromoSection ref={promoRef} merchant={merchant} onDirty={handleDirty} />
+                <WelcomeSection merchant={merchant} refetch={refetch} onShowHelp={() => setShowWelcomeHelp(true)} />
+                <PromoSection merchant={merchant} />
               </div>
             )}
           </div>
 
-          {/* ── AUTOSAVE STATUS ── */}
-          {(saving || saved) && (
-            <div className="sticky bottom-4 z-10 flex justify-end pointer-events-none">
-              <div className={`pointer-events-none inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium shadow-lg transition-all ${
-                saving ? 'bg-white text-gray-500 shadow-gray-200' : 'bg-emerald-50 text-emerald-600 shadow-emerald-100'
-              }`}>
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                {saving ? 'Sauvegarde...' : 'Sauvegardé'}
-              </div>
-            </div>
-          )}
 
         </div>
       )}
