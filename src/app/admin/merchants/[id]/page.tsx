@@ -386,37 +386,25 @@ export default function MerchantDetailPage() {
   };
 
   const getWhatsAppMarketing = (name: string, customers: number): { label: string; text: string }[] => [
-    { label: 'Aide config', text: `Hello ${name} ! C'est Elodie de Qarte. J'ai vu que votre programme n'etait pas encore finalise — on s'en occupe ensemble ? Ca prend 30 secondes, promis 😊` },
-    { label: 'Relance douce', text: `Hello ${name} ! Elodie de Qarte. Votre compte est pret, il manque juste la recompense pour vos clients. Dites-moi ce que vous offrez d'habitude et je configure tout pour vous !` },
-    { label: '1er scan', text: `Hello ${name} ! C'est Elodie de Qarte. Votre carte est prete ! Testez-la : scannez votre QR code, c'est 10 secondes et vous verrez exactement ce que vos clients voient 😊` },
-    { label: 'Premier pas', text: `Hello ${name} ! Elodie de Qarte. Votre carte est superbe ! L'astuce : montrez le QR code a vos 3 prochains clients au moment de payer. C'est tout, on s'occupe du reste 😍` },
-    { label: 'Challenge', text: `Hello ${name} ! Petit defi : montrez votre QR Qarte a 5 clients aujourd'hui. Vous allez voir, la reaction c'est toujours la meme : "ah trop bien !" 😄` },
-    { label: 'Affichage QR', text: `Hello ${name} ! Elodie de Qarte. L'astuce qui change tout : collez le QR code pres de la caisse. Les clients le scannent tout seuls — vous n'avez plus rien a faire 📱` },
-    { label: 'Fin essai', text: `Hello ${name} ! C'est Elodie. Votre essai Qarte se termine bientot${customers > 0 ? ` et vos ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. On continue ensemble ? 😊` },
-    { label: 'Accompagnement', text: `Hello ${name} ! Elodie de Qarte. Comment ca se passe ? Des questions avant la fin de l'essai ? Je suis la, on peut meme s'appeler 2 min si vous voulez 📞` },
-    { label: 'Relance expiree', text: `Hello ${name} ! C'est Elodie de Qarte. Votre essai est termine mais rien n'est perdu ! ${customers > 0 ? `Vos ${customers} clients gardent leur carte. ` : ''}Le code QARTE50 vous offre le premier mois a 9€. On relance ? 😊` },
-    { label: 'Question ouverte', text: `Hello ${name} ! Elodie de Qarte. Est-ce qu'il y a eu un truc qui a coince pendant l'essai ? Vos retours m'aident beaucoup — et je peux surement debloquer ca 🙏` },
-    { label: 'Prise de nouvelles', text: `Hello ${name} ! C'est Elodie de Qarte. Je prends des nouvelles — comment ca se passe au salon ? Un coup de main avec Qarte ? Je suis dispo 😊` },
-    { label: 'Retention', text: `Hello ${name} ! C'est Elodie de Qarte. J'ai vu pour l'annulation — aucun souci ! Qu'est-ce qui vous a manque ? Vos retours m'aident vraiment a ameliorer Qarte 🙏` },
-    { label: 'Bravo', text: `Hello ${name} ! C'est Elodie de Qarte. Bravo, deja ${customers} clients sur votre carte ! Vous savez que vous pouvez leur envoyer des notifications pour les faire revenir ? Je vous montre si vous voulez 🚀` },
-    { label: 'Suivi', text: `Hello ${name} ! C'est Elodie de Qarte. Comment ca se passe avec la carte ? Vos clients sont contents ? Si vous avez des idees, je suis toute ouie 😊` },
-    { label: 'Parrainage', text: `Hello ${name} ! Elodie de Qarte. Vous connaissez le parrainage ? Chaque client peut inviter un ami — les deux recoivent un cadeau. Ca s'active en 1 clic dans dashboard → Parrainage. C'est de l'acquisition gratuite ! 🤝` },
-    { label: 'Message libre', text: `Hello ${name} ! C'est Elodie de Qarte. ` },
+    { label: 'Presentation', text: `Hello ${name} ! C'est Elodie de Qarte, je vais t'accompagner pendant ton essai. Si t'as la moindre question, je suis dispo ici — n'hesite vraiment pas 😊` },
+    { label: 'Bienvenue', text: `Bienvenue sur Qarte ! En resumé : carte de fidelite digitale (QR code en caisse), page pro pour tes reseaux, offre de bienvenue pour attirer de nouveaux clients, et notifications push pour les faire revenir. Tout se configure en quelques clics depuis ton espace pro 😊` },
+    { label: 'Pourquoi Qarte', text: `Qarte remplace les cartes en carton que tes clients perdent. Tu affiches un QR code, ils le scannent, et leur carte est sur leur telephone. Tu peux leur envoyer des notifs, activer le parrainage, et avoir une page pro prete pour tes reseaux. Tout ca pour 19€/mois 😊` },
+    { label: 'Relance config', text: `J'ai vu que ton programme n'etait pas encore finalise — ca se fait en 2 clics depuis ton espace pro. Choisis ta recompense, ton nombre de tampons, et c'est en ligne ! Si t'as besoin d'un coup de main je suis la 😊` },
+    { label: 'Offre bienvenue', text: `T'as active l'offre de bienvenue ? C'est un geste pour les nouveaux clients (ex: -20% premiere visite). Ils la voient sur ta page pro et ca les pousse a venir. Tu la configures dans Espace Pro → Ma Page en 30 secondes 🎁` },
+    { label: 'Referencement Google', text: `Savais-tu que ta page pro est referencee sur Google ? Quand quelqu'un cherche un salon pres de chez toi, ta page peut ressortir. Ajoute tes prestations, photos et adresse pour maximiser ta visibilite 🔍` },
+    { label: 'Fin essai', text: `Ton essai se termine bientot${customers > 0 ? ` et tes ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. On continue ensemble ? 😊` },
+    { label: 'Message libre', text: `C'est Elodie de Qarte. ` },
   ];
 
   const getWhatsAppTuto = (name: string): { label: string; text: string }[] => [
-    { label: 'Comment ca marche', text: `Hello ${name} ! La carte de fidelite c'est simple : vous affichez le QR code en caisse, le client le scanne, il entre son prenom et numero — et hop sa carte est creee ! A chaque passage il rescanne et le tampon s'ajoute tout seul. Pas d'appli a telecharger 📱` },
-    { label: 'La recompense', text: `Hello ${name} ! Quand un client atteint le bon nombre de tampons, sa recompense apparait sur sa carte. Il vous la montre, vous la validez ensemble, et son compteur repart a zero. On gere tout ! 🎁` },
-    { label: 'Le dashboard', text: `Hello ${name} ! Votre dashboard (getqarte.com → Espace Pro) c'est votre tableau de bord : clients, tampons, stats, notifications. Tout se gere depuis la, meme sur mobile 📊` },
-    { label: 'Les notifications', text: `Hello ${name} ! Vous pouvez envoyer des notifs push a vos clients depuis dashboard → Notifications. Il y a aussi des messages automatiques (anniversaire, offres…). Vos clients les recoivent direct sur leur telephone 🔔` },
-    { label: 'Les offres', text: `Hello ${name} ! Pour remplir un creneau calme : dashboard → Notifications → Envoyer. Vous choisissez un message, une duree, et hop vos clients recoivent la notif. Top pour booster un jour creux 🎉` },
-    { label: 'Le parrainage', text: `Hello ${name} ! Chaque client a un lien de parrainage sur sa carte. Quand un ami s'inscrit via ce lien, les deux recoivent un cadeau. Ca se configure dans dashboard → Parrainage 🤝` },
-    { label: 'Le kit promo', text: `Hello ${name} ! On vous a envoye par email un kit avec votre QR code HD + des visuels prets pour Instagram. Vous le retrouvez aussi dans dashboard → QR code & Supports 🖼️` },
-    { label: 'Personnaliser', text: `Hello ${name} ! Logo, couleur, recompense, nombre de tampons — tout se personnalise dans dashboard → Mon Programme. Vos clients voient les changements en temps reel 🎨` },
-    { label: 'Reseaux sociaux', text: `Hello ${name} ! Ajoutez vos liens Instagram, Facebook ou TikTok dans dashboard → Mon Programme → Liens & Reseaux. Vos clients les verront sur leur carte — de la visibilite gratuite 📲` },
-    { label: 'Le Shield', text: `Hello ${name} ! Quand un client scanne 2 fois le meme jour, le 2eme passage est mis en attente — c'est le Qarte Shield. Vous le retrouvez dans dashboard → Clients, un clic pour valider ou refuser ✅` },
-    { label: 'Avis Google', text: `Hello ${name} ! Ajoutez votre lien Google dans dashboard → Mon Programme → Avis Google. Vos clients verront un bouton "Laisser un avis" sur leur carte, juste apres leur passage. Le timing parfait ! ⭐` },
-    { label: 'L\'abonnement', text: `Hello ${name} ! Qarte c'est 19€/mois sans engagement, clients illimites. Vous gerez tout depuis dashboard → Abonnement 💳` },
+    { label: 'Comment ca marche', text: `La carte de fidelite c'est simple : tu affiches le QR code en caisse, le client le scanne, il entre son prenom et numero — et hop sa carte est creee ! A chaque passage il rescanne et le tampon s'ajoute tout seul. Pas d'appli a telecharger 📱` },
+    { label: 'La recompense', text: `Quand un client atteint le bon nombre de tampons, sa recompense apparait sur sa carte. Il te la montre, tu la valides, et son compteur repart a zero. On gere tout ! 🎁` },
+    { label: 'Le dashboard', text: `Ton espace pro (getqarte.com → Espace Pro) c'est ton tableau de bord : clients, tampons, stats, notifications. Tout se gere depuis la, meme sur mobile 📊` },
+    { label: 'Notifs & offres', text: `Tu peux envoyer des notifs push a tes clients depuis Espace Pro → Notifications. Y'a aussi des messages automatiques (anniversaire, rappels…). Top pour remplir un creneau calme 🔔` },
+    { label: 'Ma page pro', text: `Ta page pro c'est ton lien en bio pour Instagram, Facebook, TikTok. Photos, prestations, offre de bienvenue — tout est dessus. Tu la configures dans Espace Pro → Ma Page 📲` },
+    { label: 'Parrainage', text: `Chaque client a un lien de parrainage sur sa carte. Quand un ami s'inscrit, les deux recoivent un cadeau. Ca s'active en 1 clic dans Espace Pro → Parrainage 🤝` },
+    { label: 'Offre bienvenue', text: `L'offre de bienvenue c'est un geste que tu offres aux nouveaux clients (ex: -20% premiere visite). Elle apparait sur ta page pro. Le client la voit, il vient, il scanne → il est dans ta base. Tu l'actives dans Espace Pro → Ma Page 🎁` },
+    { label: 'Le QR code', text: `Le QR code c'est ton outil principal. Imprime-le et affiche-le en caisse (on t'envoie des stickers aussi). Le client le scanne avec son telephone, pas besoin d'appli. En 5 secondes sa carte est creee et il recoit ses tampons a chaque visite 📸` },
   ];
 
 
