@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, X, ChevronLeft, ChevronRight, ChevronDown, Clock } from 'lucide-react';
+import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
@@ -49,6 +49,7 @@ type MerchantPublic = Pick<
   | 'loyalty_mode'
   | 'cagnotte_percent'
   | 'cagnotte_tier2_percent'
+  | 'opening_hours'
 >;
 
 export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], isDemo = false }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; isDemo?: boolean }) {
@@ -58,6 +59,14 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
+
+  // Opening hours
+  const DAY_LABELS_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const hours = merchant.opening_hours;
+  const hasHours = hours && Object.values(hours).some(Boolean);
+  // JS getDay(): 0=dimanche → we need 1=lundi format
+  const todayIndex = new Date().getDay(); // 0=dim, 1=lun...
+  const todayKey = todayIndex === 0 ? '7' : String(todayIndex); // 1-7, 1=lundi
 
   // Fetch active promo offer
   useEffect(() => {
@@ -138,7 +147,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             initial={{ opacity: 0, scale: 0.82, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="w-[100px] h-[100px] rounded-[1.75rem] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.1)] border border-gray-100 flex items-center justify-center overflow-hidden mb-4"
+            className="w-[100px] h-[100px] rounded-[1.75rem] bg-white flex items-center justify-center overflow-hidden mb-4"
+            style={{ boxShadow: `0 0 0 3px ${p}25, 0 4px 24px ${p}20` }}
           >
             {merchant.logo_url ? (
               <img src={merchant.logo_url} alt={merchant.shop_name} className="w-full h-full object-cover rounded-[1.4rem]" />
@@ -170,32 +180,42 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               className="flex items-center gap-1 text-[12px] text-gray-400 font-medium mb-2"
             >
               <MapPin className="w-3 h-3 shrink-0" />
+              <span>{merchant.shop_address}</span>
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(merchant.shop_address)}`}
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(merchant.shop_address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline underline-offset-2 hover:text-gray-600 transition-colors"
+                className="ml-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold transition-colors"
+                style={{ backgroundColor: `${p}15`, color: p }}
               >
-                {merchant.shop_address}
+                <Navigation className="w-2.5 h-2.5" />
+                Y aller
               </a>
             </motion.div>
           )}
 
-          {merchant.bio && (
-            <motion.p
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
-              className="text-[14px] text-gray-500 leading-relaxed max-w-[270px] font-medium"
-            >
-              {merchant.bio}
-            </motion.p>
-          )}
+
         </div>
       </section>
 
       {/* ── CONTENU ── */}
       <div className="mx-auto lg:max-w-lg px-4 pb-20 space-y-3 relative">
+
+        {/* ── MINI BIO ── */}
+        {merchant.bio && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+            className={`${glassCard} px-5 py-4 text-center relative overflow-hidden`}
+            style={{ borderColor: `${p}15` }}
+          >
+            <div className="absolute inset-0 opacity-[0.04] pointer-events-none" style={{ background: `linear-gradient(135deg, ${p}, ${s})` }} />
+            <p className="relative text-[13px] text-gray-600 leading-relaxed font-medium italic">
+              &ldquo;{merchant.bio}&rdquo;
+            </p>
+          </motion.div>
+        )}
 
         {/* CTA principal */}
         {hasBooking && (
@@ -217,6 +237,49 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             <CalendarDays className="w-5 h-5" />
             Prendre rendez-vous
           </motion.a>
+        )}
+
+        {/* ── HORAIRES ── */}
+        {hasHours && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28, duration: 0.4 }}
+            className={`${glassCard} p-4`}
+          >
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-2.5">
+              <Clock className="w-3 h-3 inline-block mr-1 -mt-0.5" />
+              Horaires
+            </p>
+            <div className="grid grid-cols-7 gap-1">
+              {DAY_LABELS_SHORT.map((label, i) => {
+                const dayKey = String(i + 1);
+                const slot = hours![dayKey];
+                const isToday = dayKey === todayKey;
+                return (
+                  <div
+                    key={dayKey}
+                    className={`text-center rounded-lg py-1.5 transition-colors ${
+                      slot ? 'bg-gray-50' : 'bg-gray-50/50 opacity-50'
+                    }`}
+                    style={isToday ? { boxShadow: `0 0 0 1px ${p}`, backgroundColor: `${p}08` } : undefined}
+                  >
+                    <p className={`text-[10px] font-bold mb-0.5 ${isToday ? '' : 'text-gray-500'}`} style={isToday ? { color: p } : undefined}>
+                      {label}
+                    </p>
+                    {slot ? (
+                      <>
+                        <p className="text-[9px] text-gray-600 font-medium">{slot.open}</p>
+                        <p className="text-[9px] text-gray-600 font-medium">{slot.close}</p>
+                      </>
+                    ) : (
+                      <p className="text-[9px] text-gray-400 font-medium">Fermé</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </motion.div>
         )}
 
         {/* ── OFFRE DE BIENVENUE (nouveaux clients) ── */}
@@ -466,13 +529,46 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           </motion.div>
         )}
 
+        {/* ── GALERIE PHOTOS ── */}
+        {photos.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55, duration: 0.4 }}
+            className={`${glassCard} p-4`}
+          >
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-3">
+              Nos réalisations
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {photos.map((photo, idx) => (
+                <button
+                  key={photo.id}
+                  type="button"
+                  onClick={() => setLightboxIndex(idx)}
+                  className="aspect-square rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  style={{ '--tw-ring-color': p } as React.CSSProperties}
+                >
+                  <img
+                    src={photo.url}
+                    alt={`${merchant.shop_name} - réalisation ${photo.position}`}
+                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
         {/* ── PRESTATIONS ── */}
         {services.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.15, ease: 'easeOut' }}
-            className={glassCard}
+            className="rounded-2xl overflow-hidden border shadow-lg shadow-gray-200/40"
+            style={{ borderColor: `${p}20`, background: `linear-gradient(135deg, ${p}06, ${s}04)` }}
           >
             <button
               type="button"
@@ -481,17 +577,17 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             >
               <div className="flex items-center gap-3">
                 <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ background: `${p}15` }}
+                  className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: `linear-gradient(135deg, ${p}, ${s})`, boxShadow: `0 4px 12px ${p}30` }}
                 >
-                  <Sparkles className="w-5 h-5" style={{ color: p }} />
+                  <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <p className="text-[15px] font-bold text-gray-900">
-                    Nos prestations
+                    Mes prestations
                   </p>
                   <p className="text-[11px] text-gray-400 mt-0.5">
-                    {services.length} prestation{services.length > 1 ? 's' : ''}
+                    {services.length} prestation{services.length > 1 ? 's' : ''} — voir les tarifs
                   </p>
                 </div>
               </div>
@@ -625,38 +721,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         >
           <SocialLinks merchant={merchant as Merchant} />
         </motion.div>
-
-        {/* ── GALERIE PHOTOS ── */}
-        {photos.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.55, duration: 0.4 }}
-            className={`${glassCard} p-4`}
-          >
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-3">
-              Nos réalisations
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              {photos.map((photo, idx) => (
-                <button
-                  key={photo.id}
-                  type="button"
-                  onClick={() => setLightboxIndex(idx)}
-                  className="aspect-square rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-offset-2"
-                  style={{ '--tw-ring-color': p } as React.CSSProperties}
-                >
-                  <img
-                    src={photo.url}
-                    alt={`${merchant.shop_name} - réalisation ${photo.position}`}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
-                  />
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        )}
 
         {/* ── CTA MERCHANT ── */}
         <motion.a

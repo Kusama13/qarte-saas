@@ -60,6 +60,7 @@ export interface Merchant {
   welcome_message: string | null;
   promo_message: string | null;
   review_link: string | null;
+  opening_hours: Record<string, { open: string; close: string } | null> | null;
   instagram_url: string | null;
   facebook_url: string | null;
   tiktok_url: string | null;

@@ -69,6 +69,9 @@ export default function PublicPageDashboard() {
   const [facebookUrl, setFacebookUrl] = useState('');
   const [tiktokUrl, setTiktokUrl] = useState('');
   const [snapchatUrl, setSnapchatUrl] = useState('');
+  const [openingHours, setOpeningHours] = useState<Record<string, { open: string; close: string } | null>>({
+    '1': null, '2': null, '3': null, '4': null, '5': null, '6': null, '7': null,
+  });
   const [savingInfo, setSavingInfo] = useState(false);
   const [savedInfo, setSavedInfo] = useState(false);
 
@@ -136,6 +139,7 @@ export default function PublicPageDashboard() {
     setShopName(merchant.shop_name || '');
     setAddress(merchant.shop_address || '');
     setBio(merchant.bio || '');
+    if (merchant.opening_hours) setOpeningHours(merchant.opening_hours as Record<string, { open: string; close: string } | null>);
     setBookingUrl(merchant.booking_url || '');
     setInstagramUrl(merchant.instagram_url || '');
     setFacebookUrl(merchant.facebook_url || '');
@@ -240,6 +244,7 @@ export default function PublicPageDashboard() {
           shop_name: shopName.trim() || null,
           shop_address: address.trim() || null,
           bio: bio.trim() || null,
+          opening_hours: Object.values(openingHours).some(Boolean) ? openingHours : null,
           booking_url: normalizedUrl,
           instagram_url: normalizeSocialUrl(instagramUrl, 'instagram') || null,
           facebook_url: normalizeSocialUrl(facebookUrl, 'facebook') || null,
@@ -796,15 +801,15 @@ export default function PublicPageDashboard() {
         </button>
       )}
 
-      {/* ── INFOS PRATIQUES ── */}
+      {/* ── MON SALON ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
         <div className="flex items-center gap-2.5 mb-4">
           <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
             <MapPin className="w-4 h-4 text-emerald-600" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-gray-900">Infos pratiques</h2>
-            <p className="text-xs text-gray-400">Visibles sur ta page publique</p>
+            <h2 className="text-sm font-bold text-gray-900">Mon salon</h2>
+            <p className="text-xs text-gray-400">Infos visibles sur ta page pro</p>
           </div>
         </div>
 
@@ -837,19 +842,6 @@ export default function PublicPageDashboard() {
               className="input h-auto resize-none"
             />
             <p className="text-xs text-gray-400 mt-1">{bio.length}/160 — Visible sous le nom de ton salon sur ta page pro</p>
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block flex items-center gap-1.5">
-              <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
-              Lien de réservation
-            </label>
-            <Input
-              placeholder="https://calendly.com/monsalon ou lien Planity, Treatwell..."
-              value={bookingUrl}
-              onChange={(e) => setBookingUrl(e.target.value)}
-              className="h-11"
-            />
-            <p className="text-xs text-gray-400 mt-1">Si rempli, un bouton &quot;Prendre rendez-vous&quot; apparaîtra sur ta page. Sinon, tes futurs clients pourront te contacter via tes réseaux sociaux.</p>
           </div>
         </div>
 
@@ -905,6 +897,100 @@ export default function PublicPageDashboard() {
                 onChange={(e) => setSnapchatUrl(e.target.value)}
               />
             </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex justify-end">
+          <button
+            onClick={handleSaveInfo}
+            disabled={savingInfo}
+            className={`px-5 py-2.5 font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center gap-2 text-sm ${
+              savedInfo ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+          >
+            {savingInfo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+            {savedInfo ? 'Enregistré !' : 'Enregistrer'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── HORAIRES & RÉSERVATION ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
+            <Clock className="w-4 h-4 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-gray-900">Horaires & réservation</h2>
+            <p className="text-xs text-gray-400">Affichés sur ta page pro</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Horaires d&apos;ouverture</label>
+            <div className="space-y-1.5">
+              {['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map((day, i) => {
+                const key = String(i + 1);
+                const slot = openingHours[key];
+                const isOpen = slot !== null;
+                return (
+                  <div key={key} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setOpeningHours(prev => ({
+                        ...prev,
+                        [key]: isOpen ? null : { open: '09:00', close: '18:00' },
+                      }))}
+                      className={`w-[82px] text-left text-[13px] font-medium py-1.5 px-2 rounded-lg transition-colors ${
+                        isOpen ? 'text-gray-800 bg-gray-50' : 'text-gray-400 bg-gray-50/50 line-through'
+                      }`}
+                    >
+                      {day}
+                    </button>
+                    {isOpen ? (
+                      <div className="flex items-center gap-1.5 flex-1">
+                        <input
+                          type="time"
+                          value={slot.open}
+                          onChange={(e) => setOpeningHours(prev => ({
+                            ...prev,
+                            [key]: { ...prev[key]!, open: e.target.value },
+                          }))}
+                          className="input h-9 text-[13px] w-[110px]"
+                        />
+                        <span className="text-gray-400 text-xs">—</span>
+                        <input
+                          type="time"
+                          value={slot.close}
+                          onChange={(e) => setOpeningHours(prev => ({
+                            ...prev,
+                            [key]: { ...prev[key]!, close: e.target.value },
+                          }))}
+                          className="input h-9 text-[13px] w-[110px]"
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-[13px] text-gray-400 italic">Fermé</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Clique sur un jour pour l&apos;ouvrir ou le fermer</p>
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block flex items-center gap-1.5">
+              <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
+              Lien de réservation
+            </label>
+            <Input
+              placeholder="https://calendly.com/monsalon ou lien Planity, Treatwell..."
+              value={bookingUrl}
+              onChange={(e) => setBookingUrl(e.target.value)}
+              className="h-11"
+            />
+            <p className="text-xs text-gray-400 mt-1">Si rempli, un bouton &quot;Prendre rendez-vous&quot; apparaîtra sur ta page.</p>
           </div>
         </div>
 

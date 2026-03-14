@@ -27,6 +27,7 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
       'welcome_offer_enabled, welcome_offer_description, welcome_referral_code, scan_code, ' +
       'double_days_enabled, double_days_of_week, ' +
       'booking_url, instagram_url, facebook_url, tiktok_url, snapchat_url, ' +
+      'opening_hours, ' +
       'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent'
     )
     .eq('slug', slug)
