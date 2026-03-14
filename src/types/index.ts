@@ -50,6 +50,7 @@ export interface Merchant {
   shop_name: string;
   shop_type: ShopType;
   shop_address: string | null;
+  bio: string | null;
   phone: string;
   country: MerchantCountry;
   logo_url: string | null;

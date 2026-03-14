@@ -21,6 +21,7 @@ type MerchantPublic = Pick<
   | 'shop_name'
   | 'shop_type'
   | 'shop_address'
+  | 'bio'
   | 'logo_url'
   | 'primary_color'
   | 'secondary_color'
@@ -89,11 +90,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   }, [lightboxIndex, handleLightboxKey]);
 
   const reward = merchant.reward_description || '';
-  const heroTagline = isCagnotte
-    ? `${merchant.stamps_required} passages = ${merchant.cagnotte_percent}% sur votre cagnotte fidélité.`
-    : reward.length > 0 && reward.length <= 38
-      ? `Chaque visite vous rapproche de ${reward.charAt(0).toLowerCase() + reward.slice(1)}.`
-      : 'Revenez, et laissez-nous vous récompenser.';
 
   const hasAdvantages =
     (merchant.birthday_gift_enabled && !!merchant.birthday_gift_description) ||
@@ -160,7 +156,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.4 }}
-            className="text-[24px] font-black tracking-tight text-gray-900 leading-tight mb-2"
+            className="text-[28px] font-black tracking-tight leading-tight mb-2"
+            style={{ background: `linear-gradient(135deg, ${p}, ${s})`, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
           >
             {merchant.shop_name}
           </motion.h1>
@@ -173,29 +170,27 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               className="flex items-center gap-1 text-[12px] text-gray-400 font-medium mb-2"
             >
               <MapPin className="w-3 h-3 shrink-0" />
-              <span>{merchant.shop_address}</span>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(merchant.shop_address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-2 hover:text-gray-600 transition-colors"
+              >
+                {merchant.shop_address}
+              </a>
             </motion.div>
           )}
 
-          {/* Badge exclusif */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15, duration: 0.3 }}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-gray-100 shadow-sm mb-2"
-          >
-            <Sparkles className="w-3 h-3" style={{ color: p }} />
-            <span className="text-[11px] font-bold text-gray-500">Qarte — La fidélité digitale des pros de la beauté et du bien-être</span>
-          </motion.div>
-
-          <motion.p
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            className="text-[14px] text-gray-500 leading-relaxed max-w-[270px] font-medium"
-          >
-            {heroTagline}
-          </motion.p>
+          {merchant.bio && (
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.4 }}
+              className="text-[14px] text-gray-500 leading-relaxed max-w-[270px] font-medium"
+            >
+              {merchant.bio}
+            </motion.p>
+          )}
         </div>
       </section>
 
@@ -673,8 +668,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           transition={{ delay: 0.6, duration: 0.4 }}
           className="block text-center py-4 px-5 rounded-2xl bg-white border border-gray-100/80 shadow-[0_2px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all"
         >
-          <p className="text-[13px] font-bold text-gray-800">Vous aussi, fidélisez vos clients</p>
-          <p className="text-[11px] text-gray-400 mt-0.5">Essai gratuit 7 jours — getqarte.com</p>
+          <p className="text-[13px] font-bold text-gray-800">Crée ta page beauté gratuitement</p>
+          <p className="text-[11px] text-gray-400 mt-0.5">En 5 min sur getqarte.com</p>
         </motion.a>
 
         {/* ── FOOTER ── */}

@@ -19,7 +19,7 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
   const { data: merchant } = await supabaseAdmin
     .from('merchants')
     .select(
-      'id, slug, shop_name, shop_type, shop_address, logo_url, primary_color, secondary_color, ' +
+      'id, slug, shop_name, shop_type, shop_address, bio, logo_url, primary_color, secondary_color, ' +
       'stamps_required, reward_description, ' +
       'tier2_enabled, tier2_stamps_required, tier2_reward_description, ' +
       'birthday_gift_enabled, birthday_gift_description, ' +

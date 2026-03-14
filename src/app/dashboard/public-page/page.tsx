@@ -27,6 +27,7 @@ import {
   Palette,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
+import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete';
 import { getSupabase } from '@/lib/supabase';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { compressOfferImage } from '@/lib/image-compression';
@@ -62,6 +63,7 @@ export default function PublicPageDashboard() {
   // Shop name + Address + booking + socials
   const [shopName, setShopName] = useState('');
   const [address, setAddress] = useState('');
+  const [bio, setBio] = useState('');
   const [bookingUrl, setBookingUrl] = useState('');
   const [instagramUrl, setInstagramUrl] = useState('');
   const [facebookUrl, setFacebookUrl] = useState('');
@@ -133,6 +135,7 @@ export default function PublicPageDashboard() {
     setWelcomeDescription(merchant.welcome_offer_description || '');
     setShopName(merchant.shop_name || '');
     setAddress(merchant.shop_address || '');
+    setBio(merchant.bio || '');
     setBookingUrl(merchant.booking_url || '');
     setInstagramUrl(merchant.instagram_url || '');
     setFacebookUrl(merchant.facebook_url || '');
@@ -236,6 +239,7 @@ export default function PublicPageDashboard() {
         .update({
           shop_name: shopName.trim() || null,
           shop_address: address.trim() || null,
+          bio: bio.trim() || null,
           booking_url: normalizedUrl,
           instagram_url: normalizeSocialUrl(instagramUrl, 'instagram') || null,
           facebook_url: normalizeSocialUrl(facebookUrl, 'facebook') || null,
@@ -816,12 +820,23 @@ export default function PublicPageDashboard() {
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Adresse</label>
-            <Input
+            <AddressAutocomplete
               placeholder="12 rue de la Paix, 75002 Paris"
               value={address}
-              onChange={(e) => setAddress(e.target.value)}
+              onChange={setAddress}
               className="h-11"
             />
+          </div>
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Mini bio</label>
+            <textarea
+              placeholder="Ex : Nail artist passionnée, spécialisée en baby boomer et nail art 3D. Sur rdv uniquement 💅"
+              value={bio}
+              onChange={(e) => setBio(e.target.value.slice(0, 160))}
+              rows={2}
+              className="input h-auto resize-none"
+            />
+            <p className="text-xs text-gray-400 mt-1">{bio.length}/160 — Visible sous le nom de ton salon sur ta page pro</p>
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-1.5 block flex items-center gap-1.5">
