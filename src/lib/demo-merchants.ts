@@ -32,17 +32,26 @@ export interface DemoMerchant {
   double_days_enabled: boolean;
   double_days_of_week: number[] | null;
   scan_code: string;
+  bio: string | null;
+  opening_hours: Record<string, { open: string; close: string } | null> | null;
+  phone: string | null;
+  planning_enabled: boolean;
+  planning_message: string | null;
+  planning_message_expires: string | null;
+  booking_message: string | null;
 }
 
 export type DemoPhoto = { id: string; url: string; position: number };
 export type DemoService = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 export type DemoServiceCategory = { id: string; name: string; position: number };
+export type DemoOffer = { id: string; title: string; description: string; expires_at: string | null };
 
 export interface DemoMerchantFull {
   merchant: DemoMerchant;
   photos: DemoPhoto[];
   services: DemoService[];
   serviceCategories: DemoServiceCategory[];
+  offer: DemoOffer | null;
 }
 
 const SOCIAL_LINKS = {
@@ -70,7 +79,11 @@ export const DEMO_MERCHANTS: Record<string, DemoMerchantFull> = {
       birthday_gift_enabled: true, birthday_gift_description: 'Un nail art offert',
       double_days_enabled: true, double_days_of_week: [2, 4],
       scan_code: 'demo-onglerie',
+      bio: 'Nail artist passionnée, spécialisée en baby boomer et nail art 3D. Sur rdv uniquement.',
+      opening_hours: { '1': { open: '10:00', close: '19:00' }, '2': { open: '10:00', close: '19:00' }, '3': { open: '10:00', close: '19:00' }, '4': { open: '10:00', close: '20:00' }, '5': { open: '10:00', close: '20:00' }, '6': { open: '09:00', close: '17:00' }, '7': null },
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null,
     },
+    offer: { id: 'offer-onglerie', title: 'Offre de printemps', description: '-15% sur toutes les poses gel', expires_at: null },
     photos: [
       { id: 'p1', url: '/images/demo/onglerie/1.jpg', position: 1 },
       { id: 'p2', url: '/images/demo/onglerie/2.jpg', position: 2 },
@@ -115,7 +128,11 @@ export const DEMO_MERCHANTS: Record<string, DemoMerchantFull> = {
       birthday_gift_enabled: true, birthday_gift_description: 'Un soin profond offert',
       double_days_enabled: true, double_days_of_week: [1, 3],
       scan_code: 'demo-coiffure',
+      bio: 'Coloriste et coiffeuse depuis 12 ans. Spécialités : balayage, blond californien et soins Kératine.',
+      opening_hours: { '1': { open: '09:00', close: '19:00' }, '2': { open: '09:00', close: '19:00' }, '3': { open: '09:00', close: '19:00' }, '4': { open: '09:00', close: '20:00' }, '5': { open: '09:00', close: '20:00' }, '6': { open: '09:00', close: '18:00' }, '7': null },
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null,
     },
+    offer: { id: 'offer-coiffure', title: 'Offre spéciale', description: '-20% sur votre premier balayage', expires_at: null },
     photos: [
       { id: 'p1', url: '/images/demo/coiffure/1.jpg', position: 1 },
       { id: 'p2', url: '/images/demo/coiffure/2.jpg', position: 2 },
@@ -163,7 +180,11 @@ export const DEMO_MERCHANTS: Record<string, DemoMerchantFull> = {
       birthday_gift_enabled: true, birthday_gift_description: 'Un piercing offert',
       double_days_enabled: false, double_days_of_week: null,
       scan_code: 'demo-tatouage',
+      bio: 'Artiste tatoueur spécialisé en réalisme et blackwork. Chaque pièce est unique.',
+      opening_hours: { '1': null, '2': { open: '11:00', close: '19:00' }, '3': { open: '11:00', close: '19:00' }, '4': { open: '11:00', close: '19:00' }, '5': { open: '11:00', close: '20:00' }, '6': { open: '11:00', close: '20:00' }, '7': null },
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null,
     },
+    offer: { id: 'offer-tatouage', title: 'Flash Friday', description: '-30% sur les tatouages flash chaque vendredi', expires_at: null },
     photos: [
       { id: 'p1', url: '/images/demo/tatouage/1.jpg', position: 1 },
       { id: 'p2', url: '/images/demo/tatouage/2.jpg', position: 2 },

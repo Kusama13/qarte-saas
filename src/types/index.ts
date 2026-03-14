@@ -104,6 +104,24 @@ export interface Merchant {
   no_contact: boolean;
   admin_notes: string | null;
   pwa_installed_at: string | null;
+  // Planning module
+  planning_enabled: boolean;
+  planning_message: string | null;
+  planning_message_expires: string | null;
+  booking_message: string | null;
+}
+
+export interface PlanningSlot {
+  id: string;
+  merchant_id: string;
+  slot_date: string;
+  start_time: string;
+  client_name: string | null;
+  client_phone: string | null;
+  customer_id: string | null;
+  service_id: string | null;
+  notes: string | null;
+  created_at: string;
 }
 
 export interface MerchantOffer {

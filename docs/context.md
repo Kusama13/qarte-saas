@@ -63,7 +63,7 @@ docs/
 ├── AUDIT-SECURITE.md     # Score 93/100
 └── AUDIT-SCALABILITE.md  # Score 94/100
 
-supabase/migrations/      # 60 migrations SQL (001-060)
+supabase/migrations/      # 63 migrations SQL (001-063)
 ```
 
 ---
@@ -201,6 +201,14 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - E.164 sans + (ex: 33612345678)
 - `formatPhoneNumber()`, `validatePhone()`, `displayPhoneNumber()`
 
+### Planning (mig 063)
+- Planning simple gere par le merchant (pas de reservation en ligne)
+- 1 creneau = 1 ligne en DB (date + heure debut). `client_name IS NULL` = disponible, rempli = pris
+- Dashboard `/dashboard/planning` : activation, vue semaine, ajout creneaux (heures predefinies + custom), modal edition (nom client, tel, prestation, notes), copie semaine, message libre public
+- Page publique `/p/[slug]` : section "Disponibilites" (30 jours glissants, groupes par mois), banniere message libre. Pas de bouton reserver — coordonnees deja sur la page
+- Table `merchant_planning_slots` + colonnes `planning_enabled`, `planning_message` sur merchants
+- API `/api/planning` (GET/POST/PATCH/DELETE) + `/api/planning/copy-week` (POST)
+
 ### Programmes Membres
 - Cartes de membre avec validite, avantages personnalises
 - Tables `member_programs` + `member_cards`
@@ -267,6 +275,13 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `GET /api/services?merchantId=` — Liste services + categories (public). Champs: name, price, position, category_id, duration, description, price_from
 - `POST /api/services` — CRUD services et categories (merchant auth, type discrimine: 'service' | 'category')
 - Services: duration (int, min, nullable), description (text, nullable), price_from (bool, "a partir de")
+
+### Planning
+- `GET /api/planning?merchantId=&from=&to=` — Slots merchant (auth) ou `&public=true` (dispo only, 30j)
+- `POST /api/planning` — Creation batch creneaux (max 20/requete, 200 actifs total)
+- `PATCH /api/planning` — Marquer creneau pris/libre (client_name, phone, service_id, notes)
+- `DELETE /api/planning` — Supprimer creneaux (batch slotIds)
+- `POST /api/planning/copy-week` — Copier horaires d'une semaine vers une autre
 
 ### Admin
 - `/api/admin/merchants/[id]` — GET stats/PATCH notes
@@ -372,9 +387,9 @@ Inscription rapide, validation passage, progression fidelite, detection `?ref=` 
 ### Dashboard (`/dashboard`)
 Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 4 onglets), push notifications, abonnement, parrainage, parametres. Raccourcis mobile : Ma Page (gradient indigo-violet), Fidelite (gradient pink-rose), QR Code, Clients, Parrainage, Abonnement.
 
-**Navigation sidebar** : Accueil, Programme de fidelite, Ma Page, QR code & Supports, Clients, Parrainage, Notifications, Abonnement, Parametres
+**Navigation sidebar** : Accueil, Programme de fidelite, Ma Page, QR code & Supports, Planning, Clients, Parrainage, Notifications, Abonnement, Parametres
 - **Membres** (`/dashboard/members`) : retire de la nav, accessible via bouton "Programmes VIP" dans Clients
-- **Ma Page** (`/dashboard/public-page`) : gere nom du salon, adresse, lien reservation, offre bienvenue, photos, prestations/categories. Bouton d'aide (?) expliquant l'interet pour attirer de nouveaux clients.
+- **Ma Page** (`/dashboard/public-page`) : 3 sections collapsibles avec bordure coloree et header gradient — "Mon salon" (emerald: InfoSection), "Contenu" (pink: PhotosSection, ServicesSection), "Acquisition" (violet: WelcomeSection, PromoSection). Sub-components dans fichiers separes, exposes via `forwardRef`/`useImperativeHandle` avec `save()`. Autosave debounce 1.5s : chaque enfant appelle `onDirty`, le parent orchestre `Promise.all` sur les `save()`. Barre de completion SVG ring (7 items : nom, adresse, bio, logo, horaires, reseaux, bienvenue) — lien page publique visible seulement si completion >= 3/7. Deux modals au niveau page : help modal (explication page) et welcome help modal (remonte depuis WelcomeSection).
 - **Parametres** (`/dashboard/settings`) : email (lecture seule), type commerce, telephone, infos compte, export CSV, zone danger. Nom et adresse geres dans Ma Page uniquement.
 - **Parrainage** (`/dashboard/referrals`) : config parrainage uniquement. Offre bienvenue = banner lecture seule renvoyant vers Ma Page.
 - **QR Code & Supports** (`/dashboard/qr-download`) : QR code + Kit reseaux sociaux (image HD, legendes, grille 2x2 coloree de 4 tips + lien cross-promo vers Ma Page). Post-QR modal redirige vers Ma Page.
@@ -386,17 +401,19 @@ Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, ann
 Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre bienvenue → `/scan/{code}?welcome=`).
 
 **Ordre des sections :**
-1. Hero (logo, nom, adresse, badge Qarte, tagline fidelite)
+1. Hero (logo glow couleurs merchant, nom gradient, adresse + badge "Y aller", bio glassmorphism)
 2. CTA "Prendre rendez-vous" (conditionnel sur `booking_url`) + sticky bar quand hors viewport
-3. Offre de bienvenue (CTA conditionnel si `welcome_offer_enabled`, pointe vers `/scan/{code}?welcome=`)
-3b. Offre promo (amber, depuis `merchant_offers`, CTA vers `/scan/{code}?offer={id}`)
-4. Carte fidelite simulee ("Carte de fidelite" + texte explicatif recompenses)
-5. Palier 2 (si `tier2_enabled`)
-6. Avantages exclusifs (anniversaire, parrainage, jours bonus)
-7. Prestations (collapsible, ferme par defaut, depuis `merchant_services` + `merchant_service_categories`)
-8. Reseaux sociaux (icones Instagram/Facebook/TikTok/Snapchat, sans bouton booking)
+3. Horaires (grille 7 jours, aujourd'hui mis en evidence)
+4. Planning disponibilites (si `planning_enabled` : banniere message libre + creneaux 30j glissants groupes par mois)
+5. Offre de bienvenue (CTA conditionnel si `welcome_offer_enabled`, pointe vers `/scan/{code}?welcome=`)
+5b. Offre promo (amber, depuis `merchant_offers`, CTA vers `/scan/{code}?offer={id}`)
+6. Carte fidelite simulee ("Carte de fidelite" + texte explicatif recompenses)
+7. Palier 2 (si `tier2_enabled`)
+8. Avantages exclusifs (anniversaire, parrainage, jours bonus)
 9. Galerie photos realisations (lightbox, grid 3 cols, max 6 photos depuis `merchant_photos`)
-10. CTA merchant ("Vous aussi, fidelisez vos clients")
+10. Prestations (collapsible, ferme par defaut, "Mes prestations", icone gradient + glow)
+11. Reseaux sociaux (icones Instagram/Facebook/TikTok/Snapchat)
+12. CTA merchant ("Cree ta page beaute gratuitement")
 
 **Design :** glassmorphism (`bg-white/70 backdrop-blur-sm border-white/60`) sur sections avantages, prestations, photos. Badge hero : "Qarte — La fidelite digitale des pros de la beaute et du bien-etre".
 

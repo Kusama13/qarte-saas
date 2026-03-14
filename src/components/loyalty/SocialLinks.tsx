@@ -87,7 +87,7 @@ export default function SocialLinks({ merchant }: SocialLinksProps) {
         className="rounded-2xl px-5 py-4 bg-white/70 backdrop-blur-sm shadow-lg shadow-gray-200/50 border border-gray-100/80"
       >
         <p className="text-center text-[11px] font-bold text-gray-600 uppercase tracking-[0.15em] mb-3">
-          Nos réseaux sociaux
+          Retrouvez-nous sur
         </p>
 
         <div className="flex items-center justify-center gap-5">

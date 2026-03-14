@@ -85,6 +85,10 @@
 | snapchat_url | TEXT | NULL | mig 051 |
 | booking_url | TEXT | NULL | mig 051 |
 | billing_interval | TEXT | `'monthly'` | mig 051 |
+| planning_enabled | BOOLEAN | `FALSE` | mig 063 |
+| planning_message | TEXT | NULL | mig 063 |
+| bio | TEXT | NULL | mig 061 |
+| opening_hours | JSONB | NULL | mig 062 |
 | last_seen_at | TIMESTAMPTZ | NULL | mig 031 |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 | updated_at | TIMESTAMPTZ | `NOW()` | Trigger auto (exclut last_seen_at mig 032) |
@@ -591,6 +595,23 @@ Single-row table : id, content (TEXT, default ''), updated_at
 **vouchers.offer_id** : UUID FK → merchant_offers(id) ON DELETE SET NULL (nullable, only for source='offer')
 **vouchers.source CHECK** : `('birthday', 'referral', 'redemption', 'welcome', 'offer')`
 
+### 2.35 merchant_planning_slots (mig 063)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
+| slot_date | DATE | NOT NULL | |
+| start_time | VARCHAR(5) | NOT NULL | "HH:MM" |
+| client_name | TEXT | NULL | NULL = available, filled = taken |
+| client_phone | TEXT | NULL | |
+| service_id | UUID FK → merchant_services | NULL | ON DELETE SET NULL |
+| notes | TEXT | NULL | |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**RLS** : SELECT public (client_name IS NULL AND slot_date >= CURRENT_DATE), ALL merchant own
+**Indexes** : `idx_planning_slots_merchant_date`, UNIQUE(merchant_id, slot_date, start_time)
+
 ---
 
 
@@ -691,6 +712,7 @@ Voir `docs/context.md` section 4.7 pour les regles completes. Resume DB :
 | merchant_photos | SELECT (public), INSERT/UPDATE/DELETE (merchant own) | Full |
 | merchant_service_categories | SELECT (public), ALL (merchant own) | Full |
 | merchant_services | SELECT (public), ALL (merchant own) | Full |
+| merchant_planning_slots | SELECT (public, available future only), ALL (merchant own) | Full |
 
 **Note** : Mig 038 a restreint les acces publics. Les INSERT/SELECT publics sur customers, loyalty_cards, visits, vouchers, push_subscriptions ont ete remplaces par des policies scoped au merchant.
 
@@ -759,7 +781,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 
 ---
 
-## 10. Migrations (001 → 056)
+## 10. Migrations (001 → 063)
 
 | # | Fichier | Resume |
 |---|---------|--------|
@@ -824,6 +846,9 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 058 | services_duration_description | Ajout duration + description sur merchant_services |
 | 059 | point_adjustments_cascade_delete | FK adjusted_by → auth.users passe de RESTRICT a ON DELETE CASCADE |
 | 060 | merchant_offers | Table merchant_offers (promo), vouchers.offer_id FK, source CHECK +offer, RLS public read active + merchant CRUD |
+| 061 | merchant_bio | merchants.bio TEXT |
+| 062 | merchant_opening_hours | merchants.opening_hours JSONB (format: {"1":{"open":"09:00","close":"18:00"},"2":null,...}) |
+| 063 | merchant_planning | Table merchant_planning_slots, merchants.planning_enabled + planning_message, RLS public available + merchant CRUD |
 
 ---
 

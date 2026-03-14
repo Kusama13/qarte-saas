@@ -17,6 +17,7 @@ import {
   X,
   Megaphone,
   UserPlus,
+  CalendarDays,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { getTrialStatus } from '@/lib/utils';
@@ -32,6 +33,7 @@ const navItems = [
   { href: '/dashboard/program', icon: Gift, label: 'Programme de fidélité', color: 'text-pink-500', bg: 'bg-pink-50' },
   { href: '/dashboard/public-page', icon: Globe, label: 'Ma Page', color: 'text-violet-500', bg: 'bg-violet-50' },
   { href: '/dashboard/qr-download', icon: QrCode, label: 'QR code & Supports', color: 'text-violet-500', bg: 'bg-violet-50' },
+  { href: '/dashboard/planning', icon: CalendarDays, label: 'Planning', color: 'text-cyan-500', bg: 'bg-cyan-50' },
   { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
   { href: '/dashboard/referrals', icon: UserPlus, label: 'Parrainage', color: 'text-blue-500', bg: 'bg-blue-50' },
   { href: '/dashboard/marketing', icon: Megaphone, label: 'Notifications', color: 'text-orange-500', bg: 'bg-orange-50' },

@@ -1,0 +1,26 @@
+export function getWeekStart(offset: number): Date {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff + offset * 7);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+export function formatDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export function formatDateFr(d: Date): string {
+  return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+}
+
+export function fmtTime(t: string): string {
+  const [h, m] = t.split(':');
+  return m === '00' ? `${parseInt(h)}h` : `${parseInt(h)}h${m}`;
+}
+
+export const QUICK_TIMES = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];

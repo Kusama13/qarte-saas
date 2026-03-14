@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { useRouter } from 'next/navigation';
 import {
   Store,
@@ -31,8 +32,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const { saving, saved, save } = useDashboardSave();
   const [error, setError] = useState('');
   const [referralCopied, setReferralCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -83,8 +83,7 @@ export default function SettingsPage() {
       return;
     }
 
-    setSaving(true);
-    try {
+    save(async () => {
       const { error: updateError } = await supabase
         .from('merchants')
         .update({
@@ -93,16 +92,11 @@ export default function SettingsPage() {
         })
         .eq('id', merchant.id);
 
-      if (updateError) throw updateError;
-
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
-      setError('Erreur lors de la sauvegarde');
-      console.error(err);
-    } finally {
-      setSaving(false);
-    }
+      if (updateError) {
+        setError('Erreur lors de la sauvegarde');
+        throw updateError;
+      }
+    });
   };
 
   const exportCSV = async () => {

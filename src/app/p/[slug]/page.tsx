@@ -9,10 +9,10 @@ import DemoNav from './DemoNav';
 import { cache } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; photos: any[]; services: any[]; serviceCategories: any[] } | null> => {
+const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; photos: any[]; services: any[]; serviceCategories: any[]; planningSlots: any[]; demoOffer?: any } | null> => {
   // Demo merchants: return hardcoded data without DB query
   const demo = getDemoMerchantData(slug);
-  if (demo) return demo;
+  if (demo) return { ...demo, planningSlots: [], demoOffer: demo.offer };
 
   const supabaseAdmin = getSupabaseAdmin();
 
@@ -28,14 +28,18 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
       'double_days_enabled, double_days_of_week, ' +
       'booking_url, instagram_url, facebook_url, tiktok_url, snapchat_url, ' +
       'opening_hours, ' +
-      'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent'
+      'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent, ' +
+      'planning_enabled, planning_message, planning_message_expires, booking_message, phone'
     )
     .eq('slug', slug)
     .maybeSingle();
 
   if (!merchant) return null;
 
-  const [photosResult, servicesResult, categoriesResult] = await Promise.all([
+  const today = new Date().toISOString().split('T')[0];
+  const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  const [photosResult, servicesResult, categoriesResult, planningResult] = await Promise.all([
     supabaseAdmin
       .from('merchant_photos')
       .select('id, url, position')
@@ -51,6 +55,17 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
       .select('id, name, position')
       .eq('merchant_id', (merchant as any).id)
       .order('position'),
+    (merchant as any).planning_enabled
+      ? supabaseAdmin
+          .from('merchant_planning_slots')
+          .select('slot_date, start_time')
+          .eq('merchant_id', (merchant as any).id)
+          .is('client_name', null)
+          .gte('slot_date', today)
+          .lte('slot_date', thirtyDaysLater)
+          .order('slot_date')
+          .order('start_time')
+      : Promise.resolve({ data: [] }),
   ]);
 
   return {
@@ -58,6 +73,7 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
     photos: (photosResult.data as any[]) || [],
     services: (servicesResult.data as any[]) || [],
     serviceCategories: (categoriesResult.data as any[]) || [],
+    planningSlots: (planningResult.data as any[]) || [],
   };
 });
 
@@ -102,7 +118,7 @@ export default async function ProgrammePage({
   return (
     <>
       {isDemo && <DemoNav current={slug} />}
-      <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} isDemo={isDemo} />
+      <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} planningSlots={result.planningSlots} isDemo={isDemo} demoOffer={result.demoOffer} />
     </>
   );
 }

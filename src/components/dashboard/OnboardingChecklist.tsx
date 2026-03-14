@@ -87,7 +87,7 @@ export default function OnboardingChecklist() {
             id: 'logo',
             label: 'Ajouter mon logo',
             done: !!merchant.logo_url,
-            href: '/dashboard/settings',
+            href: '/dashboard/personalize',
             icon: ImageIcon,
           },
           {
@@ -101,14 +101,14 @@ export default function OnboardingChecklist() {
             id: 'address',
             label: 'Renseigner votre adresse',
             done: !!merchant.shop_address,
-            href: '/dashboard/program',
+            href: '/dashboard/public-page',
             icon: MapPin,
           },
           {
             id: 'photos',
             label: 'Ajouter une photo',
             done: photosCount >= 1,
-            href: '/dashboard/program',
+            href: '/dashboard/public-page',
             icon: Camera,
           },
           {

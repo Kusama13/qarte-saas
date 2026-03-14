@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock } from 'lucide-react';
+import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
@@ -13,6 +13,8 @@ type Photo = { id: string; url: string; position: number };
 type ServiceCategory = { id: string; name: string; position: number };
 type Service = { id: string; name: string; price: number; position: number; category_id: string | null; duration: number | null; description: string | null; price_from: boolean };
 type PromoOffer = { id: string; title: string; description: string; expires_at: string | null };
+
+type PlanningSlotPublic = { slot_date: string; start_time: string };
 
 type MerchantPublic = Pick<
   Merchant,
@@ -50,9 +52,13 @@ type MerchantPublic = Pick<
   | 'cagnotte_percent'
   | 'cagnotte_tier2_percent'
   | 'opening_hours'
+  | 'planning_enabled'
+  | 'planning_message'
+  | 'planning_message_expires'
+  | 'booking_message'
 >;
 
-export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], isDemo = false }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; isDemo?: boolean }) {
+export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
@@ -68,16 +74,19 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const todayIndex = new Date().getDay(); // 0=dim, 1=lun...
   const todayKey = todayIndex === 0 ? '7' : String(todayIndex); // 1-7, 1=lundi
 
-  // Fetch active promo offer
+  // Fetch active promo offer (or use demo data)
   useEffect(() => {
-    if (isDemo) return;
+    if (isDemo) {
+      if (demoOffer) setPromoOffer(demoOffer);
+      return;
+    }
     fetch(`/api/merchant-offers?merchantId=${merchant.id}&public=true`)
       .then(r => r.json())
       .then(data => {
         if (data.offers?.length > 0) setPromoOffer(data.offers[0]);
       })
       .catch(() => {});
-  }, [merchant.id, isDemo]);
+  }, [merchant.id, isDemo, demoOffer]);
   const glassCard = 'rounded-2xl overflow-hidden bg-white/70 backdrop-blur-sm border border-white/60 shadow-lg shadow-gray-200/40';
 
   // Keyboard navigation for lightbox
@@ -108,9 +117,46 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const hasBooking = !!(merchant.booking_url && merchant.booking_url.trim());
   const noOp = (e: React.MouseEvent) => { e.preventDefault(); };
 
+  // Planning: group slots by month then by date
+  const MONTH_NAMES = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+  const DAY_NAMES_FULL = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+  const planningByMonth = useMemo(() => {
+    if (!merchant.planning_enabled || planningSlots.length === 0) return [];
+    const grouped: { month: string; days: { label: string; dateStr: string; times: string[] }[] }[] = [];
+    let currentMonth = '';
+    let currentDate = '';
+    for (const slot of planningSlots) {
+      const d = new Date(slot.slot_date + 'T00:00:00');
+      const monthKey = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+      const dayLabel = `${DAY_NAMES_FULL[d.getDay()]} ${d.getDate()}`;
+      const [h, m] = slot.start_time.split(':');
+      const timeStr = `${parseInt(h)}h${m}`;
+
+      if (monthKey !== currentMonth) {
+        grouped.push({ month: monthKey, days: [] });
+        currentMonth = monthKey;
+        currentDate = '';
+      }
+      const monthGroup = grouped[grouped.length - 1];
+      if (slot.slot_date !== currentDate) {
+        monthGroup.days.push({ label: dayLabel, dateStr: slot.slot_date, times: [] });
+        currentDate = slot.slot_date;
+      }
+      monthGroup.days[monthGroup.days.length - 1].times.push(timeStr);
+    }
+    return grouped;
+  }, [planningSlots, merchant.planning_enabled]);
+  const hasPlanning = merchant.planning_enabled && planningByMonth.length > 0;
+  const todayLocal = useMemo(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }, []);
+  const messageExpired = merchant.planning_message_expires && merchant.planning_message_expires < todayLocal;
+  const hasPublicMessage = !!merchant.planning_message && !messageExpired;
+  const hasBookingMessage = !!merchant.booking_message;
+  const showPlanningSection = hasPlanning || hasPublicMessage || hasBookingMessage;
+
   // Services: pre-compute outside JSX
   const hasCategories = serviceCategories.length > 0;
-  const uncategorized = services.filter(svc => !svc.category_id || !serviceCategories.find(c => c.id === svc.category_id));
+  const categoryIds = useMemo(() => new Set(serviceCategories.map(c => c.id)), [serviceCategories]);
+  const uncategorized = useMemo(() => services.filter(svc => !svc.category_id || !categoryIds.has(svc.category_id)), [services, categoryIds]);
 
   const fmtDuration = (min: number) => {
     if (min < 60) return `${min} min`;
@@ -279,6 +325,94 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 );
               })}
             </div>
+          </motion.div>
+        )}
+
+        {/* ── MESSAGE PUBLIC (indépendant du planning) ── */}
+        {hasPublicMessage && !hasPlanning && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+            className={`${glassCard} p-4`}
+          >
+            <div
+              className="rounded-xl px-4 py-3 text-center"
+              style={{ background: `linear-gradient(135deg, ${p}12, ${s}08)`, border: `1px solid ${p}20` }}
+            >
+              <p className="text-[13px] font-semibold text-gray-700">{merchant.planning_message}</p>
+            </div>
+            {hasBookingMessage && (
+              <p className="text-[12px] text-gray-500 text-center mt-3"><span className="font-semibold text-gray-400">Pour réserver :</span> {merchant.booking_message}</p>
+            )}
+          </motion.div>
+        )}
+
+        {/* ── PLANNING DISPONIBILITÉS ── */}
+        {hasPlanning && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+            className={`${glassCard} p-4`}
+          >
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-3">
+              <CalendarDays className="w-3 h-3 inline-block mr-1 -mt-0.5" />
+              Disponibilités
+            </p>
+
+            {/* Message libre */}
+            {hasPublicMessage && (
+              <div
+                className="rounded-xl px-4 py-3 mb-3 text-center"
+                style={{ background: `linear-gradient(135deg, ${p}12, ${s}08)`, border: `1px solid ${p}20` }}
+              >
+                <p className="text-[13px] font-semibold text-gray-700">{merchant.planning_message}</p>
+              </div>
+            )}
+
+            {/* Message prise de RDV */}
+            {hasBookingMessage && (
+              <p className="text-[12px] text-gray-500 text-center mb-3"><span className="font-semibold text-gray-400">Pour réserver :</span> {merchant.booking_message}</p>
+            )}
+
+            {/* Slots by month */}
+            {planningByMonth.map(monthGroup => (
+              <div key={monthGroup.month} className="mb-3 last:mb-0">
+                {planningByMonth.length > 1 && (
+                  <p className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: p }}>
+                    {monthGroup.month}
+                  </p>
+                )}
+                <div className="space-y-2">
+                  {monthGroup.days.map(day => {
+                    const isToday = day.dateStr === todayLocal;
+                    return (
+                      <div
+                        key={day.dateStr}
+                        className={`flex items-center gap-3 py-2 px-3 rounded-xl ${isToday ? 'bg-gray-50' : ''}`}
+                        style={isToday ? { boxShadow: `inset 0 0 0 1px ${p}25` } : undefined}
+                      >
+                        <p className={`text-[12px] font-bold shrink-0 w-28 ${isToday ? '' : 'text-gray-600'}`} style={isToday ? { color: p } : undefined}>
+                          {day.label}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {day.times.map(time => (
+                            <span
+                              key={time}
+                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold"
+                              style={{ backgroundColor: `${p}12`, color: p }}
+                            >
+                              {time}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </motion.div>
         )}
 

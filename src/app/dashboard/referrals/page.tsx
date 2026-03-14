@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useDashboardSave } from '@/hooks/useDashboardSave';
 import {
   Users,
   Gift,
@@ -36,7 +37,7 @@ export default function ReferralsPage() {
   const supabase = getSupabase();
 
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const { saving, saved, save } = useDashboardSave();
   const [referrals, setReferrals] = useState<ReferralRow[]>([]);
 
   // Config state
@@ -45,7 +46,6 @@ export default function ReferralsPage() {
   const [rewardReferred, setRewardReferred] = useState('');
 
   const [showHelp, setShowHelp] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState('');
 
   // Derived stats from referrals array
@@ -91,9 +91,8 @@ export default function ReferralsPage() {
 
     if (enabled && (!rewardReferrer.trim() || !rewardReferred.trim())) return;
 
-    setSaving(true);
     setSaveError('');
-    try {
+    save(async () => {
       const res = await fetch('/api/merchants/referral-config', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -108,21 +107,12 @@ export default function ReferralsPage() {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        console.error('Save error:', data.error);
         setSaveError('Erreur lors de la sauvegarde. Veuillez réessayer.');
-        return;
+        throw new Error('save failed');
       }
 
       await refetch();
-      setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-    } catch (err) {
-      console.error('Save error:', err);
-      setSaveError('Erreur réseau. Vérifie ta connexion.');
-    } finally {
-      setSaving(false);
-    }
+    });
   };
 
   if (merchantLoading || loading) {
