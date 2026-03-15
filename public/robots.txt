@@ -15,6 +15,10 @@ Disallow: /customer/
 Allow: /
 Allow: /pricing
 Allow: /contact
+Allow: /pros
+Allow: /blog
+Allow: /boutique
+Allow: /p/
 Allow: /cgv
 Allow: /mentions-legales
 Allow: /politique-confidentialite

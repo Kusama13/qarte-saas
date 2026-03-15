@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Tarifs - Programme de fidélité dès 19€/mois',
-  description: 'Tarifs transparents pour votre carte de fidélité digitale. Essai gratuit 7 jours, puis dès 19€/mois. Idéal pour coiffeurs, barbiers et instituts de beauté.',
+  title: 'Tarifs — Vitrine en ligne & fidélité tout inclus dès 19 €/mois',
+  description: 'Un prix unique pour tout : votre vitrine en ligne (bio, prestations, planning, photos) et programme de fidélité (tampons, cagnotte, relances auto, avis Google). Essai gratuit 7 jours, sans carte bancaire.',
   openGraph: {
-    title: 'Tarifs - Programme de fidélité dès 19€/mois | Qarte',
-    description: 'Tarifs transparents pour votre carte de fidélité digitale. Essai gratuit 7 jours, puis dès 19€/mois.',
+    title: 'Tarifs — Vitrine en ligne & fidélité tout inclus dès 19 €/mois | Qarte',
+    description: 'Vitrine en ligne + programme de fidélité pour salons de beauté. 19 €/mois tout inclus, essai gratuit 7 jours sans carte bancaire.',
   },
 };
 

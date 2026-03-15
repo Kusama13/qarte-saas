@@ -14,11 +14,11 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: 'Qarte - Carte de fidélité digitale pour salons de beauté',
+    default: 'Qarte — Le Linktree des pros de la beauté + programme de fidélité',
     template: '%s | Qarte',
   },
-  description: 'Programme de fidélité digital pour coiffeurs, barbiers, instituts de beauté et ongleries. La solution la moins chère du marché. Essai gratuit, sans carte bancaire.',
-  keywords: ['carte de fidélité', 'fidélisation client', 'programme fidélité', 'salon de coiffure', 'barbier', 'institut de beauté', 'onglerie', 'carte de fidélité coiffeur', 'QR code', 'digital'],
+  description: 'Un seul lien pour tout montrer : bio, prestations, planning, photos, avis Google. Un programme de fidélité qui fait revenir vos clientes (tampons, cagnotte, relances auto). Pour coiffeurs, barbiers, instituts de beauté et ongleries. 19 €/mois, essai gratuit.',
+  keywords: ['lien en bio salon de beauté', 'linktree coiffeur', 'mini-site salon de beauté', 'carte de fidélité digitale', 'programme fidélité coiffeur', 'fidélisation client beauté', 'QR code fidélité', 'vitrine en ligne coiffeur', 'salon de coiffure', 'barbier', 'onglerie', 'institut de beauté', 'avis Google salon', 'planning en ligne coiffeur'],
   authors: [{ name: 'Qarte' }],
   creator: 'Qarte',
   publisher: 'Qarte',
@@ -32,8 +32,8 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: 'Qarte - Carte de fidélité digitale pour salons de beauté',
-    description: 'Programme de fidélité digital pour coiffeurs, barbiers, instituts de beauté et ongleries. La solution la moins chère du marché. Essai gratuit, sans carte bancaire.',
+    title: 'Qarte — Le Linktree des pros de la beauté + programme de fidélité',
+    description: 'Un seul lien pour tout montrer : bio, prestations, planning, photos. Un programme de fidélité qui fait revenir vos clientes. 19 €/mois, essai gratuit.',
     url: baseUrl,
     siteName: 'Qarte',
     type: 'website',
@@ -42,8 +42,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Qarte - Carte de fidélité digitale pour salons de beauté',
-    description: 'Programme de fidélité digital pour coiffeurs, barbiers, instituts de beauté et ongleries. Essai gratuit, sans carte bancaire.',
+    title: 'Qarte — Le Linktree des pros de la beauté + programme de fidélité',
+    description: 'Un seul lien pour tout montrer + un programme de fidélité qui fait revenir vos clientes. Pour coiffeurs, barbiers, instituts et ongleries. Essai gratuit.',
     images: ['/opengraph-image'],
   },
   robots: {
@@ -83,7 +83,7 @@ export default function RootLayout({
             name: 'Qarte',
             url: baseUrl,
             logo: `${baseUrl}/icon-512.png`,
-            description: 'Programme de fidélité digital pour salons de beauté, coiffeurs, barbiers, ongleries et instituts.',
+            description: 'Le Linktree des pros de la beauté : un seul lien pour tout montrer + un programme de fidélité digital. Pour coiffeurs, barbiers, ongleries et instituts.',
             contactPoint: {
               '@type': 'ContactPoint',
               contactType: 'customer service',
@@ -107,7 +107,7 @@ export default function RootLayout({
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             url: baseUrl,
-            description: 'Carte de fidélité digitale pour salons de beauté. QR code, notifications push, anti-fraude. Sans application à télécharger.',
+            description: 'Un seul lien pour tout montrer (bio, prestations, planning, photos) + programme de fidélité digital (QR code, tampons, cagnotte, notifications push). Sans application à télécharger.',
             offers: {
               '@type': 'Offer',
               price: '19',
