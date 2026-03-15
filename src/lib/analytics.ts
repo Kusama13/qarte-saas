@@ -36,6 +36,10 @@ export function trackCtaClick(ctaName: string, ctaLocation: string) {
     cta_name: ctaName,
     cta_location: ctaLocation,
   });
+  // Persist signup source for merchant creation tracking
+  try {
+    localStorage.setItem('qarte_signup_source', `landing_${ctaName}`);
+  } catch { /* SSR / private browsing */ }
 }
 
 export function trackScrollDepth(percentage: number) {

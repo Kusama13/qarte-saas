@@ -515,6 +515,11 @@ export default function MerchantDetailPage() {
                 <span className="text-xs text-gray-500">
                   {{ FR: '🇫🇷', BE: '🇧🇪', CH: '🇨🇭', LU: '🇱🇺' }[merchant.country] || ''} {merchant.country}
                 </span>
+                {merchant.signup_source && (
+                  <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-600">
+                    {merchant.signup_source}
+                  </span>
+                )}
               </div>
               {merchant.shop_address && (
                 <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">

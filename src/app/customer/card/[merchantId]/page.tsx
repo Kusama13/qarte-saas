@@ -1243,7 +1243,7 @@ export default function CustomerCardPage({
       {isPreview && isDemo && (
         <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-2xl shadow-gray-900/10">
           <div className="max-w-lg mx-auto">
-            <Link href="/auth/merchant/signup">
+            <Link href="/auth/merchant/signup" onClick={() => { try { localStorage.setItem('qarte_signup_source', `demo_${merchantId}`); } catch {} }}>
               <motion.button
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

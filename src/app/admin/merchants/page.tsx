@@ -575,7 +575,7 @@ export default function AdminMerchantsPage() {
 
   const exportCSV = () => {
     if (!data || sortedMerchants.length === 0) return;
-    const header = ['Nom', 'Email', 'Téléphone', 'Type', 'Étape', 'Statut', 'Clients', 'Santé', 'Créé le'];
+    const header = ['Nom', 'Email', 'Téléphone', 'Type', 'Étape', 'Statut', 'Clients', 'Santé', 'Source', 'Créé le'];
     const rows = sortedMerchants.map(({ merchant, lifecycle, healthScore }) => [
       merchant.shop_name,
       data.userEmails[merchant.user_id] || '',
@@ -585,6 +585,7 @@ export default function AdminMerchantsPage() {
       merchant.subscription_status,
       String(data.customerCounts[merchant.id] || 0),
       String(healthScore),
+      merchant.signup_source || '',
       new Date(merchant.created_at).toLocaleDateString('fr-FR'),
     ]);
     const csv = [header, ...rows].map(r => r.map(c => `"${(c || '').replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -836,6 +837,9 @@ export default function AdminMerchantsPage() {
                                 <span className="truncate max-w-[160px]">{data.userEmails[merchant.user_id]}</span>
                               )}
                               <span className="truncate">{SHOP_TYPES[merchant.shop_type]?.replace('Salon de ', '').replace(' / Nail bar', '').replace(' / Bien-être / Massage', '') || merchant.shop_type}</span>
+                              {merchant.signup_source && (
+                                <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium">{merchant.signup_source}</span>
+                              )}
                             </div>
                           </div>
                         </div>

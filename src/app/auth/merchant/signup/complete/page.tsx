@@ -132,6 +132,7 @@ export default function CompleteProfilePage() {
           shop_address: null,
           phone: formattedPhone,
           country: formData.country,
+          signup_source: (() => { try { const s = localStorage.getItem('qarte_signup_source'); if (s) localStorage.removeItem('qarte_signup_source'); return s; } catch { return null; } })(),
         }),
       });
 

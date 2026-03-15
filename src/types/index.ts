@@ -111,6 +111,7 @@ export interface Merchant {
   booking_message: string | null;
   // Public page link on loyalty card
   show_public_page_on_card: boolean;
+  signup_source: string | null;
 }
 
 export interface PlanningSlot {
