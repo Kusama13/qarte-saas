@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { useRouter } from 'next/navigation';
 import {
@@ -29,6 +30,7 @@ const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
 }));
 
 export default function SettingsPage() {
+  const t = useTranslations('settings');
   const router = useRouter();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,7 +81,7 @@ export default function SettingsPage() {
 
     const formattedPhone = formatPhoneNumber(formData.phone, merchant.country || 'FR');
     if (!validatePhone(formattedPhone, merchant.country || 'FR')) {
-      setError('Veuillez entrer un numéro de téléphone valide');
+      setError(t('phoneError'));
       return;
     }
 
@@ -93,7 +95,7 @@ export default function SettingsPage() {
         .eq('id', merchant.id);
 
       if (updateError) {
-        setError('Erreur lors de la sauvegarde');
+        setError(t('saveError'));
         throw updateError;
       }
     });
@@ -111,7 +113,7 @@ export default function SettingsPage() {
 
       if (!cards) return;
 
-      const headers = ['Prénom', 'Nom', 'Téléphone', 'Passages', 'Dernière visite', 'Date inscription'];
+      const headers = t('csvHeaders').split(',');
       const rows = cards.map((card: Record<string, unknown>) => {
         const customer = card.customer as Record<string, unknown> | null;
         return [
@@ -156,10 +158,10 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between mb-6 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <div>
           <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
-            Paramètres
+            {t('title')}
           </h1>
           <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
-            Gère les informations de ton commerce
+            {t('subtitle')}
           </p>
         </div>
         <Button
@@ -175,12 +177,12 @@ export default function SettingsPage() {
           {saved ? (
             <>
               <Check className="w-4 h-4 mr-1.5" />
-              Enregistré
+              {t('saved')}
             </>
           ) : (
             <>
               <Save className="w-4 h-4 mr-1.5" />
-              Enregistrer
+              {t('save')}
             </>
           )}
         </Button>
@@ -201,17 +203,17 @@ export default function SettingsPage() {
               <Gift className="w-4 h-4 md:w-5 md:h-5" />
             </div>
             <h2 className="text-base md:text-xl font-bold text-gray-900">
-              Gagnez 10&euro; de r&eacute;duction
+              {t('referralTitle')}
             </h2>
           </div>
 
           <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-            Tu connais un(e) <strong className="text-gray-800">coiffeur, barbier, esth&eacute;ticien(ne), g&eacute;rant(e) d&apos;institut de beaut&eacute;, d&apos;onglerie ou de spa</strong> ? Recommande-lui Qarte et recevez chacun <strong className="text-emerald-600">10&euro; de r&eacute;duction</strong> sur ton prochain mois.
+            {t('referralDesc')}
           </p>
 
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/80 border border-emerald-100 mb-4">
             <div className="flex-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Ton code parrainage</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">{t('referralCodeLabel')}</p>
               <p className="text-lg font-mono font-bold text-[#4b0082]">{merchant.referral_code}</p>
             </div>
             <div className="flex items-center gap-2">
@@ -224,14 +226,14 @@ export default function SettingsPage() {
                 className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-[#4b0082]/10 text-[#4b0082] hover:bg-[#4b0082]/20 transition-colors"
               >
                 {referralCopied ? (
-                  <><Check className="w-4 h-4" /> Copi&eacute; !</>
+                  <><Check className="w-4 h-4" /> {t('referralCopied')}</>
                 ) : (
-                  <><Copy className="w-4 h-4" /> Copier</>
+                  <><Copy className="w-4 h-4" /> {t('referralCopy')}</>
                 )}
               </button>
               <button
                 onClick={() => {
-                  const text = `Salut ! J'utilise Qarte pour g\u00e9rer ma carte de fid\u00e9lit\u00e9 digitale et c'est top. Utilise mon code ${merchant.referral_code} en t'inscrivant sur getqarte.com et on re\u00e7oit chacun 10\u20ac de r\u00e9duction. \u00c0 bient\u00f4t !`;
+                  const text = t('referralShareText', { code: merchant.referral_code });
                   if (navigator.share) {
                     navigator.share({ text }).catch(() => {});
                   } else {
@@ -243,13 +245,13 @@ export default function SettingsPage() {
                 className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm"
               >
                 <Share2 className="w-4 h-4" />
-                Partager
+                {t('referralShare')}
               </button>
             </div>
           </div>
 
           <p className="text-xs text-gray-500">
-            Ton filleul nous communique ton code apr&egrave;s son inscription sur Qarte et nous appliquons la r&eacute;duction de 10&euro; &agrave; chacun.
+            {t('referralFooter')}
           </p>
         </div>
       )}
@@ -260,14 +262,14 @@ export default function SettingsPage() {
             <Store className="w-4 h-4 md:w-5 md:h-5" />
           </div>
           <h2 className="text-base md:text-xl font-bold text-gray-900">
-            Informations du commerce
+            {t('businessInfoTitle')}
           </h2>
         </div>
 
         <div className="space-y-6">
           <div className="relative group">
             <Input
-              label="Adresse email"
+              label={t('emailLabel')}
               type="email"
               value={userEmail}
               disabled
@@ -275,13 +277,13 @@ export default function SettingsPage() {
             />
             <Mail className="absolute w-4 h-4 text-gray-400 right-4 top-[42px]" />
             <p className="mt-1.5 text-xs text-gray-400">
-              L&apos;adresse email ne peut pas être modifiée pour le moment
+              {t('emailReadonly')}
             </p>
           </div>
 
           <Select
-            label="Type de commerce"
-            placeholder="Sélectionnez le type..."
+            label={t('shopTypeLabel')}
+            placeholder={t('shopTypePlaceholder')}
             options={shopTypeOptions}
             value={formData.shopType}
             onChange={(e) =>
@@ -293,7 +295,7 @@ export default function SettingsPage() {
 
           <div className="relative group">
             <Input
-              label="Téléphone"
+              label={t('phoneLabel')}
               type="tel"
               placeholder={PHONE_CONFIG[merchant?.country || 'FR'].placeholder}
               value={formData.phone}
@@ -311,17 +313,17 @@ export default function SettingsPage() {
 
       <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
         <h2 className="mb-5 md:mb-8 text-base md:text-xl font-bold text-gray-900">
-          Informations du compte
+          {t('accountTitle')}
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-5 rounded-2xl bg-white/50 border border-gray-100 shadow-sm transition-all hover:border-indigo-100">
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Pays</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">{t('countryLabel')}</p>
             <p className="text-sm text-gray-700 font-medium">{COUNTRIES[merchant?.country || 'FR']}</p>
           </div>
 
           <div className="p-5 rounded-2xl bg-white/50 border border-gray-100 shadow-sm transition-all hover:border-indigo-100">
-            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Date d&apos;inscription</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">{t('createdAtLabel')}</p>
             <p className="text-sm text-gray-700 font-medium">
               {new Date(merchant?.created_at || '').toLocaleDateString('fr-FR', {
                 day: 'numeric',
@@ -338,11 +340,11 @@ export default function SettingsPage() {
                   <Crown className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">Abonnement</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-0.5">{t('subscriptionLabel')}</p>
                   <p className="text-sm font-bold text-gray-900">
-                    Pro {merchant?.billing_interval === 'annual' ? 'Annuel' : 'Mensuel'}
+                    {merchant?.billing_interval === 'annual' ? t('proAnnual') : t('proMonthly')}
                     {merchant?.subscription_status === 'canceling' && (
-                      <span className="ml-2 text-[11px] font-semibold text-orange-500">· Annulation en cours</span>
+                      <span className="ml-2 text-[11px] font-semibold text-orange-500">· {t('canceling')}</span>
                     )}
                   </p>
                 </div>
@@ -351,7 +353,7 @@ export default function SettingsPage() {
                 href="/dashboard/subscription"
                 className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors shrink-0"
               >
-                Gérer →
+                {t('manageSubscription')}
               </Link>
             </div>
           )}
@@ -360,10 +362,10 @@ export default function SettingsPage() {
 
       <div className="mt-6 md:mt-8 p-5 md:p-8 bg-white/60 backdrop-blur-xl rounded-2xl md:rounded-3xl border border-white/40 shadow-xl shadow-indigo-100/30">
         <h2 className="mb-2 text-base md:text-xl font-bold text-gray-900">
-          Tes données
+          {t('dataTitle')}
         </h2>
         <p className="mb-4 text-sm text-gray-600 leading-relaxed">
-          Exporte la liste de tes clients au format CSV.
+          {t('dataDesc')}
         </p>
         <Button
           variant="outline"
@@ -372,23 +374,22 @@ export default function SettingsPage() {
           className="h-9 px-4 text-sm border-gray-200 hover:border-indigo-200 hover:bg-indigo-50/50 text-gray-700 rounded-xl transition-all duration-200 shadow-sm"
         >
           <Download className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
-          Exporter les clients (CSV)
+          {t('exportCsv')}
         </Button>
       </div>
 
       <div className="mt-6 md:mt-8 p-5 md:p-8 bg-red-50/50 backdrop-blur-sm rounded-2xl md:rounded-3xl border border-red-100/50 shadow-lg shadow-red-100/20">
         <h2 className="mb-2 text-base md:text-xl font-bold text-red-900">
-          Zone de danger
+          {t('dangerTitle')}
         </h2>
         <p className="mb-6 text-sm text-red-700 leading-relaxed">
-          La suppression du compte est irréversible. Toutes tes données,
-          points de fidélité clients et historiques seront définitivement supprimés.
+          {t('dangerDesc')}
         </p>
         <a
           href="/contact"
           className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm transition-colors shadow-md shadow-red-200"
         >
-          Demander la suppression de mon compte
+          {t('deleteAccount')}
         </a>
       </div>
     </div>
