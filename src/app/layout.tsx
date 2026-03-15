@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans, Playfair_Display, Poppins } from 'next/font/google';
 import { getLocale } from 'next-intl/server';
 import './globals.css';
-import CookieBanner from '@/components/shared/CookieBanner';
 import { Analytics } from '@vercel/analytics/react';
 import { MicrosoftClarity } from '@/components/analytics/MicrosoftClarity';
 
@@ -129,7 +128,6 @@ export default async function RootLayout({
       </head>
       <body className="font-sans">
         {children}
-        <CookieBanner />
         <Analytics />
         <MicrosoftClarity />
       </body>
