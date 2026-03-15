@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Users, UserCheck, Calendar, Gift, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, UserPlus, CreditCard, Coins, Globe, Heart } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime } from '@/lib/utils';
 import { Button } from '@/components/ui';
@@ -67,6 +68,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const supabase = getSupabase();
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
+  const t = useTranslations('dashHome');
 
   // Initialize from cache if available for instant display
   const [stats, setStats] = useState(() => {
@@ -343,7 +345,7 @@ export default function DashboardPage() {
 
       } catch (err) {
         console.error('Dashboard error:', err);
-        setError('Erreur lors du chargement des données');
+        setError(t('errorLoading'));
       } finally {
         setLoading(false);
       }
@@ -405,7 +407,7 @@ export default function DashboardPage() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
         <p className="text-red-600 mb-4">{error}</p>
-        <Button onClick={() => window.location.reload()}>Réessayer</Button>
+        <Button onClick={() => window.location.reload()}>{t('retry')}</Button>
       </div>
     );
   }
@@ -422,16 +424,16 @@ export default function DashboardPage() {
       <div className="space-y-8">
         <div className="p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
           <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900">
-          Bonjour, <span className="bg-gradient-to-r from-[#4b0082] to-violet-600 bg-clip-text text-transparent">
+          {t('greeting')} <span className="bg-gradient-to-r from-[#4b0082] to-violet-600 bg-clip-text text-transparent">
             {merchant?.shop_name}
           </span>
         </h1>
         <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
           {stats.totalCustomers === 0
-            ? 'Lance-toi, affiche ton QR code et inscris ta premiere cliente !'
+            ? t('subtitleNoClients')
             : stats.activeCustomers > 0
-              ? `${stats.activeCustomers} cliente${stats.activeCustomers > 1 ? 's' : ''} active${stats.activeCustomers > 1 ? 's' : ''} ce mois — continue comme ca !`
-              : 'Tes clientes t\'attendent, relance ton programme !'}
+              ? t('subtitleActive', { count: stats.activeCustomers })
+              : t('subtitleInactive')}
         </p>
       </div>
 
@@ -440,15 +442,15 @@ export default function DashboardPage() {
 
       {/* Raccourcis rapides */}
       <div className="md:hidden space-y-2">
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 px-1">Raccourcis</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 px-1">{t('shortcuts')}</p>
         <div className="grid grid-cols-3 gap-2.5">
           {[
-            { href: '/dashboard/public-page', icon: Globe, label: 'Ma Page', color: 'text-white', bg: 'bg-white/20', gradient: true },
-            { href: '/dashboard/program', icon: Heart, label: 'Fidélité', color: 'text-white', bg: 'bg-white/20', gradient: true, gradientColors: 'from-pink-500 to-rose-500 border-pink-400/20' },
-            { href: '/dashboard/qr-download', icon: QrCode, label: 'QR Code', color: 'text-violet-500', bg: 'bg-violet-50' },
-            { href: '/dashboard/customers', icon: Users, label: 'Clients', color: 'text-emerald-500', bg: 'bg-emerald-50' },
-            { href: '/dashboard/referrals', icon: UserPlus, label: 'Parrainage', color: 'text-blue-500', bg: 'bg-blue-50' },
-            { href: '/dashboard/subscription', icon: CreditCard, label: 'Abonnement', color: 'text-teal-500', bg: 'bg-teal-50' },
+            { href: '/dashboard/public-page', icon: Globe, label: t('shortcutPage'), color: 'text-white', bg: 'bg-white/20', gradient: true },
+            { href: '/dashboard/program', icon: Heart, label: t('shortcutLoyalty'), color: 'text-white', bg: 'bg-white/20', gradient: true, gradientColors: 'from-pink-500 to-rose-500 border-pink-400/20' },
+            { href: '/dashboard/qr-download', icon: QrCode, label: t('shortcutQr'), color: 'text-violet-500', bg: 'bg-violet-50' },
+            { href: '/dashboard/customers', icon: Users, label: t('shortcutClients'), color: 'text-emerald-500', bg: 'bg-emerald-50' },
+            { href: '/dashboard/referrals', icon: UserPlus, label: t('shortcutReferrals'), color: 'text-blue-500', bg: 'bg-blue-50' },
+            { href: '/dashboard/subscription', icon: CreditCard, label: t('shortcutSubscription'), color: 'text-teal-500', bg: 'bg-teal-50' },
           ].map(({ href, icon: Icon, label, color, bg, gradient, gradientColors }: { href: string; icon: React.ElementType; label: string; color: string; bg: string; gradient?: boolean; gradientColors?: string }) => (
             <Link
               key={href}
@@ -477,8 +479,8 @@ export default function DashboardPage() {
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <div>
-                <h4 className="text-lg font-bold text-gray-900">Désactiver Qarte Shield ?</h4>
-                <p className="text-sm text-gray-500">Cette action expose ton programme</p>
+                <h4 className="text-lg font-bold text-gray-900">{t('disableShieldTitle')}</h4>
+                <p className="text-sm text-gray-500">{t('disableShieldSubtitle')}</p>
               </div>
               <button
                 onClick={() => setShowShieldWarning(false)}
@@ -489,19 +491,19 @@ export default function DashboardPage() {
             </div>
 
             <div className="p-4 rounded-xl bg-red-50 border border-red-100 mb-6">
-              <p className="text-sm text-red-800 font-medium mb-2">Risques potentiels :</p>
+              <p className="text-sm text-red-800 font-medium mb-2">{t('disableShieldRisks')}</p>
               <ul className="text-sm text-red-700 space-y-1.5">
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-1">•</span>
-                  <span>Scans multiples frauduleux le même jour</span>
+                  <span>{t('disableShieldRisk1')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-1">•</span>
-                  <span>Accumulation rapide de points non légitimes</span>
+                  <span>{t('disableShieldRisk2')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-red-400 mt-1">•</span>
-                  <span>Récompenses obtenues de manière abusive</span>
+                  <span>{t('disableShieldRisk3')}</span>
                 </li>
               </ul>
             </div>
@@ -512,14 +514,14 @@ export default function DashboardPage() {
                 onClick={() => setShowShieldWarning(false)}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
               >
-                Annuler
+                {t('disableShieldCancel')}
               </button>
               <button
                 type="button"
                 onClick={confirmDisableShield}
                 className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 transition-colors"
               >
-                Désactiver
+                {t('disableShieldConfirm')}
               </button>
             </div>
           </div>
@@ -529,7 +531,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Link href="/dashboard/customers" className="block">
           <StatsCard
-            title="Clients inscrits"
+            title={t('totalClients')}
             value={stats.totalCustomers}
             icon={Users}
             color="#654EDA"
@@ -537,20 +539,20 @@ export default function DashboardPage() {
         </Link>
         <Link href="/dashboard/customers" className="block">
           <StatsCard
-            title="Clients actifs (30j)"
+            title={t('activeClients')}
             value={stats.activeCustomers}
             icon={UserCheck}
             color="#10B981"
           />
         </Link>
         <StatsCard
-          title="Visites ce mois"
+          title={t('visitsMonth')}
           value={stats.visitsThisMonth}
           icon={Calendar}
           color="#F59E0B"
         />
         <StatsCard
-          title="Récompenses ce mois"
+          title={t('rewardsMonth')}
           value={stats.redemptionsThisMonth}
           icon={Gift}
           color="#EC4899"
@@ -560,13 +562,13 @@ export default function DashboardPage() {
       {merchant?.loyalty_mode === 'cagnotte' && (
         <div className="grid grid-cols-2 gap-3">
           <StatsCard
-            title="Cumul clients"
+            title={t('cumulClients')}
             value={`${cagnotteStats.totalCumul.toFixed(2).replace('.', ',')} €`}
             icon={Coins}
             color="#059669"
           />
           <StatsCard
-            title="Cagnotte en cours"
+            title={t('cashbackOngoing')}
             value={`${cagnotteStats.totalCashback.toFixed(2).replace('.', ',')} €`}
             icon={Gift}
             color="#D97706"
@@ -580,7 +582,7 @@ export default function DashboardPage() {
           {pendingReferrals > 0 && (
             <Link href="/dashboard/referrals" className="block">
               <StatsCard
-                title="Parrainages en cours"
+                title={t('pendingReferrals')}
                 value={pendingReferrals}
                 icon={UserPlus}
                 color="#3B82F6"
@@ -590,7 +592,7 @@ export default function DashboardPage() {
           {welcomeVouchers > 0 && (
             <Link href="/dashboard/customers" className="block">
               <StatsCard
-                title="Offre bienvenue"
+                title={t('welcomeOffer')}
                 value={welcomeVouchers}
                 icon={Gift}
                 color="#8B5CF6"
@@ -619,10 +621,10 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className={`text-sm font-semibold ${shieldEnabled ? 'text-emerald-800' : 'text-gray-600'}`}>
-                    Qarte Shield {shieldEnabled ? 'actif' : 'inactif'}
+                    Qarte Shield {shieldEnabled ? t('shieldActive') : t('shieldInactive')}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {shieldEnabled ? 'Protection automatique activée' : 'Protection désactivée'}
+                    {shieldEnabled ? t('shieldProtectionOn') : t('shieldProtectionOff')}
                   </p>
                 </div>
               </div>
@@ -660,7 +662,7 @@ export default function DashboardPage() {
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-indigo-600" />
-                    <h4 className="text-sm font-bold text-gray-900">Qarte Shield</h4>
+                    <h4 className="text-sm font-bold text-gray-900">{t('shieldTitle')}</h4>
                   </div>
                   <button
                     onClick={() => setShowShieldHelp(false)}
@@ -670,10 +672,10 @@ export default function DashboardPage() {
                   </button>
                 </div>
                 <p className="text-xs text-gray-600 leading-relaxed">
-                  Qarte Shield détecte automatiquement les scans suspects (ex : un même client qui scanne plusieurs fois dans la journée) et met les points en attente de ta validation.
+                  {t('shieldDesc')}
                 </p>
                 <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-                  Tu gardes le contrôle : valide ou refuse chaque visite suspecte depuis le widget ci-dessous.
+                  {t('shieldDesc2')}
                 </p>
               </div>
             )}
@@ -693,7 +695,7 @@ export default function DashboardPage() {
           <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-indigo-600 to-violet-600" />
           <div className="p-5 md:p-8">
             <p className="text-[10px] font-black text-slate-400/80 uppercase tracking-[0.2em] mb-4 md:mb-6">
-              7 derniers jours
+              {t('last7Days')}
             </p>
             {weeklyData.thisWeek > 0 || weeklyData.lastWeek > 0 ? (
               <div>
@@ -702,7 +704,7 @@ export default function DashboardPage() {
                     {weeklyData.thisWeek}
                   </span>
                   <span className="text-sm md:text-base font-semibold text-slate-400">
-                    visite{weeklyData.thisWeek !== 1 ? 's' : ''}
+                    {weeklyData.thisWeek !== 1 ? t('visitsPlural') : t('visits')}
                   </span>
                 </div>
 
@@ -724,20 +726,20 @@ export default function DashboardPage() {
                         {change > 0 ? '+' : ''}{change}%
                       </div>
                       <span className="text-sm text-slate-500">
-                        vs {weeklyData.lastWeek} les 7 jours précédents
+                        {t('vsLastWeek', { count: weeklyData.lastWeek })}
                       </span>
                     </div>
                   );
                 })() : (
                   <p className="text-sm text-slate-400 mt-3">
-                    Pas de données la semaine précédente
+                    {t('noPrevWeekData')}
                   </p>
                 )}
 
                 {/* Visual comparison bars */}
                 <div className="mt-8 space-y-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">Cette sem.</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider w-20 shrink-0">{t('thisWeek')}</span>
                     <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-700"
@@ -747,7 +749,7 @@ export default function DashboardPage() {
                     <span className="text-sm font-bold text-slate-700 w-8 text-right tabular-nums">{weeklyData.thisWeek}</span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-20 shrink-0">Sem. préc.</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider w-20 shrink-0">{t('prevWeek')}</span>
                     <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-slate-300 rounded-full transition-all duration-700"
@@ -763,8 +765,8 @@ export default function DashboardPage() {
                 <div className="p-4 mb-4 rounded-2xl bg-indigo-50/50">
                   <Calendar className="w-10 h-10 text-indigo-200" />
                 </div>
-                <p className="font-medium text-gray-900">Aucune visite enregistrée</p>
-                <p className="text-sm">Les données apparaîtront après tes premiers scans</p>
+                <p className="font-medium text-gray-900">{t('noVisits')}</p>
+                <p className="text-sm">{t('noVisitsHint')}</p>
               </div>
             )}
           </div>
@@ -775,11 +777,11 @@ export default function DashboardPage() {
           <div className="p-4 md:p-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-base md:text-xl font-bold tracking-tight text-gray-900">
-                Activité récente
+                {t('recentActivity')}
               </h2>
               <Link href="/dashboard/customers">
                 <Button variant="ghost" size="sm" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl">
-                  Voir tout
+                  {t('viewAll')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </Link>
@@ -805,7 +807,7 @@ export default function DashboardPage() {
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">{customer.name}</p>
                           <p className="text-[11px] text-gray-400 leading-none mt-0.5">
-                            {customer.lastVisit ? formatRelativeTime(customer.lastVisit) : 'Nouveau client'}
+                            {customer.lastVisit ? formatRelativeTime(customer.lastVisit) : t('newClient')}
                           </p>
                         </div>
                       </div>
@@ -834,8 +836,8 @@ export default function DashboardPage() {
                 <div className="p-4 mb-4 rounded-2xl bg-indigo-50/50">
                   <Users className="w-10 h-10 text-indigo-200" />
                 </div>
-                <p className="font-medium text-gray-900">Aucun client pour le moment</p>
-                <p className="text-sm">Affiche ton QR code pour commencer !</p>
+                <p className="font-medium text-gray-900">{t('noClientsYet')}</p>
+                <p className="text-sm">{t('noClientsHint')}</p>
               </div>
             )}
           </div>
