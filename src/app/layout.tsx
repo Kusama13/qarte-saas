@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans, Playfair_Display, Poppins } from 'next/font/google';
+import { getLocale } from 'next-intl/server';
 import './globals.css';
 import CookieBanner from '@/components/shared/CookieBanner';
 import { Analytics } from '@vercel/analytics/react';
@@ -62,13 +63,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+
   return (
-    <html lang="fr" className={`${plusJakarta.variable} ${playfair.variable} ${poppins.variable}`}>
+    <html lang={locale} className={`${plusJakarta.variable} ${playfair.variable} ${poppins.variable}`}>
       <head>
         {/* Preconnect for performance */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
