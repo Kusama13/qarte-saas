@@ -448,31 +448,14 @@ export default function MerchantDetailPage() {
     if (merchant) setAdminNotes(merchant.admin_notes || '');
   }, [merchant?.admin_notes]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5167fc]"></div>
-      </div>
-    );
-  }
-
-  if (!merchant) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <Store className="w-12 h-12 mb-4 text-gray-300" />
-        <p className="text-gray-600 mb-4">Commerçant non trouvé</p>
-        <Link href="/admin/merchants"><Button>Retour à la liste</Button></Link>
-      </div>
-    );
-  }
-
   const healthScore = useMemo(
-    () => computeHealthScore(merchant, stats.totalCustomers, stats.weeklyScans, stats.lastVisitDate),
+    () => merchant ? computeHealthScore(merchant, stats.totalCustomers, stats.weeklyScans, stats.lastVisitDate) : 0,
     [merchant, stats.totalCustomers, stats.weeklyScans, stats.lastVisitDate]
   );
 
   // Page Pro completion
   const { pageProItems, pageProDone, pageProPct } = useMemo(() => {
+    if (!merchant) return { pageProItems: [], pageProDone: 0, pageProPct: 0 };
     const items = [
       { label: 'Bio', done: !!merchant.bio },
       { label: 'Adresse', done: !!merchant.shop_address },
@@ -491,6 +474,7 @@ export default function MerchantDetailPage() {
 
   // Onboarding checklist
   const { onboardingItems, onboardingDone } = useMemo(() => {
+    if (!merchant) return { onboardingItems: [], onboardingDone: 0 };
     const items = [
       { label: 'Programme configure', done: !!merchant.reward_description },
       { label: 'Logo ajoute', done: !!merchant.logo_url },
@@ -500,6 +484,24 @@ export default function MerchantDetailPage() {
     ];
     return { onboardingItems: items, onboardingDone: items.filter(i => i.done).length };
   }, [merchant, stats.totalVisits]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5167fc]"></div>
+      </div>
+    );
+  }
+
+  if (!merchant) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <Store className="w-12 h-12 mb-4 text-gray-300" />
+        <p className="text-gray-600 mb-4">Commerçant non trouvé</p>
+        <Link href="/admin/merchants"><Button>Retour à la liste</Button></Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
