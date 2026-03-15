@@ -1,4 +1,4 @@
-export { BentoFeaturesSection } from './BentoFeaturesSection';
+export { FideliteSection } from './FideliteSection';
 export { HeroSection } from './HeroSection';
 export { SocialProofSection } from './SocialProofSection';
 export { TestimonialsSection } from './TestimonialsSection';
@@ -7,6 +7,6 @@ export { AIReengagementSection } from './AIReengagementSection';
 export { PricingSection } from './PricingSection';
 export { FAQSection } from './FAQSection';
 export { FooterSection, FooterCta, FooterDark } from './FooterSection';
-export { LoyaltyModesSection } from './LoyaltyModesSection';
+export { PageProSection } from './PageProSection';
 export { ScrollToTopButton } from './ScrollToTopButton';
 export { MobileStickyCta } from './MobileStickyCta';

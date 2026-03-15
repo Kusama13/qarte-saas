@@ -12,7 +12,20 @@ import { cache } from 'react';
 const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; photos: any[]; services: any[]; serviceCategories: any[]; planningSlots: any[]; demoOffer?: any } | null> => {
   // Demo merchants: return hardcoded data without DB query
   const demo = getDemoMerchantData(slug);
-  if (demo) return { ...demo, planningSlots: [], demoOffer: demo.offer };
+  if (demo) {
+    // Generate planning slots for next 5 days
+    const demoSlots: { slot_date: string; start_time: string }[] = [];
+    const times = ['10:00', '11:30', '14:00', '15:30', '17:00'];
+    for (let d = 1; d <= 5; d++) {
+      const date = new Date(Date.now() + d * 24 * 60 * 60 * 1000);
+      if (date.getDay() === 0) continue; // skip Sunday
+      const dateStr = date.toISOString().split('T')[0];
+      // Vary slots per day to look realistic
+      const daySlots = times.filter((_, i) => (d + i) % 3 !== 0);
+      for (const t of daySlots) demoSlots.push({ slot_date: dateStr, start_time: t });
+    }
+    return { ...demo, planningSlots: demoSlots, demoOffer: demo.offer };
+  }
 
   const supabaseAdmin = getSupabaseAdmin();
 

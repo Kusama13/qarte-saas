@@ -11,6 +11,7 @@ import {
   Sparkles,
   Cake,
   CalendarHeart,
+  Star,
   MousePointer2,
   ArrowRight,
 } from 'lucide-react';
@@ -302,9 +303,72 @@ function AutoOffersVisual() {
   );
 }
 
+/* ── Visual: Avis Google ── */
+function ReviewsVisual() {
+  const reviews = [
+    { name: 'Camille L.', text: 'Super salon, je recommande !' },
+    { name: 'Inès M.', text: 'Résultat parfait, au top.' },
+  ];
+
+  return (
+    <div className="relative w-full max-w-[320px] mx-auto">
+      <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center">
+            <Star className="w-4 h-4 text-white fill-white" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-gray-800">4.9/5 sur Google</p>
+            <p className="text-[10px] text-gray-400">127 avis</p>
+          </div>
+        </div>
+
+        <div className="space-y-2.5">
+          {reviews.map((r, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.15 + i * 0.1, ease: EASE }}
+              className="bg-gray-50 rounded-xl p-3"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-bold text-gray-700">{r.name}</span>
+                <div className="flex gap-0.5 ml-auto">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+              </div>
+              <p className="text-[11px] text-gray-500">{r.text}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.4, ease: EASE }}
+          className="mt-3 flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-2"
+        >
+          <Check className="w-4 h-4 text-emerald-500" />
+          <span className="text-[11px] font-bold text-emerald-700">Demande envoyée automatiquement</span>
+        </motion.div>
+      </div>
+
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-white rounded-full px-3 py-1.5 shadow-lg shadow-gray-200/40 border border-amber-100 animate-float-subtle">
+        <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+        <span className="text-xs font-bold text-gray-800">+1 avis Google</span>
+      </div>
+    </div>
+  );
+}
+
 /* ── Section ── */
 
-export function BentoFeaturesSection() {
+export function FideliteSection() {
   return (
     <section className="relative py-20 md:py-28 bg-gray-50/50 overflow-hidden">
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-100/40 rounded-full blur-[120px] pointer-events-none" />
@@ -327,12 +391,12 @@ export function BentoFeaturesSection() {
           className="text-center mb-14 md:mb-16"
         >
           <p className="text-sm font-bold text-indigo-500 uppercase tracking-wider mb-4">
-            Les clientes te trouvent. Maintenant, fidélise-les.
+            Ton programme de fidélité
           </p>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Scan, programme, relances —{' '}
+            Elles reviennent.{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              tout roule en automatique.
+              Automatiquement.
             </span>
           </h2>
         </motion.div>
@@ -377,6 +441,17 @@ export function BentoFeaturesSection() {
             description="Offre surprise le jour J, promos événementielles programmées à l'avance. On s'occupe de tout — tes clientes reviennent et dépensent 30% de plus."
             visual={<AutoOffersVisual />}
             reverse
+            delay={0.05}
+          />
+
+          <Separator />
+
+          {/* === AVIS GOOGLE === */}
+          <FeatureBlock
+            title="Plus d'avis,"
+            titleBold="plus de clientes."
+            description="Après chaque passage, on demande un avis Google au bon moment. Plus d'avis = plus de visibilité = plus de clientes qui te trouvent."
+            visual={<ReviewsVisual />}
             delay={0.05}
           />
 

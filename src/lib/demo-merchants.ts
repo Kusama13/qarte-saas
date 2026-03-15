@@ -81,7 +81,7 @@ export const DEMO_MERCHANTS: Record<string, DemoMerchantFull> = {
       scan_code: 'demo-onglerie',
       bio: 'Nail artist passionnée, spécialisée en baby boomer et nail art 3D. Sur rdv uniquement.',
       opening_hours: { '1': { open: '10:00', close: '19:00' }, '2': { open: '10:00', close: '19:00' }, '3': { open: '10:00', close: '19:00' }, '4': { open: '10:00', close: '20:00' }, '5': { open: '10:00', close: '20:00' }, '6': { open: '09:00', close: '17:00' }, '7': null },
-      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null,
+      phone: null, planning_enabled: true, planning_message: null, planning_message_expires: null, booking_message: null,
     },
     offer: { id: 'offer-onglerie', title: 'Offre de printemps', description: '-15% sur toutes les poses gel', expires_at: null },
     photos: [

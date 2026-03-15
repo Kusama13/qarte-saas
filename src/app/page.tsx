@@ -1,14 +1,14 @@
 import {
   HeroSection,
   SocialProofSection,
-  LoyaltyModesSection,
+  PageProSection,
   TestimonialsSection,
   PricingSection,
   FooterSection,
   ScrollToTopButton,
 } from '@/components/landing';
 import ClientShell from '@/components/landing/ClientShell';
-import { LazyBentoFeaturesSection, LazyFAQSection } from '@/components/landing/LazySections';
+import { LazyFideliteSection, LazyFAQSection } from '@/components/landing/LazySections';
 
 export default function LandingPageV4() {
   return (
@@ -18,14 +18,13 @@ export default function LandingPageV4() {
       <main className="overflow-hidden">
         <HeroSection />
         <SocialProofSection />
-        <LoyaltyModesSection />
-        <LazyBentoFeaturesSection />
+        <PageProSection />
+        <LazyFideliteSection />
         <TestimonialsSection />
         <PricingSection />
         <LazyFAQSection />
         <FooterSection />
       </main>
-
 
       <ScrollToTopButton />
     </>

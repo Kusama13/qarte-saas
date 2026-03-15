@@ -11,6 +11,10 @@ export function PricingSection() {
 
   const features = [
     'Page publique sur Google',
+    'Bio et horaires',
+    'Galerie photos',
+    'Tarifs et prestations',
+    'Planning disponibilités',
     'Offre de bienvenue',
     'Avis Google intégrés',
     'Lien de réservation',
@@ -18,10 +22,8 @@ export function PricingSection() {
     'Mode passages ou cagnotte',
     'QR Code perso + Kit promo',
     'Notifications push',
-    'Tarifs et prestations',
     'Dashboard analytics',
     'Clients illimités',
-    'Zéro commission',
   ];
 
   return (
