@@ -195,7 +195,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Welcome email en priorité (Resend API call #2)
-      await sendWelcomeEmail(userData.user.email, trimmedShopName, slug).catch((err) => {
+      const emailLocale = locale === 'en' ? 'en' : 'fr';
+      await sendWelcomeEmail(userData.user.email, trimmedShopName, slug, emailLocale).catch((err) => {
         logger.error('Failed to send welcome email', err);
       });
 

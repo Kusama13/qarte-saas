@@ -93,24 +93,42 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; locale: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug, locale } = await params;
   const result = await getMerchantData(slug);
   if (!result) return {};
 
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
   const { merchant, photos } = result;
   const shopLabel = SHOP_TYPES[merchant.shop_type as keyof typeof SHOP_TYPES] || '';
   const location = merchant.shop_address ? ` à ${merchant.shop_address}` : '';
 
+  const isEN = locale === 'en';
+  const title = isEN
+    ? `${merchant.shop_name} — Loyalty program | Qarte`
+    : `${merchant.shop_name} — Programme de fidélité | Qarte`;
+  const description = isEN
+    ? `Discover ${merchant.shop_name}'s loyalty program${merchant.shop_address ? ` in ${merchant.shop_address}` : ''}. Digital card, rewards and perks.`
+    : `Découvrez le programme de fidélité de ${merchant.shop_name}${location}. ${shopLabel} — carte digitale, récompenses et avantages.`;
+
   return {
-    title: `${merchant.shop_name} — Programme de fidélité | Qarte`,
-    description: `Découvrez le programme de fidélité de ${merchant.shop_name}${location}. ${shopLabel} — carte digitale, récompenses et avantages.`,
+    title,
+    description,
     openGraph: {
-      title: `${merchant.shop_name} — Programme de fidélité`,
-      description: `${shopLabel}${location} — carte de fidélité digitale, récompenses et avantages exclusifs.`,
+      title,
+      description,
       images: photos[0]?.url || merchant.logo_url || undefined,
       type: 'website',
+      locale: isEN ? 'en_US' : 'fr_FR',
+      alternateLocale: isEN ? ['fr_FR'] : ['en_US'],
+    },
+    alternates: {
+      canonical: `${baseUrl}${isEN ? '/en' : ''}/p/${slug}`,
+      languages: {
+        fr: `${baseUrl}/p/${slug}`,
+        en: `${baseUrl}/en/p/${slug}`,
+      },
     },
   };
 }

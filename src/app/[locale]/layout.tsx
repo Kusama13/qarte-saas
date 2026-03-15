@@ -12,6 +12,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
   if (locale === 'en') {
     return {
@@ -24,12 +25,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: 'Qarte — The Linktree for beauty pros + loyalty program',
         description: 'One link to showcase everything + a loyalty program that brings your clients back. $19/month, free trial.',
         locale: 'en_US',
+        alternateLocale: ['fr_FR'],
+      },
+      alternates: {
+        canonical: `${baseUrl}/en`,
+        languages: { fr: baseUrl, en: `${baseUrl}/en` },
       },
     };
   }
 
-  // FR: no override needed, inherits from root layout
-  return {};
+  // FR: add alternates + og:locale:alternate
+  return {
+    openGraph: {
+      locale: 'fr_FR',
+      alternateLocale: ['en_US'],
+    },
+    alternates: {
+      canonical: baseUrl,
+      languages: { fr: baseUrl, en: `${baseUrl}/en` },
+    },
+  };
 }
 
 export default async function LocaleLayout({ children, params }: Props) {
