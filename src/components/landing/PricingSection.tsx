@@ -6,6 +6,7 @@ import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 
 export function PricingSection() {
   const { ref, isInView } = useInView();
@@ -73,13 +74,13 @@ export function PricingSection() {
                 ))}
               </ul>
 
-              <a
+              <Link
                 href="/auth/merchant/signup"
                 onClick={() => { trackCtaClick('pricing_cta_2', 'pricing_section_2'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
                 className="block w-full py-5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 text-center uppercase tracking-wider text-sm shadow-md shadow-indigo-500/15"
               >
                 {t('ctaButton')}
-              </a>
+              </Link>
 
               <p className="text-center text-gray-400 text-[10px] font-bold mt-6 uppercase tracking-[0.2em]">
                 {t('cancelAnytime')}

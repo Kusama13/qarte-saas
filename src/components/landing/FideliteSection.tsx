@@ -19,6 +19,7 @@ import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 
 const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -455,14 +456,14 @@ export function FideliteSection() {
           transition={{ duration: 0.5, ease: EASE }}
           className="mt-20 text-center"
         >
-          <a
+          <Link
             href="/auth/merchant/signup"
             onClick={() => { trackCtaClick('fidelite_cta', 'fidelite_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
           >
             {t('cta')}
             <ArrowRight className="w-5 h-5" />
-          </a>
+          </Link>
           <p className="text-sm text-gray-500 mt-3">{t('ctaSub')}</p>
         </motion.div>
       </div>

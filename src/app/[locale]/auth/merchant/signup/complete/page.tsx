@@ -164,7 +164,7 @@ export default function CompleteProfilePage() {
       ttEvents.startTrial();
 
       // Redirect to personalize screen
-      window.location.href = '/dashboard/personalize';
+      router.push('/dashboard/personalize');
     } catch {
       setError(t('genericError'));
     } finally {

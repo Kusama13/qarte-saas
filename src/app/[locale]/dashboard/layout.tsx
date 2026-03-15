@@ -70,7 +70,7 @@ function DashboardLayoutContent({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.href = '/auth/merchant';
+    router.push('/auth/merchant');
   };
 
   // Compute trial status + useEffect BEFORE any early return to preserve hooks order (React #310)

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import {
   Download,
   Check,
@@ -583,10 +584,10 @@ export default function QRDownloadPage() {
                   <p className="text-[11px] text-emerald-600 mt-0.5">{t('tipWhatsappDesc')}</p>
                 </div>
               </div>
-              <a href="/dashboard/public-page" className="block p-3 bg-indigo-50 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-colors">
+              <Link href="/dashboard/public-page" className="block p-3 bg-indigo-50 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-colors">
                 <p className="text-xs font-semibold text-indigo-700">{t('completePageTitle')}</p>
                 <p className="text-[11px] text-indigo-500 mt-0.5">{t('completePageDesc')}</p>
-              </a>
+              </Link>
             </div>
 
 
@@ -715,13 +716,13 @@ export default function QRDownloadPage() {
               <p className="mt-2 text-sm text-gray-500 leading-relaxed">
                 {t('postDownloadDesc')}
               </p>
-              <a
+              <Link
                 href="/dashboard/public-page"
                 onClick={() => setShowPostDownloadModal(false)}
                 className="mt-5 w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-indigo-200 inline-block"
               >
                 {t('postDownloadCta')}
-              </a>
+              </Link>
               <button
                 onClick={() => setShowPostDownloadModal(false)}
                 className="mt-2 text-xs text-gray-300 hover:text-gray-500 transition-colors block mx-auto"

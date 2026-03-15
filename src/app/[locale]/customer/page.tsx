@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import {
@@ -330,13 +330,13 @@ export default function CustomerLoginPage() {
 
       {/* ── Footer ── */}
       <footer className="relative z-10 py-8 text-center">
-        <a href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
+        <Link href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
           <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('poweredBy')}</span>
           <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
             Qarte
           </span>
           <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('inFrance')}</span>
-        </a>
+        </Link>
       </footer>
 
       {/* ── CSS keyframes for gradient drift ── */}

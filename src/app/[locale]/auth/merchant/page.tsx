@@ -60,7 +60,7 @@ function MerchantLoginContent() {
 
       if (data?.session) {
         // Redirection vers le dashboard (qui redirigera vers setup si nécessaire)
-        window.location.href = '/dashboard';
+        router.replace('/dashboard');
       }
     } catch (err) {
       console.error('Erreur de connexion:', err);

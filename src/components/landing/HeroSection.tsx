@@ -15,6 +15,7 @@ import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
 import { useLocale, useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import { formatTime } from '@/lib/utils';
 import LandingNav from './LandingNav';
 
@@ -144,23 +145,23 @@ export function HeroSection() {
 
           <div className="flex flex-col sm:flex-row sm:items-start gap-3 lg:gap-4">
             <div>
-              <a
+              <Link
                 href="/auth/merchant/signup"
                 onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
                 className="group relative flex items-center justify-center px-7 py-4 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
                 <span className="relative z-10">{t('ctaPrimary')}</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </a>
+              </Link>
               <p className="text-xs text-gray-400 font-medium mt-2 text-center">{t('ctaSubtext')}</p>
             </div>
-            <a
+            <Link
               href="/p/demo-onglerie"
               target="_blank"
               className="flex items-center justify-center px-7 py-4 border-2 border-gray-200 text-gray-700 font-bold rounded-xl hover:border-indigo-300 hover:text-indigo-600 transition-all duration-300"
             >
               {t('ctaDemo')}
-            </a>
+            </Link>
           </div>
 
         </div>
