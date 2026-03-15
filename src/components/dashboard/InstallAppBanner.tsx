@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
@@ -25,6 +26,7 @@ function useIsMobile() {
 export default function InstallAppBanner() {
   const isMobile = useIsMobile();
   const { merchant } = useMerchant();
+  const t = useTranslations('dashNav');
   const [hasReceivedScan, setHasReceivedScan] = useState(false);
   const [dismissed, setDismissed] = useState(true); // default hidden to avoid flash
 
@@ -89,14 +91,14 @@ export default function InstallAppBanner() {
                 <Download className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white">Installez Qarte Pro</p>
-                <p className="text-xs text-white/70">Accédez au tableau de bord en 1 tap</p>
+                <p className="text-sm font-bold text-white">{t('installTitle')}</p>
+                <p className="text-xs text-white/70">{t('installSubtitle')}</p>
               </div>
               <button
                 onClick={promptInstall}
                 className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-indigo-600 bg-white transition-all active:scale-95 hover:bg-indigo-50"
               >
-                Installer
+                {t('installBtn')}
               </button>
               <button
                 onClick={handleDismiss}
@@ -115,8 +117,8 @@ export default function InstallAppBanner() {
           isIOS={isIOS}
           isIOSChrome={isIOSChrome}
           onClose={() => setShowIOSInstructions(false)}
-          title="Installer Qarte Pro"
-          subtitle="Accédez au tableau de bord en 1 tap"
+          title={t('installTitle')}
+          subtitle={t('installSubtitle')}
           iconColor="#4f46e5"
           buttonClassName="bg-indigo-600 hover:bg-indigo-700"
         />
