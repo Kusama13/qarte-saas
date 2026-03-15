@@ -14,9 +14,9 @@ interface ProgramReminderEmailProps {
 
 export function ProgramReminderEmail({ shopName }: ProgramReminderEmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, votre programme de fidélité n'attend plus que vous`}>
+    <BaseLayout preview={`${shopName}, ton programme de fid&eacute;lit&eacute; n'attend plus que toi`}>
       <Heading style={heading}>
-        Plus qu&apos;une étape pour fidéliser vos clients
+        Plus qu&apos;une &eacute;tape pour fid&eacute;liser tes clients
       </Heading>
 
       <Text style={paragraph}>
@@ -24,14 +24,14 @@ export function ProgramReminderEmail({ shopName }: ProgramReminderEmailProps) {
       </Text>
 
       <Text style={paragraph}>
-        Votre compte Qarte est prêt. Il ne manque plus que votre récompense
-        pour lancer votre programme de fidélité.
+        Ton compte Qarte est pr&ecirc;t. Il ne manque plus que ta r&eacute;compense
+        pour lancer ton programme de fid&eacute;lit&eacute;.
       </Text>
 
       <Text style={highlightBox}>
-        Choisissez ce que vous offrez à vos clients fidèles, et votre QR code
-        sera généré automatiquement. Ça prend <strong>3 minutes</strong>.
-        Vous pourrez modifier votre récompense à tout moment.
+        Choisis ce que tu offres &agrave; tes clients fid&egrave;les, et ton QR code
+        sera g&eacute;n&eacute;r&eacute; automatiquement. &Ccedil;a prend <strong>3 minutes</strong>.
+        Tu pourras modifier ta r&eacute;compense &agrave; tout moment.
       </Text>
 
       <Section style={buttonContainer}>
@@ -41,12 +41,12 @@ export function ProgramReminderEmail({ shopName }: ProgramReminderEmailProps) {
       </Section>
 
       <Text style={paragraph}>
-        Vous ne savez pas quoi offrir ? On vous suggère la meilleure récompense
-        pour votre activité directement dans la page de configuration.
+        Tu ne sais pas quoi offrir ? On te sugg&egrave;re la meilleure r&eacute;compense
+        pour ton activit&eacute; directement dans la page de configuration.
       </Text>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? Répondez à cet email, on peut le faire pour vous en 5 minutes.
+        Besoin d&apos;aide ? R&eacute;ponds &agrave; cet email, on peut le faire pour toi en 5 minutes.
       </Text>
 
       <Text style={signature}>

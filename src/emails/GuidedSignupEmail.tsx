@@ -13,9 +13,9 @@ interface GuidedSignupEmailProps {
 
 export function GuidedSignupEmail({ email }: GuidedSignupEmailProps) {
   return (
-    <BaseLayout preview="On vous guide pas à pas — 30 secondes pour lancer votre programme">
+    <BaseLayout preview="On te guide pas &agrave; pas — 30 secondes pour lancer ton programme">
       <Heading style={heading}>
-        30 secondes, on vous guide
+        30 secondes, on te guide
       </Heading>
 
       <Text style={paragraph}>
@@ -23,7 +23,7 @@ export function GuidedSignupEmail({ email }: GuidedSignupEmailProps) {
       </Text>
 
       <Text style={paragraph}>
-        Vous avez cr&eacute;&eacute; votre compte Qarte hier ({email}), mais votre commerce
+        Tu as cr&eacute;&eacute; ton compte Qarte hier ({email}), mais ton commerce
         n&apos;est pas encore enregistr&eacute;.
       </Text>
 
@@ -31,7 +31,7 @@ export function GuidedSignupEmail({ email }: GuidedSignupEmailProps) {
         <Text style={highlightText}>
           On a simplifi&eacute; le formulaire au maximum :
           <br /><strong>4 champs</strong> (nom, activit&eacute;, t&eacute;l&eacute;phone, adresse)
-          <br />&rarr; Votre QR code est g&eacute;n&eacute;r&eacute; automatiquement apr&egrave;s.
+          <br />&rarr; Ton QR code est g&eacute;n&eacute;r&eacute; automatiquement apr&egrave;s.
         </Text>
       </Section>
 
@@ -43,13 +43,13 @@ export function GuidedSignupEmail({ email }: GuidedSignupEmailProps) {
 
       <Section style={stepsBox}>
         <Text style={stepsTitle}>Ce qui se passe ensuite :</Text>
-        <Text style={stepItem}>1️⃣ Vous remplissez 4 champs</Text>
-        <Text style={stepItem}>2️⃣ Vous choisissez une r&eacute;compense (on vous sugg&egrave;re la meilleure)</Text>
-        <Text style={stepItem}>3️⃣ Votre QR code est pr&ecirc;t &mdash; vos clients peuvent scanner</Text>
+        <Text style={stepItem}><strong>1.</strong> Tu remplis 4 champs</Text>
+        <Text style={stepItem}><strong>2.</strong> Tu choisis une r&eacute;compense (on te sugg&egrave;re la meilleure)</Text>
+        <Text style={stepItem}><strong>3.</strong> Ton QR code est pr&ecirc;t &mdash; tes clients peuvent scanner</Text>
       </Section>
 
       <Text style={paragraph}>
-        Besoin d&apos;un coup de main ? R&eacute;pondez &agrave; cet email,
+        Besoin d&apos;un coup de main ? R&eacute;ponds &agrave; cet email,
         on r&eacute;pond en moins d&apos;1h.
       </Text>
 

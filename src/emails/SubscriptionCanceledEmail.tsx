@@ -16,7 +16,7 @@ export function SubscriptionCanceledEmail({ shopName, endDate }: SubscriptionCan
   return (
     <BaseLayout preview={`${shopName} - Confirmation de résiliation`}>
       <Heading style={heading}>
-        Votre abonnement a été résilié
+        Ton abonnement a été résilié
       </Heading>
 
       <Text style={paragraph}>
@@ -24,40 +24,40 @@ export function SubscriptionCanceledEmail({ shopName, endDate }: SubscriptionCan
       </Text>
 
       <Text style={paragraph}>
-        Nous confirmons la résiliation de votre abonnement Qarte.
+        On confirme la résiliation de ton abonnement Qarte.
       </Text>
 
       <Section style={infoBox}>
         <Text style={infoTitle}>Récapitulatif</Text>
         <Text style={infoText}>
           {endDate
-            ? <>Votre accès prendra fin le <strong>{endDate}</strong>.</>
-            : <>Votre accès prendra fin à la fin de votre période en cours.</>
+            ? <>Ton accès prendra fin le <strong>{endDate}</strong>.</>
+            : <>Ton accès prendra fin à la fin de ta période en cours.</>
           }
         </Text>
         <Text style={infoText}>
-          Après cette date, votre compte sera suspendu et vos clients ne pourront plus
+          Après cette date, ton compte sera suspendu et tes clients ne pourront plus
           valider leurs passages.
         </Text>
       </Section>
 
       <Section style={dataSection}>
-        <Text style={dataTitle}>Vos données</Text>
+        <Text style={dataTitle}>Tes données</Text>
         <Text style={dataText}>
-          Conformément au RGPD, vos données seront conservées pendant 30 jours après la fin
-          de votre abonnement. Passé ce délai, elles seront définitivement supprimées.
+          Conformément au RGPD, tes données seront conservées pendant 30 jours après la fin
+          de ton abonnement. Passé ce délai, elles seront définitivement supprimées.
         </Text>
         <Text style={dataText}>
-          Si vous souhaitez récupérer vos données ou demander leur suppression anticipée,
-          contactez-nous à support@getqarte.com.
+          Si tu souhaites récupérer tes données ou demander leur suppression anticipée,
+          contacte-nous à support@getqarte.com.
         </Text>
       </Section>
 
       <Section style={offerBox}>
         <Text style={offerTitle}>Envie de revenir ?</Text>
         <Text style={offerText}>
-          Si vous changez d&apos;avis, vous pouvez réactiver votre compte à tout moment.
-          Vos données et vos clients seront toujours là.
+          Si tu changes d&apos;avis, tu peux réactiver ton compte à tout moment.
+          Tes données et tes clients seront toujours là.
         </Text>
       </Section>
 
@@ -68,8 +68,8 @@ export function SubscriptionCanceledEmail({ shopName, endDate }: SubscriptionCan
       </Section>
 
       <Text style={feedbackText}>
-        Votre avis compte ! Pourriez-vous nous dire pourquoi vous avez décidé de partir ?
-        Répondez simplement à cet email, cela nous aidera à améliorer Qarte.
+        Ton avis compte ! Pourrais-tu nous dire pourquoi tu as décidé de partir ?
+        Réponds simplement à cet email, cela nous aidera à améliorer Qarte.
       </Text>
 
       <Text style={signature}>

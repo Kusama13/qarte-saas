@@ -14,9 +14,9 @@ interface SubscriptionReactivatedEmailProps {
 
 export function SubscriptionReactivatedEmail({ shopName, referralCode }: SubscriptionReactivatedEmailProps) {
   return (
-    <BaseLayout preview={`${shopName} - Votre abonnement est maintenu !`}>
+    <BaseLayout preview={`${shopName} - Ton abonnement est maintenu !`}>
       <Heading style={heading}>
-        Votre abonnement est maintenu
+        Ton abonnement est maintenu
       </Heading>
 
       <Text style={paragraph}>
@@ -24,20 +24,20 @@ export function SubscriptionReactivatedEmail({ shopName, referralCode }: Subscri
       </Text>
 
       <Text style={paragraph}>
-        Bonne nouvelle ! Votre demande de résiliation a bien été annulée.
-        Votre abonnement Qarte reste actif sans interruption.
+        Bonne nouvelle ! Ta demande de résiliation a bien été annulée.
+        Ton abonnement Qarte reste actif sans interruption.
       </Text>
 
       <Section style={confirmBox}>
         <Text style={confirmTitle}>&#10003; Abonnement actif</Text>
         <Text style={confirmDetail}>Résiliation annulée</Text>
         <Text style={confirmNote}>
-          Votre accès continue normalement, aucune action requise
+          Ton accès continue normalement, aucune action requise
         </Text>
       </Section>
 
       <Section style={features}>
-        <Text style={featureTitle}>Vous continuez de bénéficier de :</Text>
+        <Text style={featureTitle}>Tu continues de bénéficier de :</Text>
         <Text style={featureItem}>&#10003; Programme de fidélité illimité</Text>
         <Text style={featureItem}>&#10003; Clients illimités</Text>
         <Text style={featureItem}>&#10003; Statistiques en temps réel</Text>
@@ -52,19 +52,19 @@ export function SubscriptionReactivatedEmail({ shopName, referralCode }: Subscri
       </Section>
 
       <Text style={paragraph}>
-        Merci de votre confiance ! Si vous avez des questions, répondez simplement à cet email.
+        Merci de ta confiance ! Si tu as des questions, réponds simplement à cet email.
       </Text>
 
       {referralCode && (
         <Section style={referralBox}>
           <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
           <Text style={referralText}>
-            Vous connaissez un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommandez-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
+            Recommande-lui Qarte et re&ccedil;ois <strong>10&euro; de r&eacute;duction</strong> sur ton prochain mois (lui aussi).
           </Text>
-          <Text style={referralCode_style}>Votre code : <strong>{referralCode}</strong></Text>
+          <Text style={referralCode_style}>Ton code : <strong>{referralCode}</strong></Text>
           <Text style={referralHint}>
-            Votre filleul nous communique votre code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
           </Text>
         </Section>
       )}

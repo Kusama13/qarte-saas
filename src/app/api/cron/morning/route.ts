@@ -20,8 +20,6 @@ import {
   sendFirstClientScriptEmail,
   sendQuickCheckEmail,
   sendGuidedSignupEmail,
-  sendSetupForYouEmail,
-  sendLastChanceSignupEmail,
   sendAutoSuggestRewardEmail,
   sendGracePeriodSetupEmail,
   sendBirthdayNotificationEmail,
@@ -994,14 +992,12 @@ export async function GET(request: NextRequest) {
           (existingIncompleteTracking || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
         );
 
-        // Helper for the 3 incomplete signup email windows
+        // Incomplete signup: only 1 cron email at T+24h (T+1h is scheduled via Resend at signup)
         const incompleteEmailWindows: Array<{
           minHours: number; maxHours: number; trackingCode: number;
           sendFn: (email: string) => Promise<{ success: boolean }>;
         }> = [
           { minHours: 23, maxHours: 25, trackingCode: -110, sendFn: sendGuidedSignupEmail },
-          { minHours: 71, maxHours: 73, trackingCode: -111, sendFn: sendSetupForYouEmail },
-          { minHours: 167, maxHours: 169, trackingCode: -112, sendFn: sendLastChanceSignupEmail },
         ];
 
         await batchProcess(incompleteUsers, async (user) => {

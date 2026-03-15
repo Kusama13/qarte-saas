@@ -16,7 +16,7 @@ interface ProductUpdateEmailProps {
 
 export function ProductUpdateEmail({ shopName, merchantId, referralCode }: ProductUpdateEmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, d\u00e9couvrez les nouveaut\u00e9s Qarte de la semaine`}>
+    <BaseLayout preview={`${shopName}, d\u00e9couvre les nouveaut\u00e9s Qarte de la semaine`}>
       <Heading style={heading}>
         Quoi de neuf chez Qarte ?
       </Heading>
@@ -26,7 +26,7 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode }: Produ
       </Text>
 
       <Text style={paragraph}>
-        On a travaill&eacute; dur ces derniers jours pour vous donner encore plus
+        On a travaill&eacute; dur ces derniers jours pour te donner encore plus
         d&apos;outils. Voici ce qui est nouveau :
       </Text>
 
@@ -35,8 +35,8 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode }: Produ
         <Text style={featureBadgeViolet}>Nouveau</Text>
         <Text style={featureTitle}>Programme de parrainage</Text>
         <Text style={featureText}>
-          Vos client(e)s peuvent maintenant inviter leurs proches et &ecirc;tre
-          r&eacute;compens&eacute;(e)s. Vous choisissez la r&eacute;compense du parrain
+          Tes client(e)s peuvent maintenant inviter leurs proches et &ecirc;tre
+          r&eacute;compens&eacute;(e)s. Tu choisis la r&eacute;compense du parrain
           et du filleul &mdash; tout est automatique.
         </Text>
       </Section>
@@ -49,11 +49,11 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode }: Produ
 
       {/* 2. R&eacute;seaux sociaux */}
       <Section style={featureBoxBlue}>
-        <Text style={featureTitle}>Ajoutez vos r&eacute;seaux sociaux</Text>
+        <Text style={featureTitle}>Ajoute tes r&eacute;seaux sociaux</Text>
         <Text style={featureText}>
-          Instagram, Facebook, TikTok, lien de r&eacute;servation&hellip; Vos client(e)s
+          Instagram, Facebook, TikTok, lien de r&eacute;servation&hellip; Tes client(e)s
           les retrouvent directement sur leur carte de fid&eacute;lit&eacute;.
-          Un clic pour vous suivre, un clic pour r&eacute;server.
+          Un clic pour te suivre, un clic pour r&eacute;server.
         </Text>
       </Section>
 
@@ -68,9 +68,9 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode }: Produ
         <Text style={featureBadgeIndigo}>Nouveau</Text>
         <Text style={featureTitle}>Nouveau design de la carte client</Text>
         <Text style={featureText}>
-          La page de fid&eacute;lit&eacute; de vos client(e)s a &eacute;t&eacute;
+          La page de fid&eacute;lit&eacute; de tes client(e)s a &eacute;t&eacute;
           enti&egrave;rement redessin&eacute;e : plus claire, plus rapide, plus belle.
-          Vos client(e)s vont adorer.
+          Tes client(e)s vont adorer.
         </Text>
       </Section>
 
@@ -88,8 +88,8 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode }: Produ
           pour votre onglerie ?
         </Text>
         <Text style={blogText}>
-          D&eacute;couvrez notre guide complet avec des conseils concrets
-          pour fid&eacute;liser vos client(e)s.
+          D&eacute;couvre notre guide complet avec des conseils concrets
+          pour fid&eacute;liser tes client(e)s.
         </Text>
         <Link href="https://getqarte.com/blog/programme-fidelite-onglerie-guide" style={blogLink}>
           Lire l&apos;article &rarr;
@@ -99,15 +99,15 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode }: Produ
       {/* 5. Parrainage commerçant */}
       {referralCode && (
         <Section style={referralBox}>
-          <Text style={referralTitle}>Recommandez Qarte, gagnez 10&euro;</Text>
+          <Text style={referralTitle}>Recommande Qarte, gagne 10&euro;</Text>
           <Text style={referralText}>
-            Vous connaissez un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommandez-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur
-            votre prochain mois.
+            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
+            Recommande-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur
+            ton prochain mois.
           </Text>
-          <Text style={referralCodeStyle}>Votre code : <strong>{referralCode}</strong></Text>
+          <Text style={referralCodeStyle}>Ton code : <strong>{referralCode}</strong></Text>
           <Text style={referralHint}>
-            Votre filleul nous communique votre code apr&egrave;s son inscription
+            Ton filleul nous communique ton code apr&egrave;s son inscription
             et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
           </Text>
         </Section>

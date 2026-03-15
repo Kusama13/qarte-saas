@@ -15,9 +15,9 @@ interface GracePeriodSetupEmailProps {
 
 export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeriodSetupEmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, votre essai est terminé — on peut encore vous aider`}>
+    <BaseLayout preview={`${shopName}, ton essai est termin&eacute; — on peut encore t'aider`}>
       <Heading style={heading}>
-        Votre essai est terminé — il n&apos;est pas trop tard
+        Ton essai est termin&eacute; — il n&apos;est pas trop tard
       </Heading>
 
       <Text style={paragraph}>
@@ -25,13 +25,13 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
       </Text>
 
       <Text style={paragraph}>
-        Votre essai est terminé, mais votre programme de fidélité
-        n&apos;a jamais été configuré. On comprend que le quotidien passe vite.
+        Ton essai est termin&eacute;, mais ton programme de fid&eacute;lit&eacute;
+        n&apos;a jamais &eacute;t&eacute; configur&eacute;. On comprend que le quotidien passe vite.
       </Text>
 
       <Section style={infoBox}>
         <Text style={infoText}>
-          Vos données sont conservées encore <strong>{daysUntilDeletion} jour{daysUntilDeletion > 1 ? 's' : ''}</strong>.
+          Tes donn&eacute;es sont conserv&eacute;es encore <strong>{daysUntilDeletion} jour{daysUntilDeletion > 1 ? 's' : ''}</strong>.
         </Text>
       </Section>
 
@@ -40,8 +40,8 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
       <Section style={offerBox}>
         <Text style={offerTitle}>On le fait ensemble en 2 minutes</Text>
         <Text style={offerText}>
-          Répondez à cet email et on configure
-          votre programme <strong>pendant que vous êtes avec vos clients</strong>.
+          R&eacute;ponds &agrave; cet email et on configure
+          ton programme <strong>pendant que tu es avec tes clients</strong>.
           Tout ce qu&apos;on a besoin :
         </Text>
         <Text style={offerList}>
@@ -51,7 +51,7 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
       </Section>
 
       <Text style={paragraph}>
-        Ou faites-le vous-même en 3 minutes :
+        Ou fais-le toi-m&ecirc;me en 3 minutes :
       </Text>
 
       <Section style={buttonContainer}>
@@ -62,8 +62,8 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
 
       <Section style={reassuranceBox}>
         <Text style={reassuranceText}>
-          Après configuration, vous pourrez réactiver votre abonnement à
-          <strong> 9€/mois le premier mois</strong> (au lieu de 19€).
+          Apr&egrave;s configuration, tu pourras r&eacute;activer ton abonnement &agrave;
+          <strong> 9&euro;/mois le premier mois</strong> (au lieu de 19&euro;).
         </Text>
       </Section>
 
@@ -75,7 +75,7 @@ export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeri
       </Section>
 
       <Text style={signature}>
-        On est là pour vous,
+        On est l&agrave; pour toi,
         <br />
         L&apos;équipe Qarte
       </Text>

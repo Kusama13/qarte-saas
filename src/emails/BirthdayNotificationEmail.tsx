@@ -34,13 +34,12 @@ export function BirthdayNotificationEmail({ shopName, clientNames, giftDescripti
       </Text>
 
       <Section style={giftBox}>
-        <Text style={giftEmoji}>&#127873;</Text>
         <Text style={giftLabel}>Cadeau attribu&eacute; automatiquement</Text>
         <Text style={giftText}>{giftDescription}</Text>
       </Section>
 
       <Text style={paragraph}>
-        Pensez &agrave; {plural ? 'leur' : 'lui'} envoyer un petit message personnel pour marquer le coup !
+        Pense &agrave; {plural ? 'leur' : 'lui'} envoyer un petit message personnel pour marquer le coup !
       </Text>
 
       <Section style={buttonContainer}>

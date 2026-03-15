@@ -16,7 +16,7 @@ interface FirstRewardEmailProps {
 
 export function FirstRewardEmail({ shopName, rewardDescription, referralCode, isCagnotte }: FirstRewardEmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, un client a gagné sa récompense !`}>
+    <BaseLayout preview={`${shopName}, un client a gagn&eacute; sa r&eacute;compense !`}>
       <Heading style={heading}>
         Premi&egrave;re r&eacute;compense d&eacute;bloqu&eacute;e !
       </Heading>
@@ -26,12 +26,11 @@ export function FirstRewardEmail({ shopName, rewardDescription, referralCode, is
       </Text>
 
       <Text style={paragraph}>
-        Un de vos clients vient d&apos;atteindre le nombre de passages requis
-        et a d&eacute;bloqu&eacute; sa r&eacute;compense. C&apos;est la preuve que votre programme fonctionne !
+        Un de tes clients vient d&apos;atteindre le nombre de passages requis
+        et a d&eacute;bloqu&eacute; sa r&eacute;compense. C&apos;est la preuve que ton programme fonctionne !
       </Text>
 
       <Section style={rewardBox}>
-        <Text style={rewardEmoji}>&#127942;</Text>
         <Text style={rewardLabel}>R&eacute;compense gagn&eacute;e</Text>
         <Text style={rewardText}>{rewardDescription}</Text>
       </Section>
@@ -44,10 +43,10 @@ export function FirstRewardEmail({ shopName, rewardDescription, referralCode, is
       </Text>
 
       <Section style={statsBox}>
-        <Text style={statsTitle}>Le saviez-vous ?</Text>
+        <Text style={statsTitle}>Le savais-tu ?</Text>
         <Text style={statsText}>
           Les clients qui atteignent une r&eacute;compense ont <strong>3x plus de chances</strong> de
-          revenir r&eacute;guli&egrave;rement dans votre commerce.
+          revenir r&eacute;guli&egrave;rement dans ton commerce.
         </Text>
       </Section>
 
@@ -59,14 +58,14 @@ export function FirstRewardEmail({ shopName, rewardDescription, referralCode, is
 
       {referralCode && (
         <Section style={referralBox}>
-          <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
+          <Text style={referralTitle}>Gagne 10&euro; de r&eacute;duction</Text>
           <Text style={referralText}>
-            Vous connaissez un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommandez-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
+            Recommande-lui Qarte : <strong>10&euro; de r&eacute;duction</strong> chacun sur le prochain mois.
           </Text>
-          <Text style={referralCode_style}>Votre code : <strong>{referralCode}</strong></Text>
+          <Text style={referralCode_style}>Ton code : <strong>{referralCode}</strong></Text>
           <Text style={referralHint}>
-            Votre filleul nous communique votre code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
           </Text>
         </Section>
       )}

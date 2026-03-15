@@ -15,7 +15,7 @@ export function PaymentFailedEmail({ shopName }: PaymentFailedEmailProps) {
   return (
     <BaseLayout preview={`${shopName} - Action requise : problème de paiement`}>
       <Heading style={heading}>
-        Problème avec votre paiement
+        Problème avec ton paiement
       </Heading>
 
       <Text style={paragraph}>
@@ -23,22 +23,22 @@ export function PaymentFailedEmail({ shopName }: PaymentFailedEmailProps) {
       </Text>
 
       <Text style={paragraph}>
-        Nous n&apos;avons pas pu traiter votre dernier paiement pour votre abonnement Qarte.
+        On n&apos;a pas pu traiter ton dernier paiement pour ton abonnement Qarte.
       </Text>
 
       <Section style={warningBox}>
         <Text style={warningTitle}>Pourquoi ce problème ?</Text>
         <Text style={warningText}>
-          Cela peut arriver si votre carte a expiré, si les fonds sont insuffisants,
-          ou si votre banque a bloqué la transaction.
+          Cela peut arriver si ta carte a expiré, si les fonds sont insuffisants,
+          ou si ta banque a bloqué la transaction.
         </Text>
       </Section>
 
       <Section style={impactSection}>
         <Text style={impactTitle}>Ce qui va se passer :</Text>
-        <Text style={impactItem}>• Nous réessaierons automatiquement dans quelques jours</Text>
-        <Text style={impactItem}>• Si le paiement échoue à nouveau, votre compte sera suspendu</Text>
-        <Text style={impactItem}>• Vos clients ne pourront plus valider leurs passages</Text>
+        <Text style={impactItem}>• On réessaiera automatiquement dans quelques jours</Text>
+        <Text style={impactItem}>• Si le paiement échoue à nouveau, ton compte sera suspendu</Text>
+        <Text style={impactItem}>• Tes clients ne pourront plus valider leurs passages</Text>
       </Section>
 
       <Section style={buttonContainer}>
@@ -48,7 +48,7 @@ export function PaymentFailedEmail({ shopName }: PaymentFailedEmailProps) {
       </Section>
 
       <Text style={paragraph}>
-        Si vous avez des questions ou besoin d&apos;aide, n&apos;hésitez pas à nous contacter.
+        Si tu as des questions ou besoin d&apos;aide, n&apos;hésite pas à nous contacter.
       </Text>
 
       <Text style={signature}>

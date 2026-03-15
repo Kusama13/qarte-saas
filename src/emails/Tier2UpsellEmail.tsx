@@ -16,9 +16,9 @@ interface Tier2UpsellEmailProps {
 
 export function Tier2UpsellEmail({ shopName, totalCustomers, rewardDescription, referralCode }: Tier2UpsellEmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, vos meilleurs clients méritent plus`}>
+    <BaseLayout preview={`${shopName}, tes meilleurs clients méritent plus`}>
       <Heading style={heading}>
-        Vos meilleurs clients m&eacute;ritent un traitement VIP
+        Tes meilleurs clients m&eacute;ritent un traitement VIP
       </Heading>
 
       <Text style={paragraph}>
@@ -26,20 +26,20 @@ export function Tier2UpsellEmail({ shopName, totalCustomers, rewardDescription, 
       </Text>
 
       <Text style={paragraph}>
-        Vous avez d&eacute;j&agrave; <strong>{totalCustomers} client{totalCustomers > 1 ? 's' : ''}</strong> dans
-        votre programme. C&apos;est le moment id&eacute;al pour r&eacute;compenser vos plus fid&egrave;les.
+        Tu as d&eacute;j&agrave; <strong>{totalCustomers} client{totalCustomers > 1 ? 's' : ''}</strong> dans
+        ton programme. C&apos;est le moment id&eacute;al pour r&eacute;compenser tes plus fid&egrave;les.
       </Text>
 
       <Section style={vipBox}>
         <Text style={vipTitle}>Programme VIP &mdash; Palier 2</Text>
         <Text style={vipText}>
-          Ajoutez un 2&egrave;me niveau de r&eacute;compense pour vos clients les plus assidus.
+          Ajoute un 2&egrave;me niveau de r&eacute;compense pour tes clients les plus assidus.
           Plus ils viennent, plus la r&eacute;compense est grande.
         </Text>
       </Section>
 
       <Section style={exampleBox}>
-        <Text style={exampleTitle}>Exemple pour votre commerce :</Text>
+        <Text style={exampleTitle}>Exemple pour ton commerce :</Text>
         <Text style={exampleItem}>
           <strong>Palier 1 :</strong> {rewardDescription} (actuel)
         </Text>
@@ -47,7 +47,7 @@ export function Tier2UpsellEmail({ shopName, totalCustomers, rewardDescription, 
           <strong>Palier 2 :</strong> Une r&eacute;compense premium apr&egrave;s 20 passages
         </Text>
         <Text style={exampleNote}>
-          Vous choisissez la r&eacute;compense et le nombre de passages requis.
+          Tu choisis la r&eacute;compense et le nombre de passages requis.
         </Text>
       </Section>
 
@@ -55,7 +55,7 @@ export function Tier2UpsellEmail({ shopName, totalCustomers, rewardDescription, 
         <Text style={benefitTitle}>Pourquoi &ccedil;a marche</Text>
         <Text style={benefitItem}>&#8594; Les clients VIP d&eacute;pensent en moyenne <strong>2x plus</strong></Text>
         <Text style={benefitItem}>&#8594; &Ccedil;a cr&eacute;e un sentiment d&apos;exclusivit&eacute;</Text>
-        <Text style={benefitItem}>&#8594; Vos meilleurs clients se sentent reconnus</Text>
+        <Text style={benefitItem}>&#8594; Tes meilleurs clients se sentent reconnus</Text>
       </Section>
 
       <Section style={buttonContainer}>
@@ -65,19 +65,19 @@ export function Tier2UpsellEmail({ shopName, totalCustomers, rewardDescription, 
       </Section>
 
       <Text style={noteText}>
-        D&eacute;j&agrave; inclus dans votre abonnement, aucun co&ucirc;t suppl&eacute;mentaire.
+        D&eacute;j&agrave; inclus dans ton abonnement, aucun co&ucirc;t suppl&eacute;mentaire.
       </Text>
 
       {referralCode && (
         <Section style={referralBox}>
-          <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
+          <Text style={referralTitle}>Gagne 10&euro; de r&eacute;duction</Text>
           <Text style={referralText}>
-            Vous connaissez un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommandez-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
+            Recommande-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur ton prochain mois.
           </Text>
-          <Text style={referralCode_style}>Votre code : <strong>{referralCode}</strong></Text>
+          <Text style={referralCode_style}>Ton code : <strong>{referralCode}</strong></Text>
           <Text style={referralHint}>
-            Votre filleul nous communique votre code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
           </Text>
         </Section>
       )}

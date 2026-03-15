@@ -27,9 +27,9 @@ export function WeeklyDigestEmail({
   const hasActivity = scansThisWeek > 0 || newCustomers > 0;
 
   return (
-    <BaseLayout preview={`${shopName} — votre semaine en un clin d'oeil`}>
+    <BaseLayout preview={`${shopName} — ta semaine en un clin d'oeil`}>
       <Heading style={heading}>
-        Votre semaine en un clin d&apos;oeil
+        Ta semaine en un clin d&apos;oeil
       </Heading>
 
       <Text style={paragraph}>
@@ -39,7 +39,7 @@ export function WeeklyDigestEmail({
       {hasActivity ? (
         <>
           <Text style={paragraph}>
-            Voici le r&eacute;sum&eacute; de votre activit&eacute; cette semaine :
+            Voici le r&eacute;sum&eacute; de ton activit&eacute; cette semaine :
           </Text>
 
           <Section style={statsGrid}>
@@ -67,13 +67,13 @@ export function WeeklyDigestEmail({
         <>
           <Text style={paragraph}>
             Aucun scan cette semaine. Ce n&apos;est pas grave &mdash; il suffit d&apos;un rappel
-            &agrave; vos clients pour relancer la machine.
+            &agrave; tes clients pour relancer la machine.
           </Text>
 
           <Section style={tipBox}>
             <Text style={tipTitle}>Astuce de la semaine</Text>
             <Text style={tipText}>
-              Dites &agrave; vos 5 prochains clients : &laquo; On a un programme de fid&eacute;lit&eacute;,
+              Dis &agrave; tes 5 prochains clients : &laquo; On a un programme de fid&eacute;lit&eacute;,
               scannez ce QR code pour cumuler des points ! &raquo;
             </Text>
           </Section>
@@ -88,14 +88,14 @@ export function WeeklyDigestEmail({
 
       {referralCode && (
         <Section style={referralBox}>
-          <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
+          <Text style={referralTitle}>Gagne 10&euro; de r&eacute;duction</Text>
           <Text style={referralText}>
-            Vous connaissez un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommandez-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
+            Recommande-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur ton prochain mois.
           </Text>
-          <Text style={referralCode_style}>Votre code : <strong>{referralCode}</strong></Text>
+          <Text style={referralCode_style}>Ton code : <strong>{referralCode}</strong></Text>
           <Text style={referralHint}>
-            Votre filleul nous communique votre code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
           </Text>
         </Section>
       )}

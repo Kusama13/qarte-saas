@@ -17,9 +17,9 @@ export function FirstScanEmail({ shopName, slug }: FirstScanEmailProps) {
   const publicPageUrl = slug ? `https://getqarte.com/p/${slug}` : null;
 
   return (
-    <BaseLayout preview={`${shopName}, votre 1er client a scanné !`}>
+    <BaseLayout preview={`${shopName}, ton 1er client a scann&eacute; !`}>
       <Heading style={heading}>
-        Votre programme est lancé !
+        Ton programme est lanc&eacute; !
       </Heading>
 
       <Text style={paragraph}>
@@ -27,23 +27,22 @@ export function FirstScanEmail({ shopName, slug }: FirstScanEmailProps) {
       </Text>
 
       <Text style={paragraph}>
-        Votre premier client vient de scanner votre QR code.
-        C&apos;est le début de votre programme de fidélité !
+        Ton premier client vient de scanner ton QR code.
+        C&apos;est le d&eacute;but de ton programme de fid&eacute;lit&eacute; !
       </Text>
 
       <Section style={celebrationBox}>
-        <Text style={celebrationEmoji}>&#127881;</Text>
-        <Text style={celebrationTitle}>Premier scan validé</Text>
+        <Text style={celebrationTitle}>Premier scan valid&eacute;</Text>
         <Text style={celebrationText}>
-          Chaque scan, c&apos;est un client qui s&apos;engage avec votre commerce.
+          Chaque scan, c&apos;est un client qui s&apos;engage avec ton commerce.
         </Text>
       </Section>
 
       <Section style={tipsBox}>
-        <Text style={tipsTitle}>Pour accélérer :</Text>
-        <Text style={tipItem}>&#8594; Proposez le scan à chaque client aujourd&apos;hui</Text>
-        <Text style={tipItem}>&#8594; Placez le QR code à hauteur des yeux près de la caisse</Text>
-        <Text style={tipItem}>&#8594; Dites simplement : &laquo; On a une carte de fidélité digitale, scannez ce QR code ! &raquo;</Text>
+        <Text style={tipsTitle}>Pour acc&eacute;l&eacute;rer :</Text>
+        <Text style={tipItem}>&#8594; Propose le scan &agrave; chaque client aujourd&apos;hui</Text>
+        <Text style={tipItem}>&#8594; Place le QR code &agrave; hauteur des yeux pr&egrave;s de la caisse</Text>
+        <Text style={tipItem}>&#8594; Dis simplement : &laquo; On a une carte de fid&eacute;lit&eacute; digitale, scannez ce QR code ! &raquo;</Text>
       </Section>
 
       <Section style={buttonContainer}>
@@ -54,10 +53,10 @@ export function FirstScanEmail({ shopName, slug }: FirstScanEmailProps) {
 
       {publicPageUrl && (
         <Section style={pageProBox}>
-          <Text style={pageProTitle}>Partagez votre page pro</Text>
+          <Text style={pageProTitle}>Partage ta page pro</Text>
           <Text style={pageProText}>
-            Ajoutez votre page publique dans votre bio Instagram. Vos clientes y retrouvent
-            votre salon, vos prestations et votre carte fidélité — tout en un lien.
+            Ajoute ta page publique dans ta bio Instagram. Tes clientes y retrouvent
+            ton salon, tes prestations et ta carte fid&eacute;lit&eacute; — tout en un lien.
           </Text>
           <Section style={buttonContainerSmall}>
             <Button style={buttonSecondary} href={publicPageUrl}>

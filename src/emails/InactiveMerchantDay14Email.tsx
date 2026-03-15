@@ -19,9 +19,9 @@ export function InactiveMerchantDay14Email({
   stampsRequired,
 }: InactiveMerchantDay14EmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, on peut débloquer vos premiers scans ensemble`}>
+    <BaseLayout preview={`${shopName}, on peut débloquer tes premiers scans ensemble`}>
       <Heading style={heading}>
-        2 semaines — on peut vous aider ?
+        2 semaines — on peut t&apos;aider ?
       </Heading>
 
       <Text style={paragraph}>
@@ -29,12 +29,12 @@ export function InactiveMerchantDay14Email({
       </Text>
 
       <Text style={paragraph}>
-        Votre programme de fidélité est en place, mais pas encore de scan.
-        Souvent, il suffit de trouver les bons mots pour le proposer à vos clients.
+        Ton programme de fidélité est en place, mais pas encore de scan.
+        Souvent, il suffit de trouver les bons mots pour le proposer à tes clients.
       </Text>
 
       <Section style={scriptBox}>
-        <Text style={scriptTitle}>Que dire à vos clients ?</Text>
+        <Text style={scriptTitle}>Que dire à tes clients ?</Text>
         <Text style={scriptText}>
           &quot;On a lancé une carte de fidélité digitale, scannez ce QR code
           {rewardDescription && stampsRequired
@@ -46,7 +46,7 @@ export function InactiveMerchantDay14Email({
 
       {rewardDescription && (
         <Section style={rewardBox}>
-          <Text style={rewardLabel}>Votre récompense actuelle :</Text>
+          <Text style={rewardLabel}>Ta récompense actuelle :</Text>
           <Text style={rewardText}>
             {rewardDescription}
             {stampsRequired ? ` après ${stampsRequired} passages` : ''}
@@ -61,7 +61,7 @@ export function InactiveMerchantDay14Email({
       </Section>
 
       <Text style={paragraph}>
-        On peut aussi vous aider à trouver les mots — répondez à cet email.
+        On peut aussi t&apos;aider à trouver les mots — réponds à cet email.
       </Text>
 
       <Text style={signature}>

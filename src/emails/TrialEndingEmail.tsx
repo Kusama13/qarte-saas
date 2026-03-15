@@ -17,9 +17,9 @@ export function TrialEndingEmail({ shopName, daysRemaining, promoCode }: TrialEn
   const isUrgent = daysRemaining <= 1;
 
   return (
-    <BaseLayout preview={`Votre essai Qarte se termine dans ${daysRemaining} jour${daysRemaining > 1 ? 's' : ''}`}>
+    <BaseLayout preview={`Ton essai Qarte se termine dans ${daysRemaining} jour${daysRemaining > 1 ? 's' : ''}`}>
       <Heading style={heading}>
-        {isUrgent ? '⏰' : '📅'} Votre essai se termine bientôt
+        Ton essai se termine bientôt
       </Heading>
 
       <Text style={paragraph}>
@@ -27,7 +27,7 @@ export function TrialEndingEmail({ shopName, daysRemaining, promoCode }: TrialEn
       </Text>
 
       <Text style={paragraph}>
-        Votre essai gratuit Qarte se termine dans{' '}
+        Ton essai gratuit Qarte se termine dans{' '}
         <strong style={isUrgent ? urgentText : highlight}>
           {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}
         </strong>.
@@ -36,12 +36,12 @@ export function TrialEndingEmail({ shopName, daysRemaining, promoCode }: TrialEn
       <Section style={isUrgent ? urgentBox : infoBox}>
         <Text style={boxText}>
           {isUrgent
-            ? 'Pour continuer à utiliser Qarte et conserver vos données clients, ajoutez une carte bancaire dès maintenant.'
-            : 'Pour continuer à fidéliser vos clients sans interruption, pensez à ajouter votre carte bancaire.'}
+            ? 'Pour continuer à utiliser Qarte et conserver tes données clients, ajoute une carte bancaire dès maintenant.'
+            : 'Pour continuer à fidéliser tes clients sans interruption, pense à ajouter ta carte bancaire.'}
         </Text>
         <Text style={{ ...boxText, marginTop: '12px' }}>
-          Sans abonnement, vous perdez l&apos;accès à votre programme fidélité, votre page publique,
-          vos relances automatiques et vos données clients.
+          Sans abonnement, tu perds l&apos;accès à ton programme fidélité, ta page publique,
+          tes relances automatiques et tes données clients.
         </Text>
       </Section>
 
@@ -54,7 +54,7 @@ export function TrialEndingEmail({ shopName, daysRemaining, promoCode }: TrialEn
             <Section style={promoBox}>
               <Text style={promoLabel}>CODE PROMO</Text>
               <Text style={promoCodeStyle}>{promoCode}</Text>
-              <Text style={promoNote}>-10€ sur votre premier mois</Text>
+              <Text style={promoNote}>-10€ sur ton premier mois</Text>
             </Section>
           </>
         ) : (
@@ -77,7 +77,7 @@ export function TrialEndingEmail({ shopName, daysRemaining, promoCode }: TrialEn
       </Section>
 
       <Text style={paragraph}>
-        Merci de faire confiance à Qarte pour fidéliser vos clients.
+        Merci de faire confiance à Qarte pour fidéliser tes clients.
       </Text>
 
       <Text style={signature}>

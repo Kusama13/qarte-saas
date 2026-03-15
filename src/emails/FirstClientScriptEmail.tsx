@@ -33,9 +33,9 @@ export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, 
   const script = SCRIPTS[normalized] || DEFAULT_SCRIPT;
 
   return (
-    <BaseLayout preview={`${shopName}, la phrase exacte pour obtenir votre premier scan`}>
+    <BaseLayout preview={`${shopName}, la phrase exacte pour obtenir ton premier scan`}>
       <Heading style={heading}>
-        La phrase exacte à dire à votre prochain(e) client(e)
+        La phrase exacte &agrave; dire &agrave; ton prochain(e) client(e)
       </Heading>
 
       <Text style={paragraph}>
@@ -43,13 +43,13 @@ export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, 
       </Text>
 
       <Text style={paragraph}>
-        Votre QR code est prêt depuis 2 jours. Voici le secret des commerçant(e)s
-        qui obtiennent des scans dès le premier jour : <strong>une phrase simple,
+        Ton QR code est pr&ecirc;t depuis 2 jours. Voici le secret des commer&ccedil;ant(e)s
+        qui obtiennent des scans d&egrave;s le premier jour : <strong>une phrase simple,
         au bon moment</strong>.
       </Text>
 
       <Section style={scriptBox}>
-        <Text style={scriptLabel}>Dites simplement :</Text>
+        <Text style={scriptLabel}>Dis simplement :</Text>
         <Text style={scriptText}>
           &quot;{script} — apr&egrave;s <strong>{stampsRequired} passages</strong> c&apos;est{' '}
           <strong>{rewardDescription}</strong>{loyaltyMode === 'cagnotte' ? ' sur leurs d\u00e9penses' : ''}.&quot;
@@ -57,21 +57,21 @@ export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, 
       </Section>
 
       <Section style={tipBox}>
-        <Text style={tipTitle}>🎯 Le meilleur moment pour le proposer</Text>
+        <Text style={tipTitle}>Le meilleur moment pour le proposer</Text>
         <Text style={tipText}>
-          Quand le/la client(e) <strong>attend</strong> : pendant le séchage,
-          pendant la pose, au moment de payer. Ne demandez pas &quot;vous voulez une carte ?&quot;
-          — dites directement <strong>&quot;Scannez le QR code pour votre carte de fidélité !&quot;</strong>
+          Quand le/la client(e) <strong>attend</strong> : pendant le s&eacute;chage,
+          pendant la pose, au moment de payer. Ne demande pas &quot;vous voulez une carte ?&quot;
+          — dis directement <strong>&quot;Scannez le QR code pour votre carte de fid&eacute;lit&eacute; !&quot;</strong>
         </Text>
       </Section>
 
       <Hr style={divider} />
 
       <Section style={testBox}>
-        <Text style={testTitle}>📱 Testez vous-même en 10 secondes</Text>
+        <Text style={testTitle}>Teste toi-m&ecirc;me en 10 secondes</Text>
         <Text style={testText}>
-          Scannez votre propre QR code avec votre téléphone. Vous verrez exactement
-          ce que vos client(e)s verront. Ça prend 10 secondes.
+          Scanne ton propre QR code avec ton t&eacute;l&eacute;phone. Tu verras exactement
+          ce que tes client(e)s verront. &Ccedil;a prend 10 secondes.
         </Text>
       </Section>
 
@@ -82,7 +82,7 @@ export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, 
       </Section>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? Répondez à cet email.
+        Besoin d&apos;aide ? R&eacute;ponds &agrave; cet email.
       </Text>
 
       <Text style={signature}>

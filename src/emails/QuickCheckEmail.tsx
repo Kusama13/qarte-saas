@@ -14,9 +14,9 @@ interface QuickCheckEmailProps {
 
 export function QuickCheckEmail({ shopName, daysRemaining }: QuickCheckEmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, votre QR code est prêt — il ne manque que le premier scan`}>
+    <BaseLayout preview={`${shopName}, ton QR code est prêt — il ne manque que le premier scan`}>
       <Heading style={heading}>
-        Votre QR code est prêt ?
+        Ton QR code est prêt ?
       </Heading>
 
       <Text style={paragraph}>
@@ -24,7 +24,7 @@ export function QuickCheckEmail({ shopName, daysRemaining }: QuickCheckEmailProp
       </Text>
 
       <Text style={paragraph}>
-        Votre programme est configuré depuis 4 jours, mais on n&apos;a pas encore
+        Ton programme est configuré depuis 4 jours, mais on n&apos;a pas encore
         de scan. Le plus souvent, c&apos;est parce que le QR code n&apos;est
         pas encore imprimé ou pas assez visible.
       </Text>
@@ -32,8 +32,8 @@ export function QuickCheckEmail({ shopName, daysRemaining }: QuickCheckEmailProp
       <Section style={tipBox}>
         <Text style={tipTitle}>Le bon réflexe</Text>
         <Text style={tipText}>
-          Imprimez votre QR code et placez-le à hauteur des yeux, près de la caisse.
-          Puis dites à vos prochains clients : &quot;Scannez ce QR code pour votre
+          Imprime ton QR code et place-le à hauteur des yeux, près de la caisse.
+          Puis dis à tes prochains clients : &quot;Scannez ce QR code pour votre
           carte de fidélité, c&apos;est gratuit !&quot;
         </Text>
       </Section>
@@ -46,12 +46,12 @@ export function QuickCheckEmail({ shopName, daysRemaining }: QuickCheckEmailProp
 
       <Section style={urgencyBox}>
         <Text style={urgencyText}>
-          Il vous reste <strong>{daysRemaining} jours</strong> d&apos;essai gratuit.
+          Il te reste <strong>{daysRemaining} jours</strong> d&apos;essai gratuit.
         </Text>
       </Section>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? Répondez à cet email.
+        Besoin d&apos;aide ? Réponds à cet email.
       </Text>
 
       <Text style={signature}>

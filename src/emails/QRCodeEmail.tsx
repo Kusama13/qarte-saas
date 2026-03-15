@@ -51,9 +51,9 @@ export function QRCodeEmail({
   const lightColor = lightenColor(primaryColor);
 
   return (
-    <BaseLayout preview={`${shopName}, votre QR code et kit promo sont prêts !`}>
+    <BaseLayout preview={`${shopName}, ton QR code et kit promo sont pr&ecirc;ts !`}>
       <Heading style={heading}>
-        Tout est pr&ecirc;t, lancez-vous ! &#127881;
+        Tout est pr&ecirc;t, lance-toi !
       </Heading>
 
       <Text style={paragraph}>
@@ -61,23 +61,22 @@ export function QRCodeEmail({
       </Text>
 
       <Text style={paragraph}>
-        Votre programme de fid&eacute;lit&eacute; est configur&eacute;. Voici tout ce qu&apos;il vous faut pour d&eacute;marrer : votre <strong>QR code</strong>{rewardDescription ? <> et votre <strong>kit r&eacute;seaux sociaux</strong></> : null}.
+        Ton programme de fid&eacute;lit&eacute; est configur&eacute;. Voici tout ce qu&apos;il te faut pour d&eacute;marrer : ton <strong>QR code</strong>{rewardDescription ? <> et ton <strong>kit r&eacute;seaux sociaux</strong></> : null}.
       </Text>
 
       {/* ===== SECTION 1: QR CODE ===== */}
       <Section style={sectionCard}>
-        <Text style={sectionEmoji}>&#128242;</Text>
-        <Text style={sectionTitle}>Votre QR code</Text>
+        <Text style={sectionTitle}>Ton QR code</Text>
         <Text style={sectionDesc}>
-          T&eacute;l&eacute;chargez-le et gardez-le sur votre t&eacute;l&eacute;phone. Montrez-le &agrave; vos client(e)s au moment de payer.
+          T&eacute;l&eacute;charge-le et garde-le sur ton t&eacute;l&eacute;phone. Montre-le &agrave; tes client(e)s au moment de payer.
         </Text>
 
         <Section style={stepsBox}>
           <Text style={stepItem}>
-            <strong style={{ color: primaryColor }}>1.</strong> T&eacute;l&eacute;chargez le QR code depuis votre tableau de bord
+            <strong style={{ color: primaryColor }}>1.</strong> T&eacute;l&eacute;charge le QR code depuis ton tableau de bord
           </Text>
           <Text style={stepItem}>
-            <strong style={{ color: primaryColor }}>2.</strong> Montrez-le &agrave; chaque client(e) au passage en caisse
+            <strong style={{ color: primaryColor }}>2.</strong> Montre-le &agrave; chaque client(e) au passage en caisse
           </Text>
           <Text style={stepItem}>
             <strong style={{ color: primaryColor }}>3.</strong> Un simple &laquo; Vous voulez cumuler vos points ? &raquo; suffit !
@@ -89,10 +88,9 @@ export function QRCodeEmail({
       {rewardDescription && (
         <>
           <Section style={sectionCard}>
-            <Text style={sectionEmoji}>&#128247;</Text>
-            <Text style={sectionTitle}>Votre kit r&eacute;seaux sociaux</Text>
+            <Text style={sectionTitle}>Ton kit r&eacute;seaux sociaux</Text>
             <Text style={sectionDesc}>
-              Un visuel pr&ecirc;t &agrave; poster sur Instagram, Facebook ou WhatsApp pour annoncer votre programme.
+              Un visuel pr&ecirc;t &agrave; poster sur Instagram, Facebook ou WhatsApp pour annoncer ton programme.
             </Text>
 
             {/* Visual preview */}
@@ -119,7 +117,7 @@ export function QRCodeEmail({
                 </Section>
                 {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
                   <Section style={{ ...previewRewardBox, marginTop: '8px', backgroundColor: 'rgba(255,255,255,0.8)' }}>
-                    <Text style={{ ...previewRewardLabel, color: '#f59e0b' }}>Palier 2 &#11088;</Text>
+                    <Text style={{ ...previewRewardLabel, color: '#f59e0b' }}>Palier 2</Text>
                     <Text style={{ ...previewRewardText, fontSize: '14px' }}>{tier2RewardDescription}</Text>
                     <Text style={{ ...previewRewardStamps, color: '#f59e0b' }}>
                       Apr&egrave;s {tier2StampsRequired} passage{tier2StampsRequired > 1 ? 's' : ''}
@@ -132,16 +130,15 @@ export function QRCodeEmail({
 
           {/* Captions */}
           <Section style={sectionCard}>
-            <Text style={sectionEmoji}>&#128172;</Text>
             <Text style={sectionTitle}>L&eacute;gendes pr&ecirc;tes &agrave; copier</Text>
 
             <Section style={captionBox}>
               <Text style={captionLabel}>Option 1 — Simple et efficace</Text>
               <Text style={captionText}>
                 {loyaltyMode === 'cagnotte' ? (
-                  <>Votre fid&eacute;lit&eacute; m&eacute;rite d&apos;&ecirc;tre r&eacute;compens&eacute;e ! &#127873; {stampsRequired} passages chez {shopName} = {rewardDescription} sur vos d&eacute;penses.{' '}Demandez &agrave; scanner le QR code ! #fid&eacute;lit&eacute; #{shopName.replace(/\s+/g, '')}</>
+                  <>Votre fid&eacute;lit&eacute; m&eacute;rite d&apos;&ecirc;tre r&eacute;compens&eacute;e ! {stampsRequired} passages chez {shopName} = {rewardDescription} sur vos d&eacute;penses.{' '}Demandez &agrave; scanner le QR code ! #fid&eacute;lit&eacute; #{shopName.replace(/\s+/g, '')}</>
                 ) : (
-                  <>Votre fid&eacute;lit&eacute; m&eacute;rite d&apos;&ecirc;tre r&eacute;compens&eacute;e ! &#127873; Apr&egrave;s {stampsRequired} passages chez {shopName}, recevez {rewardDescription}.
+                  <>Votre fid&eacute;lit&eacute; m&eacute;rite d&apos;&ecirc;tre r&eacute;compens&eacute;e ! Apr&egrave;s {stampsRequired} passages chez {shopName}, recevez {rewardDescription}.
                 {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
                   <> Et apr&egrave;s {tier2StampsRequired} passages : {tier2RewardDescription} !</>
                 )}
@@ -154,13 +151,13 @@ export function QRCodeEmail({
               <Text style={captionLabel}>Option 2 — Engageante</Text>
               <Text style={captionText}>
                 {loyaltyMode === 'cagnotte' ? (
-                  <>NOUVEAU chez {shopName} ! &#10024; On lance notre programme de fid&eacute;lit&eacute; digitale. Pas d&apos;appli, pas de carte &agrave; perdre &mdash; juste un scan rapide. {stampsRequired} passages = {rewardDescription} sur vos d&eacute;penses ! &Agrave; bient&ocirc;t &#128156;</>
+                  <>NOUVEAU chez {shopName} ! On lance notre programme de fid&eacute;lit&eacute; digitale. Pas d&apos;appli, pas de carte &agrave; perdre &mdash; juste un scan rapide. {stampsRequired} passages = {rewardDescription} sur vos d&eacute;penses ! &Agrave; bient&ocirc;t</>
                 ) : (
-                  <>NOUVEAU chez {shopName} ! &#10024; On lance notre carte de fid&eacute;lit&eacute; digitale. Pas d&apos;appli, pas de carte &agrave; perdre &mdash; juste un scan rapide. Votre r&eacute;compense ? {rewardDescription} !
+                  <>NOUVEAU chez {shopName} ! On lance notre carte de fid&eacute;lit&eacute; digitale. Pas d&apos;appli, pas de carte &agrave; perdre &mdash; juste un scan rapide. Votre r&eacute;compense ? {rewardDescription} !
                 {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
                   <> Et {tier2RewardDescription} apr&egrave;s {tier2StampsRequired} passages !</>
                 )}
-                {' '}&Agrave; bient&ocirc;t &#128156;</>
+                {' '}&Agrave; bient&ocirc;t</>
                 )}
               </Text>
             </Section>
@@ -176,19 +173,19 @@ export function QRCodeEmail({
       </Section>
 
       <Text style={tipBox}>
-        &#128161; <strong>Astuce :</strong> gardez le QR code sur votre t&eacute;l&eacute;phone et proposez le scan d&egrave;s le passage en caisse. Postez le visuel en story Instagram pour un maximum de visibilit&eacute; !
+        <strong>Astuce :</strong> garde le QR code sur ton t&eacute;l&eacute;phone et propose le scan d&egrave;s le passage en caisse. Poste le visuel en story Instagram pour un maximum de visibilit&eacute; !
       </Text>
 
       {referralCode && (
         <Section style={referralSection}>
-          <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
+          <Text style={referralTitle}>Gagne 10&euro; de r&eacute;duction</Text>
           <Text style={referralText}>
-            Vous connaissez un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommandez-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
+            Recommande-lui Qarte : <strong>10&euro; de r&eacute;duction</strong> chacun sur le prochain mois.
           </Text>
-          <Text style={referralCodeStyle}>Votre code : <strong>{referralCode}</strong></Text>
+          <Text style={referralCodeStyle}>Ton code : <strong>{referralCode}</strong></Text>
           <Text style={referralHint}>
-            Votre filleul nous communique votre code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
           </Text>
         </Section>
       )}
@@ -196,7 +193,7 @@ export function QRCodeEmail({
       <Hr style={divider} />
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? R&eacute;pondez &agrave; cet email, on vous r&eacute;pond rapidement.
+        Besoin d&apos;aide ? R&eacute;ponds &agrave; cet email, on te r&eacute;pond rapidement.
       </Text>
 
       <Text style={signature}>

@@ -15,9 +15,9 @@ interface TrialExpiredEmailProps {
 
 export function TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode }: TrialExpiredEmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, votre essai est terminé`}>
+    <BaseLayout preview={`${shopName}, ton essai est terminé`}>
       <Heading style={heading}>
-        Votre essai est terminé
+        Ton essai est terminé
       </Heading>
 
       <Text style={paragraph}>
@@ -25,38 +25,38 @@ export function TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode }: Tr
       </Text>
 
       <Text style={paragraph}>
-        Votre période d&apos;essai Qarte est arrivée à son terme.
-        Pas de panique : <strong>vos données sont en sécurité</strong> et on garde tout pour vous.
+        Ta période d&apos;essai Qarte est arrivée à son terme.
+        Pas de panique : <strong>tes données sont en sécurité</strong> et on garde tout pour toi.
       </Text>
 
       <Section style={infoBox}>
         <Text style={infoTitle}>Ce qui se passe maintenant</Text>
         <Text style={infoText}>
-          Votre compte est en pause. Vos clients ne peuvent plus valider leurs passages
-          et votre QR code est temporairement désactivé.
+          Ton compte est en pause. Tes clients ne peuvent plus valider leurs passages
+          et ton QR code est temporairement désactivé.
         </Text>
         <Text style={infoText}>
-          Vos données restent intactes pendant encore <strong>{daysUntilDeletion} jour{daysUntilDeletion > 1 ? 's' : ''}</strong>.
-          Réactivez quand vous voulez, tout sera là.
+          Tes données restent intactes pendant encore <strong>{daysUntilDeletion} jour{daysUntilDeletion > 1 ? 's' : ''}</strong>.
+          Réactive quand tu veux, tout sera là.
         </Text>
       </Section>
 
       {promoCode ? (
         <Section style={promoBox}>
-          <Text style={promoTitle}>Offre spéciale pour vous</Text>
+          <Text style={promoTitle}>Offre spéciale pour toi</Text>
           <Text style={promoPrice}>
             <span style={promoPriceOld}>19€</span> → 9€/mois le 1er mois
           </Text>
           <Text style={promoLabel}>CODE PROMO</Text>
           <Text style={promoCodeStyle}>{promoCode}</Text>
-          <Text style={promoNote}>Utilisez ce code lors du paiement</Text>
+          <Text style={promoNote}>Utilise ce code lors du paiement</Text>
         </Section>
       ) : (
         <Section style={offerBox}>
-          <Text style={offerTitle}>On veut vous aider à réussir</Text>
+          <Text style={offerTitle}>On veut t&apos;aider à réussir</Text>
           <Text style={offerText}>
-            Réactivez maintenant et on vous accompagne personnellement
-            pour lancer votre programme avec vos premiers clients.
+            Réactive maintenant et on t&apos;accompagne personnellement
+            pour lancer ton programme avec tes premiers clients.
           </Text>
         </Section>
       )}
@@ -72,7 +72,7 @@ export function TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode }: Tr
       </Text>
 
       <Text style={paragraph}>
-        Des questions ? Répondez à cet email, on vous répond rapidement.
+        Des questions ? Réponds à cet email, on te répond rapidement.
       </Text>
 
       <Text style={signature}>

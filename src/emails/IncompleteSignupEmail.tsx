@@ -13,9 +13,9 @@ interface IncompleteSignupEmailProps {
 
 export function IncompleteSignupEmail({ email }: IncompleteSignupEmailProps) {
   return (
-    <BaseLayout preview="Votre compte Qarte est presque prêt — il ne reste que 30 secondes">
+    <BaseLayout preview="Ton compte Qarte est presque pr&ecirc;t — il ne reste que 30 secondes">
       <Heading style={heading}>
-        Vous y êtes presque !
+        Tu y es presque !
       </Heading>
 
       <Text style={paragraph}>
@@ -23,8 +23,8 @@ export function IncompleteSignupEmail({ email }: IncompleteSignupEmailProps) {
       </Text>
 
       <Text style={paragraph}>
-        Vous avez créé votre compte Qarte, mais vous n&apos;avez pas terminé la
-        configuration de votre commerce.
+        Tu as cr&eacute;&eacute; ton compte Qarte, mais tu n&apos;as pas termin&eacute; la
+        configuration de ton commerce.
       </Text>
 
       <Text style={highlightBox}>
@@ -39,14 +39,14 @@ export function IncompleteSignupEmail({ email }: IncompleteSignupEmailProps) {
       </Section>
 
       <Section style={benefitsBox}>
-        <Text style={benefitsTitle}>Ce qui vous attend après :</Text>
-        <Text style={benefitItem}>→ Un programme de fidélité prêt en 3 minutes</Text>
-        <Text style={benefitItem}>→ Un QR code unique pour votre commerce</Text>
+        <Text style={benefitsTitle}>Ce qui t&apos;attend apr&egrave;s :</Text>
+        <Text style={benefitItem}>→ Un programme de fid&eacute;lit&eacute; pr&ecirc;t en 3 minutes</Text>
+        <Text style={benefitItem}>→ Un QR code unique pour ton commerce</Text>
         <Text style={benefitItem}>→ 7 jours d&apos;essai gratuit</Text>
       </Section>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? Répondez à cet email, on est là.
+        Besoin d&apos;aide ? R&eacute;ponds &agrave; cet email, on est l&agrave;.
       </Text>
 
       <Text style={signature}>

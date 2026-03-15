@@ -29,7 +29,7 @@ export function PendingPointsEmail({
   return (
     <BaseLayout preview={title}>
       <Heading style={heading}>
-        {isReminder ? '📋 Rappel de modération' : '🛡️ Qarte Shield - Alerte'}
+        {isReminder ? 'Rappel de moderation' : 'Qarte Shield — Alerte'}
       </Heading>
 
       <Text style={paragraph}>
@@ -38,12 +38,12 @@ export function PendingPointsEmail({
 
       {isReminder ? (
         <Text style={paragraph}>
-          Vous avez toujours <strong>{pendingCount} point{pendingCount > 1 ? 's' : ''}</strong> en attente
+          Tu as toujours <strong>{pendingCount} point{pendingCount > 1 ? 's' : ''}</strong> en attente
           de validation depuis {daysSinceFirst} jour{daysSinceFirst && daysSinceFirst > 1 ? 's' : ''}.
         </Text>
       ) : (
         <Text style={paragraph}>
-          Notre système a détecté <strong>{pendingCount} passage{pendingCount > 1 ? 's' : ''} inhabituel{pendingCount > 1 ? 's' : ''}</strong> nécessitant votre validation.
+          Notre système a détecté <strong>{pendingCount} passage{pendingCount > 1 ? 's' : ''} inhabituel{pendingCount > 1 ? 's' : ''}</strong> nécessitant ta validation.
         </Text>
       )}
 
@@ -57,8 +57,8 @@ export function PendingPointsEmail({
 
       <Text style={paragraph}>
         Ces points ont été mis en quarantaine car ils correspondent à des passages multiples
-        d&apos;un même client dans la journée. Validez-les si le client était bien présent,
-        ou refusez-les si le client n&apos;était pas présent.
+        d&apos;un même client dans la journée. Valide-les si le client était bien présent,
+        ou refuse-les si le client n&apos;était pas présent.
       </Text>
 
       <Section style={buttonContainer}>
@@ -68,10 +68,10 @@ export function PendingPointsEmail({
       </Section>
 
       <Section style={tipBox}>
-        <Text style={tipTitle}>💡 Conseil</Text>
+        <Text style={tipTitle}>Conseil</Text>
         <Text style={tipText}>
-          Si vous reconnaissez le client, validez le point. En cas de doute
-          ou de comportement suspect, refusez-le pour protéger votre programme.
+          Si tu reconnais le client, valide le point. En cas de doute
+          ou de comportement suspect, refuse-le pour protéger ton programme.
         </Text>
       </Section>
 

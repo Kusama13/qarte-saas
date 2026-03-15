@@ -13,9 +13,9 @@ interface InactiveMerchantDay7EmailProps {
 
 export function InactiveMerchantDay7Email({ shopName }: InactiveMerchantDay7EmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, on peut vous aider à obtenir vos premiers scans`}>
+    <BaseLayout preview={`${shopName}, on peut t'aider à obtenir tes premiers scans`}>
       <Heading style={heading}>
-        Vos premiers scans sont à portée de main
+        Tes premiers scans sont à portée de main
       </Heading>
 
       <Text style={paragraph}>
@@ -23,21 +23,21 @@ export function InactiveMerchantDay7Email({ shopName }: InactiveMerchantDay7Emai
       </Text>
 
       <Text style={paragraph}>
-        Votre programme de fidélité est prêt. Pour obtenir vos premiers scans,
+        Ton programme de fidélité est prêt. Pour obtenir tes premiers scans,
         il suffit souvent d&apos;un petit ajustement.
       </Text>
 
       <Section style={checklistBox}>
         <Text style={checklistTitle}>Checklist rapide :</Text>
         <Text style={checklistItem}>
-          <strong>1.</strong> Affichez votre QR code à hauteur des yeux, près de la caisse
+          <strong>1.</strong> Affiche ton QR code à hauteur des yeux, près de la caisse
         </Text>
         <Text style={checklistItem}>
-          <strong>2.</strong> Dites à vos prochains clients : &quot;Scannez ce QR code
+          <strong>2.</strong> Dis à tes prochains clients : &quot;Scannez ce QR code
           pour votre carte de fidélité, c&apos;est gratuit !&quot;
         </Text>
         <Text style={checklistItem}>
-          <strong>3.</strong> Testez le scan vous-même pour voir ce que vos clients verront
+          <strong>3.</strong> Teste le scan toi-même pour voir ce que tes clients verront
         </Text>
       </Section>
 
@@ -50,14 +50,14 @@ export function InactiveMerchantDay7Email({ shopName }: InactiveMerchantDay7Emai
       <Section style={tipBox}>
         <Text style={tipTitle}>Le secret</Text>
         <Text style={tipText}>
-          Proposez le scan à vos <strong>3 prochains clients</strong> aujourd&apos;hui.
-          Vous verrez les résultats apparaître en temps réel dans votre tableau de bord.
+          Propose le scan à tes <strong>3 prochains clients</strong> aujourd&apos;hui.
+          Tu verras les résultats apparaître en temps réel dans ton tableau de bord.
         </Text>
       </Section>
 
       <Text style={paragraph}>
-        On est disponible si vous avez besoin d&apos;un coup de main.
-        Répondez à cet email, on vous répond rapidement.
+        On est disponible si tu as besoin d&apos;un coup de main.
+        Réponds à cet email, on te répond rapidement.
       </Text>
 
       <Text style={signature}>

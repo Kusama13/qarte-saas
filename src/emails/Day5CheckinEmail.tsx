@@ -17,9 +17,9 @@ export function Day5CheckinEmail({ shopName, totalScans }: Day5CheckinEmailProps
   const hasScans = totalScans > 0;
 
   return (
-    <BaseLayout preview={`${shopName}, comment se passe votre 1ère semaine ?`}>
+    <BaseLayout preview={`${shopName}, comment se passe ta 1ère semaine ?`}>
       <Heading style={heading}>
-        Comment se passe votre première semaine ?
+        Comment se passe ta première semaine ?
       </Heading>
 
       <Text style={paragraph}>
@@ -29,15 +29,15 @@ export function Day5CheckinEmail({ shopName, totalScans }: Day5CheckinEmailProps
       {hasScans ? (
         <>
           <Text style={paragraph}>
-            Vous avez déjà <strong>{totalScans} scan{totalScans > 1 ? 's' : ''}</strong> cette
-            semaine, bravo ! Continuez comme ça.
+            Tu as déjà <strong>{totalScans} scan{totalScans > 1 ? 's' : ''}</strong> cette
+            semaine, bravo ! Continue comme ça.
           </Text>
 
           <Section style={successBox}>
             <Text style={successTitle}>Prochaine étape</Text>
             <Text style={successText}>
-              Partagez votre programme sur vos réseaux sociaux pour toucher
-              encore plus de clients. Votre kit est prêt dans votre espace.
+              Partage ton programme sur tes réseaux sociaux pour toucher
+              encore plus de clients. Ton kit est prêt dans ton espace.
             </Text>
           </Section>
 
@@ -50,20 +50,20 @@ export function Day5CheckinEmail({ shopName, totalScans }: Day5CheckinEmailProps
       ) : (
         <>
           <Text style={paragraph}>
-            Votre programme est configuré et votre QR code est prêt.
-            Il ne manque plus que vos clients !
+            Ton programme est configuré et ton QR code est prêt.
+            Il ne manque plus que tes clients !
           </Text>
 
           <Section style={actionBox}>
             <Text style={actionTitle}>3 actions pour démarrer aujourd&apos;hui :</Text>
             <Text style={actionItem}>
-              <strong>1.</strong> Imprimez votre QR code et placez-le près de la caisse
+              <strong>1.</strong> Imprime ton QR code et place-le près de la caisse
             </Text>
             <Text style={actionItem}>
-              <strong>2.</strong> Proposez le scan à vos 5 prochains clients
+              <strong>2.</strong> Propose le scan à tes 5 prochains clients
             </Text>
             <Text style={actionItem}>
-              <strong>3.</strong> Partagez sur Instagram / Facebook
+              <strong>3.</strong> Partage sur Instagram / Facebook
             </Text>
           </Section>
 
@@ -76,7 +76,7 @@ export function Day5CheckinEmail({ shopName, totalScans }: Day5CheckinEmailProps
       )}
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ou de conseils ? Répondez à cet email.
+        Besoin d&apos;aide ou de conseils ? Réponds à cet email.
       </Text>
 
       <Text style={signature}>

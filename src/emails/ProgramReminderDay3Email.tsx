@@ -14,9 +14,9 @@ interface ProgramReminderDay3EmailProps {
 
 export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramReminderDay3EmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, il vous reste ${daysRemaining} jours d'essai — configurez votre programme`}>
+    <BaseLayout preview={`${shopName}, il te reste ${daysRemaining} jours d'essai — configure ton programme`}>
       <Heading style={heading}>
-        Votre programme attend toujours
+        Ton programme attend toujours
       </Heading>
 
       <Text style={paragraph}>
@@ -24,20 +24,20 @@ export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramRem
       </Text>
 
       <Text style={paragraph}>
-        Votre compte a été créé il y a 3 jours. Configurer votre programme
-        prend 3 minutes et votre QR code sera prêt immédiatement.
+        Ton compte a &eacute;t&eacute; cr&eacute;&eacute; il y a 3 jours. Configurer ton programme
+        prend 3 minutes et ton QR code sera pr&ecirc;t imm&eacute;diatement.
       </Text>
 
       <Section style={urgencyBox}>
         <Text style={urgencyText}>
-          Il vous reste <strong>{daysRemaining} jours</strong> d&apos;essai gratuit.
+          Il te reste <strong>{daysRemaining} jours</strong> d&apos;essai gratuit.
         </Text>
       </Section>
 
       <Section style={optionBox}>
-        <Text style={optionLabel}>Faites-le vous-même (3 min)</Text>
+        <Text style={optionLabel}>Fais-le toi-m&ecirc;me (3 min)</Text>
         <Text style={optionDescription}>
-          Choisissez votre récompense et votre programme est en ligne.
+          Choisis ta r&eacute;compense et ton programme est en ligne.
         </Text>
         <Section style={buttonContainer}>
           <Button style={button} href="https://getqarte.com/dashboard/program">
@@ -47,9 +47,9 @@ export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramRem
       </Section>
 
       <Section style={optionBox}>
-        <Text style={optionLabel}>On le fait pour vous</Text>
+        <Text style={optionLabel}>On le fait pour toi</Text>
         <Text style={optionDescription}>
-          Répondez à cet email avec votre récompense (ex: &quot;1 brushing offert après 8 visites&quot;)
+          R&eacute;ponds &agrave; cet email avec ta r&eacute;compense (ex: &quot;1 brushing offert apr&egrave;s 8 visites&quot;)
           et on configure tout.
         </Text>
       </Section>
@@ -57,8 +57,8 @@ export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramRem
       <Section style={challengeBox}>
         <Text style={challengeTitle}>5 clients en 3 jours = premier mois à 9€</Text>
         <Text style={challengeText}>
-          Configurez votre programme, faites scanner <strong>5 clients en 3 jours</strong>,
-          et obtenez votre <strong>premier mois à 9€</strong> au lieu de 19€.
+          Configure ton programme, fais scanner <strong>5 clients en 3 jours</strong>,
+          et obtiens ton <strong>premier mois &agrave; 9&euro;</strong> au lieu de 19&euro;.
         </Text>
       </Section>
 

@@ -18,7 +18,7 @@ interface SubscriptionConfirmedEmailProps {
 export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingInterval, referralCode }: SubscriptionConfirmedEmailProps) {
   const planLabel = billingInterval === 'annual' ? 'Pro Annuel' : 'Pro Mensuel';
   return (
-    <BaseLayout preview="Votre abonnement Qarte est activé !">
+    <BaseLayout preview="Ton abonnement Qarte est activé !">
       <Heading style={heading}>
         Bienvenue parmi nos abonnés !
       </Heading>
@@ -28,7 +28,7 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
       </Text>
 
       <Text style={paragraph}>
-        Votre abonnement Qarte est maintenant actif. Merci pour votre confiance !
+        Ton abonnement Qarte est maintenant actif. Merci pour ta confiance !
       </Text>
 
       <Section style={confirmBox}>
@@ -60,7 +60,7 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
         </Section>
         <Text style={nfcTitle}>La carte NFC Qarte — en option (20 &euro;)</Text>
         <Text style={nfcText}>
-          Passez commande via le bouton ci-dessous, ou en r&eacute;pondant &agrave; cet email. Livraison sous 1 &agrave; 2 semaines.
+          Passe commande via le bouton ci-dessous, ou en r&eacute;pondant &agrave; cet email. Livraison sous 1 &agrave; 2 semaines.
         </Text>
         <Section style={{ textAlign: 'center' as const, margin: '12px 0 0 0' }}>
           <Button style={nfcButton} href="https://buy.stripe.com/4gM7sN6DYccX75dduH7g401">
@@ -70,19 +70,19 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
       </Section>
 
       <Text style={paragraph}>
-        Une question sur votre abonnement ? Répondez à cet email, nous sommes là pour vous.
+        Une question sur ton abonnement ? Réponds à cet email, on est là pour toi.
       </Text>
 
       {referralCode && (
         <Section style={referralBox}>
           <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
           <Text style={referralText}>
-            Vous connaissez un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommandez-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur votre prochain mois.
+            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
+            Recommande-lui Qarte et re&ccedil;ois <strong>10&euro; de r&eacute;duction</strong> sur ton prochain mois (lui aussi).
           </Text>
-          <Text style={referralCode_style}>Votre code : <strong>{referralCode}</strong></Text>
+          <Text style={referralCode_style}>Ton code : <strong>{referralCode}</strong></Text>
           <Text style={referralHint}>
-            Votre filleul nous communique votre code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
           </Text>
         </Section>
       )}

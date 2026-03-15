@@ -11,9 +11,9 @@ interface InactiveMerchantDay30EmailProps {
 
 export function InactiveMerchantDay30Email({ shopName }: InactiveMerchantDay30EmailProps) {
   return (
-    <BaseLayout preview={`${shopName}, on aimerait comprendre ce qui vous bloque`}>
+    <BaseLayout preview={`${shopName}, on aimerait comprendre ce qui te bloque`}>
       <Heading style={heading}>
-        On prend de vos nouvelles
+        On prend de tes nouvelles
       </Heading>
 
       <Text style={paragraph}>
@@ -21,13 +21,13 @@ export function InactiveMerchantDay30Email({ shopName }: InactiveMerchantDay30Em
       </Text>
 
       <Text style={paragraph}>
-        C&apos;est l&apos;équipe Qarte. Votre programme de fidélité
+        C&apos;est l&apos;équipe Qarte. Ton programme de fidélité
         n&apos;a pas eu de scans ce mois-ci.
       </Text>
 
       <Text style={paragraph}>
-        On aimerait comprendre ce qui vous bloque. Si vous avez 2 minutes,
-        répondez à cet email — on peut configurer ou ajuster votre
+        On aimerait comprendre ce qui te bloque. Si tu as 2 minutes,
+        réponds à cet email — on peut configurer ou ajuster ton
         programme ensemble.
       </Text>
 

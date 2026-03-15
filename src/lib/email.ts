@@ -11,7 +11,6 @@ import {
   ReactivationEmail,
   ProgramReminderEmail,
   IncompleteSignupEmail,
-  IncompleteSignupReminder2Email,
   ProgramReminderDay2Email,
   ProgramReminderDay3Email,
   InactiveMerchantDay7Email,
@@ -29,8 +28,6 @@ import {
   ProductUpdateEmail,
   ChallengeCompletedEmail,
   GuidedSignupEmail,
-  SetupForYouEmail,
-  LastChanceSignupEmail,
   AutoSuggestRewardEmail,
   GracePeriodSetupEmail,
   BirthdayNotificationEmail,
@@ -183,8 +180,8 @@ export async function sendTrialExpiredEmail(
   promoCode?: string
 ): Promise<SendEmailResult> {
   const subject = promoCode
-    ? `${shopName}, -10€ pour réactiver votre compte`
-    : `${shopName}, votre essai est terminé`;
+    ? `${shopName}, -10€ pour réactiver ton compte`
+    : `${shopName}, ton essai est terminé`;
 
   return sendEmail(to, subject, TrialExpiredEmail, { shopName, daysUntilDeletion, promoCode }, {
     logLabel: `Trial expired email (${daysUntilDeletion} days until deletion)`,
@@ -243,7 +240,7 @@ export async function sendSubscriptionConfirmedEmail(
   nextBillingDate?: string,
   billingInterval?: 'monthly' | 'annual'
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName} - Votre abonnement Qarte est actif`, SubscriptionConfirmedEmail, { shopName, nextBillingDate, billingInterval }, {
+  return sendEmail(to, `${shopName} - Ton abonnement Qarte est actif`, SubscriptionConfirmedEmail, { shopName, nextBillingDate, billingInterval }, {
     logLabel: 'Subscription confirmed email',
   });
 }
@@ -270,7 +267,7 @@ export async function sendPaymentFailedEmail(
   to: string,
   shopName: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `Un souci avec votre carte`, PaymentFailedEmail, { shopName }, { logLabel: 'Payment failed email' });
+  return sendEmail(to, `Un souci avec ta carte`, PaymentFailedEmail, { shopName }, { logLabel: 'Payment failed email' });
 }
 
 // Email confirmation de résiliation
@@ -289,7 +286,7 @@ export async function sendSubscriptionReactivatedEmail(
   to: string,
   shopName: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName} - Votre abonnement est maintenu`, SubscriptionReactivatedEmail, { shopName }, {
+  return sendEmail(to, `${shopName} - Ton abonnement est maintenu`, SubscriptionReactivatedEmail, { shopName }, {
     logLabel: 'Subscription reactivated email',
   });
 }
@@ -336,7 +333,7 @@ export async function sendProgramReminderEmail(
   to: string,
   shopName: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, lancez votre programme`, ProgramReminderEmail, { shopName }, {
+  return sendEmail(to, `${shopName}, lance ton programme`, ProgramReminderEmail, { shopName }, {
     logLabel: 'Program reminder email',
   });
 }
@@ -358,12 +355,12 @@ export async function sendReactivationEmail(
     subject = `${shopName} - ${promoMonths || 1} mois à 9€ pour revenir sur Qarte`;
   } else if (daysSinceCancellation <= 7) {
     subject = totalCustomers
-      ? `${shopName} - Vos ${totalCustomers} clients n'ont plus accès à leur carte`
-      : `${shopName} - Vos clients n'ont plus accès à leur carte`;
+      ? `${shopName} - Tes ${totalCustomers} clients n'ont plus accès à leur carte`
+      : `${shopName} - Tes clients n'ont plus accès à leur carte`;
   } else if (daysSinceCancellation <= 14) {
-    subject = `${shopName} - Revenez, vos données sont encore là`;
+    subject = `${shopName} - Reviens, tes données sont encore là`;
   } else {
-    subject = `${shopName} - Dernière chance avant suppression de vos données`;
+    subject = `${shopName} - Dernière chance avant suppression de tes données`;
   }
 
   return sendEmail(to, subject, ReactivationEmail, { shopName, daysSinceCancellation, totalCustomers, promoCode, promoMonths }, {
@@ -389,7 +386,7 @@ export async function sendProgramReminderDay3Email(
   shopName: string,
   daysRemaining: number
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `Dernier rappel : configurez votre programme`, ProgramReminderDay3Email, { shopName, daysRemaining }, {
+  return sendEmail(to, `Dernier rappel : configure ton programme`, ProgramReminderDay3Email, { shopName, daysRemaining }, {
     logLabel: 'Program reminder day 3 email',
   });
 }
@@ -411,7 +408,7 @@ export async function sendInactiveMerchantDay14Email(
   rewardDescription?: string,
   stampsRequired?: number
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `Comment fidéliser vos clients`, InactiveMerchantDay14Email, { shopName, rewardDescription, stampsRequired }, {
+  return sendEmail(to, `Comment fidéliser tes clients`, InactiveMerchantDay14Email, { shopName, rewardDescription, stampsRequired }, {
     logLabel: 'Inactive merchant day 14 email',
   });
 }
@@ -421,7 +418,7 @@ export async function sendInactiveMerchantDay30Email(
   to: string,
   shopName: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, on peut vous aider ?`, InactiveMerchantDay30Email, { shopName }, {
+  return sendEmail(to, `${shopName}, on peut t'aider ?`, InactiveMerchantDay30Email, { shopName }, {
     logLabel: 'Inactive merchant day 30 email',
   });
 }
@@ -439,7 +436,7 @@ export async function sendQRCodeEmail(
   tier2RewardDescription?: string | null,
   loyaltyMode?: 'visit' | 'cagnotte'
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, tout est prêt — lancez votre programme !`, QRCodeEmail, {
+  return sendEmail(to, `${shopName}, tout est prêt — lance ton programme !`, QRCodeEmail, {
     shopName,
     rewardDescription,
     stampsRequired,
@@ -454,17 +451,6 @@ export async function sendQRCodeEmail(
   });
 }
 
-// Email relance inscription incomplète #2 - PROGRAMME via Resend scheduledAt
-export async function scheduleIncompleteSignupReminder2Email(
-  to: string,
-  delayMinutes: number = 180
-): Promise<ScheduleEmailResult> {
-  const scheduledAt = new Date(Date.now() + delayMinutes * 60 * 1000).toISOString();
-  return scheduleEmail(to, 'Votre espace Qarte vous attend', IncompleteSignupReminder2Email, { email: to }, scheduledAt, {
-    logLabel: `Incomplete signup reminder 2 email (in ${delayMinutes} min)`,
-  });
-}
-
 // Email premier scan (célébration)
 export async function sendFirstScanEmail(
   to: string,
@@ -472,7 +458,7 @@ export async function sendFirstScanEmail(
   referralCode?: string,
   slug?: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, votre 1er client !`, FirstScanEmail, { shopName, referralCode, slug }, {
+  return sendEmail(to, `${shopName}, ton 1er client !`, FirstScanEmail, { shopName, referralCode, slug }, {
     logLabel: 'First scan email',
   });
 }
@@ -498,7 +484,7 @@ export async function sendWeeklyDigestEmail(
   rewardsEarned: number,
   totalCustomers: number
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName} — votre semaine`, WeeklyDigestEmail, { shopName, scansThisWeek, newCustomers, rewardsEarned, totalCustomers }, {
+  return sendEmail(to, `${shopName} — ta semaine`, WeeklyDigestEmail, { shopName, scansThisWeek, newCustomers, rewardsEarned, totalCustomers }, {
     logLabel: 'Weekly digest email',
   });
 }
@@ -509,7 +495,7 @@ export async function sendDay5CheckinEmail(
   shopName: string,
   totalScans: number
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, votre 1ère semaine`, Day5CheckinEmail, { shopName, totalScans }, {
+  return sendEmail(to, `${shopName}, ta 1ère semaine`, Day5CheckinEmail, { shopName, totalScans }, {
     logLabel: 'Day 5 checkin email',
   });
 }
@@ -521,7 +507,7 @@ export async function sendTier2UpsellEmail(
   totalCustomers: number,
   rewardDescription: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `Vos meilleurs clients méritent plus`, Tier2UpsellEmail, { shopName, totalCustomers, rewardDescription }, {
+  return sendEmail(to, `Tes meilleurs clients méritent plus`, Tier2UpsellEmail, { shopName, totalCustomers, rewardDescription }, {
     logLabel: 'Tier 2 upsell email',
   });
 }
@@ -535,7 +521,7 @@ export async function sendFirstClientScriptEmail(
   stampsRequired: number,
   loyaltyMode?: 'visit' | 'cagnotte'
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `La phrase exacte à dire à vos client(e)s`, FirstClientScriptEmail, { shopName, shopType, rewardDescription, stampsRequired, loyaltyMode }, {
+  return sendEmail(to, `La phrase exacte à dire à tes clientes`, FirstClientScriptEmail, { shopName, shopType, rewardDescription, stampsRequired, loyaltyMode }, {
     logLabel: 'First client script email',
   });
 }
@@ -557,7 +543,7 @@ export async function sendChallengeCompletedEmail(
   shopName: string,
   promoCode: string = 'QARTECHALLENGE2026'
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, défi réussi — vos codes promo sont prêts`, ChallengeCompletedEmail, { shopName, promoCode }, {
+  return sendEmail(to, `${shopName}, défi réussi — tes codes promo sont prêts`, ChallengeCompletedEmail, { shopName, promoCode }, {
     logLabel: 'Challenge completed email',
   });
 }
@@ -569,7 +555,7 @@ export async function sendProductUpdateEmail(
   merchantId: string,
   referralCode?: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, découvrez les nouveautés Qarte de la semaine`, ProductUpdateEmail, { shopName, merchantId, referralCode }, {
+  return sendEmail(to, `${shopName}, découvre les nouveautés Qarte de la semaine`, ProductUpdateEmail, { shopName, merchantId, referralCode }, {
     logLabel: 'Product update email',
   });
 }
@@ -578,26 +564,8 @@ export async function sendProductUpdateEmail(
 export async function sendGuidedSignupEmail(
   to: string
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `30 secondes, on vous guide`, GuidedSignupEmail, { email: to }, {
+  return sendEmail(to, `30 secondes, on te guide`, GuidedSignupEmail, { email: to }, {
     logLabel: 'Guided signup email',
-  });
-}
-
-// Email relance inscription incomplète T+72h (done-for-you)
-export async function sendSetupForYouEmail(
-  to: string
-): Promise<SendEmailResult> {
-  return sendEmail(to, `On peut le faire pour vous`, SetupForYouEmail, { email: to }, {
-    logLabel: 'Setup-for-you email',
-  });
-}
-
-// Email relance inscription incomplète T+7j (dernière chance + promo)
-export async function sendLastChanceSignupEmail(
-  to: string
-): Promise<SendEmailResult> {
-  return sendEmail(to, `Dernière chance : votre place est réservée`, LastChanceSignupEmail, { email: to }, {
-    logLabel: 'Last chance signup email',
   });
 }
 
@@ -608,7 +576,7 @@ export async function sendAutoSuggestRewardEmail(
   shopType: string,
   daysRemaining: number
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, on a choisi la meilleure récompense pour vous`, AutoSuggestRewardEmail, { shopName, shopType, daysRemaining }, {
+  return sendEmail(to, `${shopName}, on a choisi la meilleure récompense pour toi`, AutoSuggestRewardEmail, { shopName, shopType, daysRemaining }, {
     logLabel: 'Auto-suggest reward email',
   });
 }
@@ -619,7 +587,7 @@ export async function sendGracePeriodSetupEmail(
   shopName: string,
   daysUntilDeletion: number
 ): Promise<SendEmailResult> {
-  return sendEmail(to, `${shopName}, on garde vos données encore ${daysUntilDeletion} jours`, GracePeriodSetupEmail, { shopName, daysUntilDeletion }, {
+  return sendEmail(to, `${shopName}, on garde tes données encore ${daysUntilDeletion} jours`, GracePeriodSetupEmail, { shopName, daysUntilDeletion }, {
     logLabel: 'Grace period setup email',
   });
 }

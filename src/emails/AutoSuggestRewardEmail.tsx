@@ -34,9 +34,9 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
   const suggestion = REWARD_IDEAS[normalizedType] || DEFAULT_REWARD;
 
   return (
-    <BaseLayout preview={`${shopName}, on a choisi la meilleure récompense pour vous — 1 clic pour activer`}>
+    <BaseLayout preview={`${shopName}, on a choisi la meilleure r&eacute;compense pour toi — 1 clic pour activer`}>
       <Heading style={heading}>
-        On a choisi la meilleure récompense pour vous
+        On a choisi la meilleure r&eacute;compense pour toi
       </Heading>
 
       <Text style={paragraph}>
@@ -44,18 +44,18 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
       </Text>
 
       <Text style={paragraph}>
-        Cela fait 5 jours que votre compte est créé. On sait que choisir
-        une récompense peut être un blocage — alors on l&apos;a fait pour vous.
+        Cela fait 5 jours que ton compte est cr&eacute;&eacute;. On sait que choisir
+        une r&eacute;compense peut &ecirc;tre un blocage — alors on l&apos;a fait pour toi.
       </Text>
 
       <Section style={recommendationBox}>
-        <Text style={recommendationLabel}>Récompense recommandée pour votre activité :</Text>
+        <Text style={recommendationLabel}>R&eacute;compense recommand&eacute;e pour ton activit&eacute; :</Text>
         <Text style={recommendationText}>
           &quot;<strong>{suggestion.reward}</strong> après <strong>{suggestion.visits}</strong>&quot;
         </Text>
         <Text style={recommendationNote}>
-          Cliquez ci-dessous pour la configurer.
-          Vous pourrez la modifier à tout moment.
+          Clique ci-dessous pour la configurer.
+          Tu pourras la modifier &agrave; tout moment.
         </Text>
       </Section>
 
@@ -68,7 +68,7 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
       {daysRemaining > 0 && (
         <Section style={urgencyBox}>
           <Text style={urgencyText}>
-            Il vous reste <strong>{daysRemaining} jour{daysRemaining > 1 ? 's' : ''}</strong> d&apos;essai gratuit.
+            Il te reste <strong>{daysRemaining} jour{daysRemaining > 1 ? 's' : ''}</strong> d&apos;essai gratuit.
           </Text>
         </Section>
       )}
@@ -76,7 +76,7 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
       <Hr style={divider} />
 
       <Text style={paragraph}>
-        Vous préférez qu&apos;on le fasse pour vous ? Répondez à cet email.
+        Tu pr&eacute;f&egrave;res qu&apos;on le fasse pour toi ? R&eacute;ponds &agrave; cet email.
       </Text>
 
       <Text style={signature}>

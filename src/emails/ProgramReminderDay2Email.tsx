@@ -35,7 +35,7 @@ export function ProgramReminderDay2Email({ shopName, shopType, slug }: ProgramRe
   const publicPageUrl = slug ? `https://getqarte.com/p/${slug}` : null;
 
   return (
-    <BaseLayout preview={`${shopName}, on a trouvé la récompense idéale pour votre activité`}>
+    <BaseLayout preview={`${shopName}, on a trouv&eacute; la r&eacute;compense id&eacute;ale pour ton activit&eacute;`}>
       <Heading style={heading}>
         Quelle récompense choisir ? On a la réponse.
       </Heading>
@@ -45,17 +45,17 @@ export function ProgramReminderDay2Email({ shopName, shopType, slug }: ProgramRe
       </Text>
 
       <Text style={paragraph}>
-        Vous hésitez sur la récompense à proposer ? C&apos;est la question n°1
-        que nous recevons. On a fait le travail pour vous.
+        Tu h&eacute;sites sur la r&eacute;compense &agrave; proposer ? C&apos;est la question n&deg;1
+        que nous recevons. On a fait le travail pour toi.
       </Text>
 
       <Section style={recommendationBox}>
-        <Text style={recommendationLabel}>Notre recommandation pour votre activité :</Text>
+        <Text style={recommendationLabel}>Notre recommandation pour ton activit&eacute; :</Text>
         <Text style={recommendationText}>
           &quot;<strong>{suggestion.reward}</strong> après <strong>{suggestion.visits}</strong>&quot;
         </Text>
         <Text style={recommendationNote}>
-          Simple, vos clients comprennent tout de suite.
+          Simple, tes clients comprennent tout de suite.
         </Text>
       </Section>
 
@@ -70,10 +70,10 @@ export function ProgramReminderDay2Email({ shopName, shopType, slug }: ProgramRe
       {publicPageUrl && (
         <>
           <Section style={tipBox}>
-            <Text style={tipTitle}>Votre page publique est prête</Text>
+            <Text style={tipTitle}>Ta page publique est pr&ecirc;te</Text>
             <Text style={tipText}>
-              Votre page pro est déjà en ligne. Ajoutez-la dans votre bio Instagram pour que vos clientes
-              retrouvent votre salon, vos prestations et votre programme fidélité en un clic.
+              Ta page pro est d&eacute;j&agrave; en ligne. Ajoute-la dans ta bio Instagram pour que tes clientes
+              retrouvent ton salon, tes prestations et ton programme fid&eacute;lit&eacute; en un clic.
             </Text>
           </Section>
 
@@ -88,13 +88,13 @@ export function ProgramReminderDay2Email({ shopName, shopType, slug }: ProgramRe
       )}
 
       <Text style={paragraph}>
-        Vous pourrez modifier votre récompense à tout moment. L&apos;important,
-        c&apos;est de démarrer — chaque jour sans programme, ce sont des clients
-        qui repartent sans être fidélisés.
+        Tu pourras modifier ta r&eacute;compense &agrave; tout moment. L&apos;important,
+        c&apos;est de d&eacute;marrer — chaque jour sans programme, ce sont des clients
+        qui repartent sans &ecirc;tre fid&eacute;lis&eacute;s.
       </Text>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? Répondez à cet email.
+        Besoin d&apos;aide ? R&eacute;ponds &agrave; cet email.
       </Text>
 
       <Text style={signature}>
