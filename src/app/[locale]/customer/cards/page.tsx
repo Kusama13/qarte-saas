@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { motion } from 'framer-motion';
 import { ChevronRight, CreditCard, LogOut, Trophy, Gift } from 'lucide-react';
 
@@ -314,12 +314,12 @@ export default function CustomerCardsPage() {
       </main>
 
       <footer className="py-8 text-center">
-        <a href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
+        <Link href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
           <span className="text-xs text-gray-300 group-hover:text-gray-400">Créé avec ❤️ par</span>
           <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
             Qarte
           </span>
-        </a>
+        </Link>
       </footer>
     </div>
   );

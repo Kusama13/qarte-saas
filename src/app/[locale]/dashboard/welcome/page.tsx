@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { motion } from 'framer-motion';
 import { Users, Globe, ArrowRight, Check, Star, MapPin, Link2 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';

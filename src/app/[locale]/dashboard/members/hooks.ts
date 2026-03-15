@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber } from '@/lib/utils';
 import type { Merchant, MemberCard, Customer } from '@/types';

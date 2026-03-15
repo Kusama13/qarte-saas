@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Camera, Check, ArrowRight, Loader2, Palette, ArrowLeft } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';

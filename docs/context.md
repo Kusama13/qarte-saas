@@ -216,6 +216,16 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `formatEUR(amount, locale)` : FR → `19,00` | EN → `19.00`
 - Default `'fr'` partout pour backward-compat
 
+### Navigation i18n (regles imperatives)
+- **Liens internes** : TOUJOURS `import { Link } from '@/i18n/navigation'` — JAMAIS `next/link` ni `<a href="/...">` (sinon perte de locale EN → FR)
+- **Router** : TOUJOURS `import { useRouter } from '@/i18n/navigation'` — JAMAIS `next/navigation` pour useRouter
+- **usePathname** : TOUJOURS `import { usePathname } from '@/i18n/navigation'` (retourne path sans prefixe locale)
+- **Exceptions** qui restent sur `next/navigation` : `useSearchParams`, `useParams`, `notFound`
+- **Liens externes** (https://) : `<a>` classique, pas de `<Link>`
+- `src/i18n/navigation.ts` exporte : `{ Link, redirect, usePathname, useRouter, getPathname }`
+- `src/i18n/routing.ts` : config routing (locales, defaultLocale, pathnames)
+- **TikTokPixel** : seule exception, utilise `usePathname` de `next/navigation` (besoin du path complet avec prefixe pour analytics)
+
 ### Planning (mig 063)
 - Planning simple gere par le merchant (pas de reservation en ligne)
 - 1 creneau = 1 ligne en DB (date + heure debut). `client_name IS NULL` = disponible, rempli = pris

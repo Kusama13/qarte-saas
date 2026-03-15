@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Clock, ChevronDown, Sparkles } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { toBCP47 } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface MerchantOffer {
@@ -21,6 +22,7 @@ interface ExclusiveOfferProps {
 
 export default function ExclusiveOffer({ offer, merchantColor, isPreview }: ExclusiveOfferProps) {
   const t = useTranslations('exclusiveOffer');
+  const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
 
   if (!offer.active) return null;
@@ -73,7 +75,7 @@ export default function ExclusiveOffer({ offer, merchantColor, isPreview }: Excl
                       } else if (expires.toDateString() === tomorrow.toDateString()) {
                         return t('tomorrowNight');
                       } else {
-                        return expires.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+                        return expires.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' });
                       }
                     })() })}
                   </span>

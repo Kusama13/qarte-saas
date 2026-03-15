@@ -8,8 +8,8 @@ import { getSupabase } from '@/lib/supabase';
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
-import { PHONE_CONFIG } from '@/lib/utils';
-import { getWeekStart, formatDate, formatDateFr, fmtTime } from './utils';
+import { PHONE_CONFIG, formatTime, toBCP47 } from '@/lib/utils';
+import { getWeekStart, formatDate, formatDateFr } from './utils';
 import { handleDownloadStory } from './StoryExport';
 import AddSlotsModal from './AddSlotsModal';
 import SlotModal from './SlotModal';
@@ -313,7 +313,7 @@ export default function PlanningDashboard() {
   const onDownloadStory = useCallback(async () => {
     if (!merchant || slots.length === 0) return;
     await handleDownloadStory({ merchant, slots, slotsByDate, weekStart, weekEnd, locale });
-  }, [merchant, slots, slotsByDate, weekStart, weekEnd]);
+  }, [merchant, slots, slotsByDate, weekStart, weekEnd, locale]);
 
   if (merchantLoading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
@@ -410,7 +410,7 @@ export default function PlanningDashboard() {
 
                   <div className="flex flex-col items-center">
                     <span className="text-sm font-bold text-gray-900">
-                      {weekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} — {weekEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                      {weekStart.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' })} — {weekEnd.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' })}
                     </span>
                     {weekOffset !== 0 && (
                       <button
@@ -503,7 +503,7 @@ export default function PlanningDashboard() {
                               onClick={() => openEditSlot(slot)}
                               className={`w-full text-left px-2 py-1 rounded-lg text-[11px] font-medium transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
                             >
-                              <span className="font-bold">{fmtTime(slot.start_time, locale)}</span>
+                              <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
                               {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name.length > 8 ? slot.client_name.slice(0, 8) + '…' : slot.client_name}</span>}
                             </button>
                           ))}
@@ -555,7 +555,7 @@ export default function PlanningDashboard() {
                                 onClick={() => openEditSlot(slot)}
                                 className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
                               >
-                                {fmtTime(slot.start_time, locale)}
+                                {formatTime(slot.start_time, locale)}
                                 {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name}</span>}
                               </button>
                             ))}
@@ -682,7 +682,6 @@ export default function PlanningDashboard() {
             saving={saving}
             onSave={handleAddSlots}
             onClose={() => setAddSlotsDay(null)}
-            locale={locale}
           />
         )}
       </AnimatePresence>
@@ -716,7 +715,6 @@ export default function PlanningDashboard() {
             onDelete={handleDeleteSlot}
             onClose={() => setEditSlot(null)}
             phonePlaceholder={PHONE_CONFIG[merchant?.country || 'FR'].placeholder}
-            locale={locale}
           />
         )}
       </AnimatePresence>

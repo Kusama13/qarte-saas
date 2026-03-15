@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
   CreditCard,
@@ -16,7 +17,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
@@ -621,9 +622,9 @@ export default function SubscriptionPage() {
         <div className="mt-6 py-4 text-center">
           <p className="text-xs text-gray-400">
             {t('socialProof')}{' '}
-            <a href="/pros" className="font-semibold text-indigo-500 hover:text-indigo-700 underline underline-offset-2 transition-colors">
+            <Link href="/pros" className="font-semibold text-indigo-500 hover:text-indigo-700 underline underline-offset-2 transition-colors">
               {t('viewPrograms')}
-            </a>
+            </Link>
           </p>
         </div>
       )}

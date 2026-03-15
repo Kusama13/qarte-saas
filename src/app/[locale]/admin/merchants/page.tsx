@@ -20,7 +20,7 @@ import {
   ArrowUpDown,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
-import { cn } from '@/lib/utils';
+import { cn, formatPhoneForWhatsApp } from '@/lib/utils';
 import type { Merchant, MerchantCountry, ShopType } from '@/types';
 import { SHOP_TYPES } from '@/types';
 
@@ -188,14 +188,7 @@ function HealthDot({ score }: { score: number }) {
 }
 
 // --- WhatsApp ---
-
-function formatPhoneForWhatsApp(phone: string) {
-  const cleaned = phone.replace(/\D/g, '');
-  // Already in E.164 format (stored without +)
-  if (cleaned.length >= 10 && !cleaned.startsWith('0')) return cleaned;
-  // Local format with leading 0 — use stored E.164 directly
-  return cleaned;
-}
+// formatPhoneForWhatsApp imported from @/lib/utils
 
 // --- Shared Sub-Components ---
 

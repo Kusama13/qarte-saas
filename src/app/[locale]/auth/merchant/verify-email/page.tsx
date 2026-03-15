@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { Link } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { CreditCard, Mail, CheckCircle2, RefreshCw, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';

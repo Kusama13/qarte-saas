@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import {
   Mail,
   Calendar,
@@ -15,7 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
-import { cn } from '@/lib/utils';
+import { cn, formatPhoneForWhatsApp } from '@/lib/utils';
 
 // ============================================
 // TYPES
@@ -137,11 +137,6 @@ export default function LeadsPage() {
   // ============================================
   // ACTIONS
   // ============================================
-  const formatPhoneForWhatsApp = (phone: string) => {
-    // Phones are stored in E.164 without + (e.g. 33612345678, 15551234567)
-    return phone.replace(/\D/g, '');
-  };
-
   const openWhatsApp = (phone: string, name?: string) => {
     const formattedPhone = formatPhoneForWhatsApp(phone);
     const message = encodeURIComponent(name ? `Bonjour ${name}, ` : 'Bonjour, ');

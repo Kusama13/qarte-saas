@@ -16,7 +16,7 @@ import {
   Globe,
   ArrowRight,
 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
 import { useMerchant } from '@/contexts/MerchantContext';

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import {
   ArrowLeft,
   Store,
@@ -44,7 +44,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { cn, generateQRCode, getScanUrl, formatDoubleDays } from '@/lib/utils';
+import { cn, generateQRCode, getScanUrl, formatDoubleDays, formatPhoneForWhatsApp, COUNTRY_FLAGS } from '@/lib/utils';
 import { SHOP_TYPES } from '@/types';
 import type { Merchant as BaseMerchant, ShopType, MerchantCountry } from '@/types';
 

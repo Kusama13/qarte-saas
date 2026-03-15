@@ -2,11 +2,12 @@
 
 import { motion } from 'framer-motion';
 import { Star, Search, CalendarDays, Scissors, Sparkles, UserPlus, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { formatTime } from '@/lib/utils';
 
 const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -96,15 +97,15 @@ function SeoVisual({ t }: { t: (key: string) => string }) {
   );
 }
 
-function PlanningVisual({ t }: { t: (key: string) => string }) {
+function PlanningVisual({ t, locale }: { t: (key: string) => string; locale: string }) {
   return (
     <div className="relative w-full max-w-[340px] mx-auto">
       <div className="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-3xl shadow-xl shadow-indigo-100/30 border border-indigo-100 p-5">
         <div className="space-y-3">
           {[
-            { day: 'Lun 17', slots: ['10h', '14h', '16h30'] },
-            { day: 'Mar 18', slots: ['9h30', '11h'] },
-            { day: 'Mer 19', slots: ['14h', '15h30', '17h'] },
+            { day: locale === 'en' ? 'Mon 17' : 'Lun 17', slots: ['10:00', '14:00', '16:30'] },
+            { day: locale === 'en' ? 'Tue 18' : 'Mar 18', slots: ['09:30', '11:00'] },
+            { day: locale === 'en' ? 'Wed 19' : 'Mer 19', slots: ['14:00', '15:30', '17:00'] },
           ].map((d) => (
             <motion.div
               key={d.day}
@@ -117,7 +118,7 @@ function PlanningVisual({ t }: { t: (key: string) => string }) {
               <span className="text-xs font-bold text-gray-500 w-14 shrink-0">{d.day}</span>
               <div className="flex gap-1.5 flex-wrap">
                 {d.slots.map((s) => (
-                  <span key={s} className="text-[10px] font-bold text-indigo-600 bg-white border border-indigo-100 rounded-lg px-2.5 py-1 shadow-sm">{s}</span>
+                  <span key={s} className="text-[10px] font-bold text-indigo-600 bg-white border border-indigo-100 rounded-lg px-2.5 py-1 shadow-sm">{formatTime(s, locale)}</span>
                 ))}
               </div>
             </motion.div>
@@ -135,14 +136,14 @@ function PlanningVisual({ t }: { t: (key: string) => string }) {
   );
 }
 
-function PrestationsVisual({ t }: { t: (key: string) => string }) {
+function PrestationsVisual({ t, locale }: { t: (key: string) => string; locale: string }) {
   return (
     <div className="relative w-full max-w-[340px] mx-auto">
       <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-5 space-y-2.5">
         {[
-          { name: 'Pose complete gel', price: '45 EUR', dur: '1h15' },
-          { name: 'Semi-permanent', price: '30 EUR', dur: '45min' },
-          { name: 'Nail art (par ongle)', price: '5 EUR', dur: '10min' },
+          { name: locale === 'en' ? 'Full gel set' : 'Pose complete gel', price: locale === 'en' ? '$45' : '45 \u20ac', dur: locale === 'en' ? '1h15m' : '1h15' },
+          { name: 'Semi-permanent', price: locale === 'en' ? '$30' : '30 \u20ac', dur: '45min' },
+          { name: locale === 'en' ? 'Nail art (per nail)' : 'Nail art (par ongle)', price: locale === 'en' ? '$5' : '5 \u20ac', dur: '10min' },
         ].map((s, i) => (
           <motion.div
             key={s.name}
@@ -209,6 +210,7 @@ function WelcomeOfferVisual({ t }: { t: (key: string) => string }) {
 
 export function PageProSection() {
   const t = useTranslations('pagePro');
+  const locale = useLocale();
 
   return (
     <section className="relative py-20 md:py-28 bg-white overflow-hidden">
@@ -252,7 +254,7 @@ export function PageProSection() {
             title={t('planningTitle')}
             titleBold={t('planningTitleBold')}
             description={t('planningDesc')}
-            visual={<PlanningVisual t={t} />}
+            visual={<PlanningVisual t={t} locale={locale} />}
             reverse
             delay={0.05}
           />
@@ -263,7 +265,7 @@ export function PageProSection() {
             title={t('servicesTitle')}
             titleBold={t('servicesTitleBold')}
             description={t('servicesDesc')}
-            visual={<PrestationsVisual t={t} />}
+            visual={<PrestationsVisual t={t} locale={locale} />}
             delay={0.05}
           />
 

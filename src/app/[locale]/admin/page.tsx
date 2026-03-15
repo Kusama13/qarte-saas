@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import {
   Store,
   Users,
@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button, Input, Modal } from '@/components/ui';
-import { cn } from '@/lib/utils';
+import { cn, formatPhoneForWhatsApp } from '@/lib/utils';
 
 // ============================================
 // TYPES
@@ -556,11 +556,6 @@ export default function AdminDashboardPage() {
   const getStatusBadge = (status: string) => {
     const config = PROSPECT_STATUSES.find(s => s.value === status);
     return config || PROSPECT_STATUSES[0];
-  };
-
-  const formatPhoneForWhatsApp = (phone: string) => {
-    // Phones are stored in E.164 without + (e.g. 33612345678, 15551234567)
-    return phone.replace(/\D/g, '');
   };
 
   const openWhatsApp = (phone: string, name?: string) => {

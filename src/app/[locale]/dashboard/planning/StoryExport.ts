@@ -1,5 +1,5 @@
 import type { PlanningSlot } from '@/types';
-import { fmtTime } from './utils';
+import { formatTime, toBCP47 } from '@/lib/utils';
 
 // Cache font loading at module level (loaded once, reused across calls)
 let scriptFontPromise: Promise<string> | null = null;
@@ -111,8 +111,11 @@ export async function handleDownloadStory({ merchant, slots, slotsByDate, weekSt
   ctx.fillText('✨', W / 2 + 260, 240);
 
   // ── Semaine du X au Y ──
-  const fmtShort = (d: Date) => d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-  const weekLabel = `Semaine du ${fmtShort(weekStart)} au ${fmtShort(weekEnd)}`;
+  const bcp = toBCP47(locale);
+  const fmtShort = (d: Date) => d.toLocaleDateString(bcp, { day: 'numeric', month: 'long' });
+  const weekLabel = locale === 'en'
+    ? `Week of ${fmtShort(weekStart)} — ${fmtShort(weekEnd)}`
+    : `Semaine du ${fmtShort(weekStart)} au ${fmtShort(weekEnd)}`;
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
   ctx.font = '500 34px system-ui, -apple-system, sans-serif';
   ctx.fillText(weekLabel, W / 2, 325);
@@ -181,7 +184,7 @@ export async function handleDownloadStory({ merchant, slots, slotsByDate, weekSt
     const dayNum = d.getDate();
 
     // Tous les créneaux dans l'ordre chrono, avec flag taken
-    const items: SlotItem[] = dateSlots.map(s => ({ text: fmtTime(s.start_time, locale), taken: !!s.client_name }));
+    const items: SlotItem[] = dateSlots.map(s => ({ text: formatTime(s.start_time, locale), taken: !!s.client_name }));
     const timesMaxW = cardW - pad * 2;
     const lines = wrapSlotItems(items, timesMaxW);
 

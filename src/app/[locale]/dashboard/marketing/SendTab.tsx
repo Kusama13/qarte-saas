@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatTime } from '@/lib/utils';
+import { formatTime, toBCP47 } from '@/lib/utils';
 import {
   PUSH_TEMPLATES,
   TEMPLATE_COLOR_MAP,
@@ -122,7 +122,7 @@ export default function SendTab(props: SendTabProps) {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 truncate">{push.title}</p>
                   <p className="text-sm text-gray-500">
-                    {formatScheduleDate(push.scheduled_date)} {locale === 'en' ? 'at' : 'à'} {formatTime(push.scheduled_time, locale)}
+                    {formatScheduleDate(push.scheduled_date, locale)} {locale === 'en' ? 'at' : 'à'} {formatTime(push.scheduled_time, locale)}
                   </p>
                 </div>
                 <button
@@ -220,7 +220,7 @@ export default function SendTab(props: SendTabProps) {
                           <div className="flex-1">
                             <p className="text-xs font-semibold text-amber-800">Une offre est déjà active</p>
                             <p className="text-[10px] text-amber-700 mt-0.5">
-                              &ldquo;{currentOfferTitle}&rdquo; expire {formatExpiresAt(offerExpiresAt)}. Envoyer remplacera l&apos;offre actuelle.
+                              &ldquo;{currentOfferTitle}&rdquo; expire {formatExpiresAt(offerExpiresAt, locale)}. Envoyer remplacera l&apos;offre actuelle.
                             </p>
                           </div>
                         </div>
@@ -522,7 +522,7 @@ export default function SendTab(props: SendTabProps) {
               </div>
               <div>
                 <p className="font-bold text-emerald-900 text-sm">{currentOfferTitle || 'Offre en cours'}</p>
-                <p className="text-xs text-emerald-700">Jusqu&apos;à {formatExpiresAt(offerExpiresAt)}</p>
+                <p className="text-xs text-emerald-700">Jusqu&apos;à {formatExpiresAt(offerExpiresAt, locale)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -590,7 +590,7 @@ export default function SendTab(props: SendTabProps) {
                               <p className="font-semibold text-gray-900 truncate text-sm">{item.title}</p>
                               <p className="text-xs text-gray-600 line-clamp-1">{item.body}</p>
                               <span className="text-[10px] text-gray-400 mt-1 block">
-                                {date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                {date.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
                             <div className="flex items-center gap-1 text-emerald-600">

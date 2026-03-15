@@ -1,7 +1,8 @@
 'use client';
 
 import { Gift, Eye } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { toBCP47 } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import type { Merchant, Voucher } from '@/types';
 
@@ -13,6 +14,7 @@ interface VoucherRewardsProps {
 
 export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: VoucherRewardsProps) {
   const t = useTranslations('voucherRewards');
+  const locale = useLocale();
   const unusedVouchers = vouchers.filter(v => !v.is_used);
   if (unusedVouchers.length === 0) return null;
 
@@ -62,7 +64,7 @@ export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: 
                 </p>
                 {group[0].expires_at && (
                   <p className="text-white/50 text-[10px] mt-1">
-                    {t('expiresOn', { date: new Date(group[0].expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) })}
+                    {t('expiresOn', { date: new Date(group[0].expires_at).toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' }) })}
                   </p>
                 )}
               </div>

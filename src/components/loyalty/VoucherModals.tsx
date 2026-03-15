@@ -1,7 +1,8 @@
 'use client';
 
 import { Check, Gift, Cake, Loader2, PartyPopper, Sparkles } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { toBCP47 } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Merchant } from '@/types';
 
@@ -47,6 +48,7 @@ export default function VoucherModals({
   onCloseCelebration,
 }: VoucherModalsProps) {
   const t = useTranslations('voucherModals');
+  const locale = useLocale();
   return (
     <>
       {/* Voucher Detail Modal */}
@@ -131,7 +133,7 @@ export default function VoucherModals({
                   transition={{ delay: 0.4 }}
                   className="text-xs text-gray-400 mb-3"
                 >
-                  {t('validUntil', { date: new Date(selectedVoucher.expiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) })}
+                  {t('validUntil', { date: new Date(selectedVoucher.expiresAt).toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long', year: 'numeric' }) })}
                 </motion.p>
               )}
 

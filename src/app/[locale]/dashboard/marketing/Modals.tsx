@@ -7,7 +7,9 @@ import {
   HelpCircle,
   EyeOff,
 } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toBCP47 } from '@/lib/utils';
 
 interface HowItWorksModalProps {
   show: boolean;
@@ -95,6 +97,7 @@ interface OfferModalProps {
 }
 
 export function OfferModal({ show, onClose, title, description, imageUrl, expiresAt, onDeactivate }: OfferModalProps) {
+  const locale = useLocale();
   return (
     <AnimatePresence>
       {show && (
@@ -143,7 +146,7 @@ export function OfferModal({ show, onClose, title, description, imageUrl, expire
               <div>
                 <p className="text-xs font-medium text-gray-500 mb-1">Expiration</p>
                 <p className="text-gray-700">
-                  {expiresAt ? new Date(expiresAt).toLocaleDateString('fr-FR', {
+                  {expiresAt ? new Date(expiresAt).toLocaleDateString(toBCP47(locale), {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',

@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 
 const DEMOS = [
   { slug: 'demo-onglerie', label: 'Onglerie', emoji: '💅' },

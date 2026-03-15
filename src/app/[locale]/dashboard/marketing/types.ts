@@ -159,23 +159,25 @@ export function generateOfferDescription(notifTitle: string, notifBody: string):
   return `${notifTitle}: ${notifBody}. Rendez-vous vite en boutique pour profiter de cette offre !`;
 }
 
-export function formatScheduleDate(dateStr: string): string {
+export function formatScheduleDate(dateStr: string, locale: string = 'fr'): string {
   const date = new Date(dateStr);
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  if (dateStr === today.toISOString().split('T')[0]) return "Aujourd'hui";
-  if (dateStr === tomorrow.toISOString().split('T')[0]) return 'Demain';
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  if (dateStr === today.toISOString().split('T')[0]) return locale === 'en' ? 'Today' : "Aujourd'hui";
+  if (dateStr === tomorrow.toISOString().split('T')[0]) return locale === 'en' ? 'Tomorrow' : 'Demain';
+  const bcp = locale === 'en' ? 'en-US' : 'fr-FR';
+  return date.toLocaleDateString(bcp, { day: 'numeric', month: 'short' });
 }
 
-export function formatExpiresAt(expiresAt: string): string {
+export function formatExpiresAt(expiresAt: string, locale: string = 'fr'): string {
   const expires = new Date(expiresAt);
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-  if (expires.toDateString() === today.toDateString()) return "ce soir";
-  if (expires.toDateString() === tomorrow.toDateString()) return "demain soir";
-  return expires.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+  if (expires.toDateString() === today.toDateString()) return locale === 'en' ? 'tonight' : 'ce soir';
+  if (expires.toDateString() === tomorrow.toDateString()) return locale === 'en' ? 'tomorrow night' : 'demain soir';
+  const bcp = locale === 'en' ? 'en-US' : 'fr-FR';
+  return expires.toLocaleDateString(bcp, { day: 'numeric', month: 'short' });
 }

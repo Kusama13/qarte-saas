@@ -1,4 +1,4 @@
-import { formatTime } from '@/lib/utils';
+import { toBCP47 } from '@/lib/utils';
 
 export function getWeekStart(offset: number): Date {
   const d = new Date();
@@ -17,11 +17,7 @@ export function formatDate(d: Date): string {
 }
 
 export function formatDateFr(d: Date, locale: string = 'fr'): string {
-  return d.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
-}
-
-export function fmtTime(t: string, locale: string = 'fr'): string {
-  return formatTime(t, locale);
+  return d.toLocaleDateString(toBCP47(locale), { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 export const QUICK_TIMES = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];

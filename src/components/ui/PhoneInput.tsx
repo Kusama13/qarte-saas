@@ -2,22 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { PHONE_CONFIG } from '@/lib/utils';
+import { cn, PHONE_CONFIG, COUNTRY_FLAGS, ALL_COUNTRIES } from '@/lib/utils';
 import type { MerchantCountry } from '@/types';
-
-const COUNTRY_FLAGS: Record<MerchantCountry, string> = {
-  FR: '🇫🇷',
-  BE: '🇧🇪',
-  CH: '🇨🇭',
-  LU: '🇱🇺',
-  US: '🇺🇸',
-  GB: '🇬🇧',
-  CA: '🇨🇦',
-  AU: '🇦🇺',
-  ES: '🇪🇸',
-  IT: '🇮🇹',
-};
 
 interface PhoneInputProps {
   value: string;
@@ -40,7 +26,7 @@ export function PhoneInput({
   onChange,
   country,
   onCountryChange,
-  countries = Object.keys(PHONE_CONFIG) as MerchantCountry[],
+  countries = ALL_COUNTRIES,
   label,
   error,
   required,
@@ -54,15 +40,14 @@ export function PhoneInput({
 
   // Close dropdown on outside click
   useEffect(() => {
+    if (!dropdownOpen) return;
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
       }
     };
-    if (dropdownOpen) {
-      document.addEventListener('mousedown', handler);
-      return () => document.removeEventListener('mousedown', handler);
-    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [dropdownOpen]);
 
   const config = PHONE_CONFIG[country];
@@ -70,8 +55,7 @@ export function PhoneInput({
   const handleCountrySelect = (c: MerchantCountry) => {
     onCountryChange(c);
     setDropdownOpen(false);
-    // Focus input after selecting country
-    setTimeout(() => inputRef.current?.focus(), 50);
+    requestAnimationFrame(() => inputRef.current?.focus());
   };
 
   return (

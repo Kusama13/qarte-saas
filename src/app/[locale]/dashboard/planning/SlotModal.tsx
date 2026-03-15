@@ -1,9 +1,10 @@
 'use client';
 
 import { X, Loader2, Trash2, Search, UserCheck, Plus } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
-import { fmtTime } from './utils';
+import { formatTime, toBCP47 } from '@/lib/utils';
 
 interface CustomerResult {
   id: string;
@@ -38,7 +39,6 @@ interface SlotModalProps {
   onDelete: (slotId: string) => void;
   onClose: () => void;
   phonePlaceholder?: string;
-  locale?: string;
 }
 
 export default function SlotModal({
@@ -67,8 +67,8 @@ export default function SlotModal({
   onDelete,
   onClose,
   phonePlaceholder = '06 12 34 56 78',
-  locale = 'fr',
 }: SlotModalProps) {
+  const locale = useLocale();
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -82,9 +82,9 @@ export default function SlotModal({
       >
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900">{fmtTime(editSlot.start_time, locale)}</h3>
+            <h3 className="text-base font-bold text-gray-900">{formatTime(editSlot.start_time, locale)}</h3>
             <p className="text-xs text-gray-400 capitalize">
-              {new Date(editSlot.slot_date + 'T00:00:00').toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {new Date(editSlot.slot_date + 'T00:00:00').toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4 text-gray-400" /></button>

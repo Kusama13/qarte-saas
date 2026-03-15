@@ -14,10 +14,11 @@ import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { formatTime } from '@/lib/utils';
 import LandingNav from './LandingNav';
 
-function PageProMockup({ t }: { t: (key: string) => string }) {
+function PageProMockup({ t, locale }: { t: (key: string) => string; locale: string }) {
   return (
     <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-white shadow-2xl shadow-gray-900/20 flex flex-col">
       {/* Header gradient */}
@@ -67,9 +68,9 @@ function PageProMockup({ t }: { t: (key: string) => string }) {
       <div className="px-4 py-2">
         <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('mockupAvailability')}</p>
         <div className="flex gap-1.5">
-          {['14h', '15h30', '17h'].map((slot) => (
+          {['14:00', '15:30', '17:00'].map((slot) => (
             <div key={slot} className="flex-1 bg-indigo-50 border border-indigo-100 rounded-lg py-1.5 text-center">
-              <span className="text-[9px] font-bold text-indigo-600">{slot}</span>
+              <span className="text-[9px] font-bold text-indigo-600">{formatTime(slot, locale)}</span>
             </div>
           ))}
         </div>
@@ -106,6 +107,7 @@ function PageProMockup({ t }: { t: (key: string) => string }) {
 export function HeroSection() {
   const { ref, isInView } = useInView();
   const t = useTranslations('hero');
+  const locale = useLocale();
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-white to-gray-50">
@@ -174,7 +176,7 @@ export function HeroSection() {
             <div style={{ transform: 'rotateY(-12deg) rotateX(2deg)', transformStyle: 'preserve-3d' }}>
               <div className="relative w-[280px] h-[570px]">
                 {/* Screen */}
-                <PageProMockup t={t} />
+                <PageProMockup t={t} locale={locale} />
               </div>
             </div>
             </div>

@@ -21,17 +21,18 @@ export const SHOP_TYPES: Record<ShopType, string> = {
 
 export type MerchantCountry = 'FR' | 'BE' | 'CH' | 'LU' | 'US' | 'GB' | 'CA' | 'AU' | 'ES' | 'IT';
 
+/** Fallback display names (English). Prefer t('countries.XX') from i18n for UI. */
 export const COUNTRIES: Record<MerchantCountry, string> = {
   FR: 'France',
-  BE: 'Belgique',
-  CH: 'Suisse',
+  BE: 'Belgium',
+  CH: 'Switzerland',
   LU: 'Luxembourg',
   US: 'United States',
   GB: 'United Kingdom',
   CA: 'Canada',
   AU: 'Australia',
-  ES: 'España',
-  IT: 'Italia',
+  ES: 'Spain',
+  IT: 'Italy',
 };
 
 export const COUNTRIES_BY_LOCALE: Record<string, MerchantCountry[]> = {

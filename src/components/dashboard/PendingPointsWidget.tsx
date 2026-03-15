@@ -17,6 +17,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import type { PendingVisit } from '@/types';
+import { toBCP47 } from '@/lib/utils';
 
 interface PendingPointsWidgetProps {
   merchantId: string;
@@ -119,12 +120,12 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
 
-    const loc = locale === 'en' ? 'en-US' : 'fr-FR';
-    const time = date.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
+    const bcp = toBCP47(locale);
+    const time = date.toLocaleTimeString(bcp, { hour: '2-digit', minute: '2-digit' });
 
     if (date >= todayStart) return `${t('today')} ${time}`;
     if (date >= yesterdayStart) return `${t('yesterday')} ${time}`;
-    return date.toLocaleDateString(loc, { day: 'numeric', month: 'short' }) + ` ${time}`;
+    return date.toLocaleDateString(bcp, { day: 'numeric', month: 'short' }) + ` ${time}`;
   };
 
   const getInitials = (firstName?: string | null, lastName?: string | null) => {

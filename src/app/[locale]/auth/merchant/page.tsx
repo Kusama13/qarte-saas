@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
 import { getSupabase } from '@/lib/supabase';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { CheckCircle2, CreditCard } from 'lucide-react';
 import { suggestEmailCorrection } from '@/lib/utils';
 import { useTranslations } from 'next-intl';

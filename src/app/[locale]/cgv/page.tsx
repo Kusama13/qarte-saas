@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { ArrowLeft, CreditCard } from 'lucide-react';
 import NoRightClick from '@/components/NoRightClick';
 import { getTranslations, getLocale } from 'next-intl/server';

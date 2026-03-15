@@ -1,9 +1,11 @@
 'use client';
 
 import { X, Loader2 } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
-import { fmtTime, QUICK_TIMES } from './utils';
+import { formatTime, toBCP47 } from '@/lib/utils';
+import { QUICK_TIMES } from './utils';
 
 interface AddSlotsModalProps {
   addSlotsDay: string;
@@ -15,7 +17,6 @@ interface AddSlotsModalProps {
   saving: boolean;
   onSave: () => void;
   onClose: () => void;
-  locale?: string;
 }
 
 export default function AddSlotsModal({
@@ -28,8 +29,8 @@ export default function AddSlotsModal({
   saving,
   onSave,
   onClose,
-  locale = 'fr',
 }: AddSlotsModalProps) {
+  const locale = useLocale();
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -46,7 +47,7 @@ export default function AddSlotsModal({
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4 text-gray-400" /></button>
         </div>
         <p className="text-xs text-gray-400 mb-4 capitalize">
-          {new Date(addSlotsDay + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          {new Date(addSlotsDay + 'T00:00:00').toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
 
         <div className="grid grid-cols-4 gap-2 mb-4">
@@ -60,7 +61,7 @@ export default function AddSlotsModal({
                 disabled={exists}
                 className={`py-2 rounded-xl text-xs font-semibold transition-all ${exists ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : selected ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
               >
-                {fmtTime(time, locale)}
+                {formatTime(time, locale)}
               </button>
             );
           })}
@@ -81,7 +82,7 @@ export default function AddSlotsModal({
           <div className="flex flex-wrap gap-1.5 mb-4">
             {selectedTimes.sort().map(time => (
               <span key={time} className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">
-                {fmtTime(time, locale)}
+                {formatTime(time, locale)}
                 <button onClick={() => setSelectedTimes(prev => prev.filter(t => t !== time))}><X className="w-3 h-3" /></button>
               </span>
             ))}

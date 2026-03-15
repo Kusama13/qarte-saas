@@ -1,7 +1,8 @@
 'use client';
 
 import { Crown } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { toBCP47 } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Modal } from '@/components/ui';
 import type { Merchant, MemberCard } from '@/types';
@@ -24,6 +25,7 @@ export default function MemberCardModal({
   customerLastName,
 }: MemberCardModalProps) {
   const t = useTranslations('memberCardModal');
+  const locale = useLocale();
   const isActive = new Date(memberCard.valid_until) > new Date();
 
   return (
@@ -110,7 +112,7 @@ export default function MemberCardModal({
               <div className="text-right">
                 <p className="text-white/30 text-[7px] font-medium uppercase mb-0.5" style={{ letterSpacing: '0.15em' }}>{t('expiresOn')}</p>
                 <p className="text-white/90 text-xs font-bold tracking-wider font-mono">
-                  {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', {
+                  {new Date(memberCard.valid_until).toLocaleDateString(toBCP47(locale), {
                     day: '2-digit',
                     month: '2-digit',
                     year: '2-digit',

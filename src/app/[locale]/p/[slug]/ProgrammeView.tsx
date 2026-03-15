@@ -6,7 +6,7 @@ import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
-import { formatDoubleDays, formatTime } from '@/lib/utils';
+import { formatDoubleDays, formatTime, toBCP47 } from '@/lib/utils';
 import { useLocale, useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
@@ -620,7 +620,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               <p className="text-[12px] text-gray-500 leading-relaxed">
                 {t('promoInstructions')}
                 {promoOffer.expires_at && (
-                  <span className="font-semibold text-amber-700"> {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString('fr-FR') })}</span>
+                  <span className="font-semibold text-amber-700"> {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString(toBCP47(locale)) })}</span>
                 )}
               </p>
             </div>

@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter as useIntlRouter } from '@/i18n/navigation';
+import { useRouter } from '@/i18n/navigation';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
-import { useRouter } from 'next/navigation';
 import {
   Store,
   Phone,
@@ -19,10 +18,10 @@ import {
   Crown,
   Globe,
 } from 'lucide-react';
-import Link from 'next/link';
+import { Link } from '@/i18n/navigation';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, formatDate, PHONE_CONFIG } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, formatDate, PHONE_CONFIG, toBCP47 } from '@/lib/utils';
 import { SHOP_TYPES, type ShopType, COUNTRIES } from '@/types';
 import type { Merchant } from '@/types';
 
@@ -34,7 +33,6 @@ const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
 export default function SettingsPage() {
   const t = useTranslations('settings');
   const router = useRouter();
-  const intlRouter = useIntlRouter();
   const currentLocale = useLocale();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -329,7 +327,7 @@ export default function SettingsPage() {
           <div className="p-5 rounded-2xl bg-white/50 border border-gray-100 shadow-sm transition-all hover:border-indigo-100">
             <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">{t('createdAtLabel')}</p>
             <p className="text-sm text-gray-700 font-medium">
-              {new Date(merchant?.created_at || '').toLocaleDateString(currentLocale === 'en' ? 'en-US' : 'fr-FR', {
+              {new Date(merchant?.created_at || '').toLocaleDateString(toBCP47(currentLocale), {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
@@ -354,7 +352,7 @@ export default function SettingsPage() {
                     if (merchant) {
                       await supabase.from('merchants').update({ locale: code }).eq('id', merchant.id);
                     }
-                    intlRouter.replace('/dashboard/settings', { locale: code as 'fr' | 'en' });
+                    router.replace('/dashboard/settings', { locale: code as 'fr' | 'en' });
                   }}
                   className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
                     code === currentLocale
@@ -420,12 +418,12 @@ export default function SettingsPage() {
         <p className="mb-6 text-sm text-red-700 leading-relaxed">
           {t('dangerDesc')}
         </p>
-        <a
+        <Link
           href="/contact"
           className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm transition-colors shadow-md shadow-red-200"
         >
           {t('deleteAccount')}
-        </a>
+        </Link>
       </div>
     </div>
   );

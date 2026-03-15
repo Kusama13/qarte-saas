@@ -85,7 +85,7 @@ export function formatDateTime(date: string | Date, locale: string = 'fr'): stri
  */
 export function formatTime(time: string, locale: string = 'fr'): string {
   const [h, m] = time.split(':');
-  const hour = parseInt(h);
+  const hour = +h;
   const min = m || '00';
   if (locale === 'en') {
     const period = hour >= 12 ? 'PM' : 'AM';
@@ -243,11 +243,31 @@ export async function generateQRCodeSVG(url: string): Promise<string> {
 }
 
 // =============================================
-// Phone: multi-country support (FR, BE, CH, LU)
+// Locale helpers
+// =============================================
+
+/** Convert short locale ('fr', 'en') to BCP 47 tag for Intl APIs */
+export function toBCP47(locale: string): string {
+  return locale === 'en' ? 'en-US' : 'fr-FR';
+}
+
+// =============================================
+// Phone: multi-country support
 // Storage: E.164 without + (e.g. 33612345678)
 // =============================================
 
 import type { MerchantCountry } from '@/types';
+
+export const COUNTRY_FLAGS: Record<MerchantCountry, string> = {
+  FR: '🇫🇷', BE: '🇧🇪', CH: '🇨🇭', LU: '🇱🇺',
+  US: '🇺🇸', GB: '🇬🇧', CA: '🇨🇦', AU: '🇦🇺',
+  ES: '🇪🇸', IT: '🇮🇹',
+};
+
+/** Strip non-digits from E.164 phone for wa.me links. */
+export function formatPhoneForWhatsApp(phone: string): string {
+  return phone.replace(/\D/g, '');
+}
 
 export const PHONE_CONFIG: Record<MerchantCountry, {
   prefix: string;
@@ -327,6 +347,9 @@ export const PHONE_CONFIG: Record<MerchantCountry, {
     placeholder: '312 345 6789',
   },
 };
+
+/** All supported countries — stable reference for default props */
+export const ALL_COUNTRIES = Object.keys(PHONE_CONFIG) as MerchantCountry[];
 
 /**
  * Convertit un numero vers E.164 sans + (ex: 33612345678).
