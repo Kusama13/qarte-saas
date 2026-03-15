@@ -4,13 +4,20 @@ import { createClient } from '@supabase/supabase-js';
 import { headers } from 'next/headers';
 import logger from '@/lib/logger';
 import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail } from '@/lib/email';
+import type { EmailLocale } from '@/emails/translations';
 import { sendCapiPurchaseEvent } from '@/lib/facebook-capi';
+import { toBCP47 } from '@/lib/utils';
 import type { SubscriptionStatus } from '@/types';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+/** Extract email locale from merchant row, default 'fr' */
+function mLocale(merchant: { locale?: string }): EmailLocale {
+  return (merchant.locale as EmailLocale) || 'fr';
+}
 
 export async function POST(request: Request) {
   const body = await request.text();
@@ -60,7 +67,7 @@ export async function POST(request: Request) {
         })
         .eq('id', merchantId)
         .neq('subscription_status', 'active')
-        .select('shop_name, user_id, trial_ends_at')
+        .select('shop_name, user_id, trial_ends_at, locale')
         .single();
 
       if (!merchant) {
@@ -72,13 +79,14 @@ export async function POST(request: Request) {
       // Envoyer l'email de confirmation (await pour serverless)
       const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
       if (userData?.user?.email) {
+        const locale = mLocale(merchant);
         // Date du prochain prélèvement depuis Stripe (source de vérité)
         let nextBillingDate: string | undefined;
         if (session.subscription) {
           try {
             const sub = await stripe.subscriptions.retrieve(session.subscription as string) as unknown as { current_period_end: number };
             if (sub.current_period_end) {
-              nextBillingDate = new Date(sub.current_period_end * 1000).toLocaleDateString('fr-FR', {
+              nextBillingDate = new Date(sub.current_period_end * 1000).toLocaleDateString(toBCP47(locale), {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
@@ -89,7 +97,7 @@ export async function POST(request: Request) {
             if (merchant.trial_ends_at) {
               const trialEnd = new Date(merchant.trial_ends_at);
               if (trialEnd > new Date()) {
-                nextBillingDate = trialEnd.toLocaleDateString('fr-FR', {
+                nextBillingDate = trialEnd.toLocaleDateString(toBCP47(locale), {
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric',
@@ -99,7 +107,7 @@ export async function POST(request: Request) {
           }
         }
         const billingInterval = session.metadata?.plan === 'annual' ? 'annual' : 'monthly';
-        await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate, billingInterval).catch((err) => {
+        await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate, billingInterval, locale).catch((err) => {
           logger.error('Failed to send subscription email', err);
         });
 
@@ -161,14 +169,14 @@ export async function POST(request: Request) {
           updated_at: new Date().toISOString(),
         })
         .eq('stripe_customer_id', invoice.customer as string)
-        .select('shop_name, user_id')
+        .select('shop_name, user_id, locale')
         .single();
 
       // Envoyer l'email de paiement échoué (await pour serverless)
       if (merchant) {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         if (userData?.user?.email) {
-          await sendPaymentFailedEmail(userData.user.email, merchant.shop_name).catch((err) => {
+          await sendPaymentFailedEmail(userData.user.email, merchant.shop_name, mLocale(merchant)).catch((err) => {
             logger.error('Failed to send payment failed email', err);
           });
         }
@@ -191,14 +199,14 @@ export async function POST(request: Request) {
         })
         .eq('stripe_customer_id', invoice.customer as string)
         .eq('subscription_status', 'past_due')
-        .select('shop_name, user_id')
+        .select('shop_name, user_id, locale')
         .single();
 
       // Email de confirmation si paiement récupéré (past_due → active)
       if (merchant) {
         const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
         if (userData?.user?.email) {
-          await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name).catch((err) => {
+          await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, undefined, undefined, mLocale(merchant)).catch((err) => {
             logger.error('Failed to send payment recovery email', err);
           });
         }
@@ -273,7 +281,7 @@ export async function POST(request: Request) {
           updated_at: new Date().toISOString(),
         })
         .eq('stripe_subscription_id', subscription.id)
-        .select('id, shop_name, user_id')
+        .select('id, shop_name, user_id, locale')
         .single();
 
       if (!updatedMerchant) {
@@ -284,15 +292,16 @@ export async function POST(request: Request) {
       if (updatedMerchant && newStatus === 'canceling') {
         const { data: userData } = await supabase.auth.admin.getUserById(updatedMerchant.user_id);
         if (userData?.user?.email) {
+          const locale = mLocale(updatedMerchant);
           // cancel_at can be null — email template has a fallback message
           const endDate = subscription.cancel_at
-            ? new Date(subscription.cancel_at * 1000).toLocaleDateString('fr-FR', {
+            ? new Date(subscription.cancel_at * 1000).toLocaleDateString(toBCP47(locale), {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
               })
             : undefined;
-          await sendSubscriptionCanceledEmail(userData.user.email, updatedMerchant.shop_name, endDate).catch((err) => {
+          await sendSubscriptionCanceledEmail(userData.user.email, updatedMerchant.shop_name, endDate, locale).catch((err) => {
             logger.error('Failed to send subscription canceling email', err);
           });
         }
@@ -302,7 +311,7 @@ export async function POST(request: Request) {
       if (updatedMerchant && wasReactivated && newStatus === 'active') {
         const { data: userData } = await supabase.auth.admin.getUserById(updatedMerchant.user_id);
         if (userData?.user?.email) {
-          await sendSubscriptionReactivatedEmail(userData.user.email, updatedMerchant.shop_name).catch((err) => {
+          await sendSubscriptionReactivatedEmail(userData.user.email, updatedMerchant.shop_name, mLocale(updatedMerchant)).catch((err) => {
             logger.error('Failed to send subscription reactivated email', err);
           });
         }
