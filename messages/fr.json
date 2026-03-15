@@ -1060,6 +1060,7 @@
     "nfcSameProgram": "Même programme, zéro friction",
     "nfcSameProgramDesc": "Elle valide son passage comme d'habitude. Le NFC remplace simplement le QR code.",
     "nfcWhatsapp": "Contactez-nous sur WhatsApp",
+    "nfcWhatsappMessage": "Bonjour, je suis intéressé(e) par la carte NFC Qarte",
     "postDownloadTitle": "Aide-nous à te rendre visible",
     "postDownloadDesc": "Qarte crée une page pour ton salon, référencée sur Google. Plus elle est complète, plus tu as de chances d'attirer de nouveaux clients.",
     "postDownloadCta": "Compléter ma page",
@@ -1649,5 +1650,36 @@
     "yourBenefit": "Votre avantage",
     "holder": "Titulaire",
     "expiresOn": "Expire le"
+  },
+  "errorPage": {
+    "title": "Une erreur est survenue",
+    "description": "Nous sommes désolés, quelque chose s'est mal passé. Veuillez réessayer ou retourner à l'accueil.",
+    "retry": "Réessayer",
+    "backHome": "Retour à l'accueil"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "description": "Désolé, la page que vous recherchez n'existe pas ou a été déplacée.",
+    "backHome": "Retour à l'accueil",
+    "contact": "Nous contacter"
+  },
+  "legalCommon": {
+    "back": "Retour",
+    "lastUpdate": "Dernière mise à jour : {date}"
+  },
+  "cgv": {
+    "metaTitle": "Conditions Générales de Vente | Qarte",
+    "metaDescription": "Consultez les conditions générales de vente de Qarte, la solution de fidélité digitale et page pro pour les professionnels de la beauté.",
+    "title": "Conditions Générales de Vente"
+  },
+  "mentions": {
+    "metaTitle": "Mentions Légales | Qarte",
+    "metaDescription": "Mentions légales de Qarte, la solution de fidélité digitale et page pro pour les professionnels de la beauté.",
+    "title": "Mentions Légales"
+  },
+  "privacy": {
+    "metaTitle": "Politique de Confidentialité | Qarte",
+    "metaDescription": "Découvrez comment Qarte protège vos données personnelles. Notre politique de confidentialité détaille la collecte et l'utilisation de vos informations.",
+    "title": "Politique de Confidentialité"
   }
 }

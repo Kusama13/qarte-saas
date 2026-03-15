@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { useTranslations } from 'next-intl';
 
 export default function Error({
   error,
@@ -12,9 +13,9 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations('errorPage');
+
   useEffect(() => {
-    // Log error to monitoring service (Sentry, etc.)
-    // For now, we just log to console in development
     if (process.env.NODE_ENV === 'development') {
       console.error('Application error:', error);
     }
@@ -28,12 +29,11 @@ export default function Error({
         </div>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Une erreur est survenue
+          {t('title')}
         </h1>
 
         <p className="text-gray-600 mb-8">
-          Nous sommes d&eacute;sol&eacute;s, quelque chose s&apos;est mal pass&eacute;.
-          Veuillez r&eacute;essayer ou retourner &agrave; l&apos;accueil.
+          {t('description')}
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -42,13 +42,13 @@ export default function Error({
             className="inline-flex items-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
-            R&eacute;essayer
+            {t('retry')}
           </Button>
 
           <Link href="/">
             <Button variant="outline" className="inline-flex items-center gap-2 w-full sm:w-auto">
               <Home className="w-4 h-4" />
-              Retour &agrave; l&apos;accueil
+              {t('backHome')}
             </Button>
           </Link>
         </div>

@@ -123,6 +123,7 @@ export default async function RootLayout({
               url: `${baseUrl}/#pricing`,
               availability: 'https://schema.org/InStock',
             },
+            availableLanguage: ['French', 'English'],
           }) }}
         />
       </head>

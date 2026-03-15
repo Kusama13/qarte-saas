@@ -1060,6 +1060,7 @@
     "nfcSameProgram": "Same program, zero friction",
     "nfcSameProgramDesc": "They validate their visit as usual. NFC simply replaces the QR code.",
     "nfcWhatsapp": "Contact us on WhatsApp",
+    "nfcWhatsappMessage": "Hi, I'm interested in the Qarte NFC card",
     "postDownloadTitle": "Help us make you visible",
     "postDownloadDesc": "Qarte creates a page for your salon, indexed on Google. The more complete it is, the more likely you are to attract new clients.",
     "postDownloadCta": "Complete my page",
@@ -1649,5 +1650,36 @@
     "yourBenefit": "Your benefit",
     "holder": "Holder",
     "expiresOn": "Expires on"
+  },
+  "errorPage": {
+    "title": "Something went wrong",
+    "description": "We're sorry, something didn't work as expected. Please try again or head back to the homepage.",
+    "retry": "Try again",
+    "backHome": "Back to homepage"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "Sorry, the page you're looking for doesn't exist or has been moved.",
+    "backHome": "Back to homepage",
+    "contact": "Contact us"
+  },
+  "legalCommon": {
+    "back": "Back",
+    "lastUpdate": "Last updated: {date}"
+  },
+  "cgv": {
+    "metaTitle": "Terms and Conditions | Qarte",
+    "metaDescription": "Read the terms and conditions for Qarte, the digital loyalty and professional page solution for beauty and wellness pros.",
+    "title": "Terms and Conditions"
+  },
+  "mentions": {
+    "metaTitle": "Legal Notice | Qarte",
+    "metaDescription": "Legal notice for Qarte, the digital loyalty and professional page solution for beauty and wellness pros.",
+    "title": "Legal Notice"
+  },
+  "privacy": {
+    "metaTitle": "Privacy Policy | Qarte",
+    "metaDescription": "Learn how Qarte protects your personal data. Our privacy policy details how we collect and use your information.",
+    "title": "Privacy Policy"
   }
 }
