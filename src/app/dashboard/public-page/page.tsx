@@ -14,6 +14,7 @@ import {
   Palette,
   MapPin,
   Camera,
+  Scissors,
   ChevronDown,
   Loader2,
   CreditCard,
@@ -26,7 +27,7 @@ import WelcomeSection, { type WelcomeSectionHandle } from './WelcomeSection';
 import ServicesSection from './ServicesSection';
 import PromoSection from './PromoSection';
 
-type SectionId = 'salon' | 'contenu' | 'acquisition';
+type SectionId = 'salon' | 'contenu' | 'prestations' | 'acquisition';
 
 export default function PublicPageDashboard() {
   const router = useRouter();
@@ -34,7 +35,7 @@ export default function PublicPageDashboard() {
   const welcomeRef = useRef<WelcomeSectionHandle>(null);
 
   // Collapsible sections — all open by default
-  const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set(['salon', 'contenu', 'acquisition']));
+  const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set(['salon', 'contenu', 'prestations', 'acquisition']));
   const toggleSection = (id: SectionId) => {
     setOpenSections(prev => {
       const next = new Set(prev);
@@ -381,8 +382,8 @@ export default function PublicPageDashboard() {
                   <Camera className="w-5 h-5 text-pink-600" />
                 </div>
                 <div className="text-left">
-                  <h2 className="text-base font-extrabold text-gray-900">Contenu</h2>
-                  <p className="text-xs text-gray-500">Photos et tarifs visibles sur ta page</p>
+                  <h2 className="text-base font-extrabold text-gray-900">Photos</h2>
+                  <p className="text-xs text-gray-500">Tes realisations visibles sur ta page</p>
                 </div>
               </div>
               <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${openSections.has('contenu') ? 'rotate-180' : ''}`} />
@@ -391,12 +392,36 @@ export default function PublicPageDashboard() {
             {openSections.has('contenu') && (
               <div className="px-4 md:px-5 pb-5 space-y-0">
                 <PhotosSection merchant={merchant} />
+              </div>
+            )}
+          </div>
+
+          {/* ═══════ SECTION 3 : PRESTATIONS ═══════ */}
+          <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden border-l-4 border-l-amber-400">
+            <button
+              onClick={() => toggleSection('prestations')}
+              className="w-full flex items-center justify-between p-4 md:p-5 bg-gradient-to-r from-amber-50/60 to-transparent"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shadow-sm">
+                  <Scissors className="w-5 h-5 text-amber-600" />
+                </div>
+                <div className="text-left">
+                  <h2 className="text-base font-extrabold text-gray-900">Prestations</h2>
+                  <p className="text-xs text-gray-500">Tarifs et services visibles sur ta page</p>
+                </div>
+              </div>
+              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${openSections.has('prestations') ? 'rotate-180' : ''}`} />
+            </button>
+
+            {openSections.has('prestations') && (
+              <div className="px-4 md:px-5 pb-5 space-y-0">
                 <ServicesSection merchant={merchant} />
               </div>
             )}
           </div>
 
-          {/* ═══════ SECTION 3 : ACQUISITION ═══════ */}
+          {/* ═══════ SECTION 4 : ACQUISITION ═══════ */}
           <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden border-l-4 border-l-violet-400">
             <button
               onClick={() => toggleSection('acquisition')}

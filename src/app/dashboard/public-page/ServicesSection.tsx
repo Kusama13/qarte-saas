@@ -10,7 +10,6 @@ import {
   Euro,
   Pencil,
   ChevronRight,
-  ChevronDown,
   Clock,
   LayoutList,
   Tag,
@@ -56,7 +55,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
 
   // Collapsed categories
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
-  const [prestationsOpen, setPrestationsOpen] = useState(false);
+
 
   useEffect(() => {
     const fetchServices = async () => {
@@ -365,27 +364,16 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
   );
 
   return (
-    <div className="pt-4 border-t border-gray-100">
-      {/* Header — clickable to toggle */}
-      <button
-        onClick={() => setPrestationsOpen(!prestationsOpen)}
-        className="flex items-center justify-between w-full text-left mb-3"
-      >
-        <div className="flex items-center gap-2">
-          <LayoutList className="w-4 h-4 text-indigo-500" />
-          <span className="text-sm font-semibold text-gray-700">Tarifs et prestations</span>
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <LayoutList className="w-4 h-4 text-amber-500" />
+        <span className="text-sm font-semibold text-gray-700">Tarifs et prestations</span>
+        {services.length > 0 && (
           <span className="text-xs text-gray-400">
-            {services.length > 0
-              ? `${services.length} prestation${services.length > 1 ? 's' : ''}`
-              : ''
-            }
+            {services.length} prestation{services.length > 1 ? 's' : ''}
           </span>
-        </div>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${prestationsOpen ? 'rotate-180' : ''}`} />
-      </button>
-
-      <div className={`grid transition-all duration-300 ${prestationsOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-      <div className="overflow-hidden">
+        )}
+      </div>
       <div>
         {servicesLoading ? (
           <div className="flex justify-center py-8">
@@ -612,8 +600,6 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
             )}
           </>
         )}
-      </div>
-      </div>
       </div>
     </div>
   );
