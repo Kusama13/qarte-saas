@@ -869,5 +869,17 @@
   "customers": {
     "title": "Clients",
     "subtitle": "Gère tes clients et leur fidélité"
+  },
+  "planning": {
+    "title": "Planning",
+    "subtitle": "Gère tes créneaux et ta disponibilité"
+  },
+  "qrDownload": {
+    "title": "QR Code & Supports",
+    "subtitle": "Télécharge et partage ton QR code"
+  },
+  "referralsPage": {
+    "title": "Parrainage",
+    "subtitle": "Fais grandir ta clientèle grâce au bouche-à-oreille"
   }
 }

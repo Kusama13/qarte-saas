@@ -869,5 +869,17 @@
   "customers": {
     "title": "Clients",
     "subtitle": "Manage your clients and their loyalty"
+  },
+  "planning": {
+    "title": "Schedule",
+    "subtitle": "Manage your time slots and availability"
+  },
+  "qrDownload": {
+    "title": "QR Code & Materials",
+    "subtitle": "Download and share your QR code"
+  },
+  "referralsPage": {
+    "title": "Referrals",
+    "subtitle": "Grow your client base through word-of-mouth"
   }
 }
