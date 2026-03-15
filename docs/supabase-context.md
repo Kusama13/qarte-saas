@@ -87,6 +87,7 @@
 | billing_interval | TEXT | `'monthly'` | mig 051 |
 | planning_enabled | BOOLEAN | `FALSE` | mig 063 |
 | planning_message | TEXT | NULL | mig 063 |
+| show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL |
 | bio | TEXT | NULL | mig 061 |
 | opening_hours | JSONB | NULL | mig 062 |
 | last_seen_at | TIMESTAMPTZ | NULL | mig 031 |

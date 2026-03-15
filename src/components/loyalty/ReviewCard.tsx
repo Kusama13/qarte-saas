@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Star, ChevronRight } from 'lucide-react';
+import { Star, X, ChevronRight } from 'lucide-react';
 
 interface ReviewCardProps {
   reviewLink: string;
@@ -37,36 +37,44 @@ export default function ReviewCard({ reviewLink, shopName, merchantId }: ReviewC
   if (dismissed) return null;
 
   return (
-    <div className="w-full rounded-2xl overflow-hidden border border-amber-100 bg-gradient-to-br from-amber-50 via-white to-amber-50/50">
-      <div className="px-5 py-5 flex flex-col items-center text-center gap-3">
-        {/* Stars */}
-        <div className="flex items-center gap-0.5">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
-          ))}
+    <div className="w-full rounded-2xl overflow-hidden border border-amber-100 bg-white">
+      <div className="px-4 py-3 flex items-center gap-3">
+        {/* Stars icon */}
+        <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+          <div className="flex items-center gap-px">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Star key={i} className="w-2 h-2 text-amber-400 fill-amber-400" />
+            ))}
+          </div>
         </div>
 
-        {/* Message */}
-        <p className="text-sm font-bold text-gray-900 leading-snug">
-          Un avis, c&apos;est la meilleure façon de nous soutenir
-        </p>
+        {/* Text */}
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold text-gray-900 leading-tight">
+            Laisse-nous un avis
+          </p>
+          <p className="text-[11px] text-gray-400 leading-tight mt-0.5">
+            Ca nous aide enormement
+          </p>
+        </div>
 
-        {/* CTA */}
+        {/* CTA button */}
         <button
           onClick={handleReview}
-          className="w-full flex items-center justify-center gap-2 h-10 rounded-xl text-white text-xs font-semibold shadow-md shadow-amber-200/50 active:scale-[0.97] transition-all"
+          className="flex-shrink-0 flex items-center gap-1 px-3 h-8 rounded-lg text-white text-[11px] font-semibold active:scale-[0.97] transition-all"
           style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
         >
-          Laisser un avis
-          <ChevronRight className="w-4 h-4" />
+          Avis
+          <ChevronRight className="w-3 h-3" />
         </button>
 
         {/* Dismiss */}
         <button
           onClick={handleDismiss}
-          className="text-xs text-gray-400 hover:text-gray-500 transition-colors"
+          className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-all"
+          aria-label="Fermer"
         >
-          J&apos;ai déjà laissé un avis
+          <X className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>

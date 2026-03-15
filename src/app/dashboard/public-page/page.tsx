@@ -16,8 +16,10 @@ import {
   Camera,
   ChevronDown,
   Loader2,
+  CreditCard,
 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
+import { getSupabase } from '@/lib/supabase';
 import InfoSection from './InfoSection';
 import PhotosSection from './PhotosSection';
 import WelcomeSection, { type WelcomeSectionHandle } from './WelcomeSection';
@@ -47,6 +49,9 @@ export default function PublicPageDashboard() {
   const [showWelcomeHelp, setShowWelcomeHelp] = useState(false);
   // Link copy
   const [copied, setCopied] = useState(false);
+  // Toggle: show page link on loyalty card
+  const [showOnCard, setShowOnCard] = useState(merchant?.show_public_page_on_card ?? false);
+  const [savingShowOnCard, setSavingShowOnCard] = useState(false);
 
   const pageUrl = merchant?.slug ? `https://getqarte.com/p/${merchant.slug}` : '';
 
@@ -55,6 +60,26 @@ export default function PublicPageDashboard() {
     navigator.clipboard.writeText(pageUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleToggleShowOnCard = async () => {
+    if (!merchant || savingShowOnCard) return;
+    const next = !showOnCard;
+    setShowOnCard(next);
+    setSavingShowOnCard(true);
+    try {
+      const supabase = getSupabase();
+      const { error } = await supabase
+        .from('merchants')
+        .update({ show_public_page_on_card: next })
+        .eq('id', merchant.id);
+      if (error) throw error;
+      refetch();
+    } catch {
+      setShowOnCard(!next); // rollback
+    } finally {
+      setSavingShowOnCard(false);
+    }
   };
 
   // ── Completion bar ──
@@ -265,6 +290,28 @@ export default function PublicPageDashboard() {
               Voir
             </a>
           </div>
+        </div>
+      )}
+
+      {/* ── Toggle: afficher sur la carte ── */}
+      {merchant?.slug && (
+        <div className="flex items-center justify-between gap-3 px-5 py-3.5 mb-6 rounded-2xl border border-gray-200 bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center">
+              <CreditCard className="w-4.5 h-4.5 text-violet-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Afficher sur la carte de fidelite</p>
+              <p className="text-xs text-gray-400">Tes clients voient un lien vers ta page pro</p>
+            </div>
+          </div>
+          <button
+            onClick={handleToggleShowOnCard}
+            disabled={savingShowOnCard}
+            className={`relative w-11 h-6 rounded-full transition-colors ${showOnCard ? 'bg-violet-600' : 'bg-gray-200'} ${savingShowOnCard ? 'opacity-50' : ''}`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${showOnCard ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
         </div>
       )}
 

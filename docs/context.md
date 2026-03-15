@@ -381,6 +381,9 @@ Fond gradient mesh anime (orbes indigo/violet/rose), 4 mini cartes de fidelite f
 ### Wallet Client (`/customer/cards`)
 Design Apple Wallet, fond `bg-[#f7f6fb]`, greeting typographique, cartes avec header merchant colore, glow reward-ready, dual tier barres
 
+### Carte Fidelite Client (`/customer/card/[merchantId]`)
+Header colore avec nom merchant. Boutons conditionnels dans le header : "Membre" (si member card active), "Reserver" (si `booking_url`), **"Infos"** (si `show_public_page_on_card` et `slug` — lien vers `/p/[slug]`). Toggle dans Ma Page (`/dashboard/public-page`) pour activer/desactiver le bouton Infos.
+
 ### Scan (`/scan/[code]`)
 Inscription rapide, validation passage, progression fidelite, detection `?ref=` pour parrainage
 

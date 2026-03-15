@@ -109,6 +109,8 @@ export interface Merchant {
   planning_message: string | null;
   planning_message_expires: string | null;
   booking_message: string | null;
+  // Public page link on loyalty card
+  show_public_page_on_card: boolean;
 }
 
 export interface PlanningSlot {
