@@ -40,6 +40,7 @@ interface Merchant {
   shop_address: string | null;
   phone: string;
   subscription_status: string;
+  billing_interval: 'monthly' | 'annual' | null;
   trial_ends_at: string | null;
   created_at: string;
   reward_description: string | null;
@@ -114,6 +115,7 @@ export default function AdminDashboardPage() {
     weeklyActiveMerchants: 0,
     activationRate: 0,
     cagnotteMerchants: 0,
+    mrr: 0,
   });
   const [recentMerchants, setRecentMerchants] = useState<Merchant[]>([]);
 
@@ -170,10 +172,10 @@ export default function AdminDashboardPage() {
       { data: allVisits },
       { data: recentMerchantsList },
     ] = await Promise.all([
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode'),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode'),
       supabase.from('super_admins').select('user_id'),
       supabase.from('visits').select('merchant_id, visited_at'),
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode').order('created_at', { ascending: false }).limit(10),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode').order('created_at', { ascending: false }).limit(10),
     ]);
 
     // Fetch merchant emails via API
@@ -241,6 +243,11 @@ export default function AdminDashboardPage() {
 
     const cagnotte = merchants.filter((m: Merchant) => m.loyalty_mode === 'cagnotte');
 
+    // MRR: mensuel = 19€, annuel = 190/12 ≈ 15.83€
+    const mrr = active.reduce((sum: number, m: Merchant) => {
+      return sum + (m.billing_interval === 'annual' ? Math.round(190 / 12 * 100) / 100 : 19);
+    }, 0);
+
     setStats({
       totalMerchants: merchants.length,
       trialMerchants: trial.length,
@@ -250,6 +257,7 @@ export default function AdminDashboardPage() {
       weeklyActiveMerchants: weeklyActive.size,
       activationRate,
       cagnotteMerchants: cagnotte.length,
+      mrr,
     });
 
     // Helper to enrich merchant for action segments
@@ -597,12 +605,12 @@ export default function AdminDashboardPage() {
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         <StatCard label="Commerçants" value={stats.totalMerchants} icon={Store} color="emerald" />
-        <StatCard label="MRR" value={`${stats.activeMerchants * 19}€`} icon={CreditCard} color="pink" />
-        <StatCard label="Activation 30j" value={`${stats.activationRate}%`} icon={TrendingUp} color="indigo" />
-        <StatCard label="Actifs 7j" value={stats.weeklyActiveMerchants} icon={Users} color="blue" />
+        <StatCard label="Payants" value={stats.activeMerchants} icon={CreditCard} color="pink" />
+        <StatCard label="MRR" value={`${Math.round(stats.mrr)}€`} icon={Wallet} color="purple" />
         <StatCard label="En essai" value={stats.trialMerchants} icon={Clock} color="amber" />
+        <StatCard label="Actifs 7j" value={stats.weeklyActiveMerchants} icon={Users} color="blue" />
+        <StatCard label="Activation 30j" value={`${stats.activationRate}%`} icon={TrendingUp} color="indigo" />
         <StatCard label="Conversion" value={`${conversionRate}%`} icon={Percent} color="green" />
-        <StatCard label="Cagnotte" value={stats.cagnotteMerchants} icon={Wallet} color="purple" />
       </div>
 
 

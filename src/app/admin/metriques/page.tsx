@@ -17,6 +17,7 @@ import {
   Target,
   Filter,
   Timer,
+  ChevronDown,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import {
@@ -120,6 +121,10 @@ export default function MetriquesPage() {
   const [funnelPeriod, setFunnelPeriod] = useState<'7' | '30' | '90' | 'all'>('all');
   const [merchantsWithServices, setMerchantsWithServices] = useState<Set<string>>(new Set());
   const [merchantsWithPhotos, setMerchantsWithPhotos] = useState<Set<string>>(new Set());
+
+  // UI toggles
+  const [adoptionOpen, setAdoptionOpen] = useState(false);
+  const [expandedCohort, setExpandedCohort] = useState<string | null>(null);
 
   // Computed funnel based on period (with visit date filtering)
   const funnel = useMemo(() => {
@@ -516,6 +521,90 @@ export default function MetriquesPage() {
     return features;
   }, [funnelMerchants, merchantsWithServices, merchantsWithPhotos]);
 
+  // Weekly cohorts: group merchants by 7-day creation windows
+  const weeklyCohorts = useMemo(() => {
+    if (funnelMerchants.length === 0) return [];
+
+    // Find earliest and latest merchant creation dates
+    const sorted = [...funnelMerchants].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    const earliest = new Date(sorted[0].created_at);
+    const now = new Date();
+
+    // Build 7-day windows from earliest to now
+    const cohorts: {
+      key: string;
+      startDate: Date;
+      endDate: Date;
+      label: string;
+      merchants: MerchantData[];
+      signups: number;
+      trials: number;
+      paid: number;
+      conversionRate: number;
+      dailyBreakdown: { date: string; label: string; signups: number; trials: number; paid: number }[];
+    }[] = [];
+
+    const windowStart = new Date(earliest);
+    windowStart.setHours(0, 0, 0, 0);
+
+    while (windowStart < now) {
+      const windowEnd = new Date(windowStart);
+      windowEnd.setDate(windowEnd.getDate() + 7);
+
+      const cohortMerchants = funnelMerchants.filter(m => {
+        const created = new Date(m.created_at);
+        return created >= windowStart && created < windowEnd;
+      });
+
+      // Daily breakdown within the 7-day window
+      const dailyBreakdown: { date: string; label: string; signups: number; trials: number; paid: number }[] = [];
+
+      for (let d = 0; d < 7; d++) {
+        const dayStart = new Date(windowStart);
+        dayStart.setDate(dayStart.getDate() + d);
+        if (dayStart > now) break;
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+
+        const dayMerchants = cohortMerchants.filter(m => {
+          const created = new Date(m.created_at);
+          return created >= dayStart && created < dayEnd;
+        });
+
+        if (dayMerchants.length > 0) {
+          dailyBreakdown.push({
+            date: dayStart.toISOString().split('T')[0],
+            label: dayStart.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
+            signups: dayMerchants.length,
+            trials: dayMerchants.filter(m => m.subscription_status === 'trial').length,
+            paid: dayMerchants.filter(m => m.subscription_status === 'active').length,
+          });
+        }
+      }
+
+      if (cohortMerchants.length > 0) {
+        const paid = cohortMerchants.filter(m => m.subscription_status === 'active').length;
+        cohorts.push({
+          key: windowStart.toISOString().split('T')[0],
+          startDate: new Date(windowStart),
+          endDate: new Date(windowEnd),
+          label: `${windowStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} — ${new Date(windowEnd.getTime() - 86400000).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}`,
+          merchants: cohortMerchants,
+          signups: cohortMerchants.length,
+          trials: cohortMerchants.filter(m => m.subscription_status === 'trial').length,
+          paid,
+          conversionRate: Math.round((paid / cohortMerchants.length) * 100),
+          dailyBreakdown,
+        });
+      }
+
+      windowStart.setDate(windowStart.getDate() + 7);
+    }
+
+    // Most recent first
+    return cohorts.reverse();
+  }, [funnelMerchants]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -715,28 +804,94 @@ export default function MetriquesPage() {
         </div>
       </section>
 
-      {/* 4b. ADOPTION DES FONCTIONNALITES */}
+      {/* 4b. ADOPTION DES FONCTIONNALITES (collapsible) */}
       {featureAdoption.length > 0 && (
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <button
+            onClick={() => setAdoptionOpen(!adoptionOpen)}
+            className="w-full text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2 hover:text-[#5167fc] transition-colors"
+          >
             <Zap className="w-5 h-5 text-[#5167fc]" />
             Adoption des fonctionnalites
+            <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", adoptionOpen && "rotate-180")} />
+          </button>
+          {adoptionOpen && (
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="grid grid-cols-1 divide-y divide-gray-100">
+                {featureAdoption.map((feature) => (
+                  <div key={feature.label} className="flex items-center justify-between px-5 py-3">
+                    <span className="text-sm font-medium text-gray-700">{feature.label}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-32 bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700 bg-[#5167fc]"
+                          style={{ width: `${Math.max(feature.pct, 2)}%` }}
+                        />
+                      </div>
+                      <span className="text-sm font-bold text-gray-900 w-10 text-right">{feature.pct}%</span>
+                      <span className="text-xs text-gray-400 w-6 text-right">{feature.count}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* 4c. COHORTES HEBDOMADAIRES */}
+      {weeklyCohorts.length > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-[#5167fc]" />
+            Cohortes hebdomadaires
           </h2>
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="grid grid-cols-1 divide-y divide-gray-100">
-              {featureAdoption.map((feature) => (
-                <div key={feature.label} className="flex items-center justify-between px-5 py-3">
-                  <span className="text-sm font-medium text-gray-700">{feature.label}</span>
-                  <div className="flex items-center gap-3">
-                    <div className="w-32 bg-gray-100 rounded-full h-2 overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700 bg-[#5167fc]"
-                        style={{ width: `${Math.max(feature.pct, 2)}%` }}
-                      />
+            {/* Header */}
+            <div className="grid grid-cols-5 gap-2 px-5 py-3 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 uppercase tracking-wide">
+              <span className="col-span-1">Semaine</span>
+              <span className="text-center">Inscrits</span>
+              <span className="text-center">En essai</span>
+              <span className="text-center">Payants</span>
+              <span className="text-center">Conversion</span>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {weeklyCohorts.map((cohort) => (
+                <div key={cohort.key}>
+                  <button
+                    onClick={() => setExpandedCohort(expandedCohort === cohort.key ? null : cohort.key)}
+                    className="w-full grid grid-cols-5 gap-2 px-5 py-3 hover:bg-gray-50 transition-colors items-center"
+                  >
+                    <span className="col-span-1 text-sm font-medium text-gray-700 text-left flex items-center gap-1.5">
+                      <ChevronDown className={cn("w-3.5 h-3.5 text-gray-400 transition-transform shrink-0", expandedCohort === cohort.key && "rotate-180")} />
+                      {cohort.label}
+                    </span>
+                    <span className="text-sm font-bold text-gray-900 text-center">{cohort.signups}</span>
+                    <span className="text-sm text-amber-600 text-center">{cohort.trials}</span>
+                    <span className="text-sm text-green-600 font-semibold text-center">{cohort.paid}</span>
+                    <span className={cn(
+                      "text-sm font-bold text-center",
+                      cohort.conversionRate >= 50 ? "text-green-600" : cohort.conversionRate >= 20 ? "text-amber-600" : "text-red-500"
+                    )}>
+                      {cohort.conversionRate}%
+                    </span>
+                  </button>
+                  {/* Daily breakdown */}
+                  {expandedCohort === cohort.key && (
+                    <div className="bg-gray-50/50 border-t border-gray-100">
+                      {cohort.dailyBreakdown.map((day) => (
+                        <div key={day.date} className="grid grid-cols-5 gap-2 px-5 py-2 pl-10">
+                          <span className="col-span-1 text-xs text-gray-500">{day.label}</span>
+                          <span className="text-xs text-gray-700 text-center">{day.signups || '-'}</span>
+                          <span className="text-xs text-amber-500 text-center">{day.trials || '-'}</span>
+                          <span className="text-xs text-green-600 text-center">{day.paid || '-'}</span>
+                          <span className="text-xs text-gray-400 text-center">
+                            {day.signups > 0 ? `${Math.round((day.paid / day.signups) * 100)}%` : '-'}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                    <span className="text-sm font-bold text-gray-900 w-10 text-right">{feature.pct}%</span>
-                    <span className="text-xs text-gray-400 w-6 text-right">{feature.count}</span>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
