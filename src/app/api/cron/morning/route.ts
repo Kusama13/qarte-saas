@@ -24,6 +24,7 @@ import {
   sendGracePeriodSetupEmail,
   sendBirthdayNotificationEmail,
 } from '@/lib/email';
+import type { EmailLocale } from '@/emails/translations';
 import { getTrialStatus, getTodayInParis } from '@/lib/utils';
 import { sendAutomationPush, getUpcomingEvent } from '@/lib/push-automation';
 import logger from '@/lib/logger';
@@ -223,7 +224,7 @@ export async function GET(request: NextRequest) {
   else try {
     const { data: merchants } = await supabase
       .from('merchants')
-      .select('id, shop_name, user_id, trial_ends_at, subscription_status')
+      .select('id, shop_name, user_id, trial_ends_at, subscription_status, locale')
       .eq('subscription_status', 'trial')
       .neq('no_contact', true);
 
@@ -251,7 +252,7 @@ export async function GET(request: NextRequest) {
           if (trialStatus.isActive && (trialStatus.daysRemaining === 3 || trialStatus.daysRemaining === 1)) {
             const trackCode = trialStatus.daysRemaining === 3 ? -203 : -201;
             if (trialTrackingSet.has(`${merchant.id}:${trackCode}`)) return;
-            await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining);
+            await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining, undefined, (merchant.locale as EmailLocale) || 'fr');
             await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
             results.trialEmails.ending++;
             merchantsSentTrialEmail.add(merchant.id);
@@ -262,7 +263,7 @@ export async function GET(request: NextRequest) {
               const trackCode = daysExpired === 1 ? -211 : -212;
               if (trialTrackingSet.has(`${merchant.id}:${trackCode}`)) return;
               const promoCode = daysExpired === 1 ? 'QARTE50' : undefined;
-              await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, promoCode);
+              await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, promoCode, (merchant.locale as EmailLocale) || 'fr');
               await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
               results.trialEmails.expired++;
               merchantsSentTrialEmail.add(merchant.id);
@@ -287,7 +288,7 @@ export async function GET(request: NextRequest) {
 
     const { data: unconfiguredMerchants } = await supabase
       .from('merchants')
-      .select('id, shop_name, user_id')
+      .select('id, shop_name, user_id, locale')
       .is('reward_description', null)
       .in('subscription_status', ['trial', 'active'])
       .lte('created_at', twentyFourHoursAgo.toISOString())
@@ -298,7 +299,7 @@ export async function GET(request: NextRequest) {
       candidates: unconfiguredMerchants,
       trackingCode: -301,
       stats: results.programReminders,
-      sendFn: (email, m) => sendProgramReminderEmail(email, m.shop_name),
+      sendFn: (email, m) => sendProgramReminderEmail(email, m.shop_name, (m.locale as EmailLocale) || 'fr'),
     });
 
     // 2b. PROGRAM REMINDER (J+2)
@@ -307,7 +308,7 @@ export async function GET(request: NextRequest) {
 
     const { data: unconfiguredDay2 } = await supabase
       .from('merchants')
-      .select('id, shop_name, shop_type, slug, user_id')
+      .select('id, shop_name, shop_type, slug, user_id, locale')
       .is('reward_description', null)
       .in('subscription_status', ['trial', 'active'])
       .lte('created_at', fortyEightHoursAgo.toISOString())
@@ -318,7 +319,7 @@ export async function GET(request: NextRequest) {
       candidates: unconfiguredDay2,
       trackingCode: -302,
       stats: results.programRemindersDay2,
-      sendFn: (email, m) => sendProgramReminderDay2Email(email, m.shop_name, m.shop_type || '', m.slug),
+      sendFn: (email, m) => sendProgramReminderDay2Email(email, m.shop_name, m.shop_type || '', m.slug, (m.locale as EmailLocale) || 'fr'),
     });
 
     // 2c. PROGRAM REMINDER (J+3)
@@ -327,7 +328,7 @@ export async function GET(request: NextRequest) {
 
     const { data: unconfiguredDay3 } = await supabase
       .from('merchants')
-      .select('id, shop_name, user_id, trial_ends_at, subscription_status')
+      .select('id, shop_name, user_id, trial_ends_at, subscription_status, locale')
       .is('reward_description', null)
       .in('subscription_status', ['trial', 'active'])
       .lte('created_at', seventyTwoHoursAgo.toISOString())
@@ -342,7 +343,7 @@ export async function GET(request: NextRequest) {
       sendFn: (email, m) => {
         const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
         const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
-        return sendProgramReminderDay3Email(email, m.shop_name, daysRemaining);
+        return sendProgramReminderDay3Email(email, m.shop_name, daysRemaining, (m.locale as EmailLocale) || 'fr');
       },
     });
   } catch (error) {
@@ -361,7 +362,7 @@ export async function GET(request: NextRequest) {
 
       const { data: day5Merchants } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id')
+        .select('id, shop_name, user_id, locale')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
@@ -392,7 +393,7 @@ export async function GET(request: NextRequest) {
           alreadySentSet: alreadySentDay5,
           stats: results.day5Checkin,
           extraSkip: (m) => (scanCountMap.get(m.id) || 0) === 0,
-          sendFn: (email, m) => sendDay5CheckinEmail(email, m.shop_name, scanCountMap.get(m.id) || 0),
+          sendFn: (email, m) => sendDay5CheckinEmail(email, m.shop_name, scanCountMap.get(m.id) || 0, (m.locale as EmailLocale) || 'fr'),
         });
       }
     }
@@ -401,7 +402,7 @@ export async function GET(request: NextRequest) {
     {
       const { data: qrCandidates } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode')
+        .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, locale')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
@@ -428,7 +429,8 @@ export async function GET(request: NextRequest) {
               m.stamps_required, m.primary_color,
               m.logo_url || undefined,
               m.tier2_enabled, m.tier2_stamps_required, m.tier2_reward_description,
-              m.loyalty_mode || undefined
+              m.loyalty_mode || undefined,
+              (m.locale as EmailLocale) || 'fr'
             ),
           });
         }
@@ -439,7 +441,7 @@ export async function GET(request: NextRequest) {
     {
       const { data: scriptCandidates } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id, shop_type, reward_description, stamps_required, trial_ends_at, subscription_status, loyalty_mode')
+        .select('id, shop_name, user_id, shop_type, reward_description, stamps_required, trial_ends_at, subscription_status, loyalty_mode, locale')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
@@ -496,7 +498,8 @@ export async function GET(request: NextRequest) {
             sendFn: (email, m) => sendFirstClientScriptEmail(
               email, m.shop_name, m.shop_type || '',
               m.reward_description, m.stamps_required,
-              m.loyalty_mode || undefined
+              m.loyalty_mode || undefined,
+              (m.locale as EmailLocale) || 'fr'
             ),
           });
         }
@@ -507,7 +510,7 @@ export async function GET(request: NextRequest) {
     {
       const { data: qcCandidates } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id, trial_ends_at, subscription_status')
+        .select('id, shop_name, user_id, trial_ends_at, subscription_status, locale')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
@@ -563,7 +566,7 @@ export async function GET(request: NextRequest) {
             sendFn: (email, m) => {
               const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
               const daysRemaining = Math.max(trialStatus.daysRemaining, 1);
-              return sendQuickCheckEmail(email, m.shop_name, daysRemaining);
+              return sendQuickCheckEmail(email, m.shop_name, daysRemaining, (m.locale as EmailLocale) || 'fr');
             },
           });
         }
@@ -580,7 +583,7 @@ export async function GET(request: NextRequest) {
     // Merchants with exactly 2 confirmed visits (1st is always merchant's test, 2nd is first real client)
     const { data: allConfiguredMerchants } = await supabase
       .from('merchants')
-      .select('id, shop_name, user_id, referral_code, slug')
+      .select('id, shop_name, user_id, referral_code, slug, locale')
       .not('reward_description', 'is', null)
       .neq('reward_description', '')
       .in('subscription_status', ['trial', 'active'])
@@ -609,14 +612,14 @@ export async function GET(request: NextRequest) {
           candidates: firstScanMerchants,
           trackingCode: -100,
           stats: results.firstScan,
-          sendFn: (email, m) => sendFirstScanEmail(email, m.shop_name, m.referral_code, m.slug),
+          sendFn: (email, m) => sendFirstScanEmail(email, m.shop_name, m.referral_code, m.slug, (m.locale as EmailLocale) || 'fr'),
         });
       }
 
       // 2f. FIRST REWARD EMAIL
       const { data: merchantsWithProgram } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id, reward_description, stamps_required, loyalty_mode')
+        .select('id, shop_name, user_id, reward_description, stamps_required, loyalty_mode, locale')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
@@ -668,7 +671,7 @@ export async function GET(request: NextRequest) {
             if (!merchant.reward_description) { results.firstReward.skipped++; return; }
 
             try {
-              const result = await sendFirstRewardEmail(email, merchant.shop_name, merchant.reward_description, merchant.loyalty_mode === 'cagnotte');
+              const result = await sendFirstRewardEmail(email, merchant.shop_name, merchant.reward_description, merchant.loyalty_mode === 'cagnotte', (merchant.locale as EmailLocale) || 'fr');
               if (result.success) {
                 await supabase.from('pending_email_tracking').insert({
                   merchant_id: merchantId, reminder_day: -101, pending_count: 0,
@@ -683,7 +686,7 @@ export async function GET(request: NextRequest) {
       // 2g. TIER 2 UPSELL (50+ clients, tier2 pas active)
       const { data: tier2Candidates } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id, reward_description, tier2_enabled')
+        .select('id, shop_name, user_id, reward_description, tier2_enabled, locale')
         .not('reward_description', 'is', null)
         .neq('reward_description', '')
         .in('subscription_status', ['trial', 'active'])
@@ -725,7 +728,7 @@ export async function GET(request: NextRequest) {
             extraSkip: (m) => !m.reward_description,
             sendFn: (email, m) => {
               const totalCustomers = customerCountMap.get(m.id) || 0;
-              return sendTier2UpsellEmail(email, m.shop_name, totalCustomers, m.reward_description!);
+              return sendTier2UpsellEmail(email, m.shop_name, totalCustomers, m.reward_description!, (m.locale as EmailLocale) || 'fr');
             },
           });
         }
@@ -747,7 +750,7 @@ export async function GET(request: NextRequest) {
 
     const { data: activeMerchants } = await supabase
       .from('merchants')
-      .select('id, shop_name, user_id, reward_description, stamps_required, created_at, trial_ends_at, subscription_status')
+      .select('id, shop_name, user_id, reward_description, stamps_required, created_at, trial_ends_at, subscription_status, locale')
       .not('reward_description', 'is', null)
       .neq('reward_description', '')
       .in('subscription_status', ['trial', 'active'])
@@ -826,17 +829,19 @@ export async function GET(request: NextRequest) {
 
           try {
             let result;
+            const mLocale = (merchant.locale as EmailLocale) || 'fr';
             if (daysInactive === 7) {
-              result = await sendInactiveMerchantDay7Email(email, merchant.shop_name);
+              result = await sendInactiveMerchantDay7Email(email, merchant.shop_name, mLocale);
             } else if (daysInactive === 14) {
               result = await sendInactiveMerchantDay14Email(
                 email,
                 merchant.shop_name,
                 merchant.reward_description || undefined,
-                merchant.stamps_required || undefined
+                merchant.stamps_required || undefined,
+                mLocale
               );
             } else {
-              result = await sendInactiveMerchantDay30Email(email, merchant.shop_name);
+              result = await sendInactiveMerchantDay30Email(email, merchant.shop_name, mLocale);
             }
 
             if (result.success) {
@@ -867,7 +872,7 @@ export async function GET(request: NextRequest) {
 
     const { data: canceledMerchants } = await supabase
       .from('merchants')
-      .select('id, shop_name, user_id, updated_at')
+      .select('id, shop_name, user_id, updated_at, locale')
       .eq('subscription_status', 'canceled')
       .neq('no_contact', true);
 
@@ -933,7 +938,7 @@ export async function GET(request: NextRequest) {
               promoMonths = 3;
             }
             const result = await sendReactivationEmail(
-              email, merchant.shop_name, daysSinceCancellation, totalCustomers || undefined, promoCode, promoMonths
+              email, merchant.shop_name, daysSinceCancellation, totalCustomers || undefined, promoCode, promoMonths, (merchant.locale as EmailLocale) || 'fr'
             );
             if (result.success) {
               await supabase.from('reactivation_email_tracking').insert({
@@ -1031,7 +1036,7 @@ export async function GET(request: NextRequest) {
 
       const { data: autoSuggestCandidates } = await supabase
         .from('merchants')
-        .select('id, shop_name, shop_type, user_id, trial_ends_at, subscription_status')
+        .select('id, shop_name, shop_type, user_id, trial_ends_at, subscription_status, locale')
         .is('reward_description', null)
         .in('subscription_status', ['trial', 'active'])
         .lte('created_at', oneHundredTwentyHoursAgo.toISOString())
@@ -1046,7 +1051,7 @@ export async function GET(request: NextRequest) {
         sendFn: (email, m) => {
           const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
           const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
-          return sendAutoSuggestRewardEmail(email, m.shop_name, m.shop_type || '', daysRemaining);
+          return sendAutoSuggestRewardEmail(email, m.shop_name, m.shop_type || '', daysRemaining, (m.locale as EmailLocale) || 'fr');
         },
       });
     }
@@ -1055,7 +1060,7 @@ export async function GET(request: NextRequest) {
     {
       const { data: graceCandidates } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id, trial_ends_at, subscription_status')
+        .select('id, shop_name, user_id, trial_ends_at, subscription_status, locale')
         .is('reward_description', null)
         .eq('subscription_status', 'trial')
         .neq('no_contact', true);
@@ -1070,7 +1075,7 @@ export async function GET(request: NextRequest) {
         },
         sendFn: (email, m) => {
           const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
-          return sendGracePeriodSetupEmail(email, m.shop_name, trialStatus.daysUntilDeletion);
+          return sendGracePeriodSetupEmail(email, m.shop_name, trialStatus.daysUntilDeletion, (m.locale as EmailLocale) || 'fr');
         },
       });
     }
@@ -1093,7 +1098,7 @@ export async function GET(request: NextRequest) {
     if (uniqueMerchantIds.length > 0) {
       const { data: merchantsData } = await supabase
         .from('merchants')
-        .select('id, shop_name, user_id')
+        .select('id, shop_name, user_id, locale')
         .in('id', uniqueMerchantIds)
         .neq('no_contact', true);
 
@@ -1168,7 +1173,7 @@ export async function GET(request: NextRequest) {
         }
 
         try {
-          const result = await sendPendingPointsEmail(email, merchant.shop_name, pendingCount, isReminder, isReminder ? daysSinceFirst : undefined);
+          const result = await sendPendingPointsEmail(email, merchant.shop_name, pendingCount, isReminder, isReminder ? daysSinceFirst : undefined, (merchant.locale as EmailLocale) || 'fr');
           if (result.success) {
             await supabase.from('pending_email_tracking').insert({
               merchant_id: merchantId,
@@ -1335,7 +1340,7 @@ export async function GET(request: NextRequest) {
 
       const { data: birthdayMerchants } = await supabase
         .from('merchants')
-        .select('id, user_id, shop_name, birthday_gift_description')
+        .select('id, user_id, shop_name, birthday_gift_description, locale')
         .eq('birthday_gift_enabled', true)
         .neq('no_contact', true)
         .in('subscription_status', ['trial', 'active']);
@@ -1521,7 +1526,8 @@ export async function GET(request: NextRequest) {
                   merchantEmail,
                   bm.shop_name,
                   clientNames,
-                  bm.birthday_gift_description || 'Cadeau anniversaire'
+                  bm.birthday_gift_description || 'Cadeau anniversaire',
+                  (bm.locale as EmailLocale) || 'fr'
                 ).catch(() => {
                   // Never let merchant notification crash the cron
                 });

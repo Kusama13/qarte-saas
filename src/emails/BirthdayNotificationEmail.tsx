@@ -6,50 +6,56 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface BirthdayNotificationEmailProps {
   shopName: string;
   clientNames: string[];
   giftDescription: string;
+  locale?: EmailLocale;
 }
 
-export function BirthdayNotificationEmail({ shopName, clientNames, giftDescription }: BirthdayNotificationEmailProps) {
+export function BirthdayNotificationEmail({ shopName, clientNames, giftDescription, locale = 'fr' }: BirthdayNotificationEmailProps) {
+  const t = getEmailT(locale);
   const plural = clientNames.length > 1;
+  const pluralSuffix = plural ? 's' : '';
   const clientList = clientNames.length === 1
     ? clientNames[0]
     : clientNames.slice(0, -1).join(', ') + ' et ' + clientNames[clientNames.length - 1];
 
   return (
-    <BaseLayout preview={`${clientList} ${plural ? 'fêtent leur' : 'fête son'} anniversaire aujourd'hui`}>
+    <BaseLayout preview={t('birthdayNotification.preview', { plural: pluralSuffix })} locale={locale}>
       <Heading style={heading}>
-        Anniversaire client{plural ? 's' : ''} aujourd&apos;hui
+        {t('birthdayNotification.heading', { plural: pluralSuffix })}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('birthdayNotification.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        <strong>{clientList}</strong> {plural ? 'f&ecirc;tent leur' : 'f&ecirc;te son'} anniversaire <strong>aujourd&apos;hui</strong>.
+        {plural
+          ? t('birthdayNotification.introPlural', { count: String(clientNames.length) })
+          : t('birthdayNotification.introSingle')
+        }
+        {' '}<strong>{clientList}</strong>
       </Text>
 
       <Section style={giftBox}>
-        <Text style={giftLabel}>Cadeau attribu&eacute; automatiquement</Text>
+        <Text style={giftLabel}>{t('birthdayNotification.giftLabel', { giftDescription })}</Text>
         <Text style={giftText}>{giftDescription}</Text>
       </Section>
 
       <Text style={paragraph}>
-        Pense &agrave; {plural ? 'leur' : 'lui'} envoyer un petit message personnel pour marquer le coup !
+        {t('birthdayNotification.reminderText')}
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/customers">
-          Voir mes clients
+          {t('birthdayNotification.ctaDashboard')}
         </Button>
       </Section>
 
       <Text style={signature}>
-        L&apos;&eacute;quipe Qarte
+        {t('birthdayNotification.signature')}
       </Text>
     </BaseLayout>
   );

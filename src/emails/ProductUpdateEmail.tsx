@@ -7,23 +7,24 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface ProductUpdateEmailProps {
   shopName: string;
   merchantId: string;
   referralCode?: string;
+  locale?: EmailLocale;
 }
 
-export function ProductUpdateEmail({ shopName, merchantId, referralCode }: ProductUpdateEmailProps) {
+export function ProductUpdateEmail({ shopName, merchantId, referralCode, locale = 'fr' }: ProductUpdateEmailProps) {
+  const t = getEmailT(locale);
   return (
-    <BaseLayout preview={`${shopName}, d\u00e9couvre les nouveaut\u00e9s Qarte de la semaine`}>
+    <BaseLayout preview={t('productUpdate.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Quoi de neuf chez Qarte ?
+        {t('productUpdate.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('productUpdate.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
         On a travaill&eacute; dur ces derniers jours pour te donner encore plus
@@ -114,9 +115,7 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode }: Produ
       )}
 
       <Text style={signature}>
-        &Agrave; tr&egrave;s vite,
-        <br />
-        L&apos;&eacute;quipe Qarte
+        {t('productUpdate.signature')}
       </Text>
     </BaseLayout>
   );

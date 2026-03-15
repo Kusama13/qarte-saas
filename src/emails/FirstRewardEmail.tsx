@@ -6,72 +6,58 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface FirstRewardEmailProps {
   shopName: string;
   rewardDescription: string;
   referralCode?: string;
   isCagnotte?: boolean;
+  locale?: EmailLocale;
 }
 
-export function FirstRewardEmail({ shopName, rewardDescription, referralCode, isCagnotte }: FirstRewardEmailProps) {
+export function FirstRewardEmail({ shopName, rewardDescription, referralCode, isCagnotte, locale = 'fr' }: FirstRewardEmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview={`${shopName}, un client a gagn&eacute; sa r&eacute;compense !`}>
+    <BaseLayout preview={t('firstReward.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Premi&egrave;re r&eacute;compense d&eacute;bloqu&eacute;e !
+        {t('firstReward.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('firstReward.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Un de tes clients vient d&apos;atteindre le nombre de passages requis
-        et a d&eacute;bloqu&eacute; sa r&eacute;compense. C&apos;est la preuve que ton programme fonctionne !
+        {t('firstReward.intro')}
       </Text>
 
       <Section style={rewardBox}>
-        <Text style={rewardLabel}>R&eacute;compense gagn&eacute;e</Text>
+        <Text style={rewardLabel}>{t('firstReward.rewardLabel')}</Text>
         <Text style={rewardText}>{rewardDescription}</Text>
       </Section>
 
-      <Text style={paragraph}>
-        {isCagnotte
-          ? <>Ce client reviendra pour profiter de son avantage &mdash; et continuera &agrave; cumuler. C&apos;est le cercle vertueux de la fid&eacute;lit&eacute;.</>
-          : <>Ce client reviendra pour utiliser sa r&eacute;compense &mdash; et recommencera &agrave; cumuler des points. C&apos;est le cercle vertueux de la fid&eacute;lit&eacute;.</>
-        }
-      </Text>
-
       <Section style={statsBox}>
-        <Text style={statsTitle}>Le savais-tu ?</Text>
+        <Text style={statsTitle}>{t('firstReward.impactTitle')}</Text>
         <Text style={statsText}>
-          Les clients qui atteignent une r&eacute;compense ont <strong>3x plus de chances</strong> de
-          revenir r&eacute;guli&egrave;rement dans ton commerce.
+          {t('firstReward.impactText')}
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard">
-          Voir mon tableau de bord
+          {t('firstReward.ctaDashboard')}
         </Button>
       </Section>
 
-      {referralCode && (
-        <Section style={referralBox}>
-          <Text style={referralTitle}>Gagne 10&euro; de r&eacute;duction</Text>
-          <Text style={referralText}>
-            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommande-lui Qarte : <strong>10&euro; de r&eacute;duction</strong> chacun sur le prochain mois.
-          </Text>
-          <Text style={referralCode_style}>Ton code : <strong>{referralCode}</strong></Text>
-          <Text style={referralHint}>
-            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
-          </Text>
-        </Section>
-      )}
+      <Section style={nextStepBox}>
+        <Text style={nextStepTitle}>{t('firstReward.nextStepTitle')}</Text>
+        <Text style={nextStepText}>
+          {t('firstReward.nextStepText')}
+        </Text>
+      </Section>
 
       <Text style={signature}>
-        L&apos;&eacute;quipe Qarte
+        {t('firstReward.signature')}
       </Text>
     </BaseLayout>
   );
@@ -144,6 +130,27 @@ const statsText = {
   margin: '0',
 };
 
+const nextStepBox = {
+  backgroundColor: '#f8f9fa',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '24px 0',
+};
+
+const nextStepTitle = {
+  color: '#1a1a1a',
+  fontSize: '15px',
+  fontWeight: '600',
+  margin: '0 0 8px 0',
+};
+
+const nextStepText = {
+  color: '#4a5568',
+  fontSize: '14px',
+  lineHeight: '1.6',
+  margin: '0',
+};
+
 const buttonContainer = {
   textAlign: 'center' as const,
   margin: '28px 0',
@@ -165,48 +172,6 @@ const signature = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '24px 0 0 0',
-};
-
-const referralBox = {
-  backgroundColor: '#faf5ff',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-  border: '1px solid #e9d5ff',
-};
-
-const referralTitle = {
-  color: '#4b0082',
-  fontSize: '16px',
-  fontWeight: '700',
-  margin: '0 0 8px 0',
-};
-
-const referralText = {
-  color: '#4a5568',
-  fontSize: '14px',
-  lineHeight: '1.6',
-  margin: '0 0 12px 0',
-};
-
-const referralCode_style = {
-  color: '#4b0082',
-  fontSize: '18px',
-  fontWeight: '700',
-  fontFamily: 'monospace',
-  textAlign: 'center' as const,
-  margin: '0 0 8px 0',
-  padding: '8px',
-  backgroundColor: '#ffffff',
-  borderRadius: '8px',
-  border: '1px dashed #c4b5fd',
-};
-
-const referralHint = {
-  color: '#9ca3af',
-  fontSize: '12px',
-  textAlign: 'center' as const,
-  margin: '0',
 };
 
 export default FirstRewardEmail;

@@ -6,84 +6,50 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface Tier2UpsellEmailProps {
   shopName: string;
   totalCustomers: number;
   rewardDescription: string;
   referralCode?: string;
+  locale?: EmailLocale;
 }
 
-export function Tier2UpsellEmail({ shopName, totalCustomers, rewardDescription, referralCode }: Tier2UpsellEmailProps) {
+export function Tier2UpsellEmail({ shopName, totalCustomers, rewardDescription, referralCode, locale = 'fr' }: Tier2UpsellEmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview={`${shopName}, tes meilleurs clients méritent plus`}>
+    <BaseLayout preview={t('tier2Upsell.preview')} locale={locale}>
       <Heading style={heading}>
-        Tes meilleurs clients m&eacute;ritent un traitement VIP
+        {t('tier2Upsell.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('tier2Upsell.greeting', { shopName }) }} />
 
-      <Text style={paragraph}>
-        Tu as d&eacute;j&agrave; <strong>{totalCustomers} client{totalCustomers > 1 ? 's' : ''}</strong> dans
-        ton programme. C&apos;est le moment id&eacute;al pour r&eacute;compenser tes plus fid&egrave;les.
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('tier2Upsell.intro', { totalCustomers: String(totalCustomers) }) }} />
 
       <Section style={vipBox}>
-        <Text style={vipTitle}>Programme VIP &mdash; Palier 2</Text>
+        <Text style={vipTitle}>{t('tier2Upsell.whatIsTitle')}</Text>
         <Text style={vipText}>
-          Ajoute un 2&egrave;me niveau de r&eacute;compense pour tes clients les plus assidus.
-          Plus ils viennent, plus la r&eacute;compense est grande.
+          {t('tier2Upsell.whatIsText')}
         </Text>
       </Section>
 
       <Section style={exampleBox}>
-        <Text style={exampleTitle}>Exemple pour ton commerce :</Text>
         <Text style={exampleItem}>
-          <strong>Palier 1 :</strong> {rewardDescription} (actuel)
+          {t('tier2Upsell.currentReward', { rewardDescription })}
         </Text>
-        <Text style={exampleItem}>
-          <strong>Palier 2 :</strong> Une r&eacute;compense premium apr&egrave;s 20 passages
-        </Text>
-        <Text style={exampleNote}>
-          Tu choisis la r&eacute;compense et le nombre de passages requis.
-        </Text>
-      </Section>
-
-      <Section style={benefitBox}>
-        <Text style={benefitTitle}>Pourquoi &ccedil;a marche</Text>
-        <Text style={benefitItem}>&#8594; Les clients VIP d&eacute;pensent en moyenne <strong>2x plus</strong></Text>
-        <Text style={benefitItem}>&#8594; &Ccedil;a cr&eacute;e un sentiment d&apos;exclusivit&eacute;</Text>
-        <Text style={benefitItem}>&#8594; Tes meilleurs clients se sentent reconnus</Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/program">
-          Activer le Palier VIP
+          {t('tier2Upsell.ctaSetup')}
         </Button>
       </Section>
 
-      <Text style={noteText}>
-        D&eacute;j&agrave; inclus dans ton abonnement, aucun co&ucirc;t suppl&eacute;mentaire.
-      </Text>
-
-      {referralCode && (
-        <Section style={referralBox}>
-          <Text style={referralTitle}>Gagne 10&euro; de r&eacute;duction</Text>
-          <Text style={referralText}>
-            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommande-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur ton prochain mois.
-          </Text>
-          <Text style={referralCode_style}>Ton code : <strong>{referralCode}</strong></Text>
-          <Text style={referralHint}>
-            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
-          </Text>
-        </Section>
-      )}
-
       <Text style={signature}>
-        L&apos;&eacute;quipe Qarte
+        {t('tier2Upsell.signature')}
       </Text>
     </BaseLayout>
   );
@@ -134,46 +100,11 @@ const exampleBox = {
   margin: '24px 0',
 };
 
-const exampleTitle = {
-  color: '#1a1a1a',
-  fontSize: '15px',
-  fontWeight: '600',
-  margin: '0 0 12px 0',
-};
-
 const exampleItem = {
   color: '#4a5568',
   fontSize: '14px',
   lineHeight: '1.8',
   margin: '0 0 4px 0',
-};
-
-const exampleNote = {
-  color: '#9ca3af',
-  fontSize: '13px',
-  fontStyle: 'italic' as const,
-  margin: '8px 0 0 0',
-};
-
-const benefitBox = {
-  backgroundColor: '#f0edfc',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-};
-
-const benefitTitle = {
-  color: '#4b0082',
-  fontSize: '14px',
-  fontWeight: '600',
-  margin: '0 0 12px 0',
-};
-
-const benefitItem = {
-  color: '#4a5568',
-  fontSize: '14px',
-  lineHeight: '1.8',
-  margin: '0',
 };
 
 const buttonContainer = {
@@ -192,60 +123,11 @@ const button = {
   padding: '14px 32px',
 };
 
-const noteText = {
-  color: '#9ca3af',
-  fontSize: '13px',
-  textAlign: 'center' as const,
-  margin: '0 0 24px 0',
-};
-
 const signature = {
   color: '#4a5568',
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '24px 0 0 0',
-};
-
-const referralBox = {
-  backgroundColor: '#faf5ff',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-  border: '1px solid #e9d5ff',
-};
-
-const referralTitle = {
-  color: '#4b0082',
-  fontSize: '16px',
-  fontWeight: '700',
-  margin: '0 0 8px 0',
-};
-
-const referralText = {
-  color: '#4a5568',
-  fontSize: '14px',
-  lineHeight: '1.6',
-  margin: '0 0 12px 0',
-};
-
-const referralCode_style = {
-  color: '#4b0082',
-  fontSize: '18px',
-  fontWeight: '700',
-  fontFamily: 'monospace',
-  textAlign: 'center' as const,
-  margin: '0 0 8px 0',
-  padding: '8px',
-  backgroundColor: '#ffffff',
-  borderRadius: '8px',
-  border: '1px dashed #c4b5fd',
-};
-
-const referralHint = {
-  color: '#9ca3af',
-  fontSize: '12px',
-  textAlign: 'center' as const,
-  margin: '0',
 };
 
 export default Tier2UpsellEmail;

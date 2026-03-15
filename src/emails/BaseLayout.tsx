@@ -10,15 +10,18 @@ import {
   Text,
 } from '@react-email/components';
 import * as React from 'react';
+import { getBaseLayoutT, type EmailLocale } from './translations';
 
 interface BaseLayoutProps {
   preview: string;
   children: React.ReactNode;
+  locale?: EmailLocale;
 }
 
-export function BaseLayout({ preview, children }: BaseLayoutProps) {
+export function BaseLayout({ preview, children, locale = 'fr' }: BaseLayoutProps) {
+  const bl = getBaseLayoutT(locale);
   return (
-    <Html lang="fr">
+    <Html lang={locale}>
       <Head />
       <Preview>{preview}</Preview>
       <Body style={main}>
@@ -48,21 +51,21 @@ export function BaseLayout({ preview, children }: BaseLayoutProps) {
               <Link href="https://www.tiktok.com/@getqarte" style={socialLink}>TikTok</Link>
             </Text>
             <Text style={footerText}>
-              © {new Date().getFullYear()} Qarte. Tous droits réservés.
+              {bl.allRightsReserved.replace('{year}', String(new Date().getFullYear()))}
             </Text>
             <Text style={footerAddress}>
-              Qarte — 128 Rue la Boétie, 75008 Paris, France
+              {bl.address}
             </Text>
             <Text style={footerLinks}>
-              <Link href="https://getqarte.com" style={link}>Site web</Link>
+              <Link href="https://getqarte.com" style={link}>{bl.website}</Link>
               {' • '}
-              <Link href="https://getqarte.com/contact" style={link}>Contact</Link>
+              <Link href="https://getqarte.com/contact" style={link}>{bl.contact}</Link>
               {' • '}
-              <Link href="https://getqarte.com/politique-confidentialite" style={link}>Confidentialité</Link>
+              <Link href="https://getqarte.com/politique-confidentialite" style={link}>{bl.privacy}</Link>
             </Text>
             <Text style={unsubscribeText}>
               <Link href="mailto:contact@getqarte.com?subject=Désinscription" style={unsubscribeLink}>
-                Se désinscrire des emails
+                {bl.unsubscribe}
               </Link>
             </Text>
           </Section>

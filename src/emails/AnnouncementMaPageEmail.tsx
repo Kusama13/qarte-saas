@@ -6,23 +6,24 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface AnnouncementMaPageEmailProps {
   shopName: string;
   slug: string;
   isSubscribed?: boolean;
+  locale?: EmailLocale;
 }
 
-export function AnnouncementMaPageEmail({ shopName, slug, isSubscribed = true }: AnnouncementMaPageEmailProps) {
+export function AnnouncementMaPageEmail({ shopName, slug, isSubscribed = true, locale = 'fr' }: AnnouncementMaPageEmailProps) {
+  const t = getEmailT(locale);
   return (
-    <BaseLayout preview={`${shopName}, d\u00e9couvre ce qu'on a pr\u00e9par\u00e9 pour toi`}>
+    <BaseLayout preview={t('announcementMaPage.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        On a travaill&eacute; dur pour toi
+        {t('announcementMaPage.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('announcementMaPage.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
         Qarte, ce n&apos;est plus seulement un programme de fid&eacute;lit&eacute;.
@@ -94,9 +95,7 @@ export function AnnouncementMaPageEmail({ shopName, slug, isSubscribed = true }:
       )}
 
       <Text style={signature}>
-        &Agrave; tr&egrave;s vite,
-        <br />
-        L&apos;&eacute;quipe Qarte
+        {t('announcementMaPage.signature')}
       </Text>
     </BaseLayout>
   );

@@ -7,77 +7,70 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface GracePeriodSetupEmailProps {
   shopName: string;
   daysUntilDeletion: number;
+  locale?: EmailLocale;
 }
 
-export function GracePeriodSetupEmail({ shopName, daysUntilDeletion }: GracePeriodSetupEmailProps) {
+export function GracePeriodSetupEmail({ shopName, daysUntilDeletion, locale = 'fr' }: GracePeriodSetupEmailProps) {
+  const t = getEmailT(locale);
+  const daysPlural = daysUntilDeletion > 1 ? 's' : '';
+
   return (
-    <BaseLayout preview={`${shopName}, ton essai est termin&eacute; — on peut encore t'aider`}>
+    <BaseLayout preview={t('gracePeriodSetup.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Ton essai est termin&eacute; — il n&apos;est pas trop tard
+        {t('gracePeriodSetup.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('gracePeriodSetup.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Ton essai est termin&eacute;, mais ton programme de fid&eacute;lit&eacute;
-        n&apos;a jamais &eacute;t&eacute; configur&eacute;. On comprend que le quotidien passe vite.
+        {t('gracePeriodSetup.intro')}
       </Text>
 
       <Section style={infoBox}>
-        <Text style={infoText}>
-          Tes donn&eacute;es sont conserv&eacute;es encore <strong>{daysUntilDeletion} jour{daysUntilDeletion > 1 ? 's' : ''}</strong>.
-        </Text>
+        <Text style={infoText} dangerouslySetInnerHTML={{ __html: t('gracePeriodSetup.dataRetention', { daysUntilDeletion: String(daysUntilDeletion), daysPlural }) }} />
       </Section>
 
       <Hr style={divider} />
 
       <Section style={offerBox}>
-        <Text style={offerTitle}>On le fait ensemble en 2 minutes</Text>
-        <Text style={offerText}>
-          R&eacute;ponds &agrave; cet email et on configure
-          ton programme <strong>pendant que tu es avec tes clients</strong>.
-          Tout ce qu&apos;on a besoin :
-        </Text>
+        <Text style={offerTitle}>{t('gracePeriodSetup.togetherTitle')}</Text>
+        <Text style={offerText} dangerouslySetInnerHTML={{ __html: t('gracePeriodSetup.togetherText') }} />
         <Text style={offerList}>
-          &bull; Quelle récompense offrir (ex: &quot;1 soin offert après 10 visites&quot;)<br />
-          &bull; C&apos;est tout. On s&apos;occupe du reste.
+          {t('gracePeriodSetup.togetherList1')}<br />
+          {t('gracePeriodSetup.togetherList2')}
         </Text>
       </Section>
 
       <Text style={paragraph}>
-        Ou fais-le toi-m&ecirc;me en 3 minutes :
+        {t('gracePeriodSetup.selfSetup')}
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/program">
-          Configurer mon programme
+          {t('gracePeriodSetup.ctaSetup')}
         </Button>
       </Section>
 
       <Section style={reassuranceBox}>
-        <Text style={reassuranceText}>
-          Apr&egrave;s configuration, tu pourras r&eacute;activer ton abonnement &agrave;
-          <strong> 9&euro;/mois le premier mois</strong> (au lieu de 19&euro;).
-        </Text>
+        <Text style={reassuranceText} dangerouslySetInnerHTML={{ __html: t('gracePeriodSetup.reassurance') }} />
       </Section>
 
       <Section style={socialProofBox}>
         <Text style={socialProofText}>
-          Des centaines de pros ont déjà configuré leur programme en quelques minutes.{' '}
-          <a href="https://getqarte.com/pros" style={socialProofLink}>Voir leurs programmes &#8594;</a>
+          {t('gracePeriodSetup.socialProof')}{' '}
+          <a href="https://getqarte.com/pros" style={socialProofLinkStyle}>{t('gracePeriodSetup.socialProofLink')}</a>
         </Text>
       </Section>
 
       <Text style={signature}>
-        On est l&agrave; pour toi,
+        {t('gracePeriodSetup.signaturePrefix')}
         <br />
-        L&apos;équipe Qarte
+        {t('gracePeriodSetup.signature')}
       </Text>
     </BaseLayout>
   );
@@ -202,7 +195,7 @@ const socialProofText = {
   margin: '0',
 };
 
-const socialProofLink = {
+const socialProofLinkStyle = {
   color: '#4b0082',
   fontWeight: '600' as const,
   textDecoration: 'underline',

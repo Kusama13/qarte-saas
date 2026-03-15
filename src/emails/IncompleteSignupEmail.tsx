@@ -6,51 +6,38 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface IncompleteSignupEmailProps {
   email: string;
+  locale?: EmailLocale;
 }
 
-export function IncompleteSignupEmail({ email }: IncompleteSignupEmailProps) {
+export function IncompleteSignupEmail({ email, locale = 'fr' }: IncompleteSignupEmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview="Ton compte Qarte est presque pr&ecirc;t — il ne reste que 30 secondes">
+    <BaseLayout preview={t('incompleteSignup.preview')} locale={locale}>
       <Heading style={heading}>
-        Tu y es presque !
+        {t('incompleteSignup.heading')}
       </Heading>
 
       <Text style={paragraph}>
-        Bonjour ({email}),
-      </Text>
-
-      <Text style={paragraph}>
-        Tu as cr&eacute;&eacute; ton compte Qarte, mais tu n&apos;as pas termin&eacute; la
-        configuration de ton commerce.
-      </Text>
-
-      <Text style={highlightBox}>
-        Il ne reste que <strong>4 champs à remplir</strong> (nom, activité,
-        téléphone, adresse) — ça prend <strong>30 secondes</strong>.
+        {t('incompleteSignup.intro')}
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/auth/merchant/signup/complete">
-          Finaliser mon inscription
+          {t('incompleteSignup.ctaFinish')}
         </Button>
       </Section>
 
-      <Section style={benefitsBox}>
-        <Text style={benefitsTitle}>Ce qui t&apos;attend apr&egrave;s :</Text>
-        <Text style={benefitItem}>→ Un programme de fid&eacute;lit&eacute; pr&ecirc;t en 3 minutes</Text>
-        <Text style={benefitItem}>→ Un QR code unique pour ton commerce</Text>
-        <Text style={benefitItem}>→ 7 jours d&apos;essai gratuit</Text>
-      </Section>
-
       <Text style={paragraph}>
-        Besoin d&apos;aide ? R&eacute;ponds &agrave; cet email, on est l&agrave;.
+        {t('incompleteSignup.helpText')}
       </Text>
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('incompleteSignup.signature')}
       </Text>
     </BaseLayout>
   );
@@ -71,17 +58,6 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const highlightBox = {
-  color: '#1a1a1a',
-  fontSize: '16px',
-  fontWeight: '500',
-  lineHeight: '1.6',
-  backgroundColor: '#f0edfc',
-  borderRadius: '8px',
-  padding: '16px 20px',
-  margin: '0 0 8px 0',
-};
-
 const buttonContainer = {
   textAlign: 'center' as const,
   margin: '28px 0',
@@ -96,27 +72,6 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
-};
-
-const benefitsBox = {
-  backgroundColor: '#f8f9fa',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '0 0 24px 0',
-};
-
-const benefitsTitle = {
-  color: '#1a1a1a',
-  fontSize: '15px',
-  fontWeight: '600',
-  margin: '0 0 12px 0',
-};
-
-const benefitItem = {
-  color: '#4a5568',
-  fontSize: '14px',
-  lineHeight: '1.8',
-  margin: '0',
 };
 
 const signature = {

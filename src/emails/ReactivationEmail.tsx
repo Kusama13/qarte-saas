@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface ReactivationEmailProps {
   shopName: string;
@@ -13,6 +14,7 @@ interface ReactivationEmailProps {
   totalCustomers?: number;
   promoCode?: string;
   promoMonths?: number;
+  locale?: EmailLocale;
 }
 
 export function ReactivationEmail({
@@ -20,189 +22,130 @@ export function ReactivationEmail({
   daysSinceCancellation,
   totalCustomers,
   promoCode,
-  promoMonths = 1
+  promoMonths = 1,
+  locale = 'fr',
 }: ReactivationEmailProps) {
+  const t = getEmailT(locale);
   const isLastChance = daysSinceCancellation >= 25;
   const isMidTerm = daysSinceCancellation >= 12 && daysSinceCancellation < 25;
 
   return (
     <BaseLayout preview={
       isLastChance
-        ? `${shopName} — Suppression de tes données dans 5 jours`
-        : isMidTerm
-          ? `${shopName} — Une offre exclusive pour revenir`
-          : `${shopName} — Tes clients t'attendent`
-    }>
-      {/* ===== J+30 : DERNIÈRE CHANCE ===== */}
+        ? t('reactivation.lastChance')
+        : t('reactivation.preview', { shopName })
+    } locale={locale}>
+      {/* ===== LAST CHANCE ===== */}
       {isLastChance && (
         <>
           <Section style={urgentBanner}>
-            <Text style={urgentBannerText}>SUPPRESSION DANS 5 JOURS</Text>
+            <Text style={urgentBannerText}>{t('reactivation.lastChance')}</Text>
           </Section>
 
           <Heading style={urgentHeading}>
-            {shopName}, tes données vont être supprimées
+            {t('reactivation.heading')}
           </Heading>
 
-          <Text style={paragraph}>
-            Bonjour <strong>{shopName}</strong>,
-          </Text>
+          <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('reactivation.greeting', { shopName }) }} />
 
-          <Text style={paragraph}>
-            Dans <strong>5 jours</strong>, ton compte Qarte sera définitivement supprimé.
-            Tes clients, tes statistiques, ton programme — tout sera perdu.
-          </Text>
-
-          {totalCustomers && totalCustomers > 0 && (
-            <Section style={urgentStatsBox}>
-              <Text style={urgentStatsNumber}>{totalCustomers}</Text>
-              <Text style={urgentStatsLabel}>
-                client{totalCustomers > 1 ? 's' : ''} perdu{totalCustomers > 1 ? 's' : ''} définitivement
-              </Text>
-            </Section>
+          {totalCustomers && totalCustomers > 0 ? (
+            <Text style={paragraph}>
+              {t('reactivation.clientsNoAccess', { totalCustomers: String(totalCustomers) })}
+            </Text>
+          ) : (
+            <Text style={paragraph}>
+              {t('reactivation.clientsNoAccessGeneric')}
+            </Text>
           )}
 
           <Text style={paragraph}>
-            On te propose notre <strong>meilleure offre</strong> pour sauver ton compte :
+            {t('reactivation.dataStillHere')}
           </Text>
         </>
       )}
 
-      {/* ===== J+14 : WIN-BACK AVEC OFFRE ===== */}
+      {/* ===== MID-TERM WIN-BACK ===== */}
       {isMidTerm && (
         <>
           <Heading style={heading}>
-            {shopName}, on a une offre pour toi
+            {t('reactivation.heading')}
           </Heading>
 
-          <Text style={paragraph}>
-            Bonjour <strong>{shopName}</strong>,
-          </Text>
+          <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('reactivation.greeting', { shopName }) }} />
 
-          <Text style={paragraph}>
-            Ça fait {daysSinceCancellation} jours que tu es parti.
-            Tes données sont encore là, mais plus pour longtemps.
-          </Text>
-
-          {totalCustomers && totalCustomers > 0 && (
-            <Section style={statsBox}>
-              <Text style={statsTitle}>Tes clients attendent</Text>
-              <Text style={statsNumber}>{totalCustomers}</Text>
-              <Text style={statsLabel}>
-                client{totalCustomers > 1 ? 's' : ''} sans accès à leur carte
-              </Text>
-            </Section>
+          {totalCustomers && totalCustomers > 0 ? (
+            <Text style={paragraph}>
+              {t('reactivation.clientsNoAccess', { totalCustomers: String(totalCustomers) })}
+            </Text>
+          ) : (
+            <Text style={paragraph}>
+              {t('reactivation.clientsNoAccessGeneric')}
+            </Text>
           )}
 
           <Text style={paragraph}>
-            Pour fêter ton retour, on t&apos;offre un tarif exclusif :
+            {t('reactivation.dataStillHere')}
           </Text>
         </>
       )}
 
-      {/* ===== J+7 : PREMIER CONTACT ===== */}
+      {/* ===== FIRST CONTACT ===== */}
       {!isLastChance && !isMidTerm && (
         <>
           <Heading style={heading}>
-            {shopName}, tes clients t&apos;attendent
+            {t('reactivation.heading')}
           </Heading>
 
-          <Text style={paragraph}>
-            Bonjour <strong>{shopName}</strong>,
-          </Text>
+          <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('reactivation.greeting', { shopName }) }} />
 
-          <Text style={paragraph}>
-            Cela fait {daysSinceCancellation} jours que tu as quitté Qarte.
-            On espère que tout va bien de ton côté.
-          </Text>
-
-          {totalCustomers && totalCustomers > 0 && (
-            <Section style={statsBox}>
-              <Text style={statsTitle}>Pendant ton absence...</Text>
-              <Text style={statsNumber}>{totalCustomers}</Text>
-              <Text style={statsLabel}>
-                client{totalCustomers > 1 ? 's' : ''} inscrit{totalCustomers > 1 ? 's' : ''} dans ton programme
-              </Text>
-              <Text style={statsText}>
-                Tes clients fidèles n&apos;ont plus accès à leur carte de fidélité.
-              </Text>
-            </Section>
+          {totalCustomers && totalCustomers > 0 ? (
+            <Text style={paragraph}>
+              {t('reactivation.clientsNoAccess', { totalCustomers: String(totalCustomers) })}
+            </Text>
+          ) : (
+            <Text style={paragraph}>
+              {t('reactivation.clientsNoAccessGeneric')}
+            </Text>
           )}
 
-          <Section style={benefitsSection}>
-            <Text style={benefitsTitle}>Ce qui t&apos;attend sur Qarte :</Text>
-            <Text style={benefitItem}>✓ Programme de fidélité 100% digital</Text>
-            <Text style={benefitItem}>✓ QR code unique pour ton commerce</Text>
-            <Text style={benefitItem}>✓ Notifications push pour fidéliser tes clients</Text>
-            <Text style={benefitItem}>✓ Statistiques en temps réel</Text>
-            <Text style={benefitItem}>✓ Support prioritaire</Text>
-          </Section>
+          <Text style={paragraph}>
+            {t('reactivation.dataStillHere')}
+          </Text>
         </>
       )}
 
-      {/* ===== PROMO BOX (J+14 et J+30) ===== */}
+      {/* ===== PROMO BOX ===== */}
       {promoCode ? (
         <Section style={isLastChance ? urgentPromoBox : promoBox}>
-          <Text style={isLastChance ? urgentPromoTitle : promoTitle}>
-            {isLastChance ? 'Dernière offre' : 'Offre de retour exclusive'}
+          <Text style={isLastChance ? urgentPromoTitleStyle : promoTitleStyle}>
+            {t('reactivation.promoTitle')}
           </Text>
           <Text style={promoPrice}>
-            <span style={promoPriceOld}>19€</span> → 9€/mois pendant {promoMonths} mois
+            {t('reactivation.promoText', { promoMonths: String(promoMonths) })}
           </Text>
           <Text style={promoLabel}>CODE PROMO</Text>
           <Text style={promoCodeStyled}>{promoCode}</Text>
-          <Text style={promoNote}>
-            -{promoMonths * 10}€ d&apos;économie sur tes {promoMonths} premiers mois
-          </Text>
         </Section>
-      ) : (
-        <Section style={offerBox}>
-          <Text style={offerTitle}>Offre de retour</Text>
-          <Text style={offerText}>
-            Réactive ton compte aujourd&apos;hui et retrouve toutes tes données clients intactes.
-          </Text>
-        </Section>
-      )}
+      ) : null}
 
       <Section style={buttonContainer}>
         <Button style={isLastChance ? urgentButton : button} href="https://getqarte.com/dashboard/subscription">
-          {isLastChance
-            ? `Sauver mon compte — 9€/mois`
-            : promoCode
-              ? `Réactiver à 9€/mois pendant ${promoMonths} mois`
-              : 'Réactiver mon compte — 19€/mois'}
+          {t('reactivation.ctaReactivate')}
         </Button>
       </Section>
 
-      {isLastChance && (
-        <Text style={urgentNote}>
-          Après le 5ème jour, ton compte et toutes tes données seront supprimés définitivement.
-        </Text>
-      )}
-
-      <Section style={socialProofBox}>
-        <Text style={socialProofText}>
-          Pendant ce temps, des centaines de pros continuent de fidéliser avec Qarte.{' '}
-          <a href="https://getqarte.com/pros" style={socialProofLink}>Voir leurs programmes &#8594;</a>
-        </Text>
-      </Section>
-
       <Text style={paragraph}>
-        {isLastChance
-          ? 'Des questions ? Écris-nous, on répond en quelques minutes.'
-          : 'Si tu as des questions, n\'hésite pas à nous contacter.'}
+        {t('reactivation.noCommitment')}
       </Text>
 
       <Text style={signature}>
-        À très vite,
-        <br />
-        L&apos;équipe Qarte
+        {t('reactivation.signature')}
       </Text>
     </BaseLayout>
   );
 }
 
-// === STYLES COMMUNS ===
+// === COMMON STYLES ===
 
 const heading = {
   color: '#4b0082',
@@ -219,92 +162,7 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const statsBox = {
-  backgroundColor: '#eef2ff',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-  border: '1px solid #c7d2fe',
-};
-
-const statsTitle = {
-  color: '#4338ca',
-  fontSize: '14px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.05em',
-};
-
-const statsNumber = {
-  color: '#4b0082',
-  fontSize: '48px',
-  fontWeight: '700',
-  margin: '0',
-  lineHeight: '1.2',
-};
-
-const statsLabel = {
-  color: '#4338ca',
-  fontSize: '16px',
-  fontWeight: '500',
-  margin: '0 0 12px 0',
-};
-
-const statsText = {
-  color: '#6366f1',
-  fontSize: '14px',
-  margin: '0',
-};
-
-const benefitsSection = {
-  backgroundColor: '#f0fdf4',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-  border: '1px solid #bbf7d0',
-};
-
-const benefitsTitle = {
-  color: '#166534',
-  fontSize: '14px',
-  fontWeight: '600',
-  margin: '0 0 12px 0',
-};
-
-const benefitItem = {
-  color: '#15803d',
-  fontSize: '14px',
-  lineHeight: '1.8',
-  margin: '0',
-};
-
-// === STYLES OFFRE STANDARD ===
-
-const offerBox = {
-  backgroundColor: '#fef3c7',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-  border: '1px solid #fde68a',
-  textAlign: 'center' as const,
-};
-
-const offerTitle = {
-  color: '#b45309',
-  fontSize: '16px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-};
-
-const offerText = {
-  color: '#92400e',
-  fontSize: '14px',
-  margin: '0',
-};
-
-// === STYLES PROMO ===
+// === PROMO STYLES ===
 
 const promoBox = {
   backgroundColor: '#f0edfc',
@@ -315,7 +173,7 @@ const promoBox = {
   border: '2px dashed #4b0082',
 };
 
-const promoTitle = {
+const promoTitleStyle = {
   color: '#4b0082',
   fontSize: '16px',
   fontWeight: '600',
@@ -327,12 +185,6 @@ const promoPrice = {
   fontSize: '20px',
   fontWeight: '700',
   margin: '0 0 16px 0',
-};
-
-const promoPriceOld = {
-  textDecoration: 'line-through',
-  color: '#8898aa',
-  fontWeight: '400',
 };
 
 const promoLabel = {
@@ -352,13 +204,7 @@ const promoCodeStyled = {
   letterSpacing: '2px',
 };
 
-const promoNote = {
-  color: '#4b0082',
-  fontSize: '13px',
-  margin: '4px 0 0 0',
-};
-
-// === STYLES BOUTON ===
+// === BUTTON STYLES ===
 
 const buttonContainer = {
   textAlign: 'center' as const,
@@ -376,27 +222,6 @@ const button = {
   padding: '14px 32px',
 };
 
-const socialProofBox = {
-  backgroundColor: '#f5f3ff',
-  borderRadius: '10px',
-  padding: '16px 20px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-};
-
-const socialProofText = {
-  color: '#6b7280',
-  fontSize: '13px',
-  lineHeight: '1.6',
-  margin: '0',
-};
-
-const socialProofLink = {
-  color: '#4b0082',
-  fontWeight: '600' as const,
-  textDecoration: 'underline',
-};
-
 const signature = {
   color: '#4a5568',
   fontSize: '16px',
@@ -404,7 +229,7 @@ const signature = {
   margin: '24px 0 0 0',
 };
 
-// === STYLES J+30 URGENCE ===
+// === URGENT STYLES ===
 
 const urgentBanner = {
   backgroundColor: '#dc2626',
@@ -431,30 +256,6 @@ const urgentHeading = {
   margin: '0 0 24px 0',
 };
 
-const urgentStatsBox = {
-  backgroundColor: '#fef2f2',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-  border: '2px solid #fca5a5',
-};
-
-const urgentStatsNumber = {
-  color: '#dc2626',
-  fontSize: '48px',
-  fontWeight: '700',
-  margin: '0',
-  lineHeight: '1.2',
-};
-
-const urgentStatsLabel = {
-  color: '#991b1b',
-  fontSize: '16px',
-  fontWeight: '500',
-  margin: '8px 0 0 0',
-};
-
 const urgentPromoBox = {
   backgroundColor: '#fef2f2',
   borderRadius: '12px',
@@ -464,7 +265,7 @@ const urgentPromoBox = {
   border: '2px dashed #dc2626',
 };
 
-const urgentPromoTitle = {
+const urgentPromoTitleStyle = {
   color: '#dc2626',
   fontSize: '16px',
   fontWeight: '700',
@@ -480,14 +281,6 @@ const urgentButton = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '16px 32px',
-};
-
-const urgentNote = {
-  color: '#dc2626',
-  fontSize: '13px',
-  textAlign: 'center' as const,
-  fontWeight: '500',
-  margin: '0 0 24px 0',
 };
 
 export default ReactivationEmail;

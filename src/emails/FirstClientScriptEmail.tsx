@@ -7,6 +7,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface FirstClientScriptEmailProps {
   shopName: string;
@@ -14,6 +15,7 @@ interface FirstClientScriptEmailProps {
   rewardDescription: string;
   stampsRequired: number;
   loyaltyMode?: 'visit' | 'cagnotte';
+  locale?: EmailLocale;
 }
 
 const SCRIPTS: Record<string, string> = {
@@ -28,65 +30,48 @@ const SCRIPTS: Record<string, string> = {
 
 const DEFAULT_SCRIPT = "Avant de partir, scannez le QR code pour la carte de fidélité — 5 secondes et c'est fait";
 
-export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, stampsRequired, loyaltyMode = 'visit' }: FirstClientScriptEmailProps) {
+export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, stampsRequired, loyaltyMode = 'visit', locale = 'fr' }: FirstClientScriptEmailProps) {
+  const t = getEmailT(locale);
   const normalized = shopType?.toLowerCase().replace(/[\s-]/g, '_') || '';
   const script = SCRIPTS[normalized] || DEFAULT_SCRIPT;
 
   return (
-    <BaseLayout preview={`${shopName}, la phrase exacte pour obtenir ton premier scan`}>
+    <BaseLayout preview={t('firstClientScript.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        La phrase exacte &agrave; dire &agrave; ton prochain(e) client(e)
+        {t('firstClientScript.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('firstClientScript.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Ton QR code est pr&ecirc;t depuis 2 jours. Voici le secret des commer&ccedil;ant(e)s
-        qui obtiennent des scans d&egrave;s le premier jour : <strong>une phrase simple,
-        au bon moment</strong>.
+        {t('firstClientScript.intro')}
       </Text>
 
       <Section style={scriptBox}>
-        <Text style={scriptLabel}>Dis simplement :</Text>
+        <Text style={scriptLabel}>{t('firstClientScript.scriptTitle')}</Text>
         <Text style={scriptText}>
           &quot;{script} — apr&egrave;s <strong>{stampsRequired} passages</strong> c&apos;est{' '}
           <strong>{rewardDescription}</strong>{loyaltyMode === 'cagnotte' ? ' sur leurs d\u00e9penses' : ''}.&quot;
         </Text>
       </Section>
 
-      <Section style={tipBox}>
-        <Text style={tipTitle}>Le meilleur moment pour le proposer</Text>
-        <Text style={tipText}>
-          Quand le/la client(e) <strong>attend</strong> : pendant le s&eacute;chage,
-          pendant la pose, au moment de payer. Ne demande pas &quot;vous voulez une carte ?&quot;
-          — dis directement <strong>&quot;Scannez le QR code pour votre carte de fid&eacute;lit&eacute; !&quot;</strong>
-        </Text>
+      <Section style={tipsBox}>
+        <Text style={tipsTitle}>{t('firstClientScript.tipsTitle')}</Text>
+        <Text style={tipItem}>{t('firstClientScript.tip1')}</Text>
+        <Text style={tipItem}>{t('firstClientScript.tip2')}</Text>
+        <Text style={tipItem}>{t('firstClientScript.tip3')}</Text>
       </Section>
 
       <Hr style={divider} />
 
-      <Section style={testBox}>
-        <Text style={testTitle}>Teste toi-m&ecirc;me en 10 secondes</Text>
-        <Text style={testText}>
-          Scanne ton propre QR code avec ton t&eacute;l&eacute;phone. Tu verras exactement
-          ce que tes client(e)s verront. &Ccedil;a prend 10 secondes.
-        </Text>
-      </Section>
-
       <Section style={buttonContainer}>
-        <Button style={button} href="https://getqarte.com/dashboard/qr-download">
-          Voir mon QR code
+        <Button style={button} href="https://getqarte.com/dashboard">
+          {t('firstClientScript.ctaDashboard')}
         </Button>
       </Section>
 
-      <Text style={paragraph}>
-        Besoin d&apos;aide ? R&eacute;ponds &agrave; cet email.
-      </Text>
-
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('firstClientScript.signature')}
       </Text>
     </BaseLayout>
   );
@@ -134,44 +119,22 @@ const scriptText = {
   fontStyle: 'italic' as const,
 };
 
-const tipBox = {
+const tipsBox = {
   backgroundColor: '#f8f9fa',
   borderRadius: '12px',
   padding: '20px 24px',
   margin: '24px 0',
 };
 
-const tipTitle = {
+const tipsTitle = {
   color: '#1a1a1a',
   fontSize: '15px',
   fontWeight: '600',
   margin: '0 0 8px 0',
 };
 
-const tipText = {
+const tipItem = {
   color: '#4a5568',
-  fontSize: '14px',
-  lineHeight: '1.6',
-  margin: '0',
-};
-
-const testBox = {
-  backgroundColor: '#eff6ff',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-  border: '1px solid #bfdbfe',
-};
-
-const testTitle = {
-  color: '#1e40af',
-  fontSize: '15px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-};
-
-const testText = {
-  color: '#1e3a5f',
   fontSize: '14px',
   lineHeight: '1.6',
   margin: '0',

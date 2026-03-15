@@ -8,6 +8,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface QRCodeEmailProps {
   shopName: string;
@@ -20,6 +21,7 @@ interface QRCodeEmailProps {
   tier2RewardDescription?: string | null;
   referralCode?: string;
   loyaltyMode?: 'visit' | 'cagnotte';
+  locale?: EmailLocale;
 }
 
 // Lighten a hex color by mixing with white
@@ -45,23 +47,23 @@ export function QRCodeEmail({
   tier2RewardDescription,
   referralCode,
   loyaltyMode = 'visit',
+  locale = 'fr',
 }: QRCodeEmailProps) {
+  const t = getEmailT(locale);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
   const dashboardUrl = `${appUrl}/dashboard/qr-download`;
   const lightColor = lightenColor(primaryColor);
 
   return (
-    <BaseLayout preview={`${shopName}, ton QR code et kit promo sont pr&ecirc;ts !`}>
+    <BaseLayout preview={t('qrCode.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Tout est pr&ecirc;t, lance-toi !
+        {t('qrCode.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('qrCode.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Ton programme de fid&eacute;lit&eacute; est configur&eacute;. Voici tout ce qu&apos;il te faut pour d&eacute;marrer : ton <strong>QR code</strong>{rewardDescription ? <> et ton <strong>kit r&eacute;seaux sociaux</strong></> : null}.
+        {t('qrCode.intro')}
       </Text>
 
       {/* ===== SECTION 1: QR CODE ===== */}
@@ -168,7 +170,7 @@ export function QRCodeEmail({
       {/* CTA */}
       <Section style={ctaContainer}>
         <Button style={ctaButton} href={dashboardUrl}>
-          Voir mon QR code & kit promo
+          {t('qrCode.ctaDownload')}
         </Button>
       </Section>
 
@@ -197,7 +199,7 @@ export function QRCodeEmail({
       </Text>
 
       <Text style={signature}>
-        L&apos;&eacute;quipe Qarte
+        {t('qrCode.signature')}
       </Text>
     </BaseLayout>
   );

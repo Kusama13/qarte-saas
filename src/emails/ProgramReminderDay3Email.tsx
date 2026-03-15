@@ -6,64 +6,48 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface ProgramReminderDay3EmailProps {
   shopName: string;
   daysRemaining: number;
+  locale?: EmailLocale;
 }
 
-export function ProgramReminderDay3Email({ shopName, daysRemaining }: ProgramReminderDay3EmailProps) {
+export function ProgramReminderDay3Email({ shopName, daysRemaining, locale = 'fr' }: ProgramReminderDay3EmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview={`${shopName}, il te reste ${daysRemaining} jours d'essai — configure ton programme`}>
+    <BaseLayout preview={t('programReminderDay3.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Ton programme attend toujours
+        {t('programReminderDay3.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('programReminderDay3.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Ton compte a &eacute;t&eacute; cr&eacute;&eacute; il y a 3 jours. Configurer ton programme
-        prend 3 minutes et ton QR code sera pr&ecirc;t imm&eacute;diatement.
+        {t('programReminderDay3.intro')}
       </Text>
 
       <Section style={urgencyBox}>
-        <Text style={urgencyText}>
-          Il te reste <strong>{daysRemaining} jours</strong> d&apos;essai gratuit.
-        </Text>
+        <Text style={urgencyText} dangerouslySetInnerHTML={{ __html: t('programReminderDay3.trialNote', { daysRemaining, daysPlural: daysRemaining > 1 ? 's' : '' }) }} />
       </Section>
 
       <Section style={optionBox}>
-        <Text style={optionLabel}>Fais-le toi-m&ecirc;me (3 min)</Text>
+        <Text style={optionLabel}>{t('programReminderDay3.offerTitle')}</Text>
         <Text style={optionDescription}>
-          Choisis ta r&eacute;compense et ton programme est en ligne.
-        </Text>
-        <Section style={buttonContainer}>
-          <Button style={button} href="https://getqarte.com/dashboard/program">
-            Configurer maintenant
-          </Button>
-        </Section>
-      </Section>
-
-      <Section style={optionBox}>
-        <Text style={optionLabel}>On le fait pour toi</Text>
-        <Text style={optionDescription}>
-          R&eacute;ponds &agrave; cet email avec ta r&eacute;compense (ex: &quot;1 brushing offert apr&egrave;s 8 visites&quot;)
-          et on configure tout.
+          {t('programReminderDay3.offerText')}
         </Text>
       </Section>
 
-      <Section style={challengeBox}>
-        <Text style={challengeTitle}>5 clients en 3 jours = premier mois à 9€</Text>
-        <Text style={challengeText}>
-          Configure ton programme, fais scanner <strong>5 clients en 3 jours</strong>,
-          et obtiens ton <strong>premier mois &agrave; 9&euro;</strong> au lieu de 19&euro;.
-        </Text>
+      <Section style={buttonContainer}>
+        <Button style={button} href="https://getqarte.com/dashboard/program">
+          {t('programReminderDay3.ctaSetup')}
+        </Button>
       </Section>
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('programReminderDay3.signature')}
       </Text>
     </BaseLayout>
   );
@@ -135,28 +119,6 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
-};
-
-const challengeBox = {
-  backgroundColor: '#fffbeb',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '28px 0',
-  border: '2px solid #f59e0b',
-};
-
-const challengeTitle = {
-  color: '#92400e',
-  fontSize: '16px',
-  fontWeight: '700',
-  margin: '0 0 8px 0',
-};
-
-const challengeText = {
-  color: '#78350f',
-  fontSize: '15px',
-  lineHeight: '1.6',
-  margin: '0',
 };
 
 const signature = {

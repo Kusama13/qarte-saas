@@ -6,56 +6,50 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface QuickCheckEmailProps {
   shopName: string;
   daysRemaining: number;
+  locale?: EmailLocale;
 }
 
-export function QuickCheckEmail({ shopName, daysRemaining }: QuickCheckEmailProps) {
+export function QuickCheckEmail({ shopName, daysRemaining, locale = 'fr' }: QuickCheckEmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview={`${shopName}, ton QR code est prêt — il ne manque que le premier scan`}>
+    <BaseLayout preview={t('quickCheck.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Ton QR code est prêt ?
+        {t('quickCheck.heading')}
       </Heading>
 
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('quickCheck.greeting', { shopName }) }} />
+
       <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
+        {t('quickCheck.intro')}
       </Text>
 
       <Text style={paragraph}>
-        Ton programme est configuré depuis 4 jours, mais on n&apos;a pas encore
-        de scan. Le plus souvent, c&apos;est parce que le QR code n&apos;est
-        pas encore imprimé ou pas assez visible.
+        {t('quickCheck.question')}
       </Text>
 
-      <Section style={tipBox}>
-        <Text style={tipTitle}>Le bon réflexe</Text>
-        <Text style={tipText}>
-          Imprime ton QR code et place-le à hauteur des yeux, près de la caisse.
-          Puis dis à tes prochains clients : &quot;Scannez ce QR code pour votre
-          carte de fidélité, c&apos;est gratuit !&quot;
-        </Text>
+      <Section style={optionsBox}>
+        <Text style={optionItem}>{t('quickCheck.option1')}</Text>
+        <Text style={optionItem}>{t('quickCheck.option2')}</Text>
+        <Text style={optionItem}>{t('quickCheck.option3')}</Text>
+        <Text style={optionItem}>{t('quickCheck.option4')}</Text>
       </Section>
 
-      <Section style={buttonContainer}>
-        <Button style={button} href="https://getqarte.com/dashboard/qr-download">
-          Télécharger mon QR code
-        </Button>
-      </Section>
+      <Text style={paragraph}>
+        {t('quickCheck.helpText')}
+      </Text>
 
       <Section style={urgencyBox}>
-        <Text style={urgencyText}>
-          Il te reste <strong>{daysRemaining} jours</strong> d&apos;essai gratuit.
-        </Text>
+        <Text style={urgencyText} dangerouslySetInnerHTML={{ __html: t('quickCheck.trialNote', { daysRemaining, daysPlural: daysRemaining > 1 ? 's' : '' }) }} />
       </Section>
 
-      <Text style={paragraph}>
-        Besoin d&apos;aide ? Réponds à cet email.
-      </Text>
-
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('quickCheck.signature')}
       </Text>
     </BaseLayout>
   );
@@ -76,41 +70,18 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const tipBox = {
+const optionsBox = {
   backgroundColor: '#f8f9fa',
   borderRadius: '12px',
   padding: '20px 24px',
   margin: '24px 0',
 };
 
-const tipTitle = {
-  color: '#1a1a1a',
-  fontSize: '15px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-};
-
-const tipText = {
+const optionItem = {
   color: '#4a5568',
   fontSize: '14px',
-  lineHeight: '1.6',
+  lineHeight: '1.8',
   margin: '0',
-};
-
-const buttonContainer = {
-  textAlign: 'center' as const,
-  margin: '28px 0',
-};
-
-const button = {
-  backgroundColor: '#4b0082',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '16px',
-  fontWeight: '600',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  padding: '14px 32px',
 };
 
 const urgencyBox = {

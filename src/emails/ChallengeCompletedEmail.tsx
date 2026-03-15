@@ -7,30 +7,30 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface ChallengeCompletedEmailProps {
   shopName: string;
   promoCode: string;
+  locale?: EmailLocale;
 }
 
-export function ChallengeCompletedEmail({ shopName, promoCode }: ChallengeCompletedEmailProps) {
+export function ChallengeCompletedEmail({ shopName, promoCode, locale = 'fr' }: ChallengeCompletedEmailProps) {
+  const t = getEmailT(locale);
   return (
-    <BaseLayout preview={`${shopName}, d&eacute;fi r&eacute;ussi — ton code promo est pr&ecirc;t`}>
+    <BaseLayout preview={t('challengeCompleted.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        D&eacute;fi r&eacute;ussi !
+        {t('challengeCompleted.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Bravo ! Tu as fait scanner <strong>5 clients en 3 jours</strong>.
-        Ton programme de fid&eacute;lit&eacute; est lanc&eacute; et tes clients reviennent d&eacute;j&agrave;.
+        {t('challengeCompleted.intro')}
       </Text>
 
       <Section style={promoBox}>
-        <Text style={promoLabel}>Offre mensuelle</Text>
+        <Text style={promoLabel}>{t('challengeCompleted.promoLabel')}</Text>
         <Text style={promoCodeStyle}>{promoCode}</Text>
         <Text style={promoValue}>
           Premier mois à <strong>9€</strong> au lieu de 19€
@@ -56,7 +56,7 @@ export function ChallengeCompletedEmail({ shopName, promoCode }: ChallengeComple
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          Choisir mon abonnement
+          {t('challengeCompleted.ctaDashboard')}
         </Button>
       </Section>
 
@@ -86,7 +86,7 @@ export function ChallengeCompletedEmail({ shopName, promoCode }: ChallengeComple
       </Text>
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('challengeCompleted.signature')}
       </Text>
     </BaseLayout>
   );

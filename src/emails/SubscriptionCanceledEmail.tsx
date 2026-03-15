@@ -6,76 +6,71 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface SubscriptionCanceledEmailProps {
   shopName: string;
   endDate?: string;
+  locale?: EmailLocale;
 }
 
-export function SubscriptionCanceledEmail({ shopName, endDate }: SubscriptionCanceledEmailProps) {
+export function SubscriptionCanceledEmail({ shopName, endDate, locale = 'fr' }: SubscriptionCanceledEmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview={`${shopName} - Confirmation de résiliation`}>
+    <BaseLayout preview={t('subscriptionCanceled.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Ton abonnement a été résilié
+        {t('subscriptionCanceled.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('subscriptionCanceled.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        On confirme la résiliation de ton abonnement Qarte.
+        {t('subscriptionCanceled.intro')}
       </Text>
 
       <Section style={infoBox}>
-        <Text style={infoTitle}>Récapitulatif</Text>
+        <Text style={infoTitle}>{t('subscriptionCanceled.summaryTitle')}</Text>
+        <Text style={infoText} dangerouslySetInnerHTML={{ __html: endDate
+          ? t('subscriptionCanceled.accessEndDate', { endDate })
+          : t('subscriptionCanceled.accessEndCurrent')
+        }} />
         <Text style={infoText}>
-          {endDate
-            ? <>Ton accès prendra fin le <strong>{endDate}</strong>.</>
-            : <>Ton accès prendra fin à la fin de ta période en cours.</>
-          }
-        </Text>
-        <Text style={infoText}>
-          Après cette date, ton compte sera suspendu et tes clients ne pourront plus
-          valider leurs passages.
+          {t('subscriptionCanceled.afterEndDate')}
         </Text>
       </Section>
 
       <Section style={dataSection}>
-        <Text style={dataTitle}>Tes données</Text>
+        <Text style={dataTitle}>{t('subscriptionCanceled.dataTitle')}</Text>
         <Text style={dataText}>
-          Conformément au RGPD, tes données seront conservées pendant 30 jours après la fin
-          de ton abonnement. Passé ce délai, elles seront définitivement supprimées.
+          {t('subscriptionCanceled.dataRetention')}
         </Text>
         <Text style={dataText}>
-          Si tu souhaites récupérer tes données ou demander leur suppression anticipée,
-          contacte-nous à support@getqarte.com.
+          {t('subscriptionCanceled.dataContact')}
         </Text>
       </Section>
 
       <Section style={offerBox}>
-        <Text style={offerTitle}>Envie de revenir ?</Text>
+        <Text style={offerTitle}>{t('subscriptionCanceled.comeBackTitle')}</Text>
         <Text style={offerText}>
-          Si tu changes d&apos;avis, tu peux réactiver ton compte à tout moment.
-          Tes données et tes clients seront toujours là.
+          {t('subscriptionCanceled.comeBackText')}
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          Réactiver mon abonnement
+          {t('subscriptionCanceled.ctaReactivate')}
         </Button>
       </Section>
 
-      <Text style={feedbackText}>
-        Ton avis compte ! Pourrais-tu nous dire pourquoi tu as décidé de partir ?
-        Réponds simplement à cet email, cela nous aidera à améliorer Qarte.
+      <Text style={feedbackTextStyle}>
+        {t('subscriptionCanceled.feedbackText')}
       </Text>
 
       <Text style={signature}>
-        Merci d&apos;avoir utilisé Qarte,
+        {t('subscriptionCanceled.signaturePrefix')}
         <br />
-        L&apos;équipe Qarte
+        {t('subscriptionCanceled.signature')}
       </Text>
     </BaseLayout>
   );
@@ -178,7 +173,7 @@ const offerText = {
   margin: '0',
 };
 
-const feedbackText = {
+const feedbackTextStyle = {
   color: '#9ca3af',
   fontSize: '14px',
   lineHeight: '1.6',

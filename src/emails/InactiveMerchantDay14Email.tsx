@@ -6,66 +6,60 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface InactiveMerchantDay14EmailProps {
   shopName: string;
   rewardDescription?: string;
   stampsRequired?: number;
+  locale?: EmailLocale;
 }
 
 export function InactiveMerchantDay14Email({
   shopName,
   rewardDescription,
   stampsRequired,
+  locale = 'fr',
 }: InactiveMerchantDay14EmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview={`${shopName}, on peut débloquer tes premiers scans ensemble`}>
+    <BaseLayout preview={t('inactiveDay14.preview')} locale={locale}>
       <Heading style={heading}>
-        2 semaines — on peut t&apos;aider ?
+        {t('inactiveDay14.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('inactiveDay14.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Ton programme de fidélité est en place, mais pas encore de scan.
-        Souvent, il suffit de trouver les bons mots pour le proposer à tes clients.
+        {t('inactiveDay14.intro')}
       </Text>
 
       <Section style={scriptBox}>
-        <Text style={scriptTitle}>Que dire à tes clients ?</Text>
+        <Text style={scriptTitle}>{t('inactiveDay14.competitorTitle')}</Text>
         <Text style={scriptText}>
-          &quot;On a lancé une carte de fidélité digitale, scannez ce QR code
-          {rewardDescription && stampsRequired
-            ? ` et après ${stampsRequired} passages, vous gagnez ${rewardDescription}`
-            : ' et cumulez des points à chaque passage'
-          }. C&apos;est rapide et sans app à télécharger.&quot;
+          {t('inactiveDay14.competitorText')}
         </Text>
       </Section>
 
       {rewardDescription && (
         <Section style={rewardBox}>
-          <Text style={rewardLabel}>Ta récompense actuelle :</Text>
-          <Text style={rewardText}>
-            {rewardDescription}
-            {stampsRequired ? ` après ${stampsRequired} passages` : ''}
+          <Text style={rewardLabel}>{t('inactiveDay14.yourProgram')}</Text>
+          <Text style={rewardTextStyle}>
+            {t('inactiveDay14.rewardLabel', { rewardDescription })}
+            {stampsRequired ? ` — ${t('inactiveDay14.stampsLabel', { stampsRequired: String(stampsRequired) })}` : ''}
           </Text>
         </Section>
       )}
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard">
-          Voir mon tableau de bord
+          {t('inactiveDay14.ctaSetup')}
         </Button>
       </Section>
 
-      <Text style={paragraph}>
-        On peut aussi t&apos;aider à trouver les mots — réponds à cet email.
-      </Text>
-
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('inactiveDay14.signature')}
       </Text>
     </BaseLayout>
   );
@@ -127,7 +121,7 @@ const rewardLabel = {
   margin: '0 0 4px 0',
 };
 
-const rewardText = {
+const rewardTextStyle = {
   color: '#15803d',
   fontSize: '16px',
   fontWeight: '600',

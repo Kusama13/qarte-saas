@@ -6,68 +6,67 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface FirstScanEmailProps {
   shopName: string;
   referralCode?: string;
   slug?: string;
+  locale?: EmailLocale;
 }
 
-export function FirstScanEmail({ shopName, slug }: FirstScanEmailProps) {
+export function FirstScanEmail({ shopName, slug, locale = 'fr' }: FirstScanEmailProps) {
+  const t = getEmailT(locale);
   const publicPageUrl = slug ? `https://getqarte.com/p/${slug}` : null;
 
   return (
-    <BaseLayout preview={`${shopName}, ton 1er client a scann&eacute; !`}>
+    <BaseLayout preview={t('firstScan.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Ton programme est lanc&eacute; !
+        {t('firstScan.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('firstScan.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Ton premier client vient de scanner ton QR code.
-        C&apos;est le d&eacute;but de ton programme de fid&eacute;lit&eacute; !
+        {t('firstScan.intro')}
       </Text>
 
       <Section style={celebrationBox}>
-        <Text style={celebrationTitle}>Premier scan valid&eacute;</Text>
+        <Text style={celebrationTitle}>{t('firstScan.celebrationTitle')}</Text>
         <Text style={celebrationText}>
-          Chaque scan, c&apos;est un client qui s&apos;engage avec ton commerce.
+          {t('firstScan.celebrationText')}
         </Text>
       </Section>
 
       <Section style={tipsBox}>
-        <Text style={tipsTitle}>Pour acc&eacute;l&eacute;rer :</Text>
-        <Text style={tipItem}>&#8594; Propose le scan &agrave; chaque client aujourd&apos;hui</Text>
-        <Text style={tipItem}>&#8594; Place le QR code &agrave; hauteur des yeux pr&egrave;s de la caisse</Text>
-        <Text style={tipItem}>&#8594; Dis simplement : &laquo; On a une carte de fid&eacute;lit&eacute; digitale, scannez ce QR code ! &raquo;</Text>
+        <Text style={tipsTitle}>{t('firstScan.tipsTitle')}</Text>
+        <Text style={tipItem}>{t('firstScan.tip1')}</Text>
+        <Text style={tipItem}>{t('firstScan.tip2')}</Text>
+        <Text style={tipItem}>{t('firstScan.tip3')}</Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard">
-          Voir mes statistiques
+          {t('firstScan.ctaStats')}
         </Button>
       </Section>
 
       {publicPageUrl && (
         <Section style={pageProBox}>
-          <Text style={pageProTitle}>Partage ta page pro</Text>
+          <Text style={pageProTitle}>{t('firstScan.shareTitle')}</Text>
           <Text style={pageProText}>
-            Ajoute ta page publique dans ta bio Instagram. Tes clientes y retrouvent
-            ton salon, tes prestations et ta carte fid&eacute;lit&eacute; — tout en un lien.
+            {t('firstScan.shareText')}
           </Text>
           <Section style={buttonContainerSmall}>
             <Button style={buttonSecondary} href={publicPageUrl}>
-              Voir ma page publique
+              {t('firstScan.ctaPublicPage')}
             </Button>
           </Section>
         </Section>
       )}
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('firstScan.signature')}
       </Text>
     </BaseLayout>
   );

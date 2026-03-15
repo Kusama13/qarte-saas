@@ -7,50 +7,40 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface ProgramReminderEmailProps {
   shopName: string;
+  locale?: EmailLocale;
 }
 
-export function ProgramReminderEmail({ shopName }: ProgramReminderEmailProps) {
+export function ProgramReminderEmail({ shopName, locale = 'fr' }: ProgramReminderEmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview={`${shopName}, ton programme de fid&eacute;lit&eacute; n'attend plus que toi`}>
+    <BaseLayout preview={t('programReminder.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Plus qu&apos;une &eacute;tape pour fid&eacute;liser tes clients
+        {t('programReminder.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('programReminder.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Ton compte Qarte est pr&ecirc;t. Il ne manque plus que ta r&eacute;compense
-        pour lancer ton programme de fid&eacute;lit&eacute;.
+        {t('programReminder.intro')}
       </Text>
 
       <Text style={highlightBox}>
-        Choisis ce que tu offres &agrave; tes clients fid&egrave;les, et ton QR code
-        sera g&eacute;n&eacute;r&eacute; automatiquement. &Ccedil;a prend <strong>3 minutes</strong>.
-        Tu pourras modifier ta r&eacute;compense &agrave; tout moment.
+        {t('programReminder.timeText')}
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/program">
-          Configurer mon programme
+          {t('programReminder.ctaSetup')}
         </Button>
       </Section>
 
-      <Text style={paragraph}>
-        Tu ne sais pas quoi offrir ? On te sugg&egrave;re la meilleure r&eacute;compense
-        pour ton activit&eacute; directement dans la page de configuration.
-      </Text>
-
-      <Text style={paragraph}>
-        Besoin d&apos;aide ? R&eacute;ponds &agrave; cet email, on peut le faire pour toi en 5 minutes.
-      </Text>
-
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('programReminder.signature')}
       </Text>
     </BaseLayout>
   );

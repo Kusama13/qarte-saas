@@ -4,40 +4,48 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface InactiveMerchantDay30EmailProps {
   shopName: string;
+  locale?: EmailLocale;
 }
 
-export function InactiveMerchantDay30Email({ shopName }: InactiveMerchantDay30EmailProps) {
+export function InactiveMerchantDay30Email({ shopName, locale = 'fr' }: InactiveMerchantDay30EmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview={`${shopName}, on aimerait comprendre ce qui te bloque`}>
+    <BaseLayout preview={t('inactiveDay30.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        On prend de tes nouvelles
+        {t('inactiveDay30.heading')}
       </Heading>
 
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('inactiveDay30.greeting', { shopName }) }} />
+
       <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
+        {t('inactiveDay30.intro')}
       </Text>
 
       <Text style={paragraph}>
-        C&apos;est l&apos;équipe Qarte. Ton programme de fidélité
-        n&apos;a pas eu de scans ce mois-ci.
+        {t('inactiveDay30.questionText')}
       </Text>
 
       <Text style={paragraph}>
-        On aimerait comprendre ce qui te bloque. Si tu as 2 minutes,
-        réponds à cet email — on peut configurer ou ajuster ton
-        programme ensemble.
+        {t('inactiveDay30.option1')}
+      </Text>
+      <Text style={paragraph}>
+        {t('inactiveDay30.option2')}
+      </Text>
+      <Text style={paragraph}>
+        {t('inactiveDay30.option3')}
       </Text>
 
       <Text style={paragraph}>
-        Pas de pression. On veut juste que chaque commerçant qui nous fait
-        confiance obtienne des résultats.
+        {t('inactiveDay30.helpText')}
       </Text>
 
       <Text style={signatureBlock}>
-        L&apos;équipe Qarte
+        {t('inactiveDay30.signature')}
       </Text>
     </BaseLayout>
   );

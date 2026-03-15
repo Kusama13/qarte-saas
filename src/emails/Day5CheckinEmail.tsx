@@ -6,83 +6,67 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface Day5CheckinEmailProps {
   shopName: string;
   totalScans: number;
   referralCode?: string;
+  locale?: EmailLocale;
 }
 
-export function Day5CheckinEmail({ shopName, totalScans }: Day5CheckinEmailProps) {
+export function Day5CheckinEmail({ shopName, totalScans, locale = 'fr' }: Day5CheckinEmailProps) {
+  const t = getEmailT(locale);
   const hasScans = totalScans > 0;
 
   return (
-    <BaseLayout preview={`${shopName}, comment se passe ta 1ère semaine ?`}>
+    <BaseLayout preview={t('day5Checkin.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Comment se passe ta première semaine ?
+        {t('day5Checkin.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('day5Checkin.greeting', { shopName }) }} />
 
       {hasScans ? (
         <>
-          <Text style={paragraph}>
-            Tu as déjà <strong>{totalScans} scan{totalScans > 1 ? 's' : ''}</strong> cette
-            semaine, bravo ! Continue comme ça.
-          </Text>
+          <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('day5Checkin.introWithScans', { totalScans, scansPlural: totalScans > 1 ? 's' : '' }) }} />
 
-          <Section style={successBox}>
-            <Text style={successTitle}>Prochaine étape</Text>
-            <Text style={successText}>
-              Partage ton programme sur tes réseaux sociaux pour toucher
-              encore plus de clients. Ton kit est prêt dans ton espace.
-            </Text>
+          <Section style={tipsBox}>
+            <Text style={tipsTitle}>{t('day5Checkin.tipsTitle')}</Text>
+            <Text style={tipItem}>{t('day5Checkin.tip1')}</Text>
+            <Text style={tipItem}>{t('day5Checkin.tip2')}</Text>
+            <Text style={tipItem}>{t('day5Checkin.tip3')}</Text>
           </Section>
 
           <Section style={buttonContainer}>
-            <Button style={button} href="https://getqarte.com/dashboard/qr-download?tab=social">
-              Télécharger mon kit réseaux sociaux
+            <Button style={button} href="https://getqarte.com/dashboard">
+              {t('day5Checkin.ctaDashboard')}
             </Button>
           </Section>
         </>
       ) : (
         <>
           <Text style={paragraph}>
-            Ton programme est configuré et ton QR code est prêt.
-            Il ne manque plus que tes clients !
+            {t('day5Checkin.introNoScans')}
           </Text>
 
-          <Section style={actionBox}>
-            <Text style={actionTitle}>3 actions pour démarrer aujourd&apos;hui :</Text>
-            <Text style={actionItem}>
-              <strong>1.</strong> Imprime ton QR code et place-le près de la caisse
-            </Text>
-            <Text style={actionItem}>
-              <strong>2.</strong> Propose le scan à tes 5 prochains clients
-            </Text>
-            <Text style={actionItem}>
-              <strong>3.</strong> Partage sur Instagram / Facebook
-            </Text>
+          <Section style={tipsBox}>
+            <Text style={tipsTitle}>{t('day5Checkin.tipsTitle')}</Text>
+            <Text style={tipItem}>{t('day5Checkin.tip1')}</Text>
+            <Text style={tipItem}>{t('day5Checkin.tip2')}</Text>
+            <Text style={tipItem}>{t('day5Checkin.tip3')}</Text>
           </Section>
 
           <Section style={buttonContainer}>
-            <Button style={button} href="https://getqarte.com/dashboard/qr-download">
-              Accéder à mon QR code
+            <Button style={button} href="https://getqarte.com/dashboard">
+              {t('day5Checkin.ctaDashboard')}
             </Button>
           </Section>
         </>
       )}
 
-      <Text style={paragraph}>
-        Besoin d&apos;aide ou de conseils ? Réponds à cet email.
-      </Text>
-
       <Text style={signature}>
-        À très vite,
-        <br />
-        L&apos;équipe Qarte
+        {t('day5Checkin.signature')}
       </Text>
     </BaseLayout>
   );
@@ -103,43 +87,21 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const successBox = {
-  backgroundColor: '#f0fdf4',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-  borderLeft: '4px solid #22c55e',
-};
-
-const successTitle = {
-  color: '#166534',
-  fontSize: '15px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-};
-
-const successText = {
-  color: '#15803d',
-  fontSize: '15px',
-  lineHeight: '1.6',
-  margin: '0',
-};
-
-const actionBox = {
-  backgroundColor: '#f0edfc',
+const tipsBox = {
+  backgroundColor: '#f8f9fa',
   borderRadius: '12px',
   padding: '20px 24px',
   margin: '24px 0',
 };
 
-const actionTitle = {
+const tipsTitle = {
   color: '#1a1a1a',
   fontSize: '15px',
   fontWeight: '600',
   margin: '0 0 12px 0',
 };
 
-const actionItem = {
+const tipItem = {
   color: '#4a5568',
   fontSize: '14px',
   lineHeight: '1.8',

@@ -7,45 +7,47 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface SubscriptionConfirmedEmailProps {
   shopName: string;
   nextBillingDate?: string;
   billingInterval?: 'monthly' | 'annual';
   referralCode?: string;
+  locale?: EmailLocale;
 }
 
-export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingInterval, referralCode }: SubscriptionConfirmedEmailProps) {
-  const planLabel = billingInterval === 'annual' ? 'Pro Annuel' : 'Pro Mensuel';
+export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingInterval, referralCode, locale = 'fr' }: SubscriptionConfirmedEmailProps) {
+  const t = getEmailT(locale);
+  const planLabel = billingInterval === 'annual' ? t('subscriptionConfirmed.planAnnual') : t('subscriptionConfirmed.planMonthly');
+
   return (
-    <BaseLayout preview="Ton abonnement Qarte est activé !">
+    <BaseLayout preview={t('subscriptionConfirmed.preview')} locale={locale}>
       <Heading style={heading}>
-        Bienvenue parmi nos abonnés !
+        {t('subscriptionConfirmed.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('subscriptionConfirmed.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Ton abonnement Qarte est maintenant actif. Merci pour ta confiance !
+        {t('subscriptionConfirmed.intro')}
       </Text>
 
       <Section style={confirmBox}>
-        <Text style={confirmTitle}>✓ Abonnement confirmé</Text>
-        <Text style={confirmDetail}>Plan {planLabel}</Text>
+        <Text style={confirmTitle}>{t('subscriptionConfirmed.confirmTitle')}</Text>
+        <Text style={confirmDetail}>{t('subscriptionConfirmed.planLabel', { planLabel })}</Text>
         <Text style={confirmNote}>
           {nextBillingDate
-            ? `Prochain prélèvement le ${nextBillingDate}`
+            ? t('subscriptionConfirmed.nextBillingDate', { date: nextBillingDate })
             : billingInterval === 'annual'
-              ? 'Prochain prélèvement dans 1 an'
-              : 'Prochain prélèvement dans 30 jours'}
+              ? t('subscriptionConfirmed.nextBillingAnnual')
+              : t('subscriptionConfirmed.nextBillingMonthly')}
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard">
-          Accéder à mon tableau de bord
+          {t('subscriptionConfirmed.ctaDashboard')}
         </Button>
       </Section>
 
@@ -58,38 +60,35 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
             style={nfcImg}
           />
         </Section>
-        <Text style={nfcTitle}>La carte NFC Qarte — en option (20 &euro;)</Text>
-        <Text style={nfcText}>
-          Passe commande via le bouton ci-dessous, ou en r&eacute;pondant &agrave; cet email. Livraison sous 1 &agrave; 2 semaines.
+        <Text style={nfcTitleStyle}>{t('subscriptionConfirmed.nfcTitle')}</Text>
+        <Text style={nfcTextStyle}>
+          {t('subscriptionConfirmed.nfcText')}
         </Text>
         <Section style={{ textAlign: 'center' as const, margin: '12px 0 0 0' }}>
           <Button style={nfcButton} href="https://buy.stripe.com/4gM7sN6DYccX75dduH7g401">
-            Commander ma carte NFC — 20 &euro;
+            {t('subscriptionConfirmed.nfcCta')}
           </Button>
         </Section>
       </Section>
 
       <Text style={paragraph}>
-        Une question sur ton abonnement ? Réponds à cet email, on est là pour toi.
+        {t('subscriptionConfirmed.questionText')}
       </Text>
 
       {referralCode && (
         <Section style={referralBox}>
-          <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
-          <Text style={referralText}>
-            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommande-lui Qarte et re&ccedil;ois <strong>10&euro; de r&eacute;duction</strong> sur ton prochain mois (lui aussi).
-          </Text>
-          <Text style={referralCode_style}>Ton code : <strong>{referralCode}</strong></Text>
-          <Text style={referralHint}>
-            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+          <Text style={referralTitleStyle} dangerouslySetInnerHTML={{ __html: t('subscriptionConfirmed.referralTitle') }} />
+          <Text style={referralTextStyle} dangerouslySetInnerHTML={{ __html: t('subscriptionConfirmed.referralText') }} />
+          <Text style={referralCode_style} dangerouslySetInnerHTML={{ __html: t('subscriptionConfirmed.referralCodeLabel', { referralCode }) }} />
+          <Text style={referralHintStyle}>
+            {t('subscriptionConfirmed.referralHint')}
           </Text>
         </Section>
       )}
 
       <Text style={signature}>
-        Merci de faire grandir Qarte avec nous !<br />
-        L&apos;équipe Qarte
+        {t('subscriptionConfirmed.signaturePrefix')}<br />
+        {t('subscriptionConfirmed.signature')}
       </Text>
     </BaseLayout>
   );
@@ -170,14 +169,14 @@ const referralBox = {
   border: '1px solid #e9d5ff',
 };
 
-const referralTitle = {
+const referralTitleStyle = {
   color: '#4b0082',
   fontSize: '16px',
   fontWeight: '700',
   margin: '0 0 8px 0',
 };
 
-const referralText = {
+const referralTextStyle = {
   color: '#4a5568',
   fontSize: '14px',
   lineHeight: '1.6',
@@ -197,7 +196,7 @@ const referralCode_style = {
   border: '1px dashed #c4b5fd',
 };
 
-const referralHint = {
+const referralHintStyle = {
   color: '#9ca3af',
   fontSize: '12px',
   textAlign: 'center' as const,
@@ -212,14 +211,14 @@ const nfcBox = {
   border: '1px solid #e9d5ff',
 };
 
-const nfcTitle = {
+const nfcTitleStyle = {
   color: '#4b0082',
   fontSize: '15px',
   fontWeight: '700',
   margin: '0 0 10px 0',
 };
 
-const nfcText = {
+const nfcTextStyle = {
   color: '#4a5568',
   fontSize: '14px',
   lineHeight: '1.6',

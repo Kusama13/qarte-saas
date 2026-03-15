@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface PendingPointsEmailProps {
   shopName: string;
@@ -13,6 +14,7 @@ interface PendingPointsEmailProps {
   dashboardUrl?: string;
   isReminder?: boolean;
   daysSinceFirst?: number;
+  locale?: EmailLocale;
 }
 
 export function PendingPointsEmail({
@@ -21,29 +23,30 @@ export function PendingPointsEmail({
   dashboardUrl = 'https://getqarte.com/dashboard',
   isReminder = false,
   daysSinceFirst,
+  locale = 'fr',
 }: PendingPointsEmailProps) {
-  const title = isReminder
-    ? `Rappel : ${pendingCount} point${pendingCount > 1 ? 's' : ''} en attente`
-    : `${pendingCount} point${pendingCount > 1 ? 's' : ''} en attente de validation`;
+  const t = getEmailT(locale);
+  const pluralSuffix = pendingCount > 1 ? 's' : '';
+  const verbPlural = pendingCount > 1 ? 'nt' : '';
+  const daysPlural = daysSinceFirst && daysSinceFirst > 1 ? 's' : '';
+
+  const preview = t('pendingPoints.preview', { shopName, pendingCount: String(pendingCount), plural: pluralSuffix });
 
   return (
-    <BaseLayout preview={title}>
+    <BaseLayout preview={preview} locale={locale}>
       <Heading style={heading}>
-        {isReminder ? 'Rappel de moderation' : 'Qarte Shield — Alerte'}
+        {t('pendingPoints.heading', { pendingCount: String(pendingCount), plural: pluralSuffix })}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('pendingPoints.greeting', { shopName }) }} />
 
       {isReminder ? (
         <Text style={paragraph}>
-          Tu as toujours <strong>{pendingCount} point{pendingCount > 1 ? 's' : ''}</strong> en attente
-          de validation depuis {daysSinceFirst} jour{daysSinceFirst && daysSinceFirst > 1 ? 's' : ''}.
+          {t('pendingPoints.introReminder', { pendingCount: String(pendingCount), plural: pluralSuffix, daysSinceFirst: String(daysSinceFirst || 0), daysPlural })}
         </Text>
       ) : (
         <Text style={paragraph}>
-          Notre système a détecté <strong>{pendingCount} passage{pendingCount > 1 ? 's' : ''} inhabituel{pendingCount > 1 ? 's' : ''}</strong> nécessitant ta validation.
+          {t('pendingPoints.introNew', { pendingCount: String(pendingCount), plural: pluralSuffix, verbPlural })}
         </Text>
       )}
 
@@ -51,32 +54,22 @@ export function PendingPointsEmail({
         <Text style={alertText}>
           <strong style={{ fontSize: '24px' }}>{pendingCount}</strong>
           <br />
-          point{pendingCount > 1 ? 's' : ''} en attente
+          {t('pendingPoints.heading', { pendingCount: String(pendingCount), plural: pluralSuffix })}
         </Text>
       </Section>
 
       <Text style={paragraph}>
-        Ces points ont été mis en quarantaine car ils correspondent à des passages multiples
-        d&apos;un même client dans la journée. Valide-les si le client était bien présent,
-        ou refuse-les si le client n&apos;était pas présent.
+        {t('pendingPoints.helpText')}
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href={dashboardUrl}>
-          Modérer les points
+          {t('pendingPoints.ctaModerate')}
         </Button>
       </Section>
 
-      <Section style={tipBox}>
-        <Text style={tipTitle}>Conseil</Text>
-        <Text style={tipText}>
-          Si tu reconnais le client, valide le point. En cas de doute
-          ou de comportement suspect, refuse-le pour protéger ton programme.
-        </Text>
-      </Section>
-
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('pendingPoints.signature')}
       </Text>
     </BaseLayout>
   );
@@ -128,27 +121,6 @@ const button = {
   textDecoration: 'none',
   textAlign: 'center' as const,
   padding: '14px 32px',
-};
-
-const tipBox = {
-  backgroundColor: '#EEF2FF',
-  borderRadius: '12px',
-  padding: '16px 20px',
-  margin: '24px 0',
-};
-
-const tipTitle = {
-  color: '#4338CA',
-  fontSize: '14px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-};
-
-const tipText = {
-  color: '#4338CA',
-  fontSize: '14px',
-  lineHeight: '1.5',
-  margin: '0',
 };
 
 const signature = {

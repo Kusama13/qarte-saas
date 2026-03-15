@@ -7,11 +7,13 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface ProgramReminderDay2EmailProps {
   shopName: string;
   shopType: string;
   slug?: string;
+  locale?: EmailLocale;
 }
 
 const REWARD_IDEAS: Record<string, { reward: string; visits: string }> = {
@@ -29,39 +31,34 @@ const REWARD_IDEAS: Record<string, { reward: string; visits: string }> = {
 
 const DEFAULT_REWARD = { reward: '1 prestation offerte', visits: '10 passages' };
 
-export function ProgramReminderDay2Email({ shopName, shopType, slug }: ProgramReminderDay2EmailProps) {
+export function ProgramReminderDay2Email({ shopName, shopType, slug, locale = 'fr' }: ProgramReminderDay2EmailProps) {
+  const t = getEmailT(locale);
   const normalizedType = shopType?.toLowerCase().replace(/[\s-]/g, '_') || '';
   const suggestion = REWARD_IDEAS[normalizedType] || DEFAULT_REWARD;
   const publicPageUrl = slug ? `https://getqarte.com/p/${slug}` : null;
 
   return (
-    <BaseLayout preview={`${shopName}, on a trouv&eacute; la r&eacute;compense id&eacute;ale pour ton activit&eacute;`}>
+    <BaseLayout preview={t('programReminderDay2.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Quelle récompense choisir ? On a la réponse.
+        {t('programReminderDay2.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('programReminderDay2.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Tu h&eacute;sites sur la r&eacute;compense &agrave; proposer ? C&apos;est la question n&deg;1
-        que nous recevons. On a fait le travail pour toi.
+        {t('programReminderDay2.intro')}
       </Text>
 
       <Section style={recommendationBox}>
-        <Text style={recommendationLabel}>Notre recommandation pour ton activit&eacute; :</Text>
+        <Text style={recommendationLabel}>{t('programReminderDay2.suggestionTitle')}</Text>
         <Text style={recommendationText}>
           &quot;<strong>{suggestion.reward}</strong> après <strong>{suggestion.visits}</strong>&quot;
-        </Text>
-        <Text style={recommendationNote}>
-          Simple, tes clients comprennent tout de suite.
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/program">
-          Choisir ma récompense en 1 clic
+          {t('programReminderDay2.ctaSetup')}
         </Button>
       </Section>
 
@@ -69,17 +66,9 @@ export function ProgramReminderDay2Email({ shopName, shopType, slug }: ProgramRe
 
       {publicPageUrl && (
         <>
-          <Section style={tipBox}>
-            <Text style={tipTitle}>Ta page publique est pr&ecirc;te</Text>
-            <Text style={tipText}>
-              Ta page pro est d&eacute;j&agrave; en ligne. Ajoute-la dans ta bio Instagram pour que tes clientes
-              retrouvent ton salon, tes prestations et ton programme fid&eacute;lit&eacute; en un clic.
-            </Text>
-          </Section>
-
           <Section style={buttonContainer}>
             <Button style={buttonSecondary} href={publicPageUrl}>
-              Voir ma page publique
+              {t('programReminderDay2.ctaPublicPage')}
             </Button>
           </Section>
 
@@ -88,17 +77,11 @@ export function ProgramReminderDay2Email({ shopName, shopType, slug }: ProgramRe
       )}
 
       <Text style={paragraph}>
-        Tu pourras modifier ta r&eacute;compense &agrave; tout moment. L&apos;important,
-        c&apos;est de d&eacute;marrer — chaque jour sans programme, ce sont des clients
-        qui repartent sans &ecirc;tre fid&eacute;lis&eacute;s.
-      </Text>
-
-      <Text style={paragraph}>
-        Besoin d&apos;aide ? R&eacute;ponds &agrave; cet email.
+        {t('programReminderDay2.helpText')}
       </Text>
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('programReminderDay2.signature')}
       </Text>
     </BaseLayout>
   );
@@ -143,12 +126,6 @@ const recommendationText = {
   fontWeight: '600',
   lineHeight: '1.4',
   margin: '0 0 8px 0',
-};
-
-const recommendationNote = {
-  color: '#6b7280',
-  fontSize: '14px',
-  margin: '0',
 };
 
 const divider = {

@@ -6,82 +6,83 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface TrialEndingEmailProps {
   shopName: string;
   daysRemaining: number;
   promoCode?: string;
+  locale?: EmailLocale;
 }
 
-export function TrialEndingEmail({ shopName, daysRemaining, promoCode }: TrialEndingEmailProps) {
+export function TrialEndingEmail({ shopName, daysRemaining, promoCode, locale = 'fr' }: TrialEndingEmailProps) {
+  const t = getEmailT(locale);
   const isUrgent = daysRemaining <= 1;
+  const daysPlural = daysRemaining > 1 ? 's' : '';
 
   return (
-    <BaseLayout preview={`Ton essai Qarte se termine dans ${daysRemaining} jour${daysRemaining > 1 ? 's' : ''}`}>
+    <BaseLayout preview={t('trialEnding.preview', { daysRemaining: String(daysRemaining), daysPlural })} locale={locale}>
       <Heading style={heading}>
-        Ton essai se termine bientôt
+        {t('trialEnding.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('trialEnding.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Ton essai gratuit Qarte se termine dans{' '}
+        {t('trialEnding.intro')}
         <strong style={isUrgent ? urgentText : highlight}>
-          {daysRemaining} jour{daysRemaining > 1 ? 's' : ''}
+          {t('trialEnding.daysLabel', { daysRemaining: String(daysRemaining), daysPlural })}
         </strong>.
       </Text>
 
       <Section style={isUrgent ? urgentBox : infoBox}>
         <Text style={boxText}>
           {isUrgent
-            ? 'Pour continuer à utiliser Qarte et conserver tes données clients, ajoute une carte bancaire dès maintenant.'
-            : 'Pour continuer à fidéliser tes clients sans interruption, pense à ajouter ta carte bancaire.'}
+            ? t('trialEnding.urgentMessage')
+            : t('trialEnding.normalMessage')}
         </Text>
         <Text style={{ ...boxText, marginTop: '12px' }}>
-          Sans abonnement, tu perds l&apos;accès à ton programme fidélité, ta page publique,
-          tes relances automatiques et tes données clients.
+          {t('trialEnding.lossWarning')}
         </Text>
       </Section>
 
       <Section style={priceSection}>
-        <Text style={priceLabel}>Abonnement Qarte</Text>
+        <Text style={priceLabel}>{t('trialEnding.subscriptionLabel')}</Text>
         {promoCode ? (
           <>
-            <Text style={priceOld}>19€/mois</Text>
-            <Text style={price}>9€<span style={priceMonth}>/mois le 1er mois</span></Text>
+            <Text style={priceOld}>{t('trialEnding.priceOld')}</Text>
+            <Text style={price}>{t('trialEnding.pricePromo')}<span style={priceMonth}>{t('trialEnding.pricePromoSuffix')}</span></Text>
             <Section style={promoBox}>
-              <Text style={promoLabel}>CODE PROMO</Text>
+              <Text style={promoLabelStyle}>{t('trialEnding.promoLabel')}</Text>
               <Text style={promoCodeStyle}>{promoCode}</Text>
-              <Text style={promoNote}>-10€ sur ton premier mois</Text>
+              <Text style={promoNote}>{t('trialEnding.promoNote')}</Text>
             </Section>
           </>
         ) : (
-          <Text style={price}>19€<span style={priceMonth}>/mois</span></Text>
+          <Text style={price}>{t('trialEnding.priceFull')}<span style={priceMonth}>{t('trialEnding.priceFullSuffix')}</span></Text>
         )}
-        <Text style={priceNote}>Sans engagement • Annulable à tout moment</Text>
+        <Text style={priceNoteStyle}>{t('trialEnding.priceNote')}</Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          {promoCode ? 'Profiter de l\'offre — 9€ le 1er mois' : 'Ajouter ma carte bancaire'}
+          {promoCode ? t('trialEnding.ctaPromo') : t('trialEnding.ctaNoPromo')}
         </Button>
       </Section>
 
       <Section style={socialProofBox}>
         <Text style={socialProofText}>
-          Des centaines de professionnels de la beauté fidélisent déjà avec Qarte.{' '}
-          <a href="https://getqarte.com/pros" style={socialProofLink}>Voir leurs programmes &#8594;</a>
+          {t('trialEnding.socialProof')}{' '}
+          <a href="https://getqarte.com/pros" style={socialProofLinkStyle}>{t('trialEnding.socialProofLink')}</a>
         </Text>
       </Section>
 
       <Text style={paragraph}>
-        Merci de faire confiance à Qarte pour fidéliser tes clients.
+        {t('trialEnding.thankYou')}
       </Text>
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('trialEnding.signature')}
       </Text>
     </BaseLayout>
   );
@@ -178,7 +179,7 @@ const promoBox = {
   border: '2px dashed #4b0082',
 };
 
-const promoLabel = {
+const promoLabelStyle = {
   color: '#8898aa',
   fontSize: '11px',
   fontWeight: '600',
@@ -201,7 +202,7 @@ const promoNote = {
   margin: '4px 0 0 0',
 };
 
-const priceNote = {
+const priceNoteStyle = {
   color: '#8898aa',
   fontSize: '14px',
   margin: '8px 0 0 0',
@@ -238,7 +239,7 @@ const socialProofText = {
   margin: '0',
 };
 
-const socialProofLink = {
+const socialProofLinkStyle = {
   color: '#4b0082',
   fontWeight: '600' as const,
   textDecoration: 'underline',

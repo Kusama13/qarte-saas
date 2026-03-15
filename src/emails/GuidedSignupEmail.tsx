@@ -6,55 +6,40 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface GuidedSignupEmailProps {
   email: string;
+  locale?: EmailLocale;
 }
 
-export function GuidedSignupEmail({ email }: GuidedSignupEmailProps) {
+export function GuidedSignupEmail({ email, locale = 'fr' }: GuidedSignupEmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview="On te guide pas &agrave; pas — 30 secondes pour lancer ton programme">
+    <BaseLayout preview={t('guidedSignup.preview')} locale={locale}>
       <Heading style={heading}>
-        30 secondes, on te guide
+        {t('guidedSignup.heading')}
       </Heading>
 
       <Text style={paragraph}>
-        Bonjour,
+        {t('guidedSignup.intro')}
       </Text>
 
-      <Text style={paragraph}>
-        Tu as cr&eacute;&eacute; ton compte Qarte hier ({email}), mais ton commerce
-        n&apos;est pas encore enregistr&eacute;.
-      </Text>
-
-      <Section style={highlightBox}>
-        <Text style={highlightText}>
-          On a simplifi&eacute; le formulaire au maximum :
-          <br /><strong>4 champs</strong> (nom, activit&eacute;, t&eacute;l&eacute;phone, adresse)
-          <br />&rarr; Ton QR code est g&eacute;n&eacute;r&eacute; automatiquement apr&egrave;s.
-        </Text>
+      <Section style={stepsBox}>
+        <Text style={stepItem}><strong>1.</strong> {t('guidedSignup.step1')}</Text>
+        <Text style={stepItem}><strong>2.</strong> {t('guidedSignup.step2')}</Text>
+        <Text style={stepItem}><strong>3.</strong> {t('guidedSignup.step3')}</Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/auth/merchant/signup/complete">
-          Finaliser en 30 secondes
+          {t('guidedSignup.ctaSignup')}
         </Button>
       </Section>
 
-      <Section style={stepsBox}>
-        <Text style={stepsTitle}>Ce qui se passe ensuite :</Text>
-        <Text style={stepItem}><strong>1.</strong> Tu remplis 4 champs</Text>
-        <Text style={stepItem}><strong>2.</strong> Tu choisis une r&eacute;compense (on te sugg&egrave;re la meilleure)</Text>
-        <Text style={stepItem}><strong>3.</strong> Ton QR code est pr&ecirc;t &mdash; tes clients peuvent scanner</Text>
-      </Section>
-
-      <Text style={paragraph}>
-        Besoin d&apos;un coup de main ? R&eacute;ponds &agrave; cet email,
-        on r&eacute;pond en moins d&apos;1h.
-      </Text>
-
       <Text style={signature}>
-        L&apos;&eacute;quipe Qarte
+        {t('guidedSignup.signature')}
       </Text>
     </BaseLayout>
   );
@@ -73,20 +58,6 @@ const paragraph = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '0 0 16px 0',
-};
-
-const highlightBox = {
-  backgroundColor: '#f0edfc',
-  borderRadius: '8px',
-  padding: '16px 20px',
-  margin: '0 0 8px 0',
-};
-
-const highlightText = {
-  color: '#1a1a1a',
-  fontSize: '16px',
-  lineHeight: '1.8',
-  margin: '0',
 };
 
 const buttonContainer = {
@@ -110,13 +81,6 @@ const stepsBox = {
   borderRadius: '12px',
   padding: '20px 24px',
   margin: '0 0 24px 0',
-};
-
-const stepsTitle = {
-  color: '#1a1a1a',
-  fontSize: '15px',
-  fontWeight: '600',
-  margin: '0 0 12px 0',
 };
 
 const stepItem = {

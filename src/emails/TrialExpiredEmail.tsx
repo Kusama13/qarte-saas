@@ -6,79 +6,72 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface TrialExpiredEmailProps {
   shopName: string;
   daysUntilDeletion: number;
   promoCode?: string;
+  locale?: EmailLocale;
 }
 
-export function TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode }: TrialExpiredEmailProps) {
+export function TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode, locale = 'fr' }: TrialExpiredEmailProps) {
+  const t = getEmailT(locale);
+  const daysPlural = daysUntilDeletion > 1 ? 's' : '';
+
   return (
-    <BaseLayout preview={`${shopName}, ton essai est terminé`}>
+    <BaseLayout preview={t('trialExpired.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Ton essai est terminé
+        {t('trialExpired.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('trialExpired.greeting', { shopName }) }} />
 
-      <Text style={paragraph}>
-        Ta période d&apos;essai Qarte est arrivée à son terme.
-        Pas de panique : <strong>tes données sont en sécurité</strong> et on garde tout pour toi.
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('trialExpired.intro') }} />
 
       <Section style={infoBox}>
-        <Text style={infoTitle}>Ce qui se passe maintenant</Text>
+        <Text style={infoTitle}>{t('trialExpired.whatHappensTitle')}</Text>
         <Text style={infoText}>
-          Ton compte est en pause. Tes clients ne peuvent plus valider leurs passages
-          et ton QR code est temporairement désactivé.
+          {t('trialExpired.whatHappensText')}
         </Text>
-        <Text style={infoText}>
-          Tes données restent intactes pendant encore <strong>{daysUntilDeletion} jour{daysUntilDeletion > 1 ? 's' : ''}</strong>.
-          Réactive quand tu veux, tout sera là.
-        </Text>
+        <Text style={infoText} dangerouslySetInnerHTML={{ __html: t('trialExpired.dataRetention', { daysUntilDeletion: String(daysUntilDeletion), daysPlural }) }} />
       </Section>
 
       {promoCode ? (
-        <Section style={promoBox}>
-          <Text style={promoTitle}>Offre spéciale pour toi</Text>
-          <Text style={promoPrice}>
-            <span style={promoPriceOld}>19€</span> → 9€/mois le 1er mois
-          </Text>
-          <Text style={promoLabel}>CODE PROMO</Text>
+        <Section style={promoBoxStyle}>
+          <Text style={promoTitle}>{t('trialExpired.specialOfferTitle')}</Text>
+          <Text style={promoPrice} dangerouslySetInnerHTML={{ __html: t('trialExpired.specialOfferPrice') }} />
+          <Text style={promoLabel}>{t('trialExpired.promoLabel')}</Text>
           <Text style={promoCodeStyle}>{promoCode}</Text>
-          <Text style={promoNote}>Utilise ce code lors du paiement</Text>
+          <Text style={promoNoteStyle}>{t('trialExpired.promoNote')}</Text>
         </Section>
       ) : (
         <Section style={offerBox}>
-          <Text style={offerTitle}>On veut t&apos;aider à réussir</Text>
+          <Text style={offerTitle}>{t('trialExpired.helpTitle')}</Text>
           <Text style={offerText}>
-            Réactive maintenant et on t&apos;accompagne personnellement
-            pour lancer ton programme avec tes premiers clients.
+            {t('trialExpired.helpText')}
           </Text>
         </Section>
       )}
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          {promoCode ? 'Réactiver à 9€ le 1er mois' : 'Réactiver mon compte — 19€/mois'}
+          {promoCode ? t('trialExpired.ctaPromo') : t('trialExpired.ctaNoPromo')}
         </Button>
       </Section>
 
       <Text style={noteText}>
-        Sans engagement, annulable à tout moment.
+        {t('trialExpired.noCommitment')}
       </Text>
 
       <Text style={paragraph}>
-        Des questions ? Réponds à cet email, on te répond rapidement.
+        {t('trialExpired.questionText')}
       </Text>
 
       <Text style={signature}>
-        À très vite,
+        {t('trialExpired.signaturePrefix')}
         <br />
-        L&apos;équipe Qarte
+        {t('trialExpired.signature')}
       </Text>
     </BaseLayout>
   );
@@ -159,7 +152,7 @@ const button = {
   padding: '14px 32px',
 };
 
-const promoBox = {
+const promoBoxStyle = {
   backgroundColor: '#f0edfc',
   borderRadius: '12px',
   padding: '24px',
@@ -182,12 +175,6 @@ const promoPrice = {
   margin: '0 0 16px 0',
 };
 
-const promoPriceOld = {
-  textDecoration: 'line-through',
-  color: '#8898aa',
-  fontWeight: '400',
-};
-
 const promoLabel = {
   color: '#8898aa',
   fontSize: '11px',
@@ -205,7 +192,7 @@ const promoCodeStyle = {
   letterSpacing: '2px',
 };
 
-const promoNote = {
+const promoNoteStyle = {
   color: '#4b0082',
   fontSize: '13px',
   margin: '4px 0 0 0',

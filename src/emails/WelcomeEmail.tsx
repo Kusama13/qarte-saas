@@ -7,50 +7,42 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface WelcomeEmailProps {
   shopName: string;
   slug?: string;
   trialDays?: number;
+  locale?: EmailLocale;
 }
 
-export function WelcomeEmail({ shopName, slug, trialDays = 7 }: WelcomeEmailProps) {
+export function WelcomeEmail({ shopName, slug, trialDays = 7, locale = 'fr' }: WelcomeEmailProps) {
+  const t = getEmailT(locale);
   const publicPageUrl = slug ? `https://getqarte.com/p/${slug}` : null;
 
   return (
-    <BaseLayout preview={`${shopName}, ta page pro et ton programme de fidelite sont prets`}>
+    <BaseLayout preview={t('welcome.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Bienvenue {shopName} !
+        {t('welcome.heading', { shopName })}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('welcome.greeting', { shopName }) }} />
 
-      <Text style={paragraph}>
-        Ton compte Qarte est cree. Tu as maintenant une <strong>page pro complete</strong> et
-        un <strong>programme de fidelite</strong> prets a l&apos;emploi.
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('welcome.intro') }} />
 
       <Text style={subheading}>
-        Ce qui est deja pret pour toi
+        {t('welcome.readyTitle')}
       </Text>
 
       <Section style={stepsBox}>
-        <Text style={stepItem}>
-          <strong>Ta page pro</strong> — bio, prestations, photos, horaires. Une seule page a partager, visible sur Google.
-        </Text>
-        <Text style={stepItem}>
-          <strong>Ton planning en ligne</strong> — tes clientes voient tes dispos et reservent directement.
-        </Text>
-        <Text style={stepItem}>
-          <strong>Ton programme de fidelite</strong> — tampons ou cagnotte, relances automatiques, avis Google.
-        </Text>
+        <Text style={stepItem} dangerouslySetInnerHTML={{ __html: t('welcome.stepPagePro') }} />
+        <Text style={stepItem} dangerouslySetInnerHTML={{ __html: t('welcome.stepPlanning') }} />
+        <Text style={stepItem} dangerouslySetInnerHTML={{ __html: t('welcome.stepLoyalty') }} />
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/personalize">
-          Personnalise ta page en 5 min
+          {t('welcome.ctaPersonalize')}
         </Button>
       </Section>
 
@@ -59,40 +51,35 @@ export function WelcomeEmail({ shopName, slug, trialDays = 7 }: WelcomeEmailProp
           <Hr style={divider} />
 
           <Text style={subheading}>
-            Ta page publique est deja en ligne
+            {t('welcome.publicPageTitle')}
           </Text>
 
           <Text style={paragraph}>
-            Tes clientes y retrouvent ton salon, tes prestations, ton programme de fidelite
-            et la prise de rendez-vous. Ajoute-la dans ta bio Instagram — c&apos;est mieux qu&apos;un Linktree.
+            {t('welcome.publicPageText')}
           </Text>
 
           <Section style={buttonContainer}>
             <Button style={buttonSecondary} href={publicPageUrl}>
-              Voir ma page publique
+              {t('welcome.ctaPublicPage')}
             </Button>
           </Section>
         </>
       )}
 
-      <Text style={highlightBox}>
-        <strong>Astuce :</strong> Configure une offre de bienvenue (ex : -20% premiere visite)
-        depuis ton tableau de bord. Elle s&apos;affichera automatiquement sur ta page publique
-        pour attirer de nouvelles clientes — sans depenser en publicite.
-      </Text>
+      <Text style={highlightBox} dangerouslySetInnerHTML={{ __html: `<strong>${t('welcome.tipTitle')}</strong> ${t('welcome.tipText')}` }} />
 
       <Hr style={divider} />
 
       <Text style={footerNote}>
-        Tu as {trialDays} jours pour tout tester gratuitement, sans engagement.
+        {t('welcome.trialNote', { trialDays: String(trialDays) })}
       </Text>
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? Reponds a cet email, on te guide.
+        {t('welcome.helpText')}
       </Text>
 
       <Text style={signature}>
-        L&apos;equipe Qarte
+        {t('welcome.signature')}
       </Text>
     </BaseLayout>
   );

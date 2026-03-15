@@ -7,11 +7,13 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface AutoSuggestRewardEmailProps {
   shopName: string;
   shopType: string;
   daysRemaining: number;
+  locale?: EmailLocale;
 }
 
 const REWARD_IDEAS: Record<string, { reward: string; visits: string }> = {
@@ -29,23 +31,21 @@ const REWARD_IDEAS: Record<string, { reward: string; visits: string }> = {
 
 const DEFAULT_REWARD = { reward: '1 prestation offerte', visits: '10 passages' };
 
-export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: AutoSuggestRewardEmailProps) {
+export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining, locale = 'fr' }: AutoSuggestRewardEmailProps) {
+  const t = getEmailT(locale);
   const normalizedType = shopType?.toLowerCase().replace(/[\s-]/g, '_') || '';
   const suggestion = REWARD_IDEAS[normalizedType] || DEFAULT_REWARD;
 
   return (
-    <BaseLayout preview={`${shopName}, on a choisi la meilleure r&eacute;compense pour toi — 1 clic pour activer`}>
+    <BaseLayout preview={t('autoSuggestReward.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        On a choisi la meilleure r&eacute;compense pour toi
+        {t('autoSuggestReward.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('autoSuggestReward.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Cela fait 5 jours que ton compte est cr&eacute;&eacute;. On sait que choisir
-        une r&eacute;compense peut &ecirc;tre un blocage — alors on l&apos;a fait pour toi.
+        {t('autoSuggestReward.intro')}
       </Text>
 
       <Section style={recommendationBox}>
@@ -61,15 +61,13 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/program">
-          Activer cette récompense
+          {t('autoSuggestReward.ctaSetup')}
         </Button>
       </Section>
 
       {daysRemaining > 0 && (
         <Section style={urgencyBox}>
-          <Text style={urgencyText}>
-            Il te reste <strong>{daysRemaining} jour{daysRemaining > 1 ? 's' : ''}</strong> d&apos;essai gratuit.
-          </Text>
+          <Text style={urgencyText} dangerouslySetInnerHTML={{ __html: t('autoSuggestReward.trialNote', { daysRemaining: String(daysRemaining), daysPlural: daysRemaining > 1 ? 's' : '' }) }} />
         </Section>
       )}
 
@@ -80,7 +78,7 @@ export function AutoSuggestRewardEmail({ shopName, shopType, daysRemaining }: Au
       </Text>
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('autoSuggestReward.signature')}
       </Text>
     </BaseLayout>
   );

@@ -6,53 +6,54 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface PaymentFailedEmailProps {
   shopName: string;
+  locale?: EmailLocale;
 }
 
-export function PaymentFailedEmail({ shopName }: PaymentFailedEmailProps) {
+export function PaymentFailedEmail({ shopName, locale = 'fr' }: PaymentFailedEmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview={`${shopName} - Action requise : problème de paiement`}>
+    <BaseLayout preview={t('paymentFailed.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Problème avec ton paiement
+        {t('paymentFailed.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('paymentFailed.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        On n&apos;a pas pu traiter ton dernier paiement pour ton abonnement Qarte.
+        {t('paymentFailed.intro')}
       </Text>
 
       <Section style={warningBox}>
-        <Text style={warningTitle}>Pourquoi ce problème ?</Text>
+        <Text style={warningTitle}>{t('paymentFailed.whyTitle')}</Text>
         <Text style={warningText}>
-          Cela peut arriver si ta carte a expiré, si les fonds sont insuffisants,
-          ou si ta banque a bloqué la transaction.
+          {t('paymentFailed.whyText')}
         </Text>
       </Section>
 
       <Section style={impactSection}>
-        <Text style={impactTitle}>Ce qui va se passer :</Text>
-        <Text style={impactItem}>• On réessaiera automatiquement dans quelques jours</Text>
-        <Text style={impactItem}>• Si le paiement échoue à nouveau, ton compte sera suspendu</Text>
-        <Text style={impactItem}>• Tes clients ne pourront plus valider leurs passages</Text>
+        <Text style={impactTitle}>{t('paymentFailed.impactTitle')}</Text>
+        <Text style={impactItem}>{t('paymentFailed.impact1')}</Text>
+        <Text style={impactItem}>{t('paymentFailed.impact2')}</Text>
+        <Text style={impactItem}>{t('paymentFailed.impact3')}</Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          Mettre à jour mon moyen de paiement
+          {t('paymentFailed.ctaUpdate')}
         </Button>
       </Section>
 
       <Text style={paragraph}>
-        Si tu as des questions ou besoin d&apos;aide, n&apos;hésite pas à nous contacter.
+        {t('paymentFailed.helpText')}
       </Text>
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('paymentFailed.signature')}
       </Text>
     </BaseLayout>
   );

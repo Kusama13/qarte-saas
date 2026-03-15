@@ -6,6 +6,7 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface WeeklyDigestEmailProps {
   shopName: string;
@@ -14,6 +15,7 @@ interface WeeklyDigestEmailProps {
   rewardsEarned: number;
   totalCustomers: number;
   referralCode?: string;
+  locale?: EmailLocale;
 }
 
 export function WeeklyDigestEmail({
@@ -23,87 +25,60 @@ export function WeeklyDigestEmail({
   rewardsEarned,
   totalCustomers,
   referralCode,
+  locale = 'fr',
 }: WeeklyDigestEmailProps) {
+  const t = getEmailT(locale);
   const hasActivity = scansThisWeek > 0 || newCustomers > 0;
 
   return (
-    <BaseLayout preview={`${shopName} — ta semaine en un clin d'oeil`}>
+    <BaseLayout preview={t('weeklyDigest.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Ta semaine en un clin d&apos;oeil
+        {t('weeklyDigest.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('weeklyDigest.greeting', { shopName }) }} />
 
       {hasActivity ? (
         <>
-          <Text style={paragraph}>
-            Voici le r&eacute;sum&eacute; de ton activit&eacute; cette semaine :
-          </Text>
-
           <Section style={statsGrid}>
             <Section style={statCard}>
               <Text style={statNumber}>{scansThisWeek}</Text>
-              <Text style={statLabel}>scan{scansThisWeek > 1 ? 's' : ''}</Text>
+              <Text style={statLabel}>{t('weeklyDigest.scansLabel')}</Text>
             </Section>
             <Section style={statCard}>
               <Text style={statNumber}>{newCustomers}</Text>
-              <Text style={statLabel}>nouveau{newCustomers > 1 ? 'x' : ''}</Text>
+              <Text style={statLabel}>{t('weeklyDigest.newCustomersLabel')}</Text>
             </Section>
             <Section style={statCard}>
               <Text style={statNumber}>{rewardsEarned}</Text>
-              <Text style={statLabel}>r&eacute;compense{rewardsEarned > 1 ? 's' : ''}</Text>
+              <Text style={statLabel}>{t('weeklyDigest.rewardsLabel')}</Text>
             </Section>
           </Section>
 
           <Section style={totalBox}>
             <Text style={totalText}>
-              <strong>{totalCustomers}</strong> client{totalCustomers > 1 ? 's' : ''} fid&eacute;lis&eacute;{totalCustomers > 1 ? 's' : ''} au total
+              <strong>{totalCustomers}</strong> {t('weeklyDigest.totalCustomersLabel')}
             </Text>
           </Section>
+
+          <Text style={paragraph}>
+            {t('weeklyDigest.goodWeek')}
+          </Text>
         </>
       ) : (
-        <>
-          <Text style={paragraph}>
-            Aucun scan cette semaine. Ce n&apos;est pas grave &mdash; il suffit d&apos;un rappel
-            &agrave; tes clients pour relancer la machine.
-          </Text>
-
-          <Section style={tipBox}>
-            <Text style={tipTitle}>Astuce de la semaine</Text>
-            <Text style={tipText}>
-              Dis &agrave; tes 5 prochains clients : &laquo; On a un programme de fid&eacute;lit&eacute;,
-              scannez ce QR code pour cumuler des points ! &raquo;
-            </Text>
-          </Section>
-        </>
+        <Text style={paragraph}>
+          {t('weeklyDigest.noScans')}
+        </Text>
       )}
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard">
-          Voir mon tableau de bord
+          {t('weeklyDigest.ctaDashboard')}
         </Button>
       </Section>
 
-      {referralCode && (
-        <Section style={referralBox}>
-          <Text style={referralTitle}>Gagne 10&euro; de r&eacute;duction</Text>
-          <Text style={referralText}>
-            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommande-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur ton prochain mois.
-          </Text>
-          <Text style={referralCode_style}>Ton code : <strong>{referralCode}</strong></Text>
-          <Text style={referralHint}>
-            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
-          </Text>
-        </Section>
-      )}
-
       <Text style={signature}>
-        Bonne semaine,
-        <br />
-        L&apos;&eacute;quipe Qarte
+        {t('weeklyDigest.signature')}
       </Text>
     </BaseLayout>
   );
@@ -169,28 +144,6 @@ const totalText = {
   margin: '0',
 };
 
-const tipBox = {
-  backgroundColor: '#fef3c7',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-  borderLeft: '4px solid #f59e0b',
-};
-
-const tipTitle = {
-  color: '#92400e',
-  fontSize: '14px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-};
-
-const tipText = {
-  color: '#78350f',
-  fontSize: '15px',
-  lineHeight: '1.6',
-  margin: '0',
-};
-
 const buttonContainer = {
   textAlign: 'center' as const,
   margin: '28px 0',
@@ -212,48 +165,6 @@ const signature = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '24px 0 0 0',
-};
-
-const referralBox = {
-  backgroundColor: '#faf5ff',
-  borderRadius: '12px',
-  padding: '20px 24px',
-  margin: '24px 0',
-  border: '1px solid #e9d5ff',
-};
-
-const referralTitle = {
-  color: '#4b0082',
-  fontSize: '16px',
-  fontWeight: '700',
-  margin: '0 0 8px 0',
-};
-
-const referralText = {
-  color: '#4a5568',
-  fontSize: '14px',
-  lineHeight: '1.6',
-  margin: '0 0 12px 0',
-};
-
-const referralCode_style = {
-  color: '#4b0082',
-  fontSize: '18px',
-  fontWeight: '700',
-  fontFamily: 'monospace',
-  textAlign: 'center' as const,
-  margin: '0 0 8px 0',
-  padding: '8px',
-  backgroundColor: '#ffffff',
-  borderRadius: '8px',
-  border: '1px dashed #c4b5fd',
-};
-
-const referralHint = {
-  color: '#9ca3af',
-  fontSize: '12px',
-  textAlign: 'center' as const,
-  margin: '0',
 };
 
 export default WeeklyDigestEmail;

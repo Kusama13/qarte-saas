@@ -6,71 +6,69 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface SubscriptionReactivatedEmailProps {
   shopName: string;
   referralCode?: string;
+  locale?: EmailLocale;
 }
 
-export function SubscriptionReactivatedEmail({ shopName, referralCode }: SubscriptionReactivatedEmailProps) {
+export function SubscriptionReactivatedEmail({ shopName, referralCode, locale = 'fr' }: SubscriptionReactivatedEmailProps) {
+  const t = getEmailT(locale);
+
   return (
-    <BaseLayout preview={`${shopName} - Ton abonnement est maintenu !`}>
+    <BaseLayout preview={t('subscriptionReactivated.preview', { shopName })} locale={locale}>
       <Heading style={heading}>
-        Ton abonnement est maintenu
+        {t('subscriptionReactivated.heading')}
       </Heading>
 
-      <Text style={paragraph}>
-        Bonjour <strong>{shopName}</strong>,
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('subscriptionReactivated.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        Bonne nouvelle ! Ta demande de résiliation a bien été annulée.
-        Ton abonnement Qarte reste actif sans interruption.
+        {t('subscriptionReactivated.intro')}
       </Text>
 
       <Section style={confirmBox}>
-        <Text style={confirmTitle}>&#10003; Abonnement actif</Text>
-        <Text style={confirmDetail}>Résiliation annulée</Text>
+        <Text style={confirmTitle}>{t('subscriptionReactivated.confirmTitle')}</Text>
+        <Text style={confirmDetail}>{t('subscriptionReactivated.confirmDetail')}</Text>
         <Text style={confirmNote}>
-          Ton accès continue normalement, aucune action requise
+          {t('subscriptionReactivated.confirmNote')}
         </Text>
       </Section>
 
       <Section style={features}>
-        <Text style={featureTitle}>Tu continues de bénéficier de :</Text>
-        <Text style={featureItem}>&#10003; Programme de fidélité illimité</Text>
-        <Text style={featureItem}>&#10003; Clients illimités</Text>
-        <Text style={featureItem}>&#10003; Statistiques en temps réel</Text>
-        <Text style={featureItem}>&#10003; Support prioritaire</Text>
-        <Text style={featureItem}>&#10003; Mises à jour gratuites</Text>
+        <Text style={featureTitle}>{t('subscriptionReactivated.featuresTitle')}</Text>
+        <Text style={featureItem}>{t('subscriptionReactivated.feature1')}</Text>
+        <Text style={featureItem}>{t('subscriptionReactivated.feature2')}</Text>
+        <Text style={featureItem}>{t('subscriptionReactivated.feature3')}</Text>
+        <Text style={featureItem}>{t('subscriptionReactivated.feature4')}</Text>
+        <Text style={featureItem}>{t('subscriptionReactivated.feature5')}</Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard">
-          Accéder à mon tableau de bord
+          {t('subscriptionReactivated.ctaDashboard')}
         </Button>
       </Section>
 
       <Text style={paragraph}>
-        Merci de ta confiance ! Si tu as des questions, réponds simplement à cet email.
+        {t('subscriptionReactivated.thankYou')}
       </Text>
 
       {referralCode && (
         <Section style={referralBox}>
-          <Text style={referralTitle}>&#127873; Gagnez 10&euro; de r&eacute;duction</Text>
-          <Text style={referralText}>
-            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommande-lui Qarte et re&ccedil;ois <strong>10&euro; de r&eacute;duction</strong> sur ton prochain mois (lui aussi).
-          </Text>
-          <Text style={referralCode_style}>Ton code : <strong>{referralCode}</strong></Text>
-          <Text style={referralHint}>
-            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+          <Text style={referralTitleStyle} dangerouslySetInnerHTML={{ __html: t('subscriptionReactivated.referralTitle') }} />
+          <Text style={referralTextStyle} dangerouslySetInnerHTML={{ __html: t('subscriptionReactivated.referralText') }} />
+          <Text style={referralCode_style} dangerouslySetInnerHTML={{ __html: t('subscriptionReactivated.referralCodeLabel', { referralCode }) }} />
+          <Text style={referralHintStyle}>
+            {t('subscriptionReactivated.referralHint')}
           </Text>
         </Section>
       )}
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('subscriptionReactivated.signature')}
       </Text>
     </BaseLayout>
   );
@@ -172,14 +170,14 @@ const referralBox = {
   border: '1px solid #e9d5ff',
 };
 
-const referralTitle = {
+const referralTitleStyle = {
   color: '#4b0082',
   fontSize: '16px',
   fontWeight: '700',
   margin: '0 0 8px 0',
 };
 
-const referralText = {
+const referralTextStyle = {
   color: '#4a5568',
   fontSize: '14px',
   lineHeight: '1.6',
@@ -199,7 +197,7 @@ const referralCode_style = {
   border: '1px dashed #c4b5fd',
 };
 
-const referralHint = {
+const referralHintStyle = {
   color: '#9ca3af',
   fontSize: '12px',
   textAlign: 'center' as const,
