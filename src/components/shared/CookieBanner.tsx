@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 
 export default function CookieBanner() {
+  const t = useTranslations('cookie');
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -26,13 +28,12 @@ export default function CookieBanner() {
       <div className="flex flex-col gap-4 mx-auto max-w-4xl md:flex-row md:items-center md:justify-between">
         <div className="flex-1 pr-8">
           <p className="text-sm text-gray-600">
-            Ce site utilise des cookies pour son fonctionnement et pour mesurer son audience
-            (Google Analytics, Meta, TikTok).{' '}
+            {t('text')}{' '}
             <Link
               href="/politique-confidentialite"
               className="text-primary hover:underline"
             >
-              En savoir plus
+              {t('learnMore')}
             </Link>
           </p>
         </div>
@@ -41,13 +42,13 @@ export default function CookieBanner() {
             onClick={acceptCookies}
             className="px-6 py-2.5 text-sm font-medium text-white bg-primary rounded-xl hover:bg-primary-600 transition-colors whitespace-nowrap"
           >
-            OK, compris
+            {t('accept')}
           </button>
         </div>
         <button
           onClick={acceptCookies}
           className="absolute top-3 right-3 p-1 text-gray-400 hover:text-gray-600 md:hidden"
-          aria-label="Fermer"
+          aria-label={t('close')}
         >
           <X className="w-5 h-5" />
         </button>

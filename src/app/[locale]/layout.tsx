@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -7,6 +8,28 @@ type Props = {
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+
+  if (locale === 'en') {
+    return {
+      title: {
+        default: 'Qarte — The Linktree for beauty pros + loyalty program',
+        template: '%s | Qarte',
+      },
+      description: 'One link to showcase everything: bio, services, schedule, photos, Google reviews. A loyalty program that brings your clients back (stamps, cashback, auto follow-ups). For hair salons, barbers, beauty salons and nail studios. $19/month, free trial.',
+      openGraph: {
+        title: 'Qarte — The Linktree for beauty pros + loyalty program',
+        description: 'One link to showcase everything + a loyalty program that brings your clients back. $19/month, free trial.',
+        locale: 'en_US',
+      },
+    };
+  }
+
+  // FR: no override needed, inherits from root layout
+  return {};
+}
 
 export default async function LocaleLayout({ children, params }: Props) {
   const { locale } = await params;

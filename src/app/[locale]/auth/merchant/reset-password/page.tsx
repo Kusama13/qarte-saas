@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { getSupabase } from '@/lib/supabase';
 import { CreditCard, Eye, EyeOff, CheckCircle2, Lock } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
+import { useTranslations } from 'next-intl';
 
 function ResetPasswordContent() {
+  const t = useTranslations('resetPassword');
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = getSupabase();
@@ -49,13 +51,13 @@ function ResetPasswordContent() {
     setError('');
 
     if (password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+      setError(t('passwordTooShort'));
       setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError(t('passwordMismatch'));
       setLoading(false);
       return;
     }
@@ -106,15 +108,14 @@ function ResetPasswordContent() {
 
           <div className="bg-white rounded-3xl shadow-xl p-8 text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              Lien invalide ou expiré
+              {t('invalidTitle')}
             </h1>
             <p className="text-gray-600 mb-6">
-              Ce lien de réinitialisation n&apos;est plus valide.
-              Veuillez en demander un nouveau.
+              {t('invalidMsg')}
             </p>
             <Link href="/auth/merchant/forgot-password">
               <Button className="w-full">
-                Demander un nouveau lien
+                {t('requestNewLink')}
               </Button>
             </Link>
           </div>
@@ -141,11 +142,10 @@ function ResetPasswordContent() {
               <CheckCircle2 className="w-8 h-8 text-green-600" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              Mot de passe modifié !
+              {t('successTitle')}
             </h1>
             <p className="text-gray-600 mb-6">
-              Votre mot de passe a été mis à jour avec succès.
-              Vous allez être redirigé vers la page de connexion...
+              {t('successMsg')}
             </p>
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
           </div>
@@ -169,10 +169,10 @@ function ResetPasswordContent() {
         <div className="bg-white rounded-3xl shadow-xl p-8">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Nouveau mot de passe
+              {t('title')}
             </h1>
             <p className="text-gray-600">
-              Choisissez un nouveau mot de passe sécurisé
+              {t('subtitle')}
             </p>
           </div>
 
@@ -186,8 +186,8 @@ function ResetPasswordContent() {
             <div className="relative">
               <Input
                 type={showPassword ? 'text' : 'password'}
-                label="Nouveau mot de passe"
-                placeholder="Minimum 8 caractères"
+                label={t('newPasswordLabel')}
+                placeholder={t('newPasswordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -210,8 +210,8 @@ function ResetPasswordContent() {
             <div className="relative">
               <Input
                 type={showPassword ? 'text' : 'password'}
-                label="Confirmer le mot de passe"
-                placeholder="Répétez le mot de passe"
+                label={t('confirmLabel')}
+                placeholder={t('confirmPlaceholder')}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
@@ -222,7 +222,7 @@ function ResetPasswordContent() {
             </div>
 
             <Button type="submit" loading={loading} className="w-full">
-              Modifier le mot de passe
+              {t('cta')}
             </Button>
           </form>
         </div>

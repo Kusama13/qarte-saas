@@ -19,10 +19,12 @@ import { validateEmail, suggestEmailCorrection } from '@/lib/utils';
 import { trackPageView, trackSignupStarted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
 import { TikTokPixel } from '@/components/analytics/TikTokPixel';
+import { useTranslations } from 'next-intl';
 
 export default function MerchantSignupPage() {
   const router = useRouter();
   const supabase = getSupabase();
+  const t = useTranslations('signup');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -46,7 +48,7 @@ export default function MerchantSignupPage() {
     trackSignupStarted('email');
 
     if (!validateEmail(formData.email)) {
-      setError('Veuillez entrer une adresse email valide');
+      setError(t('invalidEmail'));
       setLoading(false);
       return;
     }
@@ -60,7 +62,7 @@ export default function MerchantSignupPage() {
     }
 
     if (formData.password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères');
+      setError(t('passwordTooShort'));
       setLoading(false);
       return;
     }
@@ -74,9 +76,9 @@ export default function MerchantSignupPage() {
       if (signUpError) {
         console.error('Signup error:', signUpError);
         if (signUpError.message.includes('already registered')) {
-          setError('Cet email est déjà utilisé');
+          setError(t('emailAlreadyUsed'));
         } else {
-          setError('Erreur lors de la création du compte: ' + signUpError.message);
+          setError(t('createError') + ': ' + signUpError.message);
         }
         return;
       }
@@ -103,10 +105,10 @@ export default function MerchantSignupPage() {
         // Redirect to Phase 2 (complete profile)
         router.push('/auth/merchant/signup/complete');
       } else {
-        setError('Erreur lors de la création du compte. Veuillez réessayer.');
+        setError(t('genericError'));
       }
     } catch {
-      setError('Une erreur est survenue. Veuillez réessayer.');
+      setError(t('genericError'));
     } finally {
       setLoading(false);
     }
@@ -131,10 +133,10 @@ export default function MerchantSignupPage() {
           <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
             <div className="text-center mb-5">
               <h1 className="text-xl font-bold text-gray-900">
-                Rejoins les centaines de <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">salons de beauté</span> qui fidélisent avec Qarte
+                {t('title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">{t('titleBold')}</span> {t('titleEnd')}
               </h1>
               <p className="mt-2 text-gray-600">
-                Commence ton essai gratuit de 7 jours
+                {t('subtitle')}
               </p>
             </div>
 
@@ -148,8 +150,8 @@ export default function MerchantSignupPage() {
               <div>
                 <Input
                   type="email"
-                  label="Email"
-                  placeholder="votre@email.fr"
+                  label={t('emailLabel')}
+                  placeholder={t('emailPlaceholder')}
                   value={formData.email}
                   onChange={(e) => {
                     setFormData({ ...formData, email: e.target.value });
@@ -159,7 +161,7 @@ export default function MerchantSignupPage() {
                 />
                 {emailSuggestion && (
                   <p className="mt-1.5 text-sm text-amber-700">
-                    Vouliez-vous dire{' '}
+                    {t('didYouMean')}{' '}
                     <button
                       type="button"
                       className="font-semibold underline hover:text-amber-900"
@@ -178,8 +180,8 @@ export default function MerchantSignupPage() {
               <div className="relative">
                 <Input
                   type={showPassword ? 'text' : 'password'}
-                  label="Mot de passe"
-                  placeholder="Minimum 8 caractères"
+                  label={t('passwordLabel')}
+                  placeholder={t('passwordPlaceholder')}
                   value={formData.password}
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
@@ -201,46 +203,46 @@ export default function MerchantSignupPage() {
               </div>
 
               <Button type="submit" loading={loading} className="w-full bg-gradient-to-r from-indigo-600 to-pink-500 hover:from-indigo-700 hover:to-pink-600 shadow-lg shadow-indigo-200/50">
-                Commencer gratuitement
+                {t('cta')}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
 
               <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500 font-medium">
                 <span className="flex items-center gap-1">
                   <CreditCard className="w-3.5 h-3.5" />
-                  Sans carte bancaire
+                  {t('noCreditCard')}
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
-                  Pret en 2 min
+                  {t('readyIn2min')}
                 </span>
               </div>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-gray-600">
-                Déjà un compte ?{' '}
+                {t('alreadyAccount')}{' '}
                 <Link
                   href="/auth/merchant"
                   className="font-medium text-primary hover:text-primary-600"
                 >
-                  Se connecter
+                  {t('login')}
                 </Link>
               </p>
             </div>
           </div>
 
           <p className="mt-6 text-sm text-center text-gray-500">
-            En créant un compte, vous acceptez nos{' '}
+            {t('termsIntro')}{' '}
             <Link href="/cgv" className="text-primary hover:underline">
-              CGV
+              {t('termsLink')}
             </Link>{' '}
-            et notre{' '}
+            {t('and')}{' '}
             <Link
               href="/politique-confidentialite"
               className="text-primary hover:underline"
             >
-              politique de confidentialité
+              {t('privacyLink')}
             </Link>
           </p>
         </div>

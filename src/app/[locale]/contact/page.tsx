@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   CreditCard,
   Mail,
@@ -15,17 +16,18 @@ import {
 import { Button, Input, Textarea, Select } from '@/components/ui';
 import { validateEmail } from '@/lib/utils';
 
-const subjectOptions = [
-  { value: 'question', label: 'Question générale' },
-  { value: 'bug', label: 'Signaler un bug' },
-  { value: 'feature', label: 'Demande de fonctionnalité' },
-  { value: 'other', label: 'Autre' },
-];
-
 export default function ContactPage() {
+  const t = useTranslations('contactPage');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const subjectOptions = [
+    { value: 'question', label: t('subjectQuestion') },
+    { value: 'bug', label: t('subjectBug') },
+    { value: 'feature', label: t('subjectFeature') },
+    { value: 'other', label: t('subjectOther') },
+  ];
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -38,22 +40,22 @@ export default function ContactPage() {
     setError('');
 
     if (!formData.name.trim()) {
-      setError('Veuillez entrer votre nom');
+      setError(t('errorName'));
       return;
     }
 
     if (!validateEmail(formData.email)) {
-      setError('Veuillez entrer une adresse email valide');
+      setError(t('errorEmail'));
       return;
     }
 
     if (!formData.subject) {
-      setError('Veuillez sélectionner un sujet');
+      setError(t('errorSubject'));
       return;
     }
 
     if (formData.message.length < 10) {
-      setError('Votre message doit contenir au moins 10 caractères');
+      setError(t('errorMessage'));
       return;
     }
 
@@ -69,12 +71,12 @@ export default function ContactPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de l\'envoi');
+        throw new Error(data.error || t('errorSend'));
       }
 
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'envoi');
+      setError(err instanceof Error ? err.message : t('errorSend'));
     } finally {
       setLoading(false);
     }
@@ -88,16 +90,15 @@ export default function ContactPage() {
             <Check className="w-10 h-10 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Message envoyé !
+            {t('successTitle')}
           </h1>
           <p className="text-gray-600 mb-8">
-            Merci pour votre message. Nous vous répondrons dans les plus brefs
-            délais.
+            {t('successMsg')}
           </p>
           <Link href="/">
             <Button>
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Retour à l&apos;accueil
+              {t('backToHome')}
             </Button>
           </Link>
         </div>
@@ -117,16 +118,16 @@ export default function ContactPage() {
           </Link>
           <Link href="/" className="text-gray-600 hover:text-primary">
             <ArrowLeft className="w-5 h-5 inline mr-1" />
-            Retour
+            {t('back')}
           </Link>
         </div>
       </header>
 
       <main className="px-4 py-12 mx-auto max-w-lg">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Contactez-nous</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{t('title')}</h1>
           <p className="mt-2 text-gray-600">
-            Une question ? Un problème ? Nous sommes là pour vous aider.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -141,8 +142,8 @@ export default function ContactPage() {
             <div className="relative">
               <Input
                 type="text"
-                label="Nom"
-                placeholder="Votre nom"
+                label={t('nameLabel')}
+                placeholder={t('namePlaceholder')}
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
@@ -155,8 +156,8 @@ export default function ContactPage() {
             <div className="relative">
               <Input
                 type="email"
-                label="Email"
-                placeholder="votre@email.fr"
+                label={t('emailLabel')}
+                placeholder={t('emailPlaceholder')}
                 value={formData.email}
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
@@ -167,8 +168,8 @@ export default function ContactPage() {
             </div>
 
             <Select
-              label="Sujet"
-              placeholder="Sélectionnez un sujet"
+              label={t('subjectLabel')}
+              placeholder={t('subjectPlaceholder')}
               options={subjectOptions}
               value={formData.subject}
               onChange={(e) =>
@@ -179,8 +180,8 @@ export default function ContactPage() {
 
             <div className="relative">
               <Textarea
-                label="Message"
-                placeholder="Décrivez votre demande en détail..."
+                label={t('messageLabel')}
+                placeholder={t('messagePlaceholder')}
                 value={formData.message}
                 onChange={(e) =>
                   setFormData({ ...formData, message: e.target.value })
@@ -193,7 +194,7 @@ export default function ContactPage() {
 
             <Button type="submit" loading={loading} className="w-full">
               <Send className="w-5 h-5 mr-2" />
-              Envoyer le message
+              {t('send')}
             </Button>
           </form>
         </div>
@@ -205,8 +206,8 @@ export default function ContactPage() {
               <MessageCircle className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="font-bold text-gray-900">Réponse plus rapide ?</p>
-              <p className="text-sm text-gray-600">Contactez-nous sur WhatsApp</p>
+              <p className="font-bold text-gray-900">{t('fasterResponse')}</p>
+              <p className="text-sm text-gray-600">{t('whatsappSub')}</p>
             </div>
           </div>
           <a
@@ -216,13 +217,13 @@ export default function ContactPage() {
             className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-md"
           >
             <MessageCircle className="w-5 h-5" />
-            Discuter sur WhatsApp
+            {t('whatsappCta')}
           </a>
         </div>
 
         <div className="mt-6 text-center text-sm text-gray-500">
           <p>
-            Ou contactez-nous par email :{' '}
+            {t('emailContact')}{' '}
             <a
               href="mailto:contact@getqarte.com"
               className="text-primary hover:underline"

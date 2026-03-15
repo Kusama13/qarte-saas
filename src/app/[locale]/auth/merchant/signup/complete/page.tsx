@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -22,20 +22,23 @@ import { trackPageView, trackSetupCompleted, trackSignupCompleted } from '@/lib/
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
 import { TikTokPixel, ttEvents, ttIdentify } from '@/components/analytics/TikTokPixel';
 
-const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
-  value,
-  label,
-}));
-
-const countryOptions = Object.entries(COUNTRIES).map(([value, label]) => ({
-  value,
-  label,
-}));
-
 export default function CompleteProfilePage() {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations('signupComplete');
+  const tShop = useTranslations('shopTypes');
+  const tCountry = useTranslations('countries');
   const supabase = getSupabase();
+
+  const shopTypeOptions = Object.keys(SHOP_TYPES).map((value) => ({
+    value,
+    label: tShop(value),
+  }));
+
+  const countryOptions = Object.keys(COUNTRIES).map((value) => ({
+    value,
+    label: tCountry(value),
+  }));
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [error, setError] = useState('');
@@ -107,13 +110,13 @@ export default function CompleteProfilePage() {
 
     const formattedPhone = formatPhoneNumber(formData.phone, formData.country);
     if (!validatePhone(formattedPhone, formData.country)) {
-      setError('Veuillez entrer un numéro de téléphone valide');
+      setError(t('invalidPhone'));
       setLoading(false);
       return;
     }
 
     if (!formData.shopType) {
-      setError('Veuillez sélectionner un type de commerce');
+      setError(t('selectShopType'));
       setLoading(false);
       return;
     }
@@ -143,7 +146,7 @@ export default function CompleteProfilePage() {
 
       if (!response.ok) {
         console.error('Merchant creation error:', result.error);
-        setError('Erreur lors de la création du profil: ' + result.error);
+        setError(t('profileError') + ': ' + result.error);
         return;
       }
 
@@ -160,7 +163,7 @@ export default function CompleteProfilePage() {
       // Redirect to personalize screen
       window.location.href = '/dashboard/personalize';
     } catch {
-      setError('Une erreur est survenue. Veuillez réessayer.');
+      setError(t('genericError'));
     } finally {
       setLoading(false);
     }
@@ -193,10 +196,10 @@ export default function CompleteProfilePage() {
           <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
             <div className="text-center mb-5">
               <h1 className="text-2xl font-bold text-gray-900">
-                Crée ta carte de fidélité
+                {t('title')}
               </h1>
               <p className="mt-2 text-gray-500 text-sm">
-                3 infos et c&apos;est parti
+                {t('subtitle')}
               </p>
 
               {/* Mini stamp card teaser */}
@@ -222,7 +225,7 @@ export default function CompleteProfilePage() {
                 ))}
               </div>
               <p className="mt-1.5 text-xs text-gray-400">
-                Vos clients vont adorer
+                {t('clientsWillLove')}
               </p>
             </div>
 
@@ -236,8 +239,8 @@ export default function CompleteProfilePage() {
               <Input
                 ref={nameRef}
                 type="text"
-                label="Votre établissement"
-                placeholder="Ex: Institut Beauté Marie"
+                label={t('shopNameLabel')}
+                placeholder={t('shopNamePlaceholder')}
                 value={formData.shopName}
                 onChange={(e) =>
                   setFormData({ ...formData, shopName: e.target.value })
@@ -246,8 +249,8 @@ export default function CompleteProfilePage() {
               />
 
               <Select
-                label="Activité"
-                placeholder="Sélectionnez..."
+                label={t('activityLabel')}
+                placeholder={t('activityPlaceholder')}
                 options={shopTypeOptions}
                 value={formData.shopType}
                 onChange={(e) =>
@@ -258,7 +261,7 @@ export default function CompleteProfilePage() {
 
               <div className="grid grid-cols-[120px_1fr] gap-2">
                 <Select
-                  label="Pays"
+                  label={t('countryLabel')}
                   options={countryOptions}
                   value={formData.country}
                   onChange={(e) =>
@@ -268,7 +271,7 @@ export default function CompleteProfilePage() {
                 />
                 <Input
                   type="tel"
-                  label="Téléphone"
+                  label={t('phoneLabel')}
                   placeholder={PHONE_CONFIG[formData.country].placeholder}
                   value={formData.phone}
                   onChange={(e) =>
@@ -279,7 +282,7 @@ export default function CompleteProfilePage() {
               </div>
 
               <Button type="submit" loading={loading} className="w-full bg-gradient-to-r from-indigo-600 to-pink-500 hover:from-indigo-700 hover:to-pink-600 shadow-lg shadow-indigo-200/50">
-                Lancer mon essai gratuit
+                {t('cta')}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </form>
@@ -288,11 +291,11 @@ export default function CompleteProfilePage() {
             <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-500 font-medium">
               <span className="flex items-center gap-1">
                 <CreditCard className="w-3.5 h-3.5" />
-                Sans carte bancaire
+                {t('noCreditCard')}
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />
-                Pret en 2 min
+                {t('readyIn2min')}
               </span>
             </div>
 
@@ -304,7 +307,7 @@ export default function CompleteProfilePage() {
                 className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                Retour
+                {t('back')}
               </button>
             </div>
           </div>

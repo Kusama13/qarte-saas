@@ -4,10 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui';
 import { Check, CreditCard, ArrowRight, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function PricingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations('pricingPage');
 
   const handleSubscribe = async () => {
     setLoading(true);
@@ -31,7 +33,7 @@ export default function PricingPage() {
       }
     } catch (err) {
       console.error('Error:', err);
-      setError('Erreur lors de la redirection');
+      setError(t('redirectError'));
     } finally {
       setLoading(false);
     }
@@ -51,7 +53,7 @@ export default function PricingPage() {
 
           <div className="flex items-center gap-4">
             <Link href="/auth/merchant">
-              <Button variant="outline">Se connecter</Button>
+              <Button variant="outline">{t('login')}</Button>
             </Link>
           </div>
         </div>
@@ -62,17 +64,16 @@ export default function PricingPage() {
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full bg-primary/10 text-primary font-medium">
             <Sparkles className="w-4 h-4" />
-            <span>Offre de lancement</span>
+            <span>{t('launchBadge')}</span>
           </div>
 
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
-            Un prix simple.<br />
-            <span className="text-primary">Tout inclus.</span>
+            {t('titleLine1')}<br />
+            <span className="text-primary">{t('titleLine2')}</span>
           </h1>
 
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Fidelisez vos clients avec des cartes digitales modernes.
-            Pas de frais caches, pas de surprises.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -82,7 +83,7 @@ export default function PricingPage() {
             {/* Badge "Populaire" */}
             <div className="absolute -top-5 left-1/2 -translate-x-1/2 z-10">
               <div className="px-6 py-2 rounded-full bg-gradient-to-r from-primary to-purple-600 text-white font-semibold shadow-lg">
-                Le plus populaire
+                {t('popular')}
               </div>
             </div>
 
@@ -90,10 +91,10 @@ export default function PricingPage() {
               {/* Prix */}
               <div className="text-center mb-10">
                 <div className="flex items-end justify-center gap-2 mb-2">
-                  <span className="text-6xl font-bold text-gray-900">19EUR</span>
-                  <span className="text-2xl text-gray-500 mb-3">/mois</span>
+                  <span className="text-6xl font-bold text-gray-900">{t('price')}</span>
+                  <span className="text-2xl text-gray-500 mb-3">{t('perMonth')}</span>
                 </div>
-                <p className="text-gray-600">Sans engagement - Annulation a tout moment</p>
+                <p className="text-gray-600">{t('noCommitment')}</p>
               </div>
 
               {/* Error message */}
@@ -110,28 +111,19 @@ export default function PricingPage() {
                 disabled={loading}
                 className="w-full h-14 text-lg mb-8 bg-gradient-to-r from-primary to-purple-600 hover:shadow-xl transition-all"
               >
-                Commencer maintenant
+                {t('cta')}
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
 
               {/* Features */}
               <div className="mb-8">
                 <p className="font-semibold text-gray-900 text-center mb-4">
-                  Tout ce dont vous avez besoin :
+                  {t('everythingYouNeed')}
                 </p>
 
                 <div className="grid grid-cols-2 gap-3">
-                  {[
-                    'Clients illimites',
-                    'Cartes digitales',
-                    'QR codes perso',
-                    'Statistiques',
-                    'Notifications push',
-                    'Programmation envois',
-                    'Support prioritaire',
-                    'Mises a jour',
-                  ].map((feature) => (
-                    <div key={feature} className="flex items-center gap-2">
+                  {[t('f1'), t('f2'), t('f3'), t('f4'), t('f5'), t('f6'), t('f7'), t('f8')].map((feature, i) => (
+                    <div key={i} className="flex items-center gap-2">
                       <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
                         <Check className="w-3 h-3 text-primary" />
                       </div>
@@ -146,11 +138,11 @@ export default function PricingPage() {
                 <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500" />
-                    <span>Paiement securise</span>
+                    <span>{t('securePayment')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-4 h-4 text-green-500" />
-                    <span>RGPD conforme</span>
+                    <span>{t('gdpr')}</span>
                   </div>
                 </div>
               </div>
@@ -160,7 +152,7 @@ export default function PricingPage() {
 
         {/* Social Proof */}
         <div className="text-center mb-20">
-          <p className="text-gray-600 mb-6">Ils nous font deja confiance</p>
+          <p className="text-gray-600 mb-6">{t('trustTitle')}</p>
           <div className="flex items-center justify-center gap-12 flex-wrap opacity-60">
             <div className="text-2xl font-bold text-gray-400">Cafe du Coin</div>
             <div className="text-2xl font-bold text-gray-400">Boulangerie Paul</div>
@@ -171,47 +163,43 @@ export default function PricingPage() {
         {/* FAQ */}
         <div className="max-w-3xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12 text-gray-900">
-            Questions frequentes
+            {t('faqTitle')}
           </h2>
 
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-3">
-                Quels moyens de paiement acceptez-vous ?
+                {t('faqQ1')}
               </h3>
               <p className="text-gray-600">
-                Carte bancaire (Visa, Mastercard, Amex) via Stripe.
-                Paiement 100% securise.
+                {t('faqA1')}
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-3">
-                Comment annuler mon abonnement ?
+                {t('faqQ2')}
               </h3>
               <p className="text-gray-600">
-                En un clic depuis votre tableau de bord. Aucune justification necessaire,
-                aucun frais d&apos;annulation.
+                {t('faqA2')}
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-3">
-                Y a-t-il une limite de clients ?
+                {t('faqQ3')}
               </h3>
               <p className="text-gray-600">
-                Non ! Vous pouvez gerer un nombre illimite de clients et
-                de cartes de fidelite.
+                {t('faqA3')}
               </p>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="font-semibold text-gray-900 mb-3">
-                Mes donnees sont-elles securisees ?
+                {t('faqQ4')}
               </h3>
               <p className="text-gray-600">
-                Oui, 100%. Hebergement securise en France, conformite RGPD,
-                et chiffrement des donnees.
+                {t('faqA4')}
               </p>
             </div>
           </div>
@@ -220,17 +208,17 @@ export default function PricingPage() {
         {/* Final CTA */}
         <div className="mt-20 text-center bg-gradient-to-r from-primary to-purple-600 rounded-3xl p-12 text-white">
           <h2 className="text-3xl font-bold mb-4">
-            Pret a fideliser vos clients ?
+            {t('finalCtaTitle')}
           </h2>
           <p className="text-xl mb-8 text-white/90">
-            Rejoignez des centaines de commercants satisfaits
+            {t('finalCtaSub')}
           </p>
           <Button
             onClick={handleSubscribe}
             loading={loading}
             className="bg-white text-primary hover:bg-gray-50 h-14 px-8 text-lg"
           >
-            Demarrer maintenant
+            {t('finalCtaBtn')}
             <ArrowRight className="w-5 h-5 ml-2" />
           </Button>
         </div>
@@ -239,16 +227,16 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white/50 backdrop-blur-md py-8">
         <div className="max-w-7xl mx-auto px-4 text-center text-gray-600">
-          <p>© 2026 Qarte. Tous droits reserves.</p>
+          <p>{t('copyright')}</p>
           <div className="flex items-center justify-center gap-6 mt-4">
             <Link href="/mentions-legales" className="hover:text-primary transition">
-              Mentions legales
+              {t('legalNotices')}
             </Link>
             <Link href="/politique-confidentialite" className="hover:text-primary transition">
-              Confidentialite
+              {t('privacy')}
             </Link>
             <Link href="/contact" className="hover:text-primary transition">
-              Contact
+              {t('contact')}
             </Link>
           </div>
         </div>

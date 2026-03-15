@@ -77,6 +77,11 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
+        {/* Hreflang alternate links */}
+        <link rel="alternate" hrefLang="fr" href={baseUrl} />
+        <link rel="alternate" hrefLang="en" href={`${baseUrl}/en`} />
+        <link rel="alternate" hrefLang="x-default" href={baseUrl} />
+
         {/* Structured Data — Organization */}
         <script
           type="application/ld+json"
@@ -91,7 +96,7 @@ export default async function RootLayout({
               '@type': 'ContactPoint',
               contactType: 'customer service',
               url: 'https://wa.me/33607447420',
-              availableLanguage: 'French',
+              availableLanguage: ['French', 'English'],
             },
             sameAs: [
               'https://www.instagram.com/getqarte',

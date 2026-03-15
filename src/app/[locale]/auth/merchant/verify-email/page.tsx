@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation';
 import { CreditCard, Mail, CheckCircle2, RefreshCw, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useTranslations } from 'next-intl';
 
 export default function VerifyEmailPage() {
+  const t = useTranslations('verifyEmail');
   const router = useRouter();
   const supabase = createClientComponentClient();
   const [resending, setResending] = useState(false);
@@ -89,12 +91,12 @@ export default function VerifyEmailPage() {
 
           {/* Title */}
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Vérifiez votre email
+            {t('title')}
           </h1>
 
           {/* Description */}
           <p className="text-gray-600 mb-6">
-            Nous avons envoyé un lien de confirmation à
+            {t('sentTo')}
             {email && (
               <span className="block font-semibold text-gray-900 mt-1">
                 {email}
@@ -105,7 +107,7 @@ export default function VerifyEmailPage() {
           {/* Instructions */}
           <div className="bg-gray-50 rounded-2xl p-6 mb-6 text-left">
             <p className="text-sm text-gray-600 mb-4">
-              Pour activer votre compte :
+              {t('instructionsTitle')}
             </p>
             <ol className="space-y-3">
               <li className="flex items-start gap-3">
@@ -113,7 +115,7 @@ export default function VerifyEmailPage() {
                   1
                 </span>
                 <span className="text-sm text-gray-700">
-                  Ouvrez votre boîte mail
+                  {t('step1')}
                 </span>
               </li>
               <li className="flex items-start gap-3">
@@ -121,7 +123,7 @@ export default function VerifyEmailPage() {
                   2
                 </span>
                 <span className="text-sm text-gray-700">
-                  Cliquez sur le lien dans l'email de Qarte
+                  {t('step2')}
                 </span>
               </li>
               <li className="flex items-start gap-3">
@@ -129,7 +131,7 @@ export default function VerifyEmailPage() {
                   3
                 </span>
                 <span className="text-sm text-gray-700">
-                  Connectez-vous avec vos identifiants
+                  {t('step3')}
                 </span>
               </li>
             </ol>
@@ -142,7 +144,7 @@ export default function VerifyEmailPage() {
               onClick={handleGoToLogin}
               className="w-full"
             >
-              J'ai confirmé mon email
+              {t('confirmed')}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
 
@@ -152,7 +154,7 @@ export default function VerifyEmailPage() {
                 {resent ? (
                   <div className="flex items-center justify-center gap-2 text-green-600">
                     <CheckCircle2 className="w-5 h-5" />
-                    <span className="text-sm font-medium">Email renvoyé !</span>
+                    <span className="text-sm font-medium">{t('resent')}</span>
                   </div>
                 ) : (
                   <button
@@ -161,7 +163,7 @@ export default function VerifyEmailPage() {
                     className="text-sm text-gray-500 hover:text-primary transition-colors inline-flex items-center gap-2"
                   >
                     <RefreshCw className={`w-4 h-4 ${resending ? 'animate-spin' : ''}`} />
-                    {resending ? 'Envoi en cours...' : 'Renvoyer l\'email'}
+                    {resending ? t('resending') : t('resend')}
                   </button>
                 )}
               </div>
@@ -170,22 +172,22 @@ export default function VerifyEmailPage() {
 
           {/* Spam notice */}
           <p className="text-xs text-gray-400 mb-6">
-            Vous ne trouvez pas l'email ? Vérifiez vos spams.
+            {t('checkSpam')}
           </p>
 
           {/* Login link */}
           <Link href="/auth/merchant">
             <Button variant="outline" className="w-full">
-              Retour à la connexion
+              {t('backToLogin')}
             </Button>
           </Link>
         </div>
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-500 mt-6">
-          Besoin d'aide ?{' '}
+          {t('needHelp')}{' '}
           <a href="mailto:support@getqarte.com" className="text-primary hover:underline">
-            Contactez-nous
+            {t('contactUs')}
           </a>
         </p>
       </div>

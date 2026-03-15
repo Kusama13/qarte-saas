@@ -6,11 +6,13 @@ import { getSupabase } from '@/lib/supabase';
 import Link from 'next/link';
 import { CheckCircle2, CreditCard } from 'lucide-react';
 import { suggestEmailCorrection } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 function MerchantLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = getSupabase();
+  const t = useTranslations('auth');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,7 +64,7 @@ function MerchantLoginContent() {
       console.error('Erreur de connexion:', err);
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
       setError(errorMessage === 'Invalid login credentials'
-        ? 'Email ou mot de passe incorrect'
+        ? t('invalidCredentials')
         : errorMessage);
     } finally {
       setLoading(false);
@@ -88,7 +90,7 @@ function MerchantLoginContent() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-gray-900">
-              Ravi de te revoir.
+              {t('welcomeBack')}
             </h1>
           </div>
 
@@ -96,7 +98,7 @@ function MerchantLoginContent() {
           {verified && (
             <div className="mb-6 bg-emerald-50/50 backdrop-blur-sm border border-emerald-200 text-emerald-700 px-4 py-3 rounded-2xl flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm font-medium">Email vérifié avec succès ! Connectez-vous.</span>
+              <span className="text-sm font-medium">{t('emailVerifiedSuccess')}</span>
             </div>
           )}
 
@@ -104,7 +106,7 @@ function MerchantLoginContent() {
           {fromVerification && !verified && (
             <div className="mb-6 bg-primary-50/50 backdrop-blur-sm border border-primary-200 text-primary-700 px-4 py-3 rounded-2xl flex items-center gap-3">
               <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-              <span className="text-sm font-medium">Entrez votre mot de passe pour accéder à votre compte.</span>
+              <span className="text-sm font-medium">{t('enterPasswordPrompt')}</span>
             </div>
           )}
 
@@ -119,7 +121,7 @@ function MerchantLoginContent() {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-1.5">
               <label htmlFor="email" className="block text-sm font-semibold text-gray-700 ml-1">
-                Email professionnel
+                {t('emailLabel')}
               </label>
               <input
                 id="email"
@@ -127,13 +129,13 @@ function MerchantLoginContent() {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setEmailSuggestion(''); }}
                 className="w-full px-4 py-3.5 bg-white/50 border border-gray-200/80 rounded-2xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-gray-400"
-                placeholder="contact@boutique.fr"
+                placeholder={t('emailPlaceholder')}
                 required
                 disabled={loading}
               />
               {emailSuggestion && (
                 <p className="mt-1.5 text-sm text-amber-700">
-                  Vouliez-vous dire{' '}
+                  {t('didYouMean')}{' '}
                   <button
                     type="button"
                     className="font-semibold underline hover:text-amber-900"
@@ -149,13 +151,13 @@ function MerchantLoginContent() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between ml-1">
                 <label htmlFor="password" className="block text-sm font-semibold text-gray-700">
-                  Mot de passe
+                  {t('passwordLabel')}
                 </label>
                 <Link
                   href="/auth/merchant/forgot-password"
                   className="text-xs font-semibold text-primary hover:text-primary-600 transition-colors"
                 >
-                  Oublié ?
+                  {t('forgotLink')}
                 </Link>
               </div>
               <input
@@ -178,17 +180,17 @@ function MerchantLoginContent() {
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Connexion...
+                  {t('loginLoading')}
                 </span>
-              ) : 'Accéder au tableau de bord'}
+              ) : t('loginCta')}
             </button>
           </form>
 
           {/* Link to Signup */}
           <div className="mt-8 text-center text-sm font-medium text-gray-500">
-            Nouveau sur Qarte ?{' '}
+            {t('newToQarte')}{' '}
             <Link href="/auth/merchant/signup" className="text-primary font-bold hover:text-primary-600 transition-colors">
-              Inscrivez votre établissement
+              {t('registerBusiness')}
             </Link>
           </div>
         </div>
