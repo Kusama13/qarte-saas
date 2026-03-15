@@ -226,6 +226,16 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `src/i18n/routing.ts` : config routing (locales, defaultLocale, pathnames)
 - **TikTokPixel** : seule exception, utilise `usePathname` de `next/navigation` (besoin du path complet avec prefixe pour analytics)
 
+### SEO i18n
+- **Sitemap** (`src/app/sitemap.ts`) : toutes routes avec alternates FR/EN, pages marchands dynamiques (Supabase), revalidate 6h
+- **robots.ts** : disallow `/api/`, `/dashboard/`, `/admin/`, `/auth/`, `/customer/`
+- **Hreflang** : `<link rel="alternate" hrefLang="fr|en|x-default">` dans root layout `<head>`
+- **og:locale:alternate** : dans `[locale]/layout.tsx` (FR ↔ EN)
+- **Blog** : `[locale]/blog/layout.tsx` — metadata locale-aware + canonical + alternates
+- **/p/[slug]** : `generateMetadata` — titre/description traduits, og:locale, alternates FR/EN
+- **Welcome email** : `sendWelcomeEmail` recoit le locale du merchant a la creation
+- **Admin pages** : hardcoded `'fr-FR'` acceptable (usage interne uniquement)
+
 ### Planning (mig 063)
 - Planning simple gere par le merchant (pas de reservation en ligne)
 - 1 creneau = 1 ligne en DB (date + heure debut). `client_name IS NULL` = disponible, rempli = pris
