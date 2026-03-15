@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from '@/i18n/navigation';
+import { useRouter, Link } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -17,7 +17,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
-import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
+import { useRouter, Link } from '@/i18n/navigation';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import {
   Store,
@@ -18,7 +18,6 @@ import {
   Crown,
   Globe,
 } from 'lucide-react';
-import { Link } from '@/i18n/navigation';
 import { Button, Input, Select } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validatePhone, formatDate, PHONE_CONFIG, toBCP47 } from '@/lib/utils';

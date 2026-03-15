@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useRouter } from '@/i18n/navigation';
+import { useRouter, Link } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
-import { Link } from '@/i18n/navigation';
 import { getSupabase } from '@/lib/supabase';
 import { CreditCard, Eye, EyeOff, CheckCircle2, Lock } from 'lucide-react';
 import { Button, Input } from '@/components/ui';

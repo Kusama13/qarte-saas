@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useRouter, usePathname } from '@/i18n/navigation';
+import { useRouter, usePathname, Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { Link } from '@/i18n/navigation';
 import {
   CreditCard,
   Home,

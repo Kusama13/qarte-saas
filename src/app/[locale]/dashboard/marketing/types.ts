@@ -5,6 +5,7 @@ import {
   PartyPopper,
   Crown,
 } from 'lucide-react';
+import { toBCP47 } from '@/lib/utils';
 
 export interface NotificationTemplate {
   id: string;
@@ -167,8 +168,7 @@ export function formatScheduleDate(dateStr: string, locale: string = 'fr'): stri
 
   if (dateStr === today.toISOString().split('T')[0]) return locale === 'en' ? 'Today' : "Aujourd'hui";
   if (dateStr === tomorrow.toISOString().split('T')[0]) return locale === 'en' ? 'Tomorrow' : 'Demain';
-  const bcp = locale === 'en' ? 'en-US' : 'fr-FR';
-  return date.toLocaleDateString(bcp, { day: 'numeric', month: 'short' });
+  return date.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' });
 }
 
 export function formatExpiresAt(expiresAt: string, locale: string = 'fr'): string {
@@ -178,6 +178,5 @@ export function formatExpiresAt(expiresAt: string, locale: string = 'fr'): strin
   tomorrow.setDate(tomorrow.getDate() + 1);
   if (expires.toDateString() === today.toDateString()) return locale === 'en' ? 'tonight' : 'ce soir';
   if (expires.toDateString() === tomorrow.toDateString()) return locale === 'en' ? 'tomorrow night' : 'demain soir';
-  const bcp = locale === 'en' ? 'en-US' : 'fr-FR';
-  return expires.toLocaleDateString(bcp, { day: 'numeric', month: 'short' });
+  return expires.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' });
 }

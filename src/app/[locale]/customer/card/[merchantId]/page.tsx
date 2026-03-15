@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, use, useCallback, useMemo } from 'react';
-import { Link } from '@/i18n/navigation';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import {
   Check,

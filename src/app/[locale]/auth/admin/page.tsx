@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from '@/i18n/navigation';
-import { Link } from '@/i18n/navigation';
+import { useRouter, Link } from '@/i18n/navigation';
 import { Shield, Mail, Lock, AlertCircle, ArrowLeft, Key } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';

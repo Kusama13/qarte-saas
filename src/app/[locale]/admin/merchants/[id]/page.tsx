@@ -393,11 +393,6 @@ export default function MerchantDetailPage() {
     }
   };
 
-  const formatPhoneForWhatsApp = (phone: string) => {
-    // Phones are stored in E.164 without + (e.g. 33612345678, 15551234567)
-    return phone.replace(/\D/g, '');
-  };
-
   const [waOpen, setWaOpen] = useState(false);
   const [waTab, setWaTab] = useState<'marketing' | 'tuto'>('marketing');
   const [adminNotes, setAdminNotes] = useState(merchant?.admin_notes || '');
