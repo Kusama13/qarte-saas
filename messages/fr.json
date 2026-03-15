@@ -661,5 +661,52 @@
     "installTitle": "Installez Qarte Pro",
     "installSubtitle": "Accédez au tableau de bord en 1 tap",
     "installBtn": "Installer"
+  },
+  "personalize": {
+    "back": "Retour",
+    "titleEdit": "Modifie",
+    "titleAdd": "Ajoute",
+    "titleHighlight": "ta touche perso",
+    "subtitleEdit": "Ton logo et tes couleurs, modifiables a tout moment.",
+    "subtitleAdd": "Ton logo et tes couleurs, en 30 secondes. Tu pourras les modifier a tout moment.",
+    "logoLabel": "Ton logo",
+    "changeLogo": "Changer le logo",
+    "addLogo": "Ajouter ton logo",
+    "changeLogoHint": "Clic pour remplacer",
+    "addLogoHint": "JPG, PNG — max 500 Ko",
+    "ambianceLabel": "Ambiance",
+    "save": "Enregistrer",
+    "continue": "Continuer"
+  },
+  "welcome": {
+    "title1": "Qarte t'offre",
+    "title2": "deux super-pouvoirs",
+    "title3": "pour booster ton business.",
+    "subtitle": "Par quoi tu veux commencer ?",
+    "stamps": "tampons",
+    "reward": "Recompense",
+    "loyaltyTitle": "Programme fidelite",
+    "loyaltyDesc": "Fais revenir tes clients avec une carte digitale. Tampons, recompenses, tout est automatique.",
+    "configure": "Configurer",
+    "pageTitle": "Ma page pro",
+    "pageDesc": "Attire de nouveaux clients avec ta page publique. Prestations, offre de bienvenue, lien en bio.",
+    "bioLink": "Lien en bio",
+    "bookAppt": "Prendre rendez-vous",
+    "yourCity": "Ta ville",
+    "skipForNow": "Je verrai plus tard"
+  },
+  "marketing": {
+    "title": "Notifications",
+    "subtitle": "Notifications push & automatisations",
+    "help": "Aide",
+    "tabSend": "Envoyer",
+    "tabAutomations": "Automatisations"
+  },
+  "members": {
+    "title": "Programmes Membres",
+    "subtitle": "Crée des programmes VIP pour tes clients",
+    "howItWorks": "Comment ça marche ?",
+    "help": "Aide",
+    "newProgram": "Nouveau programme"
   }
 }

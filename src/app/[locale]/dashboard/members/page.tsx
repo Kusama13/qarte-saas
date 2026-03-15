@@ -7,6 +7,7 @@ import {
   HelpCircle,
   ChevronDown,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import { useMembersData, useCreateProgram, useAssignCustomer, useMemberActions } from './hooks';
 import ProgramCard from './ProgramCard';
@@ -16,6 +17,7 @@ import HowItWorks from './HowItWorks';
 import { CreateProgramModal } from './Modals';
 
 export default function MembersPage() {
+  const t = useTranslations('members');
   const data = useMembersData();
   const createProgram = useCreateProgram(data.fetchPrograms);
 
@@ -72,8 +74,8 @@ export default function MembersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <div>
-          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">Programmes Membres</h1>
-          <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">Cr&eacute;e des programmes VIP pour tes clients</p>
+          <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">{t('title')}</h1>
+          <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <button
@@ -81,8 +83,8 @@ export default function MembersPage() {
             className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-all"
           >
             <HelpCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">Comment &ccedil;a marche ?</span>
-            <span className="sm:hidden">Aide</span>
+            <span className="hidden sm:inline">{t('howItWorks')}</span>
+            <span className="sm:hidden">{t('help')}</span>
             <ChevronDown className={`w-4 h-4 transition-transform ${showHowItWorks ? 'rotate-180' : ''}`} />
           </button>
           <Button
@@ -90,7 +92,7 @@ export default function MembersPage() {
             className="bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm"
           >
             <Plus className="w-4 h-4 sm:mr-2" />
-            <span className="hidden sm:inline">Nouveau programme</span>
+            <span className="hidden sm:inline">{t('newProgram')}</span>
           </Button>
         </div>
       </div>

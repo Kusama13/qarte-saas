@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Users, Globe, ArrowRight, Check, Star, MapPin, Link2 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
+import { useTranslations } from 'next-intl';
 
 export default function WelcomePage() {
   const router = useRouter();
   const { merchant, loading } = useMerchant();
+  const t = useTranslations('welcome');
 
   // Auto-redirect if merchant already has a configured program (not fresh from onboarding)
   useEffect(() => {
@@ -38,11 +40,10 @@ export default function WelcomePage() {
         className="text-center mb-10"
       >
         <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">{merchant.shop_name}</span>,{' '}
-          Qarte t&apos;offre <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-500">deux super-pouvoirs</span> pour booster ton business.
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">{merchant.shop_name}</span>, {t('title1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-pink-500">{t('title2')}</span> {t('title3')}
         </h1>
         <p className="text-gray-500 mt-3 text-sm md:text-base">
-          Par quoi tu veux commencer ?
+          {t('subtitle')}
         </p>
       </motion.div>
 
@@ -73,19 +74,19 @@ export default function WelcomePage() {
               ))}
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-medium text-indigo-400">4/6 tampons</span>
+              <span className="text-[10px] font-medium text-indigo-400">4/6 {t('stamps')}</span>
               <span className="text-[10px] font-semibold text-indigo-600 flex items-center gap-0.5">
-                <Star className="w-2.5 h-2.5 fill-indigo-500" /> Recompense
+                <Star className="w-2.5 h-2.5 fill-indigo-500" /> {t('reward')}
               </span>
             </div>
           </div>
 
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Programme fidelite</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-1">{t('loyaltyTitle')}</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            Fais revenir tes clients avec une carte digitale. Tampons, recompenses, tout est automatique.
+            {t('loyaltyDesc')}
           </p>
           <div className="flex items-center gap-1 mt-4 text-sm font-semibold text-indigo-600 group-hover:gap-2 transition-all">
-            Configurer
+            {t('configure')}
             <ArrowRight className="w-4 h-4" />
           </div>
         </motion.button>
@@ -107,13 +108,13 @@ export default function WelcomePage() {
               <div>
                 <p className="text-[10px] font-bold text-gray-800 leading-none">{merchant.shop_name}</p>
                 <p className="text-[8px] text-gray-400 flex items-center gap-0.5">
-                  <MapPin className="w-2 h-2" /> Ta ville
+                  <MapPin className="w-2 h-2" /> {t('yourCity')}
                 </p>
               </div>
             </div>
             <div className="space-y-1">
               <div className="h-5 rounded-md bg-gradient-to-r from-violet-500 to-pink-500 flex items-center justify-center">
-                <span className="text-[8px] font-semibold text-white">Prendre rendez-vous</span>
+                <span className="text-[8px] font-semibold text-white">{t('bookAppt')}</span>
               </div>
               <div className="flex gap-1">
                 <div className="flex-1 h-8 rounded bg-gray-100" />
@@ -124,17 +125,17 @@ export default function WelcomePage() {
             <div className="absolute top-2 right-2">
               <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/80 border border-violet-100 shadow-sm">
                 <Link2 className="w-2.5 h-2.5 text-violet-500" />
-                <span className="text-[8px] font-semibold text-violet-600">Lien en bio</span>
+                <span className="text-[8px] font-semibold text-violet-600">{t('bioLink')}</span>
               </div>
             </div>
           </div>
 
-          <h2 className="text-lg font-bold text-gray-900 mb-1">Ma page pro</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-1">{t('pageTitle')}</h2>
           <p className="text-sm text-gray-500 leading-relaxed">
-            Attire de nouveaux clients avec ta page publique. Prestations, offre de bienvenue, lien en bio.
+            {t('pageDesc')}
           </p>
           <div className="flex items-center gap-1 mt-4 text-sm font-semibold text-violet-600 group-hover:gap-2 transition-all">
-            Configurer
+            {t('configure')}
             <ArrowRight className="w-4 h-4" />
           </div>
         </motion.button>
@@ -148,7 +149,7 @@ export default function WelcomePage() {
         onClick={() => router.push('/dashboard')}
         className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
       >
-        Je verrai plus tard
+        {t('skipForNow')}
       </motion.button>
     </div>
   );

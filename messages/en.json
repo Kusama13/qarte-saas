@@ -661,5 +661,52 @@
     "installTitle": "Install Qarte Pro",
     "installSubtitle": "Access your dashboard in 1 tap",
     "installBtn": "Install"
+  },
+  "personalize": {
+    "back": "Back",
+    "titleEdit": "Edit",
+    "titleAdd": "Add",
+    "titleHighlight": "your personal touch",
+    "subtitleEdit": "Your logo and colors, editable anytime.",
+    "subtitleAdd": "Your logo and colors, in 30 seconds. You can change them anytime.",
+    "logoLabel": "Your logo",
+    "changeLogo": "Change logo",
+    "addLogo": "Add your logo",
+    "changeLogoHint": "Click to replace",
+    "addLogoHint": "JPG, PNG — max 500 KB",
+    "ambianceLabel": "Ambiance",
+    "save": "Save",
+    "continue": "Continue"
+  },
+  "welcome": {
+    "title1": "Qarte gives you",
+    "title2": "two superpowers",
+    "title3": "to boost your business.",
+    "subtitle": "What do you want to start with?",
+    "stamps": "stamps",
+    "reward": "Reward",
+    "loyaltyTitle": "Loyalty program",
+    "loyaltyDesc": "Bring your clients back with a digital card. Stamps, rewards, all automatic.",
+    "configure": "Set up",
+    "pageTitle": "My pro page",
+    "pageDesc": "Attract new clients with your public page. Services, welcome offer, link in bio.",
+    "bioLink": "Link in bio",
+    "bookAppt": "Book appointment",
+    "yourCity": "Your city",
+    "skipForNow": "I'll do this later"
+  },
+  "marketing": {
+    "title": "Notifications",
+    "subtitle": "Push notifications & automations",
+    "help": "Help",
+    "tabSend": "Send",
+    "tabAutomations": "Automations"
+  },
+  "members": {
+    "title": "Member Programs",
+    "subtitle": "Create VIP programs for your clients",
+    "howItWorks": "How it works?",
+    "help": "Help",
+    "newProgram": "New program"
   }
 }

@@ -9,6 +9,7 @@ import {
   Lock,
   HelpCircle,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { AUTOMATION_UNLOCK_THRESHOLD } from './types';
 import { useMarketingData, useNotificationComposer } from './hooks';
@@ -18,6 +19,7 @@ import AutomationsTab from './AutomationsTab';
 import { HowItWorksModal, OfferModal } from './Modals';
 
 export default function MarketingPushPage() {
+  const t = useTranslations('marketing');
   const { merchant } = useMerchant();
   const searchParams = useSearchParams();
 
@@ -46,10 +48,10 @@ export default function MarketingPushPage() {
       <div className="mb-4 flex items-center justify-between p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <div>
           <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
-            Notifications
+            {t('title')}
           </h1>
           <p className="mt-1 text-sm md:text-base text-gray-500 font-medium">
-            Notifications push & automatisations
+            {t('subtitle')}
           </p>
         </div>
         <button
@@ -57,7 +59,7 @@ export default function MarketingPushPage() {
           className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-indigo-600 bg-white/80 border border-indigo-100 rounded-xl hover:bg-white transition-colors shadow-sm"
         >
           <HelpCircle className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Aide</span>
+          <span className="hidden sm:inline">{t('help')}</span>
         </button>
       </div>
 
@@ -79,7 +81,7 @@ export default function MarketingPushPage() {
           }`}
         >
           <Send className="w-4 h-4" />
-          Envoyer
+          {t('tabSend')}
         </button>
         <button
           onClick={() => setActiveTab('automations')}
@@ -90,7 +92,7 @@ export default function MarketingPushPage() {
           }`}
         >
           <Zap className="w-4 h-4" />
-          Automatisations
+          {t('tabAutomations')}
           {!automationsUnlocked && <Lock className="w-3 h-3 opacity-60" />}
         </button>
       </div>
