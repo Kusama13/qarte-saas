@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import {
   Users,
@@ -32,6 +33,7 @@ interface CustomerWithCard extends LoyaltyCard {
 }
 
 function getCardBadge(
+  t: ReturnType<typeof useTranslations>,
   isTier1Ready: boolean,
   isTier2Ready: boolean,
   tier2Enabled: boolean,
@@ -40,21 +42,22 @@ function getCardBadge(
   cashbackValue?: number,
 ): { text: string; color: string } | null {
   if (tier2Enabled) {
-    if (isTier2Ready) return { text: 'Palier 2 prêt', color: 'text-violet-700 bg-violet-100' };
+    if (isTier2Ready) return { text: t('badgeTier2Ready'), color: 'text-violet-700 bg-violet-100' };
     if (isTier1Ready) {
-      if (tier1Redeemed) return { text: 'Palier 1 utilisé', color: 'text-gray-500 bg-gray-100' };
-      return { text: 'Palier 1 prêt', color: 'text-emerald-700 bg-emerald-100' };
+      if (tier1Redeemed) return { text: t('badgeTier1Used'), color: 'text-gray-500 bg-gray-100' };
+      return { text: t('badgeTier1Ready'), color: 'text-emerald-700 bg-emerald-100' };
     }
   } else if (isTier1Ready) {
     if (isCagnotte && cashbackValue !== undefined) {
-      return { text: `Cagnotte prête : ${cashbackValue.toFixed(2).replace('.', ',')} €`, color: 'text-green-700 bg-green-100' };
+      return { text: t('badgeCagnotteReady', { value: cashbackValue.toFixed(2).replace('.', ',') }), color: 'text-green-700 bg-green-100' };
     }
-    return { text: 'Récompense prête', color: 'text-green-700 bg-green-100' };
+    return { text: t('badgeRewardReady'), color: 'text-green-700 bg-green-100' };
   }
   return null;
 }
 
 export default function CustomersPage() {
+  const t = useTranslations('customers');
   const { merchant, loading: merchantLoading } = useMerchant();
   const supabase = getSupabase();
   const [customers, setCustomers] = useState<CustomerWithCard[]>([]);
@@ -80,6 +83,8 @@ export default function CustomersPage() {
   const [newStartStamps, setNewStartStamps] = useState('');
   const [creatingCustomer, setCreatingCustomer] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+
+  const monthNames = t('monthNames').split(',');
 
   const fetchData = useCallback(async () => {
     if (!merchant) return;
@@ -189,7 +194,7 @@ export default function CustomersPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setCreateError(data.error || 'Erreur lors de la création');
+        setCreateError(data.error || t('createError'));
         setCreatingCustomer(false);
         return;
       }
@@ -207,7 +212,7 @@ export default function CustomersPage() {
       await fetchData();
     } catch (error) {
       console.error('Error:', error);
-      setCreateError('Une erreur est survenue. Veuillez réessayer.');
+      setCreateError(t('createErrorGeneric'));
     }
     setCreatingCustomer(false);
   };
@@ -287,18 +292,20 @@ export default function CustomersPage() {
     );
   }
 
+  const remaining = filteredCustomers.length - displayCount;
+
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <div>
           <h1 className="text-xl md:text-3xl font-extrabold tracking-tight text-gray-900">
-            Gestion <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4b0082] to-violet-600">Clients</span>
+            {t('title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4b0082] to-violet-600">{t('titleHighlight')}</span>
           </h1>
           <p className="mt-1 text-sm md:text-base font-medium text-gray-500">
             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#4b0082]/10 text-[#4b0082] mr-2 border border-[#4b0082]/20">
-              {customers.length} total
+              {customers.length} {t('total')}
             </span>
-            {customers.length > 1 ? 'Clients inscrits' : 'Client inscrit'} sur la plateforme
+            {customers.length > 1 ? t('subtotalPlural') : t('subtotalSingular')}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -307,7 +314,7 @@ export default function CustomersPage() {
             className="h-9 px-3 text-sm bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white rounded-lg transition-all duration-200 shadow-md shadow-indigo-200"
           >
             <UserPlus className="w-3.5 h-3.5 mr-1.5" />
-            Nouveau
+            {t('newButton')}
           </Button>
           <Link href="/dashboard/members">
             <Button
@@ -315,7 +322,7 @@ export default function CustomersPage() {
               className="h-9 px-3 text-sm border-amber-200 hover:border-amber-300 hover:bg-amber-50/50 text-amber-700 rounded-lg transition-all duration-200 shadow-sm"
             >
               <Crown className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
-              Programmes VIP
+              {t('vipPrograms')}
             </Button>
           </Link>
           <Link href="/dashboard/marketing?tab=automations">
@@ -324,7 +331,7 @@ export default function CustomersPage() {
               className="h-9 px-3 text-sm border-pink-200 hover:border-pink-300 hover:bg-pink-50/50 text-pink-700 rounded-lg transition-all duration-200 shadow-sm"
             >
               <Cake className="w-3.5 h-3.5 mr-1.5 text-pink-500" />
-              Anniversaire
+              {t('birthday')}
             </Button>
           </Link>
         </div>
@@ -340,7 +347,7 @@ export default function CustomersPage() {
             </div>
             <Input
               type="text"
-              placeholder="Rechercher par nom ou téléphone..."
+              placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 h-12 bg-white/50 border-gray-100 rounded-2xl focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all duration-300 placeholder:text-gray-400"
@@ -359,7 +366,7 @@ export default function CustomersPage() {
             }`}
           >
             <Bell className={`w-3.5 h-3.5 ${filterPushOnly ? 'text-white' : 'text-violet-500'}`} />
-            <span>Notifiables</span>
+            <span>{t('filterNotifiable')}</span>
             <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
               filterPushOnly ? 'bg-white/20 text-white' : 'bg-violet-100 text-violet-700'
             }`}>
@@ -375,7 +382,7 @@ export default function CustomersPage() {
             }`}
           >
             <Clock className={`w-3.5 h-3.5 ${activeFilter === 'inactive' ? 'text-white' : 'text-rose-500'}`} />
-            <span>Inactifs 21j+</span>
+            <span>{t('filterInactive')}</span>
             <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
               activeFilter === 'inactive' ? 'bg-white/20 text-white' : 'bg-rose-100 text-rose-700'
             }`}>
@@ -391,7 +398,7 @@ export default function CustomersPage() {
             }`}
           >
             <Target className={`w-3.5 h-3.5 ${activeFilter === 'close' ? 'text-white' : 'text-amber-500'}`} />
-            <span>Proches</span>
+            <span>{t('filterClose')}</span>
             <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
               activeFilter === 'close' ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
             }`}>
@@ -407,7 +414,7 @@ export default function CustomersPage() {
             }`}
           >
             <Gift className={`w-3.5 h-3.5 ${activeFilter === 'reward' ? 'text-white' : 'text-emerald-500'}`} />
-            <span>Récompense</span>
+            <span>{t('filterReward')}</span>
             <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
               activeFilter === 'reward' ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'
             }`}>
@@ -427,7 +434,7 @@ export default function CustomersPage() {
                 const progress = Math.min((card.current_stamps / (merchant?.stamps_required || 10)) * 100, 100);
                 const isPushSubscriber = subscriberIds.includes(card.customer_id);
                 const cashbackValue = isCagnotte && merchant?.cagnotte_percent ? (Number(card.current_amount || 0) * merchant.cagnotte_percent / 100) : 0;
-                const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id), isCagnotte, cashbackValue);
+                const badge = getCardBadge(t, isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id), isCagnotte, cashbackValue);
 
                 return (
                   <button
@@ -464,7 +471,7 @@ export default function CustomersPage() {
                       )}
                       {isCagnotte && !badge && (
                         <span className="text-[10px] font-medium text-gray-500">
-                          {Number(card.current_amount || 0).toFixed(2).replace('.', ',')} € cumulés
+                          {Number(card.current_amount || 0).toFixed(2).replace('.', ',')} € {t('accumulated')}
                         </span>
                       )}
                     </div>
@@ -519,7 +526,7 @@ export default function CustomersPage() {
                     onClick={() => setDisplayCount(prev => prev + 50)}
                     className="px-5 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-colors"
                   >
-                    Charger plus ({filteredCustomers.length - displayCount} restant{filteredCustomers.length - displayCount > 1 ? 's' : ''})
+                    {t('loadMore')} ({remaining > 1 ? t('remainingPlural', { count: remaining }) : t('remaining', { count: remaining })})
                   </button>
                 </div>
               )}
@@ -531,31 +538,31 @@ export default function CustomersPage() {
                 <thead>
                   <tr className="bg-gray-50/50">
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100 first:rounded-tl-xl first:border-l last:rounded-tr-xl last:border-r">
-                      Client
+                      {t('thClient')}
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
                       <div className="flex items-center gap-2">
                         <Phone className="w-3.5 h-3.5" />
-                        Téléphone
+                        {t('thPhone')}
                       </div>
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
                       <div className="flex items-center gap-2">
                         <Gift className="w-3.5 h-3.5" />
-                        Progression
+                        {t('thProgress')}
                       </div>
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-3.5 h-3.5" />
-                        Dernière visite
+                        {t('thLastVisit')}
                       </div>
                     </th>
                     <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100">
-                      Inscription
+                      {t('thSignup')}
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider border-y border-gray-100 first:border-l last:rounded-tr-xl last:border-r">
-                      Actions
+                      {t('thActions')}
                     </th>
                   </tr>
                 </thead>
@@ -568,7 +575,7 @@ export default function CustomersPage() {
                     const isPushSubscriber = subscriberIds.includes(card.customer_id);
                     const cashbackValue = isCagnotte && merchant?.cagnotte_percent ? (Number(card.current_amount || 0) * merchant.cagnotte_percent / 100) : 0;
 
-                    const badge = getCardBadge(isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id), isCagnotte, cashbackValue);
+                    const badge = getCardBadge(t, isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id), isCagnotte, cashbackValue);
 
                     return (
                       <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200 cursor-pointer" onClick={() => handleOpenAdjustModal(card)}>
@@ -664,7 +671,7 @@ export default function CustomersPage() {
                               </div>
                               {isCagnotte && (
                                 <p className="text-[10px] font-medium text-gray-500 mt-1">
-                                  {Number(card.current_amount || 0).toFixed(2).replace('.', ',')} € cumulés
+                                  {Number(card.current_amount || 0).toFixed(2).replace('.', ',')} € {t('accumulated')}
                                 </p>
                               )}
                             </div>
@@ -682,7 +689,7 @@ export default function CustomersPage() {
                             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-indigo-600 bg-white border border-indigo-100 rounded-xl hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm transition-all active:scale-95"
                           >
                             <SlidersHorizontal className="w-4 h-4" />
-                            Gérer
+                            {t('manage')}
                           </button>
                         </td>
                       </tr>
@@ -696,7 +703,7 @@ export default function CustomersPage() {
                     onClick={() => setDisplayCount(prev => prev + 50)}
                     className="px-6 py-2.5 text-sm font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-xl border border-indigo-100 transition-colors"
                   >
-                    Charger plus ({filteredCustomers.length - displayCount} restant{filteredCustomers.length - displayCount > 1 ? 's' : ''})
+                    {t('loadMore')} ({remaining > 1 ? t('remainingPlural', { count: remaining }) : t('remaining', { count: remaining })})
                   </button>
                 </div>
               )}
@@ -707,14 +714,14 @@ export default function CustomersPage() {
             <Users className="w-16 h-16 mb-4 text-gray-300" />
             {searchQuery || activeFilter !== 'all' || filterPushOnly ? (
               <>
-                <p className="text-lg font-medium">Aucun résultat</p>
-                <p className="text-sm">Essaie de modifier tes filtres</p>
+                <p className="text-lg font-medium">{t('noResults')}</p>
+                <p className="text-sm">{t('noResultsHint')}</p>
               </>
             ) : (
               <>
-                <p className="text-lg font-medium">Aucun client pour le moment</p>
+                <p className="text-lg font-medium">{t('noClients')}</p>
                 <p className="text-sm">
-                  Tes clients apparaîtront ici après leur premier scan
+                  {t('noClientsHint')}
                 </p>
               </>
             )}
@@ -764,11 +771,11 @@ export default function CustomersPage() {
           setNewStartStamps('');
           setCreateError(null);
         }}
-        title="Nouveau client"
+        title={t('newClientTitle')}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-500 mb-4">
-            Créez un nouveau client et sa carte de fidélité associée.
+            {t('newClientDesc')}
           </p>
 
           {createError && (
@@ -778,32 +785,32 @@ export default function CustomersPage() {
           )}
 
           <Input
-            label="Prénom"
+            label={t('firstName')}
             placeholder="Jean"
             value={newFirstName}
             onChange={(e) => setNewFirstName(e.target.value)}
           />
           <Input
-            label="Nom"
+            label={t('lastName')}
             placeholder="Dupont"
             value={newLastName}
             onChange={(e) => setNewLastName(e.target.value)}
           />
           <Input
-            label="Téléphone"
+            label={t('phone')}
             placeholder={PHONE_CONFIG[merchant?.country || 'FR'].placeholder}
             value={newPhone}
             onChange={(e) => setNewPhone(e.target.value)}
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Anniversaire (optionnel)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('birthdayLabel')}</label>
             <div className="flex gap-2">
               <select
                 value={newBirthDay}
                 onChange={(e) => setNewBirthDay(e.target.value)}
                 className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               >
-                <option value="">Jour</option>
+                <option value="">{t('dayOption')}</option>
                 {Array.from({ length: 31 }, (_, i) => (
                   <option key={i + 1} value={i + 1}>{i + 1}</option>
                 ))}
@@ -813,15 +820,15 @@ export default function CustomersPage() {
                 onChange={(e) => setNewBirthMonth(e.target.value)}
                 className="flex-1 px-3 py-2 rounded-xl border border-gray-200 text-sm bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
               >
-                <option value="">Mois</option>
-                {['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((m, i) => (
+                <option value="">{t('monthOption')}</option>
+                {monthNames.map((m, i) => (
                   <option key={i + 1} value={i + 1}>{m}</option>
                 ))}
               </select>
             </div>
           </div>
           <Input
-            label="Tampons de départ (optionnel)"
+            label={t('startStamps')}
             type="number"
             min="0"
             step="1"
@@ -831,7 +838,7 @@ export default function CustomersPage() {
           />
           {merchant?.loyalty_mode === 'cagnotte' && (
             <Input
-              label="Montant déjà dépensé (optionnel)"
+              label={t('startAmount')}
               type="number"
               min="0"
               step="0.01"
@@ -850,7 +857,7 @@ export default function CustomersPage() {
             ) : (
               <UserPlus className="w-4 h-4 mr-2" />
             )}
-            Créer le client
+            {t('createButton')}
           </Button>
         </div>
       </Modal>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import {
   Users,
@@ -33,6 +34,7 @@ interface ReferralRow {
 }
 
 export default function ReferralsPage() {
+  const t = useTranslations('referralsPage');
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const supabase = getSupabase();
 
@@ -53,6 +55,9 @@ export default function ReferralsPage() {
   const pendingCount = useMemo(() => referrals.filter(r => r.status === 'pending').length, [referrals]);
   const completedCount = useMemo(() => referrals.filter(r => r.status === 'completed').length, [referrals]);
   const welcomeCount = useMemo(() => referrals.filter(r => !r.referrer_customer).length, [referrals]);
+
+  const referredSuggestions = t('referredQuickSuggestions').split(',');
+  const referrerSuggestions = t('referrerQuickSuggestions').split(',');
 
   useEffect(() => {
     if (merchantLoading || !merchant) return;
@@ -107,7 +112,7 @@ export default function ReferralsPage() {
       });
 
       if (!res.ok) {
-        setSaveError('Erreur lors de la sauvegarde. Veuillez réessayer.');
+        setSaveError(t('saveError'));
         throw new Error('save failed');
       }
 
@@ -137,39 +142,39 @@ export default function ReferralsPage() {
         <div className="flex items-center gap-3 mb-1">
           <UserPlus className="w-7 h-7 text-indigo-600" />
           <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-            Parrainage
+            {t('title')}
           </h1>
         </div>
         <p className="mt-1 text-gray-500 font-medium">
-          Configure ton programme de parrainage et suis les résultats
+          {t('subtitle')}
         </p>
       </div>
 
       {/* Configuration */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">Configuration</h2>
+          <h2 className="text-lg font-bold text-gray-900">{t('configuration')}</h2>
           <button
             onClick={() => setShowHelp(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
           >
             <HelpCircle className="w-3.5 h-3.5" />
-            Comment ça marche ?
+            {t('howItWorks')}
           </button>
         </div>
 
         {/* Toggle */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <p className="font-semibold text-gray-900">Activer le parrainage</p>
+            <p className="font-semibold text-gray-900">{t('enableReferral')}</p>
             <p className="text-sm text-gray-500">
-              Tes clients pourront partager un lien pour inviter leurs proches
+              {t('enableReferralDesc')}
             </p>
           </div>
           <button
             role="switch"
             aria-checked={enabled}
-            aria-label="Activer ou désactiver le programme de parrainage"
+            aria-label={t('enableReferral')}
             onClick={() => setEnabled(!enabled)}
             className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full transition-colors ${
               enabled ? 'bg-indigo-600' : 'bg-gray-200'
@@ -189,21 +194,21 @@ export default function ReferralsPage() {
             <div className="flex gap-3 p-3.5 rounded-xl bg-amber-50 border border-amber-100">
               <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-800 leading-relaxed">
-                <span className="font-semibold">Astuce :</span> Offrez des récompenses généreuses pour inciter tes clients à parrainer leurs proches. Plus l&apos;offre est attractive, plus ils partageront !
+                <span className="font-semibold">{t('tip')}</span> {t('tipDesc')}
               </p>
             </div>
             <div>
               <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                Récompense pour le filleul <span className="text-red-400">*</span>
+                {t('rewardReferred')} <span className="text-red-400">*</span>
               </label>
               <Input
-                placeholder="Ex: -10% sur votre première visite"
+                placeholder={t('rewardReferredPlaceholder')}
                 value={rewardReferred}
                 onChange={(e) => setRewardReferred(e.target.value)}
                 className="h-11"
               />
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {['-10% sur la 1ère visite', '-20% sur la 1ère visite', '-30% sur la 1ère visite'].map((s) => (
+                {referredSuggestions.map((s) => (
                   <button
                     key={s}
                     type="button"
@@ -214,21 +219,21 @@ export default function ReferralsPage() {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-400 mt-1.5">Ce que reçoit la personne qui s&apos;inscrit via le lien</p>
+              <p className="text-xs text-gray-400 mt-1.5">{t('rewardReferredHint')}</p>
             </div>
 
             <div>
               <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                Récompense pour le parrain <span className="text-red-400">*</span>
+                {t('rewardReferrer')} <span className="text-red-400">*</span>
               </label>
               <Input
-                placeholder="Ex: Un brushing offert"
+                placeholder={t('rewardReferrerPlaceholder')}
                 value={rewardReferrer}
                 onChange={(e) => setRewardReferrer(e.target.value)}
                 className="h-11"
               />
               <div className="flex flex-wrap gap-1.5 mt-2">
-                {['-10% sur la prochaine visite', '-20% sur la prochaine visite', '-30% sur la prochaine visite'].map((s) => (
+                {referrerSuggestions.map((s) => (
                   <button
                     key={s}
                     type="button"
@@ -239,7 +244,7 @@ export default function ReferralsPage() {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-400 mt-1.5">Ce que reçoit ton client quand son filleul utilise sa récompense</p>
+              <p className="text-xs text-gray-400 mt-1.5">{t('rewardReferrerHint')}</p>
             </div>
           </div>
         )}
@@ -265,7 +270,7 @@ export default function ReferralsPage() {
             ) : (
               <Check className="w-4 h-4" />
             )}
-            {saved ? 'Enregistré !' : 'Enregistrer'}
+            {saved ? t('saved') : t('save')}
           </button>
         </div>
       </div>
@@ -279,17 +284,17 @@ export default function ReferralsPage() {
           <Sparkles className="w-5 h-5 text-white" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm">Offre de bienvenue</p>
+          <p className="font-semibold text-gray-900 text-sm">{t('welcomeOffer')}</p>
           <p className="text-xs text-gray-500 mt-0.5">
             {welcomeEnabled
-              ? <span>Activée — <span className="text-violet-600 font-medium">{merchant?.welcome_offer_description}</span></span>
-              : 'Attire de nouveaux clients avec une offre sur ta page publique'
+              ? <span>{t('welcomeEnabled')} — <span className="text-violet-600 font-medium">{merchant?.welcome_offer_description}</span></span>
+              : t('welcomeDisabled')
             }
           </p>
         </div>
         <div className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 shrink-0 group-hover:translate-x-0.5 transition-transform">
           <Globe className="w-3.5 h-3.5" />
-          Configurer dans Ma Page
+          {t('configureInPage')}
           <ArrowRight className="w-3.5 h-3.5" />
         </div>
       </Link>
@@ -303,7 +308,7 @@ export default function ReferralsPage() {
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
                   <Users className="w-5 h-5 text-indigo-600" />
                 </div>
-                <span className="text-sm font-medium text-gray-500">Total parrainages</span>
+                <span className="text-sm font-medium text-gray-500">{t('totalReferrals')}</span>
               </div>
               <p className="text-3xl font-black text-gray-900">{totalReferrals}</p>
             </div>
@@ -313,7 +318,7 @@ export default function ReferralsPage() {
                 <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
                   <Clock className="w-5 h-5 text-amber-600" />
                 </div>
-                <span className="text-sm font-medium text-gray-500">En attente</span>
+                <span className="text-sm font-medium text-gray-500">{t('pending')}</span>
               </div>
               <p className="text-3xl font-black text-gray-900">{pendingCount}</p>
             </div>
@@ -323,7 +328,7 @@ export default function ReferralsPage() {
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
                   <Gift className="w-5 h-5 text-emerald-600" />
                 </div>
-                <span className="text-sm font-medium text-gray-500">Complétés</span>
+                <span className="text-sm font-medium text-gray-500">{t('completed')}</span>
               </div>
               <p className="text-3xl font-black text-gray-900">{completedCount}</p>
             </div>
@@ -334,7 +339,7 @@ export default function ReferralsPage() {
                   <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
                     <Sparkles className="w-5 h-5 text-violet-600" />
                   </div>
-                  <span className="text-sm font-medium text-gray-500">Via Qarte</span>
+                  <span className="text-sm font-medium text-gray-500">{t('viaQarte')}</span>
                 </div>
                 <p className="text-3xl font-black text-gray-900">{welcomeCount}</p>
               </div>
@@ -344,15 +349,15 @@ export default function ReferralsPage() {
           {/* Referrals Table */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900">Historique des parrainages</h2>
+              <h2 className="text-lg font-bold text-gray-900">{t('historyTitle')}</h2>
             </div>
 
             {referrals.length === 0 ? (
               <div className="px-6 py-12 text-center">
                 <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 font-medium">Aucun parrainage pour le moment</p>
+                <p className="text-gray-500 font-medium">{t('noReferrals')}</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  Tes clients pourront partager leur lien depuis leur carte de fidélité
+                  {t('noReferralsHint')}
                 </p>
               </div>
             ) : (
@@ -360,11 +365,11 @@ export default function ReferralsPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      <th className="px-6 py-3">Parrain</th>
-                      <th className="px-6 py-3">Filleul</th>
-                      <th className="px-6 py-3">Date</th>
-                      <th className="px-6 py-3">Statut filleul</th>
-                      <th className="px-6 py-3">Statut parrain</th>
+                      <th className="px-6 py-3">{t('thReferrer')}</th>
+                      <th className="px-6 py-3">{t('thReferred')}</th>
+                      <th className="px-6 py-3">{t('thDate')}</th>
+                      <th className="px-6 py-3">{t('thReferredStatus')}</th>
+                      <th className="px-6 py-3">{t('thReferrerStatus')}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
@@ -388,11 +393,11 @@ export default function ReferralsPage() {
                         <td className="px-6 py-3.5">
                           {r.referred_voucher?.is_used ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
-                              <Check className="w-3 h-3" /> Utilisé
+                              <Check className="w-3 h-3" /> {t('statusUsed')}
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold">
-                              <Clock className="w-3 h-3" /> En attente
+                              <Clock className="w-3 h-3" /> {t('statusPending')}
                             </span>
                           )}
                         </td>
@@ -402,11 +407,11 @@ export default function ReferralsPage() {
                           ) : r.status === 'completed' ? (
                             r.referrer_voucher?.is_used ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
-                                <Check className="w-3 h-3" /> Utilisé
+                                <Check className="w-3 h-3" /> {t('statusUsed')}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
-                                <Gift className="w-3 h-3" /> Créé
+                                <Gift className="w-3 h-3" /> {t('statusCreated')}
                               </span>
                             )
                           ) : (
@@ -438,27 +443,27 @@ export default function ReferralsPage() {
               <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
                 <HelpCircle className="w-5 h-5 text-indigo-600" />
               </div>
-              <h3 className="text-lg font-bold text-gray-900">Comment fonctionne le parrainage ?</h3>
+              <h3 className="text-lg font-bold text-gray-900">{t('helpTitle')}</h3>
             </div>
 
             <div className="space-y-4 text-sm text-gray-600">
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">1</span>
-                <p>Ton client partage son <span className="font-semibold text-gray-900">lien de parrainage</span> depuis sa carte de fidélité.</p>
+                <p dangerouslySetInnerHTML={{ __html: t('helpStep1') }} />
               </div>
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">2</span>
-                <p>Le filleul s&apos;inscrit via le lien et reçoit <span className="font-semibold text-gray-900">sa récompense</span> (ex: -10% sur sa première visite).</p>
+                <p dangerouslySetInnerHTML={{ __html: t('helpStep2') }} />
               </div>
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 font-bold text-xs flex items-center justify-center">3</span>
-                <p>Quand le filleul <span className="font-semibold text-gray-900">utilise sa récompense</span>, le parrain reçoit automatiquement la sienne.</p>
+                <p dangerouslySetInnerHTML={{ __html: t('helpStep3') }} />
               </div>
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 font-bold text-xs flex items-center justify-center">
                   <Check className="w-3 h-3" />
                 </span>
-                <p>Tout est <span className="font-semibold text-gray-900">automatique</span> — aucune action de ta part n&apos;est nécessaire !</p>
+                <p dangerouslySetInnerHTML={{ __html: t('helpStep4') }} />
               </div>
             </div>
 
@@ -466,7 +471,7 @@ export default function ReferralsPage() {
               onClick={() => setShowHelp(false)}
               className="w-full mt-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
             >
-              Compris !
+              {t('helpGotIt')}
             </button>
           </div>
         </div>

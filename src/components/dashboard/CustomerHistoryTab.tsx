@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Loader2,
   Check,
@@ -51,6 +52,7 @@ export function CustomerHistoryTab({
   tier2Enabled,
   isCagnotte = false,
 }: CustomerHistoryTabProps) {
+  const t = useTranslations('customerHistory');
   const [visits, setVisits] = useState<Visit[]>([]);
   const [adjustments, setAdjustments] = useState<PointAdjustment[]>([]);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
@@ -179,20 +181,20 @@ export function CustomerHistoryTab({
       ) : historyItems.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
           <History className="w-10 h-10 mx-auto mb-2 text-gray-300" />
-          <p className="text-sm">Aucun historique</p>
+          <p className="text-sm">{t('noHistory')}</p>
         </div>
       ) : (
         <>
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
-              {historyItems.length} entrée{historyItems.length > 1 ? 's' : ''}
+              {historyItems.length > 1 ? t('entriesPlural', { count: historyItems.length }) : t('entries', { count: historyItems.length })}
             </p>
             <button
               onClick={() => setHistoryExpanded(!historyExpanded)}
               className="text-sm text-indigo-600 flex items-center gap-1"
             >
               {historyExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              {historyExpanded ? 'Réduire' : 'Voir tout'}
+              {historyExpanded ? t('collapse') : t('viewAll')}
             </button>
           </div>
 
@@ -225,14 +227,18 @@ export function CustomerHistoryTab({
 
               const getLabel = () => {
                 if (isRedemption) {
-                  const tierLabel = tier2Enabled ? ` palier ${item.tier}` : '';
-                  return isCagnotte ? `Cagnotte${tierLabel} utilisée` : `Cadeau${tierLabel} utilisé`;
+                  if (tier2Enabled) {
+                    return isCagnotte
+                      ? t('cagnotteTierUsed', { tier: item.tier })
+                      : t('giftTierUsed', { tier: item.tier });
+                  }
+                  return isCagnotte ? t('cagnotteUsed') : t('giftUsed');
                 }
-                if (isAdjustment) return 'Ajustement manuel';
+                if (isAdjustment) return t('manualAdjust');
                 if (isCagnotte && item.amount_spent != null && item.amount_spent > 0) {
-                  return `Passage · ${Number(item.amount_spent).toFixed(2).replace('.', ',')} €`;
+                  return `${t('visit')} · ${Number(item.amount_spent).toFixed(2).replace('.', ',')} €`;
                 }
-                return 'Passage';
+                return t('visit');
               };
 
               const isVisit = item.type === 'visit';
@@ -252,7 +258,7 @@ export function CustomerHistoryTab({
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="flex-1">
-                        <label className="text-[10px] font-medium text-gray-500 uppercase">Points</label>
+                        <label className="text-[10px] font-medium text-gray-500 uppercase">{t('pointsLabel')}</label>
                         <input
                           type="number"
                           min={0}
@@ -263,7 +269,7 @@ export function CustomerHistoryTab({
                       </div>
                       {isCagnotte && (
                         <div className="flex-1">
-                          <label className="text-[10px] font-medium text-gray-500 uppercase">Montant (EUR)</label>
+                          <label className="text-[10px] font-medium text-gray-500 uppercase">{t('amountLabel')}</label>
                           <input
                             type="text"
                             inputMode="decimal"

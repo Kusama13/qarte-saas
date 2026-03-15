@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   X,
   Loader2,
@@ -44,9 +45,6 @@ interface CustomerManagementModalProps {
   cagnotteTier2Percent?: number | null;
 }
 
-const MONTHS_SHORT = ['janv.','fév.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
-const MONTHS_PICKER = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'];
-
 type Tab = 'adjust' | 'rewards' | 'history' | 'danger';
 
 export function CustomerManagementModal({
@@ -73,6 +71,7 @@ export function CustomerManagementModal({
   cagnottePercent = 0,
   cagnotteTier2Percent,
 }: CustomerManagementModalProps) {
+  const t = useTranslations('customerModal');
   const [activeTab, setActiveTab] = useState<Tab>('adjust');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -87,6 +86,9 @@ export function CustomerManagementModal({
   const [editBirthMonth, setEditBirthMonth] = useState(birthMonth?.toString() || '');
   const [savingBirthday, setSavingBirthday] = useState(false);
   const [editingBirthday, setEditingBirthday] = useState(false);
+
+  const MONTHS_SHORT = t('monthsShort').split(',');
+  const MONTHS_PICKER = t('monthsPicker').split(',');
 
   const customerName = `${editFirstName} ${editLastName}`.trim();
 
@@ -160,10 +162,10 @@ export function CustomerManagementModal({
   if (!isOpen) return null;
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode; activeColor: string }[] = [
-    { key: 'adjust', label: 'Points', icon: <SlidersHorizontal className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
-    { key: 'rewards', label: 'Cadeaux', icon: <Gift className="w-4 h-4" />, activeColor: 'text-emerald-600 border-emerald-600' },
-    { key: 'history', label: 'Historique', icon: <History className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
-    { key: 'danger', label: 'Supprimer', icon: <AlertTriangle className="w-4 h-4" />, activeColor: 'text-red-600 border-red-600' },
+    { key: 'adjust', label: t('tabPoints'), icon: <SlidersHorizontal className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
+    { key: 'rewards', label: t('tabRewards'), icon: <Gift className="w-4 h-4" />, activeColor: 'text-emerald-600 border-emerald-600' },
+    { key: 'history', label: t('tabHistory'), icon: <History className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
+    { key: 'danger', label: t('tabDelete'), icon: <AlertTriangle className="w-4 h-4" />, activeColor: 'text-red-600 border-red-600' },
   ];
 
   return (
@@ -199,13 +201,13 @@ export function CustomerManagementModal({
                   <input
                     value={editFirstName}
                     onChange={(e) => setEditFirstName(e.target.value)}
-                    placeholder="Prénom"
+                    placeholder={t('firstNamePlaceholder')}
                     className="flex-1 min-w-0 px-2 py-1 rounded-lg border border-gray-200 text-sm font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
                   />
                   <input
                     value={editLastName}
                     onChange={(e) => setEditLastName(e.target.value)}
-                    placeholder="Nom"
+                    placeholder={t('lastNamePlaceholder')}
                     className="flex-1 min-w-0 px-2 py-1 rounded-lg border border-gray-200 text-sm font-medium bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20 focus:outline-none transition-shadow"
                   />
                   <button
@@ -243,7 +245,7 @@ export function CustomerManagementModal({
                     <Cake className="w-3 h-3" />
                     {birthMonth && birthDay
                       ? `${birthDay} ${MONTHS_SHORT[birthMonth - 1]}`
-                      : 'Anniversaire'}
+                      : t('birthday')}
                     <Pencil className="w-2.5 h-2.5 opacity-40" />
                   </button>
                 ) : (
@@ -255,7 +257,7 @@ export function CustomerManagementModal({
                         onChange={(e) => setEditBirthDay(e.target.value)}
                         className="px-1 py-0 rounded border-0 text-xs bg-transparent text-pink-700 focus:outline-none focus:ring-0"
                       >
-                        <option value="">Jour</option>
+                        <option value="">{t('dayOption')}</option>
                         {Array.from({ length: 31 }, (_, i) => (
                           <option key={i + 1} value={i + 1}>{i + 1}</option>
                         ))}
@@ -265,7 +267,7 @@ export function CustomerManagementModal({
                         onChange={(e) => setEditBirthMonth(e.target.value)}
                         className="px-1 py-0 rounded border-0 text-xs bg-transparent text-pink-700 focus:outline-none focus:ring-0"
                       >
-                        <option value="">Mois</option>
+                        <option value="">{t('monthOption')}</option>
                         {MONTHS_PICKER.map((m, i) => (
                           <option key={i + 1} value={i + 1}>{m}</option>
                         ))}

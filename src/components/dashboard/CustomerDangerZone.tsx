@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Trash2,
   Ban,
@@ -22,6 +23,7 @@ export function CustomerDangerZone({
   customerName,
   onSuccess,
 }: CustomerDangerZoneProps) {
+  const t = useTranslations('customerDanger');
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [banConfirm, setBanConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -30,7 +32,7 @@ export function CustomerDangerZone({
 
   const handleDeleteCustomer = async () => {
     if (!deleteConfirm) {
-      setError('Veuillez confirmer la suppression');
+      setError(t('confirmDeletion'));
       return;
     }
 
@@ -50,12 +52,12 @@ export function CustomerDangerZone({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la suppression');
+        throw new Error(data.error || t('deleteError'));
       }
 
-      onSuccess('Client supprime !');
+      onSuccess(t('deleteSuccess'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la suppression');
+      setError(err instanceof Error ? err.message : t('deleteError'));
     } finally {
       setDeleting(false);
     }
@@ -63,7 +65,7 @@ export function CustomerDangerZone({
 
   const handleBanNumber = async () => {
     if (!banConfirm) {
-      setError('Veuillez confirmer le bannissement');
+      setError(t('confirmBan'));
       return;
     }
 
@@ -85,12 +87,12 @@ export function CustomerDangerZone({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors du bannissement');
+        throw new Error(data.error || t('banError'));
       }
 
-      onSuccess('Numero banni !');
+      onSuccess(t('banSuccess'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors du bannissement');
+      setError(err instanceof Error ? err.message : t('banError'));
     } finally {
       setBanning(false);
     }
@@ -102,7 +104,7 @@ export function CustomerDangerZone({
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
           <p className="text-xs text-red-700">
-            Ces actions sont irreversibles.
+            {t('irreversible')}
           </p>
         </div>
       </div>
@@ -120,8 +122,8 @@ export function CustomerDangerZone({
             <Trash2 className="w-3.5 h-3.5 text-red-600" />
           </div>
           <div>
-            <p className="font-semibold text-gray-900 text-sm">Supprimer le client</p>
-            <p className="text-xs text-gray-500">Carte et historique supprimes</p>
+            <p className="font-semibold text-gray-900 text-sm">{t('deleteTitle')}</p>
+            <p className="text-xs text-gray-500">{t('deleteDesc')}</p>
           </div>
         </div>
 
@@ -133,7 +135,7 @@ export function CustomerDangerZone({
             className="w-4 h-4 rounded border-red-300 text-red-600 focus:ring-red-500"
           />
           <span className="text-xs text-red-700 font-medium">
-            Je confirme vouloir supprimer ce client
+            {t('deleteCheck')}
           </span>
         </label>
 
@@ -144,7 +146,7 @@ export function CustomerDangerZone({
           className="w-full bg-red-600 hover:bg-red-700 text-sm"
         >
           <Trash2 className="w-4 h-4 mr-1.5" />
-          Supprimer definitivement
+          {t('deleteButton')}
         </Button>
       </div>
 
@@ -155,9 +157,9 @@ export function CustomerDangerZone({
             <Ban className="w-3.5 h-3.5 text-orange-600" />
           </div>
           <div>
-            <p className="font-semibold text-gray-900 text-sm">Bannir ce numero</p>
+            <p className="font-semibold text-gray-900 text-sm">{t('banTitle')}</p>
             <p className="text-xs text-gray-500">
-              Bloque {displayPhoneNumber(phoneNumber)}
+              {t('banBlocks', { phone: displayPhoneNumber(phoneNumber) })}
             </p>
           </div>
         </div>
@@ -170,7 +172,7 @@ export function CustomerDangerZone({
             className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
           />
           <span className="text-xs text-gray-700">
-            Je confirme vouloir bannir ce numero
+            {t('banCheck')}
           </span>
         </label>
 
@@ -182,7 +184,7 @@ export function CustomerDangerZone({
           className="w-full border-orange-200 text-orange-700 hover:bg-orange-50 text-sm"
         >
           <Ban className="w-4 h-4 mr-1.5" />
-          Bannir et supprimer
+          {t('banButton')}
         </Button>
       </div>
     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { QrCode, MessageSquare, UserPlus } from 'lucide-react';
 import { getScriptForShopType } from '@/lib/scripts';
 import type { Merchant } from '@/types';
@@ -10,6 +11,7 @@ interface ZeroScansCoachProps {
 }
 
 export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
+  const t = useTranslations('zeroScans');
   const script = getScriptForShopType(merchant.shop_type);
   const trialEnd = new Date(merchant.trial_ends_at);
   const now = new Date();
@@ -18,7 +20,7 @@ export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
   return (
     <div className="space-y-3">
       <p className="text-sm font-semibold text-[#4b0082]">
-        Obtenez votre 1er scan en 2 minutes
+        {t('title')}
       </p>
 
       {/* Step 1 — Test yourself */}
@@ -30,8 +32,8 @@ export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
           <QrCode className="w-3.5 h-3.5" />
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">Testez vous-même</p>
-          <p className="text-xs text-gray-500">Scannez votre QR code pour voir ce que vos client(e)s verront.</p>
+          <p className="text-sm font-medium text-gray-900">{t('step1Title')}</p>
+          <p className="text-xs text-gray-500">{t('step1Desc')}</p>
         </div>
       </Link>
 
@@ -41,7 +43,7 @@ export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
           <MessageSquare className="w-3.5 h-3.5" />
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">Préparez votre phrase</p>
+          <p className="text-sm font-medium text-gray-900">{t('step2Title')}</p>
           <p className="text-xs text-gray-600 italic mt-1">
             &quot;{script}&quot;
           </p>
@@ -54,15 +56,15 @@ export default function ZeroScansCoach({ merchant }: ZeroScansCoachProps) {
           <UserPlus className="w-3.5 h-3.5" />
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">Proposez à votre prochain(e) client(e)</p>
-          <p className="text-xs text-gray-500">Commencez par un(e) seul(e). C&apos;est tout ce qu&apos;il faut.</p>
+          <p className="text-sm font-medium text-gray-900">{t('step3Title')}</p>
+          <p className="text-xs text-gray-500">{t('step3Desc')}</p>
         </div>
       </div>
 
       {/* Trial urgency */}
       {merchant.subscription_status === 'trial' && daysRemaining <= 5 && (
         <p className="text-xs text-center text-gray-400 pt-1">
-          Jour {7 - daysRemaining} sur 7 de votre essai
+          {t('trialDay', { current: 7 - daysRemaining })}
         </p>
       )}
     </div>

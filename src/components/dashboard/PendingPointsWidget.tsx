@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   ShieldAlert,
   Shield,
@@ -30,6 +31,7 @@ interface ToastState {
 }
 
 export default function PendingPointsWidget({ merchantId, shieldEnabled, onShieldToggle }: PendingPointsWidgetProps) {
+  const t = useTranslations('pendingPoints');
   const [visits, setVisits] = useState<PendingVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -76,9 +78,9 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
       if (!response.ok) throw new Error('Action failed');
 
       setVisits(prev => prev.filter(v => v.id !== visitId));
-      showToast(action === 'confirm' ? 'Point validé' : 'Visite refusée');
+      showToast(action === 'confirm' ? t('pointConfirmed') : t('visitRejected'));
     } catch (error) {
-      showToast('Une erreur est survenue', 'error');
+      showToast(t('errorOccurred'), 'error');
     } finally {
       setProcessingId(null);
     }
@@ -102,9 +104,9 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
 
       const result = await response.json();
       setVisits([]);
-      showToast(result.message || (action === 'confirm' ? 'Tous les points validés' : 'Toutes les visites refusées'));
+      showToast(result.message || (action === 'confirm' ? t('allConfirmed') : t('allRejected')));
     } catch (error) {
-      showToast('Erreur lors du traitement', 'error');
+      showToast(t('bulkError'), 'error');
     } finally {
       setBulkProcessing(false);
     }
@@ -118,8 +120,8 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
 
     const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
-    if (date >= todayStart) return `Aujourd'hui ${time}`;
-    if (date >= yesterdayStart) return `Hier ${time}`;
+    if (date >= todayStart) return `${t('today')} ${time}`;
+    if (date >= yesterdayStart) return `${t('yesterday')} ${time}`;
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ` ${time}`;
   };
 
@@ -181,30 +183,26 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
                 <ShieldAlert className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-900">Qarte Shield</h3>
-                <p className="text-sm text-gray-500">Vérification automatique</p>
+                <h3 className="text-xl font-bold text-gray-900">{t('shieldTitle')}</h3>
+                <p className="text-sm text-gray-500">{t('shieldSubtitle')}</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <p className="text-gray-600">
-                Qarte Shield protège votre programme de fidélité en détectant les comportements suspects.
+                {t('shieldDesc')}
               </p>
 
               <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
                 <div className="flex items-center gap-2 mb-2">
                   <Footprints className="w-5 h-5 text-indigo-600" />
-                  <h4 className="font-bold text-indigo-900">Vérification automatique</h4>
+                  <h4 className="font-bold text-indigo-900">{t('shieldRuleTitle')}</h4>
                 </div>
-                <p className="text-sm text-indigo-700">
-                  Un client ne peut valider qu&apos;<strong>1 passage par jour</strong>. Toute tentative supplémentaire sera mise en quarantaine pour validation manuelle.
-                </p>
+                <p className="text-sm text-indigo-700" dangerouslySetInnerHTML={{ __html: t.raw('shieldRule') }} />
               </div>
 
               <div className="p-4 bg-gray-50 rounded-2xl">
-                <p className="text-sm text-gray-600">
-                  <strong>Validez</strong> si le client était réellement présent. <strong>Refusez</strong> si le passage vous semble inhabituel.
-                </p>
+                <p className="text-sm text-gray-600" dangerouslySetInnerHTML={{ __html: t.raw('shieldAdvice') }} />
               </div>
             </div>
 
@@ -212,7 +210,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
               onClick={() => setShowHelp(false)}
               className="w-full mt-6 py-3 font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl hover:from-indigo-700 hover:to-violet-700 transition-all shadow-lg shadow-indigo-200"
             >
-              J&apos;ai compris
+              {t('shieldUnderstood')}
             </button>
           </div>
         </div>
@@ -227,7 +225,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                Points en attente
+                {t('title')}
                 <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-500 text-white">
                   {visits.length}
                 </span>
@@ -239,7 +237,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
             <button
               onClick={() => setShowHelp(true)}
               className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-              title="Comment ça fonctionne ?"
+              title={t('helpTooltip')}
             >
               <HelpCircle className="w-5 h-5" />
             </button>
@@ -251,7 +249,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
                   disabled={bulkProcessing}
                   className="px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  Tout refuser
+                  {t('rejectAll')}
                 </button>
                 <button
                   onClick={() => handleBulkAction('confirm')}
@@ -259,7 +257,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
                   className="px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 rounded-lg transition-all disabled:opacity-50 flex items-center gap-1"
                 >
                   {bulkProcessing && <Loader2 className="w-3 h-3 animate-spin" />}
-                  Tout valider
+                  {t('confirmAll')}
                 </button>
               </div>
             )}
@@ -306,14 +304,14 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
                 <button
                   onClick={() => handleAction(visit.id, 'reject')}
                   className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                  title="Refuser"
+                  title={t('rejectTooltip')}
                 >
                   <X className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => handleAction(visit.id, 'confirm')}
                   className="p-2 text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-all shadow-sm"
-                  title="Valider"
+                  title={t('confirmTooltip')}
                 >
                   <Check className="w-5 h-5" />
                 </button>
@@ -330,7 +328,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
               disabled={bulkProcessing}
               className="flex-1 py-2 text-sm font-semibold text-rose-600 bg-white border border-rose-200 rounded-lg disabled:opacity-50"
             >
-              Tout refuser
+              {t('rejectAll')}
             </button>
             <button
               onClick={() => handleBulkAction('confirm')}
@@ -338,7 +336,7 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
               className="flex-1 py-2 text-sm font-semibold bg-emerald-600 text-white rounded-lg disabled:opacity-50 flex items-center justify-center gap-1"
             >
               {bulkProcessing && <Loader2 className="w-3 h-3 animate-spin" />}
-              Tout valider
+              {t('confirmAll')}
             </button>
           </div>
         )}

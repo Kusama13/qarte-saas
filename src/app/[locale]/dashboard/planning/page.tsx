@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
@@ -23,6 +24,7 @@ interface CustomerResult {
 type Tab = 'slots' | 'settings';
 
 export default function PlanningDashboard() {
+  const t = useTranslations('planning');
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const supabase = getSupabase();
 
@@ -326,16 +328,16 @@ export default function PlanningDashboard() {
             <CalendarDays className="w-5 h-5 text-indigo-600" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Planning</h1>
+            <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
             <p className="text-xs text-gray-400">
-              {planningEnabled ? 'Visible sur ta page publique' : 'Masqué de ta page publique'}
+              {planningEnabled ? t('visiblePublic') : t('hiddenPublic')}
             </p>
           </div>
         </div>
 
         {/* Toggle */}
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-gray-400 hidden sm:inline">{planningEnabled ? 'Actif' : 'Inactif'}</span>
+          <span className="text-[11px] text-gray-400 hidden sm:inline">{planningEnabled ? t('active') : t('inactive')}</span>
           <button
             type="button"
             role="switch"
@@ -355,40 +357,38 @@ export default function PlanningDashboard() {
           onClick={() => setTab('slots')}
           className={`flex-1 sm:flex-none sm:px-5 py-2 text-xs font-semibold rounded-lg transition-all ${tab === 'slots' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Créneaux
+          {t('tabSlots')}
         </button>
         <button
           onClick={() => setTab('settings')}
           className={`flex-1 sm:flex-none sm:px-5 py-2 text-xs font-semibold rounded-lg transition-all ${tab === 'settings' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
         >
-          Paramètres
+          {t('tabSettings')}
         </button>
       </div>
 
-      {/* ══════════════════════════════════════ */}
       {/* ── TAB: CRÉNEAUX ── */}
-      {/* ══════════════════════════════════════ */}
       {tab === 'slots' && (
         <>
           {!planningEnabled ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 text-center max-w-md mx-auto">
               <CalendarDays className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-sm font-semibold text-gray-700 mb-1">Le planning est désactivé</p>
+              <p className="text-sm font-semibold text-gray-700 mb-1">{t('disabledTitle')}</p>
               <p className="text-xs text-gray-400 mb-4">
-                Active le toggle ci-dessus pour commencer.
+                {t('disabledHint')}
               </p>
               <div className="text-left space-y-2.5">
                 <div className="flex items-start gap-2.5">
                   <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center mt-0.5">1</span>
-                  <p className="text-xs text-gray-500">Ajoute tes créneaux disponibles semaine par semaine</p>
+                  <p className="text-xs text-gray-500">{t('disabledStep1')}</p>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center mt-0.5">2</span>
-                  <p className="text-xs text-gray-500">Tes clientes voient les dispos sur ta page publique</p>
+                  <p className="text-xs text-gray-500">{t('disabledStep2')}</p>
                 </div>
                 <div className="flex items-start gap-2.5">
                   <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center mt-0.5">3</span>
-                  <p className="text-xs text-gray-500">Tu notes les réservations et télécharges une story Instagram en un clic</p>
+                  <p className="text-xs text-gray-500">{t('disabledStep3')}</p>
                 </div>
               </div>
             </div>
@@ -415,7 +415,7 @@ export default function PlanningDashboard() {
                         onClick={() => setWeekOffset(0)}
                         className="text-[11px] text-indigo-600 font-medium mt-0.5 hover:underline"
                       >
-                        Revenir à aujourd&apos;hui
+                        {t('backToToday')}
                       </button>
                     )}
                   </div>
@@ -431,9 +431,9 @@ export default function PlanningDashboard() {
                 {/* Stats inline */}
                 {totalSlots > 0 && (
                   <div className="flex items-center justify-center gap-4 text-xs mb-3 pb-3 border-b border-gray-100">
-                    <span className="text-gray-500">{totalSlots} créneau{totalSlots > 1 ? 'x' : ''}</span>
-                    <span className="text-emerald-600 font-semibold">{freeSlots} dispo{freeSlots > 1 ? 's' : ''}</span>
-                    {takenSlots > 0 && <span className="text-indigo-600 font-semibold">{takenSlots} pris</span>}
+                    <span className="text-gray-500">{totalSlots > 1 ? t('slotCountPlural', { count: totalSlots }) : t('slotCount', { count: totalSlots })}</span>
+                    <span className="text-emerald-600 font-semibold">{freeSlots > 1 ? t('freeCountPlural', { count: freeSlots }) : t('freeCount', { count: freeSlots })}</span>
+                    {takenSlots > 0 && <span className="text-indigo-600 font-semibold">{t('takenCount', { count: takenSlots })}</span>}
                   </div>
                 )}
 
@@ -444,14 +444,14 @@ export default function PlanningDashboard() {
                     className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold text-xs hover:from-indigo-700 hover:to-violet-700 transition-all shadow-sm shadow-indigo-200"
                   >
                     <Download className="w-4 h-4" />
-                    Télécharger la story
+                    {t('downloadStory')}
                   </button>
                   <button
                     onClick={() => setCopyTarget('picking')}
                     className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 font-semibold text-xs hover:bg-gray-100 transition-colors"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">Copier</span>
+                    <span className="hidden sm:inline">{t('copy')}</span>
                   </button>
                 </div>
               </div>
@@ -470,7 +470,7 @@ export default function PlanningDashboard() {
 
               {saved && (
                 <div className="mb-3 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700 font-medium text-center">
-                  Semaine copiée !
+                  {t('weekCopied')}
                 </div>
               )}
 
@@ -559,7 +559,7 @@ export default function PlanningDashboard() {
                             ))}
                           </div>
                         ) : (
-                          <p className="text-[11px] text-gray-300">Aucun créneau</p>
+                          <p className="text-[11px] text-gray-300">{t('noSlots')}</p>
                         )}
                       </div>
                     );
@@ -572,9 +572,7 @@ export default function PlanningDashboard() {
         </>
       )}
 
-      {/* ══════════════════════════════════════ */}
       {/* ── TAB: PARAMÈTRES ── */}
-      {/* ══════════════════════════════════════ */}
       {tab === 'settings' && (
         <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0">
           {/* ── Card: Message public ── */}
@@ -584,7 +582,7 @@ export default function PlanningDashboard() {
                 <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
                   <MessageSquare className="w-3.5 h-3.5 text-indigo-600" />
                 </div>
-                <h2 className="text-sm font-bold text-gray-800">Message public</h2>
+                <h2 className="text-sm font-bold text-gray-800">{t('publicMessageTitle')}</h2>
               </div>
               <button
                 type="button"
@@ -596,7 +594,7 @@ export default function PlanningDashboard() {
                 <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${messageEnabled ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
               </button>
             </div>
-            <p className="text-[11px] text-gray-400 mb-3 ml-9">Vacances, fermeture, info importante... affiche une banniere sur ta page publique</p>
+            <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('publicMessageHint')}</p>
 
             {messageEnabled && (
               <div className="space-y-2.5 ml-9">
@@ -604,12 +602,12 @@ export default function PlanningDashboard() {
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Ex: En congés jusqu'au 22 mars"
+                  placeholder={t('publicMessagePlaceholder')}
                   maxLength={200}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
                 />
                 <div className="flex items-center gap-2 flex-wrap">
-                  <label className="text-[11px] text-gray-400 shrink-0">Expire le</label>
+                  <label className="text-[11px] text-gray-400 shrink-0">{t('expiresOn')}</label>
                   <input
                     type="date"
                     value={messageExpires}
@@ -619,10 +617,10 @@ export default function PlanningDashboard() {
                   />
                   {messageExpires ? (
                     <button onClick={() => setMessageExpires('')} className="text-[11px] text-red-400 hover:text-red-500 transition-colors">
-                      Retirer
+                      {t('remove')}
                     </button>
                   ) : (
-                    <span className="text-[11px] text-gray-300">Permanent</span>
+                    <span className="text-[11px] text-gray-300">{t('permanent')}</span>
                   )}
                 </div>
               </div>
@@ -635,15 +633,15 @@ export default function PlanningDashboard() {
               <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center">
                 <Phone className="w-3.5 h-3.5 text-violet-600" />
               </div>
-              <h2 className="text-sm font-bold text-gray-800">Conditions de reservation</h2>
+              <h2 className="text-sm font-bold text-gray-800">{t('bookingTitle')}</h2>
             </div>
-            <p className="text-[11px] text-gray-400 mb-3 ml-9">Acompte, annulation, retard... tes clientes sauront a quoi s&apos;attendre</p>
+            <p className="text-[11px] text-gray-400 mb-3 ml-9">{t('bookingHint')}</p>
 
             <div className="ml-9">
               <textarea
                 value={bookingMessage}
                 onChange={(e) => setBookingMessage(e.target.value)}
-                placeholder={"Ex: Acompte de 20€ obligatoire\nAnnulation possible jusqu'a 24h avant\nRetard de +15min = creneau annule"}
+                placeholder={t('bookingPlaceholder')}
                 maxLength={500}
                 rows={4}
                 className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 resize-none"
@@ -659,11 +657,11 @@ export default function PlanningDashboard() {
             className="w-full py-3 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 sm:col-span-2 sm:max-w-xs sm:mx-auto"
           >
             {savedSettings ? (
-              <span className="flex items-center justify-center gap-2"><Check className="w-4 h-4" /> Enregistré</span>
+              <span className="flex items-center justify-center gap-2"><Check className="w-4 h-4" /> {t('saved')}</span>
             ) : savingSettings ? (
               <Loader2 className="w-4 h-4 animate-spin mx-auto" />
             ) : (
-              'Enregistrer'
+              t('save')
             )}
           </button>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Loader2,
   Check,
@@ -44,6 +45,7 @@ export function CustomerRewardsTab({
   onSuccess,
   isCagnotte = false,
 }: CustomerRewardsTabProps) {
+  const t = useTranslations('customerRewards');
   const [redeemLoading, setRedeemLoading] = useState(false);
   const [cancelLoading, setCancelLoading] = useState(false);
   const [cancelConfirm, setCancelConfirm] = useState(false);
@@ -96,14 +98,14 @@ export function CustomerRewardsTab({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de la validation');
+        throw new Error(data.error || t('redeemError'));
       }
 
-      const label = isCagnotte ? 'Cagnotte' : 'Récompense';
+      const label = isCagnotte ? t('cagnotte') : t('reward');
       fetchLastRedemption();
-      onSuccess(tier2Enabled ? `${label} palier ${tier} validée !` : `${label} validée !`);
+      onSuccess(tier2Enabled ? t('redeemSuccessTiered', { label, tier }) : t('redeemSuccess', { label }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de la validation');
+      setError(err instanceof Error ? err.message : t('redeemError'));
     } finally {
       setRedeemLoading(false);
     }
@@ -111,7 +113,7 @@ export function CustomerRewardsTab({
 
   const handleCancelReward = async () => {
     if (!cancelConfirm) {
-      setError('Veuillez confirmer l\'annulation');
+      setError(t('confirmCancelFirst'));
       return;
     }
 
@@ -130,14 +132,14 @@ export function CustomerRewardsTab({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Erreur lors de l\'annulation');
+        throw new Error(data.error || t('cancelError'));
       }
 
       setCancelConfirm(false);
       fetchLastRedemption();
-      onSuccess(isCagnotte ? 'Cagnotte annulée !' : 'Récompense annulée !');
+      onSuccess(isCagnotte ? t('cancelledCagnotte') : t('cancelledReward'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'annulation');
+      setError(err instanceof Error ? err.message : t('cancelError'));
     } finally {
       setCancelLoading(false);
     }
@@ -159,17 +161,17 @@ export function CustomerRewardsTab({
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Gift className="w-3.5 h-3.5 text-emerald-600" />
                     <span className="text-sm font-semibold text-gray-900">
-                      {tier2Enabled ? 'Palier 1' : (isCagnotte ? 'Cagnotte' : 'Récompense')}
+                      {tier2Enabled ? t('tier1') : (isCagnotte ? t('cagnotte') : t('reward'))}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500 mb-2.5">{rewardDescription || (isCagnotte ? 'Cagnotte fidélité' : 'Récompense fidélité')}</p>
+                  <p className="text-xs text-gray-500 mb-2.5">{rewardDescription || (isCagnotte ? t('cagnotteLoyalty') : t('rewardLoyalty'))}</p>
                   <Button
                     onClick={() => handleRedeem(1)}
                     loading={redeemLoading}
                     className="w-full bg-emerald-600 hover:bg-emerald-700 text-sm"
                   >
                     <Gift className="w-4 h-4 mr-1.5" />
-                    {isCagnotte ? 'Valider la cagnotte' : 'Valider la récompense'}
+                    {isCagnotte ? t('redeemCagnotte') : t('redeemReward')}
                   </Button>
                 </div>
               )}
@@ -178,16 +180,16 @@ export function CustomerRewardsTab({
                 <div className="p-3 rounded-xl border border-violet-200 bg-violet-50">
                   <div className="flex items-center gap-1.5 mb-1.5">
                     <Trophy className="w-3.5 h-3.5 text-violet-600" />
-                    <span className="text-sm font-semibold text-gray-900">Palier 2</span>
+                    <span className="text-sm font-semibold text-gray-900">{t('tier2')}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mb-2.5">{tier2RewardDescription || (isCagnotte ? 'Cagnotte palier 2' : 'Récompense palier 2')}</p>
+                  <p className="text-xs text-gray-500 mb-2.5">{tier2RewardDescription || (isCagnotte ? t('cagnotteTier2') : t('rewardTier2'))}</p>
                   <Button
                     onClick={() => handleRedeem(2)}
                     loading={redeemLoading}
                     className="w-full bg-violet-600 hover:bg-violet-700 text-sm"
                   >
                     <Trophy className="w-4 h-4 mr-1.5" />
-                    {isCagnotte ? 'Valider la cagnotte palier 2' : 'Valider la récompense palier 2'}
+                    {isCagnotte ? t('redeemCagnotteTier2') : t('redeemRewardTier2')}
                   </Button>
                 </div>
               )}
@@ -195,7 +197,7 @@ export function CustomerRewardsTab({
           ) : (
             <div className="text-center py-4">
               <Gift className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">{isCagnotte ? 'Aucune cagnotte à valider' : 'Aucune récompense à valider'}</p>
+              <p className="text-sm text-gray-400">{isCagnotte ? t('noCagnotte') : t('noReward')}</p>
             </div>
           )}
 
@@ -209,7 +211,7 @@ export function CustomerRewardsTab({
           {lastRedemption && (
             <div className="border-t border-gray-100 pt-3">
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                {isCagnotte ? 'Dernière cagnotte' : 'Dernière récompense'}
+                {isCagnotte ? t('lastCagnotte') : t('lastReward')}
               </p>
               <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-100">
                 <div className="flex items-center justify-between mb-1.5">
@@ -220,7 +222,7 @@ export function CustomerRewardsTab({
                       <Gift className="w-4 h-4 text-emerald-600" />
                     )}
                     <span className="text-sm font-medium text-gray-900">
-                      {tier2Enabled ? `Palier ${lastRedemption.tier}` : (isCagnotte ? 'Cagnotte' : 'Récompense')}
+                      {tier2Enabled ? `${lastRedemption.tier === 2 ? t('tier2') : t('tier1')}` : (isCagnotte ? t('cagnotte') : t('reward'))}
                     </span>
                   </div>
                   <span className="text-xs text-gray-500">
@@ -236,7 +238,7 @@ export function CustomerRewardsTab({
                     className="w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
                   />
                   <span className="text-xs text-amber-700">
-                    Confirmer l&apos;annulation
+                    {t('confirmCancel')}
                   </span>
                 </label>
 
@@ -248,7 +250,7 @@ export function CustomerRewardsTab({
                   className="w-full text-sm border-amber-200 text-amber-700 hover:bg-amber-100"
                 >
                   <Undo2 className="w-4 h-4 mr-1.5" />
-                  {isCagnotte ? 'Annuler cette cagnotte' : 'Annuler cette récompense'}
+                  {isCagnotte ? t('cancelCagnotte') : t('cancelReward')}
                 </Button>
               </div>
             </div>

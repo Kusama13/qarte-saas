@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Check, Sparkles, X, Gift, QrCode, Users, ImageIcon, Share2, Eye, MapPin, Camera } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
@@ -20,6 +21,7 @@ const COMPLETED_KEY = 'qarte_checklist_completed_at';
 
 export default function OnboardingChecklist() {
   const { merchant } = useMerchant();
+  const t = useTranslations('onboarding');
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -78,56 +80,56 @@ export default function OnboardingChecklist() {
         setSteps([
           {
             id: 'program',
-            label: 'Configurer mon programme',
+            label: t('stepProgram'),
             done: !!merchant.reward_description,
             href: '/dashboard/program',
             icon: Gift,
           },
           {
             id: 'logo',
-            label: 'Ajouter mon logo',
+            label: t('stepLogo'),
             done: !!merchant.logo_url,
             href: '/dashboard/personalize',
             icon: ImageIcon,
           },
           {
             id: 'social',
-            label: 'Ajouter un réseau social',
+            label: t('stepSocial'),
             done: !!(merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url),
             href: '/dashboard/public-page',
             icon: Share2,
           },
           {
             id: 'address',
-            label: 'Renseigner votre adresse',
+            label: t('stepAddress'),
             done: !!merchant.shop_address,
             href: '/dashboard/public-page',
             icon: MapPin,
           },
           {
             id: 'photos',
-            label: 'Ajouter une photo',
+            label: t('stepPhoto'),
             done: photosCount >= 1,
             href: '/dashboard/public-page',
             icon: Camera,
           },
           {
             id: 'preview',
-            label: 'Simuler l\'expérience client',
+            label: t('stepPreview'),
             done: previewDone,
             href: `/scan/${merchant.scan_code}`,
             icon: Eye,
           },
           {
             id: 'qr',
-            label: 'Télécharger mon QR code',
+            label: t('stepQr'),
             done: qrDownloaded,
             href: '/dashboard/qr-download',
             icon: QrCode,
           },
           {
             id: 'clients',
-            label: 'Obtenir mes 2 premiers scans',
+            label: t('stepClients'),
             done: visitsCount >= 2,
             href: '/dashboard/qr-download',
             icon: Users,
@@ -141,7 +143,7 @@ export default function OnboardingChecklist() {
     };
 
     fetchSteps();
-  }, [merchant]);
+  }, [merchant, t]);
 
   // Fire confetti when all steps complete (une seule fois, persisté en localStorage)
   useEffect(() => {
@@ -181,7 +183,7 @@ export default function OnboardingChecklist() {
           setDismissed(true);
         }}
         className="absolute top-3 right-3 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-white/80 transition-colors"
-        aria-label="Fermer"
+        aria-label={t('close')}
       >
         <X className="w-4 h-4" />
       </button>
@@ -193,12 +195,12 @@ export default function OnboardingChecklist() {
         </div>
         <div>
           <h2 className="text-base font-bold text-gray-900">
-            {allDone ? 'Programme lancé !' : 'Lancez votre programme'}
+            {allDone ? t('launchedTitle') : t('launchTitle')}
           </h2>
           <p className="text-xs text-gray-500">
             {allDone
-              ? 'Félicitations, tout est en place !'
-              : `${completedCount}/${steps.length} étapes complétées`}
+              ? t('launchedDesc')
+              : t('stepsCompleted', { completed: completedCount, total: steps.length })}
           </p>
         </div>
       </div>

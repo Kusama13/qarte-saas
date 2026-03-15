@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import {
   CreditCard,
   Check,
@@ -36,26 +37,10 @@ const PLANS = {
   annual: { price: 190, priceDisplay: '15,83', daily: '0,52', label: '190 €/an', originalPrice: 228, savings: '-17%' },
 } as const;
 
-const features = [
-  'Clients illimités',
-  'Mode passages ou cagnotte',
-  'QR Code perso + Carte NFC',
-  'Page pro personnalisée',
-  'Tarifs et prestations',
-  'Galerie photos',
-  'Planning en ligne',
-  'Offre de bienvenue',
-  'Programme de parrainage',
-  'Relances automatiques',
-  'Avis Google',
-  'Notifications push',
-  'Dashboard analytics',
-  'Zéro commission',
-];
-
 export default function SubscriptionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = useTranslations('subscription');
   const { refetch: refetchContext } = useMerchant();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,11 +62,27 @@ export default function SubscriptionPage() {
     return false;
   });
 
+  const features = [
+    t('featureUnlimitedClients'),
+    t('featureStampsCashback'),
+    t('featureQrNfc'),
+    t('featureProPage'),
+    t('featurePricing'),
+    t('featurePhotos'),
+    t('featurePlanning'),
+    t('featureWelcome'),
+    t('featureReferral'),
+    t('featureReminders'),
+    t('featureGoogleReviews'),
+    t('featureNotifications'),
+    t('featureDashboard'),
+    t('featureNoCommission'),
+  ];
+
   useEffect(() => {
     if (searchParams.get('success') === 'true') {
-      setToast({ type: 'success', message: 'Abonnement actif !' });
+      setToast({ type: 'success', message: t('successToast') });
       setPolling(true);
-      // Facebook Pixel — Purchase event (dedup with server-side CAPI)
       const plan = searchParams.get('plan');
       const price = plan === 'annual' ? 190 : 19;
       const planType: 'monthly' | 'annual' = plan === 'annual' ? 'annual' : 'monthly';
@@ -89,10 +90,10 @@ export default function SubscriptionPage() {
       ttEvents.subscribe(price, planType);
       router.replace('/dashboard/subscription', { scroll: false });
     } else if (searchParams.get('canceled') === 'true') {
-      setToast({ type: 'error', message: 'Paiement annulé.' });
+      setToast({ type: 'error', message: t('canceledToast') });
       router.replace('/dashboard/subscription', { scroll: false });
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, t]);
 
   useEffect(() => {
     if (!toast) return;
@@ -149,11 +150,9 @@ export default function SubscriptionPage() {
     fetchMerchant();
   }, [router]);
 
-  // Poll after Stripe checkout/portal return to catch webhook updates (exponential backoff)
   useEffect(() => {
     if (!polling || !merchant) return;
 
-    // If webhook already processed before we loaded the page, stop immediately
     if (merchant.subscription_status === 'active' || merchant.subscription_status === 'canceling') {
       refetchContext();
       if (merchant.stripe_subscription_id) fetchPaymentMethod();
@@ -210,7 +209,6 @@ export default function SubscriptionPage() {
       timeoutId = setTimeout(poll, 1000);
     };
 
-    // First poll immediately, then every 1s
     timeoutId = setTimeout(poll, 0);
     return () => {
       cancelled = true;
@@ -248,7 +246,7 @@ export default function SubscriptionPage() {
       }
     } catch (error) {
       console.error('Error opening portal:', error);
-      setToast({ type: 'error', message: 'Erreur portail' });
+      setToast({ type: 'error', message: t('portalError') });
     } finally {
       setLoadingPortal(false);
     }
@@ -270,7 +268,7 @@ export default function SubscriptionPage() {
       if (data.url) window.location.href = data.url;
     } catch (error) {
       console.error('Error:', error);
-      setToast({ type: 'error', message: 'Erreur paiement' });
+      setToast({ type: 'error', message: t('paymentError') });
     } finally {
       setSubscribing(false);
     }
@@ -322,10 +320,10 @@ export default function SubscriptionPage() {
           className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors mb-3"
         >
           <ArrowLeft className="w-4 h-4" />
-          Retour
+          {t('back')}
         </Link>
         <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
-          Abonnement
+          {t('title')}
         </h1>
       </div>
 
@@ -335,13 +333,13 @@ export default function SubscriptionPage() {
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 shrink-0" />
             {trialStatus.isInGracePeriod
-              ? <span>Essai terminé — données supprimées dans {trialStatus.daysUntilDeletion}j</span>
-              : <span>Compte inactif — tous les scans clients sont bloqués</span>
+              ? <span>{t('alertTrialExpiring', { days: trialStatus.daysUntilDeletion })}</span>
+              : <span>{t('alertExpired')}</span>
             }
           </div>
           {trialStatus.isFullyExpired && (
             <p className="text-xs font-normal text-white/80 ml-6">
-              Tes clients ne peuvent plus tamponner leur carte. Abonne-toi pour réactiver ton programme.
+              {t('alertExpiredDesc')}
             </p>
           )}
         </div>
@@ -349,13 +347,13 @@ export default function SubscriptionPage() {
       {!polling && isCanceling && (
         <div className="flex items-center gap-2 px-4 py-2.5 mb-6 rounded-xl bg-orange-500 text-white text-sm font-semibold">
           <AlertTriangle className="w-4 h-4 shrink-0" />
-          <span>Annulation en fin de période</span>
+          <span>{t('alertCanceling')}</span>
         </div>
       )}
       {!polling && isPastDue && (
         <div className="flex items-center gap-2 px-4 py-2.5 mb-6 rounded-xl bg-red-500 text-white text-sm font-semibold">
           <AlertTriangle className="w-4 h-4 shrink-0" />
-          <span>Paiement échoué</span>
+          <span>{t('alertPastDue')}</span>
         </div>
       )}
 
@@ -371,16 +369,16 @@ export default function SubscriptionPage() {
                   <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <p className="text-lg sm:text-xl font-black text-gray-900">Plan Pro {billingPlan === 'annual' ? 'Annuel' : 'Mensuel'}</p>
-                  <p className="text-xs text-gray-400 font-medium">Tout inclus</p>
+                  <p className="text-lg sm:text-xl font-black text-gray-900">{billingPlan === 'annual' ? t('planProAnnual') : t('planProMonthly')}</p>
+                  <p className="text-xs text-gray-400 font-medium">{t('allIncluded')}</p>
                 </div>
               </div>
-              {polling && <span className="px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" />Synchronisation</span>}
-              {!polling && isPaid && <span className="px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-full border border-green-100">Actif</span>}
-              {!polling && isCanceling && <span className="px-3 py-1 text-xs font-bold text-orange-700 bg-orange-50 rounded-full border border-orange-100">Annulation en cours</span>}
-              {!polling && trialStatus.isActive && !isCanceled && <span className="px-3 py-1 text-xs font-bold text-primary bg-primary-50 rounded-full border border-primary-100">Essai</span>}
-              {!polling && isCanceled && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">Annulé</span>}
-              {!polling && isPastDue && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">Paiement échoué</span>}
+              {polling && <span className="px-3 py-1 text-xs font-bold text-indigo-700 bg-indigo-50 rounded-full border border-indigo-100 flex items-center gap-1.5"><Loader2 className="w-3 h-3 animate-spin" />{t('syncing')}</span>}
+              {!polling && isPaid && <span className="px-3 py-1 text-xs font-bold text-green-700 bg-green-50 rounded-full border border-green-100">{t('statusActive')}</span>}
+              {!polling && isCanceling && <span className="px-3 py-1 text-xs font-bold text-orange-700 bg-orange-50 rounded-full border border-orange-100">{t('statusCanceling')}</span>}
+              {!polling && trialStatus.isActive && !isCanceled && <span className="px-3 py-1 text-xs font-bold text-primary bg-primary-50 rounded-full border border-primary-100">{t('statusTrial')}</span>}
+              {!polling && isCanceled && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">{t('statusCanceled')}</span>}
+              {!polling && isPastDue && <span className="px-3 py-1 text-xs font-bold text-red-700 bg-red-50 rounded-full border border-red-100">{t('statusPastDue')}</span>}
             </div>
 
             {/* Price */}
@@ -392,10 +390,13 @@ export default function SubscriptionPage() {
                 <span className="text-2xl sm:text-3xl font-black text-gray-900">
                   ,{PLANS[billingPlan].priceDisplay.split(',')[1]}
                 </span>
-                <span className="text-lg text-gray-400 font-medium ml-1">€/mois</span>
+                <span className="text-lg text-gray-400 font-medium ml-1">{t('perMonth')}</span>
               </div>
               <p className="text-sm text-gray-400 mt-1.5">
-                Soit <span className="font-bold text-gray-600">{PLANS[billingPlan].daily}€/jour</span> — moins qu&apos;un caf&eacute;
+                {t.rich('dailyCost', {
+                  daily: PLANS[billingPlan].daily,
+                  bold: (chunks) => <span className="font-bold text-gray-600">{chunks}</span>,
+                })}
               </p>
               {billingPlan === 'annual' && (
                 <p className="text-sm text-gray-400 mt-1"><span className="line-through">{PLANS.annual.originalPrice} €</span> → <span className="font-bold text-emerald-600">{PLANS.annual.label}</span></p>
@@ -413,7 +414,7 @@ export default function SubscriptionPage() {
                       : 'text-gray-500'
                   }`}
                 >
-                  Mensuel
+                  {t('monthly')}
                 </button>
                 <button
                   onClick={() => setBillingPlan('annual')}
@@ -423,7 +424,7 @@ export default function SubscriptionPage() {
                       : 'text-gray-500'
                   }`}
                 >
-                  Annuel
+                  {t('annual')}
                   <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">{PLANS.annual.savings}</span>
                 </button>
               </div>
@@ -455,14 +456,14 @@ export default function SubscriptionPage() {
                 onClick={handleSubscribe}
                 loading={subscribing}
               >
-                {`S'abonner — ${PLANS[billingPlan].label}`}
+                {t('subscribeCta', { label: PLANS[billingPlan].label })}
               </Button>
             )}
 
             {/* Micro-reassurance under CTA — mobile only */}
             {showSubscribeCTA && (
               <p className="text-[11px] text-gray-400 text-center mt-3 sm:hidden">
-                Sans engagement · Résiliable en 1 clic · Paiement sécurisé
+                {t('ctaReassurance')}
               </p>
             )}
           </div>
@@ -473,9 +474,9 @@ export default function SubscriptionPage() {
               <div className="relative z-10 flex flex-col items-center justify-center gap-1.5 text-white">
                 <div className="flex items-center gap-3">
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  <span className="text-sm font-bold">Synchronisation de ton abonnement...</span>
+                  <span className="text-sm font-bold">{t('syncingTitle')}</span>
                 </div>
-                <p className="text-xs text-white/70">Quelques secondes, tout est en ordre.</p>
+                <p className="text-xs text-white/70">{t('syncingDesc')}</p>
               </div>
               <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-white/5 skew-x-12 translate-x-10" />
             </div>
@@ -492,7 +493,7 @@ export default function SubscriptionPage() {
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <Calendar className="w-3.5 h-3.5 opacity-80" />
                   <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider opacity-80">
-                    Fin de l&apos;essai le {formatDate(merchant?.trial_ends_at || '')}
+                    {t('trialEndsOn', { date: formatDate(merchant?.trial_ends_at || '') })}
                   </span>
                 </div>
                 <div className="flex items-center justify-center gap-2 sm:gap-3">
@@ -521,7 +522,7 @@ export default function SubscriptionPage() {
         <div className="lg:col-span-2">
           {merchant?.stripe_subscription_id ? (
             <div className="bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl rounded-3xl p-5 sm:p-8">
-              <h2 className="text-lg font-extrabold text-gray-900 mb-6">Facturation</h2>
+              <h2 className="text-lg font-extrabold text-gray-900 mb-6">{t('billing')}</h2>
 
               <div className="p-4 rounded-2xl bg-gray-50 border border-gray-100 mb-6">
                 <div className="flex items-center gap-3">
@@ -541,7 +542,7 @@ export default function SubscriptionPage() {
                         </p>
                       </>
                     ) : (
-                      <p className="text-sm text-gray-500">Aucune carte</p>
+                      <p className="text-sm text-gray-500">{t('noCard')}</p>
                     )}
                   </div>
                 </div>
@@ -551,7 +552,7 @@ export default function SubscriptionPage() {
                 <div className="space-y-4">
                   <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100">
                     <p className="text-sm text-indigo-800 font-medium">
-                      Ton essai est toujours actif. Souscris pour continuer sans interruption.
+                      {t('trialStillActive')}
                     </p>
                   </div>
                   <div className="flex items-center gap-1 p-1 rounded-xl bg-gray-100">
@@ -563,7 +564,7 @@ export default function SubscriptionPage() {
                           : 'text-gray-500'
                       }`}
                     >
-                      Mensuel
+                      {t('monthly')}
                     </button>
                     <button
                       onClick={() => setBillingPlan('annual')}
@@ -573,7 +574,7 @@ export default function SubscriptionPage() {
                           : 'text-gray-500'
                       }`}
                     >
-                      Annuel <span className="text-emerald-600">-17%</span>
+                      {t('annual')} <span className="text-emerald-600">{PLANS.annual.savings}</span>
                     </button>
                   </div>
                   <Button
@@ -581,24 +582,24 @@ export default function SubscriptionPage() {
                     onClick={handleSubscribe}
                     loading={subscribing}
                   >
-                    {`S'abonner — ${PLANS[billingPlan].label}`}
+                    {t('subscribeCta', { label: PLANS[billingPlan].label })}
                   </Button>
                 </div>
               ) : isCanceled ? (
                 <Button className="w-full h-11 rounded-2xl font-bold" onClick={handleSubscribe} loading={subscribing}>
-                  Réactiver
+                  {t('reactivate')}
                 </Button>
               ) : isCanceling ? (
                 <Button variant="outline" className="w-full h-11 rounded-2xl text-orange-600 border-orange-200 hover:bg-orange-50 font-bold" onClick={handleOpenPortal} loading={loadingPortal}>
-                  Annuler la résiliation
+                  {t('cancelCancellation')}
                 </Button>
               ) : isPastDue ? (
                 <Button className="w-full h-11 rounded-2xl font-bold" onClick={handleOpenPortal} loading={loadingPortal}>
-                  Mettre à jour le paiement
+                  {t('updatePayment')}
                 </Button>
               ) : (
                 <Button variant="outline" className="w-full h-11 rounded-2xl text-gray-500 border-gray-200 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" onClick={handleOpenPortal} loading={loadingPortal}>
-                  Gérer mon abonnement
+                  {t('manageSubscription')}
                 </Button>
               )}
             </div>
@@ -608,8 +609,8 @@ export default function SubscriptionPage() {
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 flex items-center justify-center mb-4">
                 <CreditCard className="w-7 h-7 text-primary" />
               </div>
-              <p className="font-bold text-gray-900 mb-1">Paiement sécurisé</p>
-              <p className="text-sm text-gray-400">Via Stripe · Sans engagement</p>
+              <p className="font-bold text-gray-900 mb-1">{t('securePayment')}</p>
+              <p className="text-sm text-gray-400">{t('securePaymentDesc')}</p>
             </div>
           )}
         </div>
@@ -619,9 +620,9 @@ export default function SubscriptionPage() {
       {showSubscribeCTA && (
         <div className="mt-6 py-4 text-center">
           <p className="text-xs text-gray-400">
-            Des centaines de professionnels fidélisent déjà avec Qarte.{' '}
+            {t('socialProof')}{' '}
             <a href="/pros" className="font-semibold text-indigo-500 hover:text-indigo-700 underline underline-offset-2 transition-colors">
-              Voir leurs programmes
+              {t('viewPrograms')}
             </a>
           </p>
         </div>
@@ -629,13 +630,13 @@ export default function SubscriptionPage() {
 
       {/* Footer reassurance — desktop only */}
       <div className="hidden sm:flex items-center justify-center gap-6 mt-6 text-xs text-gray-400">
-        <span>Sans engagement</span>
+        <span>{t('noCommitment')}</span>
         <span className="w-1 h-1 rounded-full bg-gray-300" />
-        <span>Résiliation en 1 clic</span>
+        <span>{t('cancelAnytime')}</span>
         <span className="w-1 h-1 rounded-full bg-gray-300" />
-        <span>Données conservées 30j</span>
+        <span>{t('dataRetention')}</span>
         <span className="w-1 h-1 rounded-full bg-gray-300" />
-        <span>Paiement sécurisé Stripe</span>
+        <span>{t('stripeSecure')}</span>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Download,
   Check,
@@ -29,6 +30,7 @@ type Tab = 'qr' | 'social' | 'nfc';
 
 
 export default function QRDownloadPage() {
+  const t = useTranslations('qrDownload');
   const { merchant, loading } = useMerchant();
   const [activeTab, setActiveTab] = useState<Tab>('qr');
   const [qrSvg, setQrSvg] = useState<string>('');
@@ -175,7 +177,7 @@ export default function QRDownloadPage() {
 
   const captions = [
     {
-      label: 'Simple et efficace',
+      label: t('captionSimple'),
       icon: '✨',
       text: captionText,
     },
@@ -186,25 +188,25 @@ export default function QRDownloadPage() {
       {/* Header */}
       <div className="mb-6 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <h1 className="text-xl md:text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
-          Mon QR code & Kit promo
+          {t('title')}
         </h1>
         <p className="mt-1 text-sm text-gray-500 font-medium">
-          Ton QR code et tes visuels marketing en un seul endroit
+          {t('subtitle')}
         </p>
       </div>
 
       {/* Comment ça marche (QR tab only) */}
       {activeTab === 'qr' && <div className="mb-6">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <h3 className="text-sm font-bold text-gray-900 mb-3">Comment &ccedil;a marche ?</h3>
+          <h3 className="text-sm font-bold text-gray-900 mb-3">{t('howTitle')}</h3>
           <div className="space-y-3">
             <div className="flex items-start gap-3">
               <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                 <QrCode className="w-4 h-4 text-indigo-600" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">QR code dans ton t&eacute;l&eacute;phone</p>
-                <p className="text-xs text-gray-500">Tes clients scannent ton QR code &agrave; chaque passage pour cumuler des points.</p>
+                <p className="text-sm font-semibold text-gray-900">{t('howQrTitle')}</p>
+                <p className="text-xs text-gray-500">{t('howQrDesc')}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -212,8 +214,8 @@ export default function QRDownloadPage() {
                 <Gift className="w-4 h-4 text-emerald-600" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">R&eacute;compense automatique</p>
-                <p className="text-xs text-gray-500">Une fois le nombre de passages atteint, le client re&ccedil;oit sa r&eacute;compense directement sur sa carte.</p>
+                <p className="text-sm font-semibold text-gray-900">{t('howRewardTitle')}</p>
+                <p className="text-xs text-gray-500">{t('howRewardDesc')}</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -221,8 +223,8 @@ export default function QRDownloadPage() {
                 <Smartphone className="w-4 h-4 text-pink-600" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">Sans appli, 100% mobile</p>
-                <p className="text-xs text-gray-500">Aucune application &agrave; installer. La carte s&apos;affiche dans le navigateur et peut s&apos;ajouter &agrave; l&apos;&eacute;cran d&apos;accueil.</p>
+                <p className="text-sm font-semibold text-gray-900">{t('howMobileTitle')}</p>
+                <p className="text-xs text-gray-500">{t('howMobileDesc')}</p>
               </div>
             </div>
           </div>
@@ -240,7 +242,7 @@ export default function QRDownloadPage() {
           }`}
         >
           <QrCode className={`w-4 h-4 ${activeTab === 'qr' ? 'text-indigo-500' : ''}`} />
-          Mon QR code
+          {t('tabQr')}
         </button>
         <button
           onClick={() => setActiveTab('social')}
@@ -251,7 +253,7 @@ export default function QRDownloadPage() {
           }`}
         >
           <Image className="w-4 h-4 text-purple-500" />
-          Kit réseaux
+          {t('tabSocial')}
           {activeTab !== 'social' && (
             <span className="px-1.5 py-0.5 text-[10px] font-bold bg-purple-600 text-white rounded-full">NEW</span>
           )}
@@ -265,27 +267,25 @@ export default function QRDownloadPage() {
           }`}
         >
           <Nfc className={`w-4 h-4 ${activeTab === 'nfc' ? 'text-violet-500' : ''}`} />
-          Carte NFC
+          {t('tabNfc')}
         </button>
       </div>
 
-      {/* ========================================= */}
-      {/* TAB 1: QR CODE                            */}
-      {/* ========================================= */}
+      {/* TAB 1: QR CODE */}
       {activeTab === 'qr' && (
         <div className="animate-in fade-in duration-300 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
           {/* Left: Preview */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               <QrCode className="w-3.5 h-3.5" />
-              Aperçu
+              {t('preview')}
             </div>
 
             {/* Gray container */}
             <div className="relative flex items-center justify-center p-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl">
               <div className="absolute inset-0 m-8 bg-black/10 blur-2xl rounded-2xl transform translate-y-4" />
               <div className="relative">
-                {/* QR Card — 280x350 = same 4:5 ratio as SocialMediaTemplate at scale 0.7 */}
+                {/* QR Card */}
                 <div
                   ref={qrCardRef}
                   className="relative overflow-hidden"
@@ -303,7 +303,7 @@ export default function QRDownloadPage() {
                   <div className="absolute top-1/2 -right-4 w-10 h-10 rounded-full bg-white/[0.05]" />
 
                   <div className="relative h-full px-5 py-4 flex flex-col items-center text-center">
-                    {/* Top: Logo + Name — fixed size */}
+                    {/* Top: Logo + Name */}
                     <div className="flex-shrink-0 flex flex-col items-center">
                       {merchant.logo_url ? (
                         <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30">
@@ -325,14 +325,14 @@ export default function QRDownloadPage() {
                         {merchant.shop_name}
                       </h2>
                       <p className="mt-0.5 text-[7px] text-white/50 font-semibold uppercase tracking-[0.2em]">
-                        Programme de fidélité
+                        {t('loyaltyProgram')}
                       </p>
                     </div>
 
-                    {/* Center: CTA + QR + Scannez-moi — takes remaining space */}
+                    {/* Center: CTA + QR + Scannez-moi */}
                     <div className="flex-1 flex flex-col items-center justify-center min-h-0">
                       <p className="text-[11px] text-white/70 font-medium mb-2">
-                        Ajoutez votre carte en 15 secondes
+                        {t('addCard')}
                       </p>
                       <div className="flex-shrink-0 bg-white rounded-xl p-2 overflow-hidden">
                         {qrSvg ? (
@@ -351,14 +351,14 @@ export default function QRDownloadPage() {
                         )}
                       </div>
                       <p className="mt-2 text-sm font-black text-white tracking-tight">
-                        Scannez-moi !
+                        {t('scanMe')}
                       </p>
                     </div>
 
-                    {/* Bottom: Branding — fixed size */}
+                    {/* Bottom: Branding */}
                     <div className="flex-shrink-0 px-3 py-1 rounded-full bg-white/90">
                       <p className="text-[7px] text-gray-400 font-medium">
-                        Propulsé par <span className="font-bold text-gray-600">getqarte.com</span>
+                        {t('poweredBy')} <span className="font-bold text-gray-600">getqarte.com</span>
                       </p>
                     </div>
                   </div>
@@ -371,7 +371,7 @@ export default function QRDownloadPage() {
           <div className="mt-6 lg:mt-0 space-y-4">
             <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               <Download className="w-3.5 h-3.5" />
-              Actions
+              {t('actions')}
             </div>
 
             {/* Download */}
@@ -380,7 +380,7 @@ export default function QRDownloadPage() {
                 <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                   <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
                   <p className="text-xs text-amber-700 font-medium">
-                    Configure ton programme de fidélité (palier 1) avant de télécharger.
+                    {t('configureTier1')}
                   </p>
                 </div>
               )}
@@ -394,15 +394,15 @@ export default function QRDownloadPage() {
                 ) : (
                   <Download className="w-4 h-4 mr-2" />
                 )}
-                {downloadSuccess ? 'Enregistré !' : 'Enregistrer l\'image'}
+                {downloadSuccess ? t('imageSaved') : t('saveImage')}
               </Button>
               <p className="text-center text-xs text-gray-500">
-                Garde-le sur ton t&eacute;l&eacute;phone et montre-le &agrave; tes client(e)s au moment de payer
+                {t('keepPhone')}
               </p>
               <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
                 <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-red-700 font-medium leading-relaxed">
-                  Ne publie pas ton QR code sur les r&eacute;seaux sociaux — tes clients doivent le scanner <span className="font-bold">sur place uniquement</span>. Pour tes r&eacute;seaux, utilise l&apos;onglet Kit r&eacute;seaux !
+                  {t('dontPublishQr')}
                 </p>
               </div>
             </div>
@@ -425,17 +425,17 @@ export default function QRDownloadPage() {
                 >
                   <span className="flex items-center gap-2 text-indigo-700 font-bold text-sm">
                     <Play className="w-4 h-4" />
-                    Tester l&apos;exp&eacute;rience client
+                    {t('testExperience')}
                   </span>
-                  <span className="text-[11px] text-gray-400 mt-0.5">Vis le parcours de tes clients lors du scan</span>
+                  <span className="text-[11px] text-gray-400 mt-0.5">{t('testExperienceHint')}</span>
                 </a>
               ) : (
                 <div className="flex flex-col items-center justify-center w-full py-3 px-4 bg-white border-2 border-gray-200 rounded-xl opacity-50 cursor-not-allowed">
                   <span className="flex items-center gap-2 text-gray-400 font-bold text-sm">
                     <Play className="w-4 h-4" />
-                    Tester l&apos;exp&eacute;rience client
+                    {t('testExperience')}
                   </span>
-                  <span className="text-[11px] text-gray-300 mt-0.5">Vis le parcours de tes clients lors du scan</span>
+                  <span className="text-[11px] text-gray-300 mt-0.5">{t('testExperienceHint')}</span>
                 </div>
               )
             )}
@@ -443,16 +443,14 @@ export default function QRDownloadPage() {
         </div>
       )}
 
-      {/* ========================================= */}
-      {/* TAB 2: SOCIAL KIT                         */}
-      {/* ========================================= */}
+      {/* TAB 2: SOCIAL KIT */}
       {activeTab === 'social' && (
         <div className="animate-in fade-in duration-300 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
           {/* Left: Preview + Download */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               <Sparkles className="w-3.5 h-3.5" />
-              Visuel pour tes réseaux
+              {t('socialVisual')}
               <div className="flex items-center gap-1 ml-1">
                 <span className="w-5 h-5 rounded-md bg-gradient-to-br from-pink-500 via-red-500 to-yellow-400 flex items-center justify-center">
                   <Instagram className="w-3 h-3 text-white" />
@@ -479,7 +477,7 @@ export default function QRDownloadPage() {
                   primaryColor={merchant.primary_color}
                   secondaryColor={merchant.secondary_color}
                   logoUrl={logoDataUrl || merchant.logo_url || undefined}
-                  rewardDescription={merchant.reward_description || 'Récompense fidélité'}
+                  rewardDescription={merchant.reward_description || t('defaultReward')}
                   stampsRequired={merchant.stamps_required}
                   scale={0.7}
                   tier2Enabled={merchant.tier2_enabled}
@@ -498,7 +496,7 @@ export default function QRDownloadPage() {
                 <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
                   <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
                   <p className="text-xs text-amber-700 font-medium">
-                    Configure ton programme de fidélité (palier 1) avant de télécharger.
+                    {t('configureTier1')}
                   </p>
                 </div>
               )}
@@ -514,7 +512,7 @@ export default function QRDownloadPage() {
                 ) : (
                   <Download className="w-4 h-4 mr-2" />
                 )}
-                {socialDownloadSuccess ? 'Téléchargé !' : 'Télécharger l\'image HD'}
+                {socialDownloadSuccess ? t('downloaded') : t('downloadHd')}
               </Button>
             </div>
 
@@ -525,7 +523,7 @@ export default function QRDownloadPage() {
 
             <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               <Instagram className="w-3.5 h-3.5" />
-              Légendes prêtes à copier
+              {t('captionLabel')}
             </div>
 
             <div className="space-y-3">
@@ -547,12 +545,12 @@ export default function QRDownloadPage() {
                       {copiedCaption === index ? (
                         <>
                           <Check className="w-3 h-3" />
-                          Copié !
+                          {t('copied')}
                         </>
                       ) : (
                         <>
                           <Copy className="w-3 h-3" />
-                          Copier
+                          {t('copyButton')}
                         </>
                       )}
                     </button>
@@ -566,28 +564,28 @@ export default function QRDownloadPage() {
 
             {/* Tips */}
             <div className="space-y-2">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Comment bien partager</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('sharingTitle')}</p>
               <div className="grid grid-cols-2 gap-2">
                 <div className="p-3 bg-pink-50 rounded-xl border border-pink-100">
-                  <p className="text-xs font-semibold text-pink-900">Story + publication</p>
-                  <p className="text-[11px] text-pink-600 mt-0.5">&Eacute;pingle-la en haut de ton profil</p>
+                  <p className="text-xs font-semibold text-pink-900">{t('tipStory')}</p>
+                  <p className="text-[11px] text-pink-600 mt-0.5">{t('tipStoryDesc')}</p>
                 </div>
                 <div className="p-3 bg-violet-50 rounded-xl border border-violet-100">
-                  <p className="text-xs font-semibold text-violet-900">Lien en bio</p>
-                  <p className="text-[11px] text-violet-600 mt-0.5">Ajoute ta page Qarte dans ta bio</p>
+                  <p className="text-xs font-semibold text-violet-900">{t('tipBio')}</p>
+                  <p className="text-[11px] text-violet-600 mt-0.5">{t('tipBioDesc')}</p>
                 </div>
                 <div className="p-3 bg-amber-50 rounded-xl border border-amber-100">
-                  <p className="text-xs font-semibold text-amber-900">En caisse</p>
-                  <p className="text-[11px] text-amber-600 mt-0.5">Parles-en &agrave; chaque client</p>
+                  <p className="text-xs font-semibold text-amber-900">{t('tipCheckout')}</p>
+                  <p className="text-[11px] text-amber-600 mt-0.5">{t('tipCheckoutDesc')}</p>
                 </div>
                 <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
-                  <p className="text-xs font-semibold text-emerald-900">WhatsApp</p>
-                  <p className="text-[11px] text-emerald-600 mt-0.5">Envoie l&apos;image dans tes groupes</p>
+                  <p className="text-xs font-semibold text-emerald-900">{t('tipWhatsapp')}</p>
+                  <p className="text-[11px] text-emerald-600 mt-0.5">{t('tipWhatsappDesc')}</p>
                 </div>
               </div>
               <a href="/dashboard/public-page" className="block p-3 bg-indigo-50 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-colors">
-                <p className="text-xs font-semibold text-indigo-700">Compl&egrave;te ta page pour plus de r&eacute;sultats</p>
-                <p className="text-[11px] text-indigo-500 mt-0.5">Offre de bienvenue, lien de r&eacute;servation, photos...</p>
+                <p className="text-xs font-semibold text-indigo-700">{t('completePageTitle')}</p>
+                <p className="text-[11px] text-indigo-500 mt-0.5">{t('completePageDesc')}</p>
               </a>
             </div>
 
@@ -597,22 +595,20 @@ export default function QRDownloadPage() {
         </div>
       )}
 
-      {/* ========================================= */}
-      {/* TAB 3: CARTE NFC                          */}
-      {/* ========================================= */}
+      {/* TAB 3: CARTE NFC */}
       {activeTab === 'nfc' && (
         <div className="animate-in fade-in duration-300 lg:grid lg:grid-cols-2 lg:gap-8 lg:items-start">
           {/* Left: Card image */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               <Nfc className="w-3.5 h-3.5" />
-              Carte NFC Qarte
+              {t('nfcCard')}
             </div>
             <div className="relative flex items-center justify-center p-8 bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl border border-violet-100/50">
               <div className="relative">
                 <img
                   src="/images/Carte NFC QARTE .png"
-                  alt="Carte NFC Qarte"
+                  alt={t('nfcCard')}
                   className="w-[300px] rounded-2xl shadow-2xl shadow-violet-200/50"
                 />
                 <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-2 border-violet-300/50 animate-ping" style={{ animationDuration: '2s' }} />
@@ -624,7 +620,7 @@ export default function QRDownloadPage() {
           <div className="mt-6 lg:mt-0 space-y-4">
             <div className="flex items-center gap-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
               <CreditCard className="w-3.5 h-3.5" />
-              Comment ca marche
+              {t('nfcHowTitle')}
             </div>
 
             {/* How it works */}
@@ -635,8 +631,8 @@ export default function QRDownloadPage() {
                     <CreditCard className="w-4 h-4 text-violet-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Garde-la visible</p>
-                    <p className="text-xs text-gray-500">Sur le comptoir ou autour du cou — toujours a portee de main.</p>
+                    <p className="text-sm font-semibold text-gray-900">{t('nfcKeepVisible')}</p>
+                    <p className="text-xs text-gray-500">{t('nfcKeepVisibleDesc')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -644,8 +640,8 @@ export default function QRDownloadPage() {
                     <Smartphone className="w-4 h-4 text-indigo-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Ta cliente tap son telephone</p>
-                    <p className="text-xs text-gray-500">La page fidelite s&apos;ouvre directement dans son navigateur, sans scanner de QR code.</p>
+                    <p className="text-sm font-semibold text-gray-900">{t('nfcTap')}</p>
+                    <p className="text-xs text-gray-500">{t('nfcTapDesc')}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -653,8 +649,8 @@ export default function QRDownloadPage() {
                     <Gift className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">Meme programme, zero friction</p>
-                    <p className="text-xs text-gray-500">Elle valide son passage comme d&apos;habitude. Le NFC remplace simplement le QR code.</p>
+                    <p className="text-sm font-semibold text-gray-900">{t('nfcSameProgram')}</p>
+                    <p className="text-xs text-gray-500">{t('nfcSameProgramDesc')}</p>
                   </div>
                 </div>
               </div>
@@ -671,7 +667,7 @@ export default function QRDownloadPage() {
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
               </svg>
-              Contactez-nous sur WhatsApp
+              {t('nfcWhatsapp')}
             </a>
           </div>
           </div>
@@ -687,7 +683,7 @@ export default function QRDownloadPage() {
             primaryColor={merchant.primary_color}
             secondaryColor={merchant.secondary_color}
             logoUrl={logoDataUrl || merchant.logo_url || undefined}
-            rewardDescription={merchant.reward_description || 'Récompense fidélité'}
+            rewardDescription={merchant.reward_description || t('defaultReward')}
             stampsRequired={merchant.stamps_required}
             scale={2.7}
             tier2Enabled={merchant.tier2_enabled}
@@ -715,22 +711,22 @@ export default function QRDownloadPage() {
               <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-200">
                 <Users className="w-6 h-6 text-white" />
               </div>
-              <p className="text-lg font-black text-gray-900">Aide-nous &agrave; te rendre visible</p>
+              <p className="text-lg font-black text-gray-900">{t('postDownloadTitle')}</p>
               <p className="mt-2 text-sm text-gray-500 leading-relaxed">
-                Qarte cr&eacute;e une page pour ton salon, r&eacute;f&eacute;renc&eacute;e sur Google. Plus elle est compl&egrave;te, plus tu as de chances d&apos;attirer de nouveaux clients.
+                {t('postDownloadDesc')}
               </p>
               <a
                 href="/dashboard/public-page"
                 onClick={() => setShowPostDownloadModal(false)}
                 className="mt-5 w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-indigo-200 inline-block"
               >
-                Compl&eacute;ter ma page
+                {t('postDownloadCta')}
               </a>
               <button
                 onClick={() => setShowPostDownloadModal(false)}
                 className="mt-2 text-xs text-gray-300 hover:text-gray-500 transition-colors block mx-auto"
               >
-                Plus tard
+                {t('postDownloadLater')}
               </button>
             </div>
           </div>
