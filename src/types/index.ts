@@ -112,6 +112,7 @@ export interface Merchant {
   // Public page link on loyalty card
   show_public_page_on_card: boolean;
   signup_source: string | null;
+  locale: 'fr' | 'en';
 }
 
 export interface PlanningSlot {

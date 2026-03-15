@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -33,6 +34,7 @@ const countryOptions = Object.entries(COUNTRIES).map(([value, label]) => ({
 
 export default function CompleteProfilePage() {
   const router = useRouter();
+  const locale = useLocale();
   const supabase = getSupabase();
   const [loading, setLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -133,6 +135,7 @@ export default function CompleteProfilePage() {
           phone: formattedPhone,
           country: formData.country,
           signup_source: (() => { try { const s = localStorage.getItem('qarte_signup_source'); if (s) localStorage.removeItem('qarte_signup_source'); return s; } catch { return null; } })(),
+          locale,
         }),
       });
 

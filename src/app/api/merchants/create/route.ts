@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { user_id, shop_name, shop_type, shop_address, phone, country, signup_source } = body;
+    const { user_id, shop_name, shop_type, shop_address, phone, country, signup_source, locale } = body;
     const trimmedShopName = shop_name?.trim() || '';
     const trimmedAddress = shop_address?.trim() || '';
     const merchantCountry: MerchantCountry = country || 'FR';
@@ -142,6 +142,7 @@ export async function POST(request: NextRequest) {
         country: merchantCountry,
         stamps_required: defaultStamps[shop_type] || 10,
         ...(signup_source && { signup_source: String(signup_source).slice(0, 100) }),
+        ...(locale === 'en' && { locale: 'en' }),
       })
       .select()
       .single();
