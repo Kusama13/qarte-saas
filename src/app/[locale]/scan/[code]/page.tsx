@@ -26,6 +26,7 @@ import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validatePhone, getTodayInParis, PHONE_CONFIG } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
+import { useTranslations } from 'next-intl';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { ScanSuccessStep } from '@/components/loyalty';
 import { WelcomeBanner, ScanRewardScreen, ScanAlreadyCheckedScreen, ScanPendingScreen } from '@/components/scan';
@@ -65,6 +66,8 @@ interface OfferInfo {
 
 export default function ScanPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
+  const t = useTranslations('scanPage');
+  const tc = useTranslations('common');
   const router = useRouter();
   const searchParams = useSearchParams();
   const refCode = searchParams.get('ref');
@@ -268,7 +271,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
     const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
     if (!validatePhone(formattedPhone, merchant?.country || 'FR')) {
-      setError('Veuillez entrer un numéro de téléphone valide');
+      setError(t('invalidPhone'));
       return;
     }
 
@@ -295,7 +298,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         if (data.existsForMerchant) {
           // Referral link but client already exists → block
           if (refCode) {
-            setError('Vous êtes déjà client(e) de cet établissement. Le parrainage est réservé aux nouveaux clients.');
+            setError(t('alreadyClient'));
             setSubmitting(false);
             return;
           }
@@ -324,7 +327,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               triggerSparkles();
               setStep('referral-success');
             } else {
-              setError(claimData.error || 'Erreur lors de la récupération de l\'offre');
+              setError(claimData.error || t('offerClaimError'));
             }
             setSubmitting(false);
             return;
@@ -374,7 +377,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               }
             } else {
               console.error('Create failed:', createData);
-              setError(createData.error || 'Erreur lors de l\'inscription');
+              setError(createData.error || t('signupError'));
             }
           }
         }
@@ -394,7 +397,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setError('');
 
     if (!firstName.trim()) {
-      setError('Le prénom est requis');
+      setError(t('firstNameRequired'));
       return;
     }
 
@@ -432,7 +435,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           triggerSparkles();
           setStep('referral-success');
         } else {
-          setError(data.error || 'Erreur lors de l\'inscription');
+          setError(data.error || t('signupError'));
         }
         return;
       }
@@ -460,7 +463,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           triggerSparkles();
           setStep('referral-success');
         } else {
-          setError(data.error || 'Erreur lors de l\'inscription');
+          setError(data.error || t('signupError'));
         }
         return;
       }
@@ -488,7 +491,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           triggerSparkles();
           setStep('referral-success');
         } else {
-          setError(data.error || 'Erreur lors de l\'inscription par parrainage');
+          setError(data.error || t('referralSignupError'));
         }
         return;
       }
@@ -501,7 +504,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       }
     } catch (err) {
       console.error(err);
-      setError('Erreur lors de l\'inscription');
+      setError(t('signupError'));
     } finally {
       setSubmitting(false);
     }
@@ -513,7 +516,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
     const amount = parseFloat(amountInput.replace(',', '.'));
     if (!amount || amount < 0.01 || amount > 99999) {
-      setError('Veuillez entrer un montant valide');
+      setError(t('invalidAmount'));
       return;
     }
 
@@ -551,7 +554,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       await processCheckin(customerInfo, undefined, amount);
     } catch (err) {
       console.error(err);
-      setError('Erreur lors de l\'enregistrement');
+      setError(t('recordError'));
       setStep('amount');
     } finally {
       setSubmitting(false);
@@ -599,7 +602,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           setStep('banned');
           return;
         }
-        throw new Error(data.error || 'Erreur serveur');
+        throw new Error(data.error || t('serverError'));
       }
 
       // Update state with response data
@@ -665,7 +668,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       }
     } catch (err) {
       console.error(err);
-      setError(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement du passage');
+      setError(err instanceof Error ? err.message : t('checkinRecordError'));
       setStep('error');
     }
   };
@@ -693,7 +696,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Erreur lors de l\'enregistrement de la récompense');
+        setError(data.error || t('redeemError'));
         setStep('error');
         return;
       }
@@ -718,7 +721,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       router.replace(`/customer/card/${merchant.id}?scan_success=1&redeemed=1`);
     } catch (err) {
       console.error('Redeem error:', err);
-      setError('Erreur lors de l\'utilisation de la récompense');
+      setError(t('redeemUseError'));
       setStep('error');
     } finally {
       setSubmitting(false);
@@ -737,13 +740,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
         <AlertCircle className="w-16 h-16 mb-4 text-red-500" />
-        <h1 className="text-xl font-bold text-gray-900">Commerce introuvable</h1>
-        <p className="mt-2 text-gray-600">Ce QR code n&apos;est plus valide</p>
+        <h1 className="text-xl font-bold text-gray-900">{t('shopNotFound')}</h1>
+        <p className="mt-2 text-gray-600">{t('invalidQr')}</p>
         <Link
           href="/"
           className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
         >
-          Retour à l&apos;accueil
+          {t('backToHome')}
         </Link>
       </div>
     );
@@ -782,7 +785,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                         {offerInfo.offer_title}
                       </p>
                       <p className="text-gray-600 text-xs mt-0.5">
-                        Inscrivez-vous et recevez :
+                        {t('signUpAndReceive')}
                       </p>
                       <p className="font-bold text-sm mt-1" style={{ color: primaryColor }}>
                         {offerInfo.offer_description}
@@ -812,10 +815,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 text-sm">
-                        Offre de bienvenue chez {merchant.shop_name}
+                        {t('welcomeOfferAt', { name: merchant.shop_name })}
                       </p>
                       <p className="text-gray-600 text-xs mt-0.5">
-                        Inscrivez-vous et recevez :
+                        {t('signUpAndReceive')}
                       </p>
                       <p className="font-bold text-sm mt-1" style={{ color: primaryColor }}>
                         {welcomeInfo.welcome_offer_description}
@@ -845,10 +848,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-gray-900 text-sm">
-                        {referralInfo.referrer_name} vous recommande !
+                        {t('recommends', { name: referralInfo.referrer_name })}
                       </p>
                       <p className="text-gray-600 text-xs mt-0.5">
-                        Inscrivez-vous et recevez :
+                        {t('signUpAndReceive')}
                       </p>
                       <p className="font-bold text-sm mt-1" style={{ color: primaryColor }}>
                         {referralInfo.reward_for_you}
@@ -869,7 +872,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 >
                   <div className="flex items-center gap-2">
                     <HelpCircle className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors" />
-                    <span className="font-medium text-gray-600 text-sm">Comment ça marche ?</span>
+                    <span className="font-medium text-gray-600 text-sm">{t('howItWorks')}</span>
                   </div>
                   <motion.div
                     animate={{ rotate: isHowItWorksOpen ? 180 : 0 }}
@@ -894,21 +897,21 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                         {[
                           {
                             icon: <Star className="w-4 h-4" />,
-                            title: isCagnotte ? "Cumulez vos dépenses" : "Cumulez vos points",
+                            title: isCagnotte ? t('cagnotteAccumulate') : t('stampsAccumulate'),
                             description: isCagnotte
-                              ? "Chaque passage enregistre vos dépenses sur votre cagnotte fidélité."
-                              : "Chaque passage validé vous rapproche de votre récompense."
+                              ? t('cagnotteAccumulateDesc')
+                              : t('stampsAccumulateDesc')
                           },
                           {
                             icon: <Gift className="w-4 h-4" />,
-                            title: isCagnotte ? "Profitez de votre cagnotte" : "Recevez vos cadeaux",
+                            title: isCagnotte ? t('cagnotteReceive') : t('stampsReceive'),
                             description: isCagnotte
                               ? merchant.tier2_enabled && merchant.tier2_stamps_required
-                                ? `Palier 1 (${merchant.stamps_required} passages) : ${merchant.cagnotte_percent}% sur votre cagnotte fidélité • Palier 2 (${merchant.tier2_stamps_required} passages) : le taux passe à ${merchant.cagnotte_tier2_percent}%`
-                                : `Après ${merchant.stamps_required} passages : ${merchant.cagnotte_percent}% sur votre cagnotte fidélité`
+                                ? t('cagnotteTier2Desc', { tier1: merchant.stamps_required, percent1: Number(merchant.cagnotte_percent || 0), tier2: merchant.tier2_stamps_required, percent2: Number(merchant.cagnotte_tier2_percent || 0) })
+                                : t('cagnotteSingleDesc', { count: merchant.stamps_required, percent: Number(merchant.cagnotte_percent || 0) })
                               : merchant.tier2_enabled && merchant.tier2_stamps_required
-                                ? `Palier 1 (${merchant.stamps_required} pts) : ${merchant.reward_description} • Palier 2 (${merchant.tier2_stamps_required} pts) : ${merchant.tier2_reward_description}`
-                                : `Après ${merchant.stamps_required} passages, obtenez : ${merchant.reward_description}`
+                                ? t('stampsTier2Desc', { tier1: merchant.stamps_required, reward1: merchant.reward_description || '', tier2: merchant.tier2_stamps_required, reward2: merchant.tier2_reward_description || '' })
+                                : t('stampsSingleDesc', { count: merchant.stamps_required, reward: merchant.reward_description || '' })
                           }
                         ].map((step, idx) => (
                           <motion.div
@@ -946,7 +949,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 )}
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-600 ml-1">Votre numéro de téléphone</label>
+                  <label className="text-xs font-bold text-gray-600 ml-1">{t('yourPhone')}</label>
                   <div className="relative group">
                     <Input
                       type="tel"
@@ -970,7 +973,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      {referralInfo ? 'M\'inscrire' : 'Valider mon passage'}
+                      {referralInfo ? t('signUp') : t('validateVisit')}
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
@@ -1014,13 +1017,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 )}
                 <h2 className="text-2xl font-black text-gray-900 flex items-center justify-center gap-2" style={{ fontFamily: 'var(--font-poppins), sans-serif' }}>
                   <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
-                  À vous les privilèges
+                  {t('privileges')}
                   <Sparkles className="w-5 h-5" style={{ color: primaryColor }} />
                 </h2>
                 <p className="mt-2 text-gray-500 text-sm">
                   {referralInfo
-                    ? 'Finalisez votre inscription pour recevoir votre récompense'
-                    : `Votre carte fidélité ${merchant.shop_name} vous attend`}
+                    ? t('finishSignupReferral')
+                    : t('loyaltyCardAwaits', { name: merchant.shop_name })}
                 </p>
               </div>
 
@@ -1033,10 +1036,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   )}
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 ml-1">Prénom</label>
+                    <label className="text-sm font-bold text-gray-700 ml-1">{t('firstName')}</label>
                     <Input
                       type="text"
-                      placeholder="Votre prénom"
+                      placeholder={t('firstNamePlaceholder')}
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
@@ -1047,10 +1050,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-gray-700 ml-1">Nom</label>
+                    <label className="text-sm font-bold text-gray-700 ml-1">{t('lastName')}</label>
                     <Input
                       type="text"
-                      placeholder="Votre nom"
+                      placeholder={t('lastNamePlaceholder')}
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       className="glamour-input h-12 border-gray-200 rounded-2xl transition-all outline-none"
@@ -1073,7 +1076,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                         <Loader2 className="w-5 h-5 animate-spin" />
                       ) : (
                         <>
-                          {"C'est parti !"}
+                          {t('letsGo')}
                           <ArrowRight className="w-5 h-5" />
                         </>
                       )}
@@ -1095,8 +1098,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 >
                   <span className="text-2xl">💰</span>
                 </div>
-                <h2 className="text-lg font-bold text-gray-900">Montant de la prestation</h2>
-                <p className="text-sm text-gray-500 mt-1">Saisissez le montant de votre prestation</p>
+                <h2 className="text-lg font-bold text-gray-900">{t('serviceAmount')}</h2>
+                <p className="text-sm text-gray-500 mt-1">{t('enterAmount')}</p>
               </div>
               <form onSubmit={handleAmountSubmit} className="space-y-4">
                 {error && (
@@ -1127,7 +1130,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      Valider mon passage
+                      {t('validateVisit')}
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
@@ -1154,7 +1157,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     {customer.first_name} {customer.last_name}
                   </p>
                 )}
-                <p className="text-xs text-gray-400 mb-1">Montant a enregistrer</p>
+                <p className="text-xs text-gray-400 mb-1">{t('amountToRecord')}</p>
                 <p className="text-4xl font-black text-gray-900 mb-4">
                   {parsedConfirmAmount.toFixed(2).replace('.', ',')} €
                 </p>
@@ -1170,7 +1173,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   />
                 </div>
                 <p className="text-xs text-gray-400 mb-5">
-                  Validation automatique dans {remainingSeconds}s
+                  {t('autoValidation', { seconds: remainingSeconds })}
                 </p>
 
                 <div className="flex gap-3">
@@ -1179,7 +1182,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     disabled={submitting}
                     className="flex-1 h-11 text-sm font-bold rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
                   >
-                    Modifier
+                    {t('modify')}
                   </button>
                   <button
                     onClick={submitAmount}
@@ -1190,7 +1193,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     {submitting ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      'Confirmer'
+                      t('confirm')
                     )}
                   </button>
                 </div>
@@ -1205,7 +1208,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               className="w-16 h-16 animate-spin"
               style={{ color: primaryColor }}
             />
-            <p className="mt-4 text-gray-600">Enregistrement en cours...</p>
+            <p className="mt-4 text-gray-600">{t('checkinInProgress')}</p>
           </div>
         )}
 
@@ -1272,11 +1275,11 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </div>
 
               <h2 className="text-2xl font-black text-gray-900 mb-2">
-                {offerResult ? `${offerResult.offer_title}` : welcomeResult ? `Bienvenue chez ${welcomeResult.shop_name} !` : 'Bienvenue !'}
+                {offerResult ? `${offerResult.offer_title}` : welcomeResult ? t('welcomeAt', { name: welcomeResult.shop_name }) : t('welcome')}
               </h2>
               {referralResult && (
                 <p className="text-gray-500 mb-4">
-                  Parrainé{'\u00B7'}e par <span className="font-bold text-gray-900">{referralResult.referrer_name}</span>
+                  {t('referredBy')} <span className="font-bold text-gray-900">{referralResult.referrer_name}</span>
                 </p>
               )}
 
@@ -1287,7 +1290,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Gift className="w-4 h-4" style={{ color: primaryColor }} />
                   <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                    {offerResult ? offerResult.offer_title : welcomeResult ? 'Votre offre de bienvenue' : 'Votre récompense'}
+                    {offerResult ? offerResult.offer_title : welcomeResult ? t('yourWelcomeOffer') : t('yourReward')}
                   </span>
                 </div>
                 <p className="font-bold text-lg" style={{ color: primaryColor }}>
@@ -1297,10 +1300,10 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
               <p className="text-xs text-gray-400 mb-6">
                 {offerResult
-                  ? 'Présentez ce bon lors de votre prochaine visite.'
+                  ? t('offerPresentVoucher')
                   : welcomeResult
-                    ? 'Présentez ce bon lors de votre première visite.'
-                    : 'Votre récompense est disponible sur votre carte de fidélité.'}
+                    ? t('welcomePresentVoucher')
+                    : t('referralPresentVoucher')}
               </p>
 
               <button
@@ -1309,7 +1312,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 style={{ background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor || primaryColor})` }}
               >
                 <CheckCircle2 className="w-5 h-5" />
-                Voir ma carte
+                {t('viewMyCard')}
               </button>
             </div>
           </div>
@@ -1323,16 +1326,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 <Ban className="w-10 h-10 text-red-600" />
               </div>
 
-              <h2 className="text-2xl font-black text-gray-900 mb-2">Accès non autorisé</h2>
+              <h2 className="text-2xl font-black text-gray-900 mb-2">{t('accessDenied')}</h2>
               <p className="text-gray-500 mb-8">
-                Ce numéro n&apos;est plus autorisé à utiliser le programme de fidélité de {merchant?.shop_name || 'ce commerce'}.
+                {t('bannedMessage', { name: merchant?.shop_name || 'ce commerce' })}
               </p>
               <p className="text-sm text-gray-400 mb-8">
-                Si vous pensez qu&apos;il s&apos;agit d&apos;une erreur, contactez directement {merchant?.shop_name || 'le commerçant'}.
+                {t('bannedContact', { name: merchant?.shop_name || 'le commerçant' })}
               </p>
 
               <Button onClick={() => setStep('phone')} variant="outline">
-                Retour
+                {tc('back')}
               </Button>
             </div>
           </div>
@@ -1345,12 +1348,12 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             </div>
 
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Oups, une erreur est survenue
+              {t('errorTitle')}
             </h1>
-            <p className="text-gray-600 mb-8">{error || 'Veuillez réessayer'}</p>
+            <p className="text-gray-600 mb-8">{error || t('defaultError')}</p>
 
             <Button onClick={() => setStep('phone')} variant="outline">
-              Réessayer
+              {t('retry')}
             </Button>
           </div>
         )}
@@ -1363,7 +1366,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             <span className="text-white text-[6px] font-black italic">Q</span>
           </div>
           <span className="text-xs font-bold tracking-tight text-gray-400">
-            Propulsé par QARTE
+            {t('poweredBy')}
           </span>
         </Link>
       </footer>

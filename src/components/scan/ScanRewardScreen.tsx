@@ -2,6 +2,7 @@
 
 import { Gift, Trophy, Loader2, Coins } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import type { Merchant, LoyaltyCard, CagnotteData } from '@/types';
 
 interface ScanRewardScreenProps {
@@ -25,6 +26,7 @@ export default function ScanRewardScreen({
   onSkip,
   cagnotteData,
 }: ScanRewardScreenProps) {
+  const t = useTranslations('scanReward');
   const isCagnotte = !!cagnotteData;
   const isTier2 = rewardTier === 2;
   const gradient = isTier2
@@ -37,17 +39,17 @@ export default function ScanRewardScreen({
   const TierIcon = isCagnotte ? Coins : (isTier2 ? Trophy : Gift);
   const rewardLabel = isCagnotte
     ? (isTier2
-      ? 'Palier 2 — Votre cagnotte'
+      ? t('tier2Cagnotte')
       : merchant.tier2_enabled
-        ? 'Palier 1 — Votre cagnotte'
-        : 'Votre cagnotte')
+        ? t('tier1Cagnotte')
+        : t('cagnotte'))
     : (isTier2
-      ? 'Palier 2 — Votre récompense'
+      ? t('tier2Reward')
       : merchant.tier2_enabled
-        ? 'Palier 1 — Votre récompense'
-        : 'Votre récompense');
+        ? t('tier1Reward')
+        : t('reward'));
   const rewardText = isCagnotte && cagnotteData.rewardValue
-    ? `${cagnotteData.rewardValue.toFixed(2).replace('.', ',')} € sur votre cagnotte fidélité`
+    ? t('cagnotteAmount', { amount: cagnotteData.rewardValue.toFixed(2).replace('.', ',') })
     : isTier2 ? merchant.tier2_reward_description : merchant.reward_description;
   const stampsRequired = isTier2 ? merchant.tier2_stamps_required : merchant.stamps_required;
 
@@ -80,7 +82,7 @@ export default function ScanRewardScreen({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
       >
-        🎉 Félicitations !
+        {'🎉 '}{t('congratulations')}
       </motion.h2>
       <motion.p
         className="text-gray-500 mb-8"
@@ -88,7 +90,7 @@ export default function ScanRewardScreen({
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
       >
-        {stampsRequired} passages atteints !
+        {t('visitsReached', { count: Number(stampsRequired || 0) })}
       </motion.p>
 
       {/* Reward Card with shine effect */}
@@ -132,13 +134,13 @@ export default function ScanRewardScreen({
             ) : (
               <>
                 <TierIcon className="w-6 h-6" />
-                {isCagnotte ? 'Récupérer ma cagnotte' : 'Utiliser ma récompense'}
+                {isCagnotte ? t('redeemCagnotte') : t('redeemReward')}
               </>
             )}
           </button>
 
           <p className="mt-4 text-sm text-gray-400">
-            {isCagnotte ? 'Présentez cet écran pour valider votre cagnotte' : 'Montrez cet écran au commerçant'}
+            {isCagnotte ? t('showScreenCagnotte') : t('showScreenMerchant')}
           </p>
         </div>
       </motion.div>
@@ -150,7 +152,7 @@ export default function ScanRewardScreen({
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
       >
-        Plus tard →
+        {t('later')}
       </motion.button>
     </div>
   );

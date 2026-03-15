@@ -1,6 +1,7 @@
 'use client';
 
 import { Check, Gift, Cake, Loader2, PartyPopper, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Merchant } from '@/types';
 
@@ -45,6 +46,7 @@ export default function VoucherModals({
   celebrationData,
   onCloseCelebration,
 }: VoucherModalsProps) {
+  const t = useTranslations('voucherModals');
   return (
     <>
       {/* Voucher Detail Modal */}
@@ -87,8 +89,8 @@ export default function VoucherModals({
                 className="text-2xl font-black text-gray-900 mb-2"
               >
                 {selectedVoucher.source === 'birthday'
-                  ? `Joyeux anniversaire${customerFirstName ? ` ${customerFirstName}` : ''}\u00a0! \ud83c\udf89`
-                  : `Votre r\u00e9compense`
+                  ? t('happyBirthday', { name: customerFirstName ? ` ${customerFirstName}` : '' })
+                  : t('yourReward')
                 }
               </motion.h2>
 
@@ -100,7 +102,7 @@ export default function VoucherModals({
                   transition={{ delay: 0.3 }}
                   className="text-gray-500 mb-4 text-sm"
                 >
-                  {merchant.shop_name} vous souhaite un merveilleux anniversaire et vous offre un cadeau pour c&eacute;l&eacute;brer cette occasion sp&eacute;ciale !
+                  {t('birthdayWish', { name: merchant.shop_name })}
                 </motion.p>
               )}
 
@@ -114,7 +116,7 @@ export default function VoucherModals({
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Gift className="w-4 h-4" style={{ color: selectedVoucher.source === 'birthday' ? '#ec4899' : merchant.primary_color }} />
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Votre cadeau</span>
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('yourGift')}</span>
                 </div>
                 <p className="font-bold text-lg" style={{ color: selectedVoucher.source === 'birthday' ? '#be185d' : merchant.primary_color }}>
                   {selectedVoucher.rewardDescription}
@@ -129,7 +131,7 @@ export default function VoucherModals({
                   transition={{ delay: 0.4 }}
                   className="text-xs text-gray-400 mb-3"
                 >
-                  Valable jusqu&apos;au {new Date(selectedVoucher.expiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  {t('validUntil', { date: new Date(selectedVoucher.expiresAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) })}
                 </motion.p>
               )}
 
@@ -140,7 +142,7 @@ export default function VoucherModals({
                 transition={{ delay: 0.45 }}
                 className="text-sm text-gray-500 mb-6"
               >
-                Pr&eacute;sentez ce message lors de votre passage chez <span className="font-bold text-gray-700">{merchant.shop_name}</span>
+                {t('showMessage', { name: merchant.shop_name })}
               </motion.p>
 
               {/* Buttons */}
@@ -161,7 +163,7 @@ export default function VoucherModals({
                   ) : (
                     <>
                       <Check className="w-5 h-5" />
-                      Utiliser maintenant
+                      {t('useNow')}
                     </>
                   )}
                 </button>
@@ -169,7 +171,7 @@ export default function VoucherModals({
                   onClick={onCloseDetail}
                   className="w-full py-3 text-sm font-semibold text-gray-500 rounded-2xl bg-gray-100 hover:bg-gray-200 active:scale-[0.98] transition-all"
                 >
-                  Plus tard
+                  {t('later')}
                 </button>
               </motion.div>
             </motion.div>
@@ -215,8 +217,8 @@ export default function VoucherModals({
                 className="text-2xl font-black text-gray-900 mb-2"
               >
                 {celebrationData.isBirthday
-                  ? `Bon anniversaire${celebrationData.customerName ? ` ${celebrationData.customerName}` : ''}\u00a0! \ud83c\udf82`
-                  : `F\u00e9licitations${celebrationData.customerName ? ` ${celebrationData.customerName}` : ''}\u00a0!`
+                  ? t('happyBirthdayCelebration', { name: celebrationData.customerName ? ` ${celebrationData.customerName}` : '' })
+                  : t('congratulations', { name: celebrationData.customerName ? ` ${celebrationData.customerName}` : '' })
                 }
               </motion.h2>
 
@@ -227,8 +229,8 @@ export default function VoucherModals({
                 className="text-gray-500 mb-4"
               >
                 {celebrationData.isBirthday
-                  ? `Votre cadeau d'anniversaire a \u00e9t\u00e9 activ\u00e9\u00a0!`
-                  : `Votre r\u00e9compense a \u00e9t\u00e9 activ\u00e9e`
+                  ? t('birthdayActivated')
+                  : t('rewardActivated')
                 }
               </motion.p>
 
@@ -241,7 +243,7 @@ export default function VoucherModals({
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Gift className="w-4 h-4" style={{ color: celebrationData.isBirthday ? '#ec4899' : merchant.primary_color }} />
-                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Votre cadeau</span>
+                  <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('yourGift')}</span>
                 </div>
                 <p className="font-bold text-lg" style={{ color: celebrationData.isBirthday ? '#be185d' : merchant.primary_color }}>
                   {celebrationData.rewardDescription}
@@ -256,7 +258,7 @@ export default function VoucherModals({
                   className="flex items-center justify-center gap-2 mb-4 text-sm text-gray-500"
                 >
                   <Sparkles className="w-4 h-4" style={{ color: merchant.primary_color }} />
-                  <span>{`+1 passage bonus ajout\u00e9 \u00e0 votre carte\u00a0!`}</span>
+                  <span>{t('bonusStampAdded')}</span>
                 </motion.div>
               )}
 
@@ -266,7 +268,7 @@ export default function VoucherModals({
                 transition={{ delay: 0.7 }}
                 className="text-sm text-gray-500 mb-6"
               >
-                Pr&eacute;sentez cette confirmation chez <span className="font-bold text-gray-700">{merchant.shop_name}</span> pour en profiter.
+                {t('showConfirmation', { name: merchant.shop_name })}
               </motion.p>
 
               <motion.button
@@ -279,7 +281,7 @@ export default function VoucherModals({
                 style={{ background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})` }}
               >
                 <Check className="w-5 h-5" />
-                {`Super, merci\u00a0!`}
+                {t('thankYou')}
               </motion.button>
             </motion.div>
           </motion.div>

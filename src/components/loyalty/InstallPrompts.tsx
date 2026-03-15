@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import IOSInstallInstructions from '@/components/shared/IOSInstallInstructions';
+import { useTranslations } from 'next-intl';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -46,6 +47,7 @@ export default function InstallPrompts({
   iOSVersion,
   showSuccessToast,
 }: InstallPromptsProps) {
+  const t = useTranslations('installPrompts');
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -79,8 +81,8 @@ export default function InstallPrompts({
               <Check className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1">
-              <p className="font-bold text-white">C&apos;est fait ! 🎉</p>
-              <p className="text-sm text-white/80">Vous recevrez nos offres exclusives</p>
+              <p className="font-bold text-white">{t('successTitle')}</p>
+              <p className="text-sm text-white/80">{t('successSubtitle')}</p>
             </div>
           </div>
         </div>
@@ -92,8 +94,8 @@ export default function InstallPrompts({
           isIOS={isIOS}
           isIOSChrome={isIOSChrome}
           onClose={() => setShowIOSInstructions(false)}
-          title="Ajouter à l'écran d'accueil"
-          subtitle="Pour recevoir les offres exclusives"
+          title={t('addToHomeScreen')}
+          subtitle={t('toReceiveOffers')}
           headerStyle={{ background: `linear-gradient(135deg, ${merchant.primary_color}10, white)` }}
           iconColor={merchant.primary_color}
           buttonStyle={{ backgroundColor: merchant.primary_color }}
@@ -121,14 +123,14 @@ export default function InstallPrompts({
                 <AlertCircle className="w-8 h-8 text-amber-600" />
               </div>
 
-              <h3 className="text-xl font-black text-gray-900 mb-2">Mise à jour requise</h3>
+              <h3 className="text-xl font-black text-gray-900 mb-2">{t('updateRequired')}</h3>
               <p className="text-gray-600 mb-4">
-                Les notifications push nécessitent iOS 16.4 ou plus récent.
+                {t('pushRequiresiOS')}
               </p>
               <p className="text-sm text-gray-500 mb-6">
-                Votre version actuelle : iOS {iOSVersion || '?'}
+                {t('currentVersion', { iOSVersion: Number(iOSVersion || 0) || '?' })}
                 <br />
-                Allez dans <span className="font-semibold">Réglages → Général → Mise à jour</span> pour mettre à jour votre iPhone.
+                Allez dans <span className="font-semibold">{t('settingsPath')}</span> pour mettre à jour votre iPhone.
               </p>
 
               <button
@@ -136,7 +138,7 @@ export default function InstallPrompts({
                 className="w-full py-4 rounded-2xl font-bold text-white transition-all hover:opacity-90"
                 style={{ backgroundColor: merchant.primary_color }}
               >
-                Compris
+                {t('understood')}
               </button>
             </div>
           </div>
@@ -163,14 +165,14 @@ export default function InstallPrompts({
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-900 truncate">{merchant.shop_name}</p>
-                <p className="text-xs text-gray-500">Retrouvez votre carte en 1 tap</p>
+                <p className="text-xs text-gray-500">{t('findCardOneTap')}</p>
               </div>
               <button
                 onClick={handleInstallClick}
                 className="shrink-0 px-4 py-2 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
                 style={{ backgroundColor: merchant.primary_color }}
               >
-                Ajouter
+                {t('add')}
               </button>
               <button
                 onClick={onDismissInstallBar}

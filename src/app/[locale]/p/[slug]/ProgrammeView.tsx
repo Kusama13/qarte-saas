@@ -7,6 +7,7 @@ import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
 import { formatDoubleDays } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
 type Photo = { id: string; url: string; position: number };
@@ -59,6 +60,7 @@ type MerchantPublic = Pick<
 >;
 
 export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
+  const t = useTranslations('programmeView');
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
@@ -67,7 +69,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
 
   // Opening hours
-  const DAY_LABELS_SHORT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const DAY_LABELS_SHORT = t('dayLabelsShort').split(',');
   const hours = merchant.opening_hours;
   const hasHours = hours && Object.values(hours).some(Boolean);
   // JS getDay(): 0=dimanche → we need 1=lundi format
@@ -118,8 +120,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const noOp = (e: React.MouseEvent) => { e.preventDefault(); };
 
   // Planning: group slots by month then by date
-  const MONTH_NAMES = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
-  const DAY_NAMES_FULL = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+  const MONTH_NAMES = t('monthNames').split(',');
+  const DAY_NAMES_FULL = t('dayNamesFull').split(',');
   const planningByMonth = useMemo(() => {
     if (!merchant.planning_enabled || planningSlots.length === 0) return [];
     const grouped: { month: string; days: { label: string; dateStr: string; times: string[] }[] }[] = [];
@@ -235,7 +237,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 style={{ backgroundColor: `${p}15`, color: p }}
               >
                 <Navigation className="w-2.5 h-2.5" />
-                Y aller
+                {t('goThere')}
               </a>
             </motion.div>
           )}
@@ -281,7 +283,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             }}
           >
             <CalendarDays className="w-5 h-5" />
-            Prendre rendez-vous
+            {t('bookAppointment')}
           </motion.a>
         )}
 
@@ -295,7 +297,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           >
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-2.5">
               <Clock className="w-3 h-3 inline-block mr-1 -mt-0.5" />
-              Horaires
+              {t('hours')}
             </p>
             <div className="grid grid-cols-7 gap-1">
               {DAY_LABELS_SHORT.map((label, i) => {
@@ -319,7 +321,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                         <p className="text-[9px] text-gray-600 font-medium">{slot.close}</p>
                       </>
                     ) : (
-                      <p className="text-[9px] text-gray-400 font-medium">Fermé</p>
+                      <p className="text-[9px] text-gray-400 font-medium">{t('closed')}</p>
                     )}
                   </div>
                 );
@@ -344,7 +346,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             </div>
             {hasBookingMessage && (
               <div className="rounded-lg px-3 py-2 mt-3 bg-gray-50 border border-gray-100">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Conditions</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">{t('conditions')}</p>
                 <p className="text-[12px] text-gray-600 whitespace-pre-line">{merchant.booking_message}</p>
               </div>
             )}
@@ -361,7 +363,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           >
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-3">
               <CalendarDays className="w-3 h-3 inline-block mr-1 -mt-0.5" />
-              Disponibilités
+              {t('availability')}
             </p>
 
             {/* Message libre */}
@@ -377,7 +379,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             {/* Conditions de réservation */}
             {hasBookingMessage && (
               <div className="rounded-lg px-3 py-2 mb-3 bg-gray-50 border border-gray-100">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Conditions</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">{t('conditions')}</p>
                 <p className="text-[12px] text-gray-600 whitespace-pre-line">{merchant.booking_message}</p>
               </div>
             )}
@@ -422,7 +424,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
             {planningSlots.length >= 3 && (
               <p className="text-[11px] text-gray-400 text-center mt-2">
-                Et plus de créneaux disponibles — contactez-nous
+                {t('moreSlotsAvailable')}
               </p>
             )}
           </motion.div>
@@ -482,7 +484,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                       </span>
                     )}
                     <p className="text-[13px] font-bold text-gray-900">
-                      {svc.price_from && <span className="text-[11px] font-normal text-gray-400">dès </span>}
+                      {svc.price_from && <span className="text-[11px] font-normal text-gray-400">{t('priceFrom')}</span>}
                       {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
                     </p>
                   </div>
@@ -510,9 +512,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   <ClipboardList className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-[15px] font-bold text-gray-900">Mes prestations</p>
+                  <p className="text-[15px] font-bold text-gray-900">{t('myServices')}</p>
                   <p className="text-[11px] text-gray-400 mt-0.5">
-                    {totalSvcCount} prestation{totalSvcCount > 1 ? 's' : ''}
+                    {totalSvcCount > 1 ? t('servicePlural', { count: totalSvcCount }) : t('serviceSingular', { count: totalSvcCount })}
                   </p>
                 </div>
               </div>
@@ -527,7 +529,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     className="w-full mt-2 py-2.5 rounded-xl text-[12px] font-bold transition-colors cursor-pointer"
                     style={{ color: p, backgroundColor: `${p}08` }}
                   >
-                    Voir les {totalSvcCount - PREVIEW_COUNT} autres prestations
+                    {t('viewMoreServices', { count: totalSvcCount - PREVIEW_COUNT })}
                   </button>
                 )}
               </div>
@@ -558,25 +560,25 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-0.5" style={{ color: p }}>
-                  Offre de bienvenue
+                  {t('welcomeOffer')}
                 </p>
                 <p className="text-[15px] font-bold text-gray-800 leading-tight">
                   {merchant.welcome_offer_description}
                 </p>
                 <p className="text-[12px] text-gray-500 mt-1">
-                  Inscrivez-vous pour en profiter
+                  {t('signUpToEnjoy')}
                 </p>
               </div>
               <div
                 className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white"
                 style={{ background: p }}
               >
-                En profiter
+                {t('enjoyNow')}
               </div>
             </div>
             <div className="px-5 pb-4" style={{ background: `linear-gradient(135deg, ${p}06, transparent)` }}>
               <p className="text-[12px] text-gray-500 leading-relaxed">
-                Créez votre compte pour recevoir votre bon. Présentez-le lors de votre prochain rendez-vous pour en bénéficier.
+                {t('welcomeOfferInstructions')}
               </p>
             </div>
           </motion.a>
@@ -607,18 +609,18 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   {promoOffer.description}
                 </p>
                 <p className="text-[12px] text-gray-500 mt-1">
-                  Offre ouverte a tous
+                  {t('promoOpenToAll')}
                 </p>
               </div>
               <div className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white bg-amber-500">
-                En profiter
+                {t('enjoyNow')}
               </div>
             </div>
             <div className="px-5 pb-4" style={{ background: 'linear-gradient(135deg, #f59e0b06, transparent)' }}>
               <p className="text-[12px] text-gray-500 leading-relaxed">
-                Inscrivez-vous pour recevoir votre bon. Présentez-le lors de votre prochain rendez-vous.
+                {t('promoInstructions')}
                 {promoOffer.expires_at && (
-                  <span className="font-semibold text-amber-700"> Valable jusqu&apos;au {new Date(promoOffer.expires_at).toLocaleDateString('fr-FR')}.</span>
+                  <span className="font-semibold text-amber-700"> {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString('fr-FR') })}</span>
                 )}
               </p>
             </div>
@@ -632,7 +634,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           transition={{ delay: 0.3, duration: 0.35 }}
           className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 px-1 pt-2"
         >
-          Carte de fidelite
+          {t('loyaltyCard')}
         </motion.p>
 
         {/* SimulatedCard — LE centerpiece */}
@@ -645,8 +647,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             stampsRequired={merchant.stamps_required}
             rewardDescription={
               isCagnotte
-                ? `${merchant.cagnotte_percent}% sur votre cagnotte fidélité`
-                : (merchant.reward_description || 'Récompense fidélité')
+                ? t('cagnotteReward', { percent: Number(merchant.cagnotte_percent || 0) })
+                : (merchant.reward_description || t('defaultReward'))
             }
             primaryColor={p}
             secondaryColor={s}
@@ -660,7 +662,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           transition={{ delay: 0.45, duration: 0.4 }}
           className="text-center text-[11px] text-gray-400 font-medium -mt-1"
         >
-          En devenant client, vous recevez votre carte de fidelite et cumulez des recompenses a chaque passage.
+          {t('loyaltyNote')}
         </motion.p>
 
         {/* Tier 2 */}
@@ -697,16 +699,16 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               <div className="flex items-center gap-2 mb-2">
                 <Trophy className="w-3.5 h-3.5 text-white/40" />
                 <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
-                  Après {merchant.tier2_stamps_required} visites
+                  {t('afterVisits', { count: Number(merchant.tier2_stamps_required || 0) })}
                 </p>
               </div>
               <p className="text-[22px] font-black text-white leading-snug max-w-[72%] tracking-tight">
                 {isCagnotte
-                  ? `${merchant.cagnotte_tier2_percent}% sur votre cagnotte fidélité`
+                  ? t('cagnotteReward', { percent: Number(merchant.cagnotte_tier2_percent || 0) })
                   : merchant.tier2_reward_description}
               </p>
               <p className="text-[12px] text-white/50 mt-2 font-medium">
-                Pour les plus fidèles d'entre vous.
+                {t('forMostLoyal')}
               </p>
             </div>
           </motion.div>
@@ -723,7 +725,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           >
             <div className="px-5 pt-4 pb-1">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em]">
-                Vos avantages exclusifs
+                {t('exclusiveAdvantages')}
               </p>
             </div>
 
@@ -734,11 +736,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     <Gift className="w-4 h-4" style={{ color: p }} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-gray-800 leading-tight">Cadeau d'anniversaire</p>
+                    <p className="text-[13px] font-bold text-gray-800 leading-tight">{t('birthdayGift')}</p>
                     <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">
-                      Le mois de votre anniversaire,{' '}
-                      {merchant.birthday_gift_description.charAt(0).toLowerCase() +
-                        merchant.birthday_gift_description.slice(1)} vous attend — c'est notre façon de vous dire merci.
+                      {t('birthdayGiftDesc', { gift: merchant.birthday_gift_description.charAt(0).toLowerCase() + merchant.birthday_gift_description.slice(1) })}
                     </p>
                   </div>
                 </div>
@@ -750,15 +750,15 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     <Users className="w-4 h-4" style={{ color: p }} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-gray-800 leading-tight">Partagez, soyez récompensé</p>
+                    <p className="text-[13px] font-bold text-gray-800 leading-tight">{t('shareBeRewarded')}</p>
                     {merchant.referral_reward_referrer && (
                       <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">
-                        Chaque ami que vous ramenez vous offre {merchant.referral_reward_referrer}.
+                        {t('referrerReward', { reward: merchant.referral_reward_referrer })}
                       </p>
                     )}
                     {merchant.referral_reward_referred && (
                       <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">
-                        Votre ami bénéficie de {merchant.referral_reward_referred} dès sa première visite.
+                        {t('referredReward', { reward: merchant.referral_reward_referred })}
                       </p>
                     )}
                   </div>
@@ -771,9 +771,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     <Zap className="w-4 h-4 text-amber-500" />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-gray-800 leading-tight">Jours bonus</p>
+                    <p className="text-[13px] font-bold text-gray-800 leading-tight">{t('bonusDays')}</p>
                     <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">
-                      Les {formatDoubleDays(merchant.double_days_of_week)}, chaque passage compte double — profitez-en.
+                      {t('bonusDaysDesc', { days: formatDoubleDays(merchant.double_days_of_week) })}
                     </p>
                   </div>
                 </div>
@@ -791,7 +791,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             className={`${glassCard} p-4`}
           >
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-3">
-              Nos réalisations
+              {t('ourWork')}
             </p>
             <div className="grid grid-cols-3 gap-2">
               {photos.map((photo, idx) => (
@@ -804,7 +804,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 >
                   <img
                     src={photo.url}
-                    alt={`${merchant.shop_name} - réalisation ${photo.position}`}
+                    alt={t('realisationAlt', { name: merchant.shop_name, position: photo.position })}
                     className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                     loading="lazy"
                   />
@@ -839,13 +839,13 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           }}
         >
           <p className="text-[13px] text-gray-500 group-hover:text-gray-600 transition-colors">
-            Rejoignez <span className="font-semibold text-gray-700">{merchant.shop_name}</span> sur{' '}
+            {t('joinOnQarte', { name: merchant.shop_name })}{' '}
             <span className="font-bold text-[#4b0082] group-hover:text-[#654EDA] transition-colors">Qarte</span>
           </p>
         </motion.a>
 
         <p className="text-center text-[11px] text-gray-400 font-medium pt-3 pb-2">
-          Propulsé par{' '}
+          {t('poweredBy')}{' '}
           <a
             href="https://getqarte.com"
             target="_blank"
@@ -883,7 +883,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   boxShadow: `0 4px 14px ${p}30`,
                 }}
               >
-                {isDemo ? 'Créer ma page' : 'Prendre rendez-vous'}
+                {isDemo ? t('createMyPage') : t('bookAppointment')}
               </a>
             </div>
           </motion.div>
@@ -903,7 +903,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           >
             <button
               type="button"
-              aria-label="Fermer"
+              aria-label={t('closeLightbox')}
               className="absolute top-4 right-4 p-2 text-white/80 hover:text-white transition-colors z-10"
               onClick={() => setLightboxIndex(null)}
             >
@@ -914,7 +914,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               <>
                 <button
                   type="button"
-                  aria-label="Photo précédente"
+                  aria-label={t('prevPhoto')}
                   className="absolute left-2 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white transition-colors z-10"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -925,7 +925,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 </button>
                 <button
                   type="button"
-                  aria-label="Photo suivante"
+                  aria-label={t('nextPhoto')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-white/60 hover:text-white transition-colors z-10"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -944,7 +944,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               exit={{ opacity: 0, scale: 0.92 }}
               transition={{ duration: 0.2 }}
               src={photos[lightboxIndex].url}
-              alt={`${merchant.shop_name} - réalisation ${photos[lightboxIndex].position}`}
+              alt={t('realisationAlt', { name: merchant.shop_name, position: photos[lightboxIndex].position })}
               className="max-w-[90vw] max-h-[85vh] object-contain rounded-xl"
               onClick={(e) => e.stopPropagation()}
             />
@@ -973,7 +973,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             url: `https://getqarte.com/p/${merchant.slug}`,
             makesOffer: {
               '@type': 'Offer',
-              description: 'Programme de fidélité digitale',
+              description: t('jsonLdOffer'),
             },
           }),
         }}

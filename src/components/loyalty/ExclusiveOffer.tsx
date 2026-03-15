@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Clock, ChevronDown, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface MerchantOffer {
@@ -19,6 +20,7 @@ interface ExclusiveOfferProps {
 }
 
 export default function ExclusiveOffer({ offer, merchantColor, isPreview }: ExclusiveOfferProps) {
+  const t = useTranslations('exclusiveOffer');
   const [expanded, setExpanded] = useState(false);
 
   if (!offer.active) return null;
@@ -31,7 +33,7 @@ export default function ExclusiveOffer({ offer, merchantColor, isPreview }: Excl
     >
       {isPreview && (
         <div className="absolute top-2 right-2 z-20 bg-white/90 backdrop-blur-sm text-[10px] font-bold text-gray-500 px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">
-          Exemple — Personnalisable
+          {t('previewBadge')}
         </div>
       )}
       <button
@@ -51,7 +53,7 @@ export default function ExclusiveOffer({ offer, merchantColor, isPreview }: Excl
               <div className="flex items-center gap-2 mb-2">
                 <div className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/20 flex items-center gap-1.5">
                   <Sparkles className="w-3 h-3 text-white" />
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-white">Offre Exclusive</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-white">{t('exclusiveOffer')}</span>
                 </div>
               </div>
               <h3 className="text-base font-extrabold leading-tight mb-1 drop-shadow-sm">
@@ -61,19 +63,19 @@ export default function ExclusiveOffer({ offer, merchantColor, isPreview }: Excl
                 <div className="flex items-center gap-1.5 text-white/90 text-xs font-medium">
                   <Clock className="w-3.5 h-3.5" />
                   <span>
-                    Valable jusqu&apos;au {(() => {
+                    {t('validUntil', { date: (() => {
                       const expires = new Date(offer.expiresAt);
                       const today = new Date();
                       const tomorrow = new Date(today);
                       tomorrow.setDate(tomorrow.getDate() + 1);
                       if (expires.toDateString() === today.toDateString()) {
-                        return "ce soir";
+                        return t('tonight');
                       } else if (expires.toDateString() === tomorrow.toDateString()) {
-                        return "demain soir";
+                        return t('tomorrowNight');
                       } else {
                         return expires.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
                       }
-                    })()}
+                    })() })}
                   </span>
                 </div>
               )}

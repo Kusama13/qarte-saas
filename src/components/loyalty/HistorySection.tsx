@@ -14,6 +14,7 @@ import {
   Ticket,
   UserPlus,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { formatDateTime } from '@/lib/utils';
 import type { Merchant, Visit, VisitStatus } from '@/types';
@@ -59,6 +60,7 @@ export default function HistorySection({
   usedVouchers = [],
   merchant,
 }: HistorySectionProps) {
+  const t = useTranslations('historySection');
   const [expanded, setExpanded] = useState(false);
 
   const LoyaltyIcon = Heart;
@@ -131,7 +133,7 @@ export default function HistorySection({
           <div className="p-1.5 bg-gray-50 rounded-lg">
             <LoyaltyIcon className="w-4 h-4 text-gray-500" />
           </div>
-          Historique
+          {t('title')}
         </h2>
       </div>
 
@@ -172,21 +174,21 @@ export default function HistorySection({
               const getLabel = () => {
                 if (isVoucherUsed) {
                   const prefix = item.source === 'birthday' ? '🎂' : '🎟️';
-                  return `${prefix} ${item.reward_description || 'Récompense utilisée'}`;
+                  return `${prefix} ${item.reward_description || t('rewardUsed')}`;
                 }
-                if (isBonusParrainage) return '🎉 Bonus parrainage +1';
+                if (isBonusParrainage) return t('bonusReferral');
                 if (isRedemption) {
                   const tierLabel = merchant.tier2_enabled ? ` palier ${item.tier}` : '';
                   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
-                  return isCagnotte ? `💰 Cagnotte${tierLabel} récupérée` : `🎁 Cadeau${tierLabel} utilisé`;
+                  return isCagnotte ? t('cagnotteRedeemed', { tierLabel }) : t('giftUsed', { tierLabel });
                 }
-                if (isAdjustment) return 'Ajustement';
-                if (isPending) return 'En attente';
-                if (isRejected) return 'Refusé';
+                if (isAdjustment) return t('adjustment');
+                if (isPending) return t('pending');
+                if (isRejected) return t('rejected');
                 if (item.amount_spent != null && item.amount_spent > 0) {
-                  return `Passage validé · ${Number(item.amount_spent).toFixed(2).replace('.', ',')} €`;
+                  return t('visitValidatedAmount', { amount: Number(item.amount_spent || 0).toFixed(2).replace('.', ',') });
                 }
-                return 'Passage validé';
+                return t('visitValidated');
               };
 
               return (
@@ -265,12 +267,12 @@ export default function HistorySection({
                 {expanded ? (
                   <>
                     <ChevronUp className="w-3.5 h-3.5" />
-                    Réduire
+                    {t('collapse')}
                   </>
                 ) : (
                   <>
                     <ChevronDown className="w-3.5 h-3.5" />
-                    Voir tout ({allItems.length})
+                    {t('viewAll', { count: allItems.length })}
                   </>
                 )}
               </motion.button>
@@ -282,7 +284,7 @@ export default function HistorySection({
           <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
             <LoyaltyIcon className="w-6 h-6 text-gray-300" />
           </div>
-          <p className="text-gray-500 font-medium text-sm">Aucun historique</p>
+          <p className="text-gray-500 font-medium text-sm">{t('noHistory')}</p>
         </div>
       )}
     </motion.div>

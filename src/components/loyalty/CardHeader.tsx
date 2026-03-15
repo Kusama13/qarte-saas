@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeft, Crown, CalendarDays, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import type { Merchant, MemberCard } from '@/types';
 
 interface CardHeaderProps {
@@ -26,6 +27,7 @@ export default function CardHeader({
   onShowMemberCard,
   hideBackButton = false,
 }: CardHeaderProps) {
+  const t = useTranslations('cardHeader');
   return (
     <header className="relative w-full overflow-hidden">
       <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden">
@@ -93,7 +95,7 @@ export default function CardHeader({
                   className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all"
                 >
                   <Crown className="w-3 h-3 text-amber-300" />
-                  <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">Membre VIP</span>
+                  <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('memberVip')}</span>
                 </motion.button>
               )}
               {merchant.booking_url && merchant.booking_url.trim() !== '' && (
@@ -106,7 +108,7 @@ export default function CardHeader({
                   className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all active:scale-95"
                 >
                   <CalendarDays className="w-3 h-3 text-white" />
-                  <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">Réserver</span>
+                  <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('book')}</span>
                 </motion.a>
               )}
               {merchant.slug && merchant.show_public_page_on_card && (
@@ -119,7 +121,7 @@ export default function CardHeader({
                   className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all active:scale-95"
                 >
                   <Info className="w-3 h-3 text-white" />
-                  <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">Infos</span>
+                  <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('info')}</span>
                 </motion.a>
               )}
             </div>

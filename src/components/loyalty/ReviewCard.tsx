@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Star, X, ChevronRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface ReviewCardProps {
   reviewLink: string;
@@ -12,6 +13,7 @@ interface ReviewCardProps {
 const REVIEW_DISMISSED_KEY = 'qarte_review_card_dismissed_';
 
 export default function ReviewCard({ reviewLink, shopName, merchantId }: ReviewCardProps) {
+  const t = useTranslations('reviewCard');
   const [dismissed, setDismissed] = useState(true); // hidden by default until check
 
   useEffect(() => {
@@ -51,10 +53,10 @@ export default function ReviewCard({ reviewLink, shopName, merchantId }: ReviewC
         {/* Text */}
         <div className="flex-1 min-w-0">
           <p className="text-[13px] font-semibold text-gray-900 leading-tight">
-            Laisse-nous un avis
+            {t('leaveReview')}
           </p>
           <p className="text-[11px] text-gray-400 leading-tight mt-0.5">
-            Ca nous aide enormement
+            {t('helpsALot')}
           </p>
         </div>
 
@@ -64,7 +66,7 @@ export default function ReviewCard({ reviewLink, shopName, merchantId }: ReviewC
           className="flex-shrink-0 flex items-center gap-1 px-3 h-8 rounded-lg text-white text-[11px] font-semibold active:scale-[0.97] transition-all"
           style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
         >
-          Avis
+          {t('review')}
           <ChevronRight className="w-3 h-3" />
         </button>
 
@@ -72,7 +74,7 @@ export default function ReviewCard({ reviewLink, shopName, merchantId }: ReviewC
         <button
           onClick={handleDismiss}
           className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-gray-300 hover:text-gray-500 hover:bg-gray-100 transition-all"
-          aria-label="Fermer"
+          aria-label={t('close')}
         >
           <X className="w-3.5 h-3.5" />
         </button>

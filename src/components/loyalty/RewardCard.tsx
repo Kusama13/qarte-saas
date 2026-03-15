@@ -1,6 +1,7 @@
 'use client';
 
 import { Gift, Trophy, ChevronRight, Coins } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { formatEUR } from '@/lib/utils';
 
@@ -23,29 +24,30 @@ function getTierGradient(showingTier2: boolean, primary: string, secondary?: str
   return `linear-gradient(135deg, ${primary}, ${secondary || primary})`;
 }
 
-const formatRewardText = (reward: string, remaining: number) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const formatRewardText = (reward: string, remaining: number, t: (key: string, params?: any) => string) => {
   const lowerReward = reward.toLowerCase();
-  const unit = remaining === 1 ? 'passage' : 'passages';
+  const unit = remaining === 1 ? t('passageSingular') : t('passagePlural');
 
   const percentMatch = reward.match(/(\d+)\s*%/);
   if (percentMatch) {
-    return `Plus que ${remaining} ${unit} pour ${percentMatch[1]}% de réduction !`;
+    return t('onlyLeftUnit', { count: remaining, unit, text: t('percentDiscount', { percent: percentMatch[1] }) });
   }
 
   const euroMatch = reward.match(/(\d+)\s*€/);
   if (euroMatch) {
-    return `Plus que ${remaining} ${unit} pour ${euroMatch[1]}€ de réduction !`;
+    return t('onlyLeftUnit', { count: remaining, unit, text: t('euroDiscount', { amount: euroMatch[1] }) });
   }
 
-  if (lowerReward.includes('gratuit') || lowerReward.includes('offert')) {
-    return `Plus que ${remaining} ${unit} pour ${reward.toLowerCase()} !`;
+  if (lowerReward.includes('gratuit') || lowerReward.includes('offert') || lowerReward.includes('free')) {
+    return t('onlyLeftUnit', { count: remaining, unit, text: lowerReward });
   }
 
   if (lowerReward.includes('café') || lowerReward.includes('boisson') || lowerReward.includes('thé')) {
-    return `Plus que ${remaining} ${unit} pour votre ${reward.toLowerCase()} !`;
+    return t('onlyLeftUnit', { count: remaining, unit, text: lowerReward });
   }
 
-  return `Plus que ${remaining} ${unit} pour : ${reward}`;
+  return t('onlyLeftUnit', { count: remaining, unit, text: reward });
 };
 
 
@@ -63,6 +65,7 @@ export default function RewardCard({
   cashbackPercent,
   onRedeem,
 }: RewardCardProps) {
+  const t = useTranslations('rewardCard');
   const TierIcon = isCagnotte ? Coins : showingTier2 ? Trophy : Gift;
   const gradient = getTierGradient(showingTier2, merchantColor, secondaryColor);
 
@@ -98,16 +101,16 @@ export default function RewardCard({
             </motion.div>
             <div className="flex-1 min-w-0">
               <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
-                {tierLabel ? `${tierLabel} débloqué` : 'Cagnotte débloquée'}
+                {tierLabel ? t('tierUnlocked', { tier: tierLabel }) : t('cagnotteUnlocked')}
               </p>
               <p className="text-white text-2xl font-black leading-snug">
                 {formatEUR(cashbackAmount || 0)} €
               </p>
               <p className="text-white/80 text-xs font-semibold mt-0.5">
-                {cashbackPercent}% sur votre cagnotte fidélité
+                {t('onYourCagnotte', { percent: cashbackPercent || 0 })}
               </p>
               <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mt-1.5">
-                Réclamez votre cagnotte
+                {t('claimCagnotte')}
               </p>
             </div>
             <ChevronRight className="w-5 h-5 text-white/50 shrink-0" />
@@ -119,7 +122,7 @@ export default function RewardCard({
 
   /* ═══ CAGNOTTE MODE — NOT READY ═══ */
   if (isCagnotte && !ready) {
-    const unit = remaining === 1 ? 'passage' : 'passages';
+    const unit = remaining === 1 ? t('passageSingular') : t('passagePlural');
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -137,15 +140,15 @@ export default function RewardCard({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
-                {tierLabel ? `Cagnotte · ${tierLabel}` : 'Cagnotte'}
+                {tierLabel ? t('cagnotteLabel', { tier: tierLabel }) : t('cagnotteSimple')}
               </p>
               <p className="text-sm font-bold text-gray-800 line-clamp-2">
                 {description}
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
                 {(cashbackAmount || 0) > 0
-                  ? `Déjà ${formatEUR(cashbackAmount || 0)} € cumulés — plus que ${remaining} ${unit} !`
-                  : `Plus que ${remaining} ${unit} pour débloquer votre cagnotte !`}
+                  ? t('alreadyCumulated', { amount: formatEUR(cashbackAmount || 0), remaining, unit })
+                  : t('unlockCagnotte', { remaining, unit })}
               </p>
             </div>
           </div>
@@ -190,13 +193,13 @@ export default function RewardCard({
             </motion.div>
             <div className="flex-1 min-w-0">
               <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
-                {tierLabel ? `${tierLabel} débloqué` : 'Récompense débloquée'}
+                {tierLabel ? t('tierUnlocked', { tier: tierLabel }) : t('rewardUnlocked')}
               </p>
               <p className="text-white text-base font-black leading-snug line-clamp-2">
                 {description}
               </p>
               <p className="text-white/80 text-xs font-semibold mt-1">
-                Réclamez-la maintenant
+                {t('claimNow')}
               </p>
             </div>
             <ChevronRight className="w-5 h-5 text-white/50 shrink-0" />
@@ -214,13 +217,13 @@ export default function RewardCard({
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
-                {tierLabel ? `Récompense · ${tierLabel}` : 'Récompense'}
+                {tierLabel ? t('rewardLabel', { tier: tierLabel }) : t('rewardSimple')}
               </p>
               <p className="text-sm font-bold text-gray-800 line-clamp-2">
                 {description}
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
-                {formatRewardText(description, remaining)}
+                {formatRewardText(description, remaining, t)}
               </p>
             </div>
           </div>

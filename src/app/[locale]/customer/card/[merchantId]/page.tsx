@@ -26,6 +26,7 @@ import { ensureTextContrast } from '@/lib/utils';
 import { sparkleGrand } from '@/lib/sparkles';
 import { DEMO_MERCHANTS_FLAT as DEMO_MERCHANTS } from '@/lib/demo-merchants';
 import type { Merchant, LoyaltyCard, Customer, Visit, VisitStatus, MemberCard, Voucher } from '@/types';
+import { useTranslations } from 'next-intl';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import {
   HistorySection,
@@ -72,27 +73,17 @@ interface CardWithDetails extends LoyaltyCard {
 
 // Phone is now in HttpOnly cookie — no client-side reading needed
 
-const getLoyaltyLabel = (count: number) => {
-  return count === 1 ? 'Passage' : 'Passages';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getLoyaltyLabel = (count: number, t: any) => {
+  return count === 1 ? t('passageSingular') : t('passagePlural');
 };
 
-const GREETING_MESSAGES = [
-  'Bon retour parmi nous !',
-  'On adore vous revoir !',
-  'Vous êtes au top aujourd\'hui !',
-  'Ça fait plaisir de vous voir !',
-  'Belle journée pour se faire plaisir !',
-  'Toujours fidèle, merci !',
-  'Content de vous revoir !',
-  'Vous êtes rayonnant(e) !',
-  'Ravi(e) de vous retrouver !',
-  'Prenez soin de vous !',
-];
-
-const getGreetingMessage = () => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getGreetingMessage = (t: any) => {
+  const messages = t('greetings').split(',');
   const today = new Date();
   const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000);
-  return GREETING_MESSAGES[dayOfYear % GREETING_MESSAGES.length];
+  return messages[dayOfYear % messages.length];
 };
 
 interface MerchantOffer {
@@ -108,6 +99,7 @@ export default function CustomerCardPage({
 }: {
   params: Promise<{ merchantId: string }>;
 }) {
+  const t = useTranslations('customerCard');
   const { merchantId } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -487,8 +479,8 @@ export default function CustomerCardPage({
     const url = `${window.location.origin}/scan/${m.scan_code}?ref=${referralCode}`;
     const reward = m.referral_reward_referred;
     const text = reward
-      ? `Je te recommande ${m.shop_name} ! Inscris-toi avec mon lien et reçois "${reward}" :`
-      : `Je te recommande ${m.shop_name} ! Inscris-toi avec mon lien et on reçoit chacun une récompense :`;
+      ? t('shareText', { name: m.shop_name, reward })
+      : t('shareTextGeneric', { name: m.shop_name });
 
     if (navigator.share) {
       try {
@@ -619,13 +611,13 @@ export default function CustomerCardPage({
       rewardShowingTier2: _showingTier2,
       rewardCardReady: _showingTier2 ? !!_isTier2Ready : _isRewardReady,
       rewardCardDescription: _showingTier2
-        ? (_tier2Reward || 'Récompense Premium')
-        : (card.merchant.reward_description || 'Votre récompense fidélité'),
+        ? (_tier2Reward || t('defaultTier2Reward'))
+        : (card.merchant.reward_description || t('defaultReward')),
       rewardCardRemaining: _showingTier2
         ? _tier2Required - _currentStamps
         : _tier1Required - _currentStamps,
       rewardCardTierLabel: _tier2Enabled
-        ? (_showingTier2 ? 'Palier 2' : 'Palier 1')
+        ? (_showingTier2 ? t('tier2Label') : t('tier1Label'))
         : '',
       rewardCashbackAmount: _cashbackAmount,
       rewardCashbackPercent: _cagnottePercent,
@@ -683,11 +675,11 @@ export default function CustomerCardPage({
         triggerSparkles();
       } else {
         console.error('Redeem failed:', data);
-        setRedeemError(data.error || 'Une erreur est survenue');
+        setRedeemError(data.error || t('redeemDefaultError'));
       }
     } catch (err) {
       console.error('Redeem error:', err);
-      setRedeemError('Erreur de connexion. Veuillez réessayer.');
+      setRedeemError(t('redeemConnectionError'));
     } finally {
       setRedeeming(false);
     }
@@ -701,12 +693,12 @@ export default function CustomerCardPage({
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
         <AlertCircle className="w-16 h-16 mb-4 text-red-500" />
-        <p className="text-gray-600">Carte introuvable</p>
+        <p className="text-gray-600">{t('cardNotFound')}</p>
         <Link
           href={isDemo ? '/' : isPreview ? '/dashboard/program' : '/customer/cards'}
           className="mt-4 inline-flex items-center justify-center px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
         >
-          Retour
+          {t('back')}
         </Link>
       </div>
     );
@@ -728,10 +720,10 @@ export default function CustomerCardPage({
           <div className={`${isDemo ? 'bg-gradient-to-r from-indigo-600 to-violet-600' : 'bg-indigo-600'} text-white text-center py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2`}>
             <Eye className="w-4 h-4" />
             {isDemo
-              ? 'Exemple de carte de fidélité — Essayez gratuitement !'
+              ? t('previewDemo')
               : isOnboarding
-                ? 'Voici ce que verront vos clients !'
-                : 'Mode prévisualisation — Vos clients verront cette carte'}
+                ? t('previewOnboarding')
+                : t('previewDefault')}
           </div>
           {!isDemo && (
             <Link
@@ -739,7 +731,7 @@ export default function CustomerCardPage({
               className="flex items-center justify-center gap-2 bg-indigo-500 text-white text-xs font-medium py-2 px-4 hover:bg-indigo-400 transition-colors"
             >
               <QrCode className="w-3.5 h-3.5" />
-              L&apos;aperçu vous convient ? Téléchargez votre QR code
+              {t('downloadQr')}
             </Link>
           )}
         </div>
@@ -749,8 +741,8 @@ export default function CustomerCardPage({
         <div className="sticky top-[42px] z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 py-2 px-4">
           <div className="flex items-center justify-center gap-2">
             {[
-              { id: 'demo-onglerie', label: 'Mode passage', emoji: '💅' },
-              { id: 'demo-barbier', label: 'Mode cagnotte', emoji: '💰' },
+              { id: 'demo-onglerie', label: t('stampMode'), emoji: '💅' },
+              { id: 'demo-barbier', label: t('cagnotteMode'), emoji: '💰' },
             ].map((demo) => (
               <Link
                 key={demo.id}
@@ -788,13 +780,13 @@ export default function CustomerCardPage({
         >
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-sm text-gray-500 font-medium">Bonjour</p>
+              <p className="text-sm text-gray-500 font-medium">{t('hello')}</p>
               <p className="text-2xl font-black tracking-tight text-gray-900">{card?.customer?.first_name}</p>
-              <p className="text-[11px] text-gray-400 mt-0.5 italic">{getGreetingMessage()}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5 italic">{getGreetingMessage(t)}</p>
             </div>
             {!memberCard && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 border border-gray-100">
-                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Client fidèle</span>
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{t('loyalClient')}</span>
               </div>
             )}
           </div>
@@ -804,7 +796,7 @@ export default function CustomerCardPage({
               {currentStamps}<span className="text-gray-300 text-2xl mx-0.5">/</span><span className="text-gray-400 text-2xl">{tier2Enabled && effectiveTier1Redeemed ? tier2Required : tier1Required}</span>
             </p>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">
-              {getLoyaltyLabel(currentStamps)}
+              {getLoyaltyLabel(currentStamps, t)}
             </p>
           </div>
           <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
@@ -844,10 +836,10 @@ export default function CustomerCardPage({
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-gray-900 text-sm">
-                    {scanRedeemed ? 'Récompense utilisée !' : 'Passage validé !'}
+                    {scanRedeemed ? t('rewardUsed') : t('visitValidated')}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {scanRedeemed ? 'Profitez bien de votre cadeau' : 'Votre carte a été mise à jour'}
+                    {scanRedeemed ? t('enjoyGift') : t('cardUpdated')}
                   </p>
                 </div>
               </div>
@@ -874,7 +866,7 @@ export default function CustomerCardPage({
                 <button
                   onClick={() => setRedeemError(null)}
                   className="text-red-400 hover:text-red-600 text-lg font-bold px-1"
-                  aria-label="Fermer"
+                  aria-label={t('close')}
                 >
                   &times;
                 </button>
@@ -898,17 +890,17 @@ export default function CustomerCardPage({
                 </div>
                 <div className="flex-1">
                   <p className="font-bold text-gray-900 text-sm">
-                    {pendingCount} {pendingCount > 1 ? 'passages' : 'passage'} en attente
+                    {t('pendingVisits', { count: pendingCount })}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Validation par {merchant.shop_name} en cours
+                    {t('validationInProgress', { name: merchant.shop_name })}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-amber-100">
                 <Shield className="w-3 h-3 text-gray-400" />
                 <span className="text-[9px] font-medium text-gray-400 uppercase tracking-wider">
-                  Protégé par Qarte Shield
+                  {t('protectedByShield')}
                 </span>
               </div>
             </motion.div>
@@ -937,11 +929,11 @@ export default function CustomerCardPage({
                   <UserPlus className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 text-sm">Parrainer un ami</p>
+                  <p className="font-bold text-gray-900 text-sm">{t('referFriend')}</p>
                   <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">
                     {merchant.referral_reward_referred && merchant.referral_reward_referrer
-                      ? `Filleul : "${merchant.referral_reward_referred}" · Vous : "${merchant.referral_reward_referrer}"`
-                      : 'Vous et votre filleul recevez une récompense'}
+                      ? t('referralRewardBoth', { referred: merchant.referral_reward_referred, referrer: merchant.referral_reward_referrer })
+                      : t('referralRewardGeneric')}
                   </p>
                 </div>
                 <motion.button
@@ -956,12 +948,12 @@ export default function CustomerCardPage({
                   {shareCopied ? (
                     <>
                       <Check className="w-3.5 h-3.5" />
-                      Copié !
+                      {t('copied')}
                     </>
                   ) : (
                     <>
                       <Share2 className="w-3.5 h-3.5" />
-                      Partager
+                      {t('share')}
                     </>
                   )}
                 </motion.button>
@@ -1064,14 +1056,14 @@ export default function CustomerCardPage({
                 <Crown className="w-5 h-5 text-white" />
               </div>
               <div className="relative z-10 flex-1 min-w-0 text-left">
-                <p className="text-amber-400 text-[10px] font-bold uppercase tracking-[0.15em]">Membre Privilège</p>
+                <p className="text-amber-400 text-[10px] font-bold uppercase tracking-[0.15em]">{t('privilegeMember')}</p>
                 <p className="text-white/60 text-xs font-medium truncate mt-0.5">{memberCard.program?.benefit_label}</p>
               </div>
               <ChevronRight className="relative z-10 w-4 h-4 text-amber-500/40 shrink-0" />
             </div>
             {isPreview && (
               <div className="absolute top-2.5 right-2.5 z-20 bg-black/60 backdrop-blur-sm text-[9px] font-bold text-white/80 px-2 py-0.5 rounded-full">
-                Exemple
+                {t('example')}
               </div>
             )}
           </motion.button>
@@ -1096,7 +1088,7 @@ export default function CustomerCardPage({
               <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${merchant.primary_color}12` }}>
                 <Bell className="w-4 h-4" style={{ color: merchant.primary_color }} />
               </div>
-              <span className="flex-1 text-xs font-medium text-gray-700 text-left">Activer les notifications</span>
+              <span className="flex-1 text-xs font-medium text-gray-700 text-left">{t('enableNotifications')}</span>
               {push.pushSubscribing ? (
                 <Loader2 className="w-4 h-4 animate-spin shrink-0" style={{ color: merchant.primary_color }} />
               ) : (
@@ -1112,7 +1104,7 @@ export default function CustomerCardPage({
             <div className="w-full rounded-2xl p-4 bg-amber-50 border border-amber-200 flex items-start gap-3 mb-4">
               <Bell className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold text-amber-800 text-sm">Notifications desactivees</p>
+                <p className="font-semibold text-amber-800 text-sm">{t('notificationsDisabled')}</p>
                 <p className="text-xs text-amber-700 mt-1">{push.pushError}</p>
               </div>
             </div>
@@ -1120,7 +1112,7 @@ export default function CustomerCardPage({
             <div className="w-full rounded-2xl p-4 bg-red-50 border border-red-200 flex items-start gap-3 mb-4">
               <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold text-red-800 text-sm">Erreur d&apos;activation</p>
+                <p className="font-semibold text-red-800 text-sm">{t('activationError')}</p>
                 <p className="text-xs text-red-600 mt-1">{push.pushError}</p>
                 {push.isIOS && (
                   <p className="text-xs text-red-500 mt-2">iOS {push.iOSVersion || '?'} &bull; {push.isStandalone ? 'Mode PWA' : 'Navigateur'}</p>
@@ -1156,7 +1148,7 @@ export default function CustomerCardPage({
 
         <footer className="py-6 text-center">
           <a href="https://www.qarte.fr" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
-            <span className="text-xs text-gray-400 group-hover:text-gray-500">Propulsé par</span>
+            <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('poweredBy')}</span>
             <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
               Qarte
             </span>
@@ -1231,7 +1223,7 @@ export default function CustomerCardPage({
                 className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98]"
               >
                 <QrCode className="w-5 h-5" />
-                Valider et générer mon QR code
+                {t('generateQrCode')}
                 <ArrowRight className="w-5 h-5" />
               </motion.button>
             </Link>
@@ -1251,7 +1243,7 @@ export default function CustomerCardPage({
                 className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98]"
               >
                 <Sparkles className="w-5 h-5" />
-                Essayer gratuitement 7 jours
+                {t('tryFree')}
                 <ArrowRight className="w-5 h-5" />
               </motion.button>
             </Link>

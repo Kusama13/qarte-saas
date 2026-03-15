@@ -1,6 +1,7 @@
 'use client';
 
 import { Gift, Sparkles, Trophy } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
 interface WelcomeBannerProps {
@@ -10,6 +11,7 @@ interface WelcomeBannerProps {
 }
 
 export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }: WelcomeBannerProps) {
+  const t = useTranslations('welcomeBanner');
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
   return (
     <div className="relative mb-4 overflow-hidden rounded-3xl shadow-xl border border-gray-100">
@@ -64,13 +66,13 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
 
         <div className="relative z-10">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1.5">
-            Bienvenue chez <span style={{ color: primaryColor }}>{merchant.shop_name}</span>
+            {t('welcomeAt')} <span style={{ color: primaryColor }}>{merchant.shop_name}</span>
           </h2>
 
           <div className="flex items-center justify-center gap-2 mb-4">
             <Sparkles className="w-4 h-4" style={{ color: primaryColor }} />
             <p className="text-lg font-extrabold text-gray-900 tracking-tight">
-              Nous récompensons votre fidélité
+              {t('rewardLoyalty')}
             </p>
             <Sparkles className="w-4 h-4" style={{ color: primaryColor }} />
           </div>
@@ -84,16 +86,16 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
               <div className="flex items-center justify-center gap-2 mb-1">
                 <Gift className="w-4 h-4" style={{ color: primaryColor }} />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                  Votre récompense
+                  {t('yourReward')}
                 </span>
               </div>
               <p className="text-base font-extrabold text-gray-900 text-center">
-                {isCagnotte ? `${merchant.cagnotte_percent}% sur votre cagnotte fidélité` : merchant.reward_description}
+                {isCagnotte ? t('cagnotteReward', { percent: Number(merchant.cagnotte_percent || 0) }) : merchant.reward_description}
               </p>
               <p className="text-xs font-bold text-center mt-1" style={{ color: primaryColor }}>
                 {isCagnotte
-                  ? `Après ${merchant.stamps_required} passage${merchant.stamps_required > 1 ? 's' : ''} · sur vos dépenses`
-                  : `Après ${merchant.stamps_required} passage${merchant.stamps_required > 1 ? 's' : ''}`}
+                  ? t('afterVisitsCagnotte', { count: merchant.stamps_required })
+                  : t('afterVisits', { count: merchant.stamps_required })}
               </p>
             </div>
 
@@ -102,14 +104,14 @@ export default function WelcomeBanner({ merchant, primaryColor, secondaryColor }
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Trophy className="w-4 h-4 text-amber-500" />
                   <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600">
-                    {isCagnotte ? 'Palier 2 — Taux amélioré' : 'Palier 2 — Récompense Premium'}
+                    {isCagnotte ? t('tier2Rate') : t('tier2Premium')}
                   </span>
                 </div>
                 <p className="text-base font-extrabold text-gray-900 text-center">
-                  {isCagnotte ? `${merchant.cagnotte_tier2_percent}% sur votre cagnotte fidélité` : merchant.tier2_reward_description}
+                  {isCagnotte ? t('cagnotteReward', { percent: Number(merchant.cagnotte_tier2_percent || 0) }) : merchant.tier2_reward_description}
                 </p>
                 <p className="text-xs font-bold text-center mt-1 text-amber-600">
-                  Après {merchant.tier2_stamps_required} passage{merchant.tier2_stamps_required! > 1 ? 's' : ''}
+                  {t('afterVisits', { count: merchant.tier2_stamps_required })}
                 </p>
               </div>
             )}

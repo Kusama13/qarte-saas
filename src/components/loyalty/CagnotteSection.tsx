@@ -1,6 +1,7 @@
 'use client';
 
 import { Gift, Trophy, Zap, Heart } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 
 interface CagnotteSectionProps {
@@ -34,21 +35,23 @@ function getTier1StatusBadge(
   effectiveTier1Redeemed: boolean,
   isRewardReady: boolean,
   remaining: number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: (key: string, params?: any) => string,
 ) {
   if (effectiveTier1Redeemed) {
-    return <span className="px-2.5 py-1 rounded-full bg-gray-200 text-[10px] font-bold text-gray-500 uppercase">Réclamé</span>;
+    return <span className="px-2.5 py-1 rounded-full bg-gray-200 text-[10px] font-bold text-gray-500 uppercase">{t('claimed')}</span>;
   }
   if (isRewardReady) {
     return (
       <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="px-2.5 py-1 rounded-full bg-amber-500 text-[10px] font-black text-white uppercase shadow-lg shadow-amber-200">
-        Prêt !
+        {t('ready')}
       </motion.span>
     );
   }
   if (remaining <= 2) {
-    return <span className="px-2.5 py-1 rounded-full bg-amber-100 text-[10px] font-black text-amber-700 border border-amber-200">Plus que {remaining} !</span>;
+    return <span className="px-2.5 py-1 rounded-full bg-amber-100 text-[10px] font-black text-amber-700 border border-amber-200">{t('onlyLeft', { count: remaining })}</span>;
   }
-  return <span className="text-[10px] font-bold text-gray-400">{remaining} restants</span>;
+  return <span className="text-[10px] font-bold text-gray-400">{t('remaining', { count: remaining })}</span>;
 }
 
 export default function CagnotteSection({
@@ -63,6 +66,7 @@ export default function CagnotteSection({
   rewardDescription,
   tier2RewardDescription,
 }: CagnotteSectionProps) {
+  const t = useTranslations('cagnotteSection');
   if (tier2Enabled) {
     return (
       <div className="space-y-5">
@@ -78,10 +82,10 @@ export default function CagnotteSection({
             <div className="flex items-center gap-2">
               <Gift className={`w-4 h-4 ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-500' : 'text-gray-400'}`} />
               <span className={`text-[11px] font-black uppercase tracking-widest ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-600' : 'text-gray-400'}`}>
-                Palier 1
+                {t('tier1')}
               </span>
             </div>
-            {getTier1StatusBadge(effectiveTier1Redeemed, isRewardReady, tier1Required - currentStamps)}
+            {getTier1StatusBadge(effectiveTier1Redeemed, isRewardReady, tier1Required - currentStamps, t)}
           </div>
 
           <div className="grid grid-cols-5 gap-2.5 mb-3">
@@ -112,7 +116,7 @@ export default function CagnotteSection({
           </div>
 
           <p className={`text-center text-sm font-medium italic ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
-            {rewardDescription || 'Cagnotte fidélité'}
+            {rewardDescription || t('defaultReward')}
           </p>
         </div>
 
@@ -127,14 +131,14 @@ export default function CagnotteSection({
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
               <Trophy className={`w-4 h-4 ${isTier2Ready ? 'text-violet-500' : 'text-gray-400'}`} />
-              <span className={`text-[11px] font-black uppercase tracking-widest ${isTier2Ready ? 'text-violet-600' : 'text-gray-400'}`}>Palier 2</span>
+              <span className={`text-[11px] font-black uppercase tracking-widest ${isTier2Ready ? 'text-violet-600' : 'text-gray-400'}`}>{t('tier2')}</span>
             </div>
             {isTier2Ready ? (
-              <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="px-2.5 py-1 rounded-full bg-violet-600 text-[10px] font-black text-white uppercase shadow-lg shadow-violet-200">Débloqué !</motion.span>
+              <motion.span animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="px-2.5 py-1 rounded-full bg-violet-600 text-[10px] font-black text-white uppercase shadow-lg shadow-violet-200">{t('unlocked')}</motion.span>
             ) : tier2Required - currentStamps <= 2 ? (
-              <span className="px-2.5 py-1 rounded-full bg-violet-100 text-[10px] font-black text-violet-700 border border-violet-200">Plus que {tier2Required - currentStamps} !</span>
+              <span className="px-2.5 py-1 rounded-full bg-violet-100 text-[10px] font-black text-violet-700 border border-violet-200">{t('onlyLeft', { count: tier2Required - currentStamps })}</span>
             ) : (
-              <span className="text-[10px] font-bold text-gray-400">{tier2Required - currentStamps} restants</span>
+              <span className="text-[10px] font-bold text-gray-400">{t('remaining', { count: tier2Required - currentStamps })}</span>
             )}
           </div>
 
@@ -159,7 +163,7 @@ export default function CagnotteSection({
           </div>
 
           <p className={`text-center text-sm font-medium italic ${isTier2Ready ? 'text-violet-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
-            {tier2RewardDescription || 'Cagnotte Premium'}
+            {tier2RewardDescription || t('defaultTier2Reward')}
           </p>
         </div>
       </div>
@@ -170,16 +174,16 @@ export default function CagnotteSection({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">Ma fidélité</span>
+        <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{t('myLoyalty')}</span>
         {isRewardReady ? (
           <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200">
             <Gift className="w-4 h-4" />
-            <span className="text-xs font-black uppercase">Prêt !</span>
+            <span className="text-xs font-black uppercase">{t('ready')}</span>
           </motion.div>
         ) : tier1Required - currentStamps <= 2 ? (
           <motion.div animate={{ x: [0, -2, 2, 0] }} transition={{ repeat: Infinity, duration: 0.5, repeatDelay: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500 text-white shadow-lg shadow-amber-200">
             <Zap className="w-3.5 h-3.5" />
-            <span className="text-xs font-black">Plus que {tier1Required - currentStamps} !</span>
+            <span className="text-xs font-black">{t('onlyLeft', { count: tier1Required - currentStamps })}</span>
           </motion.div>
         ) : null}
       </div>
@@ -218,7 +222,7 @@ export default function CagnotteSection({
       </div>
 
       <p className={`text-center text-sm font-medium italic ${isRewardReady ? 'text-emerald-700' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
-        {rewardDescription || 'Cagnotte fidélité'}
+        {rewardDescription || t('defaultReward')}
       </p>
     </div>
   );

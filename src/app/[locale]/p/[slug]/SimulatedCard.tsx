@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Gift } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { sparkleSubtle } from '@/lib/sparkles';
+import { useTranslations } from 'next-intl';
 
 function getGridCols(total: number): string {
   if (total <= 3) return 'grid-cols-3';
@@ -33,6 +34,7 @@ export default function SimulatedCard({
   primaryColor: p,
   secondaryColor: s,
 }: SimulatedCardProps) {
+  const t = useTranslations('simulatedCard');
   // Cap visual stamps at 10 for readability
   const displayStamps = Math.min(stampsRequired, 10);
   const [filled, setFilled] = useState(0);
@@ -178,13 +180,13 @@ export default function SimulatedCard({
 
               <div className="relative px-5 pt-4 pb-5">
                 <p className="text-[10px] font-bold text-white/55 mb-1.5 uppercase tracking-widest">
-                  Après {stampsRequired} visites
+                  {t('afterVisits', { count: stampsRequired })}
                 </p>
                 <p className="text-[18px] font-black text-white leading-snug tracking-tight">
-                  {rewardDescription || 'Récompense fidélité'}
+                  {rewardDescription || t('defaultReward')}
                 </p>
                 <p className="text-[11px] text-white/60 mt-1.5 font-medium">
-                  Offert, rien que pour vous.
+                  {t('freeForYou')}
                 </p>
               </div>
             </motion.div>

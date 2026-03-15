@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { AlertCircle, CreditCard } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import type { Merchant, LoyaltyCard } from '@/types';
 import TierProgressDisplay from './TierProgressDisplay';
 
@@ -20,6 +21,7 @@ export default function ScanAlreadyCheckedScreen({
   primaryColor,
   secondaryColor,
 }: ScanAlreadyCheckedScreenProps) {
+  const t = useTranslations('scanAlready');
   return (
     <div className="animate-fade-in">
       <div className="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 p-8 overflow-hidden text-center">
@@ -27,8 +29,8 @@ export default function ScanAlreadyCheckedScreen({
           <AlertCircle className="w-10 h-10 text-amber-600" />
         </div>
 
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Déjà validé !</h2>
-        <p className="text-gray-500 mb-8">Vous avez déjà validé votre passage aujourd&apos;hui. Revenez demain !</p>
+        <h2 className="text-2xl font-black text-gray-900 mb-2">{t('title')}</h2>
+        <p className="text-gray-500 mb-8">{t('message')}</p>
 
         <TierProgressDisplay
           merchant={merchant}
@@ -36,7 +38,7 @@ export default function ScanAlreadyCheckedScreen({
           tier1Redeemed={tier1Redeemed}
           primaryColor={primaryColor}
           secondaryColor={secondaryColor}
-          label="Passages cumulés"
+          label={t('stampsAccumulated')}
         />
 
         <Link
@@ -44,7 +46,7 @@ export default function ScanAlreadyCheckedScreen({
           className="w-full h-14 rounded-2xl font-bold border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
         >
           <CreditCard className="w-5 h-5" />
-          Voir ma carte complète
+          {t('viewFullCard')}
         </Link>
       </div>
     </div>

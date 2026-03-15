@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { formatPhoneNumber, validatePhone } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 /* ── Floating loyalty card ─────────────────────────────── */
 function FloatingCard({
@@ -95,6 +96,7 @@ function FloatingCard({
 
 /* ── Main page ─────────────────────────────────────────── */
 export default function CustomerLoginPage() {
+  const t = useTranslations('customerLogin');
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [loading, setLoading] = useState(false);
@@ -124,7 +126,7 @@ export default function CustomerLoginPage() {
     setError('');
 
     if (!validatePhone(formatPhoneNumber(phoneNumber))) {
-      setError('Veuillez entrer un numéro de téléphone valide');
+      setError(t('invalidPhone'));
       return;
     }
 
@@ -142,7 +144,7 @@ export default function CustomerLoginPage() {
       const data = await response.json();
 
       if (!data.found) {
-        setError('Aucun compte trouvé avec ce numéro. Scannez un QR code pour créer votre première carte.');
+        setError(t('notFound'));
         setLoading(false);
         return;
       }
@@ -151,7 +153,7 @@ export default function CustomerLoginPage() {
       router.push('/customer/cards');
     } catch (err) {
       console.error('Error:', err);
-      setError('Erreur lors de la recherche');
+      setError(t('searchError'));
       setLoading(false);
     }
   };
@@ -261,10 +263,10 @@ export default function CustomerLoginPage() {
         >
           <div className="text-center mb-8">
             <h1 className="text-4xl font-black text-gray-900 leading-none mb-3">
-              Mes cartes.
+              {t('myCards')}
             </h1>
             <p className="text-base text-gray-400 font-medium">
-              Retrouvez toutes vos cartes de fidélité
+              {t('findCards')}
             </p>
           </div>
 
@@ -287,7 +289,7 @@ export default function CustomerLoginPage() {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700 ml-1">Numéro de mobile</label>
+                <label className="text-sm font-bold text-gray-700 ml-1">{t('phoneLabel')}</label>
                 <div className="relative group">
                   <Input
                     type="tel"
@@ -308,7 +310,7 @@ export default function CustomerLoginPage() {
                 className="w-full h-14 text-lg font-bold rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 shadow-lg shadow-indigo-200/50 transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 <Search className="w-5 h-5 mr-2" />
-                Continuer
+                {t('continue')}
               </Button>
             </form>
           </motion.div>
@@ -320,7 +322,7 @@ export default function CustomerLoginPage() {
             transition={{ duration: 0.5, delay: 0.5 }}
           >
             <p className="text-sm text-gray-500 leading-relaxed">
-              Nouveau ici ? <span className="font-bold text-indigo-600">Scannez un QR code</span> chez un commerçant partenaire pour créer votre première carte.
+              {t('newHere')} <span className="font-bold text-indigo-600">{t('scanQr')}</span> {t('scanQrDesc')}
             </p>
           </motion.div>
         </motion.div>
@@ -329,11 +331,11 @@ export default function CustomerLoginPage() {
       {/* ── Footer ── */}
       <footer className="relative z-10 py-8 text-center">
         <a href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
-          <span className="text-xs text-gray-400 group-hover:text-gray-500">Propulsé par</span>
+          <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('poweredBy')}</span>
           <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
             Qarte
           </span>
-          <span className="text-xs text-gray-400 group-hover:text-gray-500">en France 🇫🇷</span>
+          <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('inFrance')}</span>
         </a>
       </footer>
 

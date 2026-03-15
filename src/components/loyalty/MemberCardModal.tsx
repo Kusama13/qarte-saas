@@ -1,6 +1,7 @@
 'use client';
 
 import { Crown } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { Modal } from '@/components/ui';
 import type { Merchant, MemberCard } from '@/types';
@@ -22,6 +23,7 @@ export default function MemberCardModal({
   customerFirstName,
   customerLastName,
 }: MemberCardModalProps) {
+  const t = useTranslations('memberCardModal');
   const isActive = new Date(memberCard.valid_until) > new Date();
 
   return (
@@ -72,7 +74,7 @@ export default function MemberCardModal({
                 </div>
                 <div>
                   <p className="text-amber-400/90 text-[10px] font-bold uppercase" style={{ letterSpacing: '0.15em' }}>
-                    {memberCard.program?.name || 'Programme VIP'}
+                    {memberCard.program?.name || t('defaultProgramName')}
                   </p>
                   <p className="text-white/40 text-[9px] font-medium mt-0.5">
                     {merchant.shop_name}
@@ -85,13 +87,13 @@ export default function MemberCardModal({
                   ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/20'
                   : 'bg-red-500/15 text-red-400 border border-red-500/20'
               }`}>
-                {isActive ? 'Actif' : 'Expiré'}
+                {isActive ? t('active') : t('expired')}
               </div>
             </div>
 
             {/* Center: Benefit — prominent, centered */}
             <div className="text-center px-2">
-              <p className="text-amber-500/50 text-[7px] font-bold uppercase mb-1.5" style={{ letterSpacing: '0.2em' }}>Votre avantage</p>
+              <p className="text-amber-500/50 text-[7px] font-bold uppercase mb-1.5" style={{ letterSpacing: '0.2em' }}>{t('yourBenefit')}</p>
               <p className="text-amber-100 text-sm font-bold leading-snug">
                 {memberCard.program?.benefit_label}
               </p>
@@ -100,13 +102,13 @@ export default function MemberCardModal({
             {/* Bottom: Name + Expiry */}
             <div className="flex items-end justify-between">
               <div>
-                <p className="text-white/30 text-[7px] font-medium uppercase mb-0.5" style={{ letterSpacing: '0.15em' }}>Titulaire</p>
+                <p className="text-white/30 text-[7px] font-medium uppercase mb-0.5" style={{ letterSpacing: '0.15em' }}>{t('holder')}</p>
                 <p className="text-white/90 text-xs font-bold tracking-wide uppercase">
                   {customerFirstName} {customerLastName}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-white/30 text-[7px] font-medium uppercase mb-0.5" style={{ letterSpacing: '0.15em' }}>Expire le</p>
+                <p className="text-white/30 text-[7px] font-medium uppercase mb-0.5" style={{ letterSpacing: '0.15em' }}>{t('expiresOn')}</p>
                 <p className="text-white/90 text-xs font-bold tracking-wider font-mono">
                   {new Date(memberCard.valid_until).toLocaleDateString('fr-FR', {
                     day: '2-digit',

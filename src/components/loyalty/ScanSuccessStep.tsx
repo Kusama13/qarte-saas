@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { CreditCard, Gift, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sparkleMedium, sparkleSubtle } from '@/lib/sparkles';
@@ -62,14 +63,16 @@ function getCelebrationMessage(
   stampsRequired: number,
   customerName?: string,
   lastCheckinPoints?: number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: (key: string, params?: any) => string = (k) => k,
 ): { title: string; subtitle: string; emoji: string } {
   const remaining = stampsRequired - currentStamps;
 
   // Double day — highest priority
   if (lastCheckinPoints && lastCheckinPoints > 1) {
     return {
-      title: `Jour x${lastCheckinPoints}\u00a0!`,
-      subtitle: `Aujourd\u2019hui chaque passage compte x${lastCheckinPoints}${customerName ? `, ${customerName}` : ''}\u00a0!`,
+      title: t('doubleDayTitle', { points: lastCheckinPoints }),
+      subtitle: customerName ? t('doubleDaySubtitle', { points: lastCheckinPoints, name: `, ${customerName}` }) : t('doubleDaySubtitleNoName', { points: lastCheckinPoints }),
       emoji: '\u26a1',
     };
   }
@@ -77,8 +80,8 @@ function getCelebrationMessage(
   // First scan ever
   if (previousStamps === 0) {
     return {
-      title: customerName ? `${customerName}, c\u2019est le d\u00e9but d\u2019une belle histoire` : 'C\u2019est le d\u00e9but d\u2019une belle histoire',
-      subtitle: 'Votre carte fid\u00e9lit\u00e9 est maintenant active',
+      title: customerName ? t('firstScanTitle', { name: customerName }) : t('firstScanTitleNoName'),
+      subtitle: t('firstScanSubtitle'),
       emoji: '\u2728',
     };
   }
@@ -86,8 +89,8 @@ function getCelebrationMessage(
   // Almost there (1-2 remaining)
   if (remaining > 0 && remaining <= 2) {
     return {
-      title: `Plus que ${remaining} passage${remaining > 1 ? 's' : ''} !`,
-      subtitle: 'Votre r\u00e9compense est toute proche !',
+      title: t('almostThereTitle', { count: remaining }),
+      subtitle: t('almostThereSubtitle'),
       emoji: '\ud83d\udd25',
     };
   }
@@ -95,16 +98,16 @@ function getCelebrationMessage(
   // Exact mid-way
   if (currentStamps === Math.ceil(stampsRequired / 2)) {
     return {
-      title: 'D\u00e9j\u00e0 \u00e0 mi-chemin !',
-      subtitle: 'Continuez comme \u00e7a !',
+      title: t('midwayTitle'),
+      subtitle: t('midwaySubtitle'),
       emoji: '\u2b50',
     };
   }
 
   // Default
   return {
-    title: 'Passage valid\u00e9 !',
-    subtitle: `Merci${customerName ? ` ${customerName}` : ''} !`,
+    title: t('defaultTitle'),
+    subtitle: customerName ? t('defaultSubtitle', { name: ` ${customerName}` }) : t('defaultSubtitleNoName'),
     emoji: '\u2728',
   };
 }
@@ -120,6 +123,7 @@ export default function ScanSuccessStep({
   cagnotteData,
 }: ScanSuccessStepProps) {
   const router = useRouter();
+  const t = useTranslations('scanSuccess');
   const primaryColor = merchant.primary_color;
   const secondaryColor = merchant.secondary_color;
   const currentStamps = loyaltyCard.current_stamps;
@@ -135,6 +139,7 @@ export default function ScanSuccessStep({
     stampsRequired,
     customer?.first_name,
     lastCheckinPoints,
+    t,
   );
 
   // Active tier target
@@ -305,13 +310,13 @@ export default function ScanSuccessStep({
               </div>
 
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">
-                Passages cumulés{tier2On && tier1Done ? ' · Palier 2' : tier2On ? ' · Palier 1' : ''}
+                {t('stampsAccumulated')}{tier2On && tier1Done ? t('tier2Label') : tier2On ? t('tier1Label') : ''}
               </p>
 
               {isCagnotte && (
                 <p className="text-sm font-bold mb-4" style={{ color: primaryColor }}>
-                  {cagnotteData.currentAmount.toFixed(2).replace('.', ',')} € cumulés
-                  <span className="text-gray-400 font-normal"> (+{cagnotteData.amountAdded.toFixed(2).replace('.', ',')} €)</span>
+                  {t('cumulatedAmount', { amount: cagnotteData.currentAmount.toFixed(2).replace('.', ',') })}
+                  <span className="text-gray-400 font-normal"> {t('addedAmount', { amount: cagnotteData.amountAdded.toFixed(2).replace('.', ',') })}</span>
                 </p>
               )}
 
@@ -349,7 +354,7 @@ export default function ScanSuccessStep({
                     <strong style={{ color: tier2On && tier1Done ? '#8b5cf6' : primaryColor }}>
                       {displayTarget - currentStamps}
                     </strong>{' '}
-                    passage{displayTarget - currentStamps > 1 ? 's' : ''} avant votre récompense
+                    {t('remainingVisits', { count: displayTarget - currentStamps })}
                   </span>
                 </motion.div>
               )}
@@ -366,7 +371,7 @@ export default function ScanSuccessStep({
                 className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <CreditCard className="w-4 h-4" />
-                Voir ma carte complète
+                {t('viewFullCard')}
               </Link>
             </motion.div>
           </motion.div>

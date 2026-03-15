@@ -2,6 +2,7 @@
 
 import { Check, Gift, Trophy, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 interface RedeemModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export default function RedeemModal({
   isCagnotte,
   cashbackAmount,
 }: RedeemModalProps) {
+  const t = useTranslations('redeemModal');
   const TierIcon = isCagnotte ? Coins : (tier === 2 ? Trophy : Gift);
   const gradient = isCagnotte
     ? (tier === 2
@@ -101,7 +103,7 @@ export default function RedeemModal({
               {/* Tier label */}
               {tier2Enabled && (
                 <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">
-                  Palier {tier}
+                  {t('tierLabel', { tier })}
                 </p>
               )}
 
@@ -119,9 +121,9 @@ export default function RedeemModal({
               {/* Main text */}
               <h3 className="text-2xl font-black text-white leading-tight mb-2">
                 {success
-                  ? (isCagnotte ? 'Cagnotte validée !' : 'Un grand merci pour votre fidélité !')
+                  ? (isCagnotte ? t('cashbackValidated') : t('thankYouLoyalty'))
                   : isCagnotte
-                    ? 'Votre cagnotte est prête'
+                    ? t('cashbackReady')
                     : (tier === 2 ? tier2Reward : rewardDescription)
                 }
               </h3>
@@ -130,14 +132,14 @@ export default function RedeemModal({
                 {success
                   ? (isCagnotte
                       ? (tier === 1 && tier2Enabled
-                          ? 'Votre cumul repart à zéro. Continuez pour un taux encore meilleur !'
-                          : 'Merci pour votre fidélité. Votre cumul repart à zéro !')
+                          ? t('resetContinue')
+                          : t('resetThankYou'))
                       : (tier === 1 && tier2Enabled
-                          ? 'Vos points sont préservés. Le palier 2 vous attend !'
-                          : 'Merci pour votre fidélité. À très bientôt !'))
+                          ? t('pointsPreserved')
+                          : t('thankYouSeeYou')))
                   : isCagnotte
-                    ? `${tier === 2 ? tier2Reward : rewardDescription} sur vos dépenses cumulées`
-                    : `Présentez ce coupon à ${shopName} pour en profiter.`
+                    ? t('onAccumulatedSpending', { reward: tier === 2 ? tier2Reward : rewardDescription })
+                    : t('presentCoupon', { shopName })
                 }
               </p>
 
@@ -159,9 +161,9 @@ export default function RedeemModal({
                         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="opacity-25" />
                         <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                       </svg>
-                      Validation...
+                      {t('validating')}
                     </span>
-                  ) : success ? 'Fermer' : (isCagnotte ? 'Récupérer ma cagnotte' : 'Valider maintenant')}
+                  ) : success ? t('close') : (isCagnotte ? t('redeemCashback') : t('redeemNow'))}
                 </motion.button>
 
                 {!success && (
@@ -169,7 +171,7 @@ export default function RedeemModal({
                     onClick={onClose}
                     className="w-full py-2 text-sm font-semibold text-white/50 hover:text-white/80 transition-colors"
                   >
-                    Plus tard
+                    {t('later')}
                   </button>
                 )}
               </div>

@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { Gift, Cake, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
 interface BirthdaySectionProps {
@@ -12,6 +13,7 @@ interface BirthdaySectionProps {
 }
 
 export default function BirthdaySection({ merchant, customerId, hasBirthday }: BirthdaySectionProps) {
+  const t = useTranslations('birthdaySection');
   const [birthdayDay, setBirthdayDay] = useState('');
   const [birthdayMonth, setBirthdayMonth] = useState('');
   const [savingBirthday, setSavingBirthday] = useState(false);
@@ -25,7 +27,7 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
 
     const testDate = new Date(2000, parseInt(birthdayMonth) - 1, parseInt(birthdayDay));
     if (testDate.getMonth() !== parseInt(birthdayMonth) - 1) {
-      setBirthdayError('Cette date n\u2019existe pas (ex: 31 f\u00e9vrier)');
+      setBirthdayError(t('invalidDate'));
       return;
     }
 
@@ -47,7 +49,7 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
         setBirthdaySaved(true);
         setTimeout(() => setBirthdayDismissed(true), 4000);
       } else {
-        setBirthdayError('Une erreur est survenue, veuillez réessayer');
+        setBirthdayError(t('saveError'));
       }
     } catch (err) {
       console.error('Birthday save error:', err);
@@ -73,9 +75,9 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
                 <Cake className="w-5 h-5 text-pink-500" />
               </div>
               <div>
-                <p className="font-bold text-gray-900 text-sm">Date sauvegard&eacute;e !</p>
+                <p className="font-bold text-gray-900 text-sm">{t('dateSaved')}</p>
                 <p className="text-xs text-gray-500">
-                  Une surprise vous attendra le jour J !
+                  {t('surpriseAwaits')}
                 </p>
               </div>
             </div>
@@ -89,8 +91,8 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
                   <Gift className="w-5 h-5" style={{ color: merchant.primary_color }} />
                 </div>
                 <div>
-                  <p className="font-bold text-gray-900 text-sm">Recevez un cadeau pour votre anniversaire !</p>
-                  <p className="text-xs text-gray-500">Renseignez votre date une seule fois, elle ne pourra plus être changée</p>
+                  <p className="font-bold text-gray-900 text-sm">{t('receiveGift')}</p>
+                  <p className="text-xs text-gray-500">{t('enterDateOnce')}</p>
                 </div>
               </div>
               <div className="flex gap-2 mb-3">
@@ -99,7 +101,7 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
                   onChange={(e) => { setBirthdayDay(e.target.value); setBirthdayError(null); }}
                   className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
                 >
-                  <option value="">Jour</option>
+                  <option value="">{t('day')}</option>
                   {Array.from({ length: 31 }, (_, i) => (
                     <option key={i + 1} value={i + 1}>{i + 1}</option>
                   ))}
@@ -109,8 +111,8 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
                   onChange={(e) => { setBirthdayMonth(e.target.value); setBirthdayError(null); }}
                   className="flex-1 px-3 py-2.5 rounded-xl border border-gray-200 text-sm bg-white"
                 >
-                  <option value="">Mois</option>
-                  {['Jan','F\u00e9v','Mar','Avr','Mai','Juin','Juil','Ao\u00fbt','Sep','Oct','Nov','D\u00e9c'].map((m, i) => (
+                  <option value="">{t('month')}</option>
+                  {t('months').split(',').map((m, i) => (
                     <option key={i + 1} value={i + 1}>{m}</option>
                   ))}
                 </select>
@@ -129,7 +131,7 @@ export default function BirthdaySection({ merchant, customerId, hasBirthday }: B
                 ) : (
                   <>
                     <Cake className="w-4 h-4" />
-                    Enregistrer mon anniversaire
+                    {t('saveBirthday')}
                   </>
                 )}
               </button>

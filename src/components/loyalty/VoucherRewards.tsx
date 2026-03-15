@@ -1,6 +1,7 @@
 'use client';
 
 import { Gift, Eye } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import type { Merchant, Voucher } from '@/types';
 
@@ -11,6 +12,7 @@ interface VoucherRewardsProps {
 }
 
 export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: VoucherRewardsProps) {
+  const t = useTranslations('voucherRewards');
   const unusedVouchers = vouchers.filter(v => !v.is_used);
   if (unusedVouchers.length === 0) return null;
 
@@ -53,14 +55,14 @@ export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: 
               </motion.div>
               <div className="flex-1 min-w-0">
                 <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
-                  {group[0].source === 'birthday' ? 'Cadeau anniversaire' : 'Parrainage'}{group.length > 1 ? ` · ${group.length} disponibles` : ''}
+                  {group[0].source === 'birthday' ? t('birthdayGift') : t('referral')}{group.length > 1 ? t('availableCount', { count: group.length }) : ''}
                 </p>
                 <p className="text-white text-base font-black leading-snug line-clamp-2">
                   {desc}
                 </p>
                 {group[0].expires_at && (
                   <p className="text-white/50 text-[10px] mt-1">
-                    Expire le {new Date(group[0].expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
+                    {t('expiresOn', { date: new Date(group[0].expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }) })}
                   </p>
                 )}
               </div>
@@ -76,7 +78,7 @@ export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: 
               className="relative mt-4 w-full py-2.5 rounded-xl bg-white/20 backdrop-blur-sm border border-white/30 text-white font-bold text-sm hover:bg-white/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
             >
               <Eye className="w-4 h-4" />
-              Voir
+              {t('view')}
             </button>
           </div>
         </motion.div>

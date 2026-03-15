@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Star, X, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslations } from 'next-intl';
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface ReviewModalProps {
 const REVIEW_COOLDOWN_DAYS = 90;
 
 export default function ReviewModal({ isOpen, onClose, reviewLink, shopName, merchantId }: ReviewModalProps) {
+  const t = useTranslations('reviewModal');
   const [alreadyAsked, setAlreadyAsked] = useState(false);
 
   useEffect(() => {
@@ -111,7 +113,7 @@ export default function ReviewModal({ isOpen, onClose, reviewLink, shopName, mer
                 transition={{ delay: 0.45 }}
                 className="text-[1.35rem] font-black text-gray-900 leading-snug mb-8"
               >
-                Un avis, c&apos;est la plus belle façon de nous soutenir.
+                {t('mainMessage')}
               </motion.p>
 
               {/* Boutons */}
@@ -126,7 +128,7 @@ export default function ReviewModal({ isOpen, onClose, reviewLink, shopName, mer
                   className="w-full h-14 flex items-center justify-center gap-2 rounded-2xl text-white text-base font-bold shadow-lg shadow-amber-200/60 hover:shadow-xl hover:shadow-amber-300/50 active:scale-[0.97] transition-all"
                   style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}
                 >
-                  Laisser mon avis
+                  {t('leaveReview')}
                   <ChevronRight className="w-4 h-4" />
                 </button>
 
@@ -134,7 +136,7 @@ export default function ReviewModal({ isOpen, onClose, reviewLink, shopName, mer
                   onClick={handleDismiss}
                   className="w-full py-3 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  Non merci
+                  {t('noThanks')}
                 </button>
               </motion.div>
             </div>
