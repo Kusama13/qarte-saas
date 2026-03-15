@@ -912,17 +912,16 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <p className="text-sm font-bold text-gray-900 truncate">{merchant.shop_name}</p>
               </div>
               <a
-                href={isDemo ? '#' : merchant.booking_url!}
+                href={isDemo ? '/auth/merchant/signup' : merchant.booking_url!}
                 target={isDemo ? undefined : '_blank'}
                 rel={isDemo ? undefined : 'noopener noreferrer'}
-                onClick={isDemo ? noOp : undefined}
-                className="shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95"
-                style={{
+                className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95 ${isDemo ? 'bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/25' : ''}`}
+                style={isDemo ? undefined : {
                   background: `linear-gradient(135deg, ${p}, ${s})`,
                   boxShadow: `0 4px 14px ${p}30`,
                 }}
               >
-                Prendre rendez-vous
+                {isDemo ? 'Créer ma page' : 'Prendre rendez-vous'}
               </a>
             </div>
           </motion.div>

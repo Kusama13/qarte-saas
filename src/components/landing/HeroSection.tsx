@@ -138,15 +138,18 @@ export function HeroSection() {
             Une seule page pour tout montrer : bio, prestations, dispos, photos. Un programme fidélité pour les faire revenir. <span className="text-gray-900 font-medium">Tout ça en 5 minutes, sans site web.</span>
           </p>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 lg:gap-4">
-            <a
-              href="/auth/merchant/signup"
-              onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="group relative flex items-center justify-center px-7 py-4 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <span className="relative z-10">Essai gratuit</span>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </a>
+          <div className="flex flex-col sm:flex-row sm:items-start gap-3 lg:gap-4">
+            <div>
+              <a
+                href="/auth/merchant/signup"
+                onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
+                className="group relative flex items-center justify-center px-7 py-4 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span className="relative z-10">Essai gratuit</span>
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+              <p className="text-xs text-gray-400 font-medium mt-2 text-center">Sans carte bancaire, c&apos;est promis :)</p>
+            </div>
             <a
               href="/p/demo-onglerie"
               target="_blank"
@@ -155,7 +158,6 @@ export function HeroSection() {
               Voir la demo
             </a>
           </div>
-          <p className="text-xs text-gray-400 font-medium">Sans carte bancaire, c&apos;est promis :)</p>
 
         </div>
 
