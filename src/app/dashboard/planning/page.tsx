@@ -350,16 +350,16 @@ export default function PlanningDashboard() {
       </div>
 
       {/* ── TABS ── */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-5">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-5 sm:w-fit">
         <button
           onClick={() => setTab('slots')}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${tab === 'slots' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`flex-1 sm:flex-none sm:px-5 py-2 text-xs font-semibold rounded-lg transition-all ${tab === 'slots' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Créneaux
         </button>
         <button
           onClick={() => setTab('settings')}
-          className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${tab === 'settings' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          className={`flex-1 sm:flex-none sm:px-5 py-2 text-xs font-semibold rounded-lg transition-all ${tab === 'settings' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Paramètres
         </button>
@@ -371,12 +371,26 @@ export default function PlanningDashboard() {
       {tab === 'slots' && (
         <>
           {!planningEnabled ? (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 text-center max-w-md mx-auto">
               <CalendarDays className="w-10 h-10 text-gray-200 mx-auto mb-3" />
               <p className="text-sm font-semibold text-gray-700 mb-1">Le planning est désactivé</p>
-              <p className="text-xs text-gray-400 max-w-xs mx-auto">
-                Active le toggle ci-dessus pour gérer tes créneaux et les afficher sur ta page.
+              <p className="text-xs text-gray-400 mb-4">
+                Active le toggle ci-dessus pour commencer.
               </p>
+              <div className="text-left space-y-2.5">
+                <div className="flex items-start gap-2.5">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center mt-0.5">1</span>
+                  <p className="text-xs text-gray-500">Ajoute tes créneaux disponibles semaine par semaine</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center mt-0.5">2</span>
+                  <p className="text-xs text-gray-500">Tes clientes voient les dispos sur ta page publique</p>
+                </div>
+                <div className="flex items-start gap-2.5">
+                  <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold flex items-center justify-center mt-0.5">3</span>
+                  <p className="text-xs text-gray-500">Tu notes les réservations et télécharges une story Instagram en un clic</p>
+                </div>
+              </div>
             </div>
           ) : (
             <>
@@ -562,7 +576,7 @@ export default function PlanningDashboard() {
       {/* ── TAB: PARAMÈTRES ── */}
       {/* ══════════════════════════════════════ */}
       {tab === 'settings' && (
-        <div className="max-w-lg mx-auto space-y-4">
+        <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0">
           {/* ── Card: Message public ── */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <div className="flex items-center justify-between mb-1">
@@ -582,7 +596,7 @@ export default function PlanningDashboard() {
                 <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform ${messageEnabled ? 'translate-x-[18px]' : 'translate-x-[3px]'}`} />
               </button>
             </div>
-            <p className="text-[11px] text-gray-400 mb-3 ml-9">Banniere visible sur ta page publique</p>
+            <p className="text-[11px] text-gray-400 mb-3 ml-9">Vacances, fermeture, info importante... affiche une banniere sur ta page publique</p>
 
             {messageEnabled && (
               <div className="space-y-2.5 ml-9">
@@ -615,25 +629,26 @@ export default function PlanningDashboard() {
             )}
           </div>
 
-          {/* ── Card: Pour réserver ── */}
+          {/* ── Card: Conditions de réservation ── */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <div className="flex items-center gap-2 mb-1">
               <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center">
                 <Phone className="w-3.5 h-3.5 text-violet-600" />
               </div>
-              <h2 className="text-sm font-bold text-gray-800">Pour réserver</h2>
+              <h2 className="text-sm font-bold text-gray-800">Conditions de reservation</h2>
             </div>
-            <p className="text-[11px] text-gray-400 mb-3 ml-9">Indique le meilleur moyen de te contacter pour réserver</p>
+            <p className="text-[11px] text-gray-400 mb-3 ml-9">Acompte, annulation, retard... tes clientes sauront a quoi s&apos;attendre</p>
 
             <div className="ml-9">
-              <input
-                type="text"
+              <textarea
                 value={bookingMessage}
                 onChange={(e) => setBookingMessage(e.target.value)}
-                placeholder="Ex: Envoie-moi un DM sur Instagram"
-                maxLength={200}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400"
+                placeholder={"Ex: Acompte de 20€ obligatoire\nAnnulation possible jusqu'a 24h avant\nRetard de +15min = creneau annule"}
+                maxLength={500}
+                rows={4}
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 resize-none"
               />
+              <p className="text-[10px] text-gray-300 text-right mt-1">{bookingMessage.length}/500</p>
             </div>
           </div>
 
@@ -641,7 +656,7 @@ export default function PlanningDashboard() {
           <button
             onClick={handleSaveSettings}
             disabled={savingSettings}
-            className="w-full py-3 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            className="w-full py-3 rounded-2xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 sm:col-span-2 sm:max-w-xs sm:mx-auto"
           >
             {savedSettings ? (
               <span className="flex items-center justify-center gap-2"><Check className="w-4 h-4" /> Enregistré</span>

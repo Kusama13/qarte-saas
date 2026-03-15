@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone } from 'lucide-react';
+import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
@@ -63,7 +63,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [servicesOpen, setServicesOpen] = useState(false);
+  const [servicesExpanded, setServicesExpanded] = useState(false);
   const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
 
   // Opening hours
@@ -343,7 +343,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               <p className="text-[13px] font-semibold text-gray-700">{merchant.planning_message}</p>
             </div>
             {hasBookingMessage && (
-              <p className="text-[12px] text-gray-500 text-center mt-3"><span className="font-semibold text-gray-400">Pour réserver :</span> {merchant.booking_message}</p>
+              <div className="rounded-lg px-3 py-2 mt-3 bg-gray-50 border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Conditions</p>
+                <p className="text-[12px] text-gray-600 whitespace-pre-line">{merchant.booking_message}</p>
+              </div>
             )}
           </motion.div>
         )}
@@ -371,9 +374,12 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               </div>
             )}
 
-            {/* Message prise de RDV */}
+            {/* Conditions de réservation */}
             {hasBookingMessage && (
-              <p className="text-[12px] text-gray-500 text-center mb-3"><span className="font-semibold text-gray-400">Pour réserver :</span> {merchant.booking_message}</p>
+              <div className="rounded-lg px-3 py-2 mb-3 bg-gray-50 border border-gray-100">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Conditions</p>
+                <p className="text-[12px] text-gray-600 whitespace-pre-line">{merchant.booking_message}</p>
+              </div>
             )}
 
             {/* Slots by month */}
@@ -421,6 +427,113 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             )}
           </motion.div>
         )}
+
+        {/* ── PRESTATIONS ── */}
+        {services.length > 0 && (() => {
+          const PREVIEW_COUNT = 3;
+          // Flatten services with category headers for preview slicing
+          const flatItems: { type: 'cat'; name: string; id: string }[] | { type: 'svc'; svc: typeof services[0]; isLast: boolean }[] = [];
+          const allFlat: Array<{ type: 'cat'; name: string; id: string } | { type: 'svc'; svc: typeof services[0]; isLast: boolean }> = [];
+          if (hasCategories) {
+            for (const cat of serviceCategories) {
+              const catSvcs = services.filter(sv => sv.category_id === cat.id);
+              if (catSvcs.length === 0) continue;
+              allFlat.push({ type: 'cat', name: cat.name, id: cat.id });
+              catSvcs.forEach((sv, i) => allFlat.push({ type: 'svc', svc: sv, isLast: i === catSvcs.length - 1 }));
+            }
+            const uncatSvcs = services.filter(sv => !serviceCategories.some(c => c.id === sv.category_id));
+            uncatSvcs.forEach((sv, i) => allFlat.push({ type: 'svc', svc: sv, isLast: i === uncatSvcs.length - 1 }));
+          } else {
+            services.forEach((sv, i) => allFlat.push({ type: 'svc', svc: sv, isLast: i === services.length - 1 }));
+          }
+
+          // Count only service items for preview
+          let svcCount = 0;
+          let previewEndIdx = allFlat.length;
+          for (let i = 0; i < allFlat.length; i++) {
+            if (allFlat[i].type === 'svc') svcCount++;
+            if (svcCount === PREVIEW_COUNT) { previewEndIdx = i + 1; break; }
+          }
+          const totalSvcCount = allFlat.filter(it => it.type === 'svc').length;
+          const hasMore = totalSvcCount > PREVIEW_COUNT;
+          const visibleItems = servicesExpanded ? allFlat : allFlat.slice(0, previewEndIdx);
+
+          const renderItem = (item: typeof allFlat[number], idx: number) => {
+            if (item.type === 'cat') {
+              return (
+                <p key={`cat-${item.id}`} className="text-[11px] font-bold uppercase tracking-wider mb-1 pt-2" style={{ color: p }}>
+                  {item.name}
+                </p>
+              );
+            }
+            const { svc, isLast } = item;
+            return (
+              <div
+                key={svc.id}
+                className={`py-3 ${!isLast && !(idx === visibleItems.length - 1 && !servicesExpanded) ? 'border-b border-gray-100/80' : ''}`}
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
+                  <div className="flex items-center gap-2 shrink-0 ml-4">
+                    {svc.duration && (
+                      <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                        <Clock className="w-3 h-3" />
+                        {fmtDuration(svc.duration)}
+                      </span>
+                    )}
+                    <p className="text-[13px] font-bold text-gray-900">
+                      {svc.price_from && <span className="text-[11px] font-normal text-gray-400">dès </span>}
+                      {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
+                    </p>
+                  </div>
+                </div>
+                {svc.description && (
+                  <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{svc.description}</p>
+                )}
+              </div>
+            );
+          };
+
+          return (
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.15, ease: 'easeOut' }}
+              className="rounded-2xl overflow-hidden border shadow-lg shadow-gray-200/40"
+              style={{ borderColor: `${p}20`, background: `linear-gradient(135deg, ${p}06, ${s}04)` }}
+            >
+              <div className="px-5 pt-5 pb-2 flex items-center gap-3">
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ background: `linear-gradient(135deg, ${p}, ${s})`, boxShadow: `0 4px 12px ${p}30` }}
+                >
+                  <ClipboardList className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-[15px] font-bold text-gray-900">Mes prestations</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    {totalSvcCount} prestation{totalSvcCount > 1 ? 's' : ''}
+                  </p>
+                </div>
+              </div>
+
+              <div className="px-5 pb-4">
+                {visibleItems.map((item, idx) => renderItem(item, idx))}
+
+                {hasMore && !servicesExpanded && (
+                  <button
+                    type="button"
+                    onClick={() => setServicesExpanded(true)}
+                    className="w-full mt-2 py-2.5 rounded-xl text-[12px] font-bold transition-colors cursor-pointer"
+                    style={{ color: p, backgroundColor: `${p}08` }}
+                  >
+                    Voir les {totalSvcCount - PREVIEW_COUNT} autres prestations
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          );
+        })()}
 
         {/* ── OFFRE DE BIENVENUE (nouveaux clients) ── */}
         {merchant.welcome_offer_enabled && merchant.welcome_offer_description && merchant.welcome_referral_code && merchant.scan_code && (
@@ -701,156 +814,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           </motion.div>
         )}
 
-        {/* ── PRESTATIONS ── */}
-        {services.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.15, ease: 'easeOut' }}
-            className="rounded-2xl overflow-hidden border shadow-lg shadow-gray-200/40"
-            style={{ borderColor: `${p}20`, background: `linear-gradient(135deg, ${p}06, ${s}04)` }}
-          >
-            <button
-              type="button"
-              onClick={() => setServicesOpen(!servicesOpen)}
-              className="w-full px-5 pt-5 pb-4 flex items-center justify-between cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-11 h-11 rounded-xl flex items-center justify-center"
-                  style={{ background: `linear-gradient(135deg, ${p}, ${s})`, boxShadow: `0 4px 12px ${p}30` }}
-                >
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-[15px] font-bold text-gray-900">
-                    Mes prestations
-                  </p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">
-                    {services.length} prestation{services.length > 1 ? 's' : ''} — voir les tarifs
-                  </p>
-                </div>
-              </div>
-              <motion.div
-                animate={{ rotate: servicesOpen ? 180 : 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </motion.div>
-            </button>
-
-            <AnimatePresence initial={false}>
-              {servicesOpen && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
-                >
-                  <div className="px-5 pb-4">
-                    {hasCategories ? (
-                      <>
-                        {serviceCategories.map((cat) => {
-                          const catServices = services.filter(svc => svc.category_id === cat.id);
-                          if (catServices.length === 0) return null;
-                          return (
-                            <div key={cat.id} className="mb-3 last:mb-0">
-                              <p className="text-[11px] font-bold uppercase tracking-wider mb-1 pt-2" style={{ color: p }}>
-                                {cat.name}
-                              </p>
-                              {catServices.map((svc, idx) => (
-                                <div
-                                  key={svc.id}
-                                  className={`py-3 ${idx < catServices.length - 1 ? 'border-b border-gray-100/80' : ''}`}
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
-                                    <div className="flex items-center gap-2 shrink-0 ml-4">
-                                      {svc.duration && (
-                                        <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
-                                          <Clock className="w-3 h-3" />
-                                          {fmtDuration(svc.duration)}
-                                        </span>
-                                      )}
-                                      <p className="text-[13px] font-bold text-gray-900">
-                                        {svc.price_from && <span className="text-[11px] font-normal text-gray-400">dès </span>}
-                                        {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
-                                      </p>
-                                    </div>
-                                  </div>
-                                  {svc.description && (
-                                    <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{svc.description}</p>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })}
-                        {uncategorized.length > 0 && (
-                          <div className="mt-1">
-                            {uncategorized.map((svc, idx) => (
-                              <div
-                                key={svc.id}
-                                className={`py-3 ${idx < uncategorized.length - 1 ? 'border-b border-gray-100/80' : ''}`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
-                                  <div className="flex items-center gap-2 shrink-0 ml-4">
-                                    {svc.duration && (
-                                      <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
-                                        <Clock className="w-3 h-3" />
-                                        {fmtDuration(svc.duration)}
-                                      </span>
-                                    )}
-                                    <p className="text-[13px] font-bold text-gray-900">
-                                      {svc.price_from && <span className="text-[11px] font-normal text-gray-400">dès </span>}
-                                      {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
-                                    </p>
-                                  </div>
-                                </div>
-                                {svc.description && (
-                                  <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{svc.description}</p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      services.map((svc, idx) => (
-                        <div
-                          key={svc.id}
-                          className={`py-3 ${idx < services.length - 1 ? 'border-b border-gray-100/80' : ''}`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <p className="text-[13px] font-medium text-gray-700">{svc.name}</p>
-                            <div className="flex items-center gap-2 shrink-0 ml-4">
-                              {svc.duration && (
-                                <span className="text-[11px] text-gray-400 flex items-center gap-0.5">
-                                  <Clock className="w-3 h-3" />
-                                  {fmtDuration(svc.duration)}
-                                </span>
-                              )}
-                              <p className="text-[13px] font-bold text-gray-900">
-                                {svc.price_from && <span className="text-[11px] font-normal text-gray-400">dès </span>}
-                                {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
-                              </p>
-                            </div>
-                          </div>
-                          {svc.description && (
-                            <p className="text-[11px] text-gray-400 mt-0.5 leading-snug">{svc.description}</p>
-                          )}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        )}
-
         {/* ── RÉSEAUX SOCIAUX ── */}
         <motion.div
           ref={socialRef}
@@ -862,27 +825,26 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           <SocialLinks merchant={merchant as Merchant} />
         </motion.div>
 
-        {/* ── CTA MERCHANT ── */}
+        {/* ── FOOTER LINKTREE-STYLE ── */}
         <motion.a
           href="https://getqarte.com/auth/merchant/signup"
           target="_blank"
           rel="noopener noreferrer"
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.4 }}
-          className="block text-center py-4 px-5 rounded-2xl bg-white border border-gray-100/80 shadow-[0_2px_20px_rgba(0,0,0,0.04)] hover:shadow-md transition-all"
+          transition={{ delay: 0.6, duration: 0.5 }}
+          className="block rounded-2xl bg-white px-5 py-4 text-center group transition-all hover:-translate-y-0.5"
+          style={{
+            boxShadow: '0 1px 2px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.05), 0 12px 32px rgba(0,0,0,0.04)',
+          }}
         >
-          <p className="text-[13px] font-bold text-gray-800">Crée ta page beauté gratuitement</p>
-          <p className="text-[11px] text-gray-400 mt-0.5">En 5 min sur getqarte.com</p>
+          <p className="text-[13px] text-gray-500 group-hover:text-gray-600 transition-colors">
+            Rejoignez <span className="font-semibold text-gray-700">{merchant.shop_name}</span> sur{' '}
+            <span className="font-bold text-[#4b0082] group-hover:text-[#654EDA] transition-colors">Qarte</span>
+          </p>
         </motion.a>
 
-        {/* ── FOOTER ── */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.65, duration: 0.5 }}
-          className="text-center text-[11px] text-gray-400 font-medium pt-3 pb-2"
-        >
+        <p className="text-center text-[11px] text-gray-400 font-medium pt-3 pb-2">
           Propulsé par{' '}
           <a
             href="https://getqarte.com"
@@ -892,7 +854,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           >
             Qarte
           </a>
-        </motion.p>
+        </p>
 
       </div>
 

@@ -74,5 +74,8 @@ export const changelog: Record<string, ChangelogEntry[]> = {
     { tag: 'feature', text: 'Public-page — autosave + split, planning module, demo pages' },
     { tag: 'feature', text: 'Hero CTA layout fix + demo sticky' },
     { tag: 'feature', text: 'Admin merchant detail — tabs UX + optimisations' },
+    { tag: 'design', text: 'Page publique — prestations apres planning, 3 visibles par defaut, CTA Linktree-style' },
+    { tag: 'feature', text: 'Planning — conditions de reservation (textarea), message public description, onboarding explicatif' },
+    { tag: 'design', text: 'Planning — tabs compacts desktop, parametres en grille 2 colonnes' },
   ],
 };
