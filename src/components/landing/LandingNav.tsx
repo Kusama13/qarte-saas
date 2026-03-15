@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
+import LocaleSwitcher from '@/components/shared/LocaleSwitcher';
 
 interface LandingNavProps {
   /** Hide Tarifs, Contact, S'identifier links — keep only logo + CTA */
@@ -14,19 +16,20 @@ interface LandingNavProps {
 
 export default function LandingNav({ minimal = false }: LandingNavProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const t = useTranslations('nav');
 
   return (
     <>
       {/* Sticky Top Banner - Customer Card Recovery */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-gray-50 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-center gap-2 text-sm">
-          <span className="text-gray-500 hidden sm:inline">Tu as déjà une carte de fidélité ?</span>
-          <span className="text-gray-500 sm:hidden">Déjà client ?</span>
+          <span className="text-gray-500 hidden sm:inline">{t('bannerHasCard')}</span>
+          <span className="text-gray-500 sm:hidden">{t('bannerHasCardMobile')}</span>
           <a
             href="/customer/cards"
             className="text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
           >
-            Retrouver ma carte →
+            {t('bannerFindCard')}
           </a>
         </div>
       </div>
@@ -42,9 +45,9 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
             {!minimal && (
               <>
-                <a href="/#pricing" className="hover:text-indigo-600 transition-colors link-underline">Tarifs</a>
-                <a href="/contact" className="hover:text-indigo-600 transition-colors link-underline">Contact</a>
-                <a href="/auth/merchant" className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold border border-indigo-200 rounded-lg transition-colors">S&apos;identifier</a>
+                <a href="/#pricing" className="hover:text-indigo-600 transition-colors link-underline">{t('pricing')}</a>
+                <a href="/contact" className="hover:text-indigo-600 transition-colors link-underline">{t('contact')}</a>
+                <a href="/auth/merchant" className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold border border-indigo-200 rounded-lg transition-colors">{t('login')}</a>
               </>
             )}
             <a
@@ -52,7 +55,7 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
               onClick={() => { trackCtaClick('header_desktop_cta', 'navbar'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
               className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-lg transition-all shadow-sm hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg"
             >
-              Essai gratuit
+              {t('freeTrial')}
             </a>
           </div>
 
@@ -63,7 +66,7 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
               onClick={() => { trackCtaClick('header_mobile_cta', 'navbar'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
               className="px-3.5 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-xs font-bold rounded-lg shadow-sm"
             >
-              Essai gratuit
+              {t('freeTrial')}
             </a>
             {!minimal && (
               <button
@@ -100,21 +103,21 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
                     onClick={() => setMobileMenuOpen(false)}
                     className="block py-2 text-gray-600 hover:text-indigo-600 font-medium transition-colors"
                   >
-                    Tarifs
+                    {t('pricing')}
                   </a>
                   <a
                     href="/contact"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block py-2 text-gray-600 hover:text-indigo-600 font-medium transition-colors"
                   >
-                    Contact
+                    {t('contact')}
                   </a>
                   <a
                     href="/auth/merchant"
                     onClick={() => setMobileMenuOpen(false)}
                     className="block w-full py-3 mt-2 text-center bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold rounded-lg transition-all shadow-sm"
                   >
-                    Espace Pro
+                    {t('proSpace')}
                   </a>
                 </div>
               </motion.div>

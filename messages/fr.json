@@ -17,5 +17,30 @@
     "no": "Non",
     "or": "ou",
     "and": "et"
+  },
+  "nav": {
+    "bannerHasCard": "Tu as déjà une carte de fidélité ?",
+    "bannerHasCardMobile": "Déjà client ?",
+    "bannerFindCard": "Retrouver ma carte →",
+    "pricing": "Tarifs",
+    "contact": "Contact",
+    "login": "S'identifier",
+    "freeTrial": "Essai gratuit",
+    "proSpace": "Espace Pro"
+  },
+  "footer": {
+    "ctaTitle": "Rejoins les pros qui attirent et fidélisent avec Qarte",
+    "ctaButton": "Commence maintenant — c'est gratuit",
+    "tagline": "La carte de fidélité digitale pour les pros de la beauté et du bien-être.",
+    "madeIn": "Conçu à Marseille avec amour ❤️",
+    "support": "Support",
+    "quickLinks": "Liens rapides",
+    "followUs": "Nous suivre",
+    "blog": "Blog",
+    "legalNotices": "Mentions légales",
+    "terms": "CGV",
+    "privacy": "Confidentialité",
+    "copyright": "© 2026 Qarte. Tous droits réservés.",
+    "securePayment": "Paiement sécurisé par Stripe"
   }
 }

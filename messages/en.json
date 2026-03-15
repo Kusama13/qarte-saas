@@ -17,5 +17,30 @@
     "no": "No",
     "or": "or",
     "and": "and"
+  },
+  "nav": {
+    "bannerHasCard": "Already have a loyalty card?",
+    "bannerHasCardMobile": "Already a client?",
+    "bannerFindCard": "Find my card →",
+    "pricing": "Pricing",
+    "contact": "Contact",
+    "login": "Sign in",
+    "freeTrial": "Free trial",
+    "proSpace": "Pro Dashboard"
+  },
+  "footer": {
+    "ctaTitle": "Join the pros who attract and retain clients with Qarte",
+    "ctaButton": "Get started — it's free",
+    "tagline": "The digital loyalty card for beauty and wellness professionals.",
+    "madeIn": "Made in Marseille with love ❤️",
+    "support": "Support",
+    "quickLinks": "Quick links",
+    "followUs": "Follow us",
+    "blog": "Blog",
+    "legalNotices": "Legal notices",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "copyright": "© 2026 Qarte. All rights reserved.",
+    "securePayment": "Secure payment by Stripe"
   }
 }
