@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Globe,
@@ -20,7 +20,7 @@ import {
 import { useMerchant } from '@/contexts/MerchantContext';
 import InfoSection from './InfoSection';
 import PhotosSection from './PhotosSection';
-import WelcomeSection from './WelcomeSection';
+import WelcomeSection, { type WelcomeSectionHandle } from './WelcomeSection';
 import ServicesSection from './ServicesSection';
 import PromoSection from './PromoSection';
 
@@ -29,6 +29,7 @@ type SectionId = 'salon' | 'contenu' | 'acquisition';
 export default function PublicPageDashboard() {
   const router = useRouter();
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
+  const welcomeRef = useRef<WelcomeSectionHandle>(null);
 
   // Collapsible sections — all open by default
   const [openSections, setOpenSections] = useState<Set<SectionId>>(new Set(['salon', 'contenu', 'acquisition']));
@@ -368,8 +369,8 @@ export default function PublicPageDashboard() {
 
             {openSections.has('acquisition') && (
               <div className="px-4 md:px-5 pb-5 space-y-0">
-                <WelcomeSection merchant={merchant} refetch={refetch} onShowHelp={() => setShowWelcomeHelp(true)} />
-                <PromoSection merchant={merchant} />
+                <WelcomeSection ref={welcomeRef} merchant={merchant} refetch={refetch} onShowHelp={() => setShowWelcomeHelp(true)} />
+                <PromoSection merchant={merchant} welcomeRef={welcomeRef} />
               </div>
             )}
           </div>

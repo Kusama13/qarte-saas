@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useImperativeHandle, forwardRef } from 'react';
 import {
   Sparkles,
   HelpCircle,
-  Loader2,
-  Check,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
-import { useDashboardSave } from '@/hooks/useDashboardSave';
 import type { Merchant } from '@/types';
+
+export interface WelcomeSectionHandle {
+  save: () => Promise<void>;
+}
 
 interface WelcomeSectionProps {
   merchant: Merchant;
@@ -17,8 +18,7 @@ interface WelcomeSectionProps {
   onShowHelp?: () => void;
 }
 
-export default function WelcomeSection({ merchant, refetch, onShowHelp }: WelcomeSectionProps) {
-  const { saving, saved, save } = useDashboardSave();
+const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(function WelcomeSection({ merchant, refetch, onShowHelp }, ref) {
   const [welcomeEnabled, setWelcomeEnabled] = useState(false);
   const [welcomeDescription, setWelcomeDescription] = useState('');
   const [saveError, setSaveError] = useState('');
@@ -28,111 +28,93 @@ export default function WelcomeSection({ merchant, refetch, onShowHelp }: Welcom
     setWelcomeDescription(merchant.welcome_offer_description || '');
   }, [merchant]);
 
-  const handleSave = () => {
-    save(async () => {
-      if (welcomeEnabled && !welcomeDescription.trim()) throw new Error('Description requise');
+  const save = async () => {
+    if (welcomeEnabled && !welcomeDescription.trim()) throw new Error('Description requise');
 
-      setSaveError('');
-      const res = await fetch('/api/merchants/referral-config', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          merchant_id: merchant.id,
-          referral_program_enabled: merchant.referral_program_enabled,
-          referral_reward_referrer: merchant.referral_reward_referrer,
-          referral_reward_referred: merchant.referral_reward_referred,
-          welcome_offer_enabled: welcomeEnabled,
-          welcome_offer_description: welcomeEnabled ? welcomeDescription.trim() : null,
-        }),
-      });
-
-      if (!res.ok) {
-        setSaveError('Erreur lors de la sauvegarde');
-        throw new Error('save failed');
-      }
-
-      await refetch();
+    setSaveError('');
+    const res = await fetch('/api/merchants/referral-config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        merchant_id: merchant.id,
+        referral_program_enabled: merchant.referral_program_enabled,
+        referral_reward_referrer: merchant.referral_reward_referrer,
+        referral_reward_referred: merchant.referral_reward_referred,
+        welcome_offer_enabled: welcomeEnabled,
+        welcome_offer_description: welcomeEnabled ? welcomeDescription.trim() : null,
+      }),
     });
+
+    if (!res.ok) {
+      setSaveError('Erreur lors de la sauvegarde');
+      throw new Error('save failed');
+    }
+
+    await refetch();
   };
 
+  useImperativeHandle(ref, () => ({ save }));
+
   return (
-    <>
-      <div className="pb-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-violet-500" />
-            <span className="text-sm font-semibold text-gray-700">Offre nouveau client</span>
-            {welcomeEnabled && onShowHelp && (
-              <button
-                onClick={onShowHelp}
-                className="p-1 text-gray-400 hover:text-indigo-600 transition-colors"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-          <button
-            role="switch"
-            aria-checked={welcomeEnabled}
-            onClick={() => setWelcomeEnabled(!welcomeEnabled)}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
-              welcomeEnabled ? 'bg-violet-600' : 'bg-gray-200'
-            }`}
-          >
-            <span className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-transform ${welcomeEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
-          </button>
+    <div className="pb-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-violet-500" />
+          <span className="text-sm font-semibold text-gray-700">Offre nouveau client</span>
+          {welcomeEnabled && onShowHelp && (
+            <button
+              onClick={onShowHelp}
+              className="p-1 text-gray-400 hover:text-indigo-600 transition-colors"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
-
-        {welcomeEnabled && (
-          <div className="space-y-3 mt-3">
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                Description de l&apos;offre <span className="text-red-400">*</span>
-              </label>
-              <Input
-                placeholder="Ex: -20% sur votre premiere visite"
-                value={welcomeDescription}
-                onChange={(e) => setWelcomeDescription(e.target.value)}
-                className="h-10 text-sm"
-              />
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {['-10% sur la 1ere visite', '-20% sur la 1ere visite', 'Un soin offert'].map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => setWelcomeDescription(s)}
-                    className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-colors"
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {saveError && (
-          <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{saveError}</div>
-        )}
-
-        {/* ── Save button ── */}
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saving}
-            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
-              saved
-                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                : 'bg-violet-600 text-white hover:bg-violet-700 shadow-sm'
-            }`}
-          >
-            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : null}
-            {saving ? 'Sauvegarde...' : saved ? 'Sauvegard\u00e9' : 'Enregistrer'}
-          </button>
-        </div>
+        <button
+          role="switch"
+          aria-checked={welcomeEnabled}
+          onClick={() => setWelcomeEnabled(!welcomeEnabled)}
+          className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
+            welcomeEnabled ? 'bg-violet-600' : 'bg-gray-200'
+          }`}
+        >
+          <span className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-transform ${welcomeEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+        </button>
       </div>
 
-    </>
+      {welcomeEnabled && (
+        <div className="space-y-3 mt-3">
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+              Description de l&apos;offre <span className="text-red-400">*</span>
+            </label>
+            <Input
+              placeholder="Ex: -20% sur votre premiere visite"
+              value={welcomeDescription}
+              onChange={(e) => setWelcomeDescription(e.target.value)}
+              className="h-10 text-sm"
+            />
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {['-10% sur la 1ere visite', '-20% sur la 1ere visite', 'Un soin offert'].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setWelcomeDescription(s)}
+                  className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-violet-50 hover:text-violet-600 hover:border-violet-200 transition-colors"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {saveError && (
+        <div className="mt-3 p-2.5 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{saveError}</div>
+      )}
+    </div>
   );
-}
+});
+
+export default WelcomeSection;

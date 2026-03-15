@@ -10,12 +10,14 @@ import { Input } from '@/components/ui';
 import { getTodayInParis } from '@/lib/utils';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import type { Merchant } from '@/types';
+import type { WelcomeSectionHandle } from './WelcomeSection';
 
 interface PromoSectionProps {
   merchant: Merchant;
+  welcomeRef?: React.RefObject<WelcomeSectionHandle | null>;
 }
 
-export default function PromoSection({ merchant }: PromoSectionProps) {
+export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps) {
   const { saving, saved, save } = useDashboardSave();
   const [promoEnabled, setPromoEnabled] = useState(false);
   const [promoTitle, setPromoTitle] = useState('');
@@ -44,6 +46,9 @@ export default function PromoSection({ merchant }: PromoSectionProps) {
 
   const handleSave = () => {
     save(async () => {
+      // Save welcome section first
+      await welcomeRef?.current?.save();
+
       if (promoEnabled && (!promoTitle.trim() || !promoDescription.trim())) throw new Error('Titre et description requis');
 
       if (promoEnabled) {
