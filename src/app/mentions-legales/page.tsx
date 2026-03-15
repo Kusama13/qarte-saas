@@ -5,7 +5,7 @@ import NoRightClick from '@/components/NoRightClick';
 
 export const metadata: Metadata = {
   title: 'Mentions Légales | Qarte',
-  description: 'Mentions légales de Qarte, la solution de fidélité digitale pour les commerçants indépendants.',
+  description: 'Mentions légales de Qarte, la solution de fidélité digitale et page pro pour les professionnels de la beauté.',
 };
 
 export default function LegalMentionsPage() {
@@ -32,7 +32,7 @@ export default function LegalMentionsPage() {
           Mentions Légales
         </h1>
         <p className="text-gray-500 mb-10">
-          Dernière mise à jour : Février 2026
+          Dernière mise à jour : Mars 2026
         </p>
 
         <div className="prose prose-gray max-w-none space-y-8">

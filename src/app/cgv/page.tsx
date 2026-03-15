@@ -5,7 +5,7 @@ import NoRightClick from '@/components/NoRightClick';
 
 export const metadata: Metadata = {
   title: 'Conditions Générales de Vente | Qarte',
-  description: 'Consultez les conditions générales de vente de Qarte, la solution de fidélité digitale pour commerçants.',
+  description: 'Consultez les conditions générales de vente de Qarte, la solution de fidélité digitale et page pro pour les professionnels de la beauté.',
 };
 
 export default function CGVPage() {
@@ -32,7 +32,7 @@ export default function CGVPage() {
           Conditions Générales de Vente
         </h1>
         <p className="text-gray-500 mb-10">
-          Dernière mise à jour : Février 2026
+          Dernière mise à jour : Mars 2026
         </p>
 
         <div className="prose prose-gray max-w-none space-y-8">
@@ -41,7 +41,7 @@ export default function CGVPage() {
               1. Objet
             </h2>
             <p className="text-gray-600">
-              Les présentes Conditions Générales de Vente (ci-après « CGV ») régissent les relations contractuelles entre la société SAS Tenga Labs, éditrice du service Qarte, dont le siège social est situé au 60 rue François 1er, 75008 Paris (ci-après « le Prestataire ») et tout professionnel ou particulier (ci-après « le Client ») souscrivant au service Qarte, une plateforme SaaS de digitalisation de programmes de fidélité pour les commerçants.
+              Les présentes Conditions Générales de Vente (ci-après « CGV ») régissent les relations contractuelles entre la société SAS Tenga Labs, éditrice du service Qarte, dont le siège social est situé au 60 rue François 1er, 75008 Paris (ci-après « le Prestataire ») et tout professionnel ou particulier (ci-après « le Client ») souscrivant au service Qarte, une plateforme SaaS de page professionnelle et de programme de fidélité digital pour les professionnels de la beauté et du bien-être.
             </p>
             <p className="text-gray-600 mt-2">
               Toute souscription au Service implique l&apos;acceptation pleine et entière des présentes CGV, qui prévalent sur tout autre document.
@@ -56,12 +56,15 @@ export default function CGVPage() {
               Qarte propose aux commerçants une solution permettant de créer et gérer un programme de fidélité digital. Le Service inclut notamment :
             </p>
             <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-              <li>La création et la personnalisation d&apos;une carte de fidélité digitale</li>
-              <li>La génération de QR codes pour l&apos;enregistrement des passages clients</li>
+              <li>La création et la personnalisation d&apos;une carte de fidélité digitale (mode passages ou cagnotte)</li>
+              <li>La génération de QR codes et la compatibilité carte NFC pour l&apos;enregistrement des passages clients</li>
+              <li>Une page professionnelle personnalisée (bio, prestations, tarifs, horaires, galerie photos)</li>
+              <li>Un module de planning en ligne pour la gestion des disponibilités</li>
               <li>Un tableau de bord de suivi et de statistiques</li>
               <li>La gestion des clients et des récompenses</li>
               <li>Un système de parrainage client</li>
-              <li>L&apos;envoi de notifications push aux clients</li>
+              <li>Des relances automatiques et l&apos;envoi de notifications push aux clients</li>
+              <li>La collecte d&apos;avis Google</li>
             </ul>
           </section>
 
