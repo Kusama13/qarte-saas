@@ -39,15 +39,17 @@ const PLANS = {
 const features = [
   'Clients illimités',
   'Mode passages ou cagnotte',
-  'QR Code perso + Kit promo',
-  'Page publique personnalisée',
+  'QR Code perso + Carte NFC',
+  'Page pro personnalisée',
   'Tarifs et prestations',
+  'Galerie photos',
+  'Planning en ligne',
   'Offre de bienvenue',
   'Programme de parrainage',
+  'Relances automatiques',
+  'Avis Google',
   'Notifications push',
   'Dashboard analytics',
-  'Avis Google',
-  'Lien de réservation',
   'Zéro commission',
 ];
 
