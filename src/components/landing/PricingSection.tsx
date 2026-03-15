@@ -14,29 +14,31 @@ export function PricingSection() {
     'Bio et horaires',
     'Galerie photos',
     'Tarifs et prestations',
-    'Planning disponibilités',
+    'Planning disponibilites',
     'Offre de bienvenue',
-    'Avis Google intégrés',
-    'Lien de réservation',
+    'Avis Google integres',
+    'Lien de reservation',
     'Programme de parrainage',
     'Mode passages ou cagnotte',
     'QR Code perso + Kit promo',
     'Notifications push',
     'Dashboard analytics',
-    'Clients illimités',
+    'Clients illimites',
   ];
 
   return (
-    <section id="pricing" className="py-24 md:py-32 bg-gray-50">
-      <div ref={ref} className="max-w-6xl mx-auto px-6">
+    <section id="pricing" className="relative py-24 md:py-32 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
+      {/* No floating icons outside - they're inside the card now */}
+
+      <div ref={ref} className="relative max-w-6xl mx-auto px-6">
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             Un prix, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">tout inclus</span>
           </h2>
-          <p className="text-xl text-gray-600">Pas de surprise, pas de frais cachés. Pensé pour toi.</p>
+          <p className="text-xl text-gray-600">Pas de surprise, pas de frais caches. Pense pour toi.</p>
         </div>
 
-        {/* Pricing Card */}
+        {/* Glassmorphism Pricing Card */}
         <div className="max-w-xl mx-auto">
           <div className={`relative group transition-all duration-500 hover:-translate-y-2 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.2s' }}>
             {/* Trial Badge */}
@@ -46,22 +48,28 @@ export function PricingSection() {
               </div>
             </div>
 
-            <div className="relative bg-white border-2 border-indigo-100 rounded-[2.5rem] p-10 shadow-xl overflow-hidden">
+            {/* Glow behind card */}
+            <div className="absolute -inset-4 bg-gradient-to-br from-indigo-200/40 via-violet-200/30 to-pink-200/40 rounded-[3rem] blur-2xl opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
+
+            <div className="relative bg-white/70 backdrop-blur-xl border border-white/80 rounded-[2.5rem] p-10 shadow-xl shadow-indigo-100/30 overflow-hidden">
+              {/* Subtle shimmer */}
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-transparent to-violet-50/50 pointer-events-none" />
+
 
               <div className="relative text-center pt-4 mb-10">
                 <div className="inline-flex items-baseline justify-center gap-1.5">
                   <span className="text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-600">
-                    19€
+                    19&euro;
                   </span>
                   <span className="text-xl font-semibold text-gray-400">/mois</span>
                 </div>
-                <p className="text-gray-500 text-sm mt-2">soit <span className="font-semibold text-indigo-600">~0,63€</span> par jour</p>
+                <p className="text-gray-500 text-sm mt-2">soit <span className="font-semibold text-indigo-600">~0,63&euro;</span> par jour</p>
                 <p className="text-indigo-600 font-semibold text-sm mt-3 tracking-wide uppercase">Tout inclus, sans engagement</p>
                 <p className="text-indigo-600 font-medium text-sm mt-2">Inscription sans carte bancaire</p>
-                <p className="text-gray-400 text-xs mt-2">ou <span className="font-semibold text-gray-600">15,83€/mois</span> facturé annuellement — 2 mois offerts</p>
+                <p className="text-gray-400 text-xs mt-2">ou <span className="font-semibold text-gray-600">15,83&euro;/mois</span> facture annuellement — 2 mois offerts</p>
               </div>
 
-              <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-10" />
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200/60 to-transparent mb-10" />
 
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10 relative">
                 {features.map((feature, index) => (
@@ -79,11 +87,11 @@ export function PricingSection() {
                 onClick={() => { trackCtaClick('pricing_cta_2', 'pricing_section_2'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
                 className="block w-full py-5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 text-center uppercase tracking-wider text-sm shadow-md shadow-indigo-500/15"
               >
-                Booste ton salon en 5 min
+                Essai gratuit — 7 jours
               </a>
 
               <p className="text-center text-gray-400 text-[10px] font-bold mt-6 uppercase tracking-[0.2em]">
-                Annulation possible à tout moment
+                Annulation possible a tout moment
               </p>
             </div>
           </div>
@@ -91,17 +99,17 @@ export function PricingSection() {
 
         {/* Guarantee Badges */}
         <div className={`grid grid-cols-2 gap-3 md:flex md:flex-nowrap md:justify-center md:gap-4 mt-12 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.6s' }}>
-          <div className="flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 rounded-full border border-indigo-100 md:px-4">
+          <div className="flex items-center justify-center gap-2 px-3 py-2 bg-white/70 backdrop-blur-sm rounded-full border border-indigo-100 shadow-sm md:px-4">
             <Headphones className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-            <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">Support réactif 7j/7</span>
+            <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">Support reactif 7j/7</span>
           </div>
-          <div className="flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 rounded-full border border-indigo-100 md:px-4">
+          <div className="flex items-center justify-center gap-2 px-3 py-2 bg-white/70 backdrop-blur-sm rounded-full border border-indigo-100 shadow-sm md:px-4">
             <CreditCard className="w-4 h-4 text-indigo-600 flex-shrink-0" />
             <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">Sans CB pour essayer</span>
           </div>
-          <div className="flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 rounded-full border border-indigo-100 md:px-4">
+          <div className="flex items-center justify-center gap-2 px-3 py-2 bg-white/70 backdrop-blur-sm rounded-full border border-indigo-100 shadow-sm md:px-4">
             <Zap className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-            <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">Activation instantanée</span>
+            <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">Activation instantanee</span>
           </div>
         </div>
       </div>
