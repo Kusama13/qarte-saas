@@ -1,25 +1,18 @@
 import { Instagram } from 'lucide-react';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { unstable_cache } from 'next/cache';
+import { getTranslations } from 'next-intl/server';
 
-interface MerchantData {
+interface MerchantRaw {
   shop_name: string;
   shop_type: string;
   logo_url: string | null;
   instagram_url: string | null;
 }
 
-const SHOP_TYPE_LABELS: Record<string, string> = {
-  coiffeur: 'Coiffeur',
-  barbier: 'Barbier',
-  institut_beaute: 'Institut de beaute',
-  onglerie: 'Onglerie',
-  spa: 'Spa',
-  estheticienne: 'Estheticienne',
-  massage: 'Massage',
-  epilation: 'Epilation',
-  autre: 'Commerce',
-};
+interface MerchantData extends MerchantRaw {
+  typeLabel: string;
+}
 
 function extractHandle(url: string | null): string | null {
   if (!url) return null;
@@ -27,10 +20,9 @@ function extractHandle(url: string | null): string | null {
   return match ? match[1] : null;
 }
 
-function InstaCard({ shop_name, shop_type, logo_url, instagram_url }: MerchantData) {
+function InstaCard({ shop_name, shop_type, logo_url, instagram_url, typeLabel }: MerchantData) {
   const initials = shop_name.split(' ').map(w => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase();
   const handle = extractHandle(instagram_url);
-  const typeLabel = SHOP_TYPE_LABELS[shop_type] || shop_type;
 
   return (
     <div className="flex items-center gap-3 pl-1.5 pr-5 py-1.5 rounded-full bg-white border border-gray-200/80 shadow-sm whitespace-nowrap shrink-0">
@@ -56,7 +48,7 @@ function InstaCard({ shop_name, shop_type, logo_url, instagram_url }: MerchantDa
 }
 
 const getTopMerchants = unstable_cache(
-  async (): Promise<MerchantData[]> => {
+  async (): Promise<MerchantRaw[]> => {
     const supabaseAdmin = getSupabaseAdmin();
 
     const { data: admins } = await supabaseAdmin
@@ -113,23 +105,31 @@ export async function SocialProofSection() {
 
   if (merchants.length === 0) return null;
 
+  const t = await getTranslations('socialProof');
+  const tShop = await getTranslations('shopTypes');
+
+  const merchantsWithLabels = merchants.map(m => ({
+    ...m,
+    typeLabel: tShop(m.shop_type as any),
+  }));
+
   // Split merchants into 2 rows for crossing effect on mobile
-  const half = Math.ceil(merchants.length / 2);
-  const row1 = merchants.slice(0, half);
-  const row2 = merchants.slice(half);
+  const half = Math.ceil(merchantsWithLabels.length / 2);
+  const row1 = merchantsWithLabels.slice(0, half);
+  const row2 = merchantsWithLabels.slice(half);
 
   // Duplicate each row for seamless loop
   const items1 = [...row1, ...row1];
   const items2 = [...row2, ...row2];
   // Single row for desktop
-  const allItems = [...merchants, ...merchants];
+  const allItems = [...merchantsWithLabels, ...merchantsWithLabels];
 
   return (
     <section className="py-8 sm:py-10 bg-gray-50/50 overflow-hidden">
       <div className="flex items-center justify-center gap-2 mb-6">
         <div className="h-px w-8 bg-gray-200" />
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
-          Elles attirent et fidélisent avec Qarte
+          {t('tagline')}
         </p>
         <div className="h-px w-8 bg-gray-200" />
       </div>

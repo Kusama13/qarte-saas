@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
 
 export function MobileStickyCta() {
+  const t = useTranslations('mobileCta');
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -28,7 +30,7 @@ export function MobileStickyCta() {
         onClick={() => { trackCtaClick('mobile_sticky', 'mobile_sticky_cta'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
         className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 active:scale-[0.98] transition-transform"
       >
-        Essaie gratuitement
+        {t('text')}
         <ArrowRight className="w-5 h-5" />
       </a>
     </div>

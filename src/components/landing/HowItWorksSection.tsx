@@ -3,12 +3,13 @@
 import { motion } from 'framer-motion';
 import { QrCode, Heart, Gift, Bell } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
+import { useTranslations } from 'next-intl';
 
 /* ═══════════════════════════════════════════
    Card 1 — Créez votre programme
    ═══════════════════════════════════════════ */
 
-function SetupCard() {
+function SetupCard({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative bg-white rounded-xl border border-violet-100/80 shadow-lg shadow-violet-100/30 p-5 w-full h-full">
       {/* Numbered badge */}
@@ -17,13 +18,13 @@ function SetupCard() {
       </div>
 
       {/* Title */}
-      <p className="text-lg font-bold text-gray-900 leading-snug">Vous créez votre programme</p>
-      <p className="text-base text-gray-400 mt-1 mb-4">Vos paliers, vos récompenses. On s&apos;occupe du reste.</p>
+      <p className="text-lg font-bold text-gray-900 leading-snug">{t('step1Title')}</p>
+      <p className="text-base text-gray-400 mt-1 mb-4">{t('step1Desc')}</p>
 
       {/* Mini mockup: stamp config */}
       <div className="bg-gray-50 rounded-lg p-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Ma fidélité</span>
+          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('step1Loyalty')}</span>
           <span className="text-[10px] font-extrabold text-violet-500">0/10</span>
         </div>
         <div className="grid grid-cols-5 gap-1.5">
@@ -50,7 +51,7 @@ function SetupCard() {
         </div>
         <div className="mt-2 flex items-center gap-2 bg-violet-50 rounded-lg px-2.5 py-1.5">
           <Gift className="w-3.5 h-3.5 text-violet-500 flex-shrink-0" />
-          <span className="text-[10px] font-bold text-violet-700">Brushing offert</span>
+          <span className="text-[10px] font-bold text-violet-700">{t('step1Reward')}</span>
         </div>
       </div>
     </div>
@@ -61,7 +62,7 @@ function SetupCard() {
    Card 2 — Votre client scanne
    ═══════════════════════════════════════════ */
 
-function ScanCard() {
+function ScanCard({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative bg-white rounded-xl border border-indigo-100/80 shadow-lg shadow-indigo-100/30 p-5 w-full h-full">
       {/* Numbered badge */}
@@ -72,12 +73,12 @@ function ScanCard() {
       {/* Tag */}
       <div className="flex items-center gap-2 mb-3 ml-2">
         <QrCode className="w-4 h-4 text-indigo-400" />
-        <span className="text-sm font-bold text-indigo-400 uppercase tracking-wider">3 secondes</span>
+        <span className="text-sm font-bold text-indigo-400 uppercase tracking-wider">{t('step2Tag')}</span>
       </div>
 
       {/* Title */}
-      <p className="text-lg font-bold text-gray-900 leading-snug">Votre client(e) scanne</p>
-      <p className="text-base text-gray-400 mt-1 mb-4">Un point en plus, sans rien télécharger.</p>
+      <p className="text-lg font-bold text-gray-900 leading-snug">{t('step2Title')}</p>
+      <p className="text-base text-gray-400 mt-1 mb-4">{t('step2Desc')}</p>
 
       {/* Mini mockup: QR code + toast */}
       <div className="bg-gray-50 rounded-lg p-3 flex flex-col items-center">
@@ -125,7 +126,7 @@ function ScanCard() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <span className="text-[11px] font-bold text-gray-800">Point ajouté !</span>
+          <span className="text-[11px] font-bold text-gray-800">{t('step2Toast')}</span>
         </div>
       </div>
     </div>
@@ -136,7 +137,7 @@ function ScanCard() {
    Card 3 — Il revient tout seul
    ═══════════════════════════════════════════ */
 
-function RewardCard() {
+function RewardCard({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative bg-gradient-to-br from-rose-50 to-pink-50 rounded-xl border border-rose-200/60 shadow-lg shadow-rose-100/30 p-5 w-full h-full">
       {/* Numbered badge */}
@@ -147,12 +148,12 @@ function RewardCard() {
       {/* Tag */}
       <div className="flex items-center gap-2 mb-3 ml-2">
         <Bell className="w-4 h-4 text-rose-400" />
-        <span className="text-sm font-bold text-rose-400 uppercase tracking-wider">Automatique</span>
+        <span className="text-sm font-bold text-rose-400 uppercase tracking-wider">{t('step3Tag')}</span>
       </div>
 
       {/* Title */}
-      <p className="text-lg font-bold text-gray-900 leading-snug">Il revient tout seul</p>
-      <p className="text-base text-gray-400 mt-1 mb-4">Rappels, anniversaires, parrainage. On gère pour vous.</p>
+      <p className="text-lg font-bold text-gray-900 leading-snug">{t('step3Title')}</p>
+      <p className="text-base text-gray-400 mt-1 mb-4">{t('step3Desc')}</p>
 
       {/* Mini mockup: filled card + reward */}
       <div className="bg-white/80 rounded-lg p-3 space-y-2">
@@ -178,8 +179,8 @@ function RewardCard() {
               <Gift className="w-4 h-4 text-white" />
             </div>
             <div>
-              <p className="text-[11px] font-extrabold text-gray-900">Soin visage offert</p>
-              <p className="text-[9px] font-bold text-rose-600">Récompense débloquée !</p>
+              <p className="text-[11px] font-extrabold text-gray-900">{t('step3Reward')}</p>
+              <p className="text-[9px] font-bold text-rose-600">{t('step3Unlocked')}</p>
             </div>
             <span className="text-lg ml-auto">🎉</span>
           </div>
@@ -195,6 +196,7 @@ function RewardCard() {
 
 export function HowItWorksSection() {
   const { ref, isInView } = useInView();
+  const t = useTranslations('howItWorks');
 
   return (
     <section className="py-24 md:py-32 bg-white overflow-hidden">
@@ -202,9 +204,9 @@ export function HowItWorksSection() {
         {/* Header */}
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
-            Pour commencer,{' '}
+            {t('title')}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              rien de plus simple.
+              {t('titleBold')}
             </span>
           </h2>
         </div>
@@ -217,7 +219,7 @@ export function HowItWorksSection() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="h-full"
           >
-            <SetupCard />
+            <SetupCard t={t} />
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -225,7 +227,7 @@ export function HowItWorksSection() {
             transition={{ duration: 0.5, delay: 0.25 }}
             className="h-full"
           >
-            <ScanCard />
+            <ScanCard t={t} />
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -233,7 +235,7 @@ export function HowItWorksSection() {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="h-full"
           >
-            <RewardCard />
+            <RewardCard t={t} />
           </motion.div>
         </div>
 

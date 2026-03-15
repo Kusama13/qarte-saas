@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Clock, Cake, CalendarHeart, Sparkles } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
+import { useTranslations } from 'next-intl';
 
 /* ═══════════════════════════════════════════
    iOS Push notification
@@ -41,7 +42,7 @@ function PushNotification({ iconBg, iconLetter, name, time, title, message }: No
    iPhone mockup
    ═══════════════════════════════════════════ */
 
-function PhoneMockup({ isInView }: { isInView: boolean }) {
+function PhoneMockup({ isInView, t }: { isInView: boolean; t: (key: string) => string }) {
   return (
     <div className="relative">
       <div className="relative w-full max-w-[272px] sm:w-[290px] sm:max-w-none mx-auto">
@@ -73,7 +74,7 @@ function PhoneMockup({ isInView }: { isInView: boolean }) {
 
             {/* Date & Time */}
             <div className="relative z-10 text-center mt-2">
-              <p className="text-white/50 text-[13px] font-medium tracking-wide">Mardi 11 février</p>
+              <p className="text-white/50 text-[13px] font-medium tracking-wide">{t('phoneDateDay')}</p>
               <p className="text-white text-[56px] sm:text-[64px] font-extralight leading-none mt-0.5 tracking-tight" style={{ fontFeatureSettings: '"tnum"' }}>
                 14:32
               </p>
@@ -89,10 +90,10 @@ function PhoneMockup({ isInView }: { isInView: boolean }) {
                 <PushNotification
                   iconBg="bg-gradient-to-br from-indigo-500 to-blue-600"
                   iconLetter="G"
-                  name="Glam'Ongles"
-                  time="maintenant"
-                  title="Vos ongles vous manquent 💅"
-                  message="Ça fait 3 semaines Marie !"
+                  name={t('notif1Name')}
+                  time={t('notif1Time')}
+                  title={t('notif1Title')}
+                  message={t('notif1Msg')}
                 />
               </motion.div>
 
@@ -104,10 +105,10 @@ function PhoneMockup({ isInView }: { isInView: boolean }) {
                 <PushNotification
                   iconBg="bg-gradient-to-br from-rose-500 to-pink-600"
                   iconLetter="L"
-                  name="Le Salon de Léa"
-                  time="10:00"
-                  title="Joyeux anniversaire ! 🎂"
-                  message="-20% sur votre brushing Sophie"
+                  name={t('notif2Name')}
+                  time={t('notif2Time')}
+                  title={t('notif2Title')}
+                  message={t('notif2Msg')}
                 />
               </motion.div>
 
@@ -119,10 +120,10 @@ function PhoneMockup({ isInView }: { isInView: boolean }) {
                 <PushNotification
                   iconBg="bg-gradient-to-br from-emerald-500 to-teal-600"
                   iconLetter="N"
-                  name="Nails & Beauty"
-                  time="hier"
-                  title="Saint-Valentin 💕"
-                  message="-15% sur la pose, à deux !"
+                  name={t('notif3Name')}
+                  time={t('notif3Time')}
+                  title={t('notif3Title')}
+                  message={t('notif3Msg')}
                 />
               </motion.div>
             </div>
@@ -198,6 +199,7 @@ function FeatureRow({ icon, iconBg, title, description }: FeatureRowProps) {
 
 export function AIReengagementSection() {
   const { ref, isInView } = useInView();
+  const t = useTranslations('aiReengagement');
 
   return (
     <section className="py-24 md:py-32 bg-white overflow-hidden">
@@ -214,7 +216,7 @@ export function AIReengagementSection() {
               className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full mb-8"
             >
               <Sparkles className="w-4 h-4 text-indigo-500" />
-              <span className="text-sm font-semibold text-indigo-600 tracking-wide">Notifications automatiques</span>
+              <span className="text-sm font-semibold text-indigo-600 tracking-wide">{t('badge')}</span>
             </motion.div>
 
             {/* Headline */}
@@ -224,9 +226,9 @@ export function AIReengagementSection() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight tracking-tight mb-5"
             >
-              Vos clients oublient ?{' '}
+              {t('title')}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-                Ils reviennent quand même
+                {t('titleBold')}
               </span>
             </motion.h2>
 
@@ -237,7 +239,7 @@ export function AIReengagementSection() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="text-lg text-gray-500 mb-10 max-w-md leading-relaxed"
             >
-              Qarte rappelle vos clients au bon moment. Vous, vous ne touchez à rien.
+              {t('subtitle')}
             </motion.p>
 
             {/* Feature rows */}
@@ -250,20 +252,20 @@ export function AIReengagementSection() {
               <FeatureRow
                 icon={<Clock className="w-5 h-5 text-indigo-600" />}
                 iconBg="bg-indigo-100"
-                title="Relance inactivité"
-                description="Un client ne vient plus ? On le détecte et on lui envoie un petit rappel au bon moment."
+                title={t('inactivityTitle')}
+                description={t('inactivityDesc')}
               />
               <FeatureRow
                 icon={<Cake className="w-5 h-5 text-rose-600" />}
                 iconBg="bg-rose-100"
-                title="Anniversaires"
-                description="Une offre surprise le jour J, envoyée automatiquement. Vous n'oubliez plus jamais."
+                title={t('birthdayTitle')}
+                description={t('birthdayDesc')}
               />
               <FeatureRow
                 icon={<CalendarHeart className="w-5 h-5 text-emerald-600" />}
                 iconBg="bg-emerald-100"
-                title="Événements spéciaux"
-                description="Saint-Valentin, Noël, fête des mères... On programme tout pour vous."
+                title={t('eventsTitle')}
+                description={t('eventsDesc')}
               />
             </motion.div>
 
@@ -276,7 +278,7 @@ export function AIReengagementSection() {
             transition={{ duration: 0.7, delay: 0.2, ease: [0.23, 1, 0.32, 1] }}
             className="flex-shrink-0"
           >
-            <PhoneMockup isInView={isInView} />
+            <PhoneMockup isInView={isInView} t={t} />
           </motion.div>
         </div>
 

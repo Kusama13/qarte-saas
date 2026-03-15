@@ -4,52 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, MessageCircle } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
-
-const faqs = [
-  // --- Produit ---
-  {
-    question: "Combien de temps pour être opérationnel ?",
-    answer: "5 minutes. Compte, logo, récompense, QR code. C'est prêt.",
-  },
-  {
-    question: "Tampons ou cagnotte, lequel choisir ?",
-    answer: "Prestations à prix fixe (ongles, cils, barbe) → mode passages. Montants variables (coiffure, spa) → mode cagnotte. Tu peux changer à tout moment.",
-  },
-  {
-    question: "Les notifications push, ça marche comment ?",
-    answer: "Tes clients reçoivent des rappels directement sur leur téléphone — sans app. Relances automatiques, récompenses à récupérer, anniversaires. Zéro effort de ton côté.",
-  },
-  // --- UX / Objections ---
-  {
-    question: "Mes clients vont trouver ça compliqué ?",
-    answer: "Ils scannent le QR code avec leur appareil photo et c'est tout. Pas d'app, pas de compte à créer. Ultra simple.",
-  },
-  {
-    question: "Ça marche pour les prestations à domicile ?",
-    answer: "Oui. Montre le QR code sur ton téléphone, ton client scanne, son point est validé.",
-  },
-  {
-    question: "Je suis esthéticienne indépendante, c'est pour moi ?",
-    answer: "Absolument. Crée ton programme en 5 minutes, gère tes clients, développe le bouche-à-oreille.",
-  },
-  // --- Prix / Confiance ---
-  {
-    question: "19€/mois, c'est trop cher ?",
-    answer: "Ça fait 0,63€/jour. Une seule nouvelle cliente grâce à ta page pro et c'est remboursé. Sans compter les ~200€/an de cartes papier en moins.",
-  },
-  {
-    question: "Le prix change après les 7 jours gratuits ?",
-    answer: "Non. 19€/mois, point final. Mêmes fonctionnalités pendant l'essai et après. Zéro surprise.",
-  },
-  {
-    question: "Mes données sont-elles protégées (RGPD) ?",
-    answer: "100% conforme RGPD, hébergé en Europe, chiffré. Tes données restent les tiennes. On ne revend rien, jamais.",
-  },
-  {
-    question: "Que se passe-t-il si j'arrête Qarte ?",
-    answer: "Tes données t'appartiennent. Export CSV en 1 clic. Pas de piège, pas d'engagement.",
-  },
-];
+import { useTranslations } from 'next-intl';
 
 function AccordionItem({
   faq,
@@ -125,6 +80,12 @@ function AccordionItem({
 export function FAQSection() {
   const { ref, isInView } = useInView();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const t = useTranslations('faq');
+
+  const faqItems = Array.from({ length: 10 }, (_, i) => ({
+    question: t(`q${i + 1}`),
+    answer: t(`a${i + 1}`),
+  }));
 
   return (
     <section id="faq" className="relative py-16 md:py-24 overflow-hidden bg-white">
@@ -133,18 +94,18 @@ export function FAQSection() {
         {/* Header */}
         <div className={`text-center mb-10 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            On répond à{' '}
+            {t('title')}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              toutes tes questions
+              {t('titleBold')}
             </span>
           </h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Tout ce que tu dois savoir avant de te lancer.
+            {t('subtitle')}
           </p>
         </div>
 
         <div className="flex flex-col gap-2.5">
-          {faqs.map((faq, index) => (
+          {faqItems.map((faq, index) => (
             <AccordionItem
               key={index}
               faq={faq}
@@ -172,8 +133,8 @@ export function FAQSection() {
               <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 border-2 border-white rounded-full" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold text-gray-900">Une question ? Écris-nous directement.</p>
-              <p className="text-xs text-gray-400">Réponse en moins d&apos;1h</p>
+              <p className="text-sm font-bold text-gray-900">{t('whatsappTitle')}</p>
+              <p className="text-xs text-gray-400">{t('whatsappSub')}</p>
             </div>
           </div>
           <motion.a
@@ -185,7 +146,7 @@ export function FAQSection() {
             className="flex-shrink-0 flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-emerald-500/20"
           >
             <MessageCircle className="w-4 h-4" />
-            Démarrer la discussion
+            {t('whatsappCta')}
           </motion.a>
         </motion.div>
       </div>

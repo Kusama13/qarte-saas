@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
+import { useTranslations } from 'next-intl';
 
 const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -65,7 +66,7 @@ function Separator() {
 
 /* ── Visuals ── */
 
-function SeoVisual() {
+function SeoVisual({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative w-full max-w-[380px] mx-auto">
       <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-5">
@@ -76,12 +77,12 @@ function SeoVisual() {
           <span className="text-[10px] text-gray-400">getqarte.com/p/latelier</span>
         </div>
         <p className="text-base font-semibold text-blue-700 mb-1">L&apos;Atelier — Onglerie Paris 11e</p>
-        <p className="text-xs text-gray-500 leading-relaxed">Bio, horaires, prestations, programme fidelite. Prothesiste ongulaire a Paris 11e.</p>
+        <p className="text-xs text-gray-500 leading-relaxed">{t('seoMockupDesc')}</p>
         <div className="flex items-center gap-1 mt-2">
           {[...Array(5)].map((_, i) => (
             <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
           ))}
-          <span className="text-[11px] text-gray-400 ml-1">4.9 (127 avis)</span>
+          <span className="text-[11px] text-gray-400 ml-1">{t('seoMockupReviews')}</span>
         </div>
       </div>
 
@@ -89,13 +90,13 @@ function SeoVisual() {
         <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
           <Search className="w-3 h-3 text-white" />
         </div>
-        <span className="text-xs font-bold text-gray-800">Page 1</span>
+        <span className="text-xs font-bold text-gray-800">{t('seoBadge')}</span>
       </div>
     </div>
   );
 }
 
-function PlanningVisual() {
+function PlanningVisual({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative w-full max-w-[340px] mx-auto">
       <div className="bg-gradient-to-br from-indigo-50 to-violet-50 rounded-3xl shadow-xl shadow-indigo-100/30 border border-indigo-100 p-5">
@@ -128,13 +129,13 @@ function PlanningVisual() {
         <div className="w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
           <CalendarDays className="w-3 h-3 text-white" />
         </div>
-        <span className="text-xs font-bold text-gray-800">8 creneaux</span>
+        <span className="text-xs font-bold text-gray-800">{t('planningBadge')}</span>
       </div>
     </div>
   );
 }
 
-function PrestationsVisual() {
+function PrestationsVisual({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative w-full max-w-[340px] mx-auto">
       <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-5 space-y-2.5">
@@ -164,23 +165,23 @@ function PrestationsVisual() {
         <div className="w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center">
           <Scissors className="w-3 h-3 text-white" />
         </div>
-        <span className="text-xs font-bold text-gray-800">3 prestations</span>
+        <span className="text-xs font-bold text-gray-800">{t('servicesBadge')}</span>
       </div>
     </div>
   );
 }
 
-function WelcomeOfferVisual() {
+function WelcomeOfferVisual({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative w-full max-w-[320px] mx-auto">
       <div className="bg-gradient-to-br from-violet-50 to-pink-50 rounded-3xl shadow-xl shadow-violet-100/30 border border-violet-100 p-5">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="w-4 h-4 text-violet-500" />
-          <span className="text-[10px] font-bold text-violet-500 uppercase tracking-wider">Offre de bienvenue</span>
+          <span className="text-[10px] font-bold text-violet-500 uppercase tracking-wider">{t('welcomeBadgeLabel')}</span>
         </div>
-        <p className="text-lg font-bold text-gray-800 mb-4">-20% sur votre premiere visite</p>
+        <p className="text-lg font-bold text-gray-800 mb-4">{t('welcomeOffer')}</p>
         <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-xl px-4 py-2.5 text-center shadow-lg shadow-indigo-200/40">
-          <span className="text-sm font-bold text-white">En profiter</span>
+          <span className="text-sm font-bold text-white">{t('welcomeCta')}</span>
         </div>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -190,7 +191,7 @@ function WelcomeOfferVisual() {
           className="flex items-center gap-2 mt-4 bg-emerald-50 rounded-xl px-3 py-2.5"
         >
           <UserPlus className="w-4 h-4 text-emerald-500" />
-          <span className="text-xs font-bold text-emerald-700">Sophie M. — Nouvelle cliente</span>
+          <span className="text-xs font-bold text-emerald-700">{t('welcomeNewClient')}</span>
         </motion.div>
       </div>
 
@@ -198,7 +199,7 @@ function WelcomeOfferVisual() {
         <div className="w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center">
           <Sparkles className="w-3 h-3 text-white" />
         </div>
-        <span className="text-xs font-bold text-gray-800">+1 cliente</span>
+        <span className="text-xs font-bold text-gray-800">{t('welcomeBadge')}</span>
       </div>
     </div>
   );
@@ -207,6 +208,8 @@ function WelcomeOfferVisual() {
 /* ── Section ── */
 
 export function PageProSection() {
+  const t = useTranslations('pagePro');
+
   return (
     <section className="relative py-20 md:py-28 bg-white overflow-hidden">
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-indigo-100/40 rounded-full blur-[120px] pointer-events-none" />
@@ -221,35 +224,35 @@ export function PageProSection() {
           className="text-center mb-14 md:mb-16"
         >
           <p className="text-sm font-bold text-indigo-500 uppercase tracking-wider mb-4">
-            Ta page pro
+            {t('badge')}
           </p>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
-            Tout ton salon{' '}
+            {t('title')}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              sur une seule page.
+              {t('titleBold')}
             </span>
           </h2>
           <p className="mt-3 text-gray-500 text-lg">
-            Bio, horaires, prestations, dispos, offre bienvenue — visible sur Google et partageable en un lien.
+            {t('subtitle')}
           </p>
         </motion.div>
 
         <div className="flex flex-col gap-6 md:gap-10 lg:gap-12">
           <FeatureBlock
-            title="Visible sur Google,"
-            titleBold="trouvable en un clic."
-            description="Ta page pro est indexee et bien referencee dans ta ville. Les clientes te trouvent sans chercher."
-            visual={<SeoVisual />}
+            title={t('seoTitle')}
+            titleBold={t('seoTitleBold')}
+            description={t('seoDesc')}
+            visual={<SeoVisual t={t} />}
             delay={0.05}
           />
 
           <Separator />
 
           <FeatureBlock
-            title="Tes dispos,"
-            titleBold="en temps reel."
-            description="Publie tes creneaux en un clic. Tes clientes voient quand tu es libre — plus besoin d'echanger 10 messages."
-            visual={<PlanningVisual />}
+            title={t('planningTitle')}
+            titleBold={t('planningTitleBold')}
+            description={t('planningDesc')}
+            visual={<PlanningVisual t={t} />}
             reverse
             delay={0.05}
           />
@@ -257,20 +260,20 @@ export function PageProSection() {
           <Separator />
 
           <FeatureBlock
-            title="Prestations et tarifs,"
-            titleBold="tout est clair."
-            description="Affiche tes services avec les prix. Tes clientes savent ce que tu proposes avant de venir."
-            visual={<PrestationsVisual />}
+            title={t('servicesTitle')}
+            titleBold={t('servicesTitleBold')}
+            description={t('servicesDesc')}
+            visual={<PrestationsVisual t={t} />}
             delay={0.05}
           />
 
           <Separator />
 
           <FeatureBlock
-            title="Offre de bienvenue,"
-            titleBold="nouvelles clientes."
-            description="Configure une offre en 30 secondes. Les nouvelles clientes la decouvrent sur ta page et s'inscrivent."
-            visual={<WelcomeOfferVisual />}
+            title={t('welcomeTitle')}
+            titleBold={t('welcomeTitleBold')}
+            description={t('welcomeDesc')}
+            visual={<WelcomeOfferVisual t={t} />}
             reverse
             delay={0.05}
           />
@@ -288,10 +291,10 @@ export function PageProSection() {
             onClick={() => { trackCtaClick('page_pro_cta', 'page_pro_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
           >
-            Attire de nouvelles clientes en 5 min
+            {t('cta')}
             <ArrowRight className="w-5 h-5" />
           </Link>
-          <p className="mt-3 text-sm text-gray-400">7 jours gratuits, sans carte bancaire</p>
+          <p className="mt-3 text-sm text-gray-400">{t('ctaSub')}</p>
         </motion.div>
       </div>
     </section>

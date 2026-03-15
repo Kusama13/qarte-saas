@@ -1,6 +1,7 @@
 'use client';
 
 import { useInView } from '@/hooks/useInView';
+import { useTranslations } from 'next-intl';
 
 /* ─── Types ──────────────────────────────────────────── */
 
@@ -18,57 +19,59 @@ interface Testimonial {
   messages: ChatMsg[];
 }
 
-/* ─── Data ────────────────────────────────────────────── */
+/* ─── Data builder ────────────────────────────────────── */
 
-const testimonials: Testimonial[] = [
-  {
-    name: 'Lunzia Studio',
-    initials: 'LS',
-    dayLabel: 'SAMEDI',
-    messages: [
-      { from: 'qarte', text: "Salut ! Ca fait 3 mois que vous êtes sur Qarte, vous pouvez nous faire un petit retour ? 🙏", time: '14:32' },
-      { from: 'them', text: "Franchement au top 🔥", timeBreak: '16:45' },
-      { from: 'them', text: "Mes clients perdaient toujours leurs cartes avant" },
-      { from: 'them', text: "Maintenant tout est sur leur tel elles adorent la notif quand la pose offerte est dispo 💅" },
-      { from: 'them', text: "ah et merci pour les stickers ils sont trop beaux 😍", time: '16:47' },
-    ],
-  },
-  {
-    name: 'Doux Regard',
-    initials: 'DR',
-    dayLabel: 'JEUDI',
-    messages: [
-      { from: 'qarte', text: "Hello ! 6 semaines sur Qarte, vous en pensez quoi ? 😊", time: '16:48' },
-      { from: 'them', text: "Ah oui j'adore", timeBreak: '19:12' },
-      { from: 'them', text: "Honnêtement en 2 semaines j'avais deja recupéré le prix de l'abonnement" },
-      { from: 'them', text: "Y'a un client qui est revenu 3 fois juste pour remplir sa carte 😂", time: '19:13' },
-    ],
-  },
-  {
-    name: 'Nour Beauté',
-    initials: 'NB',
-    dayLabel: 'MARDI',
-    messages: [
-      { from: 'qarte', text: "Hey ! 2 mois sur Qarte, on peut avoir votre retour ? 🙏", time: '11:20' },
-      { from: 'them', text: "Le truc qui change tout c'est la notif auto", timeBreak: '14:33' },
-      { from: 'them', text: "Mes clients me disent \"ah oui faut que je revienne\" 😂" },
-      { from: 'them', text: "Honnêtement j'aurais du prendre avant" },
-      { from: 'them', text: "D'ailleurs merci Camélia elle repond super vite a mes questions 🙏", time: '14:35' },
-    ],
-  },
-  {
-    name: 'Le Comptoir du Visage',
-    initials: 'CV',
-    dayLabel: 'MERCREDI',
-    messages: [
-      { from: 'qarte', text: "Bonjour ! Bientôt 2 mois sur Qarte, comment ça se passe pour vous ? 😊", time: '09:47' },
-      { from: 'them', text: "Coucou !", timeBreak: '13:02' },
-      { from: 'them', text: "Très contente moi je galérais avec les cartes en carton mes clients les oubliaient tout le temps" },
-      { from: 'them', text: "La c'est simple elles scan et c'est bon" },
-      { from: 'them', text: "Et en plus elles recoivent une notif quand elles ont la récompense 👏", time: '13:04' },
-    ],
-  },
-];
+function buildTestimonials(t: (key: string) => string): Testimonial[] {
+  return [
+    {
+      name: t('t1Name'),
+      initials: t('t1Initials'),
+      dayLabel: t('t1Day'),
+      messages: [
+        { from: 'qarte', text: t('t1Q'), time: t('t1QTime') },
+        { from: 'them', text: t('t1R1'), timeBreak: t('t1R1Time') },
+        { from: 'them', text: t('t1R2') },
+        { from: 'them', text: t('t1R3') },
+        { from: 'them', text: t('t1R4'), time: t('t1R4Time') },
+      ],
+    },
+    {
+      name: t('t2Name'),
+      initials: t('t2Initials'),
+      dayLabel: t('t2Day'),
+      messages: [
+        { from: 'qarte', text: t('t2Q'), time: t('t2QTime') },
+        { from: 'them', text: t('t2R1'), timeBreak: t('t2R1Time') },
+        { from: 'them', text: t('t2R2') },
+        { from: 'them', text: t('t2R3'), time: t('t2R3Time') },
+      ],
+    },
+    {
+      name: t('t3Name'),
+      initials: t('t3Initials'),
+      dayLabel: t('t3Day'),
+      messages: [
+        { from: 'qarte', text: t('t3Q'), time: t('t3QTime') },
+        { from: 'them', text: t('t3R1'), timeBreak: t('t3R1Time') },
+        { from: 'them', text: t('t3R2') },
+        { from: 'them', text: t('t3R3') },
+        { from: 'them', text: t('t3R4'), time: t('t3R4Time') },
+      ],
+    },
+    {
+      name: t('t4Name'),
+      initials: t('t4Initials'),
+      dayLabel: t('t4Day'),
+      messages: [
+        { from: 'qarte', text: t('t4Q'), time: t('t4QTime') },
+        { from: 'them', text: t('t4R1'), timeBreak: t('t4R1Time') },
+        { from: 'them', text: t('t4R2') },
+        { from: 'them', text: t('t4R3') },
+        { from: 'them', text: t('t4R4'), time: t('t4R4Time') },
+      ],
+    },
+  ];
+}
 
 /* ─── WhatsApp double check ──────────────────────────── */
 
@@ -91,7 +94,7 @@ function DoubleCheck() {
 
 /* ─── WhatsApp Chat ──────────────────────────────────── */
 
-function WhatsAppChat({ data }: { data: Testimonial }) {
+function WhatsAppChat({ data, onlineLabel }: { data: Testimonial; onlineLabel: string }) {
   return (
     <div className="rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/5">
       {/* Header */}
@@ -104,7 +107,7 @@ function WhatsAppChat({ data }: { data: Testimonial }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-white text-[13.5px] font-medium leading-tight truncate">{data.name}</p>
-          <p className="text-[#a5d6d0] text-[10.5px] leading-tight">en ligne</p>
+          <p className="text-[#a5d6d0] text-[10.5px] leading-tight">{onlineLabel}</p>
         </div>
         <div className="flex items-center gap-4 text-white/80">
           <svg className="w-[18px] h-[18px]" fill="currentColor" viewBox="0 0 24 24"><path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 00-1.02.24l-2.2 2.2a15.045 15.045 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1A11.36 11.36 0 018.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z" /></svg>
@@ -161,6 +164,8 @@ function WhatsAppChat({ data }: { data: Testimonial }) {
 
 export function TestimonialsSection() {
   const { ref, isInView } = useInView();
+  const t = useTranslations('testimonials');
+  const testimonials = buildTestimonials(t);
 
   return (
     <section className="relative py-24 md:py-32 overflow-hidden bg-white">
@@ -169,18 +174,18 @@ export function TestimonialsSection() {
         {/* Header */}
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Elles en parlent{' '}
+            {t('title')}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
-              mieux que nous
+              {t('titleBold')}
             </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Des vraies conversations, sans filtre.
+            {t('subtitle')}
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-6 items-start">
-          {testimonials.map((t, i) => (
+          {testimonials.map((testimonial, i) => (
             <div
               key={i}
               className={`transition-all duration-500 ${
@@ -188,7 +193,7 @@ export function TestimonialsSection() {
               }`}
               style={{ transitionDelay: isInView ? `${i * 100}ms` : '0ms' }}
             >
-              <WhatsAppChat data={t} />
+              <WhatsAppChat data={testimonial} onlineLabel={t('online')} />
             </div>
           ))}
         </div>

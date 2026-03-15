@@ -18,6 +18,7 @@ import {
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
+import { useTranslations } from 'next-intl';
 
 const EASE: [number, number, number, number] = [0.23, 1, 0.32, 1];
 
@@ -77,7 +78,7 @@ function Separator() {
 
 /* ── Visuals (dark) ── */
 
-function ScanMethodsVisual() {
+function ScanMethodsVisual({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative w-full max-w-[340px] mx-auto">
       <div className="flex gap-4">
@@ -98,7 +99,7 @@ function ScanMethodsVisual() {
             </svg>
           </div>
           <p className="text-xs font-bold text-white">QR Code</p>
-          <p className="text-[10px] text-white/40 mt-0.5">Inclus</p>
+          <p className="text-[10px] text-white/40 mt-0.5">{t('scanQrIncluded')}</p>
         </div>
 
         <div className="flex-1 bg-gradient-to-br from-violet-500/10 to-pink-500/10 rounded-2xl shadow-lg shadow-violet-500/10 border border-violet-500/20 p-4 flex flex-col items-center">
@@ -112,7 +113,7 @@ function ScanMethodsVisual() {
             />
           </div>
           <p className="text-xs font-bold text-white">Carte NFC</p>
-          <p className="text-[10px] text-white/40 mt-0.5">En option</p>
+          <p className="text-[10px] text-white/40 mt-0.5">{t('scanNfcOptional')}</p>
         </div>
       </div>
 
@@ -120,13 +121,13 @@ function ScanMethodsVisual() {
         <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
           <Check className="w-3 h-3 text-white" />
         </div>
-        <span className="text-xs font-bold text-white">+1 point</span>
+        <span className="text-xs font-bold text-white">{t('scanBadge')}</span>
       </div>
     </div>
   );
 }
 
-function ProgramBrandVisual() {
+function ProgramBrandVisual({ t }: { t: (key: string) => string }) {
   const colors = [
     { bg: 'bg-gradient-to-br from-indigo-400 to-violet-500' },
     { bg: 'bg-gradient-to-br from-pink-300 to-rose-400' },
@@ -161,8 +162,8 @@ function ProgramBrandVisual() {
         <div className="bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl p-4 shadow-lg">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-white/60 text-[10px] font-medium">Programme fidelite</p>
-              <p className="text-white font-bold text-sm">Ton Salon</p>
+              <p className="text-white/60 text-[10px] font-medium">{t('programLabel')}</p>
+              <p className="text-white font-bold text-sm">{t('programSalon')}</p>
             </div>
             <div className="w-7 h-7 bg-white/15 rounded-lg flex items-center justify-center">
               <Heart className="w-3.5 h-3.5 text-white fill-white" />
@@ -182,38 +183,38 @@ function ProgramBrandVisual() {
           </div>
           <div className="flex items-center gap-2 bg-white/10 rounded-lg px-3 py-2">
             <Gift className="w-3.5 h-3.5 text-white" />
-            <span className="text-white text-[11px] font-semibold">Brushing offert</span>
+            <span className="text-white text-[11px] font-semibold">{t('programReward')}</span>
             <ChevronRight className="w-3 h-3 text-white/40 ml-auto" />
           </div>
         </div>
 
         <div className="flex items-center justify-center gap-2 mt-3">
           <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-          <span className="text-[11px] font-semibold text-gray-400">Apercu en temps reel</span>
+          <span className="text-[11px] font-semibold text-gray-400">{t('programPreview')}</span>
         </div>
       </div>
 
       <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-violet-500 rounded-full px-3 py-1.5 shadow-lg shadow-violet-500/30 animate-float-subtle">
         <Heart className="w-3.5 h-3.5 text-white fill-white" />
-        <span className="text-xs font-bold text-white">6/10 tampons</span>
+        <span className="text-xs font-bold text-white">{t('programBadge')}</span>
       </div>
     </div>
   );
 }
 
-function InactivityVisual() {
+function InactivityVisual({ t }: { t: (key: string) => string }) {
   const reminders = [
     {
-      title: 'Tes ongles te manquent !',
-      subtitle: 'Ca fait 3 semaines, on t\'attend',
-      time: 'maintenant',
+      title: t('inactivityNotif1Title'),
+      subtitle: t('inactivityNotif1Sub'),
+      time: t('inactivityNotif1Time'),
       color: 'bg-indigo-500',
       icon: <Sparkles className="w-5 h-5 text-white" />,
     },
     {
-      title: 'Plus qu\'1 tampon !',
-      subtitle: 'Ton brushing offert t\'attend',
-      time: 'hier',
+      title: t('inactivityNotif2Title'),
+      subtitle: t('inactivityNotif2Sub'),
+      time: t('inactivityNotif2Time'),
       color: 'bg-violet-500',
       icon: <Gift className="w-5 h-5 text-white" />,
     },
@@ -247,17 +248,17 @@ function InactivityVisual() {
 
       <div className="absolute -bottom-3 right-0 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
         <Bell className="w-4 h-4 text-white" />
-        <span className="text-xs font-bold text-white">100% auto</span>
+        <span className="text-xs font-bold text-white">{t('inactivityBadge')}</span>
       </div>
     </div>
   );
 }
 
-function AutoOffersVisual() {
+function AutoOffersVisual({ t }: { t: (key: string) => string }) {
   const offers = [
-    { name: 'Anniversaire de Sophie', label: '-20% soin', color: 'bg-rose-500', icon: <Cake className="w-4 h-4 text-white" />, badge: 'Auto' },
-    { name: 'Saint-Valentin', label: 'Offre duo', color: 'bg-pink-500', icon: <Heart className="w-4 h-4 text-white fill-white" />, badge: 'Programme' },
-    { name: 'Fete des meres', label: '-15% coffret', color: 'bg-violet-500', icon: <CalendarHeart className="w-4 h-4 text-white" />, badge: 'Programme' },
+    { name: t('autoOffer1'), label: t('autoOffer1Label'), color: 'bg-rose-500', icon: <Cake className="w-4 h-4 text-white" />, badge: t('autoOffer1Badge') },
+    { name: t('autoOffer2'), label: t('autoOffer2Label'), color: 'bg-pink-500', icon: <Heart className="w-4 h-4 text-white fill-white" />, badge: t('autoOffer2Badge') },
+    { name: t('autoOffer3'), label: t('autoOffer3Label'), color: 'bg-violet-500', icon: <CalendarHeart className="w-4 h-4 text-white" />, badge: t('autoOffer3Badge') },
   ];
 
   return (
@@ -289,13 +290,13 @@ function AutoOffersVisual() {
 
       <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
         <CalendarHeart className="w-4 h-4 text-white" />
-        <span className="text-xs font-bold text-white">100% auto</span>
+        <span className="text-xs font-bold text-white">{t('autoBadge')}</span>
       </div>
     </div>
   );
 }
 
-function ReviewsVisual() {
+function ReviewsVisual({ t }: { t: (key: string) => string }) {
   const reviews = [
     { name: 'Camille L.', text: 'Super salon, je recommande !' },
     { name: 'Ines M.', text: 'Resultat parfait, au top.' },
@@ -309,8 +310,8 @@ function ReviewsVisual() {
             <Star className="w-4 h-4 text-white fill-white" />
           </div>
           <div>
-            <p className="text-xs font-bold text-white">4.9/5 sur Google</p>
-            <p className="text-[10px] text-white/40">127 avis</p>
+            <p className="text-xs font-bold text-white">{t('reviewsGoogleScore')}</p>
+            <p className="text-[10px] text-white/40">{t('reviewsCount')}</p>
           </div>
         </div>
 
@@ -345,13 +346,13 @@ function ReviewsVisual() {
           className="mt-3 flex items-center gap-2 bg-emerald-500/15 rounded-xl px-3 py-2"
         >
           <Check className="w-4 h-4 text-emerald-400" />
-          <span className="text-[11px] font-bold text-emerald-400">Demande envoyee automatiquement</span>
+          <span className="text-[11px] font-bold text-emerald-400">{t('reviewsAutoSent')}</span>
         </motion.div>
       </div>
 
       <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-amber-500 rounded-full px-3 py-1.5 shadow-lg shadow-amber-500/30 animate-float-subtle">
         <Star className="w-4 h-4 text-white fill-white" />
-        <span className="text-xs font-bold text-white">+1 avis Google</span>
+        <span className="text-xs font-bold text-white">{t('reviewsBadge')}</span>
       </div>
     </div>
   );
@@ -360,6 +361,8 @@ function ReviewsVisual() {
 /* ── Section ── */
 
 export function FideliteSection() {
+  const t = useTranslations('fidelite');
+
   return (
     <section className="relative py-20 md:py-28 bg-gray-950 overflow-hidden">
       {/* Ambient glow */}
@@ -383,22 +386,22 @@ export function FideliteSection() {
           className="text-center mb-14 md:mb-16"
         >
           <p className="text-sm font-bold text-indigo-400 uppercase tracking-wider mb-4">
-            Ton programme de fidelite
+            {t('badge')}
           </p>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Tes clientes reviennent.{' '}
+            {t('title')}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">
-              Toutes seules.
+              {t('titleBold')}
             </span>
           </h2>
         </motion.div>
 
         <div className="flex flex-col gap-6 md:gap-10 lg:gap-12">
           <FeatureBlock
-            title="QR code ou NFC,"
-            titleBold="zero prise de tete."
-            description="QR code pret en 2 minutes sur ton telephone. Carte NFC en option sur le comptoir. Aucune appli a telecharger — ni pour toi, ni pour ta cliente."
-            visual={<ScanMethodsVisual />}
+            title={t('scanTitle')}
+            titleBold={t('scanTitleBold')}
+            description={t('scanDesc')}
+            visual={<ScanMethodsVisual t={t} />}
             reverse
             delay={0.05}
           />
@@ -406,30 +409,30 @@ export function FideliteSection() {
           <Separator />
 
           <FeatureBlock
-            title="Ton programme,"
-            titleBold="tes regles."
-            description="Tampons ou cagnotte, paliers, recompenses, couleurs — tout se configure en 2 minutes. Une carte a ton image que tes clientes montrent, partagent, et qui les fait revenir."
-            visual={<ProgramBrandVisual />}
+            title={t('programTitle')}
+            titleBold={t('programTitleBold')}
+            description={t('programDesc')}
+            visual={<ProgramBrandVisual t={t} />}
             delay={0.05}
           />
 
           <Separator />
 
           <FeatureBlock
-            title="Relance les clients"
-            titleBold="qui s'eloignent."
-            description="Un client ne vient plus ? On le detecte et on lui envoie un rappel au bon moment. Chaque relance, c'est du chiffre d'affaires recupere."
-            visual={<InactivityVisual />}
+            title={t('inactivityTitle')}
+            titleBold={t('inactivityTitleBold')}
+            description={t('inactivityDesc')}
+            visual={<InactivityVisual t={t} />}
             delay={0.05}
           />
 
           <Separator />
 
           <FeatureBlock
-            title="Anniversaires, Noel, fete des meres —"
-            titleBold="tout est automatique."
-            description="Offre surprise le jour J, promos evenementielles programmees a l'avance. On s'occupe de tout — tes clientes reviennent et depensent 30% de plus."
-            visual={<AutoOffersVisual />}
+            title={t('autoTitle')}
+            titleBold={t('autoTitleBold')}
+            description={t('autoDesc')}
+            visual={<AutoOffersVisual t={t} />}
             reverse
             delay={0.05}
           />
@@ -437,10 +440,10 @@ export function FideliteSection() {
           <Separator />
 
           <FeatureBlock
-            title="Plus d'avis,"
-            titleBold="plus de clientes."
-            description="Apres chaque passage, on demande un avis Google au bon moment. Plus d'avis = plus de visibilite = plus de clientes qui te trouvent."
-            visual={<ReviewsVisual />}
+            title={t('reviewsTitle')}
+            titleBold={t('reviewsTitleBold')}
+            description={t('reviewsDesc')}
+            visual={<ReviewsVisual t={t} />}
             delay={0.05}
           />
         </div>
@@ -457,10 +460,10 @@ export function FideliteSection() {
             onClick={() => { trackCtaClick('fidelite_cta', 'fidelite_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
             className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
           >
-            Fidelise tes clientes en 5 min
+            {t('cta')}
             <ArrowRight className="w-5 h-5" />
           </a>
-          <p className="text-sm text-gray-500 mt-3">7 jours gratuits, sans carte bancaire</p>
+          <p className="text-sm text-gray-500 mt-3">{t('ctaSub')}</p>
         </motion.div>
       </div>
     </section>

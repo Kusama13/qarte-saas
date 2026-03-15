@@ -5,26 +5,17 @@ import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
+import { useTranslations } from 'next-intl';
 
 export function PricingSection() {
   const { ref, isInView } = useInView();
+  const t = useTranslations('pricing');
 
-  const features = [
-    'Page publique sur Google',
-    'Bio et horaires',
-    'Galerie photos',
-    'Tarifs et prestations',
-    'Planning disponibilites',
-    'Offre de bienvenue',
-    'Avis Google integres',
-    'Lien de reservation',
-    'Programme de parrainage',
-    'Mode passages ou cagnotte',
-    'QR Code perso + Kit promo',
-    'Notifications push',
-    'Dashboard analytics',
-    'Clients illimites',
-  ];
+  const featureKeys = [
+    'feature1', 'feature2', 'feature3', 'feature4', 'feature5',
+    'feature6', 'feature7', 'feature8', 'feature9', 'feature10',
+    'feature11', 'feature12', 'feature13', 'feature14',
+  ] as const;
 
   return (
     <section id="pricing" className="relative py-24 md:py-32 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
@@ -33,9 +24,9 @@ export function PricingSection() {
       <div ref={ref} className="relative max-w-6xl mx-auto px-6">
         <div className={`text-center mb-16 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Un prix, <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">tout inclus</span>
+            {t('title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">{t('titleHighlight')}</span>
           </h2>
-          <p className="text-xl text-gray-600">Pas de surprise, pas de frais caches. Pense pour toi.</p>
+          <p className="text-xl text-gray-600">{t('subtitle')}</p>
         </div>
 
         {/* Glassmorphism Pricing Card */}
@@ -44,7 +35,7 @@ export function PricingSection() {
             {/* Trial Badge */}
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
               <div className="px-8 py-2.5 bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-xs font-bold rounded-full shadow-xl shadow-indigo-500/20 tracking-[0.1em] uppercase whitespace-nowrap">
-                7 jours gratuits
+                {t('trialBadge')}
               </div>
             </div>
 
@@ -61,23 +52,23 @@ export function PricingSection() {
                   <span className="text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-600">
                     19&euro;
                   </span>
-                  <span className="text-xl font-semibold text-gray-400">/mois</span>
+                  <span className="text-xl font-semibold text-gray-400">{t('perMonth')}</span>
                 </div>
-                <p className="text-gray-500 text-sm mt-2">soit <span className="font-semibold text-indigo-600">~0,63&euro;</span> par jour</p>
-                <p className="text-indigo-600 font-semibold text-sm mt-3 tracking-wide uppercase">Tout inclus, sans engagement</p>
-                <p className="text-indigo-600 font-medium text-sm mt-2">Inscription sans carte bancaire</p>
-                <p className="text-gray-400 text-xs mt-2">ou <span className="font-semibold text-gray-600">15,83&euro;/mois</span> facture annuellement — 2 mois offerts</p>
+                <p className="text-gray-500 text-sm mt-2">{t('perDay')} <span className="font-semibold text-indigo-600">{t('perDayAmount')}</span> {t('perDayLabel')}</p>
+                <p className="text-indigo-600 font-semibold text-sm mt-3 tracking-wide uppercase">{t('allInclusive')}</p>
+                <p className="text-indigo-600 font-medium text-sm mt-2">{t('noCreditCard')}</p>
+                <p className="text-gray-400 text-xs mt-2">{t('annualOr')} <span className="font-semibold text-gray-600">{t('annualPrice')}</span> {t('annualLabel')}</p>
               </div>
 
               <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200/60 to-transparent mb-10" />
 
               <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-10 relative">
-                {features.map((feature, index) => (
+                {featureKeys.map((key, index) => (
                   <li key={index} className="flex items-center gap-2">
                     <div className="w-5 h-5 bg-indigo-500/10 rounded-full flex items-center justify-center flex-shrink-0">
                       <Check className="w-3 h-3 text-indigo-600" />
                     </div>
-                    <span className="text-gray-600 text-sm font-medium">{feature}</span>
+                    <span className="text-gray-600 text-sm font-medium">{t(key)}</span>
                   </li>
                 ))}
               </ul>
@@ -87,11 +78,11 @@ export function PricingSection() {
                 onClick={() => { trackCtaClick('pricing_cta_2', 'pricing_section_2'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
                 className="block w-full py-5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-2xl hover:shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 text-center uppercase tracking-wider text-sm shadow-md shadow-indigo-500/15"
               >
-                Essai gratuit — 7 jours
+                {t('ctaButton')}
               </a>
 
               <p className="text-center text-gray-400 text-[10px] font-bold mt-6 uppercase tracking-[0.2em]">
-                Annulation possible a tout moment
+                {t('cancelAnytime')}
               </p>
             </div>
           </div>
@@ -101,15 +92,15 @@ export function PricingSection() {
         <div className={`grid grid-cols-2 gap-3 md:flex md:flex-nowrap md:justify-center md:gap-4 mt-12 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`} style={{ animationDelay: '0.6s' }}>
           <div className="flex items-center justify-center gap-2 px-3 py-2 bg-white/70 backdrop-blur-sm rounded-full border border-indigo-100 shadow-sm md:px-4">
             <Headphones className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-            <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">Support reactif 7j/7</span>
+            <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">{t('badgeSupport')}</span>
           </div>
           <div className="flex items-center justify-center gap-2 px-3 py-2 bg-white/70 backdrop-blur-sm rounded-full border border-indigo-100 shadow-sm md:px-4">
             <CreditCard className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-            <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">Sans CB pour essayer</span>
+            <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">{t('badgeNoCB')}</span>
           </div>
           <div className="flex items-center justify-center gap-2 px-3 py-2 bg-white/70 backdrop-blur-sm rounded-full border border-indigo-100 shadow-sm md:px-4">
             <Zap className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-            <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">Activation instantanee</span>
+            <span className="text-xs md:text-sm font-medium text-indigo-700 whitespace-nowrap">{t('badgeInstant')}</span>
           </div>
         </div>
       </div>

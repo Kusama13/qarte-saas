@@ -14,9 +14,10 @@ import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
 import { ttEvents } from '@/components/analytics/TikTokPixel';
+import { useTranslations } from 'next-intl';
 import LandingNav from './LandingNav';
 
-function PageProMockup() {
+function PageProMockup({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden bg-white shadow-2xl shadow-gray-900/20 flex flex-col">
       {/* Header gradient */}
@@ -30,7 +31,7 @@ function PageProMockup() {
             <MapPin className="w-2.5 h-2.5 text-white/70" />
             <span className="text-[9px] text-white/70">Paris 11e</span>
           </div>
-          <p className="text-[8px] text-white/60 mt-1 max-w-[200px] mx-auto leading-tight">Prothesiste ongulaire, specialisee gel et nail art 3D</p>
+          <p className="text-[8px] text-white/60 mt-1 max-w-[200px] mx-auto leading-tight">{t('mockupDescription')}</p>
         </div>
       </div>
 
@@ -38,10 +39,10 @@ function PageProMockup() {
       <div className="px-4 pt-2 pb-1">
         <div className="flex items-center justify-center gap-1.5">
           <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-          <span className="text-[9px] font-medium text-gray-500">Ouvert</span>
+          <span className="text-[9px] font-medium text-gray-500">{t('mockupOpen')}</span>
           <span className="text-[9px] text-gray-400">—</span>
           <Clock className="w-2.5 h-2.5 text-gray-400" />
-          <span className="text-[9px] text-gray-400">Ferme a 19h</span>
+          <span className="text-[9px] text-gray-400">{t('mockupCloses')}</span>
         </div>
       </div>
 
@@ -54,21 +55,21 @@ function PageProMockup() {
             ))}
           </div>
           <span className="text-[9px] font-bold text-gray-600">4.9</span>
-          <span className="text-[8px] text-gray-400">(127 avis)</span>
+          <span className="text-[8px] text-gray-400">{t('mockupReviews')}</span>
         </div>
         <div className="bg-gray-50/80 rounded-lg px-2 py-1.5">
-          <p className="text-[8px] text-gray-500 leading-tight italic">&ldquo;Super salon, je recommande ! Resultat parfait.&rdquo;</p>
+          <p className="text-[8px] text-gray-500 leading-tight italic">&ldquo;{t('mockupReviewText')}&rdquo;</p>
           <p className="text-[7px] text-gray-400 mt-0.5">— Camille L.</p>
         </div>
       </div>
 
       {/* Availability slots */}
       <div className="px-4 py-2">
-        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Disponibilites</p>
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('mockupAvailability')}</p>
         <div className="flex gap-1.5">
-          {['14h', '15h30', '17h'].map((t) => (
-            <div key={t} className="flex-1 bg-indigo-50 border border-indigo-100 rounded-lg py-1.5 text-center">
-              <span className="text-[9px] font-bold text-indigo-600">{t}</span>
+          {['14h', '15h30', '17h'].map((slot) => (
+            <div key={slot} className="flex-1 bg-indigo-50 border border-indigo-100 rounded-lg py-1.5 text-center">
+              <span className="text-[9px] font-bold text-indigo-600">{slot}</span>
             </div>
           ))}
         </div>
@@ -76,9 +77,9 @@ function PageProMockup() {
 
       {/* Services */}
       <div className="px-4 py-2">
-        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Prestations</p>
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('mockupServices')}</p>
         <div className="space-y-1.5">
-          {[{ name: 'Pose complete gel', price: '45' }, { name: 'Manucure semi-permanent', price: '30' }].map((s, i) => (
+          {[{ name: t('mockupServiceGel'), price: '45' }, { name: t('mockupServiceSemiPerm'), price: '30' }].map((s, i) => (
             <div key={i} className="flex items-center justify-between py-1.5 px-2 bg-gray-50/80 rounded-lg">
               <span className="text-[10px] font-semibold text-gray-700">{s.name}</span>
               <span className="text-[10px] font-bold text-gray-900">{s.price} EUR</span>
@@ -89,7 +90,7 @@ function PageProMockup() {
 
       {/* Loyalty stamps */}
       <div className="px-4 py-2 flex-1">
-        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Fidelite</p>
+        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('mockupLoyalty')}</p>
         <div className="grid grid-cols-8 gap-1">
           {[...Array(8)].map((_, i) => (
             <div key={i} className={`aspect-square rounded-md flex items-center justify-center ${i < 5 ? 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-sm shadow-rose-300/50' : 'bg-gray-50 border border-dashed border-gray-200'}`}>
@@ -104,6 +105,7 @@ function PageProMockup() {
 
 export function HeroSection() {
   const { ref, isInView } = useInView();
+  const t = useTranslations('hero');
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-white to-gray-50">
@@ -127,15 +129,15 @@ export function HeroSection() {
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
             <h1 className="relative text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Tu perds des clientes faute de visibilité.{' '}
+              {t('titlePart1')}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
-                Tout ton salon. En un seul lien.
+                {t('titlePart2')}
               </span>
             </h1>
           </div>
 
           <p className="text-base lg:text-lg text-gray-600 max-w-lg leading-relaxed">
-            Une seule page pour tout montrer : bio, prestations, dispos, photos. Un programme fidélité pour les faire revenir. <span className="text-gray-900 font-medium">Tout ça en 5 minutes, sans site web.</span>
+            {t('subtitle')} <span className="text-gray-900 font-medium">{t('subtitleBold')}</span>
           </p>
 
           <div className="flex flex-col sm:flex-row sm:items-start gap-3 lg:gap-4">
@@ -145,17 +147,17 @@ export function HeroSection() {
                 onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
                 className="group relative flex items-center justify-center px-7 py-4 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
               >
-                <span className="relative z-10">Essai gratuit</span>
+                <span className="relative z-10">{t('ctaPrimary')}</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
-              <p className="text-xs text-gray-400 font-medium mt-2 text-center">Sans carte bancaire, c&apos;est promis :)</p>
+              <p className="text-xs text-gray-400 font-medium mt-2 text-center">{t('ctaSubtext')}</p>
             </div>
             <a
               href="/p/demo-onglerie"
               target="_blank"
               className="flex items-center justify-center px-7 py-4 border-2 border-gray-200 text-gray-700 font-bold rounded-xl hover:border-indigo-300 hover:text-indigo-600 transition-all duration-300"
             >
-              Voir la demo
+              {t('ctaDemo')}
             </a>
           </div>
 
@@ -172,7 +174,7 @@ export function HeroSection() {
             <div style={{ transform: 'rotateY(-12deg) rotateX(2deg)', transformStyle: 'preserve-3d' }}>
               <div className="relative w-[280px] h-[570px]">
                 {/* Screen */}
-                <PageProMockup />
+                <PageProMockup t={t} />
               </div>
             </div>
             </div>
@@ -185,8 +187,8 @@ export function HeroSection() {
                 <Sparkles className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-800">47 visites</p>
-                <p className="text-[8px] text-gray-400">cette semaine</p>
+                <p className="text-[10px] font-bold text-gray-800">{t('badgeVisits')}</p>
+                <p className="text-[8px] text-gray-400">{t('badgeVisitsSub')}</p>
               </div>
             </div>
 
@@ -196,8 +198,8 @@ export function HeroSection() {
                 <UserPlus className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-800">Nouvelle cliente !</p>
-                <p className="text-[8px] text-gray-400">Sophie M. via Google</p>
+                <p className="text-[10px] font-bold text-gray-800">{t('badgeNewClient')}</p>
+                <p className="text-[8px] text-gray-400">{t('badgeNewClientSub')}</p>
               </div>
             </div>
 
@@ -207,8 +209,8 @@ export function HeroSection() {
                 <CalendarDays className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-800">Demain 14h</p>
-                <p className="text-[8px] text-indigo-500 font-semibold">Creneau reserve</p>
+                <p className="text-[10px] font-bold text-gray-800">{t('badgeSlotTime')}</p>
+                <p className="text-[8px] text-indigo-500 font-semibold">{t('badgeSlotBooked')}</p>
               </div>
             </div>
 
@@ -218,8 +220,8 @@ export function HeroSection() {
                 <Heart className="w-3.5 h-3.5 text-white fill-white" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-gray-800">Marie — 5e passage</p>
-                <p className="text-[8px] text-rose-500 font-semibold">Plus que 3 tampons !</p>
+                <p className="text-[10px] font-bold text-gray-800">{t('badgeLoyalty')}</p>
+                <p className="text-[8px] text-rose-500 font-semibold">{t('badgeLoyaltySub')}</p>
               </div>
             </div>
           </div>
