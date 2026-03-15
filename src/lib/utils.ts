@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { format, formatDistanceToNow } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { fr, enUS } from 'date-fns/locale';
 import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 import QRCode from 'qrcode';
 
@@ -66,17 +66,37 @@ export function generateScanCode(): string {
   return code;
 }
 
-export function formatDate(date: string | Date): string {
+export function formatDate(date: string | Date, locale: string = 'fr'): string {
   const d = typeof date === 'string' ? new Date(date) : date;
+  if (locale === 'en') return format(d, 'MM/dd/yyyy', { locale: enUS });
   return format(d, 'dd/MM/yyyy', { locale: fr });
 }
 
-export function formatDateTime(date: string | Date): string {
+export function formatDateTime(date: string | Date, locale: string = 'fr'): string {
   const d = typeof date === 'string' ? new Date(date) : date;
+  if (locale === 'en') return format(d, 'MM/dd/yyyy h:mm a', { locale: enUS });
   return format(d, 'dd/MM/yyyy à HH:mm', { locale: fr });
 }
 
-export function formatEUR(amount: number): string {
+/**
+ * Format a "HH:mm" time string for display.
+ * FR: "14:00" → "14h", "14:30" → "14h30"
+ * EN: "14:00" → "2:00 PM", "14:30" → "2:30 PM"
+ */
+export function formatTime(time: string, locale: string = 'fr'): string {
+  const [h, m] = time.split(':');
+  const hour = parseInt(h);
+  const min = m || '00';
+  if (locale === 'en') {
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return min === '00' ? `${h12}:00 ${period}` : `${h12}:${min} ${period}`;
+  }
+  return min === '00' ? `${hour}h` : `${hour}h${min}`;
+}
+
+export function formatEUR(amount: number, locale: string = 'fr'): string {
+  if (locale === 'en') return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
@@ -264,6 +284,48 @@ export const PHONE_CONFIG: Record<MerchantCountry, {
     intlLengths: [9, 10, 11, 12], // 352 + local
     placeholder: '621 123 456',
   },
+  US: {
+    prefix: '1',
+    localLeadingZero: false,
+    localLengths: [10],        // 5551234567
+    intlLengths: [11],         // 15551234567
+    placeholder: '(555) 123-4567',
+  },
+  GB: {
+    prefix: '44',
+    localLeadingZero: true,
+    localLengths: [10, 11],    // 0201234567 (London 10), 07911123456 (mobile 11)
+    intlLengths: [12, 13],     // 44201234567, 447911123456
+    placeholder: '07911 123456',
+  },
+  CA: {
+    prefix: '1',
+    localLeadingZero: false,
+    localLengths: [10],        // 6131234567
+    intlLengths: [11],         // 16131234567
+    placeholder: '(613) 123-4567',
+  },
+  AU: {
+    prefix: '61',
+    localLeadingZero: true,
+    localLengths: [10],        // 0412345678
+    intlLengths: [11],         // 61412345678
+    placeholder: '0412 345 678',
+  },
+  ES: {
+    prefix: '34',
+    localLeadingZero: false,
+    localLengths: [9],         // 612345678
+    intlLengths: [11],         // 34612345678
+    placeholder: '612 34 56 78',
+  },
+  IT: {
+    prefix: '39',
+    localLeadingZero: false,
+    localLengths: [9, 10],     // 312345678 (mobile 9), 0212345678 (fixe 10)
+    intlLengths: [11, 12],     // 39312345678, 390212345678
+    placeholder: '312 345 6789',
+  },
 };
 
 /**
@@ -324,7 +386,11 @@ export function displayPhoneNumber(phone: string, country: MerchantCountry = 'FR
       const withZero = '0' + local;
       return withZero.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
     }
-    // Luxembourg
+    // US/CA: (555) 123-4567
+    if ((country === 'US' || country === 'CA') && local.length === 10) {
+      return `(${local.slice(0, 3)}) ${local.slice(3, 6)}-${local.slice(6)}`;
+    }
+    // Luxembourg + fallback
     return local.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
   }
 

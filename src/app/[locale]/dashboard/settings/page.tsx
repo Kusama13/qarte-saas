@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
+import { useRouter as useIntlRouter } from '@/i18n/navigation';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { useRouter } from 'next/navigation';
 import {
@@ -16,6 +17,7 @@ import {
   Share2,
   Download,
   Crown,
+  Globe,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Button, Input, Select } from '@/components/ui';
@@ -32,6 +34,8 @@ const shopTypeOptions = Object.entries(SHOP_TYPES).map(([value, label]) => ({
 export default function SettingsPage() {
   const t = useTranslations('settings');
   const router = useRouter();
+  const intlRouter = useIntlRouter();
+  const currentLocale = useLocale();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
   const { saving, saved, save } = useDashboardSave();
@@ -325,12 +329,43 @@ export default function SettingsPage() {
           <div className="p-5 rounded-2xl bg-white/50 border border-gray-100 shadow-sm transition-all hover:border-indigo-100">
             <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">{t('createdAtLabel')}</p>
             <p className="text-sm text-gray-700 font-medium">
-              {new Date(merchant?.created_at || '').toLocaleDateString('fr-FR', {
+              {new Date(merchant?.created_at || '').toLocaleDateString(currentLocale === 'en' ? 'en-US' : 'fr-FR', {
                 day: 'numeric',
                 month: 'long',
                 year: 'numeric',
               })}
             </p>
+          </div>
+
+          <div className="p-5 rounded-2xl bg-white/50 border border-gray-100 shadow-sm transition-all hover:border-indigo-100">
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1 flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5" />
+              {t('languageLabel')}
+            </p>
+            <div className="flex gap-2 mt-2">
+              {[
+                { code: 'fr', label: 'Français' },
+                { code: 'en', label: 'English' },
+              ].map(({ code, label }) => (
+                <button
+                  key={code}
+                  onClick={async () => {
+                    if (code === currentLocale) return;
+                    if (merchant) {
+                      await supabase.from('merchants').update({ locale: code }).eq('id', merchant.id);
+                    }
+                    intlRouter.replace('/dashboard/settings', { locale: code as 'fr' | 'en' });
+                  }}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors ${
+                    code === currentLocale
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300 hover:text-indigo-600'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {(merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling') && (

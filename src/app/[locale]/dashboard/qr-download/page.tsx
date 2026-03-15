@@ -659,7 +659,7 @@ export default function QRDownloadPage() {
             {/* CTA */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
             <a
-              href={`https://wa.me/33612345678?text=${encodeURIComponent(t('nfcWhatsappMessage'))}`}
+              href={`https://wa.me/33607447420?text=${encodeURIComponent(t('nfcWhatsappMessage'))}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full h-12 bg-[#25D366] hover:bg-[#1ebe5b] text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition-all text-sm"

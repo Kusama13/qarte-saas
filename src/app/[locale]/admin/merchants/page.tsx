@@ -191,7 +191,9 @@ function HealthDot({ score }: { score: number }) {
 
 function formatPhoneForWhatsApp(phone: string) {
   const cleaned = phone.replace(/\D/g, '');
-  if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
+  // Already in E.164 format (stored without +)
+  if (cleaned.length >= 10 && !cleaned.startsWith('0')) return cleaned;
+  // Local format with leading 0 — use stored E.164 directly
   return cleaned;
 }
 
@@ -700,7 +702,7 @@ export default function AdminMerchantsPage() {
             </button>
           ))}
           <div className="w-px h-6 bg-gray-200 flex-shrink-0 hidden sm:block self-center" />
-          {(['all', 'FR', 'BE', 'CH', 'LU'] as const).map((c) => (
+          {(['all', 'FR', 'BE', 'CH', 'LU', 'US', 'GB', 'CA', 'AU', 'ES', 'IT'] as const).map((c) => (
             <button
               key={c}
               onClick={() => setCountryFilter(c)}

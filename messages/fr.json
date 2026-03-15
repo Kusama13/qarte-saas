@@ -423,6 +423,7 @@
     "ctaButton": "Commence maintenant — c'est gratuit",
     "tagline": "La carte de fidélité digitale pour les pros de la beauté et du bien-être.",
     "madeIn": "Conçu à Marseille avec amour ❤️",
+    "contact": "contact@getqarte.com",
     "support": "Support",
     "quickLinks": "Liens rapides",
     "followUs": "Nous suivre",
@@ -551,7 +552,13 @@
     "FR": "France",
     "BE": "Belgique",
     "CH": "Suisse",
-    "LU": "Luxembourg"
+    "LU": "Luxembourg",
+    "US": "États-Unis",
+    "GB": "Royaume-Uni",
+    "CA": "Canada",
+    "AU": "Australie",
+    "ES": "Espagne",
+    "IT": "Italie"
   },
   "pricingPage": {
     "login": "Se connecter",
@@ -751,6 +758,7 @@
     "accountTitle": "Informations du compte",
     "countryLabel": "Pays",
     "createdAtLabel": "Date d'inscription",
+    "languageLabel": "Langue",
     "subscriptionLabel": "Abonnement",
     "proAnnual": "Pro Annuel",
     "proMonthly": "Pro Mensuel",

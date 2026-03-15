@@ -15,12 +15,14 @@ import {
   Clock,
 } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { getSupabase } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, PHONE_CONFIG } from '@/lib/utils';
-import { SHOP_TYPES, type ShopType, COUNTRIES, type MerchantCountry } from '@/types';
+import { formatPhoneNumber, validatePhone } from '@/lib/utils';
+import { SHOP_TYPES, type ShopType, COUNTRIES, COUNTRIES_BY_LOCALE, type MerchantCountry } from '@/types';
 import { trackPageView, trackSetupCompleted, trackSignupCompleted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
 import { TikTokPixel, ttEvents, ttIdentify } from '@/components/analytics/TikTokPixel';
+import LocaleSwitcher from '@/components/shared/LocaleSwitcher';
 
 export default function CompleteProfilePage() {
   const router = useRouter();
@@ -35,7 +37,8 @@ export default function CompleteProfilePage() {
     label: tShop(value),
   }));
 
-  const countryOptions = Object.keys(COUNTRIES).map((value) => ({
+  const countryKeys = COUNTRIES_BY_LOCALE[locale] || COUNTRIES_BY_LOCALE.fr;
+  const countryOptions = countryKeys.map((value) => ({
     value,
     label: tCountry(value),
   }));
@@ -50,7 +53,7 @@ export default function CompleteProfilePage() {
     phone: '',
     shopName: '',
     shopType: '' as ShopType | '',
-    country: 'FR' as MerchantCountry,
+    country: (COUNTRIES_BY_LOCALE[locale] || COUNTRIES_BY_LOCALE.fr)[0] as MerchantCountry,
   });
 
   // Track page view
@@ -182,6 +185,11 @@ export default function CompleteProfilePage() {
       <FacebookPixel />
       <TikTokPixel />
 
+      {/* Language switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <LocaleSwitcher variant="light" />
+      </div>
+
       {/* Background decorative blobs — blue/pink */}
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/25 to-purple-400/20 rounded-full blur-3xl -translate-x-1/3 -translate-y-1/3" />
       <div className="absolute top-1/4 right-0 w-[400px] h-[400px] bg-gradient-to-br from-pink-400/25 to-rose-300/20 rounded-full blur-3xl translate-x-1/4" />
@@ -259,27 +267,15 @@ export default function CompleteProfilePage() {
                 required
               />
 
-              <div className="grid grid-cols-[120px_1fr] gap-2">
-                <Select
-                  label={t('countryLabel')}
-                  options={countryOptions}
-                  value={formData.country}
-                  onChange={(e) =>
-                    setFormData({ ...formData, country: e.target.value as MerchantCountry })
-                  }
-                  required
-                />
-                <Input
-                  type="tel"
-                  label={t('phoneLabel')}
-                  placeholder={PHONE_CONFIG[formData.country].placeholder}
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  required
-                />
-              </div>
+              <PhoneInput
+                label={t('phoneLabel')}
+                value={formData.phone}
+                onChange={(phone) => setFormData({ ...formData, phone })}
+                country={formData.country}
+                onCountryChange={(c) => setFormData({ ...formData, country: c })}
+                countries={countryKeys}
+                required
+              />
 
               <Button type="submit" loading={loading} className="w-full bg-gradient-to-r from-indigo-600 to-pink-500 hover:from-indigo-700 hover:to-pink-600 shadow-lg shadow-indigo-200/50">
                 {t('cta')}

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useLocale } from 'next-intl';
 import { compressOfferImage } from '@/lib/image-compression';
+import { formatTime } from '@/lib/utils';
 import type {
   Subscriber,
   PushHistoryItem,
@@ -235,6 +237,7 @@ export function useNotificationComposer(merchant: MerchantData | null, deps: {
   setCurrentOfferDescription: (v: string) => void;
   setCurrentOfferImageUrl: (v: string | null) => void;
 }) {
+  const locale = useLocale();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
@@ -427,7 +430,7 @@ export function useNotificationComposer(merchant: MerchantData | null, deps: {
       });
       const data = await response.json();
       if (response.ok) {
-        setSendResult({ success: true, message: `Programmé pour ${scheduleTime === '10:00' ? '10h' : '18h'}` });
+        setSendResult({ success: true, message: locale === 'en' ? `Scheduled for ${formatTime(scheduleTime, 'en')}` : `Programmé pour ${formatTime(scheduleTime, 'fr')}` });
         resetComposer();
         setShowSchedule(false);
         const scheduledResponse = await fetch(`/api/push/schedule?merchantId=${merchant.id}`);

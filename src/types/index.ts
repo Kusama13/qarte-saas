@@ -19,13 +19,24 @@ export const SHOP_TYPES: Record<ShopType, string> = {
   autre: 'Autre',
 };
 
-export type MerchantCountry = 'FR' | 'BE' | 'CH' | 'LU';
+export type MerchantCountry = 'FR' | 'BE' | 'CH' | 'LU' | 'US' | 'GB' | 'CA' | 'AU' | 'ES' | 'IT';
 
 export const COUNTRIES: Record<MerchantCountry, string> = {
   FR: 'France',
   BE: 'Belgique',
   CH: 'Suisse',
   LU: 'Luxembourg',
+  US: 'United States',
+  GB: 'United Kingdom',
+  CA: 'Canada',
+  AU: 'Australia',
+  ES: 'España',
+  IT: 'Italia',
+};
+
+export const COUNTRIES_BY_LOCALE: Record<string, MerchantCountry[]> = {
+  fr: ['FR', 'BE', 'CH', 'LU'],
+  en: ['US', 'GB', 'CA', 'AU', 'BE', 'CH', 'LU', 'ES', 'IT'],
 };
 
 export type SubscriptionStatus = 'trial' | 'active' | 'canceled' | 'canceling' | 'past_due';

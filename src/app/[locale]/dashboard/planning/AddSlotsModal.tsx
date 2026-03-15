@@ -15,6 +15,7 @@ interface AddSlotsModalProps {
   saving: boolean;
   onSave: () => void;
   onClose: () => void;
+  locale?: string;
 }
 
 export default function AddSlotsModal({
@@ -27,6 +28,7 @@ export default function AddSlotsModal({
   saving,
   onSave,
   onClose,
+  locale = 'fr',
 }: AddSlotsModalProps) {
   return (
     <motion.div
@@ -58,7 +60,7 @@ export default function AddSlotsModal({
                 disabled={exists}
                 className={`py-2 rounded-xl text-xs font-semibold transition-all ${exists ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : selected ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'}`}
               >
-                {fmtTime(time)}
+                {fmtTime(time, locale)}
               </button>
             );
           })}
@@ -79,7 +81,7 @@ export default function AddSlotsModal({
           <div className="flex flex-wrap gap-1.5 mb-4">
             {selectedTimes.sort().map(time => (
               <span key={time} className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-medium rounded-full">
-                {fmtTime(time)}
+                {fmtTime(time, locale)}
                 <button onClick={() => setSelectedTimes(prev => prev.filter(t => t !== time))}><X className="w-3 h-3" /></button>
               </span>
             ))}

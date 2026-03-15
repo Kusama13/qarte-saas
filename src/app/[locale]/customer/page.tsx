@@ -2,15 +2,17 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale, useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import {
-  Phone,
   Search,
   Loader2,
 } from 'lucide-react';
-import { Button, Input } from '@/components/ui';
+import { Button } from '@/components/ui';
+import { PhoneInput } from '@/components/ui/PhoneInput';
 import { formatPhoneNumber, validatePhone } from '@/lib/utils';
-import { useTranslations } from 'next-intl';
+import { COUNTRIES_BY_LOCALE } from '@/types';
+import type { MerchantCountry } from '@/types';
 
 /* ── Floating loyalty card ─────────────────────────────── */
 function FloatingCard({
@@ -97,8 +99,11 @@ function FloatingCard({
 /* ── Main page ─────────────────────────────────────────── */
 export default function CustomerLoginPage() {
   const t = useTranslations('customerLogin');
+  const locale = useLocale();
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
+  const defaultCountry = (COUNTRIES_BY_LOCALE[locale] || COUNTRIES_BY_LOCALE.fr)[0] as MerchantCountry;
+  const [country, setCountry] = useState<MerchantCountry>(defaultCountry);
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState('');
@@ -125,7 +130,7 @@ export default function CustomerLoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!validatePhone(formatPhoneNumber(phoneNumber))) {
+    if (!validatePhone(formatPhoneNumber(phoneNumber, country), country)) {
       setError(t('invalidPhone'));
       return;
     }
@@ -133,7 +138,7 @@ export default function CustomerLoginPage() {
     setLoading(true);
 
     try {
-      const formattedPhone = formatPhoneNumber(phoneNumber);
+      const formattedPhone = formatPhoneNumber(phoneNumber, country);
 
       // Login API — sets HttpOnly cookie on success
       const response = await fetch('/api/customers/login', {
@@ -288,21 +293,16 @@ export default function CustomerLoginPage() {
                 </motion.div>
               )}
 
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-700 ml-1">{t('phoneLabel')}</label>
-                <div className="relative group">
-                  <Input
-                    type="tel"
-                    placeholder="06 12 34 56 78"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    required
-                    autoFocus
-                    className="h-14 text-lg pl-12 bg-white/60 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-2xl transition-all shadow-sm"
-                  />
-                  <Phone className="absolute w-5 h-5 text-gray-400 left-4 top-1/2 transform -translate-y-1/2 group-focus-within:text-indigo-600 transition-colors" />
-                </div>
-              </div>
+              <PhoneInput
+                label={t('phoneLabel')}
+                value={phoneNumber}
+                onChange={setPhoneNumber}
+                country={country}
+                onCountryChange={setCountry}
+                required
+                autoFocus
+                className="h-14 text-lg bg-white/60 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-r-2xl transition-all shadow-sm"
+              />
 
               <Button
                 type="submit"

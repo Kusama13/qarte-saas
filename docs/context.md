@@ -9,7 +9,8 @@
 **Qarte** — Plateforme SaaS de cartes de fidelite digitales via QR/NFC.
 
 - **URL:** getqarte.com | **Deploiement:** Vercel
-- **Langue:** Francais (tutoiement dans le dashboard merchant, vouvoiement pour les textes client-facing) | **Version:** 0.1.0
+- **Langues:** Francais (defaut, sans prefixe URL) + Anglais (`/en/*`) via `next-intl` | **Version:** 0.1.0
+- **Ton FR:** tutoiement dashboard merchant, vouvoiement client-facing
 - **Essai:** 7 jours | **Prix:** 19€/mois ou 190€/an
 - **Cible:** Salons de beaute (coiffeurs, barbiers, instituts, ongleries, spas, estheticiennes)
 - **Entite:** SAS Tenga Labs — 60 rue Francois 1er, 75008 Paris
@@ -23,6 +24,7 @@
 - **Supabase** (PostgreSQL + Auth + Storage + RLS)
 - **Stripe** (paiements) + **Resend** (emails)
 - **Recharts** (graphiques), **Lucide React** (icones), **jsPDF** + **QRCode** (PDF/QR), **Web Push**
+- **next-intl** (i18n) — `messages/fr.json` + `messages/en.json` (~1685 lignes chacun)
 
 ---
 
@@ -31,16 +33,19 @@
 ```
 src/
 ├── app/
-│   ├── api/               # Routes API (voir section 6)
-│   ├── auth/              # Signup 2 phases + login
-│   ├── dashboard/         # Dashboard merchant (protected) + onboarding (personalize, welcome)
-│   ├── admin/             # Dashboard admin (super_admins)
-│   ├── customer/          # Carte fidelite + wallet
-│   ├── scan/[code]/       # Scan QR (page publique)
-│   ├── boutique/          # Carte NFC (20€)
-│   ├── p/[slug]/          # Page publique programme (bio reseaux)
-│   ├── pros/              # Social proof merchants
-│   └── page.tsx           # Landing page
+│   ├── api/               # Routes API (voir section 6) — hors [locale]
+│   ├── [locale]/           # Segment i18n (fr sans prefixe, en sous /en/*)
+│   │   ├── auth/          # Signup 2 phases + login
+│   │   ├── dashboard/     # Dashboard merchant (protected) + onboarding (personalize, welcome)
+│   │   ├── admin/         # Dashboard admin (super_admins)
+│   │   ├── customer/      # Carte fidelite + wallet
+│   │   ├── scan/[code]/   # Scan QR (page publique)
+│   │   ├── boutique/      # Carte NFC (20€)
+│   │   ├── p/[slug]/      # Page publique programme (bio reseaux)
+│   │   ├── pros/          # Social proof merchants
+│   │   └── page.tsx       # Landing page
+│   ├── layout.tsx         # Root shell (fonts, analytics)
+│   └── [locale]/layout.tsx # Locale layout (NextIntlClientProvider, metadata)
 │
 ├── components/
 │   ├── landing/           # Hero, SocialProof, LoyaltyModes, BentoFeatures, Testimonials, Pricing, FAQ, Footer
@@ -197,9 +202,19 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Batched 50, pause 100ms entre batches
 
 ### Support Multi-Pays
-- FR, BE, CH, LU — `PHONE_CONFIG` par pays
-- E.164 sans + (ex: 33612345678)
-- `formatPhoneNumber()`, `validatePhone()`, `displayPhoneNumber()`
+- 10 pays : FR, BE, CH, LU, US, GB, CA, AU, ES, IT — `PHONE_CONFIG` par pays
+- `COUNTRIES_BY_LOCALE` : FR locale → FR/BE/CH/LU | EN locale → US/GB/CA/AU/BE/CH/LU/ES/IT
+- E.164 sans + (ex: 33612345678, 15551234567)
+- `formatPhoneNumber()`, `validatePhone()`, `displayPhoneNumber()` — tous avec param `country`
+- `PhoneInput` composant (`src/components/ui/PhoneInput.tsx`) : selecteur pays drapeau+indicatif, dropdown, placeholder dynamique
+- Utilise dans `/customer` (login client), `/auth/merchant/signup/complete` (inscription merchant)
+
+### Formatage Heures/Dates (locale-aware)
+- `formatTime(time, locale)` : FR → `14h` / `14h30` | EN → `2:00 PM` / `2:30 PM`
+- `formatDate(date, locale)` : FR → `dd/MM/yyyy` | EN → `MM/dd/yyyy`
+- `formatDateTime(date, locale)` : FR → `dd/MM/yyyy à HH:mm` | EN → `MM/dd/yyyy h:mm AM/PM`
+- `formatEUR(amount, locale)` : FR → `19,00` | EN → `19.00`
+- Default `'fr'` partout pour backward-compat
 
 ### Planning (mig 063)
 - Planning simple gere par le merchant (pas de reservation en ligne)

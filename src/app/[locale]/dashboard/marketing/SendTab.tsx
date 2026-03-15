@@ -21,7 +21,9 @@ import {
   Upload,
   CalendarDays,
 } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatTime } from '@/lib/utils';
 import {
   PUSH_TEMPLATES,
   TEMPLATE_COLOR_MAP,
@@ -102,6 +104,7 @@ export default function SendTab(props: SendTabProps) {
     pushHistory, loadingHistory,
   } = props;
 
+  const locale = useLocale();
   const [showHistory, setShowHistory] = React.useState(false);
 
   return (
@@ -119,7 +122,7 @@ export default function SendTab(props: SendTabProps) {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-900 truncate">{push.title}</p>
                   <p className="text-sm text-gray-500">
-                    {formatScheduleDate(push.scheduled_date)} à {push.scheduled_time === '10:00' ? '10h' : '18h'}
+                    {formatScheduleDate(push.scheduled_date)} {locale === 'en' ? 'at' : 'à'} {formatTime(push.scheduled_time, locale)}
                   </p>
                 </div>
                 <button
@@ -421,7 +424,7 @@ export default function SendTab(props: SendTabProps) {
                               : 'bg-white text-blue-700 border border-blue-200'
                           }`}
                         >
-                          {time === '10:00' ? '10h' : '18h'}
+                          {formatTime(time, locale)}
                         </button>
                       ))}
                     </div>

@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
+import { PHONE_CONFIG } from '@/lib/utils';
 import { getWeekStart, formatDate, formatDateFr, fmtTime } from './utils';
 import { handleDownloadStory } from './StoryExport';
 import AddSlotsModal from './AddSlotsModal';
@@ -25,6 +26,7 @@ type Tab = 'slots' | 'settings';
 
 export default function PlanningDashboard() {
   const t = useTranslations('planning');
+  const locale = useLocale();
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const supabase = getSupabase();
 
@@ -310,7 +312,7 @@ export default function PlanningDashboard() {
 
   const onDownloadStory = useCallback(async () => {
     if (!merchant || slots.length === 0) return;
-    await handleDownloadStory({ merchant, slots, slotsByDate, weekStart, weekEnd });
+    await handleDownloadStory({ merchant, slots, slotsByDate, weekStart, weekEnd, locale });
   }, [merchant, slots, slotsByDate, weekStart, weekEnd]);
 
   if (merchantLoading) {
@@ -492,7 +494,7 @@ export default function PlanningDashboard() {
                         className={`bg-white rounded-xl border p-2.5 min-h-[100px] transition-colors ${today ? 'border-indigo-300 ring-1 ring-indigo-100' : past ? 'border-gray-100 opacity-50' : 'border-gray-100'}`}
                       >
                         <p className={`text-[11px] font-bold mb-2 capitalize ${today ? 'text-indigo-600' : 'text-gray-400'}`}>
-                          {formatDateFr(day)}
+                          {formatDateFr(day, locale)}
                         </p>
                         <div className="space-y-1">
                           {daySlots.map(slot => (
@@ -501,7 +503,7 @@ export default function PlanningDashboard() {
                               onClick={() => openEditSlot(slot)}
                               className={`w-full text-left px-2 py-1 rounded-lg text-[11px] font-medium transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
                             >
-                              <span className="font-bold">{fmtTime(slot.start_time)}</span>
+                              <span className="font-bold">{fmtTime(slot.start_time, locale)}</span>
                               {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name.length > 8 ? slot.client_name.slice(0, 8) + '…' : slot.client_name}</span>}
                             </button>
                           ))}
@@ -534,7 +536,7 @@ export default function PlanningDashboard() {
                       >
                         <div className="flex items-center justify-between mb-2">
                           <p className={`text-xs font-bold capitalize ${today ? 'text-indigo-600' : 'text-gray-500'}`}>
-                            {formatDateFr(day)}
+                            {formatDateFr(day, locale)}
                           </p>
                           {!past && (
                             <button
@@ -553,7 +555,7 @@ export default function PlanningDashboard() {
                                 onClick={() => openEditSlot(slot)}
                                 className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
                               >
-                                {fmtTime(slot.start_time)}
+                                {fmtTime(slot.start_time, locale)}
                                 {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name}</span>}
                               </button>
                             ))}
@@ -680,6 +682,7 @@ export default function PlanningDashboard() {
             saving={saving}
             onSave={handleAddSlots}
             onClose={() => setAddSlotsDay(null)}
+            locale={locale}
           />
         )}
       </AnimatePresence>
@@ -712,6 +715,8 @@ export default function PlanningDashboard() {
             onSave={handleUpdateSlot}
             onDelete={handleDeleteSlot}
             onClose={() => setEditSlot(null)}
+            phonePlaceholder={PHONE_CONFIG[merchant?.country || 'FR'].placeholder}
+            locale={locale}
           />
         )}
       </AnimatePresence>

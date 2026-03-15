@@ -37,6 +37,8 @@ interface SlotModalProps {
   onSave: () => void;
   onDelete: (slotId: string) => void;
   onClose: () => void;
+  phonePlaceholder?: string;
+  locale?: string;
 }
 
 export default function SlotModal({
@@ -64,6 +66,8 @@ export default function SlotModal({
   onSave,
   onDelete,
   onClose,
+  phonePlaceholder = '06 12 34 56 78',
+  locale = 'fr',
 }: SlotModalProps) {
   return (
     <motion.div
@@ -78,9 +82,9 @@ export default function SlotModal({
       >
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-gray-900">{fmtTime(editSlot.start_time)}</h3>
+            <h3 className="text-base font-bold text-gray-900">{fmtTime(editSlot.start_time, locale)}</h3>
             <p className="text-xs text-gray-400 capitalize">
-              {new Date(editSlot.slot_date + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {new Date(editSlot.slot_date + 'T00:00:00').toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </p>
           </div>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4 text-gray-400" /></button>
@@ -133,7 +137,7 @@ export default function SlotModal({
             <label className="text-xs font-semibold text-gray-500 mb-1 block">
               Téléphone {editCustomerId ? '(optionnel)' : '(requis pour créer le client)'}
             </label>
-            <input type="tel" value={editPhone} onChange={(e) => { onPhoneChange(e.target.value); if (editCustomerId) onCustomerIdChange(null); }} placeholder="06 12 34 56 78" maxLength={20} className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400" />
+            <input type="tel" value={editPhone} onChange={(e) => { onPhoneChange(e.target.value); if (editCustomerId) onCustomerIdChange(null); }} placeholder={phonePlaceholder} maxLength={20} className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400" />
           </div>
           {/* Create customer button — shown when name + phone filled but no customer linked */}
           {editName.trim().length >= 2 && editPhone.trim().length >= 6 && !editCustomerId && (

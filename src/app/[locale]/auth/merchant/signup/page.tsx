@@ -20,6 +20,7 @@ import { trackPageView, trackSignupStarted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
 import { TikTokPixel } from '@/components/analytics/TikTokPixel';
 import { useTranslations } from 'next-intl';
+import LocaleSwitcher from '@/components/shared/LocaleSwitcher';
 
 export default function MerchantSignupPage() {
   const router = useRouter();
@@ -118,6 +119,11 @@ export default function MerchantSignupPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-pink-50 relative overflow-hidden">
       <FacebookPixel />
       <TikTokPixel />
+
+      {/* Language switcher */}
+      <div className="absolute top-4 right-4 z-20">
+        <LocaleSwitcher variant="light" />
+      </div>
 
       {/* Background decorative blobs — blue/pink */}
       <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/25 to-purple-400/20 rounded-full blur-3xl -translate-x-1/3 -translate-y-1/3" />

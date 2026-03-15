@@ -394,9 +394,8 @@ export default function MerchantDetailPage() {
   };
 
   const formatPhoneForWhatsApp = (phone: string) => {
-    const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
-    return cleaned;
+    // Phones are stored in E.164 without + (e.g. 33612345678, 15551234567)
+    return phone.replace(/\D/g, '');
   };
 
   const [waOpen, setWaOpen] = useState(false);
@@ -513,7 +512,7 @@ export default function MerchantDetailPage() {
                   {SHOP_TYPES[merchant.shop_type] || merchant.shop_type}
                 </span>
                 <span className="text-xs text-gray-500">
-                  {{ FR: '🇫🇷', BE: '🇧🇪', CH: '🇨🇭', LU: '🇱🇺' }[merchant.country] || ''} {merchant.country}
+                  {{ FR: '🇫🇷', BE: '🇧🇪', CH: '🇨🇭', LU: '🇱🇺', US: '🇺🇸', GB: '🇬🇧', CA: '🇨🇦', AU: '🇦🇺', ES: '🇪🇸', IT: '🇮🇹' }[merchant.country] || ''} {merchant.country}
                 </span>
                 {merchant.signup_source && (
                   <span className="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-50 text-indigo-600">

@@ -6,8 +6,8 @@ import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
-import { formatDoubleDays } from '@/lib/utils';
-import { useTranslations } from 'next-intl';
+import { formatDoubleDays, formatTime } from '@/lib/utils';
+import { useLocale, useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
 type Photo = { id: string; url: string; position: number };
@@ -61,6 +61,7 @@ type MerchantPublic = Pick<
 
 export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
   const t = useTranslations('programmeView');
+  const locale = useLocale();
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
@@ -131,8 +132,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
       const d = new Date(slot.slot_date + 'T00:00:00');
       const monthKey = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
       const dayLabel = `${DAY_NAMES_FULL[d.getDay()]} ${d.getDate()}`;
-      const [h, m] = slot.start_time.split(':');
-      const timeStr = `${parseInt(h)}h${m}`;
+      const timeStr = formatTime(slot.start_time, locale);
 
       if (monthKey !== currentMonth) {
         grouped.push({ month: monthKey, days: [] });

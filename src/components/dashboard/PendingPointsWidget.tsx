@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import {
   ShieldAlert,
   Shield,
@@ -32,6 +32,7 @@ interface ToastState {
 
 export default function PendingPointsWidget({ merchantId, shieldEnabled, onShieldToggle }: PendingPointsWidgetProps) {
   const t = useTranslations('pendingPoints');
+  const locale = useLocale();
   const [visits, setVisits] = useState<PendingVisit[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -118,11 +119,12 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterdayStart = new Date(todayStart.getTime() - 24 * 60 * 60 * 1000);
 
-    const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const loc = locale === 'en' ? 'en-US' : 'fr-FR';
+    const time = date.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' });
 
     if (date >= todayStart) return `${t('today')} ${time}`;
     if (date >= yesterdayStart) return `${t('yesterday')} ${time}`;
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ` ${time}`;
+    return date.toLocaleDateString(loc, { day: 'numeric', month: 'short' }) + ` ${time}`;
   };
 
   const getInitials = (firstName?: string | null, lastName?: string | null) => {

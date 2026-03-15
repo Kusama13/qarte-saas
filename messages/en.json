@@ -423,6 +423,7 @@
     "ctaButton": "Get started — it's free",
     "tagline": "The digital loyalty card for beauty and wellness professionals.",
     "madeIn": "Made in Marseille with love ❤️",
+    "contact": "contact@getqarte.com",
     "support": "Support",
     "quickLinks": "Quick links",
     "followUs": "Follow us",
@@ -551,7 +552,13 @@
     "FR": "France",
     "BE": "Belgium",
     "CH": "Switzerland",
-    "LU": "Luxembourg"
+    "LU": "Luxembourg",
+    "US": "United States",
+    "GB": "United Kingdom",
+    "CA": "Canada",
+    "AU": "Australia",
+    "ES": "Spain",
+    "IT": "Italy"
   },
   "pricingPage": {
     "login": "Sign in",
@@ -751,6 +758,7 @@
     "accountTitle": "Account information",
     "countryLabel": "Country",
     "createdAtLabel": "Registration date",
+    "languageLabel": "Language",
     "subscriptionLabel": "Subscription",
     "proAnnual": "Pro Annual",
     "proMonthly": "Pro Monthly",

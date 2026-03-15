@@ -559,11 +559,8 @@ export default function AdminDashboardPage() {
   };
 
   const formatPhoneForWhatsApp = (phone: string) => {
-    const cleaned = phone.replace(/\D/g, '');
-    // Legacy local format → assume French
-    if (cleaned.startsWith('0')) return '33' + cleaned.substring(1);
-    // Already E.164 (33xxx, 32xxx, 41xxx, 352xxx...)
-    return cleaned;
+    // Phones are stored in E.164 without + (e.g. 33612345678, 15551234567)
+    return phone.replace(/\D/g, '');
   };
 
   const openWhatsApp = (phone: string, name?: string) => {

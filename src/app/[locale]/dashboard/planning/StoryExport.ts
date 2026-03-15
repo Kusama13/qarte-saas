@@ -28,9 +28,10 @@ interface StoryExportParams {
   slotsByDate: Map<string, PlanningSlot[]>;
   weekStart: Date;
   weekEnd: Date;
+  locale?: string;
 }
 
-export async function handleDownloadStory({ merchant, slots, slotsByDate, weekStart, weekEnd }: StoryExportParams): Promise<void> {
+export async function handleDownloadStory({ merchant, slots, slotsByDate, weekStart, weekEnd, locale = 'fr' }: StoryExportParams): Promise<void> {
   if (slots.length === 0) return;
 
   // Use already-loaded slots + pre-computed slotsByDate
@@ -132,7 +133,9 @@ export async function handleDownloadStory({ merchant, slots, slotsByDate, weekSt
   ctx.fillText('🌸', W / 2, 372);
 
   // ── Jours ──
-  const dayNamesFr = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  const dayNamesFr = locale === 'en'
+    ? ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    : ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
   const cardMx = 80;
   const cardW = W - cardMx * 2;
@@ -178,7 +181,7 @@ export async function handleDownloadStory({ merchant, slots, slotsByDate, weekSt
     const dayNum = d.getDate();
 
     // Tous les créneaux dans l'ordre chrono, avec flag taken
-    const items: SlotItem[] = dateSlots.map(s => ({ text: fmtTime(s.start_time), taken: !!s.client_name }));
+    const items: SlotItem[] = dateSlots.map(s => ({ text: fmtTime(s.start_time, locale), taken: !!s.client_name }));
     const timesMaxW = cardW - pad * 2;
     const lines = wrapSlotItems(items, timesMaxW);
 
