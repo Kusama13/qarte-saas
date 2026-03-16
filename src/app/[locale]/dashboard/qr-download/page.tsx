@@ -53,20 +53,24 @@ export default function QRDownloadPage() {
     setScanUrl(getScanUrl(merchant.scan_code));
   }, [merchant?.scan_code]);
 
-  // Pre-fetch logo as base64 to avoid CORS issues with html-to-image export
+  // Pre-fetch logo as base64 data URL to avoid CORS issues with html-to-image export
   useEffect(() => {
     if (!merchant?.logo_url) return;
-    const img = new window.Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-      canvas.getContext('2d')!.drawImage(img, 0, 0);
-      setLogoDataUrl(canvas.toDataURL('image/png'));
-    };
-    img.onerror = () => setLogoDataUrl(null);
-    img.src = merchant.logo_url;
+    let cancelled = false;
+    fetch(merchant.logo_url)
+      .then(res => res.blob())
+      .then(blob => {
+        if (cancelled) return;
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (!cancelled && typeof reader.result === 'string') {
+            setLogoDataUrl(reader.result);
+          }
+        };
+        reader.readAsDataURL(blob);
+      })
+      .catch(() => setLogoDataUrl(null));
+    return () => { cancelled = true; };
   }, [merchant?.logo_url]);
 
   /** Convert data URL to File for Web Share API */
