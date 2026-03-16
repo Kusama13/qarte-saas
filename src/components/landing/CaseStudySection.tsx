@@ -114,8 +114,8 @@ export function CaseStudySection() {
 
                 <div className="pt-6 border-t border-white/20">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold">+2 340€</span>
-                    <span className="text-indigo-200">/mois</span>
+                    <span className="text-3xl font-bold">{t('revenueAmount')}</span>
+                    <span className="text-indigo-200">{t('revenuePerMonth')}</span>
                   </div>
                   <p className="text-indigo-200 text-sm mt-1">{t('revenue')}</p>
                 </div>

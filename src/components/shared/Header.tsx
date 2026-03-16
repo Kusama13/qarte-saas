@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { Menu, X, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui';
+import { useTranslations } from 'next-intl';
 
 interface HeaderProps {
   minimal?: boolean;
@@ -11,6 +12,7 @@ interface HeaderProps {
 
 export function Header({ minimal = false }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const t = useTranslations('nav');
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-100">
@@ -30,17 +32,17 @@ export function Header({ minimal = false }: HeaderProps) {
                   href="#pricing"
                   className="text-gray-600 transition-colors hover:text-primary"
                 >
-                  Tarifs
+                  {t('pricing')}
                 </a>
                 <Link
                   href="/contact"
                   className="text-gray-600 transition-colors hover:text-primary"
                 >
-                  Contact
+                  {t('contact')}
                 </Link>
                 <Link href="/auth/merchant">
                   <Button variant="outline" size="sm">
-                    Espace Commerçant
+                    {t('proSpace')}
                   </Button>
                 </Link>
               </div>
@@ -68,21 +70,21 @@ export function Header({ minimal = false }: HeaderProps) {
                 onClick={() => setIsMenuOpen(false)}
                 className="px-4 py-2 text-gray-600 transition-colors hover:text-primary"
               >
-                Tarifs
+                {t('pricing')}
               </a>
               <Link
                 href="/contact"
                 onClick={() => setIsMenuOpen(false)}
                 className="px-4 py-2 text-gray-600 transition-colors hover:text-primary"
               >
-                Contact
+                {t('contact')}
               </Link>
               <Link
                 href="/auth/merchant"
                 onClick={() => setIsMenuOpen(false)}
                 className="px-4 py-2 text-gray-600 transition-colors hover:text-primary"
               >
-                Espace Commerçant
+                {t('proSpace')}
               </Link>
             </div>
           </div>

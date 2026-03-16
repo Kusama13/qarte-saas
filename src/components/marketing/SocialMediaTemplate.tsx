@@ -2,6 +2,7 @@
 
 import { forwardRef } from 'react';
 import { Gift, Sparkles } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface SocialMediaTemplateProps {
   shopName: string;
@@ -40,16 +41,18 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
     },
     ref
   ) => {
+    const t = useTranslations('socialMediaTemplate');
+
     // 4:5 ratio (Instagram portrait)
     const width = 400 * scale;
     const height = 500 * scale;
     const isCagnotte = loyaltyMode === 'cagnotte';
     const hasTwoTiers = tier2Enabled && tier2StampsRequired && (tier2RewardDescription || (isCagnotte && cagnotteTier2Percent));
-    const displayReward = isCagnotte ? `${cagnottePercent}% sur votre cagnotte fidélité` : rewardDescription;
-    const displayTier2Reward = isCagnotte ? `${cagnotteTier2Percent}% sur votre cagnotte fidélité` : tier2RewardDescription;
+    const displayReward = isCagnotte ? t('cagnotteReward', { percent: Number(cagnottePercent || 0) }) : rewardDescription;
+    const displayTier2Reward = isCagnotte ? t('cagnotteReward', { percent: Number(cagnotteTier2Percent || 0) }) : tier2RewardDescription;
 
     const getStampsText = (stamps: number) => {
-      return `${stamps} passage${stamps > 1 ? 's' : ''}`;
+      return t('visits', { count: stamps });
     };
 
     return (
@@ -166,7 +169,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                 marginTop: `${6 * scale}px`,
               }}
             >
-              Programme de fidélité
+              {t('loyaltyProgram')}
             </p>
           </div>
 
@@ -192,7 +195,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                 className="font-bold uppercase tracking-wider"
                 style={{ fontSize: `${(hasTwoTiers ? 9 : 10) * scale}px`, color: primaryColor }}
               >
-                {hasTwoTiers ? 'Vos récompenses' : 'Votre récompense'}
+                {hasTwoTiers ? t('yourRewards') : t('yourReward')}
               </span>
             </div>
 
@@ -212,7 +215,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                     className="font-bold uppercase tracking-wide"
                     style={{ fontSize: `${7 * scale}px`, color: primaryColor }}
                   >
-                    Palier 1
+                    {t('tier1')}
                   </span>
                   <p
                     className="font-black leading-tight"
@@ -248,7 +251,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                       className="font-bold uppercase tracking-wide"
                       style={{ fontSize: `${7 * scale}px`, color: '#f59e0b' }}
                     >
-                      Palier 2
+                      {t('tier2')}
                     </span>
                     <span style={{ fontSize: `${8 * scale}px` }}>&#11088;</span>
                   </div>
@@ -291,7 +294,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                     color: primaryColor,
                   }}
                 >
-                  Après {getStampsText(stampsRequired)}
+                  {t('after', { visits: getStampsText(stampsRequired) })}
                 </p>
               </>
             )}
@@ -320,7 +323,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                   className="text-white font-bold"
                   style={{ fontSize: `${11 * scale}px` }}
                 >
-                  Comment ça marche ?
+                  {t('howItWorks')}
                 </span>
               </div>
               <p
@@ -330,9 +333,9 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                   maxWidth: `${260 * scale}px`,
                 }}
               >
-                Lors de votre prochain rendez-vous,
+                {t('ctaLine1')}
                 <br />
-                demandez à scanner le QR code en caisse !
+                {t('ctaLine2')}
               </p>
             </div>
 
@@ -349,7 +352,7 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
                 className="font-medium"
                 style={{ fontSize: `${8 * scale}px`, color: '#9ca3af' }}
               >
-                Propulsé par&nbsp;
+                {t('poweredBy')}&nbsp;
               </span>
               <span
                 className="font-black"

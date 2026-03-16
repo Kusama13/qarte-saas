@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Star, ChevronRight, X } from 'lucide-react';
 
 interface ReviewPromptProps {
@@ -10,6 +11,7 @@ interface ReviewPromptProps {
 }
 
 export default function ReviewPrompt({ merchantId, shopName, reviewLink }: ReviewPromptProps) {
+  const t = useTranslations('reviewPrompt');
   const [permanentlyHidden, setPermanentlyHidden] = useState(false);
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export default function ReviewPrompt({ merchantId, shopName, reviewLink }: Revie
             setPermanentlyHidden(true);
           }}
           className="absolute top-2.5 right-2.5 p-1 text-amber-300 hover:text-amber-500 transition-colors rounded-full hover:bg-amber-100/50"
-          aria-label="Masquer"
+          aria-label={t('dismiss')}
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -51,8 +53,8 @@ export default function ReviewPrompt({ merchantId, shopName, reviewLink }: Revie
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-gray-800 leading-tight">Votre avis compte</p>
-            <p className="text-[11px] text-gray-500 mt-0.5">Partagez votre expérience</p>
+            <p className="text-sm font-bold text-gray-800 leading-tight">{t('title')}</p>
+            <p className="text-[11px] text-gray-500 mt-0.5">{t('subtitle')}</p>
           </div>
 
           {/* CTA button */}
@@ -62,7 +64,7 @@ export default function ReviewPrompt({ merchantId, shopName, reviewLink }: Revie
             rel="noopener noreferrer"
             className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-xl bg-amber-500 text-white text-xs font-bold shadow-sm shadow-amber-200/50 hover:bg-amber-600 active:scale-95 transition-all"
           >
-            J&apos;y vais
+            {t('cta')}
             <ChevronRight className="w-3.5 h-3.5" />
           </a>
         </div>

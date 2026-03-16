@@ -128,30 +128,30 @@ export async function subscribeToPush(
   customerId?: string
 ): Promise<{ success: boolean; subscription?: PushSubscription; error?: string }> {
   if (!isPushSupported()) {
-    return { success: false, error: 'Push non supporté sur ce navigateur' };
+    return { success: false, error: 'Push notifications not supported' };
   }
 
   if (!customerId) {
-    return { success: false, error: 'Customer ID requis' };
+    return { success: false, error: 'Customer ID required' };
   }
 
   // Get VAPID public key (from env or API)
   const vapidPublicKey = await getVapidPublicKey();
   if (!vapidPublicKey) {
-    return { success: false, error: 'Configuration push manquante' };
+    return { success: false, error: 'Push configuration missing' };
   }
 
   try {
     // Request permission first
     const permission = await requestPermission();
     if (permission !== 'granted') {
-      return { success: false, error: 'Permission refusée' };
+      return { success: false, error: 'Permission denied' };
     }
 
     // Register service worker
     const registration = await registerServiceWorker();
     if (!registration) {
-      return { success: false, error: 'Erreur Service Worker' };
+      return { success: false, error: 'Service Worker error' };
     }
 
     // Wait for the service worker to be ready
@@ -184,7 +184,7 @@ export async function subscribeToPush(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Erreur serveur');
+        throw new Error(errorData.error || 'Server error');
       }
     } finally {
       clearTimeout(subTimeout);
@@ -195,7 +195,7 @@ export async function subscribeToPush(
     console.error('Push subscription error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Erreur inconnue'
+      error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
 }

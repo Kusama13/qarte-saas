@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { motion } from 'framer-motion';
 import { ChevronRight, CreditCard, LogOut, Trophy, Gift } from 'lucide-react';
@@ -22,6 +23,7 @@ interface LoyaltyCardWithMerchant {
 }
 
 export default function CustomerCardsPage() {
+  const t = useTranslations('customerCards');
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -41,7 +43,7 @@ export default function CustomerCardsPage() {
       const response = await fetch('/api/customers/cards', { method: 'POST' });
       if (response.status === 401) { router.replace('/customer'); return; }
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Erreur serveur');
+      if (!response.ok) throw new Error(data.error || t('serverError'));
       if (data.phone) setPhoneNumber(data.phone);
       if (data.first_name) setFirstName(data.first_name);
       if (!data.found || data.cards.length === 0) { setCards([]); setLoading(false); return; }
@@ -61,7 +63,7 @@ export default function CustomerCardsPage() {
       setCards(sorted);
     } catch (err) {
       console.error(err);
-      setError('Erreur lors de la recherche');
+      setError(t('searchError'));
     } finally {
       setLoading(false);
     }
@@ -119,15 +121,15 @@ export default function CustomerCardsPage() {
       {/* Greeting */}
       <div className="px-6 pt-2 pb-8 max-w-4xl mx-auto">
         {firstName && (
-          <p className="text-base text-gray-400 font-medium mb-1">Bonjour,</p>
+          <p className="text-base text-gray-400 font-medium mb-1">{t('hello')}</p>
         )}
         <h1 className="text-4xl font-black text-gray-900 leading-none mb-2">
-          {firstName ? `${firstName}.` : 'Mes cartes.'}
+          {firstName ? `${firstName}.` : t('myCards')}
         </h1>
         <p className="text-sm text-gray-400 font-medium">
           {cards.length > 0
-            ? `${cards.length} carte${cards.length > 1 ? 's' : ''} de fidélité`
-            : 'Aucun programme actif'}
+            ? t('loyaltyCards', { count: cards.length })
+            : t('noActiveProgram')}
         </p>
       </div>
 
@@ -197,14 +199,14 @@ export default function CustomerCardsPage() {
                             {card.shop_name}
                           </p>
                           <p className="text-[10px] font-bold text-white/55 uppercase tracking-widest mt-0.5">
-                            Fidélité
+                            {t('loyalty')}
                           </p>
                         </div>
 
                         {/* Right side */}
                         {hasUnclaimedReward ? (
                           <span className="shrink-0 px-2.5 py-1 rounded-full bg-white/20 border border-white/30 text-[11px] font-black text-white">
-                            Prêt !
+                            {t('ready')}
                           </span>
                         ) : (
                           <ChevronRight className="w-4 h-4 text-white/40 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -219,7 +221,7 @@ export default function CustomerCardsPage() {
                             <div>
                               <div className="flex items-center justify-between mb-1.5">
                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                                  Palier 1
+                                  {t('tier1')}
                                 </span>
                                 <span className="text-[10px] font-bold text-gray-400">
                                   {Math.min(card.current_stamps, tier1Required)}/{tier1Required}
@@ -237,7 +239,7 @@ export default function CustomerCardsPage() {
                                 />
                               </div>
                               <p className="text-[10px] text-gray-400 font-medium mt-1 truncate">
-                                {card.reward_description || 'Cadeau fidélité'}
+                                {card.reward_description || t('defaultReward')}
                               </p>
                             </div>
 
@@ -245,7 +247,7 @@ export default function CustomerCardsPage() {
                             <div className={effectiveTier1Redeemed ? '' : 'opacity-40'}>
                               <div className="flex items-center justify-between mb-1.5">
                                 <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                                  <Trophy className="w-2.5 h-2.5" /> Palier 2
+                                  <Trophy className="w-2.5 h-2.5" /> {t('tier2')}
                                 </span>
                                 <span className="text-[10px] font-bold text-gray-400">
                                   {Math.min(Math.max(0, card.current_stamps - tier1Required), tier2Required - tier1Required)}/{tier2Required - tier1Required}
@@ -261,7 +263,7 @@ export default function CustomerCardsPage() {
                                 />
                               </div>
                               <p className="text-[10px] text-gray-400 font-medium mt-1 truncate">
-                                {card.tier2_reward_description || 'Récompense premium'}
+                                {card.tier2_reward_description || t('defaultPremiumReward')}
                               </p>
                             </div>
                           </div>
@@ -269,12 +271,12 @@ export default function CustomerCardsPage() {
                           <div>
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-[10px] font-bold text-gray-500">
-                                {card.current_stamps} sur {tier1Required} passages
+                                {t('stampsOf', { current: card.current_stamps, total: tier1Required })}
                               </span>
                               {isTier1Ready && (
                                 <span className="flex items-center gap-1 text-[10px] font-bold" style={{ color: card.primary_color }}>
                                   <Gift className="w-3 h-3" />
-                                  Disponible
+                                  {t('available')}
                                 </span>
                               )}
                             </div>
@@ -288,7 +290,7 @@ export default function CustomerCardsPage() {
                               />
                             </div>
                             <p className="text-[10px] text-gray-400 font-medium mt-1.5 truncate">
-                              {card.reward_description || 'Votre récompense fidélité'}
+                              {card.reward_description || t('defaultLoyaltyReward')}
                             </p>
                           </div>
                         )}
@@ -304,9 +306,9 @@ export default function CustomerCardsPage() {
             <div className="inline-flex items-center justify-center w-16 h-16 mb-5 rounded-2xl bg-gray-50">
               <CreditCard className="w-8 h-8 text-gray-200" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Aucune carte trouvée</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">{t('noCardsFound')}</h2>
             <p className="text-gray-400 max-w-xs mx-auto text-sm leading-relaxed">
-              Scannez un QR code chez un commerçant pour ajouter votre première carte de fidélité.
+              {t('scanToAdd')}
             </p>
           </div>
         )}
@@ -314,7 +316,7 @@ export default function CustomerCardsPage() {
 
       <footer className="py-8 text-center">
         <Link href="/" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
-          <span className="text-xs text-gray-300 group-hover:text-gray-400">Créé avec ❤️ par</span>
+          <span className="text-xs text-gray-300 group-hover:text-gray-400">{t('madeWithLove')}</span>
           <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
             Qarte
           </span>

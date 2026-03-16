@@ -10,6 +10,7 @@ import {
   Lightbulb,
   Check,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Button, Input, Modal } from '@/components/ui';
 import type { MemberCard } from '@/types';
 import type { ProgramWithCount, CustomerWithCard, DurationUnit } from './types';
@@ -48,26 +49,39 @@ export function CreateProgramModal({
   creatingProgram,
   onCreateProgram,
 }: CreateProgramModalProps) {
+  const t = useTranslations('members');
+  const durationUnitLabels: Record<string, string> = {
+    day: t('durationDay'),
+    week: t('durationWeek'),
+    month: t('durationMonth'),
+  };
+
+  const getDurationUnitText = (unit: string, count: number) => {
+    if (unit === 'day') return count > 1 ? t('daysPlural') : t('daysSingular');
+    if (unit === 'week') return count > 1 ? t('weeksPlural') : t('weeksSingular');
+    return t('months');
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Nouveau programme membre"
+      title={t('createProgramTitle')}
       size="lg"
     >
       <div className="space-y-6">
         {/* Program Name */}
         <div>
           <Input
-            label="Nom du programme"
-            placeholder="Ex: VIP Gold, Premium, Fid\u00e8le..."
+            label={t('programNameLabel')}
+            placeholder={t('programNamePlaceholder')}
             value={programName}
             onChange={(e) => setProgramName(e.target.value)}
           />
           <div className="mt-3">
             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
               <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-              <span>Suggestions populaires</span>
+              <span>{t('popularSuggestions')}</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {PROGRAM_NAME_SUGGESTIONS.map((suggestion) => (
@@ -92,15 +106,15 @@ export function CreateProgramModal({
         {/* Benefit */}
         <div>
           <Input
-            label="Avantage"
-            placeholder="Ex: -10% sur tout, Caf\u00e9 offert..."
+            label={t('benefitLabel')}
+            placeholder={t('benefitPlaceholder')}
             value={programBenefit}
             onChange={(e) => setProgramBenefit(e.target.value)}
           />
           <div className="mt-3">
             <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
               <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
-              <span>Avantages les plus courants</span>
+              <span>{t('commonBenefits')}</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {BENEFIT_SUGGESTIONS.map((suggestion) => (
@@ -125,7 +139,7 @@ export function CreateProgramModal({
         {/* Duration - Two step selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
-            Dur&eacute;e de l&apos;adh&eacute;sion
+            {t('durationLabel')}
           </label>
 
           {/* Step 1: Select unit */}
@@ -146,7 +160,7 @@ export function CreateProgramModal({
                     : 'bg-white border-gray-100 text-gray-600 hover:border-amber-200 hover:bg-amber-50/50'
                 }`}
               >
-                {unit.label}
+                {durationUnitLabels[unit.value]}
               </button>
             ))}
           </div>
@@ -165,18 +179,14 @@ export function CreateProgramModal({
               />
             </div>
             <span className="text-gray-500 font-medium min-w-[100px]">
-              {durationUnit === 'day' && (durationNumber > 1 ? 'jours' : 'jour')}
-              {durationUnit === 'week' && (durationNumber > 1 ? 'semaines' : 'semaine')}
-              {durationUnit === 'month' && 'mois'}
+              {getDurationUnitText(durationUnit, durationNumber)}
             </span>
           </div>
 
           {/* Preview */}
           <p className="mt-3 text-sm text-gray-500 bg-gray-50 rounded-lg px-3 py-2">
-            Dur&eacute;e du programme : <span className="font-semibold text-amber-700">
-              {durationNumber} {durationUnit === 'day' && (durationNumber > 1 ? 'jours' : 'jour')}
-              {durationUnit === 'week' && (durationNumber > 1 ? 'semaines' : 'semaine')}
-              {durationUnit === 'month' && 'mois'}
+            {t('durationPreview')} <span className="font-semibold text-amber-700">
+              {durationNumber} {getDurationUnitText(durationUnit, durationNumber)}
             </span>
           </p>
         </div>
@@ -191,7 +201,7 @@ export function CreateProgramModal({
           ) : (
             <Plus className="w-4 h-4 mr-2" />
           )}
-          Cr&eacute;er le programme
+          {t('createProgram')}
         </Button>
       </div>
     </Modal>
@@ -257,11 +267,12 @@ export function AssignModal({
   creatingCustomer,
   onCreateCustomer,
 }: AssignModalProps) {
+  const t = useTranslations('members');
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Ajouter un membre"
+      title={t('addMemberTitle')}
     >
       <div className="space-y-4">
         {!showNewCustomerForm ? (
@@ -269,7 +280,7 @@ export function AssignModal({
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                placeholder="Rechercher un client..."
+                placeholder={t('searchClient')}
                 value={customerSearch}
                 onChange={(e) => setCustomerSearch(e.target.value)}
                 className="pl-10"
@@ -313,7 +324,7 @@ export function AssignModal({
               className="w-full flex items-center justify-center gap-2 p-3 border-2 border-dashed border-gray-200 rounded-xl text-gray-500 hover:border-amber-300 hover:text-amber-600 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Cr&eacute;er un nouveau client
+              {t('createNewClient')}
             </button>
 
             {assignError && (
@@ -333,8 +344,8 @@ export function AssignModal({
                 <UserPlus className="w-4 h-4 mr-2" />
               )}
               {selectedCustomers.length > 1
-                ? `Ajouter ${selectedCustomers.length} membres`
-                : 'Ajouter au programme'}
+                ? t('addMembers', { count: selectedCustomers.length })
+                : t('addToProgram')}
             </Button>
           </>
         ) : (
@@ -344,28 +355,28 @@ export function AssignModal({
               className="flex items-center gap-2 text-gray-500 hover:text-gray-700"
             >
               <ArrowLeft className="w-4 h-4" />
-              Retour &agrave; la liste
+              {t('backToList')}
             </button>
 
             <Input
-              placeholder="Pr&eacute;nom *"
+              placeholder={t('firstNamePlaceholder')}
               value={newCustomerFirstName}
               onChange={(e) => setNewCustomerFirstName(e.target.value)}
             />
             <Input
-              placeholder="Nom"
+              placeholder={t('lastNamePlaceholder')}
               value={newCustomerLastName}
               onChange={(e) => setNewCustomerLastName(e.target.value)}
             />
             <Input
-              placeholder="06 12 34 56 78"
+              placeholder={t('phonePlaceholder')}
               type="tel"
               value={newCustomerPhone}
               onChange={(e) => setNewCustomerPhone(e.target.value)}
             />
             {setNewCustomerStartStamps && (
               <Input
-                placeholder="Tampons de d&eacute;part (optionnel)"
+                placeholder={t('startStampsPlaceholder')}
                 type="number"
                 min="0"
                 step="1"
@@ -375,7 +386,7 @@ export function AssignModal({
             )}
             {isCagnotte && setNewCustomerStartAmount && (
               <Input
-                placeholder="Montant d&eacute;j&agrave; d&eacute;pens&eacute; (optionnel)"
+                placeholder={t('startAmountPlaceholder')}
                 type="number"
                 min="0"
                 step="0.01"
@@ -394,7 +405,7 @@ export function AssignModal({
               ) : (
                 <Plus className="w-4 h-4 mr-2" />
               )}
-              Cr&eacute;er et s&eacute;lectionner
+              {t('createAndSelect')}
             </Button>
           </>
         )}
@@ -430,15 +441,28 @@ export function ExtendModal({
   extending,
   onExtend,
 }: ExtendModalProps) {
+  const t = useTranslations('members');
+  const durationUnitLabels: Record<string, string> = {
+    day: t('durationDay'),
+    week: t('durationWeek'),
+    month: t('durationMonth'),
+  };
+
+  const getDurationUnitText = (unit: string, count: number) => {
+    if (unit === 'day') return count > 1 ? t('daysPlural') : t('daysSingular');
+    if (unit === 'week') return count > 1 ? t('weeksPlural') : t('weeksSingular');
+    return t('months');
+  };
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Prolonger l'adh\u00e9sion"
+      title={t('extendTitle')}
     >
       <div className="space-y-4">
         <p className="text-gray-600">
-          Prolonger l&apos;adh&eacute;sion de{' '}
+          {t('extendDescription')}{' '}
           <strong>
             {selectedMember?.customer?.first_name} {selectedMember?.customer?.last_name}
           </strong>
@@ -447,7 +471,7 @@ export function ExtendModal({
         {/* Duration selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
-            Dur&eacute;e de prolongation
+            {t('extendDurationLabel')}
           </label>
 
           {/* Step 1: Select unit */}
@@ -468,7 +492,7 @@ export function ExtendModal({
                     : 'bg-white border-gray-100 text-gray-600 hover:border-amber-200 hover:bg-amber-50/50'
                 }`}
               >
-                {unit.label}
+                {durationUnitLabels[unit.value]}
               </button>
             ))}
           </div>
@@ -487,9 +511,7 @@ export function ExtendModal({
               />
             </div>
             <span className="text-gray-500 font-medium min-w-[80px]">
-              {extendDurationUnit === 'day' && (extendDurationNumber > 1 ? 'jours' : 'jour')}
-              {extendDurationUnit === 'week' && (extendDurationNumber > 1 ? 'semaines' : 'semaine')}
-              {extendDurationUnit === 'month' && 'mois'}
+              {getDurationUnitText(extendDurationUnit, extendDurationNumber)}
             </span>
           </div>
         </div>
@@ -504,7 +526,7 @@ export function ExtendModal({
           ) : (
             <RefreshCw className="w-4 h-4 mr-2" />
           )}
-          Prolonger
+          {t('extend')}
         </Button>
       </div>
     </Modal>
@@ -530,19 +552,20 @@ export function DeleteMemberModal({
   deleting,
   onDelete,
 }: DeleteMemberModalProps) {
+  const t = useTranslations('members');
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Retirer du programme"
+      title={t('removeMemberTitle')}
     >
       <div className="space-y-4">
         <p className="text-gray-600">
-          Es-tu s&ucirc;r de vouloir retirer{' '}
+          {t('removeMemberConfirm')}{' '}
           <strong>
             {selectedMember?.customer?.first_name} {selectedMember?.customer?.last_name}
           </strong>{' '}
-          de ce programme ?
+          {t('removeMemberSuffix')}
         </p>
         <div className="flex gap-3">
           <Button
@@ -550,7 +573,7 @@ export function DeleteMemberModal({
             onClick={onClose}
             className="flex-1"
           >
-            Annuler
+            {t('cancelAction')}
           </Button>
           <Button
             onClick={onDelete}
@@ -558,7 +581,7 @@ export function DeleteMemberModal({
             className="flex-1 bg-red-500 hover:bg-red-600 text-white"
           >
             {deleting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Retirer
+            {t('removeMember')}
           </Button>
         </div>
       </div>
@@ -585,19 +608,20 @@ export function DeleteProgramModal({
   deletingProgram,
   onDelete,
 }: DeleteProgramModalProps) {
+  const t = useTranslations('members');
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Supprimer le programme"
+      title={t('deleteProgramTitle')}
     >
       <div className="space-y-4">
         <p className="text-gray-600">
-          Es-tu s&ucirc;r de vouloir supprimer le programme{' '}
+          {t('deleteProgramConfirm')}{' '}
           <strong>{programName}</strong> ?
         </p>
         <p className="text-sm text-red-600">
-          Tous les membres seront automatiquement retir&eacute;s du programme.
+          {t('deleteProgramWarning')}
         </p>
         <div className="flex gap-3">
           <Button
@@ -605,7 +629,7 @@ export function DeleteProgramModal({
             onClick={onClose}
             className="flex-1"
           >
-            Annuler
+            {t('cancelAction')}
           </Button>
           <Button
             onClick={onDelete}
@@ -613,7 +637,7 @@ export function DeleteProgramModal({
             className="flex-1 bg-red-500 hover:bg-red-600 text-white"
           >
             {deletingProgram ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Supprimer
+            {t('deleteProgram')}
           </Button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { X, Loader2 } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { formatTime, toBCP47 } from '@/lib/utils';
@@ -31,6 +31,7 @@ export default function AddSlotsModal({
   onClose,
 }: AddSlotsModalProps) {
   const locale = useLocale();
+  const t = useTranslations('planning');
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -43,7 +44,7 @@ export default function AddSlotsModal({
         className="bg-white rounded-2xl w-full sm:max-w-md p-5 shadow-xl max-h-[85vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-1">
-          <h3 className="text-base font-bold text-gray-900">Ajouter des créneaux</h3>
+          <h3 className="text-base font-bold text-gray-900">{t('addSlotsTitle')}</h3>
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg"><X className="w-4 h-4 text-gray-400" /></button>
         </div>
         <p className="text-xs text-gray-400 mb-4 capitalize">
@@ -74,7 +75,7 @@ export default function AddSlotsModal({
             disabled={!customTime}
             className="px-3 py-2 text-xs font-semibold bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-40"
           >
-            Ajouter
+            {t('addCustomTime')}
           </button>
         </div>
 
@@ -94,7 +95,7 @@ export default function AddSlotsModal({
           disabled={saving || selectedTimes.length === 0}
           className="w-full py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
         >
-          {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : `Créer ${selectedTimes.length} créneau${selectedTimes.length > 1 ? 'x' : ''}`}
+          {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : (selectedTimes.length > 1 ? t('createSlotsPlural', { count: selectedTimes.length }) : t('createSlots', { count: selectedTimes.length }))}
         </button>
       </motion.div>
     </motion.div>

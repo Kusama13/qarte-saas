@@ -4,6 +4,7 @@ import {
   RefreshCw,
   Trash2,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { formatDate } from '@/lib/utils';
 import type { MemberCard } from '@/types';
 
@@ -16,6 +17,7 @@ export default function MemberItem({
   onExtend: () => void;
   onRemove: () => void;
 }) {
+  const t = useTranslations('members');
   const isValid = new Date(member.valid_until) > new Date();
   const daysRemaining = Math.ceil(
     (new Date(member.valid_until).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -53,7 +55,7 @@ export default function MemberItem({
             <span className="font-medium">{member.customer?.phone_number}</span>
             <span className="hidden sm:inline w-1 h-1 rounded-full bg-gray-300" />
             <span className="flex items-center gap-1">
-              <span className="hidden sm:inline opacity-60">Expire le</span>
+              <span className="hidden sm:inline opacity-60">{t('expiresOn')}</span>
               <span className={isValid ? 'text-amber-700 font-medium' : ''}>{formatDate(member.valid_until)}</span>
             </span>
           </div>
@@ -66,7 +68,7 @@ export default function MemberItem({
               ? 'bg-emerald-50/50 border-emerald-100 text-emerald-600'
               : 'bg-gray-100 border-gray-200 text-gray-500'
           }`}>
-            {isValid ? 'Actif' : 'Expire'}
+            {isValid ? t('active') : t('expired')}
           </div>
         </div>
       </div>
@@ -77,7 +79,7 @@ export default function MemberItem({
         <div className="hidden sm:flex items-center gap-3">
           {isValid && daysRemaining <= 7 && (
             <span className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-black uppercase tracking-wider rounded-lg shadow-sm">
-              {daysRemaining} jours
+              {t('daysRemaining', { count: daysRemaining })}
             </span>
           )}
 
@@ -86,14 +88,14 @@ export default function MemberItem({
               ? 'bg-emerald-50/50 border-emerald-100 text-emerald-600'
               : 'bg-gray-100 border-gray-200 text-gray-500'
           }`}>
-            {isValid ? 'Actif' : 'Expire'}
+            {isValid ? t('active') : t('expired')}
           </div>
         </div>
 
         {/* Mobile: Days remaining badge */}
         {isValid && daysRemaining <= 7 && (
           <span className="sm:hidden px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold uppercase rounded-lg">
-            {daysRemaining}j
+            {t('daysRemainingShort', { count: daysRemaining })}
           </span>
         )}
 
@@ -102,14 +104,14 @@ export default function MemberItem({
           <button
             onClick={onExtend}
             className="p-2 sm:p-2.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg sm:rounded-xl transition-all active:scale-95 border border-transparent hover:border-amber-100"
-            title="Renouveler"
+            title={t('renew')}
           >
             <RefreshCw className="w-4 h-4" />
           </button>
           <button
             onClick={onRemove}
             className="p-2 sm:p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg sm:rounded-xl transition-all active:scale-95 border border-transparent hover:border-red-100"
-            title="Retirer"
+            title={t('remove')}
           >
             <Trash2 className="w-4 h-4" />
           </button>

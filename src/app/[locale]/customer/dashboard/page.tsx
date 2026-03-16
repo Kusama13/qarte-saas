@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import {
   CreditCard,
@@ -22,6 +23,7 @@ interface CardData {
 }
 
 export default function CustomerDashboardPage() {
+  const t = useTranslations('customerDashboard');
   const [step, setStep] = useState<'phone' | 'cards'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [firstName, setFirstName] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export default function CustomerDashboardPage() {
       const res = await fetch('/api/customers/cards', { method: 'POST' });
 
       if (res.status === 401) {
-        setError('Aucun compte trouvé avec ce numéro');
+        setError(t('noAccountFound'));
         setLoading(false);
         return;
       }
@@ -63,7 +65,7 @@ export default function CustomerDashboardPage() {
       const data = await res.json();
 
       if (!data.found) {
-        setError('Aucun compte trouvé avec ce numéro');
+        setError(t('noAccountFound'));
         setLoading(false);
         return;
       }
@@ -72,7 +74,7 @@ export default function CustomerDashboardPage() {
       setCards(data.cards || []);
       setStep('cards');
     } catch {
-      setError('Erreur lors de la recherche');
+      setError(t('searchError'));
     } finally {
       setLoading(false);
     }
@@ -82,7 +84,7 @@ export default function CustomerDashboardPage() {
     e.preventDefault();
 
     if (!validatePhone(formatPhoneNumber(phoneNumber))) {
-      setError('Veuillez entrer un numéro de téléphone valide');
+      setError(t('invalidPhone'));
       return;
     }
 
@@ -99,7 +101,7 @@ export default function CustomerDashboardPage() {
 
       if (!loginRes.ok) {
         const loginData = await loginRes.json();
-        setError(loginData.error || 'Aucun compte trouvé avec ce numéro');
+        setError(loginData.error || t('noAccountFound'));
         setLoading(false);
         return;
       }
@@ -107,7 +109,7 @@ export default function CustomerDashboardPage() {
       // Now fetch cards (cookie is set)
       await fetchCards();
     } catch {
-      setError('Erreur lors de la recherche');
+      setError(t('searchError'));
       setLoading(false);
     }
   };
@@ -135,7 +137,7 @@ export default function CustomerDashboardPage() {
               onClick={handleLogout}
               className="text-sm text-gray-500 hover:text-gray-700"
             >
-              Changer de numéro
+              {t('changeNumber')}
             </button>
           )}
         </div>
@@ -146,10 +148,10 @@ export default function CustomerDashboardPage() {
           <div className="animate-fade-in">
             <div className="text-center mb-8">
               <h1 className="text-2xl font-bold text-gray-900">
-                Mes cartes de fidélité
+                {t('myLoyaltyCards')}
               </h1>
               <p className="mt-2 text-gray-600">
-                Entrez votre numéro pour retrouver vos cartes
+                {t('enterPhone')}
               </p>
             </div>
 
@@ -163,7 +165,7 @@ export default function CustomerDashboardPage() {
               <div className="relative">
                 <Input
                   type="tel"
-                  placeholder="06 12 34 56 78"
+                  placeholder={t('phonePlaceholder')}
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   required
@@ -174,14 +176,14 @@ export default function CustomerDashboardPage() {
 
               <Button type="submit" loading={loading} className="w-full">
                 <Search className="w-5 h-5 mr-2" />
-                Rechercher mes cartes
+                {t('searchCards')}
               </Button>
             </form>
 
             <p className="mt-8 text-sm text-center text-gray-500">
-              Vous n&apos;avez pas encore de carte ?{' '}
+              {t('noCardYet')}{' '}
               <span className="text-primary">
-                Scannez un QR code chez un commerçant partenaire.
+                {t('scanPartner')}
               </span>
             </p>
           </div>
@@ -191,10 +193,10 @@ export default function CustomerDashboardPage() {
           <div className="animate-fade-in">
             <div className="mb-8">
               <h1 className="text-2xl font-bold text-gray-900">
-                Bonjour {firstName} !
+                {t('hello', { name: firstName || '' })}
               </h1>
               <p className="mt-1 text-gray-600">
-                {cards.length} carte{cards.length > 1 ? 's' : ''} de fidélité
+                {t('loyaltyCards', { count: cards.length })}
               </p>
             </div>
 
@@ -254,7 +256,7 @@ export default function CustomerDashboardPage() {
                                 {isRewardReady && (
                                   <span className="flex items-center gap-1 text-xs font-medium text-green-600">
                                     <Gift className="w-3 h-3" />
-                                    Récompense !
+                                    {t('reward')}
                                   </span>
                                 )}
                               </div>
@@ -278,9 +280,9 @@ export default function CustomerDashboardPage() {
             ) : (
               <div className="text-center py-12">
                 <CreditCard className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                <p className="text-gray-600">Aucune carte de fidélité</p>
+                <p className="text-gray-600">{t('noCards')}</p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Scannez un QR code pour commencer
+                  {t('scanToStart')}
                 </p>
               </div>
             )}
@@ -293,7 +295,7 @@ export default function CustomerDashboardPage() {
           Qarte
         </Link>
         {' - '}
-        Fidélisez mieux, dépensez moins
+        {t('tagline')}
       </footer>
     </div>
   );

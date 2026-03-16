@@ -10,6 +10,7 @@ import {
   Loader2,
   Check,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui';
 import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete';
 import { getSupabase } from '@/lib/supabase';
@@ -24,6 +25,7 @@ interface InfoSectionProps {
 export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
   const supabase = getSupabase();
   const { saving, saved, save } = useDashboardSave();
+  const t = useTranslations('publicPage');
 
   const [shopName, setShopName] = useState('');
   const [address, setAddress] = useState('');
@@ -98,33 +100,35 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
     });
   };
 
+  const dayKeys = ['infoDayMon', 'infoDayTue', 'infoDayWed', 'infoDayThu', 'infoDayFri', 'infoDaySat', 'infoDaySun'] as const;
+
   return (
     <div className="divide-y divide-gray-100">
       {/* ── Infos ── */}
       <div className="pb-5">
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Nom du salon</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">{t('infoShopName')}</label>
             <Input
-              placeholder="Mon Salon, Chez Marie..."
+              placeholder={t('infoShopNamePlaceholder')}
               value={shopName}
               onChange={(e) => setShopName(e.target.value)}
               className="h-10 text-sm"
             />
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Adresse</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">{t('infoAddress')}</label>
             <AddressAutocomplete
-              placeholder="12 rue de la Paix, 75002 Paris"
+              placeholder={t('infoAddressPlaceholder')}
               value={address}
               onChange={(v) => setAddress(v)}
               className="h-10 text-sm"
             />
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Mini bio</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">{t('infoBio')}</label>
             <textarea
-              placeholder="Ex : Nail artist passionnée, spécialisée en baby boomer et nail art 3D. Sur rdv uniquement"
+              placeholder={t('infoBioPlaceholder')}
               value={bio}
               onChange={(e) => setBio(e.target.value.slice(0, 160))}
               rows={2}
@@ -144,7 +148,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
             className="flex items-center gap-2 text-left"
           >
             <Clock className="w-4 h-4 text-blue-500" />
-            <span className="text-sm font-semibold text-gray-700">Horaires d&apos;ouverture</span>
+            <span className="text-sm font-semibold text-gray-700">{t('infoOpeningHours')}</span>
             {hoursEnabled && (
               <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${hoursOpen ? 'rotate-180' : ''}`} />
             )}
@@ -166,7 +170,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
 
         {hoursEnabled && hoursOpen && (
           <div className="mt-3 space-y-1.5">
-            {['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map((day, i) => {
+            {dayKeys.map((dayKey, i) => {
               const key = String(i + 1);
               const slot = openingHours[key];
               const isOpen = slot !== null;
@@ -182,7 +186,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
                       isOpen ? 'text-gray-800 bg-gray-50' : 'text-gray-400 bg-gray-50/50 line-through'
                     }`}
                   >
-                    {day}
+                    {t(dayKey)}
                   </button>
                   {isOpen ? (
                     <div className="flex items-center gap-1.5 flex-1">
@@ -207,12 +211,12 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
                       />
                     </div>
                   ) : (
-                    <span className="text-[13px] text-gray-400 italic">Ferm&eacute;</span>
+                    <span className="text-[13px] text-gray-400 italic">{t('infoDayClosed')}</span>
                   )}
                 </div>
               );
             })}
-            <p className="text-xs text-gray-400 mt-1">Clique sur un jour pour l&apos;ouvrir ou le fermer</p>
+            <p className="text-xs text-gray-400 mt-1">{t('infoDayToggleHint')}</p>
           </div>
         )}
       </div>
@@ -221,15 +225,15 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
       <div className="py-5">
         <div className="flex items-center gap-2 mb-2">
           <CalendarDays className="w-4 h-4 text-violet-500" />
-          <span className="text-sm font-semibold text-gray-700">R&eacute;servation</span>
+          <span className="text-sm font-semibold text-gray-700">{t('infoBooking')}</span>
         </div>
         <Input
-          placeholder="https://calendly.com/monsalon ou lien Planity, Treatwell..."
+          placeholder={t('infoBookingPlaceholder')}
           value={bookingUrl}
           onChange={(e) => setBookingUrl(e.target.value)}
           className="h-10 text-sm"
         />
-        <p className="text-xs text-gray-400 mt-1">Un bouton &quot;Prendre rendez-vous&quot; apparaîtra sur ta page.</p>
+        <p className="text-xs text-gray-400 mt-1">{t('infoBookingHint')}</p>
       </div>
 
       {/* ── Réseaux sociaux ── */}
@@ -241,7 +245,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
         >
           <div className="flex items-center gap-2">
             <Instagram className="w-4 h-4 text-pink-500" />
-            <span className="text-sm font-semibold text-gray-700">R&eacute;seaux sociaux</span>
+            <span className="text-sm font-semibold text-gray-700">{t('infoSocials')}</span>
             <span className="text-xs text-gray-400">
               {(() => {
                 const count = [instagramUrl, facebookUrl, tiktokUrl, snapchatUrl].filter(Boolean).length;
@@ -299,7 +303,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
           }`}
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : null}
-          {saving ? 'Sauvegarde...' : saved ? 'Sauvegard\u00e9' : 'Enregistrer'}
+          {saving ? t('infoSaving') : saved ? t('infoSaved') : t('infoSave')}
         </button>
       </div>
     </div>

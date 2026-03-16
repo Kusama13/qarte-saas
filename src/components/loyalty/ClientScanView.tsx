@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Check,
@@ -31,6 +32,7 @@ export function ClientScanView({
   onCheckin,
   onUndo,
 }: ClientScanViewProps) {
+  const t = useTranslations('clientScan');
   const [currentStamps, setCurrentStamps] = useState(card.current_stamps);
   const [quantity, setQuantity] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -93,11 +95,11 @@ export function ClientScanView({
 
         setQuantity(1);
       } else {
-        setError('Une erreur est survenue. Veuillez réessayer.');
+        setError(t('errorGeneric'));
       }
     } catch (err) {
       console.error('Checkin error:', err);
-      setError('Une erreur est survenue. Veuillez réessayer.');
+      setError(t('errorGeneric'));
     } finally {
       setIsProcessing(false);
     }
@@ -160,7 +162,7 @@ export function ClientScanView({
             <span className="text-2xl font-bold text-gray-300">/{stampsTarget}</span>
           </div>
           <p className="text-gray-400 font-bold uppercase tracking-[0.2em] text-[10px] mt-2">
-            Passages
+            {t('passages')}
           </p>
         </div>
 
@@ -180,12 +182,12 @@ export function ClientScanView({
         {/* Remaining Text */}
         <p className="text-center text-sm text-gray-600">
           {remaining > 0 ? (
-            <>
-              Plus que <span className="font-bold" style={{ color: merchant.primary_color }}>{remaining}</span>{' '}
-              passage{remaining > 1 ? 's' : ''} pour votre cadeau !
-            </>
+            t.rich(remaining > 1 ? 'remainingOther' : 'remainingOne', {
+              remaining,
+              bold: (chunks) => <span className="font-bold" style={{ color: merchant.primary_color }}>{chunks}</span>,
+            })
           ) : (
-            <span className="font-bold text-green-600">Cadeau disponible !</span>
+            <span className="font-bold text-green-600">{t('giftAvailable')}</span>
           )}
         </p>
       </div>
@@ -203,14 +205,14 @@ export function ClientScanView({
               <Gift className="w-8 h-8" />
             </div>
             <h3 className="text-xl font-bold mb-2">
-              Bravo ! Vous avez débloqué :
+              {t('voucherTitle')}
             </h3>
             <p className="text-lg font-medium opacity-90">
               {merchant.reward_description}
             </p>
             <div className="mt-4 flex items-center justify-center gap-2">
               <Sparkles className="w-5 h-5" />
-              <span className="text-sm opacity-80">Un bon a été créé dans votre espace</span>
+              <span className="text-sm opacity-80">{t('voucherCreated')}</span>
             </div>
           </motion.div>
         )}
@@ -248,7 +250,7 @@ export function ClientScanView({
             ) : (
               <>
                 <Plus className="w-6 h-6 mr-2" />
-                Valider le passage
+                {t('validateVisit')}
               </>
             )}
           </Button>
@@ -264,7 +266,7 @@ export function ClientScanView({
                 <Check className="w-8 h-8 text-white" />
               </div>
               <p className="font-bold text-green-800 text-lg">
-                +{lastCheckinPoints} point{lastCheckinPoints > 1 ? 's' : ''} ajouté{lastCheckinPoints > 1 ? 's' : ''} !
+                {t('pointsAdded', { count: lastCheckinPoints })}
               </p>
             </motion.div>
 
@@ -278,7 +280,7 @@ export function ClientScanView({
                 className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-gray-100 hover:bg-gray-200 transition-colors text-gray-700 font-medium"
               >
                 <Undo2 className="w-5 h-5" />
-                Annuler ({undoTimer}s)
+                {t('cancel', { seconds: undoTimer })}
               </motion.button>
             )}
           </div>
@@ -301,7 +303,7 @@ export function ClientScanView({
         </div>
         <div>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">
-            À {stampsTarget} passages
+            {t('atStamps', { count: stampsTarget })}
           </p>
           <p className="font-bold text-gray-900">{merchant.reward_description}</p>
         </div>

@@ -5,6 +5,7 @@ import {
   Zap,
   Cake,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui';
 import { BIRTHDAY_SUGGESTIONS, type ProgramFormData } from './types';
 
@@ -14,6 +15,18 @@ interface ExtrasSectionProps {
 }
 
 export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
+  const t = useTranslations('program');
+
+  const DAYS = [
+    { label: t('dayMon'), value: 1 },
+    { label: t('dayTue'), value: 2 },
+    { label: t('dayWed'), value: 3 },
+    { label: t('dayThu'), value: 4 },
+    { label: t('dayFri'), value: 5 },
+    { label: t('daySat'), value: 6 },
+    { label: t('daySun'), value: 0 },
+  ];
+
   return (
     <>
       {/* ═══════ AVIS GOOGLE ═══════ */}
@@ -24,7 +37,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
               <Star className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
             </div>
             <div>
-              <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">Avis Google</span> <span className="font-normal text-gray-400">— Demande automatique au 3e passage et à chaque récompense</span></h3>
+              <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('googleReviewTitle')}</span> <span className="font-normal text-gray-400">{t('googleReviewDesc')}</span></h3>
             </div>
           </div>
           <Input
@@ -47,7 +60,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
                 <Zap className="w-3.5 h-3.5 md:w-4 md:h-4 text-amber-500" />
               </div>
               <div>
-                <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">Jours x2</span> <span className="font-normal text-gray-400">— Incite tes clients à venir les jours creux</span></h3>
+                <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('doubleDaysTitle')}</span> <span className="font-normal text-gray-400">{t('doubleDaysDesc')}</span></h3>
               </div>
             </div>
             <button
@@ -64,15 +77,6 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
           </div>
 
           {(() => {
-            const DAYS = [
-              { label: 'Lun', value: 1 },
-              { label: 'Mar', value: 2 },
-              { label: 'Mer', value: 3 },
-              { label: 'Jeu', value: 4 },
-              { label: 'Ven', value: 5 },
-              { label: 'Sam', value: 6 },
-              { label: 'Dim', value: 0 },
-            ];
             const toggleDay = (day: number) => {
               const current = formData.doubleDaysOfWeek;
               const updated = current.includes(day) ? current.filter(d => d !== day) : [...current, day];
@@ -101,11 +105,11 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
                   })}
                 </div>
                 {formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length === 0 && (
-                  <p className="text-xs text-amber-600 font-medium">Cochez au moins un jour</p>
+                  <p className="text-xs text-amber-600 font-medium">{t('doubleDaysSelectAtLeast')}</p>
                 )}
                 {selectedDays.length > 0 && (
                   <p className="text-xs text-gray-500">
-                    <span className="font-semibold text-amber-600">{selectedDays.map(d => d.label).join(', ')}</span> — chaque scan = 2 tampons
+                    {t('doubleDaysSummary', { days: selectedDays.map(d => d.label).join(', ') })}
                   </p>
                 )}
               </div>
@@ -124,7 +128,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
                 <Cake className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
               </div>
               <div>
-                <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">Cadeau anniversaire</span> <span className="font-normal text-gray-400">— Envoi automatique le jour J, valable 14 jours</span></h3>
+                <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('birthdayTitle')}</span> <span className="font-normal text-gray-400">{t('birthdayDesc')}</span></h3>
               </div>
             </div>
             <button
@@ -144,7 +148,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
               <textarea
                 value={formData.birthdayGiftDescription}
                 onChange={(e) => setFormData(prev => ({ ...prev, birthdayGiftDescription: e.target.value }))}
-                placeholder="Ex: Un brushing offert pour ton anniversaire !"
+                placeholder={t('birthdayPlaceholder')}
                 maxLength={200}
                 rows={2}
                 className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"

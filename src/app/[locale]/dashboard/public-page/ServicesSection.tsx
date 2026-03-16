@@ -16,12 +16,16 @@ import {
 } from 'lucide-react';
 import type { Merchant } from '@/types';
 import type { ServiceCategory, Service } from './types';
+import { formatCurrency } from '@/lib/utils';
+import { useLocale } from 'next-intl';
 
 interface ServicesSectionProps {
   merchant: Merchant;
 }
 
 export default function ServicesSection({ merchant }: ServicesSectionProps) {
+  const locale = useLocale();
+
   // Categories + Services
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [services, setServices] = useState<Service[]>([]);
@@ -338,7 +342,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
           </div>
           <p className="text-[13px] font-bold text-gray-900 shrink-0 tabular-nums">
             {service.price_from && <span className="text-[11px] font-normal text-gray-400 mr-0.5">dès </span>}
-            {Number(service.price).toFixed(2).replace('.', ',')} &euro;
+            {formatCurrency(Number(service.price), merchant.country, locale)}
           </p>
           <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <button

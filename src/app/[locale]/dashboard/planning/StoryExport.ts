@@ -267,11 +267,12 @@ export async function handleDownloadStory({ merchant, slots, slotsByDate, weekSt
     y += cardH + 16;
   }
 
-  // ── "Propulsé par Qarte" ──
+  // ── "Propulsé par Qarte" / "Powered by Qarte" ──
+  const poweredText = locale === 'en' ? 'Powered by Qarte' : 'Propuls\u00e9 par Qarte';
   ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.font = `34px ${scriptFamily}`;
   ctx.textAlign = 'center';
-  ctx.fillText('\u2728 Propuls\u00e9 par Qarte \u2728', W / 2, H - 50);
+  ctx.fillText(`\u2728 ${poweredText} \u2728`, W / 2, H - 50);
 
   // Download
   const link = document.createElement('a');

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { X, ChevronDown, ChevronUp, Share, PlusSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -27,7 +28,7 @@ export default function IOSInstallInstructions({
   isIOS,
   isIOSChrome,
   onClose,
-  title = 'Installer l\u2019application',
+  title: titleProp,
   subtitle,
   headerStyle,
   iconColor = '#4f46e5',
@@ -35,6 +36,8 @@ export default function IOSInstallInstructions({
   buttonClassName = 'bg-indigo-600 hover:bg-indigo-700',
   showNonIOSArrow = true,
 }: IOSInstallInstructionsProps) {
+  const t = useTranslations('installInstructions');
+  const title = titleProp || t('title');
   return (
     <>
       {/* Animated arrows pointing to the right button */}
@@ -111,19 +114,19 @@ export default function IOSInstallInstructions({
                   <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
                     <span className="text-white font-bold">&#x22EF;</span>
                   </div>
-                  <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>&#x22EF;</strong> en bas</p>
+                  <p className="text-sm text-gray-800">{t.rich('iosSafariStep1', { bold: (c) => <strong>{c}</strong> })}</p>
                 </div>
                 <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
                   <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
                     <Share className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> Puis <strong>Partager</strong></p>
+                  <p className="text-sm text-gray-800">{t.rich('iosSafariStep2', { bold: (c) => <strong>{c}</strong> })}</p>
                 </div>
                 <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
                   <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
                     <PlusSquare className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-sm text-gray-800"><span className="font-semibold">3.</span> <strong>Sur l&apos;écran d&apos;accueil</strong></p>
+                  <p className="text-sm text-gray-800">{t.rich('iosSafariStep3', { bold: (c) => <strong>{c}</strong> })}</p>
                 </div>
               </>
             ) : isIOS && isIOSChrome ? (
@@ -132,19 +135,19 @@ export default function IOSInstallInstructions({
                   <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
                     <Share className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>Partager</strong> &#x2191;</p>
+                  <p className="text-sm text-gray-800">{t.rich('iosChromeStep1', { bold: (c) => <strong>{c}</strong> })}</p>
                 </div>
                 <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
                   <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
                     <span className="text-white font-bold text-sm">&#x22EF;</span>
                   </div>
-                  <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> Puis <strong>Plus...</strong></p>
+                  <p className="text-sm text-gray-800">{t.rich('iosChromeStep2', { bold: (c) => <strong>{c}</strong> })}</p>
                 </div>
                 <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
                   <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
                     <PlusSquare className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-sm text-gray-800"><span className="font-semibold">3.</span> <strong>Sur l&apos;écran d&apos;accueil</strong></p>
+                  <p className="text-sm text-gray-800">{t.rich('iosChromeStep3', { bold: (c) => <strong>{c}</strong> })}</p>
                 </div>
               </>
             ) : (
@@ -153,13 +156,13 @@ export default function IOSInstallInstructions({
                   <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
                     <span className="text-white font-bold">&#x22EE;</span>
                   </div>
-                  <p className="text-sm text-gray-800"><span className="font-semibold">1.</span> Appuyez sur <strong>&#x22EE;</strong> en haut</p>
+                  <p className="text-sm text-gray-800">{t.rich('androidStep1', { bold: (c) => <strong>{c}</strong> })}</p>
                 </div>
                 <div className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-xl">
                   <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center shrink-0">
                     <PlusSquare className="w-4 h-4 text-white" />
                   </div>
-                  <p className="text-sm text-gray-800"><span className="font-semibold">2.</span> <strong>Ajouter un raccourci</strong></p>
+                  <p className="text-sm text-gray-800">{t.rich('androidStep2', { bold: (c) => <strong>{c}</strong> })}</p>
                 </div>
               </>
             )}
@@ -172,7 +175,7 @@ export default function IOSInstallInstructions({
               className={`w-full py-3 rounded-xl font-semibold text-white text-sm transition-all ${buttonClassName}`}
               style={buttonStyle}
             >
-              J&apos;ai compris
+              {t('gotIt')}
             </button>
           </div>
         </div>

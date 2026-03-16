@@ -11,56 +11,82 @@ const poppins = Poppins({ subsets: ['latin'], weight: ['600', '700', '800', '900
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
 
-export const metadata: Metadata = {
-  metadataBase: new URL(baseUrl),
-  title: {
-    default: 'Qarte — Le Linktree des pros de la beauté + programme de fidélité',
-    template: '%s | Qarte',
-  },
-  description: 'Un seul lien pour tout montrer : bio, prestations, planning, photos, avis Google. Un programme de fidélité qui fait revenir vos clientes (tampons, cagnotte, relances auto). Pour coiffeurs, barbiers, instituts de beauté et ongleries. 19 €/mois, essai gratuit.',
-  keywords: ['lien en bio salon de beauté', 'linktree coiffeur', 'mini-site salon de beauté', 'carte de fidélité digitale', 'programme fidélité coiffeur', 'fidélisation client beauté', 'QR code fidélité', 'vitrine en ligne coiffeur', 'salon de coiffure', 'barbier', 'onglerie', 'institut de beauté', 'avis Google salon', 'planning en ligne coiffeur'],
-  authors: [{ name: 'Qarte' }],
-  creator: 'Qarte',
-  publisher: 'Qarte',
-  icons: {
-    icon: '/icon-192.png',
-    apple: '/icon-192.png',
-  },
-  formatDetection: {
-    email: false,
-    address: false,
-    telephone: false,
-  },
-  openGraph: {
-    title: 'Qarte — Le Linktree des pros de la beauté + programme de fidélité',
-    description: 'Un seul lien pour tout montrer : bio, prestations, planning, photos. Un programme de fidélité qui fait revenir vos clientes. 19 €/mois, essai gratuit.',
-    url: baseUrl,
-    siteName: 'Qarte',
-    type: 'website',
-    locale: 'fr_FR',
-    images: ['/opengraph-image'],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Qarte — Le Linktree des pros de la beauté + programme de fidélité',
-    description: 'Un seul lien pour tout montrer + un programme de fidélité qui fait revenir vos clientes. Pour coiffeurs, barbiers, instituts et ongleries. Essai gratuit.',
-    images: ['/opengraph-image'],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+
+  const isEn = locale === 'en';
+
+  const title = isEn
+    ? 'Qarte — The Linktree for beauty pros + loyalty program'
+    : 'Qarte — Le Linktree des pros de la beauté + programme de fidélité';
+
+  const description = isEn
+    ? 'One link to showcase everything: bio, services, schedule, photos, Google reviews. A loyalty program that brings your clients back (stamps, cashback, auto follow-ups). For hair salons, barbers, beauty salons and nail studios. $19/month, free trial.'
+    : 'Un seul lien pour tout montrer : bio, prestations, planning, photos, avis Google. Un programme de fidélité qui fait revenir vos clientes (tampons, cagnotte, relances auto). Pour coiffeurs, barbiers, instituts de beauté et ongleries. 19 €/mois, essai gratuit.';
+
+  const ogDescription = isEn
+    ? 'One link to showcase everything + a loyalty program that brings your clients back. $19/month, free trial.'
+    : 'Un seul lien pour tout montrer : bio, prestations, planning, photos. Un programme de fidélité qui fait revenir vos clientes. 19 €/mois, essai gratuit.';
+
+  const twitterDescription = isEn
+    ? 'One link to showcase everything + a loyalty program that brings your clients back. For hair salons, barbers, beauty salons and nail studios. Free trial.'
+    : 'Un seul lien pour tout montrer + un programme de fidélité qui fait revenir vos clientes. Pour coiffeurs, barbiers, instituts et ongleries. Essai gratuit.';
+
+  const keywords = isEn
+    ? ['beauty salon bio link', 'linktree for hair salons', 'beauty salon mini-site', 'digital loyalty card', 'loyalty program hair salon', 'beauty client retention', 'QR code loyalty', 'online showcase hair salon', 'hair salon', 'barber', 'nail studio', 'beauty salon', 'Google reviews salon', 'online scheduling hair salon']
+    : ['lien en bio salon de beauté', 'linktree coiffeur', 'mini-site salon de beauté', 'carte de fidélité digitale', 'programme fidélité coiffeur', 'fidélisation client beauté', 'QR code fidélité', 'vitrine en ligne coiffeur', 'salon de coiffure', 'barbier', 'onglerie', 'institut de beauté', 'avis Google salon', 'planning en ligne coiffeur'];
+
+  return {
+    metadataBase: new URL(baseUrl),
+    title: {
+      default: title,
+      template: '%s | Qarte',
+    },
+    description,
+    keywords,
+    authors: [{ name: 'Qarte' }],
+    creator: 'Qarte',
+    publisher: 'Qarte',
+    icons: {
+      icon: '/icon-192.png',
+      apple: '/icon-192.png',
+    },
+    formatDetection: {
+      email: false,
+      address: false,
+      telephone: false,
+    },
+    openGraph: {
+      title,
+      description: ogDescription,
+      url: baseUrl,
+      siteName: 'Qarte',
+      type: 'website',
+      locale: isEn ? 'en_US' : 'fr_FR',
+      images: ['/opengraph-image'],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: twitterDescription,
+      images: ['/opengraph-image'],
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
-  verification: {
-    google: '2d98KO9ugpwse3o2e6RoYmVp1SAH9JaqokhbGbLjW3c',
-  },
-};
+    verification: {
+      google: '2d98KO9ugpwse3o2e6RoYmVp1SAH9JaqokhbGbLjW3c',
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -68,6 +94,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+
+  const orgDescription = locale === 'en'
+    ? 'The Linktree for beauty pros: one link to showcase everything + a digital loyalty program. For hair salons, barbers, nail studios and beauty salons.'
+    : 'Le Linktree des pros de la beauté : un seul lien pour tout montrer + un programme de fidélité digital. Pour coiffeurs, barbiers, ongleries et instituts.';
+
+  const appDescription = locale === 'en'
+    ? 'One link to showcase everything (bio, services, schedule, photos) + digital loyalty program (QR code, stamps, cashback, push notifications). No app to download.'
+    : 'Un seul lien pour tout montrer (bio, prestations, planning, photos) + programme de fidélité digital (QR code, tampons, cagnotte, notifications push). Sans application à télécharger.';
 
   return (
     <html lang={locale} className={`${plusJakarta.variable} ${playfair.variable} ${poppins.variable}`}>
@@ -90,7 +124,7 @@ export default async function RootLayout({
             name: 'Qarte',
             url: baseUrl,
             logo: `${baseUrl}/icon-512.png`,
-            description: 'Le Linktree des pros de la beauté : un seul lien pour tout montrer + un programme de fidélité digital. Pour coiffeurs, barbiers, ongleries et instituts.',
+            description: orgDescription,
             contactPoint: {
               '@type': 'ContactPoint',
               contactType: 'customer service',
@@ -114,7 +148,7 @@ export default async function RootLayout({
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             url: baseUrl,
-            description: 'Un seul lien pour tout montrer (bio, prestations, planning, photos) + programme de fidélité digital (QR code, tampons, cagnotte, notifications push). Sans application à télécharger.',
+            description: appDescription,
             offers: [
               {
                 '@type': 'Offer',

@@ -114,21 +114,21 @@ export function usePushNotifications({
         setTimeout(() => setShowSuccessToast(false), 4000);
       } else {
         console.error('Push subscribe failed:', result.error);
-        setPushError(result.error || 'Erreur inconnue');
-        if (result.error === 'Permission refusée') {
+        setPushError(result.error || 'Unknown error');
+        if (result.error === 'Permission denied') {
           setPushPermission('denied');
           if (isIOS && isStandalone) {
-            setPushError('Ouvrez Réglages > Qarte > Notifications et activez-les, puis réessayez.');
+            setPushError('Open Settings > Qarte > Notifications and enable them, then try again.');
             return;
           }
         }
-        if (isIOS && isStandalone && result.error === 'Push non supporté sur ce navigateur') {
+        if (isIOS && isStandalone && result.error === 'Push notifications not supported') {
           setShowIOSVersionWarning(true);
         }
       }
     } catch (error) {
       console.error('Push subscribe error:', error);
-      setPushError(error instanceof Error ? error.message : 'Erreur inconnue');
+      setPushError(error instanceof Error ? error.message : 'Unknown error');
       if (isIOS && isStandalone) {
         setShowIOSVersionWarning(true);
       }

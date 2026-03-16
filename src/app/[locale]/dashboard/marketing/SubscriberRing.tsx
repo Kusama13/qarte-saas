@@ -3,6 +3,7 @@
 import { Bell, CheckCircle2, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { AUTOMATION_UNLOCK_THRESHOLD } from './types';
 import type { Subscriber } from './types';
 
@@ -19,6 +20,7 @@ interface SubscriberRingProps {
 
 export default function SubscriberRing({ subscriberCount, subscribers, loadingCount }: SubscriberRingProps) {
   const [showSubscriberList, setShowSubscriberList] = useState(false);
+  const t = useTranslations('marketing.subscriberRing');
 
   const automationsUnlocked = (subscriberCount ?? 0) >= AUTOMATION_UNLOCK_THRESHOLD;
   const subscriberProgress = Math.min((subscriberCount ?? 0) / AUTOMATION_UNLOCK_THRESHOLD, 1);
@@ -29,7 +31,7 @@ export default function SubscriberRing({ subscriberCount, subscribers, loadingCo
       <div className="flex items-center gap-4">
         {/* SVG Ring */}
         <div className="relative flex-shrink-0" style={{ width: RING_SIZE, height: RING_SIZE }}>
-          <svg width={RING_SIZE} height={RING_SIZE} className="-rotate-90" role="img" aria-label={`${subscriberCount ?? 0} abonnés push sur ${AUTOMATION_UNLOCK_THRESHOLD} requis`}>
+          <svg width={RING_SIZE} height={RING_SIZE} className="-rotate-90" role="img" aria-label={t('ringAriaLabel', { count: subscriberCount ?? 0, threshold: AUTOMATION_UNLOCK_THRESHOLD })}>
             <circle
               cx={RING_SIZE / 2}
               cy={RING_SIZE / 2}
@@ -65,17 +67,20 @@ export default function SubscriberRing({ subscriberCount, subscribers, loadingCo
 
         {/* Text + progress bar */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-gray-900">Abonnés push</p>
+          <p className="text-sm font-bold text-gray-900">{t('pushSubscribers')}</p>
           {!loadingCount && (
             <>
               {automationsUnlocked ? (
                 <p className="text-xs text-emerald-600 font-medium flex items-center gap-1 mt-0.5">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  Automatisations débloquées
+                  {t('automationsUnlocked')}
                 </p>
               ) : (
                 <p className="text-xs text-gray-500 mt-0.5">
-                  Encore <span className="font-bold text-indigo-600">{AUTOMATION_UNLOCK_THRESHOLD - (subscriberCount ?? 0)}</span> abonné{(AUTOMATION_UNLOCK_THRESHOLD - (subscriberCount ?? 0)) > 1 ? 's' : ''} pour débloquer les automatisations
+                  {t.rich('subscribersNeeded', {
+                    count: AUTOMATION_UNLOCK_THRESHOLD - (subscriberCount ?? 0),
+                    bold: (chunks) => <span className="font-bold text-indigo-600">{chunks}</span>,
+                  })}
                 </p>
               )}
               <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -94,7 +99,7 @@ export default function SubscriberRing({ subscriberCount, subscribers, loadingCo
               className="mt-2 flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800 transition-colors"
             >
               {showSubscriberList ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              {showSubscriberList ? 'Masquer la liste' : 'Voir la liste'}
+              {showSubscriberList ? t('hideList') : t('showList')}
             </button>
           )}
         </div>

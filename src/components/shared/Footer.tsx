@@ -1,7 +1,11 @@
+'use client';
+
 import { Link } from '@/i18n/navigation';
 import { CreditCard } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function Footer() {
+  const t = useTranslations('footer');
   return (
     <footer className="py-12 bg-gray-50 border-t border-gray-100">
       <div className="px-4 mx-auto max-w-7xl">
@@ -15,29 +19,29 @@ export function Footer() {
 
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600">
             <Link href="/cgv" className="hover:text-primary transition-colors">
-              CGV
+              {t('terms')}
             </Link>
             <Link href="/politique-confidentialite" className="hover:text-primary transition-colors">
-              Politique de confidentialité
+              {t('privacy')}
             </Link>
             <Link href="/mentions-legales" className="hover:text-primary transition-colors">
-              Mentions légales
+              {t('legalNotices')}
             </Link>
             <Link
               href="/auth/merchant"
               className="text-primary font-medium hover:text-primary-600 transition-colors"
             >
-              Connexion commerçant
+              {t('merchantLogin')}
             </Link>
           </div>
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-500">
-            © 2026 Qarte - Fidélisez mieux, dépensez moins
+            {t('copyrightTagline')}
           </p>
           <p className="mt-4 text-sm text-gray-600 hover:text-primary transition-colors cursor-default">
-            🇫🇷 Conçu avec ❤️ en France
+            {t('madeIn')}
           </p>
         </div>
       </div>

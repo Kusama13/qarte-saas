@@ -1,7 +1,7 @@
 'use client';
 
 import { X, Loader2, Trash2, Search, UserCheck, Plus } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { formatTime, toBCP47 } from '@/lib/utils';
@@ -69,6 +69,7 @@ export default function SlotModal({
   phonePlaceholder = '06 12 34 56 78',
 }: SlotModalProps) {
   const locale = useLocale();
+  const t = useTranslations('planning');
   return (
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -93,8 +94,8 @@ export default function SlotModal({
         <div className="space-y-3">
           <div className="relative">
             <label className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1.5">
-              Nom du client
-              {editCustomerId && <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded-full"><UserCheck className="w-2.5 h-2.5" />Client lié</span>}
+              {t('clientName')}
+              {editCustomerId && <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 font-medium bg-emerald-50 px-1.5 py-0.5 rounded-full"><UserCheck className="w-2.5 h-2.5" />{t('clientLinked')}</span>}
             </label>
             <div className="relative">
               <input
@@ -103,7 +104,7 @@ export default function SlotModal({
                 onChange={(e) => onNameChange(e.target.value)}
                 onFocus={() => { if (customerResults.length > 0) onShowCustomerSearch(true); }}
                 onBlur={() => setTimeout(() => onShowCustomerSearch(false), 200)}
-                placeholder="Tape un nom ou numéro..."
+                placeholder={t('searchPlaceholder')}
                 maxLength={100}
                 className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
               />
@@ -127,7 +128,7 @@ export default function SlotModal({
                 ))}
                 {customerResults.length === 0 && editName.trim().length >= 2 && (
                   <div className="px-3 py-2 text-xs text-gray-400">
-                    Aucun client trouvé — remplis le téléphone puis crée-le ci-dessous
+                    {t('noClientFound')}
                   </div>
                 )}
               </div>
@@ -135,7 +136,7 @@ export default function SlotModal({
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-500 mb-1 block">
-              Téléphone {editCustomerId ? '(optionnel)' : '(requis pour créer le client)'}
+              {t('phoneLabel')} {editCustomerId ? t('phoneOptional') : t('phoneRequiredHint')}
             </label>
             <input type="tel" value={editPhone} onChange={(e) => { onPhoneChange(e.target.value); if (editCustomerId) onCustomerIdChange(null); }} placeholder={phonePlaceholder} maxLength={20} className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400" />
           </div>
@@ -148,30 +149,30 @@ export default function SlotModal({
               className="w-full py-2 px-3 rounded-xl border border-dashed border-emerald-300 bg-emerald-50 text-emerald-700 text-xs font-semibold hover:bg-emerald-100 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
             >
               {creatingCustomer ? (
-                <><Loader2 className="w-3 h-3 animate-spin" /> Création...</>
+                <><Loader2 className="w-3 h-3 animate-spin" /> {t('creating')}</>
               ) : (
-                <><Plus className="w-3 h-3" /> Créer &quot;{editName.trim()}&quot; comme nouveau client</>
+                <><Plus className="w-3 h-3" /> {t('createAsNewClient', { name: editName.trim() })}</>
               )}
             </button>
           )}
           {services.length > 0 && (
             <div>
-              <label className="text-xs font-semibold text-gray-500 mb-1 block">Prestation (optionnel)</label>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">{t('serviceLabel')}</label>
               <select value={editServiceId || ''} onChange={(e) => onServiceChange(e.target.value || null)} className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 bg-white">
-                <option value="">Aucune</option>
+                <option value="">{t('serviceNone')}</option>
                 {services.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
           )}
           <div>
-            <label className="text-xs font-semibold text-gray-500 mb-1 block">Notes (optionnel)</label>
-            <textarea value={editNotes} onChange={(e) => onNotesChange(e.target.value)} placeholder="Infos supplémentaires..." maxLength={300} rows={2} className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 resize-none" />
+            <label className="text-xs font-semibold text-gray-500 mb-1 block">{t('notesLabel')}</label>
+            <textarea value={editNotes} onChange={(e) => onNotesChange(e.target.value)} placeholder={t('notesPlaceholder')} maxLength={300} rows={2} className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 resize-none" />
           </div>
         </div>
 
         <div className="flex gap-2 mt-4">
           <button onClick={onSave} disabled={saving} className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50">
-            {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Enregistrer'}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('save')}
           </button>
           <button onClick={() => onDelete(editSlot.id)} className="px-4 py-3 rounded-xl bg-red-50 text-red-500 font-bold text-sm hover:bg-red-100 transition-colors">
             <Trash2 className="w-4 h-4" />
@@ -183,7 +184,7 @@ export default function SlotModal({
             onClick={onClearSlot}
             className="w-full mt-2 py-2 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
           >
-            Libérer le créneau
+            {t('clearSlot')}
           </button>
         )}
       </motion.div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { X, QrCode, Flashlight, FlashlightOff, Check, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,6 +38,7 @@ const isValidQarteCode = (text: string): { valid: boolean; code?: string } => {
 };
 
 export default function QRScanner({ isOpen, onClose, onScan, primaryColor = '#6366f1' }: QRScannerProps) {
+  const t = useTranslations('qrScanner');
   const [torchOn, setTorchOn] = useState(false);
   const [scanSuccess, setScanSuccess] = useState(false);
   const [invalidQR, setInvalidQR] = useState(false);
@@ -70,9 +72,9 @@ export default function QRScanner({ isOpen, onClose, onScan, primaryColor = '#63
     console.error('Scanner error:', err);
     const message = err instanceof Error ? err.message : String(err);
     if (message.includes('Permission') || message.includes('NotAllowed')) {
-      setError('Accès caméra refusé. Autorisez l\'accès dans les paramètres.');
+      setError(t('cameraAccessDenied'));
     } else if (message.includes('NotFound')) {
-      setError('Aucune caméra trouvée.');
+      setError(t('noCameraFound'));
     }
   };
 
@@ -182,8 +184,8 @@ export default function QRScanner({ isOpen, onClose, onScan, primaryColor = '#63
                 <QrCode className="w-5 h-5" style={{ color: primaryColor }} />
               </div>
               <div>
-                <h2 className="text-white font-bold">Scanner</h2>
-                <p className="text-white/60 text-xs">QR code Qarte uniquement</p>
+                <h2 className="text-white font-bold">{t('title')}</h2>
+                <p className="text-white/60 text-xs">{t('subtitle')}</p>
               </div>
             </div>
             <button
@@ -206,12 +208,12 @@ export default function QRScanner({ isOpen, onClose, onScan, primaryColor = '#63
               }`}
             >
               {torchOn ? <Flashlight className="w-5 h-5" /> : <FlashlightOff className="w-5 h-5" />}
-              <span className="font-medium">{torchOn ? 'Lampe allumée' : 'Allumer lampe'}</span>
+              <span className="font-medium">{torchOn ? t('torchOn') : t('torchOff')}</span>
             </button>
           </div>
 
           <p className="text-white/60 text-center text-sm">
-            Placez le QR code du commerce dans le cadre
+            {t('placeQR')}
           </p>
         </div>
 
@@ -227,8 +229,8 @@ export default function QRScanner({ isOpen, onClose, onScan, primaryColor = '#63
               <div className="bg-red-500 text-white px-4 py-3 rounded-xl flex items-center gap-3 shadow-lg">
                 <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                 <div>
-                  <p className="font-bold text-sm">QR code non reconnu</p>
-                  <p className="text-white/80 text-xs">Scannez uniquement un QR code Qarte</p>
+                  <p className="font-bold text-sm">{t('invalidQR')}</p>
+                  <p className="text-white/80 text-xs">{t('invalidQRSub')}</p>
                 </div>
               </div>
             </motion.div>
@@ -247,7 +249,7 @@ export default function QRScanner({ isOpen, onClose, onScan, primaryColor = '#63
                 onClick={handleClose}
                 className="px-6 py-3 bg-white text-black rounded-xl font-medium"
               >
-                Fermer
+                {t('close')}
               </button>
             </div>
           </div>

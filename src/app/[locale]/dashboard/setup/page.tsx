@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 import {
   CreditCard,
   Upload,
@@ -31,6 +32,7 @@ const UNSPLASH_IMAGES = [
 export default function OnboardingPage() {
   const router = useRouter();
   const supabase = getSupabase();
+  const t = useTranslations('setup');
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -67,8 +69,8 @@ export default function OnboardingPage() {
           logoUrl: data.logo_url || '',
           primaryColor: data.primary_color || '#654EDA',
           secondaryColor: data.secondary_color || '#9D8FE8',
-          programName: data.program_name || `Carte Fidélité ${data.shop_name}`,
-          welcomeMessage: data.welcome_message || 'Bienvenue ! Cumulez vos passages et gagnez des récompenses.',
+          programName: data.program_name || t('defaultLoyaltyCard', { name: data.shop_name }),
+          welcomeMessage: data.welcome_message || t('welcomeMessagePlaceholder'),
           stampsRequired: data.stamps_required || 10,
           rewardDescription: data.reward_description || '',
         });
@@ -133,15 +135,15 @@ export default function OnboardingPage() {
       router.push('/dashboard/qr-download');
     } catch (error) {
       console.error('Error saving:', error);
-      setSaveError('Erreur lors de la sauvegarde. Veuillez réessayer.');
+      setSaveError(t('saveError'));
     } finally {
       setLoading(false);
     }
   };
 
   const steps = [
-    { number: 1, title: 'Logo & Couleurs' },
-    { number: 2, title: 'Programme' },
+    { number: 1, title: t('step1Title') },
+    { number: 2, title: t('step2Title') },
   ];
 
   return (
@@ -190,13 +192,13 @@ export default function OnboardingPage() {
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 {currentStep === 1
-                  ? 'Personnalise ton identité'
-                  : 'Configure ton programme'}
+                  ? t('personalizeTitle')
+                  : t('configureTitle')}
               </h1>
               <p className="mt-2 text-gray-600">
                 {currentStep === 1
-                  ? 'Ajoute ton logo et choisis tes couleurs pour une expérience personnalisée.'
-                  : 'Définis les règles de ton programme de fidélité.'}
+                  ? t('personalizeSubtitle')
+                  : t('configureSubtitle')}
               </p>
             </div>
 
@@ -205,12 +207,12 @@ export default function OnboardingPage() {
                 <div className="p-6 bg-white rounded-2xl shadow-sm">
                   <h3 className="flex items-center gap-2 mb-4 text-lg font-semibold text-gray-900">
                     <Upload className="w-5 h-5 text-primary" />
-                    Logo
+                    {t('logoSection')}
                   </h3>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="label">Ajoute ton logo</label>
+                      <label className="label">{t('addYourLogo')}</label>
                       <div className="flex items-center gap-4">
                         <label className="flex items-center justify-center w-20 h-20 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary transition-colors">
                           {uploading ? (
@@ -232,13 +234,13 @@ export default function OnboardingPage() {
                           />
                         </label>
                         <p className="text-sm text-gray-500">
-                          PNG, JPG (max 2MB)
+                          {t('logoHint')}
                         </p>
                       </div>
                     </div>
 
                     <div>
-                      <label className="label">Ou choisissez une image</label>
+                      <label className="label">{t('pickImage')}</label>
                       <div className="grid grid-cols-3 gap-2">
                         {UNSPLASH_IMAGES.map((url, index) => (
                           <button
@@ -268,12 +270,12 @@ export default function OnboardingPage() {
                 <div className="p-6 bg-white rounded-2xl shadow-sm">
                   <h3 className="flex items-center gap-2 mb-4 text-lg font-semibold text-gray-900">
                     <Palette className="w-5 h-5 text-primary" />
-                    Couleurs
+                    {t('colorsSection')}
                   </h3>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="label">Couleur principale</label>
+                      <label className="label">{t('primaryColor')}</label>
                       <div className="flex items-center gap-3">
                         <input
                           type="color"
@@ -301,7 +303,7 @@ export default function OnboardingPage() {
                     </div>
 
                     <div>
-                      <label className="label">Couleur secondaire</label>
+                      <label className="label">{t('secondaryColor')}</label>
                       <div className="flex items-center gap-3">
                         <input
                           type="color"
@@ -337,13 +339,13 @@ export default function OnboardingPage() {
                 <div className="p-6 bg-white rounded-2xl shadow-sm">
                   <h3 className="flex items-center gap-2 mb-4 text-lg font-semibold text-gray-900">
                     <Gift className="w-5 h-5 text-primary" />
-                    Programme de fidélité
+                    {t('programSection')}
                   </h3>
 
                   <div className="space-y-4">
                     <Input
-                      label="Nom du programme"
-                      placeholder="Ex: Carte Fidélité Mario Pizza"
+                      label={t('programName')}
+                      placeholder={t('programNamePlaceholder')}
                       value={formData.programName}
                       onChange={(e) =>
                         setFormData({ ...formData, programName: e.target.value })
@@ -351,8 +353,8 @@ export default function OnboardingPage() {
                     />
 
                     <Textarea
-                      label="Message de bienvenue"
-                      placeholder="Ex: Bienvenue ! Cumulez vos passages et gagnez des récompenses."
+                      label={t('welcomeMessage')}
+                      placeholder={t('welcomeMessagePlaceholder')}
                       value={formData.welcomeMessage}
                       onChange={(e) =>
                         setFormData({
@@ -366,10 +368,10 @@ export default function OnboardingPage() {
 
                     <div className="p-4 rounded-xl bg-gray-50">
                       <p className="mb-4 font-medium text-gray-900">
-                        Règle de récompense
+                        {t('rewardRule')}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 text-gray-700">
-                        <span>Après</span>
+                        <span>{t('afterVisits')}</span>
                         <Input
                           type="number"
                           min={2}
@@ -383,10 +385,10 @@ export default function OnboardingPage() {
                           }
                           className="w-20 text-center"
                         />
-                        <span>passages, obtenez</span>
+                        <span>{t('visitsGet')}</span>
                       </div>
                       <Input
-                        placeholder="Ex: 20% de réduction, 1 café offert..."
+                        placeholder={t('rewardPlaceholder')}
                         value={formData.rewardDescription}
                         onChange={(e) =>
                           setFormData({
@@ -416,7 +418,7 @@ export default function OnboardingPage() {
                     onClick={() => setCurrentStep(currentStep - 1)}
                   >
                     <ArrowLeft className="w-5 h-5 mr-2" />
-                    Retour
+                    {t('back')}
                   </Button>
                 )}
                 {currentStep < 2 ? (
@@ -424,7 +426,7 @@ export default function OnboardingPage() {
                     onClick={() => setCurrentStep(currentStep + 1)}
                     className="flex-1"
                   >
-                    Continuer
+                    {t('continue')}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 ) : (
@@ -434,7 +436,7 @@ export default function OnboardingPage() {
                     className="flex-1"
                     disabled={!formData.rewardDescription}
                   >
-                    Générer mon QR code
+                    {t('generateQR')}
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 )}
@@ -443,7 +445,7 @@ export default function OnboardingPage() {
                 href="/dashboard"
                 className="text-center text-sm text-gray-500 hover:text-primary transition-colors"
               >
-                Revenir au tableau de bord
+                {t('backToDashboard')}
               </Link>
             </div>
           </div>
@@ -451,7 +453,7 @@ export default function OnboardingPage() {
           <div className="hidden lg:block">
             <div className="sticky top-8">
               <p className="mb-4 text-sm font-medium text-gray-500 text-center">
-                Aperçu en temps réel
+                {t('preview')}
               </p>
               <div className="flex justify-center">
                 <div className="phone-mockup">
@@ -469,7 +471,7 @@ export default function OnboardingPage() {
                           />
                         ) : (
                           <span className="text-lg font-bold text-white">
-                            {merchant?.shop_name || 'Ton Commerce'}
+                            {merchant?.shop_name || t('defaultShopName')}
                           </span>
                         )}
                       </div>
@@ -481,10 +483,10 @@ export default function OnboardingPage() {
                         }}
                       >
                         <p className="mb-2 text-sm font-medium text-center text-gray-900">
-                          {formData.programName || 'Carte Fidélité'}
+                          {formData.programName || t('defaultProgramName')}
                         </p>
                         <p className="mb-4 text-xs text-center text-gray-600">
-                          {formData.welcomeMessage || 'Bienvenue !'}
+                          {formData.welcomeMessage || t('defaultWelcome')}
                         </p>
 
                         <div className="flex flex-wrap justify-center gap-1.5 mb-4">
@@ -504,7 +506,7 @@ export default function OnboardingPage() {
                         </div>
 
                         <p className="text-xs text-gray-500">
-                          4 / {formData.stampsRequired} passages
+                          4 / {formData.stampsRequired} {t('passages')}
                         </p>
 
                         {formData.rewardDescription && (
@@ -515,7 +517,7 @@ export default function OnboardingPage() {
                             }}
                           >
                             <p className="text-xs font-medium" style={{ color: formData.primaryColor }}>
-                              Récompense : {formData.rewardDescription}
+                              {t('reward')} : {formData.rewardDescription}
                             </p>
                           </div>
                         )}
