@@ -32,26 +32,16 @@ export function ChallengeCompletedEmail({ shopName, promoCode, locale = 'fr' }: 
       <Section style={promoBox}>
         <Text style={promoLabel}>{t('challengeCompleted.promoLabel')}</Text>
         <Text style={promoCodeStyle}>{promoCode}</Text>
-        <Text style={promoValue}>
-          Premier mois à <strong>9€</strong> au lieu de 19€
-        </Text>
-        <Text style={promoExpiry}>
-          Valable <strong>24 heures seulement</strong>
-        </Text>
+        <Text style={promoValue} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.monthlyPromoValue') }} />
+        <Text style={promoExpiry} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.promoExpiry') }} />
       </Section>
 
       <Section style={annualBox}>
-        <Text style={promoLabel}>Offre annuelle</Text>
+        <Text style={promoLabel}>{t('challengeCompleted.annualOfferLabel')}</Text>
         <Text style={annualCodeStyle}>QARTEPROEHJT</Text>
-        <Text style={promoValue}>
-          <strong>20€ de réduction</strong> sur l&apos;abonnement annuel
-        </Text>
-        <Text style={annualDetail}>
-          170€/an au lieu de 190€ — soit <strong>14,17€/mois</strong>
-        </Text>
-        <Text style={promoExpiry}>
-          Valable <strong>24 heures seulement</strong>
-        </Text>
+        <Text style={promoValue} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.annualPromoValue') }} />
+        <Text style={annualDetail} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.annualDetail') }} />
+        <Text style={promoExpiry} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.promoExpiry') }} />
       </Section>
 
       <Section style={buttonContainer}>
@@ -63,26 +53,22 @@ export function ChallengeCompletedEmail({ shopName, promoCode, locale = 'fr' }: 
       <Hr style={divider} />
 
       <Section style={recapBox}>
-        <Text style={recapTitle}>Ce que tu as d&eacute;j&agrave; accompli :</Text>
-        <Text style={recapItem}>Ton programme de fid&eacute;lit&eacute; est en ligne</Text>
-        <Text style={recapItem}>5 clients fid&eacute;lis&eacute;s en 3 jours</Text>
-        <Text style={recapItem}>Tes clients reviendront d&apos;eux-m&ecirc;mes</Text>
+        <Text style={recapTitle}>{t('challengeCompleted.recapTitle')}</Text>
+        <Text style={recapItem}>{t('challengeCompleted.recapItem1')}</Text>
+        <Text style={recapItem}>{t('challengeCompleted.recapItem2')}</Text>
+        <Text style={recapItem}>{t('challengeCompleted.recapItem3')}</Text>
       </Section>
 
       <Text style={paragraph}>
-        Ne laisse pas retomber cette dynamique — active ton abonnement
-        maintenant et continue &agrave; fid&eacute;liser tes clients sans interruption.
+        {t('challengeCompleted.keepMomentum')}
       </Text>
 
       <Section style={urgencyBox}>
-        <Text style={urgencyText}>
-          Ces codes expirent dans <strong>24h</strong>.
-          Après ça, l&apos;abonnement sera au tarif normal.
-        </Text>
+        <Text style={urgencyText} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.urgencyText') }} />
       </Section>
 
       <Text style={paragraph}>
-        Une question ? R&eacute;ponds &agrave; cet email.
+        {t('challengeCompleted.helpLine')}
       </Text>
 
       <Text style={signature}>

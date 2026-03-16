@@ -6,56 +6,54 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface IncompleteSignupReminder2EmailProps {
   email: string;
+  locale?: EmailLocale;
 }
 
-export function IncompleteSignupReminder2Email({ email }: IncompleteSignupReminder2EmailProps) {
+export function IncompleteSignupReminder2Email({ email, locale = 'fr' }: IncompleteSignupReminder2EmailProps) {
+  const t = getEmailT(locale);
   return (
-    <BaseLayout preview="Votre espace Qarte vous attend toujours">
+    <BaseLayout preview={t('incompleteSignup2.preview')} locale={locale}>
       <Heading style={heading}>
-        On ne vous a pas oubli&eacute; !
+        {t('incompleteSignup2.heading')}
       </Heading>
 
       <Text style={paragraph}>
-        Bonjour,
+        {t('incompleteSignup2.greeting')}
       </Text>
 
       <Text style={paragraph}>
-        Vous avez commenc&eacute; &agrave; cr&eacute;er votre compte Qarte il y a quelques heures,
-        mais la configuration de votre commerce n&apos;est pas termin&eacute;e.
+        {t('incompleteSignup2.body1')}
       </Text>
 
-      <Text style={highlightBox}>
-        Votre espace est <strong>d&eacute;j&agrave; pr&ecirc;t</strong>. Il ne manque que
-        les infos de votre commerce pour lancer votre programme de fid&eacute;lit&eacute;.
-      </Text>
+      <Text style={highlightBox} dangerouslySetInnerHTML={{ __html: t('incompleteSignup2.highlightBox') }} />
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/auth/merchant/signup/complete">
-          Reprendre mon inscription
+          {t('incompleteSignup2.cta')}
         </Button>
       </Section>
 
       <Section style={testimonialBox}>
         <Text style={testimonialQuote}>
-          &laquo; J&apos;ai configur&eacute; mon programme en 3 minutes, et d&egrave;s la premi&egrave;re
-          semaine j&apos;avais des clients qui revenaient avec leur carte. &raquo;
+          {t('incompleteSignup2.testimonialQuote')}
         </Text>
         <Text style={testimonialAuthor}>
-          &mdash; Un coiffeur sur Qarte
+          {t('incompleteSignup2.testimonialAuthor')}
         </Text>
       </Section>
 
       <Text style={paragraph}>
-        Si vous avez des questions ou besoin d&apos;aide, répondez à cet email.
+        {t('incompleteSignup2.helpLine')}
       </Text>
 
       <Text style={signature}>
-        À très vite,
+        {t('incompleteSignup2.signaturePrefix')}
         <br />
-        L&apos;équipe Qarte
+        {t('incompleteSignup2.signature')}
       </Text>
     </BaseLayout>
   );

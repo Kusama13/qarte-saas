@@ -68,20 +68,20 @@ export function QRCodeEmail({
 
       {/* ===== SECTION 1: QR CODE ===== */}
       <Section style={sectionCard}>
-        <Text style={sectionTitle}>Ton QR code</Text>
+        <Text style={sectionTitle}>{t('qrCode.sectionQrTitle')}</Text>
         <Text style={sectionDesc}>
-          T&eacute;l&eacute;charge-le et garde-le sur ton t&eacute;l&eacute;phone. Montre-le &agrave; tes client(e)s au moment de payer.
+          {t('qrCode.sectionQrDesc')}
         </Text>
 
         <Section style={stepsBox}>
           <Text style={stepItem}>
-            <strong style={{ color: primaryColor }}>1.</strong> T&eacute;l&eacute;charge le QR code depuis ton tableau de bord
+            <strong style={{ color: primaryColor }}>1.</strong> {t('qrCode.step1')}
           </Text>
           <Text style={stepItem}>
-            <strong style={{ color: primaryColor }}>2.</strong> Montre-le &agrave; chaque client(e) au passage en caisse
+            <strong style={{ color: primaryColor }}>2.</strong> {t('qrCode.step2')}
           </Text>
           <Text style={stepItem}>
-            <strong style={{ color: primaryColor }}>3.</strong> Un simple &laquo; Vous voulez cumuler vos points ? &raquo; suffit !
+            <strong style={{ color: primaryColor }}>3.</strong> {t('qrCode.step3')}
           </Text>
         </Section>
       </Section>
@@ -90,9 +90,9 @@ export function QRCodeEmail({
       {rewardDescription && (
         <>
           <Section style={sectionCard}>
-            <Text style={sectionTitle}>Ton kit r&eacute;seaux sociaux</Text>
+            <Text style={sectionTitle}>{t('qrCode.socialKitTitle')}</Text>
             <Text style={sectionDesc}>
-              Un visuel pr&ecirc;t &agrave; poster sur Instagram, Facebook ou WhatsApp pour annoncer ton programme.
+              {t('qrCode.socialKitDesc')}
             </Text>
 
             {/* Visual preview */}
@@ -109,20 +109,20 @@ export function QRCodeEmail({
                 )}
                 <Text style={previewShopName}>{shopName}</Text>
                 <Section style={previewRewardBox}>
-                  <Text style={{ ...previewRewardLabel, color: primaryColor }}>{loyaltyMode === 'cagnotte' ? 'Votre cagnotte' : 'Votre r\u00e9compense'}</Text>
+                  <Text style={{ ...previewRewardLabel, color: primaryColor }}>{loyaltyMode === 'cagnotte' ? t('qrCode.rewardBoxLabelCagnotte') : t('qrCode.rewardBoxLabel')}</Text>
                   <Text style={previewRewardText}>{rewardDescription}</Text>
                   {stampsRequired && (
                     <Text style={{ ...previewRewardStamps, color: primaryColor }}>
-                      Apr&egrave;s {stampsRequired} passage{stampsRequired > 1 ? 's' : ''}
+                      {t('qrCode.afterVisits', { count: String(stampsRequired), plural: stampsRequired > 1 ? 's' : '' })}
                     </Text>
                   )}
                 </Section>
                 {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
                   <Section style={{ ...previewRewardBox, marginTop: '8px', backgroundColor: 'rgba(255,255,255,0.8)' }}>
-                    <Text style={{ ...previewRewardLabel, color: '#f59e0b' }}>Palier 2</Text>
+                    <Text style={{ ...previewRewardLabel, color: '#f59e0b' }}>{t('qrCode.tier2BoxLabel')}</Text>
                     <Text style={{ ...previewRewardText, fontSize: '14px' }}>{tier2RewardDescription}</Text>
                     <Text style={{ ...previewRewardStamps, color: '#f59e0b' }}>
-                      Apr&egrave;s {tier2StampsRequired} passage{tier2StampsRequired > 1 ? 's' : ''}
+                      {t('qrCode.afterVisits', { count: String(tier2StampsRequired), plural: tier2StampsRequired > 1 ? 's' : '' })}
                     </Text>
                   </Section>
                 )}
@@ -132,35 +132,25 @@ export function QRCodeEmail({
 
           {/* Captions */}
           <Section style={sectionCard}>
-            <Text style={sectionTitle}>L&eacute;gendes pr&ecirc;tes &agrave; copier</Text>
+            <Text style={sectionTitle}>{t('qrCode.captionsTitle')}</Text>
 
             <Section style={captionBox}>
-              <Text style={captionLabel}>Option 1 — Simple et efficace</Text>
+              <Text style={captionLabel}>{t('qrCode.captionLabel1')}</Text>
               <Text style={captionText}>
-                {loyaltyMode === 'cagnotte' ? (
-                  <>Votre fid&eacute;lit&eacute; m&eacute;rite d&apos;&ecirc;tre r&eacute;compens&eacute;e ! {stampsRequired} passages chez {shopName} = {rewardDescription} sur vos d&eacute;penses.{' '}Demandez &agrave; scanner le QR code ! #fid&eacute;lit&eacute; #{shopName.replace(/\s+/g, '')}</>
-                ) : (
-                  <>Votre fid&eacute;lit&eacute; m&eacute;rite d&apos;&ecirc;tre r&eacute;compens&eacute;e ! Apr&egrave;s {stampsRequired} passages chez {shopName}, recevez {rewardDescription}.
-                {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
-                  <> Et apr&egrave;s {tier2StampsRequired} passages : {tier2RewardDescription} !</>
-                )}
-                {' '}Demandez &agrave; scanner le QR code ! #fid&eacute;lit&eacute; #{shopName.replace(/\s+/g, '')}</>
-                )}
+                {loyaltyMode === 'cagnotte'
+                  ? t('qrCode.captionCagnotteSimple', { stampsRequired: String(stampsRequired || ''), shopName, rewardDescription: rewardDescription || '', hashtag: shopName.replace(/\s+/g, '') })
+                  : t('qrCode.captionVisitSimple', { stampsRequired: String(stampsRequired || ''), shopName, rewardDescription: rewardDescription || '', hashtag: shopName.replace(/\s+/g, ''), tier2Text: tier2Enabled && tier2RewardDescription && tier2StampsRequired ? t('qrCode.captionTier2Suffix', { tier2StampsRequired: String(tier2StampsRequired), tier2RewardDescription }) : '' })
+                }
               </Text>
             </Section>
 
             <Section style={captionBox}>
-              <Text style={captionLabel}>Option 2 — Engageante</Text>
+              <Text style={captionLabel}>{t('qrCode.captionLabel2')}</Text>
               <Text style={captionText}>
-                {loyaltyMode === 'cagnotte' ? (
-                  <>NOUVEAU chez {shopName} ! On lance notre programme de fid&eacute;lit&eacute; digitale. Pas d&apos;appli, pas de carte &agrave; perdre &mdash; juste un scan rapide. {stampsRequired} passages = {rewardDescription} sur vos d&eacute;penses ! &Agrave; bient&ocirc;t</>
-                ) : (
-                  <>NOUVEAU chez {shopName} ! On lance notre carte de fid&eacute;lit&eacute; digitale. Pas d&apos;appli, pas de carte &agrave; perdre &mdash; juste un scan rapide. Votre r&eacute;compense ? {rewardDescription} !
-                {tier2Enabled && tier2RewardDescription && tier2StampsRequired && (
-                  <> Et {tier2RewardDescription} apr&egrave;s {tier2StampsRequired} passages !</>
-                )}
-                {' '}&Agrave; bient&ocirc;t</>
-                )}
+                {loyaltyMode === 'cagnotte'
+                  ? t('qrCode.captionCagnotteEngaging', { stampsRequired: String(stampsRequired || ''), shopName, rewardDescription: rewardDescription || '' })
+                  : t('qrCode.captionVisitEngaging', { shopName, rewardDescription: rewardDescription || '', tier2Text: tier2Enabled && tier2RewardDescription && tier2StampsRequired ? t('qrCode.captionTier2Suffix', { tier2StampsRequired: String(tier2StampsRequired), tier2RewardDescription }) : '' })
+                }
               </Text>
             </Section>
           </Section>
@@ -174,20 +164,15 @@ export function QRCodeEmail({
         </Button>
       </Section>
 
-      <Text style={tipBox}>
-        <strong>Astuce :</strong> garde le QR code sur ton t&eacute;l&eacute;phone et propose le scan d&egrave;s le passage en caisse. Poste le visuel en story Instagram pour un maximum de visibilit&eacute; !
-      </Text>
+      <Text style={tipBox} dangerouslySetInnerHTML={{ __html: t('qrCode.tipBoxText') }} />
 
       {referralCode && (
         <Section style={referralSection}>
-          <Text style={referralTitle}>Gagne 10&euro; de r&eacute;duction</Text>
-          <Text style={referralText}>
-            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommande-lui Qarte : <strong>10&euro; de r&eacute;duction</strong> chacun sur le prochain mois.
-          </Text>
-          <Text style={referralCodeStyle}>Ton code : <strong>{referralCode}</strong></Text>
+          <Text style={referralTitle}>{t('qrCode.referralTitle')}</Text>
+          <Text style={referralText} dangerouslySetInnerHTML={{ __html: t('qrCode.referralText') }} />
+          <Text style={referralCodeStyle} dangerouslySetInnerHTML={{ __html: t('qrCode.referralCodeLabel', { referralCode }) }} />
           <Text style={referralHint}>
-            Ton filleul nous communique ton code apr&egrave;s son inscription et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+            {t('qrCode.referralHint')}
           </Text>
         </Section>
       )}
@@ -195,7 +180,7 @@ export function QRCodeEmail({
       <Hr style={divider} />
 
       <Text style={paragraph}>
-        Besoin d&apos;aide ? R&eacute;ponds &agrave; cet email, on te r&eacute;pond rapidement.
+        {t('qrCode.helpLine')}
       </Text>
 
       <Text style={signature}>

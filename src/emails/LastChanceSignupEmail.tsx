@@ -7,61 +7,52 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface LastChanceSignupEmailProps {
   email: string;
+  locale?: EmailLocale;
 }
 
-export function LastChanceSignupEmail({ email }: LastChanceSignupEmailProps) {
+export function LastChanceSignupEmail({ email, locale = 'fr' }: LastChanceSignupEmailProps) {
+  const t = getEmailT(locale);
   return (
-    <BaseLayout preview="Votre compte Qarte sera supprimé bientôt — finalisez votre inscription">
+    <BaseLayout preview={t('lastChanceSignup.preview')} locale={locale}>
       <Heading style={heading}>
-        Votre compte n&apos;est pas encore finalisé
+        {t('lastChanceSignup.heading')}
       </Heading>
 
       <Text style={paragraph}>
-        Bonjour,
+        {t('lastChanceSignup.greeting')}
       </Text>
 
-      <Text style={paragraph}>
-        Vous avez créé un compte Qarte ({email}) il y a une semaine,
-        mais votre commerce n&apos;est toujours pas enregistré.
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('lastChanceSignup.body1', { email }) }} />
 
       <Section style={infoBox}>
-        <Text style={infoText}>
-          Votre espace sera <strong>supprimé automatiquement</strong> dans quelques jours
-          si l&apos;inscription n&apos;est pas finalisée.
-        </Text>
+        <Text style={infoText} dangerouslySetInnerHTML={{ __html: t('lastChanceSignup.warningBox') }} />
       </Section>
 
       <Hr style={divider} />
 
-      <Text style={paragraph}>
-        L&apos;inscription prend <strong>3 minutes</strong> et l&apos;essai est 100% gratuit
-        pendant 7 jours, sans carte bancaire.
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('lastChanceSignup.body2') }} />
 
       <Section style={promoBox}>
-        <Text style={promoTitle}>Offre premier mois</Text>
-        <Text style={promoText}>
-          Si vous souscrivez après votre essai, votre <strong>premier mois est à 9€</strong> au
-          lieu de 19€. Le code promo QARTE50 s&apos;applique automatiquement.
-        </Text>
+        <Text style={promoTitle}>{t('lastChanceSignup.promoTitle')}</Text>
+        <Text style={promoText} dangerouslySetInnerHTML={{ __html: t('lastChanceSignup.promoText') }} />
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/auth/merchant/signup/complete">
-          Finaliser mon inscription
+          {t('lastChanceSignup.cta')}
         </Button>
       </Section>
 
       <Text style={paragraph}>
-        Une question avant de vous lancer ? Répondez à cet email.
+        {t('lastChanceSignup.helpLine')}
       </Text>
 
       <Text style={signature}>
-        L&apos;équipe Qarte
+        {t('lastChanceSignup.signature')}
       </Text>
     </BaseLayout>
   );

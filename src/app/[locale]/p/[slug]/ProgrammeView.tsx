@@ -320,8 +320,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     </p>
                     {slot ? (
                       <>
-                        <p className="text-[9px] text-gray-600 font-medium">{slot.open}</p>
-                        <p className="text-[9px] text-gray-600 font-medium">{slot.close}</p>
+                        <p className="text-[9px] text-gray-600 font-medium">{formatTime(slot.open, locale)}</p>
+                        <p className="text-[9px] text-gray-600 font-medium">{formatTime(slot.close, locale)}</p>
                       </>
                     ) : (
                       <p className="text-[9px] text-gray-400 font-medium">{t('closed')}</p>

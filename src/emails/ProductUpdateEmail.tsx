@@ -27,89 +27,75 @@ export function ProductUpdateEmail({ shopName, merchantId, referralCode, locale 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('productUpdate.greeting', { shopName }) }} />
 
       <Text style={paragraph}>
-        On a travaill&eacute; dur ces derniers jours pour te donner encore plus
-        d&apos;outils. Voici ce qui est nouveau :
+        {t('productUpdate.introBody')}
       </Text>
 
-      {/* 1. Parrainage */}
+      {/* 1. Referral */}
       <Section style={featureBoxViolet}>
-        <Text style={featureBadgeViolet}>Nouveau</Text>
-        <Text style={featureTitle}>Programme de parrainage</Text>
+        <Text style={featureBadgeViolet}>{t('productUpdate.badgeNew')}</Text>
+        <Text style={featureTitle}>{t('productUpdate.feature1Title')}</Text>
         <Text style={featureText}>
-          Tes client(e)s peuvent maintenant inviter leurs proches et &ecirc;tre
-          r&eacute;compens&eacute;(e)s. Tu choisis la r&eacute;compense du parrain
-          et du filleul &mdash; tout est automatique.
+          {t('productUpdate.feature1Desc')}
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={buttonViolet} href="https://getqarte.com/dashboard/program?section=referral">
-          Activer le parrainage
+          {t('productUpdate.feature1Cta')}
         </Button>
       </Section>
 
-      {/* 2. R&eacute;seaux sociaux */}
+      {/* 2. Social media */}
       <Section style={featureBoxBlue}>
-        <Text style={featureTitle}>Ajoute tes r&eacute;seaux sociaux</Text>
+        <Text style={featureTitle}>{t('productUpdate.feature2Title')}</Text>
         <Text style={featureText}>
-          Instagram, Facebook, TikTok, lien de r&eacute;servation&hellip; Tes client(e)s
-          les retrouvent directement sur leur carte de fid&eacute;lit&eacute;.
-          Un clic pour te suivre, un clic pour r&eacute;server.
+          {t('productUpdate.feature2Desc')}
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={buttonBlue} href="https://getqarte.com/dashboard/public-page">
-          Ajouter mes r&eacute;seaux
+          {t('productUpdate.feature2Cta')}
         </Button>
       </Section>
 
-      {/* 3. Nouveau design */}
+      {/* 3. New design */}
       <Section style={featureBoxIndigo}>
-        <Text style={featureBadgeIndigo}>Nouveau</Text>
-        <Text style={featureTitle}>Nouveau design de la carte client</Text>
+        <Text style={featureBadgeIndigo}>{t('productUpdate.badgeNew')}</Text>
+        <Text style={featureTitle}>{t('productUpdate.feature3Title')}</Text>
         <Text style={featureText}>
-          La page de fid&eacute;lit&eacute; de tes client(e)s a &eacute;t&eacute;
-          enti&egrave;rement redessin&eacute;e : plus claire, plus rapide, plus belle.
-          Tes client(e)s vont adorer.
+          {t('productUpdate.feature3Desc')}
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={buttonIndigo} href={`https://getqarte.com/customer/card/${merchantId}?preview=true`}>
-          Voir le nouveau design
+          {t('productUpdate.feature3Cta')}
         </Button>
       </Section>
 
-      {/* 4. Article blog */}
+      {/* 4. Blog */}
       <Section style={blogBox}>
-        <Text style={blogLabel}>Sur le blog</Text>
+        <Text style={blogLabel}>{t('productUpdate.blogLabel')}</Text>
         <Text style={blogTitle}>
-          Comment mettre en place un programme de fid&eacute;lit&eacute; efficace
-          pour votre onglerie ?
+          {t('productUpdate.blogTitle')}
         </Text>
         <Text style={blogText}>
-          D&eacute;couvre notre guide complet avec des conseils concrets
-          pour fid&eacute;liser tes client(e)s.
+          {t('productUpdate.blogDesc')}
         </Text>
         <Link href="https://getqarte.com/blog/programme-fidelite-onglerie-guide" style={blogLink}>
-          Lire l&apos;article &rarr;
+          {t('productUpdate.blogLink')}
         </Link>
       </Section>
 
-      {/* 5. Parrainage commerçant */}
+      {/* 5. Merchant referral */}
       {referralCode && (
         <Section style={referralBox}>
-          <Text style={referralTitle}>Recommande Qarte, gagne 10&euro;</Text>
-          <Text style={referralText}>
-            Tu connais un(e) commer&ccedil;ant(e) dans la beaut&eacute; ?
-            Recommande-lui Qarte et recevez chacun <strong>10&euro; de r&eacute;duction</strong> sur
-            ton prochain mois.
-          </Text>
-          <Text style={referralCodeStyle}>Ton code : <strong>{referralCode}</strong></Text>
+          <Text style={referralTitle}>{t('productUpdate.referralTitle')}</Text>
+          <Text style={referralText} dangerouslySetInnerHTML={{ __html: t('productUpdate.referralText') }} />
+          <Text style={referralCodeStyle} dangerouslySetInnerHTML={{ __html: t('productUpdate.referralCodeLabel', { referralCode }) }} />
           <Text style={referralHint}>
-            Ton filleul nous communique ton code apr&egrave;s son inscription
-            et la r&eacute;duction est appliqu&eacute;e &agrave; chacun.
+            {t('productUpdate.referralHint')}
           </Text>
         </Section>
       )}

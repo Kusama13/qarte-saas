@@ -6,63 +6,60 @@ import {
 } from '@react-email/components';
 import * as React from 'react';
 import { BaseLayout } from './BaseLayout';
+import { getEmailT, type EmailLocale } from './translations';
 
 interface SetupForYouEmailProps {
   email: string;
+  locale?: EmailLocale;
 }
 
-export function SetupForYouEmail({ email }: SetupForYouEmailProps) {
+export function SetupForYouEmail({ email, locale = 'fr' }: SetupForYouEmailProps) {
+  const t = getEmailT(locale);
   return (
-    <BaseLayout preview="Répondez OUI et on configure tout pour vous — gratuitement">
+    <BaseLayout preview={t('setupForYou.preview')} locale={locale}>
       <Heading style={heading}>
-        On peut le faire pour vous
+        {t('setupForYou.heading')}
       </Heading>
 
       <Text style={paragraph}>
-        Bonjour,
+        {t('setupForYou.greeting')}
       </Text>
 
       <Text style={paragraph}>
-        Vous avez cr&eacute;&eacute; votre compte Qarte il y a 3 jours ({email}),
-        mais la configuration n&apos;est pas termin&eacute;e.
+        {t('setupForYou.body1', { email })}
       </Text>
 
       <Text style={paragraph}>
-        On comprend &mdash; entre les clients, les rendez-vous et le quotidien,
-        c&apos;est pas toujours facile de trouver 3 minutes.
+        {t('setupForYou.body2')}
       </Text>
 
       <Section style={offerBox}>
-        <Text style={offerTitle}>On s&apos;en occupe pour vous</Text>
+        <Text style={offerTitle}>{t('setupForYou.offerTitle')}</Text>
         <Text style={offerText}>
-          R&eacute;pondez &agrave; cet email avec :
+          {t('setupForYou.offerIntro')}
         </Text>
         <Text style={offerList}>
-          &bull; Le nom de votre commerce<br />
-          &bull; Votre activit&eacute; (coiffeur, onglerie, spa...)<br />
-          &bull; Votre adresse
+          &bull; {t('setupForYou.offerList1')}<br />
+          &bull; {t('setupForYou.offerList2')}<br />
+          &bull; {t('setupForYou.offerList3')}
         </Text>
-        <Text style={offerText}>
-          Et on configure <strong>tout</strong> pour vous en moins de 10 minutes.
-          Gratuit, inclus dans votre essai.
-        </Text>
+        <Text style={offerText} dangerouslySetInnerHTML={{ __html: t('setupForYou.offerResult') }} />
       </Section>
 
       <Text style={paragraph}>
-        Ou si vous pr&eacute;f&eacute;rez le faire vous-m&ecirc;me, c&apos;est
-        toujours possible :
+        {t('setupForYou.selfSetup')}
       </Text>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/auth/merchant/signup/complete">
-          Finaliser mon inscription
+          {t('setupForYou.cta')}
         </Button>
       </Section>
 
       <Text style={signature}>
-        &Agrave; tr&egrave;s vite,
+        {t('setupForYou.signaturePrefix')}
         <br />
-        L&apos;&eacute;quipe Qarte
+        {t('setupForYou.signature')}
       </Text>
     </BaseLayout>
   );

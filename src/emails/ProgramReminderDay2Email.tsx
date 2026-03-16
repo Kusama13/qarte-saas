@@ -16,25 +16,31 @@ interface ProgramReminderDay2EmailProps {
   locale?: EmailLocale;
 }
 
-const REWARD_IDEAS: Record<string, { reward: string; visits: string }> = {
-  coiffeur: { reward: '1 brushing offert', visits: '8 visites' },
-  barbier: { reward: '1 coupe offerte', visits: '8 visites' },
-  onglerie: { reward: '1 pose semi-permanent offerte', visits: '10 passages' },
-  institut_beaute: { reward: '1 soin visage offert', visits: '10 séances' },
-  spa: { reward: '1 soin visage offert', visits: '10 séances' },
-  estheticienne: { reward: '1 séance offerte', visits: '10 rendez-vous' },
-  tatouage: { reward: '1 retouche offerte', visits: '8 séances' },
-  restaurant: { reward: '1 dessert offert', visits: '5 repas' },
-  boulangerie: { reward: '1 viennoiserie offerte', visits: '8 passages' },
-  cafe: { reward: '1 boisson offerte', visits: '8 passages' },
+const REWARD_KEYS: Record<string, string> = {
+  coiffeur: 'coiffeur',
+  barbier: 'barbier',
+  onglerie: 'onglerie',
+  institut_beaute: 'institutBeaute',
+  spa: 'spa',
+  estheticienne: 'estheticienne',
+  tatouage: 'tatouage',
+  restaurant: 'restaurant',
+  boulangerie: 'boulangerie',
+  cafe: 'cafe',
 };
 
-const DEFAULT_REWARD = { reward: '1 prestation offerte', visits: '10 passages' };
+function getRewardIdea(t: ReturnType<typeof getEmailT>, shopType: string) {
+  const normalized = shopType?.toLowerCase().replace(/[\s-]/g, '_') || '';
+  const key = REWARD_KEYS[normalized] || 'default';
+  return {
+    reward: t(`rewardIdeas.${key}Reward`),
+    visits: t(`rewardIdeas.${key}Visits`),
+  };
+}
 
 export function ProgramReminderDay2Email({ shopName, shopType, slug, locale = 'fr' }: ProgramReminderDay2EmailProps) {
   const t = getEmailT(locale);
-  const normalizedType = shopType?.toLowerCase().replace(/[\s-]/g, '_') || '';
-  const suggestion = REWARD_IDEAS[normalizedType] || DEFAULT_REWARD;
+  const suggestion = getRewardIdea(t, shopType);
   const publicPageUrl = slug ? `https://getqarte.com/p/${slug}` : null;
 
   return (
@@ -52,7 +58,7 @@ export function ProgramReminderDay2Email({ shopName, shopType, slug, locale = 'f
       <Section style={recommendationBox}>
         <Text style={recommendationLabel}>{t('programReminderDay2.suggestionTitle')}</Text>
         <Text style={recommendationText}>
-          &quot;<strong>{suggestion.reward}</strong> après <strong>{suggestion.visits}</strong>&quot;
+          &quot;<strong>{suggestion.reward}</strong> {t('programReminderDay2.afterVisits')} <strong>{suggestion.visits}</strong>&quot;
         </Text>
       </Section>
 

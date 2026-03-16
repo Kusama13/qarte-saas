@@ -396,6 +396,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ## 9. Emails (34 templates)
 
+**i18n** : Tous les templates utilisent `getEmailT(locale)` de `src/emails/translations/{fr,en}.ts`. La locale vient de `merchants.locale`. Aucun texte hardcode FR restant.
+
 ### Onboarding
 WelcomeEmail, IncompleteSignupEmail (+1h), IncompleteSignupReminder2Email (+3h), ProgramReminderEmail (J+1), ProgramReminderDay2Email (J+2, par shop_type), ProgramReminderDay3Email (J+3), QRCodeEmail, FirstClientScriptEmail (J+2 post-config), QuickCheckEmail (J+4 si 0 scans), ChallengeCompletedEmail (DESACTIVE)
 

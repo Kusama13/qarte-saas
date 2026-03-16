@@ -18,22 +18,21 @@ interface FirstClientScriptEmailProps {
   locale?: EmailLocale;
 }
 
-const SCRIPTS: Record<string, string> = {
-  coiffeur: "C'est tout bon ! Au fait, on a lancé une carte de fidélité digitale. Scannez ce QR code là, ça prend 5 secondes",
-  barbier: "C'est tout bon ! Au fait, on a lancé une carte de fidélité digitale. Scannez ce QR code là, ça prend 5 secondes",
-  onglerie: "Pendant que le vernis sèche, vous voulez scanner le QR code pour la carte de fidélité ? Ça prend 5 secondes",
-  institut_beaute: "Pendant qu'on pose le masque, vous voulez scanner le QR code pour la carte de fidélité ? Ça prend 5 secondes",
-  spa: "Avant de repartir, scannez le QR code pour votre carte de fidélité — ça prend 5 secondes",
-  estheticienne: "Pendant la pause, vous voulez scanner le QR code pour la carte de fidélité ? Ça prend 5 secondes",
-  tatouage: "Pendant la consultation, proposez à vos clients de scanner le QR code pour la carte de fidélité — ça prend 5 secondes",
+const SCRIPT_KEYS: Record<string, string> = {
+  coiffeur: 'scriptCoiffeur',
+  barbier: 'scriptBarbier',
+  onglerie: 'scriptOnglerie',
+  institut_beaute: 'scriptInstitutBeaute',
+  spa: 'scriptSpa',
+  estheticienne: 'scriptEstheticienne',
+  tatouage: 'scriptTatouage',
 };
-
-const DEFAULT_SCRIPT = "Avant de partir, scannez le QR code pour la carte de fidélité — 5 secondes et c'est fait";
 
 export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, stampsRequired, loyaltyMode = 'visit', locale = 'fr' }: FirstClientScriptEmailProps) {
   const t = getEmailT(locale);
   const normalized = shopType?.toLowerCase().replace(/[\s-]/g, '_') || '';
-  const script = SCRIPTS[normalized] || DEFAULT_SCRIPT;
+  const scriptKey = SCRIPT_KEYS[normalized] || 'scriptDefault';
+  const script = t(`firstClientScript.${scriptKey}`);
 
   return (
     <BaseLayout preview={t('firstClientScript.preview', { shopName })} locale={locale}>
@@ -49,10 +48,7 @@ export function FirstClientScriptEmail({ shopName, shopType, rewardDescription, 
 
       <Section style={scriptBox}>
         <Text style={scriptLabel}>{t('firstClientScript.scriptTitle')}</Text>
-        <Text style={scriptText}>
-          &quot;{script} — apr&egrave;s <strong>{stampsRequired} passages</strong> c&apos;est{' '}
-          <strong>{rewardDescription}</strong>{loyaltyMode === 'cagnotte' ? ' sur leurs d\u00e9penses' : ''}.&quot;
-        </Text>
+        <Text style={scriptText} dangerouslySetInnerHTML={{ __html: `&quot;${script}${t('firstClientScript.scriptSuffix', { stampsRequired: String(stampsRequired), rewardDescription, cagnotteSuffix: loyaltyMode === 'cagnotte' ? t('firstClientScript.scriptCagnotteSuffix') : '' })}&quot;` }} />
       </Section>
 
       <Section style={tipsBox}>
