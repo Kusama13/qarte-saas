@@ -41,6 +41,7 @@ export default function QRDownloadPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedCaption, setCopiedCaption] = useState<number | null>(null);
   const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [showPostDownloadModal, setShowPostDownloadModal] = useState(false);
 
   const socialExportRef = useRef<HTMLDivElement>(null);
@@ -337,12 +338,17 @@ export default function QRDownloadPage() {
                       </p>
                       <div className="flex-shrink-0 bg-white rounded-xl p-2 overflow-hidden">
                         {scanUrl ? (
-                          <BrandedQRCode
-                            data={scanUrl}
-                            size={120}
-                            primaryColor={merchant.primary_color}
-                            secondaryColor={merchant.secondary_color}
-                          />
+                          qrDataUrl ? (
+                            <img src={qrDataUrl} alt="QR Code" width={120} height={120} style={{ width: 120, height: 120 }} />
+                          ) : (
+                            <BrandedQRCode
+                              data={scanUrl}
+                              size={120}
+                              primaryColor={merchant.primary_color}
+                              secondaryColor={merchant.secondary_color}
+                              onReady={setQrDataUrl}
+                            />
+                          )
                         ) : (
                           <div className="w-[120px] h-[120px] flex items-center justify-center">
                             <Loader2 className="w-5 h-5 animate-spin text-gray-300" />

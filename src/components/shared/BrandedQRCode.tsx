@@ -9,6 +9,8 @@ type BrandedQRCodeProps = {
   size?: number;
   primaryColor?: string;
   secondaryColor?: string;
+  /** Called with the canvas data URL once the QR code is rendered */
+  onReady?: (dataUrl: string) => void;
 };
 
 /**
@@ -21,6 +23,7 @@ export default function BrandedQRCode({
   size = 120,
   primaryColor = '#4b0082',
   secondaryColor = '#654EDA',
+  onReady,
 }: BrandedQRCodeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [ready, setReady] = useState(false);
@@ -130,6 +133,9 @@ export default function BrandedQRCode({
           ctx.fillText('Q', cx, cy + logoRadius * 0.05);
 
           setReady(true);
+          if (onReady) {
+            try { onReady(canvas.toDataURL('image/png')); } catch {}
+          }
         }
       } catch (err) {
         console.error('BrandedQRCode error:', err);
