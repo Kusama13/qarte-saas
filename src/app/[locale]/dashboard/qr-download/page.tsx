@@ -22,7 +22,8 @@ import {
   Nfc,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { generateQRCodeSVG, getScanUrl } from '@/lib/utils';
+import { getScanUrl } from '@/lib/utils';
+import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SocialMediaTemplate } from '@/components/marketing/SocialMediaTemplate';
 import { toPng } from 'html-to-image';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -34,7 +35,6 @@ export default function QRDownloadPage() {
   const t = useTranslations('qrDownload');
   const { merchant, loading } = useMerchant();
   const [activeTab, setActiveTab] = useState<Tab>('qr');
-  const [qrSvg, setQrSvg] = useState<string>('');
   const [scanUrl, setScanUrl] = useState<string>('');
   const [downloadSuccess, setDownloadSuccess] = useState(false);
   const [socialDownloadSuccess, setSocialDownloadSuccess] = useState(false);
@@ -46,12 +46,10 @@ export default function QRDownloadPage() {
   const socialExportRef = useRef<HTMLDivElement>(null);
   const qrCardRef = useRef<HTMLDivElement>(null);
 
-  // Generate QR code when merchant data is available
+  // Build scan URL when merchant data is available
   useEffect(() => {
     if (!merchant?.scan_code) return;
-    const url = getScanUrl(merchant.scan_code);
-    setScanUrl(url);
-    generateQRCodeSVG(url).then(setQrSvg).catch(console.error);
+    setScanUrl(getScanUrl(merchant.scan_code));
   }, [merchant?.scan_code]);
 
   // Pre-fetch logo as base64 to avoid CORS issues with html-to-image export
@@ -338,14 +336,12 @@ export default function QRDownloadPage() {
                         {t('addCard')}
                       </p>
                       <div className="flex-shrink-0 bg-white rounded-xl p-2 overflow-hidden">
-                        {qrSvg ? (
-                          <div
-                            style={{ width: '120px', height: '120px' }}
-                            dangerouslySetInnerHTML={{
-                              __html: qrSvg
-                                .replace(/width="[^"]*"/, 'width="100%"')
-                                .replace(/height="[^"]*"/, 'height="100%"'),
-                            }}
+                        {scanUrl ? (
+                          <BrandedQRCode
+                            data={scanUrl}
+                            size={120}
+                            primaryColor={merchant.primary_color}
+                            secondaryColor={merchant.secondary_color}
                           />
                         ) : (
                           <div className="w-[120px] h-[120px] flex items-center justify-center">
@@ -389,7 +385,7 @@ export default function QRDownloadPage() {
               )}
               <Button
                 onClick={saveQrImage}
-                disabled={!qrSvg || !hasPalier1}
+                disabled={!scanUrl || !hasPalier1}
                 className="w-full h-12 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 {downloadSuccess ? (
