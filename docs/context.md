@@ -11,7 +11,7 @@
 - **URL:** getqarte.com | **Deploiement:** Vercel
 - **Langues:** Francais (defaut, sans prefixe URL) + Anglais (`/en/*`) via `next-intl` | **Version:** 0.1.0
 - **Ton FR:** tutoiement dashboard merchant, vouvoiement client-facing
-- **Essai:** 7 jours | **Prix:** 19€/mois ou 190€/an
+- **Essai:** 7 jours | **Prix FR:** 19€/mois ou 190€/an | **Prix EN:** $19/mo ou $190/yr
 - **Cible:** Salons de beaute (coiffeurs, barbiers, instituts, ongleries, spas, estheticiennes)
 - **Entite:** SAS Tenga Labs — 60 rue Francois 1er, 75008 Paris
 
@@ -364,6 +364,13 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ## 8. Stripe & Abonnement
 
+### Pricing dual-devise
+- **FR (EUR):** `PLAN` (19€/mois) + `PLAN_ANNUAL` (190€/an) — `STRIPE_PRICE_ID` + `STRIPE_PRICE_ID_ANNUAL`
+- **EN (USD):** `PLAN_EN` ($19/mo) + `PLAN_ANNUAL_EN` ($190/yr) — `STRIPE_PRICE_ID_EN` + `STRIPE_PRICE_ID_ANNUAL_EN`
+- Selection basee sur `merchant.locale` dans `/api/stripe/checkout`
+- Locale Stripe UI : `fr` ou `en` selon merchant.locale
+- Config dans `src/lib/stripe.ts`
+
 ### Statuts
 | Statut | Description |
 |--------|-------------|
@@ -407,8 +414,8 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ### Cron Jobs
 | Cron | Horaire | Description |
 |------|---------|-------------|
-| `/api/cron/morning` | 09:00 UTC | Emails essai, rappels, push 10h, vouchers anniversaire |
-| `/api/cron/evening` | 17:00 UTC | Push 18h |
+| `/api/cron/morning` | 09:00 UTC | Emails essai, rappels, push 10h, vouchers anniversaire (timezone-aware via `getTodayForCountry`) |
+| `/api/cron/evening` | 17:00 UTC | Push 18h (timezone-aware via `getTodayForCountry`) |
 | `/api/cron/reactivation` | 10:00 UTC | Win-back J+7/14/30 |
 
 ### Anti-spam

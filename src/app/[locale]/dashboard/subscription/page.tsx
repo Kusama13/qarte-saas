@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, Link } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   CreditCard,
   Check,
@@ -32,15 +32,22 @@ interface PaymentMethod {
   exp_year: number;
 }
 
-const PLANS = {
-  monthly: { price: 19, priceDisplay: '19,00', daily: '0,63', label: '19 €/mois' },
-  annual: { price: 190, priceDisplay: '15,83', daily: '0,52', label: '190 €/an', originalPrice: 228, savings: '-17%' },
-} as const;
+const PLANS_FR = {
+  monthly: { price: 19, priceDisplay: '19,00', sep: ',', daily: '0,63', label: '19 €/mois' },
+  annual: { price: 190, priceDisplay: '15,83', sep: ',', daily: '0,52', label: '190 €/an', originalPrice: '228 €', savings: '-17%' },
+};
+
+const PLANS_EN = {
+  monthly: { price: 19, priceDisplay: '19.00', sep: '.', daily: '0.63', label: '$19/mo' },
+  annual: { price: 190, priceDisplay: '15.83', sep: '.', daily: '0.52', label: '$190/yr', originalPrice: '$228', savings: '-17%' },
+};
 
 export default function SubscriptionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations('subscription');
+  const locale = useLocale();
+  const PLANS = locale === 'en' ? PLANS_EN : PLANS_FR;
   const { refetch: refetchContext } = useMerchant();
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -385,10 +392,10 @@ export default function SubscriptionPage() {
             <div className="text-center py-4 sm:py-6">
               <div className="flex items-baseline justify-center gap-1">
                 <span className="text-5xl sm:text-6xl font-black text-gray-900 tabular-nums">
-                  {PLANS[billingPlan].priceDisplay.split(',')[0]}
+                  {PLANS[billingPlan].priceDisplay.split(PLANS[billingPlan].sep)[0]}
                 </span>
                 <span className="text-2xl sm:text-3xl font-black text-gray-900">
-                  ,{PLANS[billingPlan].priceDisplay.split(',')[1]}
+                  {PLANS[billingPlan].sep}{PLANS[billingPlan].priceDisplay.split(PLANS[billingPlan].sep)[1]}
                 </span>
                 <span className="text-lg text-gray-400 font-medium ml-1">{t('perMonth')}</span>
               </div>
@@ -399,7 +406,7 @@ export default function SubscriptionPage() {
                 })}
               </p>
               {billingPlan === 'annual' && (
-                <p className="text-sm text-gray-400 mt-1"><span className="line-through">{PLANS.annual.originalPrice} €</span> → <span className="font-bold text-emerald-600">{PLANS.annual.label}</span></p>
+                <p className="text-sm text-gray-400 mt-1"><span className="line-through">{PLANS.annual.originalPrice}</span> → <span className="font-bold text-emerald-600">{PLANS.annual.label}</span></p>
               )}
             </div>
 

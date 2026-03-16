@@ -32,3 +32,19 @@ export const PLAN_ANNUAL = {
   interval: 'year' as const,
 };
 
+// USD plans for EN merchants
+export const PLAN_EN = {
+  name: 'Pro',
+  price: 19,
+  priceId: process.env.STRIPE_PRICE_ID_EN || '',
+  interval: 'month' as const,
+};
+
+export const PLAN_ANNUAL_EN = {
+  name: 'Pro Annual',
+  price: 190,
+  monthlyEquivalent: 15.83,
+  priceId: process.env.STRIPE_PRICE_ID_ANNUAL_EN || '',
+  interval: 'year' as const,
+};
+

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
-import { getTodayInParis } from '@/lib/utils';
+import { getTodayInParis, getTodayForCountry } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -43,19 +43,17 @@ export async function GET(request: NextRequest) {
   };
 
   try {
-    const today = getTodayInParis();
-
+    // Fetch all pending 18:00 pushes (no date filter — checked per merchant timezone)
     const { data: scheduledPushes } = await supabase
       .from('scheduled_push')
       .select('*')
-      .eq('scheduled_date', today)
       .eq('scheduled_time', '18:00')
       .eq('status', 'pending');
 
     // Batch fetch all merchants, loyalty cards, and push subscriptions upfront (avoid N+1)
     const pushMerchantIds = [...new Set((scheduledPushes || []).map(p => p.merchant_id))];
     const [{ data: allMerchants }, { data: allCards }, { data: allSubs }] = await Promise.all([
-      supabase.from('merchants').select('id, shop_name').in('id', pushMerchantIds),
+      supabase.from('merchants').select('id, shop_name, country').in('id', pushMerchantIds),
       supabase.from('loyalty_cards').select('merchant_id, customer_id').in('merchant_id', pushMerchantIds),
       supabase.from('push_subscriptions').select('*').in('merchant_id', pushMerchantIds),
     ]);
@@ -81,6 +79,11 @@ export async function GET(request: NextRequest) {
         if (!merchant) {
           await supabase.from('scheduled_push').update({ status: 'sent', sent_at: new Date().toISOString(), sent_count: 0 }).eq('id', push.id);
           continue;
+        }
+
+        // Check if scheduled_date matches "today" in merchant's timezone
+        if (push.scheduled_date !== getTodayForCountry(merchant.country)) {
+          continue; // Not yet "today" for this merchant — skip, will be caught on next run
         }
 
         const customerIdSet = cardsByMerchant.get(push.merchant_id);

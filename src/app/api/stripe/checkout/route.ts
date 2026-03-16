@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { stripe, PLAN, PLAN_ANNUAL } from '@/lib/stripe';
+import { stripe, PLAN, PLAN_ANNUAL, PLAN_EN, PLAN_ANNUAL_EN } from '@/lib/stripe';
 import logger from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
@@ -16,28 +16,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Determine plan (monthly or annual)
-    let selectedPriceId = PLAN.priceId;
+    // Parse plan preference from body
+    let planChoice: 'monthly' | 'annual' = 'monthly';
     try {
       const body = await request.json();
-      if (body.plan === 'annual' && PLAN_ANNUAL.priceId) {
-        selectedPriceId = PLAN_ANNUAL.priceId;
-      }
+      if (body.plan === 'annual') planChoice = 'annual';
     } catch {
       // No body or invalid JSON = default to monthly
-    }
-
-    if (!selectedPriceId) {
-      return NextResponse.json(
-        { error: 'Configuration Stripe incomplete - STRIPE_PRICE_ID manquant' },
-        { status: 500 }
-      );
     }
 
     // Get merchant info
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('id, shop_name, stripe_customer_id, trial_ends_at, subscription_status')
+      .select('id, shop_name, stripe_customer_id, trial_ends_at, subscription_status, locale')
       .eq('user_id', user.id)
       .single();
 
@@ -45,6 +36,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Commerçant non trouvé' },
         { status: 404 }
+      );
+    }
+
+    // Resolve price ID based on merchant locale (EUR for FR, USD for EN)
+    const isEN = merchant.locale === 'en';
+    const monthlyPlan = isEN ? PLAN_EN : PLAN;
+    const annualPlan = isEN ? PLAN_ANNUAL_EN : PLAN_ANNUAL;
+    const selectedPriceId = planChoice === 'annual' && annualPlan.priceId
+      ? annualPlan.priceId
+      : monthlyPlan.priceId;
+
+    if (!selectedPriceId) {
+      return NextResponse.json(
+        { error: 'Configuration Stripe incomplete - STRIPE_PRICE_ID manquant' },
+        { status: 500 }
       );
     }
 
@@ -115,11 +121,11 @@ export async function POST(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?success=true&plan=${selectedPriceId === PLAN_ANNUAL.priceId ? 'annual' : 'monthly'}`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?success=true&plan=${planChoice}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription?canceled=true`,
       metadata: {
         merchant_id: merchant.id,
-        plan: selectedPriceId === PLAN_ANNUAL.priceId ? 'annual' : 'monthly',
+        plan: planChoice,
       },
       subscription_data: {
         metadata: {
@@ -130,7 +136,7 @@ export async function POST(request: NextRequest) {
       },
       allow_promotion_codes: true,
       billing_address_collection: 'required',
-      locale: 'fr',
+      locale: merchant.locale === 'en' ? 'en' : 'fr',
     });
 
     return NextResponse.json({ url: session.url });

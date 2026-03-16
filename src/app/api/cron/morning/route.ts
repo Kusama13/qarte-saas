@@ -25,7 +25,7 @@ import {
   sendBirthdayNotificationEmail,
 } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
-import { getTrialStatus, getTodayInParis } from '@/lib/utils';
+import { getTrialStatus, getTodayInParis, getTodayForCountry } from '@/lib/utils';
 import { sendAutomationPush, getUpcomingEvent } from '@/lib/push-automation';
 import logger from '@/lib/logger';
 
@@ -1217,12 +1217,10 @@ export async function GET(request: NextRequest) {
   // ==================== SECTION 10: SCHEDULED PUSH ====================
   if (isTimedOut()) { sectionStatuses.push({ name: 'scheduledPush', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
   else try {
-    const today = getTodayInParis();
-
+    // Fetch all pending 10:00 pushes (no date filter — checked per merchant timezone)
     const { data: scheduledPushes } = await supabase
       .from('scheduled_push')
       .select('*')
-      .eq('scheduled_date', today)
       .eq('scheduled_time', '10:00')
       .eq('status', 'pending');
 
@@ -1232,13 +1230,18 @@ export async function GET(request: NextRequest) {
       try {
         const { data: merchant } = await supabase
           .from('merchants')
-          .select('shop_name')
+          .select('shop_name, country')
           .eq('id', push.merchant_id)
           .maybeSingle();
 
         if (!merchant) {
           await supabase.from('scheduled_push').update({ status: 'sent', sent_at: new Date().toISOString(), sent_count: 0 }).eq('id', push.id);
           continue;
+        }
+
+        // Check if scheduled_date matches "today" in merchant's timezone
+        if (push.scheduled_date !== getTodayForCountry(merchant.country)) {
+          continue; // Not yet "today" for this merchant — skip, will be caught on next run
         }
 
         const { data: loyaltyCards } = await supabase
@@ -1332,15 +1335,14 @@ export async function GET(request: NextRequest) {
   if (isTimedOut()) { sectionStatuses.push({ name: 'birthdayVouchers', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
   else try {
     {
-      const todayParis = getTodayInParis(); // YYYY-MM-DD in Paris timezone
+      const todayParis = getTodayInParis(); // YYYY-MM-DD fallback for birthday query
       const targetDate = new Date(todayParis + 'T12:00:00');
-      targetDate.setDate(targetDate.getDate());
       const targetMonth = targetDate.getMonth() + 1;
       const targetDay = targetDate.getDate();
 
       const { data: birthdayMerchants } = await supabase
         .from('merchants')
-        .select('id, user_id, shop_name, birthday_gift_description, locale')
+        .select('id, user_id, shop_name, birthday_gift_description, locale, country')
         .eq('birthday_gift_enabled', true)
         .neq('no_contact', true)
         .in('subscription_status', ['trial', 'active']);
@@ -1423,6 +1425,14 @@ export async function GET(request: NextRequest) {
             const loyaltyCardId = cardMap.get(key);
 
             if (!bMerchant || !loyaltyCardId) {
+              results.birthdayVouchers.skipped++;
+              continue;
+            }
+
+            // Verify birthday matches "today" in merchant's timezone (edge case: timezone date differs from Paris)
+            const merchantToday = getTodayForCountry(bMerchant.country);
+            const mDate = new Date(merchantToday + 'T12:00:00');
+            if (mDate.getMonth() + 1 !== targetMonth || mDate.getDate() !== targetDay) {
               results.birthdayVouchers.skipped++;
               continue;
             }
