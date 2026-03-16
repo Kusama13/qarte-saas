@@ -121,7 +121,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     (merchant.referral_program_enabled && !!(merchant.referral_reward_referrer || merchant.referral_reward_referred)) ||
     merchant.double_days_enabled;
 
-  const hasBooking = !!(merchant.booking_url && merchant.booking_url.trim());
+  const safeBookingUrl = merchant.booking_url && /^https?:\/\//i.test(merchant.booking_url) ? merchant.booking_url : null;
+  const hasBooking = !!safeBookingUrl;
   const noOp = (e: React.MouseEvent) => { e.preventDefault(); };
 
   // Planning: group slots by month then by date
@@ -273,7 +274,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         {hasBooking && (
           <motion.a
             ref={topCtaRef as unknown as React.Ref<HTMLAnchorElement>}
-            href={isDemo ? '#' : merchant.booking_url!}
+            href={isDemo ? '#' : safeBookingUrl!}
             target={isDemo ? undefined : '_blank'}
             rel={isDemo ? undefined : 'noopener noreferrer'}
             onClick={isDemo ? noOp : undefined}
@@ -878,7 +879,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <p className="text-sm font-bold text-gray-900 truncate">{merchant.shop_name}</p>
               </div>
               <a
-                href={isDemo ? '/auth/merchant/signup' : merchant.booking_url!}
+                href={isDemo ? '/auth/merchant/signup' : safeBookingUrl!}
                 target={isDemo ? undefined : '_blank'}
                 rel={isDemo ? undefined : 'noopener noreferrer'}
                 className={`shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all active:scale-95 ${isDemo ? 'bg-gradient-to-r from-indigo-600 to-violet-600 shadow-lg shadow-indigo-500/25' : ''}`}

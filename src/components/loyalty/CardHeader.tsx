@@ -28,6 +28,7 @@ export default function CardHeader({
   hideBackButton = false,
 }: CardHeaderProps) {
   const t = useTranslations('cardHeader');
+  const safeBookingUrl = merchant.booking_url && /^https?:\/\//i.test(merchant.booking_url) ? merchant.booking_url : null;
   return (
     <header className="relative w-full overflow-hidden">
       <div className="relative mx-auto lg:max-w-lg lg:mt-4 lg:rounded-3xl overflow-hidden">
@@ -85,7 +86,7 @@ export default function CardHeader({
             {merchant.shop_name}
           </motion.h1>
 
-          {(memberCard && isMemberCardActive || merchant.booking_url?.trim() || (merchant.slug && merchant.show_public_page_on_card)) && (
+          {(memberCard && isMemberCardActive || safeBookingUrl || (merchant.slug && merchant.show_public_page_on_card)) && (
             <div className="flex items-center gap-2 flex-wrap justify-center">
               {memberCard && isMemberCardActive && (
                 <motion.button
@@ -98,11 +99,11 @@ export default function CardHeader({
                   <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('memberVip')}</span>
                 </motion.button>
               )}
-              {merchant.booking_url && merchant.booking_url.trim() !== '' && (
+              {safeBookingUrl && (
                 <motion.a
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  href={merchant.booking_url}
+                  href={safeBookingUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all active:scale-95"
