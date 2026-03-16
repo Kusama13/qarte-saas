@@ -481,6 +481,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 
 - JSON-LD `LocalBusiness` (name, address, image, url, makesOffer)
 - SEO: `generateMetadata()` avec og:image (1ere photo ou logo), description dynamique
+- **QR desktop flottant** : bloc fixe bottom-right (visible `lg:` uniquement) avec `BrandedQRCode` aux couleurs merchant — permet de scanner pour ouvrir sur mobile
 
 ---
 

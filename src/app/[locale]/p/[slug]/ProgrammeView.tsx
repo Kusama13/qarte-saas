@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
+import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
 import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency } from '@/lib/utils';
@@ -954,6 +955,19 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Desktop QR code — scan to open on mobile ── */}
+      <div className="hidden lg:flex fixed bottom-6 right-6 z-40 flex-col items-center gap-2 rounded-2xl bg-white/95 p-3 shadow-lg border border-gray-100">
+        <BrandedQRCode
+          data={`https://getqarte.com/p/${merchant.slug}`}
+          size={100}
+          primaryColor={p}
+          secondaryColor={s}
+        />
+        <p className="text-[10px] text-gray-400 font-medium text-center leading-tight">
+          {t('scanOnMobile')}
+        </p>
+      </div>
 
       {/* ── JSON-LD STRUCTURED DATA ── */}
       <script

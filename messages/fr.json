@@ -1700,7 +1700,8 @@
     "closeLightbox": "Fermer",
     "prevPhoto": "Photo précédente",
     "nextPhoto": "Photo suivante",
-    "jsonLdOffer": "Programme de fidélité digitale"
+    "jsonLdOffer": "Programme de fidélité digitale",
+    "scanOnMobile": "Scanner pour ouvrir sur mobile"
   },
   "simulatedCard": {
     "afterVisits": "Après {count} visites",
