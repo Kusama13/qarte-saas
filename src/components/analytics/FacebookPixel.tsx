@@ -54,10 +54,10 @@ export const fbEvents = {
   lead: () => trackFBEvent("Lead"),
   completeRegistration: () => trackFBEvent("CompleteRegistration"),
   startTrial: () => trackFBEvent("StartTrial"),
-  subscribe: (value?: number, eventId?: string) =>
+  subscribe: (value?: number, eventId?: string, currency: string = "EUR") =>
     trackFBEvent(
       "Purchase",
-      value ? { value, currency: "EUR" } : undefined,
+      value ? { value, currency } : undefined,
       eventId ? { eventID: eventId } : undefined,
     ),
   scrollDepth: (percent: number) => trackFBEvent("ScrollDepth", { percent }),

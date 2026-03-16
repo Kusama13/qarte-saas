@@ -250,10 +250,11 @@ export function useAssignCustomer(
 
       // Record creation in history
       const isCagnotte = merchant.loyalty_mode === 'cagnotte';
-      const parts: string[] = ['Création du client'];
-      if (initialStamps > 0) parts.push(`${initialStamps} passage${initialStamps > 1 ? 's' : ''}`);
+      const isEn = merchant.locale === 'en';
+      const parts: string[] = [isEn ? 'Customer creation' : 'Création du client'];
+      if (initialStamps > 0) parts.push(`${initialStamps} ${isEn ? (initialStamps > 1 ? 'visits' : 'visit') : (`passage${initialStamps > 1 ? 's' : ''}`)}`);
       if (isCagnotte && newCustomerStartAmount && Number(newCustomerStartAmount) > 0) {
-        parts.push(`${formatCurrency(Number(newCustomerStartAmount), merchant.country)} cumulés`);
+        parts.push(`${formatCurrency(Number(newCustomerStartAmount), merchant.country)} ${isEn ? 'accumulated' : 'cumulés'}`);
       }
       await supabase
         .from('point_adjustments')

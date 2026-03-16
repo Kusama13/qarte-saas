@@ -115,14 +115,16 @@ export default async function RootLayout({
             operatingSystem: 'Web',
             url: baseUrl,
             description: 'Un seul lien pour tout montrer (bio, prestations, planning, photos) + programme de fidélité digital (QR code, tampons, cagnotte, notifications push). Sans application à télécharger.',
-            offers: {
-              '@type': 'Offer',
-              price: '19',
-              priceCurrency: 'EUR',
-              priceValidUntil: '2026-12-31',
-              url: `${baseUrl}/#pricing`,
-              availability: 'https://schema.org/InStock',
-            },
+            offers: [
+              {
+                '@type': 'Offer',
+                price: '19',
+                priceCurrency: locale === 'en' ? 'USD' : 'EUR',
+                priceValidUntil: '2026-12-31',
+                url: `${baseUrl}/#pricing`,
+                availability: 'https://schema.org/InStock',
+              },
+            ],
             availableLanguage: ['French', 'English'],
           }) }}
         />

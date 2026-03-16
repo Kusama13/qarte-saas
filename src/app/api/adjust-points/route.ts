@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
+import { formatCurrency } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 const adjustPointsSchema = z.object({
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('id, stamps_required, tier2_enabled, tier2_stamps_required')
+      .select('id, stamps_required, tier2_enabled, tier2_stamps_required, country')
       .eq('id', merchant_id)
       .eq('user_id', user.id)
       .single();
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
     if (!reason && amount_adjustment !== undefined && amount_adjustment !== 0) {
       const parts: string[] = [];
       if (adjustment !== 0) parts.push(`${adjustment > 0 ? '+' : ''}${adjustment} passage${Math.abs(adjustment) > 1 ? 's' : ''}`);
-      parts.push(`${amount_adjustment > 0 ? '+' : ''}${amount_adjustment.toFixed(2).replace('.', ',')} € cumul`);
+      parts.push(`${amount_adjustment > 0 ? '+' : ''}${formatCurrency(amount_adjustment, merchant.country)} cumul`);
       finalReason = parts.join(' · ');
     }
 

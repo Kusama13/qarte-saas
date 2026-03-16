@@ -7,7 +7,7 @@ import {
   HelpCircle,
   EyeOff,
 } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toBCP47 } from '@/lib/utils';
 
@@ -17,6 +17,7 @@ interface HowItWorksModalProps {
 }
 
 export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
+  const t = useTranslations('marketing.modals');
   return (
     <AnimatePresence>
       {show && (
@@ -37,7 +38,7 @@ export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <HelpCircle className="w-5 h-5 text-indigo-500" />
-                Comment ça marche ?
+                {t('howItWorksTitle')}
               </h2>
               <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5 text-gray-400" />
@@ -46,10 +47,10 @@ export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
 
             <div className="space-y-4 text-sm text-gray-700">
               {[
-                { title: 'Rédige ta notification', desc: 'Titre court et accrocheur + message clair' },
-                { title: 'Ajoutez les détails de l\'offre', desc: 'Description visible sur la carte fidélité du client' },
-                { title: 'Choisissez la durée', desc: 'L\'offre disparaît automatiquement après expiration' },
-                { title: 'Envoyez !', desc: 'Immédiatement ou programmez pour plus tard' },
+                { title: t('step1Title'), desc: t('step1Desc') },
+                { title: t('step2Title'), desc: t('step2Desc') },
+                { title: t('step3Title'), desc: t('step3Desc') },
+                { title: t('step4Title'), desc: t('step4Desc') },
               ].map((step, i) => (
                 <div key={i} className="flex gap-3">
                   <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold flex-shrink-0">
@@ -65,10 +66,10 @@ export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
               <div className="mt-4 p-3 bg-red-50 rounded-xl border border-red-100">
                 <div className="flex items-center gap-2 mb-1">
                   <AlertTriangle className="w-4 h-4 text-red-500" />
-                  <span className="font-bold text-red-700">Important</span>
+                  <span className="font-bold text-red-700">{t('important')}</span>
                 </div>
                 <p className="text-red-600 text-xs">
-                  N&apos;envoyez pas plus de 1-2 notifications par semaine. Trop de messages = désabonnements !
+                  {t('frequencyWarning')}
                 </p>
               </div>
             </div>
@@ -77,7 +78,7 @@ export function HowItWorksModal({ show, onClose }: HowItWorksModalProps) {
               onClick={onClose}
               className="w-full mt-5 py-2.5 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors"
             >
-              J&apos;ai compris
+              {t('understood')}
             </button>
           </motion.div>
         </motion.div>
@@ -98,6 +99,7 @@ interface OfferModalProps {
 
 export function OfferModal({ show, onClose, title, description, imageUrl, expiresAt, onDeactivate }: OfferModalProps) {
   const locale = useLocale();
+  const t = useTranslations('marketing.modals');
   return (
     <AnimatePresence>
       {show && (
@@ -118,7 +120,7 @@ export function OfferModal({ show, onClose, title, description, imageUrl, expire
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <Gift className="w-5 h-5 text-emerald-500" />
-                Offre en cours
+                {t('activeOffer')}
               </h2>
               <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5 text-gray-400" />
@@ -127,24 +129,24 @@ export function OfferModal({ show, onClose, title, description, imageUrl, expire
 
             <div className="space-y-4">
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Titre</p>
+                <p className="text-xs font-medium text-gray-500 mb-1">{t('offerTitle')}</p>
                 <p className="font-bold text-gray-900">{title || '-'}</p>
               </div>
 
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Description</p>
+                <p className="text-xs font-medium text-gray-500 mb-1">{t('offerDescription')}</p>
                 <p className="text-gray-700 whitespace-pre-wrap">{description || '-'}</p>
               </div>
 
               {imageUrl && (
                 <div>
-                  <p className="text-xs font-medium text-gray-500 mb-1">Image</p>
-                  <img src={imageUrl} alt="Offre" className="w-full h-40 object-cover rounded-xl" />
+                  <p className="text-xs font-medium text-gray-500 mb-1">{t('offerImage')}</p>
+                  <img src={imageUrl} alt={t('offerImage')} className="w-full h-40 object-cover rounded-xl" />
                 </div>
               )}
 
               <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Expiration</p>
+                <p className="text-xs font-medium text-gray-500 mb-1">{t('offerExpiration')}</p>
                 <p className="text-gray-700">
                   {expiresAt ? new Date(expiresAt).toLocaleDateString(toBCP47(locale), {
                     weekday: 'long',
@@ -162,14 +164,14 @@ export function OfferModal({ show, onClose, title, description, imageUrl, expire
                 onClick={onClose}
                 className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
               >
-                Fermer
+                {t('close')}
               </button>
               <button
                 onClick={() => { onClose(); onDeactivate(); }}
                 className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
               >
                 <EyeOff className="w-4 h-4" />
-                Désactiver
+                {t('deactivate')}
               </button>
             </div>
           </motion.div>

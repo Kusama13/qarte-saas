@@ -81,12 +81,12 @@ export const trackFirstCustomerAdded = createTracker('first_customer_added');
 
 export const trackSubscriptionStarted = createTracker('subscription_started');
 
-export function trackSubscriptionCompleted(plan: string, price: number, merchantId: string) {
+export function trackSubscriptionCompleted(plan: string, price: number, merchantId: string, currency: string = 'EUR') {
   if (!plan || !merchantId || typeof price !== 'number' || price < 0) return;
   trackEvent('purchase', {
     transaction_id: `sub_${merchantId}_${Date.now()}`,
     value: price,
-    currency: 'EUR',
+    currency,
     items: [{
       item_name: `Qarte ${plan}`,
       price: price,

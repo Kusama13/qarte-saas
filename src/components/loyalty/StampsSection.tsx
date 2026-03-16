@@ -1,7 +1,7 @@
 'use client';
 
 import { Gift, Heart, Trophy, Zap } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { parseDoubleDays, formatDoubleDays } from '@/lib/utils';
 
@@ -93,9 +93,10 @@ export default function StampsSection({
   doubleDaysOfWeek,
 }: StampsSectionProps) {
   const t = useTranslations('stampsSection');
+  const locale = useLocale();
   const doubleDays = parseDoubleDays(doubleDaysOfWeek);
   const showDoubleDaysHint = doubleDaysEnabled && doubleDays.length > 0;
-  const formattedDoubleDays = showDoubleDaysHint ? formatDoubleDays(doubleDaysOfWeek) : '';
+  const formattedDoubleDays = showDoubleDaysHint ? formatDoubleDays(doubleDaysOfWeek, locale) : '';
   if (tier2Enabled) {
     return (
       <div className="space-y-5">

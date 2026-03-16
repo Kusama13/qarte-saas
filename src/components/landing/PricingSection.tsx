@@ -51,7 +51,7 @@ export function PricingSection() {
               <div className="relative text-center pt-4 mb-10">
                 <div className="inline-flex items-baseline justify-center gap-1.5">
                   <span className="text-7xl font-extrabold tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-gray-900 to-gray-600">
-                    19&euro;
+                    {t('price')}
                   </span>
                   <span className="text-xl font-semibold text-gray-400">{t('perMonth')}</span>
                 </div>

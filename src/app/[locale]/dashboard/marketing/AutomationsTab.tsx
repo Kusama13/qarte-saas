@@ -12,6 +12,7 @@ import {
   Gift,
   Zap,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AUTOMATION_UNLOCK_THRESHOLD } from './types';
 import type { BirthdaySaveResult } from './types';
@@ -43,8 +44,8 @@ const SIMPLE_AUTOMATIONS = [
   {
     id: 'reward_reminder_enabled' as const,
     sentKey: 'reward_reminder_sent' as const,
-    title: 'Rappel récompense',
-    desc: 'Push aux clients avec une récompense non récupérée depuis 7 jours',
+    titleKey: 'rewardReminder' as const,
+    descKey: 'rewardReminderDesc' as const,
     icon: Gift,
     bgColor: 'bg-amber-50',
     textColor: 'text-amber-500',
@@ -63,6 +64,7 @@ export default function AutomationsTab({
   onSaveBirthdayConfig,
   onToggleBirthday,
 }: AutomationsTabProps) {
+  const t = useTranslations('marketing.automations');
   const [settings, setSettings] = useState<AutomationSettings | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -130,12 +132,12 @@ export default function AutomationsTab({
       const data = await res.json();
       if (res.ok && data.settings) {
         setSettings(data.settings);
-        setEventsSaveResult({ success: true, message: 'Sauvegardé !' });
+        setEventsSaveResult({ success: true, message: t('saved') });
       } else {
-        setEventsSaveResult({ success: false, message: 'Erreur' });
+        setEventsSaveResult({ success: false, message: t('errorGeneric') });
       }
     } catch {
-      setEventsSaveResult({ success: false, message: 'Erreur de connexion' });
+      setEventsSaveResult({ success: false, message: t('errorConnection') });
     }
     setSavingEvents(false);
     setTimeout(() => setEventsSaveResult(null), 3000);
@@ -154,12 +156,12 @@ export default function AutomationsTab({
       const data = await res.json();
       if (res.ok && data.settings) {
         setSettings(data.settings);
-        setInactiveSaveResult({ success: true, message: 'Sauvegardé !' });
+        setInactiveSaveResult({ success: true, message: t('saved') });
       } else {
-        setInactiveSaveResult({ success: false, message: 'Erreur' });
+        setInactiveSaveResult({ success: false, message: t('errorGeneric') });
       }
     } catch {
-      setInactiveSaveResult({ success: false, message: 'Erreur de connexion' });
+      setInactiveSaveResult({ success: false, message: t('errorConnection') });
     }
     setSavingInactive(false);
     setTimeout(() => setInactiveSaveResult(null), 3000);
@@ -175,14 +177,14 @@ export default function AutomationsTab({
               <Cake className="w-5 h-5 text-pink-500" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-gray-900">Cadeau anniversaire</h3>
-              <p className="text-[10px] text-gray-500">Envoi auto 3 jours avant, valable 14 jours</p>
+              <h3 className="text-sm font-bold text-gray-900">{t('birthdayGift')}</h3>
+              <p className="text-[10px] text-gray-500">{t('birthdayGiftDesc')}</p>
             </div>
           </div>
           <button
             role="switch"
             aria-checked={birthdayGiftEnabled}
-            aria-label="Activer ou désactiver le cadeau anniversaire"
+            aria-label={t('toggleBirthday')}
             onClick={onToggleBirthday}
             className={`relative w-11 h-6 rounded-full transition-colors ${birthdayGiftEnabled ? 'bg-pink-500' : 'bg-gray-200'}`}
           >
@@ -201,12 +203,12 @@ export default function AutomationsTab({
               <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Description du cadeau
+                    {t('birthdayGiftLabel')}
                   </label>
                   <textarea
                     value={birthdayGiftDescription}
                     onChange={(e) => setBirthdayGiftDescription(e.target.value)}
-                    placeholder="Ex: Un brushing offert pour ton anniversaire !"
+                    placeholder={t('birthdayGiftPlaceholder')}
                     maxLength={200}
                     rows={2}
                     className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 resize-none"
@@ -222,7 +224,7 @@ export default function AutomationsTab({
                   ) : (
                     <>
                       <CheckCircle2 className="w-4 h-4" />
-                      Sauvegarder
+                      {t('save')}
                     </>
                   )}
                 </button>
@@ -243,13 +245,16 @@ export default function AutomationsTab({
           <div className="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center mx-auto mb-3">
             <Lock className="w-7 h-7 text-indigo-400" />
           </div>
-          <h3 className="font-bold text-gray-900 text-sm">Automatisations push</h3>
+          <h3 className="font-bold text-gray-900 text-sm">{t('lockTitle')}</h3>
           <p className="text-xs text-gray-500 mt-1 max-w-xs mx-auto">
-            Atteignez <span className="font-bold text-indigo-600">{AUTOMATION_UNLOCK_THRESHOLD} abonnés push</span> pour débloquer les automatisations avancées
+            {t.rich('lockDesc', {
+              threshold: AUTOMATION_UNLOCK_THRESHOLD,
+              bold: (chunks) => <span className="font-bold text-indigo-600">{chunks}</span>,
+            })}
           </p>
           <div className="mt-4 max-w-xs mx-auto">
             <div className="flex justify-between text-[10px] font-medium text-gray-400 mb-1">
-              <span>{subscriberCount ?? 0} abonné{(subscriberCount ?? 0) > 1 ? 's' : ''}</span>
+              <span>{t('subscriberCount', { count: subscriberCount ?? 0 })}</span>
               <span>{AUTOMATION_UNLOCK_THRESHOLD}</span>
             </div>
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -269,7 +274,7 @@ export default function AutomationsTab({
         {/* Section header */}
         <div className="flex items-center gap-2 px-1">
           <Zap className="w-4 h-4 text-gray-400" />
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">Automations push</h2>
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t('pushAutomationsHeader')}</h2>
         </div>
 
         {/* Relance inactifs (with offer text) */}
@@ -281,20 +286,20 @@ export default function AutomationsTab({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-gray-900">Relance inactifs</h3>
+                  <h3 className="text-sm font-bold text-gray-900">{t('inactiveReminder')}</h3>
                   {(settings?.inactive_reminder_sent ?? 0) > 0 && (
                     <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                      {settings?.inactive_reminder_sent} envoyée{(settings?.inactive_reminder_sent ?? 0) > 1 ? 's' : ''}
+                      {t('sent', { count: settings?.inactive_reminder_sent ?? 0 })}
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-gray-500 mt-0.5">Push aux clients qui ne sont pas venus depuis 30 jours</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">{t('inactiveReminderDesc')}</p>
               </div>
             </div>
             <button
               role="switch"
               aria-checked={settings?.inactive_reminder_enabled ?? false}
-              aria-label="Activer ou désactiver la relance des clients inactifs"
+              aria-label={t('toggleInactive')}
               onClick={() => toggleAutomation('inactive_reminder_enabled', settings?.inactive_reminder_enabled ?? false)}
               disabled={loading || updating === 'inactive_reminder_enabled'}
               className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
@@ -320,18 +325,18 @@ export default function AutomationsTab({
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Ton offre de relance (optionnel)
+                      {t('inactiveOfferLabel')}
                     </label>
                     <textarea
                       value={inactiveOfferText}
                       onChange={(e) => setInactiveOfferText(e.target.value)}
-                      placeholder="Ex: -15% pour ton retour !"
+                      placeholder={t('inactiveOfferPlaceholder')}
                       maxLength={200}
                       rows={2}
                       className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
                     />
                     <p className="text-[10px] text-gray-400 mt-1">
-                      Sans offre : &quot;{'{'}boutique{'}'} te manque ! Revenez vite.&quot;
+                      {t('inactiveDefaultMessage', { shop: '{boutique}' })}
                     </p>
                   </div>
                   <button
@@ -344,7 +349,7 @@ export default function AutomationsTab({
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        Sauvegarder
+                        {t('save')}
                       </>
                     )}
                   </button>
@@ -374,20 +379,20 @@ export default function AutomationsTab({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-gray-900">{automation.title}</h3>
+                      <h3 className="text-sm font-bold text-gray-900">{t(automation.titleKey)}</h3>
                       {sentCount > 0 && (
                         <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                          {sentCount} envoyée{sentCount > 1 ? 's' : ''}
+                          {t('sent', { count: sentCount })}
                         </span>
                       )}
                     </div>
-                    <p className="text-[10px] text-gray-500 mt-0.5">{automation.desc}</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">{t(automation.descKey)}</p>
                   </div>
                 </div>
                 <button
                   role="switch"
                   aria-checked={isEnabled}
-                  aria-label={`Activer ou désactiver ${automation.title}`}
+                  aria-label={t(automation.titleKey)}
                   onClick={() => toggleAutomation(automation.id, isEnabled)}
                   disabled={loading || isUpdating}
                   className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
@@ -414,20 +419,20 @@ export default function AutomationsTab({
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-gray-900">Événements</h3>
+                  <h3 className="text-sm font-bold text-gray-900">{t('events')}</h3>
                   {(settings?.events_sent ?? 0) > 0 && (
                     <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
-                      {settings?.events_sent} envoyée{(settings?.events_sent ?? 0) > 1 ? 's' : ''}
+                      {t('sent', { count: settings?.events_sent ?? 0 })}
                     </span>
                   )}
                 </div>
-                <p className="text-[10px] text-gray-500 mt-0.5">Push auto 7j avant Noël, Pâques, Saint-Valentin...</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">{t('eventsDesc')}</p>
               </div>
             </div>
             <button
               role="switch"
               aria-checked={settings?.events_enabled ?? false}
-              aria-label="Activer ou désactiver les notifications push pour les événements"
+              aria-label={t('toggleEvents')}
               onClick={() => toggleAutomation('events_enabled', settings?.events_enabled ?? false)}
               disabled={loading || updating === 'events_enabled'}
               className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${
@@ -453,12 +458,12 @@ export default function AutomationsTab({
                 <div className="mt-3 pt-3 border-t border-gray-100 space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Ton offre pour les événements
+                      {t('eventsOfferLabel')}
                     </label>
                     <textarea
                       value={eventsOfferText}
                       onChange={(e) => setEventsOfferText(e.target.value)}
-                      placeholder="Ex: -10% pour fêter ça !"
+                      placeholder={t('eventsOfferPlaceholder')}
                       maxLength={200}
                       rows={2}
                       className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 resize-none"
@@ -474,7 +479,7 @@ export default function AutomationsTab({
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        Sauvegarder
+                        {t('save')}
                       </>
                     )}
                   </button>
@@ -484,7 +489,7 @@ export default function AutomationsTab({
                     </p>
                   )}
                   <p className="text-[10px] text-gray-400">
-                    Noël, Pâques, Saint-Valentin, Fête des mères, Fête des pères, Halloween, Black Friday
+                    {t('eventsList')}
                   </p>
                 </div>
               </motion.div>
@@ -496,7 +501,7 @@ export default function AutomationsTab({
         <div className="bg-indigo-50/50 rounded-2xl p-4 border border-indigo-100/50">
           <p className="text-xs text-indigo-700 font-medium flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-indigo-400 flex-shrink-0" />
-            Les automations push s&apos;exécutent chaque matin à 9h automatiquement.
+            {t('infoAutoRun')}
           </p>
         </div>
       </div>

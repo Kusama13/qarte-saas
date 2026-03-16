@@ -1,14 +1,16 @@
 'use client';
 
 import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
 
 const DEMOS = [
-  { slug: 'demo-onglerie', label: 'Onglerie', emoji: '💅' },
-  { slug: 'demo-tatouage', label: 'Tatouage', emoji: '🖋️' },
-  { slug: 'demo-coiffure', label: 'Coiffure', emoji: '✂️' },
+  { slug: 'demo-onglerie', labelKey: 'nailSalon' as const, emoji: '\u{1F485}' },
+  { slug: 'demo-tatouage', labelKey: 'tattoo' as const, emoji: '\u{1F58B}\uFE0F' },
+  { slug: 'demo-coiffure', labelKey: 'hairSalon' as const, emoji: '\u2702\uFE0F' },
 ];
 
 export default function DemoNav({ current }: { current: string }) {
+  const t = useTranslations('demoNav');
   return (
     <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-100 shadow-sm">
       <div className="flex items-center justify-center gap-1 px-3 py-2 max-w-lg mx-auto">
@@ -25,7 +27,7 @@ export default function DemoNav({ current }: { current: string }) {
               }`}
             >
               <span>{d.emoji}</span>
-              <span>{d.label}</span>
+              <span>{t(d.labelKey)}</span>
             </Link>
           );
         })}

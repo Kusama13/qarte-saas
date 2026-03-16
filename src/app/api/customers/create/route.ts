@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { formatPhoneNumber } from '@/lib/utils';
+import { formatPhoneNumber, formatCurrency } from '@/lib/utils';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     // Get merchant for this user
     const { data: merchant, error: merchantError } = await supabaseAdmin
       .from('merchants')
-      .select('id, stamps_required, country, loyalty_mode')
+      .select('id, stamps_required, country, loyalty_mode, locale')
       .eq('user_id', user.id)
       .single();
 
@@ -126,10 +126,11 @@ export async function POST(request: NextRequest) {
 
     // Record creation in history (point_adjustment with reason)
     const isCagnotte = merchant.loyalty_mode === 'cagnotte';
-    const parts: string[] = ['Création du client'];
-    if (stampCount > 0) parts.push(`${stampCount} passage${stampCount > 1 ? 's' : ''}`);
+    const isEn = merchant.locale === 'en';
+    const parts: string[] = [isEn ? 'Customer creation' : 'Création du client'];
+    if (stampCount > 0) parts.push(`${stampCount} ${isEn ? (stampCount > 1 ? 'visits' : 'visit') : (`passage${stampCount > 1 ? 's' : ''}`)}`);
     if (isCagnotte && initial_amount && Number(initial_amount) > 0) {
-      parts.push(`${Number(initial_amount).toFixed(2).replace('.', ',')} € cumulés`);
+      parts.push(`${formatCurrency(Number(initial_amount), merchantCountry)} ${isEn ? 'accumulated' : 'cumulés'}`);
     }
     const reason = parts.join(' · ');
 

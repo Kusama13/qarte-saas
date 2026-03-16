@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   Check,
   AlertTriangle,
@@ -50,6 +51,7 @@ export function LoyaltyModeSection({
   shopType,
   handleLoyaltySettingsChange,
 }: LoyaltyModeSectionProps) {
+  const t = useTranslations('program');
   const [pendingModeSwitch, setPendingModeSwitch] = useState<'visit' | 'cagnotte' | null>(null);
   const [modeHelp, setModeHelp] = useState<'visit' | 'cagnotte' | null>(null);
   return (
@@ -59,14 +61,14 @@ export function LoyaltyModeSection({
       {/* Mode selector */}
       <div className="flex items-center gap-3 mt-4 mb-1">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
-        <h2 className="text-sm md:text-base font-bold text-gray-500 uppercase tracking-wider">Mode de fidélité</h2>
+        <h2 className="text-sm md:text-base font-bold text-gray-500 uppercase tracking-wider">{t('loyaltyModeTitle')}</h2>
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
         {[
-          { mode: 'visit' as const, label: 'Passages', desc: 'Après un nombre de visites défini, ton client reçoit un cadeau de ton choix', icon: <Stamp className="w-5 h-5" /> },
-          { mode: 'cagnotte' as const, label: 'Cagnotte', desc: 'Les dépenses de ton client s\'accumulent sur une cagnotte fidélité', icon: <Euro className="w-5 h-5" /> },
+          { mode: 'visit' as const, label: t('loyaltyModePassages'), desc: t('loyaltyModePassagesDesc'), icon: <Stamp className="w-5 h-5" /> },
+          { mode: 'cagnotte' as const, label: t('loyaltyModeCagnotte'), desc: t('loyaltyModeCagnotteDesc'), icon: <Euro className="w-5 h-5" /> },
         ].map(({ mode, label, desc, icon }) => (
           <button
             key={mode}
@@ -111,7 +113,7 @@ export function LoyaltyModeSection({
                 }
               }}
               className="absolute bottom-2 right-2 p-1.5 rounded-full text-gray-300 hover:text-violet-500 hover:bg-violet-50 transition-colors cursor-pointer"
-              aria-label={`En savoir plus sur le mode ${label}`}
+              aria-label={t('loyaltyModeLearnMore', { label })}
             >
               <HelpCircle className="w-4 h-4" />
             </div>
@@ -123,14 +125,14 @@ export function LoyaltyModeSection({
         <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5">
           <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-amber-800 leading-relaxed">
-            <strong>Changement de mode.</strong> Les passages de tes clients sont conservés. En mode cagnotte, leur cumul EUR démarrera à 0.
+            <strong>{t('modeChangeWarningTitle')}</strong> {t('modeChangeWarningDesc')}
           </p>
         </div>
       )}
 
       <div className="flex items-center gap-3 mb-1">
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
-        <h2 className="text-sm md:text-base font-bold text-gray-500 uppercase tracking-wider">Récompenses</h2>
+        <h2 className="text-sm md:text-base font-bold text-gray-500 uppercase tracking-wider">{t('rewardsTitle')}</h2>
         <div className="h-px flex-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
       </div>
 
@@ -140,15 +142,15 @@ export function LoyaltyModeSection({
             <Gift className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
           </div>
           <div className="flex-1">
-            <h3 className="text-sm md:text-lg font-bold text-gray-900">1er Palier</h3>
-            <p className="text-[11px] md:text-xs text-gray-500">Soyez généreux, nous conseillons 5 passages</p>
+            <h3 className="text-sm md:text-lg font-bold text-gray-900">{t('tier1Title')}</h3>
+            <p className="text-[11px] md:text-xs text-gray-500">{t('tier1Hint')}</p>
           </div>
         </div>
         {formData.loyaltyMode === 'cagnotte' ? (
           <>
             <MerchantSettingsForm
               stampsRequired={formData.stampsRequired}
-              rewardDescription={`${formData.cagnottePercent}% sur votre cagnotte fidélité`}
+              rewardDescription={t('cagnotteRewardDesc', { percent: formData.cagnottePercent })}
               shopType={shopType}
               onChange={(v: LoyaltySettings) => {
               setFormData(prev => ({ ...prev, stampsRequired: v.stamps_required }));
@@ -160,7 +162,7 @@ export function LoyaltyModeSection({
             <div className="space-y-2.5 mt-4">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <Zap className="w-4 h-4 text-indigo-500" />
-                Pourcentage cagnotte
+                {t('cagnottePercentLabel')}
               </label>
               <div className="relative w-fit">
                 <Input
@@ -175,7 +177,7 @@ export function LoyaltyModeSection({
                 <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400 pointer-events-none">%</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">Suggestions :</span>
+                <span className="text-xs text-gray-400">{t('suggestionsLabel')}</span>
                 {[5, 10, 15, 20].map((n) => (
                   <button
                     key={n}
@@ -192,7 +194,7 @@ export function LoyaltyModeSection({
                 ))}
               </div>
               <p className="text-xs text-gray-500">
-                Après {formData.stampsRequired} passages, la cliente reçoit {formData.cagnottePercent}% sur sa cagnotte fidélité
+                {t('cagnotteTier1Summary', { stamps: formData.stampsRequired, percent: formData.cagnottePercent })}
               </p>
             </div>
           </>
@@ -205,7 +207,7 @@ export function LoyaltyModeSection({
               onChange={handleLoyaltySettingsChange}
             />
             {rewardError && (
-              <p className="mt-2 text-sm text-red-600 font-medium">Veuillez entrer la r&eacute;compense avant d&apos;enregistrer</p>
+              <p className="mt-2 text-sm text-red-600 font-medium">{t('rewardError')}</p>
             )}
           </>
         )}
@@ -215,11 +217,8 @@ export function LoyaltyModeSection({
           <div className="mt-6 p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-amber-800 text-sm">Attention</p>
-              <p className="text-amber-700 text-sm mt-1">
-                Augmenter le nombre requis ne s&apos;appliquera qu&apos;aux <strong>nouveaux clients</strong>.
-                Les clients existants garderont leur objectif actuel.
-              </p>
+              <p className="font-semibold text-amber-800 text-sm">{t('stampsWarningTitle')}</p>
+              <p className="text-amber-700 text-sm mt-1">{t.rich('stampsWarningDesc', { b: (chunks) => <strong>{chunks}</strong> })}</p>
             </div>
           </div>
         )}
@@ -233,9 +232,9 @@ export function LoyaltyModeSection({
               <Trophy className="w-3.5 h-3.5 md:w-5 md:h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-sm md:text-lg font-bold text-gray-900">2ème Palier <span className="text-gray-400 font-medium text-xs md:text-sm">(facultatif)</span></h3>
+              <h3 className="text-sm md:text-lg font-bold text-gray-900">{t('tier2Title')} <span className="text-gray-400 font-medium text-xs md:text-sm">{t('tier2Optional')}</span></h3>
               <p className="text-[11px] md:text-xs text-gray-500">
-                {formData.loyaltyMode === 'cagnotte' ? 'Un taux de cagnotte plus élevé après plus de passages' : 'Les passages continuent de compter après le 1er palier'}
+                {formData.loyaltyMode === 'cagnotte' ? t('tier2DescCagnotte') : t('tier2DescVisit')}
               </p>
             </div>
           </div>
@@ -243,7 +242,7 @@ export function LoyaltyModeSection({
             type="button"
             role="switch"
             aria-checked={formData.tier2Enabled}
-            aria-label="Activer ou désactiver le 2ème palier de récompense"
+            aria-label={t('tier2ToggleLabel')}
             onClick={() => setFormData(prev => ({ ...prev, tier2Enabled: !prev.tier2Enabled }))}
             className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
               formData.tier2Enabled ? 'bg-violet-600' : 'bg-gray-200'
@@ -263,15 +262,9 @@ export function LoyaltyModeSection({
               <p className="text-sm text-violet-700 flex items-start gap-2">
                 <Sparkles className="w-4 h-4 mt-0.5 flex-shrink-0" />
                 {formData.loyaltyMode === 'cagnotte' ? (
-                  <span>
-                    <strong>Comment ça marche :</strong> À {formData.stampsRequired} passages, la cliente reçoit {formData.cagnottePercent}% sur sa cagnotte fidélité.
-                    Son cumul repart à zéro, ses passages continuent. À {formData.tier2StampsRequired || '?'} passages, elle reçoit {formData.cagnotteTier2Percent}% (taux plus élevé).
-                  </span>
+                  <span>{t.rich('tier2HowCagnotte', { stamps: formData.stampsRequired, percent: formData.cagnottePercent, tier2Stamps: formData.tier2StampsRequired || '?', tier2Percent: formData.cagnotteTier2Percent, b: (chunks) => <strong>{chunks}</strong> })}</span>
                 ) : (
-                  <span>
-                    <strong>Exemple :</strong> Le client débloque la 1ère récompense à {formData.stampsRequired} passages, puis continue
-                    jusqu&apos;à {formData.tier2StampsRequired || '?'} passages pour la 2ème (cumul continu, sans remise à zéro).
-                  </span>
+                  <span>{t.rich('tier2HowVisit', { stamps: formData.stampsRequired, tier2Stamps: formData.tier2StampsRequired || '?', b: (chunks) => <strong>{chunks}</strong> })}</span>
                 )}
               </p>
             </div>
@@ -279,13 +272,13 @@ export function LoyaltyModeSection({
             <div className="space-y-2.5">
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                 <Target className="w-4 h-4 text-violet-500" />
-                Nombre de passages requis
+                {t('tier2StampsLabel')}
               </label>
               <Input
                 type="number"
                 min={1}
                 max={30}
-                placeholder={`Ex: ${formData.stampsRequired * 2}`}
+                placeholder={t('tier2StampsPlaceholder', { example: formData.stampsRequired * 2 })}
                 value={formData.tier2StampsRequired || ''}
                 onChange={(e) => {
                   setFormData(prev => ({
@@ -297,7 +290,7 @@ export function LoyaltyModeSection({
                 className={`text-center font-bold text-lg h-12 border-2 max-w-[120px] ${tier2Error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}`}
               />
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-400">Suggestions :</span>
+                <span className="text-xs text-gray-400">{t('suggestionsLabel')}</span>
                 {[15, 20, 30].map((n) => (
                   <button
                     key={n}
@@ -309,7 +302,7 @@ export function LoyaltyModeSection({
                         : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600'
                     }`}
                   >
-                    {n} passages
+                    {t('nPassages', { n })}
                   </button>
                 ))}
               </div>
@@ -317,7 +310,7 @@ export function LoyaltyModeSection({
                 <p className="text-xs text-red-500 font-medium">{tier2Error}</p>
               ) : (
                 <p className="text-xs text-gray-500">
-                  Doit être supérieur au 1er palier ({formData.stampsRequired})
+                  {t('tier2StampsHint', { stamps: formData.stampsRequired })}
                 </p>
               )}
             </div>
@@ -326,7 +319,7 @@ export function LoyaltyModeSection({
               <div className="space-y-2.5">
                 <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <Zap className="w-4 h-4 text-violet-500" />
-                  Pourcentage cagnotte palier 2
+                  {t('tier2CagnotteLabel')}
                 </label>
                 <div className="relative w-fit">
                   <Input
@@ -341,7 +334,7 @@ export function LoyaltyModeSection({
                   <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400 pointer-events-none">%</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400">Suggestions :</span>
+                  <span className="text-xs text-gray-400">{t('suggestionsLabel')}</span>
                   {[10, 15, 20, 25].map((n) => (
                     <button
                       key={n}
@@ -358,18 +351,18 @@ export function LoyaltyModeSection({
                   ))}
                 </div>
                 <p className="text-xs text-gray-500">
-                  Après {formData.tier2StampsRequired || '?'} passages, la cagnotte passe à {formData.cagnotteTier2Percent}% (le cumul repart de zéro après le palier 1)
+                  {t('tier2CagnotteSummary', { stamps: formData.tier2StampsRequired || '?', percent: formData.cagnotteTier2Percent })}
                 </p>
               </div>
             ) : (
               <div className="space-y-2.5">
                 <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <Gift className="w-4 h-4 text-violet-500" />
-                  Récompense offerte
+                  {t('tier2RewardLabel')}
                 </label>
                 <Input
                   type="text"
-                  placeholder="Ex: Un menu offert, -30% sur ta commande..."
+                  placeholder={t('tier2RewardPlaceholder')}
                   value={formData.tier2RewardDescription}
                   onChange={(e) => setFormData(prev => ({ ...prev, tier2RewardDescription: e.target.value }))}
                   className="h-11"
@@ -405,20 +398,13 @@ export function LoyaltyModeSection({
             </div>
 
             <h3 className="text-lg font-bold text-gray-900 mb-2">
-              Changer de mode ?
+              {t('changeMode')}
             </h3>
 
-            <p className="text-gray-500 text-sm mb-2 leading-relaxed">
-              Passer en mode <strong>{pendingModeSwitch === 'cagnotte' ? 'Cagnotte' : 'Passages'}</strong> affectera l&apos;affichage pour tes clients existants.
-            </p>
+            <p className="text-gray-500 text-sm mb-2 leading-relaxed">{t.rich('changeModeDesc', { mode: pendingModeSwitch === 'cagnotte' ? t('loyaltyModeCagnotte') : t('loyaltyModePassages'), b: (chunks) => <strong>{chunks}</strong> })}</p>
 
             <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 mb-5">
-              <p className="text-xs text-amber-800 leading-relaxed">
-                Les passages de tes clients sont <strong>conservés</strong>.
-                {pendingModeSwitch === 'cagnotte'
-                  ? ' Leur cumul en euros démarrera à 0 €.'
-                  : ' Leur cumul en euros sera perdu.'}
-              </p>
+              <p className="text-xs text-amber-800 leading-relaxed">{t.rich(pendingModeSwitch === 'cagnotte' ? 'changeModeBodyToCagnotte' : 'changeModeBodyToVisit', { b: (chunks) => <strong>{chunks}</strong> })}</p>
             </div>
 
             <button
@@ -428,14 +414,14 @@ export function LoyaltyModeSection({
               }}
               className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              Confirmer le changement
+              {t('confirmChange')}
             </button>
 
             <button
               onClick={() => setPendingModeSwitch(null)}
               className="mt-3 w-full py-2.5 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors"
             >
-              Annuler
+              {t('cancel')}
             </button>
           </div>
         </div>
@@ -454,7 +440,7 @@ export function LoyaltyModeSection({
                   {modeHelp === 'visit' ? <Stamp className="w-5 h-5 text-white" /> : <Euro className="w-5 h-5 text-white" />}
                 </div>
                 <h3 className="text-base font-bold text-gray-900">
-                  {modeHelp === 'visit' ? 'Mode Passages' : 'Mode Cagnotte'}
+                  {modeHelp === 'visit' ? t('helpModeVisitTitle') : t('helpModeCagnotteTitle')}
                 </h3>
               </div>
               <button
@@ -465,19 +451,19 @@ export function LoyaltyModeSection({
               </button>
             </div>
 
-            <p className="text-sm font-semibold text-violet-700 mb-3">Comment ça marche ?</p>
+            <p className="text-sm font-semibold text-violet-700 mb-3">{t('helpHowItWorks')}</p>
 
             <ul className="space-y-3 mb-5">
               {(modeHelp === 'visit' ? [
-                { text: 'Chaque visite = 1 tampon sur la carte de ton client' },
-                { text: 'Après X passages (ex : 10), il débloque un cadeau que tu définis' },
-                { text: 'Exemples de cadeaux : un brushing offert, -30% sur une prestation, un soin gratuit' },
-                { text: 'Simple et efficace — idéal si tes prestations ont des prix variés' },
+                { text: t('helpVisit1') },
+                { text: t('helpVisit2') },
+                { text: t('helpVisit3') },
+                { text: t('helpVisit4') },
               ] : [
-                { text: 'Chaque visite, le montant dépensé par le client est enregistré' },
-                { text: 'Après X passages, il reçoit un % de ses dépenses cumulées en réduction' },
-                { text: 'Exemple : après 8 passages et 320 € dépensés, avec 10% de cagnotte → 32 € de réduction' },
-                { text: 'Plus le client dépense, plus sa récompense est élevée — idéal pour encourager les gros paniers' },
+                { text: t('helpCagnotte1') },
+                { text: t('helpCagnotte2') },
+                { text: t('helpCagnotte3') },
+                { text: t('helpCagnotte4') },
               ]).map((item, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <div className="w-6 h-6 rounded-full bg-violet-100 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -492,7 +478,7 @@ export function LoyaltyModeSection({
               onClick={() => setModeHelp(null)}
               className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200/50 hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
-              Compris
+              {t('helpGotIt')}
             </button>
           </div>
         </div>

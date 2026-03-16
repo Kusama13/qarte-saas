@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
+import { formatCurrency } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 const editVisitSchema = z.object({
@@ -35,7 +36,7 @@ export async function PUT(request: NextRequest) {
     // Verify merchant ownership
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('id, loyalty_mode')
+      .select('id, loyalty_mode, country')
       .eq('id', merchant_id)
       .eq('user_id', user.id)
       .single();
@@ -109,7 +110,7 @@ export async function PUT(request: NextRequest) {
         // Audit log: record visit edit in point_adjustments
         const reasonParts: string[] = [];
         if (pointsDiff !== 0) reasonParts.push(`${pointsDiff > 0 ? '+' : ''}${pointsDiff} passage${Math.abs(pointsDiff) > 1 ? 's' : ''}`);
-        if (amountDiff !== 0) reasonParts.push(`${amountDiff > 0 ? '+' : ''}${amountDiff.toFixed(2).replace('.', ',')} €`);
+        if (amountDiff !== 0) reasonParts.push(`${amountDiff > 0 ? '+' : ''}${formatCurrency(amountDiff, merchant.country)}`);
         const auditReason = `Modification visite : ${reasonParts.join(' · ')}`;
 
         const { error: auditError } = await supabase

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, Link } from '@/i18n/navigation';
 import { Users, UserCheck, Calendar, Gift, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, UserPlus, CreditCard, Coins, Globe, Heart } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTodayForCountry, formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui';
@@ -68,6 +68,7 @@ export default function DashboardPage() {
   const supabase = getSupabase();
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const t = useTranslations('dashHome');
+  const locale = useLocale();
 
   // Initialize from cache if available for instant display
   const [stats, setStats] = useState(() => {
@@ -806,7 +807,7 @@ export default function DashboardPage() {
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">{customer.name}</p>
                           <p className="text-[11px] text-gray-400 leading-none mt-0.5">
-                            {customer.lastVisit ? formatRelativeTime(customer.lastVisit) : t('newClient')}
+                            {customer.lastVisit ? formatRelativeTime(customer.lastVisit, locale) : t('newClient')}
                           </p>
                         </div>
                       </div>

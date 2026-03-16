@@ -6,7 +6,7 @@ import logger from '@/lib/logger';
 import { sendSubscriptionConfirmedEmail, sendPaymentFailedEmail, sendSubscriptionCanceledEmail, sendSubscriptionReactivatedEmail } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { sendCapiPurchaseEvent } from '@/lib/facebook-capi';
-import { toBCP47 } from '@/lib/utils';
+import { toBCP47, getCurrencyForCountry } from '@/lib/utils';
 import type { SubscriptionStatus } from '@/types';
 
 const supabase = createClient(
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
         })
         .eq('id', merchantId)
         .neq('subscription_status', 'active')
-        .select('shop_name, user_id, trial_ends_at, locale')
+        .select('shop_name, user_id, trial_ends_at, locale, country')
         .single();
 
       if (!merchant) {
@@ -114,9 +114,11 @@ export async function POST(request: Request) {
         // Facebook CAPI — Purchase event (dedup with client-side Pixel via event_id)
         const isAnnual = session.metadata?.plan === 'annual';
         const eventId = `sub_${merchantId}_${Date.now()}`;
+        const currency = getCurrencyForCountry(merchant.country);
         await sendCapiPurchaseEvent({
           email: userData.user.email,
           value: isAnnual ? 190 : 19,
+          currency,
           contentName: isAnnual ? 'Qarte Pro Annuel' : 'Qarte Pro',
           eventId,
         }).catch((err) => {

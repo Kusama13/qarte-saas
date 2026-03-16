@@ -84,7 +84,7 @@ function PageProMockup({ t, locale }: { t: (key: string) => string; locale: stri
           {[{ name: t('mockupServiceGel'), price: '45' }, { name: t('mockupServiceSemiPerm'), price: '30' }].map((s, i) => (
             <div key={i} className="flex items-center justify-between py-1.5 px-2 bg-gray-50/80 rounded-lg">
               <span className="text-[10px] font-semibold text-gray-700">{s.name}</span>
-              <span className="text-[10px] font-bold text-gray-900">{s.price} EUR</span>
+              <span className="text-[10px] font-bold text-gray-900">{locale === 'en' ? `$${s.price}` : `${s.price} EUR`}</span>
             </div>
           ))}
         </div>

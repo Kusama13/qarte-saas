@@ -2,7 +2,8 @@
 
 import { Gift, Trophy, Loader2, Coins } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { formatCurrency } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, CagnotteData } from '@/types';
 
 interface ScanRewardScreenProps {
@@ -27,6 +28,7 @@ export default function ScanRewardScreen({
   cagnotteData,
 }: ScanRewardScreenProps) {
   const t = useTranslations('scanReward');
+  const locale = useLocale();
   const isCagnotte = !!cagnotteData;
   const isTier2 = rewardTier === 2;
   const gradient = isTier2
@@ -49,7 +51,7 @@ export default function ScanRewardScreen({
         ? t('tier1Reward')
         : t('reward'));
   const rewardText = isCagnotte && cagnotteData.rewardValue
-    ? t('cagnotteAmount', { amount: cagnotteData.rewardValue.toFixed(2).replace('.', ',') })
+    ? t('cagnotteAmount', { amount: formatCurrency(cagnotteData.rewardValue, merchant.country, locale) })
     : isTier2 ? merchant.tier2_reward_description : merchant.reward_description;
   const stampsRequired = isTier2 ? merchant.tier2_stamps_required : merchant.stamps_required;
 

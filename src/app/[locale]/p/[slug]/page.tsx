@@ -10,9 +10,9 @@ import DemoNav from './DemoNav';
 import { cache } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; photos: any[]; services: any[]; serviceCategories: any[]; planningSlots: any[]; demoOffer?: any } | null> => {
+const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promise<{ merchant: any; photos: any[]; services: any[]; serviceCategories: any[]; planningSlots: any[]; demoOffer?: any } | null> => {
   // Demo merchants: return hardcoded data without DB query
-  const demo = getDemoMerchantData(slug);
+  const demo = getDemoMerchantData(slug, locale);
   if (demo) {
     // Generate planning slots for next 5 days
     const demoSlots: { slot_date: string; start_time: string }[] = [];
@@ -99,7 +99,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string; locale: string }>;
 }): Promise<Metadata> {
   const { slug, locale } = await params;
-  const result = await getMerchantData(slug);
+  const result = await getMerchantData(slug, locale);
   if (!result) return {};
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
@@ -139,10 +139,10 @@ export async function generateMetadata({
 export default async function ProgrammePage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ slug: string; locale: string }>;
 }) {
-  const { slug } = await params;
-  const result = await getMerchantData(slug);
+  const { slug, locale } = await params;
+  const result = await getMerchantData(slug, locale);
 
   if (!result) notFound();
 

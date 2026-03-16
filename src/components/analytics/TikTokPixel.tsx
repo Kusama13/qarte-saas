@@ -91,29 +91,29 @@ function qarteContent(plan?: 'monthly' | 'annual') {
 
 // Standard events mapped for Qarte
 export const ttEvents = {
-  completeRegistration: () =>
+  completeRegistration: (currency: string = 'EUR') =>
     trackTTEvent('CompleteRegistration', {
       ...qarteContent(),
       value: 0,
-      currency: 'EUR',
+      currency,
     }),
-  startTrial: () =>
+  startTrial: (currency: string = 'EUR') =>
     trackTTEvent('StartTrial', {
       ...qarteContent(),
       value: 0,
-      currency: 'EUR',
+      currency,
     }),
-  clickButton: (label?: string) =>
+  clickButton: (label?: string, currency: string = 'EUR') =>
     trackTTEvent('ClickButton', {
       ...qarteContent(),
       value: 0,
-      currency: 'EUR',
+      currency,
     }),
-  subscribe: (value: number, plan: 'monthly' | 'annual' = 'monthly') =>
+  subscribe: (value: number, plan: 'monthly' | 'annual' = 'monthly', currency: string = 'EUR') =>
     trackTTEvent('Subscribe', {
       ...qarteContent(plan),
       value,
-      currency: 'EUR',
+      currency,
     }),
   viewContent: (contentName: string) =>
     trackTTEvent('ViewContent', {

@@ -14,7 +14,7 @@ export async function POST() {
 
     const { data: merchant } = await supabase
       .from('merchants')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, locale')
       .eq('user_id', user.id)
       .single();
 
@@ -29,6 +29,7 @@ export async function POST() {
     const session = await stripe.billingPortal.sessions.create({
       customer: merchant.stripe_customer_id,
       return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/subscription`,
+      locale: merchant.locale === 'en' ? 'en' : 'fr',
     });
 
     return NextResponse.json({ url: session.url });

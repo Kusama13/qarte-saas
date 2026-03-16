@@ -126,7 +126,16 @@
       "Bash(git -C /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas show d1d45ea -- src/app/[locale]/admin/merchants/page.tsx)",
       "Bash(git -C /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas show d1d45ea -- src/app/[locale]/admin/merchants/[id]/page.tsx)",
       "Bash(git -C /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas show d1d45ea -- src/app/[locale]/admin/leads/page.tsx)",
-      "Bash(git -C /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas show d1d45ea -- src/app/[locale]/admin/page.tsx)"
+      "Bash(git -C /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas show d1d45ea -- src/app/[locale]/admin/page.tsx)",
+      "Bash(cat /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas/src/app/[locale]/cgv/page.tsx)",
+      "Bash(tail -100 /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas/src/app/[locale]/cgv/page.tsx)",
+      "Bash(for file:*)",
+      "Bash(NODE_OPTIONS=\"--max-old-space-size=4096\" npm run build)",
+      "Bash(git stash:*)",
+      "Bash(cat /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas/src/app/[locale]/auth/merchant/signup/complete/page.tsx)",
+      "Bash(cat /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas/src/app/[locale]/pricing/page.tsx)",
+      "Bash(cat /Users/judicaelahmedtraore/Documents/SAAS/qarte-saas/src/app/[locale]/boutique/page.tsx)",
+      "Bash(vercel env:*)"
     ]
   }
 }

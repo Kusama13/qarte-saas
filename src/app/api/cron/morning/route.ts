@@ -1493,7 +1493,9 @@ export async function GET(request: NextRequest) {
                             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
                             JSON.stringify({
                               title: bMerchant.shop_name,
-                              body: `Joyeux anniversaire ! ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
+                              body: bMerchant.locale === 'en'
+                                ? `Happy birthday! ${bMerchant.shop_name} offers you: ${bMerchant.birthday_gift_description || 'a gift'}`
+                                : `Joyeux anniversaire ! ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
                               icon: '/icon-192.png',
                               url: `/customer/card/${customer.merchant_id}`,
                               tag: `qarte-birthday-${customer.merchant_id}`,
@@ -1566,10 +1568,11 @@ export async function GET(request: NextRequest) {
 
       if (automationMerchants && automationMerchants.length > 0) {
         const merchantIds = automationMerchants.map(a => a.merchant_id);
+        const automationMap = new Map(automationMerchants.map(a => [a.merchant_id, a]));
 
         const { data: merchants } = await supabase
           .from('merchants')
-          .select('id, shop_name, offer_active, offer_title, offer_expires_at')
+          .select('id, shop_name, offer_active, offer_title, offer_expires_at, locale')
           .in('id', merchantIds)
           .in('subscription_status', ['trial', 'active'])
           .neq('no_contact', true);
@@ -1593,10 +1596,11 @@ export async function GET(request: NextRequest) {
             .in('id', customerIds)
             .limit(5000);
 
-          const automationRow = automationMerchants.find(a => a.merchant_id === merchant.id);
+          const automationRow = automationMap.get(merchant.id);
           const customOfferText = automationRow?.inactive_reminder_offer_text;
           const hasOffer = merchant.offer_active && merchant.offer_title &&
             (!merchant.offer_expires_at || new Date(merchant.offer_expires_at) > now);
+          const isEn = merchant.locale === 'en';
 
           for (const customer of customers || []) {
             if (!customer.phone_number) continue;
@@ -1604,8 +1608,12 @@ export async function GET(request: NextRequest) {
             const body = customOfferText
               ? customOfferText
               : hasOffer
-                ? `${merchant.offer_title} — Profitez-en !`
-                : `${merchant.shop_name} vous manque ! Revenez vite.`;
+                ? isEn
+                  ? `${merchant.offer_title} — Don't miss out!`
+                  : `${merchant.offer_title} — Profitez-en !`
+                : isEn
+                  ? `${merchant.shop_name} misses you! Come back soon.`
+                  : `${merchant.shop_name} vous manque ! Revenez vite.`;
 
             const sent = await sendAutomationPush({
               supabase,
@@ -1637,7 +1645,7 @@ export async function GET(request: NextRequest) {
 
         const { data: merchants } = await supabase
           .from('merchants')
-          .select('id, shop_name')
+          .select('id, shop_name, locale')
           .in('id', merchantIds)
           .in('subscription_status', ['trial', 'active'])
           .neq('no_contact', true);
@@ -1685,7 +1693,9 @@ export async function GET(request: NextRequest) {
                 customerPhone: customer.phone_number,
                 automationType: 'reward_reminder',
                 title: vMerchant.shop_name,
-                body: `Votre récompense vous attend chez ${vMerchant.shop_name} !`,
+                body: vMerchant.locale === 'en'
+                  ? `Your reward is waiting at ${vMerchant.shop_name}!`
+                  : `Votre récompense vous attend chez ${vMerchant.shop_name} !`,
                 url: `/customer/card/${voucher.merchant_id}`,
               });
 
@@ -1700,9 +1710,11 @@ export async function GET(request: NextRequest) {
     // 12C. Evenements (push 7 days before event)
     {
       const nowParis = new Date(getTodayInParis() + 'T10:00:00');
-      const upcomingEvent = getUpcomingEvent(nowParis);
+      // Check both FR and EN events (different Mother's Day dates)
+      const upcomingEventFr = getUpcomingEvent(nowParis, 'fr');
+      const upcomingEventEn = getUpcomingEvent(nowParis, 'en');
 
-      if (upcomingEvent) {
+      if (upcomingEventFr || upcomingEventEn) {
         const { data: automationMerchants } = await supabase
           .from('push_automations')
           .select('merchant_id, events_offer_text')
@@ -1715,7 +1727,7 @@ export async function GET(request: NextRequest) {
 
           const { data: merchants } = await supabase
             .from('merchants')
-            .select('id, shop_name')
+            .select('id, shop_name, locale')
             .in('id', merchantIds)
             .in('subscription_status', ['trial', 'active'])
             .neq('no_contact', true);
@@ -1728,6 +1740,11 @@ export async function GET(request: NextRequest) {
 
             const offerText = offerTextMap.get(merchant.id);
             if (!offerText) continue;
+
+            // Pick the right event for this merchant's locale
+            const isEn = merchant.locale === 'en';
+            const merchantEvent = isEn ? upcomingEventEn : upcomingEventFr;
+            if (!merchantEvent) continue;
 
             // Load cards for this merchant only
             const { data: cards } = await supabase
@@ -1753,9 +1770,11 @@ export async function GET(request: NextRequest) {
                 merchantId: merchant.id,
                 customerId: customer.id,
                 customerPhone: customer.phone_number,
-                automationType: `event_${upcomingEvent.id}`,
+                automationType: `event_${merchantEvent.id}`,
                 title: merchant.shop_name,
-                body: `C'est bientôt ${upcomingEvent.name} ! ${offerText}`,
+                body: isEn
+                  ? `${merchantEvent.name} is coming soon! ${offerText}`
+                  : `C'est bientôt ${merchantEvent.name} ! ${offerText}`,
                 url: `/customer/card/${merchant.id}`,
               });
 

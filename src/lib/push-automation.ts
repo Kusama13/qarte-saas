@@ -136,47 +136,72 @@ interface CalendarEvent {
   name: string;
 }
 
+const EVENT_NAMES: Record<string, { fr: string; en: string }> = {
+  noel: { fr: 'Noël', en: 'Christmas' },
+  saint_valentin: { fr: 'la Saint-Valentin', en: "Valentine's Day" },
+  halloween: { fr: 'Halloween', en: 'Halloween' },
+  paques: { fr: 'Pâques', en: 'Easter' },
+  fete_meres: { fr: 'la Fête des mères', en: "Mother's Day" },
+  fete_peres: { fr: 'la Fête des pères', en: "Father's Day" },
+  black_friday: { fr: 'le Black Friday', en: 'Black Friday' },
+};
+
+/** 2nd Sunday of May (US Mother's Day) */
+function getSecondSundayOfMay(year: number): Date {
+  const firstDay = new Date(year, 4, 1); // May 1
+  const firstSunday = firstDay.getDay() === 0 ? 1 : 8 - firstDay.getDay();
+  return new Date(year, 4, firstSunday + 7); // 2nd Sunday
+}
+
+function getEventName(id: string, locale: string): string {
+  return EVENT_NAMES[id]?.[locale === 'en' ? 'en' : 'fr'] ?? id;
+}
+
 /**
  * Returns the event that falls exactly 7 days from `date`, or null.
+ * `locale` determines event names and Mother's Day date (FR = last Sunday of May, EN = 2nd Sunday of May).
  */
-export function getUpcomingEvent(date: Date): CalendarEvent | null {
+export function getUpcomingEvent(date: Date, locale: string = 'fr'): CalendarEvent | null {
+  const isEn = locale === 'en';
   const targetDate = new Date(date.getTime() + 7 * 24 * 60 * 60 * 1000);
   const targetMonth = targetDate.getMonth(); // 0-indexed
   const targetDay = targetDate.getDate();
   const year = targetDate.getFullYear();
 
   // Fixed-date events
-  const fixedEvents: { month: number; day: number; id: string; name: string }[] = [
-    { month: 11, day: 25, id: 'noel', name: 'Noël' },
-    { month: 1, day: 14, id: 'saint_valentin', name: 'la Saint-Valentin' },
-    { month: 9, day: 31, id: 'halloween', name: 'Halloween' },
+  const fixedEvents: { month: number; day: number; id: string }[] = [
+    { month: 11, day: 25, id: 'noel' },
+    { month: 1, day: 14, id: 'saint_valentin' },
+    { month: 9, day: 31, id: 'halloween' },
   ];
 
   for (const ev of fixedEvents) {
     if (targetMonth === ev.month && targetDay === ev.day) {
-      return { id: ev.id, name: ev.name };
+      return { id: ev.id, name: getEventName(ev.id, locale) };
     }
   }
 
   // Variable-date events
   const easter = getEasterDate(year);
   if (targetMonth === easter.getMonth() && targetDay === easter.getDate()) {
-    return { id: 'paques', name: 'Pâques' };
+    return { id: 'paques', name: getEventName('paques', locale) };
   }
 
-  const motherDay = getLastSundayOfMay(year);
+  // Mother's Day: FR = last Sunday of May, EN/US = 2nd Sunday of May
+  const motherDay = isEn ? getSecondSundayOfMay(year) : getLastSundayOfMay(year);
   if (targetMonth === motherDay.getMonth() && targetDay === motherDay.getDate()) {
-    return { id: 'fete_meres', name: 'la Fête des mères' };
+    return { id: 'fete_meres', name: getEventName('fete_meres', locale) };
   }
 
+  // Father's Day: 3rd Sunday of June (same in FR and US)
   const fatherDay = getThirdSundayOfJune(year);
   if (targetMonth === fatherDay.getMonth() && targetDay === fatherDay.getDate()) {
-    return { id: 'fete_peres', name: 'la Fête des pères' };
+    return { id: 'fete_peres', name: getEventName('fete_peres', locale) };
   }
 
   const blackFriday = getFourthFridayOfNovember(year);
   if (targetMonth === blackFriday.getMonth() && targetDay === blackFriday.getDate()) {
-    return { id: 'black_friday', name: 'le Black Friday' };
+    return { id: 'black_friday', name: getEventName('black_friday', locale) };
   }
 
   return null;
@@ -185,7 +210,8 @@ export function getUpcomingEvent(date: Date): CalendarEvent | null {
 /**
  * Returns all upcoming events from `date` (for UI display).
  */
-export function getNextEvents(date: Date, count: number = 3): { id: string; name: string; date: Date }[] {
+export function getNextEvents(date: Date, count: number = 3, locale: string = 'fr'): { id: string; name: string; date: Date }[] {
+  const isEn = locale === 'en';
   const year = date.getFullYear();
   const nextYear = year + 1;
 
@@ -194,13 +220,13 @@ export function getNextEvents(date: Date, count: number = 3): { id: string; name
 
   for (const y of [year, nextYear]) {
     allEvents.push(
-      { id: 'noel', name: 'Noël', date: new Date(y, 11, 25) },
-      { id: 'saint_valentin', name: 'Saint-Valentin', date: new Date(y, 1, 14) },
-      { id: 'halloween', name: 'Halloween', date: new Date(y, 9, 31) },
-      { id: 'paques', name: 'Pâques', date: getEasterDate(y) },
-      { id: 'fete_meres', name: 'Fête des mères', date: getLastSundayOfMay(y) },
-      { id: 'fete_peres', name: 'Fête des pères', date: getThirdSundayOfJune(y) },
-      { id: 'black_friday', name: 'Black Friday', date: getFourthFridayOfNovember(y) },
+      { id: 'noel', name: getEventName('noel', locale), date: new Date(y, 11, 25) },
+      { id: 'saint_valentin', name: getEventName('saint_valentin', locale), date: new Date(y, 1, 14) },
+      { id: 'halloween', name: getEventName('halloween', locale), date: new Date(y, 9, 31) },
+      { id: 'paques', name: getEventName('paques', locale), date: getEasterDate(y) },
+      { id: 'fete_meres', name: getEventName('fete_meres', locale), date: isEn ? getSecondSundayOfMay(y) : getLastSundayOfMay(y) },
+      { id: 'fete_peres', name: getEventName('fete_peres', locale), date: getThirdSundayOfJune(y) },
+      { id: 'black_friday', name: getEventName('black_friday', locale), date: getFourthFridayOfNovember(y) },
     );
   }
 

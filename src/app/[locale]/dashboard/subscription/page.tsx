@@ -93,8 +93,9 @@ export default function SubscriptionPage() {
       const plan = searchParams.get('plan');
       const price = plan === 'annual' ? 190 : 19;
       const planType: 'monthly' | 'annual' = plan === 'annual' ? 'annual' : 'monthly';
-      fbEvents.subscribe(price);
-      ttEvents.subscribe(price, planType);
+      const currency = locale === 'en' ? 'USD' : 'EUR';
+      fbEvents.subscribe(price, undefined, currency);
+      ttEvents.subscribe(price, planType, currency);
       router.replace('/dashboard/subscription', { scroll: false });
     } else if (searchParams.get('canceled') === 'true') {
       setToast({ type: 'error', message: t('canceledToast') });
@@ -505,10 +506,10 @@ export default function SubscriptionPage() {
                 </div>
                 <div className="flex items-center justify-center gap-2 sm:gap-3">
                   {[
-                    { value: countdown.days, label: 'j' },
-                    { value: countdown.hours, label: 'h' },
-                    { value: countdown.minutes, label: 'min' },
-                    { value: countdown.seconds, label: 's' },
+                    { value: countdown.days, label: t('countdownDays') },
+                    { value: countdown.hours, label: t('countdownHours') },
+                    { value: countdown.minutes, label: t('countdownMinutes') },
+                    { value: countdown.seconds, label: t('countdownSeconds') },
                   ].map((unit, i) => (
                     <div key={unit.label} className="flex items-center gap-1">
                       {i > 0 && <span className="text-white/30 font-bold">:</span>}

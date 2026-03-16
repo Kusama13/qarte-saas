@@ -6,7 +6,7 @@ import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
-import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry } from '@/lib/utils';
+import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency } from '@/lib/utils';
 import { useLocale, useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
@@ -488,7 +488,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     )}
                     <p className="text-[13px] font-bold text-gray-900">
                       {svc.price_from && <span className="text-[11px] font-normal text-gray-400">{t('priceFrom')}</span>}
-                      {Number(svc.price).toFixed(2).replace('.', ',')} &euro;
+                      {formatCurrency(Number(svc.price), merchant.country, locale)}
                     </p>
                   </div>
                 </div>
@@ -776,7 +776,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   <div className="min-w-0">
                     <p className="text-[13px] font-bold text-gray-800 leading-tight">{t('bonusDays')}</p>
                     <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">
-                      {t('bonusDaysDesc', { days: formatDoubleDays(merchant.double_days_of_week) })}
+                      {t('bonusDaysDesc', { days: formatDoubleDays(merchant.double_days_of_week, locale) })}
                     </p>
                   </div>
                 </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { compressOfferImage } from '@/lib/image-compression';
 import { formatTime } from '@/lib/utils';
 import type {
@@ -238,6 +238,7 @@ export function useNotificationComposer(merchant: MerchantData | null, deps: {
   setCurrentOfferImageUrl: (v: string | null) => void;
 }) {
   const locale = useLocale();
+  const tMarketing = useTranslations('marketing');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
@@ -287,15 +288,15 @@ export function useNotificationComposer(merchant: MerchantData | null, deps: {
 
   const handleTitleChange = (newTitle: string) => {
     setTitle(newTitle);
-    if (!offerDescription || offerDescription === generateOfferDescription(title, body)) {
-      setOfferDescription(generateOfferDescription(newTitle, body));
+    if (!offerDescription || offerDescription === generateOfferDescription(title, body, tMarketing)) {
+      setOfferDescription(generateOfferDescription(newTitle, body, tMarketing));
     }
   };
 
   const handleBodyChange = (newBody: string) => {
     setBody(newBody);
-    if (!offerDescription || offerDescription === generateOfferDescription(title, body)) {
-      setOfferDescription(generateOfferDescription(title, newBody));
+    if (!offerDescription || offerDescription === generateOfferDescription(title, body, tMarketing)) {
+      setOfferDescription(generateOfferDescription(title, newBody, tMarketing));
     }
   };
 

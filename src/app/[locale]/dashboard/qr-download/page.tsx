@@ -166,15 +166,17 @@ export default function QRDownloadPage() {
 
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
 
+  const hashtag = merchant.shop_name.replace(/\s+/g, '');
+
   const tier2Text = merchant.tier2_enabled && (merchant.tier2_reward_description || (isCagnotte && merchant.cagnotte_tier2_percent))
     ? isCagnotte
-      ? ` Et ce n'est pas tout : après ${merchant.tier2_stamps_required} passages, profitez de ${merchant.cagnotte_tier2_percent}% sur votre cagnotte fidélité !`
-      : ` Et ce n'est pas tout : après ${merchant.tier2_stamps_required} passages, recevez ${merchant.tier2_reward_description} !`
+      ? t('captionTier2Cagnotte', { stamps: String(merchant.tier2_stamps_required), percent: String(merchant.cagnotte_tier2_percent) })
+      : t('captionTier2Stamps', { stamps: String(merchant.tier2_stamps_required), reward: merchant.tier2_reward_description || '' })
     : '';
 
   const captionText = isCagnotte
-    ? `Votre fidélité mérite d'être récompensée ! 🎁 Après ${merchant.stamps_required} passages chez ${merchant.shop_name}, profitez de ${merchant.cagnotte_percent}% sur votre cagnotte fidélité.${tier2Text} Demandez à scanner le QR code lors de votre prochain rendez-vous ! #fidélité #${merchant.shop_name.replace(/\s+/g, '')}`
-    : `Votre fidélité mérite d'être récompensée ! 🎁 Après ${merchant.stamps_required} passages chez ${merchant.shop_name}, recevez ${merchant.reward_description}.${tier2Text} Demandez à scanner le QR code lors de votre prochain rendez-vous ! #fidélité #${merchant.shop_name.replace(/\s+/g, '')}`;
+    ? t('captionCagnotte', { stamps: String(merchant.stamps_required), shop: merchant.shop_name, percent: String(merchant.cagnotte_percent), tier2: tier2Text, hashtag })
+    : t('captionStamps', { stamps: String(merchant.stamps_required), shop: merchant.shop_name, reward: merchant.reward_description || '', tier2: tier2Text, hashtag });
 
   const captions = [
     {

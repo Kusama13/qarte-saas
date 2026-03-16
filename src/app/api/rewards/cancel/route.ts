@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
+import { formatCurrency } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 const cancelSchema = z.object({
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
     // Get loyalty card with merchant info
     const { data: loyaltyCard } = await supabase
       .from('loyalty_cards')
-      .select('*, merchant:merchants(id, user_id, tier2_enabled, stamps_required, tier2_stamps_required, loyalty_mode)')
+      .select('*, merchant:merchants(id, user_id, tier2_enabled, stamps_required, tier2_stamps_required, loyalty_mode, country)')
       .eq('id', loyalty_card_id)
       .maybeSingle();
 
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
         merchant_id: merchant.id,
         customer_id: loyaltyCard.customer_id,
         adjustment: 0,
-        reason: `Annulation récompense palier ${lastRedemption.tier}${shouldRestoreAmount ? ` · ${Number(lastRedemption.amount_accumulated).toFixed(2).replace('.', ',')} € restitué` : ''}`,
+        reason: `Annulation récompense palier ${lastRedemption.tier}${shouldRestoreAmount ? ` · ${formatCurrency(Number(lastRedemption.amount_accumulated), merchant.country)} restitué` : ''}`,
         adjusted_by: user.id,
       });
 

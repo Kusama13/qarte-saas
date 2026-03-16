@@ -2,10 +2,11 @@
 
 import { useEffect, useCallback, useState } from 'react';
 import { Link, useRouter } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { CreditCard, Gift, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { sparkleMedium, sparkleSubtle } from '@/lib/sparkles';
+import { formatCurrency } from '@/lib/utils';
 import type { Merchant, LoyaltyCard, Customer, CagnotteData } from '@/types';
 
 interface ScanSuccessStepProps {
@@ -123,6 +124,7 @@ export default function ScanSuccessStep({
 }: ScanSuccessStepProps) {
   const router = useRouter();
   const t = useTranslations('scanSuccess');
+  const locale = useLocale();
   const primaryColor = merchant.primary_color;
   const secondaryColor = merchant.secondary_color;
   const currentStamps = loyaltyCard.current_stamps;
@@ -314,8 +316,8 @@ export default function ScanSuccessStep({
 
               {isCagnotte && (
                 <p className="text-sm font-bold mb-4" style={{ color: primaryColor }}>
-                  {t('cumulatedAmount', { amount: cagnotteData.currentAmount.toFixed(2).replace('.', ',') })}
-                  <span className="text-gray-400 font-normal"> {t('addedAmount', { amount: cagnotteData.amountAdded.toFixed(2).replace('.', ',') })}</span>
+                  {t('cumulatedAmount', { amount: formatCurrency(cagnotteData.currentAmount, merchant.country, locale) })}
+                  <span className="text-gray-400 font-normal"> {t('addedAmount', { amount: formatCurrency(cagnotteData.amountAdded, merchant.country, locale) })}</span>
                 </p>
               )}
 

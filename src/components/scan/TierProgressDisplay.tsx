@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { Merchant, LoyaltyCard } from '@/types';
 
 interface TierProgressDisplayProps {
@@ -12,13 +13,13 @@ interface TierProgressDisplayProps {
   label?: string;
 }
 
-function getTierTarget(merchant: Merchant, stamps: number, tier1Redeemed: boolean) {
+function getTierTarget(merchant: Merchant, stamps: number, tier1Redeemed: boolean, t: (key: string) => string) {
   const tier2On = merchant.tier2_enabled && merchant.tier2_stamps_required;
   const tier1Done = tier1Redeemed || stamps >= (merchant.stamps_required || 10);
   const target = tier2On && tier1Done
     ? merchant.tier2_stamps_required!
     : (merchant.stamps_required || 10);
-  const tierLabel = tier2On && tier1Done ? ' · Palier 2' : tier2On ? ' · Palier 1' : '';
+  const tierLabel = tier2On && tier1Done ? ` · ${t('tier2')}` : tier2On ? ` · ${t('tier1')}` : '';
   return { target, tierLabel, tier2On, tier1Done };
 }
 
@@ -34,9 +35,11 @@ export default function TierProgressDisplay({
   primaryColor,
   secondaryColor,
   pendingStamps,
-  label = 'Passages confirmés',
+  label,
 }: TierProgressDisplayProps) {
-  const { target, tierLabel, tier2On, tier1Done } = getTierTarget(merchant, stamps, tier1Redeemed);
+  const t = useTranslations('tierProgress');
+  const displayLabel = label ?? t('confirmedVisits');
+  const { target, tierLabel, tier2On, tier1Done } = getTierTarget(merchant, stamps, tier1Redeemed, t);
 
   return (
     <>
@@ -46,12 +49,12 @@ export default function TierProgressDisplay({
           <span className="text-xl font-bold text-gray-300">/{target}</span>
         </div>
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-2">
-          {label}{tierLabel}
+          {displayLabel}{tierLabel}
         </p>
         {pendingStamps !== undefined && pendingStamps > 0 && (
           <div className="mt-3 inline-flex px-3 py-1.5 bg-amber-100 rounded-full">
             <span className="text-sm font-bold text-amber-700">
-              + {pendingStamps} en attente
+              + {pendingStamps} {t('pending')}
             </span>
           </div>
         )}

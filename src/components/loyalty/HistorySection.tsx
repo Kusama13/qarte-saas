@@ -14,9 +14,9 @@ import {
   Ticket,
   UserPlus,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { motion } from 'framer-motion';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, formatCurrency } from '@/lib/utils';
 import type { Merchant, Visit, VisitStatus } from '@/types';
 
 interface PointAdjustment {
@@ -61,6 +61,7 @@ export default function HistorySection({
   merchant,
 }: HistorySectionProps) {
   const t = useTranslations('historySection');
+  const locale = useLocale();
   const [expanded, setExpanded] = useState(false);
 
   const LoyaltyIcon = Heart;
@@ -178,7 +179,7 @@ export default function HistorySection({
                 }
                 if (isBonusParrainage) return t('bonusReferral');
                 if (isRedemption) {
-                  const tierLabel = merchant.tier2_enabled ? ` palier ${item.tier}` : '';
+                  const tierLabel = merchant.tier2_enabled && item.tier ? ` ${t('tier', { number: item.tier })}` : '';
                   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
                   return isCagnotte ? t('cagnotteRedeemed', { tierLabel }) : t('giftUsed', { tierLabel });
                 }
@@ -186,7 +187,7 @@ export default function HistorySection({
                 if (isPending) return t('pending');
                 if (isRejected) return t('rejected');
                 if (item.amount_spent != null && item.amount_spent > 0) {
-                  return t('visitValidatedAmount', { amount: Number(item.amount_spent || 0).toFixed(2).replace('.', ',') });
+                  return t('visitValidatedAmount', { amount: formatCurrency(Number(item.amount_spent || 0), merchant.country, locale) });
                 }
                 return t('visitValidated');
               };
@@ -217,7 +218,7 @@ export default function HistorySection({
                     </p>
                     <p className="text-[10px] text-gray-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
-                      {formatDateTime(item.date)}
+                      {formatDateTime(item.date, locale)}
                     </p>
                   </div>
                   {!isRedemption && !isVoucherUsed && (

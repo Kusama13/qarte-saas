@@ -161,9 +161,9 @@ export function calculateCashback(amount: number, percent: number): number {
   return Math.round(amount * percent) / 100;
 }
 
-export function formatRelativeTime(date: string | Date): string {
+export function formatRelativeTime(date: string | Date, locale: string = 'fr'): string {
   const d = typeof date === 'string' ? new Date(date) : date;
-  return formatDistanceToNow(d, { addSuffix: true, locale: fr });
+  return formatDistanceToNow(d, { addSuffix: true, locale: locale === 'en' ? enUS : fr });
 }
 
 /** Get today's date (YYYY-MM-DD) in the merchant's country timezone. */
@@ -567,10 +567,18 @@ export function generateReferralCode(): string {
 /** Week order Mon→Sun (French business convention). */
 export const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0] as const;
 
-/** Short day labels keyed by JS getDay() value. */
-export const DAY_LABELS: Record<number, string> = {
-  0: 'Dim', 1: 'Lun', 2: 'Mar', 3: 'Mer', 4: 'Jeu', 5: 'Ven', 6: 'Sam',
+/** Short day labels keyed by JS getDay() value, per locale. */
+const DAY_LABELS_BY_LOCALE: Record<string, Record<number, string>> = {
+  fr: { 0: 'Dim', 1: 'Lun', 2: 'Mar', 3: 'Mer', 4: 'Jeu', 5: 'Ven', 6: 'Sam' },
+  en: { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' },
 };
+
+/** @deprecated Use getDayLabels(locale) instead */
+export const DAY_LABELS = DAY_LABELS_BY_LOCALE.fr;
+
+export function getDayLabels(locale: string = 'fr'): Record<number, string> {
+  return DAY_LABELS_BY_LOCALE[locale] || DAY_LABELS_BY_LOCALE.fr;
+}
 
 /**
  * Parse a JSON string of JS getDay() values (0–6).
@@ -586,10 +594,11 @@ export function parseDoubleDays(json: string | null | undefined): number[] {
 }
 
 /**
- * Returns double days sorted Mon→Sun and formatted as "Lun · Mer".
+ * Returns double days sorted Mon→Sun and formatted as "Lun · Mer" (FR) or "Mon · Wed" (EN).
  * Returns empty string if none.
  */
-export function formatDoubleDays(json: string | null | undefined): string {
+export function formatDoubleDays(json: string | null | undefined, locale: string = 'fr'): string {
   const days = parseDoubleDays(json);
-  return WEEK_ORDER.filter(d => days.includes(d)).map(d => DAY_LABELS[d]).join(' · ');
+  const labels = getDayLabels(locale);
+  return WEEK_ORDER.filter(d => days.includes(d)).map(d => labels[d]).join(' · ');
 }
