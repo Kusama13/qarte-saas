@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import { getTodayForCountry, getTodayStartForCountry } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -20,7 +21,7 @@ export async function GET() {
 
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id')
+      .select('id, country')
       .eq('user_id', user.id)
       .single();
 
@@ -31,14 +32,16 @@ export async function GET() {
       );
     }
 
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
+    const merchantCountry = merchant.country;
+    const todayStr = getTodayForCountry(merchantCountry);
+    const todayDate = new Date(todayStr);
 
-    const firstDayOfMonth = new Date();
-    firstDayOfMonth.setDate(1);
-    firstDayOfMonth.setHours(0, 0, 0, 0);
-    const firstDayOfMonthStr = firstDayOfMonth.toISOString();
+    const thirtyDaysAgoDate = new Date(todayDate);
+    thirtyDaysAgoDate.setDate(thirtyDaysAgoDate.getDate() - 30);
+    const thirtyDaysAgoStr = thirtyDaysAgoDate.toISOString().split('T')[0] + 'T00:00:00.000Z';
+
+    const firstDayOfMonth = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+    const firstDayOfMonthStr = firstDayOfMonth.toISOString().split('T')[0] + 'T00:00:00.000Z';
 
     // Run all independent queries in parallel
     const [
@@ -59,7 +62,7 @@ export async function GET() {
         .from('loyalty_cards')
         .select('*', { count: 'exact', head: true })
         .eq('merchant_id', merchant.id)
-        .gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
+        .gte('last_visit_date', thirtyDaysAgoDate.toISOString().split('T')[0]),
 
       // Visits this month
       supabaseAdmin
@@ -86,10 +89,10 @@ export async function GET() {
     // Group visits by day in JavaScript (much faster than 30 DB queries)
     const visitCountsByDate: Record<string, number> = {};
 
-    // Initialize all 30 days with 0
+    // Initialize all 30 days with 0 (using merchant's local date)
     for (let i = 29; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
+      const date = new Date(todayDate);
+      date.setDate(todayDate.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
       visitCountsByDate[dateStr] = 0;
     }

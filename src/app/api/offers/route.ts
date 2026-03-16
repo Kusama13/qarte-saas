@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
+import { getTimezoneForCountry } from '@/lib/utils';
+import { fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import logger from '@/lib/logger';
 
 // Helper to verify merchant ownership
-async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean; error?: string; status?: number }> {
+async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean; error?: string; status?: number; country?: string }> {
   const supabase = await createRouteHandlerSupabaseClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -13,7 +15,7 @@ async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id')
+    .select('id, country')
     .eq('id', merchantId)
     .eq('user_id', user.id)
     .single();
@@ -22,7 +24,7 @@ async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized
     return { authorized: false, error: 'Non autorisé - vous ne pouvez pas gérer les offres de ce commerce', status: 403 };
   }
 
-  return { authorized: true };
+  return { authorized: true, country: merchant.country };
 }
 
 // GET current offer for a merchant
@@ -95,10 +97,15 @@ export async function POST(request: NextRequest) {
     // Validate duration (max 30 days)
     const duration = Math.min(30, Math.max(1, durationDays || 1));
 
-    // Calculate expiration date
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + duration);
-    expiresAt.setHours(23, 59, 59, 999); // End of day
+    const tz = getTimezoneForCountry(authCheck.country);
+
+    // Calculate expiration: end of day in merchant's timezone, duration days from now
+    const todayLocal = formatInTimeZone(new Date(), tz, 'yyyy-MM-dd');
+    const endDate = new Date(todayLocal);
+    endDate.setDate(endDate.getDate() + duration);
+    const endDateStr = endDate.toISOString().split('T')[0]; // YYYY-MM-DD
+    // 23:59:59 in merchant's timezone → convert to UTC
+    const expiresAt = fromZonedTime(new Date(endDateStr + 'T23:59:59'), tz);
 
     const { error } = await supabase
       .from('merchants')

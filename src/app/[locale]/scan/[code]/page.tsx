@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { sparkleGrand } from '@/lib/sparkles';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, getTodayInParis, PHONE_CONFIG } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTodayForCountry, PHONE_CONFIG } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
 import { useTranslations } from 'next-intl';
@@ -639,7 +639,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
         current_stamps: data.current_stamps,
         current_amount: data.current_amount ?? 0,
         stamps_target: merchant.stamps_required,
-        last_visit_date: getTodayInParis(),
+        last_visit_date: getTodayForCountry(merchant.country),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };

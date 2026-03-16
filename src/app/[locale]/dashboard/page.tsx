@@ -5,7 +5,7 @@ import { useRouter, Link } from '@/i18n/navigation';
 import { Users, UserCheck, Calendar, Gift, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, UserPlus, CreditCard, Coins, Globe, Heart } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
-import { formatRelativeTime } from '@/lib/utils';
+import { formatRelativeTime, getTodayForCountry } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
@@ -169,21 +169,21 @@ export default function DashboardPage() {
 
     const fetchData = async () => {
       try {
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        // Use merchant timezone for all date calculations
+        const todayStr = getTodayForCountry(merchant.country);
+        const todayBase = new Date(todayStr);
 
-        const firstDayOfMonth = new Date();
-        firstDayOfMonth.setDate(1);
-        firstDayOfMonth.setHours(0, 0, 0, 0);
+        const thirtyDaysAgo = new Date(todayBase);
+        thirtyDaysAgo.setDate(todayBase.getDate() - 30);
+
+        const firstDayOfMonth = new Date(todayBase.getFullYear(), todayBase.getMonth(), 1);
 
         // Week comparison date ranges
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        sevenDaysAgo.setHours(0, 0, 0, 0);
+        const sevenDaysAgo = new Date(todayBase);
+        sevenDaysAgo.setDate(todayBase.getDate() - 7);
 
-        const fourteenDaysAgo = new Date();
-        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-        fourteenDaysAgo.setHours(0, 0, 0, 0);
+        const fourteenDaysAgo = new Date(todayBase);
+        fourteenDaysAgo.setDate(todayBase.getDate() - 14);
 
         // Execute ALL queries in parallel for maximum speed
         const [

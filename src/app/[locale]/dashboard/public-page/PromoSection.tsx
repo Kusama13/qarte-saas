@@ -7,7 +7,7 @@ import {
   Check,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
-import { getTodayInParis } from '@/lib/utils';
+import { getTodayForCountry } from '@/lib/utils';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import type { Merchant } from '@/types';
 import type { WelcomeSectionHandle } from './WelcomeSection';
@@ -97,7 +97,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
         <div className="flex items-center gap-2">
           <Tag className="w-4 h-4 text-amber-500" />
           <span className="text-sm font-semibold text-gray-700">Offre promotionnelle</span>
-          {promoExpiresAt && new Date(promoExpiresAt) < new Date(getTodayInParis()) && (
+          {promoExpiresAt && new Date(promoExpiresAt) < new Date(getTodayForCountry(merchant.country)) && (
             <span className="text-[11px] font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Expir&eacute;e</span>
           )}
         </div>
@@ -168,7 +168,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
               value={promoExpiresAt}
               onChange={(e) => setPromoExpiresAt(e.target.value)}
               className="h-10 text-sm"
-              min={getTodayInParis()}
+              min={getTodayForCountry(merchant.country)}
             />
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
+import { getTodayForCountry } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
@@ -29,8 +30,16 @@ export async function GET(request: NextRequest) {
     if (isPublic) {
       // Public: use admin client to bypass RLS, but only return available future slots
       const supabaseAdmin = getSupabaseAdmin();
-      const today = new Date().toISOString().split('T')[0];
-      const thirtyDaysLater = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      // Fetch merchant country for timezone-aware date
+      const { data: merchantRow } = await supabaseAdmin
+        .from('merchants')
+        .select('country')
+        .eq('id', merchantId)
+        .single();
+      const today = getTodayForCountry(merchantRow?.country);
+      const todayDate = new Date(today);
+      todayDate.setDate(todayDate.getDate() + 30);
+      const thirtyDaysLater = todayDate.toISOString().split('T')[0];
 
       const { data, error } = await supabaseAdmin
         .from('merchant_planning_slots')
@@ -121,7 +130,12 @@ export async function POST(request: NextRequest) {
 
     // Check max 200 active future slots
     const supabaseAdmin = getSupabaseAdmin();
-    const today = new Date().toISOString().split('T')[0];
+    const { data: planMerchant } = await supabaseAdmin
+      .from('merchants')
+      .select('country')
+      .eq('id', merchantId)
+      .single();
+    const today = getTodayForCountry(planMerchant?.country);
     const { count } = await supabaseAdmin
       .from('merchant_planning_slots')
       .select('id', { count: 'exact', head: true })

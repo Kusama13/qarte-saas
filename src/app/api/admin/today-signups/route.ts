@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
+import { getTodayStartForCountry } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
@@ -8,15 +9,14 @@ export async function GET(request: NextRequest) {
   const { supabaseAdmin } = auth;
 
   try {
-    // Get today's start in UTC (France is UTC+1 or UTC+2, but we'll use local server time for simplicity)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Get today's start in Paris timezone (admin dashboard = FR)
+    const todayStart = getTodayStartForCountry('FR');
 
     // Fetch merchants created today (include reward_description to check if program is configured)
     const { data: merchants, error: merchantsError } = await supabaseAdmin
       .from('merchants')
       .select('id, user_id, shop_name, shop_type, created_at, subscription_status, reward_description, phone')
-      .gte('created_at', today.toISOString())
+      .gte('created_at', todayStart)
       .order('created_at', { ascending: false });
 
     if (merchantsError) {

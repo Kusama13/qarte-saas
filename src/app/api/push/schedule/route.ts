@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { containsForbiddenWords } from '@/lib/content-moderation';
+import { getTodayForCountry } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
 
-// Helper to verify merchant ownership
-async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean }> {
+// Helper to verify merchant ownership and return country
+async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized: boolean; country?: string }> {
   const supabase = await createRouteHandlerSupabaseClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -16,7 +17,7 @@ async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized
 
   const { data: merchant } = await supabaseAdmin
     .from('merchants')
-    .select('id')
+    .select('id, country')
     .eq('id', merchantId)
     .eq('user_id', user.id)
     .single();
@@ -25,7 +26,7 @@ async function verifyMerchantOwnership(merchantId: string): Promise<{ authorized
     return { authorized: false };
   }
 
-  return { authorized: true };
+  return { authorized: true, country: merchant.country };
 }
 
 // GET - Fetch scheduled pushes for a merchant
@@ -43,13 +44,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
+  const merchantToday = getTodayForCountry(authCheck.country);
+
   // Get pending scheduled pushes
   const { data: scheduled, error } = await supabaseAdmin
     .from('scheduled_push')
     .select('*')
     .eq('merchant_id', merchantId)
     .eq('status', 'pending')
-    .gte('scheduled_date', new Date().toISOString().split('T')[0])
+    .gte('scheduled_date', merchantToday)
     .order('scheduled_date', { ascending: true })
     .order('scheduled_time', { ascending: true });
 
@@ -90,8 +93,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid scheduled time' }, { status: 400 });
     }
 
-    // Validate date is today or future
-    const today = new Date().toISOString().split('T')[0];
+    // Validate date is today or future (merchant timezone)
+    const today = getTodayForCountry(authCheck.country);
     if (scheduledDate < today) {
       return NextResponse.json({ error: 'Cannot schedule in the past' }, { status: 400 });
     }

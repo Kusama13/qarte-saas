@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import { z } from 'zod';
 import type { VisitStatus } from '@/types';
+import { getTodayForCountry } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
     // Get the visit + merchant loyalty_mode
     const { data: visit, error: visitError } = await supabaseAdmin
       .from('visits')
-      .select('*, loyalty_card:loyalty_cards (*), merchant:merchants (loyalty_mode)')
+      .select('*, loyalty_card:loyalty_cards (*), merchant:merchants (loyalty_mode, country)')
       .eq('id', visit_id)
       .eq('merchant_id', merchant_id)
       .eq('status', 'pending')
@@ -152,7 +153,7 @@ export async function POST(request: NextRequest) {
 
       const updateData: Record<string, unknown> = {
         current_stamps: newStamps,
-        last_visit_date: new Date().toISOString().split('T')[0],
+        last_visit_date: getTodayForCountry(visit.merchant?.country),
       };
 
       // Cagnotte mode: also increment current_amount
@@ -231,7 +232,7 @@ export async function PUT(request: NextRequest) {
     // Fetch all pending visits + merchant loyalty_mode in one query
     const { data: pendingVisits, error: fetchError } = await supabaseAdmin
       .from('visits')
-      .select('*, loyalty_card:loyalty_cards (*), merchant:merchants (loyalty_mode)')
+      .select('*, loyalty_card:loyalty_cards (*), merchant:merchants (loyalty_mode, country)')
       .in('id', visit_ids)
       .eq('merchant_id', merchant_id)
       .eq('status', 'pending');
@@ -301,7 +302,7 @@ export async function PUT(request: NextRequest) {
 
         const updateData: Record<string, unknown> = {
           current_stamps: newStamps,
-          last_visit_date: new Date().toISOString().split('T')[0],
+          last_visit_date: getTodayForCountry(pendingVisits[0]?.merchant?.country),
         };
 
         // Cagnotte mode: also increment current_amount

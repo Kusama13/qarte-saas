@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import { formatPhoneNumber, validatePhone, getTodayInParis, getTrialStatus } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTodayForCountry, getTodayStartForCountry, getTrialStatus } from '@/lib/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import type { VisitStatus, MerchantCountry } from '@/types';
@@ -45,13 +45,6 @@ function getIPHashSalt(): string {
 }
 function hashIP(ip: string): string {
   return createHash('sha256').update(ip + getIPHashSalt()).digest('hex');
-}
-
-function getTodayStartParis(): string {
-  const now = new Date();
-  const parisTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
-  parisTime.setHours(0, 0, 0, 0);
-  return parisTime.toISOString();
 }
 
 const QUARANTINE_THRESHOLD = 1;
@@ -180,7 +173,7 @@ export async function POST(request: NextRequest) {
     // ── Step 4: Parallel — loyalty card + recent visit (idempotency) + today scans (shield)
     const shieldEnabled = merchant.shield_enabled !== false;
     const threeMinAgo = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-    const todayStart = getTodayStartParis();
+    const todayStart = getTodayStartForCountry(merchantCountry);
 
     const [cardResult, recentVisitResult, shieldResult] = await Promise.all([
       supabaseAdmin
@@ -268,7 +261,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Step 5: Qarte Shield — determine visit status
-    const today = getTodayInParis();
+    const today = getTodayForCountry(merchantCountry);
     // No double days in cagnotte mode — always 1 point
     const pointsEarned = 1;
     let visitStatus: VisitStatus = 'confirmed';

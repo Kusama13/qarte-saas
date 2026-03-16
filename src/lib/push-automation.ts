@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import { getTodayStartForCountry } from '@/lib/utils';
 
 // Configure web-push (same as cron)
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -22,15 +23,15 @@ export async function sendAutomationPush(params: {
   title: string;
   body: string;
   url: string;
+  merchantCountry?: string;
 }): Promise<boolean> {
-  const { supabase, merchantId, customerId, customerPhone, automationType, title, body, url } = params;
+  const { supabase, merchantId, customerId, customerPhone, automationType, title, body, url, merchantCountry } = params;
 
   if (!vapidPublicKey || !vapidPrivateKey) return false;
 
   try {
     // 1. Dedup: check if already sent today for this type + customer + merchant
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const todayStartIso = getTodayStartForCountry(merchantCountry);
 
     const { data: existing } = await supabase
       .from('push_automation_logs')
@@ -38,7 +39,7 @@ export async function sendAutomationPush(params: {
       .eq('merchant_id', merchantId)
       .eq('customer_id', customerId)
       .eq('automation_type', automationType)
-      .gte('sent_at', todayStart.toISOString())
+      .gte('sent_at', todayStartIso)
       .limit(1)
       .maybeSingle();
 

@@ -3,6 +3,7 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import webpush from 'web-push';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
+import { getTodayForCountry } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -91,6 +92,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Récompense déjà utilisée' }, { status: 409 });
     }
 
+    // Fetch merchant country for timezone-aware last_visit_date
+    const { data: voucherMerchant } = await supabaseAdmin
+      .from('merchants')
+      .select('country')
+      .eq('id', voucher.merchant_id)
+      .single();
+
     // 3. Bonus +1 stamp (skip for birthday vouchers)
     let bonusVisitId: string | null = null;
     let newStamps: number | null = null;
@@ -124,7 +132,7 @@ export async function POST(request: NextRequest) {
           .from('loyalty_cards')
           .update({
             current_stamps: newStamps,
-            last_visit_date: new Date().toISOString().split('T')[0],
+            last_visit_date: getTodayForCountry(voucherMerchant?.country),
           })
           .eq('id', filleulCard.id);
       }

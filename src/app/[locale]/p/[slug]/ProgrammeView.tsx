@@ -6,7 +6,7 @@ import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
-import { formatDoubleDays, formatTime, toBCP47 } from '@/lib/utils';
+import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry } from '@/lib/utils';
 import { useLocale, useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
@@ -57,6 +57,7 @@ type MerchantPublic = Pick<
   | 'planning_message'
   | 'planning_message_expires'
   | 'booking_message'
+  | 'country'
 >;
 
 export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
@@ -73,8 +74,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const DAY_LABELS_SHORT = t('dayLabelsShort').split(',');
   const hours = merchant.opening_hours;
   const hasHours = hours && Object.values(hours).some(Boolean);
-  // JS getDay(): 0=dimanche → we need 1=lundi format
-  const todayIndex = new Date().getDay(); // 0=dim, 1=lun...
+  // Use merchant's timezone for "today" highlight (opening hours are in merchant's local time)
+  const merchantTz = getTimezoneForCountry(merchant.country);
+  const merchantLocalDate = new Date(new Date().toLocaleString('en-US', { timeZone: merchantTz }));
+  const todayIndex = merchantLocalDate.getDay(); // 0=dim, 1=lun...
   const todayKey = todayIndex === 0 ? '7' : String(todayIndex); // 1-7, 1=lundi
 
   // Fetch active promo offer (or use demo data)

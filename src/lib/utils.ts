@@ -2,14 +2,34 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { format, formatDistanceToNow } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale';
-import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
+import { toZonedTime, fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import QRCode from 'qrcode';
+import type { MerchantCountry } from '@/types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 const TIMEZONE = 'Europe/Paris';
+
+/** Maps each merchant country to its canonical IANA timezone. */
+export const COUNTRY_TIMEZONE: Record<MerchantCountry, string> = {
+  FR: 'Europe/Paris',
+  BE: 'Europe/Brussels',
+  CH: 'Europe/Zurich',
+  LU: 'Europe/Luxembourg',
+  ES: 'Europe/Madrid',
+  IT: 'Europe/Rome',
+  GB: 'Europe/London',
+  US: 'America/New_York',
+  CA: 'America/Toronto',
+  AU: 'Australia/Sydney',
+};
+
+/** Resolve IANA timezone for a given country (defaults to Europe/Paris). */
+export function getTimezoneForCountry(country?: string): string {
+  return COUNTRY_TIMEZONE[country as MerchantCountry] || TIMEZONE;
+}
 
 /**
  * Ensures a hex color has enough contrast against a white background.
@@ -109,9 +129,24 @@ export function formatRelativeTime(date: string | Date): string {
   return formatDistanceToNow(d, { addSuffix: true, locale: fr });
 }
 
+/** Get today's date (YYYY-MM-DD) in the merchant's country timezone. */
+export function getTodayForCountry(country?: string): string {
+  const tz = getTimezoneForCountry(country);
+  return formatInTimeZone(new Date(), tz, 'yyyy-MM-dd');
+}
+
+/** Get the start-of-day ISO timestamp in the merchant's country timezone.
+ *  Used for same-day scan prevention queries (gte filter). */
+export function getTodayStartForCountry(country?: string): string {
+  const tz = getTimezoneForCountry(country);
+  const todayStr = formatInTimeZone(new Date(), tz, 'yyyy-MM-dd');
+  // Convert local midnight in that timezone → UTC
+  return fromZonedTime(new Date(todayStr + 'T00:00:00'), tz).toISOString();
+}
+
+/** @deprecated Use getTodayForCountry(country) for country-aware logic. */
 export function getTodayInParis(): string {
-  const now = new Date();
-  return formatInTimeZone(now, TIMEZONE, 'yyyy-MM-dd');
+  return getTodayForCountry('FR');
 }
 
 export function isToday(dateString: string): boolean {
@@ -119,6 +154,7 @@ export function isToday(dateString: string): boolean {
   return dateString === today;
 }
 
+/** @deprecated Use toZonedTime with getTimezoneForCountry(country). */
 export function getCurrentDateTimeInParis(): Date {
   return toZonedTime(new Date(), TIMEZONE);
 }
@@ -255,8 +291,6 @@ export function toBCP47(locale: string): string {
 // Phone: multi-country support
 // Storage: E.164 without + (e.g. 33612345678)
 // =============================================
-
-import type { MerchantCountry } from '@/types';
 
 export const COUNTRY_FLAGS: Record<MerchantCountry, string> = {
   FR: '🇫🇷', BE: '🇧🇪', CH: '🇨🇭', LU: '🇱🇺',

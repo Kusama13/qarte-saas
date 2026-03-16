@@ -4,6 +4,7 @@ import ProgrammeView from './ProgrammeView';
 import { SHOP_TYPES } from '@/types';
 import type { Metadata } from 'next';
 import { isDemoSlug, getDemoMerchantData } from '@/lib/demo-merchants';
+import { getTodayForCountry } from '@/lib/utils';
 import DemoNav from './DemoNav';
 
 import { cache } from 'react';
@@ -42,15 +43,17 @@ const getMerchantData = cache(async (slug: string): Promise<{ merchant: any; pho
       'booking_url, instagram_url, facebook_url, tiktok_url, snapchat_url, ' +
       'opening_hours, ' +
       'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent, ' +
-      'planning_enabled, planning_message, planning_message_expires, booking_message, phone'
+      'planning_enabled, planning_message, planning_message_expires, booking_message, phone, country'
     )
     .eq('slug', slug)
     .maybeSingle();
 
   if (!merchant) return null;
 
-  const today = new Date().toISOString().split('T')[0];
-  const sevenDaysLater = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const today = getTodayForCountry((merchant as any).country);
+  const todayDate = new Date(today);
+  todayDate.setDate(todayDate.getDate() + 7);
+  const sevenDaysLater = todayDate.toISOString().split('T')[0];
 
   const [photosResult, servicesResult, categoriesResult, planningResult] = await Promise.all([
     supabaseAdmin
