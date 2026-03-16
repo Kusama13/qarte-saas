@@ -301,7 +301,6 @@ export default function QRDownloadPage() {
                     height: '350px',
                     background: `linear-gradient(145deg, ${merchant.primary_color}, ${merchant.secondary_color})`,
                     borderRadius: '16px',
-                    clipPath: 'inset(0px round 16px)',
                   }}
                 >
                   {/* Decorative circles */}
@@ -313,14 +312,16 @@ export default function QRDownloadPage() {
                     {/* Top: Logo + Name */}
                     <div className="flex-shrink-0 flex flex-col items-center">
                       {merchant.logo_url ? (
-                        <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white/30">
-                          <img
-                            src={logoDataUrl || merchant.logo_url}
-                            alt={merchant.shop_name}
-                            className="w-full h-full object-cover"
-                            crossOrigin="anonymous"
-                          />
-                        </div>
+                        <div
+                          className="w-9 h-9 rounded-full border-2 border-white/30"
+                          style={{
+                            backgroundImage: `url(${logoDataUrl || merchant.logo_url})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                          }}
+                          role="img"
+                          aria-label={merchant.shop_name}
+                        />
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-white/20 border-2 border-white/30 flex items-center justify-center">
                           <span className="text-sm font-black text-white">
@@ -344,7 +345,18 @@ export default function QRDownloadPage() {
                       <div className="flex-shrink-0 bg-white rounded-xl p-2 overflow-hidden">
                         {scanUrl ? (
                           qrDataUrl ? (
-                            <img src={qrDataUrl} alt="QR Code" width={120} height={120} style={{ width: 120, height: 120 }} />
+                            <div
+                              style={{
+                                width: 120,
+                                height: 120,
+                                backgroundImage: `url(${qrDataUrl})`,
+                                backgroundSize: 'contain',
+                                backgroundRepeat: 'no-repeat',
+                                backgroundPosition: 'center',
+                              }}
+                              role="img"
+                              aria-label="QR Code"
+                            />
                           ) : (
                             <BrandedQRCode
                               data={scanUrl}
