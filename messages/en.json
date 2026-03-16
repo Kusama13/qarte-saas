@@ -511,7 +511,8 @@
     "successMsg": "If an account exists with",
     "successMsg2": "you'll receive a link to reset your password.",
     "checkSpam": "Check your spam folder if you don't see the email.",
-    "invalidEmail": "Please enter a valid email address"
+    "invalidEmail": "Please enter a valid email address",
+    "genericError": "An error occurred"
   },
   "resetPassword": {
     "title": "New password",
@@ -527,7 +528,8 @@
     "invalidMsg": "This reset link is no longer valid. Please request a new one.",
     "requestNewLink": "Request a new link",
     "passwordTooShort": "Password must be at least 8 characters",
-    "passwordMismatch": "Passwords do not match"
+    "passwordMismatch": "Passwords do not match",
+    "genericError": "An error occurred"
   },
   "verifyEmail": {
     "title": "Check your email",
@@ -1097,7 +1099,53 @@
     "infoDayThu": "Thursday",
     "infoDayFri": "Friday",
     "infoDaySat": "Saturday",
-    "infoDaySun": "Sunday"
+    "infoDaySun": "Sunday",
+    "welcomeDescRequired": "Description required",
+    "welcomeSaveError": "Error saving",
+    "welcomeOfferLabel": "New client offer",
+    "welcomeDescLabel": "Offer description",
+    "welcomeDescPlaceholder": "E.g.: -20% on your first visit",
+    "welcomeSugg1": "-10% on first visit",
+    "welcomeSugg2": "-20% on first visit",
+    "welcomeSugg3": "A free treatment",
+    "promoFieldsRequired": "Title and description required",
+    "promoOfferLabel": "Promotional offer",
+    "promoExpired": "Expired",
+    "promoTitleLabel": "Offer title",
+    "promoTitlePlaceholder": "E.g.: Spring offer",
+    "promoSugg1": "Spring offer",
+    "promoSugg2": "Special offer",
+    "promoSugg3": "Deal of the moment",
+    "promoSugg5": "Back to school offer",
+    "promoDescLabel": "Offer description",
+    "promoDescPlaceholder": "E.g.: -20% on highlights, A free treatment...",
+    "promoDescSugg1": "-10% on all services",
+    "promoDescSugg2": "-20% on one service",
+    "promoDescSugg3": "A free treatment",
+    "promoExpiryLabel": "Expiration date (optional)",
+    "photosLabel": "My work",
+    "photosAlt": "Work {position}",
+    "svcName": "Name",
+    "svcPrice": "Price",
+    "svcDuration": "Duration (min)",
+    "svcFrom": "From",
+    "svcDescOpt": "Description (optional)",
+    "svcCancel": "Cancel",
+    "svcSave": "Save",
+    "svcSingular": "service",
+    "svcPlural": "services",
+    "svcCatPlaceholder": "Category name (e.g.: Cuts, Treatments, Color...)",
+    "svcAdd": "Add",
+    "svcNoneInCat": "No services in this category",
+    "svcOther": "Other",
+    "svcNone": "No services",
+    "svcNoneHint": "Add your services and prices below",
+    "svcAddTitle": "Add a service",
+    "svcNamePlaceholder": "Service name",
+    "svcAddBtn": "Add service",
+    "svcIn": "in",
+    "svcNoCat": "No category",
+    "svcAddCat": "Add a category"
   },
   "dashHome": {
     "greeting": "Hello,",
@@ -1149,7 +1197,9 @@
     "noClientsYet": "No clients yet",
     "noClientsHint": "Display your QR code to get started!",
     "errorLoading": "Error loading data",
-    "retry": "Retry"
+    "retry": "Retry",
+    "shieldInfoAria": "Learn more about Qarte Shield",
+    "shieldToggleAria": "Enable or disable Qarte Shield"
   },
   "subscription": {
     "title": "Subscription",
@@ -2170,5 +2220,13 @@
     "ctaLine1": "At your next appointment,",
     "ctaLine2": "ask to scan the QR code at the counter!",
     "poweredBy": "Powered by"
+  },
+  "pros": {
+    "title": "They build loyalty with Qarte",
+    "description": "Discover the hair salons, beauty institutes and nail salons that use Qarte to build customer loyalty. Join them.",
+    "ogTitle": "They build loyalty with Qarte",
+    "ogDescription": "Discover beauty pros who build loyalty with Qarte. Join the community.",
+    "heading1": "A look at some pros on Qarte.",
+    "heading2": "Build loyalty with your clients too."
   }
 }

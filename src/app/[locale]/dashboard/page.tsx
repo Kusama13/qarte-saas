@@ -633,7 +633,7 @@ export default function DashboardPage() {
                   type="button"
                   onClick={() => setShowShieldHelp(!showShieldHelp)}
                   className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                  aria-label="En savoir plus sur Qarte Shield"
+                  aria-label={t('shieldInfoAria')}
                 >
                   <HelpCircle className="w-4 h-4" />
                 </button>
@@ -641,7 +641,7 @@ export default function DashboardPage() {
                   type="button"
                   role="switch"
                   aria-checked={shieldEnabled}
-                  aria-label="Activer ou désactiver Qarte Shield"
+                  aria-label={t('shieldToggleAria')}
                   onClick={() => handleShieldToggle(!shieldEnabled)}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     shieldEnabled ? 'bg-emerald-500' : 'bg-gray-300'

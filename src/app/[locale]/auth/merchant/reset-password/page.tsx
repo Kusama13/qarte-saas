@@ -78,7 +78,7 @@ function ResetPasswordContent() {
         router.push('/auth/merchant?reset=success');
       }, 3000);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
+      const errorMessage = err instanceof Error ? err.message : t('genericError');
       setError(errorMessage);
     } finally {
       setLoading(false);

@@ -6,6 +6,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
+import { useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
 export interface WelcomeSectionHandle {
@@ -19,6 +20,7 @@ interface WelcomeSectionProps {
 }
 
 const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(function WelcomeSection({ merchant, refetch, onShowHelp }, ref) {
+  const t = useTranslations('publicPage');
   const [welcomeEnabled, setWelcomeEnabled] = useState(false);
   const [welcomeDescription, setWelcomeDescription] = useState('');
   const [saveError, setSaveError] = useState('');
@@ -29,7 +31,7 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
   }, [merchant]);
 
   const save = async () => {
-    if (welcomeEnabled && !welcomeDescription.trim()) throw new Error('Description requise');
+    if (welcomeEnabled && !welcomeDescription.trim()) throw new Error(t('welcomeDescRequired'));
 
     setSaveError('');
     const res = await fetch('/api/merchants/referral-config', {
@@ -46,7 +48,7 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
     });
 
     if (!res.ok) {
-      setSaveError('Erreur lors de la sauvegarde');
+      setSaveError(t('welcomeSaveError'));
       throw new Error('save failed');
     }
 
@@ -60,7 +62,7 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-violet-500" />
-          <span className="text-sm font-semibold text-gray-700">Offre nouveau client</span>
+          <span className="text-sm font-semibold text-gray-700">{t('welcomeOfferLabel')}</span>
           {welcomeEnabled && onShowHelp && (
             <button
               onClick={onShowHelp}
@@ -86,16 +88,16 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
         <div className="space-y-3 mt-3">
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-              Description de l&apos;offre <span className="text-red-400">*</span>
+              {t('welcomeDescLabel')} <span className="text-red-400">*</span>
             </label>
             <Input
-              placeholder="Ex: -20% sur votre premiere visite"
+              placeholder={t('welcomeDescPlaceholder')}
               value={welcomeDescription}
               onChange={(e) => setWelcomeDescription(e.target.value)}
               className="h-10 text-sm"
             />
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {['-10% sur la 1ere visite', '-20% sur la 1ere visite', 'Un soin offert'].map((s) => (
+              {[t('welcomeSugg1'), t('welcomeSugg2'), t('welcomeSugg3')].map((s) => (
                 <button
                   key={s}
                   type="button"

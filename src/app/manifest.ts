@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 
+// TODO: i18n — manifest is static, not locale-aware
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: '/customer',

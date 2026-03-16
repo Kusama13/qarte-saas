@@ -17,7 +17,7 @@ import {
 import type { Merchant } from '@/types';
 import type { ServiceCategory, Service } from './types';
 import { formatCurrency } from '@/lib/utils';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 interface ServicesSectionProps {
   merchant: Merchant;
@@ -25,6 +25,7 @@ interface ServicesSectionProps {
 
 export default function ServicesSection({ merchant }: ServicesSectionProps) {
   const locale = useLocale();
+  const t = useTranslations('publicPage');
 
   // Categories + Services
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
@@ -268,7 +269,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
             className="w-full text-sm font-medium bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
-            placeholder="Nom"
+            placeholder={t('svcName')}
             onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
             autoFocus
           />
@@ -280,7 +281,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                 type="number"
                 step="0.01"
                 min="0"
-                placeholder="Prix"
+                placeholder={t('svcPrice')}
                 className="w-full text-sm font-bold bg-white border border-gray-200 rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
                 onKeyDown={(e) => e.key === 'Enter' && handleUpdateService(service.id)}
               />
@@ -293,7 +294,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                 type="number"
                 min="1"
                 max="600"
-                placeholder="Durée (min)"
+                placeholder={t('svcDuration')}
                 className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
               />
               <Clock className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -305,22 +306,22 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                 onChange={(e) => setEditPriceFrom(e.target.checked)}
                 className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30"
               />
-              <span className="text-[11px] text-gray-500 whitespace-nowrap">Dès</span>
+              <span className="text-[11px] text-gray-500 whitespace-nowrap">{t('svcFrom')}</span>
             </label>
           </div>
           <input
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
-            placeholder="Description (optionnel)"
+            placeholder={t('svcDescOpt')}
             className="w-full text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
           />
           <div className="flex items-center gap-1.5 justify-end">
             <button onClick={() => setEditingService(null)} className="px-3 py-2 rounded-lg bg-gray-100 text-gray-600 text-sm font-medium hover:bg-gray-200 transition-colors">
-              Annuler
+              {t('svcCancel')}
             </button>
             <button onClick={() => handleUpdateService(service.id)} className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors flex items-center gap-1.5">
               <Check className="w-3.5 h-3.5" />
-              Enregistrer
+              {t('svcSave')}
             </button>
           </div>
         </div>
@@ -341,7 +342,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
             </div>
           </div>
           <p className="text-[13px] font-bold text-gray-900 shrink-0 tabular-nums">
-            {service.price_from && <span className="text-[11px] font-normal text-gray-400 mr-0.5">dès </span>}
+            {service.price_from && <span className="text-[11px] font-normal text-gray-400 mr-0.5">{t('svcFrom')} </span>}
             {formatCurrency(Number(service.price), merchant.country, locale)}
           </p>
           <div className="flex items-center gap-0.5 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
@@ -371,10 +372,10 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
     <div>
       <div className="flex items-center gap-2 mb-3">
         <LayoutList className="w-4 h-4 text-amber-500" />
-        <span className="text-sm font-semibold text-gray-700">Tarifs et prestations</span>
+        <span className="text-sm font-semibold text-gray-700">{t('servicesSection')}</span>
         {services.length > 0 && (
           <span className="text-xs text-gray-400">
-            {services.length} prestation{services.length > 1 ? 's' : ''}
+            {services.length} {services.length > 1 ? t('svcPlural') : t('svcSingular')}
           </span>
         )}
       </div>
@@ -392,7 +393,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                 <input
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
-                  placeholder="Nom de la catégorie (ex: Coupes, Soins, Coloration...)"
+                  placeholder={t('svcCatPlaceholder')}
                   className="flex-1 text-sm bg-white border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400"
                   onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
                   autoFocus
@@ -402,7 +403,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                   disabled={addingCategory || !newCategoryName.trim()}
                   className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
-                  {addingCategory ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Ajouter'}
+                  {addingCategory ? <Loader2 className="w-4 h-4 animate-spin" /> : t('svcAdd')}
                 </button>
                 <button onClick={() => { setShowAddCategory(false); setNewCategoryName(''); }} className="p-2 rounded-lg text-gray-400 hover:bg-white transition-colors">
                   <X className="w-4 h-4" />
@@ -467,7 +468,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                             {catServices.map(renderServiceRow)}
                           </div>
                         ) : (
-                          <p className="text-xs text-gray-400 py-3 italic">Aucune prestation dans cette catégorie</p>
+                          <p className="text-xs text-gray-400 py-3 italic">{t('svcNoneInCat')}</p>
                         )}
                       </div>
                     )}
@@ -480,7 +481,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
             {servicesByCategory.uncategorized.length > 0 && (
               <div className={categories.length > 0 ? 'mt-4' : ''}>
                 {categories.length > 0 && (
-                  <p className="text-sm font-bold text-gray-400 mb-2">Autres</p>
+                  <p className="text-sm font-bold text-gray-400 mb-2">{t('svcOther')}</p>
                 )}
                 <div className={`divide-y divide-gray-50 ${categories.length > 0 ? 'ml-3 pl-4 border-l-2 border-gray-200' : 'rounded-xl border border-gray-100 overflow-hidden'}`}>
                   {servicesByCategory.uncategorized.map(renderServiceRow)}
@@ -494,20 +495,20 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                 <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-3">
                   <LayoutList className="w-6 h-6 text-gray-300" />
                 </div>
-                <p className="text-sm font-medium text-gray-400">Aucune prestation</p>
-                <p className="text-xs text-gray-400 mt-1">Ajoute tes services et tarifs ci-dessous</p>
+                <p className="text-sm font-medium text-gray-400">{t('svcNone')}</p>
+                <p className="text-xs text-gray-400 mt-1">{t('svcNoneHint')}</p>
               </div>
             )}
 
             {/* Add new service */}
             {services.length < 50 && (
               <div className={`mt-5 pt-5 border-t border-gray-100 ${services.length === 0 && categories.length === 0 ? 'mt-0 pt-0 border-0' : ''}`}>
-                <p className="text-xs font-semibold text-gray-500 mb-2.5">Ajouter une prestation</p>
+                <p className="text-xs font-semibold text-gray-500 mb-2.5">{t('svcAddTitle')}</p>
                 <div className="space-y-2">
                   <input
                     value={newServiceName}
                     onChange={(e) => setNewServiceName(e.target.value)}
-                    placeholder="Nom de la prestation"
+                    placeholder={t('svcNamePlaceholder')}
                     className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddService()}
                   />
@@ -519,7 +520,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                         type="number"
                         step="0.01"
                         min="0"
-                        placeholder="Prix"
+                        placeholder={t('svcPrice')}
                         className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
                         onKeyDown={(e) => e.key === 'Enter' && handleAddService()}
                       />
@@ -532,7 +533,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                         type="number"
                         min="1"
                         max="600"
-                        placeholder="Durée (min)"
+                        placeholder={t('svcDuration')}
                         className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 pr-7 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
                       />
                       <Clock className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
@@ -544,13 +545,13 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                         onChange={(e) => setNewServicePriceFrom(e.target.checked)}
                         className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500/30"
                       />
-                      <span className="text-[11px] text-gray-500 whitespace-nowrap">Dès</span>
+                      <span className="text-[11px] text-gray-500 whitespace-nowrap">{t('svcFrom')}</span>
                     </label>
                   </div>
                   <input
                     value={newServiceDescription}
                     onChange={(e) => setNewServiceDescription(e.target.value)}
-                    placeholder="Description (optionnel)"
+                    placeholder={t('svcDescOpt')}
                     className="w-full text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 focus:bg-white transition-all"
                   />
                   <button
@@ -559,12 +560,12 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                     className="w-full py-2.5 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 shadow-sm"
                   >
                     {addingService ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                    Ajouter la prestation
+                    {t('svcAddBtn')}
                   </button>
                 </div>
                 {categories.length > 0 && (
                   <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-                    <span className="text-[11px] text-gray-400 font-medium">dans</span>
+                    <span className="text-[11px] text-gray-400 font-medium">{t('svcIn')}</span>
                     <button
                       onClick={() => setNewServiceCategoryId(null)}
                       className={`px-2.5 py-1 text-[11px] font-medium rounded-full border transition-all ${
@@ -573,7 +574,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                           : 'border-gray-200 text-gray-500 hover:border-gray-300'
                       }`}
                     >
-                      Sans catégorie
+                      {t('svcNoCat')}
                     </button>
                     {categories.map((cat) => (
                       <button
@@ -599,7 +600,7 @@ export default function ServicesSection({ merchant }: ServicesSectionProps) {
                 className="mt-4 flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 hover:border-indigo-200 transition-all shadow-sm"
               >
                 <Plus className="w-4 h-4" />
-                Ajouter une catégorie
+                {t('svcAddCat')}
               </button>
             )}
           </>

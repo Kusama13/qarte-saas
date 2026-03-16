@@ -1,22 +1,24 @@
-import type { Metadata } from 'next';
 import { unstable_cache } from 'next/cache';
+import { getTranslations } from 'next-intl/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { FooterSection, ScrollToTopButton } from '@/components/landing';
 import ClientShell from '@/components/landing/ClientShell';
 import LandingNav from '@/components/landing/LandingNav';
 import InspirationGrid, { type InspirationMerchant } from './InspirationGrid';
 
-export const metadata: Metadata = {
-  title: 'Ils fidélisent avec Qarte',
-  description:
-    'Découvrez les salons de coiffure, instituts de beauté et ongleries qui utilisent Qarte pour fidéliser leurs clients. Rejoignez-les.',
-  openGraph: {
-    title: 'Ils fidélisent avec Qarte',
-    description:
-      'Découvrez les pros de la beauté qui fidélisent avec Qarte. Rejoignez la communauté.',
-    url: 'https://getqarte.com/pros',
-  },
-};
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'pros' });
+  return {
+    title: t('title'),
+    description: t('description'),
+    openGraph: {
+      title: t('ogTitle'),
+      description: t('ogDescription'),
+      url: 'https://getqarte.com/pros',
+    },
+  };
+}
 
 const getInspirationMerchants = unstable_cache(
   async (): Promise<InspirationMerchant[]> => {
@@ -80,8 +82,12 @@ const getInspirationMerchants = unstable_cache(
   { revalidate: 259200 }
 );
 
-export default async function InspirationPage() {
-  const merchants = await getInspirationMerchants();
+export default async function InspirationPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  const [merchants, t] = await Promise.all([
+    getInspirationMerchants(),
+    getTranslations({ locale, namespace: 'pros' }),
+  ]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -91,10 +97,10 @@ export default async function InspirationPage() {
       {/* Hero — offset for fixed banner (36px) + navbar (64px) */}
       <section className="px-4 pt-[140px] pb-10 text-center max-w-4xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 mb-4 leading-tight">
-          Aperçu de quelques pros sur Qarte.
+          {t('heading1')}
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">
-            Fidélisez aussi vos clients.
+            {t('heading2')}
           </span>
         </h1>
       </section>

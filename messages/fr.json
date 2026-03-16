@@ -511,7 +511,8 @@
     "successMsg": "Si un compte existe avec l'adresse",
     "successMsg2": "vous recevrez un lien pour réinitialiser votre mot de passe.",
     "checkSpam": "Pensez à vérifier vos spams si vous ne voyez pas l'email.",
-    "invalidEmail": "Veuillez entrer une adresse email valide"
+    "invalidEmail": "Veuillez entrer une adresse email valide",
+    "genericError": "Une erreur est survenue"
   },
   "resetPassword": {
     "title": "Nouveau mot de passe",
@@ -527,7 +528,8 @@
     "invalidMsg": "Ce lien de réinitialisation n'est plus valide. Veuillez en demander un nouveau.",
     "requestNewLink": "Demander un nouveau lien",
     "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères",
-    "passwordMismatch": "Les mots de passe ne correspondent pas"
+    "passwordMismatch": "Les mots de passe ne correspondent pas",
+    "genericError": "Une erreur est survenue"
   },
   "verifyEmail": {
     "title": "Vérifiez votre email",
@@ -1097,7 +1099,53 @@
     "infoDayThu": "Jeudi",
     "infoDayFri": "Vendredi",
     "infoDaySat": "Samedi",
-    "infoDaySun": "Dimanche"
+    "infoDaySun": "Dimanche",
+    "welcomeDescRequired": "Description requise",
+    "welcomeSaveError": "Erreur lors de la sauvegarde",
+    "welcomeOfferLabel": "Offre nouveau client",
+    "welcomeDescLabel": "Description de l'offre",
+    "welcomeDescPlaceholder": "Ex: -20% sur votre premiere visite",
+    "welcomeSugg1": "-10% sur la 1ere visite",
+    "welcomeSugg2": "-20% sur la 1ere visite",
+    "welcomeSugg3": "Un soin offert",
+    "promoFieldsRequired": "Titre et description requis",
+    "promoOfferLabel": "Offre promotionnelle",
+    "promoExpired": "Expirée",
+    "promoTitleLabel": "Titre de l'offre",
+    "promoTitlePlaceholder": "Ex: Offre de printemps",
+    "promoSugg1": "Offre de printemps",
+    "promoSugg2": "Offre spéciale",
+    "promoSugg3": "Offre du moment",
+    "promoSugg5": "Offre de rentrée",
+    "promoDescLabel": "Description de l'offre",
+    "promoDescPlaceholder": "Ex: -20% sur les balayages, Un soin offert...",
+    "promoDescSugg1": "-10% sur toutes les prestations",
+    "promoDescSugg2": "-20% sur un service",
+    "promoDescSugg3": "Un soin offert",
+    "promoExpiryLabel": "Date d'expiration (optionnel)",
+    "photosLabel": "Mes réalisations",
+    "photosAlt": "Réalisation {position}",
+    "svcName": "Nom",
+    "svcPrice": "Prix",
+    "svcDuration": "Durée (min)",
+    "svcFrom": "Dès",
+    "svcDescOpt": "Description (optionnel)",
+    "svcCancel": "Annuler",
+    "svcSave": "Enregistrer",
+    "svcSingular": "prestation",
+    "svcPlural": "prestations",
+    "svcCatPlaceholder": "Nom de la catégorie (ex: Coupes, Soins, Coloration...)",
+    "svcAdd": "Ajouter",
+    "svcNoneInCat": "Aucune prestation dans cette catégorie",
+    "svcOther": "Autres",
+    "svcNone": "Aucune prestation",
+    "svcNoneHint": "Ajoute tes services et tarifs ci-dessous",
+    "svcAddTitle": "Ajouter une prestation",
+    "svcNamePlaceholder": "Nom de la prestation",
+    "svcAddBtn": "Ajouter la prestation",
+    "svcIn": "dans",
+    "svcNoCat": "Sans catégorie",
+    "svcAddCat": "Ajouter une catégorie"
   },
   "dashHome": {
     "greeting": "Bonjour,",
@@ -1149,7 +1197,9 @@
     "noClientsYet": "Aucun client pour le moment",
     "noClientsHint": "Affiche ton QR code pour commencer !",
     "errorLoading": "Erreur lors du chargement des données",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "shieldInfoAria": "En savoir plus sur Qarte Shield",
+    "shieldToggleAria": "Activer ou désactiver Qarte Shield"
   },
   "subscription": {
     "title": "Abonnement",
@@ -2170,5 +2220,13 @@
     "ctaLine1": "Lors de votre prochain rendez-vous,",
     "ctaLine2": "demandez à scanner le QR code en caisse !",
     "poweredBy": "Propulsé par"
+  },
+  "pros": {
+    "title": "Ils fidélisent avec Qarte",
+    "description": "Découvrez les salons de coiffure, instituts de beauté et ongleries qui utilisent Qarte pour fidéliser leurs clients. Rejoignez-les.",
+    "ogTitle": "Ils fidélisent avec Qarte",
+    "ogDescription": "Découvrez les pros de la beauté qui fidélisent avec Qarte. Rejoignez la communauté.",
+    "heading1": "Aperçu de quelques pros sur Qarte.",
+    "heading2": "Fidélisez aussi vos clients."
   }
 }

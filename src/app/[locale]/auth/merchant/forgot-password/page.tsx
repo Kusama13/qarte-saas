@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
 
       setSuccess(true);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue';
+      const errorMessage = err instanceof Error ? err.message : t('genericError');
       setError(errorMessage);
     } finally {
       setLoading(false);

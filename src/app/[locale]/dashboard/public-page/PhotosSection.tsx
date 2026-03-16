@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { compressOfferImage } from '@/lib/image-compression';
+import { useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
 interface PhotosSectionProps {
@@ -16,6 +17,7 @@ interface PhotosSectionProps {
 }
 
 export default function PhotosSection({ merchant }: PhotosSectionProps) {
+  const t = useTranslations('publicPage');
   const supabase = getSupabase();
 
   const [photos, setPhotos] = useState<Array<{ id: string; url: string; position: number }>>([]);
@@ -84,7 +86,7 @@ export default function PhotosSection({ merchant }: PhotosSectionProps) {
     <div className="mb-4">
       <div className="flex items-center gap-2 mb-3">
         <Camera className="w-4 h-4 text-pink-500" />
-        <span className="text-sm font-semibold text-gray-700">Mes r&eacute;alisations</span>
+        <span className="text-sm font-semibold text-gray-700">{t('photosLabel')}</span>
         <span className="text-xs text-gray-400">{photos.length}/6</span>
       </div>
 
@@ -100,7 +102,7 @@ export default function PhotosSection({ merchant }: PhotosSectionProps) {
                 </div>
               ) : photo ? (
                 <>
-                  <img src={photo.url} alt={`Réalisation ${position}`} className="w-full h-full object-cover" />
+                  <img src={photo.url} alt={t('photosAlt', { position })} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors" />
                   <button
                     type="button"

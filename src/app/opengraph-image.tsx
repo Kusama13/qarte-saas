@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 
+// TODO: i18n — OG image is static, not locale-aware
 export const runtime = 'edge';
 
 export const alt = 'Qarte - Programme de fidélité digital pour salons de beauté';

@@ -9,6 +9,7 @@ import {
 import { Input } from '@/components/ui';
 import { getTodayForCountry } from '@/lib/utils';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
+import { useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 import type { WelcomeSectionHandle } from './WelcomeSection';
 
@@ -18,6 +19,7 @@ interface PromoSectionProps {
 }
 
 export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps) {
+  const t = useTranslations('publicPage');
   const { saving, saved, save } = useDashboardSave();
   const [promoEnabled, setPromoEnabled] = useState(false);
   const [promoTitle, setPromoTitle] = useState('');
@@ -49,7 +51,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
       // Save welcome section first
       await welcomeRef?.current?.save();
 
-      if (promoEnabled && (!promoTitle.trim() || !promoDescription.trim())) throw new Error('Titre et description requis');
+      if (promoEnabled && (!promoTitle.trim() || !promoDescription.trim())) throw new Error(t('promoFieldsRequired'));
 
       if (promoEnabled) {
         if (promoOfferId) {
@@ -96,9 +98,9 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Tag className="w-4 h-4 text-amber-500" />
-          <span className="text-sm font-semibold text-gray-700">Offre promotionnelle</span>
+          <span className="text-sm font-semibold text-gray-700">{t('promoOfferLabel')}</span>
           {promoExpiresAt && new Date(promoExpiresAt) < new Date(getTodayForCountry(merchant.country)) && (
-            <span className="text-[11px] font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded">Expir&eacute;e</span>
+            <span className="text-[11px] font-medium text-red-600 bg-red-50 px-1.5 py-0.5 rounded">{t('promoExpired')}</span>
           )}
         </div>
         <button
@@ -117,16 +119,16 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
         <div className="space-y-3 mt-3">
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-              Titre de l&apos;offre <span className="text-red-400">*</span>
+              {t('promoTitleLabel')} <span className="text-red-400">*</span>
             </label>
             <Input
-              placeholder="Ex: Offre de printemps"
+              placeholder={t('promoTitlePlaceholder')}
               value={promoTitle}
               onChange={(e) => setPromoTitle(e.target.value)}
               className="h-10 text-sm"
             />
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {['Offre de printemps', 'Offre sp\u00e9ciale', 'Offre du moment', 'Black Friday', 'Offre de rentr\u00e9e'].map((s) => (
+              {[t('promoSugg1'), t('promoSugg2'), t('promoSugg3'), 'Black Friday', t('promoSugg5')].map((s) => (
                 <button
                   key={s}
                   type="button"
@@ -140,16 +142,16 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
           </div>
           <div>
             <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-              Description de l&apos;offre <span className="text-red-400">*</span>
+              {t('promoDescLabel')} <span className="text-red-400">*</span>
             </label>
             <Input
-              placeholder="Ex: -20% sur les balayages, Un soin offert..."
+              placeholder={t('promoDescPlaceholder')}
               value={promoDescription}
               onChange={(e) => setPromoDescription(e.target.value)}
               className="h-10 text-sm"
             />
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {['-10% sur toutes les prestations', '-20% sur un service', 'Un soin offert'].map((s) => (
+              {[t('promoDescSugg1'), t('promoDescSugg2'), t('promoDescSugg3')].map((s) => (
                 <button
                   key={s}
                   type="button"
@@ -162,7 +164,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
             </div>
           </div>
           <div>
-            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Date d&apos;expiration (optionnel)</label>
+            <label className="text-sm font-semibold text-gray-700 mb-1.5 block">{t('promoExpiryLabel')}</label>
             <Input
               type="date"
               value={promoExpiresAt}
@@ -187,7 +189,7 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
           }`}
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <Check className="w-4 h-4" /> : null}
-          {saving ? 'Sauvegarde...' : saved ? 'Sauvegard\u00e9' : 'Enregistrer'}
+          {saving ? t('infoSaving') : saved ? t('infoSaved') : t('infoSave')}
         </button>
       </div>
     </div>

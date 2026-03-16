@@ -25,70 +25,56 @@ export function AnnouncementMaPageEmail({ shopName, slug, isSubscribed = true, l
 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('announcementMaPage.greeting', { shopName }) }} />
 
-      <Text style={paragraph}>
-        Qarte, ce n&apos;est plus seulement un programme de fid&eacute;lit&eacute;.
-        C&apos;est maintenant un vrai outil pour <strong>attirer de nouveaux clients</strong> et
-        d&eacute;velopper ton activit&eacute;. Voici ce qui est nouveau :
-      </Text>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('announcementMaPage.intro') }} />
 
       {/* 1. Ma Page */}
       <Section style={featureBoxViolet}>
-        <Text style={featureBadgeViolet}>Nouveau</Text>
-        <Text style={featureTitle}>Ta page pro est en ligne</Text>
+        <Text style={featureBadgeViolet}>{t('announcementMaPage.badgeNew')}</Text>
+        <Text style={featureTitle}>{t('announcementMaPage.feature1Title')}</Text>
         <Text style={featureText}>
-          Chaque commerce sur Qarte a d&eacute;sormais sa propre page publique :
-          tes prestations, tes tarifs, tes photos, tes r&eacute;seaux sociaux et
-          un lien de r&eacute;servation. Le tout optimis&eacute; pour Google.
-          Un seul lien &agrave; partager, et tes futurs clients te trouvent en un clic.
+          {t('announcementMaPage.feature1Desc')}
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={buttonViolet} href={`https://getqarte.com/p/${slug}`}>
-          Voir ma page
+          {t('announcementMaPage.feature1Cta')}
         </Button>
       </Section>
 
       {/* 2. Offre de bienvenue */}
       <Section style={featureBoxBlue}>
-        <Text style={featureBadgeBlue}>Acquisition</Text>
-        <Text style={featureTitle}>Offre de bienvenue : attire de nouveaux clients</Text>
+        <Text style={featureBadgeBlue}>{t('announcementMaPage.badgeAcquisition')}</Text>
+        <Text style={featureTitle}>{t('announcementMaPage.feature2Title')}</Text>
         <Text style={featureText}>
-          Propose une offre sp&eacute;ciale aux nouveaux clients qui d&eacute;couvrent
-          ta page &mdash; par exemple &laquo;&nbsp;-20&nbsp;% sur la 1&egrave;re visite&nbsp;&raquo;.
-          Ils s&apos;inscrivent, re&ccedil;oivent leur bon, et viennent chez toi.
-          Tout est automatique.
+          {t('announcementMaPage.feature2Desc')}
         </Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={buttonBlue} href="https://getqarte.com/dashboard/referrals">
-          Activer l&apos;offre de bienvenue
+          {t('announcementMaPage.feature2Cta')}
         </Button>
       </Section>
 
       {/* Résumé */}
       <Section style={summaryBox}>
-        <Text style={summaryTitle}>Fid&eacute;liser + attirer = un seul outil</Text>
+        <Text style={summaryTitle}>{t('announcementMaPage.summaryTitle')}</Text>
         <Text style={summaryText}>
-          Programme de fid&eacute;lit&eacute;, parrainage, offre de bienvenue, page pro&hellip;
-          Qarte te donne tout ce qu&apos;il faut pour garder tes clients
-          et en attirer de nouveaux. Tout &ccedil;a dans un seul abonnement.
+          {t('announcementMaPage.summaryText')}
         </Text>
       </Section>
 
       {/* Section non-abonnés */}
       {!isSubscribed && (
         <Section style={resubscribeBox}>
-          <Text style={resubscribeTitle}>Tu n&apos;es plus abonn&eacute;(e)&nbsp;?</Text>
+          <Text style={resubscribeTitle}>{t('announcementMaPage.resubscribeTitle')}</Text>
           <Text style={resubscribeText}>
-            On a ajout&eacute; beaucoup de nouveaut&eacute;s depuis ton d&eacute;part.
-            C&apos;est le moment id&eacute;al pour revenir et profiter de tout ce que
-            Qarte peut apporter &agrave; ton commerce.
+            {t('announcementMaPage.resubscribeText')}
           </Text>
           <Section style={buttonContainer}>
             <Button style={buttonGreen} href="https://getqarte.com/dashboard/subscription">
-              Se r&eacute;abonner maintenant
+              {t('announcementMaPage.resubscribeCta')}
             </Button>
           </Section>
         </Section>
