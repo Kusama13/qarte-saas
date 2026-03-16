@@ -386,29 +386,19 @@ export function FideliteSection() {
           transition={{ duration: 0.6, ease: EASE }}
           className="text-center mb-14 md:mb-16"
         >
-          <p className="text-sm font-bold text-indigo-400 uppercase tracking-wider mb-4">
+          {t('badge') && <p className="text-sm font-bold text-indigo-400 uppercase tracking-wider mb-4">
             {t('badge')}
-          </p>
+          </p>}
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
             {t('title')}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-violet-400">
               {t('titleBold')}
             </span>
           </h2>
+          {t('subtitle') && <p className="text-lg text-gray-400">{t('subtitle')}</p>}
         </motion.div>
 
         <div className="flex flex-col gap-6 md:gap-10 lg:gap-12">
-          <FeatureBlock
-            title={t('scanTitle')}
-            titleBold={t('scanTitleBold')}
-            description={t('scanDesc')}
-            visual={<ScanMethodsVisual t={t} />}
-            reverse
-            delay={0.05}
-          />
-
-          <Separator />
-
           <FeatureBlock
             title={t('programTitle')}
             titleBold={t('programTitleBold')}
@@ -424,6 +414,7 @@ export function FideliteSection() {
             titleBold={t('inactivityTitleBold')}
             description={t('inactivityDesc')}
             visual={<InactivityVisual t={t} />}
+            reverse
             delay={0.05}
           />
 
@@ -434,7 +425,6 @@ export function FideliteSection() {
             titleBold={t('autoTitleBold')}
             description={t('autoDesc')}
             visual={<AutoOffersVisual t={t} />}
-            reverse
             delay={0.05}
           />
 
@@ -445,6 +435,17 @@ export function FideliteSection() {
             titleBold={t('reviewsTitleBold')}
             description={t('reviewsDesc')}
             visual={<ReviewsVisual t={t} />}
+            reverse
+            delay={0.05}
+          />
+
+          <Separator />
+
+          <FeatureBlock
+            title={t('scanTitle')}
+            titleBold={t('scanTitleBold')}
+            description={t('scanDesc')}
+            visual={<ScanMethodsVisual t={t} />}
             delay={0.05}
           />
         </div>

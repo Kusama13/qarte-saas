@@ -17,20 +17,20 @@ export async function generateMetadata(): Promise<Metadata> {
   const isEn = locale === 'en';
 
   const title = isEn
-    ? 'Qarte — The Linktree for beauty pros + loyalty program'
-    : 'Qarte — Le Linktree des pros de la beauté + programme de fidélité';
+    ? 'Qarte — Salon page & loyalty for beauty pros'
+    : 'Qarte — Vitrine digitale et fidélité pour salons de beauté';
 
   const description = isEn
-    ? 'One link to showcase everything: bio, services, schedule, photos, Google reviews. A loyalty program that brings your clients back (stamps, cashback, auto follow-ups). For hair salons, barbers, beauty salons and nail studios. $19/month, free trial.'
-    : 'Un seul lien pour tout montrer : bio, prestations, planning, photos, avis Google. Un programme de fidélité qui fait revenir vos clientes (tampons, cagnotte, relances auto). Pour coiffeurs, barbiers, instituts de beauté et ongleries. 19 €/mois, essai gratuit.';
+    ? 'Create your salon page in 5 min: services, photos, schedule, Google reviews. Built-in loyalty program. For hair salons, barbers and nail studios. Free trial.'
+    : 'Créez votre vitrine en ligne en 5 min : prestations, photos, planning, avis Google. Programme de fidélité intégré. Essai gratuit.';
 
   const ogDescription = isEn
-    ? 'One link to showcase everything + a loyalty program that brings your clients back. $19/month, free trial.'
-    : 'Un seul lien pour tout montrer : bio, prestations, planning, photos. Un programme de fidélité qui fait revenir vos clientes. 19 €/mois, essai gratuit.';
+    ? 'Create your salon page in 5 min: services, photos, schedule, Google reviews. Built-in loyalty program. Free trial.'
+    : 'Créez votre vitrine en ligne en 5 min : prestations, photos, planning, avis Google. Programme de fidélité intégré. Essai gratuit.';
 
   const twitterDescription = isEn
-    ? 'One link to showcase everything + a loyalty program that brings your clients back. For hair salons, barbers, beauty salons and nail studios. Free trial.'
-    : 'Un seul lien pour tout montrer + un programme de fidélité qui fait revenir vos clientes. Pour coiffeurs, barbiers, instituts et ongleries. Essai gratuit.';
+    ? 'Create your salon page in 5 min: services, photos, schedule, Google reviews. Built-in loyalty program. Free trial.'
+    : 'Créez votre vitrine en ligne en 5 min : prestations, photos, planning, avis Google. Programme de fidélité intégré. Essai gratuit.';
 
   const keywords = isEn
     ? ['beauty salon bio link', 'linktree for hair salons', 'beauty salon mini-site', 'digital loyalty card', 'loyalty program hair salon', 'beauty client retention', 'QR code loyalty', 'online showcase hair salon', 'hair salon', 'barber', 'nail studio', 'beauty salon', 'Google reviews salon', 'online scheduling hair salon']
@@ -96,8 +96,8 @@ export default async function RootLayout({
   const locale = await getLocale();
 
   const orgDescription = locale === 'en'
-    ? 'The Linktree for beauty pros: one link to showcase everything + a digital loyalty program. For hair salons, barbers, nail studios and beauty salons.'
-    : 'Le Linktree des pros de la beauté : un seul lien pour tout montrer + un programme de fidélité digital. Pour coiffeurs, barbiers, ongleries et instituts.';
+    ? 'Salon page and loyalty program for beauty pros. Services, photos, schedule, Google reviews and client retention. For hair salons, barbers, nail studios and beauty salons.'
+    : 'Vitrine digitale et programme de fidélité pour salons de beauté. Prestations, photos, planning, avis Google et fidélisation client. Pour coiffeurs, barbiers, ongleries et instituts.';
 
   const appDescription = locale === 'en'
     ? 'One link to showcase everything (bio, services, schedule, photos) + digital loyalty program (QR code, stamps, cashback, push notifications). No app to download.'

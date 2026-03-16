@@ -212,11 +212,11 @@ function FeatureBadge({ active, icon, label }: { active: boolean; icon: React.Re
 function getWhatsAppMarketing(name: string, customers: number): { label: string; text: string }[] {
   return [
     { label: 'Presentation', text: `Hello ${name} ! C'est Elodie de Qarte, je vais t'accompagner pendant ton essai. Si t'as la moindre question, je suis dispo ici — n'hesite vraiment pas 😊` },
-    { label: 'Bienvenue', text: `Bienvenue sur Qarte ! En resumé : carte de fidelite digitale (QR code en caisse), page pro pour tes reseaux, offre de bienvenue pour attirer de nouveaux clients, et notifications push pour les faire revenir. Tout se configure en quelques clics depuis ton espace pro 😊` },
-    { label: 'Pourquoi Qarte', text: `Qarte remplace les cartes en carton que tes clients perdent. Tu affiches un QR code, ils le scannent, et leur carte est sur leur telephone. Tu peux leur envoyer des notifs, activer le parrainage, et avoir une page pro prete pour tes reseaux. Tout ca pour 19€/mois 😊` },
+    { label: 'Bienvenue', text: `Bienvenue sur Qarte ! En resumé : carte de fidelite digitale (QR code en caisse), vitrine en ligne pour tes reseaux, offre de bienvenue pour attirer de nouveaux clients, et notifications push pour les faire revenir. Tout se configure en quelques clics depuis ton espace pro 😊` },
+    { label: 'Pourquoi Qarte', text: `Qarte remplace les cartes en carton que tes clients perdent. Tu affiches un QR code, ils le scannent, et leur carte est sur leur telephone. Tu peux leur envoyer des notifs, activer le parrainage, et avoir une vitrine en ligne prete pour tes reseaux. Tout ca pour 19€/mois 😊` },
     { label: 'Relance config', text: `J'ai vu que ton programme n'etait pas encore finalise — ca se fait en 2 clics depuis ton espace pro. Choisis ta recompense, ton nombre de tampons, et c'est en ligne ! Si t'as besoin d'un coup de main je suis la 😊` },
-    { label: 'Offre bienvenue', text: `T'as active l'offre de bienvenue ? C'est un geste pour les nouveaux clients (ex: -20% premiere visite). Ils la voient sur ta page pro et ca les pousse a venir. Tu la configures dans Espace Pro → Ma Page en 30 secondes 🎁` },
-    { label: 'Referencement Google', text: `Savais-tu que ta page pro est referencee sur Google ? Quand quelqu'un cherche un salon pres de chez toi, ta page peut ressortir. Ajoute tes prestations, photos et adresse pour maximiser ta visibilite 🔍` },
+    { label: 'Offre bienvenue', text: `T'as active l'offre de bienvenue ? C'est un geste pour les nouveaux clients (ex: -20% premiere visite). Ils la voient sur ta vitrine en ligne et ca les pousse a venir. Tu la configures dans Espace Pro → Ma Page en 30 secondes 🎁` },
+    { label: 'Referencement Google', text: `Savais-tu que ta vitrine en ligne est referencee sur Google ? Quand quelqu'un cherche un salon pres de chez toi, ta page peut ressortir. Ajoute tes prestations, photos et adresse pour maximiser ta visibilite 🔍` },
     { label: 'Fin essai', text: `Ton essai se termine bientot${customers > 0 ? ` et tes ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. On continue ensemble ? 😊` },
     { label: 'Message libre', text: `C'est Elodie de Qarte. ` },
   ];
@@ -228,9 +228,9 @@ function getWhatsAppTuto(name: string): { label: string; text: string }[] {
     { label: 'La recompense', text: `Quand un client atteint le bon nombre de tampons, sa recompense apparait sur sa carte. Il te la montre, tu la valides, et son compteur repart a zero. On gere tout ! 🎁` },
     { label: 'Le dashboard', text: `Ton espace pro (getqarte.com → Espace Pro) c'est ton tableau de bord : clients, tampons, stats, notifications. Tout se gere depuis la, meme sur mobile 📊` },
     { label: 'Notifs & offres', text: `Tu peux envoyer des notifs push a tes clients depuis Espace Pro → Notifications. Y'a aussi des messages automatiques (anniversaire, rappels…). Top pour remplir un creneau calme 🔔` },
-    { label: 'Ma page pro', text: `Ta page pro c'est ton lien en bio pour Instagram, Facebook, TikTok. Photos, prestations, offre de bienvenue — tout est dessus. Tu la configures dans Espace Pro → Ma Page 📲` },
+    { label: 'Ma vitrine', text: `Ta vitrine en ligne c'est ton lien en bio pour Instagram, Facebook, TikTok. Photos, prestations, offre de bienvenue — tout est dessus. Tu la configures dans Espace Pro → Ma Page 📲` },
     { label: 'Parrainage', text: `Chaque client a un lien de parrainage sur sa carte. Quand un ami s'inscrit, les deux recoivent un cadeau. Ca s'active en 1 clic dans Espace Pro → Parrainage 🤝` },
-    { label: 'Offre bienvenue', text: `L'offre de bienvenue c'est un geste que tu offres aux nouveaux clients (ex: -20% premiere visite). Elle apparait sur ta page pro. Le client la voit, il vient, il scanne → il est dans ta base. Tu l'actives dans Espace Pro → Ma Page 🎁` },
+    { label: 'Offre bienvenue', text: `L'offre de bienvenue c'est un geste que tu offres aux nouveaux clients (ex: -20% premiere visite). Elle apparait sur ta vitrine en ligne. Le client la voit, il vient, il scanne → il est dans ta base. Tu l'actives dans Espace Pro → Ma Page 🎁` },
     { label: 'Le QR code', text: `Le QR code c'est ton outil principal. Imprime-le et affiche-le en caisse (on t'envoie des stickers aussi). Le client le scanne avec son telephone, pas besoin d'appli. En 5 secondes sa carte est creee et il recoit ses tampons a chaque visite 📸` },
   ];
 }
@@ -433,7 +433,7 @@ export default function MerchantDetailPage() {
     [merchant, stats.totalCustomers, stats.weeklyScans, stats.lastVisitDate]
   );
 
-  // Page Pro completion
+  // Vitrine en ligne completion
   const { pageProItems, pageProDone, pageProPct } = useMemo(() => {
     if (!merchant) return { pageProItems: [], pageProDone: 0, pageProPct: 0 };
     const items = [
@@ -968,13 +968,13 @@ export default function MerchantDetailPage() {
         )}
       </div>
 
-      {/* ═══════════ PAGE PRO ═══════════ */}
+      {/* ═══════════ VITRINE EN LIGNE ═══════════ */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-5">
         <div>
           <SectionTitle
             icon={<Globe className="w-4 h-4 text-[#5167fc]" />}
             badge={<span className={cn("px-2 py-0.5 text-xs font-bold rounded-full", pageProPct === 100 ? "bg-green-100 text-green-700" : pageProPct >= 50 ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700")}>{pageProPct}%</span>}
-          >Page pro</SectionTitle>
+          >Vitrine en ligne</SectionTitle>
           <div className="h-2 bg-gray-200/60 rounded-full mb-3 overflow-hidden">
             <div className={cn("h-full rounded-full transition-all", pageProPct === 100 ? "bg-green-500" : pageProPct >= 50 ? "bg-amber-500" : "bg-red-400")} style={{ width: `${pageProPct}%` }} />
           </div>

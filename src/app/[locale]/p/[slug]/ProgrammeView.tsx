@@ -535,6 +535,17 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     {t('viewMoreServices', { count: totalSvcCount - PREVIEW_COUNT })}
                   </button>
                 )}
+
+                {servicesExpanded && (
+                  <button
+                    type="button"
+                    onClick={() => setServicesExpanded(false)}
+                    className="w-full mt-2 py-2.5 rounded-xl text-[12px] font-bold transition-colors cursor-pointer"
+                    style={{ color: p, backgroundColor: `${p}08` }}
+                  >
+                    {t('collapseServices')}
+                  </button>
+                )}
               </div>
             </motion.div>
           );
@@ -847,17 +858,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           </p>
         </motion.a>
 
-        <p className="text-center text-[11px] text-gray-400 font-medium pt-3 pb-2">
-          {t('poweredBy')}{' '}
-          <a
-            href="https://getqarte.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-semibold text-[#4b0082] hover:text-[#654EDA] transition-colors"
-          >
-            Qarte
-          </a>
-        </p>
 
       </div>
 

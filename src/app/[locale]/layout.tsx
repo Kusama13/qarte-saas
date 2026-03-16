@@ -17,13 +17,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (locale === 'en') {
     return {
       title: {
-        default: 'Qarte — The Linktree for beauty pros + loyalty program',
+        default: 'Qarte — Salon page & loyalty for beauty pros',
         template: '%s | Qarte',
       },
-      description: 'One link to showcase everything: bio, services, schedule, photos, Google reviews. A loyalty program that brings your clients back (stamps, cashback, auto follow-ups). For hair salons, barbers, beauty salons and nail studios. $19/month, free trial.',
+      description: 'Create your salon page in 5 min: services, photos, schedule, Google reviews. Built-in loyalty program. For hair salons, barbers and nail studios. Free trial.',
       openGraph: {
-        title: 'Qarte — The Linktree for beauty pros + loyalty program',
-        description: 'One link to showcase everything + a loyalty program that brings your clients back. $19/month, free trial.',
+        title: 'Qarte — Salon page & loyalty for beauty pros',
+        description: 'Create your salon page in 5 min: services, photos, schedule, Google reviews. Built-in loyalty program. Free trial.',
         locale: 'en_US',
         alternateLocale: ['fr_FR'],
       },

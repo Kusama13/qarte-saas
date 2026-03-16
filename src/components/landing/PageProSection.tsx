@@ -225,9 +225,9 @@ export function PageProSection() {
           transition={{ duration: 0.6, ease: EASE }}
           className="text-center mb-14 md:mb-16"
         >
-          <p className="text-sm font-bold text-indigo-500 uppercase tracking-wider mb-4">
+          {t('badge') && <p className="text-sm font-bold text-indigo-500 uppercase tracking-wider mb-4">
             {t('badge')}
-          </p>
+          </p>}
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
             {t('title')}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">

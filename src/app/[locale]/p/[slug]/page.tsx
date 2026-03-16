@@ -109,11 +109,11 @@ export async function generateMetadata({
 
   const isEN = locale === 'en';
   const title = isEN
-    ? `${merchant.shop_name} — Loyalty program | Qarte`
-    : `${merchant.shop_name} — Programme de fidélité | Qarte`;
+    ? `${merchant.shop_name} — ${shopLabel || 'Salon'} | Qarte`
+    : `${merchant.shop_name} — ${shopLabel || 'Salon'} | Qarte`;
   const description = isEN
-    ? `Discover ${merchant.shop_name}'s loyalty program${merchant.shop_address ? ` in ${merchant.shop_address}` : ''}. Digital card, rewards and perks.`
-    : `Découvrez le programme de fidélité de ${merchant.shop_name}${location}. ${shopLabel} — carte digitale, récompenses et avantages.`;
+    ? `${merchant.shop_name}${merchant.shop_address ? ` in ${merchant.shop_address}` : ''}. Services, photos, schedule and loyalty program.`
+    : `${merchant.shop_name}${location}. ${shopLabel} — prestations, photos, horaires et programme de fidélité.`;
 
   return {
     title,

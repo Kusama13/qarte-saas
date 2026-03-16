@@ -232,7 +232,7 @@ function MerchantBadges({ isAdmin, noContact, pending, pwaInstalled, welcomeOffe
         </span>
       )}
       {pageRemplie && (
-        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full flex-shrink-0 flex items-center gap-0.5" title="Page pro remplie (services + photos + adresse)">
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full flex-shrink-0 flex items-center gap-0.5" title="Vitrine en ligne remplie (services + photos + adresse)">
           <CheckCircle className="w-3 h-3" />
           Page
         </span>

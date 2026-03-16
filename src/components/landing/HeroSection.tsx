@@ -140,7 +140,7 @@ export function HeroSection() {
           </div>
 
           <p className="text-base lg:text-lg text-gray-600 max-w-lg leading-relaxed">
-            {t('subtitle')} <span className="text-gray-900 font-medium">{t('subtitleBold')}</span>
+            {t('subtitle')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 font-semibold">{t('subtitleHighlight')}</span>{t('subtitleEnd')} <span className="text-gray-900 font-medium">{t('subtitleBold')}</span>
           </p>
 
           <div className="flex flex-col sm:flex-row sm:items-start gap-3 lg:gap-4">

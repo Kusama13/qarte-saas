@@ -91,7 +91,7 @@ export default function WelcomePage() {
           </div>
         </motion.button>
 
-        {/* Card 2: Ma page pro */}
+        {/* Card 2: Ma vitrine en ligne */}
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -99,7 +99,7 @@ export default function WelcomePage() {
           onClick={() => router.push('/dashboard/public-page')}
           className="group relative p-6 bg-white rounded-2xl border-2 border-gray-100 hover:border-violet-300 shadow-sm hover:shadow-lg hover:shadow-violet-100/50 transition-all duration-300 text-left overflow-hidden"
         >
-          {/* Mini page pro preview */}
+          {/* Mini vitrine preview */}
           <div className="relative mb-5 p-3 rounded-xl bg-gradient-to-br from-violet-50 to-pink-50 border border-violet-100/50">
             <div className="flex items-center gap-2 mb-2">
               <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center">

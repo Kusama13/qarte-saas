@@ -54,7 +54,7 @@ export const changelog: Record<string, ChangelogEntry[]> = {
     { tag: 'fix', text: 'Typage Stripe v20 + date prochain prelevement' },
   ],
   '2026-03-12': [
-    { tag: 'design', text: 'Landing — repositionnement page pro + fidelite, demos /p/demo-*' },
+    { tag: 'design', text: 'Landing — repositionnement vitrine en ligne + fidelite, demos /p/demo-*' },
     { tag: 'feature', text: 'Offre bienvenue + page publique /p/[slug] redesign' },
     { tag: 'design', text: 'Redesign page login client (floating cards + gradient mesh)' },
     { tag: 'marketing', text: 'Emails — mention page publique dans Welcome, FirstScan, TrialEnding' },
