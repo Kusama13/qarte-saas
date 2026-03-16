@@ -787,13 +787,13 @@ export default function CustomersPage() {
 
           <Input
             label={t('firstName')}
-            placeholder="Jean"
+            placeholder={t('firstNamePlaceholder')}
             value={newFirstName}
             onChange={(e) => setNewFirstName(e.target.value)}
           />
           <Input
             label={t('lastName')}
-            placeholder="Dupont"
+            placeholder={t('lastNamePlaceholder')}
             value={newLastName}
             onChange={(e) => setNewLastName(e.target.value)}
           />

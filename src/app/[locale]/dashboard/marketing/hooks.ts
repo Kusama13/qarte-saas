@@ -23,6 +23,7 @@ interface MerchantData {
 }
 
 export function useMarketingData(merchant: MerchantData | null) {
+  const tMarketing = useTranslations('marketing');
   // Subscribers
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
@@ -147,7 +148,7 @@ export function useMarketingData(merchant: MerchantData | null) {
         }),
       });
       if (res.ok) {
-        setBirthdaySaveResult({ success: true, message: 'Sauvegardé !' });
+        setBirthdaySaveResult({ success: true, message: tMarketing('automations.saved') });
       } else {
         setBirthdaySaveResult({ success: false, message: 'Erreur' });
       }
@@ -359,7 +360,7 @@ export function useNotificationComposer(merchant: MerchantData | null, deps: {
     const allText = `${title} ${body} ${offerDescription}`;
     const forbiddenWord = containsForbiddenWords(allText);
     if (forbiddenWord) {
-      setSendResult({ success: false, message: `Contenu interdit détecté: "${forbiddenWord}". Veuillez modifier votre message.` });
+      setSendResult({ success: false, message: tMarketing('send.forbiddenContentDetected', { forbiddenWord }) });
       return;
     }
     setSending(true);
@@ -412,7 +413,7 @@ export function useNotificationComposer(merchant: MerchantData | null, deps: {
     const allText = `${title} ${body} ${offerDescription}`;
     const forbiddenWord = containsForbiddenWords(allText);
     if (forbiddenWord) {
-      setSendResult({ success: false, message: `Contenu interdit détecté: "${forbiddenWord}". Veuillez modifier votre message.` });
+      setSendResult({ success: false, message: tMarketing('send.forbiddenContentDetected', { forbiddenWord }) });
       return;
     }
     setScheduling(true);

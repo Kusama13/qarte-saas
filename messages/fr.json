@@ -760,7 +760,8 @@
       "view": "Voir",
       "stop": "Stop",
       "history": "Historique",
-      "noNotifications": "Aucune notification envoyée"
+      "noNotifications": "Aucune notification envoyée",
+      "forbiddenContentDetected": "Contenu interdit détecté: \"{forbiddenWord}\". Veuillez modifier votre message."
     },
     "modals": {
       "howItWorksTitle": "Comment ça marche ?",
@@ -905,7 +906,26 @@
     "expired": "Expiré",
     "expiresOn": "Expire le",
     "daysRemaining": "{count} jours",
-    "daysRemainingShort": "{count}j"
+    "daysRemainingShort": "{count}j",
+    "howItWorksTitle": "Comment fonctionnent les programmes membres ?",
+    "howItWorksDesc": "Les programmes membres permettent de créer des avantages exclusifs pour tes meilleurs clients.",
+    "step1Title": "Créez un programme",
+    "step1Desc": "Définissez un nom (ex: VIP Gold), un avantage (-10% permanent) et une durée d'adhésion.",
+    "step2Title": "Ajoutez des membres",
+    "step2Desc": "Sélectionne tes clients fidèles parmi ceux qui ont déjà une carte de fidélité chez toi.",
+    "step3Title": "Ils profitent des avantages",
+    "step3Desc": "L'avantage s'affiche sur leur carte digitale. Tu peux renouveler ou retirer à tout moment.",
+    "tip": "<strong>Astuce :</strong> Utilise les programmes pour récompenser tes 10 meilleurs clients avec un statut VIP permanent !"
+  },
+  "merchantSettingsForm": {
+    "stampsRequiredLabel": "Nombre de passages requis",
+    "suggestionsLabel": "Suggestions :",
+    "nPassages": "{n} passages",
+    "rewardLabel": "Récompense offerte",
+    "rewardPlaceholder": "Ex: Un soin offert, -20%, Une coupe gratuite...",
+    "summaryAfter": "Après",
+    "summaryPassages": "{count} passages",
+    "summaryReward": "vos clients gagnent"
   },
   "program": {
     "title": "Programme fidélité",
@@ -1104,7 +1124,7 @@
     "welcomeSaveError": "Erreur lors de la sauvegarde",
     "welcomeOfferLabel": "Offre nouveau client",
     "welcomeDescLabel": "Description de l'offre",
-    "welcomeDescPlaceholder": "Ex: -20% sur votre premiere visite",
+    "welcomeDescPlaceholder": "Ex: -20% sur votre première visite",
     "welcomeSugg1": "-10% sur la 1ere visite",
     "welcomeSugg2": "-20% sur la 1ere visite",
     "welcomeSugg3": "Un soin offert",
@@ -1305,7 +1325,9 @@
     "createError": "Erreur lors de la création",
     "createErrorGeneric": "Une erreur est survenue. Veuillez réessayer.",
     "firstName": "Prénom",
+    "firstNamePlaceholder": "Jean",
     "lastName": "Nom",
+    "lastNamePlaceholder": "Dupont",
     "phone": "Téléphone",
     "birthdayLabel": "Anniversaire (optionnel)",
     "dayOption": "Jour",

@@ -760,7 +760,8 @@
       "view": "View",
       "stop": "Stop",
       "history": "History",
-      "noNotifications": "No notifications sent"
+      "noNotifications": "No notifications sent",
+      "forbiddenContentDetected": "Forbidden content detected: \"{forbiddenWord}\". Please modify your message."
     },
     "modals": {
       "howItWorksTitle": "How does it work?",
@@ -905,7 +906,26 @@
     "expired": "Expired",
     "expiresOn": "Expires on",
     "daysRemaining": "{count} days",
-    "daysRemainingShort": "{count}d"
+    "daysRemainingShort": "{count}d",
+    "howItWorksTitle": "How do member programs work?",
+    "howItWorksDesc": "Member programs let you create exclusive perks for your best clients.",
+    "step1Title": "Create a program",
+    "step1Desc": "Set a name (e.g. VIP Gold), a benefit (-10% permanent) and a membership duration.",
+    "step2Title": "Add members",
+    "step2Desc": "Select your loyal clients from those who already have a loyalty card with you.",
+    "step3Title": "They enjoy the benefits",
+    "step3Desc": "The benefit appears on their digital card. You can renew or remove at any time.",
+    "tip": "<strong>Tip:</strong> Use programs to reward your top 10 clients with a permanent VIP status!"
+  },
+  "merchantSettingsForm": {
+    "stampsRequiredLabel": "Number of visits required",
+    "suggestionsLabel": "Suggestions:",
+    "nPassages": "{n} visits",
+    "rewardLabel": "Reward offered",
+    "rewardPlaceholder": "E.g.: A free treatment, -20%, A free haircut...",
+    "summaryAfter": "After",
+    "summaryPassages": "{count} visits",
+    "summaryReward": "your clients earn"
   },
   "program": {
     "title": "Loyalty program",
@@ -1305,7 +1325,9 @@
     "createError": "Error during creation",
     "createErrorGeneric": "An error occurred. Please try again.",
     "firstName": "First name",
+    "firstNamePlaceholder": "John",
     "lastName": "Last name",
+    "lastNamePlaceholder": "Smith",
     "phone": "Phone",
     "birthdayLabel": "Birthday (optional)",
     "dayOption": "Day",

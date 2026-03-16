@@ -5,6 +5,7 @@ import {
   Gift,
   Target,
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui';
 import type { ShopType } from '@/types';
 
@@ -92,6 +93,7 @@ export function MerchantSettingsForm({
   onChange,
   hiddenReward,
 }: MerchantSettingsFormProps) {
+  const t = useTranslations('merchantSettingsForm');
   const rewardSuggestions = REWARD_SUGGESTIONS[shopType] || REWARD_SUGGESTIONS.autre;
   const stampsSuggestions = STAMPS_SUGGESTIONS[shopType] || STAMPS_SUGGESTIONS.autre;
 
@@ -140,7 +142,7 @@ export function MerchantSettingsForm({
           <Input
             value={rewardDescription}
             onChange={(e) => onChange({ stamps_required: stampsRequired, reward_description: e.target.value })}
-            placeholder="Ex: Un soin offert, -20%, Une coupe gratuite..."
+            placeholder={t('rewardPlaceholder')}
             className="h-11"
           />
           <div className="flex flex-wrap gap-1.5">
