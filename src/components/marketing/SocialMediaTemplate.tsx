@@ -1,7 +1,6 @@
 'use client';
 
 import { forwardRef } from 'react';
-import { Gift, Sparkles } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 interface SocialMediaTemplateProps {
@@ -43,17 +42,17 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
   ) => {
     const t = useTranslations('socialMediaTemplate');
 
-    // 4:5 ratio (Instagram portrait)
     const width = 400 * scale;
     const height = 500 * scale;
+    const s = scale; // shorthand
     const isCagnotte = loyaltyMode === 'cagnotte';
     const hasTwoTiers = tier2Enabled && tier2StampsRequired && (tier2RewardDescription || (isCagnotte && cagnotteTier2Percent));
     const displayReward = isCagnotte ? t('cagnotteReward', { percent: Number(cagnottePercent || 0) }) : rewardDescription;
     const displayTier2Reward = isCagnotte ? t('cagnotteReward', { percent: Number(cagnotteTier2Percent || 0) }) : tier2RewardDescription;
 
-    const getStampsText = (stamps: number) => {
-      return t('visits', { count: stamps });
-    };
+    // Show up to 8 stamps for visual, fill some
+    const stampsToShow = Math.min(stampsRequired, 8);
+    const filledStamps = Math.max(Math.floor(stampsToShow * 0.6), 1);
 
     return (
       <div
@@ -63,305 +62,230 @@ export const SocialMediaTemplate = forwardRef<HTMLDivElement, SocialMediaTemplat
           width: `${width}px`,
           height: `${height}px`,
           fontFamily: 'system-ui, -apple-system, sans-serif',
-          background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+          background: `linear-gradient(145deg, ${primaryColor} 0%, ${secondaryColor} 50%, ${primaryColor} 100%)`,
           clipPath: 'inset(0px)',
         }}
       >
 
-        {/* Decorative Elements */}
-        <div
-          style={{
-            position: 'absolute',
-            width: `${120 * scale}px`,
-            height: `${120 * scale}px`,
-            top: `${-30 * scale}px`,
-            right: `${-30 * scale}px`,
-            borderRadius: '50%',
-            backgroundColor: 'rgba(255,255,255,0.2)',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            width: `${80 * scale}px`,
-            height: `${80 * scale}px`,
-            bottom: `${80 * scale}px`,
-            left: `${-20 * scale}px`,
-            borderRadius: '50%',
-            backgroundColor: 'rgba(255,255,255,0.1)',
-          }}
-        />
-        <div
-          style={{
-            position: 'absolute',
-            width: `${50 * scale}px`,
-            height: `${50 * scale}px`,
-            top: `${200 * scale}px`,
-            right: `${-10 * scale}px`,
-            borderRadius: '50%',
-            backgroundColor: 'rgba(255,255,255,0.15)',
-          }}
-        />
+        {/* Decorative circles */}
+        <div style={{
+          position: 'absolute', width: `${140 * s}px`, height: `${140 * s}px`,
+          top: `${-40 * s}px`, right: `${-40 * s}px`, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.08)',
+        }} />
+        <div style={{
+          position: 'absolute', width: `${100 * s}px`, height: `${100 * s}px`,
+          bottom: `${60 * s}px`, left: `${-30 * s}px`, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.06)',
+        }} />
+        <div style={{
+          position: 'absolute', width: `${60 * s}px`, height: `${60 * s}px`,
+          top: `${180 * s}px`, right: `${-15 * s}px`, borderRadius: '50%',
+          background: 'rgba(255,255,255,0.05)',
+        }} />
 
-        {/* Content Container */}
+        {/* Sparkle decorations */}
+        {[
+          { top: 35, left: 30, size: 4 },
+          { top: 90, right: 35, size: 3 },
+          { top: 380, left: 45, size: 3.5 },
+          { top: 450, right: 50, size: 2.5 },
+          { top: 240, left: 20, size: 2 },
+        ].map((spark, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              top: `${spark.top * s}px`,
+              ...(spark.left !== undefined ? { left: `${spark.left * s}px` } : {}),
+              ...(spark.right !== undefined ? { right: `${spark.right * s}px` } : {}),
+              width: `${spark.size * s}px`,
+              height: `${spark.size * s}px`,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.5)',
+            }}
+          />
+        ))}
+
+        {/* Content */}
         <div
           className="relative flex flex-col items-center justify-between h-full"
-          style={{ padding: `${28 * scale}px ${24 * scale}px` }}
+          style={{ padding: `${32 * s}px ${28 * s}px ${20 * s}px` }}
         >
-          {/* Top: Logo & Shop Name */}
-          <div className="flex flex-col items-center text-center">
-            {logoUrl ? (
-              <div
-                style={{
-                  width: `${64 * scale}px`,
-                  height: `${64 * scale}px`,
-                  marginBottom: `${10 * scale}px`,
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  clipPath: 'circle(50%)',
-                  border: `${2 * scale}px solid rgba(255,255,255,0.3)`,
-                  flexShrink: 0,
-                }}
-              >
-                <img
-                  src={logoUrl}
-                  alt={shopName}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                />
-              </div>
-            ) : (
-              <div
-                style={{
-                  width: `${64 * scale}px`,
-                  height: `${64 * scale}px`,
-                  marginBottom: `${10 * scale}px`,
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  clipPath: 'circle(50%)',
-                  backgroundColor: 'rgba(255,255,255,0.2)',
-                  border: `${2 * scale}px solid rgba(255,255,255,0.3)`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <span
-                  className="text-white font-black"
-                  style={{ fontSize: `${28 * scale}px` }}
-                >
-                  {shopName[0]?.toUpperCase()}
-                </span>
-              </div>
-            )}
-            <h1
-              className="text-white font-black tracking-tight leading-tight"
+
+          {/* ===== TOP: Shop Name ===== */}
+          <div className="flex flex-col items-center text-center" style={{ marginBottom: `${20 * s}px` }}>
+            <h1 className="text-white leading-none"
               style={{
-                fontSize: `${22 * scale}px`,
-                maxWidth: `${280 * scale}px`,
-              }}
-            >
+                fontSize: `${30 * s}px`, maxWidth: `${300 * s}px`,
+                fontFamily: 'var(--font-playfair), Playfair Display, Georgia, serif',
+                fontWeight: 700, fontStyle: 'italic',
+              }}>
               {shopName}
             </h1>
-            <p
-              className="text-white/70 font-medium uppercase tracking-widest"
-              style={{
-                fontSize: `${8 * scale}px`,
-                marginTop: `${6 * scale}px`,
-              }}
-            >
-              {t('loyaltyProgram')}
-            </p>
           </div>
 
-          {/* Center: Reward Card */}
-          <div
-            className="w-full text-center"
-            style={{
-              padding: `${(hasTwoTiers ? 14 : 20) * scale}px ${(hasTwoTiers ? 14 : 20) * scale}px`,
-              borderRadius: `${20 * scale}px`,
-              backgroundColor: 'rgba(255,255,255,0.95)',
-              boxShadow: '0 15px 40px -10px rgba(0,0,0,0.2)',
-            }}
-          >
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Gift
-                style={{
-                  width: `${(hasTwoTiers ? 16 : 20) * scale}px`,
-                  height: `${(hasTwoTiers ? 16 : 20) * scale}px`,
-                  color: primaryColor,
-                }}
-              />
-              <span
-                className="font-bold uppercase tracking-wider"
-                style={{ fontSize: `${(hasTwoTiers ? 9 : 10) * scale}px`, color: primaryColor }}
-              >
-                {hasTwoTiers ? t('yourRewards') : t('yourReward')}
-              </span>
+          {/* ===== CENTER: Frosted card with stamps + reward ===== */}
+          <div style={{
+            width: '100%',
+            padding: `${20 * s}px`,
+            borderRadius: `${20 * s}px`,
+            background: 'rgba(255,255,255,0.18)',
+            border: `${1 * s}px solid rgba(255,255,255,0.3)`,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+          }}>
+
+            {/* Stamps row */}
+            <div className="flex items-center justify-center"
+              style={{ gap: `${6 * s}px`, marginBottom: `${16 * s}px` }}>
+              {Array.from({ length: stampsToShow }).map((_, i) => (
+                <div key={i} style={{
+                  width: `${28 * s}px`, height: `${28 * s}px`, borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  ...(i < filledStamps
+                    ? {
+                        background: 'rgba(255,255,255,0.95)',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      }
+                    : {
+                        border: `${2 * s}px dashed rgba(255,255,255,0.4)`,
+                      }
+                  ),
+                }}>
+                  {i < filledStamps && (
+                    <svg width={`${14 * s}px`} height={`${14 * s}px`} viewBox="0 0 24 24"
+                      fill="none" stroke={primaryColor} strokeWidth="3"
+                      strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </div>
+              ))}
             </div>
 
+            {/* Label */}
+            <p className="text-center" style={{
+              fontSize: `${9 * s}px`, color: 'rgba(255,255,255,0.6)',
+              fontWeight: 700, letterSpacing: `${1.5 * s}px`,
+              textTransform: 'uppercase' as const,
+              marginBottom: `${12 * s}px`,
+            }}>
+              {t('loyaltyProgram')}
+            </p>
+
+            {/* Divider */}
+            <div style={{
+              width: `${40 * s}px`, height: `${1 * s}px`, margin: `0 auto ${14 * s}px`,
+              background: 'rgba(255,255,255,0.25)',
+            }} />
+
             {hasTwoTiers ? (
-              <div className="flex gap-2" style={{ gap: `${8 * scale}px` }}>
+              /* Two-tier rewards */
+              <div className="flex" style={{ gap: `${8 * s}px` }}>
                 {/* Tier 1 */}
-                <div
-                  className="flex-1 text-center"
-                  style={{
-                    padding: `${10 * scale}px ${8 * scale}px`,
-                    borderRadius: `${12 * scale}px`,
-                    backgroundColor: 'rgba(255,255,255,0.8)',
-                    border: `2px solid ${primaryColor}`,
-                  }}
-                >
-                  <span
-                    className="font-bold uppercase tracking-wide"
-                    style={{ fontSize: `${7 * scale}px`, color: primaryColor }}
-                  >
+                <div className="flex-1 text-center" style={{
+                  padding: `${12 * s}px ${8 * s}px`,
+                  borderRadius: `${14 * s}px`,
+                  background: 'rgba(255,255,255,0.9)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                }}>
+                  <span style={{
+                    fontSize: `${7 * s}px`, fontWeight: 800, textTransform: 'uppercase' as const,
+                    letterSpacing: `${1 * s}px`, color: primaryColor,
+                  }}>
                     {t('tier1')}
                   </span>
-                  <p
-                    className="font-black leading-tight"
-                    style={{
-                      fontSize: `${12 * scale}px`,
-                      color: '#1a1a2e',
-                      marginTop: `${4 * scale}px`,
-                      marginBottom: `${4 * scale}px`,
-                    }}
-                  >
+                  <p style={{
+                    fontSize: `${13 * s}px`, fontWeight: 900, color: '#1a1a2e',
+                    lineHeight: 1.2, margin: `${4 * s}px 0`,
+                  }}>
                     {displayReward}
                   </p>
-                  <p
-                    className="font-bold"
-                    style={{ fontSize: `${9 * scale}px`, color: primaryColor }}
-                  >
-                    {getStampsText(stampsRequired)}
+                  <p style={{ fontSize: `${9 * s}px`, fontWeight: 700, color: primaryColor }}>
+                    {t('visits', { count: stampsRequired })}
                   </p>
                 </div>
 
                 {/* Tier 2 */}
-                <div
-                  className="flex-1 text-center"
-                  style={{
-                    padding: `${10 * scale}px ${8 * scale}px`,
-                    borderRadius: `${12 * scale}px`,
-                    backgroundColor: 'rgba(255,255,255,0.8)',
-                    border: `2px solid #f59e0b`,
-                  }}
-                >
-                  <div className="flex items-center justify-center gap-1">
-                    <span
-                      className="font-bold uppercase tracking-wide"
-                      style={{ fontSize: `${7 * scale}px`, color: '#f59e0b' }}
-                    >
-                      {t('tier2')}
-                    </span>
-                    <span style={{ fontSize: `${8 * scale}px` }}>&#11088;</span>
-                  </div>
-                  <p
-                    className="font-black leading-tight"
-                    style={{
-                      fontSize: `${12 * scale}px`,
-                      color: '#1a1a2e',
-                      marginTop: `${4 * scale}px`,
-                      marginBottom: `${4 * scale}px`,
-                    }}
-                  >
+                <div className="flex-1 text-center" style={{
+                  padding: `${12 * s}px ${8 * s}px`,
+                  borderRadius: `${14 * s}px`,
+                  background: 'rgba(255,255,255,0.9)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                  border: `${2 * s}px solid #f59e0b`,
+                }}>
+                  <span style={{
+                    fontSize: `${7 * s}px`, fontWeight: 800, textTransform: 'uppercase' as const,
+                    letterSpacing: `${1 * s}px`, color: '#f59e0b',
+                  }}>
+                    {t('tier2')} &#11088;
+                  </span>
+                  <p style={{
+                    fontSize: `${13 * s}px`, fontWeight: 900, color: '#1a1a2e',
+                    lineHeight: 1.2, margin: `${4 * s}px 0`,
+                  }}>
                     {displayTier2Reward}
                   </p>
-                  <p
-                    className="font-bold"
-                    style={{ fontSize: `${9 * scale}px`, color: '#f59e0b' }}
-                  >
-                    {getStampsText(tier2StampsRequired!)}
+                  <p style={{ fontSize: `${9 * s}px`, fontWeight: 700, color: '#f59e0b' }}>
+                    {t('visits', { count: tier2StampsRequired! })}
                   </p>
                 </div>
               </div>
             ) : (
-              <>
-                <p
-                  className="font-black leading-tight"
-                  style={{
-                    fontSize: `${18 * scale}px`,
-                    color: '#1a1a2e',
-                    maxWidth: `${280 * scale}px`,
-                    margin: '0 auto',
-                  }}
-                >
+              /* Single reward — big text */
+              <div className="text-center" style={{
+                padding: `${14 * s}px`,
+                borderRadius: `${16 * s}px`,
+                background: 'rgba(255,255,255,0.9)',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              }}>
+                <p style={{
+                  fontSize: `${20 * s}px`, fontWeight: 900, color: '#1a1a2e',
+                  lineHeight: 1.2, maxWidth: `${260 * s}px`, margin: '0 auto',
+                }}>
                   {displayReward}
                 </p>
-                <p
-                  className="font-bold mt-2"
-                  style={{
-                    fontSize: `${12 * scale}px`,
-                    color: primaryColor,
-                  }}
-                >
-                  {t('after', { visits: getStampsText(stampsRequired) })}
+                <p style={{
+                  fontSize: `${11 * s}px`, fontWeight: 700, color: primaryColor,
+                  marginTop: `${6 * s}px`,
+                }}>
+                  {t('after', { visits: t('visits', { count: stampsRequired }) })}
                 </p>
-              </>
+              </div>
             )}
           </div>
 
-          {/* Bottom: CTA Message */}
-          <div className="flex flex-col items-center">
-            <div
-              className="relative text-center"
-              style={{
-                padding: `${14 * scale}px ${20 * scale}px`,
-                borderRadius: `${16 * scale}px`,
-                backgroundColor: 'rgba(255,255,255,0.25)',
-                border: '1px solid rgba(255,255,255,0.3)',
-              }}
-            >
-              <div className="flex items-center justify-center gap-1.5 mb-1">
-                <Sparkles
-                  style={{
-                    width: `${14 * scale}px`,
-                    height: `${14 * scale}px`,
-                    color: 'white',
-                  }}
-                />
-                <span
-                  className="text-white font-bold"
-                  style={{ fontSize: `${11 * scale}px` }}
-                >
-                  {t('howItWorks')}
-                </span>
-              </div>
-              <p
-                className="text-white/90 font-medium leading-snug"
-                style={{
-                  fontSize: `${10 * scale}px`,
-                  maxWidth: `${260 * scale}px`,
-                }}
-              >
-                {t('ctaLine1')}
-                <br />
-                {t('ctaLine2')}
-              </p>
-            </div>
-
-            {/* Qarte Branding */}
-            <div
-              className="flex items-center justify-center mt-3"
-              style={{
-                padding: `${3 * scale}px ${10 * scale}px`,
-                borderRadius: `${20 * scale}px`,
-                backgroundColor: 'rgba(255,255,255,0.9)',
-              }}
-            >
-              <span
-                className="font-medium"
-                style={{ fontSize: `${8 * scale}px`, color: '#9ca3af' }}
-              >
-                {t('poweredBy')}&nbsp;
-              </span>
-              <span
-                className="font-black"
-                style={{ fontSize: `${10 * scale}px`, color: '#4b5563' }}
-              >
-                getqarte.com
-              </span>
-            </div>
+          {/* ===== CTA text — sits just below the card ===== */}
+          <div className="text-center" style={{ marginTop: `${14 * s}px` }}>
+            <p className="text-white font-bold" style={{
+              fontSize: `${14 * s}px`, letterSpacing: `${0.3 * s}px`,
+            }}>
+              {t('ctaLine1')}
+            </p>
+            <p style={{
+              fontSize: `${11 * s}px`, fontWeight: 500,
+              color: 'rgba(255,255,255,0.7)', marginTop: `${3 * s}px`,
+            }}>
+              {t('ctaLine2')}
+            </p>
           </div>
+
+          {/* ===== Qarte branding — stays at bottom ===== */}
+          <span style={{
+            display: 'inline-block',
+            padding: `${2 * s}px ${8 * s}px`,
+            borderRadius: `${8 * s}px`,
+            background: 'rgba(255,255,255,0.85)',
+            fontSize: `${7 * s}px`,
+            lineHeight: 1,
+          }}>
+            <span style={{ fontWeight: 500, color: '#9ca3af' }}>
+              {t('poweredBy')}&nbsp;
+            </span>
+            <span style={{ fontWeight: 800, color: '#6b7280' }}>
+              getqarte.com
+            </span>
+          </span>
         </div>
       </div>
     );
