@@ -172,7 +172,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `shield_enabled` (BOOL, defaut true), wording : "verification automatique"
 
 ### Jours x2 (Double Stamp Days) — mode passage uniquement
-- `double_days_enabled` + `double_days_of_week` (JSON array getDay(), timezone Paris)
+- `double_days_enabled` + `double_days_of_week` (JSON array getDay(), timezone merchant via `getTimezoneForCountry(country)`)
 - Helpers : `parseDoubleDays()`, `formatDoubleDays()`, `DAY_LABELS`, `WEEK_ORDER`
 - Affiche dans ScanSuccessStep (badge amber) et sous la grille StampsSection
 
@@ -209,12 +209,27 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `PhoneInput` composant (`src/components/ui/PhoneInput.tsx`) : selecteur pays drapeau+indicatif, dropdown, placeholder dynamique
 - Utilise dans `/customer` (login client), `/auth/merchant/signup/complete` (inscription merchant)
 
+### Fuseaux Horaires (country-aware)
+- `COUNTRY_TIMEZONE` map dans `src/lib/utils.ts` : 10 pays → IANA timezone (FR→Europe/Paris, US→America/New_York, etc.)
+- `getTimezoneForCountry(country?)` : resout le timezone IANA, defaut Europe/Paris
+- `getTodayForCountry(country?)` : YYYY-MM-DD dans le fuseau du merchant
+- `getTodayStartForCountry(country?)` : ISO UTC timestamp de minuit dans le fuseau du merchant (pour filtres `gte` DB)
+- **Toutes les APIs** utilisent ces fonctions (checkin, cagnotte, stats, planning, offers, push, visits, vouchers)
+- `getTodayInParis()` et `getCurrentDateTimeInParis()` marques `@deprecated` — wrappers retrocompatibles
+- **Crons** (morning/evening) : utilisent `getTodayInParis()` intentionnellement (batch FR, pas per-merchant)
+- `last_visit_date` : toujours set dans le fuseau du merchant via `getTodayForCountry(merchant.country)`
+- `verifyMerchantOwnership()` dans push/schedule et offers retourne `country` pour eviter requete DB supplementaire
+
 ### Formatage Heures/Dates (locale-aware)
 - `formatTime(time, locale)` : FR → `14h` / `14h30` | EN → `2:00 PM` / `2:30 PM`
 - `formatDate(date, locale)` : FR → `dd/MM/yyyy` | EN → `MM/dd/yyyy`
 - `formatDateTime(date, locale)` : FR → `dd/MM/yyyy à HH:mm` | EN → `MM/dd/yyyy h:mm AM/PM`
-- `formatEUR(amount, locale)` : FR → `19,00` | EN → `19.00`
-- Default `'fr'` partout pour backward-compat
+- `formatEUR(amount, locale)` : **@deprecated** — wrapper backward-compat, ne plus utiliser
+- `formatCurrency(amount, country?, locale?)` : retourne montant + symbole devise (ex: `19,00 €`, `$19.00`, `£19.00`)
+- `getCurrencyForCountry(country?)` : ISO currency code (EUR, CHF, GBP, USD, CAD, AUD)
+- `getCurrencySymbol(country?)` : symbole seul (€, CHF, £, $)
+- `COUNTRY_CURRENCY` map dans `src/lib/utils.ts` : 10 pays → ISO currency code
+- Default `'fr'` / EUR partout pour backward-compat
 
 ### Navigation i18n (regles imperatives)
 - **Liens internes** : TOUJOURS `import { Link } from '@/i18n/navigation'` — JAMAIS `next/link` ni `<a href="/...">` (sinon perte de locale EN → FR)

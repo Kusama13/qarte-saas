@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Gift, Trophy, Coins, Minus, Plus } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { formatEUR, calculateCashback } from '@/lib/utils';
+import { formatCurrency, calculateCashback } from '@/lib/utils';
 
 interface TierProgressProps {
   icon: React.ReactNode;
@@ -77,6 +77,7 @@ export interface CustomerAdjustTabProps {
   cagnottePercent?: number;
   cagnotteTier2Percent?: number | null;
   tier1Redeemed?: boolean;
+  country?: string;
 }
 
 export function CustomerAdjustTab({
@@ -96,6 +97,7 @@ export function CustomerAdjustTab({
   cagnottePercent = 0,
   cagnotteTier2Percent,
   tier1Redeemed = false,
+  country,
 }: CustomerAdjustTabProps) {
   const t = useTranslations('customerAdjust');
   const [adjustment, setAdjustment] = useState<number>(0);
@@ -159,7 +161,7 @@ export function CustomerAdjustTab({
         const tier2Reached = tier2Enabled && tier2StampsRequired && currentStamps >= tier2StampsRequired;
         // Palier 2 percent only applies AFTER tier1 has been redeemed (current_amount resets to 0 at T1 redeem)
         const activePercent = (tier2Reached || (tier1Redeemed && tier2Enabled)) ? (cagnotteTier2Percent || cagnottePercent) : cagnottePercent;
-        const activeValue = formatEUR(calculateCashback(currentAmount, activePercent));
+        const activeValue = formatCurrency(calculateCashback(currentAmount, activePercent), country);
         return (
           <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
             <div className="flex items-center justify-between mb-1">
@@ -174,16 +176,16 @@ export function CustomerAdjustTab({
               )}
             </div>
             <p className="text-2xl font-black text-emerald-800">
-              {activeValue} €
+              {activeValue}
               <span className="text-sm font-bold text-emerald-600 ml-1">({activePercent}%)</span>
             </p>
             {tier2Enabled && cagnotteTier2Percent && !tier2Reached && tier1Redeemed && (
               <p className="text-xs text-violet-600 mt-0.5">
-                {t('tier2')} ({cagnotteTier2Percent}%) : {formatEUR(calculateCashback(currentAmount, cagnotteTier2Percent))} €
+                {t('tier2')} ({cagnotteTier2Percent}%) : {formatCurrency(calculateCashback(currentAmount, cagnotteTier2Percent), country)}
               </p>
             )}
             <p className="text-xs text-emerald-600 mt-1">
-              {t('totalSpent', { amount: formatEUR(currentAmount) })}
+              {t('totalSpent', { amount: formatCurrency(currentAmount, country) })}
             </p>
           </div>
         );
@@ -328,9 +330,9 @@ export function CustomerAdjustTab({
           />
           {parsedAmountAdj !== 0 && (
             <div className="mt-1 text-xs text-gray-500 space-y-0.5">
-              <p>{t('newTotal')} : <span className="font-semibold">{formatEUR(newAmount)} €</span></p>
-              <p>{t('newCagnotte')} : <span className="font-semibold text-emerald-600">{formatEUR(calculateCashback(newAmount, cagnottePercent))} € ({cagnottePercent}%)</span>
-                {cagnotteTier2Percent && tier1Redeemed ? <span className="text-violet-600 ml-1">/ {formatEUR(calculateCashback(newAmount, cagnotteTier2Percent))} € ({cagnotteTier2Percent}%)</span> : ''}
+              <p>{t('newTotal')} : <span className="font-semibold">{formatCurrency(newAmount, country)}</span></p>
+              <p>{t('newCagnotte')} : <span className="font-semibold text-emerald-600">{formatCurrency(calculateCashback(newAmount, cagnottePercent), country)} ({cagnottePercent}%)</span>
+                {cagnotteTier2Percent && tier1Redeemed ? <span className="text-violet-600 ml-1">/ {formatCurrency(calculateCashback(newAmount, cagnotteTier2Percent), country)} ({cagnotteTier2Percent}%)</span> : ''}
               </p>
             </div>
           )}

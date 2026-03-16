@@ -43,6 +43,7 @@ interface CustomerManagementModalProps {
   currentAmount?: number;
   cagnottePercent?: number;
   cagnotteTier2Percent?: number | null;
+  country?: string;
 }
 
 type Tab = 'adjust' | 'rewards' | 'history' | 'danger';
@@ -70,6 +71,7 @@ export function CustomerManagementModal({
   currentAmount = 0,
   cagnottePercent = 0,
   cagnotteTier2Percent,
+  country,
 }: CustomerManagementModalProps) {
   const t = useTranslations('customerModal');
   const [activeTab, setActiveTab] = useState<Tab>('adjust');
@@ -339,6 +341,7 @@ export function CustomerManagementModal({
                   cagnottePercent={cagnottePercent}
                   cagnotteTier2Percent={cagnotteTier2Percent}
                   tier1Redeemed={tier1Redeemed}
+                  country={country}
                 />
               )}
 
@@ -363,6 +366,7 @@ export function CustomerManagementModal({
                   merchantId={merchantId}
                   tier2Enabled={tier2Enabled}
                   isCagnotte={isCagnotte}
+                  country={country}
                 />
               )}
 

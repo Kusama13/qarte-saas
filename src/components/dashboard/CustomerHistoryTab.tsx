@@ -16,7 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, formatCurrency } from '@/lib/utils';
 
 interface Visit {
   id: string;
@@ -44,6 +44,7 @@ export interface CustomerHistoryTabProps {
   merchantId: string;
   tier2Enabled: boolean;
   isCagnotte?: boolean;
+  country?: string;
 }
 
 export function CustomerHistoryTab({
@@ -51,6 +52,7 @@ export function CustomerHistoryTab({
   merchantId,
   tier2Enabled,
   isCagnotte = false,
+  country,
 }: CustomerHistoryTabProps) {
   const t = useTranslations('customerHistory');
   const [visits, setVisits] = useState<Visit[]>([]);
@@ -236,7 +238,7 @@ export function CustomerHistoryTab({
                 }
                 if (isAdjustment) return t('manualAdjust');
                 if (isCagnotte && item.amount_spent != null && item.amount_spent > 0) {
-                  return `${t('visit')} · ${Number(item.amount_spent).toFixed(2).replace('.', ',')} €`;
+                  return `${t('visit')} · ${formatCurrency(Number(item.amount_spent), country)}`;
                 }
                 return t('visit');
               };

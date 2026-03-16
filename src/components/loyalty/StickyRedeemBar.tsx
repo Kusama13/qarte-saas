@@ -3,6 +3,8 @@
 import { Gift, Trophy, Coins } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui';
+import { formatCurrency } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 interface StickyRedeemBarProps {
   visible: boolean;
@@ -16,6 +18,7 @@ interface StickyRedeemBarProps {
   onRedeemTier2: () => void;
   isCagnotte?: boolean;
   cashbackAmount?: number;
+  country?: string;
 }
 
 export default function StickyRedeemBar({
@@ -30,7 +33,9 @@ export default function StickyRedeemBar({
   onRedeemTier2,
   isCagnotte,
   cashbackAmount,
+  country,
 }: StickyRedeemBarProps) {
+  const t = useTranslations('stickyRedeemBar');
   if (!visible) return null;
 
   return (
@@ -53,8 +58,8 @@ export default function StickyRedeemBar({
         >
           {isCagnotte ? <Coins className="w-4 h-4 mr-2" /> : <Gift className="w-4 h-4 mr-2" />}
           {isCagnotte && cashbackAmount != null
-            ? `Récupérer ${cashbackAmount.toFixed(2).replace('.', ',')} € sur ma cagnotte`
-            : 'Profiter de ma récompense'}
+            ? t('claimCashback', { amount: formatCurrency(cashbackAmount, country) })
+            : t('claimReward')}
         </Button>
       )}
       {tier2Enabled && isTier2Ready && (
@@ -66,7 +71,7 @@ export default function StickyRedeemBar({
           }}
         >
           {isCagnotte ? <Coins className="w-4 h-4 mr-2" /> : <Trophy className="w-4 h-4 mr-2" />}
-          {isCagnotte ? 'Récupérer ma cagnotte palier 2' : 'Profiter de ma récompense palier 2'}
+          {isCagnotte ? t('claimCashbackTier2') : t('claimRewardTier2')}
         </Button>
       )}
     </motion.div>

@@ -31,6 +31,42 @@ export function getTimezoneForCountry(country?: string): string {
   return COUNTRY_TIMEZONE[country as MerchantCountry] || TIMEZONE;
 }
 
+/** Maps each merchant country to its currency code. */
+export const COUNTRY_CURRENCY: Record<MerchantCountry, string> = {
+  FR: 'EUR', BE: 'EUR', CH: 'CHF', LU: 'EUR',
+  ES: 'EUR', IT: 'EUR',
+  GB: 'GBP', US: 'USD', CA: 'CAD', AU: 'AUD',
+};
+
+/** Resolve ISO currency code for a given country (defaults to EUR). */
+export function getCurrencyForCountry(country?: string): string {
+  return COUNTRY_CURRENCY[country as MerchantCountry] || 'EUR';
+}
+
+/** Currency symbol for display. */
+export function getCurrencySymbol(country?: string): string {
+  const currency = getCurrencyForCountry(country);
+  switch (currency) {
+    case 'GBP': return '£';
+    case 'USD': case 'CAD': case 'AUD': return '$';
+    case 'CHF': return 'CHF';
+    default: return '€';
+  }
+}
+
+/** Format a monetary amount with the correct currency symbol and locale.
+ *  Returns e.g. "19,00 €" (FR), "$19.00" (US), "£19.00" (GB). */
+export function formatCurrency(amount: number, country?: string, locale: string = 'fr'): string {
+  const currency = getCurrencyForCountry(country);
+  const bcp47 = locale === 'en' ? 'en-US' : 'fr-FR';
+  return new Intl.NumberFormat(bcp47, {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
 /**
  * Ensures a hex color has enough contrast against a white background.
  * Returns the original color if contrast is OK, or a darkened version otherwise.
@@ -115,6 +151,7 @@ export function formatTime(time: string, locale: string = 'fr'): string {
   return min === '00' ? `${hour}h` : `${hour}h${min}`;
 }
 
+/** @deprecated Use formatCurrency(amount, country, locale) for country-aware formatting. */
 export function formatEUR(amount: number, locale: string = 'fr'): string {
   if (locale === 'en') return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return amount.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

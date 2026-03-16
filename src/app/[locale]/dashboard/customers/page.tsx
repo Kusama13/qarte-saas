@@ -25,7 +25,7 @@ import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
-import { formatDate, formatPhoneNumber, displayPhoneNumber, PHONE_CONFIG } from '@/lib/utils';
+import { formatDate, formatPhoneNumber, displayPhoneNumber, formatCurrency, PHONE_CONFIG } from '@/lib/utils';
 import type { LoyaltyCard, Customer } from '@/types';
 
 interface CustomerWithCard extends LoyaltyCard {
@@ -471,7 +471,7 @@ export default function CustomersPage() {
                       )}
                       {isCagnotte && !badge && (
                         <span className="text-[10px] font-medium text-gray-500">
-                          {Number(card.current_amount || 0).toFixed(2).replace('.', ',')} € {t('accumulated')}
+                          {formatCurrency(Number(card.current_amount || 0), merchant?.country)} {t('accumulated')}
                         </span>
                       )}
                     </div>
@@ -671,7 +671,7 @@ export default function CustomersPage() {
                               </div>
                               {isCagnotte && (
                                 <p className="text-[10px] font-medium text-gray-500 mt-1">
-                                  {Number(card.current_amount || 0).toFixed(2).replace('.', ',')} € {t('accumulated')}
+                                  {formatCurrency(Number(card.current_amount || 0), merchant?.country)} {t('accumulated')}
                                 </p>
                               )}
                             </div>
@@ -756,6 +756,7 @@ export default function CustomersPage() {
           currentAmount={Number(selectedCustomer.current_amount || 0)}
           cagnottePercent={Number(merchant.cagnotte_percent || 0)}
           cagnotteTier2Percent={merchant.cagnotte_tier2_percent ? Number(merchant.cagnotte_tier2_percent) : null}
+          country={merchant.country}
         />
       )}
 

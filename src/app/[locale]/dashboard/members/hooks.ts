@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber } from '@/lib/utils';
+import { formatPhoneNumber, formatCurrency } from '@/lib/utils';
 import type { Merchant, MemberCard, Customer } from '@/types';
 import type { ProgramWithCount, CustomerWithCard, DurationUnit } from './types';
 import { calculateDurationMonths } from './types';
@@ -253,7 +253,7 @@ export function useAssignCustomer(
       const parts: string[] = ['Création du client'];
       if (initialStamps > 0) parts.push(`${initialStamps} passage${initialStamps > 1 ? 's' : ''}`);
       if (isCagnotte && newCustomerStartAmount && Number(newCustomerStartAmount) > 0) {
-        parts.push(`${Number(newCustomerStartAmount).toFixed(2).replace('.', ',')} € cumulés`);
+        parts.push(`${formatCurrency(Number(newCustomerStartAmount), merchant.country)} cumulés`);
       }
       await supabase
         .from('point_adjustments')

@@ -1619,6 +1619,12 @@
     "findCardOneTap": "Find your card in 1 tap",
     "add": "Add"
   },
+  "stickyRedeemBar": {
+    "claimCashback": "Claim {amount} from my balance",
+    "claimReward": "Claim my reward",
+    "claimCashbackTier2": "Claim my tier 2 balance",
+    "claimRewardTier2": "Claim my tier 2 reward"
+  },
   "reviewModal": {
     "mainMessage": "A review is the best way to support us.",
     "leaveReview": "Leave a review",

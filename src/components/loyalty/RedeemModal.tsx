@@ -3,6 +3,7 @@
 import { Check, Gift, Trophy, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
+import { formatCurrency } from '@/lib/utils';
 
 interface RedeemModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface RedeemModalProps {
   onDone: () => void;
   isCagnotte?: boolean;
   cashbackAmount?: number;
+  country?: string;
 }
 
 export default function RedeemModal({
@@ -38,6 +40,7 @@ export default function RedeemModal({
   onDone,
   isCagnotte,
   cashbackAmount,
+  country,
 }: RedeemModalProps) {
   const t = useTranslations('redeemModal');
   const TierIcon = isCagnotte ? Coins : (tier === 2 ? Trophy : Gift);
@@ -114,7 +117,7 @@ export default function RedeemModal({
                   animate={{ scale: 1 }}
                   className="text-4xl font-black text-white mb-2"
                 >
-                  {cashbackAmount.toFixed(2).replace('.', ',')} €
+                  {formatCurrency(cashbackAmount, country)}
                 </motion.p>
               )}
 

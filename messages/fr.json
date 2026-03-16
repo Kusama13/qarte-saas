@@ -1619,6 +1619,12 @@
     "findCardOneTap": "Retrouvez votre carte en 1 tap",
     "add": "Ajouter"
   },
+  "stickyRedeemBar": {
+    "claimCashback": "Récupérer {amount} sur ma cagnotte",
+    "claimReward": "Profiter de ma récompense",
+    "claimCashbackTier2": "Récupérer ma cagnotte palier 2",
+    "claimRewardTier2": "Profiter de ma récompense palier 2"
+  },
   "reviewModal": {
     "mainMessage": "Un avis, c'est la plus belle façon de nous soutenir.",
     "leaveReview": "Laisser mon avis",

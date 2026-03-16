@@ -5,7 +5,7 @@ import { useRouter, Link } from '@/i18n/navigation';
 import { Users, UserCheck, Calendar, Gift, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, UserPlus, CreditCard, Coins, Globe, Heart } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
-import { formatRelativeTime, getTodayForCountry } from '@/lib/utils';
+import { formatRelativeTime, getTodayForCountry, formatCurrency } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
@@ -562,13 +562,13 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           <StatsCard
             title={t('cumulClients')}
-            value={`${cagnotteStats.totalCumul.toFixed(2).replace('.', ',')} €`}
+            value={formatCurrency(cagnotteStats.totalCumul, merchant?.country)}
             icon={Coins}
             color="#059669"
           />
           <StatsCard
             title={t('cashbackOngoing')}
-            value={`${cagnotteStats.totalCashback.toFixed(2).replace('.', ',')} €`}
+            value={formatCurrency(cagnotteStats.totalCashback, merchant?.country)}
             icon={Gift}
             color="#D97706"
           />
@@ -820,7 +820,7 @@ export default function DashboardPage() {
                         <span className="text-xs font-bold text-indigo-600 w-8 text-right">{stamps}<span className="text-gray-300 font-normal">/{stampsReq1}</span></span>
                         {merchant?.loyalty_mode === 'cagnotte' && customer.currentAmount > 0 && (
                           <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md whitespace-nowrap">
-                            {customer.currentAmount.toFixed(2).replace('.', ',')} €
+                            {formatCurrency(customer.currentAmount, merchant?.country)}
                           </span>
                         )}
                       </div>

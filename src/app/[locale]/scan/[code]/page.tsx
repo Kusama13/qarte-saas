@@ -23,7 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { sparkleGrand } from '@/lib/sparkles';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, getTodayForCountry, PHONE_CONFIG } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTodayForCountry, PHONE_CONFIG, getCurrencySymbol, formatCurrency } from '@/lib/utils';
 import type { Merchant, Customer, LoyaltyCard } from '@/types';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
 import { useTranslations } from 'next-intl';
@@ -1118,7 +1118,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                     autoFocus
                     className="h-16 text-3xl font-bold text-center pr-14 bg-gray-50/50 border-gray-200 rounded-2xl"
                   />
-                  <span className="absolute right-5 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-300">€</span>
+                  <span className="absolute right-5 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-300">{getCurrencySymbol(merchant?.country)}</span>
                 </div>
                 <button
                   type="submit"
@@ -1159,7 +1159,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                 )}
                 <p className="text-xs text-gray-400 mb-1">{t('amountToRecord')}</p>
                 <p className="text-4xl font-black text-gray-900 mb-4">
-                  {parsedConfirmAmount.toFixed(2).replace('.', ',')} €
+                  {formatCurrency(parsedConfirmAmount, merchant?.country)}
                 </p>
 
                 {/* Progress bar countdown */}

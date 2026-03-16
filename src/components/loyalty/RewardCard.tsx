@@ -3,7 +3,7 @@
 import { Gift, Trophy, ChevronRight, Coins } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
-import { formatEUR } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
 interface RewardCardProps {
   ready: boolean;
@@ -17,6 +17,7 @@ interface RewardCardProps {
   cashbackAmount?: number;
   cashbackPercent?: number;
   onRedeem?: () => void;
+  country?: string;
 }
 
 function getTierGradient(showingTier2: boolean, primary: string, secondary?: string): string {
@@ -64,6 +65,7 @@ export default function RewardCard({
   cashbackAmount,
   cashbackPercent,
   onRedeem,
+  country,
 }: RewardCardProps) {
   const t = useTranslations('rewardCard');
   const TierIcon = isCagnotte ? Coins : showingTier2 ? Trophy : Gift;
@@ -104,7 +106,7 @@ export default function RewardCard({
                 {tierLabel ? t('tierUnlocked', { tier: tierLabel }) : t('cagnotteUnlocked')}
               </p>
               <p className="text-white text-2xl font-black leading-snug">
-                {formatEUR(cashbackAmount || 0)} €
+                {formatCurrency(cashbackAmount || 0, country)}
               </p>
               <p className="text-white/80 text-xs font-semibold mt-0.5">
                 {t('onYourCagnotte', { percent: cashbackPercent || 0 })}
@@ -147,7 +149,7 @@ export default function RewardCard({
               </p>
               <p className="text-xs text-gray-500 mt-0.5">
                 {(cashbackAmount || 0) > 0
-                  ? t('alreadyCumulated', { amount: formatEUR(cashbackAmount || 0), remaining, unit })
+                  ? t('alreadyCumulated', { amount: formatCurrency(cashbackAmount || 0, country), remaining, unit })
                   : t('unlockCagnotte', { remaining, unit })}
               </p>
             </div>

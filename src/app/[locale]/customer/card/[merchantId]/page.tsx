@@ -1015,6 +1015,7 @@ export default function CustomerCardPage({
           isCagnotte={merchant.loyalty_mode === 'cagnotte'}
           cashbackAmount={rewardCashbackAmount}
           cashbackPercent={rewardCashbackPercent}
+          country={merchant.country}
           onRedeem={() => {
             setRedeemTier(rewardShowingTier2 ? 2 : 1);
             setShowRedeemModal(true);
@@ -1178,6 +1179,7 @@ export default function CustomerCardPage({
         cashbackAmount={merchant.loyalty_mode === 'cagnotte'
           ? Math.round(Number(card.current_amount || 0) * Number((redeemTier === 2 ? merchant.cagnotte_tier2_percent : merchant.cagnotte_percent) || 0)) / 100
           : undefined}
+        country={merchant.country}
       />
 
       {/* Member Card Modal */}
