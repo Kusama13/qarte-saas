@@ -96,9 +96,10 @@ export default function QRDownloadPage() {
   const saveQrImage = async () => {
     if (!qrCardRef.current || !merchant) return;
     try {
-      const image = await toPng(qrCardRef.current, {
-        pixelRatio: 4,
-      });
+      const opts = { pixelRatio: 4, cacheBust: true };
+      // First call warms up resources (known html-to-image mobile fix)
+      await toPng(qrCardRef.current, opts).catch(() => {});
+      const image = await toPng(qrCardRef.current, opts);
       await shareOrDownload(image, `qr-${merchant.slug}.png`);
 
       // Track QR download for onboarding checklist (fire and forget)
@@ -122,9 +123,9 @@ export default function QRDownloadPage() {
     if (!socialExportRef.current || !merchant) return;
     setIsGenerating(true);
     try {
-      const image = await toPng(socialExportRef.current, {
-        pixelRatio: 2,
-      });
+      const socialOpts = { pixelRatio: 2, cacheBust: true };
+      await toPng(socialExportRef.current, socialOpts).catch(() => {});
+      const image = await toPng(socialExportRef.current, socialOpts);
       await shareOrDownload(image, `${merchant.shop_name.toLowerCase().replace(/\s+/g, '-')}-fidelite.png`);
 
       // Track social kit download (fire and forget)
