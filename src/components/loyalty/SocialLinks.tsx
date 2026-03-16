@@ -1,6 +1,7 @@
 'use client';
 
 import type { Merchant } from '@/types';
+import { useTranslations } from 'next-intl';
 
 interface SocialLinksProps {
   merchant: Merchant;
@@ -74,6 +75,7 @@ const SOCIALS = [
 ];
 
 export default function SocialLinks({ merchant }: SocialLinksProps) {
+  const t = useTranslations('common');
   const active = SOCIALS.filter((s) => {
     const val = merchant[s.field];
     return val && val.trim() !== '';
@@ -87,7 +89,7 @@ export default function SocialLinks({ merchant }: SocialLinksProps) {
         className="rounded-2xl px-5 py-4 bg-white/70 backdrop-blur-sm shadow-lg shadow-gray-200/50 border border-gray-100/80"
       >
         <p className="text-center text-[11px] font-bold text-gray-600 uppercase tracking-[0.15em] mb-3">
-          Retrouvez-nous sur
+          {t('findUsOn')}
         </p>
 
         <div className="flex items-center justify-center gap-5">
