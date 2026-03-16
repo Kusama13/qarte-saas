@@ -392,21 +392,19 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             {/* Slots by month */}
             {planningByMonth.map(monthGroup => (
               <div key={monthGroup.month} className="mb-3 last:mb-0">
-                {planningByMonth.length > 1 && (
-                  <p className="text-[11px] font-bold uppercase tracking-wider mb-2" style={{ color: p }}>
-                    {monthGroup.month}
-                  </p>
-                )}
+                <p className="text-[11px] font-bold uppercase tracking-wider mb-2 text-center" style={{ color: p }}>
+                  {monthGroup.month}
+                </p>
                 <div className="space-y-2">
                   {monthGroup.days.map(day => {
                     const isToday = day.dateStr === todayLocal;
                     return (
                       <div
                         key={day.dateStr}
-                        className={`flex items-center gap-3 py-2 px-3 rounded-xl ${isToday ? 'bg-gray-50' : ''}`}
+                        className={`flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 py-2 px-3 rounded-xl ${isToday ? 'bg-gray-50' : ''}`}
                         style={isToday ? { boxShadow: `inset 0 0 0 1px ${p}25` } : undefined}
                       >
-                        <p className={`text-[12px] font-bold shrink-0 w-28 ${isToday ? '' : 'text-gray-600'}`} style={isToday ? { color: p } : undefined}>
+                        <p className={`text-[12px] font-bold shrink-0 sm:w-28 ${isToday ? '' : 'text-gray-600'}`} style={isToday ? { color: p } : undefined}>
                           {day.label}
                         </p>
                         <div className="flex flex-wrap gap-1.5">

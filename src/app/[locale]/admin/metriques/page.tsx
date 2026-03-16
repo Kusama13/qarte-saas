@@ -70,6 +70,7 @@ type MerchantData = {
   shop_address: string | null;
   loyalty_mode: 'visit' | 'cagnotte';
   slug: string | null;
+  first_feature_choice: 'loyalty' | 'vitrine' | null;
 };
 
 export default function MetriquesPage() {
@@ -179,7 +180,7 @@ export default function MetriquesPage() {
         { data: servicesList },
         { data: photosList },
       ] = await Promise.all([
-        supabase.from('merchants').select('id, user_id, subscription_status, billing_interval, created_at, reward_description, trial_ends_at, logo_url, referral_program_enabled, birthday_gift_enabled, instagram_url, facebook_url, tiktok_url, booking_url, review_link, shield_enabled, tier2_enabled, pwa_installed_at, offer_active, welcome_offer_enabled, double_days_enabled, shop_address, loyalty_mode, slug'),
+        supabase.from('merchants').select('id, user_id, subscription_status, billing_interval, created_at, reward_description, trial_ends_at, logo_url, referral_program_enabled, birthday_gift_enabled, instagram_url, facebook_url, tiktok_url, booking_url, review_link, shield_enabled, tier2_enabled, pwa_installed_at, offer_active, welcome_offer_enabled, double_days_enabled, shop_address, loyalty_mode, slug, first_feature_choice'),
         supabase.from('super_admins').select('user_id'),
         supabase.rpc('get_first_visit_per_merchant'),
         supabase.rpc('get_tenth_card_date_per_merchant'),
@@ -521,6 +522,21 @@ export default function MetriquesPage() {
     return features;
   }, [funnelMerchants, merchantsWithServices, merchantsWithPhotos]);
 
+  // First feature choice distribution
+  const firstFeatureStats = useMemo(() => {
+    const eligible = funnelMerchants.filter(
+      m => m.subscription_status === 'active' || m.subscription_status === 'trial'
+    );
+    const total = eligible.length;
+    if (total === 0) return null;
+
+    const loyalty = eligible.filter(m => m.first_feature_choice === 'loyalty').length;
+    const vitrine = eligible.filter(m => m.first_feature_choice === 'vitrine').length;
+    const notSet = total - loyalty - vitrine;
+
+    return { loyalty, vitrine, notSet, total };
+  }, [funnelMerchants]);
+
   // Weekly cohorts: group merchants by 7-day creation windows
   const weeklyCohorts = useMemo(() => {
     if (funnelMerchants.length === 0) return [];
@@ -836,6 +852,55 @@ export default function MetriquesPage() {
               </div>
             </div>
           )}
+        </section>
+      )}
+
+      {/* 4b2. PREMIER SUPER-POUVOIR CHOISI */}
+      {firstFeatureStats && (firstFeatureStats.loyalty > 0 || firstFeatureStats.vitrine > 0) && (
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Target className="w-5 h-5 text-[#5167fc]" />
+            Premier super-pouvoir choisi
+          </h2>
+          <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="text-center p-3 rounded-xl bg-indigo-50">
+                <p className="text-2xl font-black text-indigo-600">{firstFeatureStats.loyalty}</p>
+                <p className="text-xs font-medium text-indigo-500 mt-1">Programme fidelite</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-violet-50">
+                <p className="text-2xl font-black text-violet-600">{firstFeatureStats.vitrine}</p>
+                <p className="text-xs font-medium text-violet-500 mt-1">Vitrine en ligne</p>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-gray-50">
+                <p className="text-2xl font-black text-gray-400">{firstFeatureStats.notSet}</p>
+                <p className="text-xs font-medium text-gray-400 mt-1">Pas encore choisi</p>
+              </div>
+            </div>
+            {/* Visual bar */}
+            {(firstFeatureStats.loyalty + firstFeatureStats.vitrine) > 0 && (
+              <div className="flex rounded-full h-3 overflow-hidden bg-gray-100">
+                <div
+                  className="bg-indigo-500 transition-all duration-700"
+                  style={{ width: `${Math.round((firstFeatureStats.loyalty / (firstFeatureStats.loyalty + firstFeatureStats.vitrine)) * 100)}%` }}
+                />
+                <div
+                  className="bg-violet-500 transition-all duration-700"
+                  style={{ width: `${Math.round((firstFeatureStats.vitrine / (firstFeatureStats.loyalty + firstFeatureStats.vitrine)) * 100)}%` }}
+                />
+              </div>
+            )}
+            {(firstFeatureStats.loyalty + firstFeatureStats.vitrine) > 0 && (
+              <div className="flex justify-between mt-2 text-xs font-medium">
+                <span className="text-indigo-600">
+                  Fidelite {Math.round((firstFeatureStats.loyalty / (firstFeatureStats.loyalty + firstFeatureStats.vitrine)) * 100)}%
+                </span>
+                <span className="text-violet-600">
+                  Vitrine {Math.round((firstFeatureStats.vitrine / (firstFeatureStats.loyalty + firstFeatureStats.vitrine)) * 100)}%
+                </span>
+              </div>
+            )}
+          </div>
         </section>
       )}
 

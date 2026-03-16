@@ -125,6 +125,7 @@ export interface Merchant {
   show_public_page_on_card: boolean;
   signup_source: string | null;
   locale: 'fr' | 'en';
+  first_feature_choice: 'loyalty' | 'vitrine' | null;
 }
 
 export interface PlanningSlot {

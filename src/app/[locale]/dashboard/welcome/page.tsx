@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Users, Globe, ArrowRight, Check, Star, MapPin, Link2 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { useTranslations } from 'next-intl';
+import { getSupabase } from '@/lib/supabase';
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -21,6 +22,18 @@ export default function WelcomePage() {
       }
     }
   }, [loading, merchant, router]);
+
+  const trackChoice = (choice: 'loyalty' | 'vitrine') => {
+    if (!merchant) return;
+    // Only set once (don't overwrite if already set)
+    if (merchant.first_feature_choice) return;
+    const supabase = getSupabase();
+    supabase
+      .from('merchants')
+      .update({ first_feature_choice: choice })
+      .eq('id', merchant.id)
+      .then(() => {});
+  };
 
   if (loading || !merchant) {
     return (
@@ -54,7 +67,7 @@ export default function WelcomePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          onClick={() => router.push('/dashboard/program')}
+          onClick={() => { trackChoice('loyalty'); router.push('/dashboard/program'); }}
           className="group relative p-6 bg-white rounded-2xl border-2 border-gray-100 hover:border-indigo-300 shadow-sm hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 text-left overflow-hidden"
         >
           {/* Mini stamp card preview */}
@@ -96,7 +109,7 @@ export default function WelcomePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.25 }}
-          onClick={() => router.push('/dashboard/public-page')}
+          onClick={() => { trackChoice('vitrine'); router.push('/dashboard/public-page'); }}
           className="group relative p-6 bg-white rounded-2xl border-2 border-gray-100 hover:border-violet-300 shadow-sm hover:shadow-lg hover:shadow-violet-100/50 transition-all duration-300 text-left overflow-hidden"
         >
           {/* Mini vitrine preview */}
