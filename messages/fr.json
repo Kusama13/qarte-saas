@@ -1845,7 +1845,8 @@
     "myLoyalty": "Ma fidélité",
     "defaultReward": "Cadeau de fidélité",
     "defaultTier2Reward": "Récompense Premium",
-    "doubleDaysHint": "Les {days}, chaque passage compte double"
+    "doubleDaysHint": "Les {days}, chaque passage compte double",
+    "cycleCount": "{n}e carte"
   },
   "cagnotteSection": {
     "tier1": "Palier 1",
@@ -1857,7 +1858,8 @@
     "unlocked": "Débloqué !",
     "myLoyalty": "Ma fidélité",
     "defaultReward": "Cagnotte fidélité",
-    "defaultTier2Reward": "Cagnotte Premium"
+    "defaultTier2Reward": "Cagnotte Premium",
+    "cycleCount": "{n}e carte"
   },
   "rewardCard": {
     "onlyLeftUnit": "Plus que {count} {unit} pour {text}",

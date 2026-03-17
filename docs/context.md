@@ -441,7 +441,9 @@ Fond gradient mesh anime (orbes indigo/violet/rose), 4 mini cartes de fidelite f
 Design Apple Wallet, fond `bg-[#f7f6fb]`, greeting typographique, cartes avec header merchant colore, glow reward-ready, dual tier barres
 
 ### Carte Fidelite Client (`/customer/card/[merchantId]`)
-Header colore avec nom merchant. Boutons conditionnels dans le header : "Membre" (si member card active), "Reserver" (si `booking_url`), **"Infos"** (si `show_public_page_on_card` et `slug` — lien vers `/p/[slug]`). Toggle dans Ma Page (`/dashboard/public-page`) pour activer/desactiver le bouton Infos.
+Header colore avec nom merchant. Boutons conditionnels dans le header : "Membre" (si member card active), "Reserver" (si `booking_url`), **"Infos"** (si `slug` — lien vers `/p/[slug]`, toujours affiche).
+
+**Badge cycle couronne** : quand un client complete un cycle (redeem palier unique ou palier 2 si dual), un badge "Xe carte" avec icone Crown apparait au-dessus de la grille de tampons. Couleur progressive : rose (1 cycle), violet (2-3), dore (4+). Calcule depuis `redemptions` (pas de colonne DB). Single tier = count all redemptions, dual tier = count tier 2 only.
 
 ### Scan (`/scan/[code]`)
 Inscription rapide, validation passage, progression fidelite, detection `?ref=` pour parrainage
@@ -464,7 +466,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 
 **Ordre des sections :**
 1. Hero (logo glow couleurs merchant, nom gradient, adresse + badge "Y aller", bio glassmorphism)
-2. CTA "Prendre rendez-vous" (conditionnel sur `booking_url`) + sticky bar quand hors viewport
+2. CTA "Prendre rendez-vous" (conditionnel sur `booking_url`) + sticky bar quand hors viewport + detection plateforme ("via Planity/Treatwell/Fresha/..." via `detectBookingPlatform()` dans utils.ts)
 3. Horaires (grille 7 jours, aujourd'hui mis en evidence)
 4. Planning disponibilites (si `planning_enabled` : banniere message libre + creneaux 30j glissants groupes par mois)
 5. Offre de bienvenue (CTA conditionnel si `welcome_offer_enabled`, pointe vers `/scan/{code}?welcome=`)

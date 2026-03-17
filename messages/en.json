@@ -1845,7 +1845,8 @@
     "myLoyalty": "My loyalty",
     "defaultReward": "Loyalty gift",
     "defaultTier2Reward": "Premium Reward",
-    "doubleDaysHint": "On {days}, every visit counts double"
+    "doubleDaysHint": "On {days}, every visit counts double",
+    "cycleCount": "Card #{n}"
   },
   "cagnotteSection": {
     "tier1": "Tier 1",
@@ -1857,7 +1858,8 @@
     "unlocked": "Unlocked!",
     "myLoyalty": "My loyalty",
     "defaultReward": "Loyalty balance",
-    "defaultTier2Reward": "Premium Balance"
+    "defaultTier2Reward": "Premium Balance",
+    "cycleCount": "Card #{n}"
   },
   "rewardCard": {
     "onlyLeftUnit": "Only {count} {unit} until {text}",

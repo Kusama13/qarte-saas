@@ -1,6 +1,6 @@
 'use client';
 
-import { Gift, Trophy, Zap, Heart } from 'lucide-react';
+import { Gift, Trophy, Zap, Heart, Crown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 
@@ -15,6 +15,7 @@ interface CagnotteSectionProps {
   merchantColor: string;
   rewardDescription: string;
   tier2RewardDescription: string;
+  completedCycles?: number;
 }
 
 function getDualStampClass(isEarned: boolean, isGreyed: boolean, isLast: boolean): string {
@@ -65,11 +66,25 @@ export default function CagnotteSection({
   merchantColor,
   rewardDescription,
   tier2RewardDescription,
+  completedCycles = 0,
 }: CagnotteSectionProps) {
   const t = useTranslations('cagnotteSection');
+  const cycleBadge = completedCycles > 0 ? (
+    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 border ${
+      completedCycles >= 4 ? 'bg-amber-50 border-amber-200 text-amber-700'
+        : completedCycles >= 2 ? 'bg-violet-50 border-violet-200 text-violet-600'
+        : 'bg-pink-50 border-pink-200 text-pink-600'
+    }`}>
+      <Crown className="w-3 h-3" />
+      {t('cycleCount', { n: completedCycles + 1 })}
+    </span>
+  ) : null;
   if (tier2Enabled) {
     return (
       <div className="space-y-5">
+        {completedCycles > 0 && (
+          <div className="flex justify-end">{cycleBadge}</div>
+        )}
         {/* PALIER 1 */}
         <div className={`p-4 rounded-xl border transition-all ${
           isRewardReady && !effectiveTier1Redeemed
@@ -174,7 +189,10 @@ export default function CagnotteSection({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{t('myLoyalty')}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{t('myLoyalty')}</span>
+          {cycleBadge}
+        </div>
         {isRewardReady ? (
           <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200">
             <Gift className="w-4 h-4" />
