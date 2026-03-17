@@ -549,6 +549,7 @@ CONTACT_EMAIL=
 ### Imports : React/Next → externes → internes → libs → types
 ### Nommage : PascalCase (composants, types), camelCase (utils), kebab-case (routes API)
 ### Styles : Tailwind inline, `cn()` conditionnel
+### Hooks : TOUS les hooks (useState, useEffect, useMemo, useCallback, useRef, useTranslations, useLocale, useRouter, etc.) DOIVENT etre declares AVANT tout early return conditionnel. Jamais de hook apres un `if (...) return`. Regle React absolue — violation = crash #310 en prod.
 
 ---
 
