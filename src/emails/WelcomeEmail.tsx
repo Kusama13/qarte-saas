@@ -34,11 +34,7 @@ export function WelcomeEmail({ shopName, slug, trialDays = 7, locale = 'fr' }: W
         {t('welcome.readyTitle')}
       </Text>
 
-      <Section style={stepsBox}>
-        <Text style={stepItem} dangerouslySetInnerHTML={{ __html: t('welcome.stepPagePro') }} />
-        <Text style={stepItem} dangerouslySetInnerHTML={{ __html: t('welcome.stepPlanning') }} />
-        <Text style={stepItem} dangerouslySetInnerHTML={{ __html: t('welcome.stepLoyalty') }} />
-      </Section>
+      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('welcome.stepPagePro') }} />
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/personalize">
@@ -65,8 +61,6 @@ export function WelcomeEmail({ shopName, slug, trialDays = 7, locale = 'fr' }: W
           </Section>
         </>
       )}
-
-      <Text style={highlightBox} dangerouslySetInnerHTML={{ __html: `<strong>${t('welcome.tipTitle')}</strong> ${t('welcome.tipText')}` }} />
 
       <Hr style={divider} />
 
