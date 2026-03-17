@@ -624,6 +624,13 @@ export default function CustomerCardPage({
     };
   }, [card, tier1RedeemedInCycle, memberCard]);
 
+  const completedCycles = useMemo(() => {
+    if (redemptions.length === 0) return 0;
+    const t2 = card?.merchant?.tier2_enabled && card?.merchant?.tier2_stamps_required;
+    if (t2) return redemptions.filter(r => r.tier === 2).length;
+    return redemptions.length;
+  }, [redemptions, card?.merchant?.tier2_enabled, card?.merchant?.tier2_stamps_required]);
+
   const triggerSparkles = useCallback(() => {
     const m = card?.merchant;
     const colors = m
@@ -711,11 +718,6 @@ export default function CustomerCardPage({
   const tier2Enabled = merchant.tier2_enabled && merchant.tier2_stamps_required;
   const tier2Required = merchant.tier2_stamps_required || 0;
   const tier2Reward = merchant.tier2_reward_description || '';
-  const completedCycles = useMemo(() => {
-    if (redemptions.length === 0) return 0;
-    if (tier2Enabled) return redemptions.filter(r => r.tier === 2).length;
-    return redemptions.length;
-  }, [redemptions, tier2Enabled]);
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${merchant.primary_color}15 0%, ${merchant.primary_color}40 40%, ${merchant.primary_color}60 70%, ${merchant.primary_color}35 100%)` }}>
