@@ -86,7 +86,7 @@ export default function CardHeader({
             {merchant.shop_name}
           </motion.h1>
 
-          {(memberCard && isMemberCardActive || safeBookingUrl || (merchant.slug && merchant.show_public_page_on_card)) && (
+          {(memberCard && isMemberCardActive || safeBookingUrl || merchant.slug) && (
             <div className="flex items-center gap-2 flex-wrap justify-center">
               {memberCard && isMemberCardActive && (
                 <motion.button
@@ -112,7 +112,7 @@ export default function CardHeader({
                   <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('book')}</span>
                 </motion.a>
               )}
-              {merchant.slug && merchant.show_public_page_on_card && (
+              {merchant.slug && (
                 <motion.a
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
