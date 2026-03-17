@@ -7,7 +7,7 @@ import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import SimulatedCard from './SimulatedCard';
 import { useInView } from '@/hooks/useInView';
-import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency } from '@/lib/utils';
+import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform } from '@/lib/utils';
 import { useLocale, useTranslations } from 'next-intl';
 import type { Merchant } from '@/types';
 
@@ -123,6 +123,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
   const safeBookingUrl = merchant.booking_url && /^https?:\/\//i.test(merchant.booking_url) ? merchant.booking_url : null;
   const hasBooking = !!safeBookingUrl;
+  const bookingPlatform = detectBookingPlatform(safeBookingUrl);
   const noOp = (e: React.MouseEvent) => { e.preventDefault(); };
 
   // Planning: group slots by month then by date
@@ -272,24 +273,31 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
         {/* CTA principal */}
         {hasBooking && (
-          <motion.a
-            ref={topCtaRef as unknown as React.Ref<HTMLAnchorElement>}
-            href={isDemo ? '#' : safeBookingUrl!}
-            target={isDemo ? undefined : '_blank'}
-            rel={isDemo ? undefined : 'noopener noreferrer'}
-            onClick={isDemo ? noOp : undefined}
+          <motion.div
+            ref={topCtaRef as unknown as React.Ref<HTMLDivElement>}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.4 }}
-            className="flex items-center justify-center gap-2.5 w-full py-4 rounded-2xl text-white font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.98]"
-            style={{
-              background: `linear-gradient(135deg, ${p}, ${s})`,
-              boxShadow: `0 4px 20px ${p}40`,
-            }}
+            className="flex flex-col items-center"
           >
-            <CalendarDays className="w-5 h-5" />
-            {t('bookAppointment')}
-          </motion.a>
+            <a
+              href={isDemo ? '#' : safeBookingUrl!}
+              target={isDemo ? undefined : '_blank'}
+              rel={isDemo ? undefined : 'noopener noreferrer'}
+              onClick={isDemo ? noOp : undefined}
+              className="flex items-center justify-center gap-2.5 w-full py-4 rounded-2xl text-white font-bold text-[15px] transition-all hover:opacity-90 active:scale-[0.98]"
+              style={{
+                background: `linear-gradient(135deg, ${p}, ${s})`,
+                boxShadow: `0 4px 20px ${p}40`,
+              }}
+            >
+              <CalendarDays className="w-5 h-5" />
+              {t('bookAppointment')}
+            </a>
+            {bookingPlatform && (
+              <span className="mt-1.5 text-[11px] text-gray-400 font-medium">via {bookingPlatform}</span>
+            )}
+          </motion.div>
         )}
 
         {/* ── HORAIRES ── */}
@@ -875,6 +883,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             <div className="flex items-center gap-3 px-4 py-3 max-w-lg mx-auto">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-bold text-gray-900 truncate">{merchant.shop_name}</p>
+                {bookingPlatform && (
+                  <p className="text-[11px] text-gray-400 font-medium">via {bookingPlatform}</p>
+                )}
               </div>
               <a
                 href={isDemo ? '/auth/merchant/signup' : safeBookingUrl!}

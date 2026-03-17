@@ -602,3 +602,26 @@ export function formatDoubleDays(json: string | null | undefined, locale: string
   const labels = getDayLabels(locale);
   return WEEK_ORDER.filter(d => days.includes(d)).map(d => labels[d]).join(' · ');
 }
+
+const BOOKING_PLATFORMS: { pattern: RegExp; name: string }[] = [
+  { pattern: /planity\./i, name: 'Planity' },
+  { pattern: /treatwell\./i, name: 'Treatwell' },
+  { pattern: /fresha\./i, name: 'Fresha' },
+  { pattern: /booksy\./i, name: 'Booksy' },
+  { pattern: /kiute\./i, name: 'Kiute' },
+  { pattern: /iara\./i, name: 'Iara' },
+  { pattern: /calendly\./i, name: 'Calendly' },
+  { pattern: /doctolib\./i, name: 'Doctolib' },
+];
+
+/**
+ * Detects a known booking platform from a URL.
+ * Returns the platform name (e.g. "Planity") or null.
+ */
+export function detectBookingPlatform(url: string | null | undefined): string | null {
+  if (!url) return null;
+  for (const { pattern, name } of BOOKING_PLATFORMS) {
+    if (pattern.test(url)) return name;
+  }
+  return null;
+}
