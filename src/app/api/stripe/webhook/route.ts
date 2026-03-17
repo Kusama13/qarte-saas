@@ -80,30 +80,17 @@ export async function POST(request: Request) {
       const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
       if (userData?.user?.email) {
         const locale = mLocale(merchant);
-        // Date du prochain prélèvement depuis Stripe (source de vérité)
+        // Date du prochain prélèvement = fin de l'essai si > 2 jours (sinon Stripe prélève immédiatement)
         let nextBillingDate: string | undefined;
-        if (session.subscription) {
-          try {
-            const sub = await stripe.subscriptions.retrieve(session.subscription as string) as unknown as { current_period_end: number };
-            if (sub.current_period_end) {
-              nextBillingDate = new Date(sub.current_period_end * 1000).toLocaleDateString(toBCP47(locale), {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              });
-            }
-          } catch {
-            // Fallback: use trial_ends_at if still in future
-            if (merchant.trial_ends_at) {
-              const trialEnd = new Date(merchant.trial_ends_at);
-              if (trialEnd > new Date()) {
-                nextBillingDate = trialEnd.toLocaleDateString(toBCP47(locale), {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                });
-              }
-            }
+        if (merchant.trial_ends_at) {
+          const trialEnd = new Date(merchant.trial_ends_at);
+          const twoDaysFromNow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+          if (trialEnd > twoDaysFromNow) {
+            nextBillingDate = trialEnd.toLocaleDateString(toBCP47(locale), {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            });
           }
         }
         const billingInterval = session.metadata?.plan === 'annual' ? 'annual' : 'monthly';
