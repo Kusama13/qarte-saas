@@ -262,6 +262,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Historique client** : dans le modal booking, affiche les RDV passes du client (via `GET /api/planning?customerId=`)
 - **Photos resultat** : photos "apres" prestation (max 3/creneau), separees des photos inspiration
 - Flow edition 2 modals : Modal 1 (choix/creation client + reseaux sociaux Instagram/TikTok/Facebook) → Modal 2 (multi-services avec duree+prix, photos inspiration max 3, photos resultat max 3, notes, detection chevauchement avec options decaler/supprimer)
+- **Creation client depuis planning** : reutilise `/api/customers/create`. Si client existe deja (409), l'API retourne `customer_id` et le planning le reutilise automatiquement. Erreurs affichees dans un bandeau rouge
 - Tables : `merchant_planning_slots` (mig 063+065), `planning_slot_services` (mig 071, junction multi-services), `planning_slot_photos` (mig 072, max 3 photos inspiration), `planning_slot_result_photos` (mig 074, max 3 photos resultat — meme structure que planning_slot_photos)
 - Colonnes `instagram_handle`, `tiktok_handle`, `facebook_url` sur `customers` (mig 073)
 - API `/api/planning` (GET avec join services+photos+result_photos+customer social, filtre `customerId`/POST/PATCH avec service_ids[]/DELETE) + `/api/planning/copy-week` + `/api/planning/photos` (POST/DELETE) + `/api/planning/result-photos` (POST/DELETE) + `/api/planning/shift-slot` (POST, supporte `newDate` pour deplacements inter-jours) + `/api/customers/social` (PATCH)
@@ -349,7 +350,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `PATCH /api/customers/social` — MAJ liens sociaux (instagram_handle, tiktok_handle, facebook_url)
 
 ### Admin
-- `/api/admin/merchants/[id]` — GET stats/PATCH notes
+- `/api/admin/merchants/[id]` — GET stats (20 queries paralleles : clients, visites, redemptions, referrals, services, photos, planning slots+bookings, push, vouchers)/PATCH notes
+- `/api/admin/activity-feed` — Timeline activite (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, messages). Optimise : fetch merchants par IDs references uniquement
 - `/api/admin/announcements` — CRUD annonces
 - `/api/admin/incomplete-signups`, `/api/admin/prospects`, `/api/admin/tasks`, `/api/admin/merchant-emails`
 
@@ -474,7 +476,7 @@ Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 fi
 - **QR Code & Supports** (`/dashboard/qr-download`) : QR code + Kit reseaux sociaux (image HD, legendes, grille 2x2 coloree de 4 tips + lien cross-promo vers Ma Page). Post-QR modal redirige vers Ma Page.
 
 ### Admin (`/admin`)
-Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses. **Exclut les comptes admin** des stats. Feature adoption : 15 features trackees (programme, logo, reseaux, parrainage, anniversaire, reservation, avis, offre active, PWA, shield, palier 2, offre bienvenue, double jours, adresse, mode cagnotte). Health score : /100 (programme +15, logo +10, reseaux +5, avis +5, reservation +5, clients +10-20, activite +15, recence +5-10, parrainage +5, shield +5, palier2 +5, bienvenue +5, anniversaire +3, double jours +2). Badges merchants : Admin, NC, Shield pending, PWA, Bienvenue, Cagnotte.
+Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses. **Exclut les comptes admin** des stats. Feature adoption : 15 features trackees (programme, logo, reseaux, parrainage, anniversaire, reservation, avis, offre active, PWA, shield, palier 2, offre bienvenue, double jours, adresse, mode cagnotte). Health score : /100 (programme +15, logo +10, reseaux +5, avis +5, reservation +5, clients +10-20, activite +15, recence +5-10, parrainage +5, shield +5, palier2 +5, bienvenue +5, anniversaire +3, double jours +2). Badges merchants : Admin, NC, Shield pending, PWA, Bienvenue, Cagnotte. **Activite** : timeline 7 types d'evenements (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, messages) avec summary cards et filtres. **Detail merchant** : stat planning "X reservations / Y creneaux" (futurs).
 
 ### Page Publique Programme (`/p/[slug]`)
 Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre bienvenue → `/scan/{code}?welcome=`).

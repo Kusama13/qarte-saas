@@ -45,13 +45,13 @@ export async function GET(request: NextRequest) {
       { data: newCards },
       { data: contacts },
       { data: usedVouchers },
-      { data: allMerchants },
+      { data: bookings },
       { data: superAdmins },
     ] = await Promise.all([
       (() => {
         let q = supabaseAdmin
           .from('visits')
-          .select('id, merchant_id, customer_id, visited_at, points_earned')
+          .select('merchant_id, visited_at, points_earned')
           .gte('visited_at', periodStart);
         if (periodEnd) q = q.lt('visited_at', periodEnd);
         return q.order('visited_at', { ascending: false }).limit(200);
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       (() => {
         let q = supabaseAdmin
           .from('redemptions')
-          .select('id, merchant_id, customer_id, redeemed_at, tier')
+          .select('merchant_id, redeemed_at, tier')
           .gte('redeemed_at', periodStart);
         if (periodEnd) q = q.lt('redeemed_at', periodEnd);
         return q.order('redeemed_at', { ascending: false }).limit(500);
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       (() => {
         let q = supabaseAdmin
           .from('loyalty_cards')
-          .select('id, merchant_id, customer_id, created_at')
+          .select('merchant_id, created_at')
           .gte('created_at', periodStart);
         if (periodEnd) q = q.lt('created_at', periodEnd);
         return q.order('created_at', { ascending: false }).limit(1000);
@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
       (() => {
         let q = supabaseAdmin
           .from('contact_messages')
-          .select('id, name, email, subject, created_at')
+          .select('name, subject, created_at')
           .gte('created_at', periodStart);
         if (periodEnd) q = q.lt('created_at', periodEnd);
         return q.order('created_at', { ascending: false }).limit(100);
@@ -91,19 +91,39 @@ export async function GET(request: NextRequest) {
       (() => {
         let q = supabaseAdmin
           .from('vouchers')
-          .select('id, merchant_id, source, reward_description, used_at')
+          .select('merchant_id, source, reward_description, used_at')
           .eq('is_used', true)
           .gte('used_at', periodStart);
         if (periodEnd) q = q.lt('used_at', periodEnd);
         return q.order('used_at', { ascending: false }).limit(200);
       })(),
-      supabaseAdmin
-        .from('merchants')
-        .select('id, shop_name, user_id'),
+      (() => {
+        let q = supabaseAdmin
+          .from('merchant_planning_slots')
+          .select('merchant_id, client_name, slot_date, start_time, created_at')
+          .not('client_name', 'is', null)
+          .gte('created_at', periodStart);
+        if (periodEnd) q = q.lt('created_at', periodEnd);
+        return q.order('created_at', { ascending: false }).limit(200);
+      })(),
       supabaseAdmin
         .from('super_admins')
         .select('user_id'),
     ]);
+
+    // Collect all referenced merchant IDs, then fetch only those
+    const merchantIdSet = new Set<string>();
+    for (const v of visits || []) merchantIdSet.add(v.merchant_id);
+    for (const m of merchants || []) merchantIdSet.add(m.id);
+    for (const r of redemptions || []) merchantIdSet.add(r.merchant_id);
+    for (const c of newCards || []) merchantIdSet.add(c.merchant_id);
+    for (const v of usedVouchers || []) merchantIdSet.add(v.merchant_id);
+    for (const b of bookings || []) merchantIdSet.add(b.merchant_id);
+    const merchantIds = [...merchantIdSet];
+
+    const { data: allMerchants } = merchantIds.length > 0
+      ? await supabaseAdmin.from('merchants').select('id, shop_name, user_id').in('id', merchantIds)
+      : { data: [] as { id: string; shop_name: string; user_id: string }[] };
 
     // Build merchant name lookup
     const superAdminUserIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
@@ -119,7 +139,7 @@ export async function GET(request: NextRequest) {
 
     // Build events timeline
     interface ActivityEvent {
-      type: 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher';
+      type: 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher' | 'booking';
       timestamp: string;
       title: string;
       subtitle: string;
@@ -177,14 +197,25 @@ export async function GET(request: NextRequest) {
       });
     });
 
+    const SOURCE_LABELS: Record<string, string> = { birthday: 'Anniversaire', welcome: 'Bienvenue', offer: 'Offre promo', referral: 'Parrainage', redemption: 'Récompense' };
     (usedVouchers || []).forEach((v: { used_at: string; merchant_id: string; source: string; reward_description: string | null }) => {
-      const sourceLabel = v.source === 'birthday' ? 'Anniversaire' : v.source === 'welcome' ? 'Bienvenue' : v.source === 'offer' ? 'Offre promo' : 'Parrainage';
+      const sourceLabel = SOURCE_LABELS[v.source] || v.source;
       events.push({
         type: 'voucher',
         timestamp: v.used_at,
         title: `${sourceLabel} utilisé chez ${merchantNameMap.get(v.merchant_id) || 'Inconnu'}`,
         subtitle: v.reward_description || sourceLabel,
         merchant_id: v.merchant_id,
+      });
+    });
+
+    (bookings || []).forEach((b: { created_at: string; merchant_id: string; client_name: string; slot_date: string; start_time: string }) => {
+      events.push({
+        type: 'booking',
+        timestamp: b.created_at,
+        title: `Réservation chez ${merchantNameMap.get(b.merchant_id) || 'Inconnu'}`,
+        subtitle: `${b.client_name} — ${b.slot_date} à ${b.start_time}`,
+        merchant_id: b.merchant_id,
       });
     });
 
@@ -198,6 +229,7 @@ export async function GET(request: NextRequest) {
       newCustomers: (newCards || []).length,
       contacts: (contacts || []).length,
       vouchers: (usedVouchers || []).length,
+      bookings: (bookings || []).length,
     };
 
     return NextResponse.json({ events, summary });

@@ -70,6 +70,7 @@ export async function GET(
       welcomeVouchersRes,
       offerVouchersRes,
       planningSlotsRes,
+      planningBookingsRes,
     ] = await Promise.all([
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
@@ -90,6 +91,7 @@ export async function GET(
       supabaseAdmin.from('vouchers').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('source', 'welcome'),
       supabaseAdmin.from('vouchers').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('source', 'offer'),
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('slot_date', new Date().toISOString().split('T')[0]),
+      supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).not('client_name', 'is', null).gte('slot_date', new Date().toISOString().split('T')[0]),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -159,6 +161,7 @@ export async function GET(
         welcomeVouchers: welcomeVouchersRes.count || 0,
         offerVouchers: offerVouchersRes.count || 0,
         planningSlotsCount: planningSlotsRes.count || 0,
+        planningBookingsCount: planningBookingsRes.count || 0,
       },
       memberPrograms: memberProgramsRes.data || [],
       emailTrackings: emailTrackingsRes.data || [],
