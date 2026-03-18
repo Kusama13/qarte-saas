@@ -37,7 +37,12 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
 
     // Single query: JOIN loyalty_cards + customers with ILIKE filter, LIMIT 10
-    const pattern = `%${q}%`;
+    // Sanitize query for PostgREST filter syntax (commas, parens, dots are special)
+    const sanitized = q.replace(/[,().\\%_]/g, '');
+    if (sanitized.length < 2) {
+      return NextResponse.json({ customers: [] });
+    }
+    const pattern = `%${sanitized}%`;
     const { data: customers, error } = await supabaseAdmin
       .from('customers')
       .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url, loyalty_cards!inner(merchant_id)')

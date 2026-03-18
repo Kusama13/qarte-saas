@@ -9,10 +9,10 @@ const createCustomerSchema = z.object({
   first_name: z.string().min(1).max(100),
   last_name: z.string().max(100).optional().nullable(),
   phone_number: z.string().min(4).max(20),
-  birth_month: z.union([z.number().int().min(1).max(12), z.string()]).optional().nullable(),
-  birth_day: z.union([z.number().int().min(1).max(31), z.string()]).optional().nullable(),
-  initial_stamps: z.union([z.number().int().min(0).max(15), z.string()]).optional().nullable(),
-  initial_amount: z.union([z.number().min(0).max(10000), z.string()]).optional().nullable(),
+  birth_month: z.coerce.number().int().min(1).max(12).optional().nullable(),
+  birth_day: z.coerce.number().int().min(1).max(31).optional().nullable(),
+  initial_stamps: z.coerce.number().int().min(0).max(15).optional().nullable(),
+  initial_amount: z.coerce.number().min(0).max(10000).optional().nullable(),
 });
 
 const supabaseAdmin = getSupabaseAdmin();
