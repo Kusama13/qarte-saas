@@ -1406,7 +1406,14 @@
     "past": "Past",
     "showPast": "Show past ({count})",
     "hidePast": "Hide past",
-    "totalPrice": "Estimated total: {price}"
+    "totalPrice": "Estimated total: {price}",
+    "viewWeek": "Week view",
+    "viewDay": "Day view",
+    "clientHistory": "Client history",
+    "hideHistory": "Hide history",
+    "noHistory": "No previous bookings",
+    "slotMoved": "Slot moved",
+    "resultPhotos": "Result photos"
   },
   "qrDownload": {
     "title": "My QR Code & Promo Kit",

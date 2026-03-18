@@ -1406,7 +1406,14 @@
     "past": "Passé",
     "showPast": "Voir les passés ({count})",
     "hidePast": "Masquer les passés",
-    "totalPrice": "Total estimé : {price}"
+    "totalPrice": "Total estimé : {price}",
+    "viewWeek": "Vue semaine",
+    "viewDay": "Vue jour",
+    "clientHistory": "Historique du client",
+    "hideHistory": "Masquer l'historique",
+    "noHistory": "Aucun RDV précédent",
+    "slotMoved": "Créneau déplacé",
+    "resultPhotos": "Photos du résultat"
   },
   "qrDownload": {
     "title": "Mon QR code & Kit promo",

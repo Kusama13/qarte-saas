@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useMemo, useState, DragEvent } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { PHONE_CONFIG, formatTime, toBCP47 } from '@/lib/utils';
-import { formatDate, formatDateFr } from './utils';
+import { formatDate, formatDateFr, getServiceColorMap, getSlotColor, colorBorderStyle } from './utils';
 import { handleDownloadStory } from './StoryExport';
 import { usePlanningState } from './usePlanningState';
 import AddSlotsModal from './AddSlotsModal';
@@ -15,6 +15,7 @@ import CopyWeekModal from './CopyWeekModal';
 import ClientSelectModal from './ClientSelectModal';
 import BookingDetailsModal from './BookingDetailsModal';
 import ReservationsSection from './ReservationsSection';
+import DayView from './DayView';
 
 export default function PlanningDashboard() {
   const t = useTranslations('planning');
@@ -25,6 +26,7 @@ export default function PlanningDashboard() {
   const {
     merchant, merchantLoading, refetch,
     tab, setTab,
+    viewMode, setViewMode, selectedDay, setSelectedDay,
     weekOffset, setWeekOffset, weekStart, weekDays, weekEnd,
     slots, loadingSlots, slotsByDate, fetchSlots, upcomingSlots,
     todayStr, totalSlots, takenSlots, freeSlots, isToday, isPast,
@@ -39,12 +41,59 @@ export default function PlanningDashboard() {
     handleDraftNameChange, selectCustomer, handleCreateCustomer,
     saving, saved,
     handleTogglePlanning, handleAddSlots, handleUpdateSlot,
-    handleDeleteSlot, handleShiftSlot, handleCopyWeek,
+    handleDeleteSlot, handleMoveSlot, handleCopyWeek,
     openEditSlot, openAddSlotsModal,
     proceedToBookingDetails, goBackToClientSelect,
+    fetchClientHistory,
   } = state;
 
   const { saving: savingSettings, saved: savedSettings, save: saveSettings } = useDashboardSave(2000);
+
+  // Service color map
+  const serviceColorMap = useMemo(() => getServiceColorMap(services), [services]);
+
+  // Drag & drop state
+  const [dragSlotId, setDragSlotId] = useState<string | null>(null);
+  const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+
+  const handleDragStart = (e: DragEvent, slotId: string) => {
+    setDragSlotId(slotId);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', slotId);
+  };
+
+  const handleDragOver = (e: DragEvent, dateStr: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverDate(dateStr);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverDate(null);
+  };
+
+  const handleDrop = async (e: DragEvent, targetDate: string) => {
+    e.preventDefault();
+    setDragOverDate(null);
+    const slotId = e.dataTransfer.getData('text/plain');
+    if (!slotId || !dragSlotId) return;
+
+    // Find the source slot
+    const sourceSlot = slots.find(s => s.id === slotId);
+    if (!sourceSlot || sourceSlot.slot_date === targetDate) {
+      setDragSlotId(null);
+      return;
+    }
+
+    // Move to same time on new date
+    await handleMoveSlot(slotId, sourceSlot.start_time, targetDate);
+    setDragSlotId(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragSlotId(null);
+    setDragOverDate(null);
+  };
 
   const handleSaveSettings = async () => {
     if (!merchant) return;
@@ -62,6 +111,31 @@ export default function PlanningDashboard() {
     if (!merchant || slots.length === 0) return;
     await handleDownloadStory({ merchant, slots, slotsByDate, weekStart, weekEnd, locale });
   }, [merchant, slots, slotsByDate, weekStart, weekEnd, locale]);
+
+  // Day view navigation
+  const handlePrevDay = () => {
+    const d = new Date(selectedDay);
+    d.setDate(d.getDate() - 1);
+    setSelectedDay(d);
+  };
+  const handleNextDay = () => {
+    const d = new Date(selectedDay);
+    d.setDate(d.getDate() + 1);
+    setSelectedDay(d);
+  };
+  const handleGoToToday = () => setSelectedDay(new Date());
+
+  // Sync day view when clicking a day in week view
+  const switchToDayView = (day: Date) => {
+    setSelectedDay(day);
+    setViewMode('day');
+  };
+
+  // Selected day data
+  const selectedDayStr = formatDate(selectedDay);
+  const selectedDaySlots = slotsByDate.get(selectedDayStr) || [];
+  const selectedDayIsPast = isPast(selectedDay);
+  const selectedDayIsToday = isToday(selectedDay);
 
   if (merchantLoading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
@@ -139,40 +213,76 @@ export default function PlanningDashboard() {
             </div>
           ) : (
             <>
-              {/* ── Navigation semaine + stats ── */}
+              {/* ── Navigation + stats ── */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 sm:p-4 mb-4">
+                {/* View mode toggle + navigation */}
                 <div className="flex items-center justify-between mb-3">
-                  <button
-                    onClick={() => setWeekOffset(o => o - 1)}
-                    disabled={weekOffset <= -1}
-                    className="p-2 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-30"
-                  >
-                    <ChevronLeft className="w-5 h-5 text-gray-500" />
-                  </button>
-
-                  <div className="flex flex-col items-center">
-                    <span className="text-sm font-bold text-gray-900">
-                      {weekStart.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' })} — {weekEnd.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' })}
-                    </span>
-                    {weekOffset !== 0 && (
+                  {viewMode === 'week' ? (
+                    <>
                       <button
-                        onClick={() => setWeekOffset(0)}
-                        className="text-[11px] text-indigo-600 font-medium mt-0.5 hover:underline"
+                        onClick={() => setWeekOffset(o => o - 1)}
+                        disabled={weekOffset <= -1}
+                        className="p-2 rounded-xl hover:bg-gray-50 transition-colors disabled:opacity-30"
                       >
-                        {t('backToToday')}
+                        <ChevronLeft className="w-5 h-5 text-gray-500" />
                       </button>
-                    )}
-                  </div>
 
-                  <button
-                    onClick={() => setWeekOffset(o => o + 1)}
-                    className="p-2 rounded-xl hover:bg-gray-50 transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5 text-gray-500" />
-                  </button>
+                      <div className="flex flex-col items-center">
+                        <span className="text-sm font-bold text-gray-900">
+                          {weekStart.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' })} — {weekEnd.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'long' })}
+                        </span>
+                        {weekOffset !== 0 && (
+                          <button
+                            onClick={() => setWeekOffset(0)}
+                            className="text-[11px] text-indigo-600 font-medium mt-0.5 hover:underline"
+                          >
+                            {t('backToToday')}
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => setWeekOffset(o => o + 1)}
+                        className="p-2 rounded-xl hover:bg-gray-50 transition-colors"
+                      >
+                        <ChevronRight className="w-5 h-5 text-gray-500" />
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handlePrevDay}
+                        className="p-2 rounded-xl hover:bg-gray-50 transition-colors"
+                      >
+                        <ChevronLeft className="w-5 h-5 text-gray-500" />
+                      </button>
+
+                      <div className="flex flex-col items-center">
+                        <span className="text-sm font-bold text-gray-900 capitalize">
+                          {selectedDay.toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' })}
+                        </span>
+                        {!selectedDayIsToday && (
+                          <button
+                            onClick={handleGoToToday}
+                            className="text-[11px] text-indigo-600 font-medium mt-0.5 hover:underline"
+                          >
+                            {t('backToToday')}
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={handleNextDay}
+                        className="p-2 rounded-xl hover:bg-gray-50 transition-colors"
+                      >
+                        <ChevronRight className="w-5 h-5 text-gray-500" />
+                      </button>
+                    </>
+                  )}
                 </div>
 
-                {totalSlots > 0 && (
+                {/* Stats (week view only) */}
+                {viewMode === 'week' && totalSlots > 0 && (
                   <div className="flex items-center justify-center gap-4 text-xs mb-3 pb-3 border-b border-gray-100">
                     <span className="text-gray-500">{totalSlots > 1 ? t('slotCountPlural', { count: totalSlots }) : t('slotCount', { count: totalSlots })}</span>
                     <span className="text-emerald-600 font-semibold">{freeSlots > 1 ? t('freeCountPlural', { count: freeSlots }) : t('freeCount', { count: freeSlots })}</span>
@@ -180,21 +290,44 @@ export default function PlanningDashboard() {
                   </div>
                 )}
 
+                {/* Actions row */}
                 <div className="flex gap-2">
-                  <button
-                    onClick={onDownloadStory}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold text-xs hover:from-indigo-700 hover:to-violet-700 transition-all shadow-sm shadow-indigo-200"
-                  >
-                    <Download className="w-4 h-4" />
-                    {t('downloadStory')}
-                  </button>
-                  <button
-                    onClick={() => setModalState({ type: 'copy-week' })}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 font-semibold text-xs hover:bg-gray-100 transition-colors"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{t('copy')}</span>
-                  </button>
+                  {/* View mode toggle */}
+                  <div className="hidden sm:flex items-center bg-gray-100 rounded-lg p-0.5">
+                    <button
+                      onClick={() => setViewMode('week')}
+                      className={`p-1.5 rounded-md transition-colors ${viewMode === 'week' ? 'bg-white shadow-sm text-gray-700' : 'text-gray-400 hover:text-gray-600'}`}
+                      title={t('viewWeek')}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => { setViewMode('day'); setSelectedDay(new Date()); }}
+                      className={`p-1.5 rounded-md transition-colors ${viewMode === 'day' ? 'bg-white shadow-sm text-gray-700' : 'text-gray-400 hover:text-gray-600'}`}
+                      title={t('viewDay')}
+                    >
+                      <Calendar className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {viewMode === 'week' && (
+                    <>
+                      <button
+                        onClick={onDownloadStory}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold text-xs hover:from-indigo-700 hover:to-violet-700 transition-all shadow-sm shadow-indigo-200"
+                      >
+                        <Download className="w-4 h-4" />
+                        {t('downloadStory')}
+                      </button>
+                      <button
+                        onClick={() => setModalState({ type: 'copy-week' })}
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-gray-600 font-semibold text-xs hover:bg-gray-100 transition-colors"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">{t('copy')}</span>
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -216,109 +349,164 @@ export default function PlanningDashboard() {
                 </div>
               )}
 
-              {/* Week grid */}
-              {loadingSlots ? (
-                <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
-              ) : (
+              {/* ── WEEK VIEW ── */}
+              {viewMode === 'week' && (
                 <>
-                {/* Desktop: 7 columns */}
-                <div className="hidden sm:grid sm:grid-cols-4 lg:grid-cols-7 gap-2">
-                  {weekDays.map(day => {
-                    const dateStr = formatDate(day);
-                    const daySlots = slotsByDate.get(dateStr) || [];
-                    const past = isPast(day);
-                    const today = isToday(day);
-                    return (
-                      <div
-                        key={dateStr}
-                        className={`bg-white rounded-xl border p-2.5 min-h-[100px] transition-colors ${today ? 'border-indigo-300 ring-1 ring-indigo-100' : past ? 'border-gray-100 opacity-50' : 'border-gray-100'}`}
-                      >
-                        <p className={`text-[11px] font-bold mb-2 capitalize ${today ? 'text-indigo-600' : 'text-gray-400'}`}>
-                          {formatDateFr(day, locale)}
-                        </p>
-                        <div className="space-y-1">
-                          {daySlots.map(slot => (
-                            <button
-                              key={slot.id}
-                              onClick={() => openEditSlot(slot)}
-                              className={`w-full text-left px-2 py-1 rounded-lg text-[11px] font-medium transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
-                            >
-                              <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
-                              {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name.length > 8 ? slot.client_name.slice(0, 8) + '…' : slot.client_name}</span>}
-                            </button>
-                          ))}
-                        </div>
-                        {!past && (
-                          <button
-                            onClick={() => openAddSlotsModal(dateStr)}
-                            className="mt-1.5 w-full flex items-center justify-center py-1 rounded-lg border border-dashed border-gray-200 text-gray-300 text-[11px] hover:border-indigo-300 hover:text-indigo-500 transition-colors"
+                  {loadingSlots ? (
+                    <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+                  ) : (
+                    <>
+                    {/* Desktop: 7 columns */}
+                    <div className="hidden sm:grid sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                      {weekDays.map(day => {
+                        const dateStr = formatDate(day);
+                        const daySlots = slotsByDate.get(dateStr) || [];
+                        const past = isPast(day);
+                        const today = isToday(day);
+                        const isDragOver = dragOverDate === dateStr;
+                        return (
+                          <div
+                            key={dateStr}
+                            className={`bg-white rounded-xl border p-2.5 min-h-[100px] transition-colors ${
+                              isDragOver ? 'border-indigo-400 ring-2 ring-indigo-200 bg-indigo-50/30' :
+                              today ? 'border-indigo-300 ring-1 ring-indigo-100' :
+                              past ? 'border-gray-100 opacity-50' : 'border-gray-100'
+                            }`}
+                            onDragOver={(e) => !past && handleDragOver(e, dateStr)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={(e) => !past && handleDrop(e, dateStr)}
                           >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Mobile: clean vertical list */}
-                <div className="sm:hidden space-y-2">
-                  {weekDays.map(day => {
-                    const dateStr = formatDate(day);
-                    const daySlots = slotsByDate.get(dateStr) || [];
-                    const past = isPast(day);
-                    const today = isToday(day);
-                    if (past && daySlots.length === 0) return null;
-                    return (
-                      <div
-                        key={dateStr}
-                        className={`bg-white rounded-xl border p-3 transition-colors ${today ? 'border-indigo-300 ring-1 ring-indigo-100' : past ? 'border-gray-100 opacity-40' : 'border-gray-100'}`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <p className={`text-xs font-bold capitalize ${today ? 'text-indigo-600' : 'text-gray-500'}`}>
-                            {formatDateFr(day, locale)}
-                          </p>
-                          {!past && (
                             <button
-                              onClick={() => openAddSlotsModal(dateStr)}
-                              className="p-1 rounded-lg hover:bg-indigo-50 text-gray-300 hover:text-indigo-500 transition-colors"
+                              onClick={() => switchToDayView(day)}
+                              className={`text-[11px] font-bold mb-2 capitalize block hover:text-indigo-600 transition-colors ${today ? 'text-indigo-600' : 'text-gray-400'}`}
                             >
-                              <Plus className="w-3.5 h-3.5" />
+                              {formatDateFr(day, locale)}
                             </button>
-                          )}
-                        </div>
-                        {daySlots.length > 0 ? (
-                          <div className="flex flex-wrap gap-1.5">
-                            {daySlots.map(slot => (
+                            <div className="space-y-1">
+                              {daySlots.map(slot => {
+                                const slotColor = getSlotColor(slot, serviceColorMap);
+                                return (
+                                  <button
+                                    key={slot.id}
+                                    onClick={() => openEditSlot(slot)}
+                                    draggable={!past}
+                                    onDragStart={(e) => handleDragStart(e, slot.id)}
+                                    onDragEnd={handleDragEnd}
+                                    className={`w-full text-left px-2 py-1 rounded-lg text-[11px] font-medium transition-all hover:scale-[1.02] active:scale-[0.98] overflow-hidden cursor-grab active:cursor-grabbing ${
+                                      dragSlotId === slot.id ? 'opacity-40' : ''
+                                    } ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
+                                    style={colorBorderStyle(slotColor)}
+                                  >
+                                    <span className="font-bold">{formatTime(slot.start_time, locale)}</span>
+                                    {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name.length > 8 ? slot.client_name.slice(0, 8) + '…' : slot.client_name}</span>}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {!past && (
                               <button
-                                key={slot.id}
-                                onClick={() => openEditSlot(slot)}
-                                className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
+                                onClick={() => openAddSlotsModal(dateStr)}
+                                className="mt-1.5 w-full flex items-center justify-center py-1 rounded-lg border border-dashed border-gray-200 text-gray-300 text-[11px] hover:border-indigo-300 hover:text-indigo-500 transition-colors"
                               >
-                                {formatTime(slot.start_time, locale)}
-                                {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name}</span>}
+                                <Plus className="w-3 h-3" />
                               </button>
-                            ))}
+                            )}
                           </div>
-                        ) : (
-                          <p className="text-[11px] text-gray-300">{t('noSlots')}</p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Mobile: clean vertical list */}
+                    <div className="sm:hidden space-y-2">
+                      {weekDays.map(day => {
+                        const dateStr = formatDate(day);
+                        const daySlots = slotsByDate.get(dateStr) || [];
+                        const past = isPast(day);
+                        const today = isToday(day);
+                        if (past && daySlots.length === 0) return null;
+                        return (
+                          <div
+                            key={dateStr}
+                            className={`bg-white rounded-xl border p-3 transition-colors ${today ? 'border-indigo-300 ring-1 ring-indigo-100' : past ? 'border-gray-100 opacity-40' : 'border-gray-100'}`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <button
+                                onClick={() => switchToDayView(day)}
+                                className={`text-xs font-bold capitalize hover:text-indigo-600 transition-colors ${today ? 'text-indigo-600' : 'text-gray-500'}`}
+                              >
+                                {formatDateFr(day, locale)}
+                              </button>
+                              {!past && (
+                                <button
+                                  onClick={() => openAddSlotsModal(dateStr)}
+                                  className="p-1 rounded-lg hover:bg-indigo-50 text-gray-300 hover:text-indigo-500 transition-colors"
+                                >
+                                  <Plus className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                            {daySlots.length > 0 ? (
+                              <div className="flex flex-wrap gap-1.5">
+                                {daySlots.map(slot => {
+                                  const slotColor = getSlotColor(slot, serviceColorMap);
+                                  return (
+                                    <button
+                                      key={slot.id}
+                                      onClick={() => openEditSlot(slot)}
+                                      className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all active:scale-95 ${slot.client_name ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}
+                                      style={{
+                                        borderLeftWidth: slotColor ? '3px' : undefined,
+                                        borderLeftColor: slotColor || undefined,
+                                      }}
+                                    >
+                                      {formatTime(slot.start_time, locale)}
+                                      {slot.client_name && <span className="ml-1 opacity-70">— {slot.client_name}</span>}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-gray-300">{t('noSlots')}</p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    </>
+                  )}
                 </>
+              )}
+
+              {/* ── DAY VIEW ── */}
+              {viewMode === 'day' && (
+                loadingSlots ? (
+                  <div className="flex items-center justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
+                ) : (
+                  <DayView
+                    day={selectedDay}
+
+                    daySlots={selectedDaySlots}
+                    services={services}
+                    serviceColorMap={serviceColorMap}
+                    locale={locale}
+                    isPast={selectedDayIsPast}
+                    isToday={selectedDayIsToday}
+                    onSlotClick={openEditSlot}
+                    onAddSlots={openAddSlotsModal}
+                  />
+                )
               )}
             </>
           )}
         </>
       )}
 
-      {/* ── TAB: A VENIR ── */}
+      {/* ── TAB: RESERVATIONS ── */}
       {tab === 'reservations' && (
         <ReservationsSection
           slots={upcomingSlots}
           services={services}
+          serviceColorMap={serviceColorMap}
           locale={locale}
           merchantCountry={merchant?.country || 'FR'}
           onEditSlot={openEditSlot}
@@ -469,6 +657,7 @@ export default function PlanningDashboard() {
             customer={modalState.customer}
             draft={draft}
             services={services}
+            serviceColorMap={serviceColorMap}
             slotsByDate={slotsByDate}
             merchantId={merchant.id}
             merchantCountry={merchant.country || 'FR'}
@@ -477,10 +666,11 @@ export default function PlanningDashboard() {
             onDraftChange={updateDraft}
             onSave={handleUpdateSlot}
             onDelete={handleDeleteSlot}
-            onShiftSlot={handleShiftSlot}
+            onShiftSlot={handleMoveSlot}
             onRefreshSlots={fetchSlots}
             onGoBack={goBackToClientSelect}
             onClose={closeModal}
+            onFetchClientHistory={fetchClientHistory}
           />
         )}
       </AnimatePresence>

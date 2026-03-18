@@ -48,6 +48,8 @@ export function usePlanningState() {
   const supabase = getSupabase();
 
   const [tab, setTab] = useState<'slots' | 'reservations' | 'settings'>('slots');
+  const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
+  const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [weekOffset, setWeekOffset] = useState(0);
   const [slots, setSlots] = useState<PlanningSlot[]>([]);
   const [upcomingSlots, setUpcomingSlots] = useState<PlanningSlot[]>([]);
@@ -163,6 +165,21 @@ export function usePlanningState() {
     if (merchant?.planning_enabled) fetchSlots();
   }, [merchant, fetchSlots]);
 
+  // Sync weekOffset when day view navigates outside loaded week
+  useEffect(() => {
+    if (viewMode !== 'day') return;
+    const dayStr = formatDate(selectedDay);
+    const startStr = formatDate(weekStart);
+    const endStr = formatDate(weekEnd);
+    if (dayStr < startStr || dayStr > endStr) {
+      // Compute new offset: difference in weeks from current week
+      const now = getWeekStart(0);
+      const diffMs = selectedDay.getTime() - now.getTime();
+      const diffWeeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+      setWeekOffset(diffWeeks);
+    }
+  }, [viewMode, selectedDay, weekStart, weekEnd]);
+
   // ── Actions ──
 
   const handleTogglePlanning = async (enabled: boolean) => {
@@ -228,20 +245,33 @@ export function usePlanningState() {
     setModalState({ type: 'closed' });
   };
 
-  const handleShiftSlot = async (slotId: string, newTime: string) => {
+  const handleMoveSlot = async (slotId: string, newTime: string, newDate?: string) => {
     if (!merchant) return;
     setSaving(true);
     try {
+      const payload: Record<string, string> = { merchantId: merchant.id, slotId, newTime };
+      if (newDate) payload.newDate = newDate;
       await fetch('/api/planning/shift-slot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ merchantId: merchant.id, slotId, newTime }),
+        body: JSON.stringify(payload),
       });
       await fetchSlots();
       invalidateUpcoming();
     } catch { /* */ }
     setSaving(false);
   };
+
+  const fetchClientHistory = useCallback(async (customerId: string): Promise<PlanningSlot[]> => {
+    if (!merchant) return [];
+    try {
+      const res = await fetch(`/api/planning?merchantId=${merchant.id}&customerId=${customerId}&booked=true`);
+      const data = await res.json();
+      return data.slots || [];
+    } catch {
+      return [];
+    }
+  }, [merchant]);
 
   const handleCopyWeek = async (targetWeekOffset: number) => {
     if (!merchant) return;
@@ -426,6 +456,8 @@ export function usePlanningState() {
     merchant, merchantLoading, refetch,
     // Tab
     tab, setTab,
+    // View mode
+    viewMode, setViewMode, selectedDay, setSelectedDay,
     // Week navigation
     weekOffset, setWeekOffset, weekStart, weekDays, weekEnd,
     // Slots
@@ -450,8 +482,9 @@ export function usePlanningState() {
     // Actions
     saving, setSaving, saved,
     handleTogglePlanning, handleAddSlots, handleUpdateSlot,
-    handleDeleteSlot, handleShiftSlot, handleCopyWeek,
+    handleDeleteSlot, handleMoveSlot, handleCopyWeek,
     openEditSlot, openAddSlotsModal,
     proceedToBookingDetails, goBackToClientSelect,
+    fetchClientHistory,
   };
 }

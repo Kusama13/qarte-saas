@@ -652,6 +652,24 @@ Single-row table : id, content (TEXT, default ''), updated_at
 **Max** : 3 photos par creneau
 **Storage** : `images/planning/{merchantId}/{slotId}-{timestamp}.{ext}`
 
+### 2.38 planning_slot_result_photos (mig 074)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| slot_id | UUID FK → merchant_planning_slots | NOT NULL | ON DELETE CASCADE |
+| merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
+| url | TEXT | NOT NULL | |
+| position | SMALLINT | `1` | CHECK (1..3) |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**Contrainte** : UNIQUE(slot_id, position)
+**RLS** : merchant own, service_role full access
+**Index** : `idx_planning_slot_result_photos_slot`
+**Max** : 3 photos resultat par creneau
+**Storage** : `images/planning/{merchantId}/{slotId}-result-{timestamp}.{ext}`
+**Note** : Meme structure que `planning_slot_photos` mais pour les photos "apres" prestation
+
 ---
 
 
@@ -753,6 +771,7 @@ Voir `docs/context.md` section 4.7 pour les regles completes. Resume DB :
 | merchant_service_categories | SELECT (public), ALL (merchant own) | Full |
 | merchant_services | SELECT (public), ALL (merchant own) | Full |
 | merchant_planning_slots | SELECT (public, available future only), ALL (merchant own) | Full |
+| planning_slot_result_photos | merchant own | Full |
 
 **Note** : Mig 038 a restreint les acces publics. Les INSERT/SELECT publics sur customers, loyalty_cards, visits, vouchers, push_subscriptions ont ete remplaces par des policies scoped au merchant.
 
@@ -821,7 +840,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 
 ---
 
-## 10. Migrations (001 → 073)
+## 10. Migrations (001 → 074)
 
 | # | Fichier | Resume |
 |---|---------|--------|
@@ -899,6 +918,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 071 | planning_slot_services | Table junction planning_slot_services (multi-services par creneau), migration donnees existantes service_id |
 | 072 | planning_slot_photos | Table planning_slot_photos (photos inspiration, max 3/creneau, position 1-3) |
 | 073 | customer_social_links | customers.instagram_handle, tiktok_handle, facebook_url (liens sociaux pour planning) |
+| 074 | planning_slot_result_photos | Table planning_slot_result_photos (photos resultat "apres", max 3/creneau, position 1-3, meme structure que planning_slot_photos) |
 
 ---
 

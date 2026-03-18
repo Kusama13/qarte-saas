@@ -68,7 +68,7 @@ docs/
 ├── AUDIT-SECURITE.md     # Score 93/100
 └── AUDIT-SCALABILITE.md  # Score 94/100
 
-supabase/migrations/      # 75 fichiers SQL (001-073 + 008b)
+supabase/migrations/      # 76 fichiers SQL (001-074 + 008b)
 ```
 
 ---
@@ -251,17 +251,21 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Welcome email** : `sendWelcomeEmail` recoit le locale du merchant a la creation
 - **Admin pages** : hardcoded `'fr-FR'` acceptable (usage interne uniquement)
 
-### Planning (mig 063-073)
-- Planning avance gere par le merchant : multi-services, photos inspiration, liens sociaux clients
+### Planning (mig 063-074)
+- Planning avance gere par le merchant : multi-services, photos inspiration, photos resultat ("avant/apres"), liens sociaux clients
 - 1 creneau = 1 ligne en DB (date + heure debut). `client_name IS NULL` = disponible, rempli = pris
 - Dashboard `/dashboard/planning` : 3 onglets (Creneaux, Reservations, Parametres)
-  - **Creneaux** : vue semaine, ajout creneaux (heures predefinies + custom), copie semaine, story Instagram
-  - **Reservations** : tous les RDV reserves (a venir + passes), modal detail (prestations, duree, prix, notes, photos inspiration cliquables/telechargeable), bouton modifier
+  - **Creneaux** : vue semaine (drag & drop inter-jours), vue jour (timeline 8h-21h), ajout creneaux (heures predefinies + custom), copie semaine, story Instagram
+  - **Reservations** : tous les RDV reserves (a venir + passes), modal detail (prestations, duree, prix, notes, photos inspiration + photos resultat cliquables/telechargeable, historique client), bouton modifier
   - **Parametres** : message libre public, conditions de reservation
-- Flow edition 2 modals : Modal 1 (choix/creation client + reseaux sociaux Instagram/TikTok/Facebook) → Modal 2 (multi-services avec duree+prix, photos inspiration max 3, notes, detection chevauchement avec options decaler/supprimer)
-- Tables : `merchant_planning_slots` (mig 063+065), `planning_slot_services` (mig 071, junction multi-services), `planning_slot_photos` (mig 072, max 3 photos inspiration)
+- **Couleurs services** : palette 10 couleurs attribuees automatiquement aux services, affichees sur les creneaux en vue semaine/jour
+- **Historique client** : dans le modal booking, affiche les RDV passes du client (via `GET /api/planning?customerId=`)
+- **Photos resultat** : photos "apres" prestation (max 3/creneau), separees des photos inspiration
+- Flow edition 2 modals : Modal 1 (choix/creation client + reseaux sociaux Instagram/TikTok/Facebook) → Modal 2 (multi-services avec duree+prix, photos inspiration max 3, photos resultat max 3, notes, detection chevauchement avec options decaler/supprimer)
+- Tables : `merchant_planning_slots` (mig 063+065), `planning_slot_services` (mig 071, junction multi-services), `planning_slot_photos` (mig 072, max 3 photos inspiration), `planning_slot_result_photos` (mig 074, max 3 photos resultat — meme structure que planning_slot_photos)
 - Colonnes `instagram_handle`, `tiktok_handle`, `facebook_url` sur `customers` (mig 073)
-- API `/api/planning` (GET avec join services+photos+customer social/POST/PATCH avec service_ids[]/DELETE) + `/api/planning/copy-week` + `/api/planning/photos` (POST/DELETE) + `/api/planning/shift-slot` (POST) + `/api/customers/social` (PATCH)
+- API `/api/planning` (GET avec join services+photos+result_photos+customer social, filtre `customerId`/POST/PATCH avec service_ids[]/DELETE) + `/api/planning/copy-week` + `/api/planning/photos` (POST/DELETE) + `/api/planning/result-photos` (POST/DELETE) + `/api/planning/shift-slot` (POST, supporte `newDate` pour deplacements inter-jours) + `/api/customers/social` (PATCH)
+- Helpers partages : `_photo-helpers.ts` (logique commune upload/delete pour photos et result-photos)
 - Page publique `/p/[slug]` : section "Disponibilites" (60j glissants, groupes par mois, preview 4 jours + bouton Voir plus), banniere message libre
 
 ### Programmes Membres
@@ -332,13 +336,14 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Services: duration (int, min, nullable), description (text, nullable), price_from (bool, "a partir de")
 
 ### Planning
-- `GET /api/planning?merchantId=&from=&to=` — Slots merchant (auth, join services+photos+customer social) ou `&public=true` (dispo only, 30j). `&booked=true` filtre les creneaux reserves uniquement
+- `GET /api/planning?merchantId=&from=&to=` — Slots merchant (auth, join services+photos+result_photos+customer social) ou `&public=true` (dispo only, 30j). `&booked=true` filtre les creneaux reserves uniquement. `&customerId=` filtre par client
 - `POST /api/planning` — Creation batch creneaux (max 20/requete, 200 actifs total)
 - `PATCH /api/planning` — Marquer creneau pris/libre (client_name, phone, service_ids[], notes)
 - `DELETE /api/planning` — Supprimer creneaux (batch slotIds)
 - `POST /api/planning/copy-week` — Copier horaires d'une semaine vers une autre
 - `POST/DELETE /api/planning/photos` — Upload/suppression photos inspiration (max 3/creneau, magic bytes, rate limit)
-- `POST /api/planning/shift-slot` — Decaler un creneau (newTime, verifie UNIQUE)
+- `POST/DELETE /api/planning/result-photos` — Upload/suppression photos resultat (max 3/creneau, magic bytes, rate limit, helpers partages avec photos)
+- `POST /api/planning/shift-slot` — Decaler un creneau (newTime + newDate optionnel pour deplacements inter-jours, verifie UNIQUE)
 
 ### Clients (social)
 - `PATCH /api/customers/social` — MAJ liens sociaux (instagram_handle, tiktok_handle, facebook_url)

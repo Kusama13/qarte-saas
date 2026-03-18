@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { toBCP47 } from '@/lib/utils';
 
 export function getWeekStart(offset: number): Date {
@@ -53,4 +54,39 @@ export function formatDuration(totalMinutes: number): string {
   if (h > 0) parts.push(`${h}h`);
   if (m > 0) parts.push(`${m}min`);
   return parts.join('') || '0min';
+}
+
+/** Fixed palette for service colors (10 distinct colors) */
+export const SERVICE_COLORS = [
+  '#6366f1', // indigo
+  '#ec4899', // pink
+  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#8b5cf6', // violet
+  '#ef4444', // red
+  '#06b6d4', // cyan
+  '#f97316', // orange
+  '#84cc16', // lime
+  '#a855f7', // purple
+];
+
+/** Build a map of service ID → color based on service position */
+export function getServiceColorMap(services: { id: string }[]): Map<string, string> {
+  const map = new Map<string, string>();
+  services.forEach((s, i) => map.set(s.id, SERVICE_COLORS[i % SERVICE_COLORS.length]));
+  return map;
+}
+
+/** Inline style for a colored left border (3px) */
+export function colorBorderStyle(color?: string): CSSProperties | undefined {
+  return color ? { borderLeftWidth: '3px', borderLeftColor: color } : undefined;
+}
+
+/** Get the dominant color for a slot (first service's color) */
+export function getSlotColor(
+  slot: { planning_slot_services?: { service_id: string }[]; service_id?: string | null },
+  colorMap: Map<string, string>,
+): string | undefined {
+  const ids = getSlotServiceIds(slot);
+  return ids.length > 0 ? colorMap.get(ids[0]) : undefined;
 }

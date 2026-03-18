@@ -6,12 +6,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot } from '@/types';
 import { formatTime, formatCurrency, toBCP47 } from '@/lib/utils';
-import { getSlotServiceIds, formatDate, formatDuration } from './utils';
+import { getSlotServiceIds, formatDate, formatDuration, colorBorderStyle } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 
 interface ReservationsSectionProps {
   slots: PlanningSlot[];
   services: ServiceWithDuration[];
+  serviceColorMap: Map<string, string>;
   locale: string;
   merchantCountry: string;
   onEditSlot: (slot: PlanningSlot) => void;
@@ -25,7 +26,7 @@ interface DayGroup {
   slots: PlanningSlot[];
 }
 
-export default function ReservationsSection({ slots, services, locale, merchantCountry, onEditSlot }: ReservationsSectionProps) {
+export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, onEditSlot }: ReservationsSectionProps) {
   const t = useTranslations('planning');
   const [viewingSlot, setViewingSlot] = useState<PlanningSlot | null>(null);
   const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
@@ -107,6 +108,7 @@ export default function ReservationsSection({ slots, services, locale, merchantC
   }
 
   const photos = viewingSlot?.planning_slot_photos || [];
+  const resultPhotos = viewingSlot?.planning_slot_result_photos || [];
   const viewServices = viewingSlot ? getSlotServices(viewingSlot) : [];
   const viewDuration = viewingSlot ? getTotalDuration(viewingSlot) : null;
   const viewIsPast = viewingSlot ? viewingSlot.slot_date < todayStr : false;
@@ -134,11 +136,15 @@ export default function ReservationsSection({ slots, services, locale, merchantC
           const serviceNames = getServiceNames(slot);
           const duration = getTotalDuration(slot);
 
+          const svcIds = getSlotServiceIds(slot);
+          const slotColors = svcIds.map(id => serviceColorMap.get(id)).filter(Boolean) as string[];
+
           return (
             <button
               key={slot.id}
               onClick={() => setViewingSlot(slot)}
               className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors group ${group.isPast ? 'hover:bg-gray-50' : 'hover:bg-indigo-50/50'}`}
+              style={colorBorderStyle(slotColors[0])}
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${group.isPast ? 'bg-gray-100' : 'bg-indigo-50'}`}>
@@ -249,8 +255,12 @@ export default function ReservationsSection({ slots, services, locale, merchantC
                   <div>
                     <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('servicesLabel')}</p>
                     <div className="space-y-1.5">
-                      {viewServices.map(svc => (
-                        <div key={svc.id} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl">
+                      {viewServices.map(svc => {
+                        const svcColor = serviceColorMap.get(svc.id);
+                        return (
+                        <div key={svc.id} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-xl"
+                          style={colorBorderStyle(svcColor)}
+                        >
                           <span className="text-sm font-medium text-gray-700">{svc.name}</span>
                           <div className="flex items-center gap-2 text-xs text-gray-400">
                             {svc.price > 0 && <span>{formatCurrency(svc.price, merchantCountry, locale)}</span>}
@@ -262,7 +272,8 @@ export default function ReservationsSection({ slots, services, locale, merchantC
                             )}
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     {(viewDuration !== null && viewDuration > 0) && (
                       <p className="mt-1.5 text-xs font-medium text-indigo-600">
@@ -306,8 +317,26 @@ export default function ReservationsSection({ slots, services, locale, merchantC
                   </div>
                 )}
 
+                {/* Result photos */}
+                {resultPhotos.length > 0 && (
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('resultPhotos')}</p>
+                    <div className="flex gap-2 flex-wrap">
+                      {resultPhotos.map(photo => (
+                        <button
+                          key={photo.id}
+                          onClick={() => setExpandedPhoto(photo.url)}
+                          className="rounded-xl overflow-hidden border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all"
+                        >
+                          <img src={photo.url} alt="" className="w-24 h-24 object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {/* Empty state */}
-                {viewServices.length === 0 && !viewingSlot.notes && photos.length === 0 && (
+                {viewServices.length === 0 && !viewingSlot.notes && photos.length === 0 && resultPhotos.length === 0 && (
                   <div className="text-center py-4">
                     <ImageIcon className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                     <p className="text-xs text-gray-400">{t('noDetailsYet')}</p>

@@ -138,6 +138,8 @@ export interface PlanningSlotPhoto {
   position: number;
 }
 
+export type PlanningSlotResultPhoto = PlanningSlotPhoto;
+
 export interface PlanningSlot {
   id: string;
   merchant_id: string;
@@ -151,6 +153,7 @@ export interface PlanningSlot {
   created_at: string;
   planning_slot_services?: PlanningSlotService[];
   planning_slot_photos?: PlanningSlotPhoto[];
+  planning_slot_result_photos?: PlanningSlotResultPhoto[];
   customer?: { instagram_handle: string | null; tiktok_handle: string | null; facebook_url: string | null } | null;
 }
 

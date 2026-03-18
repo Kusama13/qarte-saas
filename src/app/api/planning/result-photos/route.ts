@@ -1,7 +1,7 @@
 import { createPhotoHandlers } from '../_photo-helpers';
 
 export const { POST, DELETE } = createPhotoHandlers({
-  tableName: 'planning_slot_photos',
-  storagePrefix: 'planning',
-  rateLimitKey: 'planning-photos',
+  tableName: 'planning_slot_result_photos',
+  storagePrefix: 'results',
+  rateLimitKey: 'planning-result-photos',
 });
