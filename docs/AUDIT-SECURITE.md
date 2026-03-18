@@ -1,6 +1,6 @@
-# AUDIT SÉCURITÉ — Qarte SaaS
+# AUDIT SECURITE — Qarte SaaS
 
-**Score : 93/100** — 0 critical, 0 high, 4 medium, 1 low
+**Score : 91/100** — 0 critical, 0 high, 5 medium, 3 low
 
 ---
 
@@ -8,82 +8,92 @@
 
 - RLS policies restrictives (migration 038)
 - JWT validation correcte (`getUser()` pas `getSession()`)
-- Zod partout pour validation inputs
-- File upload avec magic bytes + UUID filename + rate limit 10/min
-- Webhook Stripe signature vérifiée
+- Zod partout pour validation inputs (planning, offers, checkin, push, referrals, etc.)
+- File upload avec magic bytes + UUID filename + rate limit 10/min + compression serveur
+- Webhook Stripe signature verifiee
 - Headers HSTS, X-Frame-Options, X-Content-Type-Options OK
 - Permissions-Policy complet (camera, microphone, geolocation, magnetometer, gyroscope, accelerometer, payment, usb)
 - Cookie customer HttpOnly + SameSite=Strict
-- Admin auth centralisée (`verifyAdminAuth()`) — messages d'erreur uniformes
-- Cron protégé par `CRON_SECRET` (comparaison timing-safe)
+- Admin auth centralisee (`authorizeAdmin()`) — messages d'erreur uniformes
+- Cron protege par `CRON_SECRET` (comparaison timing-safe)
+- Planning : auth + ownership verifies sur toutes les routes, slots max 200, photos max 3/slot
+- Photo helpers factorise (`_photo-helpers.ts`) — validation coherente photos inspiration + resultat
+- IP hashing SHA-256 + salt pour GDPR
+- Referral lookup retourne uniquement `first_name` (pas de PII)
+- Activity feed : `authorizeAdmin()` + rate limit
 
-### Corrections déployées (mars 2026)
+### Corrections deployees (mars 2026)
 
-- **Push subscribe DELETE** : auth cookie phone + vérification ownership client (était ouvert sans auth)
-- **Push send** : rate limit 10 envois/heure par IP (n'avait pas de rate limit)
-- **RPCs admin-only** : migration 052 restreint les 3 fonctions RPC à `service_role` ou `super_admin` (plpgsql auth guard)
-- **Audit log visits/edit** : modifications de visites tracées dans `point_adjustments` (raison, auteur, diff)
-- **Stamps limits** : migration 054 — palier 1 max 15 (etait 50), palier 2 max 30 (etait illimite) + validation frontend/JS
-
----
-
-## Corrections faisables en local
-
-### MEDIUM
-
-- [ ] **Rate limit routes publiques** (1h)
-  - Ajouter rate limit sur : `/api/merchants/preview`, `/api/merchant/stats`, `/api/referrals` GET, `/api/offers`
-
-- [ ] **Masquer prénom parrain** (1h)
-  - `src/app/api/referrals/route.ts` : retourner initiale + `***` au lieu du prénom complet
-
-- [ ] **HTML escape push notifications** (1h)
-  - `src/app/api/push/send/route.ts` : escape titre/body même après modération
-
-- [ ] **Validate merchant_id dans webhook metadata** (1h)
-  - `src/app/api/stripe/webhook/route.ts` : vérifier que le merchant existe avant update
-
-### LOW
-
-- [ ] **Rename `getSupabase()` → `getBrowserClient()`** (1h)
-  - `src/lib/supabase.ts` : clarifier l'intention (22 fichiers à renommer)
+- **Push subscribe DELETE** : auth cookie phone + verification ownership client
+- **Push send** : rate limit 10 envois/heure par IP
+- **RPCs admin-only** : migration 052 restreint les 3 fonctions RPC a `service_role` ou `super_admin`
+- **Audit log visits/edit** : modifications tracees dans `point_adjustments`
+- **Stamps limits** : migration 054 — palier 1 max 15, palier 2 max 30
+- **Merchants preview** : rate limit 30/min ajoute
+- **Referral POST** : rate limit 5/min ajoute
+- **Customer create 409** : retourne `customer_id` existant (planning reutilise au lieu de bloquer)
 
 ---
 
-## Nécessite intervention externe
+## MEDIUM (5)
 
-### Migration DB (appliquer sur Supabase)
+### M1 — `/api/customers/create` sans Zod validation
+- `src/app/api/customers/create/route.ts:37` : body destructure sans schema
+- `initial_stamps`, `initial_amount` non bornes — un merchant pourrait injecter des valeurs arbitraires
+- Fix : ajouter Zod schema avec bornes (stamps 0-15, amount 0-10000)
 
-- [x] **Migration 052 — RPCs admin-only** : code déployé, **à exécuter dans Supabase SQL Editor**
+### M2 — Rate limit manquant sur routes publiques GET
+- `/api/referrals` GET (referral code lookup)
+- `/api/welcome` GET (welcome code validation)
+- `/api/services` GET (public services list)
+- `/api/planning?public=true` (dispos publiques)
+- Risque : enumeration, scraping
+- Fix : ajouter rate limit 30/min par IP
 
-- [ ] **Webhook idempotency** (3h)
-  - Créer table `webhook_events` (stripe_event_id unique)
-  - Checker avant chaque update dans `src/app/api/stripe/webhook/route.ts`
-  - Évite duplicate emails si Stripe renvoie le même event
+### M3 — Push notification payload non HTML-escape
+- `src/app/api/push/send/route.ts:264` : titre/body envoyes directement
+- Content moderation existe mais ne bloque pas l'injection HTML
+- Fix : escape avant envoi
+
+### M4 — IP_HASH_SALT fallback hardcode
+- `src/app/api/checkin/route.ts:45`, `src/app/api/cagnotte/checkin/route.ts:44`
+- Fallback `'qarte-default-ip-salt'` si env var absent → hash predictible
+- Fix : throw si absent + ajouter dans Vercel env vars
+
+### M5 — Pas de Content-Security-Policy header
+- `next.config.mjs` : CSP manquant
+- Necessite test en prod (Facebook Pixel, Clarity, GSC)
+
+---
+
+## LOW (3)
+
+### L1 — `/api/test-emails` GET non authentifie
+- Leake le HTML des templates email (donnees de test hardcodees)
+
+### L2 — Error details dans push/subscribe et push/send
+- `err.message` retourne au client dans le champ `details`
+- Pourrait reveler des details internes (Supabase, Node.js)
+
+### L3 — Planning public GET sans rate limit
+- `/api/planning?public=true` : donnees minimales (dates/heures) mais pas de rate limit
+
+---
+
+## Necessite intervention externe
 
 ### Config Vercel (env vars)
-
-- [ ] **Enforce IP_HASH_SALT** (30min)
-  - `src/app/api/checkin/route.ts` : throw si `IP_HASH_SALT` absent au lieu de fallback hardcodé
-  - Nécessite : ajouter `IP_HASH_SALT` dans Vercel env vars
+- [ ] **Enforce IP_HASH_SALT** (30min) — throw si absent
 
 ### Test en prod (scripts tiers)
+- [ ] **Header CSP** (1h) — tester Facebook Pixel, Clarity, GSC
 
-- [ ] **Header CSP** (1h)
-  - `next.config.mjs` : ajouter Content-Security-Policy
-  - Nécessite : tester en prod que Facebook Pixel, Clarity, GSC ne cassent pas
+### Upstash Redis (~15EUR/mois)
+- [ ] **Rate limiter in-memory → Redis** (2h) — cold start reset les compteurs
 
-### Audit Supabase dashboard
-
-- [ ] **Vérifier RLS referrals + vouchers** (2h)
-  - Vérifier dans Supabase que les policies sur referrals et vouchers sont correctes
-
-### Upstash Redis (~€15/mois)
-
-- [ ] **Rate limiter in-memory → Redis** (2h)
-  - `src/lib/rate-limit.ts` : remplacer `Map` par `@upstash/ratelimit`
-  - Chaque cold start Vercel reset les compteurs → faux positifs à 300+ merchants
+### Migration DB
+- [ ] **Webhook idempotency** (3h) — table `webhook_events` (stripe_event_id unique)
 
 ---
 
-*Audit initial : 19 février 2026 — Mis à jour : 8 mars 2026*
+*Audit initial : 19 fevrier 2026 — Mis a jour : 19 mars 2026*

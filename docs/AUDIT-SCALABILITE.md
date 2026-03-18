@@ -1,61 +1,105 @@
-# AUDIT SCALABILITÉ — Qarte SaaS
+# AUDIT SCALABILITE — Qarte SaaS
 
-**Score : 94/100** — Capacité actuelle ~5000-10000 merchants (Supabase Pro : backups quotidiens, 60 connexions)
+**Score : 86/100** — Capacite actuelle ~5000-8000 merchants (Supabase Pro)
 
 ---
 
 ## Ce qui va bien
 
-- Checkin parallélisé (Promise.all sur 3 étapes)
-- Stats dashboard optimisé (5 queries parallèles, groupBy en JS)
+- Checkin parallelise (Promise.all sur 3 etapes)
+- Stats dashboard optimise (5 queries paralleles, groupBy en JS)
 - Singleton pattern Supabase admin
-- Cron sections isolées try/catch + timeout + batch emails
-- Landing page CDN + RSC (illimité)
-- Bundle size optimisé (~70KB gzipped, lazy load Framer Motion)
-- 4 index DB ajoutés (visits, loyalty_cards, redemptions, vouchers)
-- Push notifications batchées par 50 avec pause 100ms
-- Scan page : fetch merchant + referral en parallèle
-- Page carte fidélité découpée en 5 composants (FCP amélioré)
+- Cron sections isolees try/catch + timeout + batch emails
+- Landing page CDN + RSC (illimite)
+- Bundle size optimise (~70KB gzipped, lazy load Framer Motion)
+- 25+ index DB (visits, loyalty_cards, redemptions, vouchers, planning slots, etc.)
+- Push notifications batchees par 50 avec pause 100ms
+- Planning : factory pattern photos (`_photo-helpers.ts`), max 200 slots/merchant, memoisation correcte (slotsByDate, serviceColorMap, slotCards)
+- Activity feed : merchant lookup optimise (batch par IDs references, plus de fetch unbounded)
+- Admin merchant detail : 20 queries paralleles `head: true` (count-only)
+- Customer search avec debounce 300ms
+- Client-side image compression avant upload (1MB/1200px)
 
-### Corrections déployées (mars 2026)
+### Corrections deployees (mars 2026)
 
-- **Admin métriques** : 2 queries illimitées (visits, loyalty_cards) remplacées par RPCs server-side (`get_first_visit_per_merchant`, `get_tenth_card_date_per_merchant`)
-- **Admin merchants-data** : loyalty_cards count via RPC `get_loyalty_card_counts_per_merchant` + `.limit(10000)` sur tracking tables
-- **Activity feed** : `.limit()` sur les 4 tables (redemptions 500, loyalty_cards 1000, contact_messages 100, vouchers 200)
-- **Merchants top** : loyalty_cards count via RPC au lieu de scan complet
-- **Push subscribers** : `.limit(50000)` sur visits
-- **Cron morning events push** : traitement per-merchant au lieu de bulk load + `.limit(5000)` + timeout guard
-- **Migration 052** : 3 fonctions RPC SQL (agrégations server-side, ~1000 rows retournées au lieu de millions)
+- **Admin metriques** : RPCs server-side (`get_first_visit_per_merchant`, etc.)
+- **Admin merchants-data** : loyalty_cards count via RPC + `.limit(10000)`
+- **Activity feed** : `.limit()` sur toutes les tables + fetch merchants scope aux IDs references
+- **Planning photos** : ownership + slot verification en parallele (`Promise.all`)
+- **Planning shift-slot** : supporte `newDate` pour deplacements inter-jours
+- **Photo helpers** : factory pattern elimine ~350 lignes dupliquees
 
 ---
 
 ## Corrections faisables en local
 
-*Toutes les corrections locales ont été implémentées.*
+### MEDIUM
+
+- [ ] **Customer search N+1** (1h)
+  - `src/app/api/customers/search/route.ts:40-55` : charge TOUS les clients puis filtre en JS
+  - Fix : utiliser `ILIKE` SQL avec `LIMIT 10` + JOIN
+
+- [ ] **Admin merchants-data visits sans LIMIT** (30min)
+  - `src/app/api/admin/merchants-data/route.ts:39` : visits 30 jours sans `.limit()`
+  - A 5000 merchants actifs = ~1.5M rows
+  - Fix : `.limit(500000)` ou RPC aggregation
+
+- [ ] **Photos orphelines en Storage** (2h)
+  - Quand un slot est supprime, CASCADE supprime la DB mais pas les fichiers Storage
+  - Meme probleme si un merchant est supprime
+  - Fix : cron cleanup ou trigger post-delete
+
+- [ ] **Pas de `next/image` pour photos dynamiques** (2h)
+  - Photos planning (inspiration + resultat) utilisent `<img>` brut
+  - Pas d'optimisation WebP, pas de lazy loading natif
+  - Fix : remplacer par `next/image` avec `unoptimized` ou Supabase image transform
+
+### LOW
+
+- [ ] **Pas de pagination sur certains list endpoints** (1h)
+  - `/api/push/history` : tout l'historique sans pagination
+  - `/api/planning?booked=true` : 60 jours sans pagination
+  - Fix : ajouter `offset`/`limit` query params
+
+- [ ] **Pas de caching sur routes publiques stables** (1h)
+  - Seul `/api/merchants/top` a un `Cache-Control`
+  - `/api/planning?public=true` et page pro pourraient beneficier de `stale-while-revalidate`
+
+- [ ] **Shift-slot queries sequentielles** (30min)
+  - `src/app/api/planning/shift-slot/route.ts` : ownership + fetch slot sequentiels
+  - Fix : parallelliser avec `Promise.all`
+
+- [ ] **SELECT * sur tables larges** (2h)
+  - 30+ occurrences de `.select('*')` (merchants = 50+ colonnes)
+  - Fix : selectionner uniquement les colonnes necessaires
+
+- [ ] **Planning re-fetch complet apres chaque action** (2h)
+  - Chaque add/update/delete recharge tous les slots de la semaine
+  - Fix : updates optimistes cote client
 
 ---
 
-## Nécessite intervention externe
+## Necessite intervention externe
 
-### Upstash Redis (~€15/mois)
-
-- [ ] **Rate limiter Map → Redis** (2h)
-  - `src/lib/rate-limit.ts` : remplacer `Map` par `@upstash/ratelimit`
-  - Chaque cold start Vercel reset les compteurs → faux positifs à 300+ merchants
-
-### Supabase Pro (+€25/mois)
-
-- [x] **Free → Pro** — Fait (mars 2026)
-  - 60 connections simultanées, backups quotidiens 7j, 8GB RAM
+### Upstash Redis (~15EUR/mois)
+- [ ] **Rate limiter Map → Redis** (2h) — cold start reset les compteurs
 
 ### Mois 2+ (si 1000+ merchants)
-
-- [ ] **Cron refactor vers queue** (3-4 jours)
-  - Bull + Redis ou SQS pour offload les emails — +€50/mois
-
-- [ ] **Push service dédié** (2 jours)
-  - Remplacer web-push par service managé (FCM) — +€30/mois
+- [ ] **Cron refactor vers queue** (3-4 jours) — Bull + Redis ou SQS
+- [ ] **Push service dedie** (2 jours) — FCM au lieu de web-push
 
 ---
 
-*Audit initial : 19 février 2026 — Mis à jour : 8 mars 2026*
+## Estimations de capacite
+
+| Seuil | Etat |
+|-------|------|
+| 1000 merchants | OK — systeme fluide |
+| 5000 merchants | Admin lent (3-5s), customer search >1s pour gros merchants |
+| 10000 merchants | Admin merchants-data risque timeout, besoin RPC aggregation |
+
+**Bottlenecks principaux** : customer search N+1, admin visits sans LIMIT, photos orphelines Storage
+
+---
+
+*Audit initial : 19 fevrier 2026 — Mis a jour : 19 mars 2026*
