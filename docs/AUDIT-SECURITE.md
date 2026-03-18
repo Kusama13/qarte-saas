@@ -1,6 +1,6 @@
 # AUDIT SECURITE — Qarte SaaS
 
-**Score : 91/100** — 0 critical, 0 high, 5 medium, 3 low
+**Score : 92/100** — 0 critical, 0 high, 4 medium, 3 low
 
 ---
 
@@ -32,15 +32,16 @@
 - **Merchants preview** : rate limit 30/min ajoute
 - **Referral POST** : rate limit 5/min ajoute
 - **Customer create 409** : retourne `customer_id` existant (planning reutilise au lieu de bloquer)
+- **Customer create Zod** : schema avec `z.coerce.number()` + bornes (stamps 0-15, amount 0-10000, birth 1-12/1-31)
+- **Customer search** : N+1 supprime (SQL ILIKE + JOIN + LIMIT 10), query sanitisee contre injection PostgREST
+- **Views SECURITY DEFINER** : `admin_daily_signups` + `admin_trial_ending_soon` a corriger (ALTER ou DROP)
 
 ---
 
-## MEDIUM (5)
+## MEDIUM (4)
 
-### M1 — `/api/customers/create` sans Zod validation
-- `src/app/api/customers/create/route.ts:37` : body destructure sans schema
-- `initial_stamps`, `initial_amount` non bornes — un merchant pourrait injecter des valeurs arbitraires
-- Fix : ajouter Zod schema avec bornes (stamps 0-15, amount 0-10000)
+### ~~M1 — `/api/customers/create` sans Zod validation~~ CORRIGE
+- Zod schema ajoute avec `z.coerce.number()` + bornes
 
 ### M2 — Rate limit manquant sur routes publiques GET
 - `/api/referrals` GET (referral code lookup)
@@ -90,6 +91,13 @@
 
 ### Upstash Redis (~15EUR/mois)
 - [ ] **Rate limiter in-memory → Redis** (2h) — cold start reset les compteurs
+
+### Supabase SQL Editor
+- [ ] **Views SECURITY DEFINER** (5min) — `admin_daily_signups` + `admin_trial_ending_soon` : pas utilisees dans le code, a supprimer ou passer en `security_invoker = on`
+```sql
+DROP VIEW IF EXISTS public.admin_daily_signups;
+DROP VIEW IF EXISTS public.admin_trial_ending_soon;
+```
 
 ### Migration DB
 - [ ] **Webhook idempotency** (3h) — table `webhook_events` (stripe_event_id unique)

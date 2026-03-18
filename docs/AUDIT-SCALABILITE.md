@@ -1,6 +1,6 @@
 # AUDIT SCALABILITE — Qarte SaaS
 
-**Score : 86/100** — Capacite actuelle ~5000-8000 merchants (Supabase Pro)
+**Score : 88/100** — Capacite actuelle ~5000-8000 merchants (Supabase Pro)
 
 ---
 
@@ -28,6 +28,7 @@
 - **Planning photos** : ownership + slot verification en parallele (`Promise.all`)
 - **Planning shift-slot** : supporte `newDate` pour deplacements inter-jours
 - **Photo helpers** : factory pattern elimine ~350 lignes dupliquees
+- **Customer search** : N+1 supprime — SQL ILIKE + JOIN loyalty_cards + LIMIT 10 (etait : fetch all cards + all customers + filter JS)
 
 ---
 
@@ -35,9 +36,7 @@
 
 ### MEDIUM
 
-- [ ] **Customer search N+1** (1h)
-  - `src/app/api/customers/search/route.ts:40-55` : charge TOUS les clients puis filtre en JS
-  - Fix : utiliser `ILIKE` SQL avec `LIMIT 10` + JOIN
+- [x] ~~**Customer search N+1**~~ CORRIGE — SQL ILIKE + JOIN + LIMIT 10, query sanitisee
 
 - [ ] **Admin merchants-data visits sans LIMIT** (30min)
   - `src/app/api/admin/merchants-data/route.ts:39` : visits 30 jours sans `.limit()`
@@ -98,7 +97,7 @@
 | 5000 merchants | Admin lent (3-5s), customer search >1s pour gros merchants |
 | 10000 merchants | Admin merchants-data risque timeout, besoin RPC aggregation |
 
-**Bottlenecks principaux** : customer search N+1, admin visits sans LIMIT, photos orphelines Storage
+**Bottlenecks principaux** : admin visits sans LIMIT, photos orphelines Storage, pas de next/image
 
 ---
 
