@@ -24,7 +24,7 @@
 - **Supabase** (PostgreSQL + Auth + Storage + RLS)
 - **Stripe** (paiements) + **Resend** (emails)
 - **Recharts** (graphiques), **Lucide React** (icones), **jsPDF** + **QRCode** (PDF/QR), **Web Push**
-- **next-intl** (i18n) — `messages/fr.json` + `messages/en.json` (~1685 lignes chacun)
+- **next-intl** (i18n) — `messages/fr.json` + `messages/en.json` (~2243 lignes chacun)
 
 ---
 
@@ -68,7 +68,7 @@ docs/
 ├── AUDIT-SECURITE.md     # Score 93/100
 └── AUDIT-SCALABILITE.md  # Score 94/100
 
-supabase/migrations/      # 63 migrations SQL (001-063)
+supabase/migrations/      # 70 migrations SQL (001-070)
 ```
 
 ---
@@ -430,7 +430,7 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ## 10. Pages Principales
 
 ### Landing (`/`)
-Hero (mockup page pro + floating badges) → SocialProof → LoyaltyModes (4 cartes: SEO Google, Offre bienvenue, Avis Google, Parrainage) → BentoFeatures (bento grid) → Testimonials (WhatsApp/iMessage) → Pricing (19€/mois) → FAQ (11 questions) → Footer (FooterCta + FooterDark)
+Hero (mockup page pro + floating badges) → SocialProof → VitrineSection → FideliteSection (lazy, bento grid) → Testimonials (cards style Iara : note + coeur violet + titre + texte + avatar photo + metier, 5 cards, carousel mobile) → Pricing (19€/mois, 10 features) → FAQ (10 questions) → Footer (FooterCta + FooterDark)
 
 CTA uniforme : "Booste ton salon en 5 min" (toutes sections). Positionnement : page pro (acquisition) + programme fidelite (retention) = un seul outil.
 
