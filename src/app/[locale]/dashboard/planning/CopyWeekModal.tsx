@@ -1,6 +1,6 @@
 'use client';
 
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { toBCP47 } from '@/lib/utils';
 import { getWeekStart } from './utils';
@@ -14,10 +14,11 @@ interface CopyWeekModalProps {
 
 export default function CopyWeekModal({ weekOffset, saving, onCopyWeek, onClose }: CopyWeekModalProps) {
   const locale = useLocale();
+  const t = useTranslations('planning');
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-4">
       <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-3">
-        <p className="text-xs font-semibold text-indigo-800 mb-2">Coller sur quelle semaine ?</p>
+        <p className="text-xs font-semibold text-indigo-800 mb-2">{t('copyToWhichWeek')}</p>
         <div className="flex flex-wrap gap-2">
           {[1, 2, 3, 4].map(offset => (
             <button
@@ -30,7 +31,7 @@ export default function CopyWeekModal({ weekOffset, saving, onCopyWeek, onClose 
             </button>
           ))}
           <button onClick={onClose} className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700">
-            Annuler
+            {t('cancel')}
           </button>
         </div>
       </div>

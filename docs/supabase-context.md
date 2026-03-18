@@ -118,6 +118,9 @@
 | merchant_id | UUID FK → merchants | NULL | mig 039, ON DELETE CASCADE |
 | birth_month | INTEGER | NULL | CHECK (1..12), mig 037 |
 | birth_day | INTEGER | NULL | CHECK (1..31), mig 037 |
+| instagram_handle | TEXT | NULL | mig 073 |
+| tiktok_handle | TEXT | NULL | mig 073 |
+| facebook_url | TEXT | NULL | mig 073 |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **Indexes** : `idx_customers_phone`, `idx_customers_merchant`, `idx_customers_birthday`
@@ -619,6 +622,36 @@ Single-row table : id, content (TEXT, default ''), updated_at
 **RLS** : SELECT public (client_name IS NULL AND slot_date >= CURRENT_DATE), ALL merchant own
 **Indexes** : `idx_planning_slots_merchant_date`, `idx_planning_slots_customer` (partial, NOT NULL), UNIQUE(merchant_id, slot_date, start_time)
 
+### 2.36 planning_slot_services (mig 071)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| slot_id | UUID FK → merchant_planning_slots | NOT NULL | ON DELETE CASCADE |
+| service_id | UUID FK → merchant_services | NOT NULL | ON DELETE CASCADE |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**Contrainte** : UNIQUE(slot_id, service_id)
+**RLS** : merchant own (via subquery sur merchant_planning_slots → merchants.user_id), service_role full access
+**Indexes** : `idx_planning_slot_services_slot`, `idx_planning_slot_services_service`
+
+### 2.37 planning_slot_photos (mig 072)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| slot_id | UUID FK → merchant_planning_slots | NOT NULL | ON DELETE CASCADE |
+| merchant_id | UUID FK → merchants | NOT NULL | ON DELETE CASCADE |
+| url | TEXT | NOT NULL | |
+| position | SMALLINT | `1` | CHECK (1..3) |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**Contrainte** : UNIQUE(slot_id, position)
+**RLS** : merchant own, service_role full access
+**Index** : `idx_planning_slot_photos_slot`
+**Max** : 3 photos par creneau
+**Storage** : `images/planning/{merchantId}/{slotId}-{timestamp}.{ext}`
+
 ---
 
 
@@ -788,7 +821,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 
 ---
 
-## 10. Migrations (001 → 070)
+## 10. Migrations (001 → 073)
 
 | # | Fichier | Resume |
 |---|---------|--------|
@@ -863,6 +896,9 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 068 | signup_source | merchants.signup_source TEXT (demo, landing, direct, etc.) |
 | 069 | merchant_locale | merchants.locale TEXT NOT NULL DEFAULT 'fr' |
 | 070 | first_feature_choice | merchants.first_feature_choice TEXT ('loyalty' ou 'vitrine', NULL = pas encore choisi) |
+| 071 | planning_slot_services | Table junction planning_slot_services (multi-services par creneau), migration donnees existantes service_id |
+| 072 | planning_slot_photos | Table planning_slot_photos (photos inspiration, max 3/creneau, position 1-3) |
+| 073 | customer_social_links | customers.instagram_handle, tiktok_handle, facebook_url (liens sociaux pour planning) |
 
 ---
 

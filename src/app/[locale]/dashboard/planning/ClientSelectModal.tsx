@@ -1,0 +1,291 @@
+'use client';
+
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { X, Search, UserCheck, UserPlus, Loader2, ArrowRight, Instagram } from 'lucide-react';
+import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
+import { useTranslations } from 'next-intl';
+import type { PlanningSlot, CustomerSearchResult } from '@/types';
+import { formatTime, toBCP47 } from '@/lib/utils';
+import type { BookingDraft } from './usePlanningState';
+
+interface ClientSelectModalProps {
+  slot: PlanningSlot;
+  draft: BookingDraft;
+  merchantId: string;
+  customerResults: CustomerSearchResult[];
+  showCustomerSearch: boolean;
+  searchDone: boolean;
+  creatingCustomer: boolean;
+  locale: string;
+  phonePlaceholder: string;
+  onNameChange: (value: string) => void;
+  onDraftChange: (partial: Partial<BookingDraft>) => void;
+  onSelectCustomer: (c: CustomerSearchResult) => void;
+  onCreateCustomer: (social?: { instagram_handle?: string; tiktok_handle?: string; facebook_url?: string }) => Promise<string | null>;
+  onProceed: (customer: CustomerSearchResult | null, isNewCustomer: boolean) => void;
+  onShowCustomerSearch: (show: boolean) => void;
+  onClose: () => void;
+}
+
+export default function ClientSelectModal({
+  slot,
+  draft,
+  merchantId,
+  customerResults,
+  showCustomerSearch,
+  searchDone,
+  creatingCustomer,
+  locale,
+  phonePlaceholder,
+  onNameChange,
+  onDraftChange,
+  onSelectCustomer,
+  onCreateCustomer,
+  onProceed,
+  onShowCustomerSearch,
+  onClose,
+}: ClientSelectModalProps) {
+  const t = useTranslations('planning');
+  const hasSocialData = !!(draft.instagramHandle || draft.tiktokHandle || draft.facebookUrl);
+  const [showSocial, setShowSocial] = useState(hasSocialData);
+
+  const hasClient = !!draft.customerId;
+  const canCreate = draft.clientName.trim().length >= 2 && draft.clientPhone.trim().length >= 6 && !draft.customerId;
+
+  const buildCustomerFromDraft = (id: string): CustomerSearchResult => ({
+    id,
+    first_name: draft.clientName.split(' ')[0],
+    last_name: draft.clientName.split(' ').slice(1).join(' ') || null,
+    phone_number: draft.clientPhone,
+    instagram_handle: draft.instagramHandle || null,
+    tiktok_handle: draft.tiktokHandle || null,
+    facebook_url: draft.facebookUrl || null,
+  });
+
+  const handleProceedWithClient = async () => {
+    if (draft.customerId) {
+      // Save social links if any were entered/changed
+      if (draft.instagramHandle || draft.tiktokHandle || draft.facebookUrl) {
+        fetch('/api/customers/social', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerId: draft.customerId,
+            merchantId,
+            instagram_handle: draft.instagramHandle || null,
+            tiktok_handle: draft.tiktokHandle || null,
+            facebook_url: draft.facebookUrl || null,
+          }),
+        }).catch(() => {});
+      }
+      onProceed(buildCustomerFromDraft(draft.customerId), false);
+    } else {
+      onProceed(null, false);
+    }
+  };
+
+  const handleCreateAndProceed = async () => {
+    const customerId = await onCreateCustomer({
+      instagram_handle: draft.instagramHandle || undefined,
+      tiktok_handle: draft.tiktokHandle || undefined,
+      facebook_url: draft.facebookUrl || undefined,
+    });
+    if (customerId) {
+      onProceed(buildCustomerFromDraft(customerId), true);
+    }
+  };
+
+  const handleSkip = () => {
+    onProceed(null, false);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <motion.div
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 50, opacity: 0 }}
+        className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] overflow-y-auto shadow-xl"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <div>
+            <h3 className="text-sm font-bold text-gray-900">{t('selectClient')}</h3>
+            <p className="text-xs text-gray-400">
+              {formatTime(slot.start_time, locale)} — {new Date(slot.slot_date + 'T12:00:00').toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        <div className="p-4 space-y-3">
+          {/* Search / Name field */}
+          <div className="relative">
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('clientName')}</label>
+            <div className="relative">
+              <input
+                type="text"
+                value={draft.clientName}
+                onChange={(e) => onNameChange(e.target.value)}
+                onFocus={() => { if (draft.clientName.length >= 2 && !draft.customerId) onShowCustomerSearch(true); }}
+                onBlur={() => setTimeout(() => onShowCustomerSearch(false), 200)}
+                placeholder={t('searchPlaceholder')}
+                className="w-full px-3 py-2.5 pr-9 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+              />
+              {draft.clientName.length >= 2 && !draft.customerId && (
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+              )}
+            </div>
+
+            {/* Customer linked badge */}
+            {hasClient && (
+              <div className="mt-1.5 flex items-center gap-1.5 text-emerald-600">
+                <UserCheck className="w-3.5 h-3.5" />
+                <span className="text-[11px] font-medium">{t('clientLinked')}</span>
+              </div>
+            )}
+
+            {/* Autocomplete dropdown */}
+            {showCustomerSearch && searchDone && (
+              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                {customerResults.length > 0 ? (
+                  customerResults.map(c => (
+                    <button
+                      key={c.id}
+                      onMouseDown={() => onSelectCustomer(c)}
+                      className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 transition-colors border-b border-gray-50 last:border-0"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-800">
+                          {c.first_name} {c.last_name || ''}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {c.instagram_handle && <Instagram className="w-3 h-3 text-pink-500" />}
+                          {c.tiktok_handle && <TikTokIcon className="w-3 h-3 text-gray-700" />}
+                          {c.facebook_url && <FacebookIcon className="w-3 h-3 text-blue-600" />}
+                        </div>
+                      </div>
+                      <span className="text-[11px] text-gray-400">{c.phone_number}</span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-3 text-xs text-gray-400">{t('noClientFound')}</p>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="text-xs font-semibold text-gray-600 mb-1 block">
+              {hasClient ? t('phoneOptional') : t('phoneLabel')}
+            </label>
+            <input
+              type="tel"
+              value={draft.clientPhone}
+              onChange={(e) => onDraftChange({ clientPhone: e.target.value })}
+              placeholder={phonePlaceholder}
+              maxLength={20}
+              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
+            />
+          </div>
+
+          {/* Social links toggle */}
+          {(hasClient || canCreate) && (
+            <button
+              onClick={() => setShowSocial(!showSocial)}
+              className="text-xs text-indigo-600 font-medium hover:underline"
+            >
+              {showSocial ? t('hideSocial') : t('addSocial')}
+            </button>
+          )}
+
+          {/* Social link inputs */}
+          {showSocial && (hasClient || canCreate) && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[11px] font-medium text-gray-500 mb-0.5 block flex items-center gap-1">
+                  <Instagram className="w-3 h-3 text-pink-500" /> Instagram
+                </label>
+                <input
+                  type="text"
+                  value={draft.instagramHandle}
+                  onChange={(e) => onDraftChange({ instagramHandle: e.target.value })}
+                  placeholder="@pseudo"
+                  className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-gray-500 mb-0.5 block flex items-center gap-1">
+                  <TikTokIcon className="w-3 h-3 text-gray-700" /> TikTok
+                </label>
+                <input
+                  type="text"
+                  value={draft.tiktokHandle}
+                  onChange={(e) => onDraftChange({ tiktokHandle: e.target.value })}
+                  placeholder="@pseudo"
+                  className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="text-[11px] font-medium text-gray-500 mb-0.5 block flex items-center gap-1">
+                  <FacebookIcon className="w-3 h-3 text-blue-600" /> Facebook
+                </label>
+                <input
+                  type="text"
+                  value={draft.facebookUrl}
+                  onChange={(e) => onDraftChange({ facebookUrl: e.target.value })}
+                  placeholder="https://facebook.com/..."
+                  className="w-full px-2.5 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Create customer button */}
+          {canCreate && (
+            <button
+              onClick={handleCreateAndProceed}
+              disabled={creatingCustomer}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 text-xs font-semibold hover:bg-emerald-50 transition-colors disabled:opacity-50"
+            >
+              {creatingCustomer ? (
+                <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('creating')}</>
+              ) : (
+                <><UserPlus className="w-3.5 h-3.5" /> {t('createAsNewClient', { name: draft.clientName.trim().split(' ')[0] })}</>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Footer buttons */}
+        <div className="p-4 border-t border-gray-100 flex gap-2">
+          <button
+            onClick={handleSkip}
+            className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+          >
+            {t('skipClient')}
+          </button>
+          {hasClient && (
+            <button
+              onClick={handleProceedWithClient}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+            >
+              {t('nextStep')}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}

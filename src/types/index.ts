@@ -128,6 +128,16 @@ export interface Merchant {
   first_feature_choice: 'loyalty' | 'vitrine' | null;
 }
 
+export interface PlanningSlotService {
+  service_id: string;
+}
+
+export interface PlanningSlotPhoto {
+  id: string;
+  url: string;
+  position: number;
+}
+
 export interface PlanningSlot {
   id: string;
   merchant_id: string;
@@ -136,9 +146,12 @@ export interface PlanningSlot {
   client_name: string | null;
   client_phone: string | null;
   customer_id: string | null;
-  service_id: string | null;
+  service_id: string | null; // deprecated — use planning_slot_services
   notes: string | null;
   created_at: string;
+  planning_slot_services?: PlanningSlotService[];
+  planning_slot_photos?: PlanningSlotPhoto[];
+  customer?: { instagram_handle: string | null; tiktok_handle: string | null; facebook_url: string | null } | null;
 }
 
 export interface MerchantOffer {
@@ -163,7 +176,20 @@ export interface Customer {
   last_name: string | null;
   birth_month: number | null;
   birth_day: number | null;
+  instagram_handle: string | null;
+  tiktok_handle: string | null;
+  facebook_url: string | null;
   created_at: string;
+}
+
+export interface CustomerSearchResult {
+  id: string;
+  first_name: string;
+  last_name: string | null;
+  phone_number: string;
+  instagram_handle: string | null;
+  tiktok_handle: string | null;
+  facebook_url: string | null;
 }
 
 export interface LoyaltyCard {

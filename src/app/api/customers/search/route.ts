@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     // Fetch those customers and filter by search query
     const { data: allCustomers, error } = await supabaseAdmin
       .from('customers')
-      .select('id, first_name, last_name, phone_number')
+      .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url')
       .in('id', customerIds);
 
     if (error) {
@@ -71,6 +71,9 @@ export async function GET(request: NextRequest) {
         first_name: c.first_name,
         last_name: c.last_name,
         phone_number: c.phone_number,
+        instagram_handle: c.instagram_handle,
+        tiktok_handle: c.tiktok_handle,
+        facebook_url: c.facebook_url,
       }));
 
     return NextResponse.json({ customers });

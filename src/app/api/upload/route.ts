@@ -2,20 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import logger from '@/lib/logger';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
-
-/** Detect image type from magic bytes. Returns extension or null if invalid. */
-function detectImageType(header: Buffer): string | null {
-  // JPEG: FF D8 FF
-  if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) return 'jpg';
-  // PNG: 89 50 4E 47
-  if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) return 'png';
-  // GIF: 47 49 46 38
-  if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x38) return 'gif';
-  // WebP: RIFF....WEBP
-  if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46 &&
-      header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50) return 'webp';
-  return null;
-}
+import { detectImageType } from '@/lib/image-utils';
 
 export async function POST(request: NextRequest) {
   const ip = getClientIP(request);

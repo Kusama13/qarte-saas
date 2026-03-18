@@ -1,0 +1,457 @@
+'use client';
+
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useMerchant } from '@/contexts/MerchantContext';
+import { getSupabase } from '@/lib/supabase';
+import type { PlanningSlot, CustomerSearchResult } from '@/types';
+import { getWeekStart, formatDate, getSlotServiceIds } from './utils';
+
+export interface ServiceWithDuration {
+  id: string;
+  name: string;
+  duration: number | null;
+  price: number;
+  category_id: string | null;
+}
+
+export type ModalState =
+  | { type: 'closed' }
+  | { type: 'add-slots'; day: string }
+  | { type: 'copy-week' }
+  | { type: 'client-select'; slot: PlanningSlot }
+  | { type: 'booking-details'; slot: PlanningSlot; customer: CustomerSearchResult | null; isNewCustomer: boolean };
+
+export interface BookingDraft {
+  clientName: string;
+  clientPhone: string;
+  customerId: string | null;
+  serviceIds: string[];
+  notes: string;
+  instagramHandle: string;
+  tiktokHandle: string;
+  facebookUrl: string;
+}
+
+const emptyDraft: BookingDraft = {
+  clientName: '',
+  clientPhone: '',
+  customerId: null,
+  serviceIds: [],
+  notes: '',
+  instagramHandle: '',
+  tiktokHandle: '',
+  facebookUrl: '',
+};
+
+export function usePlanningState() {
+  const { merchant, loading: merchantLoading, refetch } = useMerchant();
+  const supabase = getSupabase();
+
+  const [tab, setTab] = useState<'slots' | 'reservations' | 'settings'>('slots');
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [slots, setSlots] = useState<PlanningSlot[]>([]);
+  const [upcomingSlots, setUpcomingSlots] = useState<PlanningSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loadingUpcoming, setLoadingUpcoming] = useState(false);
+  const [upcomingFetched, setUpcomingFetched] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Settings
+  const [message, setMessage] = useState('');
+  const [messageEnabled, setMessageEnabled] = useState(false);
+  const [messageExpires, setMessageExpires] = useState('');
+  const [bookingMessage, setBookingMessage] = useState('');
+
+  // Services with duration
+  const [services, setServices] = useState<ServiceWithDuration[]>([]);
+
+  // Modal state machine
+  const [modalState, setModalState] = useState<ModalState>({ type: 'closed' });
+
+  // Add slots modal state
+  const [selectedTimes, setSelectedTimes] = useState<string[]>([]);
+  const [customTime, setCustomTime] = useState('');
+
+  // Booking draft (shared between modals)
+  const [draft, setDraft] = useState<BookingDraft>(emptyDraft);
+
+  // Customer search
+  const [customerResults, setCustomerResults] = useState<CustomerSearchResult[]>([]);
+  const [showCustomerSearch, setShowCustomerSearch] = useState(false);
+  const [searchDone, setSearchDone] = useState(false);
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Week dates
+  const weekStart = useMemo(() => getWeekStart(weekOffset), [weekOffset]);
+  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + i);
+    return d;
+  }), [weekStart]);
+  const weekEnd = useMemo(() => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + 6);
+    return d;
+  }, [weekStart]);
+
+  // Pre-compute slots grouped by date
+  const slotsByDate = useMemo(() => {
+    const map = new Map<string, PlanningSlot[]>();
+    for (const s of slots) {
+      if (!map.has(s.slot_date)) map.set(s.slot_date, []);
+      map.get(s.slot_date)!.push(s);
+    }
+    for (const arr of map.values()) arr.sort((a, b) => a.start_time.localeCompare(b.start_time));
+    return map;
+  }, [slots]);
+
+  // Stats
+  const todayStr = useMemo(() => formatDate(new Date()), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const totalSlots = slots.length;
+  const takenSlots = useMemo(() => slots.filter(s => s.client_name).length, [slots]);
+  const freeSlots = totalSlots - takenSlots;
+  const isToday = (d: Date) => formatDate(d) === todayStr;
+  const isPast = (d: Date) => formatDate(d) < todayStr;
+
+  // Init settings from merchant
+  useEffect(() => {
+    if (merchant) {
+      setMessage(merchant.planning_message || '');
+      setMessageEnabled(!!merchant.planning_message);
+      setMessageExpires(merchant.planning_message_expires || '');
+      setBookingMessage(merchant.booking_message || '');
+    }
+  }, [merchant]);
+
+  // Fetch services with duration
+  useEffect(() => {
+    if (!merchant) return;
+    fetch(`/api/services?merchantId=${merchant.id}`)
+      .then(r => r.json())
+      .then(data => setServices((data.services || []).map((s: ServiceWithDuration) => ({
+        id: s.id, name: s.name, duration: s.duration ?? null, price: s.price, category_id: s.category_id ?? null,
+      }))))
+      .catch(() => {});
+  }, [merchant]);
+
+  // Cleanup search timeout
+  useEffect(() => {
+    return () => { if (searchTimeout.current) clearTimeout(searchTimeout.current); };
+  }, []);
+
+  // Invalidate upcoming cache — will refetch via effect if on upcoming tab
+  const invalidateUpcoming = useCallback(() => { setUpcomingFetched(false); }, []);
+
+  // Fetch slots
+  const fetchSlots = useCallback(async () => {
+    if (!merchant) return;
+    setLoadingSlots(true);
+    try {
+      const res = await fetch(`/api/planning?merchantId=${merchant.id}&from=${formatDate(weekStart)}&to=${formatDate(weekEnd)}`);
+      const data = await res.json();
+      setSlots(data.slots || []);
+    } catch {
+      setSlots([]);
+    } finally {
+      setLoadingSlots(false);
+    }
+  }, [merchant, weekStart, weekEnd]);
+
+  useEffect(() => {
+    if (merchant?.planning_enabled) fetchSlots();
+  }, [merchant, fetchSlots]);
+
+  // ── Actions ──
+
+  const handleTogglePlanning = async (enabled: boolean) => {
+    if (!merchant) return;
+    setSaving(true);
+    await supabase.from('merchants').update({ planning_enabled: enabled }).eq('id', merchant.id);
+    await refetch();
+    setSaving(false);
+    if (enabled) fetchSlots();
+  };
+
+  const handleAddSlots = async () => {
+    if (!merchant || modalState.type !== 'add-slots' || selectedTimes.length === 0) return;
+    setSaving(true);
+    try {
+      await fetch('/api/planning', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantId: merchant.id, slots: selectedTimes.map(time => ({ date: modalState.day, time })) }),
+      });
+      await fetchSlots();
+      invalidateUpcoming();
+    } catch { /* */ }
+    setSaving(false);
+    setModalState({ type: 'closed' });
+    setSelectedTimes([]);
+    setCustomTime('');
+  };
+
+  const handleUpdateSlot = async (slotId: string, data: {
+    client_name: string | null;
+    client_phone: string | null;
+    customer_id: string | null;
+    service_ids: string[];
+    notes: string | null;
+  }) => {
+    if (!merchant) return;
+    setSaving(true);
+    try {
+      await fetch('/api/planning', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slotId, merchantId: merchant.id, ...data }),
+      });
+      await fetchSlots();
+      invalidateUpcoming();
+    } catch { /* */ }
+    setSaving(false);
+    setModalState({ type: 'closed' });
+  };
+
+  const handleDeleteSlot = async (slotId: string) => {
+    if (!merchant) return;
+    try {
+      await fetch('/api/planning', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantId: merchant.id, slotIds: [slotId] }),
+      });
+      await fetchSlots();
+      invalidateUpcoming();
+    } catch { /* */ }
+    setModalState({ type: 'closed' });
+  };
+
+  const handleShiftSlot = async (slotId: string, newTime: string) => {
+    if (!merchant) return;
+    setSaving(true);
+    try {
+      await fetch('/api/planning/shift-slot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ merchantId: merchant.id, slotId, newTime }),
+      });
+      await fetchSlots();
+      invalidateUpcoming();
+    } catch { /* */ }
+    setSaving(false);
+  };
+
+  const handleCopyWeek = async (targetWeekOffset: number) => {
+    if (!merchant) return;
+    setSaving(true);
+    try {
+      await fetch('/api/planning/copy-week', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          merchantId: merchant.id,
+          sourceWeekStart: formatDate(weekStart),
+          targetWeekStart: formatDate(getWeekStart(targetWeekOffset)),
+        }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      invalidateUpcoming();
+    } catch { /* */ }
+    setSaving(false);
+    setModalState({ type: 'closed' });
+  };
+
+  // Customer search
+  const searchCustomers = useCallback(async (query: string) => {
+    if (!merchant || query.length < 2) {
+      setCustomerResults([]);
+      setSearchDone(false);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/customers/search?merchantId=${merchant.id}&q=${encodeURIComponent(query)}`);
+      const data = await res.json();
+      setCustomerResults(data.customers || []);
+      setSearchDone(true);
+      setShowCustomerSearch(true);
+    } catch {
+      setCustomerResults([]);
+      setSearchDone(true);
+    }
+  }, [merchant]);
+
+  const handleDraftNameChange = (value: string) => {
+    setDraft(d => ({ ...d, clientName: value, customerId: null }));
+    setSearchDone(false);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(() => searchCustomers(value), 300);
+  };
+
+  const selectCustomer = (c: CustomerSearchResult) => {
+    setDraft(d => ({
+      ...d,
+      clientName: `${c.first_name}${c.last_name ? ` ${c.last_name}` : ''}`,
+      clientPhone: c.phone_number,
+      customerId: c.id,
+      instagramHandle: c.instagram_handle || '',
+      tiktokHandle: c.tiktok_handle || '',
+      facebookUrl: c.facebook_url || '',
+    }));
+    setShowCustomerSearch(false);
+    setCustomerResults([]);
+    setSearchDone(false);
+  };
+
+  const handleCreateCustomer = async (socialData?: { instagram_handle?: string; tiktok_handle?: string; facebook_url?: string }): Promise<string | null> => {
+    if (!merchant || !draft.clientName.trim() || !draft.clientPhone.trim()) return null;
+    setCreatingCustomer(true);
+    try {
+      const parts = draft.clientName.trim().split(/\s+/);
+      const firstName = parts[0];
+      const lastName = parts.slice(1).join(' ') || null;
+
+      const res = await fetch('/api/customers/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          first_name: firstName,
+          last_name: lastName,
+          phone_number: draft.clientPhone.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.customer_id) {
+        setDraft(d => ({ ...d, customerId: data.customer_id }));
+        setShowCustomerSearch(false);
+        setSearchDone(false);
+
+        // Update social links if provided
+        if (socialData && (socialData.instagram_handle || socialData.tiktok_handle || socialData.facebook_url)) {
+          await fetch('/api/customers/social', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customerId: data.customer_id,
+              merchantId: merchant.id,
+              ...socialData,
+            }),
+          });
+        }
+
+        return data.customer_id as string;
+      }
+    } catch { /* */ }
+    setCreatingCustomer(false);
+    return null;
+  };
+
+  // Open slot for editing (enters client-select modal)
+  const openEditSlot = (slot: PlanningSlot) => {
+    const serviceIds = getSlotServiceIds(slot);
+    const social = slot.customer;
+    setDraft({
+      clientName: slot.client_name || '',
+      clientPhone: slot.client_phone || '',
+      customerId: slot.customer_id || null,
+      serviceIds,
+      notes: slot.notes || '',
+      instagramHandle: social?.instagram_handle || '',
+      tiktokHandle: social?.tiktok_handle || '',
+      facebookUrl: social?.facebook_url || '',
+    });
+    setShowCustomerSearch(false);
+    setCustomerResults([]);
+    setModalState({ type: 'client-select', slot });
+  };
+
+  const openAddSlotsModal = (day: string) => {
+    setSelectedTimes([]);
+    setCustomTime('');
+    setModalState({ type: 'add-slots', day });
+  };
+
+  // Transition from client-select to booking-details
+  const proceedToBookingDetails = (customer: CustomerSearchResult | null, isNewCustomer: boolean) => {
+    if (modalState.type !== 'client-select') return;
+    setModalState({ type: 'booking-details', slot: modalState.slot, customer, isNewCustomer });
+  };
+
+  // Go back to client-select from booking-details
+  const goBackToClientSelect = () => {
+    if (modalState.type !== 'booking-details') return;
+    setModalState({ type: 'client-select', slot: modalState.slot });
+  };
+
+  const closeModal = () => {
+    setModalState({ type: 'closed' });
+    setDraft(emptyDraft);
+    setShowCustomerSearch(false);
+    setCustomerResults([]);
+    setSearchDone(false);
+    setCreatingCustomer(false);
+  };
+
+  // Fetch upcoming booked slots (separate state, 14 days)
+  // Fetch all reservations (past 30 days + next 30 days)
+  const fetchReservations = useCallback(async () => {
+    if (!merchant || upcomingFetched) return;
+    setLoadingUpcoming(true);
+    try {
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - 30);
+      const fromStr = formatDate(pastDate);
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 30);
+      const toStr = formatDate(futureDate);
+      const res = await fetch(`/api/planning?merchantId=${merchant.id}&from=${fromStr}&to=${toStr}&booked=true`);
+      const data = await res.json();
+      setUpcomingSlots(data.slots || []);
+      setUpcomingFetched(true);
+    } catch { /* */ }
+    setLoadingUpcoming(false);
+  }, [merchant, upcomingFetched]);
+
+  // Auto-refetch reservations when invalidated while on the tab
+  useEffect(() => {
+    if (tab === 'reservations' && !upcomingFetched && merchant?.planning_enabled) {
+      fetchReservations();
+    }
+  }, [tab, upcomingFetched, merchant, fetchReservations]);
+
+  return {
+    // Merchant
+    merchant, merchantLoading, refetch,
+    // Tab
+    tab, setTab,
+    // Week navigation
+    weekOffset, setWeekOffset, weekStart, weekDays, weekEnd,
+    // Slots
+    slots, loadingSlots, slotsByDate, fetchSlots, fetchReservations, upcomingSlots, loadingUpcoming,
+    // Stats
+    todayStr, totalSlots, takenSlots, freeSlots, isToday, isPast,
+    // Settings
+    message, setMessage, messageEnabled, setMessageEnabled,
+    messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
+    // Services
+    services,
+    // Modal state machine
+    modalState, setModalState, closeModal,
+    // Add slots
+    selectedTimes, setSelectedTimes, customTime, setCustomTime,
+    // Booking draft
+    draft, updateDraft: (partial: Partial<BookingDraft>) => setDraft(d => ({ ...d, ...partial })),
+    // Customer search
+    customerResults, showCustomerSearch, setShowCustomerSearch,
+    searchDone, creatingCustomer,
+    handleDraftNameChange, selectCustomer, handleCreateCustomer,
+    // Actions
+    saving, setSaving, saved,
+    handleTogglePlanning, handleAddSlots, handleUpdateSlot,
+    handleDeleteSlot, handleShiftSlot, handleCopyWeek,
+    openEditSlot, openAddSlotsModal,
+    proceedToBookingDetails, goBackToClientSelect,
+  };
+}

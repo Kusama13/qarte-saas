@@ -68,7 +68,7 @@ docs/
 ├── AUDIT-SECURITE.md     # Score 93/100
 └── AUDIT-SCALABILITE.md  # Score 94/100
 
-supabase/migrations/      # 72 fichiers SQL (001-070 + 008b)
+supabase/migrations/      # 75 fichiers SQL (001-073 + 008b)
 ```
 
 ---
@@ -251,13 +251,18 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Welcome email** : `sendWelcomeEmail` recoit le locale du merchant a la creation
 - **Admin pages** : hardcoded `'fr-FR'` acceptable (usage interne uniquement)
 
-### Planning (mig 063)
-- Planning simple gere par le merchant (pas de reservation en ligne)
+### Planning (mig 063-073)
+- Planning avance gere par le merchant : multi-services, photos inspiration, liens sociaux clients
 - 1 creneau = 1 ligne en DB (date + heure debut). `client_name IS NULL` = disponible, rempli = pris
-- Dashboard `/dashboard/planning` : activation, vue semaine, ajout creneaux (heures predefinies + custom), modal edition (nom client, tel, prestation, notes), copie semaine, message libre public
-- Page publique `/p/[slug]` : section "Disponibilites" (30 jours glissants, groupes par mois), banniere message libre. Pas de bouton reserver — coordonnees deja sur la page
-- Table `merchant_planning_slots` + colonnes `planning_enabled`, `planning_message` sur merchants
-- API `/api/planning` (GET/POST/PATCH/DELETE) + `/api/planning/copy-week` (POST)
+- Dashboard `/dashboard/planning` : 3 onglets (Creneaux, Reservations, Parametres)
+  - **Creneaux** : vue semaine, ajout creneaux (heures predefinies + custom), copie semaine, story Instagram
+  - **Reservations** : tous les RDV reserves (a venir + passes), modal detail (prestations, duree, prix, notes, photos inspiration cliquables/telechargeable), bouton modifier
+  - **Parametres** : message libre public, conditions de reservation
+- Flow edition 2 modals : Modal 1 (choix/creation client + reseaux sociaux Instagram/TikTok/Facebook) → Modal 2 (multi-services avec duree+prix, photos inspiration max 3, notes, detection chevauchement avec options decaler/supprimer)
+- Tables : `merchant_planning_slots` (mig 063+065), `planning_slot_services` (mig 071, junction multi-services), `planning_slot_photos` (mig 072, max 3 photos inspiration)
+- Colonnes `instagram_handle`, `tiktok_handle`, `facebook_url` sur `customers` (mig 073)
+- API `/api/planning` (GET avec join services+photos+customer social/POST/PATCH avec service_ids[]/DELETE) + `/api/planning/copy-week` + `/api/planning/photos` (POST/DELETE) + `/api/planning/shift-slot` (POST) + `/api/customers/social` (PATCH)
+- Page publique `/p/[slug]` : section "Disponibilites" (60j glissants, groupes par mois, preview 4 jours + bouton Voir plus), banniere message libre
 
 ### Programmes Membres
 - Cartes de membre avec validite, avantages personnalises
@@ -327,11 +332,16 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Services: duration (int, min, nullable), description (text, nullable), price_from (bool, "a partir de")
 
 ### Planning
-- `GET /api/planning?merchantId=&from=&to=` — Slots merchant (auth) ou `&public=true` (dispo only, 30j)
+- `GET /api/planning?merchantId=&from=&to=` — Slots merchant (auth, join services+photos+customer social) ou `&public=true` (dispo only, 30j). `&booked=true` filtre les creneaux reserves uniquement
 - `POST /api/planning` — Creation batch creneaux (max 20/requete, 200 actifs total)
-- `PATCH /api/planning` — Marquer creneau pris/libre (client_name, phone, service_id, notes)
+- `PATCH /api/planning` — Marquer creneau pris/libre (client_name, phone, service_ids[], notes)
 - `DELETE /api/planning` — Supprimer creneaux (batch slotIds)
 - `POST /api/planning/copy-week` — Copier horaires d'une semaine vers une autre
+- `POST/DELETE /api/planning/photos` — Upload/suppression photos inspiration (max 3/creneau, magic bytes, rate limit)
+- `POST /api/planning/shift-slot` — Decaler un creneau (newTime, verifie UNIQUE)
+
+### Clients (social)
+- `PATCH /api/customers/social` — MAJ liens sociaux (instagram_handle, tiktok_handle, facebook_url)
 
 ### Admin
 - `/api/admin/merchants/[id]` — GET stats/PATCH notes
