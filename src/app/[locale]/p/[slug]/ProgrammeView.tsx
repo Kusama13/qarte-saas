@@ -69,6 +69,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [servicesExpanded, setServicesExpanded] = useState(false);
+  const [planningExpanded, setPlanningExpanded] = useState(false);
   const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
 
   // Opening hours
@@ -397,47 +398,88 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               </div>
             )}
 
-            {/* Slots by month */}
-            {planningByMonth.map(monthGroup => (
-              <div key={monthGroup.month} className="mb-3 last:mb-0">
-                <p className="text-[11px] font-bold uppercase tracking-wider mb-2 text-center" style={{ color: p }}>
-                  {monthGroup.month}
-                </p>
-                <div className="space-y-2">
-                  {monthGroup.days.map(day => {
-                    const isToday = day.dateStr === todayLocal;
-                    return (
-                      <div
-                        key={day.dateStr}
-                        className={`flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 py-2 px-3 rounded-xl ${isToday ? 'bg-gray-50' : ''}`}
-                        style={isToday ? { boxShadow: `inset 0 0 0 1px ${p}25` } : undefined}
-                      >
-                        <p className={`text-[12px] font-bold shrink-0 sm:w-28 ${isToday ? '' : 'text-gray-600'}`} style={isToday ? { color: p } : undefined}>
-                          {day.label}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {day.times.map(time => (
-                            <span
-                              key={time}
-                              className="px-2.5 py-1 rounded-lg text-[11px] font-semibold"
-                              style={{ backgroundColor: `${p}12`, color: p }}
-                            >
-                              {time}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+            {/* Slots by month — preview 4 days, expandable */}
+            {(() => {
+              const PREVIEW_DAYS = 4;
+              const allDays = planningByMonth.flatMap(mg => mg.days);
+              const totalDays = allDays.length;
+              const hasMoreDays = totalDays > PREVIEW_DAYS;
+              const visibleDays = planningExpanded ? allDays : allDays.slice(0, PREVIEW_DAYS);
 
-            {planningSlots.length >= 3 && (
-              <p className="text-[11px] text-gray-400 text-center mt-2">
-                {t('moreSlotsAvailable')}
-              </p>
-            )}
+              // Regroup visible days by month
+              const visibleByMonth: typeof planningByMonth = [];
+              for (const day of visibleDays) {
+                const d = new Date(day.dateStr + 'T00:00:00');
+                const monthKey = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
+                const last = visibleByMonth[visibleByMonth.length - 1];
+                if (last && last.month === monthKey) {
+                  last.days.push(day);
+                } else {
+                  visibleByMonth.push({ month: monthKey, days: [day] });
+                }
+              }
+
+              return (
+                <>
+                  {visibleByMonth.map(monthGroup => (
+                    <div key={monthGroup.month} className="mb-3 last:mb-0">
+                      <p className="text-[11px] font-bold uppercase tracking-wider mb-2 text-center" style={{ color: p }}>
+                        {monthGroup.month}
+                      </p>
+                      <div className="space-y-2">
+                        {monthGroup.days.map(day => {
+                          const isToday = day.dateStr === todayLocal;
+                          return (
+                            <div
+                              key={day.dateStr}
+                              className={`flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 py-2 px-3 rounded-xl ${isToday ? 'bg-gray-50' : ''}`}
+                              style={isToday ? { boxShadow: `inset 0 0 0 1px ${p}25` } : undefined}
+                            >
+                              <p className={`text-[12px] font-bold shrink-0 sm:w-28 ${isToday ? '' : 'text-gray-600'}`} style={isToday ? { color: p } : undefined}>
+                                {day.label}
+                              </p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {day.times.map(time => (
+                                  <span
+                                    key={time}
+                                    className="px-2.5 py-1 rounded-lg text-[11px] font-semibold"
+                                    style={{ backgroundColor: `${p}12`, color: p }}
+                                  >
+                                    {time}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+
+                  {hasMoreDays && !planningExpanded && (
+                    <button
+                      type="button"
+                      onClick={() => setPlanningExpanded(true)}
+                      className="w-full mt-2 py-2.5 rounded-xl text-[12px] font-bold transition-colors cursor-pointer"
+                      style={{ color: p, backgroundColor: `${p}08` }}
+                    >
+                      {t('viewMoreSlots')}
+                    </button>
+                  )}
+
+                  {planningExpanded && (
+                    <button
+                      type="button"
+                      onClick={() => setPlanningExpanded(false)}
+                      className="w-full mt-2 py-2.5 rounded-xl text-[12px] font-bold transition-colors cursor-pointer"
+                      style={{ color: p, backgroundColor: `${p}08` }}
+                    >
+                      {t('collapseSlots')}
+                    </button>
+                  )}
+                </>
+              );
+            })()}
           </motion.div>
         )}
 

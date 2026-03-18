@@ -7,12 +7,9 @@ import { parseDoubleDays, formatDoubleDays } from '@/lib/utils';
 
 const LoyaltyIcon = Heart;
 
-/** Returns optimal grid columns for a balanced stamp layout */
+/** Grid columns: min 5 for consistent size, smart layout for 6+ to avoid orphans */
 function getGridCols(total: number): string {
-  if (total <= 3) return 'grid-cols-3';
-  if (total <= 4) return 'grid-cols-4';
   if (total <= 5) return 'grid-cols-5';
-  // For 6+, pick cols that avoid orphan rows (1 item alone)
   if (total === 6) return 'grid-cols-3';
   if (total === 7) return 'grid-cols-4';
   if (total === 8) return 'grid-cols-4';
@@ -151,9 +148,9 @@ export default function StampsSection({
                   }}
                 >
                   {isLast ? (
-                    <Gift className="w-4 h-4" style={!isEarned && !isGreyed ? { color: `${merchantColor}60` } : undefined} />
+                    <Gift className="w-5 h-5" style={!isEarned && !isGreyed ? { color: `${merchantColor}60` } : undefined} />
                   ) : (
-                    <LoyaltyIcon className="w-4 h-4" />
+                    <LoyaltyIcon className="w-5 h-5" />
                   )}
                 </motion.div>
               );
@@ -201,7 +198,7 @@ export default function StampsSection({
                     isEarned ? 'bg-violet-600 text-white shadow-md' : isLast ? 'bg-gray-50 border-2 border-dashed border-violet-200 text-violet-300' : 'bg-gray-50 text-gray-300 border border-gray-100'
                   }`}
                 >
-                  {isLast ? <Trophy className="w-4 h-4" /> : <LoyaltyIcon className="w-4 h-4" />}
+                  {isLast ? <Trophy className="w-5 h-5" /> : <LoyaltyIcon className="w-5 h-5" />}
                 </motion.div>
               );
             })}
@@ -234,7 +231,7 @@ export default function StampsSection({
         </div>
         {isRewardReady ? (
           <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200">
-            <Gift className="w-4 h-4" />
+            <Gift className="w-5 h-5" />
             <span className="text-xs font-black uppercase">{t('ready')}</span>
           </motion.div>
         ) : tier1Required - currentStamps <= 2 ? (

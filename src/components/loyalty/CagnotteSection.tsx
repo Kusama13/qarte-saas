@@ -4,23 +4,8 @@ import { Gift, Trophy, Zap, Heart, Crown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 
-interface CagnotteSectionProps {
-  currentStamps: number;
-  tier1Required: number;
-  tier2Enabled: boolean | number | null;
-  tier2Required: number;
-  isRewardReady: boolean;
-  isTier2Ready: boolean;
-  effectiveTier1Redeemed: boolean;
-  merchantColor: string;
-  rewardDescription: string;
-  tier2RewardDescription: string;
-  completedCycles?: number;
-}
-
+/** Grid columns: min 5 for consistent size, smart layout for 6+ to avoid orphans */
 function getGridCols(total: number): string {
-  if (total <= 3) return 'grid-cols-3';
-  if (total <= 4) return 'grid-cols-4';
   if (total <= 5) return 'grid-cols-5';
   if (total === 6) return 'grid-cols-3';
   if (total === 7) return 'grid-cols-4';
@@ -33,6 +18,20 @@ function getGridCols(total: number): string {
   if (total === 14) return 'grid-cols-5';
   if (total === 15) return 'grid-cols-5';
   return 'grid-cols-5';
+}
+
+interface CagnotteSectionProps {
+  currentStamps: number;
+  tier1Required: number;
+  tier2Enabled: boolean | number | null;
+  tier2Required: number;
+  isRewardReady: boolean;
+  isTier2Ready: boolean;
+  effectiveTier1Redeemed: boolean;
+  merchantColor: string;
+  rewardDescription: string;
+  tier2RewardDescription: string;
+  completedCycles?: number;
 }
 
 function getDualStampClass(isEarned: boolean, isGreyed: boolean, isLast: boolean): string {
@@ -138,9 +137,9 @@ export default function CagnotteSection({
                   }}
                 >
                   {isLast && !isEarned ? (
-                    <Gift className="w-4 h-4" style={{ color: `${merchantColor}60` }} />
+                    <Gift className="w-5 h-5" style={{ color: `${merchantColor}60` }} />
                   ) : (
-                    <Heart className="w-4 h-4" />
+                    <Heart className="w-5 h-5" />
                   )}
                 </motion.div>
               );
@@ -188,7 +187,7 @@ export default function CagnotteSection({
                     isEarned ? 'bg-violet-600 text-white shadow-md' : isLast ? 'bg-gray-50 border-2 border-dashed border-violet-200 text-violet-300' : 'bg-gray-50 text-gray-300 border border-gray-100'
                   }`}
                 >
-                  {isLast && !isEarned ? <Trophy className="w-4 h-4" /> : <Heart className="w-4 h-4" />}
+                  {isLast && !isEarned ? <Trophy className="w-5 h-5" /> : <Heart className="w-5 h-5" />}
                 </motion.div>
               );
             })}
@@ -212,7 +211,7 @@ export default function CagnotteSection({
         </div>
         {isRewardReady ? (
           <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200">
-            <Gift className="w-4 h-4" />
+            <Gift className="w-5 h-5" />
             <span className="text-xs font-black uppercase">{t('ready')}</span>
           </motion.div>
         ) : tier1Required - currentStamps <= 2 ? (

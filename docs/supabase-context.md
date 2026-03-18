@@ -87,7 +87,12 @@
 | billing_interval | TEXT | `'monthly'` | mig 051 |
 | planning_enabled | BOOLEAN | `FALSE` | mig 063 |
 | planning_message | TEXT | NULL | mig 063 |
-| show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL |
+| booking_message | TEXT | NULL | mig 064 |
+| planning_message_expires | DATE | NULL | mig 064 |
+| show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
+| signup_source | TEXT | NULL | mig 068 |
+| locale | TEXT | `'fr'` | NOT NULL, mig 069 |
+| first_feature_choice | TEXT | NULL | mig 070, values: 'loyalty', 'vitrine' |
 | bio | TEXT | NULL | mig 061 |
 | opening_hours | JSONB | NULL | mig 062 |
 | last_seen_at | TIMESTAMPTZ | NULL | mig 031 |
@@ -608,10 +613,11 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | client_phone | TEXT | NULL | |
 | service_id | UUID FK → merchant_services | NULL | ON DELETE SET NULL |
 | notes | TEXT | NULL | |
+| customer_id | UUID FK → customers | NULL | ON DELETE SET NULL, mig 065 |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **RLS** : SELECT public (client_name IS NULL AND slot_date >= CURRENT_DATE), ALL merchant own
-**Indexes** : `idx_planning_slots_merchant_date`, UNIQUE(merchant_id, slot_date, start_time)
+**Indexes** : `idx_planning_slots_merchant_date`, `idx_planning_slots_customer` (partial, NOT NULL), UNIQUE(merchant_id, slot_date, start_time)
 
 ---
 
@@ -782,7 +788,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 
 ---
 
-## 10. Migrations (001 → 063)
+## 10. Migrations (001 → 070)
 
 | # | Fichier | Resume |
 |---|---------|--------|
@@ -850,6 +856,13 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 061 | merchant_bio | merchants.bio TEXT |
 | 062 | merchant_opening_hours | merchants.opening_hours JSONB (format: {"1":{"open":"09:00","close":"18:00"},"2":null,...}) |
 | 063 | merchant_planning | Table merchant_planning_slots, merchants.planning_enabled + planning_message, RLS public available + merchant CRUD |
+| 064 | booking_message | merchants.booking_message TEXT + planning_message_expires DATE |
+| 065 | planning_customer_link | merchant_planning_slots.customer_id FK → customers (nullable, walk-ins), index partial |
+| 066 | security_hardening | RLS fix push_automations/logs, search_path sur SECURITY DEFINER functions, service_role policies tables recentes, storage scoping user folder, trigger updated_at prospects |
+| 067 | show_public_page_on_card | merchants.show_public_page_on_card BOOLEAN NOT NULL DEFAULT false (toggle retire du UI, colonne conservee) |
+| 068 | signup_source | merchants.signup_source TEXT (demo, landing, direct, etc.) |
+| 069 | merchant_locale | merchants.locale TEXT NOT NULL DEFAULT 'fr' |
+| 070 | first_feature_choice | merchants.first_feature_choice TEXT ('loyalty' ou 'vitrine', NULL = pas encore choisi) |
 
 ---
 

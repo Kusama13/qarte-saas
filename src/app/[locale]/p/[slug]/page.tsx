@@ -52,8 +52,8 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
 
   const today = getTodayForCountry((merchant as any).country);
   const todayDate = new Date(today);
-  todayDate.setDate(todayDate.getDate() + 7);
-  const sevenDaysLater = todayDate.toISOString().split('T')[0];
+  todayDate.setDate(todayDate.getDate() + 60);
+  const endDate = todayDate.toISOString().split('T')[0];
 
   const [photosResult, servicesResult, categoriesResult, planningResult] = await Promise.all([
     supabaseAdmin
@@ -78,7 +78,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
           .eq('merchant_id', (merchant as any).id)
           .is('client_name', null)
           .gte('slot_date', today)
-          .lte('slot_date', sevenDaysLater)
+          .lte('slot_date', endDate)
           .order('slot_date')
           .order('start_time')
       : Promise.resolve({ data: [] }),

@@ -7,17 +7,14 @@ import { useInView } from '@/hooks/useInView';
 import { sparkleSubtle } from '@/lib/sparkles';
 import { useTranslations } from 'next-intl';
 
+/** Grid columns: min 5 for consistent size, smart layout for 6+ to avoid orphans */
 function getGridCols(total: number): string {
-  if (total <= 3) return 'grid-cols-3';
-  if (total <= 4) return 'grid-cols-4';
   if (total <= 5) return 'grid-cols-5';
   if (total === 6) return 'grid-cols-3';
   if (total === 7) return 'grid-cols-4';
   if (total === 8) return 'grid-cols-4';
   if (total === 9) return 'grid-cols-5';
   if (total === 10) return 'grid-cols-5';
-  if (total === 11) return 'grid-cols-4';
-  if (total === 12) return 'grid-cols-4';
   return 'grid-cols-5';
 }
 
@@ -133,24 +130,20 @@ export default function SimulatedCard({
                   borderColor: isLast && !isFilled ? `${p}40` : undefined,
                 }}
               >
-                {(() => {
-                  const big = displayStamps <= 6;
-                  const filledSize = big ? 'w-7 h-7' : 'w-5 h-5';
-                  const emptySize = big ? 'w-6 h-6' : 'w-4 h-4';
-                  if (isLast) {
-                    return isFilled ? (
-                      <Gift className={filledSize} />
-                    ) : (
-                      <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                      >
-                        <Gift className={emptySize} style={{ color: `${p}60` }} />
-                      </motion.div>
-                    );
-                  }
-                  return <Heart className={isFilled ? filledSize : emptySize} />;
-                })()}
+                {isLast ? (
+                  isFilled ? (
+                    <Gift className="w-5 h-5" />
+                  ) : (
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ repeat: Infinity, duration: 2 }}
+                    >
+                      <Gift className="w-5 h-5" style={{ color: `${p}60` }} />
+                    </motion.div>
+                  )
+                ) : (
+                  <Heart className="w-5 h-5" />
+                )}
               </motion.div>
             );
           })}

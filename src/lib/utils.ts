@@ -612,6 +612,13 @@ const BOOKING_PLATFORMS: { pattern: RegExp; name: string }[] = [
   { pattern: /iara\./i, name: 'Iara' },
   { pattern: /calendly\./i, name: 'Calendly' },
   { pattern: /doctolib\./i, name: 'Doctolib' },
+  { pattern: /instagram\.com|instagr\.am/i, name: 'Instagram' },
+  { pattern: /tiktok\.com/i, name: 'TikTok' },
+  { pattern: /facebook\.com|fb\.com|fb\.me/i, name: 'Facebook' },
+  { pattern: /snapchat\.com/i, name: 'Snapchat' },
+  { pattern: /wa\.me|whatsapp\.com/i, name: 'WhatsApp' },
+  { pattern: /t\.me|telegram\./i, name: 'Telegram' },
+  { pattern: /linktr\.ee/i, name: 'Linktree' },
 ];
 
 /**
