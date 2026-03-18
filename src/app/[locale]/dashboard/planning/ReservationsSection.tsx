@@ -1,7 +1,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { CalendarDays, Clock, ChevronRight, Pencil, X, ImageIcon, Download } from 'lucide-react';
+import { CalendarDays, Clock, ChevronRight, Pencil, X, ImageIcon, Download, Instagram } from 'lucide-react';
+import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot } from '@/types';
@@ -247,6 +248,45 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                     <a href={`tel:${viewingSlot.client_phone}`} className="text-sm text-indigo-600 font-medium hover:underline">
                       {viewingSlot.client_phone}
                     </a>
+                  </div>
+                )}
+
+                {/* Social links */}
+                {viewingSlot.customer && (viewingSlot.customer.instagram_handle || viewingSlot.customer.tiktok_handle || viewingSlot.customer.facebook_url) && (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {viewingSlot.customer.instagram_handle && (
+                      <a
+                        href={`https://instagram.com/${viewingSlot.customer.instagram_handle.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-pink-50 text-pink-600 text-xs font-medium hover:bg-pink-100 transition-colors"
+                      >
+                        <Instagram className="w-3.5 h-3.5" />
+                        {viewingSlot.customer.instagram_handle}
+                      </a>
+                    )}
+                    {viewingSlot.customer.tiktok_handle && (
+                      <a
+                        href={`https://tiktok.com/@${viewingSlot.customer.tiktok_handle.replace('@', '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200 transition-colors"
+                      >
+                        <TikTokIcon className="w-3.5 h-3.5" />
+                        {viewingSlot.customer.tiktok_handle}
+                      </a>
+                    )}
+                    {viewingSlot.customer.facebook_url && (
+                      <a
+                        href={viewingSlot.customer.facebook_url.startsWith('http') ? viewingSlot.customer.facebook_url : `https://${viewingSlot.customer.facebook_url}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors"
+                      >
+                        <FacebookIcon className="w-3.5 h-3.5" />
+                        Facebook
+                      </a>
+                    )}
                   </div>
                 )}
 
