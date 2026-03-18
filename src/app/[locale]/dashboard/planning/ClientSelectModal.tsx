@@ -17,6 +17,7 @@ interface ClientSelectModalProps {
   showCustomerSearch: boolean;
   searchDone: boolean;
   creatingCustomer: boolean;
+  createError: string | null;
   locale: string;
   phonePlaceholder: string;
   onNameChange: (value: string) => void;
@@ -36,6 +37,7 @@ export default function ClientSelectModal({
   showCustomerSearch,
   searchDone,
   creatingCustomer,
+  createError,
   locale,
   phonePlaceholder,
   onNameChange,
@@ -249,6 +251,11 @@ export default function ClientSelectModal({
                 />
               </div>
             </div>
+          )}
+
+          {/* Error message */}
+          {createError && (
+            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{createError}</p>
           )}
 
           {/* Create customer button */}

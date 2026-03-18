@@ -37,7 +37,7 @@ export default function PlanningDashboard() {
     selectedTimes, setSelectedTimes, customTime, setCustomTime,
     draft, updateDraft,
     customerResults, showCustomerSearch, setShowCustomerSearch,
-    searchDone, creatingCustomer,
+    searchDone, creatingCustomer, createError,
     handleDraftNameChange, selectCustomer, handleCreateCustomer,
     saving, saved,
     handleTogglePlanning, handleAddSlots, handleUpdateSlot,
@@ -636,6 +636,7 @@ export default function PlanningDashboard() {
             showCustomerSearch={showCustomerSearch}
             searchDone={searchDone}
             creatingCustomer={creatingCustomer}
+            createError={createError}
             locale={locale}
             phonePlaceholder={phonePlaceholder}
             onNameChange={handleDraftNameChange}

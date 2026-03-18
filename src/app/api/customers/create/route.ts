@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
       if (existingCards && existingCards.length > 0) {
         return NextResponse.json(
-          { error: 'Ce client a déjà une carte fidélité chez vous' },
+          { error: 'Ce client a déjà une carte fidélité chez vous', customer_id: existingCustomerForMerchant.id, existing: true },
           { status: 409 }
         );
       }

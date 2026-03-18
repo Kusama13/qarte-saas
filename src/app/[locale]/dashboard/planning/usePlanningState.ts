@@ -83,6 +83,7 @@ export function usePlanningState() {
   const [showCustomerSearch, setShowCustomerSearch] = useState(false);
   const [searchDone, setSearchDone] = useState(false);
   const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Week dates
@@ -338,6 +339,7 @@ export function usePlanningState() {
   const handleCreateCustomer = async (socialData?: { instagram_handle?: string; tiktok_handle?: string; facebook_url?: string }): Promise<string | null> => {
     if (!merchant || !draft.clientName.trim() || !draft.clientPhone.trim()) return null;
     setCreatingCustomer(true);
+    setCreateError(null);
     try {
       const parts = draft.clientName.trim().split(/\s+/);
       const firstName = parts[0];
@@ -353,6 +355,21 @@ export function usePlanningState() {
         }),
       });
       const data = await res.json();
+
+      if (!res.ok) {
+        // 409 = customer already exists with loyalty card — reuse their ID
+        if (res.status === 409 && data.customer_id) {
+          setDraft(d => ({ ...d, customerId: data.customer_id }));
+          setShowCustomerSearch(false);
+          setSearchDone(false);
+          setCreatingCustomer(false);
+          return data.customer_id as string;
+        }
+        setCreateError(data.error || 'Erreur lors de la création');
+        setCreatingCustomer(false);
+        return null;
+      }
+
       if (data.customer_id) {
         setDraft(d => ({ ...d, customerId: data.customer_id }));
         setShowCustomerSearch(false);
@@ -360,7 +377,7 @@ export function usePlanningState() {
 
         // Update social links if provided
         if (socialData && (socialData.instagram_handle || socialData.tiktok_handle || socialData.facebook_url)) {
-          await fetch('/api/customers/social', {
+          fetch('/api/customers/social', {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -368,12 +385,17 @@ export function usePlanningState() {
               merchantId: merchant.id,
               ...socialData,
             }),
-          });
+          }).catch(() => {});
         }
 
+        setCreatingCustomer(false);
         return data.customer_id as string;
       }
-    } catch { /* */ }
+
+      setCreateError('Erreur inattendue');
+    } catch {
+      setCreateError('Erreur réseau');
+    }
     setCreatingCustomer(false);
     return null;
   };
@@ -477,7 +499,7 @@ export function usePlanningState() {
     draft, updateDraft: (partial: Partial<BookingDraft>) => setDraft(d => ({ ...d, ...partial })),
     // Customer search
     customerResults, showCustomerSearch, setShowCustomerSearch,
-    searchDone, creatingCustomer,
+    searchDone, creatingCustomer, createError,
     handleDraftNameChange, selectCustomer, handleCreateCustomer,
     // Actions
     saving, setSaving, saved,
