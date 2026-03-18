@@ -36,37 +36,22 @@ export async function GET(request: NextRequest) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    // Get customer IDs linked to this merchant via loyalty_cards
-    const { data: cards, error: cardsError } = await supabaseAdmin
-      .from('loyalty_cards')
-      .select('customer_id')
-      .eq('merchant_id', merchantId);
-
-    if (cardsError || !cards || cards.length === 0) {
-      return NextResponse.json({ customers: [] });
-    }
-
-    const customerIds = cards.map(c => c.customer_id);
-
-    // Fetch those customers and filter by search query
-    const { data: allCustomers, error } = await supabaseAdmin
+    // Single query: JOIN loyalty_cards + customers with ILIKE filter, LIMIT 10
+    const pattern = `%${q}%`;
+    const { data: customers, error } = await supabaseAdmin
       .from('customers')
-      .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url')
-      .in('id', customerIds);
+      .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url, loyalty_cards!inner(merchant_id)')
+      .eq('loyalty_cards.merchant_id', merchantId)
+      .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},phone_number.ilike.${pattern}`)
+      .limit(10);
 
     if (error) {
       logger.error('Customer search error:', error);
       return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
-    const qLower = q.toLowerCase();
-    const customers = (allCustomers || [])
-      .filter(c => {
-        const fullName = `${c.first_name} ${c.last_name || ''}`.toLowerCase();
-        return fullName.includes(qLower) || c.phone_number.includes(q);
-      })
-      .slice(0, 8)
-      .map(c => ({
+    return NextResponse.json({
+      customers: (customers || []).map(c => ({
         id: c.id,
         first_name: c.first_name,
         last_name: c.last_name,
@@ -74,9 +59,8 @@ export async function GET(request: NextRequest) {
         instagram_handle: c.instagram_handle,
         tiktok_handle: c.tiktok_handle,
         facebook_url: c.facebook_url,
-      }));
-
-    return NextResponse.json({ customers });
+      })),
+    });
   } catch (error) {
     logger.error('Customer search error:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

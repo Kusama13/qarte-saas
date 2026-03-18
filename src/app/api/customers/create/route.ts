@@ -3,6 +3,17 @@ import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supaba
 import { formatPhoneNumber, formatCurrency } from '@/lib/utils';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
+import { z } from 'zod';
+
+const createCustomerSchema = z.object({
+  first_name: z.string().min(1).max(100),
+  last_name: z.string().max(100).optional().nullable(),
+  phone_number: z.string().min(4).max(20),
+  birth_month: z.union([z.number().int().min(1).max(12), z.string()]).optional().nullable(),
+  birth_day: z.union([z.number().int().min(1).max(31), z.string()]).optional().nullable(),
+  initial_stamps: z.union([z.number().int().min(0).max(15), z.string()]).optional().nullable(),
+  initial_amount: z.union([z.number().min(0).max(10000), z.string()]).optional().nullable(),
+});
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -34,14 +45,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { first_name, last_name, phone_number, birth_month, birth_day, initial_amount, initial_stamps } = await request.json();
-
-    if (!first_name?.trim() || !phone_number?.trim()) {
+    const parsed = createCustomerSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Prénom et téléphone requis' },
+        { error: 'Données invalides' },
         { status: 400 }
       );
     }
+    const { first_name, last_name, phone_number, birth_month, birth_day, initial_amount, initial_stamps } = parsed.data;
 
     const merchantCountry: MerchantCountry = merchant.country || 'FR';
     const phoneFormatted = formatPhoneNumber(phone_number.trim(), merchantCountry);
@@ -82,8 +93,8 @@ export async function POST(request: NextRequest) {
           last_name: last_name?.trim() || null,
           phone_number: phoneFormatted,
           merchant_id: merchant.id,
-          birth_month: birth_month ? parseInt(birth_month) : null,
-          birth_day: birth_day ? parseInt(birth_day) : null,
+          birth_month: birth_month ? Number(birth_month) : null,
+          birth_day: birth_day ? Number(birth_day) : null,
         })
         .select()
         .single();
