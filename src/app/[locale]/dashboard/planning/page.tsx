@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useMemo, useState, DragEvent } from 'react';
+import { useCallback, useEffect, useMemo, useState, DragEvent } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
@@ -51,6 +52,14 @@ export default function PlanningDashboard() {
 
   // Service color map
   const serviceColorMap = useMemo(() => getServiceColorMap(services), [services]);
+
+  // Handle ?slot= deep link from dashboard
+  const searchParams = useSearchParams();
+  const [deepLinkSlotId, setDeepLinkSlotId] = useState<string | null>(() => searchParams.get('slot'));
+  useEffect(() => {
+    if (!deepLinkSlotId) return;
+    setTab('reservations');
+  }, [deepLinkSlotId, setTab]);
 
   // Drag & drop state
   const [dragSlotId, setDragSlotId] = useState<string | null>(null);
@@ -510,6 +519,8 @@ export default function PlanningDashboard() {
           locale={locale}
           merchantCountry={merchant?.country || 'FR'}
           onEditSlot={openEditSlot}
+          deepLinkSlotId={deepLinkSlotId}
+          onDeepLinkHandled={() => setDeepLinkSlotId(null)}
         />
       )}
 

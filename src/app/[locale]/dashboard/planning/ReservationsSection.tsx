@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Clock, ChevronRight, Pencil, X, ImageIcon, Download, Instagram } from 'lucide-react';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,6 +17,8 @@ interface ReservationsSectionProps {
   locale: string;
   merchantCountry: string;
   onEditSlot: (slot: PlanningSlot) => void;
+  deepLinkSlotId?: string | null;
+  onDeepLinkHandled?: () => void;
 }
 
 interface DayGroup {
@@ -27,11 +29,21 @@ interface DayGroup {
   slots: PlanningSlot[];
 }
 
-export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, onEditSlot }: ReservationsSectionProps) {
+export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, onEditSlot, deepLinkSlotId, onDeepLinkHandled }: ReservationsSectionProps) {
   const t = useTranslations('planning');
   const [viewingSlot, setViewingSlot] = useState<PlanningSlot | null>(null);
   const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
   const [showPast, setShowPast] = useState(false);
+
+  // Handle deep link: open slot detail modal from ?slot= param
+  useEffect(() => {
+    if (deepLinkSlotId && slots.length > 0) {
+      const slot = slots.find(s => s.id === deepLinkSlotId);
+      if (slot) setViewingSlot(slot);
+      onDeepLinkHandled?.();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deepLinkSlotId, slots]);
 
   const serviceMap = useMemo(() => {
     const map = new Map<string, ServiceWithDuration>();
