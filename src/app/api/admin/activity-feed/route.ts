@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
       { data: newCards },
       { data: contacts },
       { data: usedVouchers },
+      { data: welcomeClaims },
       { data: bookings },
       { data: superAdmins },
     ] = await Promise.all([
@@ -99,6 +100,15 @@ export async function GET(request: NextRequest) {
       })(),
       (() => {
         let q = supabaseAdmin
+          .from('vouchers')
+          .select('merchant_id, reward_description, created_at')
+          .eq('source', 'welcome')
+          .gte('created_at', periodStart);
+        if (periodEnd) q = q.lt('created_at', periodEnd);
+        return q.order('created_at', { ascending: false }).limit(100);
+      })(),
+      (() => {
+        let q = supabaseAdmin
           .from('merchant_planning_slots')
           .select('merchant_id, client_name, slot_date, start_time, created_at')
           .not('client_name', 'is', null)
@@ -119,6 +129,7 @@ export async function GET(request: NextRequest) {
     for (const c of newCards || []) merchantIdSet.add(c.merchant_id);
     for (const v of usedVouchers || []) merchantIdSet.add(v.merchant_id);
     for (const b of bookings || []) merchantIdSet.add(b.merchant_id);
+    for (const w of welcomeClaims || []) merchantIdSet.add(w.merchant_id);
     const merchantIds = [...merchantIdSet];
 
     const { data: allMerchants } = merchantIds.length > 0
@@ -139,7 +150,7 @@ export async function GET(request: NextRequest) {
 
     // Build events timeline
     interface ActivityEvent {
-      type: 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher' | 'booking';
+      type: 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher' | 'booking' | 'welcome';
       timestamp: string;
       title: string;
       subtitle: string;
@@ -219,6 +230,16 @@ export async function GET(request: NextRequest) {
       });
     });
 
+    (welcomeClaims || []).forEach((w: { created_at: string; merchant_id: string; reward_description: string | null }) => {
+      events.push({
+        type: 'welcome',
+        timestamp: w.created_at,
+        title: `Offre bienvenue chez ${merchantNameMap.get(w.merchant_id) || 'Inconnu'}`,
+        subtitle: w.reward_description || 'Offre de bienvenue',
+        merchant_id: w.merchant_id,
+      });
+    });
+
     // Sort by timestamp descending
     events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
@@ -230,6 +251,7 @@ export async function GET(request: NextRequest) {
       contacts: (contacts || []).length,
       vouchers: (usedVouchers || []).length,
       bookings: (bookings || []).length,
+      welcome: (welcomeClaims || []).length,
     };
 
     return NextResponse.json({ events, summary });

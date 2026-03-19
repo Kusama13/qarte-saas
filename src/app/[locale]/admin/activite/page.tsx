@@ -14,12 +14,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Cake,
+  Sparkles,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
-type EventType = 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher' | 'booking';
+type EventType = 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher' | 'booking' | 'welcome';
 
 interface ActivityEvent {
   type: EventType;
@@ -37,10 +38,11 @@ interface Summary {
   contacts: number;
   vouchers: number;
   bookings: number;
+  welcome: number;
 }
 
 const DEFAULT_SUMMARY: Summary = {
-  scans: 0, signups: 0, redemptions: 0, newCustomers: 0, contacts: 0, vouchers: 0, bookings: 0,
+  scans: 0, signups: 0, redemptions: 0, newCustomers: 0, contacts: 0, vouchers: 0, bookings: 0, welcome: 0,
 };
 
 const EVENT_CONFIG: Record<EventType, { icon: React.ElementType; color: string; bg: string; label: string; summaryKey: keyof Summary }> = {
@@ -51,6 +53,7 @@ const EVENT_CONFIG: Record<EventType, { icon: React.ElementType; color: string; 
   contact: { icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Messages', summaryKey: 'contacts' },
   voucher: { icon: Cake, color: 'text-pink-600', bg: 'bg-pink-50', label: 'Vouchers', summaryKey: 'vouchers' },
   booking: { icon: CalendarDays, color: 'text-cyan-600', bg: 'bg-cyan-50', label: 'Reservations', summaryKey: 'bookings' },
+  welcome: { icon: Sparkles, color: 'text-orange-600', bg: 'bg-orange-50', label: 'Bienvenue', summaryKey: 'welcome' },
 };
 
 export default function ActivitePage() {
@@ -165,12 +168,13 @@ export default function ActivitePage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
         <SummaryCard label="Scans" value={summary.scans} icon={Eye} color="emerald" />
         <SummaryCard label="Inscriptions" value={summary.signups} icon={UserPlus} color="blue" />
         <SummaryCard label="Récompenses" value={summary.redemptions} icon={Gift} color="pink" />
         <SummaryCard label="Vouchers" value={summary.vouchers} icon={Cake} color="rose" />
         <SummaryCard label="Nouveaux clients" value={summary.newCustomers} icon={Users} color="indigo" />
+        <SummaryCard label="Bienvenue" value={summary.welcome} icon={Sparkles} color="orange" />
         <SummaryCard label="Reservations" value={summary.bookings} icon={CalendarDays} color="cyan" />
         <SummaryCard label="Messages" value={summary.contacts} icon={MessageCircle} color="amber" />
       </div>
@@ -269,7 +273,7 @@ function SummaryCard({
   label: string;
   value: number;
   icon: React.ElementType;
-  color: 'emerald' | 'blue' | 'pink' | 'indigo' | 'amber' | 'rose' | 'cyan';
+  color: 'emerald' | 'blue' | 'pink' | 'indigo' | 'amber' | 'rose' | 'cyan' | 'orange';
 }) {
   const colorMap = {
     emerald: 'bg-emerald-50 text-emerald-600',
@@ -277,6 +281,7 @@ function SummaryCard({
     pink: 'bg-pink-50 text-pink-600',
     rose: 'bg-rose-50 text-rose-600',
     indigo: 'bg-[#5167fc]/10 text-[#5167fc]',
+    orange: 'bg-orange-50 text-orange-600',
     cyan: 'bg-cyan-50 text-cyan-600',
     amber: 'bg-amber-50 text-amber-600',
   };
