@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, Link } from '@/i18n/navigation';
-import { Users, UserCheck, Calendar, Gift, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, UserPlus, CreditCard, Coins, Globe, Heart } from 'lucide-react';
+import { Users, UserCheck, UserPlus, Calendar, CalendarDays, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, CreditCard, Coins, Globe, Heart } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTodayForCountry, formatCurrency } from '@/lib/utils';
@@ -102,6 +102,12 @@ export default function DashboardPage() {
   const [cagnotteStats, setCagnotteStats] = useState({ totalCumul: 0, totalCashback: 0 });
   const [pendingReferrals, setPendingReferrals] = useState(0);
   const [welcomeVouchers, setWelcomeVouchers] = useState(0);
+  const [upcomingBookings, setUpcomingBookings] = useState<Array<{
+    id: string; slot_date: string; start_time: string; client_name: string;
+  }>>([]);
+  const [recentWelcomeClaims, setRecentWelcomeClaims] = useState<Array<{
+    id: string; created_at: string; customerName: string;
+  }>>([]);
 
   // If we have cached data, don't show loading state
   const [loading, setLoading] = useState(() => {
@@ -198,6 +204,8 @@ export default function DashboardPage() {
           cagnotteCardsResult,
           pendingReferralsResult,
           welcomeVouchersResult,
+          upcomingBookingsResult,
+          welcomeClaimsResult,
         ] = await Promise.all([
           // Stats queries
           supabase
@@ -271,11 +279,48 @@ export default function DashboardPage() {
                 .eq('merchant_id', merchant.id)
                 .eq('source', 'welcome')
             : Promise.resolve({ count: 0 }),
+          // Upcoming booked planning slots
+          merchant.planning_enabled
+            ? supabase
+                .from('merchant_planning_slots')
+                .select('id, slot_date, start_time, client_name')
+                .eq('merchant_id', merchant.id)
+                .not('client_name', 'is', null)
+                .gte('slot_date', todayStr)
+                .order('slot_date', { ascending: true })
+                .order('start_time', { ascending: true })
+                .limit(5)
+            : Promise.resolve({ data: [] }),
+          // Recent welcome voucher claims (with customer name)
+          merchant.welcome_offer_enabled
+            ? supabase
+                .from('vouchers')
+                .select('id, created_at, customer:customers(first_name)')
+                .eq('merchant_id', merchant.id)
+                .eq('source', 'welcome')
+                .order('created_at', { ascending: false })
+                .limit(3)
+            : Promise.resolve({ data: [] }),
         ]);
 
         // Set pending referrals + welcome vouchers
         setPendingReferrals(pendingReferralsResult.count || 0);
         setWelcomeVouchers(welcomeVouchersResult.count || 0);
+
+        // Set upcoming bookings
+        if (upcomingBookingsResult.data) {
+          setUpcomingBookings(upcomingBookingsResult.data as typeof upcomingBookings);
+        }
+
+        // Set recent welcome claims
+        if (welcomeClaimsResult.data) {
+          setRecentWelcomeClaims(
+            (welcomeClaimsResult.data as Array<{ id: string; created_at: string; customer: { first_name: string } | { first_name: string }[] | null }>).map(v => {
+              const cust = Array.isArray(v.customer) ? v.customer[0] : v.customer;
+              return { id: v.id, created_at: v.created_at, customerName: cust?.first_name || 'Client' };
+            })
+          );
+        }
 
         // Compute cagnotte stats
         if (merchant.loyalty_mode === 'cagnotte' && cagnotteCardsResult.data) {
@@ -445,12 +490,12 @@ export default function DashboardPage() {
         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 px-1">{t('shortcuts')}</p>
         <div className="grid grid-cols-3 gap-2.5">
           {[
-            { href: '/dashboard/public-page', icon: Globe, label: t('shortcutPage'), color: 'text-white', bg: 'bg-white/20', gradient: true },
-            { href: '/dashboard/program', icon: Heart, label: t('shortcutLoyalty'), color: 'text-white', bg: 'bg-white/20', gradient: true, gradientColors: 'from-pink-500 to-rose-500 border-pink-400/20' },
-            { href: '/dashboard/qr-download', icon: QrCode, label: t('shortcutQr'), color: 'text-violet-500', bg: 'bg-violet-50' },
-            { href: '/dashboard/customers', icon: Users, label: t('shortcutClients'), color: 'text-emerald-500', bg: 'bg-emerald-50' },
-            { href: '/dashboard/referrals', icon: UserPlus, label: t('shortcutReferrals'), color: 'text-blue-500', bg: 'bg-blue-50' },
-            { href: '/dashboard/subscription', icon: CreditCard, label: t('shortcutSubscription'), color: 'text-teal-500', bg: 'bg-teal-50' },
+            { href: '/dashboard/public-page', icon: Globe, label: t('shortcutPage'), color: 'text-white', bg: 'bg-white/20', gradient: true, gradientColors: 'from-indigo-400 to-violet-400 border-indigo-300/20' },
+            { href: '/dashboard/program', icon: Heart, label: t('shortcutLoyalty'), color: 'text-white', bg: 'bg-white/20', gradient: true, gradientColors: 'from-pink-400 to-rose-400 border-pink-300/20' },
+            { href: '/dashboard/planning', icon: CalendarDays, label: t('shortcutPlanning'), color: 'text-white', bg: 'bg-white/20', gradient: true, gradientColors: 'from-cyan-400 to-blue-400 border-cyan-300/20' },
+            { href: '/dashboard/customers', icon: Users, label: t('shortcutClients'), color: 'text-gray-500', bg: 'bg-gray-50' },
+            { href: '/dashboard/qr-download', icon: QrCode, label: t('shortcutQr'), color: 'text-gray-500', bg: 'bg-gray-50' },
+            { href: '/dashboard/subscription', icon: CreditCard, label: t('shortcutSubscription'), color: 'text-gray-500', bg: 'bg-gray-50' },
           ].map(({ href, icon: Icon, label, color, bg, gradient, gradientColors }: { href: string; icon: React.ElementType; label: string; color: string; bg: string; gradient?: boolean; gradientColors?: string }) => (
             <Link
               key={href}
@@ -469,6 +514,47 @@ export default function DashboardPage() {
           ))}
         </div>
       </div>
+
+      {/* Upcoming Bookings Widget */}
+      {merchant.planning_enabled && upcomingBookings.length > 0 && (
+        <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-sm overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-cyan-400 to-blue-400" />
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold text-gray-900">{t('upcomingBookings')}</h2>
+              <Link href="/dashboard/planning" className="flex items-center gap-1 text-xs font-semibold text-cyan-600 hover:text-cyan-700">
+                {t('viewPlanning')}
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <div className="space-y-1.5">
+              {upcomingBookings.map((b) => {
+                const isToday = b.slot_date === getTodayForCountry(merchant.country);
+                const slotDate = new Date(b.slot_date + 'T12:00:00');
+                const tomorrow = new Date(getTodayForCountry(merchant.country));
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const isTomorrow = b.slot_date === tomorrow.toISOString().split('T')[0];
+                const dayLabel = isToday ? t('today') : isTomorrow ? t('tomorrow') : slotDate.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'short', day: 'numeric' });
+
+                return (
+                  <div key={b.id} className="flex items-center gap-3 px-3 py-2 rounded-xl bg-gray-50/80">
+                    <div className={`flex flex-col items-center justify-center w-10 h-10 rounded-lg text-xs font-bold shrink-0 ${isToday ? 'bg-cyan-100 text-cyan-700' : 'bg-gray-100 text-gray-500'}`}>
+                      <span className="leading-none">{dayLabel}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{b.client_name}</p>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs text-gray-400 shrink-0">
+                      <Clock className="w-3 h-3" />
+                      <span className="font-medium">{b.start_time}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Shield Disable Warning Modal */}
       {showShieldWarning && (
@@ -828,6 +914,27 @@ export default function DashboardPage() {
                     </Link>
                   );
                 })}
+
+                {/* Welcome offer claims */}
+                {recentWelcomeClaims.length > 0 && (
+                  <>
+                    <div className="flex items-center gap-2 pt-2 mt-1">
+                      <Sparkles className="w-3.5 h-3.5 text-orange-400" />
+                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">{t('welcomeClaims')}</span>
+                    </div>
+                    {recentWelcomeClaims.map((claim) => (
+                      <div key={claim.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-orange-50/50">
+                        <div className="flex items-center justify-center w-8 h-8 shrink-0 rounded-lg bg-orange-100">
+                          <Sparkles className="w-4 h-4 text-orange-500" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{claim.customerName}</p>
+                          <p className="text-[11px] text-gray-400 leading-none mt-0.5">{formatRelativeTime(claim.created_at, locale)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             ) : merchant?.reward_description ? (
               <ZeroScansCoach merchant={merchant} />

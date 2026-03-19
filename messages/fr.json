@@ -1161,8 +1161,8 @@
     "shortcutPage": "Ma Vitrine",
     "shortcutLoyalty": "Fidélité",
     "shortcutQr": "QR Code",
+    "shortcutPlanning": "Planning",
     "shortcutClients": "Clients",
-    "shortcutReferrals": "Parrainage",
     "shortcutSubscription": "Abonnement",
     "totalClients": "Clients inscrits",
     "activeClients": "Clients actifs (30j)",
@@ -1204,7 +1204,12 @@
     "errorLoading": "Erreur lors du chargement des données",
     "retry": "Réessayer",
     "shieldInfoAria": "En savoir plus sur Qarte Shield",
-    "shieldToggleAria": "Activer ou désactiver Qarte Shield"
+    "shieldToggleAria": "Activer ou désactiver Qarte Shield",
+    "upcomingBookings": "Prochains rendez-vous",
+    "viewPlanning": "Voir le planning",
+    "today": "Aujourd'hui",
+    "tomorrow": "Demain",
+    "welcomeClaims": "Offres bienvenue"
   },
   "subscription": {
     "title": "Abonnement",

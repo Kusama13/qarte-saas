@@ -1161,8 +1161,8 @@
     "shortcutPage": "My Salon Page",
     "shortcutLoyalty": "Loyalty",
     "shortcutQr": "QR Code",
+    "shortcutPlanning": "Planning",
     "shortcutClients": "Clients",
-    "shortcutReferrals": "Referrals",
     "shortcutSubscription": "Subscription",
     "totalClients": "Registered clients",
     "activeClients": "Active clients (30d)",
@@ -1204,7 +1204,12 @@
     "errorLoading": "Error loading data",
     "retry": "Retry",
     "shieldInfoAria": "Learn more about Qarte Shield",
-    "shieldToggleAria": "Enable or disable Qarte Shield"
+    "shieldToggleAria": "Enable or disable Qarte Shield",
+    "upcomingBookings": "Upcoming appointments",
+    "viewPlanning": "View planning",
+    "today": "Today",
+    "tomorrow": "Tomorrow",
+    "welcomeClaims": "Welcome offers"
   },
   "subscription": {
     "title": "Subscription",
