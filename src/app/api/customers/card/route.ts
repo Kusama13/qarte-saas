@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       // Vouchers (referral rewards)
       supabaseAdmin
         .from('vouchers')
-        .select('*')
+        .select('*, merchant_offers(title)')
         .eq('customer_id', customer.id)
         .eq('merchant_id', merchantId)
         .order('created_at', { ascending: false }),

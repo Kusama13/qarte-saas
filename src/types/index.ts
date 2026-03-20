@@ -216,11 +216,13 @@ export interface Voucher {
   merchant_id: string;
   customer_id: string;
   reward_description: string;
-  source: 'birthday' | 'referral' | 'redemption' | 'welcome' | null;
+  source: 'birthday' | 'referral' | 'redemption' | 'welcome' | 'offer' | null;
+  offer_id: string | null;
   is_used: boolean;
   used_at: string | null;
   created_at: string;
   expires_at: string | null;
+  merchant_offers?: { title: string } | null;
 }
 
 export interface Visit {
