@@ -201,6 +201,7 @@ export async function POST(request: NextRequest) {
         merchant_id: merchant.id,
         customer_id: newCustomer.id,
         reward_description: merchant.referral_reward_referred || 'Récompense parrainage',
+        source: 'referral',
         expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       })
       .select()

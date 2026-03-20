@@ -1967,6 +1967,9 @@
   "voucherRewards": {
     "birthdayGift": "Cadeau anniversaire",
     "referral": "Parrainage",
+    "welcomeOffer": "Offre de bienvenue",
+    "promoOffer": "Offre promo",
+    "reward": "Récompense",
     "availableCount": " · {count} disponibles",
     "expiresOn": "Expire le {date}",
     "view": "Voir"

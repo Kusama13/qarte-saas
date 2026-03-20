@@ -57,7 +57,7 @@ export default function VoucherRewards({ vouchers, merchant, onSelectVoucher }: 
               </motion.div>
               <div className="flex-1 min-w-0">
                 <p className="text-white/70 text-[10px] font-bold uppercase tracking-widest mb-1">
-                  {group[0].source === 'birthday' ? t('birthdayGift') : t('referral')}{group.length > 1 ? t('availableCount', { count: group.length }) : ''}
+                  {({ birthday: t('birthdayGift'), referral: t('referral'), welcome: t('welcomeOffer'), offer: t('promoOffer'), redemption: t('reward') } as Record<string, string>)[group[0].source || ''] || t('reward')}{group.length > 1 ? t('availableCount', { count: group.length }) : ''}
                 </p>
                 <p className="text-white text-base font-black leading-snug line-clamp-2">
                   {desc}

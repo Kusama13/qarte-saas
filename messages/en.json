@@ -1967,6 +1967,9 @@
   "voucherRewards": {
     "birthdayGift": "Birthday gift",
     "referral": "Referral",
+    "welcomeOffer": "Welcome offer",
+    "promoOffer": "Promo offer",
+    "reward": "Reward",
     "availableCount": " · {count} available",
     "expiresOn": "Expires on {date}",
     "view": "View"
