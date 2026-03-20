@@ -1346,6 +1346,8 @@
     "filterInactive": "Inactive 21d+",
     "filterClose": "Close",
     "filterReward": "Reward",
+    "filterWelcome": "Welcome",
+    "filterPromo": "Promo",
     "badgeTier2Ready": "Tier 2 ready",
     "badgeTier1Used": "Tier 1 used",
     "badgeTier1Ready": "Tier 1 ready",
@@ -1474,7 +1476,9 @@
     "hideHistory": "Hide history",
     "noHistory": "No previous bookings",
     "slotMoved": "Slot moved",
-    "resultPhotos": "Result photos"
+    "resultPhotos": "Result photos",
+    "grantWelcomeOffer": "Grant welcome offer",
+    "selectOffer": "Select an offer"
   },
   "qrDownload": {
     "title": "My QR Code & Promo Kit",
@@ -1637,6 +1641,7 @@
     "tabPoints": "Points",
     "tabRewards": "Rewards",
     "tabHistory": "History",
+    "tabOffers": "Offers",
     "tabDelete": "Delete",
     "firstNamePlaceholder": "First name",
     "lastNamePlaceholder": "Last name",
@@ -1711,7 +1716,8 @@
     "manualAdjust": "Manual adjustment",
     "visit": "Visit",
     "pointsLabel": "Points",
-    "amountLabel": "Amount (EUR)"
+    "amountLabel": "Amount (EUR)",
+    "voucherUsed": "Voucher used"
   },
   "customerDanger": {
     "irreversible": "These actions are irreversible.",
@@ -1973,6 +1979,25 @@
     "availableCount": " · {count} available",
     "expiresOn": "Expires on {date}",
     "view": "View"
+  },
+  "customerOffers": {
+    "welcomeOffer": "Welcome offer",
+    "grantWelcome": "Grant welcome offer",
+    "alreadyGranted": "Already granted",
+    "promoOffers": "Promo offers",
+    "grantOffer": "Grant",
+    "noOffers": "No offers configured",
+    "grantSuccess": "Voucher granted!",
+    "voucherUsed": "Voucher used!",
+    "voucherRemoved": "Voucher removed",
+    "activeVouchers": "Active vouchers",
+    "promoOffer": "Promo offer",
+    "useVoucher": "Use",
+    "removeVoucher": "Remove",
+    "confirmRemove": "Confirm",
+    "cancel": "Cancel",
+    "grantError": "An error occurred",
+    "disabledHint": "Offer disabled — enable it from My Page"
   },
   "voucherModals": {
     "happyBirthday": "Happy birthday{name}!",

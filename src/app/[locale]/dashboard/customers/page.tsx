@@ -20,6 +20,8 @@ import {
   Cake,
   Clock,
   Target,
+  Sparkles,
+  Ticket,
 } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
@@ -68,6 +70,10 @@ export default function CustomersPage() {
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithCard | null>(null);
   const [subscriberIds, setSubscriberIds] = useState<string[]>([]);
   const [filterPushOnly, setFilterPushOnly] = useState(false);
+  const [filterWelcome, setFilterWelcome] = useState(false);
+  const [filterPromo, setFilterPromo] = useState(false);
+  const [welcomeVoucherCustomerIds, setWelcomeVoucherCustomerIds] = useState<Set<string>>(new Set());
+  const [offerVoucherCustomerIds, setOfferVoucherCustomerIds] = useState<Set<string>>(new Set());
   const [tier1RedeemedCards, setTier1RedeemedCards] = useState<Set<string>>(new Set());
   const [displayCount, setDisplayCount] = useState(50);
   const [activeFilter, setActiveFilter] = useState<'all' | 'inactive' | 'close' | 'reward'>('all');
@@ -89,8 +95,8 @@ export default function CustomersPage() {
   const fetchData = useCallback(async () => {
     if (!merchant) return;
 
-    // Parallel fetch: cards + push subscribers at the same time
-    const [cardsResult, pushResult] = await Promise.all([
+    // Parallel fetch: cards + push subscribers + vouchers
+    const [cardsResult, pushResult, vouchersResult] = await Promise.all([
       supabase
         .from('loyalty_cards')
         .select(`
@@ -103,7 +109,25 @@ export default function CustomersPage() {
       fetch(`/api/push/subscribers?merchantId=${merchant.id}`)
         .then(r => r.json())
         .catch(() => ({ subscriberIds: [] })),
+
+      supabase
+        .from('vouchers')
+        .select('customer_id, source')
+        .eq('merchant_id', merchant.id)
+        .eq('is_used', false)
+        .in('source', ['welcome', 'offer']),
     ]);
+
+    // Build voucher sets
+    const welcomeSet = new Set<string>();
+    const offerSet = new Set<string>();
+    for (const v of vouchersResult.data || []) {
+      const vr = v as { customer_id: string; source: string };
+      if (vr.source === 'welcome') welcomeSet.add(vr.customer_id);
+      if (vr.source === 'offer') offerSet.add(vr.customer_id);
+    }
+    setWelcomeVoucherCustomerIds(welcomeSet);
+    setOfferVoucherCustomerIds(offerSet);
 
     const cardsData = cardsResult.data;
 
@@ -242,12 +266,26 @@ export default function CustomersPage() {
     return customers.filter(c => c.current_stamps >= required).length;
   }, [customers, merchant]);
 
+  const welcomeCount = useMemo(() => {
+    return customers.filter(c => welcomeVoucherCustomerIds.has(c.customer_id)).length;
+  }, [customers, welcomeVoucherCustomerIds]);
+
+  const promoCount = useMemo(() => {
+    return customers.filter(c => offerVoucherCustomerIds.has(c.customer_id)).length;
+  }, [customers, offerVoucherCustomerIds]);
+
   useEffect(() => {
     let filtered = customers;
 
-    // Apply push filter
+    // Apply toggle filters
     if (filterPushOnly) {
       filtered = filtered.filter((card) => subscriberIds.includes(card.customer_id));
+    }
+    if (filterWelcome) {
+      filtered = filtered.filter((card) => welcomeVoucherCustomerIds.has(card.customer_id));
+    }
+    if (filterPromo) {
+      filtered = filtered.filter((card) => offerVoucherCustomerIds.has(card.customer_id));
     }
 
     // Apply status filter
@@ -282,7 +320,7 @@ export default function CustomersPage() {
 
     setFilteredCustomers(filtered);
     setDisplayCount(50); // Reset pagination on filter change
-  }, [searchQuery, customers, filterPushOnly, subscriberIds, activeFilter, merchant]);
+  }, [searchQuery, customers, filterPushOnly, filterWelcome, filterPromo, subscriberIds, welcomeVoucherCustomerIds, offerVoucherCustomerIds, activeFilter, merchant]);
 
   if (loading || merchantLoading) {
     return (
@@ -421,7 +459,44 @@ export default function CustomersPage() {
               {rewardCount}
             </span>
           </button>
+          {merchant?.welcome_offer_enabled && welcomeCount > 0 && (
+            <button
+              onClick={() => setFilterWelcome(!filterWelcome)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                filterWelcome
+                  ? 'bg-sky-500 text-white border-sky-500 shadow-md shadow-sky-200'
+                  : 'bg-white/50 text-gray-600 border-gray-200 hover:border-sky-300 hover:bg-sky-50'
+              }`}
+            >
+              <Sparkles className={`w-3.5 h-3.5 ${filterWelcome ? 'text-white' : 'text-sky-500'}`} />
+              <span>{t('filterWelcome')}</span>
+              <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
+                filterWelcome ? 'bg-white/20 text-white' : 'bg-sky-100 text-sky-700'
+              }`}>
+                {welcomeCount}
+              </span>
+            </button>
+          )}
+          {promoCount > 0 && (
+            <button
+              onClick={() => setFilterPromo(!filterPromo)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                filterPromo
+                  ? 'bg-pink-500 text-white border-pink-500 shadow-md shadow-pink-200'
+                  : 'bg-white/50 text-gray-600 border-gray-200 hover:border-pink-300 hover:bg-pink-50'
+              }`}
+            >
+              <Ticket className={`w-3.5 h-3.5 ${filterPromo ? 'text-white' : 'text-pink-500'}`} />
+              <span>{t('filterPromo')}</span>
+              <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
+                filterPromo ? 'bg-white/20 text-white' : 'bg-pink-100 text-pink-700'
+              }`}>
+                {promoCount}
+              </span>
+            </button>
+          )}
         </div>
+
 
         {filteredCustomers.length > 0 ? (
           <>
@@ -435,7 +510,6 @@ export default function CustomersPage() {
                 const isPushSubscriber = subscriberIds.includes(card.customer_id);
                 const cashbackValue = isCagnotte && merchant?.cagnotte_percent ? (Number(card.current_amount || 0) * merchant.cagnotte_percent / 100) : 0;
                 const badge = getCardBadge(t, isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id), isCagnotte, cashbackValue);
-
                 return (
                   <button
                     key={card.id}
@@ -576,7 +650,6 @@ export default function CustomersPage() {
                     const cashbackValue = isCagnotte && merchant?.cagnotte_percent ? (Number(card.current_amount || 0) * merchant.cagnotte_percent / 100) : 0;
 
                     const badge = getCardBadge(t, isTier1Ready, !!isTier2Ready, !!merchant?.tier2_enabled, tier1RedeemedCards.has(card.id), isCagnotte, cashbackValue);
-
                     return (
                       <tr key={card.id} className="group hover:bg-indigo-50/30 transition-all duration-200 cursor-pointer" onClick={() => handleOpenAdjustModal(card)}>
                         <td className="px-6 py-4 whitespace-nowrap">

@@ -13,10 +13,13 @@ import {
   Cake,
   Phone,
   Pencil,
+  Ticket,
+  Award,
 } from 'lucide-react';
 import { displayPhoneNumber } from '@/lib/utils';
 import { CustomerAdjustTab } from './CustomerAdjustTab';
 import { CustomerRewardsTab } from './CustomerRewardsTab';
+import { CustomerOffersTab } from './CustomerOffersTab';
 import { CustomerHistoryTab } from './CustomerHistoryTab';
 import { CustomerDangerZone } from './CustomerDangerZone';
 
@@ -46,7 +49,7 @@ interface CustomerManagementModalProps {
   country?: string;
 }
 
-type Tab = 'adjust' | 'rewards' | 'history' | 'danger';
+type Tab = 'adjust' | 'rewards' | 'offers' | 'history' | 'danger';
 
 export function CustomerManagementModal({
   isOpen,
@@ -165,14 +168,15 @@ export function CustomerManagementModal({
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode; activeColor: string }[] = [
     { key: 'adjust', label: t('tabPoints'), icon: <SlidersHorizontal className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
-    { key: 'rewards', label: t('tabRewards'), icon: <Gift className="w-4 h-4" />, activeColor: 'text-emerald-600 border-emerald-600' },
+    { key: 'rewards', label: t('tabRewards'), icon: <Award className="w-4 h-4" />, activeColor: 'text-emerald-600 border-emerald-600' },
+    { key: 'offers', label: t('tabOffers'), icon: <Ticket className="w-4 h-4" />, activeColor: 'text-amber-600 border-amber-600' },
     { key: 'history', label: t('tabHistory'), icon: <History className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
     { key: 'danger', label: t('tabDelete'), icon: <AlertTriangle className="w-4 h-4" />, activeColor: 'text-red-600 border-red-600' },
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50">
-      <div className="relative w-full max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col sm:mx-4">
+      <div className="relative w-full max-w-lg lg:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] sm:max-h-[85vh] overflow-hidden flex flex-col sm:mx-4">
         <button
           onClick={handleClose}
           className="absolute p-2.5 transition-colors rounded-lg top-2 right-2 hover:bg-gray-100 z-10"
@@ -357,6 +361,14 @@ export function CustomerManagementModal({
                   tier1Redeemed={tier1Redeemed}
                   onSuccess={showSuccess}
                   isCagnotte={isCagnotte}
+                />
+              )}
+
+              {activeTab === 'offers' && (
+                <CustomerOffersTab
+                  customerId={customerId}
+                  merchantId={merchantId}
+                  onSuccess={showSuccess}
                 />
               )}
 

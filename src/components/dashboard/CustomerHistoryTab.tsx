@@ -14,6 +14,7 @@ import {
   Trophy,
   Pencil,
   X,
+  Ticket,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { formatDateTime, formatCurrency } from '@/lib/utils';
@@ -39,6 +40,13 @@ interface Redemption {
   tier: number;
 }
 
+interface UsedVoucher {
+  id: string;
+  used_at: string;
+  reward_description: string;
+  source: string | null;
+}
+
 export interface CustomerHistoryTabProps {
   loyaltyCardId: string;
   merchantId: string;
@@ -58,6 +66,7 @@ export function CustomerHistoryTab({
   const [visits, setVisits] = useState<Visit[]>([]);
   const [adjustments, setAdjustments] = useState<PointAdjustment[]>([]);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
+  const [usedVouchers, setUsedVouchers] = useState<UsedVoucher[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(true);
 
@@ -74,7 +83,7 @@ export function CustomerHistoryTab({
   const fetchHistory = async () => {
     setHistoryLoading(true);
     try {
-      const [visitsResult, adjustmentsResult, redemptionsResult] = await Promise.all([
+      const [visitsResult, adjustmentsResult, redemptionsResult, vouchersResult] = await Promise.all([
         supabase
           .from('visits')
           .select('id, visited_at, points_earned, amount_spent')
@@ -93,11 +102,19 @@ export function CustomerHistoryTab({
           .eq('loyalty_card_id', loyaltyCardId)
           .order('redeemed_at', { ascending: false })
           .limit(50),
+        supabase
+          .from('vouchers')
+          .select('id, used_at, reward_description, source')
+          .eq('loyalty_card_id', loyaltyCardId)
+          .eq('is_used', true)
+          .order('used_at', { ascending: false })
+          .limit(50),
       ]);
 
       setVisits(visitsResult.data || []);
       setAdjustments(adjustmentsResult.data || []);
       setRedemptions(redemptionsResult.data || []);
+      setUsedVouchers((vouchersResult.data || []) as UsedVoucher[]);
     } catch {
       // ignore
     } finally {
@@ -153,7 +170,7 @@ export function CustomerHistoryTab({
 
   // Combine and sort history items
   const historyItems = [
-    ...visits.map((v) => ({ type: 'visit' as const, date: v.visited_at, points: v.points_earned, id: v.id, tier: undefined as number | undefined, reason: undefined as string | null | undefined, amount_spent: v.amount_spent })),
+    ...visits.map((v) => ({ type: 'visit' as const, date: v.visited_at, points: v.points_earned, id: v.id, tier: undefined as number | undefined, reason: undefined as string | null | undefined, amount_spent: v.amount_spent, voucherDesc: undefined as string | undefined, voucherSource: undefined as string | null | undefined })),
     ...adjustments.map((a) => ({
       type: 'adjustment' as const,
       date: a.adjusted_at,
@@ -162,6 +179,8 @@ export function CustomerHistoryTab({
       id: a.id,
       tier: undefined as number | undefined,
       amount_spent: null as number | null,
+      voucherDesc: undefined as string | undefined,
+      voucherSource: undefined as string | null | undefined,
     })),
     ...redemptions.map((r) => ({
       type: 'redemption' as const,
@@ -171,6 +190,19 @@ export function CustomerHistoryTab({
       tier: r.tier,
       reason: undefined as string | null | undefined,
       amount_spent: null as number | null,
+      voucherDesc: undefined as string | undefined,
+      voucherSource: undefined as string | null | undefined,
+    })),
+    ...usedVouchers.map((v) => ({
+      type: 'voucher' as const,
+      date: v.used_at,
+      points: 0,
+      id: v.id,
+      tier: undefined as number | undefined,
+      reason: undefined as string | null | undefined,
+      amount_spent: null as number | null,
+      voucherDesc: v.reward_description,
+      voucherSource: v.source,
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -204,20 +236,24 @@ export function CustomerHistoryTab({
             {(historyExpanded ? historyItems : historyItems.slice(0, 5)).map((item) => {
               const isRedemption = item.type === 'redemption';
               const isAdjustment = item.type === 'adjustment';
+              const isVoucherUsed = item.type === 'voucher';
 
               const getBgColor = () => {
+                if (isVoucherUsed) return 'bg-orange-50';
                 if (isRedemption) return item.tier === 2 ? 'bg-violet-50' : 'bg-emerald-50';
                 if (isAdjustment) return 'bg-amber-50';
                 return 'bg-indigo-50';
               };
 
               const getIconBgColor = () => {
+                if (isVoucherUsed) return 'bg-orange-100';
                 if (isRedemption) return item.tier === 2 ? 'bg-violet-100' : 'bg-emerald-100';
                 if (isAdjustment) return 'bg-amber-100';
                 return 'bg-indigo-100';
               };
 
               const getIcon = () => {
+                if (isVoucherUsed) return <Ticket className="w-4 h-4 text-orange-600" />;
                 if (isRedemption) {
                   return item.tier === 2
                     ? <Trophy className="w-4 h-4 text-violet-600" />
@@ -228,6 +264,7 @@ export function CustomerHistoryTab({
               };
 
               const getLabel = () => {
+                if (isVoucherUsed) return item.voucherDesc || t('voucherUsed');
                 if (isRedemption) {
                   if (tier2Enabled) {
                     return isCagnotte
@@ -325,7 +362,7 @@ export function CustomerHistoryTab({
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                    {!isRedemption ? (
+                    {!isRedemption && !isVoucherUsed ? (
                       <span
                         className={`text-sm font-bold px-2 py-1 rounded-lg ${
                           item.points > 0
@@ -337,7 +374,7 @@ export function CustomerHistoryTab({
                         {item.points}
                       </span>
                     ) : (
-                      <span className={`text-sm font-bold px-2 py-1 rounded-lg ${item.tier === 2 ? 'text-violet-700 bg-violet-100' : 'text-emerald-700 bg-emerald-100'}`}>
+                      <span className={`text-sm font-bold px-2 py-1 rounded-lg ${isVoucherUsed ? 'text-orange-700 bg-orange-100' : item.tier === 2 ? 'text-violet-700 bg-violet-100' : 'text-emerald-700 bg-emerald-100'}`}>
                         ✓
                       </span>
                     )}

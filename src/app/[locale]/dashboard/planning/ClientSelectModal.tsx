@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Search, UserCheck, UserPlus, Loader2, ArrowRight, Instagram } from 'lucide-react';
+import { X, Search, UserCheck, UserPlus, Loader2, ArrowRight, Instagram, Gift } from 'lucide-react';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { useTranslations } from 'next-intl';
-import type { PlanningSlot, CustomerSearchResult } from '@/types';
+import type { PlanningSlot, CustomerSearchResult, MerchantOffer } from '@/types';
+import { useMerchant } from '@/contexts/MerchantContext';
 import { formatTime, toBCP47 } from '@/lib/utils';
 import type { BookingDraft } from './usePlanningState';
 
@@ -49,8 +50,20 @@ export default function ClientSelectModal({
   onClose,
 }: ClientSelectModalProps) {
   const t = useTranslations('planning');
+  const { merchant } = useMerchant();
   const hasSocialData = !!(draft.instagramHandle || draft.tiktokHandle || draft.facebookUrl);
   const [showSocial, setShowSocial] = useState(hasSocialData);
+  const [grantWelcome, setGrantWelcome] = useState(false);
+  const [grantOfferId, setGrantOfferId] = useState<string | null>(null);
+  const [activeOffers, setActiveOffers] = useState<MerchantOffer[]>([]);
+
+  useEffect(() => {
+    if (!merchantId) return;
+    fetch(`/api/merchant-offers?merchantId=${merchantId}&public=true`)
+      .then(r => r.ok ? r.json() : { offers: [] })
+      .then(d => setActiveOffers(d.offers || []))
+      .catch(() => {});
+  }, [merchantId]);
 
   const hasClient = !!draft.customerId;
   const canCreate = draft.clientName.trim().length >= 2 && draft.clientPhone.trim().length >= 6 && !draft.customerId;
@@ -94,6 +107,21 @@ export default function ClientSelectModal({
       facebook_url: draft.facebookUrl || undefined,
     });
     if (customerId) {
+      // Fire-and-forget voucher grants
+      if (grantWelcome) {
+        fetch('/api/vouchers/grant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customer_id: customerId, merchant_id: merchantId, type: 'welcome' }),
+        }).catch(() => {});
+      }
+      if (grantOfferId) {
+        fetch('/api/vouchers/grant', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customer_id: customerId, merchant_id: merchantId, type: 'offer', offer_id: grantOfferId }),
+        }).catch(() => {});
+      }
       onProceed(buildCustomerFromDraft(customerId), true);
     }
   };
@@ -256,6 +284,49 @@ export default function ClientSelectModal({
           {/* Error message */}
           {createError && (
             <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{createError}</p>
+          )}
+
+          {/* Voucher grants (only for new client creation) */}
+          {canCreate && (merchant?.welcome_offer_enabled || activeOffers.length > 0) && (
+            <div className="space-y-2 p-3 rounded-xl bg-gray-50 border border-gray-100">
+              {merchant?.welcome_offer_enabled && (
+                <label className="flex items-center gap-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={grantWelcome}
+                    onChange={(e) => setGrantWelcome(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+                  />
+                  <Gift className="w-3.5 h-3.5 text-violet-500 shrink-0" />
+                  <span className="text-xs text-gray-700">{t('grantWelcomeOffer')}</span>
+                </label>
+              )}
+              {activeOffers.length > 0 && (
+                <div className="flex items-center gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={!!grantOfferId}
+                    onChange={(e) => setGrantOfferId(e.target.checked ? activeOffers[0].id : null)}
+                    className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                  />
+                  <Gift className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  {activeOffers.length === 1 ? (
+                    <span className="text-xs text-gray-700">{activeOffers[0].title}</span>
+                  ) : (
+                    <select
+                      value={grantOfferId || ''}
+                      onChange={(e) => setGrantOfferId(e.target.value || null)}
+                      className="text-xs text-gray-700 border border-gray-200 rounded-lg px-2 py-1 flex-1 focus:outline-none focus:ring-1 focus:ring-amber-500/20"
+                    >
+                      <option value="">{t('selectOffer')}</option>
+                      {activeOffers.map(o => (
+                        <option key={o.id} value={o.id}>{o.title}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           {/* Create customer button */}

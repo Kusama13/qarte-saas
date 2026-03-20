@@ -1346,6 +1346,8 @@
     "filterInactive": "Inactifs 21j+",
     "filterClose": "Proches",
     "filterReward": "Récompense",
+    "filterWelcome": "Bienvenue",
+    "filterPromo": "Promo",
     "badgeTier2Ready": "Palier 2 prêt",
     "badgeTier1Used": "Palier 1 utilisé",
     "badgeTier1Ready": "Palier 1 prêt",
@@ -1474,7 +1476,9 @@
     "hideHistory": "Masquer l'historique",
     "noHistory": "Aucun RDV précédent",
     "slotMoved": "Créneau déplacé",
-    "resultPhotos": "Photos du résultat"
+    "resultPhotos": "Photos du résultat",
+    "grantWelcomeOffer": "Offrir l'offre de bienvenue",
+    "selectOffer": "Choisir une offre"
   },
   "qrDownload": {
     "title": "Mon QR code & Kit promo",
@@ -1637,6 +1641,7 @@
     "tabPoints": "Points",
     "tabRewards": "Cadeaux",
     "tabHistory": "Historique",
+    "tabOffers": "Offres",
     "tabDelete": "Supprimer",
     "firstNamePlaceholder": "Prénom",
     "lastNamePlaceholder": "Nom",
@@ -1711,7 +1716,8 @@
     "manualAdjust": "Ajustement manuel",
     "visit": "Passage",
     "pointsLabel": "Points",
-    "amountLabel": "Montant (EUR)"
+    "amountLabel": "Montant (EUR)",
+    "voucherUsed": "Bon utilisé"
   },
   "customerDanger": {
     "irreversible": "Ces actions sont irréversibles.",
@@ -1973,6 +1979,25 @@
     "availableCount": " · {count} disponibles",
     "expiresOn": "Expire le {date}",
     "view": "Voir"
+  },
+  "customerOffers": {
+    "welcomeOffer": "Offre de bienvenue",
+    "grantWelcome": "Offrir l'offre de bienvenue",
+    "alreadyGranted": "Déjà offerte",
+    "promoOffers": "Offres promo",
+    "grantOffer": "Offrir",
+    "noOffers": "Aucune offre configurée",
+    "grantSuccess": "Bon offert !",
+    "voucherUsed": "Bon consommé !",
+    "voucherRemoved": "Bon retiré",
+    "activeVouchers": "Bons en cours",
+    "promoOffer": "Offre promo",
+    "useVoucher": "Consommer",
+    "removeVoucher": "Retirer",
+    "confirmRemove": "Confirmer",
+    "cancel": "Annuler",
+    "grantError": "Erreur lors de l'opération",
+    "disabledHint": "Offre désactivée — active-la depuis Ma Vitrine"
   },
   "voucherModals": {
     "happyBirthday": "Joyeux anniversaire{name} !",
