@@ -8,5 +8,7 @@ export { PricingSection } from './PricingSection';
 export { FAQSection } from './FAQSection';
 export { FooterSection, FooterCta, FooterDark } from './FooterSection';
 export { PageProSection } from './PageProSection';
+export { ComparisonSection } from './ComparisonSection';
+export { BentoSection } from './BentoSection';
 export { ScrollToTopButton } from './ScrollToTopButton';
 export { MobileStickyCta } from './MobileStickyCta';

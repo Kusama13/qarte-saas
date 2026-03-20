@@ -65,8 +65,8 @@ docs/
 ├── context.md            # Ce fichier
 ├── supabase-context.md   # Schema DB complet (source unique)
 ├── AUDIT-MARKETING.md    # Score 67/100
-├── AUDIT-SECURITE.md     # Score 93/100
-└── AUDIT-SCALABILITE.md  # Score 94/100
+├── AUDIT-SECURITE.md     # Score 92/100
+└── AUDIT-SCALABILITE.md  # Score 88/100
 
 supabase/migrations/      # 76 fichiers SQL (001-074 + 008b)
 ```
@@ -351,7 +351,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ### Admin
 - `/api/admin/merchants/[id]` — GET stats (20 queries paralleles : clients, visites, redemptions, referrals, services, photos, planning slots+bookings, push, vouchers)/PATCH notes
-- `/api/admin/activity-feed` — Timeline activite (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, messages). Optimise : fetch merchants par IDs references uniquement
+- `/api/admin/activity-feed` — Timeline activite (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, offres bienvenue, messages). Optimise : fetch merchants par IDs references uniquement
 - `/api/admin/announcements` — CRUD annonces
 - `/api/admin/incomplete-signups`, `/api/admin/prospects`, `/api/admin/tasks`, `/api/admin/merchant-emails`
 
@@ -466,7 +466,7 @@ Header colore avec nom merchant. Boutons conditionnels dans le header : "Membre"
 Inscription rapide, validation passage, progression fidelite, detection `?ref=` pour parrainage
 
 ### Dashboard (`/dashboard`)
-Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 4 onglets), push notifications, abonnement, parrainage, parametres. Raccourcis mobile : Ma Page (gradient indigo-violet), Fidelite (gradient pink-rose), QR Code, Clients, Parrainage, Abonnement.
+Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 4 onglets), push notifications, abonnement, parrainage, parametres. **Widget "Prochains rendez-vous"** : 5 prochains RDV bookes groupes Aujourd'hui/A venir, clic → deep link `/dashboard/planning?slot=id` ouvre le modal detail. **Welcome claims** : 3 derniers vouchers bienvenue dans la section activite recente. Raccourcis mobile : Ma Page (gradient indigo-violet 400), Fidelite (gradient pink-rose 400), Planning (gradient cyan-blue 400), Clients (gris), QR Code (gris), Abonnement (gris).
 
 **Navigation sidebar** : Accueil, Programme de fidelite, Ma Page, QR code & Supports, Planning, Clients, Parrainage, Notifications, Abonnement, Parametres
 - **Membres** (`/dashboard/members`) : retire de la nav, accessible via bouton "Programmes VIP" dans Clients
@@ -476,7 +476,7 @@ Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 fi
 - **QR Code & Supports** (`/dashboard/qr-download`) : QR code + Kit reseaux sociaux (image HD, legendes, grille 2x2 coloree de 4 tips + lien cross-promo vers Ma Page). Post-QR modal redirige vers Ma Page.
 
 ### Admin (`/admin`)
-Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses. **Exclut les comptes admin** des stats. Feature adoption : 15 features trackees (programme, logo, reseaux, parrainage, anniversaire, reservation, avis, offre active, PWA, shield, palier 2, offre bienvenue, double jours, adresse, mode cagnotte). Health score : /100 (programme +15, logo +10, reseaux +5, avis +5, reservation +5, clients +10-20, activite +15, recence +5-10, parrainage +5, shield +5, palier2 +5, bienvenue +5, anniversaire +3, double jours +2). Badges merchants : Admin, NC, Shield pending, PWA, Bienvenue, Cagnotte. **Activite** : timeline 7 types d'evenements (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, messages) avec summary cards et filtres. **Detail merchant** : stat planning "X reservations / Y creneaux" (futurs).
+Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses. **Exclut les comptes admin** des stats. Feature adoption : 15 features trackees (programme, logo, reseaux, parrainage, anniversaire, reservation, avis, offre active, PWA, shield, palier 2, offre bienvenue, double jours, adresse, mode cagnotte). Health score : /100 (programme +15, logo +10, reseaux +5, avis +5, reservation +5, clients +10-20, activite +15, recence +5-10, parrainage +5, shield +5, palier2 +5, bienvenue +5, anniversaire +3, double jours +2). Badges merchants : Admin, NC, Shield pending, PWA, Bienvenue, Cagnotte. **Activite** : timeline 8 types d'evenements (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, offres bienvenue, messages) avec summary cards et filtres. **Detail merchant** : stat planning "X reservations / Y creneaux" (futurs).
 
 ### Page Publique Programme (`/p/[slug]`)
 Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre bienvenue → `/scan/{code}?welcome=`).
@@ -596,7 +596,7 @@ Le scan est reserve au merchant (affiche en boutique). Exposer le lien permettra
 
 | Metrique | Capacite |
 |----------|----------|
-| Marchands | ~2000-5000 |
+| Marchands | ~5000-8000 |
 | Checkins/jour | ~20,000 |
 | Push/envoi | ~5,000 |
 | Clients/marchand | ~2,000 |
