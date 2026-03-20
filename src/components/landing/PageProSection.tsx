@@ -262,21 +262,10 @@ export function PageProSection() {
           <Separator />
 
           <FeatureBlock
-            title={t('servicesTitle')}
-            titleBold={t('servicesTitleBold')}
-            description={t('servicesDesc')}
-            visual={<PrestationsVisual t={t} locale={locale} />}
-            delay={0.05}
-          />
-
-          <Separator />
-
-          <FeatureBlock
             title={t('welcomeTitle')}
             titleBold={t('welcomeTitleBold')}
             description={t('welcomeDesc')}
             visual={<WelcomeOfferVisual t={t} />}
-            reverse
             delay={0.05}
           />
         </div>

@@ -447,9 +447,10 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ## 10. Pages Principales
 
 ### Landing (`/`)
-Hero (mockup page pro + floating badges) → SocialProof → VitrineSection → FideliteSection (lazy, bento grid) → Testimonials (cards style Iara : note + coeur violet + titre + texte + avatar photo + metier, 5 cards, carousel mobile) → Pricing (19€/mois, 10 features) → FAQ (10 questions) → Footer (FooterCta + FooterDark)
+Hero (mockup page pro + floating badges) → SocialProof → VitrineSection (3 blocs: SEO+prestations, planning, bienvenue) → FideliteSection (lazy, 3 blocs: programme+QR, relances+anniversaires, avis Google) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau Booksy-style, epure) → FAQ (8 questions) → Footer (FooterCta + FooterDark)
 
-CTA uniforme : "Booste ton salon en 5 min" (toutes sections). Positionnement : page pro (acquisition) + programme fidelite (retention) = un seul outil.
+Hero subtitle : "Attire de nouvelles clientes et fais-les revenir grace a un seul lien — bio Instagram, TikTok, Google My Business."
+CTA uniforme : "Essayer gratuitement" (toutes sections). Positionnement : page pro (acquisition) + programme fidelite (retention) = un seul outil. Lien en bio = feature principale.
 
 ### Login Client (`/customer`)
 Fond gradient mesh anime (orbes indigo/violet/rose), 4 mini cartes de fidelite flottantes (Framer Motion), formulaire glass-morphism (`bg-white/70 backdrop-blur-2xl`), footer "Propulse par Qarte en France"

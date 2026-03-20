@@ -421,31 +421,10 @@ export function FideliteSection() {
           <Separator />
 
           <FeatureBlock
-            title={t('autoTitle')}
-            titleBold={t('autoTitleBold')}
-            description={t('autoDesc')}
-            visual={<AutoOffersVisual t={t} />}
-            delay={0.05}
-          />
-
-          <Separator />
-
-          <FeatureBlock
             title={t('reviewsTitle')}
             titleBold={t('reviewsTitleBold')}
             description={t('reviewsDesc')}
             visual={<ReviewsVisual t={t} />}
-            reverse
-            delay={0.05}
-          />
-
-          <Separator />
-
-          <FeatureBlock
-            title={t('scanTitle')}
-            titleBold={t('scanTitleBold')}
-            description={t('scanDesc')}
-            visual={<ScanMethodsVisual t={t} />}
             delay={0.05}
           />
         </div>

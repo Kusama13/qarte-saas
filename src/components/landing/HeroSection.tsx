@@ -139,7 +139,7 @@ export function HeroSection() {
             </h1>
           </div>
 
-          <p className="text-base lg:text-lg text-gray-600 max-w-lg leading-relaxed">
+          <p className="text-lg lg:text-xl text-gray-600 max-w-lg leading-relaxed">
             {t('subtitle')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 font-semibold">{t('subtitleHighlight')}</span>{t('subtitleEnd')} <span className="text-gray-900 font-medium">{t('subtitleBold')}</span>
           </p>
 
