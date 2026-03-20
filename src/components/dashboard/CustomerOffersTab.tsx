@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Gift, Sparkles, Check, Loader2, Trash2, ShoppingBag } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useMerchant } from '@/contexts/MerchantContext';
-import { getSupabase } from '@/lib/supabase';
 import { Button } from '@/components/ui';
 import type { MerchantOffer } from '@/types';
 
@@ -25,7 +24,6 @@ interface CustomerOffersTabProps {
 export function CustomerOffersTab({ customerId, merchantId, onSuccess }: CustomerOffersTabProps) {
   const t = useTranslations('customerOffers');
   const { merchant } = useMerchant();
-  const supabase = getSupabase();
 
   const [offers, setOffers] = useState<MerchantOffer[]>([]);
   const [grantedWelcome, setGrantedWelcome] = useState(false);
@@ -39,19 +37,9 @@ export function CustomerOffersTab({ customerId, merchantId, onSuccess }: Custome
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-
       const [offersRes, vouchersRes] = await Promise.all([
-        fetch(`/api/merchant-offers?merchantId=${merchantId}`, {
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        }),
-        supabase
-          .from('vouchers')
-          .select('id, source, offer_id, is_used, reward_description, created_at')
-          .eq('customer_id', customerId)
-          .eq('merchant_id', merchantId)
-          .eq('is_used', false),
+        fetch(`/api/merchant-offers?merchantId=${merchantId}`),
+        fetch(`/api/vouchers/grant?customer_id=${customerId}&merchant_id=${merchantId}`),
       ]);
 
       if (offersRes.ok) {
@@ -59,8 +47,9 @@ export function CustomerOffersTab({ customerId, merchantId, onSuccess }: Custome
         setOffers(data.offers || []);
       }
 
-      if (vouchersRes.data) {
-        const vouchers = vouchersRes.data as ExistingVoucher[];
+      if (vouchersRes.ok) {
+        const data = await vouchersRes.json();
+        const vouchers = (data.vouchers || []) as ExistingVoucher[];
         setExistingVouchers(vouchers.filter(v => v.source === 'welcome' || v.source === 'offer'));
         setGrantedWelcome(vouchers.some(v => v.source === 'welcome'));
         const offerIds = new Set<string>();
@@ -74,7 +63,7 @@ export function CustomerOffersTab({ customerId, merchantId, onSuccess }: Custome
     };
 
     fetchData();
-  }, [customerId, merchantId, supabase]);
+  }, [customerId, merchantId]);
 
   const handleGrant = async (type: 'welcome' | 'offer', offerId?: string) => {
     setGranting(type === 'welcome' ? 'welcome' : offerId || '');

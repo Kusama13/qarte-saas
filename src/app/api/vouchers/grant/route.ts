@@ -12,6 +12,50 @@ const grantSchema = z.object({
   offer_id: z.string().uuid().optional(),
 });
 
+// GET: Fetch unused vouchers for a customer (merchant auth, uses admin client to bypass RLS)
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = await createRouteHandlerSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const customerId = searchParams.get('customer_id');
+    const merchantId = searchParams.get('merchant_id');
+
+    if (!customerId || !merchantId) {
+      return NextResponse.json({ error: 'Paramètres manquants' }, { status: 400 });
+    }
+
+    // Verify merchant ownership
+    const { data: merchant } = await supabaseAdmin
+      .from('merchants')
+      .select('id')
+      .eq('id', merchantId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (!merchant) {
+      return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
+    }
+
+    const { data: vouchers } = await supabaseAdmin
+      .from('vouchers')
+      .select('id, source, offer_id, reward_description, created_at')
+      .eq('customer_id', customerId)
+      .eq('merchant_id', merchantId)
+      .eq('is_used', false)
+      .order('created_at', { ascending: false });
+
+    return NextResponse.json({ vouchers: vouchers || [] });
+  } catch (error) {
+    logger.error('Voucher list error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createRouteHandlerSupabaseClient();
