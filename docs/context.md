@@ -313,7 +313,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ### Offre de bienvenue
 - `GET /api/welcome?code=` — Valider code welcome (public)
-- `POST /api/welcome` — Inscription via offre bienvenue (cree customer + carte + voucher welcome + referral Qarte)
+- `POST /api/welcome` — Inscription via offre bienvenue. Accepte les clients existants si `current_stamps === 0` et pas de voucher welcome/referral existant (ex: client cree via planning). Bloque si stamps > 0 ou voucher deja attribue.
+- `POST /api/vouchers/grant` — Attribution manuelle voucher welcome/promo (merchant auth). Verification stamps + doublons. `PATCH` = consommer, `DELETE` = retirer, `GET` = lister vouchers client
+- Offre de bienvenue : eligible si nouveau client OU client existant avec 0 tampons et sans voucher welcome/referral
 
 ### Push & Marketing
 - `POST /api/push/subscribe` — Abonnement push (auth cookie phone)

@@ -368,6 +368,7 @@ export function CustomerManagementModal({
                 <CustomerOffersTab
                   customerId={customerId}
                   merchantId={merchantId}
+                  currentStamps={currentStamps}
                   onSuccess={showSuccess}
                 />
               )}

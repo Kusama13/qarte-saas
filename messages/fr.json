@@ -1997,6 +1997,7 @@
     "confirmRemove": "Confirmer",
     "cancel": "Annuler",
     "grantError": "Erreur lors de l'opération",
+    "notNewClient": "Déjà cliente",
     "disabledHint": "Offre désactivée — active-la depuis Ma Vitrine"
   },
   "voucherModals": {

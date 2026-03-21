@@ -302,6 +302,30 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
             setSubmitting(false);
             return;
           }
+          // Welcome flow: existing customer with 0 stamps can claim
+          if (welcomeCode && welcomeInfo) {
+            const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
+            const res = await fetch('/api/welcome', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                welcome_code: welcomeCode,
+                phone_number: formattedPhone,
+                first_name: data.customer.first_name,
+                last_name: data.customer.last_name || null,
+              }),
+            });
+            const welcomeData = await res.json();
+            if (res.ok && welcomeData.success) {
+              setCustomer(data.customer);
+              triggerSparkles();
+              setStep('referral-success');
+            } else {
+              setError(welcomeData.error || t('welcomeClaimError'));
+            }
+            setSubmitting(false);
+            return;
+          }
           // Offer flow: claim directly for existing customer
           if (offerId && offerInfo) {
             const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');

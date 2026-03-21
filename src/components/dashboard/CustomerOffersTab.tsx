@@ -18,10 +18,11 @@ interface ExistingVoucher {
 interface CustomerOffersTabProps {
   customerId: string;
   merchantId: string;
+  currentStamps: number;
   onSuccess: (message: string) => void;
 }
 
-export function CustomerOffersTab({ customerId, merchantId, onSuccess }: CustomerOffersTabProps) {
+export function CustomerOffersTab({ customerId, merchantId, currentStamps, onSuccess }: CustomerOffersTabProps) {
   const t = useTranslations('customerOffers');
   const { merchant } = useMerchant();
 
@@ -252,16 +253,18 @@ export function CustomerOffersTab({ customerId, merchantId, onSuccess }: Custome
               <Button
                 size="sm"
                 className={`w-full ${
-                  grantedWelcome
-                    ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-50 cursor-default'
+                  grantedWelcome || currentStamps > 0
+                    ? 'bg-gray-50 text-gray-400 hover:bg-gray-50 cursor-default'
                     : 'bg-violet-600 hover:bg-violet-700 focus:ring-violet-500'
                 }`}
-                disabled={grantedWelcome}
+                disabled={grantedWelcome || currentStamps > 0}
                 loading={granting === 'welcome'}
                 onClick={() => handleGrant('welcome')}
               >
                 {grantedWelcome ? (
                   <><Check className="w-4 h-4 mr-1.5" />{t('alreadyGranted')}</>
+                ) : currentStamps > 0 ? (
+                  t('notNewClient')
                 ) : (
                   t('grantWelcome')
                 )}

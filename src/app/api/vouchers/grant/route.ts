@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         .single(),
       supabaseAdmin
         .from('loyalty_cards')
-        .select('id')
+        .select('id, current_stamps')
         .eq('customer_id', customer_id)
         .eq('merchant_id', merchant_id)
         .maybeSingle(),
@@ -100,14 +100,18 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Offre de bienvenue non activée' }, { status: 400 });
       }
 
-      // Check duplicate
+      // Block if client already has stamps
+      if (Number(card.current_stamps || 0) > 0) {
+        return NextResponse.json({ error: 'not_new_client' }, { status: 400 });
+      }
+
+      // Check duplicate (any welcome voucher, used or not)
       const { data: existing } = await supabaseAdmin
         .from('vouchers')
         .select('id')
         .eq('customer_id', customer_id)
         .eq('merchant_id', merchant_id)
         .eq('source', 'welcome')
-        .eq('is_used', false)
         .maybeSingle();
 
       if (existing) {

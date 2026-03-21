@@ -1997,6 +1997,7 @@
     "confirmRemove": "Confirm",
     "cancel": "Cancel",
     "grantError": "An error occurred",
+    "notNewClient": "Already a client",
     "disabledHint": "Offer disabled — enable it from My Page"
   },
   "voucherModals": {
