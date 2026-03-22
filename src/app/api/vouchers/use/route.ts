@@ -3,7 +3,8 @@ import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import webpush from 'web-push';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
-import { getTodayForCountry } from '@/lib/utils';
+import { getTodayForCountry, getTrialStatus } from '@/lib/utils';
+import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -22,6 +23,13 @@ const useVoucherSchema = z.object({
 // POST: Client consomme un voucher (self-service)
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit: 5 per minute per IP
+    const ip = getClientIP(request);
+    const rateLimit = checkRateLimit(`voucher-use:${ip}`, { maxRequests: 5, windowMs: 60 * 1000 });
+    if (!rateLimit.success) {
+      return rateLimitResponse(rateLimit.resetTime);
+    }
+
     const phone_number = getAuthenticatedPhone(request);
     if (!phone_number) {
       return NextResponse.json(
@@ -70,7 +78,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Récompense déjà utilisée' }, { status: 409 });
     }
 
-    // Check expiration
+    // Check expiration (will be re-checked with merchant timezone after fetch)
     if (voucher.expires_at && new Date(voucher.expires_at) < new Date()) {
       return NextResponse.json({ error: 'Récompense expirée' }, { status: 410 });
     }
@@ -92,12 +100,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Récompense déjà utilisée' }, { status: 409 });
     }
 
-    // Fetch merchant country for timezone-aware last_visit_date
+    // Fetch merchant for timezone + trial check
     const { data: voucherMerchant } = await supabaseAdmin
       .from('merchants')
-      .select('country')
+      .select('country, trial_ends_at, subscription_status')
       .eq('id', voucher.merchant_id)
       .single();
+
+    // Check merchant subscription is still active
+    if (voucherMerchant) {
+      const trialStatus = getTrialStatus(voucherMerchant.trial_ends_at, voucherMerchant.subscription_status);
+      if (trialStatus.isFullyExpired) {
+        return NextResponse.json({ error: 'Ce commerce n\'accepte plus les récompenses pour le moment.' }, { status: 403 });
+      }
+    }
 
     // 3. Bonus +1 stamp (skip for birthday vouchers)
     let bonusVisitId: string | null = null;
@@ -238,8 +254,9 @@ export async function POST(request: NextRequest) {
                     }
                   })
                 );
-              } catch {
-                // Never let push failure crash the request
+              } catch (pushError) {
+                // Never let push failure crash the request, but log it
+                logger.error('Push notification to referrer failed:', pushError);
               }
             };
 

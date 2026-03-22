@@ -110,6 +110,7 @@ export async function POST(request: NextRequest) {
       .from('merchants')
       .select('*')
       .eq('id', referrerCard.merchant_id)
+      .is('deleted_at', null)
       .maybeSingle();
 
     if (!merchant || !merchant.referral_program_enabled) {
@@ -231,6 +232,9 @@ export async function POST(request: NextRequest) {
 
     if (referralError) {
       logger.error('Referral creation error:', referralError);
+      // Rollback: delete voucher since referral tracking failed
+      await supabaseAdmin.from('vouchers').delete().eq('id', referredVoucher.id);
+      return NextResponse.json({ error: 'Erreur lors de la création du parrainage' }, { status: 500 });
     }
 
     // 10. Retourner succès

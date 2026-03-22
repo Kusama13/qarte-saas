@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { getTodayForCountry } from '@/lib/utils';
+import { getTodayForCountry, formatPhoneNumber } from '@/lib/utils';
+import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 
 async function verifyOwnership(supabase: Awaited<ReturnType<typeof createRouteHandlerSupabaseClient>>, merchantId: string, userId: string) {
@@ -211,7 +212,20 @@ export async function PATCH(request: NextRequest) {
     const updateData: Record<string, unknown> = {
       client_name: client_name?.trim() || null,
     };
-    if (client_phone !== undefined) updateData.client_phone = client_phone?.trim() || null;
+    if (client_phone !== undefined) {
+      if (client_phone) {
+        // Format phone to E.164 using merchant country
+        const { data: phoneMerchant } = await supabaseAdmin
+          .from('merchants')
+          .select('country')
+          .eq('id', merchantId)
+          .single();
+        const country = (phoneMerchant?.country || 'FR') as MerchantCountry;
+        updateData.client_phone = formatPhoneNumber(client_phone.trim(), country);
+      } else {
+        updateData.client_phone = null;
+      }
+    }
     if (customer_id !== undefined) updateData.customer_id = customer_id;
     if (notes !== undefined) updateData.notes = notes?.trim() || null;
 

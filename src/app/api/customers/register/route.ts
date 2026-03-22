@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { formatPhoneNumber, validatePhone } from '@/lib/utils';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { setPhoneCookie } from '@/lib/customer-auth';
+import type { MerchantCountry } from '@/types';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -52,7 +54,7 @@ async function handleLookup(body: unknown, ip: string) {
   // Verify merchant exists
   const { data: merchant } = await supabaseAdmin
     .from('merchants')
-    .select('id')
+    .select('id, country')
     .eq('id', merchant_id)
     .maybeSingle();
 
@@ -60,11 +62,15 @@ async function handleLookup(body: unknown, ip: string) {
     return NextResponse.json({ error: 'Commerce introuvable' }, { status: 404 });
   }
 
+  // Format phone to E.164
+  const country = (merchant.country || 'FR') as MerchantCountry;
+  const formattedPhone = formatPhoneNumber(phone_number, country);
+
   // 1. Check if customer exists for THIS merchant
   const { data: customersForMerchant } = await supabaseAdmin
     .from('customers')
     .select('*')
-    .eq('phone_number', phone_number)
+    .eq('phone_number', formattedPhone)
     .eq('merchant_id', merchant_id)
     .limit(1);
 
@@ -74,7 +80,7 @@ async function handleLookup(body: unknown, ip: string) {
       exists: true,
       existsForMerchant: true,
     });
-    setPhoneCookie(response, phone_number);
+    setPhoneCookie(response, formattedPhone);
     return response;
   }
 
@@ -82,7 +88,7 @@ async function handleLookup(body: unknown, ip: string) {
   const { data: customersGlobal } = await supabaseAdmin
     .from('customers')
     .select('first_name')
-    .eq('phone_number', phone_number)
+    .eq('phone_number', formattedPhone)
     .limit(1);
 
   if (customersGlobal && customersGlobal.length > 0) {
@@ -111,7 +117,7 @@ async function handleRegister(body: unknown, ip: string) {
   // Verify merchant exists
   const { data: merchant } = await supabaseAdmin
     .from('merchants')
-    .select('id')
+    .select('id, country')
     .eq('id', merchant_id)
     .maybeSingle();
 
@@ -119,17 +125,24 @@ async function handleRegister(body: unknown, ip: string) {
     return NextResponse.json({ error: 'Commerce introuvable' }, { status: 404 });
   }
 
+  // Format and validate phone
+  const country = (merchant.country || 'FR') as MerchantCountry;
+  const formattedPhone = formatPhoneNumber(phone_number, country);
+  if (!validatePhone(formattedPhone, country)) {
+    return NextResponse.json({ error: 'Numéro de téléphone invalide' }, { status: 400 });
+  }
+
   // Check if already exists for this merchant
   const { data: existingList } = await supabaseAdmin
     .from('customers')
     .select('*')
-    .eq('phone_number', phone_number)
+    .eq('phone_number', formattedPhone)
     .eq('merchant_id', merchant_id)
     .limit(1);
 
   if (existingList && existingList.length > 0) {
     const response = NextResponse.json({ customer: existingList[0] });
-    setPhoneCookie(response, phone_number);
+    setPhoneCookie(response, formattedPhone);
     return response;
   }
 
@@ -137,7 +150,7 @@ async function handleRegister(body: unknown, ip: string) {
   const { data: newCustomer, error } = await supabaseAdmin
     .from('customers')
     .insert({
-      phone_number,
+      phone_number: formattedPhone,
       first_name: first_name.trim(),
       last_name: last_name?.trim() || null,
       merchant_id,
@@ -153,6 +166,6 @@ async function handleRegister(body: unknown, ip: string) {
   }
 
   const response = NextResponse.json({ customer: newCustomer });
-  setPhoneCookie(response, phone_number);
+  setPhoneCookie(response, formattedPhone);
   return response;
 }

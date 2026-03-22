@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
       .select('id, shop_name, primary_color, logo_url, welcome_offer_description')
       .eq('welcome_referral_code', code.toUpperCase())
       .eq('welcome_offer_enabled', true)
+      .is('deleted_at', null)
       .maybeSingle();
 
     if (!merchant) {
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
       .select('*')
       .eq('welcome_referral_code', welcome_code.toUpperCase())
       .eq('welcome_offer_enabled', true)
+      .is('deleted_at', null)
       .maybeSingle();
 
     if (!merchant) {
@@ -224,6 +226,9 @@ export async function POST(request: NextRequest) {
 
     if (referralError) {
       logger.error('Welcome referral creation error:', referralError);
+      // Rollback: delete the voucher since referral tracking failed
+      await supabaseAdmin.from('vouchers').delete().eq('id', welcomeVoucher.id);
+      return NextResponse.json({ error: 'Erreur lors de la création de la récompense' }, { status: 500 });
     }
 
     // 8. Retourner succès

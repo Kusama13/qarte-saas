@@ -83,10 +83,11 @@ export async function POST(request: NextRequest) {
       supabaseAdmin.from('redemptions').delete().eq('loyalty_card_id', loyalty_card_id),
       supabaseAdmin.from('referrals').delete().eq('referrer_card_id', loyalty_card_id),
       supabaseAdmin.from('referrals').delete().eq('referred_card_id', loyalty_card_id),
-      // Clean up push subscriptions and member cards linked to this customer
+      // Clean up push subscriptions, member cards, and planning slots linked to this customer
       ...(card.customer_id ? [
         supabaseAdmin.from('push_subscriptions').delete().eq('customer_id', card.customer_id),
         supabaseAdmin.from('member_cards').delete().eq('customer_id', card.customer_id),
+        supabaseAdmin.from('merchant_planning_slots').update({ customer_id: null }).eq('customer_id', card.customer_id),
       ] : []),
     ]);
 

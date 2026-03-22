@@ -255,41 +255,20 @@ export async function DELETE(
       );
     }
 
-    // 1. Libérer la référence dans prospects (si existe)
-    await supabaseAdmin
-      .from('prospects')
-      .update({ converted_merchant_id: null })
-      .eq('converted_merchant_id', merchantId);
-
-    // 2. Supprimer le merchant (CASCADE supprime automatiquement):
-    //    - loyalty_cards
-    //    - visits
-    //    - redemptions
-    //    - push_history
-    //    - push_automations
-    //    - scheduled_push
-    //    - banned_numbers
-    //    - point_adjustments
-    //    - member_programs (et member_cards via cascade)
-    //    - merchant_offers
+    // Soft-delete: mark as deleted instead of hard delete (preserves history)
     const { error: deleteError } = await supabaseAdmin
       .from('merchants')
-      .delete()
-      .eq('id', merchantId);
+      .update({ deleted_at: new Date().toISOString() })
+      .eq('id', merchantId)
+      .is('deleted_at', null);
 
     if (deleteError) {
-      logger.error('Delete merchant error:', deleteError);
+      logger.error('Soft-delete merchant error:', deleteError);
       return NextResponse.json(
         { error: 'Erreur lors de la suppression', details: deleteError.message },
         { status: 500 }
       );
     }
-
-    // 3. Optionnel: Supprimer l'utilisateur auth (le merchant ne pourra plus se connecter)
-    // Décommente si tu veux aussi supprimer le compte utilisateur
-    // if (merchant.user_id) {
-    //   await supabase.auth.admin.deleteUser(merchant.user_id);
-    // }
 
     return NextResponse.json({
       success: true,

@@ -92,6 +92,7 @@ export async function POST(request: NextRequest) {
       .from('merchants')
       .select('*')
       .eq('scan_code', scan_code)
+      .is('deleted_at', null)
       .single();
 
     if (merchantError || !merchant) {

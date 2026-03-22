@@ -108,15 +108,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cette offre a expiré' }, { status: 410 });
     }
 
-    if (offer.max_claims && offer.claim_count >= offer.max_claims) {
-      return NextResponse.json({ error: 'Cette offre n\'est plus disponible' }, { status: 410 });
-    }
+    // max_claims check is done atomically by increment_offer_claim RPC (step 5)
 
     // 2. Trouver le merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
       .select('*')
       .eq('id', offer.merchant_id)
+      .is('deleted_at', null)
       .single();
 
     if (!merchant) {
@@ -243,6 +242,8 @@ export async function POST(request: NextRequest) {
 
     if (voucherError || !offerVoucher) {
       logger.error('Offer voucher creation error:', voucherError);
+      // Rollback: decrement claim count since voucher creation failed
+      await supabaseAdmin.rpc('decrement_offer_claim', { p_offer_id: offer.id });
       return NextResponse.json({ error: 'Erreur lors de la création du bon' }, { status: 500 });
     }
 

@@ -55,6 +55,7 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
         .from('merchants')
         .select('*')
         .eq('user_id', session.user.id)
+        .is('deleted_at', null)
         .single();
 
       if (merchantError || !data) {

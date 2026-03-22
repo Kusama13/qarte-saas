@@ -102,20 +102,20 @@ export async function POST(request: NextRequest) {
 
       // Block if client already has stamps
       if (Number(card.current_stamps || 0) > 0) {
-        return NextResponse.json({ error: 'not_new_client' }, { status: 400 });
+        return NextResponse.json({ error: 'not_new_client', message: 'Ce client a déjà des tampons' }, { status: 400 });
       }
 
-      // Check duplicate (any welcome voucher, used or not)
-      const { data: existing } = await supabaseAdmin
+      // Check duplicate: any welcome or referral voucher (used or not) — same logic as /api/welcome
+      const { data: existingWelcomeOrReferral } = await supabaseAdmin
         .from('vouchers')
         .select('id')
         .eq('customer_id', customer_id)
         .eq('merchant_id', merchant_id)
-        .eq('source', 'welcome')
-        .maybeSingle();
+        .in('source', ['welcome', 'referral'])
+        .limit(1);
 
-      if (existing) {
-        return NextResponse.json({ error: 'already_granted' }, { status: 409 });
+      if (existingWelcomeOrReferral && existingWelcomeOrReferral.length > 0) {
+        return NextResponse.json({ error: 'already_granted', message: 'Ce client a déjà bénéficié de cette offre' }, { status: 409 });
       }
 
       const { error: insertError } = await supabaseAdmin.from('vouchers').insert({
@@ -156,9 +156,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Offre expirée' }, { status: 410 });
     }
 
-    if (offer.max_claims && offer.claim_count >= offer.max_claims) {
-      return NextResponse.json({ error: 'Limite atteinte' }, { status: 410 });
-    }
+    // max_claims check is done atomically by increment_offer_claim RPC
 
     // Check duplicate
     const { data: existingOffer } = await supabaseAdmin
@@ -170,7 +168,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (existingOffer) {
-      return NextResponse.json({ error: 'already_granted' }, { status: 409 });
+      return NextResponse.json({ error: 'already_granted', message: 'Ce client a déjà cette offre active' }, { status: 409 });
     }
 
     // Increment claim count
@@ -188,6 +186,8 @@ export async function POST(request: NextRequest) {
 
     if (insertError) {
       logger.error('Voucher insert error:', insertError);
+      // Rollback: decrement claim count since voucher creation failed
+      await supabaseAdmin.rpc('decrement_offer_claim', { p_offer_id: offer.id });
       return NextResponse.json({ error: 'Erreur' }, { status: 500 });
     }
 
