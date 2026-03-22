@@ -49,7 +49,7 @@ const welcomeSchema = z.object({
   welcome_code: z.string().min(1),
   phone_number: z.string().min(1),
   first_name: z.string().min(1),
-  last_name: z.string().optional(),
+  last_name: z.string().nullable().optional(),
 });
 
 export async function POST(request: NextRequest) {

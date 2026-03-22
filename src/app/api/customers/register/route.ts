@@ -15,7 +15,7 @@ const lookupSchema = z.object({
 const registerSchema = z.object({
   phone_number: z.string().min(10),
   first_name: z.string().min(1),
-  last_name: z.string().optional(),
+  last_name: z.string().nullable().optional(),
   merchant_id: z.string().uuid(),
 });
 
