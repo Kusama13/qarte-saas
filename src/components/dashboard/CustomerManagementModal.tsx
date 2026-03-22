@@ -13,13 +13,11 @@ import {
   Cake,
   Phone,
   Pencil,
-  Ticket,
   Award,
 } from 'lucide-react';
 import { displayPhoneNumber } from '@/lib/utils';
 import { CustomerAdjustTab } from './CustomerAdjustTab';
-import { CustomerRewardsTab } from './CustomerRewardsTab';
-import { CustomerOffersTab } from './CustomerOffersTab';
+import { CustomerRewardsCombinedTab } from './CustomerRewardsCombinedTab';
 import { CustomerHistoryTab } from './CustomerHistoryTab';
 import { CustomerDangerZone } from './CustomerDangerZone';
 
@@ -49,7 +47,7 @@ interface CustomerManagementModalProps {
   country?: string;
 }
 
-type Tab = 'adjust' | 'rewards' | 'offers' | 'history' | 'danger';
+type Tab = 'adjust' | 'rewards' | 'history' | 'danger';
 
 export function CustomerManagementModal({
   isOpen,
@@ -169,7 +167,6 @@ export function CustomerManagementModal({
   const tabs: { key: Tab; label: string; icon: React.ReactNode; activeColor: string }[] = [
     { key: 'adjust', label: t('tabPoints'), icon: <SlidersHorizontal className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
     { key: 'rewards', label: t('tabRewards'), icon: <Award className="w-4 h-4" />, activeColor: 'text-emerald-600 border-emerald-600' },
-    { key: 'offers', label: t('tabOffers'), icon: <Ticket className="w-4 h-4" />, activeColor: 'text-amber-600 border-amber-600' },
     { key: 'history', label: t('tabHistory'), icon: <History className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
     { key: 'danger', label: t('tabDelete'), icon: <AlertTriangle className="w-4 h-4" />, activeColor: 'text-red-600 border-red-600' },
   ];
@@ -350,7 +347,7 @@ export function CustomerManagementModal({
               )}
 
               {activeTab === 'rewards' && (
-                <CustomerRewardsTab
+                <CustomerRewardsCombinedTab
                   loyaltyCardId={loyaltyCardId}
                   currentStamps={currentStamps}
                   stampsRequired={stampsRequired}
@@ -359,16 +356,9 @@ export function CustomerManagementModal({
                   tier2RewardDescription={tier2RewardDescription}
                   rewardDescription={rewardDescription}
                   tier1Redeemed={tier1Redeemed}
-                  onSuccess={showSuccess}
                   isCagnotte={isCagnotte}
-                />
-              )}
-
-              {activeTab === 'offers' && (
-                <CustomerOffersTab
                   customerId={customerId}
                   merchantId={merchantId}
-                  currentStamps={currentStamps}
                   onSuccess={showSuccess}
                 />
               )}
@@ -380,6 +370,7 @@ export function CustomerManagementModal({
                   tier2Enabled={tier2Enabled}
                   isCagnotte={isCagnotte}
                   country={country}
+                  customerId={customerId}
                 />
               )}
 

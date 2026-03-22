@@ -1677,7 +1677,10 @@
     "cancelError": "Error during cancellation",
     "confirmCancelFirst": "Please confirm the cancellation",
     "redeemSuccessTiered": "{label} tier {tier} redeemed!",
-    "redeemSuccess": "{label} redeemed!"
+    "redeemSuccess": "{label} redeemed!",
+    "sectionActiveVouchers": "Active vouchers",
+    "sectionRewards": "Rewards",
+    "sectionGrant": "Grant"
   },
   "customerAdjust": {
     "enterAdjustment": "Please enter an adjustment",
@@ -1717,7 +1720,9 @@
     "visit": "Visit",
     "pointsLabel": "Points",
     "amountLabel": "Amount (EUR)",
-    "voucherUsed": "Voucher used"
+    "voucherUsed": "Voucher used",
+    "appointment": "Appointment",
+    "appointmentAt": "Appt. at {time}"
   },
   "customerDanger": {
     "irreversible": "These actions are irreversible.",
@@ -2059,7 +2064,9 @@
     "redeemDefaultError": "An error occurred",
     "redeemConnectionError": "Connection error. Please try again.",
     "generateQrCode": "Confirm and generate my QR code",
-    "tryFree": "Try free for 7 days"
+    "tryFree": "Try free for 7 days",
+    "upcomingAppointments": "Your upcoming appointments",
+    "contactToModify": "Contact {shop} to change or cancel"
   },
   "customerLogin": {
     "myCards": "My cards.",
@@ -2153,7 +2160,8 @@
     "collapse": "Show less",
     "viewAll": "View all ({count})",
     "noHistory": "No history",
-    "tier": "tier {number}"
+    "tier": "tier {number}",
+    "appointmentAt": "Appointment at {time}"
   },
   "tierProgress": {
     "confirmedVisits": "Confirmed visits",

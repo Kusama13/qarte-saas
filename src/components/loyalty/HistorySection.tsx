@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Clock,
   Gift,
@@ -13,10 +13,11 @@ import {
   Trophy,
   Ticket,
   UserPlus,
+  Calendar,
 } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { motion } from 'framer-motion';
-import { formatDateTime, formatCurrency } from '@/lib/utils';
+import { formatDateTime, formatCurrency, formatTime } from '@/lib/utils';
 import type { Merchant, Visit, VisitStatus } from '@/types';
 
 interface PointAdjustment {
@@ -45,11 +46,19 @@ export interface UsedVoucher {
   source?: 'birthday' | 'referral' | 'redemption' | 'welcome' | 'offer' | null;
 }
 
+interface AppointmentItem {
+  id: string;
+  slot_date: string;
+  start_time: string;
+  planning_slot_services?: Array<{ service_id: string; service: { name: string } | null }>;
+}
+
 interface HistorySectionProps {
   visits: VisitWithStatus[];
   adjustments: PointAdjustment[];
   redemptions: RedemptionHistory[];
   usedVouchers?: UsedVoucher[];
+  appointments?: AppointmentItem[];
   merchant: Merchant;
 }
 
@@ -58,6 +67,7 @@ export default function HistorySection({
   adjustments,
   redemptions,
   usedVouchers = [],
+  appointments = [],
   merchant,
 }: HistorySectionProps) {
   const t = useTranslations('historySection');
@@ -65,10 +75,10 @@ export default function HistorySection({
   const [expanded, setExpanded] = useState(false);
 
   const LoyaltyIcon = Heart;
-  const hasItems = visits.length > 0 || adjustments.length > 0 || redemptions.length > 0 || usedVouchers.length > 0;
+  const hasItems = visits.length > 0 || adjustments.length > 0 || redemptions.length > 0 || usedVouchers.length > 0 || appointments.length > 0;
 
-  // Pre-compute sorted items
-  const allItems = [
+  // Pre-compute sorted items (memoized to avoid re-sort on expand toggle)
+  const allItems = useMemo(() => [
     ...visits.map((v) => ({
       type: 'visit' as const,
       date: v.visited_at,
@@ -80,6 +90,7 @@ export default function HistorySection({
       reward_description: undefined as string | undefined,
       source: null as string | null,
       amount_spent: v.amount_spent ?? null,
+      serviceNames: undefined as string[] | undefined,
     })),
     ...adjustments.map((a) => ({
       type: 'adjustment' as const,
@@ -92,6 +103,7 @@ export default function HistorySection({
       reward_description: undefined as string | undefined,
       source: null as string | null,
       amount_spent: null as number | null,
+      serviceNames: undefined as string[] | undefined,
     })),
     ...redemptions.map((r) => ({
       type: 'redemption' as const,
@@ -104,6 +116,7 @@ export default function HistorySection({
       reward_description: undefined as string | undefined,
       source: null as string | null,
       amount_spent: null as number | null,
+      serviceNames: undefined as string[] | undefined,
     })),
     ...usedVouchers.map((v) => ({
       type: 'voucher_used' as const,
@@ -116,8 +129,23 @@ export default function HistorySection({
       reward_description: v.reward_description,
       source: v.source || null,
       amount_spent: null as number | null,
+      serviceNames: undefined as string[] | undefined,
     })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 30);
+    ...appointments.map((a) => ({
+      type: 'appointment' as const,
+      date: `${a.slot_date}T${a.start_time}:00`,
+      points: 0,
+      id: a.id,
+      status: 'confirmed' as const,
+      flagged_reason: null as string | null,
+      tier: undefined as number | undefined,
+      reward_description: undefined as string | undefined,
+      source: null as string | null,
+      amount_spent: null as number | null,
+      serviceNames: (a.planning_slot_services || []).map(s => s.service?.name).filter(Boolean) as string[],
+    })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 30),
+  [visits, adjustments, redemptions, usedVouchers, appointments]);
 
   const displayItems = expanded ? allItems : allItems.slice(0, 3);
   const hasMore = allItems.length > 3;
@@ -145,11 +173,13 @@ export default function HistorySection({
               const isAdjustment = item.type === 'adjustment';
               const isRedemption = item.type === 'redemption';
               const isVoucherUsed = item.type === 'voucher_used';
+              const isAppointment = item.type === 'appointment';
               const isBonusParrainage = item.type === 'visit' && item.flagged_reason === 'bonus_parrainage';
               const isPending = item.status === 'pending';
               const isRejected = item.status === 'rejected';
 
               const getStatusIcon = () => {
+                if (isAppointment) return <Calendar className="w-4 h-4 text-purple-500" />;
                 if (isVoucherUsed) return <Ticket className="w-4 h-4 text-indigo-500" />;
                 if (isBonusParrainage) return <UserPlus className="w-4 h-4" style={{ color: merchant.primary_color }} />;
                 if (isRedemption) {
@@ -164,6 +194,7 @@ export default function HistorySection({
               };
 
               const getIconBgColor = () => {
+                if (isAppointment) return '#f3e8ff';
                 if (isVoucherUsed) return '#e0e7ff';
                 if (isRedemption) return item.tier === 2 ? '#ede9fe' : '#d1fae5';
                 if (isAdjustment) return '#fef3c7';
@@ -173,6 +204,10 @@ export default function HistorySection({
               };
 
               const getLabel = () => {
+                if (isAppointment) {
+                  const time = item.date.split('T')[1]?.slice(0, 5) || '';
+                  return t('appointmentAt', { time: formatTime(time, locale) });
+                }
                 if (isVoucherUsed) {
                   const prefix = item.source === 'birthday' ? '🎂' : '🎟️';
                   return `${prefix} ${item.reward_description || t('rewardUsed')}`;
@@ -220,8 +255,15 @@ export default function HistorySection({
                       <Clock className="w-3 h-3" />
                       {formatDateTime(item.date, locale)}
                     </p>
+                    {isAppointment && item.serviceNames && item.serviceNames.length > 0 && (
+                      <p className="text-[10px] text-gray-400 mt-0.5 truncate">{item.serviceNames.join(', ')}</p>
+                    )}
                   </div>
-                  {!isRedemption && !isVoucherUsed && (
+                  {isAppointment ? (
+                    <div className="px-2 py-1 rounded-lg text-xs font-bold bg-purple-100 text-purple-700">
+                      <Calendar className="w-3.5 h-3.5" />
+                    </div>
+                  ) : !isRedemption && !isVoucherUsed && (
                     <div
                       className={`px-2 py-1 rounded-lg text-xs font-bold ${
                         isPending

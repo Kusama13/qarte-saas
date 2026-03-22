@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
-import { generateReferralCode } from '@/lib/utils';
+import { generateReferralCode, getTodayForCountry } from '@/lib/utils';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
 import logger from '@/lib/logger';
 
@@ -91,8 +91,13 @@ export async function POST(request: NextRequest) {
       card.referral_code = code;
     }
 
-    // Fetch all additional data in parallel
-    const [visitsResult, adjustmentsResult, memberCardResult, redemptionsResult, vouchersResult] = await Promise.all([
+    // Fetch all additional data in parallel (including planning if enabled)
+    const merchant = card.merchant as Record<string, unknown>;
+    const planningEnabled = !!merchant.planning_enabled;
+    const today = planningEnabled ? getTodayForCountry(merchant.country as string) : '';
+    const slotSelect = 'id, slot_date, start_time, planning_slot_services(service_id, service:merchant_services!service_id(name))';
+
+    const [visitsResult, adjustmentsResult, memberCardResult, redemptionsResult, vouchersResult, upcomingResult, pastResult] = await Promise.all([
       // Visits
       supabaseAdmin
         .from('visits')
@@ -140,10 +145,40 @@ export async function POST(request: NextRequest) {
         .eq('customer_id', customer.id)
         .eq('merchant_id', merchantId)
         .order('created_at', { ascending: false }),
+
+      // Upcoming appointments
+      planningEnabled
+        ? supabaseAdmin
+            .from('merchant_planning_slots')
+            .select(slotSelect)
+            .eq('merchant_id', merchantId)
+            .eq('customer_id', customer.id)
+            .gte('slot_date', today)
+            .not('client_name', 'is', null)
+            .order('slot_date')
+            .order('start_time')
+            .limit(3)
+        : Promise.resolve({ data: [] }),
+
+      // Past appointments (for history)
+      planningEnabled
+        ? supabaseAdmin
+            .from('merchant_planning_slots')
+            .select(slotSelect)
+            .eq('merchant_id', merchantId)
+            .eq('customer_id', customer.id)
+            .lt('slot_date', today)
+            .not('client_name', 'is', null)
+            .order('slot_date', { ascending: false })
+            .order('start_time', { ascending: false })
+            .limit(20)
+        : Promise.resolve({ data: [] }),
     ]);
 
+    const upcomingAppointments = upcomingResult.data || [];
+    const pastAppointments = pastResult.data || [];
+
     // Process offer data from merchant (already included in card.merchant)
-    const merchant = card.merchant as Record<string, unknown>;
     const isOfferExpired = merchant.offer_expires_at &&
       new Date(merchant.offer_expires_at as string) < new Date();
 
@@ -172,6 +207,8 @@ export async function POST(request: NextRequest) {
       vouchers: vouchersResult.data || [],
       offer: offer.active ? offer : null,
       pwaOffer: merchant.pwa_offer_text || null,
+      upcomingAppointments,
+      pastAppointments,
     });
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     return response;

@@ -51,8 +51,8 @@ src/
 │   ├── landing/           # Hero, SocialProof, VitrineSection, FideliteSection, Testimonials, Pricing, FAQ, Footer
 │   ├── ui/                # Button, Input, Modal, Select, Badge, Toast, Skeleton
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
-│   ├── dashboard/         # CustomerManagementModal, AdjustTab, RewardsTab, HistoryTab, DangerZone, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
-│   ├── loyalty/           # StampsSection, CagnotteSection, RewardCard, RedeemModal, StickyRedeemBar, HistorySection, VoucherRewards, VoucherModals, ReviewModal, ReviewCard, BirthdaySection, SocialLinks, CardHeader, InstallPrompts
+│   ├── dashboard/         # CustomerManagementModal, AdjustTab, RewardsCombinedTab, HistoryTab, DangerZone, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
+│   ├── loyalty/           # StampsSection, CagnotteSection, RewardCard, RedeemModal, StickyRedeemBar, HistorySection, VoucherRewards, VoucherModals, ReviewModal, ReviewCard, BirthdaySection, SocialLinks, CardHeader, InstallPrompts, UpcomingAppointmentsSection
 │   └── analytics/         # GTM, FacebookPixel, TikTokPixel, MicrosoftClarity
 │
 ├── emails/               # 34 templates React Email + BaseLayout
@@ -296,7 +296,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 ### Clients
 - `POST /api/customers/create` — Creer client + carte (merchant auth, dedup telephone)
 - `POST /api/customers/register` — Inscription client
-- `GET /api/customers/card` — Carte fidelite
+- `POST /api/customers/card` — Carte fidelite (auth cookie phone). Retourne visites, ajustements, redemptions, vouchers, member card + `upcomingAppointments` + `pastAppointments` (si planning_enabled, 7 queries paralleles)
 - `POST /api/customers/cards` — Toutes les cartes (auth cookie, rate limit 10/min)
 - `PUT /api/customers/update-name` — Modifier nom/prenom (merchant auth)
 
@@ -339,7 +339,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Services: duration (int, min, nullable), description (text, nullable), price_from (bool, "a partir de")
 
 ### Planning
-- `GET /api/planning?merchantId=&from=&to=` — Slots merchant (auth, join services+photos+result_photos+customer social) ou `&public=true` (dispo only, 30j). `&booked=true` filtre les creneaux reserves uniquement. `&customerId=` filtre par client
+- `GET /api/planning?merchantId=&from=&to=` — Slots merchant (auth, join services avec noms+photos+result_photos+customer social) ou `&public=true` (dispo only, 30j). `&booked=true` filtre les creneaux reserves uniquement. `&customerId=` filtre par client
 - `POST /api/planning` — Creation batch creneaux (max 20/requete, 200 actifs total)
 - `PATCH /api/planning` — Marquer creneau pris/libre (client_name, phone, service_ids[], notes)
 - `DELETE /api/planning` — Supprimer creneaux (batch slotIds)
@@ -463,13 +463,17 @@ Design Apple Wallet, fond `bg-[#f7f6fb]`, greeting typographique, cartes avec he
 ### Carte Fidelite Client (`/customer/card/[merchantId]`)
 Header colore avec nom merchant. Boutons conditionnels dans le header : "Membre" (si member card active), "Reserver" (si `booking_url`), **"Infos"** (si `slug` — lien vers `/p/[slug]`, toujours affiche).
 
+**Prochains rendez-vous** : section `UpcomingAppointmentsSection` (si `planning_enabled` et RDV a venir). Max 3 RDV avec date longue, heure, services. Message "Contactez {shop} pour modifier ou annuler" (vouvoiement). Placee entre offre exclusive et tampons.
+
+**Historique enrichi** : `HistorySection` affiche visites, ajustements, redemptions, vouchers + **RDV passes** (icone Calendar purple, noms services). API `/api/customers/card` retourne `upcomingAppointments` + `pastAppointments` en parallele.
+
 **Badge cycle couronne** : quand un client complete un cycle (redeem palier unique ou palier 2 si dual), un badge "Xe carte" avec icone Crown apparait au-dessus de la grille de tampons. Couleur progressive : rose (1 cycle), violet (2-3), dore (4+). Calcule depuis `redemptions` (pas de colonne DB). Single tier = count all redemptions, dual tier = count tier 2 only.
 
 ### Scan (`/scan/[code]`)
 Inscription rapide, validation passage, progression fidelite, detection `?ref=` pour parrainage
 
 ### Dashboard (`/dashboard`)
-Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 4 onglets), push notifications, abonnement, parrainage, parametres. **Widget "Prochains rendez-vous"** : 5 prochains RDV bookes groupes Aujourd'hui/A venir, clic → deep link `/dashboard/planning?slot=id` ouvre le modal detail. **Welcome claims** : 3 derniers vouchers bienvenue dans la section activite recente. Raccourcis mobile : Ma Page (gradient indigo-violet 400), Fidelite (gradient pink-rose 400), Planning (gradient cyan-blue 400), Clients (gris), QR Code (gris), Abonnement (gris).
+Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 4 onglets : Points, Cadeaux/Offres fusionne, Historique avec RDV planning, Supprimer), push notifications, abonnement, parrainage, parametres. **Widget "Prochains rendez-vous"** : 5 prochains RDV bookes groupes Aujourd'hui/A venir, clic → deep link `/dashboard/planning?slot=id` ouvre le modal detail. **Welcome claims** : 3 derniers vouchers bienvenue dans la section activite recente. Raccourcis mobile : Ma Page (gradient indigo-violet 400), Fidelite (gradient pink-rose 400), Planning (gradient cyan-blue 400), Clients (gris), QR Code (gris), Abonnement (gris).
 
 **Navigation sidebar** : Accueil, Programme de fidelite, Ma Page, QR code & Supports, Planning, Clients, Parrainage, Notifications, Abonnement, Parametres
 - **Membres** (`/dashboard/members`) : retire de la nav, accessible via bouton "Programmes VIP" dans Clients

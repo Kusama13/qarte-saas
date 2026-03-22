@@ -46,6 +46,7 @@ import {
   VoucherRewards,
   VoucherModals,
 } from '@/components/loyalty';
+import UpcomingAppointmentsSection from '@/components/loyalty/UpcomingAppointmentsSection';
 
 interface PointAdjustment {
   id: string;
@@ -128,6 +129,12 @@ export default function CustomerCardPage({
 
   // Offer state
   const [offer, setOffer] = useState<MerchantOffer | null>(null);
+
+  // Appointments
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [pastAppointments, setPastAppointments] = useState<any[]>([]);
 
   // Vouchers state (referral rewards)
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
@@ -339,6 +346,10 @@ export default function CustomerCardPage({
         if (data.vouchers) {
           setVouchers(data.vouchers);
         }
+
+        // Appointments
+        setUpcomingAppointments(data.upcomingAppointments || []);
+        setPastAppointments(data.pastAppointments || []);
 
         // Check if birthday already set
         if (data.card.customer?.birth_month && data.card.customer?.birth_day) {
@@ -972,6 +983,15 @@ export default function CustomerCardPage({
         {/* Offre Exclusive */}
         {offer && <ExclusiveOffer offer={offer} merchantColor={merchant.primary_color} isPreview={isPreview} />}
 
+        {/* Upcoming Appointments */}
+        {merchant.planning_enabled && upcomingAppointments.length > 0 && (
+          <UpcomingAppointmentsSection
+            appointments={upcomingAppointments}
+            merchantColor={merchant.primary_color}
+            shopName={merchant.shop_name}
+          />
+        )}
+
         {/* Stamps / Cagnotte Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1141,6 +1161,7 @@ export default function CustomerCardPage({
             .filter(v => v.is_used && v.used_at)
             .map(v => ({ id: v.id, used_at: v.used_at!, reward_description: v.reward_description, source: v.source }))
           }
+          appointments={pastAppointments}
           merchant={merchant}
         />
 

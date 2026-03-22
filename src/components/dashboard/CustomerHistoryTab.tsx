@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useState, useEffect, useMemo } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   Loader2,
   Check,
@@ -15,9 +15,10 @@ import {
   Pencil,
   X,
   Ticket,
+  Calendar,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { formatDateTime, formatCurrency } from '@/lib/utils';
+import { formatDateTime, formatCurrency, formatTime } from '@/lib/utils';
 
 interface Visit {
   id: string;
@@ -47,12 +48,21 @@ interface UsedVoucher {
   source: string | null;
 }
 
+interface Appointment {
+  id: string;
+  slot_date: string;
+  start_time: string;
+  planning_slot_services: Array<{ service_id: string; service: { name: string } | null }>;
+  planning_slot_result_photos: Array<{ id: string; url: string; position: number }>;
+}
+
 export interface CustomerHistoryTabProps {
   loyaltyCardId: string;
   merchantId: string;
   tier2Enabled: boolean;
   isCagnotte?: boolean;
   country?: string;
+  customerId?: string;
 }
 
 export function CustomerHistoryTab({
@@ -61,12 +71,15 @@ export function CustomerHistoryTab({
   tier2Enabled,
   isCagnotte = false,
   country,
+  customerId,
 }: CustomerHistoryTabProps) {
   const t = useTranslations('customerHistory');
+  const locale = useLocale();
   const [visits, setVisits] = useState<Visit[]>([]);
   const [adjustments, setAdjustments] = useState<PointAdjustment[]>([]);
   const [redemptions, setRedemptions] = useState<Redemption[]>([]);
   const [usedVouchers, setUsedVouchers] = useState<UsedVoucher[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyExpanded, setHistoryExpanded] = useState(true);
 
@@ -78,12 +91,17 @@ export function CustomerHistoryTab({
 
   useEffect(() => {
     fetchHistory();
-  }, [loyaltyCardId]);
+  }, [loyaltyCardId, customerId]);
 
   const fetchHistory = async () => {
     setHistoryLoading(true);
     try {
-      const [visitsResult, adjustmentsResult, redemptionsResult, vouchersResult] = await Promise.all([
+      const appointmentsPromise = customerId
+        ? fetch(`/api/planning?merchantId=${merchantId}&customerId=${customerId}&booked=true`)
+            .then(r => r.ok ? r.json() : { slots: [] })
+        : Promise.resolve({ slots: [] });
+
+      const [visitsResult, adjustmentsResult, redemptionsResult, vouchersResult, appointmentsResult] = await Promise.all([
         supabase
           .from('visits')
           .select('id, visited_at, points_earned, amount_spent')
@@ -109,12 +127,14 @@ export function CustomerHistoryTab({
           .eq('is_used', true)
           .order('used_at', { ascending: false })
           .limit(50),
+        appointmentsPromise,
       ]);
 
       setVisits(visitsResult.data || []);
       setAdjustments(adjustmentsResult.data || []);
       setRedemptions(redemptionsResult.data || []);
       setUsedVouchers((vouchersResult.data || []) as UsedVoucher[]);
+      setAppointments((appointmentsResult.slots || []) as Appointment[]);
     } catch {
       // ignore
     } finally {
@@ -168,9 +188,9 @@ export function CustomerHistoryTab({
     }
   };
 
-  // Combine and sort history items
-  const historyItems = [
-    ...visits.map((v) => ({ type: 'visit' as const, date: v.visited_at, points: v.points_earned, id: v.id, tier: undefined as number | undefined, reason: undefined as string | null | undefined, amount_spent: v.amount_spent, voucherDesc: undefined as string | undefined, voucherSource: undefined as string | null | undefined })),
+  // Combine and sort history items (memoized)
+  const historyItems = useMemo(() => [
+    ...visits.map((v) => ({ type: 'visit' as const, date: v.visited_at, points: v.points_earned, id: v.id, tier: undefined as number | undefined, reason: undefined as string | null | undefined, amount_spent: v.amount_spent, voucherDesc: undefined as string | undefined, voucherSource: undefined as string | null | undefined, serviceNames: undefined as string[] | undefined, resultPhotos: undefined as Array<{ id: string; url: string; position: number }> | undefined })),
     ...adjustments.map((a) => ({
       type: 'adjustment' as const,
       date: a.adjusted_at,
@@ -181,6 +201,8 @@ export function CustomerHistoryTab({
       amount_spent: null as number | null,
       voucherDesc: undefined as string | undefined,
       voucherSource: undefined as string | null | undefined,
+      serviceNames: undefined as string[] | undefined,
+      resultPhotos: undefined as Array<{ id: string; url: string; position: number }> | undefined,
     })),
     ...redemptions.map((r) => ({
       type: 'redemption' as const,
@@ -192,6 +214,8 @@ export function CustomerHistoryTab({
       amount_spent: null as number | null,
       voucherDesc: undefined as string | undefined,
       voucherSource: undefined as string | null | undefined,
+      serviceNames: undefined as string[] | undefined,
+      resultPhotos: undefined as Array<{ id: string; url: string; position: number }> | undefined,
     })),
     ...usedVouchers.map((v) => ({
       type: 'voucher' as const,
@@ -203,8 +227,24 @@ export function CustomerHistoryTab({
       amount_spent: null as number | null,
       voucherDesc: v.reward_description,
       voucherSource: v.source,
+      serviceNames: undefined as string[] | undefined,
+      resultPhotos: undefined as Array<{ id: string; url: string; position: number }> | undefined,
     })),
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    ...appointments.map((a) => ({
+      type: 'appointment' as const,
+      date: `${a.slot_date}T${a.start_time}:00`,
+      points: 0,
+      id: a.id,
+      tier: undefined as number | undefined,
+      reason: undefined as string | null | undefined,
+      amount_spent: null as number | null,
+      voucherDesc: undefined as string | undefined,
+      voucherSource: undefined as string | null | undefined,
+      serviceNames: a.planning_slot_services.map(s => s.service?.name).filter(Boolean) as string[],
+      resultPhotos: a.planning_slot_result_photos || [],
+    })),
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+  [visits, adjustments, redemptions, usedVouchers, appointments]);
 
   return (
     <div className="space-y-3">
@@ -237,8 +277,10 @@ export function CustomerHistoryTab({
               const isRedemption = item.type === 'redemption';
               const isAdjustment = item.type === 'adjustment';
               const isVoucherUsed = item.type === 'voucher';
+              const isAppointment = item.type === 'appointment';
 
               const getBgColor = () => {
+                if (isAppointment) return 'bg-purple-50';
                 if (isVoucherUsed) return 'bg-orange-50';
                 if (isRedemption) return item.tier === 2 ? 'bg-violet-50' : 'bg-emerald-50';
                 if (isAdjustment) return 'bg-amber-50';
@@ -246,6 +288,7 @@ export function CustomerHistoryTab({
               };
 
               const getIconBgColor = () => {
+                if (isAppointment) return 'bg-purple-100';
                 if (isVoucherUsed) return 'bg-orange-100';
                 if (isRedemption) return item.tier === 2 ? 'bg-violet-100' : 'bg-emerald-100';
                 if (isAdjustment) return 'bg-amber-100';
@@ -253,6 +296,7 @@ export function CustomerHistoryTab({
               };
 
               const getIcon = () => {
+                if (isAppointment) return <Calendar className="w-4 h-4 text-purple-600" />;
                 if (isVoucherUsed) return <Ticket className="w-4 h-4 text-orange-600" />;
                 if (isRedemption) {
                   return item.tier === 2
@@ -264,6 +308,10 @@ export function CustomerHistoryTab({
               };
 
               const getLabel = () => {
+                if (isAppointment) {
+                  const time = item.date.split('T')[1]?.slice(0, 5) || '';
+                  return t('appointmentAt', { time: formatTime(time, locale) });
+                }
                 if (isVoucherUsed) return item.voucherDesc || t('voucherUsed');
                 if (isRedemption) {
                   if (tier2Enabled) {
@@ -359,10 +407,24 @@ export function CustomerHistoryTab({
                       {isAdjustment && item.reason && (
                         <p className="text-xs text-gray-400 italic mt-0.5 truncate">{item.reason}</p>
                       )}
+                      {isAppointment && item.serviceNames && item.serviceNames.length > 0 && (
+                        <p className="text-xs text-gray-400 mt-0.5 truncate">{item.serviceNames.join(', ')}</p>
+                      )}
+                      {isAppointment && item.resultPhotos && item.resultPhotos.length > 0 && (
+                        <div className="flex gap-1 mt-1">
+                          {item.resultPhotos.map(p => (
+                            <img key={p.id} src={p.url} className="w-6 h-6 rounded object-cover" alt="" />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                    {!isRedemption && !isVoucherUsed ? (
+                    {isAppointment ? (
+                      <span className="text-sm font-bold px-2 py-1 rounded-lg text-purple-700 bg-purple-100">
+                        <Calendar className="w-3.5 h-3.5" />
+                      </span>
+                    ) : !isRedemption && !isVoucherUsed ? (
                       <span
                         className={`text-sm font-bold px-2 py-1 rounded-lg ${
                           item.points > 0

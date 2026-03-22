@@ -1677,7 +1677,10 @@
     "cancelError": "Erreur lors de l'annulation",
     "confirmCancelFirst": "Veuillez confirmer l'annulation",
     "redeemSuccessTiered": "{label} palier {tier} validée !",
-    "redeemSuccess": "{label} validée !"
+    "redeemSuccess": "{label} validée !",
+    "sectionActiveVouchers": "Bons actifs",
+    "sectionRewards": "Récompenses",
+    "sectionGrant": "Offrir"
   },
   "customerAdjust": {
     "enterAdjustment": "Veuillez saisir un ajustement",
@@ -1717,7 +1720,9 @@
     "visit": "Passage",
     "pointsLabel": "Points",
     "amountLabel": "Montant (EUR)",
-    "voucherUsed": "Bon utilisé"
+    "voucherUsed": "Bon utilisé",
+    "appointment": "Rendez-vous",
+    "appointmentAt": "RDV à {time}"
   },
   "customerDanger": {
     "irreversible": "Ces actions sont irréversibles.",
@@ -2059,7 +2064,9 @@
     "redeemDefaultError": "Une erreur est survenue",
     "redeemConnectionError": "Erreur de connexion. Veuillez réessayer.",
     "generateQrCode": "Valider et générer mon QR code",
-    "tryFree": "Essayer gratuitement 7 jours"
+    "tryFree": "Essayer gratuitement 7 jours",
+    "upcomingAppointments": "Vos prochains rendez-vous",
+    "contactToModify": "Contactez {shop} pour modifier ou annuler"
   },
   "customerLogin": {
     "myCards": "Mes cartes.",
@@ -2153,7 +2160,8 @@
     "collapse": "Réduire",
     "viewAll": "Voir tout ({count})",
     "noHistory": "Aucun historique",
-    "tier": "palier {number}"
+    "tier": "palier {number}",
+    "appointmentAt": "Rendez-vous à {time}"
   },
   "tierProgress": {
     "confirmedVisits": "Passages confirmés",
