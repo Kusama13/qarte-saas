@@ -190,8 +190,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Referral cree avec `referrer=null` (parrain virtuel = Qarte), `status='completed'`
 - Voucher `source='welcome'`, expire 30 jours
 - CTA visible sur page publique `/p/[slug]` si active
-- Config dans Ma Page (`/dashboard/public-page`), banner lecture seule dans Parrainage
-- Dashboard parrainage : "Qarte" badge violet dans le tableau pour referrals welcome
+- Config dans Ma Page (`/dashboard/public-page`) uniquement
+- Dashboard parrainage : affiche uniquement les vrais parrainages (welcome filtre)
 
 ### Birthday Gift
 - `birth_month` / `birth_day` sur customers, voucher source='birthday'
@@ -489,7 +489,7 @@ Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 fi
 - **Membres** (`/dashboard/members`) : retire de la nav, accessible via bouton "Programmes VIP" dans Clients
 - **Ma Page** (`/dashboard/public-page`) : 3 sections collapsibles avec bordure coloree et header gradient — "Mon salon" (emerald: InfoSection), "Contenu" (pink: PhotosSection, ServicesSection), "Acquisition" (violet: WelcomeSection, PromoSection). Sub-components dans fichiers separes, exposes via `forwardRef`/`useImperativeHandle` avec `save()`. Autosave debounce 1.5s : chaque enfant appelle `onDirty`, le parent orchestre `Promise.all` sur les `save()`. Barre de completion SVG ring (7 items : nom, adresse, bio, logo, horaires, reseaux, bienvenue) — lien page publique visible seulement si completion >= 3/7. Deux modals au niveau page : help modal (explication page) et welcome help modal (remonte depuis WelcomeSection).
 - **Parametres** (`/dashboard/settings`) : email (lecture seule), type commerce, telephone, infos compte, export CSV, zone danger. Nom et adresse geres dans Ma Page uniquement.
-- **Parrainage** (`/dashboard/referrals`) : config parrainage uniquement. Offre bienvenue = banner lecture seule renvoyant vers Ma Page.
+- **Parrainage** (`/dashboard/referrals`) : config parrainage uniquement (toggle, recompenses parrain/filleul). Stats et tableau filtre (vrais parrainages uniquement, welcome exclus).
 - **QR Code & Supports** (`/dashboard/qr-download`) : QR code + Kit reseaux sociaux (image HD, legendes, grille 2x2 coloree de 4 tips + lien cross-promo vers Ma Page). Post-QR modal redirige vers Ma Page.
 
 ### Admin (`/admin`)

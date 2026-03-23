@@ -13,10 +13,7 @@ import {
   HelpCircle,
   X,
   Sparkles,
-  Globe,
-  ArrowRight,
 } from 'lucide-react';
-import { Link } from '@/i18n/navigation';
 import { Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -51,10 +48,11 @@ export default function ReferralsPage() {
   const [saveError, setSaveError] = useState('');
 
   // Derived stats from referrals array
-  const totalReferrals = useMemo(() => referrals.length, [referrals]);
-  const pendingCount = useMemo(() => referrals.filter(r => r.status === 'pending').length, [referrals]);
-  const completedCount = useMemo(() => referrals.filter(r => r.status === 'completed').length, [referrals]);
-  const welcomeCount = useMemo(() => referrals.filter(r => !r.referrer_customer).length, [referrals]);
+  // Filter out welcome entries (referrer_customer === null) — those belong to Ma Page, not referrals
+  const realReferrals = useMemo(() => referrals.filter(r => r.referrer_customer !== null), [referrals]);
+  const totalReferrals = useMemo(() => realReferrals.length, [realReferrals]);
+  const pendingCount = useMemo(() => realReferrals.filter(r => r.status === 'pending').length, [realReferrals]);
+  const completedCount = useMemo(() => realReferrals.filter(r => r.status === 'completed').length, [realReferrals]);
 
   const referredSuggestions = t('referredQuickSuggestions').split(',');
   const referrerSuggestions = t('referrerQuickSuggestions').split(',');
@@ -106,8 +104,6 @@ export default function ReferralsPage() {
           referral_program_enabled: enabled,
           referral_reward_referrer: enabled ? rewardReferrer.trim() : null,
           referral_reward_referred: enabled ? rewardReferred.trim() : null,
-          welcome_offer_enabled: merchant.welcome_offer_enabled,
-          welcome_offer_description: merchant.welcome_offer_description,
         }),
       });
 
@@ -132,8 +128,6 @@ export default function ReferralsPage() {
     if (!c) return '—';
     return c.last_name ? `${c.first_name} ${c.last_name[0]}.` : c.first_name;
   };
-
-  const welcomeEnabled = merchant?.welcome_offer_enabled || false;
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -275,34 +269,10 @@ export default function ReferralsPage() {
         </div>
       </div>
 
-      {/* Welcome Offer — read-only banner linking to Ma Page */}
-      <Link
-        href="/dashboard/public-page"
-        className="flex items-center gap-3 bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6 hover:border-violet-200 hover:shadow-md transition-all group"
-      >
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0">
-          <Sparkles className="w-5 h-5 text-white" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 text-sm">{t('welcomeOffer')}</p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {welcomeEnabled
-              ? <span>{t('welcomeEnabled')} — <span className="text-violet-600 font-medium">{merchant?.welcome_offer_description}</span></span>
-              : t('welcomeDisabled')
-            }
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-violet-600 shrink-0 group-hover:translate-x-0.5 transition-transform">
-          <Globe className="w-3.5 h-3.5" />
-          {t('configureInPage')}
-          <ArrowRight className="w-3.5 h-3.5" />
-        </div>
-      </Link>
-
       {/* Stats */}
-      {(enabled || welcomeEnabled) && (
+      {enabled && (
         <>
-          <div className={`grid grid-cols-1 gap-4 mb-6 ${welcomeCount > 0 ? 'sm:grid-cols-4' : 'sm:grid-cols-3'}`}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
@@ -333,17 +303,6 @@ export default function ReferralsPage() {
               <p className="text-3xl font-black text-gray-900">{completedCount}</p>
             </div>
 
-            {welcomeCount > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-xl bg-violet-50 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-violet-600" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-500">{t('viaQarte')}</span>
-                </div>
-                <p className="text-3xl font-black text-gray-900">{welcomeCount}</p>
-              </div>
-            )}
           </div>
 
           {/* Referrals Table */}
@@ -352,7 +311,7 @@ export default function ReferralsPage() {
               <h2 className="text-lg font-bold text-gray-900">{t('historyTitle')}</h2>
             </div>
 
-            {referrals.length === 0 ? (
+            {realReferrals.length === 0 ? (
               <div className="px-6 py-12 text-center">
                 <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500 font-medium">{t('noReferrals')}</p>
@@ -373,16 +332,10 @@ export default function ReferralsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {referrals.map((r) => (
+                    {realReferrals.map((r) => (
                       <tr key={r.id} className="hover:bg-gray-50/50 transition-colors">
                         <td className="px-6 py-3.5 text-sm font-medium text-gray-900">
-                          {r.referrer_customer ? (
-                            customerName(r.referrer_customer)
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 text-violet-700 text-xs font-semibold">
-                              <Sparkles className="w-3 h-3" /> Qarte
-                            </span>
-                          )}
+                          {customerName(r.referrer_customer)}
                         </td>
                         <td className="px-6 py-3.5 text-sm font-medium text-gray-900">
                           {customerName(r.referred_customer)}
@@ -402,9 +355,7 @@ export default function ReferralsPage() {
                           )}
                         </td>
                         <td className="px-6 py-3.5">
-                          {!r.referrer_customer ? (
-                            <span className="text-xs text-gray-400">—</span>
-                          ) : r.status === 'completed' ? (
+                          {r.status === 'completed' ? (
                             r.referrer_voucher?.is_used ? (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold">
                                 <Check className="w-3 h-3" /> {t('statusUsed')}
