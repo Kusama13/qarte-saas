@@ -186,6 +186,17 @@ export interface Customer {
   created_at: string;
 }
 
+export interface CustomerNote {
+  id: string;
+  customer_id: string;
+  merchant_id: string;
+  slot_id: string | null;
+  content: string;
+  note_type: string;
+  pinned: boolean;
+  created_at: string;
+}
+
 export interface CustomerSearchResult {
   id: string;
   first_name: string;

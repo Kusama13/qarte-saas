@@ -926,6 +926,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 077 | merchant_soft_delete | merchants.deleted_at TIMESTAMPTZ + index idx_merchants_active |
 | 078 | customer_compound_unique | Drop UNIQUE(phone_number) global → UNIQUE(phone_number, merchant_id) compound |
 | 079 | whatsapp_url | merchants.whatsapp_url TEXT |
+| 080 | customer_notes | Table customer_notes (journal suivi client : content, note_type, pinned, slot_id FK nullable, index lookup+pinned, RLS merchant) |
 
 ---
 

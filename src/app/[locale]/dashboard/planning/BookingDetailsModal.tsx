@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History } from 'lucide-react';
+import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen } from 'lucide-react';
+import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, CustomerSearchResult } from '@/types';
@@ -74,12 +75,16 @@ export default function BookingDetailsModal({
   const [clientHistory, setClientHistory] = useState<PlanningSlot[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const historyFetched = useRef(false);
+  const historyFetchedFor = useRef<string | null>(null);
+
+  // Client memo (pinned notes)
+  const [pinnedNotes, setPinnedNotes] = useState<Array<{ id: string; content: string; note_type: string }>>([]);
+  const pinnedFetchedFor = useRef<string | null>(null);
 
   // Fetch client history when toggled
   useEffect(() => {
-    if (showHistory && draft.customerId && !historyFetched.current) {
-      historyFetched.current = true;
+    if (showHistory && draft.customerId && historyFetchedFor.current !== draft.customerId) {
+      historyFetchedFor.current = draft.customerId;
       setHistoryLoading(true);
       onFetchClientHistory(draft.customerId).then(slots => {
         setClientHistory(slots.filter(s => s.id !== slot.id).sort((a, b) =>
@@ -88,6 +93,17 @@ export default function BookingDetailsModal({
       }).catch(() => {}).finally(() => setHistoryLoading(false));
     }
   }, [showHistory, draft.customerId, slot.id, onFetchClientHistory]);
+
+  // Fetch pinned notes for client memo
+  useEffect(() => {
+    if (draft.customerId && pinnedFetchedFor.current !== draft.customerId) {
+      pinnedFetchedFor.current = draft.customerId;
+      fetch(`/api/customer-notes?customerId=${draft.customerId}&merchantId=${merchantId}&pinned=true`)
+        .then(r => r.ok ? r.json() : { notes: [] })
+        .then(data => setPinnedNotes(data.notes || []))
+        .catch(() => {});
+    }
+  }, [draft.customerId, merchantId]);
 
   // Service map for history display
   const serviceMap = useMemo(() => {
@@ -329,6 +345,27 @@ export default function BookingDetailsModal({
                   Facebook
                 </a>
               )}
+            </div>
+          )}
+
+          {/* Client memo (pinned notes from journal) */}
+          {pinnedNotes.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1.5">
+              <p className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
+                <BookOpen className="w-3.5 h-3.5" />
+                {t('clientMemo')}
+              </p>
+              {pinnedNotes.map(note => {
+                const style = getTypeStyle(note.note_type);
+                return (
+                  <div key={note.id} className="flex items-start gap-2">
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${style.pillBg} ${style.pillText}`}>
+                      {note.note_type}
+                    </span>
+                    <p className="text-xs text-gray-700">{note.content}</p>
+                  </div>
+                );
+              })}
             </div>
           )}
 

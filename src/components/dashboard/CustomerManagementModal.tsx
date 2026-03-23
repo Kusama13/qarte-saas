@@ -14,12 +14,14 @@ import {
   Phone,
   Pencil,
   Award,
+  BookOpen,
 } from 'lucide-react';
 import { displayPhoneNumber } from '@/lib/utils';
 import { CustomerAdjustTab } from './CustomerAdjustTab';
 import { CustomerRewardsCombinedTab } from './CustomerRewardsCombinedTab';
 import { CustomerHistoryTab } from './CustomerHistoryTab';
 import { CustomerDangerZone } from './CustomerDangerZone';
+import { CustomerJournalTab } from './CustomerJournalTab';
 
 interface CustomerManagementModalProps {
   isOpen: boolean;
@@ -47,7 +49,7 @@ interface CustomerManagementModalProps {
   country?: string;
 }
 
-type Tab = 'adjust' | 'rewards' | 'history' | 'danger';
+type Tab = 'adjust' | 'rewards' | 'history' | 'journal' | 'danger';
 
 export function CustomerManagementModal({
   isOpen,
@@ -168,6 +170,7 @@ export function CustomerManagementModal({
     { key: 'adjust', label: t('tabPoints'), icon: <SlidersHorizontal className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
     { key: 'rewards', label: t('tabRewards'), icon: <Award className="w-4 h-4" />, activeColor: 'text-emerald-600 border-emerald-600' },
     { key: 'history', label: t('tabHistory'), icon: <History className="w-4 h-4" />, activeColor: 'text-indigo-600 border-indigo-600' },
+    { key: 'journal', label: t('tabJournal'), icon: <BookOpen className="w-4 h-4" />, activeColor: 'text-teal-600 border-teal-600' },
     { key: 'danger', label: t('tabDelete'), icon: <AlertTriangle className="w-4 h-4" />, activeColor: 'text-red-600 border-red-600' },
   ];
 
@@ -371,6 +374,14 @@ export function CustomerManagementModal({
                   isCagnotte={isCagnotte}
                   country={country}
                   customerId={customerId}
+                />
+              )}
+
+              {activeTab === 'journal' && (
+                <CustomerJournalTab
+                  customerId={customerId}
+                  merchantId={merchantId}
+                  onSuccess={showSuccess}
                 />
               )}
 

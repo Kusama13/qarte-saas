@@ -51,7 +51,7 @@ src/
 │   ├── landing/           # Hero, SocialProof, VitrineSection, FideliteSection, Testimonials, Pricing, FAQ, Footer
 │   ├── ui/                # Button, Input, Modal, Select, Badge, Toast, Skeleton
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
-│   ├── dashboard/         # CustomerManagementModal, AdjustTab, RewardsCombinedTab, HistoryTab, DangerZone, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
+│   ├── dashboard/         # CustomerManagementModal, AdjustTab, RewardsCombinedTab, HistoryTab, JournalTab, DangerZone, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
 │   ├── loyalty/           # StampsSection, CagnotteSection, RewardCard, RedeemModal, StickyRedeemBar, HistorySection, VoucherRewards, VoucherModals, ReviewModal, ReviewCard, BirthdaySection, SocialLinks, CardHeader, InstallPrompts, UpcomingAppointmentsSection
 │   └── analytics/         # GTM, FacebookPixel, TikTokPixel, MicrosoftClarity
 │
@@ -349,6 +349,15 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `POST/DELETE /api/planning/result-photos` — Upload/suppression photos resultat (max 3/creneau, magic bytes, rate limit, helpers partages avec photos)
 - `POST /api/planning/shift-slot` — Decaler un creneau (newTime + newDate optionnel pour deplacements inter-jours, verifie UNIQUE)
 
+### Journal de suivi client
+- `GET/POST/PATCH/DELETE /api/customer-notes` — CRUD notes client (auth merchant, Zod)
+- Table `customer_notes` (mig 080) : content, note_type (string libre), pinned, slot_id optionnel
+- Types predefinis : general, allergy, preference, formula, observation + tags custom
+- 5e onglet "Journal" dans CustomerManagementModal (BookOpen icon teal)
+- Notes epinglees visibles comme "Memo client" dans BookingDetailsModal avant chaque RDV
+- Photos resultat agglomerees depuis tous les RDV passes (lazy-loaded)
+- Styles types partages via `src/lib/note-styles.ts` (getTypeStyle)
+
 ### Clients (social)
 - `PATCH /api/customers/social` — MAJ liens sociaux (instagram_handle, tiktok_handle, facebook_url)
 
@@ -474,7 +483,7 @@ Header colore avec nom merchant. Boutons conditionnels dans le header : "Membre"
 Inscription rapide, validation passage, progression fidelite, detection `?ref=` pour parrainage
 
 ### Dashboard (`/dashboard`)
-Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 4 onglets : Points, Cadeaux/Offres fusionne, Historique avec RDV planning, Supprimer), push notifications, abonnement, parrainage, parametres. **Widget "Prochains rendez-vous"** : 5 prochains RDV bookes groupes Aujourd'hui/A venir, clic → deep link `/dashboard/planning?slot=id` ouvre le modal detail. **Welcome claims** : 3 derniers vouchers bienvenue dans la section activite recente. Raccourcis mobile : Ma Page (gradient indigo-violet 400), Fidelite (gradient pink-rose 400), Planning (gradient cyan-blue 400), Clients (gris), QR Code (gris), Abonnement (gris).
+Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 filtres + CustomerManagementModal 5 onglets : Points, Cadeaux/Offres fusionne, Historique avec RDV planning, Journal de suivi client, Supprimer), push notifications, abonnement, parrainage, parametres. **Widget "Prochains rendez-vous"** : 5 prochains RDV bookes groupes Aujourd'hui/A venir, clic → deep link `/dashboard/planning?slot=id` ouvre le modal detail. **Welcome claims** : 3 derniers vouchers bienvenue dans la section activite recente. Raccourcis mobile : Ma Page (gradient indigo-violet 400), Fidelite (gradient pink-rose 400), Planning (gradient cyan-blue 400), Clients (gris), QR Code (gris), Abonnement (gris).
 
 **Navigation sidebar** : Accueil, Programme de fidelite, Ma Page, QR code & Supports, Planning, Clients, Parrainage, Notifications, Abonnement, Parametres
 - **Membres** (`/dashboard/members`) : retire de la nav, accessible via bouton "Programmes VIP" dans Clients
