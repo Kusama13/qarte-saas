@@ -1130,23 +1130,20 @@ export default function CustomerCardPage({
 
         {/* Push Error / iOS Settings Guidance */}
         {push.pushError && (
-          push.isIOS && push.isStandalone && push.pushPermission === 'denied' ? (
+          push.pushPermission === 'denied' ? (
             <div className="w-full rounded-2xl p-4 bg-amber-50 border border-amber-200 flex items-start gap-3 mb-4">
               <Bell className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
               <div>
                 <p className="font-semibold text-amber-800 text-sm">{t('notificationsDisabled')}</p>
-                <p className="text-xs text-amber-700 mt-1">{push.pushError}</p>
+                <p className="text-xs text-amber-700 mt-1">{t('permissionDeniedHint')}</p>
               </div>
             </div>
           ) : (
-            <div className="w-full rounded-2xl p-4 bg-red-50 border border-red-200 flex items-start gap-3 mb-4">
-              <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+            <div className="w-full rounded-2xl p-4 bg-amber-50 border border-amber-200 flex items-start gap-3 mb-4">
+              <Bell className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold text-red-800 text-sm">{t('activationError')}</p>
-                <p className="text-xs text-red-600 mt-1">{push.pushError}</p>
-                {push.isIOS && (
-                  <p className="text-xs text-red-500 mt-2">iOS {push.iOSVersion || '?'} &bull; {push.isStandalone ? 'Mode PWA' : 'Navigateur'}</p>
-                )}
+                <p className="font-semibold text-amber-800 text-sm">{t('activationError')}</p>
+                <p className="text-xs text-amber-700 mt-1">{t('activationErrorHint')}</p>
               </div>
             </div>
           )
