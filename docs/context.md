@@ -493,7 +493,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 1. Hero (logo glow couleurs merchant, nom gradient, adresse + badge "Y aller", bio glassmorphism)
 2. CTA "Prendre rendez-vous" (conditionnel sur `booking_url`) + sticky bar quand hors viewport + detection plateforme ("via Planity/Treatwell/Fresha/Instagram/TikTok/WhatsApp/..." via `detectBookingPlatform()` dans utils.ts — 15 plateformes detectees)
 3. Horaires (grille 7 jours, aujourd'hui mis en evidence)
-4. Planning disponibilites (si `planning_enabled` : banniere message libre + creneaux 60j glissants groupes par mois, preview 4 jours + bouton "Voir plus")
+4. Planning disponibilites (si `planning_enabled` : banniere message libre + creneaux 60j glissants groupes par mois, preview 4 jours + bouton "Voir plus", creneaux du jour passes masques automatiquement)
 5. Offre de bienvenue (CTA conditionnel si `welcome_offer_enabled`, pointe vers `/scan/{code}?welcome=`)
 5b. Offre promo (amber, depuis `merchant_offers`, CTA vers `/scan/{code}?offer={id}`)
 6. Carte fidelite simulee ("Carte de fidelite" + texte explicatif recompenses)

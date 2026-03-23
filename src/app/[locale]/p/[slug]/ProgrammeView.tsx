@@ -131,12 +131,17 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   // Planning: group slots by month then by date
   const MONTH_NAMES = t('monthNames').split(',');
   const DAY_NAMES_FULL = t('dayNamesFull').split(',');
+  const todayLocal = useMemo(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }, []);
+  const nowTime = useMemo(() => { const d = new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }, []);
   const planningByMonth = useMemo(() => {
     if (!merchant.planning_enabled || planningSlots.length === 0) return [];
     const grouped: { month: string; days: { label: string; dateStr: string; times: string[] }[] }[] = [];
     let currentMonth = '';
     let currentDate = '';
     for (const slot of planningSlots) {
+      // Skip past slots for today
+      if (slot.slot_date === todayLocal && slot.start_time <= nowTime) continue;
+
       const d = new Date(slot.slot_date + 'T00:00:00');
       const monthKey = `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`;
       const dayLabel = `${DAY_NAMES_FULL[d.getDay()]} ${d.getDate()}`;
@@ -155,9 +160,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
       monthGroup.days[monthGroup.days.length - 1].times.push(timeStr);
     }
     return grouped;
-  }, [planningSlots, merchant.planning_enabled]);
+  }, [planningSlots, merchant.planning_enabled, todayLocal, nowTime]);
   const hasPlanning = merchant.planning_enabled && planningByMonth.length > 0;
-  const todayLocal = useMemo(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }, []);
   const messageExpired = merchant.planning_message_expires && merchant.planning_message_expires < todayLocal;
   const hasPublicMessage = !!merchant.planning_message && !messageExpired;
   const hasBookingMessage = !!merchant.booking_message;
