@@ -83,6 +83,7 @@
 | facebook_url | TEXT | NULL | mig 051 |
 | tiktok_url | TEXT | NULL | mig 051 |
 | snapchat_url | TEXT | NULL | mig 051 |
+| whatsapp_url | TEXT | NULL | mig 079 |
 | booking_url | TEXT | NULL | mig 051 |
 | billing_interval | TEXT | `'monthly'` | mig 051 |
 | planning_enabled | BOOLEAN | `FALSE` | mig 063 |
@@ -93,6 +94,7 @@
 | signup_source | TEXT | NULL | mig 068 |
 | locale | TEXT | `'fr'` | NOT NULL, mig 069 |
 | first_feature_choice | TEXT | NULL | mig 070, values: 'loyalty', 'vitrine' |
+| deleted_at | TIMESTAMPTZ | NULL | mig 077, soft-delete (filtre `is('deleted_at', null)` sur routes publiques) |
 | bio | TEXT | NULL | mig 061 |
 | opening_hours | JSONB | NULL | mig 062 |
 | last_seen_at | TIMESTAMPTZ | NULL | mig 031 |
@@ -919,6 +921,11 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 072 | planning_slot_photos | Table planning_slot_photos (photos inspiration, max 3/creneau, position 1-3) |
 | 073 | customer_social_links | customers.instagram_handle, tiktok_handle, facebook_url (liens sociaux pour planning) |
 | 074 | planning_slot_result_photos | Table planning_slot_result_photos (photos resultat "apres", max 3/creneau, position 1-3, meme structure que planning_slot_photos) |
+| 075 | decrement_offer_claim | RPC `decrement_offer_claim(p_offer_id)` — rollback atomique si voucher echoue apres increment |
+| 076 | point_adjustments_adjusted_at | Rename conditionnel `created_at` → `adjusted_at` sur point_adjustments (formalise schema drift) |
+| 077 | merchant_soft_delete | merchants.deleted_at TIMESTAMPTZ + index idx_merchants_active |
+| 078 | customer_compound_unique | Drop UNIQUE(phone_number) global → UNIQUE(phone_number, merchant_id) compound |
+| 079 | whatsapp_url | merchants.whatsapp_url TEXT |
 
 ---
 

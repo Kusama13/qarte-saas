@@ -2,7 +2,7 @@
 
 import type { Merchant } from '@/types';
 import { useTranslations } from 'next-intl';
-import { InstagramIcon, FacebookIcon, TikTokIcon, SnapchatIcon } from '@/components/icons/SocialIcons';
+import { InstagramIcon, FacebookIcon, TikTokIcon, SnapchatIcon, WhatsAppIcon } from '@/components/icons/SocialIcons';
 
 interface SocialLinksProps {
   merchant: Merchant;
@@ -32,6 +32,14 @@ const SOCIALS = [
     icon: TikTokIcon,
     bg: '#000000',
     shadow: 'rgba(0,0,0,0.2)',
+  },
+  {
+    key: 'whatsapp' as const,
+    label: 'WhatsApp',
+    field: 'whatsapp_url' as const,
+    icon: WhatsAppIcon,
+    bg: '#25D366',
+    shadow: 'rgba(37,211,102,0.3)',
   },
   {
     key: 'snapchat' as const,

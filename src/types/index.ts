@@ -77,6 +77,7 @@ export interface Merchant {
   facebook_url: string | null;
   tiktok_url: string | null;
   snapchat_url: string | null;
+  whatsapp_url: string | null;
   booking_url: string | null;
   loyalty_mode: LoyaltyMode;
   stamps_required: number;

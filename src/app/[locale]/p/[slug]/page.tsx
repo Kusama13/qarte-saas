@@ -40,7 +40,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       'referral_program_enabled, referral_reward_referrer, referral_reward_referred, ' +
       'welcome_offer_enabled, welcome_offer_description, welcome_referral_code, scan_code, ' +
       'double_days_enabled, double_days_of_week, ' +
-      'booking_url, instagram_url, facebook_url, tiktok_url, snapchat_url, ' +
+      'booking_url, instagram_url, facebook_url, tiktok_url, snapchat_url, whatsapp_url, ' +
       'opening_hours, ' +
       'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent, ' +
       'planning_enabled, planning_message, planning_message_expires, booking_message, phone, country'
@@ -128,10 +128,6 @@ export async function generateMetadata({
     },
     alternates: {
       canonical: `${baseUrl}${isEN ? '/en' : ''}/p/${slug}`,
-      languages: {
-        fr: `${baseUrl}/p/${slug}`,
-        en: `${baseUrl}/en/p/${slug}`,
-      },
     },
   };
 }

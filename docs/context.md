@@ -242,8 +242,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **TikTokPixel** : seule exception, utilise `usePathname` de `next/navigation` (besoin du path complet avec prefixe pour analytics)
 
 ### SEO i18n
-- **Sitemap** (`src/app/sitemap.ts`) : toutes routes avec alternates FR/EN, pages marchands dynamiques (Supabase), revalidate 6h
-- **robots.ts** : disallow `/api/`, `/dashboard/`, `/admin/`, `/auth/`, `/customer/`
+- **Sitemap** (`src/app/sitemap.ts`) : pages statiques + blog + demos avec alternates FR/EN (PAS de pages merchant — decouverte organique uniquement)
+- **robots.ts** : disallow `/api/`, `/dashboard/`, `/admin/`, `/auth/`, `/customer/`, `/scan/`
+- **noindex** : `/scan/[code]` et `/customer/card/[merchantId]` (layouts avec `robots: { index: false, follow: false }`)
 - **Hreflang** : `<link rel="alternate" hrefLang="fr|en|x-default">` dans root layout `<head>`
 - **og:locale:alternate** : dans `[locale]/layout.tsx` (FR ↔ EN)
 - **Blog** : `[locale]/blog/layout.tsx` — metadata locale-aware + canonical + alternates
@@ -500,7 +501,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 8. Avantages exclusifs (anniversaire, parrainage, jours bonus)
 9. Galerie photos realisations (lightbox, grid 3 cols, max 6 photos depuis `merchant_photos`)
 10. Prestations (collapsible, ferme par defaut, "Mes prestations", icone gradient + glow)
-11. Reseaux sociaux (icones Instagram/Facebook/TikTok/Snapchat)
+11. Reseaux sociaux (icones Instagram/Facebook/TikTok/WhatsApp/Snapchat)
 12. CTA merchant ("Cree ta page beaute gratuitement")
 
 **Design :** glassmorphism (`bg-white/70 backdrop-blur-sm border-white/60`) sur sections avantages, prestations, photos. Badge hero : "Qarte — La fidelite digitale des pros de la beaute et du bien-etre".
@@ -529,7 +530,9 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 ### SEO
 - Title: "Qarte - Carte de fidelite digitale pour salons de beaute"
 - JSON-LD: Organization + SoftwareApplication (landing), LocalBusiness (page /p/[slug])
-- Sitemap: 9 pages (/, /pricing, /blog, 3 articles, /contact, /pros, /signup)
+- Sitemap: pages statiques + blog + demos (pages merchant exclues — decouverte organique)
+- Pages merchant indexables mais PAS dans le sitemap (evite les sitelinks Google sous getqarte.com)
+- `/scan/` et `/customer/` : noindex + robots disallow
 
 ---
 

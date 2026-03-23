@@ -1,8 +1,4 @@
 import { MetadataRoute } from 'next';
-import { getSupabaseAdmin } from '@/lib/supabase';
-
-// Revalidate sitemap every 6 hours
-export const revalidate = 21600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://getqarte.com';
@@ -52,28 +48,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/p/demo-tatouage', { priority: 0.6 }),
   ];
 
-  // --- Dynamic merchant pages (public profiles) ---
-  let merchantPages: MetadataRoute.Sitemap = [];
-  try {
-    const supabase = getSupabaseAdmin();
-    const { data: merchants } = await supabase
-      .from('merchants')
-      .select('slug, updated_at')
-      .in('subscription_status', ['active', 'trial', 'canceling'])
-      .not('slug', 'is', null);
+  // Merchant pages (/p/slug) are NOT included in the sitemap.
+  // Each merchant page has its own SEO identity via JSON-LD LocalBusiness
+  // and should be discovered organically, not listed under getqarte.com.
 
-    if (merchants) {
-      merchantPages = merchants.map((m) =>
-        entry(`/p/${m.slug}`, {
-          priority: 0.5,
-          changeFrequency: 'weekly',
-          lastModified: m.updated_at ? new Date(m.updated_at) : new Date(),
-        })
-      );
-    }
-  } catch {
-    // Sitemap generation should never fail — skip dynamic pages on error
-  }
-
-  return [...staticPages, ...blogPages, ...demoPages, ...merchantPages];
+  return [...staticPages, ...blogPages, ...demoPages];
 }

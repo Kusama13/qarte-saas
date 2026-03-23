@@ -50,6 +50,7 @@ type MerchantPublic = Pick<
   | 'facebook_url'
   | 'tiktok_url'
   | 'snapchat_url'
+  | 'whatsapp_url'
   | 'loyalty_mode'
   | 'cagnotte_percent'
   | 'cagnotte_tier2_percent'
