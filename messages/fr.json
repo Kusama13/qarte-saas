@@ -1330,7 +1330,21 @@
     "countdownDays": "j",
     "countdownHours": "h",
     "countdownMinutes": "min",
-    "countdownSeconds": "s"
+    "countdownSeconds": "s",
+    "recommended": "Recommandé",
+    "canceledCtaHint": "Tes clients ne peuvent plus tamponner. Réactive en 1 clic.",
+    "pastDueCtaHint": "Mets à jour ta carte pour débloquer les scans clients.",
+    "nfcIncluded": "Carte NFC offerte (valeur 20 €)",
+    "nfcFeature": "Carte NFC offerte — valeur 20 €",
+    "faqTitle": "Questions fréquentes",
+    "faqQ1": "Que se passe-t-il si je résilie ?",
+    "faqA1": "Ton compte reste actif jusqu'à la fin de la période payée. Ensuite, tes clients ne peuvent plus scanner. Tes données sont conservées 30 jours.",
+    "faqQ2": "Mes clients perdent leur carte ?",
+    "faqA2": "Non. Si tu te réabonnes, tout est retrouvé tel quel : cartes, tampons, cagnotte, historique.",
+    "faqQ3": "Je peux changer de plan ?",
+    "faqA3": "Oui, tu peux passer du mensuel à l'annuel (ou l'inverse) à tout moment depuis le portail de facturation.",
+    "faqQ4": "Y a-t-il un engagement ?",
+    "faqA4": "Aucun. Tu peux résilier en 1 clic, sans justification, sans frais cachés."
   },
   "customers": {
     "title": "Gestion",

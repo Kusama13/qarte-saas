@@ -14,9 +14,8 @@ import {
   CheckCircle2,
   XCircle,
   ArrowLeft,
-  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
-import Image from 'next/image';
 import { Button } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
@@ -68,21 +67,14 @@ export default function SubscriptionPage() {
     }
     return false;
   });
-
   const features = [
     t('featureUnlimitedClients'),
     t('featureStampsCashback'),
-    t('featureQrNfc'),
     t('featureProPage'),
-    t('featurePricing'),
-    t('featurePhotos'),
     t('featurePlanning'),
-    t('featureWelcome'),
+    t('featureQrNfc'),
     t('featureReferral'),
-    t('featureReminders'),
-    t('featureGoogleReviews'),
     t('featureNotifications'),
-    t('featureDashboard'),
     t('featureNoCommission'),
   ];
 
@@ -407,7 +399,13 @@ export default function SubscriptionPage() {
                 })}
               </p>
               {billingPlan === 'annual' && (
-                <p className="text-sm text-gray-400 mt-1"><span className="line-through">{PLANS.annual.originalPrice}</span> → <span className="font-bold text-emerald-600">{PLANS.annual.label}</span></p>
+                <>
+                  <p className="text-sm text-gray-400 mt-1"><span className="line-through">{PLANS.annual.originalPrice}</span> → <span className="font-bold text-emerald-600">{PLANS.annual.label}</span></p>
+                  <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
+                    <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
+                    <span className="text-xs font-bold text-indigo-700">{t('nfcIncluded')}</span>
+                  </span>
+                </>
               )}
             </div>
 
@@ -433,6 +431,7 @@ export default function SubscriptionPage() {
                   }`}
                 >
                   {t('annual')}
+                  <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full">{t('recommended')}</span>
                   <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">{PLANS.annual.savings}</span>
                 </button>
               </div>
@@ -446,15 +445,28 @@ export default function SubscriptionPage() {
                   <span className="text-sm text-gray-600">{feature}</span>
                 </div>
               ))}
+              {billingPlan === 'annual' && (
+                <div className="flex items-center gap-2 py-1.5 col-span-2 bg-indigo-50/60 rounded-lg px-2 -mx-2">
+                  <CreditCard className="w-4 h-4 text-indigo-600 shrink-0" />
+                  <span className="text-sm font-bold text-indigo-700">{t('nfcFeature')}</span>
+                </div>
+              )}
             </div>
             <div className="sm:hidden mb-6">
-              <div className="flex flex-wrap gap-x-1 gap-y-0.5 justify-center">
+              <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
                 {features.map((feature, i) => (
-                  <span key={i} className="text-xs text-gray-500">
-                    {feature}{i < features.length - 1 ? ' ·' : ''}
-                  </span>
+                  <div key={i} className="flex items-center gap-1.5">
+                    <Check className="w-3 h-3 text-emerald-500 shrink-0" />
+                    <span className="text-[11px] text-gray-500 leading-tight">{feature}</span>
+                  </div>
                 ))}
               </div>
+              {billingPlan === 'annual' && (
+                <div className="flex items-center gap-1.5 mt-2 bg-indigo-50/60 rounded-lg px-2 py-1.5">
+                  <CreditCard className="w-3 h-3 text-indigo-600 shrink-0" />
+                  <span className="text-[11px] font-bold text-indigo-700">{t('nfcFeature')}</span>
+                </div>
+              )}
             </div>
 
             {/* CTA */}
@@ -468,11 +480,22 @@ export default function SubscriptionPage() {
               </Button>
             )}
 
-            {/* Micro-reassurance under CTA — mobile only */}
+            {/* Reassurance under CTA */}
             {showSubscribeCTA && (
-              <p className="text-[11px] text-gray-400 text-center mt-3 sm:hidden">
-                {t('ctaReassurance')}
-              </p>
+              <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 mt-3">
+                <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                  <ShieldCheck className="w-3 h-3" />
+                  {t('noCommitment')}
+                </span>
+                <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                  <Check className="w-3 h-3" />
+                  {t('cancelAnytime')}
+                </span>
+                <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                  <CreditCard className="w-3 h-3" />
+                  {t('stripeSecure')}
+                </span>
+              </div>
             )}
           </div>
 
@@ -582,7 +605,7 @@ export default function SubscriptionPage() {
                           : 'text-gray-500'
                       }`}
                     >
-                      {t('annual')} <span className="text-emerald-600">{PLANS.annual.savings}</span>
+                      {t('annual')} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded-full">{t('recommended')}</span> <span className="text-emerald-600">{PLANS.annual.savings}</span>
                     </button>
                   </div>
                   <Button
@@ -594,17 +617,23 @@ export default function SubscriptionPage() {
                   </Button>
                 </div>
               ) : isCanceled ? (
-                <Button className="w-full h-11 rounded-2xl font-bold" onClick={handleSubscribe} loading={subscribing}>
-                  {t('reactivate')}
-                </Button>
+                <>
+                  <Button className="w-full h-11 rounded-2xl font-bold" onClick={handleSubscribe} loading={subscribing}>
+                    {t('reactivate')}
+                  </Button>
+                  <p className="text-xs text-gray-500 text-center mt-2">{t('canceledCtaHint')}</p>
+                </>
               ) : isCanceling ? (
                 <Button variant="outline" className="w-full h-11 rounded-2xl text-orange-600 border-orange-200 hover:bg-orange-50 font-bold" onClick={handleOpenPortal} loading={loadingPortal}>
                   {t('cancelCancellation')}
                 </Button>
               ) : isPastDue ? (
-                <Button className="w-full h-11 rounded-2xl font-bold" onClick={handleOpenPortal} loading={loadingPortal}>
-                  {t('updatePayment')}
-                </Button>
+                <>
+                  <Button className="w-full h-11 rounded-2xl font-bold" onClick={handleOpenPortal} loading={loadingPortal}>
+                    {t('updatePayment')}
+                  </Button>
+                  <p className="text-xs text-gray-500 text-center mt-2">{t('pastDueCtaHint')}</p>
+                </>
               ) : (
                 <Button variant="outline" className="w-full h-11 rounded-2xl text-gray-500 border-gray-200 hover:text-gray-700 hover:border-gray-300 font-medium text-sm" onClick={handleOpenPortal} loading={loadingPortal}>
                   {t('manageSubscription')}
@@ -624,28 +653,8 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
-      {/* Social proof */}
-      {showSubscribeCTA && (
-        <div className="mt-6 py-4 text-center">
-          <p className="text-xs text-gray-400">
-            {t('socialProof')}{' '}
-            <Link href="/pros" className="font-semibold text-indigo-500 hover:text-indigo-700 underline underline-offset-2 transition-colors">
-              {t('viewPrograms')}
-            </Link>
-          </p>
-        </div>
-      )}
 
-      {/* Footer reassurance — desktop only */}
-      <div className="hidden sm:flex items-center justify-center gap-6 mt-6 text-xs text-gray-400">
-        <span>{t('noCommitment')}</span>
-        <span className="w-1 h-1 rounded-full bg-gray-300" />
-        <span>{t('cancelAnytime')}</span>
-        <span className="w-1 h-1 rounded-full bg-gray-300" />
-        <span>{t('dataRetention')}</span>
-        <span className="w-1 h-1 rounded-full bg-gray-300" />
-        <span>{t('stripeSecure')}</span>
-      </div>
+
     </div>
   );
 }

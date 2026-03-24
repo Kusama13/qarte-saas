@@ -1330,7 +1330,21 @@
     "countdownDays": "d",
     "countdownHours": "h",
     "countdownMinutes": "min",
-    "countdownSeconds": "s"
+    "countdownSeconds": "s",
+    "recommended": "Recommended",
+    "canceledCtaHint": "Your clients can't stamp anymore. Reactivate in 1 click.",
+    "pastDueCtaHint": "Update your card to unlock client scans.",
+    "nfcIncluded": "Free NFC card ($20 value)",
+    "nfcFeature": "Free NFC card — $20 value",
+    "faqTitle": "Frequently asked questions",
+    "faqQ1": "What happens if I cancel?",
+    "faqA1": "Your account stays active until the end of the paid period. After that, your clients can't scan. Your data is kept for 30 days.",
+    "faqQ2": "Do my clients lose their card?",
+    "faqA2": "No. If you resubscribe, everything is restored as-is: cards, stamps, cashback, history.",
+    "faqQ3": "Can I change my plan?",
+    "faqA3": "Yes, you can switch from monthly to annual (or vice versa) at any time from the billing portal.",
+    "faqQ4": "Is there a commitment?",
+    "faqA4": "None. You can cancel in 1 click, no justification, no hidden fees."
   },
   "customers": {
     "title": "Client",
