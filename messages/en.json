@@ -31,12 +31,9 @@
     "proSpace": "Pro Dashboard"
   },
   "hero": {
-    "titlePart1": "You're losing clients because they can't find you.",
-    "titlePart2": "Your salon page. Ready in 5 minutes.",
-    "subtitle": "Bio, services, hours, photos, Google reviews — all on one page. A built-in ",
-    "subtitleHighlight": "loyalty program",
-    "subtitleEnd": " to keep your clients coming back.",
-    "subtitleBold": "No website, no app. All in one link.",
+    "titlePart1": "Hard to attract new clients. Even harder to keep them coming back.",
+    "titlePart2": "Qarte does both, in one link.",
+    "subtitle": "Online storefront, loyalty program, scheduling — everything your salon needs, in one link for your Instagram bio, TikTok and Google.",
     "ctaPrimary": "Free trial",
     "ctaSubtext": "No credit card required, we promise :)",
     "ctaDemo": "See the demo",
@@ -2015,8 +2012,8 @@
     "cagnotteSimple": "Balance",
     "rewardLabel": "Reward · {tier}",
     "rewardSimple": "Reward",
-    "alreadyCumulated": "Already {amount} accumulated — only {count} {unit} left!",
-    "unlockCagnotte": "Only {count} {unit} to unlock your balance!"
+    "alreadyCumulated": "Already {amount} accumulated — only {remaining} {unit} left!",
+    "unlockCagnotte": "Only {remaining} {unit} to unlock your balance!"
   },
   "voucherRewards": {
     "birthdayGift": "Birthday gift",
@@ -2096,7 +2093,7 @@
     "activationError": "Unable to enable notifications",
     "activationErrorHint": "Please try again or check that your browser allows notifications for this site.",
     "poweredBy": "Powered by",
-    "previewDemo": "Loyalty card example — Try free!",
+    "previewDemo": "Loyalty card example",
     "previewOnboarding": "This is what your clients will see!",
     "previewDefault": "Preview mode — Your clients will see this card",
     "downloadQr": "Like what you see? Download your QR code",
@@ -2109,7 +2106,10 @@
     "redeemDefaultError": "An error occurred",
     "redeemConnectionError": "Connection error. Please try again.",
     "generateQrCode": "Confirm and generate my QR code",
-    "tryFree": "Try free for 7 days",
+    "tryFree": "Free trial",
+    "demoVitrine": "View storefront",
+    "demoPopupDesc": "Qarte gives your salon two tools: a digital loyalty card and an online storefront. Tap below to discover the storefront.",
+    "demoPopupCta": "Got it!",
     "upcomingAppointments": "Your upcoming appointments",
     "contactToModify": "Contact {shop} to change or cancel"
   },

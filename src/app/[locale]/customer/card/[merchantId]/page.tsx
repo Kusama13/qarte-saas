@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -21,7 +22,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
-import { trackPwaInstalled } from '@/lib/analytics';
+import { trackPwaInstalled, trackCtaClick } from '@/lib/analytics';
+import { fbEvents } from '@/components/analytics/FacebookPixel';
+import { ttEvents } from '@/components/analytics/TikTokPixel';
 import { ensureTextContrast } from '@/lib/utils';
 import { sparkleGrand } from '@/lib/sparkles';
 import { DEMO_MERCHANTS_FLAT as DEMO_MERCHANTS } from '@/lib/demo-merchants';
@@ -162,6 +165,9 @@ export default function CustomerCardPage({
   const [showMemberCardModal, setShowMemberCardModal] = useState(false);
 
   const [isMobile, setIsMobile] = useState(false);
+  const [showDemoPopup, setShowDemoPopup] = useState(() => {
+    try { return !sessionStorage.getItem('qarte_demo_popup_seen'); } catch { return true; }
+  });
 
   // Push notifications (shared hook)
   const push = usePushNotifications({
@@ -733,34 +739,30 @@ export default function CustomerCardPage({
   return (
     <div className="min-h-screen flex flex-col" style={{ background: `linear-gradient(160deg, ${merchant.primary_color}15 0%, ${merchant.primary_color}40 40%, ${merchant.primary_color}60 70%, ${merchant.primary_color}35 100%)` }}>
       {/* Preview Mode Banner */}
-      {isPreview && (
+      {isPreview && !isDemo && (
         <div className="sticky top-0 z-50 shadow-lg">
-          <div className={`${isDemo ? 'bg-gradient-to-r from-indigo-600 to-violet-600' : 'bg-indigo-600'} text-white text-center py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2`}>
+          <div className="bg-indigo-600 text-white text-center py-2.5 px-4 text-sm font-semibold flex items-center justify-center gap-2">
             <Eye className="w-4 h-4" />
-            {isDemo
-              ? t('previewDemo')
-              : isOnboarding
-                ? t('previewOnboarding')
-                : t('previewDefault')}
+            {isOnboarding
+              ? t('previewOnboarding')
+              : t('previewDefault')}
           </div>
-          {!isDemo && (
-            <Link
-              href="/dashboard/qr-download"
-              className="flex items-center justify-center gap-2 bg-indigo-500 text-white text-xs font-medium py-2 px-4 hover:bg-indigo-400 transition-colors"
-            >
-              <QrCode className="w-3.5 h-3.5" />
-              {t('downloadQr')}
-            </Link>
-          )}
+          <Link
+            href="/dashboard/qr-download"
+            className="flex items-center justify-center gap-2 bg-indigo-500 text-white text-xs font-medium py-2 px-4 hover:bg-indigo-400 transition-colors"
+          >
+            <QrCode className="w-3.5 h-3.5" />
+            {t('downloadQr')}
+          </Link>
         </div>
       )}
       {/* Demo type selector */}
       {isPreview && isDemo && (
-        <div className="sticky top-[42px] z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 py-2 px-4">
+        <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200/50 py-2 px-4">
           <div className="flex items-center justify-center gap-2">
             {[
               { id: 'demo-onglerie', label: t('stampMode'), emoji: '💅' },
-              { id: 'demo-barbier', label: t('cagnotteMode'), emoji: '💰' },
+              { id: 'demo-coiffure', label: t('cagnotteMode'), emoji: '💰' },
             ].map((demo) => (
               <Link
                 key={demo.id}
@@ -1260,24 +1262,81 @@ export default function CustomerCardPage({
         </div>
       )}
 
+      {/* Demo popup */}
+      <AnimatePresence>
+        {isPreview && isDemo && showDemoPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-[2px]"
+            onClick={() => { setShowDemoPopup(false); try { sessionStorage.setItem('qarte_demo_popup_seen', '1'); } catch {} }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 80, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 80, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-sm mx-4 mb-4 sm:mb-0 rounded-3xl overflow-hidden shadow-2xl bg-white"
+            >
+              {/* Image header with gradient overlay */}
+              <div className="relative h-40 overflow-hidden">
+                <Image src="/images/popup.jpg" alt="" width={400} height={160} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/30 via-violet-500/20 to-transparent" />
+              </div>
+
+              {/* Content */}
+              <div className="px-7 pt-5 pb-7 text-center">
+                <p className="text-lg text-gray-500 leading-relaxed mb-5">
+                  {t('demoPopupDesc')}
+                </p>
+
+                <button
+                  onClick={() => { setShowDemoPopup(false); try { sessionStorage.setItem('qarte_demo_popup_seen', '1'); } catch {} }}
+                  className="text-sm font-semibold text-indigo-600 hover:text-violet-600 transition-colors"
+                >
+                  {t('demoPopupCta')}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Demo CTA - Sticky bottom button to sign up */}
       {isPreview && isDemo && (
-        <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-2xl shadow-gray-900/10">
-          <div className="max-w-lg mx-auto">
-            <Link href="/auth/merchant/signup" onClick={() => { try { localStorage.setItem('qarte_signup_source', `demo_${merchantId}`); } catch {} }}>
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
-                className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-base rounded-2xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98]"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="fixed bottom-0 left-0 right-0 z-50 p-3 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-2xl shadow-gray-900/10"
+        >
+          <div className="max-w-lg mx-auto flex gap-2.5">
+            <motion.div
+              animate={{ scale: [1, 1.04, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              className="flex-1"
+            >
+              <Link
+                href={`/p/${merchantId}`}
+                target="_blank"
+                onClick={() => { trackCtaClick('demo_card_vitrine', 'demo_card'); }}
+                className="flex items-center justify-center py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-sm rounded-xl shadow-md shadow-amber-200 hover:shadow-lg hover:from-amber-600 hover:to-orange-600 transition-all active:scale-[0.98]"
               >
-                <Sparkles className="w-5 h-5" />
-                {t('tryFree')}
-                <ArrowRight className="w-5 h-5" />
-              </motion.button>
+                {t('demoVitrine')}
+              </Link>
+            </motion.div>
+            <Link
+              href="/auth/merchant/signup"
+              onClick={() => { trackCtaClick('demo_card_signup', 'demo_card'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
+              className="flex-1 flex items-center justify-center py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold text-sm rounded-xl shadow-md shadow-indigo-200 hover:shadow-lg hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98]"
+            >
+              {t('tryFree')}
             </Link>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Voucher Modals */}

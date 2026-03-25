@@ -131,7 +131,7 @@ export function HeroSection() {
         <div className={`space-y-6 lg:space-y-8 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
-            <h1 className="relative text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+            <h1 className="relative text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
               {t('titlePart1')}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
                 {t('titlePart2')}
@@ -140,19 +140,29 @@ export function HeroSection() {
           </div>
 
           <p className="text-lg lg:text-xl text-gray-600 max-w-lg leading-relaxed">
-            {t('subtitle')}<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 font-semibold">{t('subtitleHighlight')}</span>{t('subtitleEnd')} <span className="text-gray-900 font-medium">{t('subtitleBold')}</span>
+            {t('subtitle')}
           </p>
 
-          <div>
+          <div className="flex flex-row items-start gap-3">
+            <div>
+              <Link
+                href="/auth/merchant/signup"
+                onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
+                className="group relative flex items-center justify-center px-6 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm sm:text-base rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <span className="relative z-10">{t('ctaPrimary')}</span>
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </Link>
+              <p className="text-[11px] text-gray-400 font-medium mt-1.5 text-center">{t('ctaSubtext')}</p>
+            </div>
             <Link
-              href="/auth/merchant/signup"
-              onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="group relative flex items-center justify-center px-7 py-4 lg:px-9 lg:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+              href="/customer/card/demo-onglerie?preview=true&demo=true"
+              target="_blank"
+              onClick={() => { trackCtaClick('hero_demo', 'hero_section'); }}
+              className="flex items-center justify-center px-6 py-3.5 sm:px-8 sm:py-4 text-gray-600 font-semibold text-sm sm:text-base rounded-xl border-2 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md active:scale-[0.98] transition-all duration-300"
             >
-              <span className="relative z-10">{t('ctaPrimary')}</span>
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
+              {t('ctaDemo')}
             </Link>
-            <p className="text-xs text-gray-400 font-medium mt-2 text-center">{t('ctaSubtext')}</p>
           </div>
 
         </div>

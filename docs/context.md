@@ -469,7 +469,12 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ### Landing (`/`)
 Hero (mockup page pro + floating badges) → SocialProof → FideliteSection (light, 3 blocs: programme+QR, relances+anniversaires, avis Google) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau Booksy-style, epure) → FAQ (8 questions) → Footer (FooterCta + FooterDark)
 
-Hero subtitle : "Attire de nouvelles clientes et fais-les revenir grace a un seul lien — bio Instagram, TikTok, Google My Business."
+Hero titre : "Difficile d'attirer de nouvelles clientes. Encore plus de les faire revenir. **Qarte fait les deux, en un lien.**"
+Hero subtitle : "Vitrine en ligne, programme de fidelite, planning — tout ce dont ton salon a besoin, dans un seul lien pour ta bio Instagram, TikTok et Google."
+Hero CTAs : "Essai gratuit" (primary) + "Voir la demo" (secondary, ouvre demo carte fidelite onglerie)
+
+Demos accessibles via : bouton hero → demo carte fidelite, page vitrine `/p/demo-*`, selecteur tampons/cagnotte sur carte demo.
+Demo popup (sessionStorage) : explique les 2 piliers (carte + vitrine) au premier affichage de la demo carte.
 CTA uniforme : "Essayer gratuitement" (toutes sections). Positionnement : page pro (acquisition) + programme fidelite (retention) = un seul outil. Lien en bio = feature principale.
 
 ### Login Client (`/customer`)

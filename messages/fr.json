@@ -31,12 +31,9 @@
     "proSpace": "Espace Pro"
   },
   "hero": {
-    "titlePart1": "Tu perds des clientes faute de visibilité.",
-    "titlePart2": "La vitrine de ton salon, en un lien pour tous tes réseaux.",
-    "subtitle": "Attire de nouvelles clientes et fais-les revenir grâce à un seul lien — bio Instagram, TikTok, Google My Business.",
-    "subtitleHighlight": "",
-    "subtitleEnd": "",
-    "subtitleBold": "",
+    "titlePart1": "Difficile d'attirer de nouvelles clientes. Encore plus de les faire revenir.",
+    "titlePart2": "Qarte fait les deux, en un lien.",
+    "subtitle": "Vitrine en ligne, programme de fidélité, planning — tout ce dont ton salon a besoin, dans un seul lien pour ta bio Instagram, TikTok et Google.",
     "ctaPrimary": "Essai gratuit",
     "ctaSubtext": "Sans carte bancaire, c'est promis :)",
     "ctaDemo": "Voir la démo",
@@ -2015,8 +2012,8 @@
     "cagnotteSimple": "Cagnotte",
     "rewardLabel": "Récompense · {tier}",
     "rewardSimple": "Récompense",
-    "alreadyCumulated": "Déjà {amount} € cumulés — plus que {count} {unit} !",
-    "unlockCagnotte": "Plus que {count} {unit} pour débloquer votre cagnotte !"
+    "alreadyCumulated": "Déjà {amount} cumulés — plus que {remaining} {unit} !",
+    "unlockCagnotte": "Plus que {remaining} {unit} pour débloquer votre cagnotte !"
   },
   "voucherRewards": {
     "birthdayGift": "Cadeau anniversaire",
@@ -2096,7 +2093,7 @@
     "activationError": "Impossible d'activer les notifications",
     "activationErrorHint": "Veuillez réessayer ou vérifier que votre navigateur autorise les notifications pour ce site.",
     "poweredBy": "Propulsé par",
-    "previewDemo": "Exemple de carte de fidélité — Essayez gratuitement !",
+    "previewDemo": "Exemple de carte de fidélité",
     "previewOnboarding": "Voici ce que verront vos clients !",
     "previewDefault": "Mode prévisualisation — Vos clients verront cette carte",
     "downloadQr": "L'aperçu vous convient ? Téléchargez votre QR code",
@@ -2109,7 +2106,10 @@
     "redeemDefaultError": "Une erreur est survenue",
     "redeemConnectionError": "Erreur de connexion. Veuillez réessayer.",
     "generateQrCode": "Valider et générer mon QR code",
-    "tryFree": "Essayer gratuitement 7 jours",
+    "tryFree": "Essai gratuit",
+    "demoVitrine": "Voir la vitrine",
+    "demoPopupDesc": "Qarte donne a ton salon deux outils : une carte de fidelite digitale et une vitrine en ligne. Clique en bas pour decouvrir la vitrine.",
+    "demoPopupCta": "Compris !",
     "upcomingAppointments": "Vos prochains rendez-vous",
     "contactToModify": "Contactez {shop} pour modifier ou annuler"
   },
