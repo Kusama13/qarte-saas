@@ -21,7 +21,7 @@ npm test             # Vitest
 
 ```
 src/app/[locale]/dashboard/  — Merchant dashboard (auth protected)
-src/app/[locale]/admin/      — Admin dashboard (super_admins only)
+src/app/[locale]/admin/      — Admin dashboard (super_admins only, includes /tracking analytics)
 src/app/[locale]/p/[slug]/   — Public merchant page (no auth)
 src/app/api/                 — 30+ API routes
 supabase/migrations/         — 74+ SQL migrations

@@ -365,6 +365,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `/api/admin/merchants/[id]` — GET stats (20 queries paralleles : clients, visites, redemptions, referrals, services, photos, planning slots+bookings, push, vouchers)/PATCH notes
 - `/api/admin/activity-feed` — Timeline activite (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, offres bienvenue, messages). Optimise : fetch merchants par IDs references uniquement
 - `/api/admin/announcements` — CRUD annonces
+- `/api/admin/tracking` — GET aggregation globale (12 queries paralleles) : funnel signup, engagement scans, feature adoption, push/email stats, planning/offres, croissance clients
 - `/api/admin/incomplete-signups`, `/api/admin/prospects`, `/api/admin/tasks`, `/api/admin/merchant-emails`
 
 ---
@@ -506,7 +507,7 @@ Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 fi
 - **QR Code & Supports** (`/dashboard/qr-download`) : QR code + Kit reseaux sociaux (image HD, legendes, grille 2x2 coloree de 4 tips + lien cross-promo vers Ma Page). Post-QR modal redirige vers Ma Page.
 
 ### Admin (`/admin`)
-Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses. **Exclut les comptes admin** des stats. Feature adoption : 15 features trackees (programme, logo, reseaux, parrainage, anniversaire, reservation, avis, offre active, PWA, shield, palier 2, offre bienvenue, double jours, adresse, mode cagnotte). Health score : /100 (programme +15, logo +10, reseaux +5, avis +5, reservation +5, clients +10-20, activite +15, recence +5-10, parrainage +5, shield +5, palier2 +5, bienvenue +5, anniversaire +3, double jours +2). Badges merchants : Admin, NC, Shield pending, PWA, Bienvenue, Cagnotte. **Activite** : timeline 8 types d'evenements (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, offres bienvenue, messages) avec summary cards et filtres. **Detail merchant** : stat planning "X reservations / Y creneaux" (futurs).
+Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses, tracking. **Exclut les comptes admin** des stats. Feature adoption : 15 features trackees (programme, logo, reseaux, parrainage, anniversaire, reservation, avis, offre active, PWA, shield, palier 2, offre bienvenue, double jours, adresse, mode cagnotte). Health score : /100 (programme +15, logo +10, reseaux +5, avis +5, reservation +5, clients +10-20, activite +15, recence +5-10, parrainage +5, shield +5, palier2 +5, bienvenue +5, anniversaire +3, double jours +2). Badges merchants : Admin, NC, Shield pending, PWA, Bienvenue, Cagnotte. **Activite** : timeline 8 types d'evenements (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, offres bienvenue, messages) avec summary cards et filtres. **Detail merchant** : stat planning "X reservations / Y creneaux" (futurs).
 
 ### Page Publique Programme (`/p/[slug]`)
 Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre bienvenue → `/scan/{code}?welcome=`).
@@ -565,6 +566,8 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 - **TikTok Pixel:** D6FCUKBC77UC649NN2J0 (PageView, ClickButton, CompleteRegistration, Subscribe)
 - **Microsoft Clarity:** vjx7g9ttax
 - **Facebook CAPI:** server-side Purchase sur webhook Stripe (dedup event_id)
+- **Admin Tracking** (`/admin/tracking`) : dashboard consolide — funnel inscription (sources, feature choice, trend 90j, conversion), engagement (actifs 7j/30j, scans trend, top 10), adoption features (11 flags), push/email stats, planning/offres, croissance clients (trend, referrals, vouchers par source)
+- **CTA tracking** : `trackCtaClick(name, location)` sur tous les CTAs signup (13 landing + 4 demo), stocke `signup_source` en localStorage → DB merchants. Visible dans `/admin/merchants`
 
 ---
 
