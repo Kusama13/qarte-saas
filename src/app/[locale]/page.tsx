@@ -18,8 +18,8 @@ export default function LandingPageV4() {
       <main className="overflow-hidden">
         <HeroSection />
         <SocialProofSection />
-        <PageProSection />
         <LazyFideliteSection />
+        <PageProSection />
         <TestimonialsSection />
         <PricingSection />
         <LazyFAQSection />

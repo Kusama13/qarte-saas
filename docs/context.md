@@ -48,7 +48,7 @@ src/
 │   └── [locale]/layout.tsx # Locale layout (NextIntlClientProvider, metadata)
 │
 ├── components/
-│   ├── landing/           # Hero, SocialProof, VitrineSection, FideliteSection, Testimonials, Pricing, FAQ, Footer
+│   ├── landing/           # Hero, SocialProof, FideliteSection (light), PageProSection (dark), Testimonials, Pricing, FAQ, Footer
 │   ├── ui/                # Button, Input, Modal, Select, Badge, Toast, Skeleton
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
 │   ├── dashboard/         # CustomerManagementModal, AdjustTab, RewardsCombinedTab, HistoryTab, JournalTab, DangerZone, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
@@ -467,7 +467,7 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ## 10. Pages Principales
 
 ### Landing (`/`)
-Hero (mockup page pro + floating badges) → SocialProof → VitrineSection (3 blocs: SEO+prestations, planning, bienvenue) → FideliteSection (lazy, 3 blocs: programme+QR, relances+anniversaires, avis Google) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau Booksy-style, epure) → FAQ (8 questions) → Footer (FooterCta + FooterDark)
+Hero (mockup page pro + floating badges) → SocialProof → FideliteSection (light, 3 blocs: programme+QR, relances+anniversaires, avis Google) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau Booksy-style, epure) → FAQ (8 questions) → Footer (FooterCta + FooterDark)
 
 Hero subtitle : "Attire de nouvelles clientes et fais-les revenir grace a un seul lien — bio Instagram, TikTok, Google My Business."
 CTA uniforme : "Essayer gratuitement" (toutes sections). Positionnement : page pro (acquisition) + programme fidelite (retention) = un seul outil. Lien en bio = feature principale.
