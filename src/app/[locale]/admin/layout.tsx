@@ -18,6 +18,7 @@ import {
   UserPlus,
   Activity,
   Bell,
+  BarChart3,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ const navItems = [
   { href: '/admin/leads', icon: UserPlus, label: 'Leads' },
   { href: '/admin/activite', icon: Activity, label: 'Activité' },
   { href: '/admin/metriques', icon: TrendingUp, label: 'Métriques' },
+  { href: '/admin/tracking', icon: BarChart3, label: 'Tracking' },
   { href: '/admin/depenses', icon: Wallet, label: 'Dépenses' },
   { href: '/admin/announcements', icon: Bell, label: 'Annonces' },
 ];
