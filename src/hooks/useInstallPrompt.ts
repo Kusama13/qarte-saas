@@ -48,6 +48,20 @@ export function useInstallPrompt(manifestHref: string | undefined): UseInstallPr
     }
   }, [enabled]);
 
+  // Override manifest link to use the Pro manifest on dashboard pages
+  useEffect(() => {
+    if (!enabled || !manifestHref) return;
+    // Remove existing manifest link (Next.js default)
+    const existing = document.querySelector('link[rel="manifest"]');
+    if (existing) existing.remove();
+    // Inject the Pro manifest
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = manifestHref;
+    document.head.appendChild(link);
+    return () => { link.remove(); };
+  }, [enabled, manifestHref]);
+
   // Detect platform and standalone mode
   useEffect(() => {
     if (!enabled) return;
