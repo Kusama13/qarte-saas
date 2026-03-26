@@ -196,6 +196,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 ### Birthday Gift
 - `birth_month` / `birth_day` sur customers, voucher source='birthday'
 - Cron morning genere les vouchers anniversaire
+- Dashboard accueil : section "Anniversaires a venir" (3 jours, aujourd'hui inclus) si `birthday_gift_enabled`
 
 ### Push Notifications
 - Programmees (10h/18h), manuelles, automations (welcome, close_to_reward, reward_ready, inactive, reward_reminder, events)

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, Link } from '@/i18n/navigation';
-import { Users, UserCheck, UserPlus, Calendar, CalendarDays, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, CreditCard, Coins, Globe, Heart } from 'lucide-react';
+import { Users, UserCheck, UserPlus, Calendar, CalendarDays, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, CreditCard, Coins, Globe, Heart, Cake } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTodayForCountry, formatCurrency } from '@/lib/utils';
@@ -108,6 +108,10 @@ export default function DashboardPage() {
   const [recentWelcomeClaims, setRecentWelcomeClaims] = useState<Array<{
     id: string; created_at: string; customerName: string;
   }>>([]);
+  const [upcomingBirthdays, setUpcomingBirthdays] = useState<Array<{
+    firstName: string; lastName: string; birthMonth: number; birthDay: number;
+  }>>([]);
+  const birthdayDatesRef = useRef<Array<{ month: number; day: number }>>([]);
 
   // If we have cached data, don't show loading state
   const [loading, setLoading] = useState(() => {
@@ -192,6 +196,15 @@ export default function DashboardPage() {
         const fourteenDaysAgo = new Date(todayBase);
         fourteenDaysAgo.setDate(todayBase.getDate() - 14);
 
+        // Birthday dates (today, +1, +2) for upcoming birthdays
+        const birthdayDates: { month: number; day: number }[] = [];
+        for (let i = 0; i < 3; i++) {
+          const d = new Date(todayBase);
+          d.setDate(todayBase.getDate() + i);
+          birthdayDates.push({ month: d.getMonth() + 1, day: d.getDate() });
+        }
+        birthdayDatesRef.current = birthdayDates;
+
         // Execute ALL queries in parallel for maximum speed
         const [
           totalCustomersResult,
@@ -206,6 +219,7 @@ export default function DashboardPage() {
           welcomeVouchersResult,
           upcomingBookingsResult,
           welcomeClaimsResult,
+          birthdayResult,
         ] = await Promise.all([
           // Stats queries
           supabase
@@ -301,6 +315,15 @@ export default function DashboardPage() {
                 .order('created_at', { ascending: false })
                 .limit(3)
             : Promise.resolve({ data: [] }),
+          // Upcoming birthdays (next 3 days)
+          merchant.birthday_gift_enabled
+            ? supabase
+                .from('loyalty_cards')
+                .select('customer:customers(id, first_name, last_name, birth_month, birth_day)')
+                .eq('merchant_id', merchant.id)
+                .not('customer.birth_month', 'is', null)
+                .in('customer.birth_month', [...new Set(birthdayDates.map(d => d.month))])
+            : Promise.resolve({ data: [] }),
         ]);
 
         // Set pending referrals + welcome vouchers
@@ -320,6 +343,15 @@ export default function DashboardPage() {
               return { id: v.id, created_at: v.created_at, customerName: cust?.first_name || 'Client' };
             })
           );
+        }
+
+        // Set upcoming birthdays
+        if (birthdayResult.data) {
+          const birthdays = (birthdayResult.data as Array<{ customer: { id: string; first_name: string; last_name: string; birth_month: number; birth_day: number } | null }>)
+            .map(c => c.customer)
+            .filter((c): c is NonNullable<typeof c> => c !== null && birthdayDates.some(d => d.month === c.birth_month && d.day === c.birth_day))
+            .map(c => ({ firstName: c.first_name, lastName: c.last_name, birthMonth: c.birth_month, birthDay: c.birth_day }));
+          setUpcomingBirthdays(birthdays);
         }
 
         // Compute cagnotte stats
@@ -724,6 +756,41 @@ export default function DashboardPage() {
               />
             </Link>
           )}
+        </div>
+      )}
+
+      {/* Upcoming Birthdays */}
+      {merchant?.birthday_gift_enabled && upcomingBirthdays.length > 0 && (
+        <div className="bg-pink-50/50 border border-pink-100 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 rounded-lg bg-pink-100">
+              <Cake className="w-4 h-4 text-pink-600" />
+            </div>
+            <h3 className="text-sm font-bold text-gray-900">{t('upcomingBirthdays')}</h3>
+          </div>
+          <div className="space-y-1.5">
+            {upcomingBirthdays.map((b, i) => {
+              const bd = birthdayDatesRef.current;
+              const label = bd[0]?.month === b.birthMonth && bd[0]?.day === b.birthDay
+                ? t('birthdayToday')
+                : bd[1]?.month === b.birthMonth && bd[1]?.day === b.birthDay
+                  ? t('birthdayTomorrow')
+                  : t('birthdayIn2Days');
+              return (
+                <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/70">
+                  <div className="flex items-center justify-center w-8 h-8 shrink-0 text-xs font-bold text-white rounded-lg bg-gradient-to-br from-pink-500 to-rose-500">
+                    {b.firstName.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {b.firstName} {b.lastName?.charAt(0) ? `${b.lastName.charAt(0)}.` : ''}
+                    </p>
+                  </div>
+                  <span className="text-xs font-medium text-pink-600 bg-pink-100 px-2 py-0.5 rounded-full shrink-0">{label}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

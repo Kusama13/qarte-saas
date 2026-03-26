@@ -1262,7 +1262,11 @@
     "today": "Aujourd'hui",
     "tomorrow": "Demain",
     "upcoming": "A venir",
-    "welcomeClaims": "Offres bienvenue"
+    "welcomeClaims": "Offres bienvenue",
+    "upcomingBirthdays": "Anniversaires a venir",
+    "birthdayToday": "Aujourd'hui",
+    "birthdayTomorrow": "Demain",
+    "birthdayIn2Days": "Dans 2 jours"
   },
   "subscription": {
     "title": "Abonnement",
