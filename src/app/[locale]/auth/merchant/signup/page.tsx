@@ -7,11 +7,8 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  Check,
   Clock,
   Globe,
-  Shield,
-  Zap,
   Sparkles,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';

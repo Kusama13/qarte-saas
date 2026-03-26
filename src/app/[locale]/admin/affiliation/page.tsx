@@ -19,6 +19,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
+import { generateSlug } from '@/lib/utils';
 
 // --- Types ---
 
@@ -50,23 +51,13 @@ interface AffiliateLink {
 
 // --- Helpers ---
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 50);
-}
-
 function statusBadge(status: string) {
   const map: Record<string, { label: string; className: string }> = {
     active: { label: 'Abonne', className: 'bg-emerald-100 text-emerald-700' },
-    trialing: { label: 'Essai', className: 'bg-amber-100 text-amber-700' },
+    trial: { label: 'Essai', className: 'bg-amber-100 text-amber-700' },
     canceled: { label: 'Annule', className: 'bg-red-100 text-red-700' },
-    expired: { label: 'Expire', className: 'bg-gray-100 text-gray-500' },
     canceling: { label: 'En cours', className: 'bg-orange-100 text-orange-700' },
+    past_due: { label: 'Impaye', className: 'bg-red-100 text-red-600' },
   };
   const b = map[status] || { label: status, className: 'bg-gray-100 text-gray-500' };
   return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${b.className}`}>{b.label}</span>;
@@ -137,7 +128,7 @@ export default function AffiliationPage() {
   const handleNameChange = (name: string) => {
     setFormName(name);
     if (!editingLink) {
-      setFormSlug(slugify(name));
+      setFormSlug(generateSlug(name).slice(0, 50));
     }
   };
 

@@ -703,8 +703,8 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | active | BOOLEAN | `TRUE` | NOT NULL |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
-**Index** : `idx_affiliate_links_slug`
 **Pas de RLS** (admin-only via service_role)
+**Note** : UNIQUE sur slug cree un index implicite, pas d'index supplementaire
 **Lien merchants** : `merchants.signup_source = 'affiliate_{slug}'`
 
 ---
@@ -945,7 +945,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 078 | customer_compound_unique | Drop UNIQUE(phone_number) global → UNIQUE(phone_number, merchant_id) compound |
 | 079 | whatsapp_url | merchants.whatsapp_url TEXT |
 | 080 | customer_notes | Table customer_notes (journal suivi client : content, note_type, pinned, slot_id FK nullable, index lookup+pinned, RLS merchant) |
-| 081 | affiliate_links | Table affiliate_links (name, slug UNIQUE, commission_percent, notes, active, index slug, pas de RLS — admin service_role) |
+| 081 | affiliate_links | Table affiliate_links (name, slug UNIQUE, commission_percent, notes, active, pas de RLS — admin service_role) |
 
 ---
 

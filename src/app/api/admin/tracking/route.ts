@@ -113,11 +113,11 @@ export async function GET(request: NextRequest) {
       const s = m.subscription_status;
       if (s === 'active') converted++;
       else if (s === 'canceled') canceled++;
-      else if (s === 'trialing') {
+      else if (s === 'trial') {
         const end = m.trial_ends_at ? new Date(m.trial_ends_at) : null;
         if (end && end < now) expired++;
         else trialActive++;
-      } else if (s === 'expired') expired++;
+      }
 
       // Feature adoption (single pass)
       if (m.logo_url) fc_counts.logo++;

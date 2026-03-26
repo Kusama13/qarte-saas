@@ -7,5 +7,3 @@ CREATE TABLE IF NOT EXISTS affiliate_links (
   active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-
-CREATE INDEX idx_affiliate_links_slug ON affiliate_links(slug);

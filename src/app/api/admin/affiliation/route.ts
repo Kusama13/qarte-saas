@@ -47,15 +47,14 @@ export async function GET(request: NextRequest) {
         stats: {
           total: linkedMerchants.length,
           trialing: linkedMerchants.filter((m) => {
-            if (m.subscription_status !== 'trialing') return false;
+            if (m.subscription_status !== 'trial') return false;
             const end = m.trial_ends_at ? new Date(m.trial_ends_at) : null;
             return end && end >= now;
           }).length,
           active: linkedMerchants.filter((m) => m.subscription_status === 'active').length,
           canceled: linkedMerchants.filter((m) => m.subscription_status === 'canceled').length,
           expired: linkedMerchants.filter((m) => {
-            if (m.subscription_status === 'expired') return true;
-            if (m.subscription_status !== 'trialing') return false;
+            if (m.subscription_status !== 'trial') return false;
             const end = m.trial_ends_at ? new Date(m.trial_ends_at) : null;
             return end && end < now;
           }).length,
