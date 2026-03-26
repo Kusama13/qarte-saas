@@ -8,6 +8,7 @@ import { CheckCircle2, CreditCard } from 'lucide-react';
 import { suggestEmailCorrection } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import LocaleSwitcher from '@/components/shared/LocaleSwitcher';
+import AuthBackground from '@/components/shared/AuthBackground';
 
 function MerchantLoginContent() {
   const router = useRouter();
@@ -73,15 +74,13 @@ function MerchantLoginContent() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+    <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-[#f7f6fb]">
       {/* Language switcher */}
       <div className="absolute top-4 right-4 z-20">
         <LocaleSwitcher variant="light" />
       </div>
-      {/* Background decorative blobs */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-      <div className="absolute top-1/3 right-0 w-80 h-80 bg-gradient-to-br from-secondary/15 to-primary/15 rounded-full blur-3xl translate-x-1/2" />
-      <div className="absolute bottom-0 left-1/4 w-72 h-72 bg-gradient-to-br from-primary/10 to-secondary/20 rounded-full blur-3xl" />
+
+      <AuthBackground />
 
       <div className="max-w-md w-full mx-4 z-10">
         {/* Logo */}
@@ -200,6 +199,7 @@ function MerchantLoginContent() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }
@@ -207,7 +207,7 @@ function MerchantLoginContent() {
 export default function MerchantLoginPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#f7f6fb]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     }>
