@@ -544,6 +544,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 - **Landing CTAs:** Gradient `indigo-600` → `violet-600`
 - **Landing emotion:** Rose/Pink (blobs hero, reward card)
 - **PWA Icon:** Gradient indigo → rose
+- **PWA Manifests:** 2 manifests distincts — `/manifest.webmanifest` (Next.js, `name: 'Qarte'`, `scope: '/customer'`) pour la carte client, `/api/manifest/pro` (API route, `name: 'Qarte Pro'`, `scope: '/dashboard'`) pour le dashboard merchant. Le hook `useInstallPrompt` injecte dynamiquement le manifest Pro via `<link rel="manifest">` sur le dashboard
 
 ### Style
 - Glassmorphism auth pages (`backdrop-blur-xl`, `bg-white/80`), fond lavande `#f7f6fb` avec 3 blobs animes (drift 10-14s) + 4 cartes de fidelite flottantes (Framer Motion) — meme background que `/customer`
