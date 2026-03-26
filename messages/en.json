@@ -37,6 +37,7 @@
     "ctaPrimary": "Free trial",
     "ctaSubtext": "No credit card required, we promise :)",
     "ctaDemo": "See the demo",
+    "googleRating": "5.0 on Google",
     "badgeVisits": "47 visits",
     "badgeVisitsSub": "this week",
     "badgeNewClient": "New client!",
@@ -90,7 +91,11 @@
     "badgeInstant": "Instant activation"
   },
   "socialProof": {
-    "tagline": "They attract and retain clients with Qarte"
+    "taglinePre": "Over a thousand",
+    "taglineHighlight": "beauty pros",
+    "taglineMid": "attract and",
+    "taglineAction": "retain clients",
+    "taglineEnd": "with Qarte"
   },
   "shopTypes": {
     "coiffeur": "Hair Salon",

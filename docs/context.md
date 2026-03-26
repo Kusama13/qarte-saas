@@ -474,6 +474,9 @@ Hero (mockup page pro + floating badges) → SocialProof → FideliteSection (li
 Hero titre : "Difficile d'attirer de nouvelles clientes. Encore plus de les faire revenir. **Qarte fait les deux, en un lien.**"
 Hero subtitle : "Vitrine en ligne, programme de fidelite, planning — tout ce dont ton salon a besoin, dans un seul lien pour ta bio Instagram, TikTok et Google."
 Hero CTAs : "Essai gratuit" (primary) + "Voir la demo" (secondary, ouvre demo carte fidelite onglerie)
+Hero badge Google Reviews : logo Google couleur + 5 etoiles + "5.0 sur Google" — lien vers page Google My Business
+
+SocialProof bandeau : "Plus d'un millier de **pros de la beaute** attirent et **fidelisent** avec Qarte" — mots cles en indigo-600
 
 Demos accessibles via : bouton hero → demo carte fidelite, page vitrine `/p/demo-*`, selecteur tampons/cagnotte sur carte demo.
 Demo popup (sessionStorage) : explique les 2 piliers (carte + vitrine) au premier affichage de la demo carte.

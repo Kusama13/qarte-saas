@@ -129,7 +129,11 @@ export async function SocialProofSection() {
       <div className="flex items-center justify-center gap-2 mb-6">
         <div className="h-px w-8 bg-gray-200" />
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
-          {t('tagline')}
+          {t('taglinePre')}{' '}
+          <span className="text-indigo-600">{t('taglineHighlight')}</span>{' '}
+          {t('taglineMid')}{' '}
+          <span className="text-indigo-600">{t('taglineAction')}</span>{' '}
+          {t('taglineEnd')}
         </p>
         <div className="h-px w-8 bg-gray-200" />
       </div>
@@ -160,6 +164,7 @@ export async function SocialProofSection() {
           </div>
         </div>
       </div>
+
 
     </section>
   );

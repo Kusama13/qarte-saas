@@ -37,6 +37,7 @@
     "ctaPrimary": "Essai gratuit",
     "ctaSubtext": "Sans carte bancaire, c'est promis :)",
     "ctaDemo": "Voir la démo",
+    "googleRating": "5.0 sur Google",
     "badgeVisits": "47 visites",
     "badgeVisitsSub": "cette semaine",
     "badgeNewClient": "Nouvelle cliente !",
@@ -90,7 +91,11 @@
     "badgeInstant": "Activation instantanée"
   },
   "socialProof": {
-    "tagline": "Elles attirent et fidélisent avec Qarte"
+    "taglinePre": "Plus d'un millier de",
+    "taglineHighlight": "pros de la beauté",
+    "taglineMid": "attirent et",
+    "taglineAction": "fidélisent",
+    "taglineEnd": "avec Qarte"
   },
   "shopTypes": {
     "coiffeur": "Coiffeur",
