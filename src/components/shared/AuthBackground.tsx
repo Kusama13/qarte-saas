@@ -36,12 +36,6 @@ export default function AuthBackground() {
         <FloatingCard color="#f59e0b" initials="B" stamps={9} total={10} delay={5.5} x="72%" y="65%" rotate={-6} />
         <FloatingCard color="#10b981" initials="M" stamps={3} total={6} delay={1.5} x="-2%" y="60%" rotate={10} />
       </div>
-
-      <style jsx global>{`
-        @keyframes drift1 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(80px, 60px) scale(1.15); } }
-        @keyframes drift2 { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(-70px, -50px) scale(1.1); } }
-        @keyframes drift3 { 0% { transform: translate(-50%, 0) scale(1); } 100% { transform: translate(calc(-50% + 40px), -40px) scale(1.2); } }
-      `}</style>
     </>
   );
 }

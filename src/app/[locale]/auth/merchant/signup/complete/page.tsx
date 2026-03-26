@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   Loader2,
   Check,
-  Shield,
   Gift,
   Clock,
 } from 'lucide-react';

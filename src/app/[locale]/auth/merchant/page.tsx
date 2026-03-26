@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, Link } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { getSupabase } from '@/lib/supabase';
-import { CheckCircle2, CreditCard } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { suggestEmailCorrection } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
 import LocaleSwitcher from '@/components/shared/LocaleSwitcher';
