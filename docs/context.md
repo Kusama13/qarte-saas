@@ -546,7 +546,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 - **PWA Icon:** Gradient indigo → rose
 
 ### Style
-- Glassmorphism auth pages (`backdrop-blur-xl`, `bg-white/80`)
+- Glassmorphism auth pages (`backdrop-blur-xl`, `bg-white/80`), fond lavande `#f7f6fb` avec 3 blobs animes (drift 10-14s) + 4 cartes de fidelite flottantes (Framer Motion) — meme background que `/customer`
 - Cartes `rounded-2xl`/`rounded-3xl`, ombres douces
 - Framer Motion animations, sidebar mobile = bottom sheet 50vh
 - `cn()` pour classes conditionnelles
