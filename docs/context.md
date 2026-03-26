@@ -413,7 +413,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 ### Machine d'etats Webhook
 | Evenement Stripe | Statut DB | Email |
 |-----------------|-----------|-------|
-| checkout.session.completed | `active` | SubscriptionConfirmedEmail |
+| checkout.session.completed | `active` | SubscriptionConfirmedEmail (annuel: NFC offerte, mensuel: NFC en option 20€) |
 | subscription.updated (cancel_at_period_end) | `canceling` | SubscriptionCanceledEmail |
 | subscription.updated (canceling→active) | `active` | SubscriptionReactivatedEmail |
 | subscription.deleted | `canceled` | — |

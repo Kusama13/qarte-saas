@@ -135,6 +135,8 @@ export const en = {
     nfcTitle: 'Qarte NFC Card — optional ($20)',
     nfcText: 'Order via the button below, or by replying to this email. Delivery in 1 to 2 weeks.',
     nfcCta: 'Order my NFC card — $20',
+    nfcTitleAnnual: 'Your Qarte NFC card is included!',
+    nfcTextAnnual: 'With your annual subscription, your NFC card is included. We\'ll send it to you within 2 weeks. Nothing to do on your end!',
     questionText: 'Question about your subscription? Reply to this email, we\'re here for you.',
     referralTitle: 'Get $10 off',
     referralText: 'Know a beauty professional? Recommend Qarte and both get <strong>$10 off</strong>.',

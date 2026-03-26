@@ -51,25 +51,42 @@ export function SubscriptionConfirmedEmail({ shopName, nextBillingDate, billingI
         </Button>
       </Section>
 
-      <Section style={nfcBox}>
-        <Section style={nfcImgContainer}>
-          <Img
-            src="https://getqarte.com/images/Carte%20NFC%20QARTE%20.png"
-            alt="Carte NFC Qarte"
-            width={160}
-            style={nfcImg}
-          />
+      {billingInterval === 'annual' ? (
+        <Section style={nfcBoxAnnual}>
+          <Section style={nfcImgContainer}>
+            <Img
+              src="https://getqarte.com/images/Carte%20NFC%20QARTE%20.png"
+              alt="Carte NFC Qarte"
+              width={160}
+              style={nfcImg}
+            />
+          </Section>
+          <Text style={nfcTitleAnnualStyle}>{t('subscriptionConfirmed.nfcTitleAnnual')}</Text>
+          <Text style={nfcTextStyle}>
+            {t('subscriptionConfirmed.nfcTextAnnual')}
+          </Text>
         </Section>
-        <Text style={nfcTitleStyle}>{t('subscriptionConfirmed.nfcTitle')}</Text>
-        <Text style={nfcTextStyle}>
-          {t('subscriptionConfirmed.nfcText')}
-        </Text>
-        <Section style={{ textAlign: 'center' as const, margin: '12px 0 0 0' }}>
-          <Button style={nfcButton} href="https://buy.stripe.com/4gM7sN6DYccX75dduH7g401">
-            {t('subscriptionConfirmed.nfcCta')}
-          </Button>
+      ) : (
+        <Section style={nfcBox}>
+          <Section style={nfcImgContainer}>
+            <Img
+              src="https://getqarte.com/images/Carte%20NFC%20QARTE%20.png"
+              alt="Carte NFC Qarte"
+              width={160}
+              style={nfcImg}
+            />
+          </Section>
+          <Text style={nfcTitleStyle}>{t('subscriptionConfirmed.nfcTitle')}</Text>
+          <Text style={nfcTextStyle}>
+            {t('subscriptionConfirmed.nfcText')}
+          </Text>
+          <Section style={{ textAlign: 'center' as const, margin: '12px 0 0 0' }}>
+            <Button style={nfcButton} href="https://buy.stripe.com/4gM7sN6DYccX75dduH7g401">
+              {t('subscriptionConfirmed.nfcCta')}
+            </Button>
+          </Section>
         </Section>
-      </Section>
+      )}
 
       <Text style={paragraph}>
         {t('subscriptionConfirmed.questionText')}
@@ -209,6 +226,22 @@ const nfcBox = {
   padding: '20px 24px',
   margin: '24px 0',
   border: '1px solid #e9d5ff',
+};
+
+const nfcBoxAnnual = {
+  backgroundColor: '#f0fdf4',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '24px 0',
+  border: '2px solid #bbf7d0',
+};
+
+const nfcTitleAnnualStyle = {
+  color: '#166534',
+  fontSize: '16px',
+  fontWeight: '700',
+  margin: '0 0 10px 0',
+  textAlign: 'center' as const,
 };
 
 const nfcTitleStyle = {
