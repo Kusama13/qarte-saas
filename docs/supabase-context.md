@@ -691,6 +691,24 @@ Single-row table : id, content (TEXT, default ''), updated_at
 
 ---
 
+### 2.39 affiliate_links (mig 081)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| name | TEXT | NOT NULL | Nom du partenaire |
+| slug | TEXT | NOT NULL | UNIQUE |
+| commission_percent | INTEGER | `20` | NOT NULL |
+| notes | TEXT | NULL | |
+| active | BOOLEAN | `TRUE` | NOT NULL |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**Index** : `idx_affiliate_links_slug`
+**Pas de RLS** (admin-only via service_role)
+**Lien merchants** : `merchants.signup_source = 'affiliate_{slug}'`
+
+---
+
 ## 3. Colonnes date — Regles imperatives
 
 | Table | Colonne date | NOM EXACT |
@@ -927,6 +945,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 078 | customer_compound_unique | Drop UNIQUE(phone_number) global → UNIQUE(phone_number, merchant_id) compound |
 | 079 | whatsapp_url | merchants.whatsapp_url TEXT |
 | 080 | customer_notes | Table customer_notes (journal suivi client : content, note_type, pinned, slot_id FK nullable, index lookup+pinned, RLS merchant) |
+| 081 | affiliate_links | Table affiliate_links (name, slug UNIQUE, commission_percent, notes, active, index slug, pas de RLS — admin service_role) |
 
 ---
 

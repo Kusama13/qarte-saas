@@ -12,6 +12,7 @@ import {
   Globe,
   Shield,
   Zap,
+  Sparkles,
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import { getSupabase } from '@/lib/supabase';
@@ -34,11 +35,24 @@ export default function MerchantSignupPage() {
     password: '',
   });
   const [emailSuggestion, setEmailSuggestion] = useState('');
+  const [affiliateName, setAffiliateName] = useState<string | null>(null);
   const locale = useLocale();
 
-  // Track page view
+  // Track page view + capture affiliate ref
   useEffect(() => {
     trackPageView('signup_page');
+
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      try {
+        localStorage.setItem('qarte_signup_source', `affiliate_${ref}`);
+      } catch { /* private browsing */ }
+      fetch(`/api/affiliate/resolve?slug=${encodeURIComponent(ref)}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d) setAffiliateName(d.name); })
+        .catch(() => {});
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -152,6 +166,17 @@ export default function MerchantSignupPage() {
         </Link>
 
         <div className="w-full max-w-md">
+          {affiliateName && (
+            <div className="mb-4 flex items-center gap-3 px-5 py-3.5 bg-indigo-50/80 backdrop-blur-sm border border-indigo-100 rounded-2xl">
+              <div className="p-2 rounded-xl bg-indigo-100">
+                <Sparkles className="w-4 h-4 text-indigo-600" />
+              </div>
+              <p className="text-sm text-gray-700">
+                <strong className="text-indigo-700">{affiliateName}</strong> {t('affiliateRecommends')}
+              </p>
+            </div>
+          )}
+
           <div className="p-5 md:p-8 bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl shadow-primary/10 rounded-3xl">
             <div className="text-center mb-5">
               <h1 className="text-xl font-bold text-gray-900">

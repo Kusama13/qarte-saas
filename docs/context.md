@@ -569,6 +569,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 - **Facebook CAPI:** server-side Purchase sur webhook Stripe (dedup event_id)
 - **Admin Tracking** (`/admin/tracking`) : dashboard consolide — funnel inscription (sources, feature choice, trend 90j, conversion), engagement (actifs 7j/30j, scans trend, top 10), adoption features (11 flags), push/email stats, planning/offres, croissance clients (trend, referrals, vouchers par source)
 - **CTA tracking** : `trackCtaClick(name, location)` sur tous les CTAs signup (13 landing + 4 demo), stocke `signup_source` en localStorage → DB merchants. Visible dans `/admin/merchants`
+- **Affiliation** (`/admin/affiliation`) : liens partenaires avec commission % personnalisable, suivi inscriptions + conversions. Lien format `?ref=SLUG` → `signup_source = 'affiliate_{slug}'`. Bandeau personnalise sur la page signup. Table `affiliate_links` (mig 081). API publique `/api/affiliate/resolve` pour resoudre slug → nom partenaire
 
 ---
 
