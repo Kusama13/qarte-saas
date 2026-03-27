@@ -32,6 +32,7 @@ import {
   GracePeriodSetupEmail,
   BirthdayNotificationEmail,
   AnnouncementMaPageEmail,
+  WinBackEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -621,5 +622,15 @@ export async function sendAnnouncementMaPageEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'announcementMaPage', { shopName }), AnnouncementMaPageEmail, { shopName, slug, isSubscribed, locale }, {
     logLabel: 'Announcement Ma Page email',
+  });
+}
+
+export async function sendWinBackEmail(
+  to: string,
+  shopName: string,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'winBack', { shopName }), WinBackEmail, { shopName, locale }, {
+    logLabel: 'Win-back email',
   });
 }

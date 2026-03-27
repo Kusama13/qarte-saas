@@ -29,3 +29,4 @@ export { AutoSuggestRewardEmail } from './AutoSuggestRewardEmail';
 export { GracePeriodSetupEmail } from './GracePeriodSetupEmail';
 export { BirthdayNotificationEmail } from './BirthdayNotificationEmail';
 export { AnnouncementMaPageEmail } from './AnnouncementMaPageEmail';
+export { WinBackEmail } from './WinBackEmail';

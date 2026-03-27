@@ -450,7 +450,7 @@ TrialEndingEmail (J-5/3/1), TrialExpiredEmail (J+1/3/5), InactiveMerchantDay7/14
 SubscriptionConfirmedEmail, PaymentFailedEmail, SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30 codes promo)
 
 ### Autres
-GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, SetupForYouEmail, AnnouncementMaPageEmail
+GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, SetupForYouEmail, AnnouncementMaPageEmail, WinBackEmail (envoi manuel admin — 3 features + promo QARTEBOOST 2 mois a 9€)
 
 ### Cron Jobs
 | Cron | Horaire | Description |

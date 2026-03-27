@@ -40,6 +40,7 @@ export const fr = {
     gracePeriodSetup: '{shopName}, on garde tes données encore {daysUntilDeletion} jours',
     birthdayNotification: 'Anniversaire client{plural} aujourd\'hui',
     announcementMaPage: '{shopName}, découvre ce qu\'on a préparé pour toi',
+    winBack: '{shopName} — on a tout changé, reviens voir',
   },
 
   baseLayout: {
@@ -665,6 +666,26 @@ export const fr = {
     selfSetup: 'Ou si vous préférez le faire vous-même, c\'est toujours possible :',
     cta: 'Finaliser mon inscription',
     signaturePrefix: 'À très vite,',
+    signature: 'L\'équipe Qarte',
+  },
+
+  winBack: {
+    preview: 'On a tout changé depuis ton départ — reviens voir',
+    heading: 'On a bien changé depuis ton départ',
+    greeting: 'Salut <strong>{shopName}</strong>,',
+    intro: 'Ça fait un moment qu\'on ne s\'est pas vus. On n\'a pas chômé depuis — voici ce qui est nouveau sur Qarte.',
+    badgeNew: 'Nouveau',
+    feature1Title: 'Ta vitrine en ligne',
+    feature1Desc: 'Ton salon a maintenant sa propre page pro : prestations, photos, horaires, avis Google. Un seul lien pour ta bio Instagram.',
+    feature2Title: 'Planning intégré',
+    feature2Desc: 'Tes clientes réservent directement depuis ta page. Plus besoin d\'un outil externe.',
+    feature3Title: 'Anniversaires automatiques',
+    feature3Desc: 'Qarte envoie un cadeau automatique à tes clientes pour leur anniversaire. Zéro effort.',
+    socialProof: 'Plus d\'un millier de pros de la beauté utilisent Qarte au quotidien.',
+    promoTitle: 'Offre de retour',
+    promoPrice: '2 mois à 9€/mois au lieu de 19€',
+    cta: 'Réactiver mon compte',
+    reassurance: 'Tes données clients sont toujours là. Rien n\'a été supprimé.\nSans engagement — annulable à tout moment.',
     signature: 'L\'équipe Qarte',
   },
 } as const;

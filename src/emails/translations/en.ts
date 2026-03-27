@@ -40,6 +40,7 @@ export const en = {
     gracePeriodSetup: '{shopName}, we\'re keeping your data for {daysUntilDeletion} more days',
     birthdayNotification: 'Client birthday{plural} today',
     announcementMaPage: '{shopName}, see what we\'ve prepared for you',
+    winBack: '{shopName} — we\'ve changed a lot, come take a look',
   },
 
   baseLayout: {
@@ -665,6 +666,26 @@ export const en = {
     selfSetup: 'Or if you prefer to do it yourself, that\'s always an option:',
     cta: 'Complete my signup',
     signaturePrefix: 'See you soon,',
+    signature: 'The Qarte Team',
+  },
+
+  winBack: {
+    preview: 'A lot has changed since you left — come take a look',
+    heading: 'A lot has changed since you left',
+    greeting: 'Hey <strong>{shopName}</strong>,',
+    intro: 'It\'s been a while since we last saw you. We\'ve been busy — here\'s what\'s new on Qarte.',
+    badgeNew: 'New',
+    feature1Title: 'Your online salon page',
+    feature1Desc: 'Your salon now has its own pro page: services, photos, hours, Google reviews. One link for your Instagram bio.',
+    feature2Title: 'Built-in scheduling',
+    feature2Desc: 'Your clients book directly from your page. No need for an external tool.',
+    feature3Title: 'Automatic birthdays',
+    feature3Desc: 'Qarte sends an automatic gift to your clients on their birthday. Zero effort.',
+    socialProof: 'Over a thousand beauty pros use Qarte every day.',
+    promoTitle: 'Welcome back offer',
+    promoPrice: '2 months at $9/mo instead of $19',
+    cta: 'Reactivate my account',
+    reassurance: 'Your client data is still there. Nothing has been deleted.\nNo commitment — cancel anytime.',
     signature: 'The Qarte Team',
   },
 } as const;
