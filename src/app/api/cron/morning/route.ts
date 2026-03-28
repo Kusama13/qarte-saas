@@ -157,12 +157,16 @@ async function runStandardEmailSection<T extends { id: string; user_id: string }
   sendFn: (email: string, candidate: T) => Promise<{ success: boolean }>;
   extraSkip?: (candidate: T) => boolean;
   superAdminUserIds?: Set<string>;
+  emailMap?: Map<string, string>;
+  globalTrackingSet?: Set<string>;
 }) {
   const { candidates, trackingCode, stats, sendFn, extraSkip, superAdminUserIds } = opts;
   if (!candidates || candidates.length === 0) return;
 
-  const emailMap = await batchGetUserEmails([...new Set(candidates.map(m => m.user_id))]);
-  const alreadySentSet = await getAlreadySentSet(candidates.map(m => m.id), trackingCode);
+  const emailMap = opts.emailMap || await batchGetUserEmails([...new Set(candidates.map(m => m.user_id))]);
+  const alreadySentSet = opts.globalTrackingSet
+    ? new Set(candidates.filter(m => opts.globalTrackingSet!.has(`${m.id}:${trackingCode}`)).map(m => m.id))
+    : await getAlreadySentSet(candidates.map(m => m.id), trackingCode);
 
   await processEmailSection({ candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip, superAdminUserIds });
 }
@@ -217,41 +221,57 @@ export async function GET(request: NextRequest) {
   const { data: superAdminList } = await supabase.from('super_admins').select('user_id');
   const superAdminUserIds = new Set((superAdminList || []).map((sa: { user_id: string }) => sa.user_id));
 
+  // ==================== PREFETCH: merchants, emails, tracking ====================
+  // Single fetch for all merchants — sections filter in JS instead of separate DB queries
+  const { data: allMerchants } = await supabase
+    .from('merchants')
+    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, created_at, updated_at, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, referral_code, no_contact, birthday_gift_enabled, birthday_gift_description, offer_active, offer_title, offer_expires_at');
+
+  const allMerchantsList = allMerchants || [];
+  const allMerchantsMap = new Map(allMerchantsList.map(m => [m.id, m]));
+
+  // Parallel fetch: user emails + tracking records
+  const allUserIds = [...new Set(allMerchantsList.map(m => m.user_id))];
+  const allMerchantIds = allMerchantsList.map(m => m.id);
+
+  const [globalEmailMap, { data: allTracking }] = await Promise.all([
+    batchGetUserEmails(allUserIds),
+    supabase.from('pending_email_tracking').select('merchant_id, reminder_day').in('merchant_id', allMerchantIds),
+  ]);
+
+  const globalTrackingSet = new Set(
+    (allTracking || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
+  );
+
+  // Pre-computed merchant filters — reused across multiple sections
+  const configuredActiveMerchants = allMerchantsList.filter(m =>
+    m.reward_description !== null && m.reward_description !== '' &&
+    ['trial', 'active'].includes(m.subscription_status) && !m.no_contact
+  );
+  const unconfiguredActiveMerchants = allMerchantsList.filter(m =>
+    m.reward_description === null &&
+    ['trial', 'active'].includes(m.subscription_status) && !m.no_contact
+  );
+
   // ==================== 1. TRIAL EMAILS ====================
   // Idempotent — tracked via pending_email_tracking with codes -201/-203 (ending) and -211/-212 (expired)
   // (Custom: multiple tracking codes per merchant, branching logic — kept manual)
   if (isTimedOut()) { sectionStatuses.push({ name: 'trialEmails', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
   else try {
-    const { data: merchants } = await supabase
-      .from('merchants')
-      .select('id, shop_name, user_id, trial_ends_at, subscription_status, locale')
-      .eq('subscription_status', 'trial')
-      .neq('no_contact', true);
+    const trialMerchants = allMerchantsList.filter(m => m.subscription_status === 'trial' && !m.no_contact);
 
-    if (merchants && merchants.length > 0) {
-      const userIds = [...new Set(merchants.map(m => m.user_id))];
-      const emailMap = await batchGetUserEmails(userIds);
-
-      const { data: existingTrialTracking } = await supabase
-        .from('pending_email_tracking')
-        .select('merchant_id, reminder_day')
-        .in('merchant_id', merchants.map(m => m.id))
-        .in('reminder_day', [-201, -203, -211, -212]);
-      const trialTrackingSet = new Set(
-        (existingTrialTracking || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
-      );
-
-      await batchProcess(merchants, async (merchant) => {
+    if (trialMerchants.length > 0) {
+      await batchProcess(trialMerchants, async (merchant) => {
         results.trialEmails.processed++;
         const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-        const email = emailMap.get(merchant.user_id);
+        const email = globalEmailMap.get(merchant.user_id);
 
         if (!email) return;
 
         try {
           if (trialStatus.isActive && (trialStatus.daysRemaining === 3 || trialStatus.daysRemaining === 1)) {
             const trackCode = trialStatus.daysRemaining === 3 ? -203 : -201;
-            if (trialTrackingSet.has(`${merchant.id}:${trackCode}`)) return;
+            if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) return;
             await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining, undefined, (merchant.locale as EmailLocale) || 'fr');
             await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
             results.trialEmails.ending++;
@@ -261,7 +281,7 @@ export async function GET(request: NextRequest) {
             const daysExpired = Math.abs(trialStatus.daysRemaining);
             if (daysExpired === 1 || daysExpired === 2) {
               const trackCode = daysExpired === 1 ? -211 : -212;
-              if (trialTrackingSet.has(`${merchant.id}:${trackCode}`)) return;
+              if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) return;
               const promoCode = daysExpired === 1 ? 'QARTE50' : undefined;
               await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, promoCode, (merchant.locale as EmailLocale) || 'fr');
               await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
@@ -286,54 +306,43 @@ export async function GET(request: NextRequest) {
     const twentyFiveHoursAgo = new Date(now.getTime() - 25 * 60 * 60 * 1000);
     const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-    const { data: unconfiguredMerchants } = await supabase
-      .from('merchants')
-      .select('id, shop_name, user_id, locale')
-      .is('reward_description', null)
-      .in('subscription_status', ['trial', 'active'])
-      .lte('created_at', twentyFourHoursAgo.toISOString())
-      .gte('created_at', twentyFiveHoursAgo.toISOString())
-      .neq('no_contact', true);
+    const unconfiguredMerchants = unconfiguredActiveMerchants.filter(m =>
+      m.created_at <= twentyFourHoursAgo.toISOString() && m.created_at >= twentyFiveHoursAgo.toISOString()
+    );
 
     await runStandardEmailSection({
       candidates: unconfiguredMerchants,
       trackingCode: -301,
       stats: results.programReminders,
       sendFn: (email, m) => sendProgramReminderEmail(email, m.shop_name, (m.locale as EmailLocale) || 'fr'),
+      emailMap: globalEmailMap,
+      globalTrackingSet,
     });
 
     // 2b. PROGRAM REMINDER (J+2)
     const fortyNineHoursAgo = new Date(now.getTime() - 49 * 60 * 60 * 1000);
     const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
-    const { data: unconfiguredDay2 } = await supabase
-      .from('merchants')
-      .select('id, shop_name, shop_type, slug, user_id, locale')
-      .is('reward_description', null)
-      .in('subscription_status', ['trial', 'active'])
-      .lte('created_at', fortyEightHoursAgo.toISOString())
-      .gte('created_at', fortyNineHoursAgo.toISOString())
-      .neq('no_contact', true);
+    const unconfiguredDay2 = unconfiguredActiveMerchants.filter(m =>
+      m.created_at <= fortyEightHoursAgo.toISOString() && m.created_at >= fortyNineHoursAgo.toISOString()
+    );
 
     await runStandardEmailSection({
       candidates: unconfiguredDay2,
       trackingCode: -302,
       stats: results.programRemindersDay2,
       sendFn: (email, m) => sendProgramReminderDay2Email(email, m.shop_name, m.shop_type || '', m.slug, (m.locale as EmailLocale) || 'fr'),
+      emailMap: globalEmailMap,
+      globalTrackingSet,
     });
 
     // 2c. PROGRAM REMINDER (J+3)
     const seventyThreeHoursAgo = new Date(now.getTime() - 73 * 60 * 60 * 1000);
     const seventyTwoHoursAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
 
-    const { data: unconfiguredDay3 } = await supabase
-      .from('merchants')
-      .select('id, shop_name, user_id, trial_ends_at, subscription_status, locale')
-      .is('reward_description', null)
-      .in('subscription_status', ['trial', 'active'])
-      .lte('created_at', seventyTwoHoursAgo.toISOString())
-      .gte('created_at', seventyThreeHoursAgo.toISOString())
-      .neq('no_contact', true);
+    const unconfiguredDay3 = unconfiguredActiveMerchants.filter(m =>
+      m.created_at <= seventyTwoHoursAgo.toISOString() && m.created_at >= seventyThreeHoursAgo.toISOString()
+    );
 
     await runStandardEmailSection({
       candidates: unconfiguredDay3,
@@ -345,6 +354,8 @@ export async function GET(request: NextRequest) {
         const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
         return sendProgramReminderDay3Email(email, m.shop_name, daysRemaining, (m.locale as EmailLocale) || 'fr');
       },
+      emailMap: globalEmailMap,
+      globalTrackingSet,
     });
   } catch (error) {
     sectionStatuses.push({ name: 'programReminders', status: 'error', error: String(error) });
@@ -360,19 +371,12 @@ export async function GET(request: NextRequest) {
       const oneTwentyOneHoursAgo = new Date(now.getTime() - 121 * 60 * 60 * 1000);
       const oneTwentyHoursAgo = new Date(now.getTime() - 120 * 60 * 60 * 1000);
 
-      const { data: day5Merchants } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id, locale')
-        .not('reward_description', 'is', null)
-        .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active'])
-        .lte('created_at', oneTwentyHoursAgo.toISOString())
-        .gte('created_at', oneTwentyOneHoursAgo.toISOString())
-        .neq('no_contact', true);
+      const day5Merchants = configuredActiveMerchants.filter(m =>
+        m.created_at <= oneTwentyHoursAgo.toISOString() && m.created_at >= oneTwentyOneHoursAgo.toISOString()
+      );
 
-      if (day5Merchants && day5Merchants.length > 0) {
-        const emailMap = await batchGetUserEmails([...new Set(day5Merchants.map(m => m.user_id))]);
-        const alreadySentDay5 = await getAlreadySentSet(day5Merchants.map(m => m.id), -305);
+      if (day5Merchants.length > 0) {
+        const alreadySentDay5 = new Set(day5Merchants.filter(m => globalTrackingSet.has(`${m.id}:-305`)).map(m => m.id));
 
         // Get scan counts for these merchants
         const { data: day5Visits } = await supabase
@@ -389,7 +393,7 @@ export async function GET(request: NextRequest) {
         await processEmailSection({
           candidates: day5Merchants,
           trackingCode: -305,
-          emailMap,
+          emailMap: globalEmailMap,
           alreadySentSet: alreadySentDay5,
           stats: results.day5Checkin,
           extraSkip: (m) => (scanCountMap.get(m.id) || 0) === 0,
@@ -400,27 +404,18 @@ export async function GET(request: NextRequest) {
 
     // 2e. QR CODE + KIT PROMO EMAIL (programme configure, envoi unique)
     {
-      const { data: qrCandidates } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, locale')
-        .not('reward_description', 'is', null)
-        .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active'])
-        .neq('no_contact', true);
+      const qrCandidates = configuredActiveMerchants;
 
-      if (qrCandidates && qrCandidates.length > 0) {
-        const alreadySentQr = await getAlreadySentSet(qrCandidates.map(m => m.id), -103);
-        const qrToSend = qrCandidates.filter(m => !alreadySentQr.has(m.id));
+      if (qrCandidates.length > 0) {
+        const qrToSend = qrCandidates.filter(m => !globalTrackingSet.has(`${m.id}:-103`));
         results.qrCode.processed = qrCandidates.length;
         results.qrCode.skipped = qrCandidates.length - qrToSend.length;
 
         if (qrToSend.length > 0) {
-          const qrEmailMap = await batchGetUserEmails([...new Set(qrToSend.map(m => m.user_id))]);
-
           await processEmailSection({
             candidates: qrToSend,
             trackingCode: -103,
-            emailMap: qrEmailMap,
+            emailMap: globalEmailMap,
             alreadySentSet: new Set(), // already filtered above
             stats: results.qrCode,
             sendFn: (email, m) => sendQRCodeEmail(
@@ -439,15 +434,9 @@ export async function GET(request: NextRequest) {
 
     // 2g. FIRST CLIENT SCRIPT EMAIL (J+2 apres config, 0 scans)
     {
-      const { data: scriptCandidates } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id, shop_type, reward_description, stamps_required, trial_ends_at, subscription_status, loyalty_mode, locale')
-        .not('reward_description', 'is', null)
-        .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active'])
-        .neq('no_contact', true);
+      const scriptCandidates = configuredActiveMerchants;
 
-      if (scriptCandidates && scriptCandidates.length > 0) {
+      if (scriptCandidates.length > 0) {
         const scriptIds = scriptCandidates.map(m => m.id);
 
         // Check who got QR code email (~2 days ago)
@@ -468,7 +457,7 @@ export async function GET(request: NextRequest) {
             .map(t => t.merchant_id)
         );
 
-        const alreadySentScript = await getAlreadySentSet(scriptIds, -106);
+        const alreadySentScript = new Set(scriptIds.filter(id => globalTrackingSet.has(`${id}:-106`)));
 
         // Check who has visits (exclude them)
         const { data: scriptVisits } = await supabase
@@ -486,12 +475,10 @@ export async function GET(request: NextRequest) {
         results.firstClientScript.skipped = scriptCandidates.length - scriptToSend.length;
 
         if (scriptToSend.length > 0) {
-          const scriptEmailMap = await batchGetUserEmails([...new Set(scriptToSend.map(m => m.user_id))]);
-
           await processEmailSection({
             candidates: scriptToSend,
             trackingCode: -106,
-            emailMap: scriptEmailMap,
+            emailMap: globalEmailMap,
             alreadySentSet: new Set(), // already filtered above
             stats: results.firstClientScript,
             extraSkip: (m) => !m.reward_description,
@@ -508,15 +495,9 @@ export async function GET(request: NextRequest) {
 
     // 2h. QUICK CHECK EMAIL (J+4 apres config, 0 scans)
     {
-      const { data: qcCandidates } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id, trial_ends_at, subscription_status, locale')
-        .not('reward_description', 'is', null)
-        .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active'])
-        .neq('no_contact', true);
+      const qcCandidates = configuredActiveMerchants;
 
-      if (qcCandidates && qcCandidates.length > 0) {
+      if (qcCandidates.length > 0) {
         const qcIds = qcCandidates.map(m => m.id);
 
         // Check who got QR code email ~4 days ago
@@ -537,7 +518,7 @@ export async function GET(request: NextRequest) {
             .map(t => t.merchant_id)
         );
 
-        const alreadySentQc = await getAlreadySentSet(qcIds, -107);
+        const alreadySentQc = new Set(qcIds.filter(id => globalTrackingSet.has(`${id}:-107`)));
 
         // Check who has visits
         const { data: qcVisits } = await supabase
@@ -555,12 +536,10 @@ export async function GET(request: NextRequest) {
         results.quickCheck.skipped = qcCandidates.length - qcToSend.length;
 
         if (qcToSend.length > 0) {
-          const qcEmailMap = await batchGetUserEmails([...new Set(qcToSend.map(m => m.user_id))]);
-
           await processEmailSection({
             candidates: qcToSend,
             trackingCode: -107,
-            emailMap: qcEmailMap,
+            emailMap: globalEmailMap,
             alreadySentSet: new Set(), // already filtered above
             stats: results.quickCheck,
             sendFn: (email, m) => {
@@ -581,15 +560,9 @@ export async function GET(request: NextRequest) {
   else try {
     // 2i. FIRST SCAN EMAIL
     // Merchants with exactly 2 confirmed visits (1st is always merchant's test, 2nd is first real client)
-    const { data: allConfiguredMerchants } = await supabase
-      .from('merchants')
-      .select('id, shop_name, user_id, referral_code, slug, locale')
-      .not('reward_description', 'is', null)
-      .neq('reward_description', '')
-      .in('subscription_status', ['trial', 'active'])
-      .neq('no_contact', true);
+    const allConfiguredMerchants = configuredActiveMerchants;
 
-    if (allConfiguredMerchants && allConfiguredMerchants.length > 0) {
+    if (allConfiguredMerchants.length > 0) {
       const configuredIds = allConfiguredMerchants.map(m => m.id);
 
       // Get visit counts per merchant
@@ -613,21 +586,16 @@ export async function GET(request: NextRequest) {
           trackingCode: -100,
           stats: results.firstScan,
           sendFn: (email, m) => sendFirstScanEmail(email, m.shop_name, m.referral_code, m.slug, (m.locale as EmailLocale) || 'fr'),
+          emailMap: globalEmailMap,
+          globalTrackingSet,
         });
       }
 
       // 2f. FIRST REWARD EMAIL
-      const { data: merchantsWithProgram } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id, reward_description, stamps_required, loyalty_mode, locale')
-        .not('reward_description', 'is', null)
-        .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active'])
-        .neq('no_contact', true);
-
-      if (merchantsWithProgram && merchantsWithProgram.length > 0) {
-        const programIds = merchantsWithProgram.map(m => m.id);
-        const merchantProgramMap = new Map(merchantsWithProgram.map(m => [m.id, m]));
+      // Reuse allConfiguredMerchants (same filter)
+      if (allConfiguredMerchants.length > 0) {
+        const programIds = allConfiguredMerchants.map(m => m.id);
+        const merchantProgramMap = new Map(allConfiguredMerchants.map(m => [m.id, m]));
 
         // Get loyalty cards where rewards_earned > 0 (reward unlocked)
         const { data: rewardCards } = await supabase
@@ -648,14 +616,7 @@ export async function GET(request: NextRequest) {
           .map(([id]) => id);
 
         if (firstRewardMerchantIds.length > 0) {
-          const alreadySentReward = await getAlreadySentSet(firstRewardMerchantIds, -101);
-
-          const rewardEmailMap = await batchGetUserEmails(
-            [...new Set(firstRewardMerchantIds
-              .filter(id => !alreadySentReward.has(id))
-              .map(id => merchantProgramMap.get(id)?.user_id)
-              .filter(Boolean) as string[])]
-          );
+          const alreadySentReward = new Set(firstRewardMerchantIds.filter(id => globalTrackingSet.has(`${id}:-101`)));
 
           // This section iterates over IDs, not merchant objects — kept manual for type safety
           await batchProcess(firstRewardMerchantIds, async (merchantId) => {
@@ -665,7 +626,7 @@ export async function GET(request: NextRequest) {
             const merchant = merchantProgramMap.get(merchantId);
             if (!merchant) { results.firstReward.skipped++; return; }
 
-            const email = rewardEmailMap.get(merchant.user_id);
+            const email = globalEmailMap.get(merchant.user_id);
             if (!email) { results.firstReward.skipped++; return; }
 
             if (!merchant.reward_description) { results.firstReward.skipped++; return; }
@@ -684,16 +645,11 @@ export async function GET(request: NextRequest) {
       }
 
       // 2g. TIER 2 UPSELL (50+ clients, tier2 pas active)
-      const { data: tier2Candidates } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id, reward_description, tier2_enabled, locale')
-        .not('reward_description', 'is', null)
-        .neq('reward_description', '')
-        .in('subscription_status', ['trial', 'active'])
-        .or('tier2_enabled.is.null,tier2_enabled.eq.false')
-        .neq('no_contact', true);
+      const tier2Candidates = configuredActiveMerchants.filter(m =>
+        m.tier2_enabled === null || m.tier2_enabled === false
+      );
 
-      if (tier2Candidates && tier2Candidates.length > 0) {
+      if (tier2Candidates.length > 0) {
         const t2Ids = tier2Candidates.map(m => m.id);
 
         // Count unique customers per merchant
@@ -716,13 +672,12 @@ export async function GET(request: NextRequest) {
         const tier2Eligible = tier2Candidates.filter(m => (customerCountMap.get(m.id) || 0) >= 50);
 
         if (tier2Eligible.length > 0) {
-          const alreadySentTier2 = await getAlreadySentSet(tier2Eligible.map(m => m.id), -102);
-          const t2EmailMap = await batchGetUserEmails([...new Set(tier2Eligible.map(m => m.user_id))]);
+          const alreadySentTier2 = new Set(tier2Eligible.filter(m => globalTrackingSet.has(`${m.id}:-102`)).map(m => m.id));
 
           await processEmailSection({
             candidates: tier2Eligible,
             trackingCode: -102,
-            emailMap: t2EmailMap,
+            emailMap: globalEmailMap,
             alreadySentSet: alreadySentTier2,
             stats: results.tier2Upsell,
             extraSkip: (m) => !m.reward_description,
@@ -748,15 +703,9 @@ export async function GET(request: NextRequest) {
   else try {
     const INACTIVE_DAYS = [7, 14, 30];
 
-    const { data: activeMerchants } = await supabase
-      .from('merchants')
-      .select('id, shop_name, user_id, reward_description, stamps_required, created_at, trial_ends_at, subscription_status, locale')
-      .not('reward_description', 'is', null)
-      .neq('reward_description', '')
-      .in('subscription_status', ['trial', 'active'])
-      .neq('no_contact', true);
+    const activeMerchants = configuredActiveMerchants;
 
-    if (activeMerchants && activeMerchants.length > 0) {
+    if (activeMerchants.length > 0) {
       const merchantIds = activeMerchants.map(m => m.id);
       const { data: allLastVisits } = await supabase
         .from('visits')
@@ -783,31 +732,19 @@ export async function GET(request: NextRequest) {
       results.inactiveMerchants.skipped = activeMerchants.length - candidateMerchants.length;
 
       if (candidateMerchants.length > 0) {
-        const { data: existingTrackings } = await supabase
-          .from('pending_email_tracking')
-          .select('merchant_id, reminder_day')
-          .in('merchant_id', candidateMerchants.map(m => m.id))
-          .lt('reminder_day', 0);
-
-        const trackingSet = new Set(
-          (existingTrackings || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
-        );
-
-        const emailMap = await batchGetUserEmails([...new Set(candidateMerchants.map(m => m.user_id))]);
-
         await batchProcess(candidateMerchants, async (merchant) => {
           const lastVisitDate = lastVisitMap.get(merchant.id);
           const referenceDate = lastVisitDate ? new Date(lastVisitDate) : new Date(merchant.created_at);
           const daysInactive = Math.floor((now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
 
           const inactiveTrackingCode = daysInactive === 7 ? -110 : daysInactive === 14 ? -111 : -112;
-          if (trackingSet.has(`${merchant.id}:${inactiveTrackingCode}`)) {
+          if (globalTrackingSet.has(`${merchant.id}:${inactiveTrackingCode}`)) {
             results.inactiveMerchants.skipped++;
             return;
           }
 
           // Skip if merchant already received onboarding emails — avoid double email
-          if (trackingSet.has(`${merchant.id}:-106`) || trackingSet.has(`${merchant.id}:-107`)) {
+          if (globalTrackingSet.has(`${merchant.id}:-106`) || globalTrackingSet.has(`${merchant.id}:-107`)) {
             results.inactiveMerchants.skipped++;
             return;
           }
@@ -821,7 +758,7 @@ export async function GET(request: NextRequest) {
             }
           }
 
-          const email = emailMap.get(merchant.user_id);
+          const email = globalEmailMap.get(merchant.user_id);
           if (!email) {
             results.inactiveMerchants.skipped++;
             return;
@@ -870,13 +807,9 @@ export async function GET(request: NextRequest) {
   else try {
     const REACTIVATION_DAYS = [7, 14, 30];
 
-    const { data: canceledMerchants } = await supabase
-      .from('merchants')
-      .select('id, shop_name, user_id, updated_at, locale')
-      .eq('subscription_status', 'canceled')
-      .neq('no_contact', true);
+    const canceledMerchants = allMerchantsList.filter(m => m.subscription_status === 'canceled' && !m.no_contact);
 
-    if (canceledMerchants && canceledMerchants.length > 0) {
+    if (canceledMerchants.length > 0) {
       const reactivationCandidates = canceledMerchants.filter(merchant => {
         const canceledAt = new Date(merchant.updated_at);
         const daysSince = Math.floor((now.getTime() - canceledAt.getTime()) / (1000 * 60 * 60 * 24));
@@ -894,10 +827,6 @@ export async function GET(request: NextRequest) {
 
         const reactivationTrackingSet = new Set(
           (reactivationTrackings || []).map(t => `${t.merchant_id}:${t.day_sent}`)
-        );
-
-        const reactivationEmailMap = await batchGetUserEmails(
-          [...new Set(reactivationCandidates.map(m => m.user_id))]
         );
 
         const { data: reactivationCards } = await supabase
@@ -921,7 +850,7 @@ export async function GET(request: NextRequest) {
             return;
           }
 
-          const email = reactivationEmailMap.get(merchant.user_id);
+          const email = globalEmailMap.get(merchant.user_id);
           if (!email) { results.reactivation.skipped++; return; }
 
           const totalCustomers = reactivationCountMap.get(merchant.id) || 0;
@@ -974,10 +903,8 @@ export async function GET(request: NextRequest) {
         hasMore = (batch?.length || 0) === 500;
         page++;
       }
-      const { data: allMerchantUserIds } = await supabase.from('merchants').select('user_id');
-      const merchantUserIdSet = new Set((allMerchantUserIds || []).map((m: { user_id: string }) => m.user_id));
-      const { data: superAdminList } = await supabase.from('super_admins').select('user_id');
-      const superAdminSet = new Set((superAdminList || []).map((sa: { user_id: string }) => sa.user_id));
+      const merchantUserIdSet = new Set(allMerchantsList.map(m => m.user_id));
+      const superAdminSet = superAdminUserIds;
 
       const incompleteUsers = (allAuthUsers || []).filter(u => {
         if (merchantUserIdSet.has(u.id)) return false;
@@ -1034,14 +961,9 @@ export async function GET(request: NextRequest) {
       const oneHundredTwentyOneHoursAgo = new Date(now.getTime() - 121 * 60 * 60 * 1000);
       const oneHundredTwentyHoursAgo = new Date(now.getTime() - 120 * 60 * 60 * 1000);
 
-      const { data: autoSuggestCandidates } = await supabase
-        .from('merchants')
-        .select('id, shop_name, shop_type, user_id, trial_ends_at, subscription_status, locale')
-        .is('reward_description', null)
-        .in('subscription_status', ['trial', 'active'])
-        .lte('created_at', oneHundredTwentyHoursAgo.toISOString())
-        .gte('created_at', oneHundredTwentyOneHoursAgo.toISOString())
-        .neq('no_contact', true);
+      const autoSuggestCandidates = unconfiguredActiveMerchants.filter(m =>
+        m.created_at <= oneHundredTwentyHoursAgo.toISOString() && m.created_at >= oneHundredTwentyOneHoursAgo.toISOString()
+      );
 
       await runStandardEmailSection({
         candidates: autoSuggestCandidates,
@@ -1053,17 +975,16 @@ export async function GET(request: NextRequest) {
           const daysRemaining = Math.max(trialStatus.daysRemaining, 0);
           return sendAutoSuggestRewardEmail(email, m.shop_name, m.shop_type || '', daysRemaining, (m.locale as EmailLocale) || 'fr');
         },
+        emailMap: globalEmailMap,
+        globalTrackingSet,
       });
     }
 
     // 3d. GRACE PERIOD SETUP (programme non configure + grace period)
     {
-      const { data: graceCandidates } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id, trial_ends_at, subscription_status, locale')
-        .is('reward_description', null)
-        .eq('subscription_status', 'trial')
-        .neq('no_contact', true);
+      const graceCandidates = allMerchantsList.filter(m =>
+        m.reward_description === null && m.subscription_status === 'trial' && !m.no_contact
+      );
 
       await runStandardEmailSection({
         candidates: graceCandidates,
@@ -1077,6 +998,8 @@ export async function GET(request: NextRequest) {
           const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
           return sendGracePeriodSetupEmail(email, m.shop_name, trialStatus.daysUntilDeletion, (m.locale as EmailLocale) || 'fr');
         },
+        emailMap: globalEmailMap,
+        globalTrackingSet,
       });
     }
   } catch (error) {
@@ -1096,18 +1019,11 @@ export async function GET(request: NextRequest) {
     const uniqueMerchantIds = [...new Set(merchantsWithPending?.map(v => v.merchant_id) || [])];
 
     if (uniqueMerchantIds.length > 0) {
-      const { data: merchantsData } = await supabase
-        .from('merchants')
-        .select('id, shop_name, user_id, locale')
-        .in('id', uniqueMerchantIds)
-        .neq('no_contact', true);
-
-      const merchantMap = new Map(
-        (merchantsData || []).map(m => [m.id, m])
-      );
-
-      const emailMap = await batchGetUserEmails(
-        [...new Set((merchantsData || []).map(m => m.user_id))]
+      const pendingMerchantMap = new Map(
+        uniqueMerchantIds
+          .map(id => allMerchantsMap.get(id))
+          .filter((m): m is NonNullable<typeof m> => m != null && !m.no_contact)
+          .map(m => [m.id, m])
       );
 
       const { data: allPendingVisits } = await supabase
@@ -1125,25 +1041,16 @@ export async function GET(request: NextRequest) {
         pendingByMerchant.get(visit.merchant_id)!.push(visit);
       }
 
-      const { data: existingTrackings } = await supabase
-        .from('pending_email_tracking')
-        .select('merchant_id, reminder_day')
-        .in('merchant_id', uniqueMerchantIds);
-
-      const trackingSet = new Set(
-        (existingTrackings || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
-      );
-
       await batchProcess(uniqueMerchantIds, async (merchantId) => {
         results.pendingReminders.processed++;
 
-        const merchant = merchantMap.get(merchantId);
+        const merchant = pendingMerchantMap.get(merchantId);
         if (!merchant) {
           results.pendingReminders.errors++;
           return;
         }
 
-        const email = emailMap.get(merchant.user_id);
+        const email = globalEmailMap.get(merchant.user_id);
         if (!email) {
           results.pendingReminders.skipped++;
           return;
@@ -1167,7 +1074,7 @@ export async function GET(request: NextRequest) {
           return;
         }
 
-        if (trackingSet.has(`${merchantId}:${daysSinceFirst}`)) {
+        if (globalTrackingSet.has(`${merchantId}:${daysSinceFirst}`)) {
           results.pendingReminders.skipped++;
           return;
         }
@@ -1228,11 +1135,7 @@ export async function GET(request: NextRequest) {
       results.scheduledPush.processed++;
 
       try {
-        const { data: merchant } = await supabase
-          .from('merchants')
-          .select('shop_name, country')
-          .eq('id', push.merchant_id)
-          .maybeSingle();
+        const merchant = allMerchantsMap.get(push.merchant_id);
 
         if (!merchant) {
           await supabase.from('scheduled_push').update({ status: 'sent', sent_at: new Date().toISOString(), sent_count: 0 }).eq('id', push.id);
@@ -1340,14 +1243,12 @@ export async function GET(request: NextRequest) {
       const targetMonth = targetDate.getMonth() + 1;
       const targetDay = targetDate.getDate();
 
-      const { data: birthdayMerchants } = await supabase
-        .from('merchants')
-        .select('id, user_id, shop_name, birthday_gift_description, locale, country')
-        .eq('birthday_gift_enabled', true)
-        .neq('no_contact', true)
-        .in('subscription_status', ['trial', 'active']);
+      const birthdayMerchants = allMerchantsList.filter(m =>
+        m.birthday_gift_enabled === true && !m.no_contact &&
+        ['trial', 'active'].includes(m.subscription_status)
+      );
 
-      if (birthdayMerchants && birthdayMerchants.length > 0) {
+      if (birthdayMerchants.length > 0) {
         const merchantIds = birthdayMerchants.map(m => m.id);
         const merchantMap = new Map(birthdayMerchants.map(m => [m.id, m]));
 
@@ -1521,17 +1422,11 @@ export async function GET(request: NextRequest) {
 
           // Notify merchants about client birthdays (email, fire-and-forget)
           if (birthdayByMerchant.size > 0) {
-            const merchantUserIds = [...birthdayByMerchant.keys()]
-              .map(mid => merchantMap.get(mid))
-              .filter(Boolean)
-              .map(m => m!.user_id);
-            const emailMap = await batchGetUserEmails(merchantUserIds);
-
             for (const [merchantId, clientNames] of birthdayByMerchant) {
               try {
                 const bm = merchantMap.get(merchantId);
                 if (!bm) continue;
-                const merchantEmail = emailMap.get(bm.user_id);
+                const merchantEmail = globalEmailMap.get(bm.user_id);
                 if (!merchantEmail) continue;
 
                 await sendBirthdayNotificationEmail(
@@ -1567,17 +1462,13 @@ export async function GET(request: NextRequest) {
         .eq('inactive_reminder_enabled', true);
 
       if (automationMerchants && automationMerchants.length > 0) {
-        const merchantIds = automationMerchants.map(a => a.merchant_id);
         const automationMap = new Map(automationMerchants.map(a => [a.merchant_id, a]));
 
-        const { data: merchants } = await supabase
-          .from('merchants')
-          .select('id, shop_name, offer_active, offer_title, offer_expires_at, locale')
-          .in('id', merchantIds)
-          .in('subscription_status', ['trial', 'active'])
-          .neq('no_contact', true);
+        const inactiveAutoMerchants = automationMerchants
+          .map(a => allMerchantsMap.get(a.merchant_id))
+          .filter((m): m is NonNullable<typeof m> => m != null && !m.no_contact && ['trial', 'active'].includes(m.subscription_status));
 
-        for (const merchant of merchants || []) {
+        for (const merchant of inactiveAutoMerchants) {
           const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
           const { data: inactiveCards } = await supabase
@@ -1641,17 +1532,12 @@ export async function GET(request: NextRequest) {
         .eq('reward_reminder_enabled', true);
 
       if (automationMerchants && automationMerchants.length > 0) {
-        const merchantIds = automationMerchants.map(a => a.merchant_id);
+        const rewardAutoMerchants = automationMerchants
+          .map(a => allMerchantsMap.get(a.merchant_id))
+          .filter((m): m is NonNullable<typeof m> => m != null && !m.no_contact && ['trial', 'active'].includes(m.subscription_status));
 
-        const { data: merchants } = await supabase
-          .from('merchants')
-          .select('id, shop_name, locale')
-          .in('id', merchantIds)
-          .in('subscription_status', ['trial', 'active'])
-          .neq('no_contact', true);
-
-        const activeMerchantIds = (merchants || []).map(m => m.id);
-        const merchantMap = new Map((merchants || []).map(m => [m.id, m]));
+        const activeMerchantIds = rewardAutoMerchants.map(m => m.id);
+        const merchantMap = new Map(rewardAutoMerchants.map(m => [m.id, m]));
 
         if (activeMerchantIds.length > 0) {
           const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -1722,18 +1608,14 @@ export async function GET(request: NextRequest) {
           .not('events_offer_text', 'is', null);
 
         if (automationMerchants && automationMerchants.length > 0) {
-          const merchantIds = automationMerchants.map(a => a.merchant_id);
           const offerTextMap = new Map(automationMerchants.map(a => [a.merchant_id, a.events_offer_text]));
 
-          const { data: merchants } = await supabase
-            .from('merchants')
-            .select('id, shop_name, locale')
-            .in('id', merchantIds)
-            .in('subscription_status', ['trial', 'active'])
-            .neq('no_contact', true);
+          const eventAutoMerchants = automationMerchants
+            .map(a => allMerchantsMap.get(a.merchant_id))
+            .filter((m): m is NonNullable<typeof m> => m != null && !m.no_contact && ['trial', 'active'].includes(m.subscription_status));
 
           // Process merchant by merchant to avoid loading all cards + customers at once
-          const validMerchants = (merchants || []).filter(m => offerTextMap.get(m.id));
+          const validMerchants = eventAutoMerchants.filter(m => offerTextMap.get(m.id));
 
           for (const merchant of validMerchants) {
             if (isTimedOut()) break;

@@ -455,7 +455,7 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ### Cron Jobs
 | Cron | Horaire | Description |
 |------|---------|-------------|
-| `/api/cron/morning` | 09:00 UTC | Emails essai, rappels, push 10h, vouchers anniversaire (timezone-aware via `getTodayForCountry`) |
+| `/api/cron/morning` | 09:00 UTC | Emails essai, rappels, push 10h, vouchers anniversaire (timezone-aware via `getTodayForCountry`). Prefetch unique merchants/emails/tracking au demarrage — filtres JS par section |
 | `/api/cron/evening` | 17:00 UTC | Push 18h (timezone-aware via `getTodayForCountry`) |
 | `/api/cron/reactivation` | 10:00 UTC | Win-back J+7/14/30 |
 
