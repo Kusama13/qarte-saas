@@ -39,6 +39,10 @@
     "ctaSubtext": "Sans carte bancaire, c'est promis :)",
     "ctaDemo": "Voir la démo",
     "googleRating": "5.0 sur Google",
+    "statReturn": "de retour client",
+    "statReviews": "avis Google",
+    "statVisibility": "de visibilité Google",
+    "statContact": "de prises de contact",
     "badgePointAdded": "Point ajouté !",
     "badgePointAddedSub": "Manucure semi-permanent",
     "badgeGoogleScore": "4.9/5 Google",
@@ -97,6 +101,16 @@
     "taglineMid": "attirent et",
     "taglineAction": "fidélisent",
     "taglineEnd": "avec Qarte"
+  },
+  "impactStats": {
+    "stat1Value": "+30%",
+    "stat1Label": "de retour client",
+    "stat2Value": "x3",
+    "stat2Label": "avis Google",
+    "stat3Value": "+40%",
+    "stat3Label": "de visibilité Google",
+    "stat4Value": "2x",
+    "stat4Label": "plus de prises de contact"
   },
   "shopTypes": {
     "coiffeur": "Coiffeur",
@@ -469,8 +483,9 @@
   "footer": {
     "ctaTitle": "Rejoins les pros qui attirent et fidélisent avec Qarte",
     "ctaButton": "Commence maintenant — c'est gratuit",
+    "googleRating": "5.0 sur Google",
     "tagline": "Vitrine en ligne et programme de fidélité pour salons de beauté, coiffeurs et instituts.",
-    "madeIn": "Conçu à Marseille avec amour.",
+    "madeIn": "Conçu avec amour à Marseille par Tenga Labs.",
     "contact": "contact@getqarte.com",
     "support": "Support",
     "quickLinks": "Liens rapides",

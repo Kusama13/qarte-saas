@@ -472,10 +472,10 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 Hero (mockup carte fidelite + floating badges: point ajoute, Google 4.9, parrainage, push Qarte) → SocialProof → FideliteSection (light, 3 blocs: programme+QR, relances+anniversaires, avis Google) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau Booksy-style, epure) → FAQ (8 questions) → Footer (FooterCta + FooterDark)
 
 Hero titre : "Difficile d'attirer de nouvelles clientes. Encore plus de les faire revenir. **Qarte fait les deux, en un lien.**"
-Hero sous-titre cible (surligne violet) : "Pense pour les instituts, ongleries et salons qui veulent fideliser sans se compliquer la vie."
 Hero subtitle : "Vitrine en ligne, programme de fidelite, planning — tout ce dont ton salon a besoin, dans un seul lien pour ta bio Instagram, TikTok et Google."
-Hero CTAs : "Essai gratuit" (primary) + "Voir la demo" (secondary, ouvre demo carte fidelite onglerie)
-Hero badge Google Reviews : logo Google couleur + 5 etoiles + "5.0 sur Google" — lien vers page Google My Business
+Hero CTAs : "Essai gratuit" (primary, glassmorphism violet) + "Voir la demo" (secondary, glassmorphism dark) — empiles sur mobile, cote a cote desktop
+Hero badges impact : 4 pilules glassmorphism — "+30% de retour client", "x3 avis Google", "+40% de visibilite Google", "2x de prises de contact" — chiffres en gradient indigo/rose alternes
+Footer badge Google Reviews : logo Google couleur + 5 etoiles + "5.0 sur Google" — sous "Concu avec amour a Marseille par Tenga Labs" dans FooterDark
 
 SocialProof bandeau : "Plus d'un millier de **pros de la beaute** attirent et **fidelisent** avec Qarte" — mots cles en indigo-600
 

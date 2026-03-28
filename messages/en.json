@@ -39,6 +39,10 @@
     "ctaSubtext": "No credit card required, we promise :)",
     "ctaDemo": "See the demo",
     "googleRating": "5.0 on Google",
+    "statReturn": "client return rate",
+    "statReviews": "Google reviews",
+    "statVisibility": "Google visibility",
+    "statContact": "contact requests",
     "badgePointAdded": "Point added!",
     "badgePointAddedSub": "Semi-permanent manicure",
     "badgeGoogleScore": "4.9/5 Google",
@@ -97,6 +101,16 @@
     "taglineMid": "attract and",
     "taglineAction": "retain clients",
     "taglineEnd": "with Qarte"
+  },
+  "impactStats": {
+    "stat1Value": "+30%",
+    "stat1Label": "client return rate",
+    "stat2Value": "x3",
+    "stat2Label": "Google reviews",
+    "stat3Value": "+40%",
+    "stat3Label": "Google visibility",
+    "stat4Value": "2x",
+    "stat4Label": "more contact requests"
   },
   "shopTypes": {
     "coiffeur": "Hair Salon",
@@ -469,8 +483,9 @@
   "footer": {
     "ctaTitle": "Join the pros who attract and retain clients with Qarte",
     "ctaButton": "Get started — it's free",
+    "googleRating": "5.0 on Google",
     "tagline": "Online salon page and loyalty program for beauty professionals.",
-    "madeIn": "Made in Marseille with love.",
+    "madeIn": "Made with love in Marseille by Tenga Labs.",
     "contact": "contact@getqarte.com",
     "support": "Support",
     "quickLinks": "Quick links",
