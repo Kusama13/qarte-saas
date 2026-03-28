@@ -62,6 +62,7 @@ type MerchantPublic = Pick<
   | 'planning_message'
   | 'planning_message_expires'
   | 'booking_message'
+  | 'phone'
   | 'country'
 >;
 
@@ -1050,10 +1051,55 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             }),
             ...(merchant.logo_url && { logo: merchant.logo_url }),
             url: `https://getqarte.com/p/${merchant.slug}`,
+            ...(merchant.phone && { telephone: `+${merchant.phone}` }),
+            priceRange: '€€',
+            ...(hasHours && {
+              openingHoursSpecification: (() => {
+                const SCHEMA_DAYS: Record<string, string> = {
+                  '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday',
+                  '4': 'Thursday', '5': 'Friday', '6': 'Saturday', '7': 'Sunday',
+                };
+                return Object.entries(hours!)
+                  .filter(([, slot]) => slot)
+                  .map(([key, slot]) => ({
+                    '@type': 'OpeningHoursSpecification',
+                    dayOfWeek: SCHEMA_DAYS[key],
+                    opens: slot!.open,
+                    closes: slot!.close,
+                  }));
+              })(),
+            }),
+            ...(() => {
+              const links = [merchant.instagram_url, merchant.facebook_url, merchant.tiktok_url].filter(Boolean);
+              return links.length > 0 ? { sameAs: links } : {};
+            })(),
             makesOffer: {
               '@type': 'Offer',
               description: t('jsonLdOffer'),
             },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Qarte',
+                item: 'https://getqarte.com',
+              },
+              {
+                '@type': 'ListItem',
+                position: 2,
+                name: merchant.shop_name,
+                item: `https://getqarte.com/p/${merchant.slug}`,
+              },
+            ],
           }),
         }}
       />
