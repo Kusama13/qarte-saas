@@ -137,10 +137,10 @@ export function HeroSection() {
 
       <div ref={ref} className="relative z-10 max-w-7xl mx-auto px-6 pt-28 lg:pt-36 pb-6 lg:pb-20 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         {/* Text Content */}
-        <div className={`space-y-6 lg:space-y-8 ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
+        <div className={`space-y-6 lg:space-y-8 text-center lg:text-left ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
-            <h1 className="relative text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
+            <h1 className="relative text-[2rem] md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
               {t('titlePart1')}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
                 {t('titlePart2')}
@@ -148,19 +148,15 @@ export function HeroSection() {
             </h1>
           </div>
 
-          <p className="text-lg lg:text-xl text-gray-600 max-w-lg leading-relaxed">
+          <p className="text-[1.05rem] md:text-lg lg:text-xl text-gray-600 max-w-lg mx-auto lg:mx-0 leading-relaxed">
             {t('subtitle')}
           </p>
-          <p className="text-sm text-gray-500 max-w-lg">
-            <span className="bg-violet-200/70 px-1.5 py-0.5 rounded">{t('subtitleTarget')}</span>
-          </p>
-
-          <div className="flex flex-row items-start gap-3">
-            <div>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-start justify-center lg:justify-start gap-3 w-full sm:w-auto">
+            <div className="flex flex-col">
               <Link
                 href="/auth/merchant/signup"
                 onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-                className="group relative flex items-center justify-center px-6 py-3.5 sm:px-8 sm:py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold text-sm sm:text-base rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98]"
+                className="group relative flex items-center justify-center px-8 py-4 sm:px-10 sm:py-5 bg-gradient-to-r from-indigo-600/90 to-violet-600/90 backdrop-blur-md text-white font-bold text-base sm:text-lg rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] border border-white/20"
               >
                 <span className="relative z-10">{t('ctaPrimary')}</span>
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -171,7 +167,7 @@ export function HeroSection() {
               href="/customer/card/demo-onglerie?preview=true&demo=true"
               target="_blank"
               onClick={() => { trackCtaClick('hero_demo', 'hero_section'); }}
-              className="flex items-center justify-center px-6 py-3.5 sm:px-8 sm:py-4 text-gray-600 font-semibold text-sm sm:text-base rounded-xl border-2 border-gray-200 hover:border-indigo-300 hover:text-indigo-600 hover:shadow-md active:scale-[0.98] transition-all duration-300"
+              className="flex items-center justify-center px-8 py-4 sm:px-10 sm:py-5 bg-gray-900/80 backdrop-blur-md text-white font-semibold text-base sm:text-lg rounded-xl border border-gray-700/50 hover:bg-gray-900 hover:shadow-md active:scale-[0.98] transition-all duration-300 shadow-sm"
             >
               {t('ctaDemo')}
             </Link>
