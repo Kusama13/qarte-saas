@@ -124,7 +124,6 @@ export default function OnboardingPage() {
           welcome_message: formData.welcomeMessage,
           stamps_required: formData.stampsRequired,
           reward_description: formData.rewardDescription.trim(),
-          onboarding_completed: true,
         })
         .eq('id', merchant.id);
 

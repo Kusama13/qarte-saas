@@ -90,7 +90,7 @@ function PersonalizeContent() {
       } else if (from === 'public-page') {
         router.push('/dashboard/public-page');
       } else {
-        router.push('/dashboard/welcome');
+        router.push('/dashboard/program');
       }
     } catch (error) {
       console.error('Error saving:', error);

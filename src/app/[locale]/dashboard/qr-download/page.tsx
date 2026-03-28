@@ -442,6 +442,7 @@ export default function QRDownloadPage() {
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ step: 'preview' }),
                     }).catch(() => {});
+                    try { localStorage.setItem('qarte_preview_done', '1'); } catch {}
                   }}
                   className="flex flex-col items-center justify-center w-full py-3 px-4 bg-white border-2 border-indigo-200 hover:border-indigo-400 rounded-xl transition-all hover:shadow-md active:scale-[0.98]"
                 >

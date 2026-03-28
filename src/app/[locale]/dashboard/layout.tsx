@@ -18,6 +18,7 @@ import {
   Megaphone,
   UserPlus,
   CalendarDays,
+  ArrowRight,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { getTrialStatus } from '@/lib/utils';
@@ -53,8 +54,14 @@ function DashboardLayoutContent({
   ];
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hasMounted, setHasMounted] = useState(false);
+  const [previewDone, setPreviewDone] = useState(false);
 
   useEffect(() => { setHasMounted(true); }, []);
+
+  // Check if merchant has tested their card (localStorage flag set on qr-download page)
+  useEffect(() => {
+    try { setPreviewDone(!!localStorage.getItem('qarte_preview_done')); } catch {}
+  }, []);
 
   // Swipe-to-close
   const SWIPE_CLOSE_THRESHOLD = 60;
@@ -289,6 +296,24 @@ function DashboardLayoutContent({
           <div className="lg:hidden">
             <AdminAnnouncementBanner variant="banner" />
           </div>
+
+          {/* Vitrine banner — shown after merchant tested their card but hasn't configured vitrine yet */}
+          {previewDone && merchant && !merchant.bio && !merchant.shop_address && pathname !== '/dashboard/public-page' && (
+            <Link
+              href="/dashboard/public-page"
+              className="flex items-center gap-3 p-4 mb-4 bg-gradient-to-r from-violet-50 to-pink-50 border border-violet-100 rounded-2xl hover:shadow-md transition-all group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0">
+                <Globe className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900">{t('vitrineBannerTitle')}</p>
+                <p className="text-xs text-gray-500 truncate">{t('vitrineBannerDesc')}</p>
+              </div>
+              <ArrowRight className="w-4 h-4 text-violet-500 shrink-0 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          )}
+
           {children}
         </div>
       </main>

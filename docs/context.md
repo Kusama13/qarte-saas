@@ -36,7 +36,7 @@ src/
 │   ├── api/               # Routes API (voir section 6) — hors [locale]
 │   ├── [locale]/           # Segment i18n (fr sans prefixe, en sous /en/*)
 │   │   ├── auth/          # Signup 2 phases + login
-│   │   ├── dashboard/     # Dashboard merchant (protected) + onboarding (personalize, welcome)
+│   │   ├── dashboard/     # Dashboard merchant (protected) + onboarding (personalize)
 │   │   ├── admin/         # Dashboard admin (super_admins)
 │   │   ├── customer/      # Carte fidelite + wallet
 │   │   ├── scan/[code]/   # Scan QR (page publique)
@@ -375,8 +375,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 1. **Phase 1:** Email + password (`/auth/merchant/signup`) — filet typo email
 2. **Phase 2:** Infos commerce (`/auth/merchant/signup/complete`)
-3. **Personnalisation** (`/dashboard/personalize`) — logo + ambiance couleurs (8 palettes). Sauvegarde `logo_url`, `primary_color`, `secondary_color` puis redirige vers welcome. Page onboarding-only (pas dans la sidebar).
-4. **Welcome** (`/dashboard/welcome`) — "Qarte t'offre deux super-pouvoirs" : 2 cartes (Programme fidelite → `/dashboard/program`, Ma page pro → `/dashboard/public-page`) + "Je verrai plus tard" → `/dashboard`. Auto-redirect vers `/dashboard` si merchant deja configure et pas venu de l'onboarding. Page onboarding-only (pas dans la sidebar).
+3. **Personnalisation** (`/dashboard/personalize`) — logo + ambiance couleurs (8 palettes). Sauvegarde `logo_url`, `primary_color`, `secondary_color` puis redirige vers `/dashboard/program`. Page onboarding-only (pas dans la sidebar).
+4. **Welcome** (`/dashboard/welcome`) — redirige vers `/dashboard/program` (page legacy conservee pour eviter 404 sur URLs bookmarkees).
 5. `/dashboard/program` → config (couleurs, stamps, reward)
 6. Premiere sauvegarde → modal "Ton programme est en ligne !" → "Voir le parcours client" (`/scan/{code}`) ou "Plus tard" → `/dashboard/qr-download`
 7. QR download → modal (1x) "Aide-nous a te rendre visible" → "Completer ma page" (`/dashboard/public-page`)
@@ -469,7 +469,7 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ## 10. Pages Principales
 
 ### Landing (`/`)
-Hero (mockup page pro + floating badges) → SocialProof → FideliteSection (light, 3 blocs: programme+QR, relances+anniversaires, avis Google) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau Booksy-style, epure) → FAQ (8 questions) → Footer (FooterCta + FooterDark)
+Hero (mockup carte fidelite + floating badges: point ajoute, Google 4.9, parrainage, push Qarte) → SocialProof → FideliteSection (light, 3 blocs: programme+QR, relances+anniversaires, avis Google) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau Booksy-style, epure) → FAQ (8 questions) → Footer (FooterCta + FooterDark)
 
 Hero titre : "Difficile d'attirer de nouvelles clientes. Encore plus de les faire revenir. **Qarte fait les deux, en un lien.**"
 Hero subtitle : "Vitrine en ligne, programme de fidelite, planning — tout ce dont ton salon a besoin, dans un seul lien pour ta bio Instagram, TikTok et Google."
