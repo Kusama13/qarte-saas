@@ -151,6 +151,9 @@ export function HeroSection() {
           <p className="text-lg lg:text-xl text-gray-600 max-w-lg leading-relaxed">
             {t('subtitle')}
           </p>
+          <p className="text-sm text-gray-500 max-w-lg">
+            <span className="bg-violet-200/70 px-1.5 py-0.5 rounded">{t('subtitleTarget')}</span>
+          </p>
 
           <div className="flex flex-row items-start gap-3">
             <div>
