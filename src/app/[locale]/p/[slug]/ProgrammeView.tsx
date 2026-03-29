@@ -913,7 +913,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           }}
         >
           <p className="text-[13px] text-gray-500 group-hover:text-gray-600 transition-colors">
-            {t('joinOnQarte', { name: merchant.shop_name })}{' '}
+            {t('joinOnQarte')}{' '}
             <span className="font-bold text-[#4b0082] group-hover:text-[#654EDA] transition-colors">Qarte</span>
           </p>
         </motion.a>
