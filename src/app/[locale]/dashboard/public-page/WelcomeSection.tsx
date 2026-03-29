@@ -52,7 +52,7 @@ const WelcomeSection = forwardRef<WelcomeSectionHandle, WelcomeSectionProps>(fun
       throw new Error('save failed');
     }
 
-    await refetch();
+    refetch().catch(() => {});
   };
 
   useImperativeHandle(ref, () => ({ save }));

@@ -104,7 +104,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
         .eq('id', merchant.id);
 
       if (error) throw error;
-      await refetch();
+      refetch().catch(() => {});
     });
   };
 

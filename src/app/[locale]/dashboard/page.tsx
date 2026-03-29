@@ -146,12 +146,13 @@ export default function DashboardPage() {
 
     // Enable shield directly
     try {
-      await supabase
+      const { error } = await supabase
         .from('merchants')
         .update({ shield_enabled: true })
         .eq('id', merchant.id);
+      if (error) throw error;
       setShieldEnabled(true);
-      refetch();
+      refetch().catch(() => {});
     } catch (err) {
       console.error('Error enabling shield:', err);
     }
@@ -162,13 +163,14 @@ export default function DashboardPage() {
     if (!merchant) return;
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('merchants')
         .update({ shield_enabled: false })
         .eq('id', merchant.id);
+      if (error) throw error;
       setShieldEnabled(false);
       setShowShieldWarning(false);
-      refetch();
+      refetch().catch(() => {});
     } catch (err) {
       console.error('Error disabling shield:', err);
     }

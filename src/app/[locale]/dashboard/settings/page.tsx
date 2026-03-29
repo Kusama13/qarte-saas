@@ -349,7 +349,8 @@ export default function SettingsPage() {
                   onClick={async () => {
                     if (code === currentLocale) return;
                     if (merchant) {
-                      await supabase.from('merchants').update({ locale: code }).eq('id', merchant.id);
+                      const { error } = await supabase.from('merchants').update({ locale: code }).eq('id', merchant.id);
+                      if (error) { console.error('Locale update error:', error); return; }
                     }
                     router.replace('/dashboard/settings', { locale: code as 'fr' | 'en' });
                   }}

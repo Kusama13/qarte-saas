@@ -107,12 +107,13 @@ export default function PlanningDashboard() {
   const handleSaveSettings = async () => {
     if (!merchant) return;
     saveSettings(async () => {
-      await supabase.from('merchants').update({
+      const { error } = await supabase.from('merchants').update({
         planning_message: messageEnabled && message.trim() ? message.trim() : null,
         planning_message_expires: messageEnabled && messageExpires ? messageExpires : null,
         booking_message: bookingMessage.trim() || null,
       }).eq('id', merchant.id);
-      await refetch();
+      if (error) throw error;
+      refetch().catch(() => {});
     });
   };
 

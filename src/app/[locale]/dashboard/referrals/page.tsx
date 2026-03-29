@@ -112,7 +112,7 @@ export default function ReferralsPage() {
         throw new Error('save failed');
       }
 
-      await refetch();
+      refetch().catch(() => {});
     });
   };
 
