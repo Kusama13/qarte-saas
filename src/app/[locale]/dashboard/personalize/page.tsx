@@ -78,13 +78,15 @@ function PersonalizeContent() {
     setSaving(true);
 
     try {
-      await supabase.from('merchants').update({
+      const { error: updateError } = await supabase.from('merchants').update({
         logo_url: logoUrl || null,
         primary_color: primaryColor,
         secondary_color: secondaryColor,
       }).eq('id', merchant.id);
 
-      await refetch();
+      if (updateError) throw updateError;
+
+      refetch().catch(() => {});
       if (from === 'program') {
         router.push('/dashboard/program');
       } else if (from === 'public-page') {
@@ -94,7 +96,6 @@ function PersonalizeContent() {
       }
     } catch (error) {
       console.error('Error saving:', error);
-    } finally {
       setSaving(false);
     }
   };
