@@ -225,13 +225,32 @@ export async function GET(request: NextRequest) {
   const allUserIds = [...new Set(allMerchantsList.map(m => m.user_id))];
   const allMerchantIds = allMerchantsList.map(m => m.id);
 
-  const [globalEmailMap, { data: allTracking }] = await Promise.all([
+  // Fetch all tracking records — paginate to avoid Supabase 1000-row default limit
+  async function fetchAllTracking(merchantIds: string[]) {
+    const allRows: Array<{ merchant_id: string; reminder_day: number }> = [];
+    const PAGE_SIZE = 1000;
+    let offset = 0;
+    while (true) {
+      const { data } = await supabase
+        .from('pending_email_tracking')
+        .select('merchant_id, reminder_day')
+        .in('merchant_id', merchantIds)
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (!data || data.length === 0) break;
+      allRows.push(...data);
+      if (data.length < PAGE_SIZE) break;
+      offset += PAGE_SIZE;
+    }
+    return allRows;
+  }
+
+  const [globalEmailMap, allTracking] = await Promise.all([
     batchGetUserEmails(allUserIds),
-    supabase.from('pending_email_tracking').select('merchant_id, reminder_day').in('merchant_id', allMerchantIds),
+    fetchAllTracking(allMerchantIds),
   ]);
 
   const globalTrackingSet = new Set(
-    (allTracking || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
+    allTracking.map(t => `${t.merchant_id}:${t.reminder_day}`)
   );
 
   // Pre-computed merchant filters — reused across multiple sections
@@ -376,7 +395,8 @@ export async function GET(request: NextRequest) {
           .from('visits')
           .select('merchant_id')
           .in('merchant_id', day5Merchants.map(m => m.id))
-          .eq('status', 'confirmed');
+          .eq('status', 'confirmed')
+          .limit(10000);
 
         const scanCountMap = new Map<string, number>();
         for (const v of day5Visits || []) {
@@ -439,7 +459,8 @@ export async function GET(request: NextRequest) {
           .from('pending_email_tracking')
           .select('merchant_id, sent_at')
           .in('merchant_id', scriptIds)
-          .eq('reminder_day', -103);
+          .eq('reminder_day', -103)
+          .limit(5000);
 
         const qrSent2DaysAgo = new Set(
           (qrTrackings || [])
@@ -457,7 +478,8 @@ export async function GET(request: NextRequest) {
           .from('visits')
           .select('merchant_id')
           .in('merchant_id', scriptIds)
-          .eq('status', 'confirmed');
+          .eq('status', 'confirmed')
+          .limit(10000);
         const hasVisits = new Set((scriptVisits || []).map(v => v.merchant_id));
 
         const scriptToSend = scriptCandidates.filter(
@@ -500,7 +522,8 @@ export async function GET(request: NextRequest) {
           .from('pending_email_tracking')
           .select('merchant_id, sent_at')
           .in('merchant_id', qcIds)
-          .eq('reminder_day', -103);
+          .eq('reminder_day', -103)
+          .limit(5000);
 
         const qrSent4DaysAgo = new Set(
           (qrTrackings4 || [])
@@ -518,7 +541,8 @@ export async function GET(request: NextRequest) {
           .from('visits')
           .select('merchant_id')
           .in('merchant_id', qcIds)
-          .eq('status', 'confirmed');
+          .eq('status', 'confirmed')
+          .limit(10000);
         const qcHasVisits = new Set((qcVisits || []).map(v => v.merchant_id));
 
         const qcToSend = qcCandidates.filter(
@@ -563,7 +587,8 @@ export async function GET(request: NextRequest) {
         .from('visits')
         .select('merchant_id')
         .in('merchant_id', configuredIds)
-        .eq('status', 'confirmed');
+        .eq('status', 'confirmed')
+        .limit(50000);
 
       const visitCountMap = new Map<string, number>();
       for (const v of visitCounts || []) {
@@ -706,7 +731,8 @@ export async function GET(request: NextRequest) {
         .select('merchant_id, visited_at')
         .in('merchant_id', merchantIds)
         .eq('status', 'confirmed')
-        .order('visited_at', { ascending: false });
+        .order('visited_at', { ascending: false })
+        .limit(10000);
 
       const lastVisitMap = new Map<string, string>();
       for (const visit of allLastVisits || []) {
@@ -818,7 +844,8 @@ export async function GET(request: NextRequest) {
         const { data: reactivationTrackings } = await supabase
           .from('reactivation_email_tracking')
           .select('merchant_id, day_sent')
-          .in('merchant_id', reactivationCandidates.map(m => m.id));
+          .in('merchant_id', reactivationCandidates.map(m => m.id))
+          .limit(5000);
 
         const reactivationTrackingSet = new Set(
           (reactivationTrackings || []).map(t => `${t.merchant_id}:${t.day_sent}`)
@@ -1013,7 +1040,8 @@ export async function GET(request: NextRequest) {
       .from('visits')
       .select('merchant_id')
       .eq('status', 'pending')
-      .order('merchant_id');
+      .order('merchant_id')
+      .limit(10000);
 
     const uniqueMerchantIds = [...new Set(merchantsWithPending?.map(v => v.merchant_id) || [])];
 
@@ -1030,7 +1058,8 @@ export async function GET(request: NextRequest) {
         .select('id, merchant_id, visited_at')
         .in('merchant_id', uniqueMerchantIds)
         .eq('status', 'pending')
-        .order('visited_at', { ascending: true });
+        .order('visited_at', { ascending: true })
+        .limit(10000);
 
       const pendingByMerchant = new Map<string, { id: string; visited_at: string }[]>();
       for (const visit of allPendingVisits || []) {
