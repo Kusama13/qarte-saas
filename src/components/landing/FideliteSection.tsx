@@ -14,6 +14,8 @@ import {
   Star,
   MousePointer2,
   ArrowRight,
+  Pin,
+  FileText,
 } from 'lucide-react';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
@@ -359,6 +361,83 @@ function ReviewsVisual({ t }: { t: (key: string) => string }) {
   );
 }
 
+function JournalVisual({ t }: { t: (key: string) => string }) {
+  const types = [
+    { label: t('journalAllergy'), bg: 'bg-red-50', text: 'text-red-600', dot: 'bg-red-400' },
+    { label: t('journalFormula'), bg: 'bg-violet-50', text: 'text-violet-600', dot: 'bg-violet-400' },
+    { label: t('journalPreference'), bg: 'bg-blue-50', text: 'text-blue-600', dot: 'bg-blue-400' },
+  ];
+
+  return (
+    <div className="relative w-full max-w-[320px] mx-auto">
+      <div className="bg-white backdrop-blur-sm rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-5">
+        {/* Client header */}
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-pink-500 flex items-center justify-center text-white text-sm font-bold shadow-md shadow-rose-300/40">
+            CL
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-800">Camille L.</p>
+            <p className="text-[10px] text-gray-400">12 visites</p>
+          </div>
+        </div>
+
+        {/* Type pills */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {types.map((type, i) => (
+            <motion.span
+              key={i}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: 0.1 + i * 0.06, ease: EASE }}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full ${type.bg} ${type.text} text-[10px] font-bold`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${type.dot}`} />
+              {type.label}
+            </motion.span>
+          ))}
+        </div>
+
+        {/* Pinned note */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.2, ease: EASE }}
+          className="bg-red-50/60 rounded-xl p-3 mb-2.5 border border-red-100/60"
+        >
+          <div className="flex items-center gap-1.5 mb-1">
+            <Pin className="w-3 h-3 text-red-400 rotate-45" />
+            <span className="text-[10px] font-bold text-red-500">{t('journalPinned')}</span>
+          </div>
+          <p className="text-[11px] text-gray-600">{t('journalNote1')}</p>
+        </motion.div>
+
+        {/* Regular note */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.3, ease: EASE }}
+          className="bg-violet-50/50 rounded-xl p-3 border border-violet-100/50"
+        >
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
+            <span className="text-[10px] font-bold text-violet-500">{t('journalFormula')}</span>
+          </div>
+          <p className="text-[11px] text-gray-600">{t('journalNote2')}</p>
+        </motion.div>
+      </div>
+
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-indigo-500 rounded-full px-3 py-1.5 shadow-lg shadow-indigo-500/30 animate-float-subtle">
+        <FileText className="w-4 h-4 text-white" />
+        <span className="text-xs font-bold text-white">{t('journalBadge')}</span>
+      </div>
+    </div>
+  );
+}
+
 /* ── Section ── */
 
 export function FideliteSection() {
@@ -416,6 +495,17 @@ export function FideliteSection() {
             titleBold={t('reviewsTitleBold')}
             description={t('reviewsDesc')}
             visual={<ReviewsVisual t={t} />}
+            delay={0.05}
+          />
+
+          <Separator />
+
+          <FeatureBlock
+            title={t('journalTitle')}
+            titleBold={t('journalTitleBold')}
+            description={t('journalDesc')}
+            visual={<JournalVisual t={t} />}
+            reverse
             delay={0.05}
           />
         </div>
