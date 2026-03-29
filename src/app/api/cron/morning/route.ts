@@ -61,17 +61,9 @@ const REMINDER_DAYS = [2, 3];
 // Result counters type
 type SectionStats = { processed: number; sent: number; skipped: number; errors: number };
 
-// Helper: process items sequentially with 600ms pause between each (Resend rate limit: 2 req/s)
-async function batchProcess<T>(
-  items: T[],
-  fn: (item: T) => Promise<void>,
-) {
-  for (let i = 0; i < items.length; i++) {
-    await fn(items[i]);
-    // Resend rate limit: 2 req/s — pause apres chaque envoi
-    await new Promise(resolve => setTimeout(resolve, 600));
-  }
-}
+// Resend rate limit: 2 req/s — 600ms pause between actual sends only
+const RESEND_RATE_LIMIT_MS = 600;
+const rateLimitDelay = () => new Promise(resolve => setTimeout(resolve, RESEND_RATE_LIMIT_MS));
 
 // Helper: batch fetch user emails by user_id (Supabase auth, pas Resend — pas de rate limit strict)
 async function batchGetUserEmails(userIds: string[]): Promise<Map<string, string>> {
@@ -98,11 +90,8 @@ async function getAlreadySentSet(merchantIds: string[], trackingCode: number): P
 }
 
 // Helper: standard email section — handles the common pattern:
-// 1. batchProcess candidates
-// 2. Skip if already sent (via alreadySentSet)
-// 3. Skip if no email (via emailMap)
-// 4. Call sendFn, track on success, count results
-// Optional extraSkip: per-candidate custom skip logic (return true to skip)
+// 1. Iterate candidates, skip already-sent/no-email/extraSkip
+// 2. Call sendFn, track on success, count results, rate-limit delay
 // Flush tracking records in batches of 100
 async function flushTrackingBatch(batch: Array<{ merchant_id: string; reminder_day: number; pending_count: number }>) {
   if (batch.length === 0) return;
@@ -141,7 +130,7 @@ async function processEmailSection<T extends { id: string; user_id: string }>(op
         }
         stats.sent++;
         // Resend rate limit: 2 req/s — pause only after actual send
-        await new Promise(resolve => setTimeout(resolve, 600));
+        await rateLimitDelay();
       } else { stats.errors++; }
     } catch { stats.errors++; }
   }
@@ -278,7 +267,7 @@ export async function GET(request: NextRequest) {
             await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
             results.trialEmails.ending++;
             merchantsSentTrialEmail.add(merchant.id);
-            await new Promise(resolve => setTimeout(resolve, 600));
+            await rateLimitDelay();
           }
           if (trialStatus.isInGracePeriod) {
             const daysExpired = Math.abs(trialStatus.daysRemaining);
@@ -290,7 +279,7 @@ export async function GET(request: NextRequest) {
               await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
               results.trialEmails.expired++;
               merchantsSentTrialEmail.add(merchant.id);
-              await new Promise(resolve => setTimeout(resolve, 600));
+              await rateLimitDelay();
             }
           }
         } catch {
@@ -642,7 +631,7 @@ export async function GET(request: NextRequest) {
                   merchant_id: merchantId, reminder_day: -101, pending_count: 0,
                 });
                 results.firstReward.sent++;
-                await new Promise(resolve => setTimeout(resolve, 600));
+                await rateLimitDelay();
               } else { results.firstReward.errors++; }
             } catch { results.firstReward.errors++; }
           }
@@ -793,7 +782,7 @@ export async function GET(request: NextRequest) {
                 pending_count: 0,
               });
               results.inactiveMerchants.sent++;
-              await new Promise(resolve => setTimeout(resolve, 600));
+              await rateLimitDelay();
             } else {
               results.inactiveMerchants.errors++;
             }
@@ -881,7 +870,7 @@ export async function GET(request: NextRequest) {
                 day_sent: daysSinceCancellation,
               });
               results.reactivation.sent++;
-              await new Promise(resolve => setTimeout(resolve, 600));
+              await rateLimitDelay();
             } else {
               results.reactivation.errors++;
             }
@@ -952,7 +941,7 @@ export async function GET(request: NextRequest) {
                 if (result.success) {
                   await supabase.from('pending_email_tracking').insert({ merchant_id: user.id, reminder_day: window.trackingCode, pending_count: 0 });
                   results.incompleteRelance.sent++;
-                  await new Promise(resolve => setTimeout(resolve, 600));
+                  await rateLimitDelay();
                 } else { results.incompleteRelance.errors++; }
               } catch { results.incompleteRelance.errors++; }
               sent = true;
@@ -1098,7 +1087,7 @@ export async function GET(request: NextRequest) {
               pending_count: pendingCount,
             });
             results.pendingReminders.sent++;
-            await new Promise(resolve => setTimeout(resolve, 600));
+            await rateLimitDelay();
           } else {
             results.pendingReminders.errors++;
           }
