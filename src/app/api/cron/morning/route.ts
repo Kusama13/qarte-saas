@@ -122,15 +122,15 @@ async function processEmailSection<T extends { id: string; user_id: string }>(op
   const { candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip, superAdminUserIds } = opts;
   const trackingBatch: Array<{ merchant_id: string; reminder_day: number; pending_count: number }> = [];
 
-  await batchProcess(candidates, async (candidate) => {
+  for (const candidate of candidates) {
     stats.processed++;
 
-    if (superAdminUserIds?.has(candidate.user_id)) { stats.skipped++; return; }
-    if (alreadySentSet.has(candidate.id)) { stats.skipped++; return; }
-    if (extraSkip && extraSkip(candidate)) { stats.skipped++; return; }
+    if (superAdminUserIds?.has(candidate.user_id)) { stats.skipped++; continue; }
+    if (alreadySentSet.has(candidate.id)) { stats.skipped++; continue; }
+    if (extraSkip && extraSkip(candidate)) { stats.skipped++; continue; }
 
     const email = emailMap.get(candidate.user_id);
-    if (!email) { stats.skipped++; return; }
+    if (!email) { stats.skipped++; continue; }
 
     try {
       const result = await sendFn(email, candidate);
@@ -140,9 +140,11 @@ async function processEmailSection<T extends { id: string; user_id: string }>(op
           await flushTrackingBatch(trackingBatch.splice(0));
         }
         stats.sent++;
+        // Resend rate limit: 2 req/s — pause only after actual send
+        await new Promise(resolve => setTimeout(resolve, 600));
       } else { stats.errors++; }
     } catch { stats.errors++; }
-  });
+  }
 
   // Flush remaining tracking records
   await flushTrackingBatch(trackingBatch);
@@ -261,38 +263,40 @@ export async function GET(request: NextRequest) {
     const trialMerchants = allMerchantsList.filter(m => m.subscription_status === 'trial' && !m.no_contact);
 
     if (trialMerchants.length > 0) {
-      await batchProcess(trialMerchants, async (merchant) => {
+      for (const merchant of trialMerchants) {
         results.trialEmails.processed++;
         const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
         const email = globalEmailMap.get(merchant.user_id);
 
-        if (!email) return;
+        if (!email) continue;
 
         try {
           if (trialStatus.isActive && (trialStatus.daysRemaining === 3 || trialStatus.daysRemaining === 1)) {
             const trackCode = trialStatus.daysRemaining === 3 ? -203 : -201;
-            if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) return;
+            if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) continue;
             await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining, undefined, (merchant.locale as EmailLocale) || 'fr');
             await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
             results.trialEmails.ending++;
             merchantsSentTrialEmail.add(merchant.id);
+            await new Promise(resolve => setTimeout(resolve, 600));
           }
           if (trialStatus.isInGracePeriod) {
             const daysExpired = Math.abs(trialStatus.daysRemaining);
             if (daysExpired === 1 || daysExpired === 2) {
               const trackCode = daysExpired === 1 ? -211 : -212;
-              if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) return;
+              if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) continue;
               const promoCode = daysExpired === 1 ? 'QARTE50' : undefined;
               await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, promoCode, (merchant.locale as EmailLocale) || 'fr');
               await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
               results.trialEmails.expired++;
               merchantsSentTrialEmail.add(merchant.id);
+              await new Promise(resolve => setTimeout(resolve, 600));
             }
           }
         } catch {
           results.trialEmails.errors++;
         }
-      });
+      }
     }
   } catch (error) {
     sectionStatuses.push({ name: 'trialEmails', status: 'error', error: String(error) });
@@ -619,17 +623,17 @@ export async function GET(request: NextRequest) {
           const alreadySentReward = new Set(firstRewardMerchantIds.filter(id => globalTrackingSet.has(`${id}:-101`)));
 
           // This section iterates over IDs, not merchant objects — kept manual for type safety
-          await batchProcess(firstRewardMerchantIds, async (merchantId) => {
+          for (const merchantId of firstRewardMerchantIds) {
             results.firstReward.processed++;
-            if (alreadySentReward.has(merchantId)) { results.firstReward.skipped++; return; }
+            if (alreadySentReward.has(merchantId)) { results.firstReward.skipped++; continue; }
 
             const merchant = merchantProgramMap.get(merchantId);
-            if (!merchant) { results.firstReward.skipped++; return; }
+            if (!merchant) { results.firstReward.skipped++; continue; }
 
             const email = globalEmailMap.get(merchant.user_id);
-            if (!email) { results.firstReward.skipped++; return; }
+            if (!email) { results.firstReward.skipped++; continue; }
 
-            if (!merchant.reward_description) { results.firstReward.skipped++; return; }
+            if (!merchant.reward_description) { results.firstReward.skipped++; continue; }
 
             try {
               const result = await sendFirstRewardEmail(email, merchant.shop_name, merchant.reward_description, merchant.loyalty_mode === 'cagnotte', (merchant.locale as EmailLocale) || 'fr');
@@ -638,9 +642,10 @@ export async function GET(request: NextRequest) {
                   merchant_id: merchantId, reminder_day: -101, pending_count: 0,
                 });
                 results.firstReward.sent++;
+                await new Promise(resolve => setTimeout(resolve, 600));
               } else { results.firstReward.errors++; }
             } catch { results.firstReward.errors++; }
-          });
+          }
         }
       }
 
@@ -732,7 +737,7 @@ export async function GET(request: NextRequest) {
       results.inactiveMerchants.skipped = activeMerchants.length - candidateMerchants.length;
 
       if (candidateMerchants.length > 0) {
-        await batchProcess(candidateMerchants, async (merchant) => {
+        for (const merchant of candidateMerchants) {
           const lastVisitDate = lastVisitMap.get(merchant.id);
           const referenceDate = lastVisitDate ? new Date(lastVisitDate) : new Date(merchant.created_at);
           const daysInactive = Math.floor((now.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -740,13 +745,13 @@ export async function GET(request: NextRequest) {
           const inactiveTrackingCode = daysInactive === 7 ? -110 : daysInactive === 14 ? -111 : -112;
           if (globalTrackingSet.has(`${merchant.id}:${inactiveTrackingCode}`)) {
             results.inactiveMerchants.skipped++;
-            return;
+            continue;
           }
 
           // Skip if merchant already received onboarding emails — avoid double email
           if (globalTrackingSet.has(`${merchant.id}:-106`) || globalTrackingSet.has(`${merchant.id}:-107`)) {
             results.inactiveMerchants.skipped++;
-            return;
+            continue;
           }
 
           // Skip InactiveMerchantDay7 if merchant is in grace period (trial just expired)
@@ -754,14 +759,14 @@ export async function GET(request: NextRequest) {
             const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
             if (trialStatus.isInGracePeriod) {
               results.inactiveMerchants.skipped++;
-              return;
+              continue;
             }
           }
 
           const email = globalEmailMap.get(merchant.user_id);
           if (!email) {
             results.inactiveMerchants.skipped++;
-            return;
+            continue;
           }
 
           try {
@@ -788,13 +793,14 @@ export async function GET(request: NextRequest) {
                 pending_count: 0,
               });
               results.inactiveMerchants.sent++;
+              await new Promise(resolve => setTimeout(resolve, 600));
             } else {
               results.inactiveMerchants.errors++;
             }
           } catch {
             results.inactiveMerchants.errors++;
           }
-        });
+        }
       }
     }
   } catch (error) {
@@ -839,7 +845,7 @@ export async function GET(request: NextRequest) {
           reactivationCountMap.set(card.merchant_id, (reactivationCountMap.get(card.merchant_id) || 0) + 1);
         }
 
-        await batchProcess(reactivationCandidates, async (merchant) => {
+        for (const merchant of reactivationCandidates) {
           const canceledAt = new Date(merchant.updated_at);
           const daysSinceCancellation = Math.floor(
             (now.getTime() - canceledAt.getTime()) / (1000 * 60 * 60 * 24)
@@ -847,11 +853,11 @@ export async function GET(request: NextRequest) {
 
           if (reactivationTrackingSet.has(`${merchant.id}:${daysSinceCancellation}`)) {
             results.reactivation.skipped++;
-            return;
+            continue;
           }
 
           const email = globalEmailMap.get(merchant.user_id);
-          if (!email) { results.reactivation.skipped++; return; }
+          if (!email) { results.reactivation.skipped++; continue; }
 
           const totalCustomers = reactivationCountMap.get(merchant.id) || 0;
 
@@ -875,13 +881,14 @@ export async function GET(request: NextRequest) {
                 day_sent: daysSinceCancellation,
               });
               results.reactivation.sent++;
+              await new Promise(resolve => setTimeout(resolve, 600));
             } else {
               results.reactivation.errors++;
             }
           } catch {
             results.reactivation.errors++;
           }
-        });
+        }
       }
     }
   } catch (error) {
@@ -932,10 +939,11 @@ export async function GET(request: NextRequest) {
           { minHours: 23, maxHours: 25, trackingCode: -110, sendFn: sendGuidedSignupEmail },
         ];
 
-        await batchProcess(incompleteUsers, async (user) => {
+        for (const user of incompleteUsers) {
           results.incompleteRelance.processed++;
           const createdAt = new Date(user.created_at);
           const hoursSince = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+          let sent = false;
 
           for (const window of incompleteEmailWindows) {
             if (hoursSince >= window.minHours && hoursSince <= window.maxHours && !incompleteTrackingSet.has(`${user.id}:${window.trackingCode}`)) {
@@ -944,14 +952,16 @@ export async function GET(request: NextRequest) {
                 if (result.success) {
                   await supabase.from('pending_email_tracking').insert({ merchant_id: user.id, reminder_day: window.trackingCode, pending_count: 0 });
                   results.incompleteRelance.sent++;
+                  await new Promise(resolve => setTimeout(resolve, 600));
                 } else { results.incompleteRelance.errors++; }
               } catch { results.incompleteRelance.errors++; }
-              return;
+              sent = true;
+              break;
             }
           }
 
-          results.incompleteRelance.skipped++;
-        });
+          if (!sent) results.incompleteRelance.skipped++;
+        }
       }
     }
 
@@ -1041,25 +1051,25 @@ export async function GET(request: NextRequest) {
         pendingByMerchant.get(visit.merchant_id)!.push(visit);
       }
 
-      await batchProcess(uniqueMerchantIds, async (merchantId) => {
+      for (const merchantId of uniqueMerchantIds) {
         results.pendingReminders.processed++;
 
         const merchant = pendingMerchantMap.get(merchantId);
         if (!merchant) {
           results.pendingReminders.errors++;
-          return;
+          continue;
         }
 
         const email = globalEmailMap.get(merchant.user_id);
         if (!email) {
           results.pendingReminders.skipped++;
-          return;
+          continue;
         }
 
         const pendingVisits = pendingByMerchant.get(merchantId);
         if (!pendingVisits || pendingVisits.length === 0) {
           results.pendingReminders.skipped++;
-          return;
+          continue;
         }
 
         const pendingCount = pendingVisits.length;
@@ -1071,12 +1081,12 @@ export async function GET(request: NextRequest) {
 
         if (!isInitialAlert && !isReminder) {
           results.pendingReminders.skipped++;
-          return;
+          continue;
         }
 
         if (globalTrackingSet.has(`${merchantId}:${daysSinceFirst}`)) {
           results.pendingReminders.skipped++;
-          return;
+          continue;
         }
 
         try {
@@ -1088,13 +1098,14 @@ export async function GET(request: NextRequest) {
               pending_count: pendingCount,
             });
             results.pendingReminders.sent++;
+            await new Promise(resolve => setTimeout(resolve, 600));
           } else {
             results.pendingReminders.errors++;
           }
         } catch {
           results.pendingReminders.errors++;
         }
-      });
+      }
     }
 
     // Clean up old tracking

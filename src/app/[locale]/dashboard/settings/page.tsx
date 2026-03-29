@@ -209,7 +209,7 @@ export default function SettingsPage() {
           </div>
 
           <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-            {t('referralDesc')}
+            {t.rich('referralDesc', { b: (chunks) => <strong className="font-semibold text-gray-800">{chunks}</strong> })}
           </p>
 
           <div className="flex items-center gap-3 p-4 rounded-2xl bg-white/80 border border-emerald-100 mb-4">
