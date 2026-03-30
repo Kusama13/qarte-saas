@@ -19,7 +19,7 @@ export default function CarteNFCPage() {
         <section className="max-w-lg mx-auto text-center py-16">
           <div className="relative mx-auto mb-10 w-fit">
             <Image
-              src="/images/Carte NFC QARTE .png"
+              src="/images/carte-nfc-qarte.png"
               alt={t('heroTitle')}
               width={340}
               height={218}

@@ -425,7 +425,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ### Page Abonnement (`/dashboard/subscription`)
 - Toggle mensuel/annuel avec badge "Recommande" sur annuel
-- Plan annuel : badge + feature "Carte NFC offerte (valeur 20 €)" en surbrillance indigo
+- CTA : "Continuer en mensuel" / "Continuer en annuel" (sans prix dans le bouton)
+- Plan annuel : badge cliquable "Carte NFC offerte" → modal explicatif avec photo reelle + description + livraison 7 jours
 - 8 features cles (liste reduite), grid 2 colonnes desktop + mobile compact
 - Reassurance sous CTA (icones ShieldCheck/Check/CreditCard) visible all screens
 - Textes explicatifs sous CTAs canceled ("Tes clients ne peuvent plus tamponner") et past_due

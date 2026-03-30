@@ -1328,7 +1328,7 @@
     "dailyCost": "That's <bold>${daily}/day</bold> — less than a coffee",
     "monthly": "Monthly",
     "annual": "Annual",
-    "subscribeCta": "Subscribe — {label}",
+    "subscribeCta": "Continue with {plan}",
     "ctaReassurance": "No commitment · Cancel in 1 click · Secure payment",
     "syncingTitle": "Syncing your subscription...",
     "syncingDesc": "Just a few seconds, everything is in order.",
@@ -1371,6 +1371,9 @@
     "pastDueCtaHint": "Update your card to unlock client scans.",
     "nfcIncluded": "Free NFC card ($20 value)",
     "nfcFeature": "Free NFC card — $20 value",
+    "nfcModalTitle": "Qarte NFC Card",
+    "nfcModalDesc": "A small card to place on your counter or wear around your neck. Your client taps their phone on it and instantly accesses their loyalty card — no QR code needed.",
+    "nfcModalDelivery": "Delivery within 7 days with the annual plan.",
     "faqTitle": "Frequently asked questions",
     "faqQ1": "What happens if I cancel?",
     "faqA1": "Your account stays active until the end of the paid period. After that, your clients can't scan. Your data is kept for 30 days.",
@@ -2300,7 +2303,7 @@
   },
   "boutique": {
     "metaTitle": "Qarte NFC Card — Loyalty in a tap",
-    "metaDescription": "The Qarte NFC card opens the loyalty page with a single tap. No QR code needed. $20, delivery within 1-2 weeks.",
+    "metaDescription": "The Qarte NFC card opens the loyalty page with a single tap. No QR code needed. $20, delivery within 7 days.",
     "heroTitle": "Qarte NFC Card",
     "heroDescription": "Replaces the QR code. Place it on the counter or wear it around your neck — your client taps and accesses their loyalty card.",
     "howTitle": "How it works",
@@ -2313,7 +2316,7 @@
     "price": "$20",
     "shippingIncluded": "shipping included",
     "orderButton": "Order my NFC card",
-    "deliveryNote": "Delivery within 1-2 weeks"
+    "deliveryNote": "Delivery within 7 days"
   },
   "clientScan": {
     "passages": "Visits",

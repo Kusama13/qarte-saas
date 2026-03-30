@@ -16,7 +16,7 @@ import {
   ArrowLeft,
   ShieldCheck,
 } from 'lucide-react';
-import { Button } from '@/components/ui';
+import { Button, Modal } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { getTrialStatus, formatDate } from '@/lib/utils';
 import type { Merchant } from '@/types';
@@ -57,6 +57,7 @@ export default function SubscriptionPage() {
   const [loadingPortal, setLoadingPortal] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [showNfcModal, setShowNfcModal] = useState(false);
   const [polling, setPolling] = useState(() => {
     if (typeof window !== 'undefined') {
       const flag = sessionStorage.getItem('qarte_portal_return');
@@ -401,10 +402,10 @@ export default function SubscriptionPage() {
               {billingPlan === 'annual' && (
                 <>
                   <p className="text-sm text-gray-400 mt-1"><span className="line-through">{PLANS.annual.originalPrice}</span> → <span className="font-bold text-emerald-600">{PLANS.annual.label}</span></p>
-                  <span className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100">
+                  <button onClick={() => setShowNfcModal(true)} className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-100 hover:from-indigo-100 hover:to-violet-100 transition-colors cursor-pointer underline-offset-2 hover:underline">
                     <CreditCard className="w-3.5 h-3.5 text-indigo-600" />
                     <span className="text-xs font-bold text-indigo-700">{t('nfcIncluded')}</span>
-                  </span>
+                  </button>
                 </>
               )}
             </div>
@@ -476,7 +477,7 @@ export default function SubscriptionPage() {
                 onClick={handleSubscribe}
                 loading={subscribing}
               >
-                {t('subscribeCta', { label: PLANS[billingPlan].label })}
+                {t('subscribeCta', { plan: billingPlan === 'annual' ? t('annual').toLowerCase() : t('monthly').toLowerCase() })}
               </Button>
             )}
 
@@ -613,7 +614,7 @@ export default function SubscriptionPage() {
                     onClick={handleSubscribe}
                     loading={subscribing}
                   >
-                    {t('subscribeCta', { label: PLANS[billingPlan].label })}
+                    {t('subscribeCta', { plan: billingPlan === 'annual' ? t('annual').toLowerCase() : t('monthly').toLowerCase() })}
                   </Button>
                 </div>
               ) : isCanceled ? (
@@ -653,7 +654,19 @@ export default function SubscriptionPage() {
         </div>
       </div>
 
-
+      {/* NFC explanation modal */}
+      <Modal isOpen={showNfcModal} onClose={() => setShowNfcModal(false)} size="sm">
+        <div className="text-center">
+          <img
+            src="/images/carte-nfc-qarte.png"
+            alt={t('nfcModalTitle')}
+            className="w-48 mx-auto rounded-2xl shadow-lg mb-4"
+          />
+          <h3 className="text-lg font-bold text-gray-900 mb-2">{t('nfcModalTitle')}</h3>
+          <p className="text-sm text-gray-500 leading-relaxed">{t('nfcModalDesc')}</p>
+          <p className="text-xs text-gray-400 mt-3">{t('nfcModalDelivery')}</p>
+        </div>
+      </Modal>
 
     </div>
   );

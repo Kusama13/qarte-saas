@@ -108,7 +108,7 @@ function ScanMethodsVisual({ t }: { t: (key: string) => string }) {
         <div className="flex-1 bg-gradient-to-br from-violet-50 to-pink-50 rounded-2xl shadow-lg shadow-violet-100/30 border border-violet-100 p-4 flex flex-col items-center">
           <div className="relative mb-3">
             <Image
-              src="/images/Carte NFC QARTE .png"
+              src="/images/carte-nfc-qarte.png"
               alt="Carte NFC Qarte"
               width={80}
               height={52}

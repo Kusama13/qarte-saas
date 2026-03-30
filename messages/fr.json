@@ -1328,7 +1328,7 @@
     "dailyCost": "Soit <bold>{daily}€/jour</bold> — moins qu'un café",
     "monthly": "Mensuel",
     "annual": "Annuel",
-    "subscribeCta": "S'abonner — {label}",
+    "subscribeCta": "Continuer en {plan}",
     "ctaReassurance": "Sans engagement · Résiliable en 1 clic · Paiement sécurisé",
     "syncingTitle": "Synchronisation de ton abonnement...",
     "syncingDesc": "Quelques secondes, tout est en ordre.",
@@ -1371,6 +1371,9 @@
     "pastDueCtaHint": "Mets à jour ta carte pour débloquer les scans clients.",
     "nfcIncluded": "Carte NFC offerte (valeur 20 €)",
     "nfcFeature": "Carte NFC offerte — valeur 20 €",
+    "nfcModalTitle": "Carte NFC Qarte",
+    "nfcModalDesc": "Une petite carte a poser sur ton comptoir ou a porter autour du cou. Ta cliente tap son telephone dessus et accede directement a sa carte de fidelite — sans scanner de QR code.",
+    "nfcModalDelivery": "Livraison sous 7 jours avec l'abonnement annuel.",
     "faqTitle": "Questions fréquentes",
     "faqQ1": "Que se passe-t-il si je résilie ?",
     "faqA1": "Ton compte reste actif jusqu'à la fin de la période payée. Ensuite, tes clients ne peuvent plus scanner. Tes données sont conservées 30 jours.",
@@ -2300,7 +2303,7 @@
   },
   "boutique": {
     "metaTitle": "Carte NFC Qarte — Fidélisez en un geste",
-    "metaDescription": "La carte NFC Qarte ouvre la page fidélité en un tap. Plus besoin de scanner un QR code. 20 €, livraison sous 1 à 2 semaines.",
+    "metaDescription": "La carte NFC Qarte ouvre la page fidélité en un tap. Plus besoin de scanner un QR code. 20 €, livraison sous 7 jours.",
     "heroTitle": "Carte NFC Qarte",
     "heroDescription": "Remplace le QR code. Posez-la sur le comptoir ou gardez-la autour du cou — votre cliente tap et accède à sa carte fidélité.",
     "howTitle": "Comment ça marche",
@@ -2313,7 +2316,7 @@
     "price": "20 €",
     "shippingIncluded": "livraison comprise",
     "orderButton": "Commander ma carte NFC",
-    "deliveryNote": "Livraison sous 1 à 2 semaines"
+    "deliveryNote": "Livraison sous 7 jours"
   },
   "clientScan": {
     "passages": "Passages",

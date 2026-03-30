@@ -630,7 +630,7 @@ export default function QRDownloadPage() {
             <div className="relative flex items-center justify-center p-8 bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl border border-violet-100/50">
               <div className="relative">
                 <img
-                  src="/images/Carte NFC QARTE .png"
+                  src="/images/carte-nfc-qarte.png"
                   alt={t('nfcCard')}
                   className="w-[300px] rounded-2xl shadow-2xl shadow-violet-200/50"
                 />
