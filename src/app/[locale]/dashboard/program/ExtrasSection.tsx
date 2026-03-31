@@ -2,12 +2,13 @@
 
 import {
   Star,
+  Users,
   Zap,
   Cake,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui';
-import { BIRTHDAY_SUGGESTIONS, type ProgramFormData } from './types';
+import { BIRTHDAY_SUGGESTIONS, DUO_OFFER_SUGGESTIONS, type ProgramFormData } from './types';
 
 interface ExtrasSectionProps {
   formData: ProgramFormData;
@@ -47,6 +48,61 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
             value={formData.reviewLink}
             onChange={(e) => setFormData(prev => ({ ...prev, reviewLink: e.target.value }))}
           />
+        </div>
+      </div>
+
+      {/* ═══════ OFFRE DUO ═══════ */}
+      <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-3 md:p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center">
+                <Users className="w-3.5 h-3.5 md:w-4 md:h-4 text-violet-500" />
+              </div>
+              <div>
+                <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('duoOfferTitle')}</span> <span className="font-normal text-gray-400">{t('duoOfferDesc')}</span></h3>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={formData.duoOfferEnabled}
+              onClick={() => setFormData(prev => ({ ...prev, duoOfferEnabled: !prev.duoOfferEnabled }))}
+              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 ${
+                formData.duoOfferEnabled ? 'bg-violet-500' : 'bg-gray-200'
+              }`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.duoOfferEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+          {formData.duoOfferEnabled && (
+            <div className="space-y-2">
+              <textarea
+                value={formData.duoOfferDescription}
+                onChange={(e) => setFormData(prev => ({ ...prev, duoOfferDescription: e.target.value }))}
+                placeholder={t('duoOfferPlaceholder')}
+                maxLength={200}
+                rows={2}
+                className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500 resize-none"
+              />
+              <div className="flex flex-wrap gap-1.5">
+                {DUO_OFFER_SUGGESTIONS.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, duoOfferDescription: suggestion }))}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                      formData.duoOfferDescription === suggestion
+                        ? 'bg-violet-100 border-violet-300 text-violet-700'
+                        : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-violet-50 hover:border-violet-200 hover:text-violet-600'
+                    }`}
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

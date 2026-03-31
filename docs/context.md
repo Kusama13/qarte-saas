@@ -171,6 +171,13 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Detection IP duplicates, moderation manuelle (valider/refuser), bannissement numeros
 - `shield_enabled` (BOOL, defaut true), wording : "verification automatique"
 
+### Offre Duo (mig 082)
+- `duo_offer_enabled` (BOOL, defaut false) + `duo_offer_description` (TEXT) sur table `merchants`
+- Config dans `/dashboard/program` (ExtrasSection) : toggle + description + suggestions
+- Affiche sur page publique `/p/[slug]` (ProgrammeView) et carte fidelite client (`/customer/card/[merchantId]`)
+- Le merchant applique la reduction manuellement — pas de logique au scan
+- Fonctionne en mode passage ET cagnotte
+
 ### Jours x2 (Double Stamp Days) — mode passage uniquement
 - `double_days_enabled` + `double_days_of_week` (JSON array getDay(), timezone merchant via `getTimezoneForCountry(country)`)
 - Helpers : `parseDoubleDays()`, `formatDoubleDays()`, `DAY_LABELS`, `WEEK_ORDER`
@@ -254,7 +261,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Admin pages** : hardcoded `'fr-FR'` acceptable (usage interne uniquement)
 
 ### Planning (mig 063-074)
-- Planning avance gere par le merchant : multi-services, photos inspiration, photos resultat ("avant/apres"), liens sociaux clients
+- Planning **manuel** gere par le merchant (pas de reservation en ligne) : le client voit les dispos, contacte le merchant, discute de ses envies, puis le merchant bloque le creneau
+- Multi-services, photos inspiration, photos resultat ("avant/apres"), liens sociaux clients
 - 1 creneau = 1 ligne en DB (date + heure debut). `client_name IS NULL` = disponible, rempli = pris
 - Dashboard `/dashboard/planning` : 3 onglets (Creneaux, Reservations, Parametres)
   - **Creneaux** : vue semaine (drag & drop inter-jours), vue jour (timeline 8h-21h), ajout creneaux (heures predefinies + custom), copie semaine, story Instagram

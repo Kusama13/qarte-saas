@@ -29,6 +29,8 @@ export interface DemoMerchant {
   welcome_referral_code: string | null;
   birthday_gift_enabled: boolean;
   birthday_gift_description: string | null;
+  duo_offer_enabled: boolean;
+  duo_offer_description: string | null;
   double_days_enabled: boolean;
   double_days_of_week: number[] | null;
   scan_code: string;
@@ -109,6 +111,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFull> = {
       referral_program_enabled: true, referral_reward_referrer: 'Une pose gel offerte', referral_reward_referred: '-15% sur votre 1ère pose',
       welcome_offer_enabled: true, welcome_offer_description: '-20% sur votre première pose', welcome_referral_code: 'BIENVENUE20',
       birthday_gift_enabled: true, birthday_gift_description: 'Un nail art offert',
+      duo_offer_enabled: true, duo_offer_description: '-20% pour les deux',
       double_days_enabled: true, double_days_of_week: [2, 4],
       scan_code: 'demo-onglerie',
       bio: 'Nail artist passionnée, spécialisée en baby boomer et nail art 3D. Sur rdv uniquement.',
@@ -152,6 +155,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFull> = {
       referral_program_enabled: true, referral_reward_referrer: '5€ sur votre cagnotte', referral_reward_referred: '-15% sur votre 1ère visite',
       welcome_offer_enabled: true, welcome_offer_description: '-15% sur votre première coupe', welcome_referral_code: 'WELCOME15',
       birthday_gift_enabled: true, birthday_gift_description: 'Un soin profond offert',
+      duo_offer_enabled: true, duo_offer_description: '-20% pour les deux',
       double_days_enabled: true, double_days_of_week: [1, 3],
       scan_code: 'demo-coiffure',
       bio: 'Coloriste et coiffeuse depuis 12 ans. Spécialités : balayage, blond californien et soins Kératine.',
@@ -198,6 +202,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFull> = {
       referral_program_enabled: true, referral_reward_referrer: 'Un flash offert', referral_reward_referred: '-10% sur votre 1er tatouage',
       welcome_offer_enabled: true, welcome_offer_description: '-10% sur votre premier tatouage', welcome_referral_code: 'INK10',
       birthday_gift_enabled: true, birthday_gift_description: 'Un piercing offert',
+      duo_offer_enabled: true, duo_offer_description: '-20% pour les deux',
       double_days_enabled: false, double_days_of_week: null,
       scan_code: 'demo-tatouage',
       bio: 'Artiste tatoueur spécialisé en réalisme et blackwork. Chaque pièce est unique.',
@@ -246,6 +251,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFull> = {
       referral_program_enabled: true, referral_reward_referrer: 'A free gel manicure', referral_reward_referred: '15% off your first set',
       welcome_offer_enabled: true, welcome_offer_description: '20% off your first gel set', welcome_referral_code: 'WELCOME20',
       birthday_gift_enabled: true, birthday_gift_description: 'A free nail art design',
+      duo_offer_enabled: true, duo_offer_description: '-20% for both',
       double_days_enabled: true, double_days_of_week: [2, 4],
       scan_code: 'demo-onglerie',
       bio: 'Passionate nail artist specializing in baby boomer and 3D nail art. By appointment only.',
@@ -289,6 +295,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFull> = {
       referral_program_enabled: true, referral_reward_referrer: '$5 on your loyalty balance', referral_reward_referred: '15% off your first visit',
       welcome_offer_enabled: true, welcome_offer_description: '15% off your first haircut', welcome_referral_code: 'WELCOME15',
       birthday_gift_enabled: true, birthday_gift_description: 'A free deep conditioning treatment',
+      duo_offer_enabled: true, duo_offer_description: '-20% for both',
       double_days_enabled: true, double_days_of_week: [1, 3],
       scan_code: 'demo-coiffure',
       bio: 'Colorist and stylist for 12 years. Specialties: balayage, California blonde, and Keratin treatments.',
@@ -335,6 +342,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFull> = {
       referral_program_enabled: true, referral_reward_referrer: 'A free flash tattoo', referral_reward_referred: '10% off your first tattoo',
       welcome_offer_enabled: true, welcome_offer_description: '10% off your first tattoo', welcome_referral_code: 'INK10',
       birthday_gift_enabled: true, birthday_gift_description: 'A free piercing',
+      duo_offer_enabled: true, duo_offer_description: '-20% for both',
       double_days_enabled: false, double_days_of_week: null,
       scan_code: 'demo-tatouage',
       bio: 'Tattoo artist specializing in realism and blackwork. Every piece is one of a kind.',

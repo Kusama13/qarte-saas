@@ -46,6 +46,8 @@ type MerchantPublic = Pick<
   | 'welcome_offer_description'
   | 'welcome_referral_code'
   | 'scan_code'
+  | 'duo_offer_enabled'
+  | 'duo_offer_description'
   | 'double_days_enabled'
   | 'double_days_of_week'
   | 'booking_url'
@@ -125,6 +127,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const hasAdvantages =
     (merchant.birthday_gift_enabled && !!merchant.birthday_gift_description) ||
     (merchant.referral_program_enabled && !!(merchant.referral_reward_referrer || merchant.referral_reward_referred)) ||
+    (merchant.duo_offer_enabled && !!merchant.duo_offer_description) ||
     merchant.double_days_enabled;
 
   const safeBookingUrl = merchant.booking_url && /^https?:\/\//i.test(merchant.booking_url) ? merchant.booking_url : null;
@@ -384,10 +387,11 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             transition={{ delay: 0.3, duration: 0.4 }}
             className={`${glassCard} p-4`}
           >
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-3">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-1">
               <CalendarDays className="w-3 h-3 inline-block mr-1 -mt-0.5" />
               {t('availability')}
             </p>
+            <p className="text-[11px] text-gray-400 mb-3">{t('planningManualHint')}</p>
 
             {/* Message libre */}
             {hasPublicMessage && (
@@ -834,6 +838,19 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                         {t('referredReward', { reward: merchant.referral_reward_referred })}
                       </p>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {merchant.duo_offer_enabled && merchant.duo_offer_description && (
+                <div className="px-5 py-4 flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-xl bg-violet-50 flex items-center justify-center shrink-0">
+                    <Users className="w-4 h-4 text-violet-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-bold text-gray-800 leading-tight">{t('duoOffer')}</p>
+                    <p className="text-[12px] text-gray-500 mt-0.5 leading-snug">{t('duoOfferDesc')}</p>
+                    <p className="text-[12px] font-semibold mt-1 leading-snug" style={{ color: merchant.primary_color }}>{merchant.duo_offer_description}</p>
                   </div>
                 </div>
               )}

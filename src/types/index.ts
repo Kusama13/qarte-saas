@@ -108,6 +108,9 @@ export interface Merchant {
   // Cagnotte (cashback) mode
   cagnotte_percent: number | null;
   cagnotte_tier2_percent: number | null;
+  // Duo offer
+  duo_offer_enabled: boolean;
+  duo_offer_description: string | null;
   // Double stamp days
   double_days_enabled: boolean;
   double_days_of_week: string; // JSON array of JS getDay() values ex: "[1,3]"

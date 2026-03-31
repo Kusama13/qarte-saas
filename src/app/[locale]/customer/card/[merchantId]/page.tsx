@@ -18,6 +18,7 @@ import {
   QrCode,
   ArrowRight,
   UserPlus,
+  Users,
   Share2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -977,6 +978,33 @@ export default function CustomerCardPage({
                     </>
                   )}
                 </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Offre Duo */}
+        {merchant.duo_offer_enabled && merchant.duo_offer_description && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4"
+          >
+            <div className="rounded-2xl bg-white shadow-lg shadow-gray-200/50 border border-gray-100/80 p-4">
+              <div className="flex items-center gap-3.5">
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    background: `linear-gradient(135deg, ${merchant.primary_color}, ${merchant.secondary_color || merchant.primary_color})`,
+                    boxShadow: `0 4px 12px ${merchant.primary_color}25`,
+                  }}
+                >
+                  <Users className="w-5 h-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-900 text-sm">{t('duoOfferTitle')}</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">{merchant.duo_offer_description}</p>
+                </div>
               </div>
             </div>
           </motion.div>

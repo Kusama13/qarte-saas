@@ -75,6 +75,7 @@ export default function SubscriptionPage() {
     t('featurePlanning'),
     t('featureQrNfc'),
     t('featureReferral'),
+    t('featureDuoOffer'),
     t('featureNotifications'),
     t('featureNoCommission'),
   ];

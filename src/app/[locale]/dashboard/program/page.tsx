@@ -46,6 +46,9 @@ export default function ProgramPage() {
     tier2Enabled: false,
     tier2StampsRequired: 0,
     tier2RewardDescription: '',
+    // Duo offer
+    duoOfferEnabled: false,
+    duoOfferDescription: '',
     // Double stamp days
     doubleDaysEnabled: false,
     doubleDaysOfWeek: [],
@@ -90,6 +93,8 @@ export default function ProgramPage() {
           tier2Enabled: data.tier2_enabled || false,
           tier2StampsRequired: data.tier2_stamps_required || 0,
           tier2RewardDescription: data.tier2_reward_description || '',
+          duoOfferEnabled: data.duo_offer_enabled || false,
+          duoOfferDescription: data.duo_offer_description || '',
           doubleDaysEnabled: data.double_days_enabled || false,
           doubleDaysOfWeek: (() => { try { return JSON.parse(data.double_days_of_week || '[]'); } catch { return []; } })(),
           birthdayGiftEnabled: data.birthday_gift_enabled || false,
@@ -176,6 +181,8 @@ export default function ProgramPage() {
           tier2_reward_description: isCagnotte
             ? (formData.tier2Enabled ? t('cagnotteRewardDesc', { percent: formData.cagnotteTier2Percent }) : null)
             : (formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null),
+          duo_offer_enabled: formData.duoOfferEnabled,
+          duo_offer_description: formData.duoOfferEnabled ? formData.duoOfferDescription.trim() || null : null,
           double_days_enabled: isCagnotte ? false : doubleDaysEnabled,
           double_days_of_week: isCagnotte ? '[]' : JSON.stringify(formData.doubleDaysOfWeek),
           birthday_gift_enabled: formData.birthdayGiftEnabled,
@@ -203,6 +210,8 @@ export default function ProgramPage() {
           tier2_reward_description: isCagnotte
             ? (formData.tier2Enabled ? t('cagnotteRewardDesc', { percent: formData.cagnotteTier2Percent }) : null)
             : (formData.tier2Enabled ? formData.tier2RewardDescription.trim() : null),
+          duo_offer_enabled: formData.duoOfferEnabled,
+          duo_offer_description: formData.duoOfferEnabled ? formData.duoOfferDescription.trim() || null : null,
           double_days_enabled: isCagnotte ? false : doubleDaysEnabled,
           double_days_of_week: isCagnotte ? '[]' : JSON.stringify(formData.doubleDaysOfWeek),
           birthday_gift_enabled: formData.birthdayGiftEnabled,

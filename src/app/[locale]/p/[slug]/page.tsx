@@ -39,6 +39,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       'birthday_gift_enabled, birthday_gift_description, ' +
       'referral_program_enabled, referral_reward_referrer, referral_reward_referred, ' +
       'welcome_offer_enabled, welcome_offer_description, welcome_referral_code, scan_code, ' +
+      'duo_offer_enabled, duo_offer_description, ' +
       'double_days_enabled, double_days_of_week, ' +
       'booking_url, instagram_url, facebook_url, tiktok_url, snapchat_url, whatsapp_url, ' +
       'opening_hours, ' +

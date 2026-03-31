@@ -71,6 +71,12 @@ export const BIRTHDAY_SUGGESTIONS = [
   '-30% sur ton prochain passage',
 ];
 
+export const DUO_OFFER_SUGGESTIONS = [
+  '-20% pour les deux',
+  '2e prestation a -50%',
+  'Soin offert pour l\'accompagnant',
+];
+
 export interface ProgramFormData {
   logoUrl: string;
   primaryColor: string;
@@ -86,6 +92,9 @@ export interface ProgramFormData {
   tier2Enabled: boolean;
   tier2StampsRequired: number;
   tier2RewardDescription: string;
+  // Duo offer
+  duoOfferEnabled: boolean;
+  duoOfferDescription: string;
   // Double stamp days
   doubleDaysEnabled: boolean;
   doubleDaysOfWeek: number[];
