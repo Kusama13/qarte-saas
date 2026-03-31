@@ -41,10 +41,10 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
 
   const fetchMerchant = useCallback(async (skipCache = false) => {
     try {
-      // Use getSession first (faster, from cache) then verify with getUser if needed
-      const { data: { session } } = await supabase.auth.getSession();
+      // Use getUser() to validate JWT and trigger token refresh if needed
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-      if (!session?.user) {
+      if (userError || !user) {
         localStorage.removeItem(CACHE_KEY);
         router.push('/auth/merchant');
         setLoading(false);
@@ -54,7 +54,7 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
       const { data, error: merchantError } = await supabase
         .from('merchants')
         .select('*')
-        .eq('user_id', session.user.id)
+        .eq('user_id', user.id)
         .is('deleted_at', null)
         .single();
 
@@ -105,7 +105,7 @@ export function MerchantProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem(CACHE_KEY);
         setMerchant(null);
         router.push('/auth/merchant');
-      } else if (event === 'SIGNED_IN') {
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         fetchMerchant(true);
       }
     });
