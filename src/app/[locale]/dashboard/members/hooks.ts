@@ -60,7 +60,7 @@ export function useMembersData() {
       .order('created_at', { ascending: false });
 
     if (cardsData) {
-      const transformed = cardsData.map((card) => ({
+      const transformed = cardsData.map((card: Record<string, unknown>) => ({
         ...card,
         customer: Array.isArray(card.customer) ? card.customer[0] : card.customer,
       })) as CustomerWithCard[];
