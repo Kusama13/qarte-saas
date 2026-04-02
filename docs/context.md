@@ -205,6 +205,14 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Cron morning genere les vouchers anniversaire
 - Dashboard accueil : section "Anniversaires a venir" (3 jours, aujourd'hui inclus) si `birthday_gift_enabled`
 
+### Avis Google
+- `review_link` sur `merchants` — lien Google review du commerce
+- Modal `ReviewModal` declenchee automatiquement : au 1er passage, au 3e passage (`current_stamps === 1 || 3`), apres chaque redeem, apres chaque voucher consomme
+- Dismiss 90 jours (localStorage `qarte_review_card_dismissed_${merchantId}`)
+- Encart permanent `ReviewCard` sur la carte client si `review_link` configure
+- `ReviewPrompt` sur la carte (dismissable definitivement via localStorage)
+- Config dans `/dashboard/program` (ExtrasSection)
+
 ### Push Notifications
 - Programmees (10h/18h), manuelles, automations (welcome, close_to_reward, reward_ready, inactive, reward_reminder, events)
 - Batched 50, pause 100ms entre batches

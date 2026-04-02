@@ -380,9 +380,9 @@ export default function CustomerCardPage({
           setTier1RedeemedInCycle(tier1RedemptionsAfterTier2.length > 0);
         }
 
-        // Show review modal at 3rd stamp (if review_link configured and not already dismissed)
+        // Show review modal at 1st and 3rd stamp (if review_link configured and not already dismissed)
         if (
-          data.card?.current_stamps === 3 &&
+          (data.card?.current_stamps === 1 || data.card?.current_stamps === 3) &&
           data.card?.merchant?.review_link &&
           !isPreview
         ) {

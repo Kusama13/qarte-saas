@@ -212,27 +212,28 @@ function FeatureBadge({ active, icon, label }: { active: boolean; icon: React.Re
 
 function getWhatsAppMarketing(name: string, customers: number): { label: string; text: string }[] {
   return [
-    { label: 'Presentation', text: `Hello ${name} ! C'est Elodie de Qarte, je vais t'accompagner pendant ton essai. Si t'as la moindre question, je suis dispo ici — n'hesite vraiment pas 😊` },
-    { label: 'Bienvenue', text: `Bienvenue sur Qarte ! En resumé : carte de fidelite digitale (QR code en caisse), vitrine en ligne pour tes reseaux, offre de bienvenue pour attirer de nouveaux clients, et notifications push pour les faire revenir. Tout se configure en quelques clics depuis ton espace pro 😊` },
-    { label: 'Pourquoi Qarte', text: `Qarte remplace les cartes en carton que tes clients perdent. Tu affiches un QR code, ils le scannent, et leur carte est sur leur telephone. Tu peux leur envoyer des notifs, activer le parrainage, et avoir une vitrine en ligne prete pour tes reseaux. Tout ca pour 19€/mois 😊` },
-    { label: 'Relance config', text: `J'ai vu que ton programme n'etait pas encore finalise — ca se fait en 2 clics depuis ton espace pro. Choisis ta recompense, ton nombre de tampons, et c'est en ligne ! Si t'as besoin d'un coup de main je suis la 😊` },
-    { label: 'Offre bienvenue', text: `T'as active l'offre de bienvenue ? C'est un geste pour les nouveaux clients (ex: -20% premiere visite). Ils la voient sur ta vitrine en ligne et ca les pousse a venir. Tu la configures dans Espace Pro → Ma Page en 30 secondes 🎁` },
-    { label: 'Referencement Google', text: `Savais-tu que ta vitrine en ligne est referencee sur Google ? Quand quelqu'un cherche un salon pres de chez toi, ta page peut ressortir. Ajoute tes prestations, photos et adresse pour maximiser ta visibilite 🔍` },
-    { label: 'Fin essai', text: `Ton essai se termine bientot${customers > 0 ? ` et tes ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. On continue ensemble ? 😊` },
+    { label: 'Bienvenue', text: `Bienvenue sur Qarte ${name} ! En resume :\n\n→ Tes clients ne perdent plus leur carte de fidelite\n→ T'as une vitrine en ligne prete pour tes reseaux\n→ Tes clients reviennent grace aux notifs et au parrainage\n→ Tu remplis ton planning les jours calmes\n\nTout est dans ton espace pro. Je suis Elodie, je t'accompagne 😊` },
+    { label: 'Presentation', text: `Hello ${name} ! C'est Elodie de Qarte, je t'accompagne pendant ton essai. La moindre question, je suis dispo ici 😊` },
+    { label: 'Relance config', text: `Hello ${name} ! Ton programme n'est pas encore en ligne — dis-moi ta recompense habituelle et je configure tout pour toi en 30 secondes 😊` },
+    { label: 'Offre bienvenue', text: `Hello ${name} ! Un geste pour les nouveaux clients (ex: -20% 1ere visite). Ils le voient sur ta vitrine, ils viennent, ils scannent → dans ta base. Espace Pro → Ma Page 🎁` },
+    { label: 'SEO Google', text: `Hello ${name} ! Ta vitrine est referencee sur Google. Ajoute tes prestations, photos et adresse pour ressortir quand quelqu'un cherche un salon pres de chez toi 🔍` },
+    { label: 'Fin essai', text: `Hello ${name} ! Ton essai se termine bientot${customers > 0 ? ` et tes ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. On continue ? 😊` },
     { label: 'Message libre', text: `C'est Elodie de Qarte. ` },
   ];
 }
 
 function getWhatsAppTuto(name: string): { label: string; text: string }[] {
   return [
-    { label: 'Comment ca marche', text: `La carte de fidelite c'est simple : tu affiches le QR code en caisse, le client le scanne, il entre son prenom et numero — et hop sa carte est creee ! A chaque passage il rescanne et le tampon s'ajoute tout seul. Pas d'appli a telecharger 📱` },
-    { label: 'La recompense', text: `Quand un client atteint le bon nombre de tampons, sa recompense apparait sur sa carte. Il te la montre, tu la valides, et son compteur repart a zero. On gere tout ! 🎁` },
-    { label: 'Le dashboard', text: `Ton espace pro (getqarte.com → Espace Pro) c'est ton tableau de bord : clients, tampons, stats, notifications. Tout se gere depuis la, meme sur mobile 📊` },
-    { label: 'Notifs & offres', text: `Tu peux envoyer des notifs push a tes clients depuis Espace Pro → Notifications. Y'a aussi des messages automatiques (anniversaire, rappels…). Top pour remplir un creneau calme 🔔` },
-    { label: 'Ma vitrine', text: `Ta vitrine en ligne c'est ton lien en bio pour Instagram, Facebook, TikTok. Photos, prestations, offre de bienvenue — tout est dessus. Tu la configures dans Espace Pro → Ma Page 📲` },
-    { label: 'Parrainage', text: `Chaque client a un lien de parrainage sur sa carte. Quand un ami s'inscrit, les deux recoivent un cadeau. Ca s'active en 1 clic dans Espace Pro → Parrainage 🤝` },
-    { label: 'Offre bienvenue', text: `L'offre de bienvenue c'est un geste que tu offres aux nouveaux clients (ex: -20% premiere visite). Elle apparait sur ta vitrine en ligne. Le client la voit, il vient, il scanne → il est dans ta base. Tu l'actives dans Espace Pro → Ma Page 🎁` },
-    { label: 'Le QR code', text: `Le QR code c'est ton outil principal. Imprime-le et affiche-le en caisse (on t'envoie des stickers aussi). Le client le scanne avec son telephone, pas besoin d'appli. En 5 secondes sa carte est creee et il recoit ses tampons a chaque visite 📸` },
+    { label: 'Comment ca marche', text: `Hello ${name} ! QR code en caisse → le client scanne → sa carte est creee. A chaque passage il rescanne, le tampon s'ajoute tout seul. Pas d'appli 📱` },
+    { label: 'La recompense', text: `Hello ${name} ! Bon nombre de tampons atteint → la recompense apparait. Il te la montre, tu valides, compteur a zero 🎁` },
+    { label: 'L\'espace pro', text: `Hello ${name} ! Ton espace pro (getqarte.com → Espace Pro) : clients, tampons, stats, notifs. Tout depuis ton telephone 📊` },
+    { label: 'Notifs push', text: `Hello ${name} ! Envoie des notifs push en 1 clic — top pour remplir un creneau calme ou rappeler une promo 🔔` },
+    { label: 'Vitrine en ligne', text: `Hello ${name} ! Ta vitrine c'est ton lien en bio : photos, prestations, offre de bienvenue. Espace Pro → Ma Page 📲` },
+    { label: 'Parrainage', text: `Hello ${name} ! Un ami s'inscrit via le lien de ton client → les deux recoivent un cadeau. Espace Pro → Parrainage 🤝` },
+    { label: 'Kit promo', text: `Hello ${name} ! QR code HD + visuels prets pour Instagram dans Espace Pro → QR code & Supports 🖼️` },
+    { label: 'Avis Google', text: `Hello ${name} ! On demande l'avis a tes clients au 1er passage et a chaque recompense. Ajoute ton lien Google dans Espace Pro → Programme ⭐` },
+    { label: 'Le Shield', text: `Hello ${name} ! Un client scanne 2 fois le meme jour ? Le 2eme est mis en attente. Un clic pour valider ou refuser ✅` },
+    { label: 'Prix', text: `Hello ${name} ! 19€/mois sans engagement, clients illimites 💳` },
   ];
 }
 
