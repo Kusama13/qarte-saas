@@ -115,12 +115,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 3. Bonus +1 stamp (skip for birthday vouchers)
+    // 3. Bonus +1 stamp (skip for birthday vouchers + skip if already visited today)
     let bonusVisitId: string | null = null;
     let newStamps: number | null = null;
-    const isBirthdayVoucher = voucher.source === 'birthday';
+    let skipBonusStamp = voucher.source === 'birthday';
 
-    if (!isBirthdayVoucher) {
+    if (!skipBonusStamp) {
+      // If client already scanned QR today, don't add another stamp
+      const today = getTodayForCountry(voucherMerchant?.country);
+      const { count } = await supabaseAdmin
+        .from('visits')
+        .select('id', { count: 'exact', head: true })
+        .eq('customer_id', voucher.customer_id)
+        .eq('merchant_id', voucher.merchant_id)
+        .eq('status', 'confirmed')
+        .gte('visited_at', today);
+
+      if (count && count > 0) {
+        skipBonusStamp = true;
+      }
+    }
+
+    if (!skipBonusStamp) {
       const { data: filleulCard } = await supabaseAdmin
         .from('loyalty_cards')
         .select('id, current_stamps')

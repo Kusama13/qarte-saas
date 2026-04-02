@@ -326,7 +326,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 ### Parrainage
 - `GET /api/referrals?code=` — Info code parrainage
 - `POST /api/referrals` — Inscription filleul (cree customer + carte + voucher)
-- `POST /api/vouchers/use` — Consommer voucher (auto-cree voucher parrain si referral)
+- `POST /api/vouchers/use` — Consommer voucher (auto-cree voucher parrain si referral). Bonus +1 stamp sauf birthday et sauf si visite confirmee aujourd'hui (evite double stamp scan+voucher)
 - `POST /api/merchants/referral-config` — Config parrainage + offre bienvenue (merchant auth)
 
 ### Offre de bienvenue
