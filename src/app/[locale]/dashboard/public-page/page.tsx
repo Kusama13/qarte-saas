@@ -179,15 +179,15 @@ export default function PublicPageDashboard() {
             <div className="space-y-4 text-sm text-gray-600">
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center">1</span>
-                <p>{t('helpStep1')}</p>
+                <p dangerouslySetInnerHTML={{ __html: t('helpStep1') }} />
               </div>
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center">2</span>
-                <p>{t('helpStep2')}</p>
+                <p dangerouslySetInnerHTML={{ __html: t('helpStep2') }} />
               </div>
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-100 text-violet-600 font-bold text-xs flex items-center justify-center">3</span>
-                <p>{t('helpStep3')}</p>
+                <p dangerouslySetInnerHTML={{ __html: t('helpStep3') }} />
               </div>
               <div className="flex gap-3">
                 <span className="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 font-bold text-xs flex items-center justify-center">
