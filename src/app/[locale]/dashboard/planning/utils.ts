@@ -21,7 +21,7 @@ export function formatDateFr(d: Date, locale: string = 'fr'): string {
   return d.toLocaleDateString(toBCP47(locale), { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-export const QUICK_TIMES = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'];
+export const QUICK_TIMES = ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
 
 /** Extract service IDs from a slot (junction table first, fallback to deprecated service_id) */
 export function getSlotServiceIds(slot: { planning_slot_services?: { service_id: string }[]; service_id?: string | null }): string[] {
