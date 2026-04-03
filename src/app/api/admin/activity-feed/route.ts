@@ -112,6 +112,7 @@ export async function GET(request: NextRequest) {
           .from('merchant_planning_slots')
           .select('merchant_id, client_name, slot_date, start_time, created_at')
           .not('client_name', 'is', null)
+          .is('primary_slot_id', null)
           .gte('created_at', periodStart);
         if (periodEnd) q = q.lt('created_at', periodEnd);
         return q.order('created_at', { ascending: false }).limit(200);

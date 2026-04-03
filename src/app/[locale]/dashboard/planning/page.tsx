@@ -5,9 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
-import { PHONE_CONFIG, formatTime, toBCP47 } from '@/lib/utils';
+import type { PlanningSlot } from '@/types';
+import { PHONE_CONFIG, formatTime, toBCP47, getCurrencySymbol } from '@/lib/utils';
 import { formatDate, formatDateFr, getServiceColorMap, getSlotColor, colorBorderStyle } from './utils';
 import { handleDownloadStory } from './StoryExport';
 import { usePlanningState } from './usePlanningState';
@@ -33,6 +34,9 @@ export default function PlanningDashboard() {
     todayStr, totalSlots, takenSlots, freeSlots, isToday, isPast,
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
+    autoBookingEnabled, setAutoBookingEnabled,
+    depositLink, setDepositLink, depositPercent, setDepositPercent, depositAmount, setDepositAmount,
+    depositMessage, setDepositMessage,
     services,
     modalState, setModalState, closeModal,
     selectedTimes, setSelectedTimes, customTime, setCustomTime,
@@ -60,6 +64,9 @@ export default function PlanningDashboard() {
     if (!deepLinkSlotId) return;
     setTab('reservations');
   }, [deepLinkSlotId, setTab]);
+
+  // Deposit validation error
+  const [depositError, setDepositError] = useState<string | null>(null);
 
   // Drag & drop state
   const [dragSlotId, setDragSlotId] = useState<string | null>(null);
@@ -104,15 +111,37 @@ export default function PlanningDashboard() {
     setDragOverDate(null);
   };
 
+  const handleConfirmDeposit = async (slot: PlanningSlot) => {
+    if (!merchant) return;
+    await supabase.from('merchant_planning_slots').update({ deposit_confirmed: true }).eq('id', slot.id);
+    fetchSlots();
+  };
+
   const handleSaveSettings = async () => {
     if (!merchant) return;
+    // Validate deposit config: if link → need amount, if amount → need link
+    if (autoBookingEnabled) {
+      const hasLink = !!depositLink.trim();
+      const hasAmount = !!(depositPercent || depositAmount);
+      if (hasAmount && !hasLink) { setDepositError(t('depositLinkRequired')); return; }
+      if (hasLink && !hasAmount) { setDepositError(t('depositAmountRequired')); return; }
+    }
+    setDepositError(null);
     saveSettings(async () => {
       const { error } = await supabase.from('merchants').update({
         planning_message: messageEnabled && message.trim() ? message.trim() : null,
         planning_message_expires: messageEnabled && messageExpires ? messageExpires : null,
         booking_message: bookingMessage.trim() || null,
+        auto_booking_enabled: autoBookingEnabled,
+        deposit_link: autoBookingEnabled && depositLink.trim() ? depositLink.trim() : null,
+        deposit_percent: autoBookingEnabled && depositPercent ? parseInt(depositPercent) : null,
+        deposit_amount: autoBookingEnabled && depositAmount ? parseFloat(depositAmount) : null,
+        deposit_message: autoBookingEnabled && depositMessage.trim() ? depositMessage.trim() : null,
       }).eq('id', merchant.id);
-      if (error) throw error;
+      if (error) {
+        console.error('Settings save error:', error);
+        throw error;
+      }
       refetch().catch(() => {});
     });
   };
@@ -187,8 +216,16 @@ export default function PlanningDashboard() {
       </div>
 
       {/* ── TABS ── */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-5 sm:w-fit">
-        {(['slots', 'reservations', 'settings'] as const).map(tabKey => (
+      <div className="grid grid-cols-2 sm:flex gap-1 bg-gray-100 p-1 rounded-xl mb-5 sm:w-fit">
+        {(['slots', 'reservations', 'online', 'settings'] as const).map(tabKey => {
+          const colors: Record<string, { active: string; inactive: string }> = {
+            slots: { active: 'bg-indigo-600 text-white', inactive: 'text-indigo-600 hover:bg-indigo-50' },
+            reservations: { active: 'bg-violet-600 text-white', inactive: 'text-violet-600 hover:bg-violet-50' },
+            online: { active: 'bg-emerald-600 text-white', inactive: 'text-emerald-600 hover:bg-emerald-50' },
+            settings: { active: 'bg-gray-700 text-white', inactive: 'text-gray-500 hover:bg-gray-200' },
+          };
+          const c = colors[tabKey];
+          return (
           <button
             key={tabKey}
             onClick={() => {
@@ -197,11 +234,12 @@ export default function PlanningDashboard() {
                 state.fetchReservations();
               }
             }}
-            className={`flex-1 sm:flex-none sm:px-5 py-2 text-xs font-semibold rounded-lg transition-all ${tab === tabKey ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`sm:px-5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${tab === tabKey ? c.active : c.inactive}`}
           >
-            {tabKey === 'slots' ? t('tabSlots') : tabKey === 'reservations' ? t('tabReservations') : t('tabSettings')}
+            {tabKey === 'slots' ? t('tabSlots') : tabKey === 'reservations' ? t('tabReservations') : tabKey === 'online' ? t('tabOnline') : t('tabSettings')}
           </button>
-        ))}
+          );
+        })}
       </div>
 
       {/* ── TAB: CRENEAUX ── */}
@@ -519,10 +557,194 @@ export default function PlanningDashboard() {
           serviceColorMap={serviceColorMap}
           locale={locale}
           merchantCountry={merchant?.country || 'FR'}
+          depositPercent={merchant?.deposit_percent}
+          depositAmount={merchant?.deposit_amount}
           onEditSlot={openEditSlot}
+          onConfirmDeposit={handleConfirmDeposit}
           deepLinkSlotId={deepLinkSlotId}
           onDeepLinkHandled={() => setDeepLinkSlotId(null)}
         />
+      )}
+
+      {/* ── TAB: RESA EN LIGNE ── */}
+      {tab === 'online' && (
+        <div className="max-w-lg mx-auto space-y-5">
+          {/* Hero card — Toggle + explanation */}
+          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <Globe className="w-5 h-5 text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-gray-900">{t('autoBookingTitle')}</h2>
+                  <p className="text-[11px] text-emerald-600/70 mt-0.5">{t('autoBookingHint')}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={autoBookingEnabled}
+                onClick={() => setAutoBookingEnabled(!autoBookingEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoBookingEnabled ? 'bg-emerald-600' : 'bg-gray-300'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${autoBookingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {!autoBookingEnabled && (
+              <p className="text-xs text-gray-400 italic ml-[52px]">{t('autoBookingOffHint')}</p>
+            )}
+          </div>
+
+          {/* Info banner when auto booking is enabled */}
+          {autoBookingEnabled && (
+            <div className="flex gap-2.5 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
+              <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-700">{t('autoBookingInfo')}</p>
+            </div>
+          )}
+
+          {/* Warning if external booking URL is configured */}
+          {autoBookingEnabled && merchant?.booking_url && (
+            <div className="flex gap-2.5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+              <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-700">{t('externalBookingWarning')}</p>
+            </div>
+          )}
+
+          {/* Acompte config */}
+          {autoBookingEnabled && (() => {
+            const hasAmount = !!(depositPercent || depositAmount);
+            const hasLink = !!depositLink.trim();
+            const linkMissing = hasAmount && !hasLink;
+            const amountMissing = hasLink && !hasAmount;
+            return (
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                {/* Section header */}
+                <div className="px-5 py-3 bg-amber-50/50 border-b border-amber-100/50 flex items-center gap-2.5">
+                  <CreditCard className="w-4 h-4 text-amber-500" />
+                  <h2 className="text-sm font-bold text-gray-800">{t('depositTitle')}</h2>
+                  <span className="text-[10px] text-gray-400 ml-auto">({t('optional')})</span>
+                </div>
+
+                <div className="p-5 space-y-5">
+                  {/* Payment link */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('depositLinkLabel')}</label>
+                    <input
+                      type="url"
+                      value={depositLink}
+                      onChange={(e) => setDepositLink(e.target.value)}
+                      placeholder={t('depositLinkPlaceholder')}
+                      className={`w-full px-3.5 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-colors ${linkMissing ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
+                    />
+                    {linkMissing && <p className="text-[10px] text-red-400 mt-1.5 flex items-center gap-1">{t('depositLinkRequired')}</p>}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-100" />
+
+                  {/* Amount selection */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('depositAmountLabel')}</label>
+
+                    {/* Percentage pills */}
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('percentageLabel')}</p>
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {['10', '15', '20', '25', '30'].map(v => (
+                        <button key={`p${v}`} type="button" onClick={() => { setDepositPercent(v); setDepositAmount(''); }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositPercent === v ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                        >{v}%</button>
+                      ))}
+                      <input
+                        type="number"
+                        value={!['10', '15', '20', '25', '30'].includes(depositPercent) ? depositPercent : ''}
+                        onChange={(e) => { setDepositPercent(e.target.value); if (e.target.value) setDepositAmount(''); }}
+                        placeholder={t('customPercent')}
+                        min={1}
+                        max={100}
+                        className={`w-20 px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
+                      />
+                    </div>
+
+                    {/* OR divider */}
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex-1 border-t border-gray-100" />
+                      <span className="text-[10px] font-semibold text-gray-300 uppercase">{t('or')}</span>
+                      <div className="flex-1 border-t border-gray-100" />
+                    </div>
+
+                    {/* Fixed amount pills */}
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('fixedAmountLabel')}</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {['10', '15', '20', '25', '30'].map(v => (
+                        <button key={`a${v}`} type="button" onClick={() => { setDepositAmount(v); setDepositPercent(''); }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositAmount === v ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                        >{v}{getCurrencySymbol(merchant?.country)}</button>
+                      ))}
+                      <input
+                        type="number"
+                        value={!['10', '15', '20', '25', '30'].includes(depositAmount) ? depositAmount : ''}
+                        onChange={(e) => { setDepositAmount(e.target.value); if (e.target.value) setDepositPercent(''); }}
+                        placeholder={t('customAmount')}
+                        min={1}
+                        className={`w-20 px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
+                      />
+                    </div>
+                    {amountMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositAmountRequired')}</p>}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-100" />
+
+                  {/* Message */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('depositMessageLabel')}</label>
+                    <input
+                      type="text"
+                      value={depositMessage}
+                      onChange={(e) => setDepositMessage(e.target.value)}
+                      placeholder={t('depositMessagePlaceholder')}
+                      maxLength={200}
+                      className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-colors"
+                    />
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {[t('depositSugg1'), t('depositSugg2'), t('depositSugg3')].map(sugg => (
+                        <button key={sugg} type="button" onClick={() => setDepositMessage(sugg)}
+                          className={`px-2.5 py-1.5 rounded-xl text-[11px] font-medium transition-all leading-tight text-left ${depositMessage === sugg ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
+                        >{sugg}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Deposit validation error */}
+          {depositError && (
+            <div className="flex gap-2.5 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+              <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-red-600 font-medium">{depositError}</p>
+            </div>
+          )}
+
+          {/* Save */}
+          <button
+            onClick={handleSaveSettings}
+            disabled={savingSettings}
+            className={`w-full py-3.5 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 shadow-md ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-200/50' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200/50'}`}
+          >
+            {savedSettings ? (
+              <span className="flex items-center justify-center gap-2"><Check className="w-4 h-4" /> {t('saved')}</span>
+            ) : savingSettings ? (
+              <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+            ) : (
+              t('save')
+            )}
+          </button>
+        </div>
       )}
 
       {/* ── TAB: PARAMETRES ── */}
@@ -676,11 +898,14 @@ export default function PlanningDashboard() {
             merchantCountry={merchant.country || 'FR'}
             saving={saving}
             locale={locale}
+            depositPercent={merchant.deposit_percent}
+            depositAmount={merchant.deposit_amount}
             onDraftChange={updateDraft}
             onSave={handleUpdateSlot}
             onDelete={handleDeleteSlot}
             onShiftSlot={handleMoveSlot}
             onRefreshSlots={fetchSlots}
+            onConfirmDeposit={handleConfirmDeposit}
             onGoBack={goBackToClientSelect}
             onClose={closeModal}
             onFetchClientHistory={fetchClientHistory}

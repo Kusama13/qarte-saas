@@ -268,23 +268,30 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Welcome email** : `sendWelcomeEmail` recoit le locale du merchant a la creation
 - **Admin pages** : hardcoded `'fr-FR'` acceptable (usage interne uniquement)
 
-### Planning (mig 063-074)
-- Planning **manuel** gere par le merchant (pas de reservation en ligne) : le client voit les dispos, contacte le merchant, discute de ses envies, puis le merchant bloque le creneau
+### Planning (mig 063-074, 083-084)
+- Planning gere par le merchant — mode manuel (le client contacte) OU **reservation en ligne** (`auto_booking_enabled`, mig 083)
+- **Reservation en ligne** : le client clique un creneau sur `/p/[slug]`, coche ses prestations, entre son tel/prenom, et confirme. Blocage automatique des creneaux consecutifs selon la duree totale des services. Email notification au merchant (`BookingNotificationEmail`). API `POST /api/planning/book`
+- **Multi-slot booking** : quand la duree > 30min, les creneaux consecutifs sont bloques. Le slot principal a les `planning_slot_services`, les fillers ont `primary_slot_id` pointant vers le principal (mig 084). Filtre centralise dans `usePlanningState.slotsByDate`. Cascade PATCH (clear) et DELETE (supprime fillers)
+- **Acompte** (optionnel) : `deposit_link` (lien externe Stripe/PayPal), `deposit_percent` OU `deposit_amount` (fixe), `deposit_message`. Affiche apres confirmation avec montant calcule. Tristate `deposit_confirmed`: NULL=pas d'acompte, false=en attente, true=confirme. Bouton confirmer dans le dashboard
+- **Priorite resa Qarte vs externe** : quand `auto_booking_enabled`, le CTA externe (`booking_url`) est masque sur la vitrine et la carte de fidelite affiche un seul lien "Reserver" vers `/p/{slug}`. Warning dans les settings si les deux sont configures
+- Les RDV ne sont ni modifiables ni annulables par le client
 - Multi-services, photos inspiration, photos resultat ("avant/apres"), liens sociaux clients
 - 1 creneau = 1 ligne en DB (date + heure debut). `client_name IS NULL` = disponible, rempli = pris
-- Dashboard `/dashboard/planning` : 3 onglets (Creneaux, Reservations, Parametres)
+- Dashboard `/dashboard/planning` : 4 onglets (Creneaux, Reservations, Resa en ligne, Parametres)
   - **Creneaux** : vue semaine (drag & drop inter-jours), vue jour (timeline 8h-21h), ajout creneaux (heures predefinies + custom), copie semaine, story Instagram
-  - **Reservations** : tous les RDV reserves (a venir + passes), modal detail (prestations, duree, prix, notes, photos inspiration + photos resultat cliquables/telechargeable, historique client), bouton modifier
+  - **Reservations** : tous les RDV reserves (a venir + passes), modal detail (prestations, duree, prix, acompte, notes, photos, historique client), bouton modifier + confirmer acompte
+  - **Resa en ligne** : toggle activation, config acompte (lien, pourcentage ou montant fixe, message), info et warning si lien externe
   - **Parametres** : message libre public, conditions de reservation
 - **Couleurs services** : palette 10 couleurs attribuees automatiquement aux services, affichees sur les creneaux en vue semaine/jour
 - **Historique client** : dans le modal booking, affiche les RDV passes du client (via `GET /api/planning?customerId=`)
-- **Photos resultat** : photos "apres" prestation (max 3/creneau), separees des photos inspiration
-- Flow edition 2 modals : Modal 1 (choix/creation client + reseaux sociaux Instagram/TikTok/Facebook) → Modal 2 (multi-services avec duree+prix, photos inspiration max 3, photos resultat max 3, notes, detection chevauchement avec options decaler/supprimer)
-- **Creation client depuis planning** : reutilise `/api/customers/create`. Si client existe deja (409), l'API retourne `customer_id` et le planning le reutilise automatiquement. Erreurs affichees dans un bandeau rouge
-- Tables : `merchant_planning_slots` (mig 063+065), `planning_slot_services` (mig 071, junction multi-services), `planning_slot_photos` (mig 072, max 3 photos inspiration), `planning_slot_result_photos` (mig 074, max 3 photos resultat — meme structure que planning_slot_photos)
+- **Photos resultat** : photos "apres" prestation (max 3/creneau), separees des photos inspiration. Groupees sous un depliant "Photos" (Avant/Apres) dans le modal edition
+- Flow edition : clic slot reserve → direct modal edition (skip selection client). Clic slot libre → Modal 1 (choix/creation client) → Modal 2 (edition)
+- **Creation client depuis planning** : reutilise `/api/customers/create`. Si client existe deja (409), l'API retourne `customer_id` et le planning le reutilise automatiquement
+- **Auto-creation client + voucher bienvenue** : a la reservation en ligne, si nouveau client, creation automatique du customer + carte fidelite + voucher bienvenue (si `welcome_offer_enabled`)
+- Tables : `merchant_planning_slots` (mig 063+065+083+084), `planning_slot_services` (mig 071), `planning_slot_photos` (mig 072), `planning_slot_result_photos` (mig 074)
 - Colonnes `instagram_handle`, `tiktok_handle`, `facebook_url` sur `customers` (mig 073)
-- API `/api/planning` (GET avec join services+photos+result_photos+customer social, filtre `customerId`/POST/PATCH avec service_ids[]/DELETE) + `/api/planning/copy-week` + `/api/planning/photos` (POST/DELETE) + `/api/planning/result-photos` (POST/DELETE) + `/api/planning/shift-slot` (POST, supporte `newDate` pour deplacements inter-jours) + `/api/customers/social` (PATCH)
-- Helpers partages : `_photo-helpers.ts` (logique commune upload/delete pour photos et result-photos)
+- API `/api/planning` (GET avec join services+photos+result_photos+customer social, filtre `customerId`/POST/PATCH avec cascade fillers/DELETE avec cascade fillers) + `/api/planning/book` (POST public, rate-limited) + `/api/planning/copy-week` + `/api/planning/photos` + `/api/planning/result-photos` + `/api/planning/shift-slot` + `/api/customers/social`
+- Helpers partages : `_photo-helpers.ts`, `computeDepositAmount()` dans `planning/utils.ts`
 - Page publique `/p/[slug]` : section "Disponibilites" (60j glissants, groupes par mois, preview 4 jours + bouton Voir plus), banniere message libre
 
 ### Programmes Membres

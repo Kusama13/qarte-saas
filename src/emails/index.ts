@@ -30,3 +30,4 @@ export { GracePeriodSetupEmail } from './GracePeriodSetupEmail';
 export { BirthdayNotificationEmail } from './BirthdayNotificationEmail';
 export { AnnouncementMaPageEmail } from './AnnouncementMaPageEmail';
 export { WinBackEmail } from './WinBackEmail';
+export { BookingNotificationEmail } from './BookingNotificationEmail';

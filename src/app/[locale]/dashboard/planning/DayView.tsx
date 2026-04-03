@@ -45,7 +45,7 @@ export default function DayView({
     return map;
   }, [services]);
 
-  // Compute slot positions and heights
+  // Compute slot positions and heights (filler slots already filtered in slotsByDate)
   const slotCards = useMemo(() => {
     return daySlots.map(slot => {
       const mins = timeToMinutes(slot.start_time);

@@ -90,6 +90,11 @@
 | planning_message | TEXT | NULL | mig 063 |
 | booking_message | TEXT | NULL | mig 064 |
 | planning_message_expires | DATE | NULL | mig 064 |
+| auto_booking_enabled | BOOLEAN | `FALSE` | NOT NULL, mig 083 |
+| deposit_link | TEXT | NULL | mig 083, lien externe paiement acompte |
+| deposit_percent | INTEGER | NULL | mig 083, % acompte (mutuellement exclusif avec deposit_amount) |
+| deposit_amount | DECIMAL(10,2) | NULL | mig 083, montant fixe acompte (mutuellement exclusif avec deposit_percent) |
+| deposit_message | TEXT | NULL | mig 083, message libre acompte |
 | show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
 | signup_source | TEXT | NULL | mig 068 |
 | locale | TEXT | `'fr'` | NOT NULL, mig 069 |
@@ -619,10 +624,12 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | service_id | UUID FK → merchant_services | NULL | ON DELETE SET NULL |
 | notes | TEXT | NULL | |
 | customer_id | UUID FK → customers | NULL | ON DELETE SET NULL, mig 065 |
+| deposit_confirmed | BOOLEAN | NULL | mig 083, NULL=pas d'acompte, false=en attente, true=confirme |
+| primary_slot_id | UUID FK → merchant_planning_slots | NULL | mig 084, NULL=slot principal/libre, UUID=filler d'un booking multi-creneaux |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **RLS** : SELECT public (client_name IS NULL AND slot_date >= CURRENT_DATE), ALL merchant own
-**Indexes** : `idx_planning_slots_merchant_date`, `idx_planning_slots_customer` (partial, NOT NULL), UNIQUE(merchant_id, slot_date, start_time)
+**Indexes** : `idx_planning_slots_merchant_date`, `idx_planning_slots_customer` (partial, NOT NULL), `idx_planning_slots_primary_slot_id` (partial, NOT NULL), UNIQUE(merchant_id, slot_date, start_time)
 
 ### 2.36 planning_slot_services (mig 071)
 
@@ -946,6 +953,9 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 079 | whatsapp_url | merchants.whatsapp_url TEXT |
 | 080 | customer_notes | Table customer_notes (journal suivi client : content, note_type, pinned, slot_id FK nullable, index lookup+pinned, RLS merchant) |
 | 081 | affiliate_links | Table affiliate_links (name, slug UNIQUE, commission_percent, notes, active, pas de RLS — admin service_role) |
+| 082 | duo_offer | merchants.duo_offer_enabled BOOLEAN + duo_offer_description TEXT |
+| 083 | auto_booking | merchants.auto_booking_enabled, deposit_link, deposit_percent, deposit_message + merchant_planning_slots.deposit_confirmed BOOLEAN |
+| 084 | primary_slot_id | merchant_planning_slots.primary_slot_id UUID FK self-ref — lie les fillers au slot principal d'un booking multi-creneaux |
 
 ---
 

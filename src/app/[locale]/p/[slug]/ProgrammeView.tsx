@@ -6,6 +6,7 @@ import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import SimulatedCard from './SimulatedCard';
+import BookingModal from './BookingModal';
 import { useInView } from '@/hooks/useInView';
 import { formatDoubleDays, formatTime, toBCP47, getTimezoneForCountry, formatCurrency, detectBookingPlatform } from '@/lib/utils';
 import { trackCtaClick } from '@/lib/analytics';
@@ -64,6 +65,11 @@ type MerchantPublic = Pick<
   | 'planning_message'
   | 'planning_message_expires'
   | 'booking_message'
+  | 'auto_booking_enabled'
+  | 'deposit_link'
+  | 'deposit_percent'
+  | 'deposit_amount'
+  | 'deposit_message'
   | 'phone'
   | 'country'
 >;
@@ -78,6 +84,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [planningExpanded, setPlanningExpanded] = useState(false);
   const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
+  const [bookingSlot, setBookingSlot] = useState<{ date: string; time: string } | null>(null);
 
   // Opening hours
   const DAY_LABELS_SHORT = t('dayLabelsShort').split(',');
@@ -131,8 +138,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     merchant.double_days_enabled;
 
   const safeBookingUrl = merchant.booking_url && /^https?:\/\//i.test(merchant.booking_url) ? merchant.booking_url : null;
-  const hasBooking = !!safeBookingUrl;
-  const bookingPlatform = detectBookingPlatform(safeBookingUrl);
+  // Hide external booking CTA when Qarte online booking is active
+  const hasBooking = !!safeBookingUrl && !merchant.auto_booking_enabled;
+  const bookingPlatform = hasBooking ? detectBookingPlatform(safeBookingUrl) : null;
   const noOp = (e: React.MouseEvent) => { e.preventDefault(); };
 
   // Planning: group slots by month then by date
@@ -142,7 +150,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const nowTime = useMemo(() => { const d = new Date(); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }, []);
   const planningByMonth = useMemo(() => {
     if (!merchant.planning_enabled || planningSlots.length === 0) return [];
-    const grouped: { month: string; days: { label: string; dateStr: string; times: string[] }[] }[] = [];
+    const grouped: { month: string; days: { label: string; dateStr: string; times: { raw: string; display: string }[] }[] }[] = [];
     let currentMonth = '';
     let currentDate = '';
     for (const slot of planningSlots) {
@@ -164,7 +172,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         monthGroup.days.push({ label: dayLabel, dateStr: slot.slot_date, times: [] });
         currentDate = slot.slot_date;
       }
-      monthGroup.days[monthGroup.days.length - 1].times.push(timeStr);
+      monthGroup.days[monthGroup.days.length - 1].times.push({ raw: slot.start_time, display: timeStr });
     }
     return grouped;
   }, [planningSlots, merchant.planning_enabled, todayLocal, nowTime]);
@@ -391,7 +399,12 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               <CalendarDays className="w-3 h-3 inline-block mr-1 -mt-0.5" />
               {t('availability')}
             </p>
-            <p className="text-[11px] text-gray-400 mb-3">{t('planningManualHint')}</p>
+            {!merchant.auto_booking_enabled && (
+              <p className="text-[11px] text-gray-400 mb-3">{t('planningManualHint')}</p>
+            )}
+            {merchant.auto_booking_enabled && (
+              <p className="text-[11px] text-emerald-500 font-medium mb-3">{t('planningAutoHint')}</p>
+            )}
 
             {/* Message libre */}
             {hasPublicMessage && (
@@ -452,15 +465,30 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                                 {day.label}
                               </p>
                               <div className="flex flex-wrap gap-1.5">
-                                {day.times.map(time => (
-                                  <span
-                                    key={time}
-                                    className="px-2.5 py-1 rounded-lg text-[11px] font-semibold"
-                                    style={{ backgroundColor: `${p}12`, color: p }}
-                                  >
-                                    {time}
-                                  </span>
-                                ))}
+                                {day.times.map(({ raw, display }) => {
+                                  if (merchant.auto_booking_enabled && !isDemo) {
+                                    return (
+                                      <button
+                                        key={raw}
+                                        type="button"
+                                        onClick={() => setBookingSlot({ date: day.dateStr, time: raw })}
+                                        className="px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                                        style={{ backgroundColor: `${p}12`, color: p }}
+                                      >
+                                        {display}
+                                      </button>
+                                    );
+                                  }
+                                  return (
+                                    <span
+                                      key={raw}
+                                      className="px-2.5 py-1 rounded-lg text-[11px] font-semibold"
+                                      style={{ backgroundColor: `${p}12`, color: p }}
+                                    >
+                                      {display}
+                                    </span>
+                                  );
+                                })}
                               </div>
                             </div>
                           );
@@ -615,14 +643,12 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         })()}
 
         {/* ── OFFRE DE BIENVENUE (nouveaux clients) ── */}
-        {merchant.welcome_offer_enabled && merchant.welcome_offer_description && merchant.welcome_referral_code && merchant.scan_code && (
-          <motion.a
-            href={isDemo ? '#' : `/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`}
-            onClick={isDemo ? noOp : undefined}
+        {merchant.welcome_offer_enabled && merchant.welcome_offer_description && (merchant.auto_booking_enabled || (merchant.welcome_referral_code && merchant.scan_code)) && (
+          <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.28, ease: 'easeOut' }}
-            className="block rounded-2xl overflow-hidden border-2 shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            className="block rounded-2xl overflow-hidden border-2 shadow-lg"
             style={{ borderColor: `${p}40`, boxShadow: `0 4px 24px ${p}20` }}
           >
             <div
@@ -643,32 +669,35 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   {merchant.welcome_offer_description}
                 </p>
                 <p className="text-[12px] text-gray-500 mt-1">
-                  {t('signUpToEnjoy')}
+                  {merchant.auto_booking_enabled ? t('signUpToEnjoyBooking') : t('signUpToEnjoy')}
                 </p>
               </div>
-              <div
-                className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white"
-                style={{ background: p }}
-              >
-                {t('enjoyNow')}
-              </div>
+              {!merchant.auto_booking_enabled && merchant.scan_code && (
+                <a
+                  href={isDemo ? '#' : `/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`}
+                  onClick={isDemo ? noOp : undefined}
+                  className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white"
+                  style={{ background: p }}
+                >
+                  {t('enjoyNow')}
+                </a>
+              )}
             </div>
             <div className="px-5 pb-4" style={{ background: `linear-gradient(135deg, ${p}06, transparent)` }}>
               <p className="text-[12px] text-gray-500 leading-relaxed">
-                {t('welcomeOfferInstructions')}
+                {merchant.auto_booking_enabled ? t('welcomeOfferInstructionsBooking') : t('welcomeOfferInstructions')}
               </p>
             </div>
-          </motion.a>
+          </motion.div>
         )}
 
         {/* ── OFFRE PROMO (tout le monde) — style amber distinct ── */}
-        {promoOffer && merchant.scan_code && (
-          <motion.a
-            href={`/scan/${merchant.scan_code}?offer=${promoOffer.id}`}
+        {promoOffer && (merchant.auto_booking_enabled || merchant.scan_code) && (
+          <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.32, ease: 'easeOut' }}
-            className="block rounded-2xl overflow-hidden border-2 shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            className="block rounded-2xl overflow-hidden border-2 shadow-lg"
             style={{ borderColor: '#f59e0b40', boxShadow: '0 4px 24px #f59e0b20' }}
           >
             <div
@@ -689,19 +718,24 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   {t('promoOpenToAll')}
                 </p>
               </div>
-              <div className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white bg-amber-500">
-                {t('enjoyNow')}
-              </div>
+              {!merchant.auto_booking_enabled && merchant.scan_code && (
+                <a
+                  href={`/scan/${merchant.scan_code}?offer=${promoOffer.id}`}
+                  className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white bg-amber-500"
+                >
+                  {t('enjoyNow')}
+                </a>
+              )}
             </div>
             <div className="px-5 pb-4" style={{ background: 'linear-gradient(135deg, #f59e0b06, transparent)' }}>
               <p className="text-[12px] text-gray-500 leading-relaxed">
-                {t('promoInstructions')}
+                {merchant.auto_booking_enabled ? t('promoInstructionsBooking') : t('promoInstructions')}
                 {promoOffer.expires_at && (
                   <span className="font-semibold text-amber-700"> {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString(toBCP47(locale)) })}</span>
                 )}
               </p>
             </div>
-          </motion.a>
+          </motion.div>
         )}
 
         {/* Label carte simulée */}
@@ -1120,6 +1154,19 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
           }),
         }}
       />
+      {/* ── BOOKING MODAL ── */}
+      {bookingSlot && merchant.auto_booking_enabled && !isDemo && (
+        <BookingModal
+          merchant={merchant}
+          services={services}
+          serviceCategories={serviceCategories}
+          slotDate={bookingSlot.date}
+          slotTime={bookingSlot.time}
+          planningSlots={planningSlots}
+          promoOffer={promoOffer}
+          onClose={() => setBookingSlot(null)}
+        />
+      )}
     </div>
   );
 }

@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     const supabaseAdmin = getSupabaseAdmin();
     let query = supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, service_id, notes, deposit_confirmed, primary_slot_id, created_at, planning_slot_services(service_id, service:merchant_services!service_id(name)), planning_slot_photos(id, url, position), planning_slot_result_photos(id, url, position), customer:customers!customer_id(instagram_handle, tiktok_handle, facebook_url)')
       .eq('merchant_id', merchantId)
       .order('slot_date')
       .order('start_time');
@@ -184,6 +184,7 @@ const updateSlotSchema = z.object({
   service_id: z.string().uuid().nullable().optional(), // deprecated
   service_ids: z.array(z.string().uuid()).max(10).optional(),
   notes: z.string().max(300).nullable().optional(),
+  deposit_confirmed: z.boolean().nullable().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -202,7 +203,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, notes } = parsed.data;
+    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, notes, deposit_confirmed } = parsed.data;
 
     if (!await verifyOwnership(supabase, merchantId, user.id)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -228,6 +229,7 @@ export async function PATCH(request: NextRequest) {
     }
     if (customer_id !== undefined) updateData.customer_id = customer_id;
     if (notes !== undefined) updateData.notes = notes?.trim() || null;
+    if (deposit_confirmed !== undefined) updateData.deposit_confirmed = deposit_confirmed;
 
     // Run slot update and services junction update in parallel
     const slotUpdatePromise = supabaseAdmin
@@ -252,10 +254,19 @@ export async function PATCH(request: NextRequest) {
           })
       : Promise.resolve();
 
-    const [{ error }] = await Promise.all([slotUpdatePromise, serviceUpdatePromise]);
+    // If clearing a slot (client_name → null), also clear its filler slots
+    const clearFillersPromise = (client_name === null || client_name === '')
+      ? supabaseAdmin
+          .from('merchant_planning_slots')
+          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, primary_slot_id: null })
+          .eq('primary_slot_id', slotId)
+          .eq('merchant_id', merchantId)
+      : Promise.resolve({ error: null });
 
-    if (error) {
-      logger.error('Planning PATCH error:', error);
+    const [{ error }, , { error: fillerError }] = await Promise.all([slotUpdatePromise, serviceUpdatePromise, clearFillersPromise]);
+
+    if (error || fillerError) {
+      logger.error('Planning PATCH error:', error || fillerError);
       return NextResponse.json({ error: 'Erreur lors de la mise à jour' }, { status: 500 });
     }
 
@@ -295,6 +306,14 @@ export async function DELETE(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+
+    // Also delete filler slots linked to any deleted primary slot
+    await supabaseAdmin
+      .from('merchant_planning_slots')
+      .delete()
+      .eq('merchant_id', merchantId)
+      .in('primary_slot_id', slotIds);
+
     const { error } = await supabaseAdmin
       .from('merchant_planning_slots')
       .delete()

@@ -33,6 +33,7 @@ import {
   BirthdayNotificationEmail,
   AnnouncementMaPageEmail,
   WinBackEmail,
+  BookingNotificationEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -632,5 +633,31 @@ export async function sendWinBackEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'winBack', { shopName }), WinBackEmail, { shopName, locale }, {
     logLabel: 'Win-back email',
+  });
+}
+
+interface BookingNotificationParams {
+  shopName: string;
+  clientName: string;
+  clientPhone: string;
+  date: string;
+  time: string;
+  services: { name: string; price: number; duration: number }[];
+  totalDuration: number;
+  totalPrice: number;
+  deposit: { link: string; percent: number | null; amount: number | null; message: string | null } | null;
+  locale: EmailLocale;
+}
+
+export async function sendBookingNotificationEmail(
+  to: string,
+  params: BookingNotificationParams
+): Promise<SendEmailResult> {
+  const subject = params.locale === 'en'
+    ? `New booking — ${params.clientName}`
+    : `Nouvelle reservation — ${params.clientName}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return sendEmail(to, subject, BookingNotificationEmail as any, params as any, {
+    logLabel: 'Booking notification email',
   });
 }

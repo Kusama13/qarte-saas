@@ -9,6 +9,7 @@ interface AppointmentSlot {
   id: string;
   slot_date: string;
   start_time: string;
+  deposit_confirmed?: boolean | null;
   planning_slot_services: Array<{
     service_id: string;
     service: { name: string } | null;
@@ -84,6 +85,12 @@ export default function UpcomingAppointmentsSection({
                 </p>
                 {serviceNames && (
                   <p className="text-xs text-gray-400 mt-1 truncate">{serviceNames}</p>
+                )}
+                {appt.deposit_confirmed === false && (
+                  <p className="text-[11px] font-semibold text-amber-600 mt-1">{t('depositPending')}</p>
+                )}
+                {appt.deposit_confirmed === true && (
+                  <p className="text-[11px] font-semibold text-emerald-600 mt-1">{t('depositOk')}</p>
                 )}
               </div>
             </div>

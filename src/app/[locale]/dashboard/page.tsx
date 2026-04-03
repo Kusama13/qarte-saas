@@ -295,13 +295,14 @@ export default function DashboardPage() {
                 .eq('merchant_id', merchant.id)
                 .eq('source', 'welcome')
             : Promise.resolve({ count: 0 }),
-          // Upcoming booked planning slots
+          // Upcoming booked planning slots (primary slots only)
           merchant.planning_enabled
             ? supabase
                 .from('merchant_planning_slots')
                 .select('id, slot_date, start_time, client_name')
                 .eq('merchant_id', merchant.id)
                 .not('client_name', 'is', null)
+                .is('primary_slot_id', null)
                 .gte('slot_date', todayStr)
                 .order('slot_date', { ascending: true })
                 .order('start_time', { ascending: true })
@@ -332,7 +333,6 @@ export default function DashboardPage() {
         setPendingReferrals(pendingReferralsResult.count || 0);
         setWelcomeVouchers(welcomeVouchersResult.count || 0);
 
-        // Set upcoming bookings
         if (upcomingBookingsResult.data) {
           setUpcomingBookings(upcomingBookingsResult.data as typeof upcomingBookings);
         }

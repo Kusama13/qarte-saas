@@ -99,20 +99,8 @@ export default function CardHeader({
                   <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('memberVip')}</span>
                 </motion.button>
               )}
-              {safeBookingUrl && (
-                <motion.a
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  href={safeBookingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all active:scale-95"
-                >
-                  <CalendarDays className="w-3 h-3 text-white" />
-                  <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('book')}</span>
-                </motion.a>
-              )}
-              {merchant.slug && (
+              {merchant.auto_booking_enabled && merchant.slug ? (
+                /* Qarte booking active → single "Reserver" link to vitrine */
                 <motion.a
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -121,9 +109,39 @@ export default function CardHeader({
                   rel="noopener noreferrer"
                   className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all active:scale-95"
                 >
-                  <Info className="w-3 h-3 text-white" />
-                  <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('info')}</span>
+                  <CalendarDays className="w-3 h-3 text-white" />
+                  <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('book')}</span>
                 </motion.a>
+              ) : (
+                /* No Qarte booking → show external booking + info links separately */
+                <>
+                  {safeBookingUrl && (
+                    <motion.a
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      href={safeBookingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all active:scale-95"
+                    >
+                      <CalendarDays className="w-3 h-3 text-white" />
+                      <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('book')}</span>
+                    </motion.a>
+                  )}
+                  {merchant.slug && (
+                    <motion.a
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      href={`/p/${merchant.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 hover:bg-white/30 transition-all active:scale-95"
+                    >
+                      <Info className="w-3 h-3 text-white" />
+                      <span className="text-[11px] font-bold text-white/90 uppercase tracking-wider">{t('info')}</span>
+                    </motion.a>
+                  )}
+                </>
               )}
             </div>
           )}

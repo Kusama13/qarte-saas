@@ -2,14 +2,14 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen } from 'lucide-react';
+import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen, ChevronDown, Camera, StickyNote } from 'lucide-react';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot, CustomerSearchResult } from '@/types';
 import { formatTime, formatCurrency, toBCP47 } from '@/lib/utils';
 import { compressOfferImage } from '@/lib/image-compression';
-import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle } from './utils';
+import { timeToMinutes, minutesToTime, roundUp5, formatDuration, getSlotServiceIds, colorBorderStyle, computeDepositAmount } from './utils';
 import type { BookingDraft, ServiceWithDuration } from './usePlanningState';
 
 interface BookingDetailsModalProps {
@@ -23,6 +23,8 @@ interface BookingDetailsModalProps {
   merchantCountry: string;
   saving: boolean;
   locale: string;
+  depositPercent?: number | null;
+  depositAmount?: number | null;
   onDraftChange: (partial: Partial<BookingDraft>) => void;
   onSave: (slotId: string, data: {
     client_name: string | null;
@@ -34,6 +36,7 @@ interface BookingDetailsModalProps {
   onDelete: (slotId: string) => Promise<void>;
   onShiftSlot: (slotId: string, newTime: string, newDate?: string) => Promise<void>;
   onRefreshSlots: () => Promise<void>;
+  onConfirmDeposit?: (slot: PlanningSlot) => void;
   onGoBack: () => void;
   onClose: () => void;
   onFetchClientHistory: (customerId: string) => Promise<PlanningSlot[]>;
@@ -50,16 +53,21 @@ export default function BookingDetailsModal({
   merchantCountry,
   saving,
   locale,
+  depositPercent,
+  depositAmount: depositFixed,
   onDraftChange,
   onSave,
   onDelete,
   onShiftSlot,
   onRefreshSlots,
+  onConfirmDeposit,
   onGoBack,
   onClose,
   onFetchClientHistory,
 }: BookingDetailsModalProps) {
   const t = useTranslations('planning');
+  const [showPhotos, setShowPhotos] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
   const [localPhotos, setLocalPhotos] = useState(slot.planning_slot_photos || []);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoSuccess, setPhotoSuccess] = useState(false);
@@ -136,18 +144,28 @@ export default function BookingDetailsModal({
     return t('totalDuration', { duration: formatDuration(totalMinutes.total) });
   }, [draft.serviceIds.length, totalMinutes, t]);
 
-  // Overlap detection
+  // Overlap detection — skip filler slots belonging to same booking
   const overlap = useMemo(() => {
     if (draft.serviceIds.length === 0 || totalMinutes.total === 0) return null;
     const daySlots = slotsByDate.get(slot.slot_date) || [];
     const slotIndex = daySlots.findIndex(s => s.id === slot.id);
-    if (slotIndex === -1 || slotIndex === daySlots.length - 1) return null;
+    if (slotIndex === -1) return null;
 
-    const nextSlot = daySlots[slotIndex + 1];
     const startMins = timeToMinutes(slot.start_time);
     const endMins = startMins + totalMinutes.total;
-    const nextMins = timeToMinutes(nextSlot.start_time);
 
+    // Find the next slot that is NOT a filler of this booking
+    let nextSlot: PlanningSlot | null = null;
+    for (let i = slotIndex + 1; i < daySlots.length; i++) {
+      const candidate = daySlots[i];
+      if (candidate.primary_slot_id !== slot.id) {
+        nextSlot = candidate;
+        break;
+      }
+    }
+    if (!nextSlot) return null;
+
+    const nextMins = timeToMinutes(nextSlot.start_time);
     if (endMins > nextMins) {
       const suggestedTime = minutesToTime(roundUp5(endMins));
       return { nextSlot, endTime: minutesToTime(endMins), suggestedTime };
@@ -308,60 +326,38 @@ export default function BookingDetailsModal({
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
-          {/* Social links (if customer has them) */}
+        <div className="p-4 space-y-3">
+          {/* ── Client info: social + memo ── */}
           {customer && (customer.instagram_handle || customer.tiktok_handle || customer.facebook_url) && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {customer.instagram_handle && (
-                <a
-                  href={`https://instagram.com/${customer.instagram_handle.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-pink-50 text-pink-600 text-xs font-medium hover:bg-pink-100 transition-colors"
-                >
-                  <Instagram className="w-3.5 h-3.5" />
-                  {customer.instagram_handle}
+                <a href={`https://instagram.com/${customer.instagram_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-pink-50 text-pink-600 text-xs font-medium hover:bg-pink-100 transition-colors">
+                  <Instagram className="w-3.5 h-3.5" />{customer.instagram_handle}
                 </a>
               )}
               {customer.tiktok_handle && (
-                <a
-                  href={`https://tiktok.com/@${customer.tiktok_handle.replace('@', '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200 transition-colors"
-                >
-                  <TikTokIcon className="w-3.5 h-3.5" />
-                  {customer.tiktok_handle}
+                <a href={`https://tiktok.com/@${customer.tiktok_handle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-medium hover:bg-gray-200 transition-colors">
+                  <TikTokIcon className="w-3.5 h-3.5" />{customer.tiktok_handle}
                 </a>
               )}
               {customer.facebook_url && (
-                <a
-                  href={customer.facebook_url.startsWith('http') ? customer.facebook_url : `https://${customer.facebook_url}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors"
-                >
-                  <FacebookIcon className="w-3.5 h-3.5" />
-                  Facebook
+                <a href={customer.facebook_url.startsWith('http') ? customer.facebook_url : `https://${customer.facebook_url}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-medium hover:bg-blue-100 transition-colors">
+                  <FacebookIcon className="w-3.5 h-3.5" />Facebook
                 </a>
               )}
             </div>
           )}
 
-          {/* Client memo (pinned notes from journal) */}
           {pinnedNotes.length > 0 && (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 space-y-1.5">
               <p className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5" />
-                {t('clientMemo')}
+                <BookOpen className="w-3.5 h-3.5" />{t('clientMemo')}
               </p>
               {pinnedNotes.map(note => {
                 const style = getTypeStyle(note.note_type);
                 return (
                   <div key={note.id} className="flex items-start gap-2">
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${style.pillBg} ${style.pillText}`}>
-                      {note.note_type}
-                    </span>
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${style.pillBg} ${style.pillText}`}>{note.note_type}</span>
                     <p className="text-xs text-gray-700">{note.content}</p>
                   </div>
                 );
@@ -369,79 +365,7 @@ export default function BookingDetailsModal({
             </div>
           )}
 
-          {/* Client history toggle */}
-          {draft.customerId && (
-            <button
-              onClick={() => setShowHistory(!showHistory)}
-              className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-indigo-600 transition-colors"
-            >
-              <History className="w-3.5 h-3.5" />
-              {showHistory ? t('hideHistory') : t('clientHistory')}
-            </button>
-          )}
-
-          {/* Client history list */}
-          {showHistory && (
-            <div className="bg-gray-50 rounded-xl p-3">
-              {historyLoading ? (
-                <div className="flex items-center justify-center py-3">
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                </div>
-              ) : clientHistory.length === 0 ? (
-                <p className="text-xs text-gray-400 text-center py-2">{t('noHistory')}</p>
-              ) : (
-                <div className="space-y-1.5">
-                  {clientHistory.map(h => {
-                    const svcIds = getSlotServiceIds(h);
-                    const svcNames = svcIds.map(id => serviceMap.get(id)?.name).filter(Boolean).join(', ');
-                    const histDate = new Date(h.slot_date + 'T12:00:00');
-                    const histResultPhotos = h.planning_slot_result_photos || [];
-                    return (
-                      <div key={h.id} className="px-2.5 py-1.5 bg-white rounded-lg border border-gray-100">
-                        <div className="flex items-center justify-between">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs font-bold text-gray-700">
-                                {histDate.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}
-                              </span>
-                              <span className="text-[11px] text-gray-400">{formatTime(h.start_time, locale)}</span>
-                            </div>
-                            {svcNames && (
-                              <p className="text-[10px] text-gray-400 truncate max-w-[200px]">{svcNames}</p>
-                            )}
-                          </div>
-                          {svcIds.length > 0 && (
-                            <div className="flex gap-0.5">
-                              {svcIds.slice(0, 3).map(id => {
-                                const color = serviceColorMap.get(id);
-                                return color ? (
-                                  <div key={id} className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                                ) : null;
-                              })}
-                            </div>
-                          )}
-                        </div>
-                        {histResultPhotos.length > 0 && (
-                          <div className="flex gap-1.5 mt-1.5">
-                            {histResultPhotos.map(p => (
-                              <img
-                                key={p.id}
-                                src={p.url}
-                                alt=""
-                                className="w-8 h-8 object-cover rounded-lg border border-gray-200"
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Services multi-select */}
+          {/* ── Prestations (always visible) ── */}
           {services.length > 0 && (
             <div>
               <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('servicesLabel')}</label>
@@ -453,30 +377,19 @@ export default function BookingDetailsModal({
                     <button
                       key={svc.id}
                       onClick={() => toggleService(svc.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all text-sm ${
-                        isChecked
-                          ? 'border-indigo-300 bg-indigo-50 text-indigo-700'
-                          : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                      }`}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all text-sm ${isChecked ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-gray-200 hover:border-gray-300 text-gray-700'}`}
                       style={colorBorderStyle(svcColor)}
                     >
                       <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded flex items-center justify-center border ${
-                          isChecked ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'
-                        }`}>
+                        <div className={`w-4 h-4 rounded flex items-center justify-center border ${isChecked ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
                           {isChecked && <Check className="w-3 h-3 text-white" />}
                         </div>
                         <span className="font-medium">{svc.name}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-gray-400">
-                        {svc.price > 0 && (
-                          <span>{formatCurrency(svc.price, merchantCountry, locale)}</span>
-                        )}
+                        {svc.price > 0 && <span>{formatCurrency(svc.price, merchantCountry, locale)}</span>}
                         {svc.duration && (
-                          <span className="flex items-center gap-0.5">
-                            <Clock className="w-3 h-3" />
-                            {svc.duration}min
-                          </span>
+                          <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{svc.duration}min</span>
                         )}
                       </div>
                     </button>
@@ -484,19 +397,24 @@ export default function BookingDetailsModal({
                 })}
               </div>
 
-              {/* Duration + Price display */}
               {(durationLabel || totalPrice) && (
-                <div className="mt-2 flex items-center gap-3">
-                  {durationLabel && (
-                    <p className={`text-xs font-medium ${totalMinutes.hasUnknown ? 'text-amber-600' : 'text-indigo-600'}`}>
-                      {durationLabel}
-                    </p>
-                  )}
-                  {totalPrice !== null && (
-                    <p className="text-xs font-medium text-emerald-600">
-                      {t('totalPrice', { price: formatCurrency(totalPrice, merchantCountry, locale) })}
-                    </p>
-                  )}
+                <div className="mt-2 space-y-1.5">
+                  <div className="flex items-center gap-3">
+                    {durationLabel && <p className={`text-xs font-medium ${totalMinutes.hasUnknown ? 'text-amber-600' : 'text-indigo-600'}`}>{durationLabel}</p>}
+                    {totalPrice !== null && <p className="text-xs font-medium text-emerald-600">{t('totalPrice', { price: formatCurrency(totalPrice, merchantCountry, locale) })}</p>}
+                  </div>
+                  {slot.deposit_confirmed !== null && totalPrice !== null && (() => {
+                    const depAmt = computeDepositAmount(totalPrice, depositFixed, depositPercent);
+                    return depAmt ? (
+                      <div className="px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-100">
+                        <p className="text-[11px] text-amber-700 font-medium">
+                          {t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(totalPrice - depAmt, merchantCountry, locale) })}
+                        </p>
+                        {slot.deposit_confirmed === false && <span className="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{t('depositPending')}</span>}
+                        {slot.deposit_confirmed === true && <span className="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{t('depositConfirmed')}</span>}
+                      </div>
+                    ) : null;
+                  })()}
                 </div>
               )}
             </div>
@@ -512,134 +430,184 @@ export default function BookingDetailsModal({
                 </p>
               </div>
               <div className="flex gap-2 ml-6">
-                <button
-                  onClick={() => onShiftSlot(overlap.nextSlot.id, overlap.suggestedTime)}
-                  disabled={saving}
-                  className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors disabled:opacity-50"
-                >
+                <button onClick={() => onShiftSlot(overlap.nextSlot.id, overlap.suggestedTime)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 transition-colors disabled:opacity-50">
                   {t('shiftNextSlot', { newTime: formatTime(overlap.suggestedTime, locale) })}
                 </button>
-                <button
-                  onClick={() => onDelete(overlap.nextSlot.id)}
-                  disabled={saving}
-                  className="px-3 py-1.5 rounded-lg bg-red-100 text-red-600 text-xs font-semibold hover:bg-red-200 transition-colors disabled:opacity-50"
-                >
+                <button onClick={() => onDelete(overlap.nextSlot.id)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-red-100 text-red-600 text-xs font-semibold hover:bg-red-200 transition-colors disabled:opacity-50">
                   {t('deleteNextSlot')}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Inspiration photos */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <label className="text-xs font-semibold text-gray-600">{t('inspirationPhotos')}</label>
-              {photoSuccess && (
-                <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{t('photoUploaded')}</span>
-              )}
-            </div>
-            <div className="flex gap-2">
-              {localPhotos.map(photo => (
-                <div key={photo.id} className="relative group">
-                  <img
-                    src={photo.url}
-                    alt=""
-                    className="w-20 h-20 object-cover rounded-xl border border-gray-200"
-                  />
-                  <button
-                    onClick={() => handleDeletePhoto(photo.id)}
-                    className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
+          {/* ── Collapsible: Photos avant / apres ── */}
+          <div className="border border-gray-100 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setShowPhotos(!showPhotos)}
+              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Camera className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-xs font-semibold text-gray-600">{t('photosSection')}</span>
+                {(localPhotos.length + localResultPhotos.length) > 0 && (
+                  <span className="text-[10px] font-medium text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                    {localPhotos.length + localResultPhotos.length}
+                  </span>
+                )}
+                {(photoSuccess || resultPhotoSuccess) && (
+                  <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{t('photoUploaded')}</span>
+                )}
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${showPhotos ? 'rotate-180' : ''}`} />
+            </button>
+            {showPhotos && (
+              <div className="px-3 pb-3 space-y-3 border-t border-gray-100 pt-3">
+                {/* Inspiration photos */}
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('inspirationPhotos')}</p>
+                  <div className="flex gap-2">
+                    {localPhotos.map(photo => (
+                      <div key={photo.id} className="relative group">
+                        <img src={photo.url} alt="" className="w-20 h-20 object-cover rounded-xl border border-gray-200" loading="lazy" />
+                        <button onClick={() => handleDeletePhoto(photo.id)} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {localPhotos.length < 3 && (
+                      <button onClick={() => fileInputRef.current?.click()} disabled={uploadingPhoto} className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300 hover:border-indigo-300 hover:text-indigo-400 transition-colors disabled:opacity-50">
+                        {uploadingPhoto ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImagePlus className="w-5 h-5" />}
+                      </button>
+                    )}
+                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                  </div>
                 </div>
-              ))}
-              {localPhotos.length < 3 && (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingPhoto}
-                  className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300 hover:border-indigo-300 hover:text-indigo-400 transition-colors disabled:opacity-50"
-                >
-                  {uploadingPhoto ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <ImagePlus className="w-5 h-5" />
-                  )}
-                </button>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                className="hidden"
-              />
-            </div>
+                {/* Result photos */}
+                <div>
+                  <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('resultPhotos')}</p>
+                  <div className="flex gap-2">
+                    {localResultPhotos.map(photo => (
+                      <div key={photo.id} className="relative group">
+                        <img src={photo.url} alt="" className="w-20 h-20 object-cover rounded-xl border border-gray-200" loading="lazy" />
+                        <button onClick={() => handleDeleteResultPhoto(photo.id)} className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    {localResultPhotos.length < 3 && (
+                      <button onClick={() => resultFileInputRef.current?.click()} disabled={uploadingResultPhoto} className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300 hover:border-indigo-300 hover:text-indigo-400 transition-colors disabled:opacity-50">
+                        {uploadingResultPhoto ? <Loader2 className="w-5 h-5 animate-spin" /> : <ImagePlus className="w-5 h-5" />}
+                      </button>
+                    )}
+                    <input ref={resultFileInputRef} type="file" accept="image/*" onChange={handleResultPhotoUpload} className="hidden" />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Result photos */}
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <label className="text-xs font-semibold text-gray-600">{t('resultPhotos')}</label>
-              {resultPhotoSuccess && (
-                <span className="text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{t('photoUploaded')}</span>
-              )}
-            </div>
-            <div className="flex gap-2">
-              {localResultPhotos.map(photo => (
-                <div key={photo.id} className="relative group">
-                  <img
-                    src={photo.url}
-                    alt=""
-                    className="w-20 h-20 object-cover rounded-xl border border-gray-200"
-                  />
-                  <button
-                    onClick={() => handleDeleteResultPhoto(photo.id)}
-                    className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              ))}
-              {localResultPhotos.length < 3 && (
-                <button
-                  onClick={() => resultFileInputRef.current?.click()}
-                  disabled={uploadingResultPhoto}
-                  className="w-20 h-20 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-300 hover:border-indigo-300 hover:text-indigo-400 transition-colors disabled:opacity-50"
-                >
-                  {uploadingResultPhoto ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <ImagePlus className="w-5 h-5" />
-                  )}
-                </button>
-              )}
-              <input
-                ref={resultFileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleResultPhotoUpload}
-                className="hidden"
-              />
-            </div>
+          {/* ── Collapsible: Notes ── */}
+          <div className="border border-gray-100 rounded-xl overflow-hidden">
+            <button
+              onClick={() => setShowNotes(!showNotes)}
+              className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <StickyNote className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-xs font-semibold text-gray-600">{t('notesLabel')}</span>
+                {draft.notes && <span className="text-[10px] text-gray-400 truncate max-w-[150px]">{draft.notes}</span>}
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${showNotes ? 'rotate-180' : ''}`} />
+            </button>
+            {showNotes && (
+              <div className="px-3 pb-3 border-t border-gray-100 pt-3">
+                <textarea
+                  value={draft.notes}
+                  onChange={(e) => onDraftChange({ notes: e.target.value })}
+                  placeholder={t('notesPlaceholder')}
+                  maxLength={300}
+                  rows={2}
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
+                />
+              </div>
+            )}
           </div>
 
-          {/* Notes */}
-          <div>
-            <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('notesLabel')}</label>
-            <textarea
-              value={draft.notes}
-              onChange={(e) => onDraftChange({ notes: e.target.value })}
-              placeholder={t('notesPlaceholder')}
-              maxLength={300}
-              rows={2}
-              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
-            />
-          </div>
+          {/* ── Collapsible: Historique client ── */}
+          {draft.customerId && (
+            <div className="border border-gray-100 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setShowHistory(!showHistory)}
+                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <History className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-xs font-semibold text-gray-600">{t('clientHistory')}</span>
+                </div>
+                <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${showHistory ? 'rotate-180' : ''}`} />
+              </button>
+              {showHistory && (
+                <div className="px-3 pb-3 border-t border-gray-100 pt-3">
+                  {historyLoading ? (
+                    <div className="flex items-center justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-gray-400" /></div>
+                  ) : clientHistory.length === 0 ? (
+                    <p className="text-xs text-gray-400 text-center py-2">{t('noHistory')}</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {clientHistory.map(h => {
+                        const svcIds = getSlotServiceIds(h);
+                        const svcNames = svcIds.map(id => serviceMap.get(id)?.name).filter(Boolean).join(', ');
+                        const histDate = new Date(h.slot_date + 'T12:00:00');
+                        const histResultPhotos = h.planning_slot_result_photos || [];
+                        return (
+                          <div key={h.id} className="px-2.5 py-1.5 bg-gray-50 rounded-lg border border-gray-100">
+                            <div className="flex items-center justify-between">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-gray-700">{histDate.toLocaleDateString(toBCP47(locale), { day: 'numeric', month: 'short' })}</span>
+                                  <span className="text-[11px] text-gray-400">{formatTime(h.start_time, locale)}</span>
+                                </div>
+                                {svcNames && <p className="text-[10px] text-gray-400 truncate max-w-[200px]">{svcNames}</p>}
+                              </div>
+                              {svcIds.length > 0 && (
+                                <div className="flex gap-0.5">
+                                  {svcIds.slice(0, 3).map(id => {
+                                    const color = serviceColorMap.get(id);
+                                    return color ? <div key={id} className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} /> : null;
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                            {histResultPhotos.length > 0 && (
+                              <div className="flex gap-1.5 mt-1.5">
+                                {histResultPhotos.map(p => (
+                                  <img key={p.id} src={p.url} alt="" className="w-8 h-8 object-cover rounded-lg border border-gray-200" loading="lazy" />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Footer actions */}
         <div className="p-4 border-t border-gray-100 space-y-2">
+          {/* Confirm deposit button */}
+          {slot.deposit_confirmed === false && onConfirmDeposit && (
+            <button
+              onClick={() => { onConfirmDeposit(slot); onClose(); }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
+            >
+              <Check className="w-3.5 h-3.5" />
+              {t('confirmDeposit')}
+            </button>
+          )}
           <div className="flex gap-2">
             <button
               onClick={handleSave}

@@ -815,6 +815,7 @@ export default function MerchantDetailPage() {
           <FeatureBadge active={merchant.birthday_gift_enabled} icon={<Cake className="w-3 h-3" />} label="Anniversaire" />
           <FeatureBadge active={merchant.shield_enabled} icon={<Shield className="w-3 h-3" />} label="Shield" />
           <FeatureBadge active={merchant.welcome_offer_enabled} icon={<Gift className="w-3 h-3" />} label="Bienvenue" />
+          <FeatureBadge active={merchant.auto_booking_enabled} icon={<CalendarDays className="w-3 h-3" />} label="Resa en ligne" />
           <FeatureBadge active={merchant.tier2_enabled} icon={<Zap className="w-3 h-3" />} label="Palier 2" />
           {merchant.double_days_enabled && (
             <FeatureBadge active icon={<Zap className="w-3 h-3" />} label={`Jours x2 : ${formatDoubleDays(merchant.double_days_of_week) || '—'}`} />
@@ -995,7 +996,7 @@ export default function MerchantDetailPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard icon={<StatIcon icon={Scissors} color="violet" />} value={stats.servicesCount} label="Prestations" />
             <StatCard icon={<StatIcon icon={Image} color="cyan" />} value={stats.photosCount} label="Photos" />
-            <StatCard icon={<StatIcon icon={CalendarDays} color="indigo" />} value={`${stats.planningBookingsCount} / ${stats.planningSlotsCount}`} label="Reservations / creneaux" />
+            <StatCard icon={<StatIcon icon={CalendarDays} color="indigo" />} value={`${stats.planningBookingsCount} / ${stats.planningSlotsCount}`} label="Reservations / creneaux" highlight={stats.planningBookingsCount > 0 ? 'green' : undefined} />
             <StatCard
               icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", merchant.bio ? "bg-green-50" : "bg-gray-50")}><FileText className={cn("w-4 h-4", merchant.bio ? "text-green-600" : "text-gray-400")} /></div>}
               value={merchant.bio ? 'Oui' : '—'} label="Bio renseignée"

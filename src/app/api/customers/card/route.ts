@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     const merchant = card.merchant as Record<string, unknown>;
     const planningEnabled = !!merchant.planning_enabled;
     const today = planningEnabled ? getTodayForCountry(merchant.country as string) : '';
-    const slotSelect = 'id, slot_date, start_time, planning_slot_services(service_id, service:merchant_services!service_id(name))';
+    const slotSelect = 'id, slot_date, start_time, deposit_confirmed, primary_slot_id, planning_slot_services(service_id, service:merchant_services!service_id(name))';
 
     const [visitsResult, adjustmentsResult, memberCardResult, redemptionsResult, vouchersResult, upcomingResult, pastResult] = await Promise.all([
       // Visits
@@ -155,6 +155,7 @@ export async function POST(request: NextRequest) {
             .eq('customer_id', customer.id)
             .gte('slot_date', today)
             .not('client_name', 'is', null)
+            .is('primary_slot_id', null)
             .order('slot_date')
             .order('start_time')
             .limit(3)
@@ -169,6 +170,7 @@ export async function POST(request: NextRequest) {
             .eq('customer_id', customer.id)
             .lt('slot_date', today)
             .not('client_name', 'is', null)
+            .is('primary_slot_id', null)
             .order('slot_date', { ascending: false })
             .order('start_time', { ascending: false })
             .limit(20)

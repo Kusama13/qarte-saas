@@ -47,7 +47,7 @@ export function usePlanningState() {
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const supabase = getSupabase();
 
-  const [tab, setTab] = useState<'slots' | 'reservations' | 'settings'>('slots');
+  const [tab, setTab] = useState<'slots' | 'reservations' | 'online' | 'settings'>('slots');
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [weekOffset, setWeekOffset] = useState(0);
@@ -64,6 +64,11 @@ export function usePlanningState() {
   const [messageEnabled, setMessageEnabled] = useState(false);
   const [messageExpires, setMessageExpires] = useState('');
   const [bookingMessage, setBookingMessage] = useState('');
+  const [autoBookingEnabled, setAutoBookingEnabled] = useState(false);
+  const [depositLink, setDepositLink] = useState('');
+  const [depositPercent, setDepositPercent] = useState('');
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositMessage, setDepositMessage] = useState('');
 
   // Services with duration
   const [services, setServices] = useState<ServiceWithDuration[]>([]);
@@ -99,10 +104,11 @@ export function usePlanningState() {
     return d;
   }, [weekStart]);
 
-  // Pre-compute slots grouped by date
+  // Pre-compute slots grouped by date (excluding filler slots for display)
   const slotsByDate = useMemo(() => {
     const map = new Map<string, PlanningSlot[]>();
     for (const s of slots) {
+      if (s.primary_slot_id) continue; // skip filler slots
       if (!map.has(s.slot_date)) map.set(s.slot_date, []);
       map.get(s.slot_date)!.push(s);
     }
@@ -125,6 +131,11 @@ export function usePlanningState() {
       setMessageEnabled(!!merchant.planning_message);
       setMessageExpires(merchant.planning_message_expires || '');
       setBookingMessage(merchant.booking_message || '');
+      setAutoBookingEnabled(!!merchant.auto_booking_enabled);
+      setDepositLink(merchant.deposit_link || '');
+      setDepositPercent(merchant.deposit_percent ? String(merchant.deposit_percent) : '');
+      setDepositAmount(merchant.deposit_amount ? String(merchant.deposit_amount) : '');
+      setDepositMessage(merchant.deposit_message || '');
     }
   }, [merchant]);
 
@@ -416,7 +427,21 @@ export function usePlanningState() {
     });
     setShowCustomerSearch(false);
     setCustomerResults([]);
-    setModalState({ type: 'client-select', slot });
+    // Skip client-select and go directly to booking-details if slot already has a client
+    if (slot.client_name) {
+      const customer: CustomerSearchResult | null = slot.customer_id ? {
+        id: slot.customer_id,
+        first_name: slot.client_name.split(' ')[0],
+        last_name: slot.client_name.split(' ').slice(1).join(' ') || null,
+        phone_number: slot.client_phone || '',
+        instagram_handle: social?.instagram_handle || null,
+        tiktok_handle: social?.tiktok_handle || null,
+        facebook_url: social?.facebook_url || null,
+      } : null;
+      setModalState({ type: 'booking-details', slot, customer, isNewCustomer: false });
+    } else {
+      setModalState({ type: 'client-select', slot });
+    }
   };
 
   const openAddSlotsModal = (day: string) => {
@@ -489,6 +514,9 @@ export function usePlanningState() {
     // Settings
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
+    autoBookingEnabled, setAutoBookingEnabled,
+    depositLink, setDepositLink, depositPercent, setDepositPercent, depositAmount, setDepositAmount,
+    depositMessage, setDepositMessage,
     // Services
     services,
     // Modal state machine

@@ -44,7 +44,8 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       'booking_url, instagram_url, facebook_url, tiktok_url, snapchat_url, whatsapp_url, ' +
       'opening_hours, ' +
       'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent, ' +
-      'planning_enabled, planning_message, planning_message_expires, booking_message, phone, country'
+      'planning_enabled, planning_message, planning_message_expires, booking_message, ' +
+      'auto_booking_enabled, deposit_link, deposit_percent, deposit_amount, deposit_message, phone, country'
     )
     .eq('slug', slug)
     .maybeSingle();

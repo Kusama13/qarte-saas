@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Clock, ChevronRight, Pencil, X, ImageIcon, Download, Instagram } from 'lucide-react';
+import { CalendarDays, Clock, ChevronRight, Pencil, X, ImageIcon, Download, Instagram, Check } from 'lucide-react';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot } from '@/types';
 import { formatTime, formatCurrency, toBCP47 } from '@/lib/utils';
-import { getSlotServiceIds, formatDate, formatDuration, colorBorderStyle } from './utils';
+import { getSlotServiceIds, formatDate, formatDuration, colorBorderStyle, computeDepositAmount } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 
 interface ReservationsSectionProps {
@@ -16,7 +16,10 @@ interface ReservationsSectionProps {
   serviceColorMap: Map<string, string>;
   locale: string;
   merchantCountry: string;
+  depositPercent?: number | null;
+  depositAmount?: number | null;
   onEditSlot: (slot: PlanningSlot) => void;
+  onConfirmDeposit?: (slot: PlanningSlot) => void;
   deepLinkSlotId?: string | null;
   onDeepLinkHandled?: () => void;
 }
@@ -29,7 +32,7 @@ interface DayGroup {
   slots: PlanningSlot[];
 }
 
-export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, onEditSlot, deepLinkSlotId, onDeepLinkHandled }: ReservationsSectionProps) {
+export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, depositPercent, depositAmount: depositFixed, onEditSlot, onConfirmDeposit, deepLinkSlotId, onDeepLinkHandled }: ReservationsSectionProps) {
   const t = useTranslations('planning');
   const [viewingSlot, setViewingSlot] = useState<PlanningSlot | null>(null);
   const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
@@ -55,10 +58,11 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
   // Split into upcoming and past groups
   const { upcomingGroups, pastGroups } = useMemo(() => {
-    const bookedSlots = slots.filter(s => s.client_name);
+    // Only show primary slots (not fillers from multi-slot bookings)
+    const primarySlots = slots.filter(s => s.client_name && !s.primary_slot_id);
     const groups = new Map<string, PlanningSlot[]>();
 
-    for (const slot of bookedSlots) {
+    for (const slot of primarySlots) {
       if (!groups.has(slot.slot_date)) groups.set(slot.slot_date, []);
       groups.get(slot.slot_date)!.push(slot);
     }
@@ -168,12 +172,20 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                   {serviceNames && (
                     <p className="text-xs text-gray-400 truncate max-w-[180px] sm:max-w-[250px]">{serviceNames}</p>
                   )}
-                  {duration !== null && duration > 0 && (
-                    <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-300">
-                      <Clock className="w-3 h-3" />
-                      <span>{duration}min</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {duration !== null && duration > 0 && (
+                      <div className="flex items-center gap-1 text-xs text-gray-300">
+                        <Clock className="w-3 h-3" />
+                        <span>{duration}min</span>
+                      </div>
+                    )}
+                    {slot.deposit_confirmed === false && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{t('depositPending')}</span>
+                    )}
+                    {slot.deposit_confirmed === true && (
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{t('depositConfirmed')}</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <ChevronRight className={`w-4 h-4 shrink-0 transition-colors ${group.isPast ? 'text-gray-200' : 'text-gray-300 group-hover:text-indigo-400'}`} />
@@ -334,11 +346,22 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                     )}
                     {(() => {
                       const total = viewServices.reduce((sum, s) => sum + (s.price || 0), 0);
-                      return total > 0 ? (
-                        <p className="mt-0.5 text-xs font-medium text-emerald-600">
-                          {t('totalPrice', { price: formatCurrency(total, merchantCountry, locale) })}
-                        </p>
-                      ) : null;
+                      if (total <= 0) return null;
+                      const depAmt = computeDepositAmount(total, depositFixed, depositPercent);
+                      return (
+                        <>
+                          <p className="mt-0.5 text-xs font-medium text-emerald-600">
+                            {t('totalPrice', { price: formatCurrency(total, merchantCountry, locale) })}
+                          </p>
+                          {viewingSlot.deposit_confirmed !== null && depAmt && (
+                            <div className="mt-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-100">
+                              <p className="text-[11px] text-amber-700 font-medium">
+                                {t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(total - depAmt, merchantCountry, locale) })}
+                              </p>
+                            </div>
+                          )}
+                        </>
+                      );
                     })()}
                   </div>
                 )}
@@ -362,7 +385,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                           onClick={() => setExpandedPhoto(photo.url)}
                           className="rounded-xl overflow-hidden border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all"
                         >
-                          <img src={photo.url} alt="" className="w-24 h-24 object-cover" />
+                          <img src={photo.url} alt="" className="w-24 h-24 object-cover" loading="lazy" />
                         </button>
                       ))}
                     </div>
@@ -380,7 +403,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                           onClick={() => setExpandedPhoto(photo.url)}
                           className="rounded-xl overflow-hidden border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all"
                         >
-                          <img src={photo.url} alt="" className="w-24 h-24 object-cover" />
+                          <img src={photo.url} alt="" className="w-24 h-24 object-cover" loading="lazy" />
                         </button>
                       ))}
                     </div>
@@ -396,8 +419,18 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                 )}
               </div>
 
-              {/* Footer — Edit button */}
-              <div className="p-4 border-t border-gray-100">
+              {/* Footer */}
+              <div className="p-4 border-t border-gray-100 space-y-2">
+                {/* Deposit confirm button */}
+                {viewingSlot.deposit_confirmed === false && onConfirmDeposit && (
+                  <button
+                    onClick={() => { onConfirmDeposit(viewingSlot); setViewingSlot(null); }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    {t('confirmDeposit')}
+                  </button>
+                )}
                 <button
                   onClick={() => { setViewingSlot(null); onEditSlot(viewingSlot); }}
                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
@@ -428,7 +461,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
               className="relative max-w-[90vw] max-h-[85vh]"
               onClick={(e) => e.stopPropagation()}
             >
-              <img src={expandedPhoto} alt="" className="max-w-full max-h-[85vh] object-contain rounded-2xl" />
+              <img src={expandedPhoto} alt="" className="max-w-full max-h-[85vh] object-contain rounded-2xl" loading="lazy" />
               <div className="absolute top-3 right-3 flex gap-2">
                 <a
                   href={expandedPhoto}

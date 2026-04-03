@@ -125,6 +125,12 @@ export interface Merchant {
   planning_message: string | null;
   planning_message_expires: string | null;
   booking_message: string | null;
+  // Auto booking
+  auto_booking_enabled: boolean;
+  deposit_link: string | null;
+  deposit_percent: number | null;
+  deposit_amount: number | null;
+  deposit_message: string | null;
   // Public page link on loyalty card
   show_public_page_on_card: boolean;
   signup_source: string | null;
@@ -154,6 +160,8 @@ export interface PlanningSlot {
   customer_id: string | null;
   service_id: string | null; // deprecated — use planning_slot_services
   notes: string | null;
+  deposit_confirmed: boolean | null;
+  primary_slot_id: string | null;
   created_at: string;
   planning_slot_services?: PlanningSlotService[];
   planning_slot_photos?: PlanningSlotPhoto[];
