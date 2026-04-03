@@ -218,9 +218,13 @@ export default function AffiliationPage() {
     }
   };
 
-  const copyLink = (slug: string, id: string) => {
-    navigator.clipboard.writeText(`https://getqarte.com/auth/merchant/signup?ref=${slug}`);
-    setCopiedId(id);
+  const copyLink = (slug: string, id: string, type: 'signup' | 'home' = 'signup') => {
+    const url = type === 'home'
+      ? `https://getqarte.com/?ref=${slug}`
+      : `https://getqarte.com/auth/merchant/signup?ref=${slug}`;
+    const copyKey = `${id}_${type}`;
+    navigator.clipboard.writeText(url);
+    setCopiedId(copyKey);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -313,32 +317,44 @@ export default function AffiliationPage() {
                     </div>
                   </div>
 
-                  {/* Link URL */}
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-600 font-mono truncate">
-                      <ExternalLink className="w-3.5 h-3.5 shrink-0 text-gray-400" />
-                      <span className="truncate">{fullUrl}</span>
+                  {/* Link URLs */}
+                  <div className="space-y-2 mb-4">
+                    {/* Signup link */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase w-12 shrink-0">Signup</span>
+                      <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-600 font-mono truncate">
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+                        <span className="truncate">{fullUrl}</span>
+                      </div>
+                      <button
+                        onClick={() => copyLink(link.slug, link.id, 'signup')}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all shrink-0 ${
+                          copiedId === `${link.id}_signup`
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {copiedId === `${link.id}_signup` ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => copyLink(link.slug, link.id)}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
-                        copiedId === link.id
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {copiedId === link.id ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          Copie
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          Copier
-                        </>
-                      )}
-                    </button>
+                    {/* Home link */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase w-12 shrink-0">Home</span>
+                      <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg text-sm text-gray-600 font-mono truncate">
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+                        <span className="truncate">{`https://getqarte.com/?ref=${link.slug}`}</span>
+                      </div>
+                      <button
+                        onClick={() => copyLink(link.slug, link.id, 'home')}
+                        className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-all shrink-0 ${
+                          copiedId === `${link.id}_home`
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {copiedId === `${link.id}_home` ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Stats row */}
