@@ -34,9 +34,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  // FR: add alternates + og:locale:alternate
+  // FR: title + description + alternates + og:locale:alternate
   return {
+    title: {
+      default: 'Qarte — Vitrine digitale et fidélité pour salons de beauté',
+      template: '%s | Qarte',
+    },
+    description: 'Créez votre vitrine en ligne en 5 min : prestations, photos, planning, avis Google. Programme de fidélité intégré. Essai gratuit.',
     openGraph: {
+      title: 'Qarte — Vitrine digitale et fidélité pour salons de beauté',
+      description: 'Créez votre vitrine en ligne en 5 min : prestations, photos, planning, avis Google. Programme de fidélité intégré. Essai gratuit.',
       locale: 'fr_FR',
       alternateLocale: ['en_US'],
     },
