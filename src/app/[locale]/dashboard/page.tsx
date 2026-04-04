@@ -336,16 +336,20 @@ export default function DashboardPage() {
                 .not('customer.birth_month', 'is', null)
                 .in('customer.birth_month', [...new Set(birthdayDates.map(d => d.month))])
             : Promise.resolve({ data: [] }),
-          // Milestone queries
-          supabase
-            .from('merchant_services')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id),
-          supabase
-            .from('redemptions')
-            .select('*', { count: 'exact', head: true })
-            .eq('merchant_id', merchant.id),
-          merchant.planning_enabled
+          // Milestone queries (trial only)
+          merchant.subscription_status === 'trial'
+            ? supabase
+                .from('merchant_services')
+                .select('*', { count: 'exact', head: true })
+                .eq('merchant_id', merchant.id)
+            : Promise.resolve({ count: 0 }),
+          merchant.subscription_status === 'trial'
+            ? supabase
+                .from('redemptions')
+                .select('*', { count: 'exact', head: true })
+                .eq('merchant_id', merchant.id)
+            : Promise.resolve({ count: 0 }),
+          merchant.subscription_status === 'trial' && merchant.planning_enabled
             ? supabase
                 .from('merchant_planning_slots')
                 .select('*', { count: 'exact', head: true })
@@ -463,9 +467,10 @@ export default function DashboardPage() {
     fetchData();
   }, [merchant, merchantLoading, router]);
 
-  // Milestone celebration detection
+  // Milestone celebration detection (trial only)
   useEffect(() => {
     if (!merchant || loading) return;
+    if (merchant.subscription_status !== 'trial') return;
 
     const PRIORITY: MilestoneType[] = [
       'vitrine_live', 'services_added', 'planning_active',
