@@ -1303,7 +1303,18 @@
     "upcomingBirthdays": "Upcoming birthdays",
     "birthdayToday": "Today",
     "birthdayTomorrow": "Tomorrow",
-    "birthdayIn2Days": "In 2 days"
+    "birthdayIn2Days": "In 2 days",
+    "depositPending": "Deposit pending",
+    "depositOk": "Deposit OK",
+    "trendUp": "Up {percent}% from last week, keep it up!",
+    "trendDown": "Down {percent}% from last week",
+    "trendStable": "Stable from last week",
+    "activityScan": "+{points} point(s)",
+    "activityReward": "Reward unlocked",
+    "activityBooking": "{date} at {time}",
+    "activityReferral": "New referral",
+    "activityReferralDone": "Referral completed",
+    "activityWelcome": "Welcome offer"
   },
   "subscription": {
     "title": "Subscription",

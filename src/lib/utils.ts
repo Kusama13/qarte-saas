@@ -554,6 +554,12 @@ export function getScanUrl(scanCode: string): string {
   return `${getAppUrl()}/scan/${scanCode}`;
 }
 
+/** Unwrap Supabase join result that may be T or T[] depending on query shape */
+export function unwrapJoin<T>(value: T | T[] | null | undefined): T | null {
+  if (value == null) return null;
+  return Array.isArray(value) ? value[0] ?? null : value;
+}
+
 export function generateReferralCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   const randomBytes = crypto.getRandomValues(new Uint8Array(6));

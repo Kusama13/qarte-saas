@@ -1303,7 +1303,18 @@
     "upcomingBirthdays": "Anniversaires a venir",
     "birthdayToday": "Aujourd'hui",
     "birthdayTomorrow": "Demain",
-    "birthdayIn2Days": "Dans 2 jours"
+    "birthdayIn2Days": "Dans 2 jours",
+    "depositPending": "Acompte en attente",
+    "depositOk": "Acompte OK",
+    "trendUp": "En hausse de {percent}% par rapport a la semaine derniere, continue !",
+    "trendDown": "En baisse de {percent}% par rapport a la semaine derniere",
+    "trendStable": "Stable par rapport a la semaine derniere",
+    "activityScan": "+{points} point(s)",
+    "activityReward": "Récompense débloquée",
+    "activityBooking": "{date} à {time}",
+    "activityReferral": "Nouveau parrainage",
+    "activityReferralDone": "Parrainage validé",
+    "activityWelcome": "Offre bienvenue"
   },
   "subscription": {
     "title": "Abonnement",

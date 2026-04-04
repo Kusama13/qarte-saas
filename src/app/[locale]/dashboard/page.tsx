@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter, Link } from '@/i18n/navigation';
-import { Users, UserCheck, UserPlus, Calendar, CalendarDays, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, CreditCard, Coins, Globe, Heart, Cake } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
+import { Users, UserCheck, UserPlus, Calendar, CalendarDays, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, CreditCard, Coins, Globe, Heart, Cake, Eye } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
-import { formatRelativeTime, getTodayForCountry, formatCurrency } from '@/lib/utils';
+import { formatRelativeTime, getTodayForCountry, formatCurrency, unwrapJoin } from '@/lib/utils';
 import { Button } from '@/components/ui';
 import { useMerchant } from '@/contexts/MerchantContext';
 import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
@@ -36,7 +36,7 @@ function getCachedStats(merchantId: string) {
   return null;
 }
 
-function setCachedStats(merchantId: string, data: { stats: typeof initialStats; recentCustomers: typeof initialRecentCustomers; weeklyData: typeof initialWeeklyData }) {
+function setCachedStats(merchantId: string, data: { stats: typeof initialStats; weeklyData: typeof initialWeeklyData }) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(`${STATS_CACHE_KEY}_${merchantId}`, JSON.stringify({
@@ -55,18 +55,24 @@ const initialStats = {
   redemptionsThisMonth: 0,
 };
 
-const initialRecentCustomers: Array<{
-  id: string;
-  name: string;
-  stamps: number;
-  currentAmount: number;
-  lastVisit: string;
-}> = [];
-
 const initialWeeklyData = { thisWeek: 0, lastWeek: 0 };
 
+interface ActivityEvent {
+  type: 'scan' | 'reward' | 'booking' | 'referral' | 'welcome';
+  timestamp: string;
+  title: string;
+  subtitle: string;
+}
+
+const EVENT_CONFIG: Record<ActivityEvent['type'], { icon: React.ElementType; color: string; bg: string; href: string }> = {
+  scan:     { icon: Eye,          color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/dashboard/customers' },
+  reward:   { icon: Gift,         color: 'text-pink-600',    bg: 'bg-pink-50',    href: '/dashboard/customers' },
+  booking:  { icon: CalendarDays, color: 'text-cyan-600',    bg: 'bg-cyan-50',    href: '/dashboard/planning' },
+  referral: { icon: UserPlus,     color: 'text-violet-600',  bg: 'bg-violet-50',  href: '/dashboard/referrals' },
+  welcome:  { icon: Sparkles,     color: 'text-orange-600',  bg: 'bg-orange-50',  href: '/dashboard/customers' },
+};
+
 export default function DashboardPage() {
-  const router = useRouter();
   const supabase = getSupabase();
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const t = useTranslations('dashHome');
@@ -80,19 +86,7 @@ export default function DashboardPage() {
     }
     return initialStats;
   });
-  const [recentCustomers, setRecentCustomers] = useState<Array<{
-    id: string;
-    name: string;
-    stamps: number;
-    currentAmount: number;
-    lastVisit: string;
-  }>>(() => {
-    if (merchant?.id) {
-      const cached = getCachedStats(merchant.id);
-      return cached?.recentCustomers || initialRecentCustomers;
-    }
-    return initialRecentCustomers;
-  });
+  const [activityFeed, setActivityFeed] = useState<ActivityEvent[]>([]);
   const [weeklyData, setWeeklyData] = useState(() => {
     if (merchant?.id) {
       const cached = getCachedStats(merchant.id);
@@ -105,10 +99,7 @@ export default function DashboardPage() {
   const [pendingReferrals, setPendingReferrals] = useState(0);
   const [welcomeVouchers, setWelcomeVouchers] = useState(0);
   const [upcomingBookings, setUpcomingBookings] = useState<Array<{
-    id: string; slot_date: string; start_time: string; client_name: string;
-  }>>([]);
-  const [recentWelcomeClaims, setRecentWelcomeClaims] = useState<Array<{
-    id: string; created_at: string; customerName: string;
+    id: string; slot_date: string; start_time: string; client_name: string; deposit_confirmed: boolean | null;
   }>>([]);
   const [upcomingBirthdays, setUpcomingBirthdays] = useState<Array<{
     firstName: string; lastName: string; birthMonth: number; birthDay: number;
@@ -219,18 +210,21 @@ export default function DashboardPage() {
           activeCustomersResult,
           visitsThisMonthResult,
           redemptionsThisMonthResult,
-          recentCardsResult,
+          feedVisitsResult,
           thisWeekVisitsResult,
           lastWeekVisitsResult,
           cagnotteCardsResult,
           pendingReferralsResult,
           welcomeVouchersResult,
           upcomingBookingsResult,
-          welcomeClaimsResult,
+          feedRedemptionsResult,
           birthdayResult,
           servicesCountResult,
           allRedemptionsResult,
           allBookingsResult,
+          feedBookingsResult,
+          feedReferralsResult,
+          feedWelcomeResult,
         ] = await Promise.all([
           // Stats queries
           supabase
@@ -252,22 +246,15 @@ export default function DashboardPage() {
             .select('*', { count: 'exact', head: true })
             .eq('merchant_id', merchant.id)
             .gte('redeemed_at', firstDayOfMonth.toISOString()),
-          // Recent customers
+          // Recent visits for activity feed
           supabase
-            .from('loyalty_cards')
-            .select(`
-              id,
-              current_stamps,
-              current_amount,
-              last_visit_date,
-              customer:customers (
-                first_name,
-                last_name
-              )
-            `)
+            .from('visits')
+            .select('visited_at, points_earned, loyalty_card:loyalty_cards!inner(customer:customers(first_name, last_name))')
             .eq('merchant_id', merchant.id)
-            .order('updated_at', { ascending: false })
-            .limit(5),
+            .gte('visited_at', thirtyDaysAgo.toISOString())
+            .eq('status', 'confirmed')
+            .order('visited_at', { ascending: false })
+            .limit(8),
           // This week visits (last 7 days)
           supabase
             .from('visits')
@@ -308,7 +295,7 @@ export default function DashboardPage() {
           merchant.planning_enabled
             ? supabase
                 .from('merchant_planning_slots')
-                .select('id, slot_date, start_time, client_name')
+                .select('id, slot_date, start_time, client_name, deposit_confirmed')
                 .eq('merchant_id', merchant.id)
                 .not('client_name', 'is', null)
                 .is('primary_slot_id', null)
@@ -317,16 +304,14 @@ export default function DashboardPage() {
                 .order('start_time', { ascending: true })
                 .limit(5)
             : Promise.resolve({ data: [] }),
-          // Recent welcome voucher claims (with customer name)
-          merchant.welcome_offer_enabled
-            ? supabase
-                .from('vouchers')
-                .select('id, created_at, customer:customers(first_name)')
-                .eq('merchant_id', merchant.id)
-                .eq('source', 'welcome')
-                .order('created_at', { ascending: false })
-                .limit(3)
-            : Promise.resolve({ data: [] }),
+          // Recent redemptions for activity feed
+          supabase
+            .from('redemptions')
+            .select('redeemed_at, tier, loyalty_card:loyalty_cards!inner(customer:customers(first_name))')
+            .eq('merchant_id', merchant.id)
+            .gte('redeemed_at', thirtyDaysAgo.toISOString())
+            .order('redeemed_at', { ascending: false })
+            .limit(8),
           // Upcoming birthdays (next 3 days)
           merchant.birthday_gift_enabled
             ? supabase
@@ -356,6 +341,30 @@ export default function DashboardPage() {
                 .eq('merchant_id', merchant.id)
                 .not('client_name', 'is', null)
             : Promise.resolve({ count: 0 }),
+          // Activity feed: bookings, referrals, welcome
+          supabase
+            .from('merchant_planning_slots')
+            .select('client_name, slot_date, start_time, created_at')
+            .eq('merchant_id', merchant.id)
+            .not('client_name', 'is', null)
+            .is('primary_slot_id', null)
+            .order('created_at', { ascending: false })
+            .limit(8),
+          supabase
+            .from('referrals')
+            .select('created_at, status')
+            .eq('merchant_id', merchant.id)
+            .order('created_at', { ascending: false })
+            .limit(8),
+          merchant.welcome_offer_enabled
+            ? supabase
+                .from('vouchers')
+                .select('created_at, customer:customers(first_name)')
+                .eq('merchant_id', merchant.id)
+                .eq('source', 'welcome')
+                .order('created_at', { ascending: false })
+                .limit(8)
+            : Promise.resolve({ data: [] }),
         ]);
 
         // Set pending referrals + welcome vouchers
@@ -364,16 +373,6 @@ export default function DashboardPage() {
 
         if (upcomingBookingsResult.data) {
           setUpcomingBookings(upcomingBookingsResult.data as typeof upcomingBookings);
-        }
-
-        // Set recent welcome claims
-        if (welcomeClaimsResult.data) {
-          setRecentWelcomeClaims(
-            (welcomeClaimsResult.data as Array<{ id: string; created_at: string; customer: { first_name: string } | { first_name: string }[] | null }>).map(v => {
-              const cust = Array.isArray(v.customer) ? v.customer[0] : v.customer;
-              return { id: v.id, created_at: v.created_at, customerName: cust?.first_name || 'Client' };
-            })
-          );
         }
 
         // Set upcoming birthdays
@@ -397,31 +396,47 @@ export default function DashboardPage() {
         // Milestone data
         setServicesCount(servicesCountResult.count || 0);
         setTotalRedemptions(allRedemptionsResult.count || 0);
-        setHasAnyBooking((allBookingsResult.count || 0) >= 1);
+        setHasAnyBooking((allBookingsResult.count || 0) >= 1 || (feedBookingsResult.data?.length || 0) >= 1);
 
-        // Set stats
-        setStats({
+        const newStats = {
           totalCustomers: totalCustomersResult.count || 0,
           activeCustomers: activeCustomersResult.count || 0,
           visitsThisMonth: visitsThisMonthResult.count || 0,
           redemptionsThisMonth: redemptionsThisMonthResult.count || 0,
-        });
+        };
+        setStats(newStats);
 
-        // Set recent customers
-        if (recentCardsResult.data) {
-          setRecentCustomers(
-            recentCardsResult.data.map((card: { id: string; customer: { first_name?: string; last_name?: string } | { first_name?: string; last_name?: string }[]; current_stamps: number; current_amount?: number; last_visit_date?: string }) => {
-              const customer = Array.isArray(card.customer) ? card.customer[0] : card.customer;
-              return {
-                id: card.id,
-                name: `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Client',
-                stamps: card.current_stamps,
-                currentAmount: Number(card.current_amount || 0),
-                lastVisit: card.last_visit_date || '',
-              };
-            })
-          );
+        // Build activity feed
+        const feed: ActivityEvent[] = [];
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const v of (feedVisitsResult.data || []) as any[]) {
+          const cust = unwrapJoin(unwrapJoin(v.loyalty_card)?.customer);
+          const name = cust ? `${cust.first_name} ${cust.last_name?.charAt(0) || ''}`.trim() : 'Client';
+          feed.push({ type: 'scan', timestamp: v.visited_at, title: name, subtitle: t('activityScan', { points: v.points_earned }) });
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const r of (feedRedemptionsResult.data || []) as any[]) {
+          const cust = unwrapJoin(unwrapJoin(r.loyalty_card)?.customer);
+          feed.push({ type: 'reward', timestamp: r.redeemed_at, title: cust?.first_name || 'Client', subtitle: t('activityReward') });
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const b of (feedBookingsResult.data || []) as any[]) {
+          feed.push({ type: 'booking', timestamp: b.created_at, title: b.client_name, subtitle: t('activityBooking', { date: b.slot_date, time: b.start_time }) });
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const ref of (feedReferralsResult.data || []) as any[]) {
+          feed.push({ type: 'referral', timestamp: ref.created_at, title: ref.status === 'completed' ? t('activityReferralDone') : t('activityReferral'), subtitle: '' });
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        for (const w of (feedWelcomeResult.data || []) as any[]) {
+          const cust = unwrapJoin(w.customer);
+          feed.push({ type: 'welcome', timestamp: w.created_at, title: cust?.first_name || 'Client', subtitle: t('activityWelcome') });
+        }
+
+        // Sort by timestamp DESC and take 8
+        feed.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        setActivityFeed(feed.slice(0, 8));
 
         // Process weekly comparison
         const newWeeklyData = {
@@ -430,29 +445,8 @@ export default function DashboardPage() {
         };
         setWeeklyData(newWeeklyData);
 
-        // Cache the data for instant display on next visit
-        const newStats = {
-          totalCustomers: totalCustomersResult.count || 0,
-          activeCustomers: activeCustomersResult.count || 0,
-          visitsThisMonth: visitsThisMonthResult.count || 0,
-          redemptionsThisMonth: redemptionsThisMonthResult.count || 0,
-        };
-        const newRecentCustomers = recentCardsResult.data
-          ? recentCardsResult.data.map((card: { id: string; customer: { first_name?: string; last_name?: string } | { first_name?: string; last_name?: string }[]; current_stamps: number; current_amount?: number; last_visit_date?: string }) => {
-              const customer = Array.isArray(card.customer) ? card.customer[0] : card.customer;
-              return {
-                id: card.id,
-                name: `${customer?.first_name || ''} ${customer?.last_name || ''}`.trim() || 'Client',
-                stamps: card.current_stamps,
-                currentAmount: Number(card.current_amount || 0),
-                lastVisit: card.last_visit_date || '',
-              };
-            })
-          : [];
-
         setCachedStats(merchant.id, {
           stats: newStats,
-          recentCustomers: newRecentCustomers,
           weeklyData: newWeeklyData,
         });
 
@@ -465,7 +459,8 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, [merchant, merchantLoading, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merchant, merchantLoading]);
 
   // Milestone celebration detection (trial only)
   useEffect(() => {
@@ -494,7 +489,7 @@ export default function DashboardPage() {
         break;
       }
     }
-  }, [merchant, loading, stats, servicesCount, totalRedemptions, hasAnyBooking]);
+  }, [merchant, loading, stats.totalCustomers, servicesCount, totalRedemptions, hasAnyBooking]);
 
   if (merchantLoading || loading) {
     return (
@@ -562,6 +557,19 @@ export default function DashboardPage() {
     );
   }
 
+  const renderDepositBadge = (status: boolean | null) => {
+    if (status === false) return (
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+        {t('depositPending')}
+      </span>
+    );
+    if (status === true) return (
+      <span className="text-[10px] font-bold text-emerald-600">{t('depositOk')}</span>
+    );
+    return null;
+  };
+
   return (
       <div className="space-y-8">
         <div className="p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
@@ -587,9 +595,9 @@ export default function DashboardPage() {
         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 px-1">{t('shortcuts')}</p>
         <div className="grid grid-cols-3 gap-2.5">
           {[
-            { href: '/dashboard/public-page', icon: Globe, label: t('shortcutPage'), color: 'text-white', bg: 'bg-white/20', gradient: true, gradientColors: 'from-indigo-400 to-violet-400 border-indigo-300/20' },
-            { href: '/dashboard/program', icon: Heart, label: t('shortcutLoyalty'), color: 'text-white', bg: 'bg-white/20', gradient: true, gradientColors: 'from-pink-400 to-rose-400 border-pink-300/20' },
-            { href: '/dashboard/planning', icon: CalendarDays, label: t('shortcutPlanning'), color: 'text-white', bg: 'bg-white/20', gradient: true, gradientColors: 'from-cyan-400 to-blue-400 border-cyan-300/20' },
+            { href: '/dashboard/public-page', icon: Globe, label: t('shortcutPage'), color: 'text-white', bg: 'bg-white/25', gradient: true, gradientColors: 'from-indigo-500 to-violet-600 border-indigo-400/30 shadow-indigo-500/20' },
+            { href: '/dashboard/program', icon: Heart, label: t('shortcutLoyalty'), color: 'text-white', bg: 'bg-white/25', gradient: true, gradientColors: 'from-pink-500 to-rose-600 border-pink-400/30 shadow-pink-500/20' },
+            { href: '/dashboard/planning', icon: CalendarDays, label: t('shortcutPlanning'), color: 'text-white', bg: 'bg-white/25', gradient: true, gradientColors: 'from-cyan-500 to-blue-600 border-cyan-400/30 shadow-cyan-500/20' },
             { href: '/dashboard/customers', icon: Users, label: t('shortcutClients'), color: 'text-gray-500', bg: 'bg-gray-50' },
             { href: '/dashboard/qr-download', icon: QrCode, label: t('shortcutQr'), color: 'text-gray-500', bg: 'bg-gray-50' },
             { href: '/dashboard/subscription', icon: CreditCard, label: t('shortcutSubscription'), color: 'text-gray-500', bg: 'bg-gray-50' },
@@ -597,10 +605,10 @@ export default function DashboardPage() {
             <Link
               key={href}
               href={href}
-              className={`flex flex-col items-center gap-2 p-3 rounded-2xl shadow-sm active:scale-95 transition-transform ${
+              className={`flex flex-col items-center gap-2 p-3 rounded-2xl active:scale-95 transition-transform ${
                 gradient
-                  ? `bg-gradient-to-br ${gradientColors || 'from-indigo-600 to-violet-600 border-indigo-500/20'} border`
-                  : 'bg-white border border-gray-100'
+                  ? `bg-gradient-to-br ${gradientColors || 'from-indigo-600 to-violet-600 border-indigo-500/20'} border shadow-md`
+                  : 'bg-white border border-gray-100 shadow-sm'
               }`}
             >
               <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center`}>
@@ -649,6 +657,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-gray-900 truncate">{b.client_name}</p>
+                          {renderDepositBadge(b.deposit_confirmed)}
                         </div>
                         <span className="text-sm font-bold text-cyan-700 shrink-0">{b.start_time}</span>
                       </Link>
@@ -675,7 +684,10 @@ export default function DashboardPage() {
                         <Link key={b.id} href={`/dashboard/planning?slot=${b.id}`} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50/80 hover:bg-gray-100/80 transition-colors cursor-pointer active:scale-[0.99]">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-gray-900 truncate">{b.client_name}</p>
-                            <p className="text-[11px] text-gray-400 mt-0.5">{dayLabel}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <p className="text-[11px] text-gray-400">{dayLabel}</p>
+                              {renderDepositBadge(b.deposit_confirmed)}
+                            </div>
                           </div>
                           <div className="flex items-center gap-1 shrink-0 text-xs font-medium text-gray-400">
                             <Clock className="w-3 h-3" />
@@ -691,6 +703,41 @@ export default function DashboardPage() {
           </div>
         );
       })()}
+
+      {/* Upcoming Birthdays — near bookings for urgency */}
+      {merchant?.birthday_gift_enabled && upcomingBirthdays.length > 0 && (
+        <div className="bg-pink-50/50 border border-pink-100 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 rounded-lg bg-pink-100">
+              <Cake className="w-4 h-4 text-pink-600" />
+            </div>
+            <h3 className="text-sm font-bold text-gray-900">{t('upcomingBirthdays')}</h3>
+          </div>
+          <div className="space-y-1.5">
+            {upcomingBirthdays.map((b, i) => {
+              const bd = birthdayDatesRef.current;
+              const label = bd[0]?.month === b.birthMonth && bd[0]?.day === b.birthDay
+                ? t('birthdayToday')
+                : bd[1]?.month === b.birthMonth && bd[1]?.day === b.birthDay
+                  ? t('birthdayTomorrow')
+                  : t('birthdayIn2Days');
+              return (
+                <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/70">
+                  <div className="flex items-center justify-center w-8 h-8 shrink-0 text-xs font-bold text-white rounded-lg bg-gradient-to-br from-pink-500 to-rose-500">
+                    {b.firstName.charAt(0)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">
+                      {b.firstName} {b.lastName?.charAt(0) ? `${b.lastName.charAt(0)}.` : ''}
+                    </p>
+                  </div>
+                  <span className="text-xs font-medium text-pink-600 bg-pink-100 px-2 py-0.5 rounded-full shrink-0">{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Shield Disable Warning Modal */}
       {showShieldWarning && (
@@ -821,41 +868,6 @@ export default function DashboardPage() {
               />
             </Link>
           )}
-        </div>
-      )}
-
-      {/* Upcoming Birthdays */}
-      {merchant?.birthday_gift_enabled && upcomingBirthdays.length > 0 && (
-        <div className="bg-pink-50/50 border border-pink-100 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-1.5 rounded-lg bg-pink-100">
-              <Cake className="w-4 h-4 text-pink-600" />
-            </div>
-            <h3 className="text-sm font-bold text-gray-900">{t('upcomingBirthdays')}</h3>
-          </div>
-          <div className="space-y-1.5">
-            {upcomingBirthdays.map((b, i) => {
-              const bd = birthdayDatesRef.current;
-              const label = bd[0]?.month === b.birthMonth && bd[0]?.day === b.birthDay
-                ? t('birthdayToday')
-                : bd[1]?.month === b.birthMonth && bd[1]?.day === b.birthDay
-                  ? t('birthdayTomorrow')
-                  : t('birthdayIn2Days');
-              return (
-                <div key={i} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/70">
-                  <div className="flex items-center justify-center w-8 h-8 shrink-0 text-xs font-bold text-white rounded-lg bg-gradient-to-br from-pink-500 to-rose-500">
-                    {b.firstName.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {b.firstName} {b.lastName?.charAt(0) ? `${b.lastName.charAt(0)}.` : ''}
-                    </p>
-                  </div>
-                  <span className="text-xs font-medium text-pink-600 bg-pink-100 px-2 py-0.5 rounded-full shrink-0">{label}</span>
-                </div>
-              );
-            })}
-          </div>
         </div>
       )}
 
@@ -1016,6 +1028,14 @@ export default function DashboardPage() {
                     <span className="text-sm font-bold text-slate-400 w-8 text-right tabular-nums">{weeklyData.lastWeek}</span>
                   </div>
                 </div>
+
+                {/* Trend message */}
+                {weeklyData.lastWeek > 0 && (() => {
+                  const change = Math.round(((weeklyData.thisWeek - weeklyData.lastWeek) / weeklyData.lastWeek) * 100);
+                  if (change > 0) return <p className="text-xs text-emerald-600 font-medium mt-4">{t('trendUp', { percent: change })}</p>;
+                  if (change < 0) return <p className="text-xs text-red-500 font-medium mt-4">{t('trendDown', { percent: Math.abs(change) })}</p>;
+                  return <p className="text-xs text-gray-400 font-medium mt-4">{t('trendStable')}</p>;
+                })()}
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-[200px] text-gray-500">
@@ -1032,80 +1052,36 @@ export default function DashboardPage() {
         {/* Activity Card */}
         <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl md:rounded-3xl shadow-xl shadow-indigo-100/50 transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-200/50">
           <div className="p-4 md:p-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base md:text-xl font-bold tracking-tight text-gray-900">
-                {t('recentActivity')}
-              </h2>
-              <Link href="/dashboard/customers">
-                <Button variant="ghost" size="sm" className="font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded-xl">
-                  {t('viewAll')}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
+            <h2 className="text-base md:text-xl font-bold tracking-tight text-gray-900 mb-3">
+              {t('recentActivity')}
+            </h2>
 
-            {recentCustomers.length > 0 ? (
+            {activityFeed.length > 0 ? (
               <div className="space-y-1.5">
-                {recentCustomers.map((customer) => {
-                  const stampsReq1 = merchant?.stamps_required || 1;
-                  const stamps = Math.min(customer.stamps, stampsReq1);
-                  const progress1 = Math.min((customer.stamps / stampsReq1) * 100, 100);
-
+                {activityFeed.map((event, i) => {
+                  const config = EVENT_CONFIG[event.type];
+                  const Icon = config.icon;
                   return (
                     <Link
-                      key={customer.id}
-                      href="/dashboard/customers"
-                      className="group/item flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50/80 border border-transparent hover:bg-white hover:border-indigo-100 hover:shadow-sm transition-all duration-150 cursor-pointer"
+                      key={`${event.type}-${i}`}
+                      href={config.href}
+                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gray-50/80 border border-transparent hover:bg-white hover:border-gray-200 hover:shadow-sm transition-all duration-150 cursor-pointer"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="flex items-center justify-center w-8 h-8 shrink-0 text-xs font-bold text-white rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600">
-                          {customer.name.charAt(0)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{customer.name}</p>
-                          <p className="text-[11px] text-gray-400 leading-none mt-0.5">
-                            {customer.lastVisit ? formatRelativeTime(customer.lastVisit, locale) : t('newClient')}
-                          </p>
-                        </div>
+                      <div className={`flex items-center justify-center w-8 h-8 shrink-0 rounded-lg ${config.bg}`}>
+                        <Icon className={`w-4 h-4 ${config.color}`} />
                       </div>
-                      <div className="flex items-center gap-2 shrink-0 ml-3">
-                        <div className="h-1 w-14 bg-gray-200 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-indigo-600 to-violet-600 rounded-full"
-                            style={{ width: `${progress1}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-bold text-indigo-600 w-8 text-right">{stamps}<span className="text-gray-300 font-normal">/{stampsReq1}</span></span>
-                        {merchant?.loyalty_mode === 'cagnotte' && customer.currentAmount > 0 && (
-                          <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md whitespace-nowrap">
-                            {formatCurrency(customer.currentAmount, merchant?.country)}
-                          </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{event.title}</p>
+                        {event.subtitle && (
+                          <p className="text-[11px] text-gray-400 leading-none mt-0.5">{event.subtitle}</p>
                         )}
                       </div>
+                      <span className="text-[10px] text-gray-400 shrink-0 whitespace-nowrap">
+                        {formatRelativeTime(event.timestamp, locale)}
+                      </span>
                     </Link>
                   );
                 })}
-
-                {/* Welcome offer claims */}
-                {recentWelcomeClaims.length > 0 && (
-                  <>
-                    <div className="flex items-center gap-2 pt-2 mt-1">
-                      <Sparkles className="w-3.5 h-3.5 text-orange-400" />
-                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-400">{t('welcomeClaims')}</span>
-                    </div>
-                    {recentWelcomeClaims.map((claim) => (
-                      <div key={claim.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-orange-50/50">
-                        <div className="flex items-center justify-center w-8 h-8 shrink-0 rounded-lg bg-orange-100">
-                          <Sparkles className="w-4 h-4 text-orange-500" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-gray-900 truncate">{claim.customerName}</p>
-                          <p className="text-[11px] text-gray-400 leading-none mt-0.5">{formatRelativeTime(claim.created_at, locale)}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </>
-                )}
               </div>
             ) : merchant?.reward_description ? (
               <ZeroScansCoach merchant={merchant} />
