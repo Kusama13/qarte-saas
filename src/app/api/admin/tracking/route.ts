@@ -27,10 +27,12 @@ export async function GET(request: NextRequest) {
       slotsRes,
       offersRes,
       vouchersRes,
+      servicesRes,
+      photosRes,
     ] = await Promise.all([
       supabaseAdmin
         .from('merchants')
-        .select('id, signup_source, first_feature_choice, created_at, subscription_status, trial_ends_at, user_id, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, shop_name'),
+        .select('id, signup_source, first_feature_choice, created_at, subscription_status, trial_ends_at, user_id, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, planning_enabled, auto_booking_enabled, shield_enabled, tier2_enabled, pwa_installed_at, logo_url, review_link, booking_url, shop_name, loyalty_mode'),
       supabaseAdmin.from('super_admins').select('user_id'),
       supabaseAdmin
         .from('visits')
@@ -68,6 +70,12 @@ export async function GET(request: NextRequest) {
       supabaseAdmin
         .from('vouchers')
         .select('source'),
+      supabaseAdmin
+        .from('merchant_services')
+        .select('merchant_id'),
+      supabaseAdmin
+        .from('merchant_photos')
+        .select('merchant_id'),
     ]);
 
     // Check for critical query errors
@@ -98,7 +106,11 @@ export async function GET(request: NextRequest) {
     let expired = 0;
 
     // Feature counters
-    const fc_counts = { logo: 0, referral: 0, birthday: 0, welcome: 0, doubleDays: 0, planning: 0, shield: 0, tier2: 0, pwa: 0, review: 0, booking: 0 };
+    // Services & photos: count unique merchants that have at least one
+    const merchantsWithServices = new Set((servicesRes.data || []).map((s: { merchant_id: string }) => s.merchant_id));
+    const merchantsWithPhotos = new Set((photosRes.data || []).map((p: { merchant_id: string }) => p.merchant_id));
+
+    const fc_counts = { logo: 0, referral: 0, birthday: 0, welcome: 0, doubleDays: 0, planning: 0, autoBooking: 0, shield: 0, tier2: 0, pwa: 0, review: 0, booking: 0, services: 0, photos: 0, cagnotte: 0 };
 
     for (const m of merchants) {
       const src = m.signup_source || 'direct';
@@ -131,6 +143,10 @@ export async function GET(request: NextRequest) {
       if (m.pwa_installed_at) fc_counts.pwa++;
       if (m.review_link) fc_counts.review++;
       if (m.booking_url) fc_counts.booking++;
+      if (m.auto_booking_enabled) fc_counts.autoBooking++;
+      if (m.loyalty_mode === 'cagnotte') fc_counts.cagnotte++;
+      if (merchantsWithServices.has(m.id)) fc_counts.services++;
+      if (merchantsWithPhotos.has(m.id)) fc_counts.photos++;
     }
 
     // ── Section 2: Engagement ──
@@ -174,6 +190,10 @@ export async function GET(request: NextRequest) {
       mkF('PWA', fc_counts.pwa),
       mkF('Avis Google', fc_counts.review),
       mkF('Booking', fc_counts.booking),
+      mkF('Résa en ligne', fc_counts.autoBooking),
+      mkF('Prestations', fc_counts.services),
+      mkF('Photos', fc_counts.photos),
+      mkF('Mode cagnotte', fc_counts.cagnotte),
     ];
 
     // ── Section 4: Push & Email ──

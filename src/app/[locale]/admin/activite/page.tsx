@@ -15,12 +15,13 @@ import {
   ChevronRight,
   Cake,
   Sparkles,
+  UserCheck,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
 
-type EventType = 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher' | 'booking' | 'welcome';
+type EventType = 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher' | 'booking' | 'welcome' | 'referral';
 
 interface ActivityEvent {
   type: EventType;
@@ -38,11 +39,12 @@ interface Summary {
   contacts: number;
   vouchers: number;
   bookings: number;
+  referrals: number;
   welcome: number;
 }
 
 const DEFAULT_SUMMARY: Summary = {
-  scans: 0, signups: 0, redemptions: 0, newCustomers: 0, contacts: 0, vouchers: 0, bookings: 0, welcome: 0,
+  scans: 0, signups: 0, redemptions: 0, newCustomers: 0, contacts: 0, vouchers: 0, bookings: 0, referrals: 0, welcome: 0,
 };
 
 const EVENT_CONFIG: Record<EventType, { icon: React.ElementType; color: string; bg: string; label: string; summaryKey: keyof Summary }> = {
@@ -53,6 +55,7 @@ const EVENT_CONFIG: Record<EventType, { icon: React.ElementType; color: string; 
   contact: { icon: MessageCircle, color: 'text-amber-600', bg: 'bg-amber-50', label: 'Messages', summaryKey: 'contacts' },
   voucher: { icon: Cake, color: 'text-pink-600', bg: 'bg-pink-50', label: 'Vouchers', summaryKey: 'vouchers' },
   booking: { icon: CalendarDays, color: 'text-cyan-600', bg: 'bg-cyan-50', label: 'Reservations', summaryKey: 'bookings' },
+  referral: { icon: UserCheck, color: 'text-violet-600', bg: 'bg-violet-50', label: 'Parrainages', summaryKey: 'referrals' },
   welcome: { icon: Sparkles, color: 'text-orange-600', bg: 'bg-orange-50', label: 'Bienvenue', summaryKey: 'welcome' },
 };
 
@@ -176,6 +179,7 @@ export default function ActivitePage() {
         <SummaryCard label="Nouveaux clients" value={summary.newCustomers} icon={Users} color="indigo" />
         <SummaryCard label="Bienvenue" value={summary.welcome} icon={Sparkles} color="orange" />
         <SummaryCard label="Reservations" value={summary.bookings} icon={CalendarDays} color="cyan" />
+        <SummaryCard label="Parrainages" value={summary.referrals || 0} icon={UserCheck} color="violet" />
         <SummaryCard label="Messages" value={summary.contacts} icon={MessageCircle} color="amber" />
       </div>
 
@@ -273,7 +277,7 @@ function SummaryCard({
   label: string;
   value: number;
   icon: React.ElementType;
-  color: 'emerald' | 'blue' | 'pink' | 'indigo' | 'amber' | 'rose' | 'cyan' | 'orange';
+  color: 'emerald' | 'blue' | 'pink' | 'indigo' | 'amber' | 'rose' | 'cyan' | 'orange' | 'violet';
 }) {
   const colorMap = {
     emerald: 'bg-emerald-50 text-emerald-600',
@@ -284,6 +288,7 @@ function SummaryCard({
     orange: 'bg-orange-50 text-orange-600',
     cyan: 'bg-cyan-50 text-cyan-600',
     amber: 'bg-amber-50 text-amber-600',
+    violet: 'bg-violet-50 text-violet-600',
   };
 
   return (

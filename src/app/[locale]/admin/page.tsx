@@ -46,6 +46,15 @@ interface Merchant {
   reward_description: string | null;
   logo_url: string | null;
   loyalty_mode: 'visit' | 'cagnotte';
+  bio: string | null;
+  planning_enabled: boolean;
+  auto_booking_enabled: boolean;
+  referral_program_enabled: boolean;
+  birthday_gift_enabled: boolean;
+  welcome_offer_enabled: boolean;
+  double_days_enabled: boolean;
+  shield_enabled: boolean;
+  tier2_enabled: boolean;
 }
 
 interface ActionMerchant extends Merchant {
@@ -172,10 +181,10 @@ export default function AdminDashboardPage() {
       { data: allVisits },
       { data: recentMerchantsList },
     ] = await Promise.all([
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode'),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled'),
       supabase.from('super_admins').select('user_id'),
       supabase.from('visits').select('merchant_id, visited_at'),
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode').order('created_at', { ascending: false }).limit(10),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled').order('created_at', { ascending: false }).limit(10),
     ]);
 
     // Fetch merchant emails via API

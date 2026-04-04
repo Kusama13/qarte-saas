@@ -33,6 +33,10 @@ export async function GET(request: NextRequest) {
       { data: pendingVisits },
       { data: servicesList },
       { data: photosList },
+      { data: vouchersList },
+      { data: redemptionsList },
+      { data: referralsList },
+      { data: slotsList },
     ] = await Promise.all([
       supabaseAdmin.from('merchants').select('*').order('created_at', { ascending: false }),
       supabaseAdmin.from('super_admins').select('user_id'),
@@ -43,6 +47,10 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('visits').select('merchant_id').eq('status', 'pending').limit(10000),
       supabaseAdmin.from('merchant_services').select('merchant_id').limit(10000),
       supabaseAdmin.from('merchant_photos').select('merchant_id').limit(10000),
+      supabaseAdmin.from('vouchers').select('merchant_id').limit(10000),
+      supabaseAdmin.from('redemptions').select('merchant_id').limit(10000),
+      supabaseAdmin.from('referrals').select('merchant_id').limit(10000),
+      supabaseAdmin.from('merchant_planning_slots').select('merchant_id, client_name').limit(10000),
     ]);
 
     // Super admin user_ids
@@ -115,6 +123,34 @@ export async function GET(request: NextRequest) {
       photosCounts[p.merchant_id] = (photosCounts[p.merchant_id] || 0) + 1;
     });
 
+    // Vouchers counts per merchant
+    const vouchersCounts: Record<string, number> = {};
+    (vouchersList || []).forEach((v: { merchant_id: string }) => {
+      vouchersCounts[v.merchant_id] = (vouchersCounts[v.merchant_id] || 0) + 1;
+    });
+
+    // Redemptions counts per merchant
+    const redemptionsCounts: Record<string, number> = {};
+    (redemptionsList || []).forEach((r: { merchant_id: string }) => {
+      redemptionsCounts[r.merchant_id] = (redemptionsCounts[r.merchant_id] || 0) + 1;
+    });
+
+    // Referrals counts per merchant
+    const referralsCounts: Record<string, number> = {};
+    (referralsList || []).forEach((r: { merchant_id: string }) => {
+      referralsCounts[r.merchant_id] = (referralsCounts[r.merchant_id] || 0) + 1;
+    });
+
+    // Planning slots & bookings per merchant
+    const slotsCounts: Record<string, number> = {};
+    const bookingsCounts: Record<string, number> = {};
+    (slotsList || []).forEach((s: { merchant_id: string; client_name: string | null }) => {
+      slotsCounts[s.merchant_id] = (slotsCounts[s.merchant_id] || 0) + 1;
+      if (s.client_name) {
+        bookingsCounts[s.merchant_id] = (bookingsCounts[s.merchant_id] || 0) + 1;
+      }
+    });
+
     // User emails mapping (uses paginated allUsers from C10 fix)
     const userEmails: Record<string, string> = {};
     allUsers.forEach((u) => {
@@ -134,6 +170,11 @@ export async function GET(request: NextRequest) {
       userEmails,
       servicesCounts,
       photosCounts,
+      vouchersCounts,
+      redemptionsCounts,
+      referralsCounts,
+      slotsCounts,
+      bookingsCounts,
     });
   } catch (error) {
     logger.error('Merchants data API error:', error);

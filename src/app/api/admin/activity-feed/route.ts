@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
       { data: usedVouchers },
       { data: welcomeClaims },
       { data: bookings },
+      { data: referrals },
       { data: superAdmins },
     ] = await Promise.all([
       (() => {
@@ -117,6 +118,14 @@ export async function GET(request: NextRequest) {
         if (periodEnd) q = q.lt('created_at', periodEnd);
         return q.order('created_at', { ascending: false }).limit(200);
       })(),
+      (() => {
+        let q = supabaseAdmin
+          .from('referrals')
+          .select('merchant_id, status, created_at')
+          .gte('created_at', periodStart);
+        if (periodEnd) q = q.lt('created_at', periodEnd);
+        return q.order('created_at', { ascending: false }).limit(200);
+      })(),
       supabaseAdmin
         .from('super_admins')
         .select('user_id'),
@@ -130,6 +139,7 @@ export async function GET(request: NextRequest) {
     for (const c of newCards || []) merchantIdSet.add(c.merchant_id);
     for (const v of usedVouchers || []) merchantIdSet.add(v.merchant_id);
     for (const b of bookings || []) merchantIdSet.add(b.merchant_id);
+    for (const ref of referrals || []) merchantIdSet.add(ref.merchant_id);
     for (const w of welcomeClaims || []) merchantIdSet.add(w.merchant_id);
     const merchantIds = [...merchantIdSet];
 
@@ -151,7 +161,7 @@ export async function GET(request: NextRequest) {
 
     // Build events timeline
     interface ActivityEvent {
-      type: 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher' | 'booking' | 'welcome';
+      type: 'scan' | 'signup' | 'redemption' | 'new_customer' | 'contact' | 'voucher' | 'booking' | 'welcome' | 'referral';
       timestamp: string;
       title: string;
       subtitle: string;
@@ -231,6 +241,16 @@ export async function GET(request: NextRequest) {
       });
     });
 
+    (referrals || []).forEach((ref: { created_at: string; merchant_id: string; status: string }) => {
+      events.push({
+        type: 'referral',
+        timestamp: ref.created_at,
+        title: `Parrainage chez ${merchantNameMap.get(ref.merchant_id) || 'Inconnu'}`,
+        subtitle: ref.status === 'completed' ? 'Parrainage validé' : 'En attente de validation',
+        merchant_id: ref.merchant_id,
+      });
+    });
+
     (welcomeClaims || []).forEach((w: { created_at: string; merchant_id: string; reward_description: string | null }) => {
       events.push({
         type: 'welcome',
@@ -252,6 +272,7 @@ export async function GET(request: NextRequest) {
       contacts: (contacts || []).length,
       vouchers: (usedVouchers || []).length,
       bookings: (bookings || []).length,
+      referrals: (referrals || []).length,
       welcome: (welcomeClaims || []).length,
     };
 
