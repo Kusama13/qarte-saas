@@ -3,7 +3,7 @@ export const maxDuration = 300;
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
-import { getTodayInParis, getTodayForCountry } from '@/lib/utils';
+import { getTodayForCountry } from '@/lib/utils';
 import { sendMerchantPush } from '@/lib/merchant-push';
 import { verifyCronAuth } from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
@@ -36,14 +36,14 @@ export async function GET(request: NextRequest) {
     // Fetch all pending 18:00 pushes (no date filter — checked per merchant timezone)
     const { data: scheduledPushes } = await supabase
       .from('scheduled_push')
-      .select('*')
+      .select('id, merchant_id, title, body, scheduled_date')
       .eq('scheduled_time', '18:00')
       .eq('status', 'pending');
 
     // Batch fetch all merchants, loyalty cards, and push subscriptions upfront (avoid N+1)
     const pushMerchantIds = [...new Set((scheduledPushes || []).map(p => p.merchant_id))];
     const [{ data: allMerchants }, { data: allCards }, { data: allSubs }] = await Promise.all([
-      supabase.from('merchants').select('id, shop_name, country').in('id', pushMerchantIds),
+      supabase.from('merchants').select('id, shop_name, country, locale').in('id', pushMerchantIds),
       supabase.from('loyalty_cards').select('merchant_id, customer_id').in('merchant_id', pushMerchantIds),
       supabase.from('push_subscriptions').select('*').in('merchant_id', pushMerchantIds),
     ]);
@@ -166,9 +166,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // ── DEPOSIT DEADLINE CHECK (same as morning cron Section 14) ──
+    // ── DEPOSIT DEADLINE CHECK ──
     const nowIso = new Date().toISOString();
+    const fourHoursFromNow = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
 
+    // A. Auto-release expired deposits
     const { data: expiredSlots } = await supabase
       .from('merchant_planning_slots')
       .select('id, merchant_id, client_name, slot_date, start_time')
@@ -178,11 +180,17 @@ export async function GET(request: NextRequest) {
       .is('primary_slot_id', null)
       .limit(200);
 
+    // Fetch merchants for locale-aware notifications
+    const depositMerchantIds = [...new Set((expiredSlots || []).map(s => s.merchant_id))];
+    const { data: depositMerchants } = depositMerchantIds.length > 0
+      ? await supabase.from('merchants').select('id, locale').in('id', depositMerchantIds)
+      : { data: [] };
+    const depositMerchantMap = new Map((depositMerchants || []).map(m => [m.id, m]));
+
     const depositPushes: Promise<boolean>[] = [];
     let depositReleased = 0;
 
     for (const slot of expiredSlots || []) {
-      // Query filler IDs BEFORE releasing
       const { data: fillerSlots } = await supabase
         .from('merchant_planning_slots')
         .select('id')
@@ -190,10 +198,8 @@ export async function GET(request: NextRequest) {
 
       const allSlotIds = [slot.id, ...(fillerSlots || []).map(f => f.id)];
 
-      // Delete all services (primary + fillers)
       await supabase.from('planning_slot_services').delete().in('slot_id', allSlotIds);
 
-      // Release fillers
       if (fillerSlots && fillerSlots.length > 0) {
         await supabase
           .from('merchant_planning_slots')
@@ -201,26 +207,60 @@ export async function GET(request: NextRequest) {
           .in('id', fillerSlots.map(f => f.id));
       }
 
-      // Release primary slot
       await supabase
         .from('merchant_planning_slots')
         .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null })
         .eq('id', slot.id);
 
+      const isEN = depositMerchantMap.get(slot.merchant_id)?.locale === 'en';
       depositPushes.push(sendMerchantPush({
         supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expired', referenceId: slot.id,
-        title: 'Créneau libéré — acompte non reçu',
-        body: `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
+        title: isEN ? 'Slot released — deposit not received' : 'Créneau libéré — acompte non reçu',
+        body: isEN
+          ? `${slot.client_name} — ${slot.slot_date} at ${slot.start_time}`
+          : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
         url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
       }));
 
       depositReleased++;
     }
 
+    // B. Warn merchants about deposits expiring soon (within 4h)
+    const { data: expiringSlots } = await supabase
+      .from('merchant_planning_slots')
+      .select('id, merchant_id, client_name, slot_date, start_time')
+      .eq('deposit_confirmed', false)
+      .not('deposit_deadline_at', 'is', null)
+      .gte('deposit_deadline_at', nowIso)
+      .lte('deposit_deadline_at', fourHoursFromNow)
+      .is('primary_slot_id', null)
+      .limit(200);
+
+    // Fetch merchants for warning locale (reuse map if overlap)
+    const warningMerchantIds = [...new Set((expiringSlots || []).map(s => s.merchant_id))].filter(id => !depositMerchantMap.has(id));
+    if (warningMerchantIds.length > 0) {
+      const { data: warnMerchants } = await supabase.from('merchants').select('id, locale').in('id', warningMerchantIds);
+      for (const m of warnMerchants || []) depositMerchantMap.set(m.id, m);
+    }
+
+    let depositWarned = 0;
+    for (const slot of expiringSlots || []) {
+      const isEN = depositMerchantMap.get(slot.merchant_id)?.locale === 'en';
+      depositPushes.push(sendMerchantPush({
+        supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expiring', referenceId: slot.id,
+        title: isEN ? 'Deposit expiring soon' : 'Acompte bientôt expiré',
+        body: isEN
+          ? `${slot.client_name} — confirm or the slot will be released`
+          : `${slot.client_name} — confirme ou le créneau sera libéré`,
+        url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
+      }));
+      depositWarned++;
+    }
+
     if (depositPushes.length > 0) await Promise.allSettled(depositPushes);
 
-    logger.info('Evening cron completed', { ...results, depositReleased });
-    return NextResponse.json({ success: true, ...results, depositReleased });
+    logger.info('Evening cron completed', { ...results, depositReleased, depositWarned });
+    return NextResponse.json({ success: true, ...results, depositReleased, depositWarned });
   } catch (error) {
     logger.error('Evening cron error', error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

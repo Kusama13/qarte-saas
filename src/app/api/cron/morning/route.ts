@@ -909,7 +909,7 @@ export async function GET(request: NextRequest) {
           .from('pending_email_tracking')
           .select('merchant_id, reminder_day')
           .in('merchant_id', incompleteUsers.map(u => u.id))
-          .in('reminder_day', [-110, -111, -112]);
+          .in('reminder_day', [-150]);
 
         const incompleteTrackingSet = new Set(
           (existingIncompleteTracking || []).map(t => `${t.merchant_id}:${t.reminder_day}`)
@@ -920,7 +920,7 @@ export async function GET(request: NextRequest) {
           minHours: number; maxHours: number; trackingCode: number;
           sendFn: (email: string) => Promise<{ success: boolean }>;
         }> = [
-          { minHours: 23, maxHours: 25, trackingCode: -110, sendFn: sendGuidedSignupEmail },
+          { minHours: 23, maxHours: 25, trackingCode: -150, sendFn: sendGuidedSignupEmail },
         ];
 
         for (const user of incompleteUsers) {
