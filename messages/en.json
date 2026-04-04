@@ -2324,6 +2324,16 @@
     "leaveReview": "Leave a review",
     "noThanks": "No thanks"
   },
+  "referralModal": {
+    "title": "Invite a friend!",
+    "subtitle": "Share this link and you both win",
+    "youGet": "You",
+    "theyGet": "Your friend",
+    "share": "Share the link",
+    "copied": "Link copied!",
+    "noThanks": "Maybe later",
+    "shareText": "Join me at {shopName}! Use my link to get your reward: {link}"
+  },
   "reviewCard": {
     "leaveReview": "Leave us a review",
     "helpsALot": "It helps us a lot",

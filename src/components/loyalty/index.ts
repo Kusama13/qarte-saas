@@ -18,3 +18,4 @@ export { default as VoucherRewards } from './VoucherRewards';
 export { default as VoucherModals } from './VoucherModals';
 export { default as ReviewModal } from './ReviewModal';
 export { default as ReviewCard } from './ReviewCard';
+export { default as ReferralModal } from './ReferralModal';

@@ -2324,6 +2324,16 @@
     "leaveReview": "Laisser mon avis",
     "noThanks": "Non merci"
   },
+  "referralModal": {
+    "title": "Invite un proche !",
+    "subtitle": "Partage ce lien et vous gagnez tous les deux",
+    "youGet": "Toi",
+    "theyGet": "Ton proche",
+    "share": "Partager le lien",
+    "copied": "Lien copié !",
+    "noThanks": "Plus tard",
+    "shareText": "Rejoins-moi chez {shopName} ! Utilise mon lien pour profiter de ton avantage : {link}"
+  },
   "reviewCard": {
     "leaveReview": "Laisse-nous un avis",
     "helpsALot": "Ça nous aide énormément",

@@ -39,6 +39,7 @@ import {
   InstallPrompts,
   ReviewModal,
   ReviewCard,
+  ReferralModal,
   StampsSection,
   CagnotteSection,
   RewardCard,
@@ -118,6 +119,7 @@ export default function CustomerCardPage({
   const [redeeming, setRedeeming] = useState(false);
   const [showRedeemModal, setShowRedeemModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showReferralModal, setShowReferralModal] = useState(false);
   const [redeemSuccess, setRedeemSuccess] = useState(false);
   const [redeemError, setRedeemError] = useState<string | null>(null);
   const [redeemTier, setRedeemTier] = useState<1 | 2>(1);
@@ -391,6 +393,21 @@ export default function CustomerCardPage({
           const alreadyDismissed = stored && (Date.now() - parseInt(stored)) / (1000 * 60 * 60 * 24) < 90;
           if (!alreadyDismissed) {
             setTimeout(() => setShowReviewModal(true), 1500);
+          }
+        }
+
+        // Show referral modal at 2nd, 5th, 10th stamp (if referral enabled and not already shown)
+        if (
+          (data.card?.current_stamps === 2 || data.card?.current_stamps === 5 || data.card?.current_stamps === 10) &&
+          data.card?.merchant?.referral_program_enabled &&
+          data.card?.referral_code &&
+          !isPreview
+        ) {
+          const refKey = `qarte_referral_shown_${merchantId}`;
+          const storedRef = localStorage.getItem(refKey);
+          const alreadyShownRef = storedRef && (Date.now() - parseInt(storedRef)) / (1000 * 60 * 60 * 24) < 90;
+          if (!alreadyShownRef) {
+            setTimeout(() => setShowReferralModal(true), 1500);
           }
         }
       } catch (error) {
@@ -1389,6 +1406,20 @@ export default function CustomerCardPage({
           reviewLink={merchant.review_link}
           shopName={merchant.shop_name}
           merchantId={merchantId}
+        />
+      )}
+
+      {/* Referral Modal — affiché au 2ème, 5ème, 10ème scan */}
+      {card?.referral_code && merchant.referral_program_enabled && (
+        <ReferralModal
+          isOpen={showReferralModal && !showReviewModal}
+          onClose={() => setShowReferralModal(false)}
+          referralCode={card.referral_code}
+          scanCode={merchant.scan_code}
+          shopName={merchant.shop_name}
+          merchantId={merchantId}
+          rewardReferrer={merchant.referral_reward_referrer}
+          rewardReferred={merchant.referral_reward_referred}
         />
       )}
     </div>

@@ -52,7 +52,7 @@ src/
 │   ├── ui/                # Button, Input, Modal, Select, Badge, Toast, Skeleton
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
 │   ├── dashboard/         # CustomerManagementModal, AdjustTab, RewardsCombinedTab, HistoryTab, JournalTab, DangerZone, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach, MilestoneModal
-│   ├── loyalty/           # StampsSection, CagnotteSection, RewardCard, RedeemModal, StickyRedeemBar, HistorySection, VoucherRewards, VoucherModals, ReviewModal, ReviewCard, BirthdaySection, SocialLinks, CardHeader, InstallPrompts, UpcomingAppointmentsSection
+│   ├── loyalty/           # StampsSection, CagnotteSection, RewardCard, RedeemModal, StickyRedeemBar, HistorySection, VoucherRewards, VoucherModals, ReviewModal, ReviewCard, ReferralModal, BirthdaySection, SocialLinks, CardHeader, InstallPrompts, UpcomingAppointmentsSection
 │   └── analytics/         # GTM, FacebookPixel, TikTokPixel, MicrosoftClarity
 │
 ├── emails/               # 34 templates React Email + BaseLayout
@@ -208,6 +208,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 ### Avis Google
 - `review_link` sur `merchants` — lien Google review du commerce
 - Modal `ReviewModal` declenchee automatiquement : au 1er passage, au 3e passage (`current_stamps === 1 || 3`), apres chaque redeem, apres chaque voucher consomme
+- Modal `ReferralModal` declenchee au 2e, 5e, 10e passage (si `referral_program_enabled`). Affiche recompenses parrain+filleul, Web Share API / clipboard. Cooldown 90j (`qarte_referral_shown_{merchantId}`). Guard `!showReviewModal` pour eviter double modal
 - Dismiss 90 jours (localStorage `qarte_review_card_dismissed_${merchantId}`)
 - Encart permanent `ReviewCard` sur la carte client si `review_link` configure
 - `ReviewPrompt` sur la carte (dismissable definitivement via localStorage)
