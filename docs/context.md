@@ -419,7 +419,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 8. `isFirstSetup` = true quand `reward_description` is null
 9. Email QR code envoye a la premiere config
 
-**OnboardingChecklist** : 8 etapes (programme, logo, reseau social, adresse, photo, simuler experience, QR download, 2 premiers scans), confetti a la completion (one-shot localStorage), auto-dismiss 3 jours apres. Visible seulement en trial.
+**OnboardingChecklist** : 15 etapes en 3 groupes accordion (Fidelite 6, Vitrine 5, Planning 4). Groupe Fidelite : programme, logo, QR, parrainage, anniversaire, 1er client. Groupe Vitrine : bio, adresse, photos, prestations, reseaux. Groupe Planning : activer planning, creneaux, resa en ligne, 1ere resa. Progress ring SVG par groupe + barre globale. Celebrations sparkles (sparkleSubtle par etape, sparkleMedium par groupe, sparkleGrand quand 15/15). Auto-dismiss 3 jours apres completion. Visible en trial uniquement.
 
 **Score programme** : cercle sticky 0-100% (recompense 25pts, logo 20pts, reseaux 15pts, avis 15pts, reservation 10pts, palier2 10pts, jours x2 5pts)
 
