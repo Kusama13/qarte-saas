@@ -112,8 +112,22 @@ export default function PlanningDashboard() {
 
   const handleConfirmDeposit = async (slot: PlanningSlot) => {
     if (!merchant) return;
-    await supabase.from('merchant_planning_slots').update({ deposit_confirmed: true }).eq('id', slot.id);
-    fetchSlots();
+    try {
+      const res = await fetch('/api/planning', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slotId: slot.id,
+          merchantId: merchant.id,
+          client_name: slot.client_name,
+          deposit_confirmed: true,
+        }),
+      });
+      if (!res.ok) console.error('Confirm deposit error:', await res.text());
+    } catch (err) {
+      console.error('Confirm deposit error:', err);
+    }
+    await fetchSlots();
   };
 
   const handleSaveSettings = async () => {
