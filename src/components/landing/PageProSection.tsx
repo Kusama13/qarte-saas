@@ -262,20 +262,20 @@ export function PageProSection() {
 
         <div className="flex flex-col gap-6 md:gap-10 lg:gap-12">
           <FeatureBlock
-            title={t('seoTitle')}
-            titleBold={t('seoTitleBold')}
-            description={t('seoDesc')}
-            visual={<SeoVisual t={t} />}
+            title={t('planningTitle')}
+            titleBold={t('planningTitleBold')}
+            description={t('planningDesc')}
+            visual={<PlanningVisual t={t} locale={locale} />}
             delay={0.05}
           />
 
           <Separator />
 
           <FeatureBlock
-            title={t('planningTitle')}
-            titleBold={t('planningTitleBold')}
-            description={t('planningDesc')}
-            visual={<PlanningVisual t={t} locale={locale} />}
+            title={t('seoTitle')}
+            titleBold={t('seoTitleBold')}
+            description={t('seoDesc')}
+            visual={<SeoVisual t={t} />}
             reverse
             delay={0.05}
           />

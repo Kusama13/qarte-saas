@@ -178,6 +178,13 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Le merchant applique la reduction manuellement — pas de logique au scan
 - Fonctionne en mode passage ET cagnotte
 
+### Student Offer
+- `student_offer_enabled` (BOOL, defaut false) + `student_offer_description` (TEXT) sur table `merchants` (mig 087)
+- Config dans `/dashboard/public-page` (PromoSection) : toggle + description + suggestions (-10%, -20%, -15% hors WE)
+- Affiche sur page publique `/p/[slug]` dans la section "Avantages exclusifs" avec icone GraduationCap
+- Mention "Carte etudiante obligatoire" affichee automatiquement
+- Reduction permanente (pas de date d'expiration)
+
 ### Jours x2 (Double Stamp Days) — mode passage uniquement
 - `double_days_enabled` + `double_days_of_week` (JSON array getDay(), timezone merchant via `getTimezoneForCountry(country)`)
 - Helpers : `parseDoubleDays()`, `formatDoubleDays()`, `DAY_LABELS`, `WEEK_ORDER`
@@ -512,7 +519,7 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ## 10. Pages Principales
 
 ### Landing (`/`)
-Hero (mockup carte fidelite + floating badges: point ajoute, Google 4.9, parrainage, push Qarte) → SocialProof → FideliteSection (light, 4 blocs: programme+QR, relances+anniversaires, avis Google, journal client) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau Booksy-style, epure) → FAQ (8 questions) → Footer (FooterCta + FooterDark). Typo landing : titres de section en Playfair Display italic sur les mots gradient + surlignage indigo (sections light) ou sans surlignage (sections dark). Separateurs dot+traits. CTAs differencies : noir (FideliteSection), blanc (PageProSection), gradient violet (Hero). Grain texture SVG sur FideliteSection
+Hero (mockup carte fidelite + floating badges: point ajoute, Google 4.9, parrainage, push Qarte) → SocialProof → FideliteSection (light, 4 blocs: programme+QR, relances+anniversaires, avis Google, journal client) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau Booksy-style, epure) → FAQ (10 questions) → Footer (FooterCta + FooterDark). Typo landing : titres de section en Playfair Display italic sur les mots gradient + surlignage indigo (sections light) ou sans surlignage (sections dark). Separateurs dot+traits. CTAs differencies : noir (FideliteSection), blanc (PageProSection), gradient violet (Hero). Grain texture SVG sur FideliteSection
 
 Hero titre : "Difficile d'attirer de nouvelles clientes. Encore plus de les faire revenir. **Qarte fait les deux, en un lien.**"
 Hero subtitle : "Vitrine en ligne, programme de fidelite, planning — tout ce dont ton salon a besoin, dans un seul lien pour ta bio Instagram, TikTok et Google."

@@ -9,6 +9,7 @@ import {
   Users,
   Bell,
   Gift,
+  CalendarCheck,
 } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -151,26 +152,16 @@ export function HeroSection() {
           <p className="text-[1.05rem] md:text-lg lg:text-xl text-gray-600 max-w-lg mx-auto lg:mx-0 leading-relaxed">
             {t('subtitle')}
           </p>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-start justify-center lg:justify-start gap-3 w-full sm:w-auto">
-            <div className="flex flex-col">
-              <Link
-                href="/auth/merchant/signup"
-                onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-                className="group relative flex items-center justify-center px-8 py-4 sm:px-10 sm:py-5 bg-gradient-to-r from-indigo-600/90 to-violet-600/90 backdrop-blur-md text-white font-bold text-base sm:text-lg rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] border border-white/20"
-              >
-                <span className="relative z-10">{t('ctaPrimary')}</span>
-                <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Link>
-              <p className="text-[11px] text-gray-400 font-medium mt-1.5 text-center">{t('ctaSubtext')}</p>
-            </div>
+          <div className="flex flex-col items-center lg:items-start gap-3 w-full sm:w-auto">
             <Link
-              href="/customer/card/demo-onglerie?preview=true&demo=true"
-              target="_blank"
-              onClick={() => { trackCtaClick('hero_demo', 'hero_section'); }}
-              className="flex items-center justify-center px-8 py-4 sm:px-10 sm:py-5 bg-gray-900/80 backdrop-blur-md text-white font-semibold text-base sm:text-lg rounded-xl border border-gray-700/50 hover:bg-gray-900 hover:shadow-md active:scale-[0.98] transition-all duration-300 shadow-sm"
+              href="/auth/merchant/signup"
+              onClick={() => { trackCtaClick('hero_primary', 'hero_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
+              className="group relative flex items-center justify-center px-10 py-5 bg-gradient-to-r from-indigo-600/90 to-violet-600/90 backdrop-blur-md text-white font-bold text-base sm:text-lg rounded-xl transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] border border-white/20"
             >
-              {t('ctaDemo')}
+              <span className="relative z-10">{t('ctaPrimary')}</span>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity" />
             </Link>
+            <p className="text-[11px] text-gray-400 font-medium text-center">{t('ctaSubtext')}</p>
           </div>
 
           {/* Impact stats badges */}
@@ -188,7 +179,7 @@ export function HeroSection() {
               <span className="text-gray-500 font-medium">{t('statVisibility')}</span>
             </span>
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 shadow-sm text-xs tracking-wide">
-              <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500">2x</span>
+              <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500">24/7</span>
               <span className="text-gray-500 font-medium">{t('statContact')}</span>
             </span>
           </div>
@@ -260,20 +251,16 @@ export function HeroSection() {
               </div>
             </div>
 
-            {/* Heart decorations */}
-            {[
-              { left: '-12px', top: '40%', size: 'w-5 h-5' },
-              { left: '105%', top: '30%', size: 'w-4 h-4' },
-              { left: '95%', top: '65%', size: 'w-3 h-3' },
-            ].map((p, i) => (
-              <div
-                key={i}
-                className={`absolute ${p.size} text-rose-300/50 z-0`}
-                style={{ left: p.left, top: p.top }}
-              >
-                <Heart className="w-full h-full fill-current" />
+            {/* Booking badge */}
+            <div className="hidden sm:flex absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-cyan-200/40 border border-cyan-100 items-center gap-2 z-30">
+              <div className="w-7 h-7 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center shadow-md shadow-cyan-300/40">
+                <CalendarCheck className="w-3.5 h-3.5 text-white" />
               </div>
-            ))}
+              <div>
+                <p className="text-[10px] font-bold text-gray-800">{t('badgeBooking')}</p>
+                <p className="text-[8px] text-cyan-500 font-semibold">{t('badgeBookingSub')}</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
