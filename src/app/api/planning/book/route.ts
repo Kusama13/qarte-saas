@@ -188,6 +188,7 @@ export async function POST(request: NextRequest) {
       client_name: clientName,
       client_phone: formattedPhone,
       customer_id: customerId,
+      booked_online: true,
     };
     if (hasDeposit) {
       baseData.deposit_confirmed = false;

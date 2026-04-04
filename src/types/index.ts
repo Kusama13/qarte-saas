@@ -165,6 +165,7 @@ export interface PlanningSlot {
   notes: string | null;
   deposit_confirmed: boolean | null;
   deposit_deadline_at: string | null;
+  booked_online: boolean;
   primary_slot_id: string | null;
   created_at: string;
   planning_slot_services?: PlanningSlotService[];
