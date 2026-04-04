@@ -502,10 +502,10 @@ export default function AdminMerchantsPage() {
     } else if (l.includes('1er scan')) {
       msgs.push({ label: '1er scan', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Ta carte est prete ! Montre le QR code a tes 3 prochains clients au moment de payer — ils scannent, c'est fait 😊` });
     } else if (l.includes('essai j-')) {
-      msgs.push({ label: 'Fin essai', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME}. Ton essai se termine bientot${customers > 0 ? ` et tes ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. On continue ? 😊` });
+      msgs.push({ label: 'Fin essai', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME}. Ton essai se termine bientot${customers > 0 ? ` et tes ${customers} clients comptent sur leur carte` : ''}. On continue ensemble ? 😊` });
       msgs.push({ label: 'Dispo', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Des questions avant la fin de l'essai ? Je suis la, on peut meme s'appeler 2 min si tu veux 📞` });
     } else if (l.includes('expiré')) {
-      msgs.push({ label: 'Relance', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Ton essai est termine mais rien n'est perdu ! ${customers > 0 ? `Tes ${customers} clients gardent leur carte. ` : ''}Le code QARTE50 te donne le premier mois a 9€. On relance ? 😊` });
+      msgs.push({ label: 'Relance', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Ton essai est termine mais rien n'est perdu ! ${customers > 0 ? `Tes ${customers} clients gardent leur carte. ` : ''}On relance ? 😊` });
       msgs.push({ label: 'Feedback', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Un truc a coince pendant l'essai ? Tes retours m'aident beaucoup — et je peux surement debloquer ca 🙏` });
     } else if (l.includes('inactif')) {
       msgs.push({ label: 'Nouvelles', text: `Hello ${name} ! C'est ${ADMIN_CONTACT_NAME} de Qarte. Comment ca se passe au salon ? Un coup de main avec Qarte ? 😊` });

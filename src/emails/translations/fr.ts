@@ -1,7 +1,7 @@
 export const fr = {
   subjects: {
     welcome: 'Bienvenue {shopName} !',
-    trialEndingLastDayPromo: '{shopName}, dernier jour — code promo inside',
+    trialEndingLastDayPromo: '{shopName}, dernier jour pour garder tes clients',
     trialEndingLastDay: '{shopName}, dernier jour d\'essai',
     trialEndingDays: 'Plus que {daysRemaining} jours d\'essai',
     trialExpiredPromo: '{shopName}, -10€ pour réactiver ton compte',
@@ -632,8 +632,8 @@ export const fr = {
     body1: 'Vous avez créé un compte Qarte ({email}) il y a une semaine, mais votre commerce n\'est toujours pas enregistré.',
     warningBox: 'Votre espace sera <strong>supprimé automatiquement</strong> dans quelques jours si l\'inscription n\'est pas finalisée.',
     body2: 'L\'inscription prend <strong>3 minutes</strong> et l\'essai est 100% gratuit pendant 7 jours, sans carte bancaire.',
-    promoTitle: 'Offre premier mois',
-    promoText: 'Si vous souscrivez après votre essai, votre <strong>premier mois est à 9€</strong> au lieu de 19€. Le code promo QARTE50 s\'applique automatiquement.',
+    promoTitle: 'Essai gratuit 7 jours',
+    promoText: 'Testez Qarte gratuitement pendant 7 jours : vitrine en ligne, programme fidélité, réservation en ligne, parrainage et cadeaux anniversaire. Sans carte bancaire.',
     cta: 'Finaliser mon inscription',
     helpLine: 'Une question avant de vous lancer ? Répondez à cet email.',
     signature: 'L\'équipe Qarte',

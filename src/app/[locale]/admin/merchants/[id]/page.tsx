@@ -217,7 +217,7 @@ function getWhatsAppMarketing(name: string, customers: number): { label: string;
     { label: 'Relance config', text: `Hello ${name} ! Ton programme n'est pas encore en ligne — dis-moi ta recompense habituelle et je configure tout pour toi en 30 secondes 😊` },
     { label: 'Offre bienvenue', text: `Hello ${name} ! Un geste pour les nouveaux clients (ex: -20% 1ere visite). Ils le voient sur ta vitrine, ils viennent, ils scannent → dans ta base. Espace Pro → Ma Page 🎁` },
     { label: 'SEO Google', text: `Hello ${name} ! Ta vitrine est referencee sur Google. Ajoute tes prestations, photos et adresse pour ressortir quand quelqu'un cherche un salon pres de chez toi 🔍` },
-    { label: 'Fin essai', text: `Hello ${name} ! Ton essai se termine bientot${customers > 0 ? ` et tes ${customers} clients comptent sur leur carte` : ''}. Avec le code QARTE50 c'est 9€ au lieu de 19€ le premier mois. On continue ? 😊` },
+    { label: 'Fin essai', text: `Hello ${name} ! Ton essai se termine bientot${customers > 0 ? ` et tes ${customers} clients comptent sur leur carte` : ''}. On continue ensemble ? 😊` },
     { label: 'Message libre', text: `C'est Elodie de Qarte. ` },
   ];
 }

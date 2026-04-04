@@ -1,7 +1,7 @@
 export const en = {
   subjects: {
     welcome: 'Welcome {shopName}!',
-    trialEndingLastDayPromo: '{shopName}, last day — promo code inside',
+    trialEndingLastDayPromo: '{shopName}, last day to keep your clients',
     trialEndingLastDay: '{shopName}, last day of your trial',
     trialEndingDays: 'Only {daysRemaining} days left in your trial',
     trialExpiredPromo: '{shopName}, $10 off to reactivate your account',
@@ -632,8 +632,8 @@ export const en = {
     body1: 'You created a Qarte account ({email}) a week ago, but your business is still not registered.',
     warningBox: 'Your workspace will be <strong>automatically deleted</strong> in a few days if you don\'t complete your signup.',
     body2: 'Signing up takes <strong>3 minutes</strong> and the trial is 100% free for 7 days, no credit card required.',
-    promoTitle: 'First month offer',
-    promoText: 'If you subscribe after your trial, your <strong>first month is $9</strong> instead of $19. The promo code QARTE50 is applied automatically.',
+    promoTitle: '7-day free trial',
+    promoText: 'Try Qarte free for 7 days: salon page, loyalty program, online booking, referrals and birthday gifts. No credit card required.',
     cta: 'Complete my signup',
     helpLine: 'Have a question before getting started? Reply to this email.',
     signature: 'The Qarte Team',
