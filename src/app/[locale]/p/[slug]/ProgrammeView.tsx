@@ -83,6 +83,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [planningExpanded, setPlanningExpanded] = useState(false);
   const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
+  // Online booking only works if merchant has actual available slots
+  const canBookOnline = merchant.auto_booking_enabled && planningSlots.length > 0;
   const [bookingSlot, setBookingSlot] = useState<{ date: string; time: string } | null>(null);
 
   // Opening hours
@@ -642,7 +644,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         })()}
 
         {/* ── OFFRE DE BIENVENUE (nouveaux clients) ── */}
-        {merchant.welcome_offer_enabled && merchant.welcome_offer_description && (merchant.auto_booking_enabled || (merchant.welcome_referral_code && merchant.scan_code)) && (
+        {merchant.welcome_offer_enabled && merchant.welcome_offer_description && (canBookOnline || (merchant.welcome_referral_code && merchant.scan_code)) && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -668,10 +670,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   {merchant.welcome_offer_description}
                 </p>
                 <p className="text-[12px] text-gray-500 mt-1">
-                  {merchant.auto_booking_enabled ? t('signUpToEnjoyBooking') : t('signUpToEnjoy')}
+                  {canBookOnline ? t('signUpToEnjoyBooking') : t('signUpToEnjoy')}
                 </p>
               </div>
-              {!merchant.auto_booking_enabled && merchant.scan_code && (
+              {!canBookOnline && merchant.scan_code && (
                 <a
                   href={isDemo ? '#' : `/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`}
                   onClick={isDemo ? noOp : undefined}
@@ -684,14 +686,14 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             </div>
             <div className="px-5 pb-4" style={{ background: `linear-gradient(135deg, ${p}06, transparent)` }}>
               <p className="text-[12px] text-gray-500 leading-relaxed">
-                {merchant.auto_booking_enabled ? t('welcomeOfferInstructionsBooking') : t('welcomeOfferInstructions')}
+                {canBookOnline ? t('welcomeOfferInstructionsBooking') : t('welcomeOfferInstructions')}
               </p>
             </div>
           </motion.div>
         )}
 
         {/* ── OFFRE PROMO (tout le monde) — style amber distinct ── */}
-        {promoOffer && (merchant.auto_booking_enabled || merchant.scan_code) && (
+        {promoOffer && (canBookOnline || merchant.scan_code) && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -717,7 +719,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   {t('promoOpenToAll')}
                 </p>
               </div>
-              {!merchant.auto_booking_enabled && merchant.scan_code && (
+              {!canBookOnline && merchant.scan_code && (
                 <a
                   href={`/scan/${merchant.scan_code}?offer=${promoOffer.id}`}
                   className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white bg-amber-500"
@@ -728,7 +730,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             </div>
             <div className="px-5 pb-4" style={{ background: 'linear-gradient(135deg, #f59e0b06, transparent)' }}>
               <p className="text-[12px] text-gray-500 leading-relaxed">
-                {merchant.auto_booking_enabled ? t('promoInstructionsBooking') : t('promoInstructions')}
+                {canBookOnline ? t('promoInstructionsBooking') : t('promoInstructions')}
                 {promoOffer.expires_at && (
                   <span className="font-semibold text-amber-700"> {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString(toBCP47(locale)) })}</span>
                 )}
