@@ -240,7 +240,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `getTodayStartForCountry(country?)` : ISO UTC timestamp de minuit dans le fuseau du merchant (pour filtres `gte` DB)
 - **Toutes les APIs** utilisent ces fonctions (checkin, cagnotte, stats, planning, offers, push, visits, vouchers)
 - `getTodayInParis()` et `getCurrentDateTimeInParis()` marques `@deprecated` — wrappers retrocompatibles
-- **Crons** (morning/evening) : utilisent `getTodayInParis()` intentionnellement (batch FR, pas per-merchant)
+- **Crons** (morning/morning-jobs/morning-push/evening) : utilisent `getTodayInParis()` intentionnellement (batch FR, pas per-merchant)
 - `last_visit_date` : toujours set dans le fuseau du merchant via `getTodayForCountry(merchant.country)`
 - `verifyMerchantOwnership()` dans push/schedule et offers retourne `country` pour eviter requete DB supplementaire
 
@@ -281,7 +281,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Reservation en ligne** : le client clique un creneau sur `/p/[slug]`, coche ses prestations, entre son tel/prenom, et confirme. Blocage automatique des creneaux consecutifs selon la duree totale des services. Email notification au merchant (`BookingNotificationEmail`). API `POST /api/planning/book`
 - **Multi-slot booking** : quand la duree > 30min, les creneaux consecutifs sont bloques. Le slot principal a les `planning_slot_services`, les fillers ont `primary_slot_id` pointant vers le principal (mig 084). Filtre centralise dans `usePlanningState.slotsByDate`. Cascade PATCH (clear) et DELETE (supprime fillers)
 - **Acompte** (optionnel) : `deposit_link` (lien externe Revolut/PayPal/Stripe), `deposit_percent` OU `deposit_amount` (fixe). Affiche apres confirmation avec montant calcule. Tristate `deposit_confirmed`: NULL=pas d'acompte, false=en attente, true=confirme. Boutons confirmer ET annuler confirmation dans le dashboard. Conditions de resa via `booking_message` (pas de champ message acompte separe). Lien affilie Revolut sous le champ de lien de paiement
-- **Delai d'acompte** : `deposit_deadline_hours` (merchant config, NULL=libre/pas de delai). `deposit_deadline_at` (TIMESTAMPTZ sur le slot, calcule au booking : min(now + deadline_hours, RDV - 4h)). Si RDV dans moins de 4h, pas de deadline. Auto-liberation par cron morning (Section 14) + evening. Notification merchant 4h avant expiration + push a la liberation. Timezone-aware via `fromZonedTime` (mig 086)
+- **Delai d'acompte** : `deposit_deadline_hours` (merchant config, NULL=libre/pas de delai). `deposit_deadline_at` (TIMESTAMPTZ sur le slot, calcule au booking : min(now + deadline_hours, RDV - 4h)). Si RDV dans moins de 4h, pas de deadline. Auto-liberation par cron morning-jobs + evening. Notification merchant 4h avant expiration + push a la liberation. Timezone-aware via `fromZonedTime` (mig 086)
 - **Priorite resa Qarte vs externe** : quand `auto_booking_enabled`, le CTA externe (`booking_url`) est masque sur la vitrine et la carte de fidelite affiche un seul lien "Reserver" vers `/p/{slug}`. Warning dans les settings si les deux sont configures
 - **Guard offres vitrine** : les sections offre bienvenue et promo utilisent `canBookOnline = auto_booking_enabled && planningSlots.length > 0`. Si resa en ligne activee mais aucun creneau disponible, fallback vers le mode scan (bouton "En profiter" + lien `/scan/{code}`)
 - Les RDV ne sont ni modifiables ni annulables par le client
@@ -363,7 +363,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `DELETE /api/merchant-push/subscribe` — Desabonnement push merchant
 - Helper `sendMerchantPush()` dans `src/lib/merchant-push.ts` — fire-and-forget, dedup via `merchant_push_logs`
 - **Triggers temps reel** : nouvelle resa en ligne (dans `POST /api/planning/book`), anniversaires clients (cron morning)
-- **Triggers cron** : rappels essai (J+5, J+7, J+8 grace) — Section 13 du morning cron
+- **Triggers cron** : rappels essai (J+5, J+7, J+8 grace) — morning-push cron
 - **Push onboarding** (PWA only, `pwa_installed_at` non null) : config J+1/J+2, vitrine J+3, planning J+4, QR pret, no scans, premier scan, inactif J+7 — greffes dans les sections email existantes
 - **Emails onboarding supplementaires** : vitrine J+3 (tracking -304), planning J+4 (tracking -308) — via `runStandardEmailSection`
 - **Architecture** : table separee `merchant_push_subscriptions` (auth JWT, pas cookie phone), meme service worker `sw.js`, meme VAPID keys
@@ -505,9 +505,11 @@ GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotifi
 ### Cron Jobs
 | Cron | Horaire | Description |
 |------|---------|-------------|
-| `/api/cron/morning` | 09:00 UTC | Emails essai, rappels, push 10h, vouchers anniversaire (timezone-aware via `getTodayForCountry`). Prefetch unique merchants/emails/tracking au demarrage — filtres JS par section |
-| `/api/cron/evening` | 17:00 UTC | Push 18h (timezone-aware via `getTodayForCountry`) |
-| `/api/cron/reactivation` | 10:00 UTC | Win-back J+7/14/30 |
+| `/api/cron/morning` | 09:00 UTC | Emails : essai, onboarding, milestones, inactifs, reactivation, lifecycle, pending. Prefetch unique merchants/emails/tracking — filtres JS par section |
+| `/api/cron/morning-jobs` | 09:15 UTC | Vouchers anniversaire (timezone-aware) + auto-liberation acomptes expires |
+| `/api/cron/morning-push` | 09:30 UTC | Push 10h (scheduled), push automations (inactifs/recompense/events), push trial reminders |
+| `/api/cron/evening` | 17:00 UTC | Push 18h (timezone-aware) + check acomptes expires |
+| `/api/cron/reactivation` | — | Deprecie (integre dans morning, section 7) |
 
 ### Anti-spam
 - `List-Unsubscribe` + `List-Unsubscribe-Post` headers

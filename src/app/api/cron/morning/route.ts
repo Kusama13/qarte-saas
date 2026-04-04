@@ -2,7 +2,6 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import webpush from 'web-push';
 import {
   sendPendingPointsEmail,
   sendTrialEndingEmail,
@@ -24,14 +23,21 @@ import {
   sendGuidedSignupEmail,
   sendAutoSuggestRewardEmail,
   sendGracePeriodSetupEmail,
-  sendBirthdayNotificationEmail,
   sendVitrineReminderEmail,
   sendPlanningReminderEmail,
 } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
-import { getTrialStatus, getTodayInParis, getTodayForCountry } from '@/lib/utils';
-import { sendAutomationPush, getUpcomingEvent } from '@/lib/push-automation';
+import { getTrialStatus, getTodayInParis } from '@/lib/utils';
 import { sendMerchantPush } from '@/lib/merchant-push';
+import {
+  verifyCronAuth,
+  batchGetUserEmails,
+  processEmailSection,
+  runStandardEmailSection,
+  sendOnboardingPushes,
+  rateLimitDelay,
+  fetchAllTracking,
+} from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -39,158 +45,13 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const CRON_SECRET = process.env.CRON_SECRET;
-
-function timingSafeCompare(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  const encoder = new TextEncoder();
-  const bufA = encoder.encode(a);
-  const bufB = encoder.encode(b);
-  let result = 0;
-  for (let i = 0; i < bufA.length; i++) result |= bufA[i] ^ bufB[i];
-  return result === 0;
-}
-
-// Configure web-push
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-
-if (vapidPublicKey && vapidPrivateKey) {
-  webpush.setVapidDetails('mailto:contact@qarte.fr', vapidPublicKey, vapidPrivateKey);
-}
-
 // Email schedule for pending reminders
 const INITIAL_ALERT_DAYS = [0, 1];
 const REMINDER_DAYS = [2, 3];
 
-// Result counters type
-type SectionStats = { processed: number; sent: number; skipped: number; errors: number };
-
-// Resend rate limit: 2 req/s — 600ms pause between actual sends only
-const RESEND_RATE_LIMIT_MS = 600;
-const rateLimitDelay = () => new Promise(resolve => setTimeout(resolve, RESEND_RATE_LIMIT_MS));
-
-// Helper: batch fetch user emails by user_id (Supabase auth, pas Resend — pas de rate limit strict)
-async function batchGetUserEmails(userIds: string[]): Promise<Map<string, string>> {
-  const emailMap = new Map<string, string>();
-  for (let i = 0; i < userIds.length; i += 10) {
-    const batch = userIds.slice(i, i + 10);
-    await Promise.allSettled(batch.map(async (userId) => {
-      const { data: userData } = await supabase.auth.admin.getUserById(userId);
-      const email = userData?.user?.email;
-      if (email) emailMap.set(userId, email);
-    }));
-  }
-  return emailMap;
-}
-
-// Helper: fetch tracking records and build a Set of already-sent merchant IDs
-async function getAlreadySentSet(merchantIds: string[], trackingCode: number): Promise<Set<string>> {
-  const { data } = await supabase
-    .from('pending_email_tracking')
-    .select('merchant_id')
-    .in('merchant_id', merchantIds)
-    .eq('reminder_day', trackingCode);
-  return new Set((data || []).map(t => t.merchant_id));
-}
-
-// Helper: standard email section — handles the common pattern:
-// 1. Iterate candidates, skip already-sent/no-email/extraSkip
-// 2. Call sendFn, track on success, count results, rate-limit delay
-// Flush tracking records in batches of 100
-async function flushTrackingBatch(batch: Array<{ merchant_id: string; reminder_day: number; pending_count: number }>) {
-  if (batch.length === 0) return;
-  await supabase.from('pending_email_tracking').insert(batch);
-}
-
-async function processEmailSection<T extends { id: string; user_id: string }>(opts: {
-  candidates: T[];
-  trackingCode: number;
-  emailMap: Map<string, string>;
-  alreadySentSet: Set<string>;
-  stats: SectionStats;
-  sendFn: (email: string, candidate: T) => Promise<{ success: boolean }>;
-  extraSkip?: (candidate: T) => boolean;
-  superAdminUserIds?: Set<string>;
-}) {
-  const { candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip, superAdminUserIds } = opts;
-  const trackingBatch: Array<{ merchant_id: string; reminder_day: number; pending_count: number }> = [];
-
-  for (const candidate of candidates) {
-    stats.processed++;
-
-    if (superAdminUserIds?.has(candidate.user_id)) { stats.skipped++; continue; }
-    if (alreadySentSet.has(candidate.id)) { stats.skipped++; continue; }
-    if (extraSkip && extraSkip(candidate)) { stats.skipped++; continue; }
-
-    const email = emailMap.get(candidate.user_id);
-    if (!email) { stats.skipped++; continue; }
-
-    try {
-      const result = await sendFn(email, candidate);
-      if (result.success) {
-        trackingBatch.push({ merchant_id: candidate.id, reminder_day: trackingCode, pending_count: 0 });
-        if (trackingBatch.length >= 100) {
-          await flushTrackingBatch(trackingBatch.splice(0));
-        }
-        stats.sent++;
-        // Resend rate limit: 2 req/s — pause only after actual send
-        await rateLimitDelay();
-      } else { stats.errors++; }
-    } catch { stats.errors++; }
-  }
-
-  // Flush remaining tracking records
-  await flushTrackingBatch(trackingBatch);
-}
-
-// Helper: query candidates, fetch tracking, fetch emails, then run processEmailSection
-// For sections that follow the full standard pattern end-to-end
-async function runStandardEmailSection<T extends { id: string; user_id: string }>(opts: {
-  candidates: T[] | null | undefined;
-  trackingCode: number;
-  stats: SectionStats;
-  sendFn: (email: string, candidate: T) => Promise<{ success: boolean }>;
-  extraSkip?: (candidate: T) => boolean;
-  superAdminUserIds?: Set<string>;
-  emailMap?: Map<string, string>;
-  globalTrackingSet?: Set<string>;
-}) {
-  const { candidates, trackingCode, stats, sendFn, extraSkip, superAdminUserIds } = opts;
-  if (!candidates || candidates.length === 0) return;
-
-  const emailMap = opts.emailMap || await batchGetUserEmails([...new Set(candidates.map(m => m.user_id))]);
-  const alreadySentSet = opts.globalTrackingSet
-    ? new Set(candidates.filter(m => opts.globalTrackingSet!.has(`${m.id}:${trackingCode}`)).map(m => m.id))
-    : await getAlreadySentSet(candidates.map(m => m.id), trackingCode);
-
-  await processEmailSection({ candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip, superAdminUserIds });
-}
-
-// Helper: send onboarding push to merchants with PWA installed
-function sendOnboardingPushes(
-  merchants: Array<{ id: string; locale: string | null; pwa_installed_at: string | null }>,
-  opts: { notificationType: string; titleFr: string; titleEn: string; bodyFr: string; bodyEn: string; url: string },
-  pushPromises: Promise<boolean>[],
-) {
-  for (const m of merchants) {
-    if (!m.pwa_installed_at) continue;
-    const isEN = m.locale === 'en';
-    pushPromises.push(
-      sendMerchantPush({
-        supabase, merchantId: m.id, notificationType: opts.notificationType, referenceId: m.id,
-        title: isEN ? opts.titleEn : opts.titleFr,
-        body: isEN ? opts.bodyEn : opts.bodyFr,
-        url: opts.url, tag: 'qarte-merchant-onboarding',
-      })
-    );
-  }
-}
 
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get('authorization');
-  if (!CRON_SECRET || !authHeader?.startsWith('Bearer ') ||
-      !timingSafeCompare(authHeader.slice(7), CRON_SECRET)) {
+  if (!verifyCronAuth(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -212,13 +73,6 @@ export async function GET(request: NextRequest) {
     autoSuggestReward: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     gracePeriodSetup: { processed: 0, sent: 0, skipped: 0, errors: 0 },
     pendingReminders: { processed: 0, sent: 0, skipped: 0, errors: 0 },
-    scheduledPush: { processed: 0, sent: 0, errors: 0 },
-    birthdayVouchers: { processed: 0, created: 0, skipped: 0, errors: 0 },
-    pushAutomations: {
-      inactive: { sent: 0, skipped: 0, errors: 0 },
-      reward: { sent: 0, skipped: 0, errors: 0 },
-      events: { sent: 0, skipped: 0, errors: 0 },
-    },
   };
 
   // Track section statuses for isolated error handling
@@ -252,28 +106,9 @@ export async function GET(request: NextRequest) {
   const allUserIds = [...new Set(allMerchantsList.map(m => m.user_id))];
   const allMerchantIds = allMerchantsList.map(m => m.id);
 
-  // Fetch all tracking records — paginate to avoid Supabase 1000-row default limit
-  async function fetchAllTracking(merchantIds: string[]) {
-    const allRows: Array<{ merchant_id: string; reminder_day: number }> = [];
-    const PAGE_SIZE = 1000;
-    let offset = 0;
-    while (true) {
-      const { data } = await supabase
-        .from('pending_email_tracking')
-        .select('merchant_id, reminder_day')
-        .in('merchant_id', merchantIds)
-        .range(offset, offset + PAGE_SIZE - 1);
-      if (!data || data.length === 0) break;
-      allRows.push(...data);
-      if (data.length < PAGE_SIZE) break;
-      offset += PAGE_SIZE;
-    }
-    return allRows;
-  }
-
   const [globalEmailMap, allTracking] = await Promise.all([
-    batchGetUserEmails(allUserIds),
-    fetchAllTracking(allMerchantIds),
+    batchGetUserEmails(supabase, allUserIds),
+    fetchAllTracking(supabase, allMerchantIds),
   ]);
 
   const globalTrackingSet = new Set(
@@ -349,7 +184,7 @@ export async function GET(request: NextRequest) {
       m.created_at <= twentyFourHoursAgo.toISOString() && m.created_at >= twentyFiveHoursAgo.toISOString()
     );
 
-    await runStandardEmailSection({
+    await runStandardEmailSection(supabase, {
       candidates: unconfiguredMerchants,
       trackingCode: -301,
       stats: results.programReminders,
@@ -359,7 +194,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Push onboarding J+1 (PWA only)
-    sendOnboardingPushes(unconfiguredMerchants, {
+    sendOnboardingPushes(sendMerchantPush, supabase,unconfiguredMerchants, {
       notificationType: 'onboarding_config_j1',
       titleFr: 'Configure ton programme de fidélité', titleEn: 'Set up your loyalty program',
       bodyFr: 'Ça prend 2 minutes, c\'est parti !', bodyEn: 'It only takes 2 minutes to get started.',
@@ -374,7 +209,7 @@ export async function GET(request: NextRequest) {
       m.created_at <= fortyEightHoursAgo.toISOString() && m.created_at >= fortyNineHoursAgo.toISOString()
     );
 
-    await runStandardEmailSection({
+    await runStandardEmailSection(supabase, {
       candidates: unconfiguredDay2,
       trackingCode: -302,
       stats: results.programRemindersDay2,
@@ -384,7 +219,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Push onboarding J+2 (PWA only)
-    sendOnboardingPushes(unconfiguredDay2, {
+    sendOnboardingPushes(sendMerchantPush, supabase,unconfiguredDay2, {
       notificationType: 'onboarding_config_j2',
       titleFr: 'Ton programme attend d\'être configuré', titleEn: 'Your program is waiting',
       bodyFr: 'Configure ta récompense pour fidéliser tes clients.', bodyEn: 'Set up your reward to start retaining clients.',
@@ -399,7 +234,7 @@ export async function GET(request: NextRequest) {
       m.created_at <= seventyTwoHoursAgo.toISOString() && m.created_at >= seventyThreeHoursAgo.toISOString()
     );
 
-    await runStandardEmailSection({
+    await runStandardEmailSection(supabase, {
       candidates: unconfiguredDay3,
       trackingCode: -303,
       stats: results.programRemindersDay3,
@@ -419,7 +254,7 @@ export async function GET(request: NextRequest) {
         && !m.bio && !m.shop_address
       );
 
-      await runStandardEmailSection({
+      await runStandardEmailSection(supabase, {
         candidates: vitrineDay3,
         trackingCode: -304,
         stats: results.programRemindersDay3, // reuse stats bucket
@@ -431,7 +266,7 @@ export async function GET(request: NextRequest) {
         globalTrackingSet,
       });
 
-      sendOnboardingPushes(vitrineDay3, {
+      sendOnboardingPushes(sendMerchantPush, supabase,vitrineDay3, {
         notificationType: 'onboarding_vitrine',
         titleFr: 'Complète ta vitrine en ligne', titleEn: 'Complete your online page',
         bodyFr: 'Ajoute ta bio et ton adresse pour apparaître sur Google.', bodyEn: 'Add your bio and address to appear on Google.',
@@ -449,7 +284,7 @@ export async function GET(request: NextRequest) {
         && !m.planning_enabled
       );
 
-      await runStandardEmailSection({
+      await runStandardEmailSection(supabase, {
         candidates: planningDay4,
         trackingCode: -308,
         stats: results.programRemindersDay3, // reuse stats bucket
@@ -461,7 +296,7 @@ export async function GET(request: NextRequest) {
         globalTrackingSet,
       });
 
-      sendOnboardingPushes(planningDay4, {
+      sendOnboardingPushes(sendMerchantPush, supabase,planningDay4, {
         notificationType: 'onboarding_planning',
         titleFr: 'Reçois des réservations en ligne', titleEn: 'Start receiving online bookings',
         bodyFr: 'Active ton planning en un clic.', bodyEn: 'Enable your calendar in one click.',
@@ -502,7 +337,7 @@ export async function GET(request: NextRequest) {
           scanCountMap.set(v.merchant_id, (scanCountMap.get(v.merchant_id) || 0) + 1);
         }
 
-        await processEmailSection({
+        await processEmailSection(supabase, {
           candidates: day5Merchants,
           trackingCode: -305,
           emailMap: globalEmailMap,
@@ -524,7 +359,7 @@ export async function GET(request: NextRequest) {
         results.qrCode.skipped = qrCandidates.length - qrToSend.length;
 
         if (qrToSend.length > 0) {
-          await processEmailSection({
+          await processEmailSection(supabase, {
             candidates: qrToSend,
             trackingCode: -103,
             emailMap: globalEmailMap,
@@ -542,7 +377,7 @@ export async function GET(request: NextRequest) {
           });
 
           // Push QR ready (PWA only)
-          sendOnboardingPushes(qrToSend, {
+          sendOnboardingPushes(sendMerchantPush, supabase,qrToSend, {
             notificationType: 'onboarding_qr_ready',
             titleFr: 'Ton QR code est prêt !', titleEn: 'Your QR code is ready!',
             bodyFr: 'Télécharge-le et scanne ton premier client.', bodyEn: 'Download it and start scanning clients.',
@@ -597,7 +432,7 @@ export async function GET(request: NextRequest) {
         results.firstClientScript.skipped = scriptCandidates.length - scriptToSend.length;
 
         if (scriptToSend.length > 0) {
-          await processEmailSection({
+          await processEmailSection(supabase, {
             candidates: scriptToSend,
             trackingCode: -106,
             emailMap: globalEmailMap,
@@ -613,7 +448,7 @@ export async function GET(request: NextRequest) {
           });
 
           // Push no scans (PWA only)
-          sendOnboardingPushes(scriptToSend, {
+          sendOnboardingPushes(sendMerchantPush, supabase,scriptToSend, {
             notificationType: 'onboarding_no_scans',
             titleFr: 'Affiche ton QR code !', titleEn: 'Display your QR code!',
             bodyFr: 'Scanne ton premier client pour lancer ton programme.', bodyEn: 'Scan your first client to start your loyalty program.',
@@ -668,7 +503,7 @@ export async function GET(request: NextRequest) {
         results.quickCheck.skipped = qcCandidates.length - qcToSend.length;
 
         if (qcToSend.length > 0) {
-          await processEmailSection({
+          await processEmailSection(supabase, {
             candidates: qcToSend,
             trackingCode: -107,
             emailMap: globalEmailMap,
@@ -714,7 +549,7 @@ export async function GET(request: NextRequest) {
       const firstScanMerchants = allConfiguredMerchants.filter(m => visitCountMap.get(m.id) === 2);
 
       if (firstScanMerchants.length > 0) {
-        await runStandardEmailSection({
+        await runStandardEmailSection(supabase, {
           candidates: firstScanMerchants,
           trackingCode: -100,
           stats: results.firstScan,
@@ -724,7 +559,7 @@ export async function GET(request: NextRequest) {
         });
 
         // Push first scan (PWA only)
-        sendOnboardingPushes(firstScanMerchants, {
+        sendOnboardingPushes(sendMerchantPush, supabase,firstScanMerchants, {
           notificationType: 'onboarding_first_scan',
           titleFr: 'Premier client fidélisé !', titleEn: 'First client scanned!',
           bodyFr: 'Ton programme de fidélité est lancé.', bodyEn: 'Your loyalty program is up and running.',
@@ -816,7 +651,7 @@ export async function GET(request: NextRequest) {
         if (tier2Eligible.length > 0) {
           const alreadySentTier2 = new Set(tier2Eligible.filter(m => globalTrackingSet.has(`${m.id}:-102`)).map(m => m.id));
 
-          await processEmailSection({
+          await processEmailSection(supabase, {
             candidates: tier2Eligible,
             trackingCode: -102,
             emailMap: globalEmailMap,
@@ -1124,7 +959,7 @@ export async function GET(request: NextRequest) {
         m.created_at <= oneHundredTwentyHoursAgo.toISOString() && m.created_at >= oneHundredTwentyOneHoursAgo.toISOString()
       );
 
-      await runStandardEmailSection({
+      await runStandardEmailSection(supabase, {
         candidates: autoSuggestCandidates,
         trackingCode: -120,
         stats: results.autoSuggestReward,
@@ -1145,7 +980,7 @@ export async function GET(request: NextRequest) {
         m.reward_description === null && m.subscription_status === 'trial' && !m.no_contact
       );
 
-      await runStandardEmailSection({
+      await runStandardEmailSection(supabase, {
         candidates: graceCandidates,
         trackingCode: -113,
         stats: results.gracePeriodSetup,
@@ -1283,724 +1118,7 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'pendingReminders', status: 'error', error: String(error) });
   }
 
-  // ==================== SECTION 10: SCHEDULED PUSH ====================
-  if (isTimedOut()) { sectionStatuses.push({ name: 'scheduledPush', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
-  else try {
-    // Fetch all pending 10:00 pushes (no date filter — checked per merchant timezone)
-    const { data: scheduledPushes } = await supabase
-      .from('scheduled_push')
-      .select('*')
-      .eq('scheduled_time', '10:00')
-      .eq('status', 'pending');
-
-    for (const push of scheduledPushes || []) {
-      results.scheduledPush.processed++;
-
-      try {
-        const merchant = allMerchantsMap.get(push.merchant_id);
-
-        if (!merchant) {
-          await supabase.from('scheduled_push').update({ status: 'sent', sent_at: new Date().toISOString(), sent_count: 0 }).eq('id', push.id);
-          continue;
-        }
-
-        // Check if scheduled_date matches "today" in merchant's timezone
-        if (push.scheduled_date !== getTodayForCountry(merchant.country)) {
-          continue; // Not yet "today" for this merchant — skip, will be caught on next run
-        }
-
-        const { data: loyaltyCards } = await supabase
-          .from('loyalty_cards')
-          .select('customer_id')
-          .eq('merchant_id', push.merchant_id)
-          .limit(5000);
-
-        if (!loyaltyCards || loyaltyCards.length === 0) {
-          await supabase.from('scheduled_push').update({ status: 'sent', sent_at: new Date().toISOString(), sent_count: 0 }).eq('id', push.id);
-          continue;
-        }
-
-        const customerIds = [...new Set(loyaltyCards.map(c => c.customer_id))];
-
-        const { data: subscriptions } = await supabase
-          .from('push_subscriptions')
-          .select('*')
-          .in('customer_id', customerIds)
-          .limit(10000);
-
-        if (!subscriptions || subscriptions.length === 0) {
-          await supabase.from('scheduled_push').update({ status: 'sent', sent_at: new Date().toISOString(), sent_count: 0 }).eq('id', push.id);
-          continue;
-        }
-
-        const pushResults = await Promise.allSettled(
-          subscriptions.map(async (sub) => {
-            await webpush.sendNotification(
-              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-              JSON.stringify({
-                title: merchant?.shop_name || 'Qarte',
-                body: `${push.title}: ${push.body}`,
-                icon: '/icon-192.svg',
-                url: `/customer/card/${push.merchant_id}`,
-                tag: 'qarte-scheduled',
-              })
-            );
-          })
-        );
-
-        let sentCount = 0;
-        let failedCount = 0;
-        const failedEndpoints: string[] = [];
-
-        pushResults.forEach((result, idx) => {
-          if (result.status === 'fulfilled') {
-            sentCount++;
-          } else {
-            failedCount++;
-            const webPushError = result.reason as { statusCode?: number };
-            if (webPushError?.statusCode === 404 || webPushError?.statusCode === 410) {
-              failedEndpoints.push(subscriptions[idx].endpoint);
-            }
-          }
-        });
-
-        if (failedEndpoints.length > 0) {
-          await supabase.from('push_subscriptions').delete().in('endpoint', failedEndpoints);
-        }
-
-        await supabase.from('scheduled_push').update({
-          status: 'sent',
-          sent_at: new Date().toISOString(),
-          sent_count: sentCount,
-          failed_count: failedCount,
-        }).eq('id', push.id);
-
-        if (sentCount > 0) {
-          await supabase.from('push_history').insert({
-            merchant_id: push.merchant_id,
-            title: push.title,
-            body: push.body,
-            filter_type: 'scheduled_10h',
-            sent_count: sentCount,
-            failed_count: failedCount,
-          });
-        }
-
-        results.scheduledPush.sent++;
-      } catch {
-        results.scheduledPush.errors++;
-        await supabase.from('scheduled_push').update({ status: 'failed' }).eq('id', push.id);
-      }
-    }
-  } catch (error) {
-    sectionStatuses.push({ name: 'scheduledPush', status: 'error', error: String(error) });
-  }
-
-  // ==================== SECTION 11: BIRTHDAY VOUCHERS ====================
-  if (isTimedOut()) { sectionStatuses.push({ name: 'birthdayVouchers', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
-  else try {
-    {
-      const todayParis = getTodayInParis(); // YYYY-MM-DD fallback for birthday query
-      const targetDate = new Date(todayParis + 'T12:00:00');
-      const targetMonth = targetDate.getMonth() + 1;
-      const targetDay = targetDate.getDate();
-
-      const birthdayMerchants = allMerchantsList.filter(m =>
-        m.birthday_gift_enabled === true && !m.no_contact &&
-        ['trial', 'active'].includes(m.subscription_status)
-      );
-
-      if (birthdayMerchants.length > 0) {
-        const merchantIds = birthdayMerchants.map(m => m.id);
-        const merchantMap = new Map(birthdayMerchants.map(m => [m.id, m]));
-
-        const { data: birthdayCustomers } = await supabase
-          .from('customers')
-          .select('id, merchant_id, first_name, phone_number')
-          .in('merchant_id', merchantIds)
-          .eq('birth_month', targetMonth)
-          .eq('birth_day', targetDay);
-
-        if (birthdayCustomers && birthdayCustomers.length > 0) {
-          results.birthdayVouchers.processed = birthdayCustomers.length;
-
-          const { data: loyaltyCards } = await supabase
-            .from('loyalty_cards')
-            .select('id, customer_id, merchant_id')
-            .in('customer_id', birthdayCustomers.map(c => c.id))
-            .in('merchant_id', merchantIds);
-
-          const cardMap = new Map<string, string>();
-          for (const lc of loyaltyCards || []) {
-            cardMap.set(`${lc.customer_id}:${lc.merchant_id}`, lc.id);
-          }
-
-          // Dedup: check existing birthday vouchers this year (use Paris timezone for consistency)
-          const currentYear = parseInt(todayParis.split('-')[0], 10);
-          const yearStart = `${currentYear}-01-01T00:00:00.000Z`;
-          const yearEnd = `${currentYear + 1}-01-01T00:00:00.000Z`;
-
-          const { data: existingBirthdayVouchers } = await supabase
-            .from('vouchers')
-            .select('customer_id, merchant_id')
-            .eq('source', 'birthday')
-            .gte('created_at', yearStart)
-            .lt('created_at', yearEnd)
-            .in('customer_id', birthdayCustomers.map(c => c.id));
-
-          const alreadyHasVoucher = new Set(
-            (existingBirthdayVouchers || []).map(v => `${v.customer_id}:${v.merchant_id}`)
-          );
-
-          // Pre-fetch phone->customer_ids mapping to avoid N+1
-          const birthdayPhones = [...new Set(birthdayCustomers.map((c: any) => c.phone_number))];
-          const { data: allPhoneCustomers } = await supabase
-            .from('customers')
-            .select('id, phone_number')
-            .in('phone_number', birthdayPhones);
-
-          const customersByPhone = new Map<string, string[]>();
-          for (const c of allPhoneCustomers || []) {
-            if (!customersByPhone.has(c.phone_number)) customersByPhone.set(c.phone_number, []);
-            customersByPhone.get(c.phone_number)!.push(c.id);
-          }
-
-          // Pre-fetch ALL push subscriptions for birthday customers in one query (avoid N+1)
-          const allBirthdayCustIds = [...new Set((allPhoneCustomers || []).map(c => c.id))];
-          const pushSubsByCustomer = new Map<string, Array<{ endpoint: string; p256dh: string; auth: string }>>();
-          if (vapidPublicKey && vapidPrivateKey && allBirthdayCustIds.length > 0) {
-            const { data: allPushSubs } = await supabase
-              .from('push_subscriptions')
-              .select('customer_id, endpoint, p256dh, auth')
-              .in('customer_id', allBirthdayCustIds);
-            for (const sub of allPushSubs || []) {
-              if (!pushSubsByCustomer.has(sub.customer_id)) pushSubsByCustomer.set(sub.customer_id, []);
-              pushSubsByCustomer.get(sub.customer_id)!.push({ endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth });
-            }
-          }
-
-          // Track birthday clients per merchant for merchant notification
-          const birthdayByMerchant = new Map<string, string[]>();
-
-          for (const customer of birthdayCustomers) {
-            const key = `${customer.id}:${customer.merchant_id}`;
-            const bMerchant = merchantMap.get(customer.merchant_id);
-            const loyaltyCardId = cardMap.get(key);
-
-            if (!bMerchant || !loyaltyCardId) {
-              results.birthdayVouchers.skipped++;
-              continue;
-            }
-
-            // Verify birthday matches "today" in merchant's timezone (edge case: timezone date differs from Paris)
-            const merchantToday = getTodayForCountry(bMerchant.country);
-            const mDate = new Date(merchantToday + 'T12:00:00');
-            if (mDate.getMonth() + 1 !== targetMonth || mDate.getDate() !== targetDay) {
-              results.birthdayVouchers.skipped++;
-              continue;
-            }
-
-            if (alreadyHasVoucher.has(key)) {
-              results.birthdayVouchers.skipped++;
-              continue;
-            }
-
-            try {
-              const expiresAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-              const { error: voucherError } = await supabase
-                .from('vouchers')
-                .insert({
-                  loyalty_card_id: loyaltyCardId,
-                  merchant_id: customer.merchant_id,
-                  customer_id: customer.id,
-                  reward_description: bMerchant.birthday_gift_description || 'Cadeau anniversaire',
-                  source: 'birthday',
-                  tier: 1,
-                  expires_at: expiresAt.toISOString(),
-                });
-
-              if (voucherError) {
-                results.birthdayVouchers.errors++;
-                continue;
-              }
-
-              results.birthdayVouchers.created++;
-
-              // Collect client name for merchant notification
-              const clientName = customer.first_name || 'Un client';
-              if (!birthdayByMerchant.has(customer.merchant_id)) birthdayByMerchant.set(customer.merchant_id, []);
-              birthdayByMerchant.get(customer.merchant_id)!.push(clientName);
-
-              // Push notification to customer (fire-and-forget, dedup by endpoint)
-              if (vapidPublicKey && vapidPrivateKey) {
-                try {
-                  const allCustIds = customersByPhone.get(customer.phone_number) || [];
-                  const allSubs: Array<{ endpoint: string; p256dh: string; auth: string }> = [];
-                  for (const cid of allCustIds) {
-                    const subs = pushSubsByCustomer.get(cid);
-                    if (subs) allSubs.push(...subs);
-                  }
-
-                  if (allSubs.length > 0) {
-                    const seen = new Set<string>();
-                    const uniqueSubs = allSubs.filter(sub => {
-                      if (seen.has(sub.endpoint)) return false;
-                      seen.add(sub.endpoint);
-                      return true;
-                    });
-
-                    await Promise.allSettled(
-                      uniqueSubs.map(async (sub) => {
-                        try {
-                          await webpush.sendNotification(
-                            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-                            JSON.stringify({
-                              title: bMerchant.shop_name,
-                              body: bMerchant.locale === 'en'
-                                ? `Happy birthday! ${bMerchant.shop_name} offers you: ${bMerchant.birthday_gift_description || 'a gift'}`
-                                : `Joyeux anniversaire ! ${bMerchant.shop_name} vous offre : ${bMerchant.birthday_gift_description || 'un cadeau'}`,
-                              icon: '/icon-192.png',
-                              url: `/customer/card/${customer.merchant_id}`,
-                              tag: `qarte-birthday-${customer.merchant_id}`,
-                            })
-                          );
-                        } catch (pushErr: unknown) {
-                          const webPushError = pushErr as { statusCode?: number };
-                          if (webPushError?.statusCode === 404 || webPushError?.statusCode === 410) {
-                            await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint);
-                          }
-                        }
-                      })
-                    );
-                  }
-                } catch {
-                  // Never let push failure crash the cron
-                }
-              }
-            } catch {
-              results.birthdayVouchers.errors++;
-            }
-          }
-
-          // Notify merchants about client birthdays (email + push, fire-and-forget)
-          if (birthdayByMerchant.size > 0) {
-            for (const [merchantId, clientNames] of birthdayByMerchant) {
-              try {
-                const bm = merchantMap.get(merchantId);
-                if (!bm) continue;
-                const merchantEmail = globalEmailMap.get(bm.user_id);
-                if (merchantEmail) {
-                  await sendBirthdayNotificationEmail(
-                    merchantEmail,
-                    bm.shop_name,
-                    clientNames,
-                    bm.birthday_gift_description || 'Cadeau anniversaire',
-                    (bm.locale as EmailLocale) || 'fr'
-                  ).catch(() => {});
-                }
-
-                // Push notification to merchant
-                const bodyText = clientNames.length === 1
-                  ? `${clientNames[0]} fête son anniversaire aujourd'hui`
-                  : `${clientNames.join(', ')} fêtent leur anniversaire aujourd'hui`;
-                pushPromises.push(sendMerchantPush({
-                  supabase,
-                  merchantId,
-                  notificationType: 'birthday_digest',
-                  referenceId: `${merchantId}-${todayParis}`,
-                  title: `🎂 ${clientNames.length} anniversaire${clientNames.length > 1 ? 's' : ''} aujourd'hui`,
-                  body: bodyText,
-                  url: '/dashboard/planning',
-                  tag: 'qarte-merchant-birthday',
-                }));
-              } catch {
-                // Never let merchant notification crash the cron
-              }
-            }
-          }
-        }
-      }
-    }
-
-  } catch (error) {
-    sectionStatuses.push({ name: 'birthdayVouchers', status: 'error', error: String(error) });
-  }
-
-  // ==================== SECTION 12: PUSH AUTOMATIONS ====================
-  if (isTimedOut()) { sectionStatuses.push({ name: 'pushAutomations', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
-  else try {
-    // 12A. Relance inactifs (30+ days no visit)
-    {
-      const { data: automationMerchants } = await supabase
-        .from('push_automations')
-        .select('merchant_id, inactive_reminder_offer_text')
-        .eq('inactive_reminder_enabled', true);
-
-      if (automationMerchants && automationMerchants.length > 0) {
-        const automationMap = new Map(automationMerchants.map(a => [a.merchant_id, a]));
-
-        const inactiveAutoMerchants = automationMerchants
-          .map(a => allMerchantsMap.get(a.merchant_id))
-          .filter((m): m is NonNullable<typeof m> => m != null && !m.no_contact && ['trial', 'active'].includes(m.subscription_status));
-
-        for (const merchant of inactiveAutoMerchants) {
-          const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-
-          const { data: inactiveCards } = await supabase
-            .from('loyalty_cards')
-            .select('customer_id')
-            .eq('merchant_id', merchant.id)
-            .or(`last_visit_date.lte.${thirtyDaysAgo},last_visit_date.is.null`)
-            .limit(5000);
-
-          if (!inactiveCards || inactiveCards.length === 0) continue;
-
-          const customerIds = inactiveCards.map(c => c.customer_id);
-          const { data: customers } = await supabase
-            .from('customers')
-            .select('id, phone_number')
-            .in('id', customerIds)
-            .limit(5000);
-
-          const automationRow = automationMap.get(merchant.id);
-          const customOfferText = automationRow?.inactive_reminder_offer_text;
-          const hasOffer = merchant.offer_active && merchant.offer_title &&
-            (!merchant.offer_expires_at || new Date(merchant.offer_expires_at) > now);
-          const isEn = merchant.locale === 'en';
-
-          for (const customer of customers || []) {
-            if (!customer.phone_number) continue;
-
-            const body = customOfferText
-              ? customOfferText
-              : hasOffer
-                ? isEn
-                  ? `${merchant.offer_title} — Don't miss out!`
-                  : `${merchant.offer_title} — Profitez-en !`
-                : isEn
-                  ? `${merchant.shop_name} misses you! Come back soon.`
-                  : `${merchant.shop_name} vous manque ! Revenez vite.`;
-
-            const sent = await sendAutomationPush({
-              supabase,
-              merchantId: merchant.id,
-              customerId: customer.id,
-              customerPhone: customer.phone_number,
-              automationType: 'inactive_reminder',
-              title: merchant.shop_name,
-              body,
-              url: `/customer/card/${merchant.id}`,
-            });
-
-            if (sent) results.pushAutomations.inactive.sent++;
-            else results.pushAutomations.inactive.skipped++;
-          }
-        }
-      }
-    }
-
-    // 12B. Rappel recompense (unused voucher 7+ days)
-    {
-      const { data: automationMerchants } = await supabase
-        .from('push_automations')
-        .select('merchant_id')
-        .eq('reward_reminder_enabled', true);
-
-      if (automationMerchants && automationMerchants.length > 0) {
-        const rewardAutoMerchants = automationMerchants
-          .map(a => allMerchantsMap.get(a.merchant_id))
-          .filter((m): m is NonNullable<typeof m> => m != null && !m.no_contact && ['trial', 'active'].includes(m.subscription_status));
-
-        const activeMerchantIds = rewardAutoMerchants.map(m => m.id);
-        const merchantMap = new Map(rewardAutoMerchants.map(m => [m.id, m]));
-
-        if (activeMerchantIds.length > 0) {
-          const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-
-          const { data: oldVouchers } = await supabase
-            .from('vouchers')
-            .select('customer_id, merchant_id')
-            .in('merchant_id', activeMerchantIds)
-            .eq('is_used', false)
-            .lte('created_at', sevenDaysAgo)
-            .or(`expires_at.gt.${now.toISOString()},expires_at.is.null`);
-
-          if (oldVouchers && oldVouchers.length > 0) {
-            const seen = new Set<string>();
-            const uniqueVouchers = oldVouchers.filter(v => {
-              const key = `${v.customer_id}:${v.merchant_id}`;
-              if (seen.has(key)) return false;
-              seen.add(key);
-              return true;
-            });
-
-            const customerIds = [...new Set(uniqueVouchers.map(v => v.customer_id))];
-            const { data: customers } = await supabase
-              .from('customers')
-              .select('id, phone_number')
-              .in('id', customerIds);
-
-            const customerMap = new Map((customers || []).map(c => [c.id, c]));
-
-            for (const voucher of uniqueVouchers) {
-              const customer = customerMap.get(voucher.customer_id);
-              const vMerchant = merchantMap.get(voucher.merchant_id);
-              if (!customer?.phone_number || !vMerchant) continue;
-
-              const sent = await sendAutomationPush({
-                supabase,
-                merchantId: voucher.merchant_id,
-                customerId: voucher.customer_id,
-                customerPhone: customer.phone_number,
-                automationType: 'reward_reminder',
-                title: vMerchant.shop_name,
-                body: vMerchant.locale === 'en'
-                  ? `Your reward is waiting at ${vMerchant.shop_name}!`
-                  : `Votre récompense vous attend chez ${vMerchant.shop_name} !`,
-                url: `/customer/card/${voucher.merchant_id}`,
-              });
-
-              if (sent) results.pushAutomations.reward.sent++;
-              else results.pushAutomations.reward.skipped++;
-            }
-          }
-        }
-      }
-    }
-
-    // 12C. Evenements (push 7 days before event)
-    {
-      const nowParis = new Date(getTodayInParis() + 'T10:00:00');
-      // Check both FR and EN events (different Mother's Day dates)
-      const upcomingEventFr = getUpcomingEvent(nowParis, 'fr');
-      const upcomingEventEn = getUpcomingEvent(nowParis, 'en');
-
-      if (upcomingEventFr || upcomingEventEn) {
-        const { data: automationMerchants } = await supabase
-          .from('push_automations')
-          .select('merchant_id, events_offer_text')
-          .eq('events_enabled', true)
-          .not('events_offer_text', 'is', null);
-
-        if (automationMerchants && automationMerchants.length > 0) {
-          const offerTextMap = new Map(automationMerchants.map(a => [a.merchant_id, a.events_offer_text]));
-
-          const eventAutoMerchants = automationMerchants
-            .map(a => allMerchantsMap.get(a.merchant_id))
-            .filter((m): m is NonNullable<typeof m> => m != null && !m.no_contact && ['trial', 'active'].includes(m.subscription_status));
-
-          // Process merchant by merchant to avoid loading all cards + customers at once
-          const validMerchants = eventAutoMerchants.filter(m => offerTextMap.get(m.id));
-
-          for (const merchant of validMerchants) {
-            if (isTimedOut()) break;
-
-            const offerText = offerTextMap.get(merchant.id);
-            if (!offerText) continue;
-
-            // Pick the right event for this merchant's locale
-            const isEn = merchant.locale === 'en';
-            const merchantEvent = isEn ? upcomingEventEn : upcomingEventFr;
-            if (!merchantEvent) continue;
-
-            // Load cards for this merchant only
-            const { data: cards } = await supabase
-              .from('loyalty_cards')
-              .select('customer_id')
-              .eq('merchant_id', merchant.id)
-              .limit(5000);
-
-            if (!cards || cards.length === 0) continue;
-
-            const customerIds = [...new Set(cards.map(c => c.customer_id))];
-            const { data: customers } = await supabase
-              .from('customers')
-              .select('id, phone_number')
-              .in('id', customerIds)
-              .limit(5000);
-
-            for (const customer of customers || []) {
-              if (!customer.phone_number) continue;
-
-              const sent = await sendAutomationPush({
-                supabase,
-                merchantId: merchant.id,
-                customerId: customer.id,
-                customerPhone: customer.phone_number,
-                automationType: `event_${merchantEvent.id}`,
-                title: merchant.shop_name,
-                body: isEn
-                  ? `${merchantEvent.name} is coming soon! ${offerText}`
-                  : `C'est bientôt ${merchantEvent.name} ! ${offerText}`,
-                url: `/customer/card/${merchant.id}`,
-              });
-
-              if (sent) results.pushAutomations.events.sent++;
-              else results.pushAutomations.events.skipped++;
-            }
-          }
-        }
-      }
-    }
-
-  } catch (error) {
-    sectionStatuses.push({ name: 'pushAutomations', status: 'error', error: String(error) });
-  }
-
-  // ==================== SECTION 13: MERCHANT PUSH — TRIAL REMINDERS ====================
-  if (isTimedOut()) { sectionStatuses.push({ name: 'trialPush', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
-  else try {
-    const trialPushMerchants = allMerchantsList.filter(m =>
-      (m.subscription_status === 'trial' || m.subscription_status === 'expired') && !m.no_contact
-    );
-
-    let trialPushSent = 0;
-
-    for (const merchant of trialPushMerchants) {
-      const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
-      const isEN = merchant.locale === 'en';
-
-      let title: string | null = null;
-      let body: string | null = null;
-      let refSuffix: string | null = null;
-
-      // J+5 : 2 jours avant fin d'essai
-      if (trialStatus.isActive && trialStatus.daysRemaining === 2) {
-        title = isEN ? 'Your trial ends in 2 days' : 'Ton essai se termine dans 2 jours';
-        body = isEN
-          ? 'Subscribe now to keep your clients and bookings.'
-          : 'Abonne-toi pour garder tes clients et tes réservations.';
-        refSuffix = 'trial-j5';
-      }
-
-      // J+7 : dernier jour
-      if (trialStatus.isActive && trialStatus.daysRemaining <= 0) {
-        title = isEN ? 'Your trial ends today' : 'Ton essai se termine aujourd\'hui';
-        body = isEN
-          ? 'Subscribe to continue using Qarte without interruption.'
-          : 'Abonne-toi pour continuer à utiliser Qarte sans interruption.';
-        refSuffix = 'trial-j7';
-      }
-
-      // J+8 : grace period jour 1
-      if (trialStatus.isInGracePeriod && Math.abs(trialStatus.daysRemaining) === 1) {
-        title = isEN ? 'Your trial has ended' : 'Ton essai est terminé';
-        body = isEN
-          ? `You have ${trialStatus.daysUntilDeletion} days left before losing your data. Subscribe now.`
-          : `Il te reste ${trialStatus.daysUntilDeletion} jours avant la perte de tes données. Abonne-toi maintenant.`;
-        refSuffix = 'trial-j8';
-      }
-
-      if (title && body && refSuffix) {
-        const sent = await sendMerchantPush({
-          supabase,
-          merchantId: merchant.id,
-          notificationType: 'trial_reminder',
-          referenceId: `${merchant.id}-${refSuffix}`,
-          title,
-          body,
-          url: '/dashboard/subscription',
-          tag: 'qarte-merchant-trial',
-        });
-        if (sent) trialPushSent++;
-      }
-    }
-
-    sectionStatuses.push({ name: 'trialPush', status: 'ok', sent: trialPushSent } as never);
-  } catch (error) {
-    sectionStatuses.push({ name: 'trialPush', status: 'error', error: String(error) });
-  }
-
-  // ==================== SECTION 14: DEPOSIT DEADLINE CHECK ====================
-  if (isTimedOut()) { sectionStatuses.push({ name: 'depositDeadline', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
-  else try {
-    const nowIso = new Date().toISOString();
-    const fourHoursFromNow = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
-
-    // 14A. Auto-release expired deposits
-    const { data: expiredSlots } = await supabase
-      .from('merchant_planning_slots')
-      .select('id, merchant_id, client_name, slot_date, start_time, primary_slot_id')
-      .eq('deposit_confirmed', false)
-      .not('deposit_deadline_at', 'is', null)
-      .lt('deposit_deadline_at', nowIso)
-      .is('primary_slot_id', null) // Only primary slots
-      .limit(200);
-
-    let releasedCount = 0;
-    for (const slot of expiredSlots || []) {
-      // Query filler IDs BEFORE releasing (primary_slot_id gets nullified)
-      const { data: fillerSlots } = await supabase
-        .from('merchant_planning_slots')
-        .select('id')
-        .eq('primary_slot_id', slot.id);
-
-      const allSlotIds = [slot.id, ...(fillerSlots || []).map(f => f.id)];
-
-      // Delete all services (primary + fillers)
-      await supabase.from('planning_slot_services').delete().in('slot_id', allSlotIds);
-
-      // Release fillers
-      if (fillerSlots && fillerSlots.length > 0) {
-        await supabase
-          .from('merchant_planning_slots')
-          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null })
-          .in('id', fillerSlots.map(f => f.id));
-      }
-
-      // Release primary slot
-      await supabase
-        .from('merchant_planning_slots')
-        .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null })
-        .eq('id', slot.id);
-
-      // Push notification to merchant
-      const bm = allMerchantsMap.get(slot.merchant_id);
-      if (bm) {
-        const isEN = bm.locale === 'en';
-        pushPromises.push(sendMerchantPush({
-          supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expired', referenceId: slot.id,
-          title: isEN ? 'Slot released — deposit not received' : 'Créneau libéré — acompte non reçu',
-          body: isEN
-            ? `${slot.client_name} — ${slot.slot_date} at ${slot.start_time}`
-            : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
-          url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
-        }));
-      }
-
-      releasedCount++;
-    }
-
-    // 14B. Warn merchants about deposits expiring soon (within 4h)
-    const { data: expiringSlots } = await supabase
-      .from('merchant_planning_slots')
-      .select('id, merchant_id, client_name, slot_date, start_time')
-      .eq('deposit_confirmed', false)
-      .not('deposit_deadline_at', 'is', null)
-      .gte('deposit_deadline_at', nowIso)
-      .lte('deposit_deadline_at', fourHoursFromNow)
-      .is('primary_slot_id', null)
-      .limit(200);
-
-    for (const slot of expiringSlots || []) {
-      const bm = allMerchantsMap.get(slot.merchant_id);
-      if (bm) {
-        const isEN = bm.locale === 'en';
-        pushPromises.push(sendMerchantPush({
-          supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expiring', referenceId: slot.id,
-          title: isEN ? 'Deposit expiring soon' : 'Acompte bientôt expiré',
-          body: isEN
-            ? `${slot.client_name} — confirm or the slot will be released`
-            : `${slot.client_name} — confirme ou le créneau sera libéré`,
-          url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
-        }));
-      }
-    }
-
-    sectionStatuses.push({ name: 'depositDeadline', status: 'ok', released: releasedCount, warned: (expiringSlots || []).length } as never);
-  } catch (error) {
-    sectionStatuses.push({ name: 'depositDeadline', status: 'error', error: String(error) });
-  }
+  // Sections 10-14 moved to /api/cron/morning-push and /api/cron/morning-jobs
 
   // Await all push promises before returning (avoid orphaned work on Vercel)
   if (pushPromises.length > 0) {

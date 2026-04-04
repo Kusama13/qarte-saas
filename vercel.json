@@ -5,6 +5,14 @@
       "schedule": "0 9 * * *"
     },
     {
+      "path": "/api/cron/morning-jobs",
+      "schedule": "15 9 * * *"
+    },
+    {
+      "path": "/api/cron/morning-push",
+      "schedule": "30 9 * * *"
+    },
+    {
       "path": "/api/cron/evening",
       "schedule": "0 17 * * *"
     }
