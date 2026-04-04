@@ -53,7 +53,7 @@ function FeatureBlock({
       >
         <h3 className="text-2xl md:text-5xl font-bold text-gray-900 leading-tight mb-3 md:mb-5">
           {title}{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500 font-extrabold">
+          <span className="font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500 font-extrabold">
             {titleBold}
           </span>
         </h3>
@@ -76,7 +76,13 @@ function FeatureBlock({
 }
 
 function Separator() {
-  return <div className="w-24 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-auto" />;
+  return (
+    <div className="flex items-center justify-center gap-3 py-2">
+      <div className="w-12 h-px bg-gray-200" />
+      <div className="w-1.5 h-1.5 rounded-full bg-indigo-300" />
+      <div className="w-12 h-px bg-gray-200" />
+    </div>
+  );
 }
 
 /* ── Visuals (light) ── */
@@ -447,6 +453,8 @@ export function FideliteSection() {
     <section className="relative py-20 md:py-28 bg-white overflow-hidden">
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-100/40 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-violet-100/30 rounded-full blur-[120px] pointer-events-none" />
+      {/* Subtle grain */}
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\'/%3E%3C/svg%3E")' }} />
 
       <div className="relative max-w-7xl mx-auto px-6">
         <motion.div
@@ -461,8 +469,9 @@ export function FideliteSection() {
           </p>}
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             {t('title')}{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
+            <span className="relative font-[family-name:var(--font-playfair)] italic text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
               {t('titleBold')}
+              <span className="absolute -bottom-1 left-0 right-0 h-3 bg-indigo-100/60 -skew-x-3 rounded-sm -z-10" />
             </span>
           </h2>
           {t('subtitle') && <p className="text-lg text-gray-500">{t('subtitle')}</p>}
@@ -520,10 +529,10 @@ export function FideliteSection() {
           <Link
             href="/auth/merchant/signup"
             onClick={() => { trackCtaClick('fidelite_cta', 'fidelite_section'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+            className="group inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white font-bold rounded-xl shadow-lg shadow-gray-900/20 hover:shadow-gray-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
           >
             {t('cta')}
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
           </Link>
           <p className="text-sm text-gray-400 mt-3">{t('ctaSub')}</p>
         </motion.div>
