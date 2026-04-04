@@ -525,10 +525,10 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 ## 10. Pages Principales
 
 ### Landing (`/`)
-Hero (mockup carte fidelite + floating badges: point ajoute, Google 4.9, parrainage, push Qarte) → SocialProof → FideliteSection (light, 4 blocs: programme+QR, relances+anniversaires, avis Google, journal client) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau Booksy-style, epure) → FAQ (10 questions) → Footer (FooterCta + FooterDark). Typo landing : titres de section en Playfair Display italic sur les mots gradient + surlignage indigo (sections light) ou sans surlignage (sections dark). Separateurs dot+traits. CTAs differencies : noir (FideliteSection), blanc (PageProSection), gradient violet (Hero). Grain texture SVG sur FideliteSection
+Hero (mockup carte fidelite + floating badges: point ajoute, Google 4.9, parrainage, push Qarte) → SocialProof → FideliteSection (light, 4 blocs: programme+QR, relances+anniversaires, avis Google, journal client) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau, 10 features listees, prix annuel, badges confiance) → FAQ (11 questions) → Footer (FooterCta + FooterDark). Typo landing : titres de section en Playfair Display italic sur les mots gradient + surlignage indigo (sections light) ou sans surlignage (sections dark). Separateurs dot+traits. CTAs differencies : noir (FideliteSection), blanc (PageProSection), gradient violet (Hero). Grain texture SVG sur FideliteSection
 
-Hero titre : "Difficile d'attirer de nouvelles clientes. Encore plus de les faire revenir. **Qarte fait les deux, en un lien.**"
-Hero subtitle : "Vitrine en ligne, programme de fidelite, planning — tout ce dont ton salon a besoin, dans un seul lien pour ta bio Instagram, TikTok et Google."
+Hero titre : "La facon la plus simple de **remplir ton agenda et fidéliser tes clientes.**"
+Hero subtitle : "Crée ta vitrine digitale, reçois des réservations en ligne et fidélise tes clientes — tout est inclus, sans outil compliqué."
 Hero CTAs : "Essai gratuit" (primary, glassmorphism violet) + "Voir la demo" (secondary, glassmorphism dark) — empiles sur mobile, cote a cote desktop
 Hero badges impact : 4 pilules glassmorphism — "+30% de retour client", "x3 avis Google", "+40% de visibilite Google", "2x de prises de contact" — chiffres en gradient indigo/rose alternes
 Footer badge Google Reviews : logo Google couleur + 5 etoiles + "5.0 sur Google" — sous "Concu avec amour a Marseille par Tenga Labs" dans FooterDark
