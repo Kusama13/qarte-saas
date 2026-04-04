@@ -656,6 +656,7 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | deposit_confirmed | BOOLEAN | NULL | mig 083, NULL=pas d'acompte, false=en attente, true=confirme |
 | deposit_deadline_at | TIMESTAMPTZ | NULL | mig 086, deadline auto-liberation si acompte non confirme |
 | booked_online | BOOLEAN | `false` | mig 088, true si reserve via /api/planning/book (vitrine) |
+| booked_at | TIMESTAMPTZ | NULL | mig 088, timestamp de reservation (set par book API + PATCH manual) |
 | primary_slot_id | UUID FK → merchant_planning_slots | NULL | mig 084, NULL=slot principal/libre, UUID=filler d'un booking multi-creneaux |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
@@ -990,7 +991,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 085 | merchant_push_subscriptions | Tables merchant_push_subscriptions + merchant_push_logs — push notifications merchant PWA Pro |
 | 086 | deposit_deadline | merchant_planning_slots.deposit_deadline_at + merchants.deposit_deadline_hours — auto-liberation creneaux si acompte non confirme |
 | 087 | student_offer | merchants.student_offer_enabled BOOLEAN + student_offer_description TEXT |
-| 088 | booked_online | merchant_planning_slots.booked_online BOOLEAN DEFAULT false — distingue resa en ligne vs manuelle |
+| 088 | booked_online | merchant_planning_slots.booked_online BOOLEAN DEFAULT false + booked_at TIMESTAMPTZ — distingue resa en ligne vs manuelle, timestamp de reservation |
 
 ---
 

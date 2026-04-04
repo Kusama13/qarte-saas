@@ -210,9 +210,14 @@ export async function PATCH(request: NextRequest) {
     }
 
     const supabaseAdmin = getSupabaseAdmin();
+    const trimmedName = client_name?.trim() || null;
     const updateData: Record<string, unknown> = {
-      client_name: client_name?.trim() || null,
+      client_name: trimmedName,
     };
+    // Set booked_at when assigning a client to a slot (manual booking)
+    if (trimmedName) {
+      updateData.booked_at = new Date().toISOString();
+    }
     if (client_phone !== undefined) {
       if (client_phone) {
         // Format phone to E.164 using merchant country

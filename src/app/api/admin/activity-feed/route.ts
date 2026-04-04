@@ -111,12 +111,13 @@ export async function GET(request: NextRequest) {
       (() => {
         let q = supabaseAdmin
           .from('merchant_planning_slots')
-          .select('merchant_id, client_name, slot_date, start_time, created_at, booked_online')
+          .select('merchant_id, client_name, slot_date, start_time, booked_at, booked_online')
           .not('client_name', 'is', null)
+          .not('booked_at', 'is', null)
           .is('primary_slot_id', null)
-          .gte('created_at', periodStart);
-        if (periodEnd) q = q.lt('created_at', periodEnd);
-        return q.order('created_at', { ascending: false }).limit(200);
+          .gte('booked_at', periodStart);
+        if (periodEnd) q = q.lt('booked_at', periodEnd);
+        return q.order('booked_at', { ascending: false }).limit(200);
       })(),
       (() => {
         let q = supabaseAdmin
@@ -231,10 +232,10 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    (bookings || []).forEach((b: { created_at: string; merchant_id: string; client_name: string; slot_date: string; start_time: string; booked_online: boolean }) => {
+    (bookings || []).forEach((b: { booked_at: string; merchant_id: string; client_name: string; slot_date: string; start_time: string; booked_online: boolean }) => {
       events.push({
         type: 'booking',
-        timestamp: b.created_at,
+        timestamp: b.booked_at,
         title: `Réservation ${b.booked_online ? 'en ligne' : 'manuelle'} chez ${merchantNameMap.get(b.merchant_id) || 'Inconnu'}`,
         subtitle: `${b.client_name} — ${b.slot_date} à ${b.start_time}`,
         merchant_id: b.merchant_id,
