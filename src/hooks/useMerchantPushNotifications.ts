@@ -107,8 +107,8 @@ export function useMerchantPushNotifications() {
     localStorage.setItem(LS_DISMISSED_KEY, 'true');
   }, []);
 
-  // Show prompt if: supported, not subscribed, not dismissed, not denied
-  const showPrompt = pushSupported && !pushSubscribed && !dismissed && pushPermission !== 'denied';
+  // Show prompt only in standalone PWA mode (not desktop browser)
+  const showPrompt = pushSupported && isStandalone && !pushSubscribed && !dismissed && pushPermission !== 'denied';
   const iOSVersion = typeof navigator !== 'undefined' ? getIOSVersion() : 0;
 
   return {

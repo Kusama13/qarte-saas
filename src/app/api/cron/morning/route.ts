@@ -1715,6 +1715,70 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'pushAutomations', status: 'error', error: String(error) });
   }
 
+  // ==================== SECTION 13: MERCHANT PUSH — TRIAL REMINDERS ====================
+  if (isTimedOut()) { sectionStatuses.push({ name: 'trialPush', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
+    const trialPushMerchants = allMerchantsList.filter(m =>
+      (m.subscription_status === 'trial' || m.subscription_status === 'expired') && !m.no_contact
+    );
+
+    let trialPushSent = 0;
+
+    for (const merchant of trialPushMerchants) {
+      const trialStatus = getTrialStatus(merchant.trial_ends_at, merchant.subscription_status);
+      const isEN = merchant.locale === 'en';
+
+      let title: string | null = null;
+      let body: string | null = null;
+      let refSuffix: string | null = null;
+
+      // J+5 : 2 jours avant fin d'essai
+      if (trialStatus.isActive && trialStatus.daysRemaining === 2) {
+        title = isEN ? 'Your trial ends in 2 days' : 'Ton essai se termine dans 2 jours';
+        body = isEN
+          ? 'Subscribe now to keep your clients and bookings.'
+          : 'Abonne-toi pour garder tes clients et tes réservations.';
+        refSuffix = 'trial-j5';
+      }
+
+      // J+7 : dernier jour
+      if (trialStatus.isActive && trialStatus.daysRemaining <= 0) {
+        title = isEN ? 'Your trial ends today' : 'Ton essai se termine aujourd\'hui';
+        body = isEN
+          ? 'Subscribe to continue using Qarte without interruption.'
+          : 'Abonne-toi pour continuer à utiliser Qarte sans interruption.';
+        refSuffix = 'trial-j7';
+      }
+
+      // J+8 : grace period jour 1
+      if (trialStatus.isInGracePeriod && Math.abs(trialStatus.daysRemaining) === 1) {
+        title = isEN ? 'Your trial has ended' : 'Ton essai est terminé';
+        body = isEN
+          ? `You have ${trialStatus.daysUntilDeletion} days left before losing your data. Subscribe now.`
+          : `Il te reste ${trialStatus.daysUntilDeletion} jours avant la perte de tes données. Abonne-toi maintenant.`;
+        refSuffix = 'trial-j8';
+      }
+
+      if (title && body && refSuffix) {
+        const sent = await sendMerchantPush({
+          supabase,
+          merchantId: merchant.id,
+          notificationType: 'trial_reminder',
+          referenceId: `${merchant.id}-${refSuffix}`,
+          title,
+          body,
+          url: '/dashboard/subscription',
+          tag: 'qarte-merchant-trial',
+        });
+        if (sent) trialPushSent++;
+      }
+    }
+
+    sectionStatuses.push({ name: 'trialPush', status: 'ok', sent: trialPushSent } as never);
+  } catch (error) {
+    sectionStatuses.push({ name: 'trialPush', status: 'error', error: String(error) });
+  }
+
   // ==================== RESPONSE ====================
   const elapsedMs = Date.now() - cronStartTime;
   const failedSections = sectionStatuses.filter(s => s.status === 'error');
