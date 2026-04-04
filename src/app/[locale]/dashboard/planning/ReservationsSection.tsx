@@ -20,6 +20,7 @@ interface ReservationsSectionProps {
   depositAmount?: number | null;
   onEditSlot: (slot: PlanningSlot) => void;
   onConfirmDeposit?: (slot: PlanningSlot) => void;
+  onCancelDeposit?: (slot: PlanningSlot) => void;
   deepLinkSlotId?: string | null;
   onDeepLinkHandled?: () => void;
 }
@@ -32,7 +33,7 @@ interface DayGroup {
   slots: PlanningSlot[];
 }
 
-export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, depositPercent, depositAmount: depositFixed, onEditSlot, onConfirmDeposit, deepLinkSlotId, onDeepLinkHandled }: ReservationsSectionProps) {
+export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, depositPercent, depositAmount: depositFixed, onEditSlot, onConfirmDeposit, onCancelDeposit, deepLinkSlotId, onDeepLinkHandled }: ReservationsSectionProps) {
   const t = useTranslations('planning');
   const [viewingSlot, setViewingSlot] = useState<PlanningSlot | null>(null);
   const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
@@ -421,7 +422,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
               {/* Footer */}
               <div className="p-4 border-t border-gray-100 space-y-2">
-                {/* Deposit confirm button */}
+                {/* Deposit confirm / cancel */}
                 {viewingSlot.deposit_confirmed === false && onConfirmDeposit && (
                   <button
                     onClick={() => { onConfirmDeposit(viewingSlot); setViewingSlot(null); }}
@@ -429,6 +430,15 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                   >
                     <Check className="w-3.5 h-3.5" />
                     {t('confirmDeposit')}
+                  </button>
+                )}
+                {viewingSlot.deposit_confirmed === true && onCancelDeposit && (
+                  <button
+                    onClick={() => { onCancelDeposit(viewingSlot); setViewingSlot(null); }}
+                    className="mx-auto flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-orange-50 text-orange-600 text-xs font-semibold hover:bg-orange-100 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    {t('cancelDeposit')}
                   </button>
                 )}
                 <button

@@ -37,6 +37,7 @@ interface BookingDetailsModalProps {
   onShiftSlot: (slotId: string, newTime: string, newDate?: string) => Promise<void>;
   onRefreshSlots: () => Promise<void>;
   onConfirmDeposit?: (slot: PlanningSlot) => void;
+  onCancelDeposit?: (slot: PlanningSlot) => void;
   onGoBack: () => void;
   onClose: () => void;
   onFetchClientHistory: (customerId: string) => Promise<PlanningSlot[]>;
@@ -61,6 +62,7 @@ export default function BookingDetailsModal({
   onShiftSlot,
   onRefreshSlots,
   onConfirmDeposit,
+  onCancelDeposit,
   onGoBack,
   onClose,
   onFetchClientHistory,
@@ -598,7 +600,7 @@ export default function BookingDetailsModal({
 
         {/* Footer actions */}
         <div className="p-4 border-t border-gray-100 space-y-2">
-          {/* Confirm deposit button */}
+          {/* Confirm / cancel deposit */}
           {slot.deposit_confirmed === false && onConfirmDeposit && (
             <div className="flex justify-center">
               <button
@@ -607,6 +609,17 @@ export default function BookingDetailsModal({
               >
                 <Check className="w-3.5 h-3.5" />
                 {t('confirmDeposit')}
+              </button>
+            </div>
+          )}
+          {slot.deposit_confirmed === true && onCancelDeposit && (
+            <div className="flex justify-center">
+              <button
+                onClick={() => { onCancelDeposit(slot); onClose(); }}
+                className="flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-orange-50 text-orange-600 text-xs font-semibold hover:bg-orange-100 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+                {t('cancelDeposit')}
               </button>
             </div>
           )}

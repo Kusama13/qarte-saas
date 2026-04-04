@@ -130,6 +130,26 @@ export default function PlanningDashboard() {
     await fetchSlots();
   };
 
+  const handleCancelDeposit = async (slot: PlanningSlot) => {
+    if (!merchant) return;
+    try {
+      const res = await fetch('/api/planning', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slotId: slot.id,
+          merchantId: merchant.id,
+          client_name: slot.client_name,
+          deposit_confirmed: false,
+        }),
+      });
+      if (!res.ok) console.error('Cancel deposit error:', await res.text());
+    } catch (err) {
+      console.error('Cancel deposit error:', err);
+    }
+    await fetchSlots();
+  };
+
   const handleSaveSettings = async () => {
     if (!merchant) return;
     // Validate deposit config: if link → need amount, if amount → need link
@@ -573,6 +593,7 @@ export default function PlanningDashboard() {
           depositAmount={merchant?.deposit_amount}
           onEditSlot={openEditSlot}
           onConfirmDeposit={handleConfirmDeposit}
+          onCancelDeposit={handleCancelDeposit}
           deepLinkSlotId={deepLinkSlotId}
           onDeepLinkHandled={() => setDeepLinkSlotId(null)}
         />
@@ -652,6 +673,12 @@ export default function PlanningDashboard() {
                       className={`w-full px-3.5 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-colors ${linkMissing ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
                     />
                     {linkMissing && <p className="text-[10px] text-red-400 mt-1.5 flex items-center gap-1">{t('depositLinkRequired')}</p>}
+                    <p className="text-[10px] text-gray-400 mt-2">
+                      {t('depositLinkAffiliate')}{' '}
+                      <a href="https://revolut.com/referral/?referral-code=judicasay3!APR1-26-VR-FR&geo-redirect" target="_blank" rel="noopener noreferrer" className="text-indigo-500 font-semibold hover:underline">
+                        {t('depositLinkAffiliateJoin')}
+                      </a>
+                    </p>
                   </div>
 
                   {/* Divider */}
@@ -896,6 +923,7 @@ export default function PlanningDashboard() {
             onShiftSlot={handleMoveSlot}
             onRefreshSlots={fetchSlots}
             onConfirmDeposit={handleConfirmDeposit}
+            onCancelDeposit={handleCancelDeposit}
             onGoBack={goBackToClientSelect}
             onClose={closeModal}
             onFetchClientHistory={fetchClientHistory}

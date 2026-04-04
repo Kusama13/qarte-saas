@@ -272,14 +272,14 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Planning gere par le merchant — mode manuel (le client contacte) OU **reservation en ligne** (`auto_booking_enabled`, mig 083)
 - **Reservation en ligne** : le client clique un creneau sur `/p/[slug]`, coche ses prestations, entre son tel/prenom, et confirme. Blocage automatique des creneaux consecutifs selon la duree totale des services. Email notification au merchant (`BookingNotificationEmail`). API `POST /api/planning/book`
 - **Multi-slot booking** : quand la duree > 30min, les creneaux consecutifs sont bloques. Le slot principal a les `planning_slot_services`, les fillers ont `primary_slot_id` pointant vers le principal (mig 084). Filtre centralise dans `usePlanningState.slotsByDate`. Cascade PATCH (clear) et DELETE (supprime fillers)
-- **Acompte** (optionnel) : `deposit_link` (lien externe Stripe/PayPal), `deposit_percent` OU `deposit_amount` (fixe). Affiche apres confirmation avec montant calcule. Tristate `deposit_confirmed`: NULL=pas d'acompte, false=en attente, true=confirme. Bouton confirmer dans le dashboard. Conditions de resa via `booking_message` (pas de champ message acompte separe)
+- **Acompte** (optionnel) : `deposit_link` (lien externe Revolut/PayPal/Stripe), `deposit_percent` OU `deposit_amount` (fixe). Affiche apres confirmation avec montant calcule. Tristate `deposit_confirmed`: NULL=pas d'acompte, false=en attente, true=confirme. Boutons confirmer ET annuler confirmation dans le dashboard. Conditions de resa via `booking_message` (pas de champ message acompte separe). Lien affilie Revolut sous le champ de lien de paiement
 - **Priorite resa Qarte vs externe** : quand `auto_booking_enabled`, le CTA externe (`booking_url`) est masque sur la vitrine et la carte de fidelite affiche un seul lien "Reserver" vers `/p/{slug}`. Warning dans les settings si les deux sont configures
 - Les RDV ne sont ni modifiables ni annulables par le client
 - Multi-services, photos inspiration, photos resultat ("avant/apres"), liens sociaux clients
 - 1 creneau = 1 ligne en DB (date + heure debut). `client_name IS NULL` = disponible, rempli = pris
 - Dashboard `/dashboard/planning` : 4 onglets (Creneaux, Reservations, Resa en ligne, Parametres)
   - **Creneaux** : vue semaine (drag & drop inter-jours), vue jour (timeline 8h-21h), ajout creneaux (heures predefinies + custom), copie semaine, story Instagram
-  - **Reservations** : tous les RDV reserves (a venir + passes), modal detail (prestations, duree, prix, acompte, notes, photos, historique client), bouton modifier + confirmer acompte
+  - **Reservations** : tous les RDV reserves (a venir + passes), modal detail (prestations, duree, prix, acompte, notes, photos, historique client), bouton modifier + confirmer/annuler acompte
   - **Resa en ligne** : toggle activation, config acompte (lien, pourcentage ou montant fixe, message), info et warning si lien externe
   - **Parametres** : message libre public, conditions de reservation
 - **Couleurs services** : palette 10 couleurs attribuees automatiquement aux services, affichees sur les creneaux en vue semaine/jour
