@@ -5,6 +5,7 @@ import { formatPhoneNumber, validatePhone, getTrialStatus } from '@/lib/utils';
 import { setPhoneCookie } from '@/lib/customer-auth';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendBookingNotificationEmail } from '@/lib/email';
+import { sendMerchantPush } from '@/lib/merchant-push';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 
@@ -278,6 +279,18 @@ export async function POST(request: NextRequest) {
         }
       ).catch(err => logger.error('Booking notification email failed:', err));
     }
+
+    // 10b. Push notification to merchant (fire-and-forget)
+    sendMerchantPush({
+      supabase: supabaseAdmin,
+      merchantId: merchant_id,
+      notificationType: 'booking',
+      referenceId: targetSlot.id,
+      title: 'Nouvelle réservation',
+      body: `${clientName} — ${targetSlot.slot_date} à ${targetSlot.start_time}`,
+      url: '/dashboard/planning',
+      tag: 'qarte-merchant-booking',
+    }).catch(() => {});
 
     // 11. Set phone cookie + return
     const jsonResponse = NextResponse.json({

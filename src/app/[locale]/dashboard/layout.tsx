@@ -27,6 +27,7 @@ import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 import InstallAppBanner from '@/components/dashboard/InstallAppBanner';
 import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBanner';
 import StatusBanner from '@/components/dashboard/StatusBanner';
+import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 
 
 function DashboardLayoutContent({
@@ -39,6 +40,15 @@ function DashboardLayoutContent({
   const supabase = getSupabase();
   const { merchant, loading } = useMerchant();
   const t = useTranslations('dashNav');
+  const tp = useTranslations('merchantPush');
+  const {
+    showPrompt: showPushPrompt,
+    pushSubscribing,
+    pushSubscribed,
+    pushError,
+    subscribe: subscribePush,
+    dismiss: dismissPush,
+  } = useMerchantPushNotifications();
 
   const navItems = [
     { href: '/dashboard', icon: Home, label: t('home'), color: 'text-indigo-500', bg: 'bg-indigo-50' },
@@ -312,6 +322,41 @@ function DashboardLayoutContent({
               </div>
               <ArrowRight className="w-4 h-4 text-violet-500 shrink-0 group-hover:translate-x-1 transition-transform" />
             </Link>
+          )}
+
+          {/* Push notifications prompt */}
+          {showPushPrompt && (
+            <div className="flex items-center gap-3 p-4 mb-4 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 flex items-center justify-center shrink-0">
+                <Megaphone className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900">{tp('promptTitle')}</p>
+                <p className="text-xs text-gray-500">{tp('promptDesc')}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={dismissPush}
+                  className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {tp('promptDismiss')}
+                </button>
+                <button
+                  onClick={subscribePush}
+                  disabled={pushSubscribing}
+                  className="px-3 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-indigo-500 to-blue-500 rounded-lg hover:shadow-md disabled:opacity-50 transition-all"
+                >
+                  {pushSubscribing ? '...' : tp('promptCta')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Push error */}
+          {pushError && (
+            <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
+              {tp('error')} : {pushError}
+            </div>
           )}
 
           {children}

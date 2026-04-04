@@ -342,11 +342,20 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `POST /api/vouchers/grant` — Attribution manuelle voucher welcome/promo (merchant auth). Verification stamps + doublons. `PATCH` = consommer, `DELETE` = retirer, `GET` = lister vouchers client
 - Offre de bienvenue : eligible si nouveau client OU client existant avec 0 tampons et sans voucher welcome/referral
 
-### Push & Marketing
-- `POST /api/push/subscribe` — Abonnement push (auth cookie phone)
-- `DELETE /api/push/subscribe` — Desabonnement push (auth cookie phone + ownership)
-- `POST /api/push/send` — Envoi notification (rate limit 10/h par IP)
+### Push & Marketing (Client)
+- `POST /api/push/subscribe` — Abonnement push client (auth cookie phone)
+- `DELETE /api/push/subscribe` — Desabonnement push client (auth cookie phone + ownership)
+- `POST /api/push/send` — Envoi notification aux clients (rate limit 10/h par IP)
 - `GET /api/offers` — Offres promo
+
+### Push Merchant (PWA Pro)
+- `POST /api/merchant-push/subscribe` — Abonnement push merchant (auth Supabase JWT)
+- `DELETE /api/merchant-push/subscribe` — Desabonnement push merchant
+- Helper `sendMerchantPush()` dans `src/lib/merchant-push.ts` — fire-and-forget, dedup via `merchant_push_logs`
+- **Triggers temps reel** : nouvelle resa en ligne (dans `POST /api/planning/book`), anniversaires clients (cron morning)
+- **Architecture** : table separee `merchant_push_subscriptions` (auth JWT, pas cookie phone), meme service worker `sw.js`, meme VAPID keys
+- **Prompt activation** : banner dans le dashboard layout, dismissable via localStorage
+- **Pas de toggles** : toutes les notifs actives par defaut pour tout merchant abonne au push
 
 ### Stripe
 - `POST /api/stripe/checkout` — Session paiement (verifie customer Stripe)

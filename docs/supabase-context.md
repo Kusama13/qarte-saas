@@ -94,7 +94,7 @@
 | deposit_link | TEXT | NULL | mig 083, lien externe paiement acompte |
 | deposit_percent | INTEGER | NULL | mig 083, % acompte (mutuellement exclusif avec deposit_amount) |
 | deposit_amount | DECIMAL(10,2) | NULL | mig 083, montant fixe acompte (mutuellement exclusif avec deposit_percent) |
-| deposit_message | TEXT | NULL | mig 083, message libre acompte |
+| deposit_message | TEXT | NULL | mig 083, DEPRECATED — supprime du code (conditions de resa suffisent) |
 | show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
 | signup_source | TEXT | NULL | mig 068 |
 | locale | TEXT | `'fr'` | NOT NULL, mig 069 |
@@ -508,11 +508,39 @@
 **Contrainte** : UNIQUE(merchant_id, scheduled_time, scheduled_date)
 **Index partiel** : `idx_scheduled_push_pending` WHERE status = 'pending'
 
-### 2.26 admin_notes (mig 015)
+### 2.26 merchant_push_subscriptions (mig 085)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK | NOT NULL | → merchants(id) ON DELETE CASCADE |
+| endpoint | TEXT | NOT NULL | UNIQUE |
+| p256dh | TEXT | NOT NULL | |
+| auth | TEXT | NOT NULL | |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+| updated_at | TIMESTAMPTZ | `NOW()` | |
+
+**Index** : `idx_merchant_push_subs_merchant` (merchant_id)
+**RLS** : merchants manage own subs (WHERE merchant_id IN merchants WHERE user_id = auth.uid())
+
+### 2.27 merchant_push_logs (mig 085)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK | NOT NULL | → merchants(id) ON DELETE CASCADE |
+| notification_type | TEXT | NOT NULL | |
+| reference_id | TEXT | | |
+| sent_at | TIMESTAMPTZ | `NOW()` | |
+
+**Index** : `idx_merchant_push_logs_lookup` (merchant_id, notification_type, sent_at)
+**RLS** : service role full access
+
+### 2.28 admin_notes (mig 015)
 
 Single-row table : id, content (TEXT, default ''), updated_at
 
-### 2.27 admin_tasks (mig 015)
+### 2.29 admin_tasks (mig 015)
 
 | Colonne | Type | Default | Contrainte |
 |---------|------|---------|------------|
@@ -956,6 +984,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 082 | duo_offer | merchants.duo_offer_enabled BOOLEAN + duo_offer_description TEXT |
 | 083 | auto_booking | merchants.auto_booking_enabled, deposit_link, deposit_percent, deposit_amount + merchant_planning_slots.deposit_confirmed BOOLEAN |
 | 084 | primary_slot_id | merchant_planning_slots.primary_slot_id UUID FK self-ref — lie les fillers au slot principal d'un booking multi-creneaux |
+| 085 | merchant_push_subscriptions | Tables merchant_push_subscriptions + merchant_push_logs — push notifications merchant PWA Pro |
 
 ---
 

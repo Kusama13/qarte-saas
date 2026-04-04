@@ -2541,5 +2541,13 @@
     "welcomeOfferHint": "Offre de bienvenue",
     "noModify": "Les rendez-vous ne sont ni modifiables ni annulables",
     "viewCard": "Voir ma carte de fidélité"
+  },
+  "merchantPush": {
+    "promptTitle": "Active les notifications",
+    "promptDesc": "Reçois une alerte instantanée à chaque nouvelle réservation en ligne et pour les anniversaires de tes clients.",
+    "promptCta": "Activer",
+    "promptDismiss": "Plus tard",
+    "enabled": "Notifications activées",
+    "error": "Impossible d'activer les notifications"
   }
 }

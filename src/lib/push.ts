@@ -4,7 +4,7 @@
 let cachedVapidPublicKey: string | null = null;
 
 // Get VAPID public key - try env var first, then fetch from API
-async function getVapidPublicKey(): Promise<string | null> {
+export async function getVapidPublicKey(): Promise<string | null> {
   // Try environment variable first
   const envKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (envKey) return envKey;
@@ -34,7 +34,7 @@ async function getVapidPublicKey(): Promise<string | null> {
 }
 
 // Convert VAPID key to Uint8Array
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
+export function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding)
     .replace(/-/g, '+')

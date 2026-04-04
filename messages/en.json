@@ -2541,5 +2541,13 @@
     "welcomeOfferHint": "Welcome offer",
     "noModify": "Appointments cannot be modified or cancelled",
     "viewCard": "View my loyalty card"
+  },
+  "merchantPush": {
+    "promptTitle": "Enable notifications",
+    "promptDesc": "Get instant alerts for every new online booking and your clients' birthdays.",
+    "promptCta": "Enable",
+    "promptDismiss": "Later",
+    "enabled": "Notifications enabled",
+    "error": "Could not enable notifications"
   }
 }

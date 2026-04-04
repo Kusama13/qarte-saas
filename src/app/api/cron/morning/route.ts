@@ -27,6 +27,7 @@ import {
 import type { EmailLocale } from '@/emails/translations';
 import { getTrialStatus, getTodayInParis, getTodayForCountry } from '@/lib/utils';
 import { sendAutomationPush, getUpcomingEvent } from '@/lib/push-automation';
+import { sendMerchantPush } from '@/lib/merchant-push';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -1449,24 +1450,37 @@ export async function GET(request: NextRequest) {
             }
           }
 
-          // Notify merchants about client birthdays (email, fire-and-forget)
+          // Notify merchants about client birthdays (email + push, fire-and-forget)
           if (birthdayByMerchant.size > 0) {
             for (const [merchantId, clientNames] of birthdayByMerchant) {
               try {
                 const bm = merchantMap.get(merchantId);
                 if (!bm) continue;
                 const merchantEmail = globalEmailMap.get(bm.user_id);
-                if (!merchantEmail) continue;
+                if (merchantEmail) {
+                  await sendBirthdayNotificationEmail(
+                    merchantEmail,
+                    bm.shop_name,
+                    clientNames,
+                    bm.birthday_gift_description || 'Cadeau anniversaire',
+                    (bm.locale as EmailLocale) || 'fr'
+                  ).catch(() => {});
+                }
 
-                await sendBirthdayNotificationEmail(
-                  merchantEmail,
-                  bm.shop_name,
-                  clientNames,
-                  bm.birthday_gift_description || 'Cadeau anniversaire',
-                  (bm.locale as EmailLocale) || 'fr'
-                ).catch(() => {
-                  // Never let merchant notification crash the cron
-                });
+                // Push notification to merchant
+                const bodyText = clientNames.length === 1
+                  ? `${clientNames[0]} fête son anniversaire aujourd'hui`
+                  : `${clientNames.join(', ')} fêtent leur anniversaire aujourd'hui`;
+                sendMerchantPush({
+                  supabase,
+                  merchantId,
+                  notificationType: 'birthday_digest',
+                  referenceId: `${merchantId}-${todayParis}`,
+                  title: `🎂 ${clientNames.length} anniversaire${clientNames.length > 1 ? 's' : ''} aujourd'hui`,
+                  body: bodyText,
+                  url: '/dashboard/planning',
+                  tag: 'qarte-merchant-birthday',
+                }).catch(() => {});
               } catch {
                 // Never let merchant notification crash the cron
               }
