@@ -23,6 +23,8 @@ import {
   sendAutoSuggestRewardEmail,
   sendGracePeriodSetupEmail,
   sendBirthdayNotificationEmail,
+  sendVitrineReminderEmail,
+  sendPlanningReminderEmail,
 } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { getTrialStatus, getTodayInParis, getTodayForCountry } from '@/lib/utils';
@@ -163,6 +165,26 @@ async function runStandardEmailSection<T extends { id: string; user_id: string }
   await processEmailSection({ candidates, trackingCode, emailMap, alreadySentSet, stats, sendFn, extraSkip, superAdminUserIds });
 }
 
+// Helper: send onboarding push to merchants with PWA installed
+function sendOnboardingPushes(
+  merchants: Array<{ id: string; locale: string | null; pwa_installed_at: string | null }>,
+  opts: { notificationType: string; titleFr: string; titleEn: string; bodyFr: string; bodyEn: string; url: string },
+  pushPromises: Promise<boolean>[],
+) {
+  for (const m of merchants) {
+    if (!m.pwa_installed_at) continue;
+    const isEN = m.locale === 'en';
+    pushPromises.push(
+      sendMerchantPush({
+        supabase, merchantId: m.id, notificationType: opts.notificationType, referenceId: m.id,
+        title: isEN ? opts.titleEn : opts.titleFr,
+        body: isEN ? opts.bodyEn : opts.bodyFr,
+        url: opts.url, tag: 'qarte-merchant-onboarding',
+      })
+    );
+  }
+}
+
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   if (!CRON_SECRET || !authHeader?.startsWith('Bearer ') ||
@@ -199,6 +221,8 @@ export async function GET(request: NextRequest) {
 
   // Track section statuses for isolated error handling
   const sectionStatuses: Array<{ name: string; status: 'ok' | 'error'; error?: string }> = [];
+  // Collect push promises to await before response (avoid orphaned work on Vercel)
+  const pushPromises: Promise<boolean>[] = [];
 
   // Hard timeout: stop processing sections after 240s (leave 60s buffer for Vercel Pro 300s limit)
   const cronStartTime = Date.now();
@@ -217,7 +241,7 @@ export async function GET(request: NextRequest) {
   // Single fetch for all merchants — sections filter in JS instead of separate DB queries
   const { data: allMerchants } = await supabase
     .from('merchants')
-    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, created_at, updated_at, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, referral_code, no_contact, birthday_gift_enabled, birthday_gift_description, offer_active, offer_title, offer_expires_at');
+    .select('id, shop_name, shop_type, slug, user_id, locale, country, trial_ends_at, subscription_status, created_at, updated_at, reward_description, stamps_required, primary_color, logo_url, tier2_enabled, tier2_stamps_required, tier2_reward_description, loyalty_mode, referral_code, no_contact, birthday_gift_enabled, birthday_gift_description, offer_active, offer_title, offer_expires_at, pwa_installed_at, bio, shop_address, planning_enabled');
 
   const allMerchantsList = allMerchants || [];
   const allMerchantsMap = new Map(allMerchantsList.map(m => [m.id, m]));
@@ -332,6 +356,14 @@ export async function GET(request: NextRequest) {
       globalTrackingSet,
     });
 
+    // Push onboarding J+1 (PWA only)
+    sendOnboardingPushes(unconfiguredMerchants, {
+      notificationType: 'onboarding_config_j1',
+      titleFr: 'Configure ton programme de fidélité', titleEn: 'Set up your loyalty program',
+      bodyFr: 'Ça prend 2 minutes, c\'est parti !', bodyEn: 'It only takes 2 minutes to get started.',
+      url: '/dashboard/setup',
+    }, pushPromises);
+
     // 2b. PROGRAM REMINDER (J+2)
     const fortyNineHoursAgo = new Date(now.getTime() - 49 * 60 * 60 * 1000);
     const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
@@ -348,6 +380,14 @@ export async function GET(request: NextRequest) {
       emailMap: globalEmailMap,
       globalTrackingSet,
     });
+
+    // Push onboarding J+2 (PWA only)
+    sendOnboardingPushes(unconfiguredDay2, {
+      notificationType: 'onboarding_config_j2',
+      titleFr: 'Ton programme attend d\'être configuré', titleEn: 'Your program is waiting',
+      bodyFr: 'Configure ta récompense pour fidéliser tes clients.', bodyEn: 'Set up your reward to start retaining clients.',
+      url: '/dashboard/setup',
+    }, pushPromises);
 
     // 2c. PROGRAM REMINDER (J+3)
     const seventyThreeHoursAgo = new Date(now.getTime() - 73 * 60 * 60 * 1000);
@@ -370,6 +410,62 @@ export async function GET(request: NextRequest) {
       emailMap: globalEmailMap,
       globalTrackingSet,
     });
+    // 2d-bis. VITRINE REMINDER (J+3, programme configure, vitrine vide)
+    {
+      const vitrineDay3 = configuredActiveMerchants.filter(m =>
+        m.created_at <= seventyTwoHoursAgo.toISOString() && m.created_at >= seventyThreeHoursAgo.toISOString()
+        && !m.bio && !m.shop_address
+      );
+
+      await runStandardEmailSection({
+        candidates: vitrineDay3,
+        trackingCode: -304,
+        stats: results.programRemindersDay3, // reuse stats bucket
+        sendFn: (email, m) => {
+          const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
+          return sendVitrineReminderEmail(email, m.shop_name, Math.max(trialStatus.daysRemaining, 0), (m.locale as EmailLocale) || 'fr');
+        },
+        emailMap: globalEmailMap,
+        globalTrackingSet,
+      });
+
+      sendOnboardingPushes(vitrineDay3, {
+        notificationType: 'onboarding_vitrine',
+        titleFr: 'Complète ta vitrine en ligne', titleEn: 'Complete your online page',
+        bodyFr: 'Ajoute ta bio et ton adresse pour apparaître sur Google.', bodyEn: 'Add your bio and address to appear on Google.',
+        url: '/dashboard/public-page',
+      }, pushPromises);
+    }
+
+    // 2d-ter. PLANNING REMINDER (J+4, programme configure, planning desactive)
+    {
+      const ninetySixHoursAgo = new Date(now.getTime() - 96 * 60 * 60 * 1000);
+      const ninetySevenHoursAgo = new Date(now.getTime() - 97 * 60 * 60 * 1000);
+
+      const planningDay4 = configuredActiveMerchants.filter(m =>
+        m.created_at <= ninetySixHoursAgo.toISOString() && m.created_at >= ninetySevenHoursAgo.toISOString()
+        && !m.planning_enabled
+      );
+
+      await runStandardEmailSection({
+        candidates: planningDay4,
+        trackingCode: -308,
+        stats: results.programRemindersDay3, // reuse stats bucket
+        sendFn: (email, m) => {
+          const trialStatus = getTrialStatus(m.trial_ends_at, m.subscription_status);
+          return sendPlanningReminderEmail(email, m.shop_name, Math.max(trialStatus.daysRemaining, 0), (m.locale as EmailLocale) || 'fr');
+        },
+        emailMap: globalEmailMap,
+        globalTrackingSet,
+      });
+
+      sendOnboardingPushes(planningDay4, {
+        notificationType: 'onboarding_planning',
+        titleFr: 'Reçois des réservations en ligne', titleEn: 'Start receiving online bookings',
+        bodyFr: 'Active ton planning en un clic.', bodyEn: 'Enable your calendar in one click.',
+        url: '/dashboard/planning',
+      }, pushPromises);
+    }
   } catch (error) {
     sectionStatuses.push({ name: 'programReminders', status: 'error', error: String(error) });
   }
@@ -442,6 +538,14 @@ export async function GET(request: NextRequest) {
               (m.locale as EmailLocale) || 'fr'
             ),
           });
+
+          // Push QR ready (PWA only)
+          sendOnboardingPushes(qrToSend, {
+            notificationType: 'onboarding_qr_ready',
+            titleFr: 'Ton QR code est prêt !', titleEn: 'Your QR code is ready!',
+            bodyFr: 'Télécharge-le et scanne ton premier client.', bodyEn: 'Download it and start scanning clients.',
+            url: '/dashboard/qr-download',
+          }, pushPromises);
         }
       }
     }
@@ -505,6 +609,14 @@ export async function GET(request: NextRequest) {
               (m.locale as EmailLocale) || 'fr'
             ),
           });
+
+          // Push no scans (PWA only)
+          sendOnboardingPushes(scriptToSend, {
+            notificationType: 'onboarding_no_scans',
+            titleFr: 'Affiche ton QR code !', titleEn: 'Display your QR code!',
+            bodyFr: 'Scanne ton premier client pour lancer ton programme.', bodyEn: 'Scan your first client to start your loyalty program.',
+            url: '/dashboard/qr-download',
+          }, pushPromises);
         }
       }
     }
@@ -608,6 +720,14 @@ export async function GET(request: NextRequest) {
           emailMap: globalEmailMap,
           globalTrackingSet,
         });
+
+        // Push first scan (PWA only)
+        sendOnboardingPushes(firstScanMerchants, {
+          notificationType: 'onboarding_first_scan',
+          titleFr: 'Premier client fidélisé !', titleEn: 'First client scanned!',
+          bodyFr: 'Ton programme de fidélité est lancé.', bodyEn: 'Your loyalty program is up and running.',
+          url: '/dashboard',
+        }, pushPromises);
       }
 
       // 2f. FIRST REWARD EMAIL
@@ -810,6 +930,16 @@ export async function GET(request: NextRequest) {
               });
               results.inactiveMerchants.sent++;
               await rateLimitDelay();
+
+              // Push inactive J+7 (PWA only)
+              if (daysInactive === 7 && merchant.pwa_installed_at) {
+                pushPromises.push(sendMerchantPush({
+                  supabase, merchantId: merchant.id, notificationType: 'onboarding_inactive_j7', referenceId: merchant.id,
+                  title: merchant.locale === 'en' ? 'Your clients are waiting' : 'Tes clients t\'attendent',
+                  body: merchant.locale === 'en' ? 'Display your QR code to start building loyalty.' : 'Affiche ton QR code pour fidéliser tes clients.',
+                  url: '/dashboard', tag: 'qarte-merchant-onboarding',
+                }));
+              }
             } else {
               results.inactiveMerchants.errors++;
             }
@@ -1471,7 +1601,7 @@ export async function GET(request: NextRequest) {
                 const bodyText = clientNames.length === 1
                   ? `${clientNames[0]} fête son anniversaire aujourd'hui`
                   : `${clientNames.join(', ')} fêtent leur anniversaire aujourd'hui`;
-                sendMerchantPush({
+                pushPromises.push(sendMerchantPush({
                   supabase,
                   merchantId,
                   notificationType: 'birthday_digest',
@@ -1480,7 +1610,7 @@ export async function GET(request: NextRequest) {
                   body: bodyText,
                   url: '/dashboard/planning',
                   tag: 'qarte-merchant-birthday',
-                }).catch(() => {});
+                }));
               } catch {
                 // Never let merchant notification crash the cron
               }
@@ -1777,6 +1907,11 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'trialPush', status: 'ok', sent: trialPushSent } as never);
   } catch (error) {
     sectionStatuses.push({ name: 'trialPush', status: 'error', error: String(error) });
+  }
+
+  // Await all push promises before returning (avoid orphaned work on Vercel)
+  if (pushPromises.length > 0) {
+    await Promise.allSettled(pushPromises);
   }
 
   // ==================== RESPONSE ====================

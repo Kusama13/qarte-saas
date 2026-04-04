@@ -34,6 +34,8 @@ import {
   AnnouncementMaPageEmail,
   WinBackEmail,
   BookingNotificationEmail,
+  VitrineReminderEmail,
+  PlanningReminderEmail,
 } from '@/emails';
 import { getEmailT, type EmailLocale } from '@/emails/translations';
 import logger from './logger';
@@ -587,6 +589,28 @@ export async function sendAutoSuggestRewardEmail(
 ): Promise<SendEmailResult> {
   return sendEmail(to, subj(locale, 'autoSuggestReward', { shopName }), AutoSuggestRewardEmail, { shopName, shopType, daysRemaining, locale }, {
     logLabel: 'Auto-suggest reward email',
+  });
+}
+
+export async function sendVitrineReminderEmail(
+  to: string,
+  shopName: string,
+  daysRemaining: number,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'vitrineReminder', { shopName }), VitrineReminderEmail, { shopName, daysRemaining, locale }, {
+    logLabel: 'Vitrine reminder email',
+  });
+}
+
+export async function sendPlanningReminderEmail(
+  to: string,
+  shopName: string,
+  daysRemaining: number,
+  locale: EmailLocale = 'fr'
+): Promise<SendEmailResult> {
+  return sendEmail(to, subj(locale, 'planningReminder', { shopName }), PlanningReminderEmail, { shopName, daysRemaining, locale }, {
+    logLabel: 'Planning reminder email',
   });
 }
 

@@ -353,7 +353,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `DELETE /api/merchant-push/subscribe` — Desabonnement push merchant
 - Helper `sendMerchantPush()` dans `src/lib/merchant-push.ts` — fire-and-forget, dedup via `merchant_push_logs`
 - **Triggers temps reel** : nouvelle resa en ligne (dans `POST /api/planning/book`), anniversaires clients (cron morning)
-- **Triggers cron** : rappels essai (J+5 "2 jours restants", J+7 "dernier jour", J+8 grace "essai termine") — Section 13 du morning cron
+- **Triggers cron** : rappels essai (J+5, J+7, J+8 grace) — Section 13 du morning cron
+- **Push onboarding** (PWA only, `pwa_installed_at` non null) : config J+1/J+2, vitrine J+3, planning J+4, QR pret, no scans, premier scan, inactif J+7 — greffes dans les sections email existantes
+- **Emails onboarding supplementaires** : vitrine J+3 (tracking -304), planning J+4 (tracking -308) — via `runStandardEmailSection`
 - **Architecture** : table separee `merchant_push_subscriptions` (auth JWT, pas cookie phone), meme service worker `sw.js`, meme VAPID keys
 - **Prompt activation** : banner dans le layout dashboard, uniquement en mode standalone PWA (pas desktop)
 - **Pas de toggles** : toutes les notifs actives par defaut pour tout merchant abonne au push

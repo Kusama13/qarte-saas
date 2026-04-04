@@ -288,7 +288,7 @@ export default function AutomationsTab({
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-gray-900">{t('inactiveReminder')}</h3>
                   {(settings?.inactive_reminder_sent ?? 0) > 0 && (
-                    <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
                       {t('sent', { count: settings?.inactive_reminder_sent ?? 0 })}
                     </span>
                   )}
@@ -381,7 +381,7 @@ export default function AutomationsTab({
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-bold text-gray-900">{t(automation.titleKey)}</h3>
                       {sentCount > 0 && (
-                        <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                        <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
                           {t('sent', { count: sentCount })}
                         </span>
                       )}
@@ -421,7 +421,7 @@ export default function AutomationsTab({
                 <div className="flex items-center gap-2">
                   <h3 className="text-sm font-bold text-gray-900">{t('events')}</h3>
                   {(settings?.events_sent ?? 0) > 0 && (
-                    <span className="text-[9px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
                       {t('sent', { count: settings?.events_sent ?? 0 })}
                     </span>
                   )}

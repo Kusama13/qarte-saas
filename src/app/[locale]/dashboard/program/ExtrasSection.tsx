@@ -68,7 +68,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
               role="switch"
               aria-checked={formData.duoOfferEnabled}
               onClick={() => setFormData(prev => ({ ...prev, duoOfferEnabled: !prev.duoOfferEnabled }))}
-              className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 ${
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 ${
                 formData.duoOfferEnabled ? 'bg-violet-500' : 'bg-gray-200'
               }`}
             >

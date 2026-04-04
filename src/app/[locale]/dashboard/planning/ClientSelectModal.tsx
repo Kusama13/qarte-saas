@@ -27,6 +27,7 @@ interface ClientSelectModalProps {
   onCreateCustomer: (social?: { instagram_handle?: string; tiktok_handle?: string; facebook_url?: string }) => Promise<string | null>;
   onProceed: (customer: CustomerSearchResult | null, isNewCustomer: boolean) => void;
   onShowCustomerSearch: (show: boolean) => void;
+  onDelete?: () => void;
   onClose: () => void;
 }
 
@@ -47,6 +48,7 @@ export default function ClientSelectModal({
   onCreateCustomer,
   onProceed,
   onShowCustomerSearch,
+  onDelete,
   onClose,
 }: ClientSelectModalProps) {
   const t = useTranslations('planning');
@@ -347,6 +349,14 @@ export default function ClientSelectModal({
 
         {/* Footer buttons */}
         <div className="p-4 border-t border-gray-100 flex justify-center gap-2">
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="px-4 py-2.5 rounded-xl text-xs font-semibold text-red-500 hover:bg-red-50 transition-colors"
+            >
+              {t('deleteSlot')}
+            </button>
+          )}
           <button
             onClick={handleSkip}
             className="px-5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"

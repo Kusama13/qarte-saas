@@ -64,6 +64,13 @@ export function WelcomeEmail({ shopName, slug, trialDays = 7, locale = 'fr' }: W
 
       <Hr style={divider} />
 
+      <Section style={pwaBox}>
+        <Text style={pwaTitle}>{t('welcome.pwaTitle')}</Text>
+        <Text style={pwaText} dangerouslySetInnerHTML={{ __html: t('welcome.pwaText') }} />
+      </Section>
+
+      <Hr style={divider} />
+
       <Text style={footerNote}>
         {t('welcome.trialNote', { trialDays: String(trialDays) })}
       </Text>
@@ -102,17 +109,6 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const highlightBox = {
-  color: '#1a1a1a',
-  fontSize: '16px',
-  fontWeight: '500',
-  lineHeight: '1.6',
-  backgroundColor: '#f0edfc',
-  borderRadius: '8px',
-  padding: '16px 20px',
-  margin: '0 0 8px 0',
-};
-
 const divider = {
   borderColor: '#e8e8e8',
   margin: '28px 0',
@@ -145,17 +141,25 @@ const buttonSecondary = {
   padding: '12px 28px',
 };
 
-const stepsBox = {
-  backgroundColor: '#f8f9fa',
+const pwaBox = {
+  backgroundColor: '#f0f4ff',
   borderRadius: '12px',
   padding: '20px 24px',
   margin: '0 0 8px 0',
+  border: '1px solid #e0e7ff',
 };
 
-const stepItem = {
+const pwaTitle = {
+  color: '#4b0082',
+  fontSize: '16px',
+  fontWeight: '600',
+  margin: '0 0 8px 0',
+};
+
+const pwaText = {
   color: '#4a5568',
-  fontSize: '15px',
-  lineHeight: '2',
+  fontSize: '14px',
+  lineHeight: '1.6',
   margin: '0',
 };
 
