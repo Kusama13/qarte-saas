@@ -30,37 +30,35 @@ export function WelcomeEmail({ shopName, slug, trialDays = 7, locale = 'fr' }: W
 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('welcome.intro') }} />
 
-      <Text style={subheading}>
-        {t('welcome.readyTitle')}
-      </Text>
-
-      <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('welcome.stepPagePro') }} />
+      {/* Step 1 — Loyalty */}
+      <Section style={stepBox}>
+        <Text style={stepTitle}>{t('welcome.step1Title')}</Text>
+        <Text style={featureItem}>&#x2713; {t('welcome.step1Feature1')}</Text>
+        <Text style={featureItem}>&#x2713; {t('welcome.step1Feature2')}</Text>
+        <Text style={featureItem}>&#x2713; {t('welcome.step1Feature3')}</Text>
+        <Text style={featureItem}>&#x2713; {t('welcome.step1Feature4')}</Text>
+      </Section>
 
       <Section style={buttonContainer}>
-        <Button style={button} href="https://getqarte.com/dashboard/personalize">
+        <Button style={button} href="https://getqarte.com/dashboard/program">
           {t('welcome.ctaPersonalize')}
         </Button>
       </Section>
 
-      {publicPageUrl && (
-        <>
-          <Hr style={divider} />
+      {/* Step 2 — Storefront */}
+      <Section style={stepBox2}>
+        <Text style={stepTitle}>{t('welcome.step2Title')}</Text>
+        <Text style={featureItem}>&#x2713; {t('welcome.step2Feature1')}</Text>
+        <Text style={featureItem}>&#x2713; {t('welcome.step2Feature2')}</Text>
+        <Text style={featureItem}>&#x2713; {t('welcome.step2Feature3')}</Text>
+        <Text style={featureItem}>&#x2713; {t('welcome.step2Feature4')}</Text>
+      </Section>
 
-          <Text style={subheading}>
-            {t('welcome.publicPageTitle')}
-          </Text>
-
-          <Text style={paragraph}>
-            {t('welcome.publicPageText')}
-          </Text>
-
-          <Section style={buttonContainer}>
-            <Button style={buttonSecondary} href={publicPageUrl}>
-              {t('welcome.ctaPublicPage')}
-            </Button>
-          </Section>
-        </>
-      )}
+      <Section style={buttonContainer}>
+        <Button style={buttonSecondary} href={publicPageUrl || 'https://getqarte.com/dashboard/public-page'}>
+          {t('welcome.ctaPublicPage')}
+        </Button>
+      </Section>
 
       <Hr style={divider} />
 
@@ -94,19 +92,41 @@ const heading = {
   margin: '0 0 24px 0',
 };
 
-const subheading = {
-  color: '#1a1a1a',
-  fontSize: '18px',
-  fontWeight: '600',
-  lineHeight: '1.3',
-  margin: '0 0 20px 0',
-};
-
 const paragraph = {
   color: '#4a5568',
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '0 0 16px 0',
+};
+
+const stepBox = {
+  backgroundColor: '#f0edfc',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '24px 0 0 0',
+  borderLeft: '4px solid #4b0082',
+};
+
+const stepBox2 = {
+  backgroundColor: '#f0fdf4',
+  borderRadius: '12px',
+  padding: '20px 24px',
+  margin: '24px 0 0 0',
+  borderLeft: '4px solid #10b981',
+};
+
+const stepTitle = {
+  color: '#1a1a1a',
+  fontSize: '17px',
+  fontWeight: '700',
+  margin: '0 0 12px 0',
+};
+
+const featureItem = {
+  color: '#4a5568',
+  fontSize: '14px',
+  lineHeight: '1.8',
+  margin: '0',
 };
 
 const divider = {
@@ -116,7 +136,7 @@ const divider = {
 
 const buttonContainer = {
   textAlign: 'center' as const,
-  margin: '28px 0',
+  margin: '20px 0 0 0',
 };
 
 const button = {
@@ -131,7 +151,7 @@ const button = {
 };
 
 const buttonSecondary = {
-  backgroundColor: '#1a1a1a',
+  backgroundColor: '#10b981',
   borderRadius: '8px',
   color: '#ffffff',
   fontSize: '15px',
