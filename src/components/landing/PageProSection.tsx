@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Star, Search, CalendarDays, Scissors, Sparkles, UserPlus, ArrowRight } from 'lucide-react';
+import { Star, Search, CalendarDays, Scissors, Sparkles, UserPlus, ArrowRight, Check } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
@@ -103,9 +103,9 @@ function PlanningVisual({ t, locale }: { t: (key: string) => string; locale: str
       <div className="bg-white/[0.06] backdrop-blur-sm rounded-3xl shadow-xl shadow-black/20 border border-white/10 p-5">
         <div className="space-y-3">
           {[
-            { day: locale === 'en' ? 'Mon 17' : 'Lun 17', slots: ['10:00', '14:00', '16:30'] },
-            { day: locale === 'en' ? 'Tue 18' : 'Mar 18', slots: ['09:30', '11:00'] },
-            { day: locale === 'en' ? 'Wed 19' : 'Mer 19', slots: ['14:00', '15:30', '17:00'] },
+            { day: locale === 'en' ? 'Mon 17' : 'Lun 17', slots: [{ time: '10:00' }, { time: '14:00', booked: true, client: 'Marie L.' }, { time: '16:30' }] },
+            { day: locale === 'en' ? 'Tue 18' : 'Mar 18', slots: [{ time: '09:30' }, { time: '11:00' }] },
+            { day: locale === 'en' ? 'Wed 19' : 'Mer 19', slots: [{ time: '14:00' }, { time: '15:30', booked: true, client: 'Sophie D.' }, { time: '17:00' }] },
           ].map((d) => (
             <motion.div
               key={d.day}
@@ -118,7 +118,13 @@ function PlanningVisual({ t, locale }: { t: (key: string) => string; locale: str
               <span className="text-xs font-bold text-white/50 w-14 shrink-0">{d.day}</span>
               <div className="flex gap-1.5 flex-wrap">
                 {d.slots.map((s) => (
-                  <span key={s} className="text-[10px] font-bold text-indigo-300 bg-white/[0.08] border border-white/10 rounded-lg px-2.5 py-1 shadow-sm">{formatTime(s, locale)}</span>
+                  s.booked ? (
+                    <span key={s.time} className="text-[10px] font-bold text-emerald-300 bg-emerald-500/15 border border-emerald-400/30 rounded-lg px-2.5 py-1 shadow-sm">
+                      {formatTime(s.time, locale)} — {s.client}
+                    </span>
+                  ) : (
+                    <span key={s.time} className="text-[10px] font-bold text-indigo-300 bg-white/[0.08] border border-white/10 rounded-lg px-2.5 py-1 shadow-sm">{formatTime(s.time, locale)}</span>
+                  )
                 ))}
               </div>
             </motion.div>
@@ -126,9 +132,9 @@ function PlanningVisual({ t, locale }: { t: (key: string) => string; locale: str
         </div>
       </div>
 
-      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-indigo-500 rounded-full px-3 py-1.5 shadow-lg shadow-indigo-500/30 animate-float-subtle">
+      <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
         <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-          <CalendarDays className="w-3 h-3 text-white" />
+          <Check className="w-3 h-3 text-white" />
         </div>
         <span className="text-xs font-bold text-white">{t('planningBadge')}</span>
       </div>
