@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, deposit_link, deposit_percent, deposit_amount, deposit_message, welcome_offer_enabled, welcome_offer_description')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, deposit_link, deposit_percent, deposit_amount, welcome_offer_enabled, welcome_offer_description')
       .eq('id', merchant_id)
       .single();
 
@@ -257,7 +257,6 @@ export async function POST(request: NextRequest) {
       percent: merchant.deposit_percent || null,
       fixed_amount: merchant.deposit_amount ? Number(merchant.deposit_amount) : null,
       amount: depositAmount,
-      message: merchant.deposit_message || null,
     } : null;
 
     // 10. Send email notification to merchant (fire-and-forget)

@@ -23,7 +23,7 @@ interface BookingNotificationEmailProps {
   services: ServiceDetail[];
   totalDuration: number;
   totalPrice: number;
-  deposit: { percent: number | null; amount: number | null; message: string | null } | null;
+  deposit: { percent: number | null; amount: number | null } | null;
   dashboardUrl?: string;
   locale?: EmailLocale;
 }

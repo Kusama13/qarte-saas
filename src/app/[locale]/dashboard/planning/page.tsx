@@ -36,7 +36,6 @@ export default function PlanningDashboard() {
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
     depositLink, setDepositLink, depositPercent, setDepositPercent, depositAmount, setDepositAmount,
-    depositMessage, setDepositMessage,
     services,
     modalState, setModalState, closeModal,
     selectedTimes, setSelectedTimes, customTime, setCustomTime,
@@ -136,7 +135,6 @@ export default function PlanningDashboard() {
         deposit_link: autoBookingEnabled && depositLink.trim() ? depositLink.trim() : null,
         deposit_percent: autoBookingEnabled && depositPercent ? parseInt(depositPercent) : null,
         deposit_amount: autoBookingEnabled && depositAmount ? parseFloat(depositAmount) : null,
-        deposit_message: autoBookingEnabled && depositMessage.trim() ? depositMessage.trim() : null,
       }).eq('id', merchant.id);
       if (error) {
         console.error('Settings save error:', error);
@@ -695,28 +693,6 @@ export default function PlanningDashboard() {
                     {amountMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositAmountRequired')}</p>}
                   </div>
 
-                  {/* Divider */}
-                  <div className="border-t border-gray-100" />
-
-                  {/* Message */}
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('depositMessageLabel')}</label>
-                    <input
-                      type="text"
-                      value={depositMessage}
-                      onChange={(e) => setDepositMessage(e.target.value)}
-                      placeholder={t('depositMessagePlaceholder')}
-                      maxLength={200}
-                      className="w-full px-3.5 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-colors"
-                    />
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {[t('depositSugg1'), t('depositSugg2'), t('depositSugg3')].map(sugg => (
-                        <button key={sugg} type="button" onClick={() => setDepositMessage(sugg)}
-                          className={`px-2.5 py-1.5 rounded-xl text-[11px] font-medium transition-all leading-tight text-left ${depositMessage === sugg ? 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
-                        >{sugg}</button>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               </div>
             );

@@ -69,7 +69,6 @@ type MerchantPublic = Pick<
   | 'deposit_link'
   | 'deposit_percent'
   | 'deposit_amount'
-  | 'deposit_message'
   | 'phone'
   | 'country'
 >;

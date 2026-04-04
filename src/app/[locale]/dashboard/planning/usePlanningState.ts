@@ -68,7 +68,6 @@ export function usePlanningState() {
   const [depositLink, setDepositLink] = useState('');
   const [depositPercent, setDepositPercent] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
-  const [depositMessage, setDepositMessage] = useState('');
 
   // Services with duration
   const [services, setServices] = useState<ServiceWithDuration[]>([]);
@@ -135,7 +134,6 @@ export function usePlanningState() {
       setDepositLink(merchant.deposit_link || '');
       setDepositPercent(merchant.deposit_percent ? String(merchant.deposit_percent) : '');
       setDepositAmount(merchant.deposit_amount ? String(merchant.deposit_amount) : '');
-      setDepositMessage(merchant.deposit_message || '');
     }
   }, [merchant]);
 
@@ -516,7 +514,6 @@ export function usePlanningState() {
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
     depositLink, setDepositLink, depositPercent, setDepositPercent, depositAmount, setDepositAmount,
-    depositMessage, setDepositMessage,
     // Services
     services,
     // Modal state machine

@@ -45,7 +45,6 @@ export interface DemoMerchant {
   deposit_link: string | null;
   deposit_percent: number | null;
   deposit_amount: number | null;
-  deposit_message: string | null;
   country: string;
 }
 
@@ -121,8 +120,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFull> = {
       scan_code: 'demo-onglerie',
       bio: 'Nail artist passionnée, spécialisée en baby boomer et nail art 3D. Sur rdv uniquement.',
       opening_hours: { '1': { open: '10:00', close: '19:00' }, '2': { open: '10:00', close: '19:00' }, '3': { open: '10:00', close: '19:00' }, '4': { open: '10:00', close: '20:00' }, '5': { open: '10:00', close: '20:00' }, '6': { open: '09:00', close: '17:00' }, '7': null },
-      phone: null, planning_enabled: true, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, deposit_message: null,
-      country: 'FR',
+      phone: null, planning_enabled: true, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'FR',
     },
     offer: { id: 'offer-onglerie', title: 'Offre de printemps', description: '-15% sur toutes les poses gel', expires_at: null },
     photos: PHOTOS_ONGLERIE,
@@ -165,8 +163,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFull> = {
       scan_code: 'demo-coiffure',
       bio: 'Coloriste et coiffeuse depuis 12 ans. Spécialités : balayage, blond californien et soins Kératine.',
       opening_hours: { '1': { open: '09:00', close: '19:00' }, '2': { open: '09:00', close: '19:00' }, '3': { open: '09:00', close: '19:00' }, '4': { open: '09:00', close: '20:00' }, '5': { open: '09:00', close: '20:00' }, '6': { open: '09:00', close: '18:00' }, '7': null },
-      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, deposit_message: null,
-      country: 'FR',
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'FR',
     },
     offer: { id: 'offer-coiffure', title: 'Offre spéciale', description: '-20% sur votre premier balayage', expires_at: null },
     photos: PHOTOS_COIFFURE,
@@ -212,8 +209,7 @@ const DEMO_MERCHANTS_FR: Record<string, DemoMerchantFull> = {
       scan_code: 'demo-tatouage',
       bio: 'Artiste tatoueur spécialisé en réalisme et blackwork. Chaque pièce est unique.',
       opening_hours: { '1': null, '2': { open: '11:00', close: '19:00' }, '3': { open: '11:00', close: '19:00' }, '4': { open: '11:00', close: '19:00' }, '5': { open: '11:00', close: '20:00' }, '6': { open: '11:00', close: '20:00' }, '7': null },
-      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, deposit_message: null,
-      country: 'FR',
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'FR',
     },
     offer: { id: 'offer-tatouage', title: 'Flash Friday', description: '-30% sur les tatouages flash chaque vendredi', expires_at: null },
     photos: PHOTOS_TATOUAGE,
@@ -261,8 +257,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFull> = {
       scan_code: 'demo-onglerie',
       bio: 'Passionate nail artist specializing in baby boomer and 3D nail art. By appointment only.',
       opening_hours: { '1': { open: '10:00', close: '19:00' }, '2': { open: '10:00', close: '19:00' }, '3': { open: '10:00', close: '19:00' }, '4': { open: '10:00', close: '20:00' }, '5': { open: '10:00', close: '20:00' }, '6': { open: '09:00', close: '17:00' }, '7': null },
-      phone: null, planning_enabled: true, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, deposit_message: null,
-      country: 'US',
+      phone: null, planning_enabled: true, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'US',
     },
     offer: { id: 'offer-onglerie', title: 'Spring special', description: '15% off all gel sets', expires_at: null },
     photos: PHOTOS_ONGLERIE,
@@ -305,8 +300,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFull> = {
       scan_code: 'demo-coiffure',
       bio: 'Colorist and stylist for 12 years. Specialties: balayage, California blonde, and Keratin treatments.',
       opening_hours: { '1': { open: '09:00', close: '19:00' }, '2': { open: '09:00', close: '19:00' }, '3': { open: '09:00', close: '19:00' }, '4': { open: '09:00', close: '20:00' }, '5': { open: '09:00', close: '20:00' }, '6': { open: '09:00', close: '18:00' }, '7': null },
-      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, deposit_message: null,
-      country: 'US',
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'US',
     },
     offer: { id: 'offer-coiffure', title: 'Special offer', description: '20% off your first balayage', expires_at: null },
     photos: PHOTOS_COIFFURE,
@@ -352,8 +346,7 @@ const DEMO_MERCHANTS_EN: Record<string, DemoMerchantFull> = {
       scan_code: 'demo-tatouage',
       bio: 'Tattoo artist specializing in realism and blackwork. Every piece is one of a kind.',
       opening_hours: { '1': null, '2': { open: '11:00', close: '19:00' }, '3': { open: '11:00', close: '19:00' }, '4': { open: '11:00', close: '19:00' }, '5': { open: '11:00', close: '20:00' }, '6': { open: '11:00', close: '20:00' }, '7': null },
-      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null, deposit_message: null,
-      country: 'US',
+      phone: null, planning_enabled: false, planning_message: null, planning_message_expires: null, booking_message: null, auto_booking_enabled: false, deposit_link: null, deposit_percent: null, deposit_amount: null,      country: 'US',
     },
     offer: { id: 'offer-tatouage', title: 'Flash Friday', description: '30% off flash tattoos every Friday', expires_at: null },
     photos: PHOTOS_TATOUAGE,

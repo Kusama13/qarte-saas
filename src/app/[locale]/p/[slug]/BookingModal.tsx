@@ -17,7 +17,7 @@ type PromoOffer = { id: string; title: string; description: string; expires_at: 
 type MerchantBooking = Pick<
   Merchant,
   'id' | 'shop_name' | 'primary_color' | 'secondary_color' | 'country' | 'booking_message' |
-  'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' | 'deposit_message' |
+  'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' |
   'welcome_offer_enabled' | 'welcome_offer_description'
 >;
 
@@ -460,7 +460,9 @@ export default function BookingModal({
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-bold text-amber-800">
-                          {depositResult.message || t('depositRequired', { percent: depositResult.percent || 0 })}
+                          {depositResult.percent
+                            ? t('depositRequired', { percent: depositResult.percent })
+                            : t('depositFixedLabel')}
                         </p>
                         {depositResult.amount && (
                           <p className="text-lg font-black text-amber-900 mt-1">

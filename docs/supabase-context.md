@@ -954,7 +954,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 080 | customer_notes | Table customer_notes (journal suivi client : content, note_type, pinned, slot_id FK nullable, index lookup+pinned, RLS merchant) |
 | 081 | affiliate_links | Table affiliate_links (name, slug UNIQUE, commission_percent, notes, active, pas de RLS — admin service_role) |
 | 082 | duo_offer | merchants.duo_offer_enabled BOOLEAN + duo_offer_description TEXT |
-| 083 | auto_booking | merchants.auto_booking_enabled, deposit_link, deposit_percent, deposit_message + merchant_planning_slots.deposit_confirmed BOOLEAN |
+| 083 | auto_booking | merchants.auto_booking_enabled, deposit_link, deposit_percent, deposit_amount + merchant_planning_slots.deposit_confirmed BOOLEAN |
 | 084 | primary_slot_id | merchant_planning_slots.primary_slot_id UUID FK self-ref — lie les fillers au slot principal d'un booking multi-creneaux |
 
 ---

@@ -45,7 +45,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       'opening_hours, ' +
       'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent, ' +
       'planning_enabled, planning_message, planning_message_expires, booking_message, ' +
-      'auto_booking_enabled, deposit_link, deposit_percent, deposit_amount, deposit_message, phone, country'
+      'auto_booking_enabled, deposit_link, deposit_percent, deposit_amount, phone, country'
     )
     .eq('slug', slug)
     .maybeSingle();

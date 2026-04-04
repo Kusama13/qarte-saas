@@ -645,7 +645,7 @@ interface BookingNotificationParams {
   services: { name: string; price: number; duration: number }[];
   totalDuration: number;
   totalPrice: number;
-  deposit: { link: string; percent: number | null; amount: number | null; message: string | null } | null;
+  deposit: { link: string; percent: number | null; amount: number | null } | null;
   locale: EmailLocale;
 }
 

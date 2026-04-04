@@ -130,7 +130,6 @@ export interface Merchant {
   deposit_link: string | null;
   deposit_percent: number | null;
   deposit_amount: number | null;
-  deposit_message: string | null;
   // Public page link on loyalty card
   show_public_page_on_card: boolean;
   signup_source: string | null;
