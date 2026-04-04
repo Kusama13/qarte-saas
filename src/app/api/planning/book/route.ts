@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { formatPhoneNumber, validatePhone, getTrialStatus } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTrialStatus, getTimezoneForCountry } from '@/lib/utils';
+import { fromZonedTime } from 'date-fns-tz';
 import { setPhoneCookie } from '@/lib/customer-auth';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendBookingNotificationEmail } from '@/lib/email';
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, deposit_link, deposit_percent, deposit_amount, welcome_offer_enabled, welcome_offer_description')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, deposit_link, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description')
       .eq('id', merchant_id)
       .single();
 
@@ -190,6 +191,22 @@ export async function POST(request: NextRequest) {
     };
     if (hasDeposit) {
       baseData.deposit_confirmed = false;
+
+      // Compute deposit deadline
+      const deadlineHours = merchant.deposit_deadline_hours;
+      if (deadlineHours) {
+        const bookingDeadline = new Date(Date.now() + deadlineHours * 60 * 60 * 1000);
+        const tz = getTimezoneForCountry(merchant.country);
+        const rdvTime = fromZonedTime(new Date(`${slot_date}T${targetSlot.start_time}:00`), tz);
+        const rdvMinus4h = new Date(rdvTime.getTime() - 4 * 60 * 60 * 1000);
+
+        if (rdvMinus4h.getTime() > Date.now()) {
+          baseData.deposit_deadline_at = new Date(
+            Math.min(bookingDeadline.getTime(), rdvMinus4h.getTime())
+          ).toISOString();
+        }
+        // RDV dans moins de 4h → pas de deadline, merchant gere manuellement
+      }
     }
 
     // Block primary slot
@@ -258,6 +275,7 @@ export async function POST(request: NextRequest) {
       percent: merchant.deposit_percent || null,
       fixed_amount: merchant.deposit_amount ? Number(merchant.deposit_amount) : null,
       amount: depositAmount,
+      deadline_hours: merchant.deposit_deadline_hours || null,
     } : null;
 
     // 10. Send email notification to merchant (fire-and-forget)

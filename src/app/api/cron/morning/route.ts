@@ -1909,6 +1909,97 @@ export async function GET(request: NextRequest) {
     sectionStatuses.push({ name: 'trialPush', status: 'error', error: String(error) });
   }
 
+  // ==================== SECTION 14: DEPOSIT DEADLINE CHECK ====================
+  if (isTimedOut()) { sectionStatuses.push({ name: 'depositDeadline', status: 'error', error: 'Skipped: cron timeout (240s)' }); }
+  else try {
+    const nowIso = new Date().toISOString();
+    const fourHoursFromNow = new Date(Date.now() + 4 * 60 * 60 * 1000).toISOString();
+
+    // 14A. Auto-release expired deposits
+    const { data: expiredSlots } = await supabase
+      .from('merchant_planning_slots')
+      .select('id, merchant_id, client_name, slot_date, start_time, primary_slot_id')
+      .eq('deposit_confirmed', false)
+      .not('deposit_deadline_at', 'is', null)
+      .lt('deposit_deadline_at', nowIso)
+      .is('primary_slot_id', null) // Only primary slots
+      .limit(200);
+
+    let releasedCount = 0;
+    for (const slot of expiredSlots || []) {
+      // Query filler IDs BEFORE releasing (primary_slot_id gets nullified)
+      const { data: fillerSlots } = await supabase
+        .from('merchant_planning_slots')
+        .select('id')
+        .eq('primary_slot_id', slot.id);
+
+      const allSlotIds = [slot.id, ...(fillerSlots || []).map(f => f.id)];
+
+      // Delete all services (primary + fillers)
+      await supabase.from('planning_slot_services').delete().in('slot_id', allSlotIds);
+
+      // Release fillers
+      if (fillerSlots && fillerSlots.length > 0) {
+        await supabase
+          .from('merchant_planning_slots')
+          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null })
+          .in('id', fillerSlots.map(f => f.id));
+      }
+
+      // Release primary slot
+      await supabase
+        .from('merchant_planning_slots')
+        .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null })
+        .eq('id', slot.id);
+
+      // Push notification to merchant
+      const bm = allMerchantsMap.get(slot.merchant_id);
+      if (bm) {
+        const isEN = bm.locale === 'en';
+        pushPromises.push(sendMerchantPush({
+          supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expired', referenceId: slot.id,
+          title: isEN ? 'Slot released — deposit not received' : 'Créneau libéré — acompte non reçu',
+          body: isEN
+            ? `${slot.client_name} — ${slot.slot_date} at ${slot.start_time}`
+            : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
+          url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
+        }));
+      }
+
+      releasedCount++;
+    }
+
+    // 14B. Warn merchants about deposits expiring soon (within 4h)
+    const { data: expiringSlots } = await supabase
+      .from('merchant_planning_slots')
+      .select('id, merchant_id, client_name, slot_date, start_time')
+      .eq('deposit_confirmed', false)
+      .not('deposit_deadline_at', 'is', null)
+      .gte('deposit_deadline_at', nowIso)
+      .lte('deposit_deadline_at', fourHoursFromNow)
+      .is('primary_slot_id', null)
+      .limit(200);
+
+    for (const slot of expiringSlots || []) {
+      const bm = allMerchantsMap.get(slot.merchant_id);
+      if (bm) {
+        const isEN = bm.locale === 'en';
+        pushPromises.push(sendMerchantPush({
+          supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expiring', referenceId: slot.id,
+          title: isEN ? 'Deposit expiring soon' : 'Acompte bientôt expiré',
+          body: isEN
+            ? `${slot.client_name} — confirm or the slot will be released`
+            : `${slot.client_name} — confirme ou le créneau sera libéré`,
+          url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
+        }));
+      }
+    }
+
+    sectionStatuses.push({ name: 'depositDeadline', status: 'ok', released: releasedCount, warned: (expiringSlots || []).length } as never);
+  } catch (error) {
+    sectionStatuses.push({ name: 'depositDeadline', status: 'error', error: String(error) });
+  }
+
   // Await all push promises before returning (avoid orphaned work on Vercel)
   if (pushPromises.length > 0) {
     await Promise.allSettled(pushPromises);

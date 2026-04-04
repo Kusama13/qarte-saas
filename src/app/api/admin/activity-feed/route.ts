@@ -210,8 +210,8 @@ export async function GET(request: NextRequest) {
     });
 
     const SOURCE_LABELS: Record<string, string> = { birthday: 'Anniversaire', welcome: 'Bienvenue', offer: 'Offre promo', referral: 'Parrainage', redemption: 'Récompense' };
-    (usedVouchers || []).forEach((v: { used_at: string; merchant_id: string; source: string; reward_description: string | null }) => {
-      const sourceLabel = SOURCE_LABELS[v.source] || v.source;
+    (usedVouchers || []).forEach((v: { used_at: string; merchant_id: string; source: string | null; reward_description: string | null }) => {
+      const sourceLabel = (v.source && SOURCE_LABELS[v.source]) || 'Récompense';
       events.push({
         type: 'voucher',
         timestamp: v.used_at,

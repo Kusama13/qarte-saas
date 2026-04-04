@@ -412,7 +412,16 @@ export default function BookingDetailsModal({
                         <p className="text-[11px] text-amber-700 font-medium">
                           {t('depositRecap', { deposit: formatCurrency(depAmt, merchantCountry, locale), remaining: formatCurrency(totalPrice - depAmt, merchantCountry, locale) })}
                         </p>
-                        {slot.deposit_confirmed === false && <span className="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{t('depositPending')}</span>}
+                        {slot.deposit_confirmed === false && (
+                          <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{t('depositPending')}</span>
+                            {slot.deposit_deadline_at && (
+                              <span className="text-[10px] text-gray-400">
+                                {t('depositDeadlineBefore', { date: new Date(slot.deposit_deadline_at).toLocaleString(toBCP47(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) })}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {slot.deposit_confirmed === true && <span className="inline-block mt-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{t('depositConfirmed')}</span>}
                       </div>
                     ) : null;

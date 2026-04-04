@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { getTodayInParis, getTodayForCountry } from '@/lib/utils';
+import { sendMerchantPush } from '@/lib/merchant-push';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -176,8 +177,61 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    logger.info('Evening cron completed', results);
-    return NextResponse.json({ success: true, ...results });
+    // ── DEPOSIT DEADLINE CHECK (same as morning cron Section 14) ──
+    const nowIso = new Date().toISOString();
+
+    const { data: expiredSlots } = await supabase
+      .from('merchant_planning_slots')
+      .select('id, merchant_id, client_name, slot_date, start_time')
+      .eq('deposit_confirmed', false)
+      .not('deposit_deadline_at', 'is', null)
+      .lt('deposit_deadline_at', nowIso)
+      .is('primary_slot_id', null)
+      .limit(200);
+
+    const depositPushes: Promise<boolean>[] = [];
+    let depositReleased = 0;
+
+    for (const slot of expiredSlots || []) {
+      // Query filler IDs BEFORE releasing
+      const { data: fillerSlots } = await supabase
+        .from('merchant_planning_slots')
+        .select('id')
+        .eq('primary_slot_id', slot.id);
+
+      const allSlotIds = [slot.id, ...(fillerSlots || []).map(f => f.id)];
+
+      // Delete all services (primary + fillers)
+      await supabase.from('planning_slot_services').delete().in('slot_id', allSlotIds);
+
+      // Release fillers
+      if (fillerSlots && fillerSlots.length > 0) {
+        await supabase
+          .from('merchant_planning_slots')
+          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null })
+          .in('id', fillerSlots.map(f => f.id));
+      }
+
+      // Release primary slot
+      await supabase
+        .from('merchant_planning_slots')
+        .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null })
+        .eq('id', slot.id);
+
+      depositPushes.push(sendMerchantPush({
+        supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expired', referenceId: slot.id,
+        title: 'Créneau libéré — acompte non reçu',
+        body: `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
+        url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
+      }));
+
+      depositReleased++;
+    }
+
+    if (depositPushes.length > 0) await Promise.allSettled(depositPushes);
+
+    logger.info('Evening cron completed', { ...results, depositReleased });
+    return NextResponse.json({ success: true, ...results, depositReleased });
   } catch (error) {
     logger.error('Evening cron error', error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

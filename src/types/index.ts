@@ -130,6 +130,7 @@ export interface Merchant {
   deposit_link: string | null;
   deposit_percent: number | null;
   deposit_amount: number | null;
+  deposit_deadline_hours: number | null;
   // Public page link on loyalty card
   show_public_page_on_card: boolean;
   signup_source: string | null;
@@ -160,6 +161,7 @@ export interface PlanningSlot {
   service_id: string | null; // deprecated — use planning_slot_services
   notes: string | null;
   deposit_confirmed: boolean | null;
+  deposit_deadline_at: string | null;
   primary_slot_id: string | null;
   created_at: string;
   planning_slot_services?: PlanningSlotService[];

@@ -76,7 +76,7 @@ export default function BookingModal({
     total_price: number; total_duration: number;
   } | null>(null);
   const [depositResult, setDepositResult] = useState<{
-    link: string; percent: number | null; amount: number | null; message: string | null;
+    link: string; percent: number | null; amount: number | null; message: string | null; deadline_hours: number | null;
   } | null>(null);
 
   // Compute totals
@@ -471,6 +471,9 @@ export default function BookingModal({
                         )}
                       </div>
                     </div>
+                    {depositResult.deadline_hours && (
+                      <p className="text-xs text-amber-600 mt-2">{t('depositDeadlineClient', { hours: depositResult.deadline_hours })}</p>
+                    )}
                     <a
                       href={depositResult.link}
                       target="_blank"

@@ -35,7 +35,7 @@ export default function PlanningDashboard() {
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
-    depositLink, setDepositLink, depositPercent, setDepositPercent, depositAmount, setDepositAmount,
+    depositLink, setDepositLink, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     services,
     modalState, setModalState, closeModal,
     selectedTimes, setSelectedTimes, customTime, setCustomTime,
@@ -169,6 +169,7 @@ export default function PlanningDashboard() {
         deposit_link: autoBookingEnabled && depositLink.trim() ? depositLink.trim() : null,
         deposit_percent: autoBookingEnabled && depositPercent ? parseInt(depositPercent) : null,
         deposit_amount: autoBookingEnabled && depositAmount ? parseFloat(depositAmount) : null,
+        deposit_deadline_hours: autoBookingEnabled && depositDeadlineHours ? parseInt(depositDeadlineHours) : null,
       }).eq('id', merchant.id);
       if (error) {
         console.error('Settings save error:', error);
@@ -601,17 +602,17 @@ export default function PlanningDashboard() {
 
       {/* ── TAB: RESA EN LIGNE ── */}
       {tab === 'online' && (
-        <div className="max-w-lg mx-auto space-y-5">
+        <div className="max-w-lg mx-auto space-y-4">
           {/* Hero card — Toggle + explanation */}
-          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
-                  <Globe className="w-5 h-5 text-emerald-600" />
+          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 p-4 sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                  <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <h2 className="text-sm font-bold text-gray-900">{t('autoBookingTitle')}</h2>
-                  <p className="text-[11px] text-emerald-600/70 mt-0.5">{t('autoBookingHint')}</p>
+                  <p className="text-[11px] text-emerald-600/70 mt-0.5">{autoBookingEnabled ? t('autoBookingHint') : t('autoBookingOffHint')}</p>
                 </div>
               </div>
               <button
@@ -624,15 +625,11 @@ export default function PlanningDashboard() {
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${autoBookingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
-
-            {!autoBookingEnabled && (
-              <p className="text-xs text-gray-400 italic ml-[52px]">{t('autoBookingOffHint')}</p>
-            )}
           </div>
 
           {/* Info banner when auto booking is enabled */}
           {autoBookingEnabled && (
-            <div className="flex gap-2.5 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3">
+            <div className="flex gap-2.5 rounded-xl bg-blue-50 border border-blue-100 px-3 sm:px-4 py-3">
               <Info className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
               <p className="text-xs text-blue-700">{t('autoBookingInfo')}</p>
             </div>
@@ -640,7 +637,7 @@ export default function PlanningDashboard() {
 
           {/* Warning if external booking URL is configured */}
           {autoBookingEnabled && merchant?.booking_url && (
-            <div className="flex gap-2.5 rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+            <div className="flex gap-2.5 rounded-xl bg-amber-50 border border-amber-200 px-3 sm:px-4 py-3">
               <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
               <p className="text-xs text-amber-700">{t('externalBookingWarning')}</p>
             </div>
@@ -655,13 +652,13 @@ export default function PlanningDashboard() {
             return (
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 {/* Section header */}
-                <div className="px-5 py-3 bg-amber-50/50 border-b border-amber-100/50 flex items-center gap-2.5">
-                  <CreditCard className="w-4 h-4 text-amber-500" />
+                <div className="px-4 sm:px-5 py-3 bg-amber-50/50 border-b border-amber-100/50 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-amber-500 shrink-0" />
                   <h2 className="text-sm font-bold text-gray-800">{t('depositTitle')}</h2>
-                  <span className="text-[10px] text-gray-400 ml-auto">({t('optional')})</span>
+                  <span className="text-[10px] text-gray-400 ml-auto shrink-0">({t('optional')})</span>
                 </div>
 
-                <div className="p-5 space-y-5">
+                <div className="p-4 sm:p-5 space-y-4">
                   {/* Payment link */}
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('depositLinkLabel')}</label>
@@ -670,10 +667,10 @@ export default function PlanningDashboard() {
                       value={depositLink}
                       onChange={(e) => setDepositLink(e.target.value)}
                       placeholder={t('depositLinkPlaceholder')}
-                      className={`w-full px-3.5 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-colors ${linkMissing ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
+                      className={`w-full px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-colors ${linkMissing ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
                     />
-                    {linkMissing && <p className="text-[10px] text-red-400 mt-1.5 flex items-center gap-1">{t('depositLinkRequired')}</p>}
-                    <p className="text-[10px] text-gray-400 mt-2">
+                    {linkMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositLinkRequired')}</p>}
+                    <p className="text-[11px] text-gray-400 mt-2">
                       {t('depositLinkAffiliate')}{' '}
                       <a href="https://revolut.com/referral/?referral-code=judicasay3!APR1-26-VR-FR&geo-redirect" target="_blank" rel="noopener noreferrer" className="text-indigo-500 font-semibold hover:underline">
                         {t('depositLinkAffiliateJoin')}
@@ -703,7 +700,7 @@ export default function PlanningDashboard() {
                         placeholder={t('customPercent')}
                         min={1}
                         max={100}
-                        className={`w-20 px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
+                        className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
                       />
                     </div>
 
@@ -728,10 +725,37 @@ export default function PlanningDashboard() {
                         onChange={(e) => { setDepositAmount(e.target.value); if (e.target.value) setDepositPercent(''); }}
                         placeholder={t('customAmount')}
                         min={1}
-                        className={`w-20 px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
+                        className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
                       />
                     </div>
                     {amountMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositAmountRequired')}</p>}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-gray-100" />
+
+                  {/* Deadline hours */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('depositDeadlineLabel')}</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      <button type="button" onClick={() => setDepositDeadlineHours('')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${!depositDeadlineHours ? 'bg-gray-700 text-white shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                      >{t('depositDeadlineFree')}</button>
+                      {['12', '24', '48', '72'].map(v => (
+                        <button key={`d${v}`} type="button" onClick={() => setDepositDeadlineHours(v)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositDeadlineHours === v ? 'bg-amber-500 text-white shadow-sm shadow-amber-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                        >{v}h</button>
+                      ))}
+                      <input
+                        type="number"
+                        value={!['', '12', '24', '48', '72'].includes(depositDeadlineHours) ? depositDeadlineHours : ''}
+                        onChange={(e) => setDepositDeadlineHours(e.target.value)}
+                        placeholder={t('customHours')}
+                        min={1}
+                        className="w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-gray-200"
+                      />
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-1.5">{depositDeadlineHours ? t('depositDeadlineHint') : t('depositDeadlineFreeHint')}</p>
                   </div>
 
                 </div>
@@ -741,7 +765,7 @@ export default function PlanningDashboard() {
 
           {/* Deposit validation error */}
           {depositError && (
-            <div className="flex gap-2.5 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+            <div className="flex gap-2.5 rounded-xl bg-red-50 border border-red-200 px-3 sm:px-4 py-3">
               <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
               <p className="text-xs text-red-600 font-medium">{depositError}</p>
             </div>
@@ -751,7 +775,7 @@ export default function PlanningDashboard() {
           <button
             onClick={handleSaveSettings}
             disabled={savingSettings}
-            className={`w-full py-3.5 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 shadow-md ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-200/50' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200/50'}`}
+            className={`w-full py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 shadow-md ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-200/50' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200/50'}`}
           >
             {savedSettings ? (
               <span className="flex items-center justify-center gap-2"><Check className="w-4 h-4" /> {t('saved')}</span>

@@ -95,6 +95,7 @@
 | deposit_percent | INTEGER | NULL | mig 083, % acompte (mutuellement exclusif avec deposit_amount) |
 | deposit_amount | DECIMAL(10,2) | NULL | mig 083, montant fixe acompte (mutuellement exclusif avec deposit_percent) |
 | deposit_message | TEXT | NULL | mig 083, DEPRECATED — supprime du code (conditions de resa suffisent) |
+| deposit_deadline_hours | INTEGER | NULL | mig 086, delai en heures pour recevoir l'acompte (NULL=libre, pas de delai) |
 | show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
 | signup_source | TEXT | NULL | mig 068 |
 | locale | TEXT | `'fr'` | NOT NULL, mig 069 |
@@ -653,6 +654,7 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | notes | TEXT | NULL | |
 | customer_id | UUID FK → customers | NULL | ON DELETE SET NULL, mig 065 |
 | deposit_confirmed | BOOLEAN | NULL | mig 083, NULL=pas d'acompte, false=en attente, true=confirme |
+| deposit_deadline_at | TIMESTAMPTZ | NULL | mig 086, deadline auto-liberation si acompte non confirme |
 | primary_slot_id | UUID FK → merchant_planning_slots | NULL | mig 084, NULL=slot principal/libre, UUID=filler d'un booking multi-creneaux |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
@@ -985,6 +987,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 083 | auto_booking | merchants.auto_booking_enabled, deposit_link, deposit_percent, deposit_amount + merchant_planning_slots.deposit_confirmed BOOLEAN |
 | 084 | primary_slot_id | merchant_planning_slots.primary_slot_id UUID FK self-ref — lie les fillers au slot principal d'un booking multi-creneaux |
 | 085 | merchant_push_subscriptions | Tables merchant_push_subscriptions + merchant_push_logs — push notifications merchant PWA Pro |
+| 086 | deposit_deadline | merchant_planning_slots.deposit_deadline_at + merchants.deposit_deadline_hours — auto-liberation creneaux si acompte non confirme |
 
 ---
 

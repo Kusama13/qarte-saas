@@ -181,7 +181,10 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                       </div>
                     )}
                     {slot.deposit_confirmed === false && (
-                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">{t('depositPending')}</span>
+                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                        {t('depositPending')}
+                        {slot.deposit_deadline_at && ` — ${new Date(slot.deposit_deadline_at).toLocaleString(toBCP47(locale), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
+                      </span>
                     )}
                     {slot.deposit_confirmed === true && (
                       <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">{t('depositConfirmed')}</span>

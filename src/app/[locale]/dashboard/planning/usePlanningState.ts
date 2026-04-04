@@ -68,6 +68,7 @@ export function usePlanningState() {
   const [depositLink, setDepositLink] = useState('');
   const [depositPercent, setDepositPercent] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
+  const [depositDeadlineHours, setDepositDeadlineHours] = useState('48');
 
   // Services with duration
   const [services, setServices] = useState<ServiceWithDuration[]>([]);
@@ -134,6 +135,7 @@ export function usePlanningState() {
       setDepositLink(merchant.deposit_link || '');
       setDepositPercent(merchant.deposit_percent ? String(merchant.deposit_percent) : '');
       setDepositAmount(merchant.deposit_amount ? String(merchant.deposit_amount) : '');
+      setDepositDeadlineHours(merchant.deposit_deadline_hours != null ? String(merchant.deposit_deadline_hours) : '');
     }
   }, [merchant]);
 
@@ -513,7 +515,7 @@ export function usePlanningState() {
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
-    depositLink, setDepositLink, depositPercent, setDepositPercent, depositAmount, setDepositAmount,
+    depositLink, setDepositLink, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     // Services
     services,
     // Modal state machine
