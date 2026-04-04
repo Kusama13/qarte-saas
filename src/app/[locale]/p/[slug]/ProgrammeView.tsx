@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
@@ -230,7 +231,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             style={{ boxShadow: `0 0 0 3px ${p}25, 0 4px 24px ${p}20` }}
           >
             {merchant.logo_url ? (
-              <img src={merchant.logo_url} alt={merchant.shop_name} className="w-full h-full object-cover rounded-[1.4rem]" />
+              <Image src={merchant.logo_url} alt={merchant.shop_name} fill className="object-cover rounded-[1.4rem]" sizes="80px" />
             ) : (
               <div
                 className="w-full h-full rounded-[1.4rem] flex items-center justify-center text-white text-4xl font-black"
@@ -943,11 +944,12 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   className="aspect-square rounded-xl overflow-hidden focus:outline-none focus:ring-2 focus:ring-offset-2"
                   style={{ '--tw-ring-color': p } as React.CSSProperties}
                 >
-                  <img
+                  <Image
                     src={photo.url}
                     alt={t('realisationAlt', { name: merchant.shop_name, position: photo.position })}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    loading="lazy"
+                    fill
+                    className="object-cover hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 640px) 33vw, 200px"
                   />
                 </button>
               ))}
