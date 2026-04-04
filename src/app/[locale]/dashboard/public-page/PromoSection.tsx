@@ -5,6 +5,7 @@ import {
   Tag,
   Loader2,
   Check,
+  GraduationCap,
 } from 'lucide-react';
 import { Input } from '@/components/ui';
 import { getTodayForCountry } from '@/lib/utils';
@@ -26,6 +27,8 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
   const [promoDescription, setPromoDescription] = useState('');
   const [promoExpiresAt, setPromoExpiresAt] = useState('');
   const [promoOfferId, setPromoOfferId] = useState<string | null>(null);
+  const [studentEnabled, setStudentEnabled] = useState(merchant.student_offer_enabled || false);
+  const [studentDescription, setStudentDescription] = useState(merchant.student_offer_description || '');
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -50,6 +53,14 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
     save(async () => {
       // Save welcome section first
       await welcomeRef?.current?.save();
+
+      // Save student offer
+      const { getSupabase } = await import('@/lib/supabase');
+      const supabase = getSupabase();
+      await supabase.from('merchants').update({
+        student_offer_enabled: studentEnabled,
+        student_offer_description: studentEnabled && studentDescription.trim() ? studentDescription.trim() : null,
+      }).eq('id', merchant.id);
 
       if (promoEnabled && (!promoTitle.trim() || !promoDescription.trim())) throw new Error(t('promoFieldsRequired'));
 
@@ -175,6 +186,55 @@ export default function PromoSection({ merchant, welcomeRef }: PromoSectionProps
           </div>
         </div>
       )}
+
+      {/* ── Student offer ── */}
+      <div className="pt-5 border-t border-gray-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-4 h-4 text-blue-500" />
+            <span className="text-sm font-semibold text-gray-700">{t('studentOfferLabel')}</span>
+          </div>
+          <button
+            role="switch"
+            aria-checked={studentEnabled}
+            onClick={() => setStudentEnabled(!studentEnabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition-colors ${
+              studentEnabled ? 'bg-blue-500' : 'bg-gray-200'
+            }`}
+          >
+            <span className={`pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-transform ${studentEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+          </button>
+        </div>
+
+        {studentEnabled && (
+          <div className="space-y-3 mt-3">
+            <div>
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                {t('studentOfferDescLabel')}
+              </label>
+              <Input
+                placeholder={t('studentOfferPlaceholder')}
+                value={studentDescription}
+                onChange={(e) => setStudentDescription(e.target.value)}
+                className="h-10 text-sm"
+              />
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {[t('studentSugg1'), t('studentSugg2'), t('studentSugg3')].map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStudentDescription(s)}
+                    className="px-2.5 py-1 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400">{t('studentOfferHint')}</p>
+          </div>
+        )}
+      </div>
 
       {/* ── Save button for Acquisition section ── */}
       <div className="mt-5 pt-5 border-t border-gray-100">

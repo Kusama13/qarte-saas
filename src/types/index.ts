@@ -111,6 +111,9 @@ export interface Merchant {
   // Duo offer
   duo_offer_enabled: boolean;
   duo_offer_description: string | null;
+  // Student offer
+  student_offer_enabled: boolean;
+  student_offer_description: string | null;
   // Double stamp days
   double_days_enabled: boolean;
   double_days_of_week: string; // JSON array of JS getDay() values ex: "[1,3]"
