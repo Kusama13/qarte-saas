@@ -558,7 +558,7 @@ export default function AdminMerchantsPage() {
       { label: 'Kit promo', text: `Hello ${name} ! QR code HD + visuels prets pour Instagram dans Espace Pro → QR code & Supports 🖼️` },
       { label: 'Avis Google', text: `Hello ${name} ! On demande l'avis a tes clients au 1er passage et a chaque recompense. Ajoute ton lien Google dans Espace Pro → Programme ⭐` },
       { label: 'Le Shield', text: `Hello ${name} ! Un client scanne 2 fois le meme jour ? Le 2eme est mis en attente. Un clic pour valider ou refuser dans Espace Pro → Clients ✅` },
-      { label: 'Prix', text: `Hello ${name} ! 19€/mois sans engagement, clients illimites 💳` },
+      { label: 'Prix', text: `Hello ${name} ! 24€/mois sans engagement, clients illimites 💳` },
     ];
   }
 

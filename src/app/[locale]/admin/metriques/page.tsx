@@ -34,9 +34,9 @@ import {
 } from 'recharts';
 import { cn } from '@/lib/utils';
 
-const MONTHLY_PRICE = 19;
-const ANNUAL_PRICE = 190;
-const ANNUAL_MONTHLY_EQUIV = Math.round((ANNUAL_PRICE / 12) * 100) / 100; // 15.83
+const MONTHLY_PRICE = 24;
+const ANNUAL_PRICE = 240;
+const ANNUAL_MONTHLY_EQUIV = Math.round((ANNUAL_PRICE / 12) * 100) / 100; // 20
 
 interface Snapshot {
   snapshot_date: string;

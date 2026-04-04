@@ -8,7 +8,7 @@
 
 - UX onboarding excellente (2 phases, linéaire, sans friction)
 - Email lifecycle sophistiqué (32 templates, anti-churn, segmentation shop_type)
-- Prix ultra compétitif (19€ vs 43-74€ concurrents)
+- Prix ultra compétitif (24€ vs 43-74€ concurrents)
 - Produit zéro-friction (pas d'app, scan QR = instant)
 - Anti-fraude Shield (unique en FR)
 - Parrainage client intégré (viral loop)
@@ -37,7 +37,7 @@
   - "Sophie invite Lisa → Lisa reçoit 5 tampons, Sophie aussi"
 
 - [ ] **Pricing : ajouter comparatif prix** (30min)
-  - Footnote : "Stamp Me 43€, Square 45€+ → Qarte 19€"
+  - Footnote : "Stamp Me 43€, Square 45€+ → Qarte 24€"
 
 - [ ] **Essai gratuit page : reformuler copy** (1h)
   - Pain points + stats + CTA clair

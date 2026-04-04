@@ -252,9 +252,9 @@ export default function AdminDashboardPage() {
 
     const cagnotte = merchants.filter((m: Merchant) => m.loyalty_mode === 'cagnotte');
 
-    // MRR: mensuel = 19€, annuel = 190/12 ≈ 15.83€
+    // MRR: mensuel = 24€, annuel = 240/12 = 20€
     const mrr = active.reduce((sum: number, m: Merchant) => {
-      return sum + (m.billing_interval === 'annual' ? Math.round(190 / 12 * 100) / 100 : 19);
+      return sum + (m.billing_interval === 'annual' ? Math.round(240 / 12 * 100) / 100 : 24);
     }, 0);
 
     setStats({

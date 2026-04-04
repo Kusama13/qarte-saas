@@ -76,8 +76,8 @@
     "allInclusive": "All-inclusive",
     "noCreditCard": "Sign up without a credit card",
     "annualOr": "or",
-    "annualPrice": "$17/mo",
-    "price": "$19",
+    "annualPrice": "$20/mo",
+    "price": "$24",
     "annualLabel": "billed annually — 2 months free",
     "feature1": "Online page (bio, hours, photos, pricing)",
     "feature2": "Loyalty program — stamps or cashback",
@@ -164,7 +164,7 @@
     "colB2": "Clients contact you directly (WhatsApp, phone, DM). You chat before booking a slot.",
     "colB3": "Publish your availability, they see when you're free. Simple, no robots.",
     "colB4": "Build loyalty effortlessly — QR code, auto reminders, Google reviews.",
-    "includedTitle": "Everything included in Qarte — $19/month",
+    "includedTitle": "Everything included in Qarte — $24/month",
     "feat_vitrine": "Online storefront indexed by Google",
     "feat_fidelite": "Loyalty program (stamps or cashback)",
     "feat_bienvenue": "Welcome offer for new clients",
@@ -414,7 +414,7 @@
     "q6": "Is the birthday gift automatic?",
     "a6": "Yes. You choose the gift (e.g. -20%, free treatment) and Qarte sends it automatically on each client's birthday. Zero effort on your part.",
     "q7": "Does the price change after the 7-day trial?",
-    "a7": "No. $19/month or $190/year, same features during trial and after. No credit card to start.",
+    "a7": "No. $24/month or $240/year, same features during trial and after. No credit card to start.",
     "q8": "Is my data protected?",
     "a8": "100% GDPR compliant, hosted in Europe, encrypted. We never resell anything. CSV export in 1 click if you leave.",
     "q9": "Does it work for freelancers and home services?",
@@ -651,7 +651,7 @@
     "titleLine2": "Everything included.",
     "subtitle": "Build client loyalty with modern digital cards. No hidden fees, no surprises.",
     "popular": "Most popular",
-    "price": "$19",
+    "price": "$24",
     "perMonth": "/month",
     "noCommitment": "No commitment — Cancel anytime",
     "cta": "Get started now",
@@ -2570,10 +2570,10 @@
     "close": "Close"
   },
   "pricingMeta": {
-    "title": "Pricing — Salon page & loyalty all-inclusive from $19/month",
+    "title": "Pricing — Salon page & loyalty all-inclusive from $24/month",
     "description": "One price for everything: your salon page (bio, services, schedule, photos) and loyalty program (stamps, cashback, auto follow-ups, Google reviews). Free 7-day trial, no credit card required.",
-    "ogTitle": "Pricing — Salon page & loyalty all-inclusive from $19/month | Qarte",
-    "ogDescription": "Salon page + loyalty program for beauty salons. $19/month all-inclusive, free 7-day trial with no credit card."
+    "ogTitle": "Pricing — Salon page & loyalty all-inclusive from $24/month | Qarte",
+    "ogDescription": "Salon page + loyalty program for beauty salons. $24/month all-inclusive, free 7-day trial with no credit card."
   },
   "socialMediaTemplate": {
     "loyaltyProgram": "Loyalty Program",

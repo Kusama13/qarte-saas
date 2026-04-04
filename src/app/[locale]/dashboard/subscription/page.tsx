@@ -32,13 +32,13 @@ interface PaymentMethod {
 }
 
 const PLANS_FR = {
-  monthly: { price: 19, priceDisplay: '19,00', sep: ',', daily: '0,63', label: '19 €/mois' },
-  annual: { price: 190, priceDisplay: '15,83', sep: ',', daily: '0,52', label: '190 €/an', originalPrice: '228 €', savings: '-17%' },
+  monthly: { price: 24, priceDisplay: '24,00', sep: ',', daily: '0,80', label: '24 €/mois' },
+  annual: { price: 240, priceDisplay: '20,00', sep: ',', daily: '0,66', label: '240 €/an', originalPrice: '288 €', savings: '-17%' },
 };
 
 const PLANS_EN = {
-  monthly: { price: 19, priceDisplay: '19.00', sep: '.', daily: '0.63', label: '$19/mo' },
-  annual: { price: 190, priceDisplay: '15.83', sep: '.', daily: '0.52', label: '$190/yr', originalPrice: '$228', savings: '-17%' },
+  monthly: { price: 24, priceDisplay: '24.00', sep: '.', daily: '0.80', label: '$24/mo' },
+  annual: { price: 240, priceDisplay: '20.00', sep: '.', daily: '0.66', label: '$240/yr', originalPrice: '$288', savings: '-17%' },
 };
 
 export default function SubscriptionPage() {

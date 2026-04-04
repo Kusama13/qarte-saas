@@ -54,8 +54,8 @@ function CGVContentFR() {
           Le Service est proposé selon les formules suivantes :
         </p>
         <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li><strong>Abonnement mensuel :</strong> 19€ HT par mois, sans engagement de durée, renouvelable par tacite reconduction chaque mois.</li>
-          <li><strong>Abonnement annuel :</strong> 190€ HT par an (soit environ 15,83€ HT/mois), facturé en une seule fois, en contrepartie d&apos;un engagement ferme de douze (12) mois.</li>
+          <li><strong>Abonnement mensuel :</strong> 24€ HT par mois, sans engagement de durée, renouvelable par tacite reconduction chaque mois.</li>
+          <li><strong>Abonnement annuel :</strong> 240€ HT par an (soit 20€ HT/mois), facturé en une seule fois, en contrepartie d&apos;un engagement ferme de douze (12) mois.</li>
           <li><strong>Essai gratuit :</strong> Un essai gratuit de 7 jours est proposé sans carte bancaire. À l&apos;issue de l&apos;essai, le Client doit souscrire un abonnement pour continuer à utiliser le Service.</li>
         </ul>
         <p className="text-gray-600 mt-3">
@@ -376,8 +376,8 @@ function CGVContentEN() {
           The Service is offered under the following plans:
         </p>
         <ul className="list-disc pl-6 text-gray-600 space-y-1 mt-2">
-          <li><strong>Monthly subscription:</strong> 19&#8364; excl. tax per month, with no minimum commitment, automatically renewed each month.</li>
-          <li><strong>Annual subscription:</strong> 190&#8364; excl. tax per year (approximately 15.83&#8364; excl. tax/month), billed as a single payment in consideration of a firm twelve (12) month commitment.</li>
+          <li><strong>Monthly subscription:</strong> 24&#8364; excl. tax per month, with no minimum commitment, automatically renewed each month.</li>
+          <li><strong>Annual subscription:</strong> 240&#8364; excl. tax per year (20&#8364; excl. tax/month), billed as a single payment in consideration of a firm twelve (12) month commitment.</li>
           <li><strong>Free trial:</strong> A 7-day free trial is available without requiring a credit card. At the end of the trial period, the Client must subscribe to a paid plan to continue using the Service.</li>
         </ul>
         <p className="text-gray-600 mt-3">
