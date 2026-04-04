@@ -154,8 +154,11 @@ export default function ProgramPage() {
     }
     setTier2Error('');
 
-    // Sanitize double days: if enabled but no day selected, disable silently
-    const doubleDaysEnabled = formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length > 0;
+    // Validate double days: if enabled, at least one day must be selected
+    if (formData.doubleDaysEnabled && formData.doubleDaysOfWeek.length === 0) {
+      return; // ExtrasSection already shows the warning
+    }
+    const doubleDaysEnabled = formData.doubleDaysEnabled;
 
     save(async () => {
       // Auto-generate reward_description for cagnotte mode (email compatibility)
@@ -260,7 +263,7 @@ export default function ProgramPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-3xl mx-auto md:pb-20">
       <div className="mb-5 md:mb-10 p-4 md:p-6 rounded-2xl bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]">
         <h1 className="text-xl md:text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#4b0082] to-violet-600">
           {t('title')}

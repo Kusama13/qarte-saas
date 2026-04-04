@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, formatTime, toBCP47, getCurrencySymbol } from '@/lib/utils';
@@ -123,10 +123,11 @@ export default function PlanningDashboard() {
           deposit_confirmed: true,
         }),
       });
-      if (!res.ok) console.error('Confirm deposit error:', await res.text());
-    } catch (err) {
-      console.error('Confirm deposit error:', err);
+      if (!res.ok) { setDepositError(t('saveError')); return; }
+    } catch {
+      setDepositError(t('saveError')); return;
     }
+    setDepositError(null);
     await fetchSlots();
   };
 
@@ -143,10 +144,11 @@ export default function PlanningDashboard() {
           deposit_confirmed: false,
         }),
       });
-      if (!res.ok) console.error('Cancel deposit error:', await res.text());
-    } catch (err) {
-      console.error('Cancel deposit error:', err);
+      if (!res.ok) { setDepositError(t('saveError')); return; }
+    } catch {
+      setDepositError(t('saveError')); return;
     }
+    setDepositError(null);
     await fetchSlots();
   };
 
@@ -241,7 +243,7 @@ export default function PlanningDashboard() {
             aria-checked={planningEnabled}
             onClick={() => handleTogglePlanning(!planningEnabled)}
             disabled={saving}
-            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${planningEnabled ? 'bg-violet-600' : 'bg-gray-200'} ${saving ? 'opacity-50' : ''}`}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 ${planningEnabled ? 'bg-violet-600' : 'bg-gray-200'} ${saving ? 'opacity-50' : ''}`}
           >
             <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${planningEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
@@ -274,6 +276,15 @@ export default function PlanningDashboard() {
           );
         })}
       </div>
+
+      {/* Global error banner */}
+      {depositError && (
+        <div className="flex gap-2.5 rounded-xl bg-red-50 border border-red-200 px-3 sm:px-4 py-3 mb-4">
+          <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-red-600 font-medium">{depositError}</p>
+          <button onClick={() => setDepositError(null)} className="ml-auto text-red-400 hover:text-red-600 shrink-0"><X className="w-3.5 h-3.5" /></button>
+        </div>
+      )}
 
       {/* ── TAB: CRENEAUX ── */}
       {tab === 'slots' && (
@@ -620,7 +631,7 @@ export default function PlanningDashboard() {
                 role="switch"
                 aria-checked={autoBookingEnabled}
                 onClick={() => setAutoBookingEnabled(!autoBookingEnabled)}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${autoBookingEnabled ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${autoBookingEnabled ? 'bg-emerald-600' : 'bg-gray-300'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${autoBookingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
@@ -764,13 +775,6 @@ export default function PlanningDashboard() {
           })()}
 
           {/* Deposit validation error */}
-          {depositError && (
-            <div className="flex gap-2.5 rounded-xl bg-red-50 border border-red-200 px-3 sm:px-4 py-3">
-              <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-              <p className="text-xs text-red-600 font-medium">{depositError}</p>
-            </div>
-          )}
-
           {/* Save */}
           <button
             onClick={handleSaveSettings}
@@ -805,7 +809,7 @@ export default function PlanningDashboard() {
                 role="switch"
                 aria-checked={messageEnabled}
                 onClick={() => setMessageEnabled(!messageEnabled)}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${messageEnabled ? 'bg-violet-600' : 'bg-gray-200'}`}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 ${messageEnabled ? 'bg-violet-600' : 'bg-gray-200'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${messageEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>

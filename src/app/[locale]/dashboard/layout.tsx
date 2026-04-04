@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter, usePathname, Link } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import {
   CreditCard,
   Home,
@@ -41,6 +41,7 @@ function DashboardLayoutContent({
   const { merchant, loading } = useMerchant();
   const t = useTranslations('dashNav');
   const tp = useTranslations('merchantPush');
+  const locale = useLocale();
   const {
     showPrompt: showPushPrompt,
     pushSubscribing,
@@ -263,7 +264,7 @@ function DashboardLayoutContent({
             >
               <div className="flex items-center justify-center w-9 h-9 font-bold text-white text-sm rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 shadow-md shadow-indigo-200/50 shrink-0 overflow-hidden">
                 {merchant?.logo_url
-                  ? <img src={merchant.logo_url} alt={merchant.shop_name || ''} className="w-full h-full object-cover" />
+                  ? <img src={merchant.logo_url} alt={merchant.shop_name || ''} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = merchant?.shop_name?.charAt(0) || 'M'; }} />
                   : merchant?.shop_name?.charAt(0) || 'M'
                 }
               </div>
@@ -278,9 +279,10 @@ function DashboardLayoutContent({
             </Link>
             <div className="flex items-center gap-1">
               <a
-                href="https://wa.me/33607447420?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20avec%20Qarte"
+                href={`https://wa.me/33607447420?text=${encodeURIComponent(locale === 'en' ? 'Hi, I need help with Qarte' : 'Bonjour, j\'ai besoin d\'aide avec Qarte')}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label={t('help')}
                 className="flex items-center flex-1 gap-2 px-3 py-2 text-gray-500 transition-all rounded-lg hover:bg-green-50 group"
               >
                 <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-green-500 shrink-0">

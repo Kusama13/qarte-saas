@@ -1510,6 +1510,7 @@
     "customAmount": "Autre €",
     "save": "Enregistrer",
     "saved": "Enregistré",
+    "saveError": "Erreur, veuillez réessayer",
     "clientName": "Nom du client",
     "clientLinked": "Client lié",
     "searchPlaceholder": "Tape un nom ou numéro...",

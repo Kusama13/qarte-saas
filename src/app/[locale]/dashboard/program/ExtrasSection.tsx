@@ -140,7 +140,7 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
             };
             const selectedDays = DAYS.filter(d => formData.doubleDaysOfWeek.includes(d.value));
             return (
-              <div className={`space-y-3 ${!formData.doubleDaysEnabled ? 'opacity-40 pointer-events-none' : ''}`}>
+              <div className={`space-y-3 ${!formData.doubleDaysEnabled ? 'opacity-50 pointer-events-none grayscale' : ''}`}>
                 <div className="flex gap-1.5 flex-wrap">
                   {DAYS.map(day => {
                     const active = formData.doubleDaysOfWeek.includes(day.value);

@@ -1510,6 +1510,7 @@
     "customAmount": "Other $",
     "save": "Save",
     "saved": "Saved",
+    "saveError": "Error, please try again",
     "clientName": "Client name",
     "clientLinked": "Linked",
     "searchPlaceholder": "Type a name or number...",

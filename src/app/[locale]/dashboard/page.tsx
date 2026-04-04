@@ -837,7 +837,7 @@ export default function DashboardPage() {
                   aria-checked={shieldEnabled}
                   aria-label={t('shieldToggleAria')}
                   onClick={() => handleShieldToggle(!shieldEnabled)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${
                     shieldEnabled ? 'bg-emerald-500' : 'bg-gray-300'
                   }`}
                 >
@@ -852,7 +852,7 @@ export default function DashboardPage() {
 
             {/* Shield Help Tooltip */}
             {showShieldHelp && (
-              <div className="absolute right-0 top-full mt-2 z-20 w-[calc(100vw-3rem)] sm:w-80 rounded-xl border border-gray-200 bg-white p-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute right-0 top-full mt-2 z-20 w-[calc(100vw-4rem)] max-w-xs sm:w-80 rounded-xl border border-gray-200 bg-white p-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-indigo-600" />
