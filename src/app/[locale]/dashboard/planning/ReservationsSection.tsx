@@ -239,14 +239,14 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
             onClick={(e) => { if (e.target === e.currentTarget) setViewingSlot(null); }}
           >
             <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
-              className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] overflow-y-auto shadow-xl"
+              className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl"
             >
               {/* Header */}
               <div className={`flex items-center justify-between p-4 border-b ${viewIsPast ? 'border-gray-200 bg-gray-50' : 'border-gray-100'}`}>
@@ -425,7 +425,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                 {viewingSlot.deposit_confirmed === false && onConfirmDeposit && (
                   <button
                     onClick={() => { onConfirmDeposit(viewingSlot); setViewingSlot(null); }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
+                    className="mx-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
                   >
                     <Check className="w-3.5 h-3.5" />
                     {t('confirmDeposit')}
@@ -433,7 +433,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                 )}
                 <button
                   onClick={() => { setViewingSlot(null); onEditSlot(viewingSlot); }}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+                  className="mx-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
                 >
                   <Pencil className="w-3.5 h-3.5" />
                   {t('editSlot')}

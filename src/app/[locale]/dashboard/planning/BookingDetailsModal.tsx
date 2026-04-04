@@ -289,14 +289,14 @@ export default function BookingDetailsModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] overflow-y-auto shadow-xl"
+        className="bg-white rounded-2xl w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
@@ -600,19 +600,21 @@ export default function BookingDetailsModal({
         <div className="p-4 border-t border-gray-100 space-y-2">
           {/* Confirm deposit button */}
           {slot.deposit_confirmed === false && onConfirmDeposit && (
-            <button
-              onClick={() => { onConfirmDeposit(slot); onClose(); }}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
-            >
-              <Check className="w-3.5 h-3.5" />
-              {t('confirmDeposit')}
-            </button>
+            <div className="flex justify-center">
+              <button
+                onClick={() => { onConfirmDeposit(slot); onClose(); }}
+                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
+              >
+                <Check className="w-3.5 h-3.5" />
+                {t('confirmDeposit')}
+              </button>
+            </div>
           )}
-          <div className="flex gap-2">
+          <div className="flex justify-center gap-2">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {t('save')}

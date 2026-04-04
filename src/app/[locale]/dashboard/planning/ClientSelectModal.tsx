@@ -135,14 +135,14 @@ export default function ClientSelectModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] overflow-y-auto shadow-xl"
+        className="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-xl"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
@@ -334,7 +334,7 @@ export default function ClientSelectModal({
             <button
               onClick={handleCreateAndProceed}
               disabled={creatingCustomer}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 text-xs font-semibold hover:bg-emerald-50 transition-colors disabled:opacity-50"
+              className="flex items-center justify-center gap-2 mx-auto px-6 py-2.5 rounded-xl border-2 border-dashed border-emerald-300 text-emerald-600 text-xs font-semibold hover:bg-emerald-50 transition-colors disabled:opacity-50"
             >
               {creatingCustomer ? (
                 <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('creating')}</>
@@ -346,17 +346,17 @@ export default function ClientSelectModal({
         </div>
 
         {/* Footer buttons */}
-        <div className="p-4 border-t border-gray-100 flex gap-2">
+        <div className="p-4 border-t border-gray-100 flex justify-center gap-2">
           <button
             onClick={handleSkip}
-            className="flex-1 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+            className="px-5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
           >
             {t('skipClient')}
           </button>
           {hasClient && (
             <button
               onClick={handleProceedWithClient}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
             >
               {t('nextStep')}
               <ArrowRight className="w-3.5 h-3.5" />

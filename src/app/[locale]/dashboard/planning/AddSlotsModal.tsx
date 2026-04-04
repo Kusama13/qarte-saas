@@ -93,7 +93,7 @@ export default function AddSlotsModal({
         <button
           onClick={onSave}
           disabled={saving || selectedTimes.length === 0}
-          className="w-full py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          className="mx-auto block px-8 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : (selectedTimes.length > 1 ? t('createSlotsPlural', { count: selectedTimes.length }) : t('createSlots', { count: selectedTimes.length }))}
         </button>
