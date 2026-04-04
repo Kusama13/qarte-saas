@@ -39,6 +39,15 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
   const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
   const [showPast, setShowPast] = useState(false);
 
+  // Sync viewingSlot with updated slots data (e.g. after deposit confirm/cancel)
+  useEffect(() => {
+    if (viewingSlot) {
+      const updated = slots.find(s => s.id === viewingSlot.id);
+      if (updated && updated !== viewingSlot) setViewingSlot(updated);
+      else if (!updated) setViewingSlot(null);
+    }
+  }, [slots, viewingSlot]);
+
   // Handle deep link: open slot detail modal from ?slot= param
   useEffect(() => {
     if (deepLinkSlotId && slots.length > 0) {
@@ -428,7 +437,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                 {/* Deposit confirm / cancel */}
                 {viewingSlot.deposit_confirmed === false && onConfirmDeposit && (
                   <button
-                    onClick={() => { onConfirmDeposit(viewingSlot); setViewingSlot(null); }}
+                    onClick={() => { onConfirmDeposit(viewingSlot); }}
                     className="mx-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -437,7 +446,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                 )}
                 {viewingSlot.deposit_confirmed === true && onCancelDeposit && (
                   <button
-                    onClick={() => { onCancelDeposit(viewingSlot); setViewingSlot(null); }}
+                    onClick={() => { onCancelDeposit(viewingSlot); }}
                     className="mx-auto flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-orange-50 text-orange-600 text-xs font-semibold hover:bg-orange-100 transition-colors"
                   >
                     <X className="w-3.5 h-3.5" />

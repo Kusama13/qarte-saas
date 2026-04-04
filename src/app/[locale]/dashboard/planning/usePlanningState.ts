@@ -177,6 +177,16 @@ export function usePlanningState() {
     if (merchant?.planning_enabled) fetchSlots();
   }, [merchant, fetchSlots]);
 
+  // Sync modalState.slot with refreshed slots data (e.g. after deposit confirm)
+  useEffect(() => {
+    if (modalState.type !== 'booking-details' && modalState.type !== 'client-select') return;
+    const updated = slots.find(s => s.id === modalState.slot.id);
+    if (updated && updated !== modalState.slot) {
+      setModalState({ ...modalState, slot: updated });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slots]);
+
   // Sync weekOffset when day view navigates outside loaded week
   useEffect(() => {
     if (viewMode !== 'day') return;
@@ -508,7 +518,7 @@ export function usePlanningState() {
     // Week navigation
     weekOffset, setWeekOffset, weekStart, weekDays, weekEnd,
     // Slots
-    slots, loadingSlots, slotsByDate, fetchSlots, fetchReservations, upcomingSlots, loadingUpcoming,
+    slots, loadingSlots, slotsByDate, fetchSlots, fetchReservations, invalidateUpcoming, upcomingSlots, loadingUpcoming,
     // Stats
     todayStr, totalSlots, takenSlots, freeSlots, isToday, isPast,
     // Settings

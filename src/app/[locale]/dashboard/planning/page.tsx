@@ -30,7 +30,7 @@ export default function PlanningDashboard() {
     tab, setTab,
     viewMode, setViewMode, selectedDay, setSelectedDay,
     weekOffset, setWeekOffset, weekStart, weekDays, weekEnd,
-    slots, loadingSlots, slotsByDate, fetchSlots, upcomingSlots,
+    slots, loadingSlots, slotsByDate, fetchSlots, invalidateUpcoming, upcomingSlots,
     todayStr, totalSlots, takenSlots, freeSlots, isToday, isPast,
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
@@ -128,6 +128,7 @@ export default function PlanningDashboard() {
       setDepositError(t('saveError')); return;
     }
     setDepositError(null);
+    invalidateUpcoming();
     await fetchSlots();
   };
 
@@ -149,6 +150,7 @@ export default function PlanningDashboard() {
       setDepositError(t('saveError')); return;
     }
     setDepositError(null);
+    invalidateUpcoming();
     await fetchSlots();
   };
 
