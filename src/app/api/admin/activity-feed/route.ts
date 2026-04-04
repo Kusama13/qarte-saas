@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
       (() => {
         let q = supabaseAdmin
           .from('merchant_planning_slots')
-          .select('merchant_id, client_name, slot_date, start_time, created_at')
+          .select('merchant_id, client_name, slot_date, start_time, created_at, deposit_confirmed')
           .not('client_name', 'is', null)
           .is('primary_slot_id', null)
           .gte('created_at', periodStart);
@@ -231,11 +231,12 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    (bookings || []).forEach((b: { created_at: string; merchant_id: string; client_name: string; slot_date: string; start_time: string }) => {
+    (bookings || []).forEach((b: { created_at: string; merchant_id: string; client_name: string; slot_date: string; start_time: string; deposit_confirmed: boolean | null }) => {
+      const isOnline = b.deposit_confirmed !== null;
       events.push({
         type: 'booking',
         timestamp: b.created_at,
-        title: `Réservation chez ${merchantNameMap.get(b.merchant_id) || 'Inconnu'}`,
+        title: `Réservation ${isOnline ? 'en ligne' : 'manuelle'} chez ${merchantNameMap.get(b.merchant_id) || 'Inconnu'}`,
         subtitle: `${b.client_name} — ${b.slot_date} à ${b.start_time}`,
         merchant_id: b.merchant_id,
       });

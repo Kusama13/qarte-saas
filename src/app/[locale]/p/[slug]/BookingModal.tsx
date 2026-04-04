@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Clock, ChevronRight, Loader2, Gift, ExternalLink, CreditCard, CalendarDays } from 'lucide-react';
+import { X, Check, Clock, ChevronRight, Loader2, Gift, CreditCard, CalendarDays } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { formatTime, toBCP47, formatCurrency } from '@/lib/utils';
@@ -481,7 +481,6 @@ export default function BookingModal({
                       className="mt-3 w-full py-2.5 rounded-xl font-bold text-sm text-white bg-amber-500 hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
                     >
                       {t('payDeposit')}
-                      <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   </div>
                 )}
