@@ -1182,7 +1182,7 @@
     "infoDayToggleHint": "Click a day to open or close it",
     "infoBooking": "Booking",
     "infoBookingPlaceholder": "https://calendly.com/mysalon or Planity, Treatwell link...",
-    "infoBookingHint": "A \"Book appointment\" button will appear on your page.",
+    "infoBookingHint": "A \"Book appointment\" button will appear on your page. If you enable Qarte bookings (Planning tab), this link will be replaced automatically.",
     "infoSocials": "Social media",
     "infoSaving": "Saving...",
     "infoSaved": "Saved",

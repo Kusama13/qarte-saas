@@ -174,8 +174,10 @@ export async function handleDownloadStory({ merchant, slots, slotsByDate, weekSt
   };
 
   let y = 430;
+  const todayStr = new Date().toISOString().split('T')[0];
 
   for (const dateStr of sortedDates) {
+    if (dateStr < todayStr) continue;
     if (y > H - 200) break;
 
     const dateSlots = slotsByDate.get(dateStr)!.sort((a, b) => a.start_time.localeCompare(b.start_time));
