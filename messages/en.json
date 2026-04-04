@@ -71,7 +71,7 @@
     "trialBadge": "7-day free trial",
     "perMonth": "/mo",
     "perDay": "that's",
-    "perDayAmount": "~$0.70",
+    "perDayAmount": "~$0.80",
     "perDayLabel": "per day",
     "allInclusive": "All-inclusive",
     "noCreditCard": "Sign up without a credit card",
@@ -421,6 +421,8 @@
     "a9": "Yes. Show the QR code on your phone, your client scans it, their visit is recorded. Your salon page replaces the website you never had time to build.",
     "q10": "I'm already on Planity or Booksy — is it compatible?",
     "a10": "Yes. You can keep your POS tool and use Qarte for loyalty, your storefront, referrals and Google reviews. Or switch entirely to Qarte with the built-in calendar — your choice.",
+    "q11": "How do deposits work for bookings?",
+    "a11": "You add your own payment link (Revolut, PayPal, Stripe...) in your calendar settings. When a client books online, they're asked to pay a deposit through your link. No Qarte commission — you receive payment directly to your account.",
     "whatsappTitle": "Have a question? Message us directly.",
     "whatsappSub": "Response in under 1 hour",
     "whatsappCta": "Start a conversation"

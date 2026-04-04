@@ -71,7 +71,7 @@
     "trialBadge": "7 jours gratuits",
     "perMonth": "/mois",
     "perDay": "soit",
-    "perDayAmount": "~0,63€",
+    "perDayAmount": "~0,80€",
     "perDayLabel": "par jour",
     "allInclusive": "Tout compris",
     "noCreditCard": "Inscription sans carte bancaire",
@@ -421,6 +421,8 @@
     "a9": "Oui. Montre le QR code sur ton téléphone, ta cliente scanne, son passage est validé. Ta vitrine en ligne remplace le site web que tu n'as pas eu le temps de faire.",
     "q10": "Je suis déjà sur Planity ou Booksy, c'est compatible ?",
     "a10": "Oui. Tu peux garder ton outil de caisse et utiliser Qarte pour la fidélité, ta vitrine, le parrainage et les avis Google. Ou passer entièrement sur Qarte avec le planning intégré — c'est toi qui choisis.",
+    "q11": "Comment fonctionnent les acomptes pour les réservations ?",
+    "a11": "Tu ajoutes ton propre lien de paiement (Revolut, PayPal, Stripe...) dans les paramètres de ton planning. Quand une cliente réserve en ligne, on lui demande de payer l'acompte via ton lien. Aucune commission Qarte — tu reçois le paiement directement sur ton compte.",
     "whatsappTitle": "Une question ? Écris-nous directement.",
     "whatsappSub": "Réponse en moins d'1h",
     "whatsappCta": "Démarrer la discussion"
