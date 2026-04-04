@@ -24,7 +24,10 @@ export async function sendMerchantPush(params: {
 }): Promise<boolean> {
   const { supabase, merchantId, notificationType, referenceId, title, body, url, tag } = params;
 
-  if (!vapidPublicKey || !vapidPrivateKey) return false;
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    console.error('[merchant-push] VAPID keys missing');
+    return false;
+  }
 
   try {
     // 1. Dedup by reference_id (e.g. same booking slot)
@@ -47,7 +50,10 @@ export async function sendMerchantPush(params: {
       .select('endpoint, p256dh, auth')
       .eq('merchant_id', merchantId);
 
-    if (!subscriptions || subscriptions.length === 0) return false;
+    if (!subscriptions || subscriptions.length === 0) {
+      console.warn(`[merchant-push] No subscriptions for merchant ${merchantId}`);
+      return false;
+    }
 
     // 3. Send via webpush
     const payload = JSON.stringify({
@@ -95,7 +101,8 @@ export async function sendMerchantPush(params: {
     });
 
     return true;
-  } catch {
+  } catch (err) {
+    console.error(`[merchant-push] Error sending to merchant ${merchantId}:`, err);
     return false;
   }
 }

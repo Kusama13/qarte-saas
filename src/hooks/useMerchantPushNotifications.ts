@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   isPushSupported,
   requestPermission,
-  registerServiceWorker,
   getPermissionStatus,
   getVapidPublicKey,
   urlBase64ToUint8Array,
@@ -54,7 +53,13 @@ export function useMerchantPushNotifications() {
         return;
       }
 
-      const registration = await registerServiceWorker();
+      // Register SW with /dashboard scope (must match manifest Pro scope)
+      let registration: ServiceWorkerRegistration | null = null;
+      try {
+        registration = await navigator.serviceWorker.register('/sw.js', { scope: '/dashboard' });
+      } catch {
+        registration = null;
+      }
       if (!registration) {
         setPushError('Service Worker non disponible');
         return;
