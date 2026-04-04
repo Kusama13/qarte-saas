@@ -12,6 +12,8 @@ import PendingPointsWidget from '@/components/dashboard/PendingPointsWidget';
 import OnboardingChecklist from '@/components/dashboard/OnboardingChecklist';
 import ZeroScansCoach from '@/components/dashboard/ZeroScansCoach';
 import StatsCard from '@/components/dashboard/StatsCard';
+import MilestoneModal from '@/components/dashboard/MilestoneModal';
+import type { MilestoneType } from '@/components/dashboard/MilestoneModal';
 
 // Cache for dashboard stats
 const STATS_CACHE_KEY = 'qarte_dashboard_stats';
@@ -125,6 +127,10 @@ export default function DashboardPage() {
   const [showShieldWarning, setShowShieldWarning] = useState(false);
   const [showShieldHelp, setShowShieldHelp] = useState(false);
   const [shieldEnabled, setShieldEnabled] = useState(true);
+  const [activeMilestone, setActiveMilestone] = useState<MilestoneType | null>(null);
+  const [servicesCount, setServicesCount] = useState(0);
+  const [totalRedemptions, setTotalRedemptions] = useState(0);
+  const [hasAnyBooking, setHasAnyBooking] = useState(false);
 
 
   // Sync shield status with merchant data
@@ -222,6 +228,9 @@ export default function DashboardPage() {
           upcomingBookingsResult,
           welcomeClaimsResult,
           birthdayResult,
+          servicesCountResult,
+          allRedemptionsResult,
+          allBookingsResult,
         ] = await Promise.all([
           // Stats queries
           supabase
@@ -327,6 +336,22 @@ export default function DashboardPage() {
                 .not('customer.birth_month', 'is', null)
                 .in('customer.birth_month', [...new Set(birthdayDates.map(d => d.month))])
             : Promise.resolve({ data: [] }),
+          // Milestone queries
+          supabase
+            .from('merchant_services')
+            .select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id),
+          supabase
+            .from('redemptions')
+            .select('*', { count: 'exact', head: true })
+            .eq('merchant_id', merchant.id),
+          merchant.planning_enabled
+            ? supabase
+                .from('merchant_planning_slots')
+                .select('*', { count: 'exact', head: true })
+                .eq('merchant_id', merchant.id)
+                .not('client_name', 'is', null)
+            : Promise.resolve({ count: 0 }),
         ]);
 
         // Set pending referrals + welcome vouchers
@@ -364,6 +389,11 @@ export default function DashboardPage() {
           const totalCashback = Math.round(totalCumul * percent) / 100;
           setCagnotteStats({ totalCumul, totalCashback });
         }
+
+        // Milestone data
+        setServicesCount(servicesCountResult.count || 0);
+        setTotalRedemptions(allRedemptionsResult.count || 0);
+        setHasAnyBooking((allBookingsResult.count || 0) >= 1);
 
         // Set stats
         setStats({
@@ -432,6 +462,34 @@ export default function DashboardPage() {
 
     fetchData();
   }, [merchant, merchantLoading, router]);
+
+  // Milestone celebration detection
+  useEffect(() => {
+    if (!merchant || loading) return;
+
+    const PRIORITY: MilestoneType[] = [
+      'vitrine_live', 'services_added', 'planning_active',
+      'first_scan', 'first_booking', 'first_reward',
+    ];
+
+    const checks: Record<MilestoneType, boolean> = {
+      vitrine_live: !!(merchant.bio && merchant.shop_address),
+      services_added: servicesCount >= 1,
+      planning_active: merchant.planning_enabled === true,
+      first_scan: stats.totalCustomers >= 1,
+      first_booking: hasAnyBooking,
+      first_reward: totalRedemptions >= 1,
+    };
+
+    for (const type of PRIORITY) {
+      const key = `qarte_milestone_${type}_${merchant.id}`;
+      if (checks[type] && !localStorage.getItem(key)) {
+        localStorage.setItem(key, Date.now().toString());
+        setActiveMilestone(type);
+        break;
+      }
+    }
+  }, [merchant, loading, stats, servicesCount, totalRedemptions, hasAnyBooking]);
 
   if (merchantLoading || loading) {
     return (
@@ -1058,6 +1116,10 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {activeMilestone && (
+        <MilestoneModal type={activeMilestone} onClose={() => setActiveMilestone(null)} />
+      )}
       </div>
   );
 }

@@ -1713,6 +1713,38 @@
     "stepBooking": "Active la résa en ligne",
     "stepFirstBooking": "Reçois ta 1ère résa"
   },
+  "milestones": {
+    "vitrine_live": {
+      "title": "Ta vitrine est en ligne !",
+      "subtitle": "Tes clients peuvent maintenant te trouver et découvrir ton salon.",
+      "cta": "Voir ma vitrine"
+    },
+    "services_added": {
+      "title": "Tes prestations sont visibles !",
+      "subtitle": "Tes clients voient maintenant ce que tu proposes.",
+      "cta": "Gérer mes prestations"
+    },
+    "planning_active": {
+      "title": "Ton planning est actif !",
+      "subtitle": "Tes clients peuvent désormais réserver en ligne.",
+      "cta": "Voir mon planning"
+    },
+    "first_scan": {
+      "title": "Ton premier client est fidélisé !",
+      "subtitle": "C'est le début d'une belle aventure. Continue comme ça !",
+      "cta": "Voir mes clients"
+    },
+    "first_booking": {
+      "title": "Ta première réservation en ligne !",
+      "subtitle": "Un client a réservé directement depuis ta page.",
+      "cta": "Voir mes réservations"
+    },
+    "first_reward": {
+      "title": "Ta première récompense offerte !",
+      "subtitle": "Ta cliente a atteint l'objectif — la fidélité, ça paie !",
+      "cta": "Voir mes clients"
+    }
+  },
   "zeroScans": {
     "title": "Obtenez votre 1er scan en 2 minutes",
     "step1Title": "Testez vous-même",

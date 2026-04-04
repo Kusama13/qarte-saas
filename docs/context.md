@@ -51,7 +51,7 @@ src/
 │   ├── landing/           # Hero, SocialProof, FideliteSection (light), PageProSection (dark), Testimonials, Pricing, FAQ, Footer
 │   ├── ui/                # Button, Input, Modal, Select, Badge, Toast, Skeleton
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
-│   ├── dashboard/         # CustomerManagementModal, AdjustTab, RewardsCombinedTab, HistoryTab, JournalTab, DangerZone, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach
+│   ├── dashboard/         # CustomerManagementModal, AdjustTab, RewardsCombinedTab, HistoryTab, JournalTab, DangerZone, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach, MilestoneModal
 │   ├── loyalty/           # StampsSection, CagnotteSection, RewardCard, RedeemModal, StickyRedeemBar, HistorySection, VoucherRewards, VoucherModals, ReviewModal, ReviewCard, BirthdaySection, SocialLinks, CardHeader, InstallPrompts, UpcomingAppointmentsSection
 │   └── analytics/         # GTM, FacebookPixel, TikTokPixel, MicrosoftClarity
 │
@@ -420,6 +420,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 9. Email QR code envoye a la premiere config
 
 **OnboardingChecklist** : 15 etapes en 3 groupes accordion (Fidelite 6, Vitrine 5, Planning 4). Groupe Fidelite : programme, logo, QR, parrainage, anniversaire, 1er client. Groupe Vitrine : bio, adresse, photos, prestations, reseaux. Groupe Planning : activer planning, creneaux, resa en ligne, 1ere resa. Progress ring SVG par groupe + barre globale. Celebrations sparkles (sparkleSubtle par etape, sparkleMedium par groupe, sparkleGrand quand 15/15). Auto-dismiss 3 jours apres completion. Visible en trial uniquement.
+
+**MilestoneModal** : celebrations in-app pour tous les merchants (trial + abonnes). 6 milestones one-shot : vitrine_live (bio+adresse), services_added (1+ prestation), planning_active (planning active), first_scan (1+ client), first_booking (1+ resa en ligne), first_reward (1+ recompense). Modal glassmorphism centree + sparkleGrand() + Framer Motion. Dedup localStorage permanent (`qarte_milestone_{type}_{merchantId}`). Priorite d'affichage : vitrine > services > planning > scan > booking > reward. 1 seul modal par chargement.
 
 **Score programme** : cercle sticky 0-100% (recompense 25pts, logo 20pts, reseaux 15pts, avis 15pts, reservation 10pts, palier2 10pts, jours x2 5pts)
 

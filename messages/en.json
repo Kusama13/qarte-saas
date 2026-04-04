@@ -1713,6 +1713,38 @@
     "stepBooking": "Enable online booking",
     "stepFirstBooking": "Get your first booking"
   },
+  "milestones": {
+    "vitrine_live": {
+      "title": "Your page is live!",
+      "subtitle": "Clients can now find you and discover your salon.",
+      "cta": "View my page"
+    },
+    "services_added": {
+      "title": "Your services are visible!",
+      "subtitle": "Clients can now see what you offer.",
+      "cta": "Manage services"
+    },
+    "planning_active": {
+      "title": "Your calendar is active!",
+      "subtitle": "Clients can now book online.",
+      "cta": "View my calendar"
+    },
+    "first_scan": {
+      "title": "Your first loyal client!",
+      "subtitle": "This is the start of something great. Keep it up!",
+      "cta": "View my clients"
+    },
+    "first_booking": {
+      "title": "Your first online booking!",
+      "subtitle": "A client booked directly from your page.",
+      "cta": "View my bookings"
+    },
+    "first_reward": {
+      "title": "First reward given!",
+      "subtitle": "Your client reached the goal — loyalty pays off!",
+      "cta": "View my clients"
+    }
+  },
   "zeroScans": {
     "title": "Get your first scan in 2 minutes",
     "step1Title": "Test it yourself",
