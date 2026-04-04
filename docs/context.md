@@ -282,6 +282,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Multi-slot booking** : quand la duree > 30min, les creneaux consecutifs sont bloques. Le slot principal a les `planning_slot_services`, les fillers ont `primary_slot_id` pointant vers le principal (mig 084). Filtre centralise dans `usePlanningState.slotsByDate`. Cascade PATCH (clear) et DELETE (supprime fillers)
 - **Acompte** (optionnel) : `deposit_link` (lien externe Revolut/PayPal/Stripe), `deposit_percent` OU `deposit_amount` (fixe). Affiche apres confirmation avec montant calcule. Tristate `deposit_confirmed`: NULL=pas d'acompte, false=en attente, true=confirme. Boutons confirmer ET annuler confirmation dans le dashboard. Conditions de resa via `booking_message` (pas de champ message acompte separe). Lien affilie Revolut sous le champ de lien de paiement
 - **Delai d'acompte** : `deposit_deadline_hours` (merchant config, NULL=libre/pas de delai). `deposit_deadline_at` (TIMESTAMPTZ sur le slot, calcule au booking : min(now + deadline_hours, RDV - 4h)). Si RDV dans moins de 4h, pas de deadline. Auto-liberation par cron morning-jobs + evening. Notification merchant 4h avant expiration + push a la liberation. Timezone-aware via `fromZonedTime` (mig 086)
+- **Source reservation** : `booked_online` BOOLEAN (mig 088) — true si reserve via `/api/planning/book` (vitrine), false si cree manuellement par le merchant. Utilise dans admin activite pour distinguer "Reservation en ligne" vs "Reservation manuelle"
 - **Priorite resa Qarte vs externe** : quand `auto_booking_enabled`, le CTA externe (`booking_url`) est masque sur la vitrine et la carte de fidelite affiche un seul lien "Reserver" vers `/p/{slug}`. Warning dans les settings si les deux sont configures
 - **Guard offres vitrine** : les sections offre bienvenue et promo utilisent `canBookOnline = auto_booking_enabled && planningSlots.length > 0`. Si resa en ligne activee mais aucun creneau disponible, fallback vers le mode scan (bouton "En profiter" + lien `/scan/{code}`)
 - Les RDV ne sont ni modifiables ni annulables par le client
@@ -497,10 +498,13 @@ FirstScanEmail (2e visite), Day5CheckinEmail, FirstRewardEmail, Tier2UpsellEmail
 TrialEndingEmail (J-5/3/1), TrialExpiredEmail (J+1/3/5), InactiveMerchantDay7/14/30Email
 
 ### Stripe
-SubscriptionConfirmedEmail, PaymentFailedEmail, SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30 codes promo)
+SubscriptionConfirmedEmail, PaymentFailedEmail, SubscriptionCanceledEmail, SubscriptionReactivatedEmail, ReactivationEmail (J+7/14/30, sans code promo)
 
 ### Autres
-GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, SetupForYouEmail, AnnouncementMaPageEmail, WinBackEmail (envoi manuel admin — 3 features + promo QARTEBOOST 2 mois a 9€)
+GuidedSignupEmail, LastChanceSignupEmail, AutoSuggestRewardEmail, BirthdayNotificationEmail, GracePeriodSetupEmail, ProductUpdateEmail, SetupForYouEmail, AnnouncementMaPageEmail, WinBackEmail (envoi manuel admin — 3 features, sans code promo), VitrineReminderEmail (J+3), PlanningReminderEmail (J+4)
+
+### Codes promo
+Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, QARTECHALLENGE2026, QARTEPROEHJT). Aucun code de reduction n'est envoye automatiquement.
 
 ### Cron Jobs
 | Cron | Horaire | Description |
