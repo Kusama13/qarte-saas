@@ -168,7 +168,9 @@ export default function PlanningDashboard() {
         planning_message_expires: messageEnabled && messageExpires ? messageExpires : null,
         booking_message: bookingMessage.trim() || null,
         auto_booking_enabled: autoBookingEnabled,
-        deposit_link: autoBookingEnabled && depositLink.trim() ? depositLink.trim() : null,
+        deposit_link: autoBookingEnabled && depositLink.trim()
+          ? (/^https?:\/\//i.test(depositLink.trim()) ? depositLink.trim() : `https://${depositLink.trim()}`)
+          : null,
         deposit_percent: autoBookingEnabled && depositPercent ? parseInt(depositPercent) : null,
         deposit_amount: autoBookingEnabled && depositAmount ? parseFloat(depositAmount) : null,
         deposit_deadline_hours: autoBookingEnabled && depositDeadlineHours ? parseInt(depositDeadlineHours) : null,

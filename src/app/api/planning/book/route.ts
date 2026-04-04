@@ -270,8 +270,12 @@ export async function POST(request: NextRequest) {
         ? Math.round(totalPrice * merchant.deposit_percent / 100)
         : null;
 
-    const deposit = merchant.deposit_link ? {
-      link: merchant.deposit_link,
+    const safeDepositLink = merchant.deposit_link && !/^https?:\/\//i.test(merchant.deposit_link)
+      ? `https://${merchant.deposit_link}`
+      : merchant.deposit_link;
+
+    const deposit = safeDepositLink ? {
+      link: safeDepositLink,
       percent: merchant.deposit_percent || null,
       fixed_amount: merchant.deposit_amount ? Number(merchant.deposit_amount) : null,
       amount: depositAmount,
