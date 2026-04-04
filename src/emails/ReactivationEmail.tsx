@@ -12,8 +12,6 @@ interface ReactivationEmailProps {
   shopName: string;
   daysSinceCancellation: number;
   totalCustomers?: number;
-  promoCode?: string;
-  promoMonths?: number;
   locale?: EmailLocale;
 }
 
@@ -21,8 +19,6 @@ export function ReactivationEmail({
   shopName,
   daysSinceCancellation,
   totalCustomers,
-  promoCode,
-  promoMonths = 1,
   locale = 'fr',
 }: ReactivationEmailProps) {
   const t = getEmailT(locale);
@@ -114,20 +110,6 @@ export function ReactivationEmail({
         </>
       )}
 
-      {/* ===== PROMO BOX ===== */}
-      {promoCode ? (
-        <Section style={isLastChance ? urgentPromoBox : promoBox}>
-          <Text style={isLastChance ? urgentPromoTitleStyle : promoTitleStyle}>
-            {t('reactivation.promoTitle')}
-          </Text>
-          <Text style={promoPrice}>
-            {t('reactivation.promoText', { promoMonths: String(promoMonths) })}
-          </Text>
-          <Text style={promoLabel}>CODE PROMO</Text>
-          <Text style={promoCodeStyled}>{promoCode}</Text>
-        </Section>
-      ) : null}
-
       <Section style={buttonContainer}>
         <Button style={isLastChance ? urgentButton : button} href="https://getqarte.com/dashboard/subscription">
           {t('reactivation.ctaReactivate')}
@@ -160,48 +142,6 @@ const paragraph = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '0 0 16px 0',
-};
-
-// === PROMO STYLES ===
-
-const promoBox = {
-  backgroundColor: '#f0edfc',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-  border: '2px dashed #4b0082',
-};
-
-const promoTitleStyle = {
-  color: '#4b0082',
-  fontSize: '16px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-};
-
-const promoPrice = {
-  color: '#1a1a1a',
-  fontSize: '20px',
-  fontWeight: '700',
-  margin: '0 0 16px 0',
-};
-
-const promoLabel = {
-  color: '#8898aa',
-  fontSize: '11px',
-  fontWeight: '600',
-  margin: '0 0 4px 0',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '1px',
-};
-
-const promoCodeStyled = {
-  color: '#4b0082',
-  fontSize: '28px',
-  fontWeight: '700',
-  margin: '0',
-  letterSpacing: '2px',
 };
 
 // === BUTTON STYLES ===
@@ -256,21 +196,6 @@ const urgentHeading = {
   margin: '0 0 24px 0',
 };
 
-const urgentPromoBox = {
-  backgroundColor: '#fef2f2',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-  border: '2px dashed #dc2626',
-};
-
-const urgentPromoTitleStyle = {
-  color: '#dc2626',
-  fontSize: '16px',
-  fontWeight: '700',
-  margin: '0 0 8px 0',
-};
 
 const urgentButton = {
   backgroundColor: '#dc2626',

@@ -11,11 +11,10 @@ import { getEmailT, type EmailLocale } from './translations';
 
 interface ChallengeCompletedEmailProps {
   shopName: string;
-  promoCode: string;
   locale?: EmailLocale;
 }
 
-export function ChallengeCompletedEmail({ shopName, promoCode, locale = 'fr' }: ChallengeCompletedEmailProps) {
+export function ChallengeCompletedEmail({ shopName, locale = 'fr' }: ChallengeCompletedEmailProps) {
   const t = getEmailT(locale);
   return (
     <BaseLayout preview={t('challengeCompleted.preview', { shopName })} locale={locale}>
@@ -28,21 +27,6 @@ export function ChallengeCompletedEmail({ shopName, promoCode, locale = 'fr' }: 
       <Text style={paragraph}>
         {t('challengeCompleted.intro')}
       </Text>
-
-      <Section style={promoBox}>
-        <Text style={promoLabel}>{t('challengeCompleted.promoLabel')}</Text>
-        <Text style={promoCodeStyle}>{promoCode}</Text>
-        <Text style={promoValue} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.monthlyPromoValue') }} />
-        <Text style={promoExpiry} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.promoExpiry') }} />
-      </Section>
-
-      <Section style={annualBox}>
-        <Text style={promoLabel}>{t('challengeCompleted.annualOfferLabel')}</Text>
-        <Text style={annualCodeStyle}>QARTEPROEHJT</Text>
-        <Text style={promoValue} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.annualPromoValue') }} />
-        <Text style={annualDetail} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.annualDetail') }} />
-        <Text style={promoExpiry} dangerouslySetInnerHTML={{ __html: t('challengeCompleted.promoExpiry') }} />
-      </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
@@ -93,68 +77,6 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const promoBox = {
-  backgroundColor: '#f0edfc',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '24px 0',
-  border: '2px solid #4b0082',
-  textAlign: 'center' as const,
-};
-
-const promoLabel = {
-  color: '#4b0082',
-  fontSize: '13px',
-  fontWeight: '600',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.1em',
-  margin: '0 0 8px 0',
-};
-
-const promoCodeStyle = {
-  color: '#4b0082',
-  fontSize: '32px',
-  fontWeight: '800',
-  letterSpacing: '0.15em',
-  margin: '0 0 12px 0',
-};
-
-const promoValue = {
-  color: '#1a1a1a',
-  fontSize: '18px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-};
-
-const promoExpiry = {
-  color: '#e53e3e',
-  fontSize: '14px',
-  fontWeight: '600',
-  margin: '0',
-};
-
-const annualBox = {
-  backgroundColor: '#f0fdf4',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '0 0 24px 0',
-  border: '2px solid #16a34a',
-  textAlign: 'center' as const,
-};
-
-const annualCodeStyle = {
-  color: '#16a34a',
-  fontSize: '28px',
-  fontWeight: '800',
-  letterSpacing: '0.1em',
-  margin: '0 0 12px 0',
-};
-
-const annualDetail = {
-  color: '#4a5568',
-  fontSize: '15px',
-  margin: '0 0 8px 0',
-};
 
 const buttonContainer = {
   textAlign: 'center' as const,

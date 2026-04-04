@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
           if (trialStatus.isActive && (trialStatus.daysRemaining === 3 || trialStatus.daysRemaining === 1)) {
             const trackCode = trialStatus.daysRemaining === 3 ? -203 : -201;
             if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) continue;
-            await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining, undefined, (merchant.locale as EmailLocale) || 'fr');
+            await sendTrialEndingEmail(email, merchant.shop_name, trialStatus.daysRemaining, (merchant.locale as EmailLocale) || 'fr');
             await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
             results.trialEmails.ending++;
             merchantsSentTrialEmail.add(merchant.id);
@@ -155,8 +155,7 @@ export async function GET(request: NextRequest) {
             if (daysExpired === 1 || daysExpired === 2) {
               const trackCode = daysExpired === 1 ? -211 : -212;
               if (globalTrackingSet.has(`${merchant.id}:${trackCode}`)) continue;
-              const promoCode = daysExpired === 1 ? 'QARTE50' : undefined;
-              await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, promoCode, (merchant.locale as EmailLocale) || 'fr');
+              await sendTrialExpiredEmail(email, merchant.shop_name, trialStatus.daysUntilDeletion, (merchant.locale as EmailLocale) || 'fr');
               await supabase.from('pending_email_tracking').insert({ merchant_id: merchant.id, reminder_day: trackCode, pending_count: 0 });
               results.trialEmails.expired++;
               merchantsSentTrialEmail.add(merchant.id);
@@ -846,18 +845,8 @@ export async function GET(request: NextRequest) {
           const totalCustomers = reactivationCountMap.get(merchant.id) || 0;
 
           try {
-            // Codes promo progressifs : J+14 = 2 mois a 9eur, J+30 = 3 mois a 9eur
-            let promoCode: string | undefined;
-            let promoMonths: number | undefined;
-            if (daysSinceCancellation === 14) {
-              promoCode = 'QARTEBOOST';
-              promoMonths = 2;
-            } else if (daysSinceCancellation === 30) {
-              promoCode = 'QARTELAST';
-              promoMonths = 3;
-            }
             const result = await sendReactivationEmail(
-              email, merchant.shop_name, daysSinceCancellation, totalCustomers || undefined, promoCode, promoMonths, (merchant.locale as EmailLocale) || 'fr'
+              email, merchant.shop_name, daysSinceCancellation, totalCustomers || undefined, (merchant.locale as EmailLocale) || 'fr'
             );
             if (result.success) {
               await supabase.from('reactivation_email_tracking').insert({

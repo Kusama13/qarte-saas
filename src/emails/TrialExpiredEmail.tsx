@@ -11,11 +11,10 @@ import { getEmailT, type EmailLocale } from './translations';
 interface TrialExpiredEmailProps {
   shopName: string;
   daysUntilDeletion: number;
-  promoCode?: string;
   locale?: EmailLocale;
 }
 
-export function TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode, locale = 'fr' }: TrialExpiredEmailProps) {
+export function TrialExpiredEmail({ shopName, daysUntilDeletion, locale = 'fr' }: TrialExpiredEmailProps) {
   const t = getEmailT(locale);
   const daysPlural = daysUntilDeletion > 1 ? 's' : '';
 
@@ -37,26 +36,16 @@ export function TrialExpiredEmail({ shopName, daysUntilDeletion, promoCode, loca
         <Text style={infoText} dangerouslySetInnerHTML={{ __html: t('trialExpired.dataRetention', { daysUntilDeletion: String(daysUntilDeletion), daysPlural }) }} />
       </Section>
 
-      {promoCode ? (
-        <Section style={promoBoxStyle}>
-          <Text style={promoTitle}>{t('trialExpired.specialOfferTitle')}</Text>
-          <Text style={promoPrice} dangerouslySetInnerHTML={{ __html: t('trialExpired.specialOfferPrice') }} />
-          <Text style={promoLabel}>{t('trialExpired.promoLabel')}</Text>
-          <Text style={promoCodeStyle}>{promoCode}</Text>
-          <Text style={promoNoteStyle}>{t('trialExpired.promoNote')}</Text>
-        </Section>
-      ) : (
-        <Section style={offerBox}>
-          <Text style={offerTitle}>{t('trialExpired.helpTitle')}</Text>
-          <Text style={offerText}>
-            {t('trialExpired.helpText')}
-          </Text>
-        </Section>
-      )}
+      <Section style={offerBox}>
+        <Text style={offerTitle}>{t('trialExpired.helpTitle')}</Text>
+        <Text style={offerText}>
+          {t('trialExpired.helpText')}
+        </Text>
+      </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          {promoCode ? t('trialExpired.ctaPromo') : t('trialExpired.ctaNoPromo')}
+          {t('trialExpired.ctaNoPromo')}
         </Button>
       </Section>
 
@@ -152,51 +141,6 @@ const button = {
   padding: '14px 32px',
 };
 
-const promoBoxStyle = {
-  backgroundColor: '#f0edfc',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-  border: '2px dashed #4b0082',
-};
-
-const promoTitle = {
-  color: '#4b0082',
-  fontSize: '16px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-};
-
-const promoPrice = {
-  color: '#1a1a1a',
-  fontSize: '20px',
-  fontWeight: '700',
-  margin: '0 0 16px 0',
-};
-
-const promoLabel = {
-  color: '#8898aa',
-  fontSize: '11px',
-  fontWeight: '600',
-  margin: '0 0 4px 0',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '1px',
-};
-
-const promoCodeStyle = {
-  color: '#4b0082',
-  fontSize: '28px',
-  fontWeight: '700',
-  margin: '0',
-  letterSpacing: '2px',
-};
-
-const promoNoteStyle = {
-  color: '#4b0082',
-  fontSize: '13px',
-  margin: '4px 0 0 0',
-};
 
 const noteText = {
   color: '#9ca3af',

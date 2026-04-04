@@ -92,19 +92,14 @@ export async function POST(request: NextRequest) {
     results.push({ type: 'subscription_confirmed_annual', ...subscriptionAnnual });
     await delay(600);
 
-    // 6. Email essai expiré AVEC code promo QARTE50
-    const trialExpiredPromo = await sendTrialExpiredEmail(email, 'Boulangerie Test', 5, 'QARTE50');
-    results.push({ type: 'trial_expired_promo', ...trialExpiredPromo });
+    // 6. Email réactivation J+14
+    const reactivation14 = await sendReactivationEmail(email, 'Boulangerie Test', 14, 42);
+    results.push({ type: 'reactivation_14days', ...reactivation14 });
     await delay(600);
 
-    // 7. Email réactivation AVEC code promo QARTEBOOST (2 mois)
-    const reactivationPromo = await sendReactivationEmail(email, 'Boulangerie Test', 14, 42, 'QARTEBOOST', 2);
-    results.push({ type: 'reactivation_promo_2months', ...reactivationPromo });
-    await delay(600);
-
-    // 8. Email réactivation AVEC code promo QARTELAST (3 mois)
-    const reactivationLast = await sendReactivationEmail(email, 'Boulangerie Test', 30, 42, 'QARTELAST', 3);
-    results.push({ type: 'reactivation_promo_3months', ...reactivationLast });
+    // 7. Email réactivation J+30
+    const reactivation30 = await sendReactivationEmail(email, 'Boulangerie Test', 30, 42);
+    results.push({ type: 'reactivation_30days', ...reactivation30 });
 
     const successCount = results.filter(r => r.success).length;
 

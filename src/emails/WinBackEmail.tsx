@@ -60,14 +60,6 @@ export function WinBackEmail({ shopName, locale = 'fr' }: WinBackEmailProps) {
         <Text style={socialProofText}>{t('winBack.socialProof')}</Text>
       </Section>
 
-      {/* Promo box */}
-      <Section style={promoBox}>
-        <Text style={promoTitle}>{t('winBack.promoTitle')}</Text>
-        <Text style={promoPrice}>{t('winBack.promoPrice')}</Text>
-        <Text style={promoLabel}>CODE PROMO</Text>
-        <Text style={promoCodeStyled}>QARTEBOOST</Text>
-      </Section>
-
       {/* CTA */}
       <Section style={buttonContainer}>
         <Button style={ctaButton} href="https://getqarte.com/dashboard/subscription">
@@ -187,47 +179,6 @@ const socialProofText = {
   fontSize: '14px',
   fontStyle: 'italic' as const,
   margin: '0',
-};
-
-// Promo
-const promoBox = {
-  backgroundColor: '#f0edfc',
-  borderRadius: '16px',
-  padding: '28px 24px',
-  margin: '20px 0',
-  textAlign: 'center' as const,
-  border: '2px dashed #4b0082',
-};
-
-const promoTitle = {
-  color: '#4b0082',
-  fontSize: '16px',
-  fontWeight: '600',
-  margin: '0 0 8px 0',
-};
-
-const promoPrice = {
-  color: '#1a1a1a',
-  fontSize: '22px',
-  fontWeight: '700',
-  margin: '0 0 16px 0',
-};
-
-const promoLabel = {
-  color: '#8898aa',
-  fontSize: '11px',
-  fontWeight: '600',
-  margin: '0 0 4px 0',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '1px',
-};
-
-const promoCodeStyled = {
-  color: '#4b0082',
-  fontSize: '28px',
-  fontWeight: '700',
-  margin: '0',
-  letterSpacing: '3px',
 };
 
 // CTA

@@ -11,11 +11,10 @@ import { getEmailT, type EmailLocale } from './translations';
 interface TrialEndingEmailProps {
   shopName: string;
   daysRemaining: number;
-  promoCode?: string;
   locale?: EmailLocale;
 }
 
-export function TrialEndingEmail({ shopName, daysRemaining, promoCode, locale = 'fr' }: TrialEndingEmailProps) {
+export function TrialEndingEmail({ shopName, daysRemaining, locale = 'fr' }: TrialEndingEmailProps) {
   const t = getEmailT(locale);
   const isUrgent = daysRemaining <= 1;
   const daysPlural = daysRemaining > 1 ? 's' : '';
@@ -48,25 +47,13 @@ export function TrialEndingEmail({ shopName, daysRemaining, promoCode, locale = 
 
       <Section style={priceSection}>
         <Text style={priceLabel}>{t('trialEnding.subscriptionLabel')}</Text>
-        {promoCode ? (
-          <>
-            <Text style={priceOld}>{t('trialEnding.priceOld')}</Text>
-            <Text style={price}>{t('trialEnding.pricePromo')}<span style={priceMonth}>{t('trialEnding.pricePromoSuffix')}</span></Text>
-            <Section style={promoBox}>
-              <Text style={promoLabelStyle}>{t('trialEnding.promoLabel')}</Text>
-              <Text style={promoCodeStyle}>{promoCode}</Text>
-              <Text style={promoNote}>{t('trialEnding.promoNote')}</Text>
-            </Section>
-          </>
-        ) : (
-          <Text style={price}>{t('trialEnding.priceFull')}<span style={priceMonth}>{t('trialEnding.priceFullSuffix')}</span></Text>
-        )}
+        <Text style={price}>{t('trialEnding.priceFull')}<span style={priceMonth}>{t('trialEnding.priceFullSuffix')}</span></Text>
         <Text style={priceNoteStyle}>{t('trialEnding.priceNote')}</Text>
       </Section>
 
       <Section style={buttonContainer}>
         <Button style={button} href="https://getqarte.com/dashboard/subscription">
-          {promoCode ? t('trialEnding.ctaPromo') : t('trialEnding.ctaNoPromo')}
+          {t('trialEnding.ctaNoPromo')}
         </Button>
       </Section>
 
@@ -161,46 +148,6 @@ const priceMonth = {
   color: '#8898aa',
 };
 
-const priceOld = {
-  color: '#8898aa',
-  fontSize: '24px',
-  fontWeight: '400',
-  margin: '0',
-  textDecoration: 'line-through',
-  textAlign: 'center' as const,
-};
-
-const promoBox = {
-  backgroundColor: '#f0edfc',
-  borderRadius: '12px',
-  padding: '16px 24px',
-  margin: '16px 0 0 0',
-  textAlign: 'center' as const,
-  border: '2px dashed #4b0082',
-};
-
-const promoLabelStyle = {
-  color: '#8898aa',
-  fontSize: '11px',
-  fontWeight: '600',
-  margin: '0 0 4px 0',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '1px',
-};
-
-const promoCodeStyle = {
-  color: '#4b0082',
-  fontSize: '28px',
-  fontWeight: '700',
-  margin: '0',
-  letterSpacing: '2px',
-};
-
-const promoNote = {
-  color: '#4b0082',
-  fontSize: '13px',
-  margin: '4px 0 0 0',
-};
 
 const priceNoteStyle = {
   color: '#8898aa',

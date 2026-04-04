@@ -169,16 +169,13 @@ export async function sendTrialEndingEmail(
   to: string,
   shopName: string,
   daysRemaining: number,
-  promoCode?: string,
   locale: EmailLocale = 'fr'
 ): Promise<SendEmailResult> {
   const subject = daysRemaining <= 1
-    ? promoCode
-      ? subj(locale, 'trialEndingLastDayPromo', { shopName })
-      : subj(locale, 'trialEndingLastDay', { shopName })
+    ? subj(locale, 'trialEndingLastDay', { shopName })
     : subj(locale, 'trialEndingDays', { daysRemaining });
 
-  return sendEmail(to, subject, TrialEndingEmail, { shopName, daysRemaining, promoCode, locale }, {
+  return sendEmail(to, subject, TrialEndingEmail, { shopName, daysRemaining, locale }, {
     logLabel: `Trial ending email (${daysRemaining} days)`,
   });
 }
@@ -187,14 +184,9 @@ export async function sendTrialExpiredEmail(
   to: string,
   shopName: string,
   daysUntilDeletion: number,
-  promoCode?: string,
   locale: EmailLocale = 'fr'
 ): Promise<SendEmailResult> {
-  const subject = promoCode
-    ? subj(locale, 'trialExpiredPromo', { shopName })
-    : subj(locale, 'trialExpired', { shopName });
-
-  return sendEmail(to, subject, TrialExpiredEmail, { shopName, daysUntilDeletion, promoCode, locale }, {
+  return sendEmail(to, subj(locale, 'trialExpired', { shopName }), TrialExpiredEmail, { shopName, daysUntilDeletion, locale }, {
     logLabel: `Trial expired email (${daysUntilDeletion} days until deletion)`,
   });
 }
@@ -354,16 +346,10 @@ export async function sendReactivationEmail(
   shopName: string,
   daysSinceCancellation: number,
   totalCustomers?: number,
-  promoCode?: string,
-  promoMonths?: number,
   locale: EmailLocale = 'fr'
 ): Promise<SendEmailResult> {
   let subject: string;
-  if (promoCode && promoMonths && promoMonths >= 3) {
-    subject = subj(locale, 'reactivationPromoLong', { shopName, promoMonths });
-  } else if (promoCode && daysSinceCancellation >= 14) {
-    subject = subj(locale, 'reactivationPromo', { shopName, promoMonths: promoMonths || 1 });
-  } else if (daysSinceCancellation <= 7) {
+  if (daysSinceCancellation <= 7) {
     subject = totalCustomers
       ? subj(locale, 'reactivationEarly', { shopName, totalCustomers })
       : subj(locale, 'reactivationEarlyGeneric', { shopName });
@@ -373,7 +359,7 @@ export async function sendReactivationEmail(
     subject = subj(locale, 'reactivationLate', { shopName });
   }
 
-  return sendEmail(to, subject, ReactivationEmail, { shopName, daysSinceCancellation, totalCustomers, promoCode, promoMonths, locale }, {
+  return sendEmail(to, subject, ReactivationEmail, { shopName, daysSinceCancellation, totalCustomers, locale }, {
     logLabel: `Reactivation email (${daysSinceCancellation} days since cancellation)`,
   });
 }
@@ -551,10 +537,9 @@ export async function sendQuickCheckEmail(
 export async function sendChallengeCompletedEmail(
   to: string,
   shopName: string,
-  promoCode: string = 'QARTECHALLENGE2026',
   locale: EmailLocale = 'fr'
 ): Promise<SendEmailResult> {
-  return sendEmail(to, subj(locale, 'challengeCompleted', { shopName }), ChallengeCompletedEmail, { shopName, promoCode, locale }, {
+  return sendEmail(to, subj(locale, 'challengeCompleted', { shopName }), ChallengeCompletedEmail, { shopName, locale }, {
     logLabel: 'Challenge completed email',
   });
 }
