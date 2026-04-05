@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2 } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, formatTime, toBCP47, getCurrencySymbol } from '@/lib/utils';
@@ -14,6 +14,7 @@ import { handleDownloadStory } from './StoryExport';
 import { usePlanningState } from './usePlanningState';
 import AddSlotsModal from './AddSlotsModal';
 import CopyWeekModal from './CopyWeekModal';
+import ConfirmDeleteSlotsModal from './ConfirmDeleteSlotsModal';
 import ClientSelectModal from './ClientSelectModal';
 import BookingDetailsModal from './BookingDetailsModal';
 import ReservationsSection from './ReservationsSection';
@@ -45,7 +46,7 @@ export default function PlanningDashboard() {
     handleDraftNameChange, selectCustomer, handleCreateCustomer,
     saving, saved,
     handleTogglePlanning, handleAddSlots, handleUpdateSlot,
-    handleDeleteSlot, handleMoveSlot, handleCopyWeek,
+    handleDeleteSlot, handleBulkDeleteSlots, handleMoveSlot, handleCopyWeek,
     openEditSlot, openAddSlotsModal,
     proceedToBookingDetails, goBackToClientSelect,
     fetchClientHistory,
@@ -214,6 +215,27 @@ export default function PlanningDashboard() {
   const selectedDaySlots = slotsByDate.get(selectedDayStr) || [];
   const selectedDayIsPast = isPast(selectedDay);
   const selectedDayIsToday = isToday(selectedDay);
+  const selectedDayFreeCount = selectedDaySlots.filter(s => !s.client_name).length;
+
+  // Open bulk delete confirmation for a given day or the whole week
+  const openBulkDelete = (scope: 'day' | 'week') => {
+    const targetSlots = scope === 'day'
+      ? selectedDaySlots
+      : weekDays.flatMap(day => slotsByDate.get(formatDate(day)) || []);
+    const emptySlots = targetSlots.filter(s => !s.client_name);
+    const bookedCount = targetSlots.length - emptySlots.length;
+    const label = scope === 'day'
+      ? selectedDay.toLocaleDateString(toBCP47(locale), { weekday: 'long', day: 'numeric', month: 'long' })
+      : '';
+    setModalState({
+      type: 'bulk-delete',
+      scope,
+      slotIds: emptySlots.map(s => s.id),
+      emptyCount: emptySlots.length,
+      bookedCount,
+      label,
+    });
+  };
 
   if (merchantLoading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
@@ -422,7 +444,27 @@ export default function PlanningDashboard() {
                         <Copy className="w-3.5 h-3.5" />
                         <span className="hidden sm:inline">{t('copy')}</span>
                       </button>
+                      {freeSlots > 0 && (
+                        <button
+                          onClick={() => openBulkDelete('week')}
+                          className="flex items-center justify-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 font-semibold text-xs hover:bg-red-100 transition-colors"
+                          title={t('deleteAll')}
+                          aria-label={t('deleteAll')}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">{t('deleteAll')}</span>
+                        </button>
+                      )}
                     </>
+                  )}
+                  {viewMode === 'day' && selectedDayFreeCount > 0 && !selectedDayIsPast && (
+                    <button
+                      onClick={() => openBulkDelete('day')}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-50 border border-red-100 text-red-600 font-semibold text-xs hover:bg-red-100 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      {t('deleteAll')}
+                    </button>
                   )}
                 </div>
               </div>
@@ -434,6 +476,17 @@ export default function PlanningDashboard() {
                     weekOffset={weekOffset}
                     saving={saving}
                     onCopyWeek={handleCopyWeek}
+                    onClose={closeModal}
+                  />
+                )}
+                {modalState.type === 'bulk-delete' && (
+                  <ConfirmDeleteSlotsModal
+                    scope={modalState.scope}
+                    label={modalState.label}
+                    emptyCount={modalState.emptyCount}
+                    bookedCount={modalState.bookedCount}
+                    saving={saving}
+                    onConfirm={() => handleBulkDeleteSlots(modalState.type === 'bulk-delete' ? modalState.slotIds : [])}
                     onClose={closeModal}
                   />
                 )}

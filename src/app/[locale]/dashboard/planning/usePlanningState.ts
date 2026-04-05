@@ -18,6 +18,7 @@ export type ModalState =
   | { type: 'closed' }
   | { type: 'add-slots'; day: string }
   | { type: 'copy-week' }
+  | { type: 'bulk-delete'; scope: 'day' | 'week'; slotIds: string[]; emptyCount: number; bookedCount: number; label: string }
   | { type: 'client-select'; slot: PlanningSlot }
   | { type: 'booking-details'; slot: PlanningSlot; customer: CustomerSearchResult | null; isNewCustomer: boolean };
 
@@ -264,6 +265,26 @@ export function usePlanningState() {
       await fetchSlots();
       invalidateUpcoming();
     } catch { /* */ }
+    setModalState({ type: 'closed' });
+  };
+
+  const handleBulkDeleteSlots = async (slotIds: string[]) => {
+    if (!merchant || slotIds.length === 0) return;
+    setSaving(true);
+    try {
+      // Batch by 200 (API limit)
+      for (let i = 0; i < slotIds.length; i += 200) {
+        const chunk = slotIds.slice(i, i + 200);
+        await fetch('/api/planning', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ merchantId: merchant.id, slotIds: chunk }),
+        });
+      }
+      await fetchSlots();
+      invalidateUpcoming();
+    } catch { /* */ }
+    setSaving(false);
     setModalState({ type: 'closed' });
   };
 
@@ -541,7 +562,7 @@ export function usePlanningState() {
     // Actions
     saving, setSaving, saved,
     handleTogglePlanning, handleAddSlots, handleUpdateSlot,
-    handleDeleteSlot, handleMoveSlot, handleCopyWeek,
+    handleDeleteSlot, handleBulkDeleteSlots, handleMoveSlot, handleCopyWeek,
     openEditSlot, openAddSlotsModal,
     proceedToBookingDetails, goBackToClientSelect,
     fetchClientHistory,
