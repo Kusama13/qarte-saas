@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       logger.error('[WIN-BACK] Error fetching merchants:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     if (!merchants || merchants.length === 0) {
@@ -118,7 +118,8 @@ export async function GET(request: NextRequest) {
     const { data: merchants, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      logger.error('Admin win-back DB error:', error);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({

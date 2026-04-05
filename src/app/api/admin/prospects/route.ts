@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
 import { z } from 'zod';
+import logger from '@/lib/logger';
 
 const prospectSchema = z.object({
   business_name: z.string().min(1, 'Nom requis'),
@@ -37,7 +38,8 @@ export async function GET(request: NextRequest) {
     const { data, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      logger.error('Admin prospects DB error:', error);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     // Also get counts per status
@@ -95,7 +97,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      logger.error('Admin prospects DB error:', error);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ prospect: data }, { status: 201 });
@@ -152,7 +155,8 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      logger.error('Admin prospects DB error:', error);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ prospect: data });
@@ -181,7 +185,8 @@ export async function DELETE(request: NextRequest) {
       .eq('id', id);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      logger.error('Admin prospects DB error:', error);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       logger.error('Error fetching announcements:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     // Fetch dismissal counts for each announcement
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       logger.error('Error creating announcement:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ announcement: data }, { status: 201 });
@@ -192,7 +192,7 @@ export async function PATCH(request: NextRequest) {
 
     if (error) {
       logger.error('Error updating announcement:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ announcement: data });
@@ -247,7 +247,7 @@ export async function DELETE(request: NextRequest) {
 
     if (error) {
       logger.error('Error deleting announcement:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

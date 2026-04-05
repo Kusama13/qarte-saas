@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
 
       logger.error('Merchant creation error', error);
       return NextResponse.json(
-        { error: error.message },
+        { error: 'Erreur serveur' },
         { status: 500 }
       );
     }

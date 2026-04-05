@@ -2,9 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerSupabaseClient } from '@/lib/supabase';
 import webpush from 'web-push';
+import { z } from 'zod';
 import { containsForbiddenWords } from '@/lib/content-moderation';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import logger from '@/lib/logger';
+
+const pushSendSchema = z.object({
+  merchantId: z.string().uuid().optional(),
+  customerId: z.string().uuid().optional(),
+  customerIds: z.array(z.string().uuid()).max(5000).optional(),
+  filterType: z.string().max(50).optional(),
+  payload: z.object({
+    title: z.string().min(1).max(200),
+    body: z.string().min(1).max(500),
+    icon: z.string().max(500).optional(),
+    url: z.string().max(500).optional(),
+    tag: z.string().max(100).optional(),
+  }),
+});
 
 interface PushSubscriptionRecord {
   id: string;
@@ -12,14 +27,6 @@ interface PushSubscriptionRecord {
   endpoint: string;
   p256dh: string;
   auth: string;
-}
-
-interface PushPayload {
-  title: string;
-  body: string;
-  icon?: string;
-  url?: string;
-  tag?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -64,20 +71,14 @@ export async function POST(request: NextRequest) {
       vapidPrivateKey
     );
 
-    const { merchantId, customerId, customerIds, filterType, payload } = await request.json() as {
-      merchantId?: string;
-      customerId?: string;
-      customerIds?: string[]; // Optional: filter to specific customer IDs
-      filterType?: string; // Optional: filter type for history tracking
-      payload: PushPayload;
-    };
-
-    if (!payload || !payload.title || !payload.body) {
+    const parsed = pushSendSchema.safeParse(await request.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Payload invalide (title et body requis)' },
+        { error: 'Données invalides' },
         { status: 400 }
       );
     }
+    const { merchantId, customerId, customerIds, filterType, payload } = parsed.data;
 
     // Server-side content moderation (C8)
     const forbiddenWord = containsForbiddenWords(`${payload.title} ${payload.body}`);
@@ -339,13 +340,7 @@ export async function POST(request: NextRequest) {
       total: subscriptions.length,
     });
   } catch (error) {
-    const err = error as Error;
     logger.error('Send push error:', error);
-    logger.error('Error stack:', err?.stack);
-    logger.error('Error message:', err?.message);
-    return NextResponse.json(
-      { error: 'Erreur serveur', details: err?.message || 'Unknown error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

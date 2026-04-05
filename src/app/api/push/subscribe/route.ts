@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     if (error) {
       logger.error('Error saving subscription:', error);
       return NextResponse.json(
-        { error: 'Erreur lors de l\'enregistrement', details: error.message },
+        { error: 'Erreur lors de l\'enregistrement' },
         { status: 500 }
       );
     }
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error('Subscribe error:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur', details: error instanceof Error ? error.message : 'Unknown' },
+      { error: 'Erreur serveur' },
       { status: 500 }
     );
   }

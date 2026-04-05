@@ -109,9 +109,7 @@ export async function POST(request: NextRequest) {
       results,
     });
   } catch (error) {
-    return NextResponse.json({
-      error: 'Erreur serveur',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 });
+    logger.error('Test emails error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }

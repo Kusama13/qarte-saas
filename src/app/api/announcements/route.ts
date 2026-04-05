@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       logger.error('Error dismissing announcement:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

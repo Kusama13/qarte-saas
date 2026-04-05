@@ -51,7 +51,8 @@ export async function GET(request: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('Offers DB error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 
   // Check if offer is expired
@@ -121,7 +122,8 @@ export async function POST(request: NextRequest) {
       .eq('id', merchantId);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      logger.error('Offers DB error:', error);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -160,7 +162,8 @@ export async function PATCH(request: NextRequest) {
       .eq('id', merchantId);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      logger.error('Offers DB error:', error);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
@@ -195,7 +198,8 @@ export async function DELETE(request: NextRequest) {
     .eq('id', merchantId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('Offers DB error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });

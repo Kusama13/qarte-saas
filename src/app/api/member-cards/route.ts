@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       logger.error('Error fetching member cards:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ memberCards });
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       logger.error('Error creating member card:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ memberCard });

@@ -178,7 +178,7 @@ export async function PATCH(
 
     if (error) {
       logger.error('Error extending member card:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ memberCard });
@@ -209,7 +209,7 @@ export async function DELETE(
 
     if (error) {
       logger.error('Error deleting member card:', error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

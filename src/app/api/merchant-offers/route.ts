@@ -26,7 +26,8 @@ export async function GET(request: NextRequest) {
       .limit(5);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      logger.error('Merchant offers DB error:', error);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
     return NextResponse.json({ offers: data || [] });
   }
@@ -55,7 +56,8 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('Merchant offers DB error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 
   return NextResponse.json({ offers: data || [] });
@@ -115,7 +117,8 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      logger.error('Merchant offers DB error:', error);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, offer });
@@ -193,7 +196,8 @@ export async function PATCH(request: NextRequest) {
       .eq('merchant_id', merchantId);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      logger.error('Merchant offers DB error:', error);
+      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
@@ -238,7 +242,8 @@ export async function DELETE(request: NextRequest) {
     .eq('merchant_id', merchantId);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    logger.error('Merchant offers DB error:', error);
+    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });
