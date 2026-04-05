@@ -71,6 +71,7 @@ export async function GET(
       offerVouchersRes,
       planningSlotsRes,
       planningBookingsRes,
+      pendingDepositsRes,
     ] = await Promise.all([
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
@@ -92,6 +93,8 @@ export async function GET(
       supabaseAdmin.from('vouchers').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('source', 'offer'),
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('slot_date', new Date().toISOString().split('T')[0]),
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).not('client_name', 'is', null).is('primary_slot_id', null).gte('slot_date', new Date().toISOString().split('T')[0]),
+      // Pending deposits: booked slots (future) with deposit required but not yet confirmed
+      supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('deposit_confirmed', false).not('client_name', 'is', null).is('primary_slot_id', null).gte('slot_date', new Date().toISOString().split('T')[0]),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -162,6 +165,7 @@ export async function GET(
         offerVouchers: offerVouchersRes.count || 0,
         planningSlotsCount: planningSlotsRes.count || 0,
         planningBookingsCount: planningBookingsRes.count || 0,
+        pendingDepositsCount: pendingDepositsRes.count || 0,
       },
       memberPrograms: memberProgramsRes.data || [],
       emailTrackings: emailTrackingsRes.data || [],

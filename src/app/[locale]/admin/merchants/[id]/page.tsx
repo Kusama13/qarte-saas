@@ -43,6 +43,7 @@ import {
   CalendarDays,
   FileText,
   CreditCard,
+  Hourglass,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl, formatDoubleDays, formatPhoneForWhatsApp, COUNTRY_FLAGS } from '@/lib/utils';
@@ -77,6 +78,7 @@ interface Stats {
   offerVouchers: number;
   planningSlotsCount: number;
   planningBookingsCount: number;
+  pendingDepositsCount: number;
 }
 
 interface MemberProgram {
@@ -302,7 +304,7 @@ export default function MerchantDetailPage() {
     totalCustomers: 0, activeCustomers: 0, totalVisits: 0, totalRedemptions: 0,
     pushSubscribers: 0, pushSent: 0, pendingPoints: 0, weeklyScans: 0,
     lastVisitDate: null, totalReferrals: 0, pendingReferrals: 0, completedReferrals: 0,
-    servicesCount: 0, photosCount: 0, welcomeVouchers: 0, offerVouchers: 0, planningSlotsCount: 0, planningBookingsCount: 0,
+    servicesCount: 0, photosCount: 0, welcomeVouchers: 0, offerVouchers: 0, planningSlotsCount: 0, planningBookingsCount: 0, pendingDepositsCount: 0,
   });
   const [memberPrograms, setMemberPrograms] = useState<MemberProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1017,6 +1019,12 @@ export default function MerchantDetailPage() {
             <StatCard icon={<StatIcon icon={Scissors} color="violet" />} value={stats.servicesCount} label="Prestations" />
             <StatCard icon={<StatIcon icon={Image} color="cyan" />} value={stats.photosCount} label="Photos" />
             <StatCard icon={<StatIcon icon={CalendarDays} color="indigo" />} value={`${stats.planningBookingsCount} / ${stats.planningSlotsCount}`} label="Reservations / creneaux" highlight={stats.planningBookingsCount > 0 ? 'green' : undefined} />
+            <StatCard
+              icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", stats.pendingDepositsCount > 0 ? "bg-amber-100" : "bg-gray-50")}><Hourglass className={cn("w-4 h-4", stats.pendingDepositsCount > 0 ? "text-amber-600" : "text-gray-400")} /></div>}
+              value={stats.pendingDepositsCount}
+              label="Resas en attente d'acompte"
+              highlight={stats.pendingDepositsCount > 0 ? 'amber' : undefined}
+            />
             <StatCard
               icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", merchant.bio ? "bg-green-50" : "bg-gray-50")}><FileText className={cn("w-4 h-4", merchant.bio ? "text-green-600" : "text-gray-400")} /></div>}
               value={merchant.bio ? 'Oui' : '—'} label="Bio renseignée"

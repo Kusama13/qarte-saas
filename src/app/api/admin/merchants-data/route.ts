@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('vouchers').select('merchant_id').limit(10000),
       supabaseAdmin.from('redemptions').select('merchant_id').limit(10000),
       supabaseAdmin.from('referrals').select('merchant_id').limit(10000),
-      supabaseAdmin.from('merchant_planning_slots').select('merchant_id, client_name').limit(10000),
+      supabaseAdmin.from('merchant_planning_slots').select('merchant_id, client_name, deposit_confirmed, slot_date').limit(10000),
     ]);
 
     // Super admin user_ids
@@ -141,13 +141,18 @@ export async function GET(request: NextRequest) {
       referralsCounts[r.merchant_id] = (referralsCounts[r.merchant_id] || 0) + 1;
     });
 
-    // Planning slots & bookings per merchant
+    // Planning slots & bookings per merchant (+ pending deposits on future booked slots)
     const slotsCounts: Record<string, number> = {};
     const bookingsCounts: Record<string, number> = {};
-    (slotsList || []).forEach((s: { merchant_id: string; client_name: string | null }) => {
+    const pendingDepositsCounts: Record<string, number> = {};
+    const todayDateStr = new Date().toISOString().split('T')[0];
+    (slotsList || []).forEach((s: { merchant_id: string; client_name: string | null; deposit_confirmed: boolean | null; slot_date: string }) => {
       slotsCounts[s.merchant_id] = (slotsCounts[s.merchant_id] || 0) + 1;
       if (s.client_name) {
         bookingsCounts[s.merchant_id] = (bookingsCounts[s.merchant_id] || 0) + 1;
+        if (s.deposit_confirmed === false && s.slot_date >= todayDateStr) {
+          pendingDepositsCounts[s.merchant_id] = (pendingDepositsCounts[s.merchant_id] || 0) + 1;
+        }
       }
     });
 
@@ -175,6 +180,7 @@ export async function GET(request: NextRequest) {
       referralsCounts,
       slotsCounts,
       bookingsCounts,
+      pendingDepositsCounts,
     });
   } catch (error) {
     logger.error('Merchants data API error:', error);

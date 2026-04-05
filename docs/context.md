@@ -413,7 +413,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `PATCH /api/customers/social` — MAJ liens sociaux (instagram_handle, tiktok_handle, facebook_url)
 
 ### Admin
-- `/api/admin/merchants/[id]` — GET stats (20 queries paralleles : clients, visites, redemptions, referrals, services, photos, planning slots+bookings, push, vouchers)/PATCH notes. Page detail affiche les liens externes du merchant (booking_url, deposit_link avec montant/%, review_link, reseaux sociaux)
+- `/api/admin/merchants/[id]` — GET stats (21 queries paralleles : clients, visites, redemptions, referrals, services, photos, planning slots+bookings, **resas en attente d'acompte**, push, vouchers)/PATCH notes. Page detail affiche les liens externes du merchant (booking_url, deposit_link avec montant/%, review_link, reseaux sociaux). StatCard "Resas en attente d'acompte" avec icone sablier + highlight ambre si > 0.
+- `/api/admin/merchants-data` — liste globale agregation : ajoute `pendingDepositsCounts` par merchant (derive de `slotsList` deja charge, zero query supplementaire). Badge orange sablier sur la ligne merchant dans `/admin/merchants` (desktop + mobile) pour reperer d'un coup d'oeil les merchants qui ont des resas bloquees.
 - `/api/admin/activity-feed` — Timeline activite (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, offres bienvenue, messages). Optimise : fetch merchants par IDs references uniquement
 - `/api/admin/announcements` — CRUD annonces
 - `/api/admin/tracking` — GET aggregation globale (12 queries paralleles) : funnel signup, engagement scans, feature adoption, push/email stats, planning/offres, croissance clients

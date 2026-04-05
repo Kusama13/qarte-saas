@@ -18,6 +18,7 @@ import {
   CalendarX,
   Download,
   ArrowUpDown,
+  Hourglass,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn, formatPhoneForWhatsApp } from '@/lib/utils';
@@ -42,6 +43,7 @@ interface MerchantsDataResponse {
   userEmails: Record<string, string>;
   servicesCounts: Record<string, number>;
   photosCounts: Record<string, number>;
+  pendingDepositsCounts?: Record<string, number>;
 }
 
 interface LifecycleStage {
@@ -193,7 +195,7 @@ function HealthDot({ score }: { score: number }) {
 // --- Shared Sub-Components ---
 
 /** Badges shown next to merchant name */
-function MerchantBadges({ isAdmin, noContact, pending, pwaInstalled, welcomeOffer, cagnotte, pageRemplie }: { isAdmin: boolean; noContact: boolean | null; pending: number; pwaInstalled: boolean; welcomeOffer: boolean; cagnotte: boolean; pageRemplie: boolean }) {
+function MerchantBadges({ isAdmin, noContact, pending, pendingDeposits, pwaInstalled, welcomeOffer, cagnotte, pageRemplie }: { isAdmin: boolean; noContact: boolean | null; pending: number; pendingDeposits: number; pwaInstalled: boolean; welcomeOffer: boolean; cagnotte: boolean; pageRemplie: boolean }) {
   return (
     <>
       {isAdmin && (
@@ -213,6 +215,15 @@ function MerchantBadges({ isAdmin, noContact, pending, pwaInstalled, welcomeOffe
         >
           <Shield className="w-3 h-3" />
           {pending}
+        </span>
+      )}
+      {pendingDeposits > 0 && (
+        <span
+          className="px-1.5 py-0.5 text-[10px] font-semibold bg-orange-100 text-orange-700 rounded-full flex-shrink-0 flex items-center gap-0.5"
+          title={`${pendingDeposits} resa${pendingDeposits > 1 ? 's' : ''} en attente d'acompte`}
+        >
+          <Hourglass className="w-3 h-3" />
+          {pendingDeposits}
         </span>
       )}
       {pwaInstalled && (
@@ -814,6 +825,7 @@ export default function AdminMerchantsPage() {
                   const today = data?.todayScans[merchant.id] || 0;
                   const customers = data?.customerCounts[merchant.id] || 0;
                   const pending = data?.pendingPoints[merchant.id] || 0;
+                  const pendingDeposits = data?.pendingDepositsCounts?.[merchant.id] || 0;
                   return (
                     <tr key={merchant.id} onClick={() => window.open(`/admin/merchants/${merchant.id}`, '_blank')} className="hover:bg-gray-50/50 transition-colors group cursor-pointer">
                       {/* Commercant */}
@@ -825,7 +837,7 @@ export default function AdminMerchantsPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                               <p className="font-medium text-gray-900 truncate max-w-[180px] text-sm">{merchant.shop_name}</p>
-                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} />
+                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pendingDeposits={pendingDeposits} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} />
                             </div>
                             <div className="flex items-center gap-2 text-[11px] text-gray-400">
                               {data?.userEmails[merchant.user_id] && (
@@ -914,6 +926,7 @@ export default function AdminMerchantsPage() {
               const today = data?.todayScans[merchant.id] || 0;
               const customers = data?.customerCounts[merchant.id] || 0;
               const pending = data?.pendingPoints[merchant.id] || 0;
+              const pendingDeposits = data?.pendingDepositsCounts?.[merchant.id] || 0;
               return (
                 <div key={merchant.id} onClick={() => window.open(`/admin/merchants/${merchant.id}`, '_blank')} className="bg-white rounded-xl border border-gray-100 shadow-sm px-3 py-2 cursor-pointer">
                   <div className="flex items-start justify-between gap-2">
@@ -924,7 +937,7 @@ export default function AdminMerchantsPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="font-medium text-gray-900 truncate text-sm">{merchant.shop_name}</p>
-                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} />
+                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pendingDeposits={pendingDeposits} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} />
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className={cn("px-1.5 py-0.5 text-[10px] font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>
