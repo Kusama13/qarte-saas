@@ -658,6 +658,8 @@ export default function PlanningDashboard() {
           serviceColorMap={serviceColorMap}
           locale={locale}
           merchantCountry={merchant?.country || 'FR'}
+          merchantName={merchant?.shop_name}
+          merchantAddress={merchant?.shop_address}
           depositPercent={merchant?.deposit_percent}
           depositAmount={merchant?.deposit_amount}
           onEditSlot={openEditSlot}

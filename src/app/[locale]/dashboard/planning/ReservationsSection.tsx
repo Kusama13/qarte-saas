@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Clock, ChevronRight, Pencil, X, ImageIcon, Download, Instagram, Check } from 'lucide-react';
+import { CalendarDays, CalendarPlus, Clock, ChevronRight, Pencil, X, ImageIcon, Download, Instagram, Check } from 'lucide-react';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot } from '@/types';
-import { formatTime, formatCurrency, toBCP47 } from '@/lib/utils';
+import { formatTime, formatCurrency, toBCP47, getTimezoneForCountry } from '@/lib/utils';
+import { downloadIcs } from '@/lib/ics';
 import { getSlotServiceIds, formatDate, formatDuration, colorBorderStyle, computeDepositAmount } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
 
@@ -16,6 +17,8 @@ interface ReservationsSectionProps {
   serviceColorMap: Map<string, string>;
   locale: string;
   merchantCountry: string;
+  merchantName?: string | null;
+  merchantAddress?: string | null;
   depositPercent?: number | null;
   depositAmount?: number | null;
   onEditSlot: (slot: PlanningSlot) => void;
@@ -33,7 +36,7 @@ interface DayGroup {
   slots: PlanningSlot[];
 }
 
-export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, depositPercent, depositAmount: depositFixed, onEditSlot, onConfirmDeposit, onCancelDeposit, deepLinkSlotId, onDeepLinkHandled }: ReservationsSectionProps) {
+export default function ReservationsSection({ slots, services, serviceColorMap, locale, merchantCountry, merchantName, merchantAddress, depositPercent, depositAmount: depositFixed, onEditSlot, onConfirmDeposit, onCancelDeposit, deepLinkSlotId, onDeepLinkHandled }: ReservationsSectionProps) {
   const t = useTranslations('planning');
   const [viewingSlot, setViewingSlot] = useState<PlanningSlot | null>(null);
   const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
@@ -139,6 +142,37 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
   const viewServices = viewingSlot ? getSlotServices(viewingSlot) : [];
   const viewDuration = viewingSlot ? getTotalDuration(viewingSlot) : null;
   const viewIsPast = viewingSlot ? viewingSlot.slot_date < todayStr : false;
+
+  const handleAddToCalendar = (slot: PlanningSlot) => {
+    const slotServices = getSlotServices(slot);
+    const duration = getTotalDuration(slot) || 60;
+    const serviceNames = slotServices.map(s => s.name).join(', ');
+    const title = serviceNames
+      ? `${slot.client_name} — ${serviceNames}`
+      : (slot.client_name || t('addToCalendar'));
+
+    const descLines: string[] = [];
+    if (serviceNames) descLines.push(serviceNames);
+    const total = slotServices.reduce((sum, s) => sum + (s.price || 0), 0);
+    if (total > 0) descLines.push(formatCurrency(total, merchantCountry, locale));
+    if (slot.client_phone) descLines.push(slot.client_phone);
+    if (slot.notes) descLines.push(slot.notes);
+    if (merchantName) descLines.push(`— ${merchantName}`);
+
+    const startTime = slot.start_time.length === 5 ? slot.start_time : slot.start_time.slice(0, 5);
+    downloadIcs(
+      {
+        uid: `qarte-slot-${slot.id}@qarte.fr`,
+        title,
+        description: descLines.join('\n') || undefined,
+        location: merchantAddress || undefined,
+        startLocal: `${slot.slot_date}T${startTime}`,
+        durationMinutes: duration,
+        timezone: getTimezoneForCountry(merchantCountry),
+      },
+      `reservation-${slot.slot_date}-${(slot.client_name || 'client').replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.ics`
+    );
+  };
 
   const renderDayGroup = (group: DayGroup) => (
     <div key={group.date} className={`bg-white rounded-2xl border shadow-sm overflow-hidden ${group.isPast ? 'border-gray-100 opacity-60' : group.isToday ? 'border-indigo-200 ring-1 ring-indigo-100' : 'border-gray-100'}`}>
@@ -453,6 +487,13 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                     {t('cancelDeposit')}
                   </button>
                 )}
+                <button
+                  onClick={() => handleAddToCalendar(viewingSlot)}
+                  className="mx-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 transition-colors"
+                >
+                  <CalendarPlus className="w-3.5 h-3.5" />
+                  {t('addToCalendar')}
+                </button>
                 <button
                   onClick={() => { setViewingSlot(null); onEditSlot(viewingSlot); }}
                   className="mx-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"

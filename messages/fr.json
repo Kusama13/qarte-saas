@@ -1590,6 +1590,7 @@
     "deleteNextSlot": "Supprimer le prochain",
     "viewDetails": "Voir",
     "editSlot": "Modifier",
+    "addToCalendar": "Ajouter à mon agenda",
     "confirmDeposit": "Confirmer l'acompte",
     "depositPending": "Acompte en attente",
     "depositConfirmed": "Acompte confirmé",

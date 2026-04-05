@@ -290,7 +290,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - 1 creneau = 1 ligne en DB (date + heure debut). `client_name IS NULL` = disponible, rempli = pris
 - Dashboard `/dashboard/planning` : 4 onglets (Creneaux, Reservations, Resa en ligne, Parametres)
   - **Creneaux** : vue semaine (drag & drop inter-jours), vue jour (timeline 8h-21h), ajout creneaux (heures predefinies + custom), copie semaine, story Instagram
-  - **Reservations** : tous les RDV reserves (a venir + passes), modal detail (prestations, duree, prix, acompte, notes, photos, historique client), bouton modifier + confirmer/annuler acompte
+  - **Reservations** : tous les RDV reserves (a venir + passes), modal detail (prestations, duree, prix, acompte, notes, photos, historique client), boutons modifier + confirmer/annuler acompte + **ajouter a mon agenda** (export .ics RFC 5545 client-side via `src/lib/ics.ts`, compatible Apple Calendar / Google Calendar, timezone merchant)
   - **Resa en ligne** : toggle activation, config acompte (lien, pourcentage ou montant fixe, message), info et warning si lien externe
   - **Parametres** : message libre public, conditions de reservation
 - **Couleurs services** : palette 10 couleurs attribuees automatiquement aux services, affichees sur les creneaux en vue semaine/jour
