@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Trophy,
   Undo2,
+  Cake,
 } from 'lucide-react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { Button } from '@/components/ui';
@@ -115,7 +116,7 @@ export function CustomerRewardsCombinedTab({
         if (vouchersRes.ok) {
           const data = await vouchersRes.json();
           const vouchers = (data.vouchers || []) as ExistingVoucher[];
-          setExistingVouchers(vouchers.filter(v => v.source === 'welcome' || v.source === 'offer'));
+          setExistingVouchers(vouchers.filter(v => v.source === 'welcome' || v.source === 'offer' || v.source === 'birthday'));
         }
 
         setLastRedemption(redemptionResult.data);
@@ -291,14 +292,14 @@ export function CustomerRewardsCombinedTab({
           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{tr('sectionActiveVouchers')}</p>
           <div className="space-y-2">
             {existingVouchers.map((v) => (
-              <div key={v.id} className="p-3 sm:p-4 rounded-xl border border-emerald-100 bg-emerald-50/50">
+              <div key={v.id} className={`p-3 sm:p-4 rounded-xl border ${v.source === 'birthday' ? 'border-pink-100 bg-pink-50/50' : 'border-emerald-100 bg-emerald-50/50'}`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-                    {v.source === 'welcome' ? <Sparkles className="w-5 h-5 text-emerald-600" /> : <Gift className="w-5 h-5 text-emerald-600" />}
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${v.source === 'birthday' ? 'bg-pink-100' : 'bg-emerald-100'}`}>
+                    {v.source === 'welcome' ? <Sparkles className="w-5 h-5 text-emerald-600" /> : v.source === 'birthday' ? <Cake className="w-5 h-5 text-pink-600" /> : <Gift className="w-5 h-5 text-emerald-600" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900 truncate">{v.reward_description}</p>
-                    <p className="text-[11px] text-gray-400">{v.source === 'welcome' ? to('welcomeOffer') : to('promoOffer')}</p>
+                    <p className="text-[11px] text-gray-400">{v.source === 'welcome' ? to('welcomeOffer') : v.source === 'birthday' ? to('birthdayGift') : to('promoOffer')}</p>
                   </div>
                 </div>
 

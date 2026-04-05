@@ -72,8 +72,10 @@ export default function CustomersPage() {
   const [filterPushOnly, setFilterPushOnly] = useState(false);
   const [filterWelcome, setFilterWelcome] = useState(false);
   const [filterPromo, setFilterPromo] = useState(false);
+  const [filterBirthday, setFilterBirthday] = useState(false);
   const [welcomeVoucherCustomerIds, setWelcomeVoucherCustomerIds] = useState<Set<string>>(new Set());
   const [offerVoucherCustomerIds, setOfferVoucherCustomerIds] = useState<Set<string>>(new Set());
+  const [birthdayVoucherCustomerIds, setBirthdayVoucherCustomerIds] = useState<Set<string>>(new Set());
   const [tier1RedeemedCards, setTier1RedeemedCards] = useState<Set<string>>(new Set());
   const [displayCount, setDisplayCount] = useState(50);
   const [activeFilter, setActiveFilter] = useState<'all' | 'inactive' | 'close' | 'reward'>('all');
@@ -115,19 +117,22 @@ export default function CustomersPage() {
         .select('customer_id, source')
         .eq('merchant_id', merchant.id)
         .eq('is_used', false)
-        .in('source', ['welcome', 'offer']),
+        .in('source', ['welcome', 'offer', 'birthday']),
     ]);
 
     // Build voucher sets
     const welcomeSet = new Set<string>();
     const offerSet = new Set<string>();
+    const birthdaySet = new Set<string>();
     for (const v of vouchersResult.data || []) {
       const vr = v as { customer_id: string; source: string };
       if (vr.source === 'welcome') welcomeSet.add(vr.customer_id);
       if (vr.source === 'offer') offerSet.add(vr.customer_id);
+      if (vr.source === 'birthday') birthdaySet.add(vr.customer_id);
     }
     setWelcomeVoucherCustomerIds(welcomeSet);
     setOfferVoucherCustomerIds(offerSet);
+    setBirthdayVoucherCustomerIds(birthdaySet);
 
     const cardsData = cardsResult.data;
 
@@ -274,6 +279,10 @@ export default function CustomersPage() {
     return customers.filter(c => offerVoucherCustomerIds.has(c.customer_id)).length;
   }, [customers, offerVoucherCustomerIds]);
 
+  const birthdayCount = useMemo(() => {
+    return customers.filter(c => birthdayVoucherCustomerIds.has(c.customer_id)).length;
+  }, [customers, birthdayVoucherCustomerIds]);
+
   useEffect(() => {
     let filtered = customers;
 
@@ -286,6 +295,9 @@ export default function CustomersPage() {
     }
     if (filterPromo) {
       filtered = filtered.filter((card) => offerVoucherCustomerIds.has(card.customer_id));
+    }
+    if (filterBirthday) {
+      filtered = filtered.filter((card) => birthdayVoucherCustomerIds.has(card.customer_id));
     }
 
     // Apply status filter
@@ -320,7 +332,7 @@ export default function CustomersPage() {
 
     setFilteredCustomers(filtered);
     setDisplayCount(50); // Reset pagination on filter change
-  }, [searchQuery, customers, filterPushOnly, filterWelcome, filterPromo, subscriberIds, welcomeVoucherCustomerIds, offerVoucherCustomerIds, activeFilter, merchant]);
+  }, [searchQuery, customers, filterPushOnly, filterWelcome, filterPromo, filterBirthday, subscriberIds, welcomeVoucherCustomerIds, offerVoucherCustomerIds, birthdayVoucherCustomerIds, activeFilter, merchant]);
 
   if (loading || merchantLoading) {
     return (
@@ -492,6 +504,24 @@ export default function CustomersPage() {
                 filterPromo ? 'bg-white/20 text-white' : 'bg-pink-100 text-pink-700'
               }`}>
                 {promoCount}
+              </span>
+            </button>
+          )}
+          {birthdayCount > 0 && (
+            <button
+              onClick={() => setFilterBirthday(!filterBirthday)}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                filterBirthday
+                  ? 'bg-fuchsia-500 text-white border-fuchsia-500 shadow-md shadow-fuchsia-200'
+                  : 'bg-white/50 text-gray-600 border-gray-200 hover:border-fuchsia-300 hover:bg-fuchsia-50'
+              }`}
+            >
+              <Cake className={`w-3.5 h-3.5 ${filterBirthday ? 'text-white' : 'text-fuchsia-500'}`} />
+              <span>{t('filterBirthday')}</span>
+              <span className={`px-1.5 py-0.5 text-xs font-bold rounded-full ${
+                filterBirthday ? 'bg-white/20 text-white' : 'bg-fuchsia-100 text-fuchsia-700'
+              }`}>
+                {birthdayCount}
               </span>
             </button>
           )}
