@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { formatPhoneNumber, validatePhone, getTrialStatus, getTimezoneForCountry } from '@/lib/utils';
-import { fromZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { setPhoneCookie } from '@/lib/customer-auth';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendBookingNotificationEmail } from '@/lib/email';
@@ -27,6 +27,36 @@ function timeToMinutes(time: string): number {
   return h * 60 + m;
 }
 
+/**
+ * Calcule la deadline d'acompte avec grace nuit silencieuse.
+ * Si la deadline brute (now + deadlineHours) tombe entre 22h et 9h heure merchant,
+ * elle est repoussee a 9h du matin pour ne pas forcer le merchant a confirmer en pleine nuit.
+ * Cap absolu : RDV - 4h.
+ */
+function computeDepositDeadline(
+  deadlineHours: number,
+  rdvDateTime: Date,
+  timezone: string
+): Date | null {
+  const now = new Date();
+
+  let deadline = new Date(now.getTime() + deadlineHours * 3600_000);
+
+  const deadlineInTz = toZonedTime(deadline, timezone);
+  const hourInTz = deadlineInTz.getHours();
+  if (hourInTz >= 22 || hourInTz < 9) {
+    const next9am = new Date(deadlineInTz);
+    if (hourInTz >= 22) next9am.setDate(next9am.getDate() + 1);
+    next9am.setHours(9, 0, 0, 0);
+    deadline = fromZonedTime(next9am, timezone);
+  }
+
+  const rdvMinus4h = new Date(rdvDateTime.getTime() - 4 * 3600_000);
+  if (rdvMinus4h.getTime() <= now.getTime()) return null;
+
+  return new Date(Math.min(deadline.getTime(), rdvMinus4h.getTime()));
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Rate limit
@@ -45,7 +75,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, deposit_link, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description')
       .eq('id', merchant_id)
       .single();
 
@@ -194,20 +224,13 @@ export async function POST(request: NextRequest) {
     if (hasDeposit) {
       baseData.deposit_confirmed = false;
 
-      // Compute deposit deadline
+      // Compute deposit deadline with night grace period (22h-9h → pushed to 9am)
       const deadlineHours = merchant.deposit_deadline_hours;
       if (deadlineHours) {
-        const bookingDeadline = new Date(Date.now() + deadlineHours * 60 * 60 * 1000);
         const tz = getTimezoneForCountry(merchant.country);
         const rdvTime = fromZonedTime(new Date(`${slot_date}T${targetSlot.start_time}:00`), tz);
-        const rdvMinus4h = new Date(rdvTime.getTime() - 4 * 60 * 60 * 1000);
-
-        if (rdvMinus4h.getTime() > Date.now()) {
-          baseData.deposit_deadline_at = new Date(
-            Math.min(bookingDeadline.getTime(), rdvMinus4h.getTime())
-          ).toISOString();
-        }
-        // RDV dans moins de 4h → pas de deadline, merchant gere manuellement
+        const deadline = computeDepositDeadline(deadlineHours, rdvTime, tz);
+        if (deadline) baseData.deposit_deadline_at = deadline.toISOString();
       }
     }
 
@@ -272,12 +295,18 @@ export async function POST(request: NextRequest) {
         ? Math.round(totalPrice * merchant.deposit_percent / 100)
         : null;
 
-    const safeDepositLink = merchant.deposit_link && !/^https?:\/\//i.test(merchant.deposit_link)
-      ? `https://${merchant.deposit_link}`
-      : merchant.deposit_link;
+    const normalizeLink = (url: string | null) =>
+      url && !/^https?:\/\//i.test(url) ? `https://${url}` : url;
 
-    const deposit = safeDepositLink ? {
-      link: safeDepositLink,
+    const links: Array<{ label: string | null; url: string }> = [];
+    const link1 = normalizeLink(merchant.deposit_link);
+    if (link1) links.push({ label: merchant.deposit_link_label || null, url: link1 });
+    const link2 = normalizeLink(merchant.deposit_link_2);
+    if (link2) links.push({ label: merchant.deposit_link_2_label || null, url: link2 });
+
+    const deposit = links.length > 0 ? {
+      link: links[0].url, // retro-compat
+      links,
       percent: merchant.deposit_percent || null,
       fixed_amount: merchant.deposit_amount ? Number(merchant.deposit_amount) : null,
       amount: depositAmount,

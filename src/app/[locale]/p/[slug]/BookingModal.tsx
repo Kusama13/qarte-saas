@@ -76,7 +76,12 @@ export default function BookingModal({
     total_price: number; total_duration: number;
   } | null>(null);
   const [depositResult, setDepositResult] = useState<{
-    link: string; percent: number | null; amount: number | null; message: string | null; deadline_hours: number | null;
+    link: string;
+    links?: Array<{ label: string | null; url: string }>;
+    percent: number | null;
+    amount: number | null;
+    message: string | null;
+    deadline_hours: number | null;
   } | null>(null);
 
   // Compute totals
@@ -201,7 +206,9 @@ export default function BookingModal({
         <div className="sticky top-0 z-10 bg-white rounded-t-3xl border-b border-gray-100 px-5 py-4 flex items-center justify-between">
           <div>
             <h3 className="text-base font-bold text-gray-900">
-              {step === 'confirm' ? t('bookingConfirmed') : t('bookSlot')}
+              {step === 'confirm'
+                ? (depositResult?.link ? t('bookingPending') : t('bookingConfirmed'))
+                : t('bookSlot')}
             </h3>
             <p className="text-xs text-gray-500 mt-0.5 capitalize">
               {formattedDate} {t('at')} {formatTime(slotTime, locale)}
@@ -422,8 +429,15 @@ export default function BookingModal({
                   </div>
                 </div>
 
-                <h3 className="text-center text-lg font-bold text-gray-900 mb-1">{t('bookingConfirmed')}</h3>
+                <h3 className="text-center text-lg font-bold text-gray-900 mb-1">
+                  {depositResult?.link ? t('bookingPending') : t('bookingConfirmed')}
+                </h3>
                 <p className="text-center text-xs text-gray-500 mb-4">{merchant.shop_name}</p>
+                {depositResult?.link && (
+                  <p className="text-center text-[13px] text-gray-600 mb-4 px-2">
+                    {t('depositPendingMessage')}
+                  </p>
+                )}
 
                 {/* Booking summary */}
                 <div className="rounded-xl bg-gray-50 px-4 py-3 mb-4 space-y-2">
@@ -452,7 +466,11 @@ export default function BookingModal({
                 </div>
 
                 {/* Deposit section */}
-                {depositResult && depositResult.link && (
+                {depositResult && depositResult.link && (() => {
+                  const depositLinks = depositResult.links && depositResult.links.length > 0
+                    ? depositResult.links
+                    : [{ label: null, url: depositResult.link }];
+                  return (
                   <div
                     className="rounded-2xl p-4 mb-4"
                     style={{ backgroundColor: `${p}0D`, border: `1px solid ${p}26` }}
@@ -477,23 +495,27 @@ export default function BookingModal({
                         )}
                       </div>
                     </div>
-                    {depositResult.deadline_hours && (
-                      <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 mb-3">
-                        <Clock className="w-3 h-3" />
-                        {t('depositDeadlineClient', { hours: depositResult.deadline_hours })}
-                      </div>
+                    {depositLinks.length > 1 && (
+                      <p className="text-[11px] font-semibold text-gray-500 mb-2">{t('depositChooseMethod')}</p>
                     )}
-                    <a
-                      href={depositResult.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
-                      style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
-                    >
-                      {t('payDeposit')}
-                    </a>
+                    <div className="space-y-2">
+                      {depositLinks.map((link, i) => (
+                        <a
+                          key={i}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full py-2.5 px-4 rounded-xl font-bold text-sm text-white transition-all flex items-center justify-between gap-2 shadow-sm hover:shadow-md"
+                          style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                        >
+                          <span>{link.label || t('payDeposit')}</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </a>
+                      ))}
+                    </div>
                   </div>
-                )}
+                  );
+                })()}
 
                 <button
                   type="button"

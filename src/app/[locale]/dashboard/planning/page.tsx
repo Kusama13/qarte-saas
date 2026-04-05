@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2 } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, formatTime, toBCP47, getCurrencySymbol } from '@/lib/utils';
@@ -36,7 +36,7 @@ export default function PlanningDashboard() {
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
-    depositLink, setDepositLink, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
+    depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     services,
     modalState, setModalState, closeModal,
     selectedTimes, setSelectedTimes, customTime, setCustomTime,
@@ -174,6 +174,11 @@ export default function PlanningDashboard() {
         deposit_link: autoBookingEnabled && depositLink.trim()
           ? (/^https?:\/\//i.test(depositLink.trim()) ? depositLink.trim() : `https://${depositLink.trim()}`)
           : null,
+        deposit_link_label: autoBookingEnabled && depositLink.trim() && depositLinkLabel.trim() ? depositLinkLabel.trim() : null,
+        deposit_link_2: autoBookingEnabled && depositLink2.trim()
+          ? (/^https?:\/\//i.test(depositLink2.trim()) ? depositLink2.trim() : `https://${depositLink2.trim()}`)
+          : null,
+        deposit_link_2_label: autoBookingEnabled && depositLink2.trim() && depositLink2Label.trim() ? depositLink2Label.trim() : null,
         deposit_percent: autoBookingEnabled && depositPercent ? parseInt(depositPercent) : null,
         deposit_amount: autoBookingEnabled && depositAmount ? parseFloat(depositAmount) : null,
         deposit_deadline_hours: autoBookingEnabled && depositDeadlineHours ? parseInt(depositDeadlineHours) : null,
@@ -720,17 +725,48 @@ export default function PlanningDashboard() {
                 </div>
 
                 <div className="p-4 sm:p-5 space-y-4">
-                  {/* Payment link */}
+                  {/* Payment links */}
                   <div>
                     <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('depositLinkLabel')}</label>
-                    <input
-                      type="url"
-                      value={depositLink}
-                      onChange={(e) => setDepositLink(e.target.value)}
-                      placeholder={t('depositLinkPlaceholder')}
-                      className={`w-full px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors ${linkMissing ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={depositLink}
+                        onChange={(e) => setDepositLink(e.target.value)}
+                        placeholder={t('depositLinkPlaceholder')}
+                        className={`flex-1 min-w-0 px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors ${linkMissing ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
+                      />
+                      <input
+                        type="text"
+                        value={depositLinkLabel}
+                        onChange={(e) => setDepositLinkLabel(e.target.value)}
+                        placeholder={t('depositLinkNamePlaceholder')}
+                        maxLength={20}
+                        className="w-24 sm:w-28 px-2.5 py-2 sm:py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors"
+                      />
+                    </div>
                     {linkMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositLinkRequired')}</p>}
+
+                    {/* Second payment link */}
+                    <div className="flex gap-2 mt-2">
+                      <input
+                        type="url"
+                        value={depositLink2}
+                        onChange={(e) => setDepositLink2(e.target.value)}
+                        placeholder={t('depositLink2Placeholder')}
+                        className="flex-1 min-w-0 px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors"
+                      />
+                      <input
+                        type="text"
+                        value={depositLink2Label}
+                        onChange={(e) => setDepositLink2Label(e.target.value)}
+                        placeholder={t('depositLinkNamePlaceholder')}
+                        maxLength={20}
+                        className="w-24 sm:w-28 px-2.5 py-2 sm:py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors"
+                      />
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-1.5">{t('depositLink2Hint')}</p>
+
                     <p className="text-[11px] text-gray-400 mt-2">
                       {t('depositLinkAffiliate')}{' '}
                       <a href="https://revolut.com/referral/?referral-code=judicasay3!APR1-26-VR-FR&geo-redirect" target="_blank" rel="noopener noreferrer" className="text-indigo-500 font-semibold hover:underline">
@@ -802,21 +838,28 @@ export default function PlanningDashboard() {
                       <button type="button" onClick={() => setDepositDeadlineHours('')}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${!depositDeadlineHours ? 'bg-gray-700 text-white shadow-sm' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                       >{t('depositDeadlineFree')}</button>
-                      {['12', '24', '48', '72'].map(v => (
+                      {['1', '2', '3', '4'].map(v => (
                         <button key={`d${v}`} type="button" onClick={() => setDepositDeadlineHours(v)}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositDeadlineHours === v ? 'bg-amber-500 text-white shadow-sm shadow-amber-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositDeadlineHours === v ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                         >{v}h</button>
                       ))}
                       <input
                         type="number"
-                        value={!['', '12', '24', '48', '72'].includes(depositDeadlineHours) ? depositDeadlineHours : ''}
+                        value={!['', '1', '2', '3', '4'].includes(depositDeadlineHours) ? depositDeadlineHours : ''}
                         onChange={(e) => setDepositDeadlineHours(e.target.value)}
                         placeholder={t('customHours')}
                         min={1}
-                        className="w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/20 border-gray-200"
+                        className="w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 border-gray-200"
                       />
                     </div>
                     <p className="text-[11px] text-gray-400 mt-1.5">{depositDeadlineHours ? t('depositDeadlineHint') : t('depositDeadlineFreeHint')}</p>
+                    {/* Night grace hint */}
+                    {depositDeadlineHours && (
+                      <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
+                        <Moon className="w-3.5 h-3.5 text-gray-400 shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-gray-500">{t('depositNightGraceHint')}</p>
+                      </div>
+                    )}
                   </div>
 
                 </div>

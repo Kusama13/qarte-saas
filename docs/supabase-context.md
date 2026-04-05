@@ -993,6 +993,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 087 | student_offer | merchants.student_offer_enabled BOOLEAN + student_offer_description TEXT |
 | 088 | booked_online | merchant_planning_slots.booked_online BOOLEAN DEFAULT false + booked_at TIMESTAMPTZ — distingue resa en ligne vs manuelle, timestamp de reservation |
 | 089 | planning_scale_indexes | 2 partial indexes sur merchant_planning_slots : `idx_planning_slots_deposit_deadline` (cron) + `idx_planning_slots_booked` (dashboard Reservations) — renforce perfs a 500 slots actifs |
+| 090 | deposit_second_link | merchants : +3 colonnes `deposit_link_label`, `deposit_link_2`, `deposit_link_2_label` — permet 2 moyens de paiement acompte (ex: Revolut + PayPal) affiches en liste de choix sur la modal reservation publique |
 
 ---
 

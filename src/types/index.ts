@@ -131,6 +131,9 @@ export interface Merchant {
   // Auto booking
   auto_booking_enabled: boolean;
   deposit_link: string | null;
+  deposit_link_label: string | null;
+  deposit_link_2: string | null;
+  deposit_link_2_label: string | null;
   deposit_percent: number | null;
   deposit_amount: number | null;
   deposit_deadline_hours: number | null;

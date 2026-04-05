@@ -67,9 +67,12 @@ export function usePlanningState() {
   const [bookingMessage, setBookingMessage] = useState('');
   const [autoBookingEnabled, setAutoBookingEnabled] = useState(false);
   const [depositLink, setDepositLink] = useState('');
+  const [depositLinkLabel, setDepositLinkLabel] = useState('');
+  const [depositLink2, setDepositLink2] = useState('');
+  const [depositLink2Label, setDepositLink2Label] = useState('');
   const [depositPercent, setDepositPercent] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
-  const [depositDeadlineHours, setDepositDeadlineHours] = useState('48');
+  const [depositDeadlineHours, setDepositDeadlineHours] = useState('1');
 
   // Services with duration
   const [services, setServices] = useState<ServiceWithDuration[]>([]);
@@ -134,9 +137,12 @@ export function usePlanningState() {
       setBookingMessage(merchant.booking_message || '');
       setAutoBookingEnabled(!!merchant.auto_booking_enabled);
       setDepositLink(merchant.deposit_link || '');
+      setDepositLinkLabel(merchant.deposit_link_label || '');
+      setDepositLink2(merchant.deposit_link_2 || '');
+      setDepositLink2Label(merchant.deposit_link_2_label || '');
       setDepositPercent(merchant.deposit_percent ? String(merchant.deposit_percent) : '');
       setDepositAmount(merchant.deposit_amount ? String(merchant.deposit_amount) : '');
-      setDepositDeadlineHours(merchant.deposit_deadline_hours != null ? String(merchant.deposit_deadline_hours) : '');
+      setDepositDeadlineHours(merchant.deposit_deadline_hours != null ? String(merchant.deposit_deadline_hours) : '1');
     }
   }, [merchant]);
 
@@ -546,7 +552,7 @@ export function usePlanningState() {
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
-    depositLink, setDepositLink, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
+    depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     // Services
     services,
     // Modal state machine
