@@ -15,7 +15,8 @@ import { Input } from '@/components/ui';
 import { AddressAutocomplete } from '@/components/ui/AddressAutocomplete';
 import { getSupabase } from '@/lib/supabase';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
-import type { Merchant } from '@/types';
+import { formatPhoneNumber } from '@/lib/utils';
+import type { Merchant, MerchantCountry } from '@/types';
 
 interface InfoSectionProps {
   merchant: Merchant;
@@ -74,9 +75,10 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
       case 'tiktok': return `https://tiktok.com/@${username}`;
       case 'snapchat': return `https://snapchat.com/add/${username}`;
       case 'whatsapp': {
-        // Accept phone number (digits only) or full wa.me URL
-        const digits = trimmed.replace(/[\s\-\+\(\)]/g, '');
-        return `https://wa.me/${digits}`;
+        // Accept phone number in any format (local 06xx, international 336xx, +33, etc.)
+        // formatPhoneNumber converts to E.164 without + based on merchant country
+        const e164 = formatPhoneNumber(trimmed, (merchant.country as MerchantCountry) || 'FR');
+        return `https://wa.me/${e164}`;
       }
     }
   };

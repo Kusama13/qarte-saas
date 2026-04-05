@@ -557,7 +557,9 @@ Design Apple Wallet, fond `bg-[#f7f6fb]`, greeting typographique, cartes avec he
 ### Carte Fidelite Client (`/customer/card/[merchantId]`)
 Header colore avec nom merchant. Boutons conditionnels dans le header : "Membre" (si member card active), "Reserver" (si `booking_url`), **"Infos"** (si `slug` — lien vers `/p/[slug]`, toujours affiche).
 
-**Prochains rendez-vous** : section `UpcomingAppointmentsSection` (si `planning_enabled` et RDV a venir). Max 3 RDV avec date longue, heure, services. Message "Contactez {shop} pour modifier ou annuler" (vouvoiement). Placee entre offre exclusive et tampons.
+**Prochains rendez-vous** : section `UpcomingAppointmentsSection` (si `planning_enabled` et RDV a venir). Design compact : card blanche avec **bordure 2px merchant primary color** + shadow coloree, icone header 7x7, items `rounded-lg` avec fond `${p}08` + bordure `${p}1a`, date+heure **inline** (heure en merchant color avec icone `Clock`), services en liste a puces colorees, status acompte en **pill badge** (amber `Hourglass` si en attente, emerald `Check` si confirme). Message "Pour modifier ou annuler, contactez {shop} sur ses reseaux" en footer dans la card avec liseret top. **Placee juste avant le bloc parrainage** (pas entre offre et tampons).
+**CardHeader — bouton sous le nom du merchant** : si `auto_booking_enabled && slug` → bouton unique **"Infos & reservations"** pointant vers `/p/[slug]` (la vitrine contient infos + resa Qarte). Sinon : boutons separes "Reserver" (vers `booking_url` externe) + "Infos" (vers `/p/[slug]`).
+**StampsSection — descriptions de recompenses** : plus de Playfair italic, remplace par `font-bold` sans serif, colore en `merchantColor` (palier 1) et `secondaryColor || merchantColor` (palier 2). Accents `amber-800` quand palier 1 ready, `violet-800` quand palier 2 unlocked.
 
 **Historique enrichi** : `HistorySection` affiche visites, ajustements, redemptions, vouchers + **RDV passes** (icone Calendar purple, noms services). API `/api/customers/card` retourne `upcomingAppointments` + `pastAppointments` en parallele.
 
@@ -595,7 +597,7 @@ Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette p
 8. Avantages exclusifs (anniversaire, parrainage, jours bonus)
 9. Galerie photos realisations (lightbox, grid 3 cols, max 6 photos depuis `merchant_photos`)
 10. Prestations (collapsible, ferme par defaut, "Mes prestations", icone gradient + glow)
-11. Reseaux sociaux (icones Instagram/Facebook/TikTok/WhatsApp/Snapchat)
+11. Reseaux sociaux (icones Instagram/Facebook/TikTok/WhatsApp/Snapchat). **WhatsApp auto-format** : si le merchant saisit `06 12 34 56 78` dans le dashboard, `normalizeSocialUrl('whatsapp')` dans `public-page/InfoSection.tsx` appelle `formatPhoneNumber()` pour convertir en E.164 selon `merchant.country` avant de generer `https://wa.me/33612345678`. Supporte les 10 pays PHONE_CONFIG.
 12. CTA merchant ("Cree ta page beaute gratuitement")
 
 **Design :** glassmorphism (`bg-white/70 backdrop-blur-sm border-white/60`) sur sections avantages, prestations, photos. Badge hero : "Qarte — La fidelite digitale des pros de la beaute et du bien-etre".

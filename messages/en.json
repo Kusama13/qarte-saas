@@ -2308,7 +2308,7 @@
     "demoPopupDesc": "Qarte gives your salon two tools: a digital loyalty card and an online storefront. Tap below to discover the storefront.",
     "demoPopupCta": "Got it!",
     "upcomingAppointments": "Your upcoming appointments",
-    "contactToModify": "Contact {shop} to change or cancel",
+    "contactToModify": "To reschedule or cancel, contact {shop} on their socials",
     "depositPending": "Deposit confirmation pending",
     "depositOk": "Deposit confirmed"
   },
@@ -2329,7 +2329,8 @@
   "cardHeader": {
     "memberVip": "VIP Member",
     "book": "Book",
-    "info": "Info"
+    "info": "Info",
+    "infoAndBook": "Info & bookings"
   },
   "birthdaySection": {
     "invalidDate": "This date doesn't exist (e.g., February 31)",

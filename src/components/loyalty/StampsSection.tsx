@@ -32,6 +32,7 @@ interface StampsSectionProps {
   isTier2Ready: boolean;
   effectiveTier1Redeemed: boolean;
   merchantColor: string;
+  secondaryColor?: string | null;
   rewardDescription: string;
   tier2Reward: string;
   doubleDaysEnabled?: boolean;
@@ -85,12 +86,14 @@ export default function StampsSection({
   isTier2Ready,
   effectiveTier1Redeemed,
   merchantColor,
+  secondaryColor,
   rewardDescription,
   tier2Reward,
   doubleDaysEnabled,
   doubleDaysOfWeek,
   completedCycles = 0,
 }: StampsSectionProps) {
+  const tier2Color = secondaryColor || merchantColor;
   const t = useTranslations('stampsSection');
   const locale = useLocale();
   const doubleDays = parseDoubleDays(doubleDaysOfWeek);
@@ -157,7 +160,12 @@ export default function StampsSection({
             })}
           </div>
 
-          <p className={`text-center text-sm font-medium italic ${isRewardReady && !effectiveTier1Redeemed ? 'text-amber-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
+          <p
+            className="text-center text-sm font-bold"
+            style={{
+              color: effectiveTier1Redeemed ? '#9ca3af' : (isRewardReady ? '#92400e' : merchantColor),
+            }}
+          >
             {rewardDescription || t('defaultReward')}
           </p>
         </div>
@@ -204,7 +212,12 @@ export default function StampsSection({
             })}
           </div>
 
-          <p className={`text-center text-sm font-medium italic ${isTier2Ready ? 'text-violet-800' : 'text-gray-500'}`} style={{ fontFamily: 'var(--font-playfair), Georgia, serif' }}>
+          <p
+            className="text-center text-sm font-bold"
+            style={{
+              color: isTier2Ready ? '#5b21b6' : tier2Color,
+            }}
+          >
             {tier2Reward || t('defaultTier2Reward')}
           </p>
         </div>

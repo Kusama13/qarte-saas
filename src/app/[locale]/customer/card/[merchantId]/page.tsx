@@ -945,6 +945,15 @@ export default function CustomerCardPage({
           )}
         </AnimatePresence>
 
+        {/* Upcoming Appointments — placé juste avant parrainage */}
+        {merchant.planning_enabled && upcomingAppointments.length > 0 && (
+          <UpcomingAppointmentsSection
+            appointments={upcomingAppointments}
+            merchantColor={merchant.primary_color}
+            shopName={merchant.shop_name}
+          />
+        )}
+
         {/* Bouton Parrainer un ami */}
         {merchant.referral_program_enabled && (card as LoyaltyCard & { referral_code?: string }).referral_code && (
           <motion.div
@@ -1030,15 +1039,6 @@ export default function CustomerCardPage({
         {/* Offre Exclusive */}
         {offer && <ExclusiveOffer offer={offer} merchantColor={merchant.primary_color} isPreview={isPreview} />}
 
-        {/* Upcoming Appointments */}
-        {merchant.planning_enabled && upcomingAppointments.length > 0 && (
-          <UpcomingAppointmentsSection
-            appointments={upcomingAppointments}
-            merchantColor={merchant.primary_color}
-            shopName={merchant.shop_name}
-          />
-        )}
-
         {/* Stamps / Cagnotte Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1070,6 +1070,7 @@ export default function CustomerCardPage({
               isTier2Ready={isTier2Ready}
               effectiveTier1Redeemed={effectiveTier1Redeemed}
               merchantColor={merchant.primary_color}
+              secondaryColor={merchant.secondary_color}
               rewardDescription={merchant.reward_description || ''}
               tier2Reward={tier2Reward}
               doubleDaysEnabled={merchant.double_days_enabled}

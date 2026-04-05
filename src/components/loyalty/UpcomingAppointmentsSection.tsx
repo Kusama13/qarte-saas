@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar } from 'lucide-react';
+import { CalendarDays, Hourglass, Check, Clock } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { formatTime } from '@/lib/utils';
@@ -46,61 +46,81 @@ export default function UpcomingAppointmentsSection({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.3 }}
-      className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 border border-gray-100/80 overflow-hidden mb-4"
+      className="mb-4"
     >
-      {/* Header */}
       <div
-        className="px-4 py-3 flex items-center gap-2.5"
-        style={{ backgroundColor: `${merchantColor}08` }}
+        className="bg-white rounded-2xl p-3.5"
+        style={{
+          border: `2px solid ${merchantColor}`,
+          boxShadow: `0 4px 16px -4px ${merchantColor}30`,
+        }}
       >
-        <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center"
-          style={{ backgroundColor: `${merchantColor}15` }}
-        >
-          <Calendar className="w-4 h-4" style={{ color: merchantColor }} />
+        {/* Header compact */}
+        <div className="flex items-center gap-2 mb-2.5">
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `${merchantColor}15` }}
+          >
+            <CalendarDays className="w-3.5 h-3.5" style={{ color: merchantColor }} />
+          </div>
+          <h3 className="text-[13px] font-bold text-gray-900">{t('upcomingAppointments')}</h3>
         </div>
-        <h3 className="text-sm font-bold text-gray-900">{t('upcomingAppointments')}</h3>
-      </div>
 
-      {/* Appointments list */}
-      <div className="px-4 py-3 space-y-2.5">
-        {appointments.map((appt) => {
-          const serviceNames = appt.planning_slot_services
-            .map(s => s.service?.name)
-            .filter(Boolean)
-            .join(', ');
+        {/* Appointments list */}
+        <div className="space-y-2 mb-2.5">
+          {appointments.map((appt) => {
+            const serviceNames = appt.planning_slot_services
+              .map(s => s.service?.name)
+              .filter((n): n is string => !!n);
 
-          return (
-            <div
-              key={appt.id}
-              className="flex items-start gap-3 p-3 rounded-xl bg-gray-50/80"
-              style={{ borderLeft: `3px solid ${merchantColor}` }}
-            >
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-gray-900 capitalize">
-                  {formatLongDate(appt.slot_date)}
-                </p>
-                <p className="text-sm text-gray-600 mt-0.5">
-                  {formatTime(appt.start_time, locale)}
-                </p>
-                {serviceNames && (
-                  <p className="text-xs text-gray-400 mt-1 truncate">{serviceNames}</p>
-                )}
-                {appt.deposit_confirmed === false && (
-                  <p className="text-[11px] font-semibold text-amber-600 mt-1">{t('depositPending')}</p>
-                )}
-                {appt.deposit_confirmed === true && (
-                  <p className="text-[11px] font-semibold text-emerald-600 mt-1">{t('depositOk')}</p>
+            return (
+              <div
+                key={appt.id}
+                className="rounded-lg px-3 py-2"
+                style={{ backgroundColor: `${merchantColor}08`, border: `1px solid ${merchantColor}1a` }}
+              >
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-baseline gap-1.5 flex-wrap min-w-0">
+                    <p className="text-[13px] font-black text-gray-900 capitalize leading-tight tracking-tight">
+                      {formatLongDate(appt.slot_date)}
+                    </p>
+                    <span className="inline-flex items-center gap-0.5 text-[12px] font-bold" style={{ color: merchantColor }}>
+                      <Clock className="w-3 h-3" />
+                      {formatTime(appt.start_time, locale)}
+                    </span>
+                  </div>
+                  {appt.deposit_confirmed === false && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 border border-amber-200 shrink-0">
+                      <Hourglass className="w-2.5 h-2.5 text-amber-700" />
+                      <span className="text-[10px] font-bold text-amber-800">{t('depositPending')}</span>
+                    </span>
+                  )}
+                  {appt.deposit_confirmed === true && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-100 border border-emerald-200 shrink-0">
+                      <Check className="w-2.5 h-2.5 text-emerald-700" />
+                      <span className="text-[10px] font-bold text-emerald-800">{t('depositOk')}</span>
+                    </span>
+                  )}
+                </div>
+                {serviceNames.length > 0 && (
+                  <ul className="mt-1.5 space-y-0.5">
+                    {serviceNames.map((name, i) => (
+                      <li key={i} className="flex items-start gap-1.5 text-[11px] text-gray-600">
+                        <span
+                          className="mt-[5px] w-1 h-1 rounded-full shrink-0"
+                          style={{ backgroundColor: merchantColor }}
+                        />
+                        <span className="truncate">{name}</span>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      {/* Footer contact message */}
-      <div className="px-4 pb-3">
-        <p className="text-[11px] text-gray-400 text-center italic">
+        <p className="text-[10px] text-gray-400 text-center pt-2 border-t border-gray-100">
           {t('contactToModify', { shop: shopName })}
         </p>
       </div>

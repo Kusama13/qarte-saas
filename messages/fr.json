@@ -2308,7 +2308,7 @@
     "demoPopupDesc": "Qarte donne a ton salon deux outils : une carte de fidelite digitale et une vitrine en ligne. Clique en bas pour decouvrir la vitrine.",
     "demoPopupCta": "Compris !",
     "upcomingAppointments": "Vos prochains rendez-vous",
-    "contactToModify": "Contactez {shop} pour modifier ou annuler",
+    "contactToModify": "Pour modifier ou annuler, contactez {shop} sur ses réseaux",
     "depositPending": "En attente de confirmation acompte",
     "depositOk": "Acompte confirmé"
   },
@@ -2329,7 +2329,8 @@
   "cardHeader": {
     "memberVip": "Membre VIP",
     "book": "Réserver",
-    "info": "Infos"
+    "info": "Infos",
+    "infoAndBook": "Infos & réservations"
   },
   "birthdaySection": {
     "invalidDate": "Cette date n\u2019existe pas (ex: 31 février)",
