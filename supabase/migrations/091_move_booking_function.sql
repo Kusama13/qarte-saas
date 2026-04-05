@@ -24,7 +24,7 @@ BEGIN
   FROM merchant_planning_slots
   WHERE id = p_source_slot_id AND merchant_id = p_merchant_id;
 
-  IF v_source IS NULL THEN
+  IF NOT FOUND THEN
     RETURN jsonb_build_object('success', false, 'error', 'source_not_found');
   END IF;
 
@@ -35,7 +35,7 @@ BEGIN
   -- 2. Reject multi-slot bookings (source has filler secondaries)
   IF EXISTS (
     SELECT 1 FROM merchant_planning_slots
-    WHERE primary_slot_id = p_source_slot_id LIMIT 1
+    WHERE primary_slot_id = p_source_slot_id
   ) THEN
     RETURN jsonb_build_object('success', false, 'error', 'multi_slot_not_supported');
   END IF;
@@ -52,7 +52,7 @@ BEGIN
     AND slot_date = p_target_date
     AND start_time = p_target_time;
 
-  IF v_target_existing IS NOT NULL THEN
+  IF FOUND THEN
     -- Target already booked → reject
     IF v_target_existing.client_name IS NOT NULL THEN
       RETURN jsonb_build_object('success', false, 'error', 'target_already_booked');
