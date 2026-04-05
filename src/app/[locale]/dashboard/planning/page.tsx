@@ -5,7 +5,8 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell } from 'lucide-react';
+import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import { AnimatePresence } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, formatTime, toBCP47, getCurrencySymbol } from '@/lib/utils';
@@ -67,6 +68,18 @@ export default function PlanningDashboard() {
 
   // Deposit validation error
   const [depositError, setDepositError] = useState<string | null>(null);
+
+  // Push notifications
+  const {
+    pushSupported,
+    pushPermission,
+    pushSubscribing,
+    pushSubscribed,
+    pushError,
+    subscribe: subscribePush,
+    isIOS,
+    isStandalone,
+  } = useMerchantPushNotifications();
 
   // Drag & drop state
   const [dragSlotId, setDragSlotId] = useState<string | null>(null);
@@ -860,6 +873,23 @@ export default function PlanningDashboard() {
                         <p className="text-[11px] text-gray-500">{t('depositNightGraceHint')}</p>
                       </div>
                     )}
+
+                    {/* Merchant validation reminder */}
+                    <div className="mt-2 rounded-xl bg-indigo-50/60 border border-indigo-100 p-3">
+                      <div className="flex items-start gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-indigo-100 flex items-center justify-center shrink-0">
+                          <Bell className="w-3.5 h-3.5 text-indigo-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-bold text-indigo-900 mb-0.5">{t('depositValidationTitle')}</p>
+                          <p className="text-[11px] text-indigo-800/80 leading-relaxed">{t('depositValidationBody')}</p>
+                        </div>
+                      </div>
+                      <div className="mt-2 pt-2 border-t border-indigo-100/80 flex items-start gap-2">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-gray-600 leading-relaxed">{t('depositEmailSpamWarning')}</p>
+                      </div>
+                    </div>
                   </div>
 
                 </div>
@@ -888,6 +918,45 @@ export default function PlanningDashboard() {
       {/* ── TAB: PARAMETRES ── */}
       {tab === 'settings' && (
         <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4 sm:space-y-0">
+          {/* Card: Notifications push */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
+            <div className="flex items-center justify-between gap-3 mb-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                  <Bell className="w-3.5 h-3.5 text-indigo-600" />
+                </div>
+                <h2 className="text-sm font-bold text-gray-800 truncate">{t('pushNotifTitle')}</h2>
+              </div>
+              {pushSubscribed ? (
+                <span className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
+                  <Check className="w-3 h-3" />
+                  {t('pushNotifActive')}
+                </span>
+              ) : pushSupported ? (
+                <button
+                  type="button"
+                  onClick={subscribePush}
+                  disabled={pushSubscribing || pushPermission === 'denied'}
+                  className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-xs font-bold disabled:opacity-50 hover:shadow-md transition-all"
+                >
+                  {pushSubscribing ? '...' : t('pushNotifEnable')}
+                </button>
+              ) : null}
+            </div>
+            <p className="text-[11px] text-gray-500 ml-9 leading-relaxed">
+              {pushSubscribed
+                ? t('pushNotifActiveHint')
+                : !pushSupported
+                  ? (isIOS && !isStandalone ? t('pushNotifIosPwa') : t('pushNotifUnsupported'))
+                  : pushPermission === 'denied'
+                    ? t('pushNotifDenied')
+                    : t('pushNotifHint')}
+            </p>
+            {pushError && (
+              <p className="text-[11px] text-red-500 font-medium ml-9 mt-1.5">{pushError}</p>
+            )}
+          </div>
+
           {/* Card: Message public */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <div className="flex items-center justify-between mb-1">

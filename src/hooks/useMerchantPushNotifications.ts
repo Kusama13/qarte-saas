@@ -31,8 +31,28 @@ export function useMerchantPushNotifications() {
     const supported = isPushSupported() || (isIOS && isStandalone && isIOSPushSupported());
     setPushSupported(supported);
     setPushPermission(getPermissionStatus());
-    setPushSubscribed(localStorage.getItem(LS_KEY) === 'true');
     setDismissed(localStorage.getItem(LS_DISMISSED_KEY) === 'true');
+
+    // Verify real subscription state via the SW — localStorage can be stale if iOS revoked the endpoint
+    (async () => {
+      if (!supported || !('serviceWorker' in navigator)) {
+        setPushSubscribed(false);
+        return;
+      }
+      try {
+        const reg = await navigator.serviceWorker.getRegistration('/dashboard');
+        const sub = reg ? await reg.pushManager.getSubscription() : null;
+        const isReallySubscribed = !!sub;
+        setPushSubscribed(isReallySubscribed);
+        if (isReallySubscribed) {
+          localStorage.setItem(LS_KEY, 'true');
+        } else {
+          localStorage.removeItem(LS_KEY);
+        }
+      } catch {
+        setPushSubscribed(localStorage.getItem(LS_KEY) === 'true');
+      }
+    })();
   }, [isIOS, isStandalone]);
 
   const subscribe = useCallback(async () => {

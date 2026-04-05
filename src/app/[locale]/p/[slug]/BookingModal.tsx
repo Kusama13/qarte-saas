@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Clock, ChevronRight, Loader2, Gift, CreditCard, CalendarDays } from 'lucide-react';
+import { X, Check, Clock, ChevronRight, Loader2, Gift, CreditCard, CalendarDays, Hourglass } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { formatTime, toBCP47, formatCurrency } from '@/lib/utils';
@@ -454,7 +454,11 @@ export default function BookingModal({
                     className="w-16 h-16 rounded-2xl flex items-center justify-center"
                     style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
                   >
-                    <CalendarDays className="w-8 h-8 text-white" />
+                    {depositResult?.link ? (
+                      <Hourglass className="w-8 h-8 text-white" />
+                    ) : (
+                      <CalendarDays className="w-8 h-8 text-white" />
+                    )}
                   </div>
                 </div>
 
@@ -549,15 +553,25 @@ export default function BookingModal({
                   );
                 })()}
 
-                <button
-                  type="button"
-                  onClick={() => router.push(`/customer/card/${merchant.id}`)}
-                  className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all flex items-center justify-center gap-2"
-                  style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
-                >
-                  {t('viewCard')}
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                {depositResult?.link ? (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="w-full py-3 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+                  >
+                    {t('close')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/customer/card/${merchant.id}`)}
+                    className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all flex items-center justify-center gap-2"
+                    style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                  >
+                    {t('viewCard')}
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
