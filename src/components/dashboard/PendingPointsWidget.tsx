@@ -92,21 +92,23 @@ export default function PendingPointsWidget({ merchantId, shieldEnabled, onShiel
     setBulkProcessing(true);
     try {
       const visitIds = visits.map(v => v.id);
-      const response = await fetch('/api/visits/moderate', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          visit_ids: visitIds,
-          action,
-          merchant_id: merchantId,
-        }),
-      });
+      // Batch by 100 (API max)
+      for (let i = 0; i < visitIds.length; i += 100) {
+        const chunk = visitIds.slice(i, i + 100);
+        const response = await fetch('/api/visits/moderate', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            visit_ids: chunk,
+            action,
+            merchant_id: merchantId,
+          }),
+        });
+        if (!response.ok) throw new Error('Bulk action failed');
+      }
 
-      if (!response.ok) throw new Error('Bulk action failed');
-
-      const result = await response.json();
       setVisits([]);
-      showToast(result.message || (action === 'confirm' ? t('allConfirmed') : t('allRejected')));
+      showToast(action === 'confirm' ? t('allConfirmed') : t('allRejected'));
     } catch (error) {
       showToast(t('bulkError'), 'error');
     } finally {

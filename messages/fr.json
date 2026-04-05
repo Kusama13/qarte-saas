@@ -1563,6 +1563,7 @@
     "clearSlot": "Libérer le créneau",
     "addSlotsTitle": "Ajouter des créneaux",
     "addCustomTime": "Ajouter",
+    "maxSlotsReached": "Limite de {max} créneaux par ajout atteinte",
     "createSlots": "Créer {count} créneau",
     "createSlotsPlural": "Créer {count} créneaux",
     "poweredByQarte": "Propulsé par Qarte",

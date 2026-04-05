@@ -1563,6 +1563,7 @@
     "clearSlot": "Free up the slot",
     "addSlotsTitle": "Add time slots",
     "addCustomTime": "Add",
+    "maxSlotsReached": "Limit of {max} slots per batch reached",
     "createSlots": "Create {count} slot",
     "createSlotsPlural": "Create {count} slots",
     "poweredByQarte": "Powered by Qarte",

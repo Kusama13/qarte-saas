@@ -390,7 +390,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `GET /api/planning?merchantId=&from=&to=` — Slots merchant (auth, join services avec noms+photos+result_photos+customer social) ou `&public=true` (dispo only, 30j). `&booked=true` filtre les creneaux reserves uniquement. `&customerId=` filtre par client
 - `POST /api/planning` — Creation batch creneaux (max 20/requete, 200 actifs total)
 - `PATCH /api/planning` — Marquer creneau pris/libre (client_name, phone, service_ids[], notes)
-- `DELETE /api/planning` — Supprimer creneaux (batch slotIds)
+- `DELETE /api/planning` — Supprimer creneaux (batch slotIds, max 200/requete, client batch si plus)
 - `POST /api/planning/copy-week` — Copier horaires d'une semaine vers une autre
 - `POST/DELETE /api/planning/photos` — Upload/suppression photos inspiration (max 3/creneau, magic bytes, rate limit)
 - `POST/DELETE /api/planning/result-photos` — Upload/suppression photos resultat (max 3/creneau, magic bytes, rate limit, helpers partages avec photos)
