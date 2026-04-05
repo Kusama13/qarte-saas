@@ -1,6 +1,7 @@
 import {
   HeroSection,
   SocialProofSection,
+  FeaturesGridSection,
   PageProSection,
   TestimonialsSection,
   PricingSection,
@@ -18,6 +19,7 @@ export default function LandingPageV4() {
       <main className="overflow-hidden">
         <HeroSection />
         <SocialProofSection />
+        <FeaturesGridSection />
         <LazyFideliteSection />
         <PageProSection />
         <TestimonialsSection />

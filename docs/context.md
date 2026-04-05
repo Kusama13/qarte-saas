@@ -48,7 +48,7 @@ src/
 │   └── [locale]/layout.tsx # Locale layout (NextIntlClientProvider, metadata)
 │
 ├── components/
-│   ├── landing/           # Hero, SocialProof, FideliteSection (light), PageProSection (dark), Testimonials, Pricing, FAQ, Footer
+│   ├── landing/           # Hero, SocialProof, FeaturesGridSection (grille 9 features), FideliteSection (light), PageProSection (dark), Testimonials, Pricing, FAQ, Footer
 │   ├── ui/                # Button, Input, Modal, Select, Badge, Toast, Skeleton
 │   ├── shared/            # Header, Footer, CookieBanner, QRScanner
 │   ├── dashboard/         # CustomerManagementModal, AdjustTab, RewardsCombinedTab, HistoryTab, JournalTab, DangerZone, PendingPointsWidget, OnboardingChecklist, ZeroScansCoach, MilestoneModal
@@ -534,7 +534,7 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 ## 10. Pages Principales
 
 ### Landing (`/`)
-Hero (mockup carte fidelite + floating badges: point ajoute, Google 4.9, parrainage, push Qarte) → SocialProof → FideliteSection (light, 4 blocs: programme+QR, relances+anniversaires, avis Google, journal client) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau, 10 features listees, prix annuel, badges confiance) → FAQ (11 questions) → Footer (FooterCta + FooterDark). Typo landing : titres de section en Playfair Display italic sur les mots gradient + surlignage indigo (sections light) ou sans surlignage (sections dark). Separateurs dot+traits. CTAs differencies : noir (FideliteSection), blanc (PageProSection), gradient violet (Hero). Grain texture SVG sur FideliteSection
+Hero (mockup carte fidelite + floating badges emojis: point ajoute, Google 4.9, parrainage, push Qarte) → SocialProof → FeaturesGridSection (grille 3x3, 9 features avec emojis: reservations, page pro, regles, fidelite, photos, suivi, rappels, relances, avis Google — cartes blanches animees framer-motion, fond blanc + ambient glow + grain) → FideliteSection (light, 4 blocs: programme+QR, relances+anniversaires, avis Google, journal client) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau, 10 features listees, prix annuel, badges confiance) → FAQ (11 questions) → Footer (FooterCta + FooterDark). Toutes les sections landing utilisent des emojis au lieu d'icones Lucide pour les badges et visuels decoratifs. Typo landing : titres de section en Playfair Display italic sur les mots gradient + surlignage indigo (sections light) ou sans surlignage (sections dark). Separateurs dot+traits. CTAs differencies : noir (FideliteSection), blanc (PageProSection), gradient violet (Hero). Grain texture SVG sur FideliteSection
 
 Hero titre : "La facon la plus simple de **remplir ton agenda et fidéliser tes clientes.**"
 Hero subtitle : "Crée ta vitrine digitale, reçois des réservations en ligne et fidélise tes clientes — tout est inclus, sans outil compliqué."

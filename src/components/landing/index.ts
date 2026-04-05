@@ -1,4 +1,5 @@
 export { FideliteSection } from './FideliteSection';
+export { FeaturesGridSection } from './FeaturesGridSection';
 export { HeroSection } from './HeroSection';
 export { SocialProofSection } from './SocialProofSection';
 export { TestimonialsSection } from './TestimonialsSection';

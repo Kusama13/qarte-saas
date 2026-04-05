@@ -1,15 +1,7 @@
 'use client';
 
 import {
-  Star,
   ChevronDown,
-  Sparkles,
-  Heart,
-  Check,
-  Users,
-  Bell,
-  Gift,
-  CalendarCheck,
 } from 'lucide-react';
 import { useInView } from '@/hooks/useInView';
 import { trackCtaClick } from '@/lib/analytics';
@@ -51,14 +43,14 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
                   : 'bg-gray-50 border-2 border-dashed border-gray-200'
               }`}>
                 {i < 7 ? (
-                  <Heart className="w-3.5 h-3.5 text-white fill-white" />
+                  <span className="text-[10px]">{'\u2764\uFE0F'}</span>
                 ) : (
                   <span className="text-[9px] font-bold text-gray-300">{i + 1}</span>
                 )}
               </div>
               {i === 6 && (
-                <div className="absolute -top-1 -right-1">
-                  <Sparkles className="w-3 h-3 text-rose-400" />
+                <div className="absolute -top-1 -right-1 text-[8px]">
+                  {'\u2728'}
                 </div>
               )}
             </div>
@@ -80,8 +72,8 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
           <div className="absolute -inset-1 bg-gradient-to-r from-rose-200/40 to-pink-200/40 rounded-2xl blur-md -z-10" />
           <div className="absolute top-0 right-0 w-20 h-20 bg-rose-200/30 rounded-full -mr-8 -mt-8 blur-xl" />
           <div className="relative flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-br from-rose-400 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-rose-400/40">
-              <Gift className="w-5 h-5 text-white" />
+            <div className="w-11 h-11 bg-gradient-to-br from-rose-400 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-rose-400/40 text-lg">
+              {'\uD83C\uDF81'}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[12px] font-extrabold text-gray-900">{t('mockupReward')}</p>
@@ -206,8 +198,8 @@ export function HeroSection() {
 
             {/* Toast "Point ajouté" */}
             <div className="hidden sm:flex absolute top-28 right-0 translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100 items-center gap-2 z-30">
-              <div className="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center">
-                <Check className="w-3.5 h-3.5 text-white" />
+              <div className="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center text-sm">
+                {'\u2705'}
               </div>
               <div>
                 <p className="text-[10px] font-bold text-gray-800">{t('badgePointAdded')}</p>
@@ -219,7 +211,7 @@ export function HeroSection() {
             <div className="hidden sm:flex absolute top-12 left-0 -translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-amber-200/50 border border-amber-200 z-30 flex-col items-center">
               <div className="flex gap-0.5 mb-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span key={i} className="text-sm">{'\u2B50'}</span>
                 ))}
               </div>
               <p className="text-[10px] font-bold text-gray-700 text-center">{t('badgeGoogleScore')}</p>
@@ -228,8 +220,8 @@ export function HeroSection() {
 
             {/* Floating referral badge */}
             <div className="hidden sm:flex absolute bottom-32 left-0 -translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-violet-200/40 border border-violet-100 z-30 items-center gap-2">
-              <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-pink-500 rounded-full flex items-center justify-center shadow-md shadow-violet-300/40">
-                <Users className="w-3.5 h-3.5 text-white" />
+              <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-pink-500 rounded-full flex items-center justify-center shadow-md shadow-violet-300/40 text-sm">
+                {'\uD83D\uDC65'}
               </div>
               <div>
                 <p className="text-[10px] font-bold text-gray-800">{t('badgeReferral')}</p>
@@ -240,8 +232,8 @@ export function HeroSection() {
             {/* Push notification Qarte */}
             <div className="hidden sm:flex absolute bottom-28 right-0 translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-indigo-200/40 border border-indigo-100 z-30 max-w-[200px]">
               <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-300/40">
-                  <Bell className="w-4 h-4 text-white" />
+                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-300/40 text-base">
+                  {'\uD83D\uDD14'}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[9px] font-bold text-indigo-600 uppercase tracking-wider">Qarte</p>
@@ -253,8 +245,8 @@ export function HeroSection() {
 
             {/* Booking badge */}
             <div className="hidden sm:flex absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-cyan-200/40 border border-cyan-100 items-center gap-2 z-30">
-              <div className="w-7 h-7 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center shadow-md shadow-cyan-300/40">
-                <CalendarCheck className="w-3.5 h-3.5 text-white" />
+              <div className="w-7 h-7 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center shadow-md shadow-cyan-300/40 text-sm">
+                {'\uD83D\uDCC5'}
               </div>
               <div>
                 <p className="text-[10px] font-bold text-gray-800">{t('badgeBooking')}</p>

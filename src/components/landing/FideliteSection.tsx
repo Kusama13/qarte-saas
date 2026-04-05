@@ -3,19 +3,9 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import {
-  Bell,
-  Heart,
-  Gift,
-  Check,
   ChevronRight,
-  Sparkles,
-  Cake,
-  CalendarHeart,
-  Star,
   MousePointer2,
   ArrowRight,
-  Pin,
-  FileText,
 } from 'lucide-react';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
@@ -127,9 +117,7 @@ function ScanMethodsVisual({ t }: { t: (key: string) => string }) {
       </div>
 
       <div className="absolute -top-3 -right-3 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
-        <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
-          <Check className="w-3 h-3 text-white" />
-        </div>
+        <span className="text-sm">{'\u2705'}</span>
         <span className="text-xs font-bold text-white">{t('scanBadge')}</span>
       </div>
     </div>
@@ -174,8 +162,8 @@ function ProgramBrandVisual({ t }: { t: (key: string) => string }) {
               <p className="text-gray-400 text-[10px] font-medium">{t('programLabel')}</p>
               <p className="text-gray-800 font-bold text-sm">{t('programSalon')}</p>
             </div>
-            <div className="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <Heart className="w-3.5 h-3.5 text-indigo-500 fill-indigo-500" />
+            <div className="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center text-sm">
+              {'\uD83D\uDC9C'}
             </div>
           </div>
           <div className="grid grid-cols-5 gap-1.5 mb-3">
@@ -186,12 +174,12 @@ function ProgramBrandVisual({ t }: { t: (key: string) => string }) {
                   i < 6 ? 'bg-indigo-100' : 'border border-dashed border-indigo-200'
                 }`}
               >
-                {i < 6 && <Heart className="w-3 h-3 text-indigo-500 fill-indigo-500" />}
+                {i < 6 && <span className="text-[10px]">{'\uD83D\uDC9C'}</span>}
               </div>
             ))}
           </div>
           <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border border-gray-100">
-            <Gift className="w-3.5 h-3.5 text-indigo-500" />
+            <span className="text-sm">{'\uD83C\uDF81'}</span>
             <span className="text-gray-700 text-[11px] font-semibold">{t('programReward')}</span>
             <ChevronRight className="w-3 h-3 text-gray-300 ml-auto" />
           </div>
@@ -204,7 +192,7 @@ function ProgramBrandVisual({ t }: { t: (key: string) => string }) {
       </div>
 
       <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-violet-500 rounded-full px-3 py-1.5 shadow-lg shadow-violet-500/30 animate-float-subtle">
-        <Heart className="w-3.5 h-3.5 text-white fill-white" />
+        <span className="text-sm">{'\uD83D\uDC9C'}</span>
         <span className="text-xs font-bold text-white">{t('programBadge')}</span>
       </div>
     </div>
@@ -218,14 +206,14 @@ function InactivityVisual({ t }: { t: (key: string) => string }) {
       subtitle: t('inactivityNotif1Sub'),
       time: t('inactivityNotif1Time'),
       color: 'bg-indigo-500',
-      icon: <Sparkles className="w-5 h-5 text-white" />,
+      emoji: '\u2728',
     },
     {
       title: t('inactivityNotif2Title'),
       subtitle: t('inactivityNotif2Sub'),
       time: t('inactivityNotif2Time'),
       color: 'bg-violet-500',
-      icon: <Gift className="w-5 h-5 text-white" />,
+      emoji: '\uD83C\uDF81',
     },
   ];
 
@@ -241,8 +229,8 @@ function InactivityVisual({ t }: { t: (key: string) => string }) {
             transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: EASE }}
             className="flex items-start gap-3 bg-white backdrop-blur-sm rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
           >
-            <div className={`w-10 h-10 ${notif.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
-              {notif.icon}
+            <div className={`w-10 h-10 ${notif.color} rounded-xl flex items-center justify-center flex-shrink-0 text-lg`}>
+              {notif.emoji}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
@@ -256,7 +244,7 @@ function InactivityVisual({ t }: { t: (key: string) => string }) {
       </div>
 
       <div className="absolute -bottom-3 right-0 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
-        <Bell className="w-4 h-4 text-white" />
+        <span className="text-sm">{'\uD83D\uDD14'}</span>
         <span className="text-xs font-bold text-white">{t('inactivityBadge')}</span>
       </div>
     </div>
@@ -265,9 +253,9 @@ function InactivityVisual({ t }: { t: (key: string) => string }) {
 
 function AutoOffersVisual({ t }: { t: (key: string) => string }) {
   const offers = [
-    { name: t('autoOffer1'), label: t('autoOffer1Label'), color: 'bg-rose-500', icon: <Cake className="w-4 h-4 text-white" />, badge: t('autoOffer1Badge') },
-    { name: t('autoOffer2'), label: t('autoOffer2Label'), color: 'bg-pink-500', icon: <Heart className="w-4 h-4 text-white fill-white" />, badge: t('autoOffer2Badge') },
-    { name: t('autoOffer3'), label: t('autoOffer3Label'), color: 'bg-violet-500', icon: <CalendarHeart className="w-4 h-4 text-white" />, badge: t('autoOffer3Badge') },
+    { name: t('autoOffer1'), label: t('autoOffer1Label'), color: 'bg-rose-500', emoji: '\uD83C\uDF82', badge: t('autoOffer1Badge') },
+    { name: t('autoOffer2'), label: t('autoOffer2Label'), color: 'bg-pink-500', emoji: '\u2764\uFE0F', badge: t('autoOffer2Badge') },
+    { name: t('autoOffer3'), label: t('autoOffer3Label'), color: 'bg-violet-500', emoji: '\uD83D\uDC95', badge: t('autoOffer3Badge') },
   ];
 
   return (
@@ -282,15 +270,15 @@ function AutoOffersVisual({ t }: { t: (key: string) => string }) {
             transition={{ duration: 0.5, delay: 0.15 + i * 0.1, ease: EASE }}
             className="flex items-center gap-3 bg-white backdrop-blur-sm rounded-2xl p-4 shadow-lg shadow-gray-200/40 border border-gray-100 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300"
           >
-            <div className={`w-10 h-10 ${offer.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
-              {offer.icon}
+            <div className={`w-10 h-10 ${offer.color} rounded-xl flex items-center justify-center flex-shrink-0 text-lg`}>
+              {offer.emoji}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-gray-800 truncate">{offer.name}</p>
               <p className="text-xs text-gray-400">{offer.label}</p>
             </div>
             <div className="flex items-center gap-1 bg-emerald-50 rounded-full px-2.5 py-1 flex-shrink-0">
-              <Check className="w-3 h-3 text-emerald-500" />
+              <span className="text-[10px]">{'\u2705'}</span>
               <span className="text-[10px] font-bold text-emerald-600">{offer.badge}</span>
             </div>
           </motion.div>
@@ -298,7 +286,7 @@ function AutoOffersVisual({ t }: { t: (key: string) => string }) {
       </div>
 
       <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
-        <CalendarHeart className="w-4 h-4 text-white" />
+        <span className="text-sm">{'\uD83D\uDC95'}</span>
         <span className="text-xs font-bold text-white">{t('autoBadge')}</span>
       </div>
     </div>
@@ -315,8 +303,8 @@ function ReviewsVisual({ t }: { t: (key: string) => string }) {
     <div className="relative w-full max-w-[320px] mx-auto">
       <div className="bg-white backdrop-blur-sm rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center">
-            <Star className="w-4 h-4 text-white fill-white" />
+          <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center text-base">
+            {'\u2B50'}
           </div>
           <div>
             <p className="text-xs font-bold text-gray-800">{t('reviewsGoogleScore')}</p>
@@ -338,7 +326,7 @@ function ReviewsVisual({ t }: { t: (key: string) => string }) {
                 <span className="text-[11px] font-bold text-gray-600">{r.name}</span>
                 <div className="flex gap-0.5 ml-auto">
                   {[...Array(5)].map((_, j) => (
-                    <Star key={j} className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                    <span key={j} className="text-[10px]">{'\u2B50'}</span>
                   ))}
                 </div>
               </div>
@@ -354,13 +342,13 @@ function ReviewsVisual({ t }: { t: (key: string) => string }) {
           transition={{ duration: 0.4, delay: 0.4, ease: EASE }}
           className="mt-3 flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-2"
         >
-          <Check className="w-4 h-4 text-emerald-500" />
+          <span className="text-sm">{'\u2705'}</span>
           <span className="text-[11px] font-bold text-emerald-600">{t('reviewsAutoSent')}</span>
         </motion.div>
       </div>
 
       <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-amber-500 rounded-full px-3 py-1.5 shadow-lg shadow-amber-500/30 animate-float-subtle">
-        <Star className="w-4 h-4 text-white fill-white" />
+        <span className="text-sm">{'\u2B50'}</span>
         <span className="text-xs font-bold text-white">{t('reviewsBadge')}</span>
       </div>
     </div>
@@ -414,7 +402,7 @@ function JournalVisual({ t }: { t: (key: string) => string }) {
           className="bg-red-50/60 rounded-xl p-3 mb-2.5 border border-red-100/60"
         >
           <div className="flex items-center gap-1.5 mb-1">
-            <Pin className="w-3 h-3 text-red-400 rotate-45" />
+            <span className="text-[10px]">{'\uD83D\uDCCC'}</span>
             <span className="text-[10px] font-bold text-red-500">{t('journalPinned')}</span>
           </div>
           <p className="text-[11px] text-gray-600">{t('journalNote1')}</p>
@@ -437,7 +425,7 @@ function JournalVisual({ t }: { t: (key: string) => string }) {
       </div>
 
       <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-indigo-500 rounded-full px-3 py-1.5 shadow-lg shadow-indigo-500/30 animate-float-subtle">
-        <FileText className="w-4 h-4 text-white" />
+        <span className="text-sm">{'\uD83D\uDCCB'}</span>
         <span className="text-xs font-bold text-white">{t('journalBadge')}</span>
       </div>
     </div>
