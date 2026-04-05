@@ -47,6 +47,35 @@ function formatDuration(mins: number, locale: string): string {
   return m > 0 ? `${h}h${String(m).padStart(2, '0')}` : `${h}h`;
 }
 
+const PAYMENT_PROVIDER_RULES: Array<[RegExp, string]> = [
+  [/revolut\.(me|com)/, 'Revolut'],
+  [/paypal\.(com|me)/, 'PayPal'],
+  [/(lydia-app\.com|lydia\.me)/, 'Lydia'],
+  [/pumpkin-app\.com/, 'Pumpkin'],
+  [/wise\.com/, 'Wise'],
+  [/(stripe\.com|buy\.stripe\.com)/, 'Stripe'],
+  [/sumup\.(link|com)/, 'SumUp'],
+  [/buymeacoffee\.com/, 'Buy Me a Coffee'],
+  [/venmo\.com/, 'Venmo'],
+  [/cash\.app/, 'Cash App'],
+  [/zelle\.com/, 'Zelle'],
+  [/payconiq\.com/, 'Payconiq'],
+  [/twint/, 'Twint'],
+  [/monzo\.me/, 'Monzo'],
+];
+
+function detectPaymentProvider(url: string): string | null {
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+    for (const [pattern, label] of PAYMENT_PROVIDER_RULES) {
+      if (pattern.test(host)) return label;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default function BookingModal({
   merchant,
   services,
@@ -499,19 +528,22 @@ export default function BookingModal({
                       <p className="text-[11px] font-semibold text-gray-500 mb-2">{t('depositChooseMethod')}</p>
                     )}
                     <div className="space-y-2">
-                      {depositLinks.map((link, i) => (
-                        <a
-                          key={i}
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="w-full py-2.5 px-4 rounded-xl font-bold text-sm text-white transition-all flex items-center justify-between gap-2 shadow-sm hover:shadow-md"
-                          style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
-                        >
-                          <span>{link.label || t('payDeposit')}</span>
-                          <ChevronRight className="w-4 h-4" />
-                        </a>
-                      ))}
+                      {depositLinks.map((link, i) => {
+                        const label = link.label || detectPaymentProvider(link.url) || t('payDeposit');
+                        return (
+                          <a
+                            key={i}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full py-2.5 px-4 rounded-xl font-bold text-sm text-white transition-all flex items-center justify-between gap-2 shadow-sm hover:shadow-md"
+                            style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                          >
+                            <span>{label}</span>
+                            <ChevronRight className="w-4 h-4" />
+                          </a>
+                        );
+                      })}
                     </div>
                   </div>
                   );
