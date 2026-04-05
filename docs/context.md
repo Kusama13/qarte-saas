@@ -398,7 +398,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `POST /api/planning/copy-week` — Copier horaires d'une semaine vers une autre
 - `POST/DELETE /api/planning/photos` — Upload/suppression photos inspiration (max 3/creneau, magic bytes, rate limit)
 - `POST/DELETE /api/planning/result-photos` — Upload/suppression photos resultat (max 3/creneau, magic bytes, rate limit, helpers partages avec photos)
-- `POST /api/planning/shift-slot` — Decaler un creneau (newTime + newDate optionnel pour deplacements inter-jours, verifie UNIQUE)
+- `POST /api/planning/shift-slot` — Decaler un creneau (newTime + newDate optionnel pour deplacements inter-jours, verifie UNIQUE). Param `force?: boolean` : si `true` ET le slot source est booke → utilise la fonction Postgres atomique `move_booking()` (mig 091) qui transfere les champs booking + FKs (`planning_slot_services`, `planning_slot_photos`, `planning_slot_result_photos`, `customer_notes`) vers le slot cible. Source devient un slot libre dispo pour rebook, cible est reutilisee si existante vide ou creee si absente. Rejette les resas multi-creneaux (pas encore supporte). Bouton "Deplacer" dans `BookingDetailsModal` ouvre un overlay inline avec date picker + pills creneaux libres + input heure custom.
 
 ### Journal de suivi client
 - `GET/POST/PATCH/DELETE /api/customer-notes` — CRUD notes client (auth merchant, Zod)

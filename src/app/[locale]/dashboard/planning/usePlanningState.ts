@@ -294,21 +294,31 @@ export function usePlanningState() {
     setModalState({ type: 'closed' });
   };
 
-  const handleMoveSlot = async (slotId: string, newTime: string, newDate?: string) => {
-    if (!merchant) return;
+  const handleMoveSlot = async (slotId: string, newTime: string, newDate?: string, force?: boolean): Promise<{ success: boolean; error?: string }> => {
+    if (!merchant) return { success: false, error: 'Merchant non charge' };
     setSaving(true);
     try {
-      const payload: Record<string, string> = { merchantId: merchant.id, slotId, newTime };
+      const payload: Record<string, string | boolean> = { merchantId: merchant.id, slotId, newTime };
       if (newDate) payload.newDate = newDate;
-      await fetch('/api/planning/shift-slot', {
+      if (force) payload.force = true;
+      const res = await fetch('/api/planning/shift-slot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setSaving(false);
+        return { success: false, error: data.error || 'Erreur lors du deplacement' };
+      }
       await fetchSlots();
       invalidateUpcoming();
-    } catch { /* */ }
-    setSaving(false);
+      setSaving(false);
+      return { success: true };
+    } catch {
+      setSaving(false);
+      return { success: false, error: 'Erreur reseau' };
+    }
   };
 
   const fetchClientHistory = useCallback(async (customerId: string): Promise<PlanningSlot[]> => {

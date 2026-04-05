@@ -8,6 +8,9 @@ const shiftSlotSchema = z.object({
   slotId: z.string().uuid(),
   newTime: z.string().regex(/^\d{2}:\d{2}$/),
   newDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  // If true, delete an empty target slot to make room for the move (used when moving a booked slot).
+  // If false (default, used for drag & drop of empty slots), reject on any target conflict.
+  force: z.boolean().optional(),
 });
 
 // POST — shift a slot to a new time and/or date
@@ -27,7 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Donnees invalides' }, { status: 400 });
     }
 
-    const { merchantId, slotId, newTime, newDate } = parsed.data;
+    const { merchantId, slotId, newTime, newDate, force } = parsed.data;
 
     // Verify ownership
     const { data: merchant } = await supabase
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
     // Get the slot to shift
     const { data: slot } = await supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time')
+      .select('id, slot_date, start_time, client_name')
       .eq('id', slotId)
       .eq('merchant_id', merchantId)
       .single();
@@ -57,21 +60,47 @@ export async function POST(request: NextRequest) {
 
     const targetDate = newDate || slot.slot_date;
 
-    // Check no conflict with UNIQUE(merchant_id, slot_date, start_time)
+    // Booked slot with force flag → use the atomic RPC that transfers booking data
+    // (source stays in grid as a free slot, target is created or reused)
+    if (slot.client_name && force) {
+      const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('move_booking', {
+        p_merchant_id: merchantId,
+        p_source_slot_id: slotId,
+        p_target_date: targetDate,
+        p_target_time: newTime,
+      });
+      if (rpcErr) {
+        logger.error('Planning move_booking RPC error:', rpcErr);
+        return NextResponse.json({ error: 'Erreur lors du deplacement' }, { status: 500 });
+      }
+      const result = rpcData as { success: boolean; error?: string; target_id?: string };
+      if (!result.success) {
+        const errorMap: Record<string, { status: number; message: string }> = {
+          source_not_found: { status: 404, message: 'Creneau introuvable' },
+          source_not_booked: { status: 400, message: 'Le creneau n\'a pas de reservation' },
+          multi_slot_not_supported: { status: 400, message: 'Deplacement des resas multi-creneaux pas encore supporte' },
+          target_already_booked: { status: 409, message: 'Un RDV existe deja a cette heure' },
+        };
+        const mapped = errorMap[result.error || ''] || { status: 500, message: 'Erreur lors du deplacement' };
+        return NextResponse.json({ error: mapped.message }, { status: mapped.status });
+      }
+      return NextResponse.json({ success: true, target_id: result.target_id });
+    }
+
+    // Empty slot shift (drag & drop) — simple update path
     const { data: conflict } = await supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id')
+      .select('id, client_name')
       .eq('merchant_id', merchantId)
       .eq('slot_date', targetDate)
       .eq('start_time', newTime)
       .neq('id', slotId)
-      .single();
+      .maybeSingle();
 
     if (conflict) {
       return NextResponse.json({ error: 'Un creneau existe deja a cette heure' }, { status: 409 });
     }
 
-    // Update start_time and optionally slot_date
     const updateData: Record<string, string> = { start_time: newTime };
     if (newDate) updateData.slot_date = newDate;
 

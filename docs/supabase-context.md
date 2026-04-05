@@ -994,6 +994,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 088 | booked_online | merchant_planning_slots.booked_online BOOLEAN DEFAULT false + booked_at TIMESTAMPTZ — distingue resa en ligne vs manuelle, timestamp de reservation |
 | 089 | planning_scale_indexes | 2 partial indexes sur merchant_planning_slots : `idx_planning_slots_deposit_deadline` (cron) + `idx_planning_slots_booked` (dashboard Reservations) — renforce perfs a 500 slots actifs |
 | 090 | deposit_second_link | merchants : +3 colonnes `deposit_link_label`, `deposit_link_2`, `deposit_link_2_label` — permet 2 moyens de paiement acompte (ex: Revolut + PayPal) affiches en liste de choix sur la modal reservation publique |
+| 091 | move_booking_function | Fonction Postgres `move_booking(merchant_id, source_slot_id, target_date, target_time) RETURNS JSONB` — transfert atomique booking source → target (champs client + deposit + booked_online, et FKs `planning_slot_services`, `planning_slot_photos`, `planning_slot_result_photos`, `customer_notes`). Source devient vide, cible creee si absente ou reutilisee si vide, rejete si cible bookee ou multi-slot. `SECURITY DEFINER`, execute restreint a `service_role` |
 
 ---
 
