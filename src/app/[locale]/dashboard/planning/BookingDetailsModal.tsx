@@ -773,7 +773,7 @@ export default function BookingDetailsModal({
                 disabled={moving}
                 className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 transition-colors"
               >
-                {t('back')}
+                {t('cancel')}
               </button>
               <button
                 onClick={handleMoveConfirm}
