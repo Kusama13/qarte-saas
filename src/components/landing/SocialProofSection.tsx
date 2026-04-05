@@ -126,16 +126,15 @@ export async function SocialProofSection() {
 
   return (
     <section className="py-8 sm:py-10 bg-gray-50/50 overflow-hidden">
-      <div className="flex items-center justify-center gap-2 mb-6">
-        <div className="h-px w-8 bg-gray-200" />
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
+      <div className="flex items-center justify-center gap-3 mb-8 px-4">
+        <div className="h-px w-8 sm:w-12 bg-gray-200" />
+        <p className="text-base sm:text-xl font-bold text-gray-700 text-center">
           {t('taglinePre')}{' '}
           <span className="text-indigo-600">{t('taglineHighlight')}</span>{' '}
           {t('taglineMid')}{' '}
-          <span className="text-indigo-600">{t('taglineAction')}</span>{' '}
-          {t('taglineEnd')}
+          <span className="text-indigo-600">{t('taglineAction')}</span>
         </p>
-        <div className="h-px w-8 bg-gray-200" />
+        <div className="h-px w-8 sm:w-12 bg-gray-200" />
       </div>
 
       <div className="relative">
