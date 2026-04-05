@@ -468,11 +468,11 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
 
               {/* Footer */}
               <div className="p-4 border-t border-gray-100 space-y-2">
-                {/* Deposit confirm / cancel */}
+                {/* Deposit confirm / cancel — full width CTA when actionable */}
                 {viewingSlot.deposit_confirmed === false && onConfirmDeposit && (
                   <button
                     onClick={() => { onConfirmDeposit(viewingSlot); }}
-                    className="mx-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
                   >
                     <Check className="w-3.5 h-3.5" />
                     {t('confirmDeposit')}
@@ -481,26 +481,29 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                 {viewingSlot.deposit_confirmed === true && onCancelDeposit && (
                   <button
                     onClick={() => { onCancelDeposit(viewingSlot); }}
-                    className="mx-auto flex items-center justify-center gap-2 px-5 py-2 rounded-xl bg-orange-50 text-orange-600 text-xs font-semibold hover:bg-orange-100 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-orange-50 text-orange-600 text-xs font-semibold hover:bg-orange-100 transition-colors"
                   >
                     <X className="w-3.5 h-3.5" />
                     {t('cancelDeposit')}
                   </button>
                 )}
-                <button
-                  onClick={() => handleAddToCalendar(viewingSlot)}
-                  className="mx-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gray-900 text-white text-xs font-bold hover:bg-gray-800 transition-colors"
-                >
-                  <CalendarPlus className="w-3.5 h-3.5" />
-                  {t('addToCalendar')}
-                </button>
-                <button
-                  onClick={() => { setViewingSlot(null); onEditSlot(viewingSlot); }}
-                  className="mx-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
-                >
-                  <Pencil className="w-3.5 h-3.5" />
-                  {t('editSlot')}
-                </button>
+                {/* Secondary + primary side by side */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleAddToCalendar(viewingSlot)}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-colors"
+                  >
+                    <CalendarPlus className="w-3.5 h-3.5" />
+                    {t('addToCalendar')}
+                  </button>
+                  <button
+                    onClick={() => { setViewingSlot(null); onEditSlot(viewingSlot); }}
+                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    {t('editSlot')}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>

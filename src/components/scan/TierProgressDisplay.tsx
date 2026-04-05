@@ -24,7 +24,7 @@ function getTierTarget(merchant: Merchant, stamps: number, tier1Redeemed: boolea
 }
 
 function getProgressGradient(tier2On: boolean | number | null | undefined, tier1Done: boolean, primaryColor: string, secondaryColor?: string | null) {
-  if (tier2On && tier1Done) return 'linear-gradient(90deg, #8b5cf6, #a78bfa)';
+  if (tier2On && tier1Done) return `linear-gradient(90deg, ${secondaryColor || primaryColor}, ${primaryColor})`;
   return `linear-gradient(90deg, ${primaryColor}, ${secondaryColor || primaryColor})`;
 }
 

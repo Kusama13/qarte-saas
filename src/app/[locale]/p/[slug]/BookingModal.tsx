@@ -296,7 +296,7 @@ export default function BookingModal({
                             ? t('depositFixedLabel')
                             : t('depositLabel', { percent: merchant.deposit_percent || 0 })}
                         </span>
-                        <span className="font-bold text-amber-600">
+                        <span className="font-bold" style={{ color: p }}>
                           {formatCurrency(
                             merchant.deposit_amount
                               ? Number(merchant.deposit_amount)
@@ -453,32 +453,42 @@ export default function BookingModal({
 
                 {/* Deposit section */}
                 {depositResult && depositResult.link && (
-                  <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4 mb-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-                        <CreditCard className="w-5 h-5 text-amber-600" />
+                  <div
+                    className="rounded-2xl p-4 mb-4"
+                    style={{ backgroundColor: `${p}0D`, border: `1px solid ${p}26` }}
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div
+                        className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: `${p}1A` }}
+                      >
+                        <CreditCard className="w-5 h-5" style={{ color: p }} />
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-amber-800">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-gray-500">
                           {depositResult.percent
                             ? t('depositRequired', { percent: depositResult.percent })
                             : t('depositFixedLabel')}
                         </p>
                         {depositResult.amount && (
-                          <p className="text-lg font-black text-amber-900 mt-1">
+                          <p className="text-xl font-black text-gray-900 leading-tight">
                             {formatCurrency(depositResult.amount, country, locale)}
                           </p>
                         )}
                       </div>
                     </div>
                     {depositResult.deadline_hours && (
-                      <p className="text-xs text-amber-600 mt-2">{t('depositDeadlineClient', { hours: depositResult.deadline_hours })}</p>
+                      <div className="flex items-center gap-1.5 text-[11px] font-medium text-gray-500 mb-3">
+                        <Clock className="w-3 h-3" />
+                        {t('depositDeadlineClient', { hours: depositResult.deadline_hours })}
+                      </div>
                     )}
                     <a
                       href={depositResult.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="mt-3 w-full py-2.5 rounded-xl font-bold text-sm text-white bg-amber-500 hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
+                      className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                      style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
                     >
                       {t('payDeposit')}
                     </a>

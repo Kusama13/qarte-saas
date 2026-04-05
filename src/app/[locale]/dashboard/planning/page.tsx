@@ -278,15 +278,7 @@ export default function PlanningDashboard() {
 
       {/* ── TABS ── */}
       <div className="grid grid-cols-2 sm:flex gap-1 bg-gray-100 p-1 rounded-xl mb-5 sm:w-fit">
-        {(['slots', 'reservations', 'online', 'settings'] as const).map(tabKey => {
-          const colors: Record<string, { active: string; inactive: string }> = {
-            slots: { active: 'bg-indigo-600 text-white', inactive: 'text-indigo-600 hover:bg-indigo-50' },
-            reservations: { active: 'bg-violet-600 text-white', inactive: 'text-violet-600 hover:bg-violet-50' },
-            online: { active: 'bg-emerald-600 text-white', inactive: 'text-emerald-600 hover:bg-emerald-50' },
-            settings: { active: 'bg-gray-700 text-white', inactive: 'text-gray-500 hover:bg-gray-200' },
-          };
-          const c = colors[tabKey];
-          return (
+        {(['slots', 'reservations', 'online', 'settings'] as const).map(tabKey => (
           <button
             key={tabKey}
             onClick={() => {
@@ -295,12 +287,11 @@ export default function PlanningDashboard() {
                 state.fetchReservations();
               }
             }}
-            className={`sm:px-5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${tab === tabKey ? c.active : c.inactive}`}
+            className={`sm:px-5 py-2 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${tab === tabKey ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-600 hover:bg-white'}`}
           >
             {tabKey === 'slots' ? t('tabSlots') : tabKey === 'reservations' ? t('tabReservations') : tabKey === 'online' ? t('tabOnline') : t('tabSettings')}
           </button>
-          );
-        })}
+        ))}
       </div>
 
       {/* Global error banner */}
@@ -674,15 +665,15 @@ export default function PlanningDashboard() {
       {tab === 'online' && (
         <div className="max-w-lg mx-auto space-y-4">
           {/* Hero card — Toggle + explanation */}
-          <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl border border-emerald-100 p-4 sm:p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-                  <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                  <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
                 </div>
                 <div className="min-w-0">
                   <h2 className="text-sm font-bold text-gray-900">{t('autoBookingTitle')}</h2>
-                  <p className="text-[11px] text-emerald-600/70 mt-0.5">{autoBookingEnabled ? t('autoBookingHint') : t('autoBookingOffHint')}</p>
+                  <p className="text-[11px] text-gray-500 mt-0.5">{autoBookingEnabled ? t('autoBookingHint') : t('autoBookingOffHint')}</p>
                 </div>
               </div>
               <button
@@ -690,7 +681,7 @@ export default function PlanningDashboard() {
                 role="switch"
                 aria-checked={autoBookingEnabled}
                 onClick={() => setAutoBookingEnabled(!autoBookingEnabled)}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${autoBookingEnabled ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 ${autoBookingEnabled ? 'bg-indigo-600' : 'bg-gray-300'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${autoBookingEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
@@ -737,7 +728,7 @@ export default function PlanningDashboard() {
                       value={depositLink}
                       onChange={(e) => setDepositLink(e.target.value)}
                       placeholder={t('depositLinkPlaceholder')}
-                      className={`w-full px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-colors ${linkMissing ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
+                      className={`w-full px-3 py-2 sm:px-3.5 sm:py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 transition-colors ${linkMissing ? 'border-red-300 bg-red-50/30' : 'border-gray-200'}`}
                     />
                     {linkMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositLinkRequired')}</p>}
                     <p className="text-[11px] text-gray-400 mt-2">
@@ -760,7 +751,7 @@ export default function PlanningDashboard() {
                     <div className="flex flex-wrap gap-1.5 mb-3">
                       {['10', '15', '20', '25', '30'].map(v => (
                         <button key={`p${v}`} type="button" onClick={() => { setDepositPercent(v); setDepositAmount(''); }}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositPercent === v ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositPercent === v ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                         >{v}%</button>
                       ))}
                       <input
@@ -770,7 +761,7 @@ export default function PlanningDashboard() {
                         placeholder={t('customPercent')}
                         min={1}
                         max={100}
-                        className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
+                        className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
                       />
                     </div>
 
@@ -786,7 +777,7 @@ export default function PlanningDashboard() {
                     <div className="flex flex-wrap gap-1.5">
                       {['10', '15', '20', '25', '30'].map(v => (
                         <button key={`a${v}`} type="button" onClick={() => { setDepositAmount(v); setDepositPercent(''); }}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositAmount === v ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositAmount === v ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
                         >{v}{getCurrencySymbol(merchant?.country)}</button>
                       ))}
                       <input
@@ -795,7 +786,7 @@ export default function PlanningDashboard() {
                         onChange={(e) => { setDepositAmount(e.target.value); if (e.target.value) setDepositPercent(''); }}
                         placeholder={t('customAmount')}
                         min={1}
-                        className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
+                        className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
                       />
                     </div>
                     {amountMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositAmountRequired')}</p>}
@@ -838,7 +829,7 @@ export default function PlanningDashboard() {
           <button
             onClick={handleSaveSettings}
             disabled={savingSettings}
-            className={`w-full py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 shadow-md ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-200/50' : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-200/50'}`}
+            className={`w-full py-3 rounded-2xl font-bold text-sm transition-all disabled:opacity-50 shadow-md ${savedSettings ? 'bg-emerald-500 text-white shadow-emerald-200/50' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200/50'}`}
           >
             {savedSettings ? (
               <span className="flex items-center justify-center gap-2"><Check className="w-4 h-4" /> {t('saved')}</span>

@@ -437,7 +437,11 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 **Score programme** : cercle sticky 0-100% (recompense 25pts, logo 20pts, reseaux 15pts, avis 15pts, reservation 10pts, palier2 10pts, jours x2 5pts)
 
-**Boutons save unifies** : tous `bg-indigo-600 hover:bg-indigo-700` (default), `bg-emerald-600` (saved), `rounded-xl`, icone Check/Loader2. Coherent sur Ma Page, Programme, Parrainage, Parametres.
+**Boutons save unifies** : tous `bg-indigo-600 hover:bg-indigo-700` (default), `bg-emerald-600` (saved), `rounded-xl`, icone Check/Loader2. Coherent sur Ma Page, Programme, Parrainage, Parametres, Planning.
+
+**Planning module harmony** : tabs/hero/toggles/pills deposit/save button tous unifies en indigo (plus d'emerald/violet accent mixte). Emerald reserve au feedback "saved" et aux status success semantiques.
+
+**BookingModal vitrine — section acompte** : fond + bordure + icone + CTA "Payer acompte" utilisent les couleurs du merchant (`primary_color` / `secondary_color` via styles inline avec opacites hex `0D`/`1A`/`26`). Plus d'ambre. `RewardCard` et `TierProgressDisplay` : tier 2 = gradient inverse des couleurs merchant (plus de violet Qarte hardcode `#8B5CF6`).
 
 **Headers unifies** : tous `bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]` avec titre gradient `from-indigo-600 to-violet-600`.
 

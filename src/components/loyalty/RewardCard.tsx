@@ -21,7 +21,8 @@ interface RewardCardProps {
 }
 
 function getTierGradient(showingTier2: boolean, primary: string, secondary?: string): string {
-  if (showingTier2) return 'linear-gradient(135deg, #8B5CF6, #7C3AED)';
+  // Tier 2 reverses the gradient direction for subtle distinction, keeps merchant brand
+  if (showingTier2) return `linear-gradient(135deg, ${secondary || primary}, ${primary})`;
   return `linear-gradient(135deg, ${primary}, ${secondary || primary})`;
 }
 
