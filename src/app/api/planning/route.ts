@@ -132,7 +132,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
     }
 
-    // Check max 200 active future slots
+    // Check max 500 active future slots (~2 months for a busy salon)
+    const MAX_ACTIVE_SLOTS = 500;
     const supabaseAdmin = getSupabaseAdmin();
     const { data: planMerchant } = await supabaseAdmin
       .from('merchants')
@@ -146,8 +147,12 @@ export async function POST(request: NextRequest) {
       .eq('merchant_id', merchantId)
       .gte('slot_date', today);
 
-    if ((count || 0) + slots.length > 200) {
-      return NextResponse.json({ error: 'Maximum 200 créneaux actifs' }, { status: 400 });
+    const current = count || 0;
+    if (current + slots.length > MAX_ACTIVE_SLOTS) {
+      return NextResponse.json(
+        { error: `Maximum ${MAX_ACTIVE_SLOTS} créneaux actifs (vous en avez ${current}). Supprimez d'anciens créneaux pour en ajouter.` },
+        { status: 400 }
+      );
     }
 
     const rows = slots.map(s => ({

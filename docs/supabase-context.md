@@ -661,7 +661,7 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **RLS** : SELECT public (client_name IS NULL AND slot_date >= CURRENT_DATE), ALL merchant own
-**Indexes** : `idx_planning_slots_merchant_date`, `idx_planning_slots_customer` (partial, NOT NULL), `idx_planning_slots_primary_slot_id` (partial, NOT NULL), UNIQUE(merchant_id, slot_date, start_time)
+**Indexes** : `idx_planning_slots_merchant_date`, `idx_planning_slots_customer` (partial, NOT NULL), `idx_planning_slots_primary_slot_id` (partial, NOT NULL), `idx_planning_slots_deposit_deadline` (mig 089, partial : `deposit_confirmed=false AND deposit_deadline_at IS NOT NULL AND primary_slot_id IS NULL` — speed up cron deposit scan a 500 slots), `idx_planning_slots_booked` (mig 089, partial : `client_name IS NOT NULL` — speed up onglet Reservations dashboard), UNIQUE(merchant_id, slot_date, start_time)
 
 ### 2.36 planning_slot_services (mig 071)
 
@@ -992,6 +992,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 086 | deposit_deadline | merchant_planning_slots.deposit_deadline_at + merchants.deposit_deadline_hours — auto-liberation creneaux si acompte non confirme |
 | 087 | student_offer | merchants.student_offer_enabled BOOLEAN + student_offer_description TEXT |
 | 088 | booked_online | merchant_planning_slots.booked_online BOOLEAN DEFAULT false + booked_at TIMESTAMPTZ — distingue resa en ligne vs manuelle, timestamp de reservation |
+| 089 | planning_scale_indexes | 2 partial indexes sur merchant_planning_slots : `idx_planning_slots_deposit_deadline` (cron) + `idx_planning_slots_booked` (dashboard Reservations) — renforce perfs a 500 slots actifs |
 
 ---
 

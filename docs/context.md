@@ -276,7 +276,10 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Welcome email** : `sendWelcomeEmail` recoit le locale du merchant a la creation
 - **Admin pages** : hardcoded `'fr-FR'` acceptable (usage interne uniquement)
 
-### Planning (mig 063-074, 083-084)
+### Planning (mig 063-074, 083-086, 088-089)
+
+- **Limites** : 20 creneaux par batch de creation (Zod max), **500 creneaux futurs actifs max par merchant** (mig 089 ajoute 2 partial indexes pour tenir a cette echelle : deposit deadline + booked). Suppression bulk : 200 par requete (client boucle si plus).
+
 - Planning gere par le merchant — mode manuel (le client contacte) OU **reservation en ligne** (`auto_booking_enabled`, mig 083)
 - **Reservation en ligne** : le client clique un creneau sur `/p/[slug]`, coche ses prestations, entre son tel/prenom, et confirme. Blocage automatique des creneaux consecutifs selon la duree totale des services. Email notification au merchant (`BookingNotificationEmail`). API `POST /api/planning/book`
 - **Multi-slot booking** : quand la duree > 30min, les creneaux consecutifs sont bloques. Le slot principal a les `planning_slot_services`, les fillers ont `primary_slot_id` pointant vers le principal (mig 084). Filtre centralise dans `usePlanningState.slotsByDate`. Cascade PATCH (clear) et DELETE (supprime fillers)
