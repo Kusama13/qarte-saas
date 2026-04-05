@@ -553,25 +553,15 @@ export default function BookingModal({
                   );
                 })()}
 
-                {depositResult?.link ? (
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="w-full py-3 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
-                  >
-                    {t('close')}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => router.push(`/customer/card/${merchant.id}`)}
-                    className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all flex items-center justify-center gap-2"
-                    style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
-                  >
-                    {t('viewCard')}
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => router.push(`/customer/card/${merchant.id}`)}
+                  className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all flex items-center justify-center gap-2"
+                  style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                >
+                  {t('viewBookingsAndCard')}
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </motion.div>
             )}
           </AnimatePresence>

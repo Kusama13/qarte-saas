@@ -1970,6 +1970,9 @@
   },
   "programmeView": {
     "goThere": "Y aller",
+    "returningShortcutEyebrow": "Déjà client",
+    "returningShortcutTitle": "Mes RDV & fidélité",
+    "returningShortcutSubtitle": "Retrouve tes réservations et ta carte de fidélité",
     "hours": "Horaires",
     "closed": "Fermé",
     "conditions": "Conditions",
@@ -2664,7 +2667,8 @@
     "invalidPhone": "Numéro de téléphone invalide",
     "welcomeOfferHint": "Offre de bienvenue",
     "noModify": "Les rendez-vous ne sont ni modifiables ni annulables",
-    "viewCard": "Voir ma carte de fidélité"
+    "viewCard": "Voir ma carte de fidélité",
+    "viewBookingsAndCard": "Mes RDV & fidélité"
   },
   "merchantPush": {
     "promptTitle": "Active les notifications",

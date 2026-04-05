@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap } from 'lucide-react';
+import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import SimulatedCard from './SimulatedCard';
@@ -75,7 +75,7 @@ type MerchantPublic = Pick<
   | 'country'
 >;
 
-export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
+export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], isDemo = false, demoOffer, hasPhoneCookie = false }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null; hasPhoneCookie?: boolean }) {
   const t = useTranslations('programmeView');
   const locale = useLocale();
   const p = merchant.primary_color;
@@ -279,6 +279,55 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
       {/* ── CONTENU ── */}
       <div className="mx-auto lg:max-w-lg px-4 pb-20 space-y-3 relative">
+
+        {/* ── RETURNING VISITOR SHORTCUT ── */}
+        {hasPhoneCookie && !isDemo && (
+          <motion.a
+            href={`/customer/card/${merchant.id}`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18, duration: 0.4 }}
+            className="group relative block rounded-2xl overflow-hidden active:scale-[0.99] transition-transform"
+            style={{
+              background: `linear-gradient(135deg, ${p}, ${s})`,
+              boxShadow: `0 8px 24px -6px ${p}55, inset 0 0 0 1px rgba(255,255,255,0.12)`,
+            }}
+          >
+            {/* Shimmer sweep */}
+            <motion.div
+              animate={{ x: ['-150%', '200%'] }}
+              transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 6, ease: 'easeInOut' }}
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent skew-x-12 pointer-events-none"
+            />
+            {/* Radial glow */}
+            <div
+              className="absolute inset-0 pointer-events-none"
+              style={{ background: 'radial-gradient(circle at 85% 50%, rgba(255,255,255,0.18), transparent 60%)' }}
+            />
+            {/* Watermark icon */}
+            <CreditCard className="absolute -right-3 -bottom-3 w-24 h-24 text-white/10 pointer-events-none" strokeWidth={1.5} />
+
+            <div className="relative flex items-center gap-3.5 px-4 py-3.5">
+              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 bg-white/20 backdrop-blur-sm border border-white/30">
+                <CreditCard className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black text-white/70 uppercase tracking-[0.14em] mb-0.5">
+                  {t('returningShortcutEyebrow')}
+                </p>
+                <p className="text-[15px] font-black text-white leading-tight tracking-tight">
+                  {t('returningShortcutTitle')}
+                </p>
+                <p className="text-[11px] text-white/75 mt-0.5 font-medium truncate">
+                  {t('returningShortcutSubtitle')}
+                </p>
+              </div>
+              <div className="w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0 border border-white/30 group-hover:bg-white/30 transition-colors">
+                <ChevronRight className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          </motion.a>
+        )}
 
         {/* ── MINI BIO ── */}
         {merchant.bio && (

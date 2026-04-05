@@ -1970,6 +1970,9 @@
   },
   "programmeView": {
     "goThere": "Directions",
+    "returningShortcutEyebrow": "Already a client",
+    "returningShortcutTitle": "My bookings & loyalty",
+    "returningShortcutSubtitle": "Find your appointments and your loyalty card",
     "hours": "Hours",
     "closed": "Closed",
     "conditions": "Conditions",
@@ -2664,7 +2667,8 @@
     "invalidPhone": "Invalid phone number",
     "welcomeOfferHint": "Welcome offer",
     "noModify": "Appointments cannot be modified or cancelled",
-    "viewCard": "View my loyalty card"
+    "viewCard": "View my loyalty card",
+    "viewBookingsAndCard": "My bookings & loyalty"
   },
   "merchantPush": {
     "promptTitle": "Enable notifications",
