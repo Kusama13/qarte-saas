@@ -1546,7 +1546,7 @@
     "depositDeadlineFreeHint": "No deadline — the slot stays booked until you confirm manually.",
     "depositValidationTitle": "Your turn to validate fast",
     "depositValidationBody": "As soon as a client books and pays the deposit, you get an email and a push notification on the Qarte Pro app. Confirm the booking quickly to reassure your client.",
-    "depositEmailSpamWarning": "Check your spam folder if you don't receive our emails, and add contact@qarte.fr to your contacts to make sure you get everything.",
+    "depositEmailSpamWarning": "Check your spam folder if you don't receive our emails, and add contact@getqarte.com to your contacts to make sure you get everything.",
     "depositDeadlineBefore": "Before {date}",
     "customHours": "Other (h)",
     "depositSugg1": "A deposit is required to confirm your booking",

@@ -1546,7 +1546,7 @@
     "depositDeadlineFreeHint": "Aucun délai — le créneau reste bloqué jusqu'à confirmation manuelle.",
     "depositValidationTitle": "À toi de valider rapidement",
     "depositValidationBody": "Dès qu'un client réserve et paie son acompte, tu reçois un email et une notification push sur l'app Qarte Pro. Confirme la réservation au plus vite pour rassurer ton client.",
-    "depositEmailSpamWarning": "Pense à vérifier tes spams si tu ne reçois pas nos emails, et ajoute contact@qarte.fr à tes contacts pour être sûr de tout recevoir.",
+    "depositEmailSpamWarning": "Pense à vérifier tes spams si tu ne reçois pas nos emails, et ajoute contact@getqarte.com à tes contacts pour être sûr de tout recevoir.",
     "depositDeadlineBefore": "Avant le {date}",
     "customHours": "Autre (h)",
     "depositSugg1": "Un acompte est demandé pour confirmer votre réservation",

@@ -269,7 +269,7 @@ BENEFITS LIST:
 ✓ Notifications push
 
 CTA BUTTON: "7 jours gratuits" or "Essai gratuit"
-FOOTER: "qarte.fr | La fidélité simplifiée"
+FOOTER: "getqarte.com | La fidélité simplifiée"
 
 Style: Professional, trustworthy, modern SaaS marketing. Clean typography. High contrast. Print-ready A5 format.`,
     tips: [
@@ -305,7 +305,7 @@ BENEFITS:
 ✓ Avis Google boostés
 
 CTA: "Testez gratuitement 7 jours"
-FOOTER: "qarte.fr"
+FOOTER: "getqarte.com"
 
 Style: Upscale restaurant marketing, professional, clean lines, appetizing but not food-focused. B2B tone, convincing stats layout.`,
     tips: [
@@ -341,7 +341,7 @@ BENEFITS:
 ✓ Image premium
 
 CTA: "Démo gratuite de 5 min"
-FOOTER: "qarte.fr | Rejoignez 50+ salons"
+FOOTER: "getqarte.com | Rejoignez 50+ salons"
 
 Style: Clean, premium, modern salon marketing. Elegant typography. Professional B2B pitch targeting salon owners.`,
     tips: [
@@ -377,7 +377,7 @@ BENEFITS:
 ✓ Setup immédiat
 
 CTA: "Essai gratuit 7 jours"
-FOOTER: "qarte.fr | La fidélité simplifiée"
+FOOTER: "getqarte.com | La fidélité simplifiée"
 
 Style: Fashion-forward, chic, boutique marketing. Clean and sophisticated. Appeals to boutique owners who care about brand image.`,
     tips: [
@@ -413,7 +413,7 @@ BENEFITS:
 ✓ QR code unique
 
 CTA: "7 jours offerts"
-FOOTER: "qarte.fr"
+FOOTER: "getqarte.com"
 
 Style: Warm, inviting, coffee shop aesthetic but professional B2B marketing. Stats-driven, convincing.`,
     tips: [
@@ -449,7 +449,7 @@ BENEFITS:
 ✓ Zéro papier
 
 CTA: "Essai gratuit"
-FOOTER: "qarte.fr | La beauté de la fidélité"
+FOOTER: "getqarte.com | La beauté de la fidélité"
 
 Style: Luxurious, feminine, spa marketing. Clean, soft colors. Premium feel that matches high-end beauty institutes.`,
     tips: [

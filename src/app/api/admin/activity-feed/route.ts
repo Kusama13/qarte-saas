@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
+import { fromZonedTime } from 'date-fns-tz';
 import logger from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
@@ -8,33 +9,29 @@ export async function GET(request: NextRequest) {
   const { supabaseAdmin } = auth;
 
   try {
-    // Date parameter: "yesterday" or default to today
     const dateParam = request.nextUrl.searchParams.get('date');
 
-    // Today in Paris timezone
-    const now = new Date();
-    const parisOffset = new Intl.DateTimeFormat('fr-FR', {
-      timeZone: 'Europe/Paris',
+    // Compute Paris-midnight as UTC ISO for gte/lt on TIMESTAMPTZ columns
+    // (raw "YYYY-MM-DDT00:00:00" is interpreted as UTC by Postgres → off by DST offset)
+    const parisTz = 'Europe/Paris';
+    const todayStr = new Intl.DateTimeFormat('fr-CA', {
+      timeZone: parisTz,
       year: 'numeric', month: '2-digit', day: '2-digit',
-    }).format(now);
-    // parisOffset = "DD/MM/YYYY" → parse to YYYY-MM-DD
-    const [dd, mm, yyyy] = parisOffset.split('/');
+    }).format(new Date());
+    const todayStartUtc = fromZonedTime(`${todayStr}T00:00:00`, parisTz).toISOString();
 
     let periodStart: string;
     let periodEnd: string | null = null;
 
     if (dateParam === 'yesterday') {
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yOffset = new Intl.DateTimeFormat('fr-FR', {
-        timeZone: 'Europe/Paris',
+      const yStr = new Intl.DateTimeFormat('fr-CA', {
+        timeZone: parisTz,
         year: 'numeric', month: '2-digit', day: '2-digit',
-      }).format(yesterday);
-      const [yd, ym, yy] = yOffset.split('/');
-      periodStart = `${yy}-${ym}-${yd}T00:00:00`;
-      periodEnd = `${yyyy}-${mm}-${dd}T00:00:00`;
+      }).format(new Date(Date.now() - 86400000));
+      periodStart = fromZonedTime(`${yStr}T00:00:00`, parisTz).toISOString();
+      periodEnd = todayStartUtc;
     } else {
-      periodStart = `${yyyy}-${mm}-${dd}T00:00:00`;
+      periodStart = todayStartUtc;
     }
 
     // Fetch all data in parallel

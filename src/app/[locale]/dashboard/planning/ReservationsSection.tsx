@@ -162,7 +162,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
     const startTime = slot.start_time.length === 5 ? slot.start_time : slot.start_time.slice(0, 5);
     downloadIcs(
       {
-        uid: `qarte-slot-${slot.id}@qarte.fr`,
+        uid: `qarte-slot-${slot.id}@getqarte.com`,
         title,
         description: descLines.join('\n') || undefined,
         location: merchantAddress || undefined,

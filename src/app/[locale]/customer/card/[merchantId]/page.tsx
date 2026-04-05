@@ -1223,7 +1223,7 @@ export default function CustomerCardPage({
         )}
 
         <footer className="py-6 text-center">
-          <a href="https://www.qarte.fr" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
+          <a href="https://www.getqarte.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 group transition-all duration-300 hover:opacity-70">
             <span className="text-xs text-gray-400 group-hover:text-gray-500">{t('poweredBy')}</span>
             <span className="text-xs font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
               Qarte

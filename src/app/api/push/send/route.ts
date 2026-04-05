@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     // Configure web-push with VAPID keys at runtime
     webpush.setVapidDetails(
-      'mailto:contact@qarte.fr',
+      'mailto:contact@getqarte.com',
       vapidPublicKey,
       vapidPrivateKey
     );
