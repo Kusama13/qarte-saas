@@ -280,6 +280,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    sectionStatuses.push({ name: 'birthdayVouchers', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'birthdayVouchers', status: 'error', error: String(error) });
   }

@@ -409,7 +409,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - `PATCH /api/customers/social` — MAJ liens sociaux (instagram_handle, tiktok_handle, facebook_url)
 
 ### Admin
-- `/api/admin/merchants/[id]` — GET stats (20 queries paralleles : clients, visites, redemptions, referrals, services, photos, planning slots+bookings, push, vouchers)/PATCH notes
+- `/api/admin/merchants/[id]` — GET stats (20 queries paralleles : clients, visites, redemptions, referrals, services, photos, planning slots+bookings, push, vouchers)/PATCH notes. Page detail affiche les liens externes du merchant (booking_url, deposit_link avec montant/%, review_link, reseaux sociaux)
 - `/api/admin/activity-feed` — Timeline activite (scans, inscriptions, recompenses, nouveaux clients, vouchers, reservations planning, offres bienvenue, messages). Optimise : fetch merchants par IDs references uniquement
 - `/api/admin/announcements` — CRUD annonces
 - `/api/admin/tracking` — GET aggregation globale (12 queries paralleles) : funnel signup, engagement scans, feature adoption, push/email stats, planning/offres, croissance clients

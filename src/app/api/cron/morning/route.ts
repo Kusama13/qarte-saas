@@ -167,6 +167,7 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+    sectionStatuses.push({ name: 'trialEmails', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'trialEmails', status: 'error', error: String(error) });
   }
@@ -302,6 +303,7 @@ export async function GET(request: NextRequest) {
         url: '/dashboard/planning',
       }, pushPromises);
     }
+    sectionStatuses.push({ name: 'programReminders', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'programReminders', status: 'error', error: String(error) });
   }
@@ -517,6 +519,7 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+    sectionStatuses.push({ name: 'onboardingEmails', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'onboardingEmails', status: 'error', error: String(error) });
   }
@@ -665,6 +668,7 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+    sectionStatuses.push({ name: 'milestoneEmails', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'milestoneEmails', status: 'error', error: String(error) });
   }
@@ -785,6 +789,7 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+    sectionStatuses.push({ name: 'inactiveMerchants', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'inactiveMerchants', status: 'error', error: String(error) });
   }
@@ -864,6 +869,7 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+    sectionStatuses.push({ name: 'reactivation', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'reactivation', status: 'error', error: String(error) });
   }
@@ -985,6 +991,7 @@ export async function GET(request: NextRequest) {
         globalTrackingSet,
       });
     }
+    sectionStatuses.push({ name: 'lifecycleEmails', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'lifecycleEmails', status: 'error', error: String(error) });
   }
@@ -1103,6 +1110,7 @@ export async function GET(request: NextRequest) {
     oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
     const oneYearAgoISO = oneYearAgo.toISOString();
     await supabase.from('contact_messages').delete().lt('created_at', oneYearAgoISO);
+    sectionStatuses.push({ name: 'pendingReminders', status: 'ok' });
   } catch (error) {
     sectionStatuses.push({ name: 'pendingReminders', status: 'error', error: String(error) });
   }

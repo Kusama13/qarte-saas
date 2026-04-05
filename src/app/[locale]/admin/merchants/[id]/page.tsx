@@ -42,6 +42,7 @@ import {
   Globe,
   CalendarDays,
   FileText,
+  CreditCard,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { cn, generateQRCode, getScanUrl, formatDoubleDays, formatPhoneForWhatsApp, COUNTRY_FLAGS } from '@/lib/utils';
@@ -758,7 +759,7 @@ export default function MerchantDetailPage() {
       </div>
 
       {/* ═══════════ LIENS & RÉSEAUX ═══════════ */}
-      {(merchant.slug || merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url || merchant.booking_url || merchant.review_link) && (
+      {(merchant.slug || merchant.instagram_url || merchant.facebook_url || merchant.tiktok_url || merchant.snapchat_url || merchant.booking_url || merchant.review_link || merchant.deposit_link) && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <SectionTitle icon={<ExternalLink className="w-4 h-4 text-[#5167fc]" />}>Liens & Réseaux</SectionTitle>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -794,6 +795,25 @@ export default function MerchantDetailPage() {
             {merchant.booking_url && (
               <a href={merchant.booking_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 text-sm text-gray-700 hover:text-[#5167fc] transition-colors">
                 <Calendar className="w-4 h-4 flex-shrink-0" /><span className="truncate">Réservation</span>
+              </a>
+            )}
+            {merchant.deposit_link && (
+              <a
+                href={merchant.deposit_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-sm text-emerald-700 transition-colors"
+                title={merchant.deposit_link}
+              >
+                <CreditCard className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">
+                  Acompte
+                  {merchant.deposit_amount != null
+                    ? ` · ${merchant.deposit_amount}€`
+                    : merchant.deposit_percent != null
+                      ? ` · ${merchant.deposit_percent}%`
+                      : ''}
+                </span>
               </a>
             )}
             {merchant.review_link && (
