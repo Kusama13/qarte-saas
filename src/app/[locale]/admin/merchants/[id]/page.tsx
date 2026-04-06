@@ -314,6 +314,7 @@ export default function MerchantDetailPage() {
   const [emailCopied, setEmailCopied] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [emailTrackings, setEmailTrackings] = useState<{ reminder_day: number; sent_at: string }[]>([]);
+  const [upcomingBookings, setUpcomingBookings] = useState<Array<{ id: string; slot_date: string; start_time: string; client_name: string; deposit_confirmed: boolean | null }>>([]);
   const [qrOpen, setQrOpen] = useState(false);
 
   useEffect(() => {
@@ -326,6 +327,7 @@ export default function MerchantDetailPage() {
         setStats(data.stats);
         setMemberPrograms(data.memberPrograms || []);
         setEmailTrackings(data.emailTrackings || []);
+        setUpcomingBookings(data.upcomingBookings || []);
         if (data.userEmail) setUserEmail(data.userEmail);
       } catch (error) {
         console.error('Error fetching merchant data:', error);
@@ -1014,6 +1016,31 @@ export default function MerchantDetailPage() {
             ))}
           </div>
         </div>
+
+        {upcomingBookings.length > 0 && (
+          <div>
+            <SectionTitle icon={<CalendarDays className="w-4 h-4 text-indigo-600" />}>Prochaines reservations</SectionTitle>
+            <div className="space-y-1.5">
+              {upcomingBookings.map(b => (
+                <div key={b.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-50 border border-gray-100">
+                  <span className="text-xs font-bold text-gray-500 w-20 shrink-0">{b.slot_date} {b.start_time}</span>
+                  <span className="text-sm font-medium text-gray-800 truncate flex-1">{b.client_name}</span>
+                  {b.deposit_confirmed === false && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-[10px] font-bold text-amber-600 shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                      Acompte en attente
+                    </span>
+                  )}
+                  {b.deposit_confirmed === true && (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[10px] font-bold text-emerald-600 shrink-0">
+                      Acompte OK
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div>
           <SectionTitle icon={<FileText className="w-4 h-4 text-violet-600" />}>Contenu</SectionTitle>
