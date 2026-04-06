@@ -16,14 +16,12 @@ interface PhoneInputProps {
   onChange: (value: string) => void;
   country: MerchantCountry;
   onCountryChange: (country: MerchantCountry) => void;
-  /** Which countries to show in the dropdown */
   countries?: MerchantCountry[];
   label?: string;
   error?: string;
   required?: boolean;
   autoFocus?: boolean;
   className?: string;
-  /** Extra className for the outer wrapper */
   wrapperClassName?: string;
 }
 
@@ -41,22 +39,30 @@ export function PhoneInput({
   wrapperClassName,
 }: PhoneInputProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number } | null>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Position dropdown using fixed positioning (escapes overflow containers)
-  const updateDropdownPos = useCallback(() => {
+  const updateDropdownPosition = useCallback(() => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
-    setDropdownPos({ top: rect.bottom + 4, left: rect.left });
-  }, []);
+    const dropdownHeight = (countries.length * 40) + 10; // ~40px per item + padding
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
 
-  // Close dropdown on outside click or scroll
+    if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
+      // Open downward
+      setDropdownStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, zIndex: 100 });
+    } else {
+      // Open upward
+      setDropdownStyle({ position: 'fixed', bottom: window.innerHeight - rect.top + 4, left: rect.left, zIndex: 100 });
+    }
+  }, [countries.length]);
+
   useEffect(() => {
     if (!dropdownOpen) return;
-    updateDropdownPos();
+    updateDropdownPosition();
     const handleClose = (e: MouseEvent) => {
       if (
         dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
@@ -72,7 +78,7 @@ export function PhoneInput({
       document.removeEventListener('mousedown', handleClose);
       window.removeEventListener('scroll', handleScroll, true);
     };
-  }, [dropdownOpen, updateDropdownPos]);
+  }, [dropdownOpen, updateDropdownPosition]);
 
   const config = PHONE_CONFIG[country];
   const sortedCountries = useMemo(
@@ -88,31 +94,29 @@ export function PhoneInput({
 
   return (
     <div className={cn('w-full', wrapperClassName)}>
-      {label && (
-        <label className="label">{label}</label>
-      )}
+      {label && <label className="label">{label}</label>}
       <div className="relative flex">
-        {/* Country selector button */}
+        {/* Country selector */}
         <button
           ref={buttonRef}
           type="button"
           onClick={() => setDropdownOpen(!dropdownOpen)}
           className={cn(
-            'flex items-center gap-1 h-full px-3 border border-r-0 rounded-l-xl bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-700 shrink-0',
+            'flex items-center gap-1.5 h-full px-3 border border-r-0 rounded-l-xl bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-700 shrink-0',
             error ? 'border-red-300' : 'border-gray-300',
           )}
         >
-          <span className="text-base leading-none">{COUNTRY_FLAGS[country]}</span>
+          <span className="text-lg leading-none">{COUNTRY_FLAGS[country]}</span>
           <span className="text-xs text-gray-500">+{config.prefix}</span>
           <ChevronDown className="w-3 h-3 text-gray-400" />
         </button>
 
-        {/* Dropdown — fixed position to escape overflow containers */}
-        {dropdownOpen && dropdownPos && (
+        {/* Dropdown */}
+        {dropdownOpen && (
           <div
             ref={dropdownRef}
-            className="fixed z-[100] bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[200px] max-h-[240px] overflow-y-auto"
-            style={{ top: dropdownPos.top, left: dropdownPos.left }}
+            className="bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[210px]"
+            style={dropdownStyle}
           >
             {sortedCountries.map((c, i) => {
               const cfg = PHONE_CONFIG[c];
@@ -125,11 +129,11 @@ export function PhoneInput({
                     type="button"
                     onClick={() => handleCountrySelect(c)}
                     className={cn(
-                      'w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors',
+                      'w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors',
                       c === country && 'bg-indigo-50 text-indigo-700 font-medium',
                     )}
                   >
-                    <span className="text-base leading-none">{COUNTRY_FLAGS[c]}</span>
+                    <span className="text-lg leading-none">{COUNTRY_FLAGS[c]}</span>
                     <span className="flex-1 text-left">{COUNTRY_NAMES[c] || c}</span>
                     <span className="text-xs text-gray-400">+{cfg.prefix}</span>
                   </button>
@@ -155,9 +159,7 @@ export function PhoneInput({
           )}
         />
       </div>
-      {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );
 }

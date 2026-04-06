@@ -236,6 +236,7 @@ export default function ClientSelectModal({
             country={phoneCountry}
             onCountryChange={handlePhoneCountryChange}
             countries={['FR', 'BE', 'CH']}
+
             className="text-sm border-gray-200 rounded-r-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400"
           />
 
