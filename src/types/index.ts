@@ -90,6 +90,7 @@ export interface Merchant {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   billing_interval: 'monthly' | 'annual';
+  billing_period_start: string | null;
   subscription_status: SubscriptionStatus;
   onboarding_completed: boolean;
   shield_enabled: boolean;

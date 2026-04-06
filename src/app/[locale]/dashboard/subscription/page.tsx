@@ -86,7 +86,7 @@ export default function SubscriptionPage() {
       setToast({ type: 'success', message: t('successToast') });
       setPolling(true);
       const plan = searchParams.get('plan');
-      const price = plan === 'annual' ? 190 : 19;
+      const price = plan === 'annual' ? 240 : 24;
       const planType: 'monthly' | 'annual' = plan === 'annual' ? 'annual' : 'monthly';
       const currency = locale === 'en' ? 'USD' : 'EUR';
       fbEvents.subscribe(price, undefined, currency);

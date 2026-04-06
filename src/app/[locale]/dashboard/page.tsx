@@ -106,7 +106,7 @@ export default function DashboardPage() {
     firstName: string; lastName: string; birthMonth: number; birthDay: number;
   }>>([]);
   const birthdayDatesRef = useRef<Array<{ month: number; day: number }>>([]);
-  const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number; overageCount: number; overageCost: number } | null>(null);
+  const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number; overageCount: number; overageCost: number; periodStart: string } | null>(null);
 
   // Fetch SMS usage
   useEffect(() => {
@@ -755,6 +755,10 @@ export default function DashboardPage() {
         const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
         const pct = Math.min(100, Math.round((smsUsage.sent / 100) * 100));
         const isOverage = smsUsage.sent > 100;
+        const periodStartDate = new Date(smsUsage.periodStart);
+        const periodEndDate = new Date(periodStartDate);
+        periodEndDate.setMonth(periodEndDate.getMonth() + 1);
+        const fmtDate = (d: Date) => d.toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'short' });
         return (
           <div className={`backdrop-blur-xl border rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6 ${isPaid ? 'bg-white/80 border-white/20' : 'bg-amber-50/80 border-amber-200/40'}`}>
             <div className="flex items-center justify-between">
@@ -768,7 +772,10 @@ export default function DashboardPage() {
                 </div>
               </div>
               {isPaid && (
-                <span className="text-xs font-bold text-gray-700">{t('smsQuotaUsed', { sent: smsUsage.sent })}</span>
+                <div className="text-right">
+                  <span className="text-xs font-bold text-gray-700">{t('smsQuotaUsed', { sent: smsUsage.sent })}</span>
+                  <p className="text-[9px] text-gray-400">{fmtDate(periodStartDate)} — {fmtDate(periodEndDate)}</p>
+                </div>
               )}
             </div>
             {isPaid ? (

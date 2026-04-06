@@ -152,7 +152,7 @@ export default async function RootLayout({
             offers: [
               {
                 '@type': 'Offer',
-                price: '19',
+                price: '24',
                 priceCurrency: locale === 'en' ? 'USD' : 'EUR',
                 priceValidUntil: '2026-12-31',
                 url: `${baseUrl}/#pricing`,

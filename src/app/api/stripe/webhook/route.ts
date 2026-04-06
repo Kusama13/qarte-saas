@@ -63,6 +63,7 @@ export async function POST(request: Request) {
           billing_interval: session.metadata?.plan === 'annual' ? 'annual' : 'monthly',
           stripe_customer_id: session.customer as string,
           stripe_subscription_id: session.subscription as string,
+          billing_period_start: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
         .eq('id', merchantId)
@@ -102,9 +103,10 @@ export async function POST(request: Request) {
         const isAnnual = session.metadata?.plan === 'annual';
         const eventId = `sub_${merchantId}_${Date.now()}`;
         const currency = getCurrencyForCountry(merchant.country);
+        const paidAmount = session.amount_total ? session.amount_total / 100 : (isAnnual ? 240 : 24);
         await sendCapiPurchaseEvent({
           email: userData.user.email,
-          value: isAnnual ? 190 : 19,
+          value: paidAmount,
           currency,
           contentName: isAnnual ? 'Qarte Pro Annuel' : 'Qarte Pro',
           eventId,

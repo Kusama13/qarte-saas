@@ -74,17 +74,31 @@ export interface SmsUsage {
   remaining: number;
   overageCount: number;
   overageCost: number;
+  periodStart: string;
 }
 
-export async function getSmsUsageThisMonth(supabase: SupabaseClient, merchantId: string): Promise<SmsUsage> {
-  const now = new Date();
-  const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+export async function getSmsUsageThisMonth(supabase: SupabaseClient, merchantId: string, billingPeriodStart?: string | null): Promise<SmsUsage> {
+  // Compute current billing cycle start from the subscription day-of-month
+  // e.g. subscribed on Feb 27 → cycles: Feb 27, Mar 27, Apr 27...
+  // On Apr 6, current cycle started Mar 27. On Apr 28, current cycle started Apr 27.
+  let periodStart: string;
+  if (billingPeriodStart) {
+    const subDay = new Date(billingPeriodStart).getUTCDate();
+    const now = new Date();
+    const thisMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), subDay));
+    // If we haven't reached the billing day yet this month, cycle started last month
+    periodStart = (now < thisMonth)
+      ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, subDay)).toISOString()
+      : thisMonth.toISOString();
+  } else {
+    periodStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  }
 
   const { count } = await supabase
     .from('sms_logs')
     .select('id', { count: 'exact', head: true })
     .eq('merchant_id', merchantId)
-    .gte('created_at', firstOfMonth)
+    .gte('created_at', periodStart)
     .neq('status', 'failed');
 
   const sent = count || 0;
@@ -94,6 +108,7 @@ export async function getSmsUsageThisMonth(supabase: SupabaseClient, merchantId:
     remaining: Math.max(0, SMS_FREE_QUOTA - sent),
     overageCount,
     overageCost: parseFloat((overageCount * SMS_OVERAGE_COST).toFixed(2)),
+    periodStart,
   };
 }
 

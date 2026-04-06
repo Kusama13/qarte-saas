@@ -86,6 +86,7 @@
 | whatsapp_url | TEXT | NULL | mig 079 |
 | booking_url | TEXT | NULL | mig 051 |
 | billing_interval | TEXT | `'monthly'` | mig 051 |
+| billing_period_start | TIMESTAMPTZ | NULL | mig 095, Stripe billing cycle start for SMS quota |
 | planning_enabled | BOOLEAN | `FALSE` | mig 063 |
 | planning_message | TEXT | NULL | mig 063 |
 | booking_message | TEXT | NULL | mig 064 |

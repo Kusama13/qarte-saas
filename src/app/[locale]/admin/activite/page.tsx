@@ -29,6 +29,7 @@ interface ActivityEvent {
   title: string;
   subtitle: string;
   merchant_id?: string;
+  depositStatus?: boolean | null;
 }
 
 interface Summary {
@@ -243,7 +244,20 @@ export default function ActivitePage() {
                     <Icon className={cn('w-5 h-5', config.color)} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 text-sm truncate">{event.title}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-medium text-gray-900 text-sm truncate">{event.title}</p>
+                      {event.type === 'booking' && event.depositStatus === false && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-[9px] font-bold text-amber-600 shrink-0">
+                          <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
+                          Acompte en attente
+                        </span>
+                      )}
+                      {event.type === 'booking' && event.depositStatus === true && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-[9px] font-bold text-emerald-600 shrink-0">
+                          Acompte OK
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-0.5">{event.subtitle}</p>
                   </div>
                   <span className="text-xs text-gray-400 whitespace-nowrap shrink-0">

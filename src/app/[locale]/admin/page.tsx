@@ -241,7 +241,7 @@ export default function AdminDashboardPage() {
 
     // Stats
     const trial = merchants.filter((m: Merchant) => m.subscription_status === 'trial');
-    const active = merchants.filter((m: Merchant) => m.subscription_status === 'active');
+    const active = merchants.filter((m: Merchant) => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due');
     const canceled = merchants.filter((m: Merchant) => m.subscription_status === 'canceled');
     const weeklyActive = new Set([...scans7dMap.keys()].filter(id => merchants.some((m: Merchant) => m.id === id)));
 

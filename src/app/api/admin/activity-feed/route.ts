@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
       (() => {
         let q = supabaseAdmin
           .from('merchant_planning_slots')
-          .select('merchant_id, client_name, slot_date, start_time, booked_at, booked_online')
+          .select('merchant_id, client_name, slot_date, start_time, booked_at, booked_online, deposit_confirmed')
           .not('client_name', 'is', null)
           .not('booked_at', 'is', null)
           .is('primary_slot_id', null)
@@ -164,6 +164,7 @@ export async function GET(request: NextRequest) {
       title: string;
       subtitle: string;
       merchant_id?: string;
+      depositStatus?: boolean | null;
     }
 
     const events: ActivityEvent[] = [];
@@ -229,13 +230,14 @@ export async function GET(request: NextRequest) {
       });
     });
 
-    (bookings || []).forEach((b: { booked_at: string; merchant_id: string; client_name: string; slot_date: string; start_time: string; booked_online: boolean }) => {
+    (bookings || []).forEach((b: { booked_at: string; merchant_id: string; client_name: string; slot_date: string; start_time: string; booked_online: boolean; deposit_confirmed: boolean | null }) => {
       events.push({
         type: 'booking',
         timestamp: b.booked_at,
         title: `Réservation ${b.booked_online ? 'en ligne' : 'manuelle'} chez ${merchantNameMap.get(b.merchant_id) || 'Inconnu'}`,
         subtitle: `${b.client_name} — ${b.slot_date} à ${b.start_time}`,
         merchant_id: b.merchant_id,
+        depositStatus: b.deposit_confirmed,
       });
     });
 

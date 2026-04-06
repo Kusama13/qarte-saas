@@ -73,7 +73,6 @@ export async function GET(
       planningBookingsRes,
       pendingDepositsRes,
       smsSentRes,
-      upcomingBookingsRes,
     ] = await Promise.all([
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId),
       supabaseAdmin.from('loyalty_cards').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).gte('last_visit_date', thirtyDaysAgo.toISOString().split('T')[0]),
@@ -98,7 +97,6 @@ export async function GET(
       // Pending deposits: booked slots (future) with deposit required but not yet confirmed
       supabaseAdmin.from('merchant_planning_slots').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).eq('deposit_confirmed', false).not('client_name', 'is', null).is('primary_slot_id', null).gte('slot_date', new Date().toISOString().split('T')[0]),
       supabaseAdmin.from('sms_logs').select('*', { count: 'exact', head: true }).eq('merchant_id', merchantId).neq('status', 'failed'),
-      supabaseAdmin.from('merchant_planning_slots').select('id, slot_date, start_time, client_name, deposit_confirmed').eq('merchant_id', merchantId).not('client_name', 'is', null).is('primary_slot_id', null).gte('slot_date', new Date().toISOString().split('T')[0]).order('slot_date', { ascending: true }).order('start_time', { ascending: true }).limit(10),
     ]);
 
     // Compute push subscribers (same logic as before)
@@ -174,7 +172,6 @@ export async function GET(
       },
       memberPrograms: memberProgramsRes.data || [],
       emailTrackings: emailTrackingsRes.data || [],
-      upcomingBookings: upcomingBookingsRes.data || [],
     });
   } catch (error) {
     logger.error('Admin merchant stats error:', error);

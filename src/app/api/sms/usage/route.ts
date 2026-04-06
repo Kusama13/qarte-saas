@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   // Verify merchant ownership
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id')
+    .select('id, billing_period_start')
     .eq('id', merchantId)
     .eq('user_id', user.id)
     .single();
@@ -29,6 +29,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
   }
 
-  const usage = await getSmsUsageThisMonth(supabase, merchantId);
+  const usage = await getSmsUsageThisMonth(supabase, merchantId, merchant.billing_period_start);
   return NextResponse.json(usage);
 }
