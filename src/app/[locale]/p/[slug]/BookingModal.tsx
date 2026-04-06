@@ -400,6 +400,7 @@ export default function BookingModal({
                       onChange={setPhone}
                       country={phoneCountry}
                       onCountryChange={setPhoneCountry}
+                      countries={['FR', 'BE', 'CH']}
                     />
                   </div>
                 </div>
