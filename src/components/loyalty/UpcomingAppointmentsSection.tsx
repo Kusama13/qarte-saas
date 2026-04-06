@@ -409,7 +409,7 @@ export default function UpcomingAppointmentsSection({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
             onClick={() => { if (!rescheduling) { setRescheduleSlot(null); setError(null); } }}
           >
             <motion.div
@@ -417,122 +417,130 @@ export default function UpcomingAppointmentsSection({
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-sm bg-white rounded-t-[2rem] sm:rounded-[2rem] p-6 shadow-xl max-h-[85vh] overflow-y-auto"
+              className="w-full max-w-sm bg-white rounded-t-[2rem] sm:rounded-[2rem] px-5 pt-5 pb-8 shadow-xl max-h-[80vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Icon */}
-              <div className="flex justify-center mb-4">
+              {/* Header compact */}
+              <div className="flex items-center gap-3 mb-4">
                 <div
-                  className="w-14 h-14 rounded-full flex items-center justify-center"
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                   style={{ backgroundColor: `${merchantColor}15` }}
                 >
-                  <CalendarClock className="w-7 h-7" style={{ color: merchantColor }} />
+                  <CalendarClock className="w-5 h-5" style={{ color: merchantColor }} />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-gray-900 leading-tight">
+                    {t('rescheduleTitle')}
+                  </h3>
+                  <p className="text-[11px] text-gray-400 truncate">
+                    {formatLongDate(rescheduleSlot.slot_date)} — {formatTime(rescheduleSlot.start_time, locale)}
+                  </p>
                 </div>
               </div>
 
-              {/* Title */}
-              <h3 className="text-base font-bold text-gray-900 text-center mb-1">
-                {t('rescheduleTitle')}
-              </h3>
-              <p className="text-xs text-gray-400 text-center mb-4">
-                {formatLongDate(rescheduleSlot.slot_date)} — {formatTime(rescheduleSlot.start_time, locale)}
-              </p>
-
-              {/* Loading */}
-              {loadingSlots && (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
-                </div>
-              )}
-
-              {/* No slots */}
-              {!loadingSlots && availableDates.length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-6">{t('noSlotsAvailable')}</p>
-              )}
-
-              {/* Date picker */}
-              {!loadingSlots && availableDates.length > 0 && (
-                <>
-                  <p className="text-xs font-semibold text-gray-500 mb-2">{t('reschedulePickSlot')}</p>
-
-                  {/* Horizontal scrollable dates */}
-                  <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3 -mx-1 px-1 scrollbar-none">
-                    {availableDates.map((date) => {
-                      const isSelected = selectedDate === date;
-                      return (
-                        <motion.button
-                          key={date}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => { setSelectedDate(date); setSelectedTime(null); }}
-                          className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold capitalize transition-colors ${
-                            isSelected
-                              ? 'text-white shadow-sm'
-                              : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                          }`}
-                          style={isSelected ? {
-                            backgroundColor: merchantColor,
-                            boxShadow: `0 2px 8px ${merchantColor}40`,
-                          } : undefined}
-                        >
-                          {formatShortDate(date)}
-                        </motion.button>
-                      );
-                    })}
+              {/* Scrollable content */}
+              <div className="flex-1 overflow-y-auto min-h-0">
+                {/* Loading */}
+                {loadingSlots && (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
                   </div>
+                )}
 
-                  {/* Time slots grid */}
-                  {selectedDate && timesForDate.length > 0 && (
-                    <div className="grid grid-cols-3 gap-1.5 mb-4">
-                      {timesForDate.map((time) => {
-                        const isSelected = selectedTime === time;
-                        const isSameSlot = selectedDate === rescheduleSlot.slot_date && time === rescheduleSlot.start_time;
-                        return (
-                          <motion.button
-                            key={time}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setSelectedTime(isSameSlot ? null : time)}
-                            disabled={isSameSlot}
-                            className={`py-2 rounded-lg text-xs font-semibold transition-colors ${
-                              isSameSlot
-                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                                : isSelected
+                {/* No slots */}
+                {!loadingSlots && availableDates.length === 0 && (
+                  <p className="text-sm text-gray-400 text-center py-6">{t('noSlotsAvailable')}</p>
+                )}
+
+                {/* Date + time picker */}
+                {!loadingSlots && availableDates.length > 0 && (
+                  <>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide mb-2">{t('reschedulePickSlot')}</p>
+
+                    {/* Horizontal scrollable dates with fade edges */}
+                    <div className="relative mb-3">
+                      <div className="flex gap-1.5 overflow-x-auto pb-1.5 scrollbar-none">
+                        {availableDates.map((date) => {
+                          const isSelected = selectedDate === date;
+                          return (
+                            <motion.button
+                              key={date}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => { setSelectedDate(date); setSelectedTime(null); }}
+                              className={`shrink-0 px-3 py-2 rounded-xl text-[11px] font-bold capitalize transition-all ${
+                                isSelected
                                   ? 'text-white'
-                                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                            }`}
-                            style={isSelected ? {
-                              backgroundColor: merchantColor,
-                              boxShadow: `0 2px 8px ${merchantColor}40`,
-                            } : undefined}
-                          >
-                            {formatTime(time, locale)}
-                          </motion.button>
-                        );
-                      })}
+                                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-100'
+                              }`}
+                              style={isSelected ? {
+                                backgroundColor: merchantColor,
+                                boxShadow: `0 2px 8px ${merchantColor}40`,
+                              } : undefined}
+                            >
+                              {formatShortDate(date)}
+                            </motion.button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  )}
 
-                  {/* Confirmation text */}
-                  {selectedDate && selectedTime && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs text-gray-500 text-center mb-3"
-                    >
-                      {t('rescheduleConfirm', { date: formatLongDate(selectedDate), time: formatTime(selectedTime, locale) })}
-                    </motion.p>
-                  )}
-                </>
-              )}
+                    {/* Time slots grid */}
+                    {selectedDate && timesForDate.length > 0 && (
+                      <div className="grid grid-cols-4 gap-1.5 mb-3">
+                        {timesForDate.map((time) => {
+                          const isSelected = selectedTime === time;
+                          const isSameSlot = selectedDate === rescheduleSlot.slot_date && time === rescheduleSlot.start_time;
+                          return (
+                            <motion.button
+                              key={time}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => setSelectedTime(isSameSlot ? null : time)}
+                              disabled={isSameSlot}
+                              className={`py-2 rounded-lg text-xs font-semibold transition-all ${
+                                isSameSlot
+                                  ? 'bg-gray-50 text-gray-300 cursor-not-allowed line-through'
+                                  : isSelected
+                                    ? 'text-white'
+                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-100'
+                              }`}
+                              style={isSelected ? {
+                                backgroundColor: merchantColor,
+                                boxShadow: `0 2px 8px ${merchantColor}40`,
+                              } : undefined}
+                            >
+                              {formatTime(time, locale)}
+                            </motion.button>
+                          );
+                        })}
+                      </div>
+                    )}
 
-              {/* Error */}
-              {error && (
-                <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-3 text-center">
-                  {error}
-                </p>
-              )}
+                    {/* Confirmation text */}
+                    {selectedDate && selectedTime && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="rounded-xl px-3 py-2.5 mb-2 text-center"
+                        style={{ backgroundColor: `${merchantColor}08`, border: `1px solid ${merchantColor}15` }}
+                      >
+                        <p className="text-xs font-semibold text-gray-700">
+                          {t('rescheduleConfirm', { date: formatLongDate(selectedDate), time: formatTime(selectedTime, locale) })}
+                        </p>
+                      </motion.div>
+                    )}
+                  </>
+                )}
 
-              {/* Buttons */}
-              <div className="mt-2 space-y-2">
+                {/* Error */}
+                {error && (
+                  <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-2 text-center">
+                    {error}
+                  </p>
+                )}
+              </div>
+
+              {/* Sticky buttons */}
+              <div className="mt-3 space-y-2 shrink-0">
                 {selectedDate && selectedTime && (
                   <motion.button
                     initial={{ opacity: 0, y: 10 }}
