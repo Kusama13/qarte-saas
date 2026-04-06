@@ -12,7 +12,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
 export const PLAN = {
   name: 'Pro',
   price: 24,
-  priceId: process.env.STRIPE_PRICE_ID || '',
+  priceId: (process.env.STRIPE_PRICE_ID || '').trim(),
   interval: 'month' as const,
   features: [
     'Clients illimites',
@@ -28,7 +28,7 @@ export const PLAN_ANNUAL = {
   name: 'Pro Annuel',
   price: 240,
   monthlyEquivalent: 20,
-  priceId: process.env.STRIPE_PRICE_ID_ANNUAL || '',
+  priceId: (process.env.STRIPE_PRICE_ID_ANNUAL || '').trim(),
   interval: 'year' as const,
 };
 
@@ -36,7 +36,7 @@ export const PLAN_ANNUAL = {
 export const PLAN_EN = {
   name: 'Pro',
   price: 24,
-  priceId: process.env.STRIPE_PRICE_ID_EN || '',
+  priceId: (process.env.STRIPE_PRICE_ID_EN || '').trim(),
   interval: 'month' as const,
 };
 
@@ -44,7 +44,7 @@ export const PLAN_ANNUAL_EN = {
   name: 'Pro Annual',
   price: 240,
   monthlyEquivalent: 20,
-  priceId: process.env.STRIPE_PRICE_ID_ANNUAL_EN || '',
+  priceId: (process.env.STRIPE_PRICE_ID_ANNUAL_EN || '').trim(),
   interval: 'year' as const,
 };
 
