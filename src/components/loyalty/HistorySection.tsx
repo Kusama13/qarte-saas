@@ -174,14 +174,14 @@ export default function HistorySection({
               const isRedemption = item.type === 'redemption';
               const isVoucherUsed = item.type === 'voucher_used';
               const isAppointment = item.type === 'appointment';
-              const isBonusParrainage = item.type === 'visit' && item.flagged_reason === 'bonus_parrainage';
+              const isBonusVoucher = item.type === 'visit' && !!item.flagged_reason?.startsWith('bonus_');
               const isPending = item.status === 'pending';
               const isRejected = item.status === 'rejected';
 
               const getStatusIcon = () => {
                 if (isAppointment) return <Calendar className="w-4 h-4 text-purple-500" />;
                 if (isVoucherUsed) return <Ticket className="w-4 h-4 text-indigo-500" />;
-                if (isBonusParrainage) return <UserPlus className="w-4 h-4" style={{ color: merchant.primary_color }} />;
+                if (isBonusVoucher) return <UserPlus className="w-4 h-4" style={{ color: merchant.primary_color }} />;
                 if (isRedemption) {
                   return item.tier === 2
                     ? <Trophy className="w-4 h-4 text-violet-500" />
@@ -212,7 +212,11 @@ export default function HistorySection({
                   const prefix = item.source === 'birthday' ? '🎂' : '🎟️';
                   return `${prefix} ${item.reward_description || t('rewardUsed')}`;
                 }
-                if (isBonusParrainage) return t('bonusReferral');
+                if (isBonusVoucher) {
+                  if (item.flagged_reason === 'bonus_welcome') return t('bonusWelcome');
+                  if (item.flagged_reason === 'bonus_offer') return t('bonusOffer');
+                  return t('bonusReferral');
+                }
                 if (isRedemption) {
                   const tierLabel = merchant.tier2_enabled && item.tier ? ` ${t('tier', { number: item.tier })}` : '';
                   const isCagnotte = merchant.loyalty_mode === 'cagnotte';
@@ -246,7 +250,7 @@ export default function HistorySection({
                       isRejected ? 'text-gray-500 line-through'
                       : isRedemption ? 'text-emerald-700'
                       : isVoucherUsed ? 'text-indigo-700'
-                      : isBonusParrainage ? 'text-gray-900'
+                      : isBonusVoucher ? 'text-gray-900'
                       : 'text-gray-900'
                     }`}>
                       {getLabel()}

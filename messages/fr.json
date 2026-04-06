@@ -2484,6 +2484,8 @@
     "title": "Historique",
     "rewardUsed": "Récompense utilisée",
     "bonusReferral": "🎉 Bonus parrainage +1",
+    "bonusWelcome": "🎁 Bonus bienvenue +1",
+    "bonusOffer": "🎟️ Bonus offre +1",
     "cagnotteRedeemed": "💰 Cagnotte{tierLabel} récupérée",
     "giftUsed": "🎁 Cadeau{tierLabel} utilisé",
     "adjustment": "Ajustement",

@@ -2484,6 +2484,8 @@
     "title": "History",
     "rewardUsed": "Reward used",
     "bonusReferral": "🎉 Referral bonus +1",
+    "bonusWelcome": "🎁 Welcome bonus +1",
+    "bonusOffer": "🎟️ Offer bonus +1",
     "cagnotteRedeemed": "💰 Cashback{tierLabel} redeemed",
     "giftUsed": "🎁 Gift{tierLabel} used",
     "adjustment": "Adjustment",

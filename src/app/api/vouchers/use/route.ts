@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
             customer_id: voucher.customer_id,
             points_earned: 1,
             status: 'confirmed',
-            flagged_reason: 'bonus_parrainage',
+            flagged_reason: voucher.source === 'referral' ? 'bonus_parrainage' : `bonus_${voucher.source || 'voucher'}`,
           })
           .select('id')
           .single();
