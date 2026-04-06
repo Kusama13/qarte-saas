@@ -950,7 +950,12 @@ export default function CustomerCardPage({
           <UpcomingAppointmentsSection
             appointments={upcomingAppointments}
             merchantColor={merchant.primary_color}
+            merchantId={merchant.id}
             shopName={merchant.shop_name}
+            allowCancel={!!merchant.allow_customer_cancel}
+            allowReschedule={!!merchant.allow_customer_reschedule}
+            editDeadlineDays={merchant.customer_edit_deadline_days ?? 1}
+            onRefresh={() => window.location.reload()}
           />
         )}
 

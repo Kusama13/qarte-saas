@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useDashboardSave } from '@/hooks/useDashboardSave';
 import { getSupabase } from '@/lib/supabase';
-import { CalendarDays, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell } from 'lucide-react';
+import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Plus, Copy, Loader2, Check, Download, MessageSquare, Phone, LayoutGrid, Calendar, Globe, CreditCard, Info, AlertTriangle, X, Trash2, Moon, Bell } from 'lucide-react';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 import { AnimatePresence } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
@@ -37,6 +37,7 @@ export default function PlanningDashboard() {
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
+    allowCustomerCancel, setAllowCustomerCancel, allowCustomerReschedule, setAllowCustomerReschedule, customerEditDeadlineDays, setCustomerEditDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     services,
     modalState, setModalState, closeModal,
@@ -206,6 +207,9 @@ export default function PlanningDashboard() {
         deposit_percent: autoBookingEnabled && depositPercent ? parseInt(depositPercent) : null,
         deposit_amount: autoBookingEnabled && depositAmount ? parseFloat(depositAmount) : null,
         deposit_deadline_hours: autoBookingEnabled && depositDeadlineHours ? parseInt(depositDeadlineHours) : null,
+        allow_customer_cancel: allowCustomerCancel,
+        allow_customer_reschedule: allowCustomerReschedule,
+        customer_edit_deadline_days: parseInt(customerEditDeadlineDays) || 1,
       }).eq('id', merchant.id);
       if (error) {
         console.error('Settings save error:', error);
@@ -912,7 +916,76 @@ export default function PlanningDashboard() {
             );
           })()}
 
-          {/* Deposit validation error */}
+          {/* Customer self-service cancel/reschedule */}
+          {autoBookingEnabled && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-visible">
+              <div className="px-4 sm:px-5 py-3 bg-gray-50/80 border-b border-gray-100 flex items-center gap-2">
+                <CalendarX2 className="w-4 h-4 text-gray-500 shrink-0" />
+                <h2 className="text-sm font-bold text-gray-800">{t('allowCustomerCancel').split(' ').slice(0, 3).join(' ')}</h2>
+              </div>
+              <div className="p-4 sm:p-5 space-y-4">
+                {/* Cancel toggle */}
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">{t('allowCustomerCancel')}</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{t('allowCustomerCancelDesc')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={allowCustomerCancel}
+                    onClick={() => setAllowCustomerCancel(!allowCustomerCancel)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${allowCustomerCancel ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                  >
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform mt-0.5 ${allowCustomerCancel ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                  </button>
+                </label>
+
+                {/* Reschedule toggle */}
+                <label className="flex items-center justify-between gap-3 cursor-pointer">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">{t('allowCustomerReschedule')}</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">{t('allowCustomerRescheduleDesc')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={allowCustomerReschedule}
+                    onClick={() => setAllowCustomerReschedule(!allowCustomerReschedule)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ${allowCustomerReschedule ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                  >
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform mt-0.5 ${allowCustomerReschedule ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+                  </button>
+                </label>
+
+                {/* Deadline selector */}
+                {(allowCustomerCancel || allowCustomerReschedule) && (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('editDeadlineDays')}</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { value: '0', label: t('deadlineDay0') },
+                        { value: '1', label: t('deadlineDay1') },
+                        { value: '2', label: t('deadlineDay2') },
+                        { value: '3', label: t('deadlineDay3') },
+                        { value: '7', label: t('deadlineDay7') },
+                      ].map(opt => (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => setCustomerEditDeadlineDays(opt.value)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${customerEditDeadlineDays === opt.value ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Save */}
           <button
             onClick={handleSaveSettings}

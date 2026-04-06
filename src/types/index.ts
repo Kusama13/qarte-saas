@@ -138,6 +138,10 @@ export interface Merchant {
   deposit_percent: number | null;
   deposit_amount: number | null;
   deposit_deadline_hours: number | null;
+  // Customer self-service booking edit
+  allow_customer_cancel: boolean;
+  allow_customer_reschedule: boolean;
+  customer_edit_deadline_days: number;
   // Public page link on loyalty card
   show_public_page_on_card: boolean;
   signup_source: string | null;

@@ -69,6 +69,9 @@ export function usePlanningState() {
   const [messageExpires, setMessageExpires] = useState('');
   const [bookingMessage, setBookingMessage] = useState('');
   const [autoBookingEnabled, setAutoBookingEnabled] = useState(false);
+  const [allowCustomerCancel, setAllowCustomerCancel] = useState(false);
+  const [allowCustomerReschedule, setAllowCustomerReschedule] = useState(false);
+  const [customerEditDeadlineDays, setCustomerEditDeadlineDays] = useState('1');
   const [depositLink, setDepositLink] = useState('');
   const [depositLinkLabel, setDepositLinkLabel] = useState('');
   const [depositLink2, setDepositLink2] = useState('');
@@ -146,6 +149,9 @@ export function usePlanningState() {
       setDepositPercent(merchant.deposit_percent ? String(merchant.deposit_percent) : '');
       setDepositAmount(merchant.deposit_amount ? String(merchant.deposit_amount) : '');
       setDepositDeadlineHours(merchant.deposit_deadline_hours != null ? String(merchant.deposit_deadline_hours) : '1');
+      setAllowCustomerCancel(!!merchant.allow_customer_cancel);
+      setAllowCustomerReschedule(!!merchant.allow_customer_reschedule);
+      setCustomerEditDeadlineDays(String(merchant.customer_edit_deadline_days ?? 1));
     }
   }, [merchant]);
 
@@ -571,6 +577,7 @@ export function usePlanningState() {
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
+    allowCustomerCancel, setAllowCustomerCancel, allowCustomerReschedule, setAllowCustomerReschedule, customerEditDeadlineDays, setCustomerEditDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     // Services
     services,
