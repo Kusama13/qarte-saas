@@ -94,10 +94,6 @@ async function commonChecks(
   }
 
   // Must be online booking
-  if (!slot.booked_online) {
-    return { error: NextResponse.json({ error: 'Seules les reservations en ligne peuvent etre modifiees' }, { status: 403 }) };
-  }
-
   // Deadline check
   const today = getTodayForCountry(merchant.country);
   const days = daysUntil(slot.slot_date, today);

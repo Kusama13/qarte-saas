@@ -71,12 +71,10 @@ export default function UpcomingAppointmentsSection({
   };
 
   const canCancelAppointment = (appt: AppointmentSlot) => {
-    if (!appt.booked_online) return false;
     return getDaysUntil(appt.slot_date) >= cancelDeadlineDays;
   };
 
   const canRescheduleAppointment = (appt: AppointmentSlot) => {
-    if (!appt.booked_online) return false;
     return getDaysUntil(appt.slot_date) >= rescheduleDeadlineDays;
   };
 
