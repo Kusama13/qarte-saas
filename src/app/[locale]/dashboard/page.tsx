@@ -761,7 +761,10 @@ export default function DashboardPage() {
                 <div className={`p-1.5 rounded-lg ${isOverage ? 'bg-amber-50' : 'bg-emerald-50'}`}>
                   <MessageSquare className={`w-4 h-4 ${isOverage ? 'text-amber-600' : 'text-emerald-600'}`} />
                 </div>
-                <h3 className="text-sm font-bold text-gray-900">{t('smsQuotaTitle')}</h3>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">{t('smsQuotaTitle')}</h3>
+                  <p className="text-[10px] text-gray-400">{t('smsQuotaDesc')}</p>
+                </div>
               </div>
               {isPaid && (
                 <span className="text-xs font-bold text-gray-700">{t('smsQuotaUsed', { sent: smsUsage.sent })}</span>
