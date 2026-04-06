@@ -150,7 +150,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     const globalConfig = preloadedConfig || await getGlobalSmsConfig(supabase);
     if (!isTypeEnabled(smsType, globalConfig)) return false;
 
-    // 3. Dedup — check if SMS already sent for this merchant + type + slot (only for slot-based types)
+    // 3. Dedup — check if SMS already sent for this merchant + type + slot/phone
     if (slotId) {
       const { data: existing } = await supabase
         .from('sms_logs')
@@ -159,7 +159,19 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
         .eq('sms_type', smsType)
         .eq('slot_id', slotId)
         .maybeSingle();
-
+      if (existing) return false;
+    } else {
+      // Non-slot types (birthday, referral_reward): dedup by phone + type + today
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const { data: existing } = await supabase
+        .from('sms_logs')
+        .select('id')
+        .eq('merchant_id', merchantId)
+        .eq('sms_type', smsType)
+        .eq('phone_to', phone)
+        .gte('created_at', todayStart.toISOString())
+        .maybeSingle();
       if (existing) return false;
     }
 
@@ -192,21 +204,32 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
     const usage = await getSmsUsageThisMonth(supabase, merchantId);
     const cost = usage.sent >= SMS_FREE_QUOTA ? SMS_OVERAGE_COST : 0;
 
-    // 6. Send via OVH
-    const result = await sendSms(phone, message);
-
-    // 7. Log
-    await supabase.from('sms_logs').insert({
+    // 6. Insert log FIRST (prevents concurrent duplicate sends via unique constraint)
+    const { data: logRow, error: logError } = await supabase.from('sms_logs').insert({
       merchant_id: merchantId,
       slot_id: slotId || null,
       phone_to: phone,
       sms_type: smsType,
       message_body: message,
-      ovh_job_id: result.jobId || null,
-      status: result.success ? 'sent' : 'failed',
-      error_message: result.error || null,
-      cost_euro: result.success ? cost : 0,
-    });
+      status: 'sent',
+      cost_euro: cost,
+    }).select('id').maybeSingle();
+
+    // Unique constraint violation = already sent (concurrent dedup)
+    if (logError) return false;
+
+    // 7. Send via OVH
+    const result = await sendSms(phone, message);
+
+    // 8. Update log with result
+    if (logRow?.id) {
+      await supabase.from('sms_logs').update({
+        ovh_job_id: result.jobId || null,
+        status: result.success ? 'sent' : 'failed',
+        error_message: result.error || null,
+        cost_euro: result.success ? cost : 0,
+      }).eq('id', logRow.id);
+    }
 
     return result.success;
   } catch (err) {
