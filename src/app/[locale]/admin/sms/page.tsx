@@ -9,6 +9,8 @@ interface MerchantSms {
   sent_this_month: number;
   free_remaining: number;
   overage_cost: number;
+  period_start: string;
+  period_end: string;
 }
 
 interface SmsData {
@@ -184,7 +186,7 @@ export default function AdminSmsPage() {
       {/* Per-merchant breakdown */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-4 sm:px-5 py-3 border-b border-gray-100">
-          <h2 className="text-sm font-bold text-gray-800">SMS par merchant ce mois</h2>
+          <h2 className="text-sm font-bold text-gray-800">SMS par merchant (cycle de facturation)</h2>
         </div>
         {data.merchants.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-8">Aucun SMS envoyé ce mois</p>
@@ -194,6 +196,7 @@ export default function AdminSmsPage() {
               <thead>
                 <tr className="text-[11px] font-bold text-gray-400 uppercase tracking-wider border-b border-gray-50">
                   <th className="px-4 py-2">Merchant</th>
+                  <th className="px-4 py-2">Cycle</th>
                   <th className="px-4 py-2 text-right">Envoyés</th>
                   <th className="px-4 py-2 text-right">Restant gratuit</th>
                   <th className="px-4 py-2 text-right">Dépassement</th>
@@ -203,6 +206,11 @@ export default function AdminSmsPage() {
                 {data.merchants.map(m => (
                   <tr key={m.merchant_id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
                     <td className="px-4 py-2.5 text-sm font-medium text-gray-700">{m.shop_name}</td>
+                    <td className="px-4 py-2.5 text-xs text-gray-400">
+                      {new Date(m.period_start).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                      {' — '}
+                      {new Date(m.period_end).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    </td>
                     <td className="px-4 py-2.5 text-sm text-right text-gray-600">{m.sent_this_month}</td>
                     <td className="px-4 py-2.5 text-sm text-right">
                       <span className={`font-medium ${m.free_remaining === 0 ? 'text-amber-600' : 'text-emerald-600'}`}>

@@ -1027,6 +1027,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 092 | sms_system | Table `sms_logs` (audit + quota + dedup) + table `app_config` (toggles admin globaux SMS) |
 | 093 | sms_birthday_referral | Ajout types `birthday` + `referral_reward` au CHECK sms_type, index dedup partiel (WHERE slot_id IS NOT NULL), toggles birthday_enabled + referral_enabled dans app_config |
 | 094 | sms_move_type | Ajout type `booking_moved` au CHECK sms_type |
+| 095 | billing_period_start | `merchants.billing_period_start` TIMESTAMPTZ + backfill 24 merchants |
 
 ---
 

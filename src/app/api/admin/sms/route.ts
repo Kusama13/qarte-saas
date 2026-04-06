@@ -21,7 +21,6 @@ export async function GET(request: NextRequest) {
     { count: totalWeek },
     { count: totalFailed },
     globalConfig,
-    { data: monthLogs },
     { data: costData },
   ] = await Promise.all([
     supabaseAdmin.from('sms_logs').select('id', { count: 'exact', head: true }),
@@ -29,30 +28,52 @@ export async function GET(request: NextRequest) {
     supabaseAdmin.from('sms_logs').select('id', { count: 'exact', head: true }).gte('created_at', firstOfWeekIso).neq('status', 'failed'),
     supabaseAdmin.from('sms_logs').select('id', { count: 'exact', head: true }).eq('status', 'failed'),
     getGlobalSmsConfig(supabaseAdmin),
-    supabaseAdmin.from('sms_logs').select('merchant_id').gte('created_at', firstOfMonth).neq('status', 'failed'),
     supabaseAdmin.from('sms_logs').select('cost_euro').gt('cost_euro', 0),
   ]);
 
-  // Per-merchant breakdown
-  const countMap = new Map<string, number>();
-  for (const log of monthLogs || []) {
-    countMap.set(log.merchant_id, (countMap.get(log.merchant_id) || 0) + 1);
+  // Per-merchant breakdown using billing cycle
+  // Fetch all merchants with billing_period_start
+  const { data: allMerchantData } = await supabaseAdmin
+    .from('merchants')
+    .select('id, shop_name, billing_period_start')
+    .in('subscription_status', ['active', 'canceling', 'past_due']);
+
+  // Compute each merchant's current billing cycle start
+  function getBillingCycleStart(billingPeriodStart: string | null): Date {
+    if (!billingPeriodStart) return new Date(now.getFullYear(), now.getMonth(), 1);
+    const subDay = new Date(billingPeriodStart).getUTCDate();
+    const thisMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), subDay));
+    return now < thisMonth
+      ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, subDay))
+      : thisMonth;
   }
 
-  const merchantIds = [...countMap.keys()];
-  const { data: merchantData } = merchantIds.length > 0
-    ? await supabaseAdmin.from('merchants').select('id, shop_name').in('id', merchantIds)
-    : { data: [] };
+  // For each merchant, count SMS in their billing cycle
+  // Get all SMS logs (non-failed) to count per merchant per cycle
+  const { data: allLogs } = await supabaseAdmin
+    .from('sms_logs')
+    .select('merchant_id, created_at')
+    .neq('status', 'failed');
 
-  const merchantNameMap = new Map((merchantData || []).map(m => [m.id, m.shop_name]));
-
-  const merchants = [...countMap.entries()].map(([id, sent]) => ({
-    merchant_id: id,
-    shop_name: merchantNameMap.get(id) || 'Inconnu',
-    sent_this_month: sent,
-    free_remaining: Math.max(0, SMS_FREE_QUOTA - sent),
-    overage_cost: parseFloat((Math.max(0, sent - SMS_FREE_QUOTA) * SMS_OVERAGE_COST).toFixed(2)),
-  })).sort((a, b) => b.sent_this_month - a.sent_this_month);
+  const merchants = (allMerchantData || []).map(m => {
+    const cycleStart = getBillingCycleStart(m.billing_period_start);
+    const cycleEnd = new Date(cycleStart);
+    cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+    const sent = (allLogs || []).filter(l =>
+      l.merchant_id === m.id &&
+      new Date(l.created_at) >= cycleStart &&
+      new Date(l.created_at) < cycleEnd
+    ).length;
+    return {
+      merchant_id: m.id,
+      shop_name: m.shop_name || 'Inconnu',
+      sent_this_month: sent,
+      free_remaining: Math.max(0, SMS_FREE_QUOTA - sent),
+      overage_cost: parseFloat((Math.max(0, sent - SMS_FREE_QUOTA) * SMS_OVERAGE_COST).toFixed(2)),
+      period_start: cycleStart.toISOString(),
+      period_end: cycleEnd.toISOString(),
+    };
+  }).filter(m => m.sent_this_month > 0).sort((a, b) => b.sent_this_month - a.sent_this_month);
 
   const totalCost = (costData || []).reduce((sum, r) => sum + Number(r.cost_euro), 0);
 

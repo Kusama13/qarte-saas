@@ -388,10 +388,11 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
   - `booking_moved` — notification client quand le merchant deplace un RDV (`POST /api/planning/shift-slot`)
   - `birthday` — voeux + cadeau anniversaire (cron morning-jobs)
   - `referral_reward` — notification parrain quand le filleul utilise sa recompense (`POST /api/vouchers/use`)
-- **Compteur SMS** : visible dans dashboard principal + planning parametres (barre de progression)
+- **Compteur SMS** : visible dans dashboard principal + planning parametres (barre de progression), cycle aligne sur la date d'abonnement Stripe (`billing_period_start`)
 - **Booking modal** : message SMS confirmation instantane (sans acompte) ou apres validation acompte, + hint "revenez sur cette page pour suivre votre reservation"
 - **Landing** : SMS mis en avant dans Hero (badge), FeaturesGrid, PageProSection (bloc dedie avec visual 2 SMS), Pricing, FAQ (Q4+Q12)
-- **Admin** : `/admin/sms` — metriques (total, ce mois, echecs, cout), toggles globaux, breakdown par merchant
+- **Admin** : `/admin/sms` — metriques (total, ce mois, echecs, cout), toggles globaux, breakdown par merchant avec plage de dates du cycle de facturation
+- **Admin activite** : badges "Acompte en attente" / "Acompte OK" sur les reservations
 - **Env vars** : `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`
 - **Sender** : "Qarte" (en attente validation OVH, fallback numero court via `senderForResponse`)
 - **Migrations** : 092 (sms_logs + app_config), 093 (birthday + referral types), 094 (booking_moved type)
