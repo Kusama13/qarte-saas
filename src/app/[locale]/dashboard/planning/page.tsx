@@ -69,6 +69,16 @@ export default function PlanningDashboard() {
   // Deposit validation error
   const [depositError, setDepositError] = useState<string | null>(null);
 
+  // SMS usage
+  const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number } | null>(null);
+  useEffect(() => {
+    if (!merchant || tab !== 'settings') return;
+    fetch(`/api/sms/usage?merchantId=${merchant.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setSmsUsage(data); })
+      .catch(() => {});
+  }, [merchant, tab]);
+
   // Push notifications
   const {
     pushSupported,
@@ -1030,6 +1040,43 @@ export default function PlanningDashboard() {
               />
               <p className="text-[10px] text-gray-300 text-right mt-1">{bookingMessage.length}/500</p>
             </div>
+          </div>
+
+          {/* Card: SMS Notifications */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:col-span-2">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+                <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+              </div>
+              <h2 className="text-sm font-bold text-gray-800">{t('smsTitle')}</h2>
+            </div>
+            {merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due' ? (
+              <div className="ml-9">
+                <p className="text-[11px] text-gray-500 leading-relaxed">{t('smsActiveInfo')}</p>
+                {smsUsage && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-[11px] mb-1">
+                      <span className="text-gray-500">{t('smsQuotaLabel')}</span>
+                      <span className="font-bold text-gray-700">{smsUsage.sent} {t('smsQuotaOf')} 100</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${smsUsage.sent >= 100 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                        style={{ width: `${Math.min(100, smsUsage.sent)}%` }}
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-1">{t('smsOverageInfo')}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="ml-9 flex items-center justify-between gap-3">
+                <p className="text-[11px] text-gray-500">{t('smsTrialMessage')}</p>
+                <a href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-[11px] font-bold hover:shadow-md transition-all">
+                  {t('smsTrialCta')}
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Save button */}

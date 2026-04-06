@@ -22,7 +22,7 @@
 - **Next.js** 15.5.12 (App Router) + **React** 18.3.1 + **TypeScript** 5.6.2
 - **Tailwind CSS** 3.4.13 + **Framer Motion** (animations)
 - **Supabase** (PostgreSQL + Auth + Storage + RLS)
-- **Stripe** (paiements) + **Resend** (emails)
+- **Stripe** (paiements) + **Resend** (emails) + **OVH SMS** (SMS transactionnels)
 - **Recharts** (graphiques), **Lucide React** (icones), **jsPDF** + **QRCode** (PDF/QR), **Web Push**
 - **next-intl** (i18n) — `messages/fr.json` + `messages/en.json` (~2243 lignes chacun)
 
@@ -375,6 +375,25 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Verification abonnement reel** : `useMerchantPushNotifications` verifie au montage `pushManager.getSubscription()` (pas localStorage seul) — corrige le cas ou iOS revoque l'endpoint apres inactivite, le hook se resynchronise avec la realite serveur
 - **Pas de toggles** : toutes les notifs actives par defaut pour tout merchant abonne au push
 
+### SMS (OVH Cloud)
+- **Client API** : `src/lib/ovh-sms.ts` — signature HMAC-SHA1 custom, fire-and-forget, pas de npm package
+- **Service** : `src/lib/sms.ts` — dedup via `sms_logs`, quota 100 SMS/mois inclus (0,06€ au-dela), templates FR/EN < 160 chars
+- **Config globale** : table `app_config` (key `sms_global`) — 4 toggles admin dans `/admin/sms`
+- **Pas de toggles merchant** — gere uniquement par l'admin
+- **Reserve aux abonnes actifs** (pas trial) — message CTA dans dashboard + planning settings
+- **6 types de SMS** :
+  - `reminder_j1` — rappel la veille a 18h (cron evening)
+  - `confirmation_no_deposit` — confirmation immediate apres resa sans acompte (`POST /api/planning/book`)
+  - `confirmation_deposit` — confirmation apres validation acompte par le merchant (`PATCH /api/planning`)
+  - `booking_moved` — notification client quand le merchant deplace un RDV (`POST /api/planning/shift-slot`)
+  - `birthday` — voeux + cadeau anniversaire (cron morning-jobs)
+  - `referral_reward` — notification parrain quand le filleul utilise sa recompense (`POST /api/vouchers/use`)
+- **Compteur SMS** : visible dans dashboard principal + planning parametres (barre de progression)
+- **Admin** : `/admin/sms` — metriques (total, ce mois, echecs, cout), toggles globaux, breakdown par merchant
+- **Env vars** : `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`
+- **Sender** : "Qarte" (en attente validation OVH, fallback numero court via `senderForResponse`)
+- **Migrations** : 092 (sms_logs + app_config), 093 (birthday + referral types), 094 (booking_moved type)
+
 ### Stripe
 - `POST /api/stripe/checkout` — Session paiement (verifie customer Stripe)
 - `POST /api/stripe/webhook` — 5 events (checkout.completed, sub.updated, sub.deleted, invoice.failed, invoice.succeeded)
@@ -519,9 +538,9 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 | Cron | Horaire | Description |
 |------|---------|-------------|
 | `/api/cron/morning` | 09:00 UTC | Emails : essai, onboarding, milestones, inactifs, reactivation, lifecycle, pending. Prefetch unique merchants/emails/tracking — filtres JS par section |
-| `/api/cron/morning-jobs` | 09:15 UTC | Vouchers anniversaire (timezone-aware) + auto-liberation acomptes expires |
+| `/api/cron/morning-jobs` | 09:15 UTC | Vouchers anniversaire (timezone-aware) + SMS anniversaire + auto-liberation acomptes expires |
 | `/api/cron/morning-push` | 09:30 UTC | Push 10h (scheduled), push automations (inactifs/recompense/events), push trial reminders |
-| `/api/cron/evening` | 17:00 UTC | Push 18h (timezone-aware) + check acomptes expires |
+| `/api/cron/evening` | 17:00 UTC | Push 18h (timezone-aware) + check acomptes expires + SMS rappel J-1 |
 | `/api/cron/reactivation` | — | Deprecie (integre dans morning, section 7) |
 
 ### Anti-spam

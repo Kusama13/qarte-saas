@@ -1435,7 +1435,11 @@
     "faqQ3": "Je peux changer de plan ?",
     "faqA3": "Oui, tu peux passer du mensuel à l'annuel (ou l'inverse) à tout moment depuis le portail de facturation.",
     "faqQ4": "Y a-t-il un engagement ?",
-    "faqA4": "Aucun. Tu peux résilier en 1 clic, sans justification, sans frais cachés."
+    "faqA4": "Aucun. Tu peux résilier en 1 clic, sans justification, sans frais cachés.",
+    "smsQuotaTitle": "SMS",
+    "smsQuotaUsed": "{sent} sur 100",
+    "smsQuotaTrialHint": "100 SMS de rappel et de confirmation inclus chaque mois. Ajoute ta carte bancaire pour en profiter.",
+    "smsQuotaTrialCta": "Souscrire"
   },
   "customers": {
     "title": "Gestion",
@@ -1510,8 +1514,8 @@
     "disabledTitle": "Le planning est désactivé",
     "disabledHint": "Active le toggle ci-dessus pour commencer.",
     "disabledStep1": "Ajoute tes créneaux disponibles semaine par semaine",
-    "disabledStep2": "Tes clientes voient tes dispos et te contactent pour réserver",
-    "disabledStep3": "Tu notes les réservations et télécharges une story Instagram en un clic",
+    "disabledStep2": "Tes clientes voient tes dispos et te contactent, ou réservent directement en ligne",
+    "disabledStep3": "SMS de rappel et de confirmation envoyés automatiquement à tes clientes",
     "backToToday": "Revenir à aujourd'hui",
     "slotCount": "{count} créneau",
     "slotCountPlural": "{count} créneaux",
@@ -1575,8 +1579,8 @@
     "depositSugg1": "Un acompte est demandé pour confirmer votre réservation",
     "depositSugg2": "Acompte non remboursable en cas d'annulation",
     "depositSugg3": "Acompte déduit du montant total de la prestation",
-    "autoBookingOffHint": "Active cette option pour que tes clients réservent directement en ligne",
-    "autoBookingInfo": "Tes clients peuvent réserver directement depuis ta vitrine en ligne. Les créneaux sont bloqués automatiquement selon la durée des prestations choisies.",
+    "autoBookingOffHint": "Par défaut, tes clientes voient tes créneaux et te contactent. Active cette option pour qu'elles réservent directement en ligne avec SMS de confirmation automatique.",
+    "autoBookingInfo": "Tes clientes réservent directement depuis ta vitrine en ligne. Les créneaux sont bloqués automatiquement selon la durée des prestations choisies. Tu peux désactiver à tout moment pour revenir au mode contact.",
     "externalBookingWarning": "Tu as un lien de réservation externe. La réservation Qarte le remplace sur ta vitrine tant qu'elle est activée.",
     "optional": "optionnel",
     "percentageLabel": "En pourcentage",
@@ -1664,7 +1668,14 @@
     "slotMoved": "Créneau déplacé",
     "resultPhotos": "Après",
     "grantWelcomeOffer": "Offrir l'offre de bienvenue",
-    "selectOffer": "Choisir une offre"
+    "selectOffer": "Choisir une offre",
+    "smsTitle": "Notifications SMS",
+    "smsActiveInfo": "Tes clients reçoivent automatiquement un SMS de rappel la veille et de confirmation à la réservation.",
+    "smsTrialMessage": "100 SMS inclus chaque mois avec ton abonnement. Ajoute ta carte bancaire pour activer les SMS de rappel et de confirmation.",
+    "smsQuotaLabel": "SMS ce mois",
+    "smsQuotaOf": "sur",
+    "smsOverageInfo": "Au-delà de 100 SMS/mois : 0,06€ par SMS",
+    "smsTrialCta": "Souscrire"
   },
   "qrDownload": {
     "title": "Mon QR code & Kit promo",

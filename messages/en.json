@@ -1435,7 +1435,11 @@
     "faqQ3": "Can I change my plan?",
     "faqA3": "Yes, you can switch from monthly to annual (or vice versa) at any time from the billing portal.",
     "faqQ4": "Is there a commitment?",
-    "faqA4": "None. You can cancel in 1 click, no justification, no hidden fees."
+    "faqA4": "None. You can cancel in 1 click, no justification, no hidden fees.",
+    "smsQuotaTitle": "SMS",
+    "smsQuotaUsed": "{sent} of 100",
+    "smsQuotaTrialHint": "100 reminder and confirmation SMS included every month. Add your payment method to unlock them.",
+    "smsQuotaTrialCta": "Subscribe"
   },
   "customers": {
     "title": "Client",
@@ -1510,8 +1514,8 @@
     "disabledTitle": "The schedule is disabled",
     "disabledHint": "Enable the toggle above to get started.",
     "disabledStep1": "Add your available time slots week by week",
-    "disabledStep2": "Your clients see availability and contact you to book",
-    "disabledStep3": "Note bookings and download an Instagram story in one click",
+    "disabledStep2": "Your clients see your availability and contact you, or book directly online",
+    "disabledStep3": "Reminder and confirmation SMS sent automatically to your clients",
     "backToToday": "Back to today",
     "slotCount": "{count} slot",
     "slotCountPlural": "{count} slots",
@@ -1575,8 +1579,8 @@
     "depositSugg1": "A deposit is required to confirm your booking",
     "depositSugg2": "Non-refundable deposit in case of cancellation",
     "depositSugg3": "Deposit deducted from the total service amount",
-    "autoBookingOffHint": "Enable this so your clients can book directly online",
-    "autoBookingInfo": "Your clients can book directly from your online page. Slots are automatically blocked based on the duration of selected services.",
+    "autoBookingOffHint": "By default, your clients see your slots and contact you. Enable this so they can book directly online with automatic confirmation SMS.",
+    "autoBookingInfo": "Your clients book directly from your online page. Slots are automatically blocked based on the duration of selected services. You can disable anytime to go back to contact mode.",
     "externalBookingWarning": "You have an external booking link configured. Qarte online booking replaces it on your page while enabled.",
     "optional": "optional",
     "percentageLabel": "Percentage",
@@ -1664,7 +1668,14 @@
     "slotMoved": "Slot moved",
     "resultPhotos": "After",
     "grantWelcomeOffer": "Grant welcome offer",
-    "selectOffer": "Select an offer"
+    "selectOffer": "Select an offer",
+    "smsTitle": "SMS Notifications",
+    "smsActiveInfo": "Your clients automatically receive a reminder SMS the day before and a confirmation SMS when booking.",
+    "smsTrialMessage": "100 SMS included every month with your subscription. Add your payment method to activate reminder and confirmation SMS.",
+    "smsQuotaLabel": "SMS this month",
+    "smsQuotaOf": "of",
+    "smsOverageInfo": "Beyond 100 SMS/month: €0.06 per SMS",
+    "smsTrialCta": "Subscribe"
   },
   "qrDownload": {
     "title": "My QR Code & Promo Kit",

@@ -7,6 +7,7 @@ import { getTodayInParis, getTodayForCountry } from '@/lib/utils';
 import { sendBirthdayNotificationEmail } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { sendMerchantPush } from '@/lib/merchant-push';
+import { sendBookingSms } from '@/lib/sms';
 import { verifyCronAuth, batchGetUserEmails, rateLimitDelay } from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
 
@@ -228,6 +229,19 @@ export async function GET(request: NextRequest) {
               } catch {
                 // Never let push failure crash the cron
               }
+            }
+
+            // SMS birthday to customer
+            if (customer.phone_number) {
+              sendBookingSms(supabase, {
+                merchantId: customer.merchant_id,
+                phone: customer.phone_number,
+                shopName: bMerchant.shop_name,
+                smsType: 'birthday',
+                locale: bMerchant.locale || 'fr',
+                subscriptionStatus: bMerchant.subscription_status,
+                gift: bMerchant.birthday_gift_description || (bMerchant.locale === 'en' ? 'a gift' : 'un cadeau'),
+              }).catch(() => {});
             }
           } catch {
             results.birthdayVouchers.errors++;

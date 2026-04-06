@@ -5,6 +5,7 @@ import webpush from 'web-push';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
 import { getTodayForCountry, getTrialStatus } from '@/lib/utils';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
+import { sendBookingSms } from '@/lib/sms';
 import logger from '@/lib/logger';
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
       // Récupérer le merchant pour la description de la récompense parrain
       const { data: merchant } = await supabaseAdmin
         .from('merchants')
-        .select('referral_reward_referrer, shop_name')
+        .select('referral_reward_referrer, shop_name, locale, subscription_status')
         .eq('id', referral.merchant_id)
         .single();
 
@@ -278,6 +279,25 @@ export async function POST(request: NextRequest) {
 
             // Fire-and-forget
             sendPushToParrain().catch(() => {});
+          }
+
+          // SMS to referrer (fire-and-forget)
+          const { data: referrerForSms } = await supabaseAdmin
+            .from('customers')
+            .select('phone_number')
+            .eq('id', referral.referrer_customer_id)
+            .single();
+
+          if (referrerForSms?.phone_number && merchant) {
+            sendBookingSms(supabaseAdmin, {
+              merchantId: referral.merchant_id,
+              phone: referrerForSms.phone_number,
+              shopName: merchant.shop_name,
+              smsType: 'referral_reward',
+              locale: merchant.locale || 'fr',
+              subscriptionStatus: merchant.subscription_status,
+              reward: merchant.referral_reward_referrer || '',
+            }).catch(() => {});
           }
         }
       }

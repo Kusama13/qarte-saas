@@ -537,7 +537,35 @@
 **Index** : `idx_merchant_push_logs_lookup` (merchant_id, notification_type, sent_at)
 **RLS** : service role full access
 
-### 2.28 admin_notes (mig 015)
+### 2.28 sms_logs (mig 092-094)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK | NOT NULL | → merchants(id) ON DELETE CASCADE |
+| slot_id | UUID FK | | → merchant_planning_slots(id) ON DELETE SET NULL |
+| phone_to | TEXT | NOT NULL | |
+| sms_type | TEXT | NOT NULL | CHECK IN ('reminder_j1', 'confirmation_no_deposit', 'confirmation_deposit', 'birthday', 'referral_reward', 'booking_moved') |
+| message_body | TEXT | NOT NULL | |
+| ovh_job_id | TEXT | | |
+| status | TEXT | 'sent' | CHECK IN ('sent', 'delivered', 'failed') |
+| error_message | TEXT | | |
+| cost_euro | NUMERIC(6,4) | 0 | |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**Index** : `idx_sms_logs_merchant_month` (merchant_id, created_at), `idx_sms_logs_dedup` UNIQUE (merchant_id, sms_type, slot_id) WHERE slot_id IS NOT NULL
+
+### 2.29 app_config (mig 092)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| key | TEXT PK | | |
+| value | JSONB | '{}' | |
+| updated_at | TIMESTAMPTZ | `NOW()` | |
+
+**Donnees** : key `sms_global` → `{"reminder_enabled": true, "confirmation_enabled": true, "birthday_enabled": true, "referral_enabled": true}`
+
+### 2.30 admin_notes (mig 015)
 
 Single-row table : id, content (TEXT, default ''), updated_at
 
@@ -995,6 +1023,9 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 089 | planning_scale_indexes | 2 partial indexes sur merchant_planning_slots : `idx_planning_slots_deposit_deadline` (cron) + `idx_planning_slots_booked` (dashboard Reservations) — renforce perfs a 500 slots actifs |
 | 090 | deposit_second_link | merchants : +3 colonnes `deposit_link_label`, `deposit_link_2`, `deposit_link_2_label` — permet 2 moyens de paiement acompte (ex: Revolut + PayPal) affiches en liste de choix sur la modal reservation publique |
 | 091 | move_booking_function | Fonction Postgres `move_booking(merchant_id, source_slot_id, target_date, target_time) RETURNS JSONB` — transfert atomique booking source → target (champs client + deposit + booked_online, et FKs `planning_slot_services`, `planning_slot_photos`, `planning_slot_result_photos`, `customer_notes`). Source devient vide, cible creee si absente ou reutilisee si vide, rejete si cible bookee ou multi-slot. `SECURITY DEFINER`, execute restreint a `service_role` |
+| 092 | sms_system | Table `sms_logs` (audit + quota + dedup) + table `app_config` (toggles admin globaux SMS) |
+| 093 | sms_birthday_referral | Ajout types `birthday` + `referral_reward` au CHECK sms_type, index dedup partiel (WHERE slot_id IS NOT NULL), toggles birthday_enabled + referral_enabled dans app_config |
+| 094 | sms_move_type | Ajout type `booking_moved` au CHECK sms_type |
 
 ---
 

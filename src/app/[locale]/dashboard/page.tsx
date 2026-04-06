@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
-import { Users, UserCheck, UserPlus, Calendar, CalendarDays, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, CreditCard, Coins, Globe, Heart, Cake, Eye } from 'lucide-react';
+import { Users, UserCheck, UserPlus, Calendar, CalendarDays, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, CreditCard, Coins, Globe, Heart, Cake, Eye, MessageSquare } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTodayForCountry, formatCurrency, unwrapJoin } from '@/lib/utils';
@@ -105,6 +105,16 @@ export default function DashboardPage() {
     firstName: string; lastName: string; birthMonth: number; birthDay: number;
   }>>([]);
   const birthdayDatesRef = useRef<Array<{ month: number; day: number }>>([]);
+  const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number } | null>(null);
+
+  // Fetch SMS usage
+  useEffect(() => {
+    if (!merchant?.id) return;
+    fetch(`/api/sms/usage?merchantId=${merchant.id}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setSmsUsage(data); })
+      .catch(() => {});
+  }, [merchant?.id]);
 
   // If we have cached data, don't show loading state
   const [loading, setLoading] = useState(() => {
@@ -738,6 +748,43 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+
+      {/* SMS Quota Widget */}
+      {smsUsage && (() => {
+        const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
+        return (
+          <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-sm p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-emerald-50">
+                  <MessageSquare className="w-4 h-4 text-emerald-600" />
+                </div>
+                <h3 className="text-sm font-bold text-gray-900">{t('smsQuotaTitle')}</h3>
+              </div>
+              {isPaid && (
+                <span className="text-xs font-bold text-gray-700">{t('smsQuotaUsed', { sent: smsUsage.sent })}</span>
+              )}
+            </div>
+            {isPaid ? (
+              <div className="mt-2">
+                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${smsUsage.sent >= 100 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                    style={{ width: `${Math.min(100, smsUsage.sent)}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="text-[11px] text-gray-500">{t('smsQuotaTrialHint')}</p>
+                <Link href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-[11px] font-bold hover:shadow-md transition-all">
+                  {t('smsQuotaTrialCta')}
+                </Link>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Shield Disable Warning Modal */}
       {showShieldWarning && (

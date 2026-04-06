@@ -5,7 +5,8 @@ import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { getTodayForCountry } from '@/lib/utils';
 import { sendMerchantPush } from '@/lib/merchant-push';
-import { verifyCronAuth } from '@/lib/cron-helpers';
+import { sendBookingSms, getGlobalSmsConfig } from '@/lib/sms';
+import { verifyCronAuth, rateLimitDelay } from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
 
 const supabase = createClient(
@@ -259,8 +260,68 @@ export async function GET(request: NextRequest) {
 
     if (depositPushes.length > 0) await Promise.allSettled(depositPushes);
 
-    logger.info('Evening cron completed', { ...results, depositReleased, depositWarned });
-    return NextResponse.json({ success: true, ...results, depositReleased, depositWarned });
+    // ── SMS REMINDERS (J-1, 18h) ──
+    const smsResults = { sent: 0, skipped: 0, errors: 0 };
+
+    try {
+      const globalSmsConfig = await getGlobalSmsConfig(supabase);
+
+      if (globalSmsConfig.reminder_enabled) {
+        // Fetch all active merchants
+        const { data: smsMerchants } = await supabase
+          .from('merchants')
+          .select('id, shop_name, country, locale, subscription_status')
+          .in('subscription_status', ['active', 'canceling', 'past_due']);
+
+        const activeMerchants = smsMerchants || [];
+
+        // Compute tomorrow per merchant timezone and batch query slots
+        for (const m of activeMerchants) {
+          const today = getTodayForCountry(m.country);
+          const todayDate = new Date(today + 'T12:00:00');
+          const tomorrowDate = new Date(todayDate);
+          tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+          const tomorrowStr = tomorrowDate.toISOString().slice(0, 10);
+
+          const { data: tomorrowSlots } = await supabase
+            .from('merchant_planning_slots')
+            .select('id, client_phone, start_time, slot_date')
+            .eq('merchant_id', m.id)
+            .eq('slot_date', tomorrowStr)
+            .not('client_name', 'is', null)
+            .not('client_phone', 'is', null)
+            .is('primary_slot_id', null);
+
+          for (const slot of tomorrowSlots || []) {
+            if (!slot.client_phone) { smsResults.skipped++; continue; }
+
+            const sent = await sendBookingSms(supabase, {
+              merchantId: m.id,
+              slotId: slot.id,
+              phone: slot.client_phone,
+              shopName: m.shop_name,
+              date: slot.slot_date,
+              time: slot.start_time,
+              smsType: 'reminder_j1',
+              locale: m.locale || 'fr',
+              subscriptionStatus: m.subscription_status,
+              globalConfig: globalSmsConfig,
+            });
+
+            if (sent) smsResults.sent++;
+            else smsResults.skipped++;
+
+            await rateLimitDelay();
+          }
+        }
+      }
+    } catch (smsError) {
+      smsResults.errors++;
+      logger.error('SMS reminders error:', smsError);
+    }
+
+    logger.info('Evening cron completed', { ...results, depositReleased, depositWarned, smsReminders: smsResults });
+    return NextResponse.json({ success: true, ...results, depositReleased, depositWarned, smsReminders: smsResults });
   } catch (error) {
     logger.error('Evening cron error', error);
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });

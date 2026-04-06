@@ -20,6 +20,7 @@ import {
   Bell,
   BarChart3,
   Link2,
+  MessageSquare,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,7 @@ const navItems = [
   { href: '/admin/metriques', icon: TrendingUp, label: 'Métriques' },
   { href: '/admin/tracking', icon: BarChart3, label: 'Tracking' },
   { href: '/admin/affiliation', icon: Link2, label: 'Affiliation' },
+  { href: '/admin/sms', icon: MessageSquare, label: 'SMS' },
   { href: '/admin/depenses', icon: Wallet, label: 'Dépenses' },
   { href: '/admin/announcements', icon: Bell, label: 'Annonces' },
 ];

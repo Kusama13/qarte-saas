@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
+import { sendBookingSms } from '@/lib/sms';
 import logger from '@/lib/logger';
 
 const shiftSlotSchema = z.object({
@@ -84,6 +85,27 @@ export async function POST(request: NextRequest) {
         const mapped = errorMap[result.error || ''] || { status: 500, message: 'Erreur lors du deplacement' };
         return NextResponse.json({ error: mapped.message }, { status: mapped.status });
       }
+      // SMS notification to client about moved booking
+      if (result.target_id) {
+        const [{ data: movedSlot }, { data: smsMerchant }] = await Promise.all([
+          supabaseAdmin.from('merchant_planning_slots').select('client_phone, slot_date, start_time').eq('id', result.target_id).single(),
+          supabaseAdmin.from('merchants').select('shop_name, locale, subscription_status').eq('id', merchantId).single(),
+        ]);
+        if (movedSlot?.client_phone && smsMerchant) {
+          sendBookingSms(supabaseAdmin, {
+            merchantId,
+            slotId: result.target_id,
+            phone: movedSlot.client_phone,
+            shopName: smsMerchant.shop_name,
+            date: movedSlot.slot_date,
+            time: movedSlot.start_time,
+            smsType: 'booking_moved',
+            locale: smsMerchant.locale || 'fr',
+            subscriptionStatus: smsMerchant.subscription_status,
+          }).catch(() => {});
+        }
+      }
+
       return NextResponse.json({ success: true, target_id: result.target_id });
     }
 

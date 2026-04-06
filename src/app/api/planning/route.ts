@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import { getTodayForCountry, formatPhoneNumber } from '@/lib/utils';
+import { sendBookingSms } from '@/lib/sms';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 
@@ -278,6 +279,27 @@ export async function PATCH(request: NextRequest) {
     if (error || fillerError) {
       logger.error('Planning PATCH error:', error || fillerError);
       return NextResponse.json({ error: 'Erreur lors de la mise à jour' }, { status: 500 });
+    }
+
+    // SMS confirmation when deposit is confirmed
+    if (deposit_confirmed === true) {
+      const [{ data: smsSlot }, { data: smsMerchant }] = await Promise.all([
+        supabaseAdmin.from('merchant_planning_slots').select('client_phone, slot_date, start_time').eq('id', slotId).single(),
+        supabaseAdmin.from('merchants').select('shop_name, locale, subscription_status').eq('id', merchantId).single(),
+      ]);
+      if (smsSlot?.client_phone && smsMerchant) {
+        sendBookingSms(supabaseAdmin, {
+          merchantId,
+          slotId,
+          phone: smsSlot.client_phone,
+          shopName: smsMerchant.shop_name,
+          date: smsSlot.slot_date,
+          time: smsSlot.start_time,
+          smsType: 'confirmation_deposit',
+          locale: smsMerchant.locale || 'fr',
+          subscriptionStatus: smsMerchant.subscription_status,
+        }).catch(() => {});
+      }
     }
 
     return NextResponse.json({ success: true });
