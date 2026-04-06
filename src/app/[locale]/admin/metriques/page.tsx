@@ -32,11 +32,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { cn } from '@/lib/utils';
-
-const MONTHLY_PRICE = 24;
-const ANNUAL_PRICE = 240;
-const ANNUAL_MONTHLY_EQUIV = Math.round((ANNUAL_PRICE / 12) * 100) / 100; // 20
+import { cn, getMerchantMonthlyPrice } from '@/lib/utils';
 
 interface Snapshot {
   snapshot_date: string;
@@ -71,6 +67,7 @@ type MerchantData = {
   loyalty_mode: 'visit' | 'cagnotte';
   slug: string | null;
   first_feature_choice: 'loyalty' | 'vitrine' | null;
+  billing_period_start: string | null;
 };
 
 export default function MetriquesPage() {
@@ -147,7 +144,7 @@ export default function MetriquesPage() {
         if (cutoff && firstVisit < cutoff) return false;
         return true;
       }).length,
-      paid: filtered.filter(m => m.subscription_status === 'active').length,
+      paid: filtered.filter(m => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due').length,
     };
   }, [funnelMerchants, funnelFirstVisitMap, funnelPeriod]);
 
@@ -180,7 +177,7 @@ export default function MetriquesPage() {
         { data: servicesList },
         { data: photosList },
       ] = await Promise.all([
-        supabase.from('merchants').select('id, user_id, subscription_status, billing_interval, created_at, reward_description, trial_ends_at, logo_url, referral_program_enabled, birthday_gift_enabled, instagram_url, facebook_url, tiktok_url, booking_url, review_link, shield_enabled, tier2_enabled, pwa_installed_at, offer_active, welcome_offer_enabled, double_days_enabled, shop_address, loyalty_mode, slug, first_feature_choice'),
+        supabase.from('merchants').select('id, user_id, subscription_status, billing_interval, billing_period_start, created_at, reward_description, trial_ends_at, logo_url, referral_program_enabled, birthday_gift_enabled, instagram_url, facebook_url, tiktok_url, booking_url, review_link, shield_enabled, tier2_enabled, pwa_installed_at, offer_active, welcome_offer_enabled, double_days_enabled, shop_address, loyalty_mode, slug, first_feature_choice'),
         supabase.from('super_admins').select('user_id'),
         supabase.rpc('get_first_visit_per_merchant'),
         supabase.rpc('get_tenth_card_date_per_merchant'),
@@ -224,14 +221,14 @@ export default function MetriquesPage() {
       }
 
       // Revenue calculations (monthly vs annual)
-      const activeMerchants = merchants.filter(m => m.subscription_status === 'active');
+      const activeMerchants = merchants.filter(m => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due');
       const active = activeMerchants.length;
       const monthlyCount = activeMerchants.filter(m => m.billing_interval !== 'annual').length;
       const annualCount = activeMerchants.filter(m => m.billing_interval === 'annual').length;
       const trial = merchants.filter(m => m.subscription_status === 'trial').length;
       const churned = merchants.filter(m => m.subscription_status === 'canceled').length;
       const total = merchants.length;
-      const mrr = Math.round(monthlyCount * MONTHLY_PRICE + annualCount * ANNUAL_MONTHLY_EQUIV);
+      const mrr = Math.round(activeMerchants.reduce((sum, m) => sum + getMerchantMonthlyPrice(m), 0));
       const churnRate = (active + churned) > 0 ? Math.round((churned / (active + churned)) * 100) : 0;
 
       // Trial-to-paid rate (compute early for projection)
@@ -240,7 +237,7 @@ export default function MetriquesPage() {
         const trialEnd = new Date(m.trial_ends_at);
         return trialEnd < now && trialEnd >= oneMonthAgo;
       });
-      const trialConvertedCount = trialEndedRecently.filter(m => m.subscription_status === 'active').length;
+      const trialConvertedCount = trialEndedRecently.filter(m => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due').length;
       const trialToPaidRate = trialEndedRecently.length > 0
         ? Math.round((trialConvertedCount / trialEndedRecently.length) * 100)
         : 0;
@@ -272,7 +269,8 @@ export default function MetriquesPage() {
       const trialEndingSoon = endingSoonCount || 0;
       const estimatedConversionRate = trialToPaidRate > 0 ? trialToPaidRate / 100 : 0.5;
       const estimatedConversions = Math.round(trialEndingSoon * estimatedConversionRate);
-      const revenueNextMonth = Math.round((active + estimatedConversions) * (mrr > 0 && active > 0 ? mrr / active : MONTHLY_PRICE));
+      const avgMerchantPrice = mrr > 0 && active > 0 ? mrr / active : 24;
+      const revenueNextMonth = Math.round((active + estimatedConversions) * avgMerchantPrice);
 
       // Time-based stats
       const weekMerchants = merchants.filter(m => new Date(m.created_at) >= oneWeekAgo);
@@ -311,15 +309,21 @@ export default function MetriquesPage() {
         const mrrData: { month: string; mrr: number }[] = [];
         const merchantsByMonth = new Map<string, number>();
 
+        const isPaid = (s: string) => s === 'active' || s === 'canceling' || s === 'past_due';
+        // Average monthly price across active merchants (accounts for old/new pricing)
+        const avgPrice = activeMerchants.length > 0
+          ? activeMerchants.reduce((sum, m) => sum + getMerchantMonthlyPrice(m), 0) / activeMerchants.length
+          : 24;
+
         sixMonthMerchants.forEach((m) => {
-          if (m.subscription_status === 'active') {
+          if (isPaid(m.subscription_status)) {
             const date = new Date(m.created_at);
             const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
             merchantsByMonth.set(monthKey, (merchantsByMonth.get(monthKey) || 0) + 1);
           }
         });
 
-        let cumulativeActive = active - sixMonthMerchants.filter(m => m.subscription_status === 'active').length;
+        let cumulativeActive = active - sixMonthMerchants.filter(m => isPaid(m.subscription_status)).length;
         for (let i = 5; i >= 0; i--) {
           const date = new Date();
           date.setMonth(date.getMonth() - i);
@@ -329,7 +333,7 @@ export default function MetriquesPage() {
           cumulativeActive += merchantsByMonth.get(monthKey) || 0;
           mrrData.push({
             month: monthName,
-            mrr: Math.max(0, cumulativeActive) * MONTHLY_PRICE,
+            mrr: Math.round(Math.max(0, cumulativeActive) * avgPrice),
           });
         }
         setMrrHistory(mrrData);
@@ -488,7 +492,7 @@ export default function MetriquesPage() {
 
   const arpu = revenue.activeSubscribers > 0
     ? Math.round((revenue.mrr / revenue.activeSubscribers) * 100) / 100
-    : MONTHLY_PRICE;
+    : 24;
 
   const featureAdoption = useMemo(() => {
     const eligible = funnelMerchants.filter(
@@ -681,14 +685,14 @@ export default function MetriquesPage() {
                 <p className="text-xs font-medium text-gray-500">Mensuel</p>
                 <p className="text-lg font-bold text-gray-900">{revenue.monthlyCount}</p>
               </div>
-              <p className="text-sm font-semibold text-[#5167fc]">{revenue.monthlyCount * MONTHLY_PRICE}€/mois</p>
+              <p className="text-sm font-semibold text-[#5167fc]">{revenue.mrr}€/mois</p>
             </div>
             <div className="bg-white/80 px-4 py-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Annuel</p>
                 <p className="text-lg font-bold text-gray-900">{revenue.annualCount}</p>
               </div>
-              <p className="text-sm font-semibold text-purple-600">{Math.round(revenue.annualCount * ANNUAL_MONTHLY_EQUIV)}€/mois</p>
+              <p className="text-sm font-semibold text-purple-600">{Math.round(revenue.annualCount * 20)}€/mois</p>
             </div>
           </div>
         )}
@@ -1076,7 +1080,7 @@ export default function MetriquesPage() {
           </div>
           <div>
             <p className="text-white/70 text-sm">Revenus potentiels (essais)</p>
-            <p className="text-2xl font-bold">{formatCurrency(revenue.trialUsers * MONTHLY_PRICE)}</p>
+            <p className="text-2xl font-bold">{formatCurrency(revenue.trialUsers * 24)}</p>
           </div>
           <div>
             <p className="text-white/70 text-sm">Perte mensuelle (annulés)</p>

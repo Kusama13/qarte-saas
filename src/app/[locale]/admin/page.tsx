@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button, Input, Modal } from '@/components/ui';
-import { cn, formatPhoneForWhatsApp } from '@/lib/utils';
+import { cn, formatPhoneForWhatsApp, getMerchantMonthlyPrice } from '@/lib/utils';
 
 // ============================================
 // TYPES
@@ -41,6 +41,7 @@ interface Merchant {
   phone: string;
   subscription_status: string;
   billing_interval: 'monthly' | 'annual' | null;
+  billing_period_start: string | null;
   trial_ends_at: string | null;
   created_at: string;
   reward_description: string | null;
@@ -181,10 +182,10 @@ export default function AdminDashboardPage() {
       { data: allVisits },
       { data: recentMerchantsList },
     ] = await Promise.all([
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled'),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, billing_period_start, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled'),
       supabase.from('super_admins').select('user_id'),
       supabase.from('visits').select('merchant_id, visited_at'),
-      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled').order('created_at', { ascending: false }).limit(10),
+      supabase.from('merchants').select('id, user_id, shop_name, shop_type, shop_address, phone, subscription_status, billing_interval, billing_period_start, trial_ends_at, created_at, reward_description, logo_url, loyalty_mode, bio, planning_enabled, auto_booking_enabled, referral_program_enabled, birthday_gift_enabled, welcome_offer_enabled, double_days_enabled, shield_enabled, tier2_enabled').order('created_at', { ascending: false }).limit(10),
     ]);
 
     // Fetch merchant emails via API
@@ -252,9 +253,9 @@ export default function AdminDashboardPage() {
 
     const cagnotte = merchants.filter((m: Merchant) => m.loyalty_mode === 'cagnotte');
 
-    // MRR: mensuel = 24€, annuel = 240/12 = 20€
+    // MRR: prix reel par merchant (19€ anciens, 24€ nouveaux, annuel /12)
     const mrr = active.reduce((sum: number, m: Merchant) => {
-      return sum + (m.billing_interval === 'annual' ? Math.round(240 / 12 * 100) / 100 : 24);
+      return sum + getMerchantMonthlyPrice(m);
     }, 0);
 
     setStats({

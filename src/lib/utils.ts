@@ -213,6 +213,18 @@ export interface TrialStatus {
   gracePeriodDays: number;     // Constante: 3 jours
 }
 
+// Pricing history — old price before 2026-04-05, new price after
+const PRICE_CHANGE_DATE = '2026-04-05';
+
+/** Returns the monthly equivalent price for a merchant based on their subscription date */
+export function getMerchantMonthlyPrice(merchant: { billing_interval: string | null; billing_period_start: string | null }): number {
+  const isOldPrice = merchant.billing_period_start && merchant.billing_period_start < PRICE_CHANGE_DATE;
+  if (merchant.billing_interval === 'annual') {
+    return Math.round((isOldPrice ? 190 : 240) / 12 * 100) / 100;
+  }
+  return isOldPrice ? 19 : 24;
+}
+
 export function getTrialStatus(trialEndsAt: string | null, subscriptionStatus: string): TrialStatus {
   const GRACE_PERIOD_DAYS = 3;
 
