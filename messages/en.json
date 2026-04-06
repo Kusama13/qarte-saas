@@ -1376,10 +1376,12 @@
     "activityReferral": "New referral",
     "activityReferralDone": "Referral completed",
     "activityWelcome": "Welcome offer",
+    "defaultClient": "Client",
     "smsQuotaTitle": "SMS + push reminders",
     "smsQuotaUsed": "{sent} out of 100",
     "smsQuotaTrialHint": "100 SMS reminders and confirmations included every month. Add your card to activate.",
-    "smsQuotaTrialCta": "Subscribe"
+    "smsQuotaTrialCta": "Subscribe",
+    "smsOverage": "{count} SMS over quota ({cost}€)"
   },
   "subscription": {
     "title": "Subscription",
@@ -1595,6 +1597,7 @@
     "depositLinkRequired": "Payment link required when an amount is configured",
     "depositLinkInvalid": "Link must start with https://",
     "depositAmountRequired": "Enter a percentage or a fixed amount",
+    "depositPercentMax": "Percentage cannot exceed 100%",
     "depositDeadlineLabel": "Deposit payment deadline",
     "depositDeadlineFree": "No limit",
     "depositDeadlineHint": "If the deposit is not confirmed within this timeframe, the slot will be released automatically.",

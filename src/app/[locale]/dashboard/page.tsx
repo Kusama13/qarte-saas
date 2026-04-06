@@ -105,7 +105,7 @@ export default function DashboardPage() {
     firstName: string; lastName: string; birthMonth: number; birthDay: number;
   }>>([]);
   const birthdayDatesRef = useRef<Array<{ month: number; day: number }>>([]);
-  const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number } | null>(null);
+  const [smsUsage, setSmsUsage] = useState<{ sent: number; remaining: number; overageCount: number; overageCost: number } | null>(null);
 
   // Fetch SMS usage
   useEffect(() => {
@@ -422,13 +422,13 @@ export default function DashboardPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const v of (feedVisitsResult.data || []) as any[]) {
           const cust = unwrapJoin(unwrapJoin(v.loyalty_card)?.customer);
-          const name = cust ? `${cust.first_name} ${cust.last_name?.charAt(0) || ''}`.trim() : 'Client';
+          const name = cust ? `${cust.first_name} ${cust.last_name?.charAt(0) || ''}`.trim() : t('defaultClient');
           feed.push({ type: 'scan', timestamp: v.visited_at, title: name, subtitle: t('activityScan', { points: v.points_earned }) });
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const r of (feedRedemptionsResult.data || []) as any[]) {
           const cust = unwrapJoin(unwrapJoin(r.loyalty_card)?.customer);
-          feed.push({ type: 'reward', timestamp: r.redeemed_at, title: cust?.first_name || 'Client', subtitle: t('activityReward') });
+          feed.push({ type: 'reward', timestamp: r.redeemed_at, title: cust?.first_name || t('defaultClient'), subtitle: t('activityReward') });
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const b of (feedBookingsResult.data || []) as any[]) {
@@ -441,7 +441,7 @@ export default function DashboardPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const w of (feedWelcomeResult.data || []) as any[]) {
           const cust = unwrapJoin(w.customer);
-          feed.push({ type: 'welcome', timestamp: w.created_at, title: cust?.first_name || 'Client', subtitle: t('activityWelcome') });
+          feed.push({ type: 'welcome', timestamp: w.created_at, title: cust?.first_name || t('defaultClient'), subtitle: t('activityWelcome') });
         }
 
         // Sort by timestamp DESC and take 8
@@ -752,12 +752,14 @@ export default function DashboardPage() {
       {/* SMS Quota Widget */}
       {smsUsage && (() => {
         const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
+        const pct = Math.min(100, Math.round((smsUsage.sent / 100) * 100));
+        const isOverage = smsUsage.sent > 100;
         return (
-          <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-2xl shadow-sm p-4">
+          <div className={`backdrop-blur-xl border rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6 ${isPaid ? 'bg-white/80 border-white/20' : 'bg-amber-50/80 border-amber-200/40'}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-emerald-50">
-                  <MessageSquare className="w-4 h-4 text-emerald-600" />
+                <div className={`p-1.5 rounded-lg ${isOverage ? 'bg-amber-50' : 'bg-emerald-50'}`}>
+                  <MessageSquare className={`w-4 h-4 ${isOverage ? 'text-amber-600' : 'text-emerald-600'}`} />
                 </div>
                 <h3 className="text-sm font-bold text-gray-900">{t('smsQuotaTitle')}</h3>
               </div>
@@ -769,10 +771,15 @@ export default function DashboardPage() {
               <div className="mt-2">
                 <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${smsUsage.sent >= 100 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                    style={{ width: `${Math.min(100, smsUsage.sent)}%` }}
+                    className={`h-full rounded-full transition-all ${isOverage ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                    style={{ width: `${pct}%` }}
                   />
                 </div>
+                {isOverage && (
+                  <p className="text-[11px] font-semibold text-amber-600 mt-1.5">
+                    {t('smsOverage', { count: smsUsage.overageCount, cost: smsUsage.overageCost.toFixed(2) })}
+                  </p>
+                )}
               </div>
             ) : (
               <div className="mt-2 flex items-center justify-between gap-3">
@@ -937,7 +944,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className={`text-sm font-semibold ${shieldEnabled ? 'text-emerald-800' : 'text-gray-600'}`}>
-                    Qarte Shield {shieldEnabled ? t('shieldActive') : t('shieldInactive')}
+                    {t('shieldTitle')} {shieldEnabled ? t('shieldActive') : t('shieldInactive')}
                   </p>
                   <p className="text-xs text-gray-500">
                     {shieldEnabled ? t('shieldProtectionOn') : t('shieldProtectionOff')}

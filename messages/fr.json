@@ -1376,10 +1376,12 @@
     "activityReferral": "Nouveau parrainage",
     "activityReferralDone": "Parrainage validé",
     "activityWelcome": "Offre bienvenue",
+    "defaultClient": "Client",
     "smsQuotaTitle": "Rappels SMS + push",
     "smsQuotaUsed": "{sent} sur 100",
     "smsQuotaTrialHint": "100 SMS de rappel et de confirmation inclus chaque mois. Ajoute ta carte bancaire pour en profiter.",
-    "smsQuotaTrialCta": "Souscrire"
+    "smsQuotaTrialCta": "Souscrire",
+    "smsOverage": "{count} SMS au-delà du forfait ({cost}€)"
   },
   "subscription": {
     "title": "Abonnement",
@@ -1595,6 +1597,7 @@
     "depositLinkRequired": "Lien de paiement requis si un montant est configuré",
     "depositLinkInvalid": "Le lien doit commencer par https://",
     "depositAmountRequired": "Renseigne un pourcentage ou un montant fixe",
+    "depositPercentMax": "Le pourcentage ne peut pas dépasser 100%",
     "depositDeadlineLabel": "Délai pour recevoir l'acompte",
     "depositDeadlineFree": "Libre",
     "depositDeadlineHint": "Si l'acompte n'est pas confirmé dans ce délai, le créneau sera libéré automatiquement.",

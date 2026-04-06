@@ -186,6 +186,7 @@ export default function PlanningDashboard() {
       const hasAmount = !!(depositPercent || depositAmount);
       if (hasAmount && !hasLink) { setDepositError(t('depositLinkRequired')); return; }
       if (hasLink && !hasAmount) { setDepositError(t('depositAmountRequired')); return; }
+      if (depositPercent && parseInt(depositPercent) > 100) { setDepositError(t('depositPercentMax')); return; }
     }
     setDepositError(null);
     saveSettings(async () => {
@@ -297,7 +298,7 @@ export default function PlanningDashboard() {
             aria-checked={planningEnabled}
             onClick={() => handleTogglePlanning(!planningEnabled)}
             disabled={saving}
-            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 ${planningEnabled ? 'bg-violet-600' : 'bg-gray-200'} ${saving ? 'opacity-50' : ''}`}
+            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 ${planningEnabled ? 'bg-indigo-600' : 'bg-gray-200'} ${saving ? 'opacity-50' : ''}`}
           >
             <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${planningEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
@@ -525,7 +526,7 @@ export default function PlanningDashboard() {
                   ) : (
                     <>
                     {/* Desktop: 7 columns */}
-                    <div className="hidden sm:grid sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                    <div className="hidden sm:grid sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-2">
                       {weekDays.map(day => {
                         const dateStr = formatDate(day);
                         const daySlots = slotsByDate.get(dateStr) || [];
@@ -806,22 +807,24 @@ export default function PlanningDashboard() {
                     <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('depositAmountLabel')}</label>
 
                     {/* Percentage pills */}
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('percentageLabel')}</p>
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {['10', '15', '20', '25', '30'].map(v => (
-                        <button key={`p${v}`} type="button" onClick={() => { setDepositPercent(v); setDepositAmount(''); }}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositPercent === v ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-                        >{v}%</button>
-                      ))}
-                      <input
-                        type="number"
-                        value={!['10', '15', '20', '25', '30'].includes(depositPercent) ? depositPercent : ''}
-                        onChange={(e) => { setDepositPercent(e.target.value); if (e.target.value) setDepositAmount(''); }}
-                        placeholder={t('customPercent')}
-                        min={1}
-                        max={100}
-                        className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
-                      />
+                    <div className={`transition-opacity ${depositAmount ? 'opacity-40' : ''}`}>
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('percentageLabel')}</p>
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {['10', '15', '20', '25', '30'].map(v => (
+                          <button key={`p${v}`} type="button" onClick={() => { setDepositPercent(v); setDepositAmount(''); }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositPercent === v ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                          >{v}%</button>
+                        ))}
+                        <input
+                          type="number"
+                          value={!['10', '15', '20', '25', '30'].includes(depositPercent) ? depositPercent : ''}
+                          onChange={(e) => { setDepositPercent(e.target.value); if (e.target.value) setDepositAmount(''); }}
+                          placeholder={t('customPercent')}
+                          min={1}
+                          max={100}
+                          className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
+                        />
+                      </div>
                     </div>
 
                     {/* OR divider */}
@@ -832,21 +835,23 @@ export default function PlanningDashboard() {
                     </div>
 
                     {/* Fixed amount pills */}
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('fixedAmountLabel')}</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {['10', '15', '20', '25', '30'].map(v => (
-                        <button key={`a${v}`} type="button" onClick={() => { setDepositAmount(v); setDepositPercent(''); }}
-                          className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositAmount === v ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-                        >{v}{getCurrencySymbol(merchant?.country)}</button>
-                      ))}
-                      <input
-                        type="number"
-                        value={!['10', '15', '20', '25', '30'].includes(depositAmount) ? depositAmount : ''}
-                        onChange={(e) => { setDepositAmount(e.target.value); if (e.target.value) setDepositPercent(''); }}
-                        placeholder={t('customAmount')}
-                        min={1}
-                        className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
-                      />
+                    <div className={`transition-opacity ${depositPercent ? 'opacity-40' : ''}`}>
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">{t('fixedAmountLabel')}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {['10', '15', '20', '25', '30'].map(v => (
+                          <button key={`a${v}`} type="button" onClick={() => { setDepositAmount(v); setDepositPercent(''); }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${depositAmount === v ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                          >{v}{getCurrencySymbol(merchant?.country)}</button>
+                        ))}
+                        <input
+                          type="number"
+                          value={!['10', '15', '20', '25', '30'].includes(depositAmount) ? depositAmount : ''}
+                          onChange={(e) => { setDepositAmount(e.target.value); if (e.target.value) setDepositPercent(''); }}
+                          placeholder={t('customAmount')}
+                          min={1}
+                          className={`w-[72px] px-2.5 py-1.5 text-xs border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 ${amountMissing ? 'border-red-300' : 'border-gray-200'}`}
+                        />
+                      </div>
                     </div>
                     {amountMissing && <p className="text-[10px] text-red-400 mt-1.5">{t('depositAmountRequired')}</p>}
                   </div>
@@ -981,7 +986,7 @@ export default function PlanningDashboard() {
                 role="switch"
                 aria-checked={messageEnabled}
                 onClick={() => setMessageEnabled(!messageEnabled)}
-                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 ${messageEnabled ? 'bg-violet-600' : 'bg-gray-200'}`}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 ${messageEnabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${messageEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
@@ -1036,7 +1041,7 @@ export default function PlanningDashboard() {
                 placeholder={t('bookingPlaceholder')}
                 maxLength={500}
                 rows={4}
-                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 resize-none"
+                className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400 resize-none"
               />
               <p className="text-[10px] text-gray-300 text-right mt-1">{bookingMessage.length}/500</p>
             </div>

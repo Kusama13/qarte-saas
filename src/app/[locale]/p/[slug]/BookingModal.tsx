@@ -496,7 +496,7 @@ export default function BookingModal({
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">{t('services')}</span>
-                    <span className="font-semibold text-gray-900 text-right max-w-[60%]">
+                    <span className="font-semibold text-gray-900 text-right max-w-[60%] line-clamp-2">
                       {bookingResult.services.map(s => s.name).join(', ')}
                     </span>
                   </div>
