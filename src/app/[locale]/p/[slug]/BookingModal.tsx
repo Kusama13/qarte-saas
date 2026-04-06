@@ -401,6 +401,7 @@ export default function BookingModal({
                       country={phoneCountry}
                       onCountryChange={setPhoneCountry}
                       countries={['FR', 'BE', 'CH']}
+                      className="px-4 py-2.5 text-sm border-gray-200 rounded-r-xl"
                     />
                   </div>
                 </div>
