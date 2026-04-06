@@ -41,13 +41,13 @@ export function PhoneInput({
 }: PhoneInputProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
-  const buttonRef = useRef<HTMLButtonElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const updateDropdownPosition = useCallback(() => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
+    if (!wrapperRef.current) return;
+    const rect = wrapperRef.current.getBoundingClientRect();
     const dropdownHeight = (countries.length * 44) + 16;
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
@@ -65,7 +65,7 @@ export function PhoneInput({
     const handleClose = (e: MouseEvent) => {
       if (
         dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
-        buttonRef.current && !buttonRef.current.contains(e.target as Node)
+        wrapperRef.current && !wrapperRef.current.contains(e.target as Node)
       ) {
         setDropdownOpen(false);
       }
@@ -94,21 +94,22 @@ export function PhoneInput({
   return (
     <div className={cn('w-full', wrapperClassName)}>
       {label && <label className="label">{label}</label>}
-      <div className="relative flex">
-        {/* Country selector */}
-        <button
-          ref={buttonRef}
-          type="button"
-          onClick={() => setDropdownOpen(!dropdownOpen)}
-          className={cn(
-            'flex items-center gap-1.5 h-full px-3 border border-r-0 rounded-l-xl bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-700 shrink-0',
-            error ? 'border-red-300' : 'border-gray-300',
-          )}
-        >
-          <span className="text-lg leading-none">{COUNTRY_FLAGS[country]}</span>
-          <span className="text-xs text-gray-500">+{config.prefix}</span>
-          <ChevronDown className="w-3 h-3 text-gray-400" />
-        </button>
+      <div className="relative flex" ref={wrapperRef}>
+        {/* Country selector — wrapped in div for h-full to work */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className={cn(
+              'flex items-center gap-1 h-full px-3 border border-r-0 rounded-l-xl bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-700 shrink-0',
+              error ? 'border-red-300' : 'border-gray-300',
+            )}
+          >
+            <span className="text-base leading-none">{COUNTRY_FLAGS[country]}</span>
+            <span className="text-xs text-gray-500">+{config.prefix}</span>
+            <ChevronDown className="w-3 h-3 text-gray-400" />
+          </button>
+        </div>
 
         {/* Phone input */}
         <input
@@ -127,7 +128,7 @@ export function PhoneInput({
         />
       </div>
 
-      {/* Dropdown — rendered via portal in document.body, outside all parent containers */}
+      {/* Dropdown via portal — completely outside parent DOM */}
       {dropdownOpen && createPortal(
         <div
           ref={dropdownRef}
@@ -145,11 +146,11 @@ export function PhoneInput({
                   type="button"
                   onClick={() => handleCountrySelect(c)}
                   className={cn(
-                    'w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors',
+                    'w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors',
                     c === country && 'bg-indigo-50 text-indigo-700 font-medium',
                   )}
                 >
-                  <span className="text-lg leading-none">{COUNTRY_FLAGS[c]}</span>
+                  <span className="text-base leading-none">{COUNTRY_FLAGS[c]}</span>
                   <span className="flex-1 text-left">{COUNTRY_NAMES[c] || c}</span>
                   <span className="text-xs text-gray-400">+{cfg.prefix}</span>
                 </button>
