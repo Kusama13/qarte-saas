@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown } from 'lucide-react';
 import { cn, PHONE_CONFIG, COUNTRY_FLAGS, ALL_COUNTRIES } from '@/lib/utils';
 import type { MerchantCountry } from '@/types';
@@ -47,16 +48,14 @@ export function PhoneInput({
   const updateDropdownPosition = useCallback(() => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
-    const dropdownHeight = (countries.length * 40) + 10; // ~40px per item + padding
+    const dropdownHeight = (countries.length * 44) + 16;
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
 
     if (spaceBelow >= dropdownHeight || spaceBelow >= spaceAbove) {
-      // Open downward
-      setDropdownStyle({ position: 'fixed', top: rect.bottom + 4, left: rect.left, zIndex: 100 });
+      setDropdownStyle({ top: rect.bottom + 4, left: rect.left });
     } else {
-      // Open upward
-      setDropdownStyle({ position: 'fixed', bottom: window.innerHeight - rect.top + 4, left: rect.left, zIndex: 100 });
+      setDropdownStyle({ bottom: window.innerHeight - rect.top + 4, left: rect.left });
     }
   }, [countries.length]);
 
@@ -111,38 +110,6 @@ export function PhoneInput({
           <ChevronDown className="w-3 h-3 text-gray-400" />
         </button>
 
-        {/* Dropdown */}
-        {dropdownOpen && (
-          <div
-            ref={dropdownRef}
-            className="bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[210px]"
-            style={dropdownStyle}
-          >
-            {sortedCountries.map((c, i) => {
-              const cfg = PHONE_CONFIG[c];
-              return (
-                <div key={c}>
-                  {i === 1 && sortedCountries.length > 1 && (
-                    <div className="border-t border-gray-100 my-1" />
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleCountrySelect(c)}
-                    className={cn(
-                      'w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors',
-                      c === country && 'bg-indigo-50 text-indigo-700 font-medium',
-                    )}
-                  >
-                    <span className="text-lg leading-none">{COUNTRY_FLAGS[c]}</span>
-                    <span className="flex-1 text-left">{COUNTRY_NAMES[c] || c}</span>
-                    <span className="text-xs text-gray-400">+{cfg.prefix}</span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
         {/* Phone input */}
         <input
           ref={inputRef}
@@ -159,6 +126,40 @@ export function PhoneInput({
           )}
         />
       </div>
+
+      {/* Dropdown — rendered via portal in document.body, outside all parent containers */}
+      {dropdownOpen && createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed z-[100] bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[210px]"
+          style={dropdownStyle}
+        >
+          {sortedCountries.map((c, i) => {
+            const cfg = PHONE_CONFIG[c];
+            return (
+              <div key={c}>
+                {i === 1 && sortedCountries.length > 1 && (
+                  <div className="border-t border-gray-100 my-1" />
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleCountrySelect(c)}
+                  className={cn(
+                    'w-full flex items-center gap-2.5 px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors',
+                    c === country && 'bg-indigo-50 text-indigo-700 font-medium',
+                  )}
+                >
+                  <span className="text-lg leading-none">{COUNTRY_FLAGS[c]}</span>
+                  <span className="flex-1 text-left">{COUNTRY_NAMES[c] || c}</span>
+                  <span className="text-xs text-gray-400">+{cfg.prefix}</span>
+                </button>
+              </div>
+            );
+          })}
+        </div>,
+        document.body
+      )}
+
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );
