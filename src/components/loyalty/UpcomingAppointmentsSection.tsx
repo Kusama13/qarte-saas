@@ -339,7 +339,7 @@ export default function UpcomingAppointmentsSection({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             onClick={() => { if (!cancellingId) setConfirmCancelSlot(null); }}
           >
             <motion.div
@@ -347,7 +347,7 @@ export default function UpcomingAppointmentsSection({
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-sm bg-white rounded-t-[2rem] sm:rounded-[2rem] p-6 shadow-xl"
+              className="w-full max-w-sm bg-white rounded-[2rem] p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-center mb-4">
@@ -409,7 +409,7 @@ export default function UpcomingAppointmentsSection({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
             onClick={() => { if (!rescheduling) { setRescheduleSlot(null); setError(null); } }}
           >
             <motion.div
@@ -417,7 +417,7 @@ export default function UpcomingAppointmentsSection({
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              className="w-full max-w-sm bg-white rounded-t-[2rem] sm:rounded-[2rem] px-5 pt-5 pb-8 shadow-xl max-h-[80vh] flex flex-col"
+              className="w-full max-w-sm bg-white rounded-[2rem] px-5 pt-5 pb-6 shadow-xl max-h-[80vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header compact */}
