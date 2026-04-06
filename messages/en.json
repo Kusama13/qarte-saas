@@ -468,7 +468,7 @@
     "q11": "How do deposits work for bookings?",
     "a11": "You add your own payment link (Revolut, PayPal, Stripe...) in your calendar settings. When a client books online, they're asked to pay a deposit through your link. No Qarte commission — you receive payment directly to your account.",
     "q12": "How do SMS notifications work?",
-    "a12": "Your clients automatically receive an SMS confirmation when they book and a reminder the day before their appointment. 100 SMS per month are included in your plan, beyond that it's $0.06 per SMS.",
+    "a12": "Your clients automatically receive an SMS confirmation when they book and a reminder the day before their appointment. 100 SMS per month are included in your plan, beyond that it's $0.075 per SMS.",
     "whatsappTitle": "Have a question? Message us directly.",
     "whatsappSub": "Response in under 1 hour",
     "whatsappCta": "Start a conversation"
@@ -1708,7 +1708,7 @@
     "smsTrialMessage": "100 SMS included every month with your subscription. Add your payment method to activate reminder and confirmation SMS.",
     "smsQuotaLabel": "SMS this month",
     "smsQuotaOf": "of",
-    "smsOverageInfo": "Beyond 100 SMS/month: €0.06 per SMS",
+    "smsOverageInfo": "Beyond 100 SMS/month: €0.075 per SMS",
     "smsTrialCta": "Subscribe"
   },
   "qrDownload": {

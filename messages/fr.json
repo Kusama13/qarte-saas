@@ -468,7 +468,7 @@
     "q11": "Comment fonctionnent les acomptes pour les réservations ?",
     "a11": "Tu ajoutes ton propre lien de paiement (Revolut, PayPal, Stripe...) dans les paramètres de ton planning. Quand une cliente réserve en ligne, on lui demande de payer l'acompte via ton lien. Aucune commission Qarte — tu reçois le paiement directement sur ton compte.",
     "q12": "Comment fonctionnent les SMS ?",
-    "a12": "Tes clientes reçoivent automatiquement un SMS de confirmation à la réservation et un rappel la veille du rendez-vous. 100 SMS par mois sont inclus dans ton abonnement, au-delà c'est 0,06€ par SMS.",
+    "a12": "Tes clientes reçoivent automatiquement un SMS de confirmation à la réservation et un rappel la veille du rendez-vous. 100 SMS par mois sont inclus dans ton abonnement, au-delà c'est 0,075€ par SMS.",
     "whatsappTitle": "Une question ? Écris-nous directement.",
     "whatsappSub": "Réponse en moins d'1h",
     "whatsappCta": "Démarrer la discussion"
@@ -1708,7 +1708,7 @@
     "smsTrialMessage": "100 SMS inclus chaque mois avec ton abonnement. Ajoute ta carte bancaire pour activer les SMS de rappel et de confirmation.",
     "smsQuotaLabel": "SMS ce mois",
     "smsQuotaOf": "sur",
-    "smsOverageInfo": "Au-delà de 100 SMS/mois : 0,06€ par SMS",
+    "smsOverageInfo": "Au-delà de 100 SMS/mois : 0,075€ par SMS",
     "smsTrialCta": "Souscrire"
   },
   "qrDownload": {

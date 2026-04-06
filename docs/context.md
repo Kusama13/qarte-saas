@@ -377,7 +377,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ### SMS (OVH Cloud)
 - **Client API** : `src/lib/ovh-sms.ts` — signature HMAC-SHA1 custom, fire-and-forget, pas de npm package
-- **Service** : `src/lib/sms.ts` — dedup via `sms_logs`, quota 100 SMS/mois inclus (0,06€ au-dela), templates FR/EN < 160 chars
+- **Service** : `src/lib/sms.ts` — dedup via `sms_logs`, quota 100 SMS/mois inclus (0,075€ au-dela), templates FR/EN < 160 chars
 - **Config globale** : table `app_config` (key `sms_global`) — 4 toggles admin dans `/admin/sms`
 - **Pas de toggles merchant** — gere uniquement par l'admin
 - **Reserve aux abonnes actifs** (pas trial) — message CTA dans dashboard + planning settings

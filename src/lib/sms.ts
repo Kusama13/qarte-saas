@@ -2,7 +2,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { sendSms } from './ovh-sms';
 
 export const SMS_FREE_QUOTA = 100;
-export const SMS_OVERAGE_COST = 0.06;
+export const SMS_OVERAGE_COST = 0.075;
 
 const PAID_STATUSES = ['active', 'canceling', 'past_due'];
 
@@ -173,7 +173,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
         break;
     }
 
-    // 5. Compute cost (free if under quota, 0.06€ if over)
+    // 5. Compute cost (free if under quota, 0.075€ if over)
     const usage = await getSmsUsageThisMonth(supabase, merchantId);
     const cost = usage.sent >= SMS_FREE_QUOTA ? SMS_OVERAGE_COST : 0;
 
