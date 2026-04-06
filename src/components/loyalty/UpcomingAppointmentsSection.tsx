@@ -62,6 +62,7 @@ export default function UpcomingAppointmentsSection({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [rescheduling, setRescheduling] = useState(false);
+  const [rescheduleSuccess, setRescheduleSuccess] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const [error, setError] = useState<string | null>(null);
@@ -166,8 +167,12 @@ export default function UpcomingAppointmentsSection({
       });
       if (res.ok) {
         const data = await res.json();
-        setRescheduleSlot(null);
-        onRescheduled?.(rescheduleSlot.id, data.new_slot_id);
+        setRescheduleSuccess(true);
+        setTimeout(() => {
+          setRescheduleSlot(null);
+          setRescheduleSuccess(false);
+          onRescheduled?.(rescheduleSlot.id, data.new_slot_id);
+        }, 1500);
       } else {
         const data = await res.json();
         setError(data.error || t('rescheduleError'));
@@ -410,7 +415,7 @@ export default function UpcomingAppointmentsSection({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-            onClick={() => { if (!rescheduling) { setRescheduleSlot(null); setError(null); } }}
+            onClick={() => { if (!rescheduling && !rescheduleSuccess) { setRescheduleSlot(null); setError(null); } }}
           >
             <motion.div
               initial={{ y: 100, opacity: 0 }}
@@ -420,6 +425,27 @@ export default function UpcomingAppointmentsSection({
               className="w-full max-w-sm bg-white rounded-[2rem] px-5 pt-5 pb-6 shadow-xl max-h-[80vh] flex flex-col"
               onClick={(e) => e.stopPropagation()}
             >
+              {rescheduleSuccess ? (
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="py-6 text-center"
+                >
+                  <div
+                    className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+                    style={{ backgroundColor: `${merchantColor}15` }}
+                  >
+                    <Check className="w-7 h-7" style={{ color: merchantColor }} />
+                  </div>
+                  <p className="text-sm font-bold text-gray-900 mb-1">{t('bookingRescheduled')}</p>
+                  {selectedDate && selectedTime && (
+                    <p className="text-xs text-gray-400">
+                      {formatLongDate(selectedDate)} — {formatTime(selectedTime, locale)}
+                    </p>
+                  )}
+                </motion.div>
+              ) : (
+              <>
               {/* Header compact */}
               <div className="flex items-center gap-3 mb-4">
                 <div
@@ -571,6 +597,8 @@ export default function UpcomingAppointmentsSection({
                   {t('cancelKeep')}
                 </motion.button>
               </div>
+              </>
+              )}
             </motion.div>
           </motion.div>
         )}
