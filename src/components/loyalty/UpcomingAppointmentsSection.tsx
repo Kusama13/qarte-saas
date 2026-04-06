@@ -27,7 +27,8 @@ interface UpcomingAppointmentsSectionProps {
   merchantCountry?: MerchantCountry;
   allowCancel?: boolean;
   allowReschedule?: boolean;
-  editDeadlineDays?: number;
+  cancelDeadlineDays?: number;
+  rescheduleDeadlineDays?: number;
   onRefresh?: () => void;
 }
 
@@ -39,7 +40,8 @@ export default function UpcomingAppointmentsSection({
   merchantCountry,
   allowCancel = false,
   allowReschedule = false,
-  editDeadlineDays = 1,
+  cancelDeadlineDays = 1,
+  rescheduleDeadlineDays = 1,
   onRefresh,
 }: UpcomingAppointmentsSectionProps) {
   const t = useTranslations('customerCard');
@@ -68,9 +70,14 @@ export default function UpcomingAppointmentsSection({
     return Math.floor((slotDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  const canEditAppointment = (appt: AppointmentSlot) => {
+  const canCancelAppointment = (appt: AppointmentSlot) => {
     if (!appt.booked_online) return false;
-    return getDaysUntil(appt.slot_date) >= editDeadlineDays;
+    return getDaysUntil(appt.slot_date) >= cancelDeadlineDays;
+  };
+
+  const canRescheduleAppointment = (appt: AppointmentSlot) => {
+    if (!appt.booked_online) return false;
+    return getDaysUntil(appt.slot_date) >= rescheduleDeadlineDays;
   };
 
   const handleCancel = async (slotId: string) => {
@@ -141,9 +148,8 @@ export default function UpcomingAppointmentsSection({
             const serviceNames = appt.planning_slot_services
               .map(s => s.service?.name)
               .filter((n): n is string => !!n);
-            const editable = canEditAppointment(appt);
-            const showCancel = allowCancel && editable;
-            const showReschedule = false; // TODO: enable when reschedule modal is built (allowReschedule && editable)
+            const showCancel = allowCancel && canCancelAppointment(appt);
+            const showReschedule = false; // TODO: enable when reschedule modal is built (allowReschedule && canRescheduleAppointment(appt))
             const isCancelled = cancelSuccess === appt.id;
 
             if (isCancelled) {

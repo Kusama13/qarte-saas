@@ -81,20 +81,9 @@ export async function POST(request: Request) {
       const { data: userData } = await supabase.auth.admin.getUserById(merchant.user_id);
       if (userData?.user?.email) {
         const locale = mLocale(merchant);
-        // Date du prochain prélèvement = fin de l'essai si > 2 jours (sinon Stripe prélève immédiatement)
-        let nextBillingDate: string | undefined;
-        if (merchant.trial_ends_at) {
-          const trialEnd = new Date(merchant.trial_ends_at);
-          const twoDaysFromNow = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
-          if (trialEnd > twoDaysFromNow) {
-            nextBillingDate = trialEnd.toLocaleDateString(toBCP47(locale), {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-            });
-          }
-        }
+        // Debit immediat — prochain prelevement dans 30j (mensuel) ou 1 an (annuel)
         const billingInterval = session.metadata?.plan === 'annual' ? 'annual' : 'monthly';
+        const nextBillingDate: string | undefined = undefined; // Email uses generic fallback ("dans 30 jours" / "dans 1 an")
         await sendSubscriptionConfirmedEmail(userData.user.email, merchant.shop_name, nextBillingDate, billingInterval, locale).catch((err) => {
           logger.error('Failed to send subscription email', err);
         });

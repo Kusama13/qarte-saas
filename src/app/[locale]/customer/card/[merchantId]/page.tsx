@@ -955,7 +955,8 @@ export default function CustomerCardPage({
             merchantCountry={merchant.country}
             allowCancel={!!merchant.allow_customer_cancel}
             allowReschedule={!!merchant.allow_customer_reschedule}
-            editDeadlineDays={merchant.customer_edit_deadline_days ?? 1}
+            cancelDeadlineDays={merchant.cancel_deadline_days ?? 1}
+            rescheduleDeadlineDays={merchant.reschedule_deadline_days ?? 1}
             onRefresh={() => window.location.reload()}
           />
         )}

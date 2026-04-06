@@ -54,7 +54,7 @@ async function commonChecks(
   // Fetch merchant
   const { data: merchant, error: merchantErr } = await supabaseAdmin
     .from('merchants')
-    .select('id, allow_customer_cancel, allow_customer_reschedule, customer_edit_deadline_days, country, shop_name, locale, user_id')
+    .select('id, allow_customer_cancel, allow_customer_reschedule, cancel_deadline_days, reschedule_deadline_days, country, shop_name, locale, user_id')
     .eq('id', merchantId)
     .single();
 
@@ -101,7 +101,10 @@ async function commonChecks(
   // Deadline check
   const today = getTodayForCountry(merchant.country);
   const days = daysUntil(slot.slot_date, today);
-  if (days < Number(merchant.customer_edit_deadline_days || 0)) {
+  const deadlineDays = permissionField === 'allow_customer_cancel'
+    ? Number(merchant.cancel_deadline_days || 0)
+    : Number(merchant.reschedule_deadline_days || 0);
+  if (days < deadlineDays) {
     return { error: NextResponse.json({ error: 'Le delai de modification est depasse' }, { status: 403 }) };
   }
 

@@ -99,7 +99,8 @@
 | deposit_deadline_hours | INTEGER | NULL | mig 086, delai en heures pour recevoir l'acompte (NULL=libre, pas de delai) |
 | allow_customer_cancel | BOOLEAN | `FALSE` | NOT NULL, mig 096, client peut annuler ses RDV en ligne |
 | allow_customer_reschedule | BOOLEAN | `FALSE` | NOT NULL, mig 096, client peut deplacer ses RDV en ligne |
-| customer_edit_deadline_days | INTEGER | `1` | NOT NULL, mig 096, delai min en jours avant le RDV (0=jour meme, 1=veille) |
+| cancel_deadline_days | INTEGER | `1` | NOT NULL, mig 097, delai annulation en jours avant le RDV |
+| reschedule_deadline_days | INTEGER | `1` | NOT NULL, mig 097, delai modification en jours avant le RDV |
 | show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
 | signup_source | TEXT | NULL | mig 068 |
 | locale | TEXT | `'fr'` | NOT NULL, mig 069 |
@@ -1032,6 +1033,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 094 | sms_move_type | Ajout type `booking_moved` au CHECK sms_type |
 | 095 | billing_period_start | `merchants.billing_period_start` TIMESTAMPTZ + backfill 24 merchants |
 | 096 | customer_booking_edit | `merchants.allow_customer_cancel` BOOLEAN + `allow_customer_reschedule` BOOLEAN + `customer_edit_deadline_days` INTEGER — annulation/modification RDV par le client |
+| 097 | separate_edit_deadlines | Split `customer_edit_deadline_days` → `cancel_deadline_days` + `reschedule_deadline_days` (delais independants) |
 
 ---
 

@@ -97,20 +97,7 @@ export async function POST(request: NextRequest) {
         .eq('id', merchant.id);
     }
 
-    // Calculate trial end from merchant's trial period
-    let trialEnd: number | undefined;
-    if (merchant.trial_ends_at) {
-      const trialEndsAt = new Date(merchant.trial_ends_at);
-      const now = new Date();
-      // Stripe requires trial_end to be at least 2 days in the future
-      const twoDaysFromNow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
-
-      if (trialEndsAt > twoDaysFromNow) {
-        trialEnd = Math.floor(trialEndsAt.getTime() / 1000);
-      }
-    }
-
-    // Create checkout session
+    // Create checkout session — charge immediately (no trial deferral)
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
@@ -131,8 +118,6 @@ export async function POST(request: NextRequest) {
         metadata: {
           merchant_id: merchant.id,
         },
-        // Billing starts at end of trial period (no immediate charge)
-        ...(trialEnd && { trial_end: trialEnd }),
       },
       allow_promotion_codes: true,
       billing_address_collection: 'required',

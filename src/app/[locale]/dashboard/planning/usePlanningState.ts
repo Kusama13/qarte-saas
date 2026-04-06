@@ -71,7 +71,8 @@ export function usePlanningState() {
   const [autoBookingEnabled, setAutoBookingEnabled] = useState(false);
   const [allowCustomerCancel, setAllowCustomerCancel] = useState(false);
   const [allowCustomerReschedule, setAllowCustomerReschedule] = useState(false);
-  const [customerEditDeadlineDays, setCustomerEditDeadlineDays] = useState('1');
+  const [cancelDeadlineDays, setCancelDeadlineDays] = useState('1');
+  const [rescheduleDeadlineDays, setRescheduleDeadlineDays] = useState('1');
   const [depositLink, setDepositLink] = useState('');
   const [depositLinkLabel, setDepositLinkLabel] = useState('');
   const [depositLink2, setDepositLink2] = useState('');
@@ -151,7 +152,8 @@ export function usePlanningState() {
       setDepositDeadlineHours(merchant.deposit_deadline_hours != null ? String(merchant.deposit_deadline_hours) : '1');
       setAllowCustomerCancel(!!merchant.allow_customer_cancel);
       setAllowCustomerReschedule(!!merchant.allow_customer_reschedule);
-      setCustomerEditDeadlineDays(String(merchant.customer_edit_deadline_days ?? 1));
+      setCancelDeadlineDays(String(merchant.cancel_deadline_days ?? 1));
+      setRescheduleDeadlineDays(String(merchant.reschedule_deadline_days ?? 1));
     }
   }, [merchant]);
 
@@ -577,7 +579,8 @@ export function usePlanningState() {
     message, setMessage, messageEnabled, setMessageEnabled,
     messageExpires, setMessageExpires, bookingMessage, setBookingMessage,
     autoBookingEnabled, setAutoBookingEnabled,
-    allowCustomerCancel, setAllowCustomerCancel, allowCustomerReschedule, setAllowCustomerReschedule, customerEditDeadlineDays, setCustomerEditDeadlineDays,
+    allowCustomerCancel, setAllowCustomerCancel, allowCustomerReschedule, setAllowCustomerReschedule,
+    cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
     // Services
     services,
