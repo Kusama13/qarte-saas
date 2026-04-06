@@ -957,7 +957,7 @@ export default function CustomerCardPage({
             allowReschedule={!!merchant.allow_customer_reschedule}
             cancelDeadlineDays={merchant.cancel_deadline_days ?? 1}
             rescheduleDeadlineDays={merchant.reschedule_deadline_days ?? 1}
-            onRefresh={() => window.location.reload()}
+            onCancelled={(slotId) => setUpcomingAppointments(prev => prev.filter(a => a.id !== slotId))}
           />
         )}
 
