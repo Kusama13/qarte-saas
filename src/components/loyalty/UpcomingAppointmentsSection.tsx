@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { CalendarDays, Hourglass, Check, Clock, X, Loader2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { CalendarDays, Hourglass, Check, Clock, X, Loader2, CalendarClock } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatTime, getTodayForCountry } from '@/lib/utils';
@@ -30,7 +30,10 @@ interface UpcomingAppointmentsSectionProps {
   cancelDeadlineDays?: number;
   rescheduleDeadlineDays?: number;
   onCancelled?: (slotId: string) => void;
+  onRescheduled?: (oldSlotId: string, newSlotId: string) => void;
 }
+
+type AvailableSlot = { slot_date: string; start_time: string };
 
 export default function UpcomingAppointmentsSection({
   appointments,
@@ -43,12 +46,24 @@ export default function UpcomingAppointmentsSection({
   cancelDeadlineDays = 1,
   rescheduleDeadlineDays = 1,
   onCancelled,
+  onRescheduled,
 }: UpcomingAppointmentsSectionProps) {
   const t = useTranslations('customerCard');
   const locale = useLocale();
 
+  // Cancel state
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [confirmCancelSlot, setConfirmCancelSlot] = useState<AppointmentSlot | null>(null);
+
+  // Reschedule state
+  const [rescheduleSlot, setRescheduleSlot] = useState<AppointmentSlot | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [rescheduling, setRescheduling] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+
   const [error, setError] = useState<string | null>(null);
 
   if (appointments.length === 0) return null;
@@ -59,6 +74,13 @@ export default function UpcomingAppointmentsSection({
     month: 'long',
   });
   const formatLongDate = (dateStr: string) => dateFormatter.format(new Date(dateStr + 'T00:00:00'));
+
+  const shortDateFormatter = new Intl.DateTimeFormat(locale === 'fr' ? 'fr-FR' : 'en-US', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+  const formatShortDate = (dateStr: string) => shortDateFormatter.format(new Date(dateStr + 'T00:00:00'));
 
   const today = getTodayForCountry(merchantCountry);
   const todayMs = new Date(today + 'T00:00:00').getTime();
@@ -72,6 +94,37 @@ export default function UpcomingAppointmentsSection({
 
   const canRescheduleAppointment = (appt: AppointmentSlot) => {
     return getDaysUntil(appt.slot_date) >= rescheduleDeadlineDays;
+  };
+
+  const fetchAvailableSlots = async () => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setLoadingSlots(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/planning?public=true&merchantId=${merchantId}`, { signal: controller.signal });
+      if (res.ok) {
+        const data = await res.json();
+        setAvailableSlots(data.slots || []);
+        if (data.slots?.length > 0) {
+          setSelectedDate(data.slots[0].slot_date);
+        }
+      } else {
+        setError(t('rescheduleError'));
+      }
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') setError(t('rescheduleError'));
+    }
+    setLoadingSlots(false);
+  };
+
+  const openRescheduleModal = (appt: AppointmentSlot) => {
+    setRescheduleSlot(appt);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setError(null);
+    fetchAvailableSlots();
   };
 
   const handleCancel = async (slotId: string) => {
@@ -96,9 +149,44 @@ export default function UpcomingAppointmentsSection({
     setCancellingId(null);
   };
 
+  const handleReschedule = async () => {
+    if (!rescheduleSlot || !selectedDate || !selectedTime) return;
+    setRescheduling(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/planning/customer-edit', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slot_id: rescheduleSlot.id,
+          merchant_id: merchantId,
+          new_date: selectedDate,
+          new_time: selectedTime,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRescheduleSlot(null);
+        onRescheduled?.(rescheduleSlot.id, data.new_slot_id);
+      } else {
+        const data = await res.json();
+        setError(data.error || t('rescheduleError'));
+      }
+    } catch {
+      setError(t('rescheduleError'));
+    }
+    setRescheduling(false);
+  };
+
   const showFooterContact = !allowCancel && !allowReschedule;
   const modalServices = confirmCancelSlot
     ? confirmCancelSlot.planning_slot_services.map(s => s.service?.name).filter((n): n is string => !!n)
+    : [];
+
+  // Reschedule: available dates and times for selected date
+  const availableDates = [...new Set(availableSlots.map(s => s.slot_date))];
+  const timesForDate = selectedDate
+    ? availableSlots.filter(s => s.slot_date === selectedDate).map(s => s.start_time)
     : [];
 
   return (
@@ -125,20 +213,6 @@ export default function UpcomingAppointmentsSection({
           </div>
           <h3 className="text-[13px] font-bold text-gray-900">{t('upcomingAppointments')}</h3>
         </div>
-
-        {/* Error */}
-        <AnimatePresence>
-          {error && (
-            <motion.p
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-2"
-            >
-              {error}
-            </motion.p>
-          )}
-        </AnimatePresence>
 
         {/* Appointments list */}
         <div className="space-y-2 mb-2.5">
@@ -201,17 +275,35 @@ export default function UpcomingAppointmentsSection({
                     )}
 
                     {/* Action buttons */}
-                    {showCancel && (
+                    {(showCancel || showReschedule) && (
                       <div className="mt-2 pt-2 border-t flex gap-2" style={{ borderColor: `${merchantColor}15` }}>
-                        <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setConfirmCancelSlot(appt)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-colors"
-                          aria-label={t('cancelBooking')}
-                        >
-                          <X className="w-3.5 h-3.5" />
-                          {t('cancelBooking')}
-                        </motion.button>
+                        {showReschedule && (
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => openRescheduleModal(appt)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                            style={{
+                              backgroundColor: `${merchantColor}10`,
+                              color: merchantColor,
+                              border: `1px solid ${merchantColor}25`,
+                            }}
+                            aria-label={t('rescheduleBooking')}
+                          >
+                            <CalendarClock className="w-3.5 h-3.5" />
+                            {t('rescheduleBooking')}
+                          </motion.button>
+                        )}
+                        {showCancel && (
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setConfirmCancelSlot(appt)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-colors"
+                            aria-label={t('cancelBooking')}
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            {t('cancelBooking')}
+                          </motion.button>
+                        )}
                       </div>
                     )}
 
@@ -239,6 +331,7 @@ export default function UpcomingAppointmentsSection({
         )}
       </div>
 
+      {/* Cancel confirmation modal */}
       <AnimatePresence>
         {confirmCancelSlot && (
           <motion.div
@@ -257,14 +350,12 @@ export default function UpcomingAppointmentsSection({
               className="w-full max-w-sm bg-white rounded-t-[2rem] sm:rounded-[2rem] p-6 shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Red icon */}
               <div className="flex justify-center mb-4">
                 <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
                   <X className="w-7 h-7 text-red-500" />
                 </div>
               </div>
 
-              {/* Title */}
               <h3 className="text-base font-bold text-gray-900 text-center mb-2">
                 {t('cancelConfirmTitle')}
               </h3>
@@ -300,6 +391,173 @@ export default function UpcomingAppointmentsSection({
                   whileTap={{ scale: 0.97 }}
                   onClick={() => { setConfirmCancelSlot(null); setError(null); }}
                   disabled={!!cancellingId}
+                  className="w-full py-3 rounded-xl text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors disabled:opacity-50"
+                >
+                  {t('cancelKeep')}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reschedule modal */}
+      <AnimatePresence>
+        {rescheduleSlot && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
+            onClick={() => { if (!rescheduling) { setRescheduleSlot(null); setError(null); } }}
+          >
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-sm bg-white rounded-t-[2rem] sm:rounded-[2rem] p-6 shadow-xl max-h-[85vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Icon */}
+              <div className="flex justify-center mb-4">
+                <div
+                  className="w-14 h-14 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: `${merchantColor}15` }}
+                >
+                  <CalendarClock className="w-7 h-7" style={{ color: merchantColor }} />
+                </div>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-base font-bold text-gray-900 text-center mb-1">
+                {t('rescheduleTitle')}
+              </h3>
+              <p className="text-xs text-gray-400 text-center mb-4">
+                {formatLongDate(rescheduleSlot.slot_date)} — {formatTime(rescheduleSlot.start_time, locale)}
+              </p>
+
+              {/* Loading */}
+              {loadingSlots && (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                </div>
+              )}
+
+              {/* No slots */}
+              {!loadingSlots && availableDates.length === 0 && (
+                <p className="text-sm text-gray-400 text-center py-6">{t('noSlotsAvailable')}</p>
+              )}
+
+              {/* Date picker */}
+              {!loadingSlots && availableDates.length > 0 && (
+                <>
+                  <p className="text-xs font-semibold text-gray-500 mb-2">{t('reschedulePickSlot')}</p>
+
+                  {/* Horizontal scrollable dates */}
+                  <div className="flex gap-1.5 overflow-x-auto pb-2 mb-3 -mx-1 px-1 scrollbar-none">
+                    {availableDates.map((date) => {
+                      const isSelected = selectedDate === date;
+                      return (
+                        <motion.button
+                          key={date}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => { setSelectedDate(date); setSelectedTime(null); }}
+                          className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold capitalize transition-colors ${
+                            isSelected
+                              ? 'text-white shadow-sm'
+                              : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                          }`}
+                          style={isSelected ? {
+                            backgroundColor: merchantColor,
+                            boxShadow: `0 2px 8px ${merchantColor}40`,
+                          } : undefined}
+                        >
+                          {formatShortDate(date)}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Time slots grid */}
+                  {selectedDate && timesForDate.length > 0 && (
+                    <div className="grid grid-cols-3 gap-1.5 mb-4">
+                      {timesForDate.map((time) => {
+                        const isSelected = selectedTime === time;
+                        const isSameSlot = selectedDate === rescheduleSlot.slot_date && time === rescheduleSlot.start_time;
+                        return (
+                          <motion.button
+                            key={time}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => setSelectedTime(isSameSlot ? null : time)}
+                            disabled={isSameSlot}
+                            className={`py-2 rounded-lg text-xs font-semibold transition-colors ${
+                              isSameSlot
+                                ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                                : isSelected
+                                  ? 'text-white'
+                                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                            }`}
+                            style={isSelected ? {
+                              backgroundColor: merchantColor,
+                              boxShadow: `0 2px 8px ${merchantColor}40`,
+                            } : undefined}
+                          >
+                            {formatTime(time, locale)}
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Confirmation text */}
+                  {selectedDate && selectedTime && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-xs text-gray-500 text-center mb-3"
+                    >
+                      {t('rescheduleConfirm', { date: formatLongDate(selectedDate), time: formatTime(selectedTime, locale) })}
+                    </motion.p>
+                  )}
+                </>
+              )}
+
+              {/* Error */}
+              {error && (
+                <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-3 text-center">
+                  {error}
+                </p>
+              )}
+
+              {/* Buttons */}
+              <div className="mt-2 space-y-2">
+                {selectedDate && selectedTime && (
+                  <motion.button
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={handleReschedule}
+                    disabled={rescheduling}
+                    className="w-full py-3 rounded-xl text-sm font-bold text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    style={{
+                      backgroundColor: merchantColor,
+                      boxShadow: `0 2px 8px ${merchantColor}30`,
+                    }}
+                  >
+                    {rescheduling ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <CalendarClock className="w-4 h-4" />
+                    )}
+                    {t('rescheduleButton')}
+                  </motion.button>
+                )}
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => { setRescheduleSlot(null); setError(null); }}
+                  disabled={rescheduling}
                   className="w-full py-3 rounded-xl text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors disabled:opacity-50"
                 >
                   {t('cancelKeep')}
