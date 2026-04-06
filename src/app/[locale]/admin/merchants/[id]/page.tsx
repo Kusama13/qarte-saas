@@ -66,6 +66,7 @@ interface Stats {
   totalRedemptions: number;
   pushSubscribers: number;
   pushSent: number;
+  smsSent: number;
   pendingPoints: number;
   weeklyScans: number;
   lastVisitDate: string | null;
@@ -302,7 +303,7 @@ export default function MerchantDetailPage() {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [stats, setStats] = useState<Stats>({
     totalCustomers: 0, activeCustomers: 0, totalVisits: 0, totalRedemptions: 0,
-    pushSubscribers: 0, pushSent: 0, pendingPoints: 0, weeklyScans: 0,
+    pushSubscribers: 0, pushSent: 0, smsSent: 0, pendingPoints: 0, weeklyScans: 0,
     lastVisitDate: null, totalReferrals: 0, pendingReferrals: 0, completedReferrals: 0,
     servicesCount: 0, photosCount: 0, welcomeVouchers: 0, offerVouchers: 0, planningSlotsCount: 0, planningBookingsCount: 0, pendingDepositsCount: 0,
   });
@@ -669,6 +670,7 @@ export default function MerchantDetailPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <StatCard icon={<StatIcon icon={Bell} color="blue" />} value={stats.pushSubscribers} label="Abonnes push" />
             <StatCard icon={<StatIcon icon={Send} color="purple" />} value={stats.pushSent} label="Notifs envoyees" />
+            <StatCard icon={<StatIcon icon={MessageCircle} color="emerald" />} value={stats.smsSent} label="SMS envoyes" />
             <StatCard icon={<StatIcon icon={TrendingUp} color="emerald" />} value={stats.weeklyScans} label="Scans (7j)" />
             <StatCard
               icon={<div className={cn("w-9 h-9 rounded-lg flex items-center justify-center", merchant.pwa_installed_at ? "bg-green-100" : "bg-gray-50")}><Smartphone className={cn("w-4 h-4", merchant.pwa_installed_at ? "text-green-600" : "text-gray-400")} /></div>}

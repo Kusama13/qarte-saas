@@ -62,6 +62,7 @@ interface ActivityEvent {
   timestamp: string;
   title: string;
   subtitle: string;
+  depositStatus?: boolean | null;
 }
 
 const EVENT_CONFIG: Record<ActivityEvent['type'], { icon: React.ElementType; color: string; bg: string; href: string }> = {
@@ -354,7 +355,7 @@ export default function DashboardPage() {
           // Activity feed: bookings, referrals, welcome
           supabase
             .from('merchant_planning_slots')
-            .select('client_name, slot_date, start_time, created_at')
+            .select('client_name, slot_date, start_time, created_at, deposit_confirmed')
             .eq('merchant_id', merchant.id)
             .not('client_name', 'is', null)
             .is('primary_slot_id', null)
@@ -432,7 +433,7 @@ export default function DashboardPage() {
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const b of (feedBookingsResult.data || []) as any[]) {
-          feed.push({ type: 'booking', timestamp: b.created_at, title: b.client_name, subtitle: t('activityBooking', { date: b.slot_date, time: b.start_time }) });
+          feed.push({ type: 'booking', timestamp: b.created_at, title: b.client_name, subtitle: t('activityBooking', { date: b.slot_date, time: b.start_time }), depositStatus: b.deposit_confirmed });
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const ref of (feedReferralsResult.data || []) as any[]) {
@@ -1128,7 +1129,20 @@ export default function DashboardPage() {
                         <Icon className={`w-4 h-4 ${config.color}`} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-gray-900 truncate">{event.title}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{event.title}</p>
+                          {event.type === 'booking' && event.depositStatus === false && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-50 text-[9px] font-bold text-amber-600 shrink-0">
+                              <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
+                              {t('depositPending')}
+                            </span>
+                          )}
+                          {event.type === 'booking' && event.depositStatus === true && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-emerald-50 text-[9px] font-bold text-emerald-600 shrink-0">
+                              {t('depositOk')}
+                            </span>
+                          )}
+                        </div>
                         {event.subtitle && (
                           <p className="text-[11px] text-gray-400 leading-none mt-0.5">{event.subtitle}</p>
                         )}
