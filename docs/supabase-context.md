@@ -97,6 +97,9 @@
 | deposit_amount | DECIMAL(10,2) | NULL | mig 083, montant fixe acompte (mutuellement exclusif avec deposit_percent) |
 | deposit_message | TEXT | NULL | mig 083, DEPRECATED — supprime du code (conditions de resa suffisent) |
 | deposit_deadline_hours | INTEGER | NULL | mig 086, delai en heures pour recevoir l'acompte (NULL=libre, pas de delai) |
+| allow_customer_cancel | BOOLEAN | `FALSE` | NOT NULL, mig 096, client peut annuler ses RDV en ligne |
+| allow_customer_reschedule | BOOLEAN | `FALSE` | NOT NULL, mig 096, client peut deplacer ses RDV en ligne |
+| customer_edit_deadline_days | INTEGER | `1` | NOT NULL, mig 096, delai min en jours avant le RDV (0=jour meme, 1=veille) |
 | show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
 | signup_source | TEXT | NULL | mig 068 |
 | locale | TEXT | `'fr'` | NOT NULL, mig 069 |
@@ -1028,6 +1031,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 093 | sms_birthday_referral | Ajout types `birthday` + `referral_reward` au CHECK sms_type, index dedup partiel (WHERE slot_id IS NOT NULL), toggles birthday_enabled + referral_enabled dans app_config |
 | 094 | sms_move_type | Ajout type `booking_moved` au CHECK sms_type |
 | 095 | billing_period_start | `merchants.billing_period_start` TIMESTAMPTZ + backfill 24 merchants |
+| 096 | customer_booking_edit | `merchants.allow_customer_cancel` BOOLEAN + `allow_customer_reschedule` BOOLEAN + `customer_edit_deadline_days` INTEGER — annulation/modification RDV par le client |
 
 ---
 

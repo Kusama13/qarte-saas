@@ -1616,6 +1616,7 @@
     "autoBookingOffHint": "Par défaut, tes clientes voient tes créneaux et te contactent. Active cette option pour qu'elles réservent directement en ligne avec SMS de confirmation automatique.",
     "autoBookingInfo": "Tes clientes réservent directement depuis ta vitrine en ligne. Les créneaux sont bloqués automatiquement selon la durée des prestations choisies. Tu peux désactiver à tout moment pour revenir au mode contact.",
     "externalBookingWarning": "Tu as un lien de réservation externe. La réservation Qarte le remplace sur ta vitrine tant qu'elle est activée.",
+    "customerEditTitle": "Gestion par le client",
     "allowCustomerCancel": "Autoriser les clients à annuler",
     "allowCustomerCancelDesc": "Les clients pourront annuler leur RDV depuis leur carte de fidélité.",
     "allowCustomerReschedule": "Autoriser les clients à modifier",

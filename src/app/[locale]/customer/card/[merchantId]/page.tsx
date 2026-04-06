@@ -952,6 +952,7 @@ export default function CustomerCardPage({
             merchantColor={merchant.primary_color}
             merchantId={merchant.id}
             shopName={merchant.shop_name}
+            merchantCountry={merchant.country}
             allowCancel={!!merchant.allow_customer_cancel}
             allowReschedule={!!merchant.allow_customer_reschedule}
             editDeadlineDays={merchant.customer_edit_deadline_days ?? 1}

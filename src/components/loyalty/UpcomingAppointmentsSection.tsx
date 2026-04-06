@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { CalendarDays, Hourglass, Check, Clock, X, CalendarClock, Loader2 } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatTime } from '@/lib/utils';
+import { formatTime, getTodayForCountry } from '@/lib/utils';
+import type { MerchantCountry } from '@/types';
 
 interface AppointmentSlot {
   id: string;
@@ -23,6 +24,7 @@ interface UpcomingAppointmentsSectionProps {
   merchantColor: string;
   merchantId: string;
   shopName: string;
+  merchantCountry?: MerchantCountry;
   allowCancel?: boolean;
   allowReschedule?: boolean;
   editDeadlineDays?: number;
@@ -34,6 +36,7 @@ export default function UpcomingAppointmentsSection({
   merchantColor,
   merchantId,
   shopName,
+  merchantCountry,
   allowCancel = false,
   allowReschedule = false,
   editDeadlineDays = 1,
@@ -59,10 +62,10 @@ export default function UpcomingAppointmentsSection({
   };
 
   const getDaysUntil = (dateStr: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = getTodayForCountry(merchantCountry);
+    const todayDate = new Date(today + 'T00:00:00');
     const slotDate = new Date(dateStr + 'T00:00:00');
-    return Math.floor((slotDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.floor((slotDate.getTime() - todayDate.getTime()) / (1000 * 60 * 60 * 24));
   };
 
   const canEditAppointment = (appt: AppointmentSlot) => {
@@ -140,7 +143,7 @@ export default function UpcomingAppointmentsSection({
               .filter((n): n is string => !!n);
             const editable = canEditAppointment(appt);
             const showCancel = allowCancel && editable;
-            const showReschedule = allowReschedule && editable;
+            const showReschedule = false; // TODO: enable when reschedule modal is built (allowReschedule && editable)
             const isCancelled = cancelSuccess === appt.id;
 
             if (isCancelled) {

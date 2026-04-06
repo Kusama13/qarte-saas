@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { Resend } from 'resend';
 import { getSupabaseAdmin } from '@/lib/supabase';
+import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
 import { getAuthenticatedPhone } from '@/lib/customer-auth';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendMerchantPush } from '@/lib/merchant-push';
-import { getTodayForCountry } from '@/lib/utils';
+import { getTodayForCountry, formatDate } from '@/lib/utils';
 import logger from '@/lib/logger';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const cancelSchema = z.object({
   slot_id: z.string().uuid(),
@@ -28,11 +26,6 @@ function daysUntil(slotDate: string, today: string): number {
   const slot = new Date(slotDate + 'T00:00:00Z');
   const now = new Date(today + 'T00:00:00Z');
   return Math.floor((slot.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function formatDateFR(dateStr: string): string {
-  const [y, m, d] = dateStr.split('-');
-  return `${d}/${m}/${y}`;
 }
 
 // ── Shared pre-checks ────────────────────────────────────────────────
@@ -74,26 +67,28 @@ async function commonChecks(
     return { error: NextResponse.json({ error: 'Cette action n\'est pas autorisee par le commercant' }, { status: 403 }) };
   }
 
-  // Fetch slot
-  const { data: slot, error: slotErr } = await supabaseAdmin
-    .from('merchant_planning_slots')
-    .select('id, slot_date, start_time, client_name, client_phone, customer_id, booked_online, primary_slot_id')
-    .eq('id', slotId)
-    .eq('merchant_id', merchantId)
-    .single();
+  // Fetch slot + customer in parallel
+  const [slotResult, customerResult] = await Promise.all([
+    supabaseAdmin
+      .from('merchant_planning_slots')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, booked_online, primary_slot_id')
+      .eq('id', slotId)
+      .eq('merchant_id', merchantId)
+      .single(),
+    supabaseAdmin
+      .from('customers')
+      .select('id')
+      .eq('phone_number', phone)
+      .eq('merchant_id', merchantId)
+      .maybeSingle(),
+  ]);
 
-  if (slotErr || !slot) {
+  const slot = slotResult.data;
+  if (!slot) {
     return { error: NextResponse.json({ error: 'Creneau introuvable' }, { status: 404 }) };
   }
 
-  // Verify ownership: lookup customer by phone + merchant_id
-  const { data: customer } = await supabaseAdmin
-    .from('customers')
-    .select('id')
-    .eq('phone', phone)
-    .eq('merchant_id', merchantId)
-    .single();
-
+  const customer = customerResult.data;
   if (!customer || slot.customer_id !== customer.id) {
     return { error: NextResponse.json({ error: 'Non autorise' }, { status: 403 }) };
   }
@@ -153,19 +148,13 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
     }
 
-    // Delete fillers
-    await supabaseAdmin
-      .from('merchant_planning_slots')
-      .delete()
-      .eq('primary_slot_id', slot_id);
+    // Delete fillers + services in parallel
+    await Promise.all([
+      supabaseAdmin.from('merchant_planning_slots').delete().eq('primary_slot_id', slot_id),
+      supabaseAdmin.from('planning_slot_services').delete().eq('slot_id', slot_id),
+    ]);
 
-    // Delete services
-    await supabaseAdmin
-      .from('planning_slot_services')
-      .delete()
-      .eq('slot_id', slot_id);
-
-    const formattedDate = formatDateFR(slot.slot_date);
+    const formattedDate = formatDate(slot.slot_date);
 
     // Fire-and-forget: push notification
     sendMerchantPush({
@@ -183,8 +172,9 @@ export async function DELETE(request: NextRequest) {
       try {
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(merchant.user_id);
         if (authUser?.user?.email) {
-          resend.emails.send({
-            from: 'Qarte <contact@getqarte.com>',
+          resend?.emails.send({
+            from: EMAIL_FROM,
+            headers: EMAIL_HEADERS,
             to: authUser.user.email,
             subject: `RDV annule — ${slot.client_name}`,
             text: `${slot.client_name} a annule son RDV du ${formattedDate} a ${slot.start_time}.\n\nConnecte-toi sur ton dashboard pour voir tes reservations.\nhttps://getqarte.com/dashboard/planning`,
@@ -310,8 +300,8 @@ export async function PATCH(request: NextRequest) {
       newSlotId = result.target_id || targetSlot.id;
     }
 
-    const oldDate = formatDateFR(slot.slot_date);
-    const newDateFormatted = formatDateFR(new_date);
+    const oldDate = formatDate(slot.slot_date);
+    const newDateFormatted = formatDate(new_date);
 
     // Fire-and-forget: push notification
     sendMerchantPush({
@@ -329,8 +319,9 @@ export async function PATCH(request: NextRequest) {
       try {
         const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(merchant.user_id);
         if (authUser?.user?.email) {
-          resend.emails.send({
-            from: 'Qarte <contact@getqarte.com>',
+          resend?.emails.send({
+            from: EMAIL_FROM,
+            headers: EMAIL_HEADERS,
             to: authUser.user.email,
             subject: `RDV modifie — ${slot.client_name}`,
             text: `${slot.client_name} a deplace son RDV du ${oldDate} a ${slot.start_time} au ${newDateFormatted} a ${new_time}.\n\nConnecte-toi sur ton dashboard pour voir tes reservations.\nhttps://getqarte.com/dashboard/planning`,

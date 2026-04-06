@@ -1616,6 +1616,7 @@
     "autoBookingOffHint": "By default, your clients see your slots and contact you. Enable this so they can book directly online with automatic confirmation SMS.",
     "autoBookingInfo": "Your clients book directly from your online page. Slots are automatically blocked based on the duration of selected services. You can disable anytime to go back to contact mode.",
     "externalBookingWarning": "You have an external booking link configured. Qarte online booking replaces it on your page while enabled.",
+    "customerEditTitle": "Client self-service",
     "allowCustomerCancel": "Allow clients to cancel",
     "allowCustomerCancelDesc": "Clients will be able to cancel their booking from their loyalty card.",
     "allowCustomerReschedule": "Allow clients to reschedule",

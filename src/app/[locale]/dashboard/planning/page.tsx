@@ -921,7 +921,7 @@ export default function PlanningDashboard() {
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-visible">
               <div className="px-4 sm:px-5 py-3 bg-gray-50/80 border-b border-gray-100 flex items-center gap-2">
                 <CalendarX2 className="w-4 h-4 text-gray-500 shrink-0" />
-                <h2 className="text-sm font-bold text-gray-800">{t('allowCustomerCancel').split(' ').slice(0, 3).join(' ')}</h2>
+                <h2 className="text-sm font-bold text-gray-800">{t('customerEditTitle')}</h2>
               </div>
               <div className="p-4 sm:p-5 space-y-4">
                 {/* Cancel toggle */}
