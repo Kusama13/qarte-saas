@@ -193,6 +193,23 @@ export default function UpcomingAppointmentsSection({
                         <span className="text-[10px] font-bold text-emerald-800">{t('depositOk')}</span>
                       </span>
                     )}
+                    {/* Cancel icon button */}
+                    {showCancel && confirmCancelId !== appt.id && (
+                      <button
+                        onClick={() => setConfirmCancelId(appt.id)}
+                        className="w-6 h-6 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center shrink-0 transition-colors"
+                        title={t('cancelBooking')}
+                      >
+                        <X className="w-3 h-3 text-red-500" />
+                      </button>
+                    )}
+                    {/* Deadline passed hint */}
+                    {(allowCancel || allowReschedule) && !showCancel && !showReschedule && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 shrink-0">
+                        <Clock className="w-2.5 h-2.5 text-gray-400" />
+                        <span className="text-[10px] text-gray-400">{t('editDeadlinePassed')}</span>
+                      </span>
+                    )}
                   </div>
                   {serviceNames.length > 0 && (
                     <ul className="mt-1.5 space-y-0.5">
@@ -208,59 +225,38 @@ export default function UpcomingAppointmentsSection({
                     </ul>
                   )}
 
-                  {/* Action buttons */}
-                  {(showCancel || showReschedule) && confirmCancelId !== appt.id && (
-                    <div className="flex gap-2 mt-2 pt-2 border-t" style={{ borderColor: `${merchantColor}15` }}>
-                      {showCancel && (
-                        <button
-                          onClick={() => setConfirmCancelId(appt.id)}
-                          className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors"
-                        >
-                          <X className="w-3 h-3" />
-                          {t('cancelBooking')}
-                        </button>
-                      )}
-                      {showReschedule && (
-                        <button
-                          onClick={() => { /* TODO: reschedule modal */ }}
-                          className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700 transition-colors"
-                        >
-                          <CalendarClock className="w-3 h-3" />
-                          {t('rescheduleBooking')}
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Cancel confirmation */}
-                  {confirmCancelId === appt.id && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      className="mt-2 pt-2 border-t space-y-2"
-                      style={{ borderColor: `${merchantColor}15` }}
-                    >
-                      <p className="text-[11px] text-gray-600 text-center">
-                        {t('cancelConfirmMessage', { date: formatLongDate(appt.slot_date), time: formatTime(appt.start_time, locale), shop: shopName })}
-                      </p>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setConfirmCancelId(null)}
-                          className="flex-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
-                        >
-                          {locale === 'fr' ? 'Non' : 'No'}
-                        </button>
-                        <button
-                          onClick={() => handleCancel(appt.id)}
-                          disabled={cancellingId === appt.id}
-                          className="flex-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
-                        >
-                          {cancellingId === appt.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
-                          {t('cancelConfirmButton')}
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
+                  {/* Cancel confirmation inline */}
+                  <AnimatePresence>
+                    {confirmCancelId === appt.id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="mt-2 pt-2 border-t space-y-2"
+                        style={{ borderColor: `${merchantColor}15` }}
+                      >
+                        <p className="text-[11px] text-gray-600 text-center">
+                          {t('cancelConfirmMessage', { date: formatLongDate(appt.slot_date), time: formatTime(appt.start_time, locale), shop: shopName })}
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setConfirmCancelId(null)}
+                            className="flex-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                          >
+                            {locale === 'fr' ? 'Non' : 'No'}
+                          </button>
+                          <button
+                            onClick={() => handleCancel(appt.id)}
+                            disabled={cancellingId === appt.id}
+                            className="flex-1 px-2 py-1.5 rounded-lg text-[11px] font-semibold bg-red-600 hover:bg-red-700 text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                          >
+                            {cancellingId === appt.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+                            {t('cancelConfirmButton')}
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
             );
@@ -268,11 +264,9 @@ export default function UpcomingAppointmentsSection({
         </div>
 
         {/* Footer message */}
-        {!allowCancel && !allowReschedule && (
-          <p className="text-[10px] text-gray-400 text-center pt-2 border-t border-gray-100">
-            {t('contactToModify', { shop: shopName })}
-          </p>
-        )}
+        <p className="text-[10px] text-gray-400 text-center pt-2 border-t border-gray-100">
+          {t('contactToModify', { shop: shopName })}
+        </p>
       </div>
     </motion.div>
   );
