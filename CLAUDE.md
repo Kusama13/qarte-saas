@@ -14,7 +14,7 @@ npm test             # Vitest
 
 - Next.js 15 App Router + React 18 + TypeScript + Tailwind
 - Supabase (PostgreSQL + Auth + Storage + RLS) + Stripe + Resend
-- i18n: next-intl — FR default (no prefix), EN under /en/*
+- i18n: next-intl — FR only (EN disabled via 301 redirect, infra kept)
 - All pages under src/app/[locale]/ except API routes
 
 ## Key Directories

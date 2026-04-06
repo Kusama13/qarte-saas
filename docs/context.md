@@ -9,9 +9,10 @@
 **Qarte** — Plateforme SaaS de cartes de fidelite digitales via QR/NFC.
 
 - **URL:** getqarte.com | **Deploiement:** Vercel
-- **Langues:** Francais (defaut, sans prefixe URL) + Anglais (`/en/*`) via `next-intl` | **Version:** 0.1.0
+- **Langues:** Francais uniquement (EN desactive via redirect 301, infra conservee) via `next-intl` | **Version:** 0.1.0
+- **Pays:** FR, BE, CH uniquement (signup + PhoneInput)
 - **Ton FR:** tutoiement dashboard merchant, vouvoiement client-facing
-- **Essai:** 7 jours | **Prix FR:** 24€/mois ou 240€/an | **Prix EN:** $24/mo ou $240/yr
+- **Essai:** 7 jours | **Prix:** 24€/mois ou 240€/an
 - **Cible:** Salons de beaute (coiffeurs, barbiers, instituts, ongleries, spas, estheticiennes)
 - **Entite:** SAS Tenga Labs — 60 rue Francois 1er, 75008 Paris
 
@@ -227,7 +228,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 ### Support Multi-Pays
 - 10 pays : FR, BE, CH, LU, US, GB, CA, AU, ES, IT — `PHONE_CONFIG` par pays
-- `COUNTRIES_BY_LOCALE` : FR locale → FR/BE/CH/LU | EN locale → US/GB/CA/AU/BE/CH/LU/ES/IT
+- `COUNTRIES_BY_LOCALE` : FR/EN → FR/BE/CH (LU et autres retires, EN desactive)
 - E.164 sans + (ex: 33612345678, 15551234567)
 - `formatPhoneNumber()`, `validatePhone()`, `displayPhoneNumber()` — tous avec param `country`
 - `PhoneInput` composant (`src/components/ui/PhoneInput.tsx`) : selecteur pays drapeau+indicatif, dropdown, placeholder dynamique

@@ -44,7 +44,6 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-            <LocaleSwitcher variant="light" />
             {!minimal && (
               <>
                 <Link href="/#pricing" className="hover:text-indigo-600 transition-colors link-underline">{t('pricing')}</Link>
@@ -63,7 +62,6 @@ export default function LandingNav({ minimal = false }: LandingNavProps) {
 
           {/* Mobile CTA + Menu Button */}
           <div className="flex md:hidden items-center gap-2">
-            <LocaleSwitcher variant="light" />
             <Link
               href="/auth/merchant/signup"
               onClick={() => { trackCtaClick('header_mobile_cta', 'navbar'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}

@@ -34,6 +34,12 @@ export async function middleware(request: NextRequest) {
     return new NextResponse('Accès refusé.', { status: 403 });
   }
 
+  // Redirect /en/* to FR equivalent — EN disabled for now (infrastructure kept)
+  if (pathname.startsWith('/en/') || pathname === '/en') {
+    const frPath = pathname.replace(/^\/en\/?/, '/') || '/';
+    return NextResponse.redirect(new URL(frPath, request.url), 301);
+  }
+
   // Serve the correct PWA manifest based on referer (dashboard → Qarte Pro, else → customer)
   if (pathname === '/manifest.webmanifest') {
     const referer = request.headers.get('referer') || '';

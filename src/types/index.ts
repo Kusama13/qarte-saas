@@ -36,8 +36,8 @@ export const COUNTRIES: Record<MerchantCountry, string> = {
 };
 
 export const COUNTRIES_BY_LOCALE: Record<string, MerchantCountry[]> = {
-  fr: ['FR', 'BE', 'CH', 'LU'],
-  en: ['US', 'GB', 'CA', 'AU', 'BE', 'CH', 'LU', 'ES', 'IT'],
+  fr: ['FR', 'BE', 'CH'],
+  en: ['FR', 'BE', 'CH'],
 };
 
 export type SubscriptionStatus = 'trial' | 'active' | 'canceled' | 'canceling' | 'past_due';

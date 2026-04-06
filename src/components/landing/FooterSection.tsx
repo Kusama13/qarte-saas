@@ -144,7 +144,7 @@ export function FooterDark() {
               </svg>
               <span>{t('securePayment')}</span>
             </div>
-            <LocaleSwitcher />
+            {/* <LocaleSwitcher /> */}
           </div>
         </div>
       </div>
