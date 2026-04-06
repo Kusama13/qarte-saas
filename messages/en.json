@@ -790,6 +790,7 @@
     "trialDaysPlural": "{count} trial days remaining",
     "viewSubscription": "View subscription",
     "addPayment": "Add a payment method",
+    "trialSmsHint": "Add your card to activate SMS reminders and confirmations.",
     "trialExpired": "Trial expired",
     "graceDescription": "Data deleted in {days}d. Read-only mode.",
     "subscribeNow": "Subscribe now",

@@ -790,6 +790,7 @@
     "trialDaysPlural": "{count} jours d\u2019essai restants",
     "viewSubscription": "Voir l'abonnement",
     "addPayment": "Ajouter une carte bancaire",
+    "trialSmsHint": "Ajoute ta carte pour activer les SMS de rappel et de confirmation.",
     "trialExpired": "Essai expiré",
     "graceDescription": "Données supprimées dans {days}j. Lecture seule.",
     "subscribeNow": "Souscrire maintenant",

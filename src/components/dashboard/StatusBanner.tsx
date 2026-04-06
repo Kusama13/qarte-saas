@@ -50,7 +50,7 @@ export default function StatusBanner({
       </span>
 
       {description && (
-        <p className="mt-1.5 text-red-700 text-xs">{description}</p>
+        <p className={cn('mt-1.5 text-xs', variant === 'trial' ? (urgent ? 'text-red-600' : 'text-primary-500') : 'text-red-700')}>{description}</p>
       )}
 
       {linkText && linkHref && (
