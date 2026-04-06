@@ -6,7 +6,7 @@ import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import type { PlanningSlot } from '@/types';
-import { formatTime, formatCurrency, toBCP47, getTimezoneForCountry } from '@/lib/utils';
+import { formatTime, formatCurrency, toBCP47, getTimezoneForCountry, formatPhoneLabel, displayPhoneNumber, detectPhoneCountry } from '@/lib/utils';
 import { downloadIcs } from '@/lib/ics';
 import { getSlotServiceIds, formatDate, formatDuration, colorBorderStyle, computeDepositAmount } from './utils';
 import type { ServiceWithDuration } from './usePlanningState';
@@ -155,7 +155,7 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
     if (serviceNames) descLines.push(serviceNames);
     const total = slotServices.reduce((sum, s) => sum + (s.price || 0), 0);
     if (total > 0) descLines.push(formatCurrency(total, merchantCountry, locale));
-    if (slot.client_phone) descLines.push(slot.client_phone);
+    if (slot.client_phone) descLines.push(displayPhoneNumber(slot.client_phone, detectPhoneCountry(slot.client_phone)));
     if (slot.notes) descLines.push(slot.notes);
     if (merchantName) descLines.push(`— ${merchantName}`);
 
@@ -316,8 +316,8 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                 {viewingSlot.client_phone && (
                   <div>
                     <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{t('phoneLabel')}</p>
-                    <a href={`tel:${viewingSlot.client_phone}`} className="text-sm text-indigo-600 font-medium hover:underline">
-                      {viewingSlot.client_phone}
+                    <a href={`tel:+${viewingSlot.client_phone}`} className="text-sm text-indigo-600 font-medium hover:underline">
+                      {formatPhoneLabel(viewingSlot.client_phone!)}
                     </a>
                   </div>
                 )}

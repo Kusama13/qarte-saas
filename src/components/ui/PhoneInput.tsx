@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn, PHONE_CONFIG, COUNTRY_FLAGS, ALL_COUNTRIES } from '@/lib/utils';
 import type { MerchantCountry } from '@/types';
+
+const COUNTRY_NAMES: Record<MerchantCountry, string> = {
+  FR: 'France', BE: 'Belgique', CH: 'Suisse', LU: 'Luxembourg',
+  US: 'United States', GB: 'United Kingdom', CA: 'Canada', AU: 'Australia',
+  ES: 'Espagne', IT: 'Italie',
+};
 
 interface PhoneInputProps {
   value: string;
@@ -51,6 +57,10 @@ export function PhoneInput({
   }, [dropdownOpen]);
 
   const config = PHONE_CONFIG[country];
+  const sortedCountries = useMemo(
+    () => [country, ...countries.filter(c => c !== country)],
+    [country, countries]
+  );
 
   const handleCountrySelect = (c: MerchantCountry) => {
     onCountryChange(c);
@@ -81,23 +91,27 @@ export function PhoneInput({
 
           {/* Dropdown */}
           {dropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[180px] max-h-[240px] overflow-y-auto">
-              {countries.map((c) => {
+            <div className="absolute top-full left-0 mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1 min-w-[200px] max-h-[240px] overflow-y-auto">
+              {sortedCountries.map((c, i) => {
                 const cfg = PHONE_CONFIG[c];
                 return (
-                  <button
-                    key={c}
-                    type="button"
-                    onClick={() => handleCountrySelect(c)}
-                    className={cn(
-                      'w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors',
-                      c === country && 'bg-indigo-50 text-indigo-700 font-medium',
+                  <div key={c}>
+                    {i === 1 && sortedCountries.length > 1 && (
+                      <div className="border-t border-gray-100 my-1" />
                     )}
-                  >
-                    <span className="text-base leading-none">{COUNTRY_FLAGS[c]}</span>
-                    <span className="flex-1 text-left">{c}</span>
-                    <span className="text-xs text-gray-400">+{cfg.prefix}</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCountrySelect(c)}
+                      className={cn(
+                        'w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 transition-colors',
+                        c === country && 'bg-indigo-50 text-indigo-700 font-medium',
+                      )}
+                    >
+                      <span className="text-base leading-none">{COUNTRY_FLAGS[c]}</span>
+                      <span className="flex-1 text-left">{COUNTRY_NAMES[c] || c}</span>
+                      <span className="text-xs text-gray-400">+{cfg.prefix}</span>
+                    </button>
+                  </div>
                 );
               })}
             </div>

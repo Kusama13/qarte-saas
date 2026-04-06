@@ -73,6 +73,7 @@ type MerchantPublic = Pick<
   | 'deposit_amount'
   | 'phone'
   | 'country'
+  | 'subscription_status'
 >;
 
 export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], isDemo = false, demoOffer, hasPhoneCookie = false }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null; hasPhoneCookie?: boolean }) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getAllPhoneFormats } from '@/lib/utils';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { setPhoneCookie } from '@/lib/customer-auth';
@@ -12,6 +12,7 @@ const lookupSchema = z.object({
   action: z.literal('lookup'),
   phone_number: z.string().min(10),
   merchant_id: z.string().uuid(),
+  phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
 });
 
 const registerSchema = z.object({
@@ -19,6 +20,7 @@ const registerSchema = z.object({
   first_name: z.string().min(1),
   last_name: z.string().nullable().optional(),
   merchant_id: z.string().uuid(),
+  phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
 });
 
 // POST: Lookup or create a customer (phone in body, not URL — GDPR C5 fix)
@@ -63,14 +65,14 @@ async function handleLookup(body: unknown, ip: string) {
   }
 
   // Format phone to E.164
-  const country = (merchant.country || 'FR') as MerchantCountry;
+  const country = (parsed.data.phone_country || merchant.country || 'FR') as MerchantCountry;
   const formattedPhone = formatPhoneNumber(phone_number, country);
 
   // 1. Check if customer exists for THIS merchant
   const { data: customersForMerchant } = await supabaseAdmin
     .from('customers')
     .select('*')
-    .eq('phone_number', formattedPhone)
+    .in('phone_number', getAllPhoneFormats(formattedPhone))
     .eq('merchant_id', merchant_id)
     .limit(1);
 
@@ -88,7 +90,7 @@ async function handleLookup(body: unknown, ip: string) {
   const { data: customersGlobal } = await supabaseAdmin
     .from('customers')
     .select('first_name')
-    .eq('phone_number', formattedPhone)
+    .in('phone_number', getAllPhoneFormats(formattedPhone))
     .limit(1);
 
   if (customersGlobal && customersGlobal.length > 0) {
@@ -126,7 +128,7 @@ async function handleRegister(body: unknown, ip: string) {
   }
 
   // Format and validate phone
-  const country = (merchant.country || 'FR') as MerchantCountry;
+  const country = (parsed.data.phone_country || merchant.country || 'FR') as MerchantCountry;
   const formattedPhone = formatPhoneNumber(phone_number, country);
   if (!validatePhone(formattedPhone, country)) {
     return NextResponse.json({ error: 'Numéro de téléphone invalide' }, { status: 400 });
@@ -136,7 +138,7 @@ async function handleRegister(body: unknown, ip: string) {
   const { data: existingList } = await supabaseAdmin
     .from('customers')
     .select('*')
-    .eq('phone_number', formattedPhone)
+    .in('phone_number', getAllPhoneFormats(formattedPhone))
     .eq('merchant_id', merchant_id)
     .limit(1);
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import { formatPhoneNumber, validatePhone, getTodayForCountry, getTodayStartForCountry, getTimezoneForCountry, getTrialStatus } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getAllPhoneFormats, getTodayForCountry, getTodayStartForCountry, getTimezoneForCountry, getTrialStatus } from '@/lib/utils';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
 import type { VisitStatus, MerchantCountry } from '@/types';
@@ -13,6 +13,7 @@ const supabaseAdmin = getSupabaseAdmin();
 const checkinSchema = z.object({
   scan_code: z.string().min(1),
   phone_number: z.string().min(1),
+  phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
   first_name: z.string().nullable().optional(),
   last_name: z.string().nullable().optional(),
 });
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const merchantCountry: MerchantCountry = merchant.country || 'FR';
+    const merchantCountry: MerchantCountry = (parsed.data.phone_country || merchant.country || 'FR') as MerchantCountry;
     const formattedPhone = formatPhoneNumber(phone_number, merchantCountry);
 
     if (!validatePhone(formattedPhone, merchantCountry)) {
@@ -135,17 +136,18 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Step 2: Parallel — banned check + customer fetch
+    const phoneVariants = getAllPhoneFormats(formattedPhone);
     const [bannedResult, customerResult] = await Promise.all([
       supabaseAdmin
         .from('banned_numbers')
         .select('id')
-        .eq('phone_number', formattedPhone)
+        .in('phone_number', phoneVariants)
         .eq('merchant_id', merchant.id)
         .maybeSingle(),
       supabaseAdmin
         .from('customers')
         .select('*')
-        .eq('phone_number', formattedPhone)
+        .in('phone_number', phoneVariants)
         .eq('merchant_id', merchant.id)
         .maybeSingle(),
     ]);

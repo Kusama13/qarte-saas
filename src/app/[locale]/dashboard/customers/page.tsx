@@ -27,7 +27,9 @@ import { Button, Input, Modal } from '@/components/ui';
 import { CustomerManagementModal } from '@/components/dashboard/CustomerManagementModal';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
-import { formatDate, formatPhoneNumber, displayPhoneNumber, formatCurrency, PHONE_CONFIG } from '@/lib/utils';
+import { formatDate, formatPhoneNumber, formatPhoneLabel, formatCurrency, PHONE_CONFIG } from '@/lib/utils';
+import { PhoneInput } from '@/components/ui/PhoneInput';
+import type { MerchantCountry } from '@/types';
 import type { LoyaltyCard, Customer } from '@/types';
 
 interface CustomerWithCard extends LoyaltyCard {
@@ -85,6 +87,7 @@ export default function CustomersPage() {
   const [newFirstName, setNewFirstName] = useState('');
   const [newLastName, setNewLastName] = useState('');
   const [newPhone, setNewPhone] = useState('');
+  const [newPhoneCountry, setNewPhoneCountry] = useState<MerchantCountry>((merchant?.country || 'FR') as MerchantCountry);
   const [newBirthDay, setNewBirthDay] = useState('');
   const [newBirthMonth, setNewBirthMonth] = useState('');
   const [newStartAmount, setNewStartAmount] = useState('');
@@ -212,7 +215,8 @@ export default function CustomersPage() {
         body: JSON.stringify({
           first_name: newFirstName.trim(),
           last_name: newLastName.trim() || null,
-          phone_number: formatPhoneNumber(newPhone.trim(), merchant.country || 'FR'),
+          phone_number: formatPhoneNumber(newPhone.trim(), newPhoneCountry),
+          phone_country: newPhoneCountry,
           birth_month: newBirthMonth ? parseInt(newBirthMonth) : null,
           birth_day: newBirthDay ? parseInt(newBirthDay) : null,
           ...(merchant.loyalty_mode === 'cagnotte' && newStartAmount ? { initial_amount: parseFloat(newStartAmount) } : {}),
@@ -717,7 +721,7 @@ export default function CustomersPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          {displayPhoneNumber(card.customer?.phone_number || '', merchant?.country || 'FR')}
+                          {formatPhoneLabel(card.customer?.phone_number || '')}
                         </td>
                         <td className="px-6 py-4">
                           {merchant?.tier2_enabled && merchant?.tier2_stamps_required ? (
@@ -900,11 +904,13 @@ export default function CustomersPage() {
             value={newLastName}
             onChange={(e) => setNewLastName(e.target.value)}
           />
-          <Input
+          <PhoneInput
             label={t('phone')}
-            placeholder={PHONE_CONFIG[merchant?.country || 'FR'].placeholder}
             value={newPhone}
-            onChange={(e) => setNewPhone(e.target.value)}
+            onChange={setNewPhone}
+            country={newPhoneCountry}
+            onCountryChange={setNewPhoneCountry}
+            countries={['FR', 'BE', 'CH']}
           />
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('birthdayLabel')}</label>

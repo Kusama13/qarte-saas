@@ -43,7 +43,7 @@ docs/                        — context.md, supabase-context.md, audits
 - NEVER push without explicit user approval
 - NEVER place React hooks after conditional early returns (crash #310)
 - Supabase admin client (service_role) = server-side only
-- Phone storage: E.164 without + (e.g. `33612345678`)
+- Phone storage: E.164 without + (e.g. `33612345678`). Client chooses country via PhoneInput (default=merchant). APIs accept optional `phone_country` param, lookup via `getAllPhoneFormats()` for cross-border dedup
 - Migrations must be applied manually in Supabase SQL Editor
 - `.next` cache can cause stale module errors → `rm -rf .next`
 

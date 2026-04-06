@@ -8,7 +8,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { displayPhoneNumber } from '@/lib/utils';
+import { formatPhoneLabel } from '@/lib/utils';
 
 export interface CustomerDangerZoneProps {
   loyaltyCardId: string;
@@ -159,7 +159,7 @@ export function CustomerDangerZone({
           <div>
             <p className="font-semibold text-gray-900 text-sm">{t('banTitle')}</p>
             <p className="text-xs text-gray-500">
-              {t('banBlocks', { phone: displayPhoneNumber(phoneNumber) })}
+              {t('banBlocks', { phone: formatPhoneLabel(phoneNumber) })}
             </p>
           </div>
         </div>

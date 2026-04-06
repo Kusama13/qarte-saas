@@ -18,7 +18,7 @@ type MerchantBooking = Pick<
   Merchant,
   'id' | 'shop_name' | 'primary_color' | 'secondary_color' | 'country' | 'booking_message' |
   'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' |
-  'welcome_offer_enabled' | 'welcome_offer_description'
+  'welcome_offer_enabled' | 'welcome_offer_description' | 'subscription_status'
 >;
 
 interface BookingModalProps {
@@ -175,6 +175,7 @@ export default function BookingModal({
           slot_date: slotDate,
           slot_time: slotTime,
           phone_number: phone.trim(),
+          phone_country: phoneCountry,
           first_name: firstName.trim(),
           last_name: lastName.trim() || undefined,
           service_ids: Array.from(selectedServiceIds),
@@ -470,12 +471,12 @@ export default function BookingModal({
                   <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
                     {t('depositPendingMessage')}
                   </p>
-                ) : (
+                ) : merchant.subscription_status !== 'trial' ? (
                   <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
                     {t('smsConfirmationSent')}
                   </p>
-                )}
-                {depositResult?.link && (
+                ) : null}
+                {depositResult?.link && merchant.subscription_status !== 'trial' && (
                   <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
                     {t('smsAfterDeposit')}
                   </p>

@@ -491,6 +491,105 @@ export function displayPhoneNumber(phone: string, country: MerchantCountry = 'FR
   return cleaned.replace(/(\d{2})(?=\d)/g, '$1 ').trim();
 }
 
+/** Supported phone countries for client-facing input */
+export const PHONE_COUNTRIES: MerchantCountry[] = ['FR', 'BE', 'CH'];
+
+// Pre-sorted configs: longer prefixes first to avoid false matches (e.g. '352' before '32')
+const SORTED_PHONE_CONFIGS = Object.entries(PHONE_CONFIG).sort(
+  ([, a], [, b]) => b.prefix.length - a.prefix.length
+);
+
+/**
+ * Detecte le pays d'un numero E.164 sans + a partir de son prefix.
+ * Ex: '33612345678' → 'FR', '32475123456' → 'BE', '41791234567' → 'CH'
+ */
+export function detectPhoneCountry(phone: string): MerchantCountry {
+  const cleaned = phone.replace(/\D/g, '');
+  for (const [country, cfg] of SORTED_PHONE_CONFIGS) {
+    if (cleaned.startsWith(cfg.prefix) && cfg.intlLengths.includes(cleaned.length)) {
+      return country as MerchantCountry;
+    }
+  }
+  return 'FR';
+}
+
+/**
+ * Retourne le drapeau + format local lisible d'un numero E.164.
+ * Ex: '33612345678' → { flag: '🇫🇷', display: '06 12 34 56 78', country: 'FR' }
+ * Ex: '32475123456' → { flag: '🇧🇪', display: '0475 12 34 56', country: 'BE' }
+ */
+export function displayPhoneWithFlag(phone: string): { flag: string; display: string; country: MerchantCountry } {
+  const country = detectPhoneCountry(phone);
+  return {
+    flag: COUNTRY_FLAGS[country],
+    display: displayPhoneNumber(phone, country),
+    country,
+  };
+}
+
+/**
+ * Convertit un E.164 en numero local brut + pays detecte.
+ * Ex: '33612345678' → { local: '0612345678', country: 'FR' }
+ * Utile pour pre-remplir un PhoneInput avec un numero stocke en DB.
+ */
+export function toLocalPhone(phone: string): { local: string; country: MerchantCountry } {
+  const cleaned = phone.replace(/\D/g, '');
+  const country = detectPhoneCountry(cleaned);
+  const cfg = PHONE_CONFIG[country];
+  if (cleaned.startsWith(cfg.prefix)) {
+    const local = cleaned.slice(cfg.prefix.length);
+    return { local: cfg.localLeadingZero ? '0' + local : local, country };
+  }
+  return { local: cleaned, country };
+}
+
+/**
+ * Retourne directement "🇫🇷 06 12 34 56 78" — raccourci pour le JSX.
+ */
+export function formatPhoneLabel(phone: string): string {
+  const { flag, display } = displayPhoneWithFlag(phone);
+  return `${flag} ${display}`;
+}
+
+/**
+ * Genere toutes les variantes E.164 possibles d'un numero pour FR/BE/CH.
+ * Permet de retrouver un client peu importe le format stocke.
+ * Ex: '33612345678' → ['33612345678', '32612345678', '41612345678']
+ */
+export function getAllPhoneFormats(phone: string): string[] {
+  const cleaned = phone.replace(/\D/g, '');
+  const countries = PHONE_COUNTRIES;
+  const results = new Set<string>();
+
+  // Si deja E.164 pour un pays connu → extraire le local, generer variantes
+  for (const c of countries) {
+    const cfg = PHONE_CONFIG[c];
+    if (cleaned.startsWith(cfg.prefix) && cfg.intlLengths.includes(cleaned.length)) {
+      results.add(cleaned);
+      const local = cleaned.slice(cfg.prefix.length);
+      for (const c2 of countries) {
+        const cfg2 = PHONE_CONFIG[c2];
+        const variant = cfg2.prefix + local;
+        if (cfg2.intlLengths.includes(variant.length)) results.add(variant);
+      }
+      return [...results];
+    }
+  }
+
+  // Format local avec 0 → generer variantes
+  if (cleaned.startsWith('0')) {
+    const local = cleaned.slice(1);
+    for (const c of countries) {
+      const cfg = PHONE_CONFIG[c];
+      const variant = cfg.prefix + local;
+      if (cfg.intlLengths.includes(variant.length)) results.add(variant);
+    }
+  }
+
+  if (results.size === 0) results.add(cleaned);
+  return [...results];
+}
+
 export function validateEmail(email: string): boolean {
   if (!email || email.length > 254) return false;
   const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;

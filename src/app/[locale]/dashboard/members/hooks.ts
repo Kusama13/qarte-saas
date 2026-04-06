@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, formatCurrency } from '@/lib/utils';
-import type { Merchant, MemberCard, Customer } from '@/types';
+import type { Merchant, MemberCard, Customer, MerchantCountry } from '@/types';
 import type { ProgramWithCount, CustomerWithCard, DurationUnit } from './types';
 import { calculateDurationMonths } from './types';
 
@@ -193,6 +193,7 @@ export function useAssignCustomer(
   const [newCustomerFirstName, setNewCustomerFirstName] = useState('');
   const [newCustomerLastName, setNewCustomerLastName] = useState('');
   const [newCustomerPhone, setNewCustomerPhone] = useState('');
+  const [newCustomerPhoneCountry, setNewCustomerPhoneCountry] = useState<MerchantCountry>((merchant?.country || 'FR') as MerchantCountry);
   const [newCustomerStartAmount, setNewCustomerStartAmount] = useState('');
   const [newCustomerStartStamps, setNewCustomerStartStamps] = useState('');
   const [creatingCustomer, setCreatingCustomer] = useState(false);
@@ -208,7 +209,7 @@ export function useAssignCustomer(
         .insert({
           first_name: newCustomerFirstName.trim(),
           last_name: newCustomerLastName.trim() || null,
-          phone_number: formatPhoneNumber(newCustomerPhone.trim(), merchant.country || 'FR'),
+          phone_number: formatPhoneNumber(newCustomerPhone.trim(), newCustomerPhoneCountry),
           merchant_id: merchant.id,
         })
         .select()
@@ -378,6 +379,8 @@ export function useAssignCustomer(
     setNewCustomerLastName,
     newCustomerPhone,
     setNewCustomerPhone,
+    newCustomerPhoneCountry,
+    setNewCustomerPhoneCountry,
     newCustomerStartAmount,
     setNewCustomerStartAmount,
     newCustomerStartStamps,

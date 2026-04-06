@@ -10,7 +10,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { Button } from '@/components/ui';
-import type { MemberCard } from '@/types';
+import type { MemberCard, MerchantCountry } from '@/types';
 import type { ProgramWithCount, CustomerWithCard, DurationUnit } from './types';
 import { formatDuration } from './types';
 import MemberItem from './MemberItem';
@@ -48,6 +48,8 @@ interface ProgramDetailViewProps {
     setNewCustomerLastName: (v: string) => void;
     newCustomerPhone: string;
     setNewCustomerPhone: (v: string) => void;
+    newCustomerPhoneCountry: MerchantCountry;
+    setNewCustomerPhoneCountry: (v: MerchantCountry) => void;
     newCustomerStartAmount: string;
     setNewCustomerStartAmount: (v: string) => void;
     newCustomerStartStamps: string;
@@ -217,6 +219,8 @@ export default function ProgramDetailView({
         setNewCustomerLastName={assign.setNewCustomerLastName}
         newCustomerPhone={assign.newCustomerPhone}
         setNewCustomerPhone={assign.setNewCustomerPhone}
+        newCustomerPhoneCountry={assign.newCustomerPhoneCountry}
+        setNewCustomerPhoneCountry={assign.setNewCustomerPhoneCountry}
         newCustomerStartAmount={assign.newCustomerStartAmount}
         setNewCustomerStartAmount={assign.setNewCustomerStartAmount}
         newCustomerStartStamps={assign.newCustomerStartStamps}

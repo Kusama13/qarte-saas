@@ -196,6 +196,7 @@ export default function BookingDetailsModal({
       customer_id: draft.customerId,
       service_ids: draft.serviceIds,
       notes: draft.notes.trim() || null,
+      ...(draft.phoneCountry && { phone_country: draft.phoneCountry }),
     });
   };
 

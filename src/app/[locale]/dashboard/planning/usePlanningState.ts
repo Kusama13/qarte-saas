@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
-import type { PlanningSlot, CustomerSearchResult } from '@/types';
+import type { PlanningSlot, CustomerSearchResult, MerchantCountry } from '@/types';
 import { getWeekStart, formatDate, getSlotServiceIds } from './utils';
+import { toLocalPhone } from '@/lib/utils';
 
 export interface ServiceWithDuration {
   id: string;
@@ -25,6 +26,7 @@ export type ModalState =
 export interface BookingDraft {
   clientName: string;
   clientPhone: string;
+  phoneCountry: MerchantCountry | '';
   customerId: string | null;
   serviceIds: string[];
   notes: string;
@@ -36,6 +38,7 @@ export interface BookingDraft {
 const emptyDraft: BookingDraft = {
   clientName: '',
   clientPhone: '',
+  phoneCountry: '',
   customerId: null,
   serviceIds: [],
   notes: '',
@@ -244,6 +247,7 @@ export function usePlanningState() {
     customer_id: string | null;
     service_ids: string[];
     notes: string | null;
+    phone_country?: string;
   }) => {
     if (!merchant) return;
     setSaving(true);
@@ -380,10 +384,12 @@ export function usePlanningState() {
   };
 
   const selectCustomer = (c: CustomerSearchResult) => {
+    const { local, country: detectedCountry } = toLocalPhone(c.phone_number);
     setDraft(d => ({
       ...d,
       clientName: `${c.first_name}${c.last_name ? ` ${c.last_name}` : ''}`,
-      clientPhone: c.phone_number,
+      clientPhone: local,
+      phoneCountry: detectedCountry,
       customerId: c.id,
       instagramHandle: c.instagram_handle || '',
       tiktokHandle: c.tiktok_handle || '',
@@ -410,6 +416,7 @@ export function usePlanningState() {
           first_name: firstName,
           last_name: lastName,
           phone_number: draft.clientPhone.trim(),
+          ...(draft.phoneCountry && { phone_country: draft.phoneCountry }),
         }),
       });
       const data = await res.json();
@@ -462,9 +469,11 @@ export function usePlanningState() {
   const openEditSlot = (slot: PlanningSlot) => {
     const serviceIds = getSlotServiceIds(slot);
     const social = slot.customer;
+    const phoneInfo = slot.client_phone ? toLocalPhone(slot.client_phone) : null;
     setDraft({
       clientName: slot.client_name || '',
-      clientPhone: slot.client_phone || '',
+      clientPhone: phoneInfo?.local || '',
+      phoneCountry: phoneInfo?.country || '',
       customerId: slot.customer_id || null,
       serviceIds,
       notes: slot.notes || '',

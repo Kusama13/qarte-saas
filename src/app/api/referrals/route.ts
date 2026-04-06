@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { formatPhoneNumber, validatePhone, generateReferralCode, getTrialStatus } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, generateReferralCode, getTrialStatus, getAllPhoneFormats } from '@/lib/utils';
 import { z } from 'zod';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import type { MerchantCountry } from '@/types';
@@ -71,6 +71,7 @@ const referralSchema = z.object({
   phone_number: z.string().min(1),
   first_name: z.string().min(1),
   last_name: z.string().nullable().optional(),
+  phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. Formater et valider le téléphone
-    const country = (merchant.country || 'FR') as MerchantCountry;
+    const country = (parsed.data.phone_country || merchant.country || 'FR') as MerchantCountry;
     const formattedPhone = formatPhoneNumber(phone_number, country);
     if (!validatePhone(formattedPhone, country)) {
       return NextResponse.json({ error: 'Numéro de téléphone invalide' }, { status: 400 });
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
     const { data: existingCustomer } = await supabaseAdmin
       .from('customers')
       .select('id')
-      .eq('phone_number', formattedPhone)
+      .in('phone_number', getAllPhoneFormats(formattedPhone))
       .eq('merchant_id', merchant.id)
       .maybeSingle();
 

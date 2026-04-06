@@ -5,7 +5,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatPhoneLabel } from '@/lib/utils';
 import type { MemberCard } from '@/types';
 
 export default function MemberItem({
@@ -52,7 +52,7 @@ export default function MemberItem({
             {isValid && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)] shrink-0" />}
           </p>
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2.5 text-[11px] sm:text-[13px] text-gray-500">
-            <span className="font-medium">{member.customer?.phone_number}</span>
+            <span className="font-medium">{formatPhoneLabel(member.customer?.phone_number || '')}</span>
             <span className="hidden sm:inline w-1 h-1 rounded-full bg-gray-300" />
             <span className="flex items-center gap-1">
               <span className="hidden sm:inline opacity-60">{t('expiresOn')}</span>

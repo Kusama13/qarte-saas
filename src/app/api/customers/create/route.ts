@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, createRouteHandlerSupabaseClient } from '@/lib/supabase';
-import { formatPhoneNumber, formatCurrency } from '@/lib/utils';
+import { formatPhoneNumber, formatCurrency, getAllPhoneFormats } from '@/lib/utils';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 import { z } from 'zod';
@@ -13,6 +13,7 @@ const createCustomerSchema = z.object({
   birth_day: z.coerce.number().int().min(1).max(31).optional().nullable(),
   initial_stamps: z.coerce.number().int().min(0).max(15).optional().nullable(),
   initial_amount: z.coerce.number().min(0).max(10000).optional().nullable(),
+  phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
 });
 
 const supabaseAdmin = getSupabaseAdmin();
@@ -54,14 +55,14 @@ export async function POST(request: NextRequest) {
     }
     const { first_name, last_name, phone_number, birth_month, birth_day, initial_amount, initial_stamps } = parsed.data;
 
-    const merchantCountry: MerchantCountry = merchant.country || 'FR';
+    const merchantCountry: MerchantCountry = parsed.data.phone_country || merchant.country || 'FR';
     const phoneFormatted = formatPhoneNumber(phone_number.trim(), merchantCountry);
 
     // Check if customer already exists for THIS merchant with this phone number
     const { data: existingCustomerForMerchant } = await supabaseAdmin
       .from('customers')
       .select('id')
-      .eq('phone_number', phoneFormatted)
+      .in('phone_number', getAllPhoneFormats(phoneFormatted))
       .eq('merchant_id', merchant.id)
       .maybeSingle();
 

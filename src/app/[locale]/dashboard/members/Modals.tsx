@@ -13,6 +13,9 @@ import {
 import { useTranslations } from 'next-intl';
 import { Button, Input, Modal } from '@/components/ui';
 import type { MemberCard } from '@/types';
+import { formatPhoneLabel } from '@/lib/utils';
+import { PhoneInput } from '@/components/ui/PhoneInput';
+import type { MerchantCountry } from '@/types';
 import type { ProgramWithCount, CustomerWithCard, DurationUnit } from './types';
 import { DURATION_UNITS, PROGRAM_NAME_SUGGESTIONS, BENEFIT_SUGGESTIONS } from './types';
 
@@ -231,6 +234,8 @@ interface AssignModalProps {
   setNewCustomerLastName: (v: string) => void;
   newCustomerPhone: string;
   setNewCustomerPhone: (v: string) => void;
+  newCustomerPhoneCountry: MerchantCountry;
+  setNewCustomerPhoneCountry: (v: MerchantCountry) => void;
   newCustomerStartAmount?: string;
   setNewCustomerStartAmount?: (v: string) => void;
   newCustomerStartStamps?: string;
@@ -259,6 +264,8 @@ export function AssignModal({
   setNewCustomerLastName,
   newCustomerPhone,
   setNewCustomerPhone,
+  newCustomerPhoneCountry,
+  setNewCustomerPhoneCountry,
   newCustomerStartAmount,
   setNewCustomerStartAmount,
   newCustomerStartStamps,
@@ -312,7 +319,7 @@ export function AssignModal({
                       <p className="font-semibold text-gray-900 truncate">
                         {c.customer?.first_name} {c.customer?.last_name}
                       </p>
-                      <p className="text-sm text-gray-500">{c.customer?.phone_number}</p>
+                      <p className="text-sm text-gray-500">{formatPhoneLabel(c.customer?.phone_number || '')}</p>
                     </div>
                   </button>
                 );
@@ -368,11 +375,12 @@ export function AssignModal({
               value={newCustomerLastName}
               onChange={(e) => setNewCustomerLastName(e.target.value)}
             />
-            <Input
-              placeholder={t('phonePlaceholder')}
-              type="tel"
+            <PhoneInput
               value={newCustomerPhone}
-              onChange={(e) => setNewCustomerPhone(e.target.value)}
+              onChange={setNewCustomerPhone}
+              country={newCustomerPhoneCountry as MerchantCountry}
+              onCountryChange={(c) => setNewCustomerPhoneCountry(c)}
+              countries={['FR', 'BE', 'CH']}
             />
             {setNewCustomerStartStamps && (
               <Input

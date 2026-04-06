@@ -24,7 +24,8 @@ import { sparkleGrand } from '@/lib/sparkles';
 import { Button, Input } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { formatPhoneNumber, validatePhone, getTodayForCountry, PHONE_CONFIG, getCurrencySymbol, formatCurrency } from '@/lib/utils';
-import type { Merchant, Customer, LoyaltyCard } from '@/types';
+import { PhoneInput } from '@/components/ui/PhoneInput';
+import type { Merchant, Customer, LoyaltyCard, MerchantCountry } from '@/types';
 import { trackQrScanned, trackCardCreated, trackPointEarned, trackRewardRedeemed } from '@/lib/analytics';
 import { useTranslations } from 'next-intl';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -80,6 +81,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
   const [error, setError] = useState('');
 
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneCountry, setPhoneCountry] = useState<MerchantCountry>('FR');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
 
@@ -171,6 +173,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
 
       if (merchantResult.data) {
         setMerchant(merchantResult.data);
+        setPhoneCountry((merchantResult.data.country || 'FR') as MerchantCountry);
         trackQrScanned({ merchant_id: merchantResult.data.id });
       }
 
@@ -269,8 +272,8 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     e.preventDefault();
     setError('');
 
-    const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
-    if (!validatePhone(formattedPhone, merchant?.country || 'FR')) {
+    const formattedPhone = formatPhoneNumber(phoneNumber, phoneCountry);
+    if (!validatePhone(formattedPhone, phoneCountry)) {
       setError(t('invalidPhone'));
       return;
     }
@@ -289,7 +292,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
       const response = await fetch('/api/customers/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'lookup', phone_number: formattedPhone, merchant_id: merchant.id }),
+        body: JSON.stringify({ action: 'lookup', phone_number: formattedPhone, phone_country: phoneCountry, merchant_id: merchant.id }),
       });
       const data = await response.json();
 
@@ -304,13 +307,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           }
           // Welcome flow: existing customer with 0 stamps can claim
           if (welcomeCode && welcomeInfo) {
-            const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
+            const formattedPhone = formatPhoneNumber(phoneNumber, phoneCountry);
             const res = await fetch('/api/welcome', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 welcome_code: welcomeCode,
-                phone_number: formattedPhone,
+                phone_number: formattedPhone, phone_country: phoneCountry,
                 first_name: data.customer.first_name,
                 last_name: data.customer.last_name || null,
               }),
@@ -328,13 +331,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           }
           // Offer flow: claim directly for existing customer
           if (offerId && offerInfo) {
-            const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
+            const formattedPhone = formatPhoneNumber(phoneNumber, phoneCountry);
             const res = await fetch('/api/merchant-offers/claim', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 offer_id: offerId,
-                phone_number: formattedPhone,
+                phone_number: formattedPhone, phone_country: phoneCountry,
                 first_name: data.customer.first_name,
                 last_name: data.customer.last_name || null,
               }),
@@ -384,7 +387,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                phone_number: formattedPhone,
+                phone_number: formattedPhone, phone_country: phoneCountry,
                 first_name: data.customer.first_name,
                 merchant_id: merchant.id,
               }),
@@ -432,7 +435,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setSubmitting(true);
 
     try {
-      const formattedPhone = formatPhoneNumber(phoneNumber, merchant?.country || 'FR');
+      const formattedPhone = formatPhoneNumber(phoneNumber, phoneCountry);
       // Cookie is set server-side by register/checkin APIs
 
       // Offer flow: call /api/merchant-offers/claim
@@ -442,7 +445,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             offer_id: offerId,
-            phone_number: formattedPhone,
+            phone_number: formattedPhone, phone_country: phoneCountry,
             first_name: firstName.trim(),
             last_name: lastName.trim() || null,
           }),
@@ -471,7 +474,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             welcome_code: welcomeCode,
-            phone_number: formattedPhone,
+            phone_number: formattedPhone, phone_country: phoneCountry,
             first_name: firstName.trim(),
             last_name: lastName.trim() || null,
           }),
@@ -499,7 +502,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             referral_code: refCode,
-            phone_number: formattedPhone,
+            phone_number: formattedPhone, phone_country: phoneCountry,
             first_name: firstName.trim(),
             last_name: lastName.trim() || null,
           }),
@@ -599,13 +602,13 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
     setStep('checkin');
 
     try {
-      const formattedPhone = formatPhoneNumber(overridePhone || phoneNumber, merchant?.country || 'FR');
+      const formattedPhone = formatPhoneNumber(overridePhone || phoneNumber, phoneCountry);
       const isCagnotteMode = merchant.loyalty_mode === 'cagnotte';
       const endpoint = isCagnotteMode ? '/api/cagnotte/checkin' : '/api/checkin';
 
       const body: Record<string, unknown> = {
         scan_code: code,
-        phone_number: formattedPhone,
+        phone_number: formattedPhone, phone_country: phoneCountry,
         first_name: customerInfo.first_name,
         last_name: customerInfo.last_name,
       };
@@ -964,7 +967,7 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-5">
               <form onSubmit={handlePhoneSubmit} className="space-y-3">
                 {error && (
                   <div className="p-3 text-sm font-semibold text-rose-600 bg-rose-50 border border-rose-100 rounded-xl">
@@ -972,20 +975,16 @@ export default function ScanPage({ params }: { params: Promise<{ code: string }>
                   </div>
                 )}
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-gray-600 ml-1">{t('yourPhone')}</label>
-                  <div className="relative group">
-                    <Input
-                      type="tel"
-                      placeholder={PHONE_CONFIG[merchant.country || 'FR'].placeholder}
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      required
-                      className="h-12 text-base pl-11 bg-gray-50/50 border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-200 rounded-xl transition-all"
-                    />
-                    <Phone className="absolute w-4 h-4 text-gray-400 left-4 top-1/2 transform -translate-y-1/2 group-focus-within:text-gray-600 transition-colors" />
-                  </div>
-                </div>
+                <PhoneInput
+                  label={t('yourPhone')}
+                  value={phoneNumber}
+                  onChange={setPhoneNumber}
+                  country={phoneCountry}
+                  onCountryChange={setPhoneCountry}
+                  countries={['FR', 'BE', 'CH']}
+                  required
+                  className="h-12 text-base bg-gray-50/50 border-gray-200 focus:border-gray-400 focus:ring-2 focus:ring-gray-200 rounded-r-xl transition-all"
+                />
 
                 <button
                   type="submit"

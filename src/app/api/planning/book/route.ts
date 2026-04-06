@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { formatPhoneNumber, validatePhone, getTrialStatus, getTimezoneForCountry } from '@/lib/utils';
+import { formatPhoneNumber, validatePhone, getTrialStatus, getTimezoneForCountry, getAllPhoneFormats } from '@/lib/utils';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { setPhoneCookie } from '@/lib/customer-auth';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
@@ -18,6 +18,7 @@ const bookSchema = z.object({
   slot_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   slot_time: z.string().regex(/^\d{2}:\d{2}$/),
   phone_number: z.string().min(4).max(20),
+  phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
   first_name: z.string().min(1).max(100),
   last_name: z.string().max(100).optional(),
   service_ids: z.array(z.string().uuid()).min(1).max(10),
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Format & validate phone
-    const country = (merchant.country || 'FR') as MerchantCountry;
+    const country = (parsed.data.phone_country || merchant.country || 'FR') as MerchantCountry;
     const formattedPhone = formatPhoneNumber(phone_number.trim(), country);
     if (!validatePhone(formattedPhone, country)) {
       return NextResponse.json({ error: 'Numéro de téléphone invalide' }, { status: 400 });
@@ -161,7 +162,7 @@ export async function POST(request: NextRequest) {
     const { data: existingCustomer } = await supabaseAdmin
       .from('customers')
       .select('id')
-      .eq('phone_number', formattedPhone)
+      .in('phone_number', getAllPhoneFormats(formattedPhone))
       .eq('merchant_id', merchant_id)
       .maybeSingle();
 

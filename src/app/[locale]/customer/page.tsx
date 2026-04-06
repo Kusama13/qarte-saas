@@ -145,6 +145,7 @@ export default function CustomerLoginPage() {
                 onChange={setPhoneNumber}
                 country={country}
                 onCountryChange={setCountry}
+                countries={['FR', 'BE', 'CH']}
                 required
                 autoFocus
                 className="h-14 text-lg bg-white/60 border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 rounded-r-2xl transition-all shadow-sm"

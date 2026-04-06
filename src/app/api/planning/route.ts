@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
 import { z } from 'zod';
-import { getTodayForCountry, formatPhoneNumber } from '@/lib/utils';
+import { getTodayForCountry, formatPhoneNumber, getAllPhoneFormats } from '@/lib/utils';
 import { sendBookingSms } from '@/lib/sms';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
@@ -191,6 +191,7 @@ const updateSlotSchema = z.object({
   service_ids: z.array(z.string().uuid()).max(10).optional(),
   notes: z.string().max(300).nullable().optional(),
   deposit_confirmed: z.boolean().nullable().optional(),
+  phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -232,7 +233,7 @@ export async function PATCH(request: NextRequest) {
           .select('country')
           .eq('id', merchantId)
           .single();
-        const country = (phoneMerchant?.country || 'FR') as MerchantCountry;
+        const country = (parsed.data.phone_country || phoneMerchant?.country || 'FR') as MerchantCountry;
         updateData.client_phone = formatPhoneNumber(client_phone.trim(), country);
       } else {
         updateData.client_phone = null;

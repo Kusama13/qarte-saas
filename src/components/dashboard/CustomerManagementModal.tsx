@@ -16,7 +16,7 @@ import {
   Award,
   BookOpen,
 } from 'lucide-react';
-import { displayPhoneNumber } from '@/lib/utils';
+import { formatPhoneLabel } from '@/lib/utils';
 import { CustomerAdjustTab } from './CustomerAdjustTab';
 import { CustomerRewardsCombinedTab } from './CustomerRewardsCombinedTab';
 import { CustomerHistoryTab } from './CustomerHistoryTab';
@@ -236,7 +236,7 @@ export function CustomerManagementModal({
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 text-xs font-medium text-gray-600">
                   <Phone className="w-3 h-3 text-gray-400" />
-                  {displayPhoneNumber(phoneNumber)}
+                  {formatPhoneLabel(phoneNumber)}
                 </span>
 
                 {!editingBirthday ? (

@@ -227,12 +227,22 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Batched 50, pause 100ms entre batches
 
 ### Support Multi-Pays
-- 10 pays : FR, BE, CH, LU, US, GB, CA, AU, ES, IT — `PHONE_CONFIG` par pays
+- 10 pays dans `PHONE_CONFIG` : FR, BE, CH, LU, US, GB, CA, AU, ES, IT
 - `COUNTRIES_BY_LOCALE` : FR/EN → FR/BE/CH (LU et autres retires, EN desactive)
-- E.164 sans + (ex: 33612345678, 15551234567)
-- `formatPhoneNumber()`, `validatePhone()`, `displayPhoneNumber()` — tous avec param `country`
-- `PhoneInput` composant (`src/components/ui/PhoneInput.tsx`) : selecteur pays drapeau+indicatif, dropdown, placeholder dynamique
-- Utilise dans `/customer` (login client), `/auth/merchant/signup/complete` (inscription merchant)
+- `PHONE_COUNTRIES` : `['FR', 'BE', 'CH']` — pays supportes pour les clients (selecteur PhoneInput + schemas Zod)
+- E.164 sans + (ex: 33612345678, 32475123456, 41791234567)
+- `formatPhoneNumber(phone, country)`, `validatePhone(phone, country)`, `displayPhoneNumber(phone, country)` — tous avec param country
+- `detectPhoneCountry(phone)` : detecte FR/BE/CH depuis le prefix E.164 (pre-tri module-level)
+- `displayPhoneWithFlag(phone)` : retourne `{ flag: '🇫🇷', display: '06 12 34 56 78', country: 'FR' }`
+- `formatPhoneLabel(phone)` : raccourci JSX → `"🇫🇷 06 12 34 56 78"` (utilise partout pour l'affichage)
+- `toLocalPhone(phone)` : convertit E.164 en format local → `{ local: '0612345678', country: 'FR' }` (pour pre-remplir PhoneInput)
+- `getAllPhoneFormats(phone)` : genere toutes les variantes E.164 FR/BE/CH pour lookup anti-doublon (ex: `33612345678` → `['33612345678', '32612345678', '41612345678']`)
+- **PhoneInput** (`src/components/ui/PhoneInput.tsx`) : selecteur pays drapeau+indicatif+nom pays, dropdown avec pays prefere en premier, placeholder dynamique, `useMemo` pour tri
+- **Client choisit son pays** : le PhoneInput est pre-rempli avec le pays du merchant mais le client peut changer (ex: client belge chez merchant francais)
+- **`phone_country`** : parametre optionnel dans tous les schemas Zod des APIs client-facing (9 routes). Fallback `merchant.country` si absent (backward compat)
+- **Lookup multi-format** : `.in('phone_number', getAllPhoneFormats(...))` au lieu de `.eq()` — evite les doublons cross-border
+- **Affichage** : tous les numeros affiches avec drapeau + format local via `formatPhoneLabel()` (8 endroits dashboard)
+- Utilise dans : `/scan/[code]` (QR), `/customer` (login), `/p/[slug]` (booking), `/dashboard/planning` (client select), `/dashboard/customers` (ajout), `/dashboard/members` (ajout), `/auth/merchant/signup/complete` (inscription)
 
 ### Fuseaux Horaires (country-aware)
 - `COUNTRY_TIMEZONE` map dans `src/lib/utils.ts` : 10 pays → IANA timezone (FR→Europe/Paris, US→America/New_York, etc.)
