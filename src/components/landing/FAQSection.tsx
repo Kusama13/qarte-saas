@@ -82,7 +82,7 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const t = useTranslations('faq');
 
-  const faqItems = Array.from({ length: 11 }, (_, i) => ({
+  const faqItems = Array.from({ length: 12 }, (_, i) => ({
     question: t(`q${i + 1}`),
     answer: t(`a${i + 1}`),
   }));

@@ -502,7 +502,6 @@ export function FideliteSection() {
             titleBold={t('journalTitleBold')}
             description={t('journalDesc')}
             visual={<JournalVisual t={t} />}
-            reverse
             delay={0.05}
           />
         </div>

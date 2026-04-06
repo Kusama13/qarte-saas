@@ -466,11 +466,23 @@ export default function BookingModal({
                   {depositResult?.link ? t('bookingPending') : t('bookingConfirmed')}
                 </h3>
                 <p className="text-center text-xs text-gray-500 mb-4">{merchant.shop_name}</p>
-                {depositResult?.link && (
-                  <p className="text-center text-[13px] text-gray-600 mb-4 px-2">
+                {depositResult?.link ? (
+                  <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
                     {t('depositPendingMessage')}
                   </p>
+                ) : (
+                  <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
+                    {t('smsConfirmationSent')}
+                  </p>
                 )}
+                {depositResult?.link && (
+                  <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
+                    {t('smsAfterDeposit')}
+                  </p>
+                )}
+                <p className="text-center text-[11px] text-gray-400 mb-4 px-2">
+                  {t('checkStatusHint')}
+                </p>
 
                 {/* Booking summary */}
                 <div className="rounded-xl bg-gray-50 px-4 py-3 mb-4 space-y-2">

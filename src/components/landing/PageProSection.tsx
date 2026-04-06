@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, MessageSquare } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { trackCtaClick } from '@/lib/analytics';
 import { fbEvents } from '@/components/analytics/FacebookPixel';
@@ -178,6 +178,57 @@ function PrestationsVisual({ t, locale }: { t: (key: string) => string; locale: 
   );
 }
 
+function SmsVisual({ t }: { t: (key: string) => string }) {
+  const messages = [
+    { text: t('smsMsg1'), time: t('smsMsg1Time'), icon: '\uD83D\uDD14', color: 'bg-emerald-500' },
+    { text: t('smsMsg2'), time: t('smsMsg2Time'), icon: '\u2705', color: 'bg-indigo-500' },
+  ];
+
+  return (
+    <div className="relative w-full max-w-[320px] mx-auto">
+      <div className="bg-white/[0.06] backdrop-blur-sm rounded-3xl shadow-xl shadow-black/20 border border-white/10 p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl flex items-center justify-center">
+            <MessageSquare className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-white/80">{t('smsHeader')}</p>
+            <p className="text-[10px] text-white/40">{t('smsHeaderSub')}</p>
+          </div>
+        </div>
+
+        <div className="space-y-2.5">
+          {messages.map((msg, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: 12 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.4, delay: 0.15 + i * 0.12, ease: EASE }}
+              className="relative bg-emerald-500/10 rounded-2xl rounded-tr-sm p-3 border border-emerald-400/20"
+            >
+              <div className="flex items-start gap-2.5">
+                <div className={`w-7 h-7 ${msg.color} rounded-lg flex items-center justify-center flex-shrink-0 text-sm shadow-sm`}>
+                  {msg.icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-white/70 leading-relaxed">{msg.text}</p>
+                  <p className="text-[9px] text-white/30 mt-1 text-right">{msg.time}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-emerald-500 rounded-full px-3 py-1.5 shadow-lg shadow-emerald-500/30 animate-float-subtle">
+        <span className="text-sm">{'\uD83D\uDCF1'}</span>
+        <span className="text-xs font-bold text-white">{t('smsBadge')}</span>
+      </div>
+    </div>
+  );
+}
+
 function WelcomeOfferVisual({ t }: { t: (key: string) => string }) {
   return (
     <div className="relative w-full max-w-[320px] mx-auto">
@@ -264,11 +315,21 @@ export function PageProSection() {
           <Separator />
 
           <FeatureBlock
+            title={t('smsTitle')}
+            titleBold={t('smsTitleBold')}
+            description={t('smsDesc')}
+            visual={<SmsVisual t={t} />}
+            reverse
+            delay={0.05}
+          />
+
+          <Separator />
+
+          <FeatureBlock
             title={t('seoTitle')}
             titleBold={t('seoTitleBold')}
             description={t('seoDesc')}
             visual={<SeoVisual t={t} />}
-            reverse
             delay={0.05}
           />
 
@@ -279,6 +340,7 @@ export function PageProSection() {
             titleBold={t('welcomeTitleBold')}
             description={t('welcomeDesc')}
             visual={<WelcomeOfferVisual t={t} />}
+            reverse
             delay={0.05}
           />
         </div>

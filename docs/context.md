@@ -389,6 +389,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
   - `birthday` — voeux + cadeau anniversaire (cron morning-jobs)
   - `referral_reward` — notification parrain quand le filleul utilise sa recompense (`POST /api/vouchers/use`)
 - **Compteur SMS** : visible dans dashboard principal + planning parametres (barre de progression)
+- **Booking modal** : message SMS confirmation instantane (sans acompte) ou apres validation acompte, + hint "revenez sur cette page pour suivre votre reservation"
+- **Landing** : SMS mis en avant dans Hero (badge), FeaturesGrid, PageProSection (bloc dedie avec visual 2 SMS), Pricing, FAQ (Q4+Q12)
 - **Admin** : `/admin/sms` — metriques (total, ce mois, echecs, cout), toggles globaux, breakdown par merchant
 - **Env vars** : `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`
 - **Sender** : "Qarte" (en attente validation OVH, fallback numero court via `senderForResponse`)
@@ -553,12 +555,12 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 ## 10. Pages Principales
 
 ### Landing (`/`)
-Hero (mockup carte fidelite + floating badges emojis: point ajoute, Google 4.9, parrainage, push Qarte) → SocialProof → FeaturesGridSection (grille 3x3, 9 features avec emojis: reservations, page pro, regles, fidelite, photos, suivi, rappels, relances, avis Google — cartes blanches animees framer-motion, fond blanc + ambient glow + grain) → FideliteSection (light, 4 blocs: programme+QR, relances+anniversaires, avis Google, journal client) → PageProSection (dark, 3 blocs: SEO, planning, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau, 10 features listees, prix annuel, badges confiance) → FAQ (11 questions) → Footer (FooterCta + FooterDark). Toutes les sections landing utilisent des emojis au lieu d'icones Lucide pour les badges et visuels decoratifs. Typo landing : titres de section en Playfair Display italic sur les mots gradient + surlignage indigo (sections light) ou sans surlignage (sections dark). Separateurs dot+traits. CTAs differencies : noir (FideliteSection), blanc (PageProSection), gradient violet (Hero). Grain texture SVG sur FideliteSection
+Hero (mockup iPhone de face: greeting, prochain RDV, parrainage, fidelite tampons, recompense, historique) → SocialProof → FeaturesGridSection (grille 3x3, 9 features avec emojis: reservations, rappels SMS+push, page pro, regles, fidelite, photos, suivi, relances, avis Google — cartes blanches animees framer-motion, fond blanc + ambient glow + grain) → FideliteSection (light, 4 blocs: programme+QR, relances+anniversaires, avis Google, journal client) → PageProSection (dark, 4 blocs: planning, SMS automatiques, SEO, bienvenue) → Testimonials (5 cards, carousel mobile) → Pricing (image+prix bandeau, 10 features listees, prix annuel, badges confiance) → FAQ (12 questions) → Footer (FooterCta + FooterDark). Toutes les sections landing utilisent des emojis au lieu d'icones Lucide pour les badges et visuels decoratifs. Typo landing : titres de section en Playfair Display italic sur les mots gradient + surlignage indigo (sections light) ou sans surlignage (sections dark). Separateurs dot+traits. CTAs differencies : noir (FideliteSection), blanc (PageProSection), gradient violet (Hero). Grain texture SVG sur FideliteSection
 
 Hero titre : "La facon la plus simple de **remplir ton agenda et fidéliser tes clientes.**"
-Hero subtitle : "Crée ta vitrine digitale, reçois des réservations en ligne et fidélise tes clientes — tout est inclus, sans outil compliqué."
+Hero subtitle : "Vitrine en ligne, reservations, fidelite, rappels SMS — tout est inclus, sans outil complique."
 Hero CTAs : "Essai gratuit" (primary, glassmorphism violet) + "Voir la demo" (secondary, glassmorphism dark) — empiles sur mobile, cote a cote desktop
-Hero badges impact : 4 pilules glassmorphism — "+30% de retour client", "x3 avis Google", "+40% de visibilite Google", "2x de prises de contact" — chiffres en gradient indigo/rose alternes
+Hero badges features : 4 pilules blanches avec coche verte — "Vitrine en ligne", "Reservations", "Fidelite", "Rappels SMS"
 Footer badge Google Reviews : logo Google couleur + 5 etoiles + "5.0 sur Google" — sous "Concu avec amour a Marseille par Tenga Labs" dans FooterDark
 
 SocialProof bandeau : "Plus d'un millier de **pros de la beaute** attirent et **fidelisent** avec Qarte" — mots cles en indigo-600

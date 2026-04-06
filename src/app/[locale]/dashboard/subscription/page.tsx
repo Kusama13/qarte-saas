@@ -77,6 +77,7 @@ export default function SubscriptionPage() {
     t('featureReferral'),
     t('featureDuoOffer'),
     t('featureNotifications'),
+    t('featureSms'),
     t('featureNoCommission'),
   ];
 

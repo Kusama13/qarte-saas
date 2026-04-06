@@ -18,90 +18,108 @@ function LoyaltyCardMockup({ t }: { t: (key: string) => string }) {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-rose-500 via-pink-500 to-violet-500" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.2),transparent)]" />
-        <div className="relative px-5 pt-10 pb-5 text-white text-center">
-          <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl mx-auto mb-2.5 flex items-center justify-center text-xl font-bold border border-white/30 shadow-lg shadow-black/10">
+        <div className="relative px-5 pt-8 pb-3 text-white text-center">
+          <div className="w-11 h-11 bg-white/20 backdrop-blur-sm rounded-xl mx-auto mb-1.5 flex items-center justify-center text-base font-bold border border-white/30 shadow-lg shadow-black/10">
             E
           </div>
-          <p className="font-bold text-[15px] tracking-tight">Elodie Nails Studio</p>
+          <p className="font-bold text-[13px] tracking-tight">Elodie Nails Studio</p>
+        </div>
+      </div>
+
+      {/* Greeting */}
+      <div className="px-3.5 pt-2.5 pb-0.5">
+        <p className="text-[12px] font-bold text-gray-800">{t('mockupGreeting')}</p>
+      </div>
+
+      {/* Upcoming booking */}
+      <div className="px-3.5 pt-1.5 pb-1">
+        <div className="bg-gradient-to-r from-indigo-50 to-violet-50 border border-indigo-200/60 rounded-xl p-2.5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0 text-xs">
+              {'\uD83D\uDCC5'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[8px] font-bold text-gray-400 uppercase tracking-wider">{t('mockupNextBooking')}</p>
+              <p className="text-[11px] font-extrabold text-gray-900">{t('mockupBookingDate')}</p>
+              <p className="text-[9px] text-indigo-600 font-semibold">{t('mockupBookingService')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Referral */}
+      <div className="px-3.5 pt-1 pb-1">
+        <div className="bg-gradient-to-r from-violet-50 to-pink-50 border border-violet-200/60 rounded-xl p-2.5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-violet-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0 text-xs">
+              {'\uD83D\uDC65'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] font-extrabold text-gray-900">{t('mockupReferralTitle')}</p>
+              <p className="text-[8px] text-violet-600 font-semibold">{t('mockupReferralSub')}</p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Points section */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="flex items-center justify-between mb-2.5">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{t('mockupMyLoyalty')}</span>
-          <span className="text-[11px] font-extrabold text-rose-500">7/10</span>
+      <div className="px-3.5 pt-2 pb-1.5">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{t('mockupMyLoyalty')}</span>
+          <span className="text-[10px] font-extrabold text-rose-500">7/10</span>
         </div>
 
         {/* Stamp grid - 2 rows of 5 */}
-        <div className="grid grid-cols-5 gap-2">
+        <div className="grid grid-cols-5 gap-1.5">
           {[...Array(10)].map((_, i) => (
-            <div key={i} className="relative">
-              <div className={`aspect-square rounded-xl flex items-center justify-center ${
+            <div key={i}>
+              <div className={`aspect-square rounded-lg flex items-center justify-center ${
                 i < 7
-                  ? 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-md shadow-rose-300/50'
+                  ? 'bg-gradient-to-br from-rose-400 to-pink-500 shadow-sm shadow-rose-300/50'
                   : 'bg-gray-50 border-2 border-dashed border-gray-200'
               }`}>
                 {i < 7 ? (
-                  <span className="text-[10px]">{'\u2764\uFE0F'}</span>
+                  <span className="text-[8px]">{'\u2764\uFE0F'}</span>
                 ) : (
-                  <span className="text-[9px] font-bold text-gray-300">{i + 1}</span>
+                  <span className="text-[8px] font-bold text-gray-300">{i + 1}</span>
                 )}
               </div>
-              {i === 6 && (
-                <div className="absolute -top-1 -right-1 text-[8px]">
-                  {'\u2728'}
-                </div>
-              )}
             </div>
           ))}
         </div>
 
         {/* Progress bar */}
-        <div className="mt-3 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+        <div className="mt-2 h-1 bg-gray-100 rounded-full overflow-hidden">
           <div className="h-full w-[70%] bg-gradient-to-r from-rose-400 to-pink-500 rounded-full" />
         </div>
       </div>
 
       {/* Reward card */}
-      <div className="px-4 py-2 relative" style={{ perspective: 600 }}>
-        <div
-          className="relative bg-gradient-to-r from-rose-50 to-pink-50 border-2 border-rose-300/60 rounded-2xl p-3.5 shadow-xl shadow-rose-300/30 scale-[1.08]"
-          style={{ transformStyle: 'preserve-3d', transform: 'translateZ(20px)' }}
-        >
-          <div className="absolute -inset-1 bg-gradient-to-r from-rose-200/40 to-pink-200/40 rounded-2xl blur-md -z-10" />
-          <div className="absolute top-0 right-0 w-20 h-20 bg-rose-200/30 rounded-full -mr-8 -mt-8 blur-xl" />
-          <div className="relative flex items-center gap-3">
-            <div className="w-11 h-11 bg-gradient-to-br from-rose-400 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-rose-400/40 text-lg">
+      <div className="px-3.5 py-1.5">
+        <div className="bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-200/60 rounded-xl p-2.5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-gradient-to-br from-rose-400 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0 text-sm">
               {'\uD83C\uDF81'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] font-extrabold text-gray-900">{t('mockupReward')}</p>
-              <p className="text-[10px] text-rose-600 font-bold">{t('mockupVisitsLeft')}</p>
+              <p className="text-[10px] font-extrabold text-gray-900">{t('mockupReward')}</p>
+              <p className="text-[8px] text-rose-600 font-bold">{t('mockupVisitsLeft')}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Recent visits */}
-      <div className="px-4 py-2 flex-1">
-        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t('mockupHistory')}</p>
-        <div className="space-y-1.5">
-          {[
-            { date: t('mockupToday'), label: t('mockupVisit1') },
-            { date: t('mockupDate2'), label: t('mockupVisit2') },
-            { date: t('mockupDate3'), label: t('mockupVisit3') },
-          ].map((visit, i) => (
-            <div key={i} className="flex items-center gap-2.5 p-2 bg-gray-50/80 rounded-xl">
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-semibold text-gray-700 truncate">{visit.label}</p>
-                <p className="text-[8px] text-gray-400">{visit.date}</p>
-              </div>
-              <div className="flex items-center gap-0.5 px-1.5 py-0.5 bg-emerald-50 rounded-full">
-                <span className="text-[8px] font-extrabold text-emerald-600">+1</span>
-              </div>
-            </div>
-          ))}
+      {/* Recent visit — single line */}
+      <div className="px-3.5 pt-1.5 pb-3">
+        <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">{t('mockupHistory')}</p>
+        <div className="flex items-center gap-2 p-2 bg-gray-50/80 rounded-xl">
+          <div className="flex-1 min-w-0">
+            <p className="text-[9px] font-semibold text-gray-700 truncate">{t('mockupVisit1')}</p>
+            <p className="text-[7px] text-gray-400">{t('mockupToday')}</p>
+          </div>
+          <div className="flex items-center px-1.5 py-0.5 bg-emerald-50 rounded-full">
+            <span className="text-[8px] font-extrabold text-emerald-600">+1</span>
+          </div>
         </div>
       </div>
     </div>
@@ -133,7 +151,7 @@ export function HeroSection() {
         <div className={`space-y-6 lg:space-y-8 text-center lg:text-left ${isInView ? 'animate-fade-in-up' : 'opacity-0'}`}>
           <div className="relative">
             <div className="absolute -inset-x-20 -inset-y-10 bg-indigo-100/50 blur-[100px] rounded-full pointer-events-none" />
-            <h1 className="relative text-[2.5rem] md:text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
+            <h1 className="relative text-[2.5rem] md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
               {t('titlePart1')}{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 via-pink-500 to-violet-500">
                 {t('titlePart2')}
@@ -156,24 +174,16 @@ export function HeroSection() {
             <p className="text-[11px] text-gray-400 font-medium text-center">{t('ctaSubtext')}</p>
           </div>
 
-          {/* Impact stats badges */}
-          <div className="grid grid-cols-2 lg:flex lg:flex-wrap justify-center lg:justify-start gap-2.5">
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 shadow-sm text-xs tracking-wide">
-              <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">+30%</span>
-              <span className="text-gray-500 font-medium">{t('statReturn')}</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 shadow-sm text-xs tracking-wide">
-              <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-pink-500">x3</span>
-              <span className="text-gray-500 font-medium">{t('statReviews')}</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 shadow-sm text-xs tracking-wide">
-              <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">+40%</span>
-              <span className="text-gray-500 font-medium">{t('statVisibility')}</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 shadow-sm text-xs tracking-wide">
-              <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500">24/7</span>
-              <span className="text-gray-500 font-medium">{t('statContact')}</span>
-            </span>
+          {/* Included features badges */}
+          <div className="grid grid-cols-2 lg:flex lg:flex-wrap justify-center lg:justify-start gap-2">
+            {(['feature1', 'feature2', 'feature3', 'feature4'] as const).map((key) => (
+              <span key={key} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/70 backdrop-blur-sm border border-gray-200/60 shadow-sm text-xs">
+                <svg className="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <span className="text-gray-600 font-medium">{t(key)}</span>
+              </span>
+            ))}
           </div>
 
         </div>
@@ -184,75 +194,10 @@ export function HeroSection() {
             {/* Glow behind phone */}
             <div className="absolute inset-0 -m-8 bg-gradient-to-br from-rose-300/40 via-pink-300/30 to-violet-300/40 rounded-full blur-[60px]" />
 
-            {/* Phone tilted at an angle */}
-            <div style={{ perspective: 800 }}>
-            <div style={{ transform: 'rotateY(-12deg) rotateX(2deg)', transformStyle: 'preserve-3d' }}>
+            {/* Phone facing front */}
               <div className="relative w-[280px] h-[570px]">
-                {/* Screen */}
                 <LoyaltyCardMockup t={t} />
               </div>
-            </div>
-            </div>
-
-            {/* === Floating elements around phone === */}
-
-            {/* Toast "Point ajouté" */}
-            <div className="hidden sm:flex absolute top-28 right-0 translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-gray-200/60 border border-gray-100 items-center gap-2 z-30">
-              <div className="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center text-sm">
-                {'\u2705'}
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-800">{t('badgePointAdded')}</p>
-                <p className="text-[8px] text-gray-400">{t('badgePointAddedSub')}</p>
-              </div>
-            </div>
-
-            {/* Floating star rating badge */}
-            <div className="hidden sm:flex absolute top-12 left-0 -translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-amber-200/50 border border-amber-200 z-30 flex-col items-center">
-              <div className="flex gap-0.5 mb-1">
-                {[...Array(5)].map((_, i) => (
-                  <span key={i} className="text-sm">{'\u2B50'}</span>
-                ))}
-              </div>
-              <p className="text-[10px] font-bold text-gray-700 text-center">{t('badgeGoogleScore')}</p>
-              <p className="text-[8px] text-gray-400 text-center">{t('badgeGoogleReviews')}</p>
-            </div>
-
-            {/* Floating referral badge */}
-            <div className="hidden sm:flex absolute bottom-32 left-0 -translate-x-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-violet-200/40 border border-violet-100 z-30 items-center gap-2">
-              <div className="w-7 h-7 bg-gradient-to-br from-violet-500 to-pink-500 rounded-full flex items-center justify-center shadow-md shadow-violet-300/40 text-sm">
-                {'\uD83D\uDC65'}
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-800">{t('badgeReferral')}</p>
-                <p className="text-[8px] text-violet-500 font-semibold">{t('badgeReferralSub')}</p>
-              </div>
-            </div>
-
-            {/* Push notification Qarte */}
-            <div className="hidden sm:flex absolute bottom-28 right-0 translate-x-1/2 bg-white px-4 py-3 rounded-2xl shadow-xl shadow-indigo-200/40 border border-indigo-100 z-30 max-w-[200px]">
-              <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-md shadow-indigo-300/40 text-base">
-                  {'\uD83D\uDD14'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[9px] font-bold text-indigo-600 uppercase tracking-wider">Qarte</p>
-                  <p className="text-[10px] font-semibold text-gray-800 leading-tight">{t('badgePushText')}</p>
-                  <p className="text-[8px] text-gray-400 mt-0.5">{t('badgePushTime')}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Booking badge */}
-            <div className="hidden sm:flex absolute top-1/2 left-0 -translate-x-1/2 -translate-y-1/2 bg-white px-3.5 py-2.5 rounded-2xl shadow-xl shadow-cyan-200/40 border border-cyan-100 items-center gap-2 z-30">
-              <div className="w-7 h-7 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center shadow-md shadow-cyan-300/40 text-sm">
-                {'\uD83D\uDCC5'}
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-800">{t('badgeBooking')}</p>
-                <p className="text-[8px] text-cyan-500 font-semibold">{t('badgeBookingSub')}</p>
-              </div>
-            </div>
           </div>
         </div>
       </div>
