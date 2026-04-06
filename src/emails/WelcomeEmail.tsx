@@ -30,13 +30,20 @@ export function WelcomeEmail({ shopName, slug, trialDays = 7, locale = 'fr' }: W
 
       <Text style={paragraph} dangerouslySetInnerHTML={{ __html: t('welcome.intro') }} />
 
-      {/* Step 1 — Loyalty */}
-      <Section style={stepBox}>
-        <Text style={stepTitle}>{t('welcome.step1Title')}</Text>
-        <Text style={featureItem}>&#x2713; {t('welcome.step1Feature1')}</Text>
-        <Text style={featureItem}>&#x2713; {t('welcome.step1Feature2')}</Text>
-        <Text style={featureItem}>&#x2713; {t('welcome.step1Feature3')}</Text>
-        <Text style={featureItem}>&#x2713; {t('welcome.step1Feature4')}</Text>
+      {/* What changes for you */}
+      <Section style={benefitsBox}>
+        <Text style={sectionTitle}>{t('welcome.benefitsTitle')}</Text>
+        <Text style={benefitItem}>&#x2713; {t('welcome.benefit1')}</Text>
+        <Text style={benefitItem}>&#x2713; {t('welcome.benefit2')}</Text>
+        <Text style={benefitItem}>&#x2713; {t('welcome.benefit3')}</Text>
+      </Section>
+
+      {/* SMS unlock */}
+      <Section style={smsBox}>
+        <Text style={smsTitle}>{t('welcome.smsTitle')}</Text>
+        <Text style={smsItem}>&#x2713; {t('welcome.sms1')}</Text>
+        <Text style={smsItem}>&#x2713; {t('welcome.sms2')}</Text>
+        <Text style={smsItem}>&#x2713; {t('welcome.sms3')}</Text>
       </Section>
 
       <Section style={buttonContainer}>
@@ -45,20 +52,13 @@ export function WelcomeEmail({ shopName, slug, trialDays = 7, locale = 'fr' }: W
         </Button>
       </Section>
 
-      {/* Step 2 — Storefront */}
-      <Section style={stepBox2}>
-        <Text style={stepTitle}>{t('welcome.step2Title')}</Text>
-        <Text style={featureItem}>&#x2713; {t('welcome.step2Feature1')}</Text>
-        <Text style={featureItem}>&#x2713; {t('welcome.step2Feature2')}</Text>
-        <Text style={featureItem}>&#x2713; {t('welcome.step2Feature3')}</Text>
-        <Text style={featureItem}>&#x2713; {t('welcome.step2Feature4')}</Text>
-      </Section>
-
-      <Section style={buttonContainer}>
-        <Button style={buttonSecondary} href={publicPageUrl || 'https://getqarte.com/dashboard/public-page'}>
-          {t('welcome.ctaPublicPage')}
-        </Button>
-      </Section>
+      {publicPageUrl && (
+        <Section style={buttonContainer}>
+          <Button style={buttonSecondary} href={publicPageUrl}>
+            {t('welcome.ctaPublicPage')}
+          </Button>
+        </Section>
+      )}
 
       <Hr style={divider} />
 
@@ -99,7 +99,14 @@ const paragraph = {
   margin: '0 0 16px 0',
 };
 
-const stepBox = {
+const sectionTitle = {
+  color: '#1a1a1a',
+  fontSize: '17px',
+  fontWeight: '700',
+  margin: '0 0 12px 0',
+};
+
+const benefitsBox = {
   backgroundColor: '#f0edfc',
   borderRadius: '12px',
   padding: '20px 24px',
@@ -107,22 +114,29 @@ const stepBox = {
   borderLeft: '4px solid #4b0082',
 };
 
-const stepBox2 = {
-  backgroundColor: '#f0fdf4',
+const benefitItem = {
+  color: '#4a5568',
+  fontSize: '14px',
+  lineHeight: '1.8',
+  margin: '0',
+};
+
+const smsBox = {
+  backgroundColor: '#ecfdf5',
   borderRadius: '12px',
   padding: '20px 24px',
-  margin: '24px 0 0 0',
+  margin: '16px 0 0 0',
   borderLeft: '4px solid #10b981',
 };
 
-const stepTitle = {
-  color: '#1a1a1a',
-  fontSize: '17px',
+const smsTitle = {
+  color: '#065f46',
+  fontSize: '15px',
   fontWeight: '700',
-  margin: '0 0 12px 0',
+  margin: '0 0 10px 0',
 };
 
-const featureItem = {
+const smsItem = {
   color: '#4a5568',
   fontSize: '14px',
   lineHeight: '1.8',
