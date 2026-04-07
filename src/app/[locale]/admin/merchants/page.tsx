@@ -387,7 +387,7 @@ export default function AdminMerchantsPage() {
       total: nonAdmin.length,
       trial: nonAdmin.filter((m) => m.subscription_status === 'trial' && !isTrialExpired(m)).length,
       trialExpired: nonAdmin.filter((m) => isTrialExpired(m)).length,
-      active: nonAdmin.filter((m) => m.subscription_status === 'active').length,
+      active: nonAdmin.filter((m) => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due').length,
       canceling: nonAdmin.filter((m) => m.subscription_status === 'canceling').length,
       canceled: nonAdmin.filter((m) => m.subscription_status === 'canceled').length,
       adminCount: data.merchants.filter((m) => superAdminIds.has(m.user_id)).length,
@@ -409,6 +409,8 @@ export default function AdminMerchantsPage() {
       filtered = filtered.filter((m) => m.subscription_status === 'trial' && !isTrialExpired(m));
     } else if (statusFilter === 'trial_expired') {
       filtered = filtered.filter((m) => isTrialExpired(m));
+    } else if (statusFilter === 'active') {
+      filtered = filtered.filter((m) => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due');
     } else if (statusFilter !== 'all') {
       filtered = filtered.filter((m) => m.subscription_status === statusFilter);
     }
@@ -663,9 +665,8 @@ export default function AdminMerchantsPage() {
               { label: 'Tous', value: 'all' as FilterStatus, count: stats.total },
               { label: 'Essai', value: 'trial' as FilterStatus, count: stats.trial },
               { label: 'Expirés', value: 'trial_expired' as FilterStatus, count: stats.trialExpired },
-              { label: 'Actifs', value: 'active' as FilterStatus, count: stats.active },
-              { label: 'Annulation', value: 'canceling' as FilterStatus, count: stats.canceling },
-              { label: 'Churned', value: 'canceled' as FilterStatus, count: stats.canceled },
+              { label: 'Abonnes', value: 'active' as FilterStatus, count: stats.active },
+              { label: 'Annules', value: 'canceled' as FilterStatus, count: stats.canceled },
             ]).map((btn) => (
               <button
                 key={btn.value}

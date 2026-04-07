@@ -597,13 +597,13 @@ export default function MetriquesPage() {
             label: dayStart.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
             signups: dayMerchants.length,
             trials: dayMerchants.filter(m => m.subscription_status === 'trial').length,
-            paid: dayMerchants.filter(m => m.subscription_status === 'active').length,
+            paid: dayMerchants.filter(m => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due').length,
           });
         }
       }
 
       if (cohortMerchants.length > 0) {
-        const paid = cohortMerchants.filter(m => m.subscription_status === 'active').length;
+        const paid = cohortMerchants.filter(m => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due').length;
         cohorts.push({
           key: windowStart.toISOString().split('T')[0],
           startDate: new Date(windowStart),
