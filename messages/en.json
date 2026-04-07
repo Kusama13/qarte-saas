@@ -912,7 +912,7 @@
     },
     "automations": {
       "birthdayGift": "Birthday gift",
-      "birthdayGiftDesc": "Auto-sent 3 days before, valid 14 days",
+      "birthdayGiftDesc": "Auto-sent on the day, valid 14 days. An SMS is also sent — your client will never forget you thought of them.",
       "birthdayGiftLabel": "Gift description",
       "birthdayGiftPlaceholder": "E.g.: A free blowout for your birthday!",
       "save": "Save",
@@ -1133,7 +1133,7 @@
     "doubleDaysSelectAtLeast": "Select at least one day",
     "doubleDaysSummary": "{days} — each scan = 2 stamps",
     "birthdayTitle": "Birthday gift",
-    "birthdayDesc": "— Sent automatically on the day, valid 14 days",
+    "birthdayDesc": "— Push notification + SMS sent automatically on the day, valid 14 days",
     "birthdayPlaceholder": "E.g.: A free blowout for your birthday!",
     "dayMon": "Mon",
     "dayTue": "Tue",

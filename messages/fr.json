@@ -912,7 +912,7 @@
     },
     "automations": {
       "birthdayGift": "Cadeau anniversaire",
-      "birthdayGiftDesc": "Envoi auto 3 jours avant, valable 14 jours",
+      "birthdayGiftDesc": "Envoi automatique le jour J, valable 14 jours. Un SMS est aussi envoyé — ta cliente n'oubliera jamais que tu as pensé à elle.",
       "birthdayGiftLabel": "Description du cadeau",
       "birthdayGiftPlaceholder": "Ex: Un brushing offert pour ton anniversaire !",
       "save": "Sauvegarder",
@@ -1133,7 +1133,7 @@
     "doubleDaysSelectAtLeast": "Cochez au moins un jour",
     "doubleDaysSummary": "{days} — chaque scan = 2 tampons",
     "birthdayTitle": "Cadeau anniversaire",
-    "birthdayDesc": "— Envoi automatique le jour J, valable 14 jours",
+    "birthdayDesc": "— Notification push + SMS envoyés automatiquement le jour J, valable 14 jours",
     "birthdayPlaceholder": "Ex: Un brushing offert pour ton anniversaire !",
     "dayMon": "Lun",
     "dayTue": "Mar",
