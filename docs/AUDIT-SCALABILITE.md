@@ -1,13 +1,13 @@
 # AUDIT SCALABILITE — Qarte SaaS
 
-**Score : 82/100** — Mis a jour 7 avril 2026
+**Score : 84/100** — Mis a jour 7 avril 2026
 **Capacite estimee : ~5000-8000 merchants** (Supabase Pro, Vercel Pro)
 
 ---
 
 ## Resume
 
-4 critiques, 5 hautes, 9 moyennes restantes. Les principaux risques sont le rate limiting en memoire (C1 — necessite Redis), le refactor admin metriques (C3/C4), et le hard timeout cron (C9).
+3 critiques, 5 hautes, 9 moyennes restantes. Les principaux risques sont le rate limiting en memoire (C1 — necessite Redis), le refactor admin merchants-data (C3), et le hard timeout cron (C9).
 
 ---
 
@@ -47,11 +47,8 @@
 - Tout agrege en JS cote serveur → memoire spike
 - **Fix** : RPC SQL pour aggregation, pagination merchants
 
-### C4. Page admin metriques — 10k+ records en state client
-**Fichier** : `src/app/[locale]/admin/metriques/page.tsx` lignes 180-195
-- 8 queries paralleles, certaines avec `limit(10000)`
-- Tout stocke en `useState` → 8+ re-renders en cascade
-- **Fix** : COUNT queries au lieu de SELECT *, useReducer pour batch state
+### ~~C4. Page admin metriques — 10k+ records en state client~~ FAIT (mig 099)
+RPC `get_merchants_with_services` et `get_merchants_with_photos` (DISTINCT cote DB). React 18 auto-batch les setState.
 
 ### C9. Timeout cron soft, pas hard
 **Fichier** : `src/app/api/cron/morning/route.ts` lignes 83-86

@@ -190,8 +190,8 @@ export default function MetriquesPage() {
           .select('*')
           .order('snapshot_date', { ascending: true })
           .limit(12),
-        supabase.from('merchant_services').select('merchant_id').limit(10000),
-        supabase.from('merchant_photos').select('merchant_id').limit(10000),
+        supabase.rpc('get_merchants_with_services'),
+        supabase.rpc('get_merchants_with_photos'),
       ]);
 
       // Get super admin user_ids
