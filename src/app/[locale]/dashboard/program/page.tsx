@@ -55,6 +55,10 @@ export default function ProgramPage() {
     // Birthday gift
     birthdayGiftEnabled: false,
     birthdayGiftDescription: '',
+    // Referral
+    referralEnabled: false,
+    referralRewardReferred: '',
+    referralRewardReferrer: '',
   });
 
   // Track original values for warnings
@@ -99,6 +103,9 @@ export default function ProgramPage() {
           doubleDaysOfWeek: (() => { try { return JSON.parse(data.double_days_of_week || '[]'); } catch { return []; } })(),
           birthdayGiftEnabled: data.birthday_gift_enabled || false,
           birthdayGiftDescription: data.birthday_gift_description || '',
+          referralEnabled: data.referral_program_enabled || false,
+          referralRewardReferred: data.referral_reward_referred || '',
+          referralRewardReferrer: data.referral_reward_referrer || '',
         });
         setOriginalLoyaltyMode(data.loyalty_mode || 'visit');
         setOriginalStampsRequired(data.stamps_required || 5);
@@ -190,6 +197,9 @@ export default function ProgramPage() {
           double_days_of_week: isCagnotte ? '[]' : JSON.stringify(formData.doubleDaysOfWeek),
           birthday_gift_enabled: formData.birthdayGiftEnabled,
           birthday_gift_description: formData.birthdayGiftDescription.trim() || null,
+          referral_program_enabled: formData.referralEnabled,
+          referral_reward_referred: formData.referralEnabled ? formData.referralRewardReferred.trim() || null : null,
+          referral_reward_referrer: formData.referralEnabled ? formData.referralRewardReferrer.trim() || null : null,
         })
         .eq('id', merchant.id);
 

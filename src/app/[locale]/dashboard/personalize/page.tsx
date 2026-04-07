@@ -11,14 +11,21 @@ import { compressLogo } from '@/lib/image-compression';
 import { useTranslations } from 'next-intl';
 
 const COLOR_PALETTES = [
+  // Row 1
   { primary: '#1e293b', secondary: '#475569', name: 'Elegant' },
   { primary: '#db2777', secondary: '#f472b6', name: 'Glamour' },
   { primary: '#7c3aed', secondary: '#a78bfa', name: 'Moderne' },
   { primary: '#059669', secondary: '#10b981', name: 'Zen' },
+  // Row 2
   { primary: '#92704f', secondary: '#c8a97e', name: 'Sable' },
   { primary: '#b45309', secondary: '#f59e0b', name: 'Dore' },
-  { primary: '#6d28d9', secondary: '#c084fc', name: 'Orchidee' },
-  { primary: '#be185d', secondary: '#fb7185', name: 'Corail' },
+  { primary: '#0369a1', secondary: '#38bdf8', name: 'Ocean' },
+  { primary: '#dc2626', secondary: '#f87171', name: 'Passion' },
+  // Row 3
+  { primary: '#0f766e', secondary: '#5eead4', name: 'Menthe' },
+  { primary: '#4338ca', secondary: '#818cf8', name: 'Indigo' },
+  { primary: '#c2410c', secondary: '#fb923c', name: 'Terracotta' },
+  { primary: '#171717', secondary: '#404040', name: 'Noir' },
 ];
 
 function PersonalizeContent() {

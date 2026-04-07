@@ -197,6 +197,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Voucher filleul auto-cree a l'inscription, voucher parrain auto-cree quand filleul consomme
 - Statuts : `pending` → `completed` (filleul consomme)
 - Dashboard `/dashboard/referrals` : toggle, config recompenses, stats, tableau
+- Config aussi dans `/dashboard/program` (ExtrasSection) : toggle + recompenses parrain/filleul — synchro avec la page Parrainage (memes champs DB)
 
 ### Offre de Bienvenue (mig 056)
 - Code welcome par merchant (`welcome_referral_code`, genere a l'activation)
@@ -463,9 +464,9 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 1. **Phase 1:** Email + password (`/auth/merchant/signup`) — filet typo email
 2. **Phase 2:** Infos commerce (`/auth/merchant/signup/complete`)
-3. **Personnalisation** (`/dashboard/personalize`) — logo + ambiance couleurs (8 palettes). Sauvegarde `logo_url`, `primary_color`, `secondary_color` puis redirige vers `/dashboard/program`. Page onboarding-only (pas dans la sidebar).
+3. **Personnalisation** (`/dashboard/personalize`) — logo + ambiance couleurs (12 palettes : Elegant, Glamour, Moderne, Zen, Sable, Dore, Ocean, Passion, Menthe, Indigo, Terracotta, Noir). Sauvegarde `logo_url`, `primary_color`, `secondary_color` puis redirige vers `/dashboard/program`. Page onboarding-only (pas dans la sidebar).
 4. **Welcome** (`/dashboard/welcome`) — redirige vers `/dashboard/program` (page legacy conservee pour eviter 404 sur URLs bookmarkees).
-5. `/dashboard/program` → config (couleurs, stamps, reward)
+5. `/dashboard/program` → config (couleurs, stamps, reward, extras : parrainage, avis Google, duo, jours x2, anniversaire)
 6. Premiere sauvegarde → modal "Ton programme est en ligne !" → "Voir le parcours client" (`/scan/{code}`) ou "Plus tard" → `/dashboard/qr-download`
 7. QR download → modal (1x) "Aide-nous a te rendre visible" → "Completer ma page" (`/dashboard/public-page`)
 8. `isFirstSetup` = true quand `reward_description` is null

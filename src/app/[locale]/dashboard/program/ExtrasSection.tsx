@@ -5,10 +5,11 @@ import {
   Users,
   Zap,
   Cake,
+  Gift,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Input } from '@/components/ui';
-import { BIRTHDAY_SUGGESTIONS, DUO_OFFER_SUGGESTIONS, type ProgramFormData } from './types';
+import { BIRTHDAY_SUGGESTIONS, DUO_OFFER_SUGGESTIONS, REFERRAL_SUGGESTIONS, type ProgramFormData } from './types';
 
 interface ExtrasSectionProps {
   formData: ProgramFormData;
@@ -30,6 +31,92 @@ export function ExtrasSection({ formData, setFormData }: ExtrasSectionProps) {
 
   return (
     <>
+      {/* ═══════ PARRAINAGE ═══════ */}
+      <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-3 md:p-5">
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="w-7 h-7 md:w-9 md:h-9 rounded-lg md:rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
+                <Gift className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm md:text-base text-gray-900"><span className="font-bold">{t('referralTitle')}</span> <span className="font-normal text-gray-400">{t('referralDesc')}</span></h3>
+              </div>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={formData.referralEnabled}
+              onClick={() => setFormData(prev => ({ ...prev, referralEnabled: !prev.referralEnabled }))}
+              className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${
+                formData.referralEnabled ? 'bg-emerald-500' : 'bg-gray-200'
+              }`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${formData.referralEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+          <p className="text-[11px] text-gray-400 mb-3 ml-9 md:ml-12">{t('referralHint')}</p>
+          {formData.referralEnabled && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('referralReferred')}</label>
+                <textarea
+                  value={formData.referralRewardReferred}
+                  onChange={(e) => setFormData(prev => ({ ...prev, referralRewardReferred: e.target.value }))}
+                  placeholder={t('referralReferredPlaceholder')}
+                  maxLength={200}
+                  rows={1}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {REFERRAL_SUGGESTIONS.referred.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, referralRewardReferred: s }))}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                        formData.referralRewardReferred === s
+                          ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                          : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 mb-1 block">{t('referralReferrer')}</label>
+                <textarea
+                  value={formData.referralRewardReferrer}
+                  onChange={(e) => setFormData(prev => ({ ...prev, referralRewardReferrer: e.target.value }))}
+                  placeholder={t('referralReferrerPlaceholder')}
+                  maxLength={200}
+                  rows={1}
+                  className="w-full px-3 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
+                />
+                <div className="flex flex-wrap gap-1.5 mt-1.5">
+                  {REFERRAL_SUGGESTIONS.referrer.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, referralRewardReferrer: s }))}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-all duration-200 ${
+                        formData.referralRewardReferrer === s
+                          ? 'bg-emerald-100 border-emerald-300 text-emerald-700'
+                          : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-emerald-50 hover:border-emerald-200 hover:text-emerald-600'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* ═══════ AVIS GOOGLE ═══════ */}
       <div className="bg-white/60 backdrop-blur-xl border border-gray-200/60 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-3 md:p-5">

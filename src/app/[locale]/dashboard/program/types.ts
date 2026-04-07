@@ -64,6 +64,19 @@ export const TIER2_REWARD_SUGGESTIONS: Record<string, string[]> = {
   ],
 };
 
+export const REFERRAL_SUGGESTIONS = {
+  referred: [
+    '-10% sur la 1ère visite',
+    '-20% sur la 1ère visite',
+    'Un soin découverte offert',
+  ],
+  referrer: [
+    '-10% sur la prochaine visite',
+    '-20% sur la prochaine visite',
+    'Un soin offert',
+  ],
+};
+
 export const BIRTHDAY_SUGGESTIONS = [
   '-10% sur ton prochain passage',
   '-15% sur ton prochain passage',
@@ -101,4 +114,8 @@ export interface ProgramFormData {
   // Birthday gift
   birthdayGiftEnabled: boolean;
   birthdayGiftDescription: string;
+  // Referral
+  referralEnabled: boolean;
+  referralRewardReferred: string;
+  referralRewardReferrer: string;
 }
