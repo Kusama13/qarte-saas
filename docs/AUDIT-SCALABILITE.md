@@ -29,10 +29,11 @@
 - Images webp + deviceSizes optimises
 - Planning API limite a 1000 + default 90j
 - Error isolation par slot dans evening cron (parallel ops)
+- Admin metriques: RPC DISTINCT pour services/photos (mig 099)
 
 ---
 
-## CRITICAL (4 restantes)
+## CRITICAL (3 restantes)
 
 ### C1. Rate limiting en memoire — perdu au cold start
 **Fichier** : `src/lib/rate-limit.ts` lignes 8-19
@@ -46,9 +47,6 @@
 - Fetch `merchants.*` sans LIMIT + 12 tables avec `limit(10000)`
 - Tout agrege en JS cote serveur → memoire spike
 - **Fix** : RPC SQL pour aggregation, pagination merchants
-
-### ~~C4. Page admin metriques — 10k+ records en state client~~ FAIT (mig 099)
-RPC `get_merchants_with_services` et `get_merchants_with_photos` (DISTINCT cote DB). React 18 auto-batch les setState.
 
 ### C9. Timeout cron soft, pas hard
 **Fichier** : `src/app/api/cron/morning/route.ts` lignes 83-86
@@ -105,23 +103,21 @@ Permet des customers orphelins sans merchant.
 
 ### Phase 2 — Sprint suivant
 3. Pagination admin merchants-data — C3
-4. COUNT queries metriques — C4
-5. Cache middleware auth (Vercel KV) — H1
-6. Email rate limit interne — H6
+4. Cache middleware auth (Vercel KV) — H1
+5. Email rate limit interne — H6
 
 ### Phase 3 — 2 sprints
-7. Virtualisation listes longues — H7
-8. Recharts lazy load — H9
-9. Data retention policy — M6
-10. Compression images upload — M12
+6. Virtualisation listes longues — H7
+7. Recharts lazy load — H9
+8. Data retention policy — M6
+9. Compression images upload — M12
 
 ---
 
-## Migration 098 (a appliquer dans SQL Editor)
+## Migrations a appliquer (SQL Editor)
 
-Fichier : `supabase/migrations/098_scalability_constraints.sql`
-
-Contenu : 11 CHECK constraints, RLS admin, deposit exclusivite, 3 composite indexes, UNIQUE push dedup, index reactivation tracking.
+- `supabase/migrations/098_scalability_constraints.sql` — CHECK constraints, RLS admin, deposit exclusivite, composite indexes, UNIQUE push dedup, index reactivation tracking
+- `supabase/migrations/099_admin_metriques_rpc.sql` — RPC get_merchants_with_services/photos (DISTINCT)
 
 ---
 
