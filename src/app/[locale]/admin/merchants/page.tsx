@@ -544,7 +544,10 @@ export default function AdminMerchantsPage() {
     if (!merchant.logo_url) {
       msgs.push({ label: 'Logo', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Ajoute ton logo dans Espace Pro → Programme. La carte est plus pro et tes clients la reconnaissent tout de suite 🎨` });
     }
-    if (!merchant.booking_url) {
+    if (!merchant.planning_enabled) {
+      msgs.push({ label: 'Planning', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Tu savais que tes clients peuvent réserver en ligne depuis ta vitrine ? Active le planning dans Espace Pro → Planning → Résa en ligne. SMS de rappel automatique la veille 📅` });
+    }
+    if (!merchant.booking_url && !merchant.planning_enabled) {
       msgs.push({ label: 'Réservation', text: `Hello ${name} ! ${ADMIN_CONTACT_NAME} de Qarte. Ajoute ton lien de réservation dans Espace Pro → Ma Page. Tes clients auront un bouton "Réserver" directement sur leur carte 📅` });
     }
     if (merchant.referral_program_enabled === false) {
@@ -565,9 +568,14 @@ export default function AdminMerchantsPage() {
       { label: 'La récompense', text: `Hello ${name} ! Quand un client atteint le bon nombre de tampons, sa récompense apparaît. Il te la montre, tu valides, son compteur repart à zéro 🎁` },
       { label: 'L\'espace pro', text: `Hello ${name} ! Ton espace pro (getqarte.com → Espace Pro) : clients, tampons, stats, notifs. Tout depuis ton téléphone 📊` },
       { label: 'Notifs push', text: `Hello ${name} ! Envoie des notifs push à tes clients en 1 clic — top pour remplir un créneau calme ou rappeler une promo 🔔` },
+      { label: 'Push auto', text: `Hello ${name} ! Active les push automatiques : tes clients inactifs depuis 30 jours reçoivent un rappel tout seuls. Espace Pro → Push → Automatisations 🤖` },
       { label: 'Parrainage', text: `Hello ${name} ! Chaque client a un lien de parrainage sur sa carte. Un ami s'inscrit → les deux reçoivent un cadeau. Espace Pro → Parrainage 🤝` },
       { label: 'Vitrine en ligne', text: `Hello ${name} ! Ta vitrine c'est ton lien en bio : photos, prestations, offre de bienvenue. Espace Pro → Ma Page 📲` },
+      { label: 'Réservation en ligne', text: `Hello ${name} ! Tes clients peuvent réserver directement depuis ta vitrine. Tu gères ton planning dans Espace Pro → Planning. SMS de rappel automatique la veille 📅` },
       { label: 'Offre bienvenue', text: `Hello ${name} ! Un geste pour les nouveaux clients (ex: -20% 1ère visite). Ils la voient sur ta vitrine, ils viennent, ils scannent → dans ta base. Espace Pro → Ma Page 🎁` },
+      { label: 'Offre promo', text: `Hello ${name} ! Lance une offre promo visible sur ta vitrine et sur la carte de tes clients. Durée limitée, ça crée de l'urgence. Espace Pro → Ma Page → Offre promo 🔥` },
+      { label: 'Jours x2', text: `Hello ${name} ! Active les jours x2 : tes clients gagnent le double de tampons certains jours. Parfait pour remplir les jours calmes. Espace Pro → Programme → Jours x2 ⚡` },
+      { label: 'SMS rappel', text: `Hello ${name} ! Tes clients reçoivent un SMS de rappel la veille de leur RDV — automatique, rien à faire. Moins de no-shows ! 💬` },
       { label: 'Kit promo', text: `Hello ${name} ! QR code HD + visuels prêts pour Instagram dans Espace Pro → QR code & Supports 🖼️` },
       { label: 'Avis Google', text: `Hello ${name} ! On demande l'avis à tes clients au 1er passage et à chaque récompense. Ajoute ton lien Google dans Espace Pro → Programme ⭐` },
       { label: 'Le Shield', text: `Hello ${name} ! Un client scanne 2 fois le même jour ? Le 2ème est mis en attente. Un clic pour valider ou refuser dans Espace Pro → Clients ✅` },
