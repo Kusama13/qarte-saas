@@ -30,6 +30,7 @@
 - Planning API limite a 1000 + default 90j
 - Error isolation par slot dans evening cron (parallel ops)
 - Admin metriques: RPC DISTINCT pour services/photos (mig 099)
+- Admin merchants-data: 4 RPC COUNT au lieu de 7 SELECT 10k (mig 100) + whitelist tables + REVOKE anon/authenticated
 
 ---
 
@@ -41,9 +42,6 @@
 - Chaque instance serverless a son propre store
 - **Touche** : checkin, booking, upload, customer-edit
 - **Fix** : Redis (Upstash) ou Vercel KV
-
-### ~~C3. Admin merchants-data — 13 queries paralleles sans pagination~~ FAIT (mig 100)
-7 tables `limit(10000)` remplacees par 4 RPC (COUNT GROUP BY + planning summary). ~100 rows au lieu de ~70k.
 
 ### C9. Timeout cron soft, pas hard
 **Fichier** : `src/app/api/cron/morning/route.ts` lignes 83-86
@@ -99,15 +97,14 @@ Permet des customers orphelins sans merchant.
 2. Timeout hard-stop crons — C9
 
 ### Phase 2 — Sprint suivant
-3. Pagination admin merchants-data — C3
-4. Cache middleware auth (Vercel KV) — H1
-5. Email rate limit interne — H6
+3. Cache middleware auth (Vercel KV) — H1
+4. Email rate limit interne — H6
 
 ### Phase 3 — 2 sprints
-6. Virtualisation listes longues — H7
-7. Recharts lazy load — H9
-8. Data retention policy — M6
-9. Compression images upload — M12
+5. Virtualisation listes longues — H7
+6. Recharts lazy load — H9
+7. Data retention policy — M6
+8. Compression images upload — M12
 
 ---
 
@@ -115,7 +112,7 @@ Permet des customers orphelins sans merchant.
 
 - `supabase/migrations/098_scalability_constraints.sql` — CHECK constraints, RLS admin, deposit exclusivite, composite indexes, UNIQUE push dedup, index reactivation tracking
 - `supabase/migrations/099_admin_metriques_rpc.sql` — RPC get_merchants_with_services/photos (DISTINCT)
-- `supabase/migrations/100_admin_merchants_data_rpc.sql` — RPC counts per merchant, pending visits, planning summary
+- `supabase/migrations/100_admin_merchants_data_rpc.sql` — RPC counts per merchant (whitelist + REVOKE), pending visits, planning summary
 
 ---
 
