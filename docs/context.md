@@ -464,7 +464,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 
 1. **Phase 1:** Email + password (`/auth/merchant/signup`) — filet typo email
 2. **Phase 2:** Infos commerce (`/auth/merchant/signup/complete`)
-3. **Personnalisation** (`/dashboard/personalize`) — logo + ambiance couleurs (12 palettes : Elegant, Glamour, Moderne, Zen, Sable, Dore, Ocean, Passion, Menthe, Indigo, Terracotta, Noir). Sauvegarde `logo_url`, `primary_color`, `secondary_color` puis redirige vers `/dashboard/program`. Page onboarding-only (pas dans la sidebar).
+3. **Personnalisation** (`/dashboard/personalize`) — logo + ambiance couleurs (12 palettes : Elegant, Glamour, Moderne, Zen, Sable, Dore, Ocean, Passion, Menthe, Indigo, Terracotta, Noir). Sauvegarde `logo_url`, `primary_color`, `secondary_color` puis redirige vers `/dashboard/program`. Page onboarding-only (pas dans la sidebar). **Défaut UI : Glamour** — si le merchant a encore les couleurs par défaut DB (`#654EDA`/`#9D8FE8`, aucune palette ne les propose), la page pré-coche Glamour pour éviter de laisser aucune palette sélectionnée.
 4. **Welcome** (`/dashboard/welcome`) — redirige vers `/dashboard/program` (page legacy conservee pour eviter 404 sur URLs bookmarkees).
 5. `/dashboard/program` → config (couleurs, stamps, reward, extras : parrainage, avis Google, duo, jours x2, anniversaire)
 6. Premiere sauvegarde → modal "Ton programme est en ligne !" → "Voir le parcours client" (`/scan/{code}`) ou "Plus tard" → `/dashboard/qr-download`

@@ -38,8 +38,8 @@ function PersonalizeContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [logoUrl, setLogoUrl] = useState('');
-  const [primaryColor, setPrimaryColor] = useState('#654EDA');
-  const [secondaryColor, setSecondaryColor] = useState('#9D8FE8');
+  const [primaryColor, setPrimaryColor] = useState('#db2777'); // Glamour par défaut
+  const [secondaryColor, setSecondaryColor] = useState('#f472b6');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -47,8 +47,13 @@ function PersonalizeContent() {
   useEffect(() => {
     if (merchant) {
       if (merchant.logo_url) setLogoUrl(merchant.logo_url);
-      if (merchant.primary_color) setPrimaryColor(merchant.primary_color);
-      if (merchant.secondary_color) setSecondaryColor(merchant.secondary_color);
+      // Si les couleurs sont les valeurs génériques par défaut (jamais choisies),
+      // garder Glamour pré-sélectionné plutôt que d'afficher aucune palette cochée
+      const isDefaultColor = merchant.primary_color === '#654EDA' && merchant.secondary_color === '#9D8FE8';
+      if (!isDefaultColor) {
+        if (merchant.primary_color) setPrimaryColor(merchant.primary_color);
+        if (merchant.secondary_color) setSecondaryColor(merchant.secondary_color);
+      }
     }
   }, [merchant]);
 
