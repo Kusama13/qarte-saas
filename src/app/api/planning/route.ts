@@ -83,10 +83,16 @@ export async function GET(request: NextRequest) {
       .order('start_time');
 
     if (from) query = query.gte('slot_date', from);
+    else if (!searchParams.get('customerId')) {
+      // Default: 90 days ago to avoid unbounded queries
+      const d = new Date(); d.setDate(d.getDate() - 90);
+      query = query.gte('slot_date', d.toISOString().split('T')[0]);
+    }
     if (to) query = query.lte('slot_date', to);
     if (searchParams.get('booked') === 'true') query = query.not('client_name', 'is', null);
     const customerId = searchParams.get('customerId');
     if (customerId) query = query.eq('customer_id', customerId);
+    query = query.limit(1000);
 
     const { data, error } = await query;
 

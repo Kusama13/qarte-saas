@@ -61,7 +61,10 @@ interface SendEmailResult {
 
 // ---------------------------------------------------------------------------
 // Factory: sendEmail — encapsulates the render + send + error-handling pattern
+// Retries up to 2 times with exponential backoff on transient failures
 // ---------------------------------------------------------------------------
+const MAX_RETRIES = 2;
+
 async function sendEmail<P extends Record<string, unknown>>(
   to: string,
   subject: string,
@@ -81,24 +84,37 @@ async function sendEmail<P extends Record<string, unknown>>(
       render(element, { plainText: true }),
     ]);
 
-    const { error } = await resend!.emails.send({
-      from: EMAIL_FROM,
-      to,
-      replyTo: options?.replyTo ?? EMAIL_REPLY_TO,
-      subject,
-      html,
-      text,
-      headers: EMAIL_HEADERS,
-      ...(options?.scheduledAt ? { scheduledAt: options.scheduledAt } : {}),
-    });
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const { error } = await resend!.emails.send({
+          from: EMAIL_FROM,
+          to,
+          replyTo: options?.replyTo ?? EMAIL_REPLY_TO,
+          subject,
+          html,
+          text,
+          headers: EMAIL_HEADERS,
+          ...(options?.scheduledAt ? { scheduledAt: options.scheduledAt } : {}),
+        });
 
-    if (error) {
-      logger.error(`Failed to send ${label}`, error);
-      return { success: false, error: error.message };
+        if (error) {
+          // API-level error (validation, quota) — no retry
+          logger.error(`Failed to send ${label}`, error);
+          return { success: false, error: error.message };
+        }
+
+        logger.info(`${label} sent to ${to}`);
+        return { success: true };
+      } catch (sendErr) {
+        if (attempt < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+          continue;
+        }
+        throw sendErr;
+      }
     }
 
-    logger.info(`${label} sent to ${to}`);
-    return { success: true };
+    return { success: false, error: 'Max retries exceeded' };
   } catch (error) {
     logger.error(`Error sending ${label}`, error);
     return { success: false, error: error instanceof Error ? error.message : 'Failed to send email' };

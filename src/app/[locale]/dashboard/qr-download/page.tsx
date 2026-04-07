@@ -25,7 +25,8 @@ import { Button } from '@/components/ui';
 import { getScanUrl } from '@/lib/utils';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import { SocialMediaTemplate } from '@/components/marketing/SocialMediaTemplate';
-import { toPng } from 'html-to-image';
+// Lazy-loaded in download handlers to reduce initial bundle
+const loadToPng = () => import('html-to-image').then(m => m.toPng);
 import { useMerchant } from '@/contexts/MerchantContext';
 
 type Tab = 'qr' | 'social' | 'nfc';
@@ -96,8 +97,9 @@ export default function QRDownloadPage() {
   const saveQrImage = async () => {
     if (!qrCardRef.current || !merchant) return;
     try {
+      const toPng = await loadToPng();
       const opts = { pixelRatio: 4, cacheBust: true };
-      // First call warms up resources (known html-to-image mobile fix)
+      // Warmup call — required for html-to-image on mobile
       await toPng(qrCardRef.current, opts).catch(() => {});
       const image = await toPng(qrCardRef.current, opts);
       await shareOrDownload(image, `qr-${merchant.slug}.png`);
@@ -123,7 +125,9 @@ export default function QRDownloadPage() {
     if (!socialExportRef.current || !merchant) return;
     setIsGenerating(true);
     try {
+      const toPng = await loadToPng();
       const socialOpts = { pixelRatio: 2, cacheBust: true };
+      // Warmup call — required for html-to-image on mobile
       await toPng(socialExportRef.current, socialOpts).catch(() => {});
       const image = await toPng(socialExportRef.current, socialOpts);
       await shareOrDownload(image, `${merchant.shop_name.toLowerCase().replace(/\s+/g, '-')}-fidelite.png`);

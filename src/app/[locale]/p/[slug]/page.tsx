@@ -1,6 +1,7 @@
+export const revalidate = 3600; // ISR: revalider toutes les heures
+
 import { getSupabaseAdmin } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
-import { cookies } from 'next/headers';
 import ProgrammeView from './ProgrammeView';
 import { SHOP_TYPES } from '@/types';
 import type { Metadata } from 'next';
@@ -148,15 +149,11 @@ export default async function ProgrammePage({
 
   const isDemo = isDemoSlug(slug);
 
-  // Returning visitor? Show the "Mes RDV & fidélité" shortcut if phone cookie is set.
-  const cookieStore = await cookies();
-  const hasPhoneCookie = !!cookieStore.get('qarte_cust')?.value;
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (
     <>
       {isDemo && <DemoNav current={slug} />}
-      <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} planningSlots={result.planningSlots} isDemo={isDemo} demoOffer={result.demoOffer} hasPhoneCookie={hasPhoneCookie} />
+      <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} planningSlots={result.planningSlots} isDemo={isDemo} demoOffer={result.demoOffer} />
     </>
   );
 }

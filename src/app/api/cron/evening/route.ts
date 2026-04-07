@@ -192,38 +192,46 @@ export async function GET(request: NextRequest) {
     let depositReleased = 0;
 
     for (const slot of expiredSlots || []) {
-      const { data: fillerSlots } = await supabase
-        .from('merchant_planning_slots')
-        .select('id')
-        .eq('primary_slot_id', slot.id);
+      try {
+        const { data: fillerSlots } = await supabase
+          .from('merchant_planning_slots')
+          .select('id')
+          .eq('primary_slot_id', slot.id);
 
-      const allSlotIds = [slot.id, ...(fillerSlots || []).map(f => f.id)];
+        const allSlotIds = [slot.id, ...(fillerSlots || []).map(f => f.id)];
 
-      await supabase.from('planning_slot_services').delete().in('slot_id', allSlotIds);
+        const [deleteResult, updateResult] = await Promise.all([
+          supabase.from('planning_slot_services').delete().in('slot_id', allSlotIds),
+          fillerSlots && fillerSlots.length > 0
+            ? supabase.from('merchant_planning_slots')
+                .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null })
+                .in('id', fillerSlots.map(f => f.id))
+            : Promise.resolve({ error: null }),
+        ]);
 
-      if (fillerSlots && fillerSlots.length > 0) {
+        if (deleteResult.error || updateResult.error) {
+          logger.error(`Deposit release partial failure for slot ${slot.id}`, { deleteErr: deleteResult.error, updateErr: updateResult.error });
+        }
+
         await supabase
           .from('merchant_planning_slots')
-          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null })
-          .in('id', fillerSlots.map(f => f.id));
+          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null })
+          .eq('id', slot.id);
+
+        const isEN = depositMerchantMap.get(slot.merchant_id)?.locale === 'en';
+        depositPushes.push(sendMerchantPush({
+          supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expired', referenceId: slot.id,
+          title: isEN ? 'Slot released — deposit not received' : 'Créneau libéré — acompte non reçu',
+          body: isEN
+            ? `${slot.client_name} — ${slot.slot_date} at ${slot.start_time}`
+            : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
+          url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
+        }));
+
+        depositReleased++;
+      } catch (slotErr) {
+        logger.error(`Deposit release failed for slot ${slot.id}`, slotErr);
       }
-
-      await supabase
-        .from('merchant_planning_slots')
-        .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null })
-        .eq('id', slot.id);
-
-      const isEN = depositMerchantMap.get(slot.merchant_id)?.locale === 'en';
-      depositPushes.push(sendMerchantPush({
-        supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expired', referenceId: slot.id,
-        title: isEN ? 'Slot released — deposit not received' : 'Créneau libéré — acompte non reçu',
-        body: isEN
-          ? `${slot.client_name} — ${slot.slot_date} at ${slot.start_time}`
-          : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
-        url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
-      }));
-
-      depositReleased++;
     }
 
     // B. Warn merchants about deposits expiring soon (within 4h)
@@ -260,14 +268,14 @@ export async function GET(request: NextRequest) {
 
     if (depositPushes.length > 0) await Promise.allSettled(depositPushes);
 
-    // ── SMS REMINDERS (J-1, 18h) ──
+    // ── SMS REMINDERS (J-1, 18h) — cap 200 SMS/run ──
+    const SMS_CAP = 200;
     const smsResults = { sent: 0, skipped: 0, errors: 0 };
 
     try {
       const globalSmsConfig = await getGlobalSmsConfig(supabase);
 
       if (globalSmsConfig.reminder_enabled) {
-        // Fetch all active merchants
         const { data: smsMerchants } = await supabase
           .from('merchants')
           .select('id, shop_name, country, locale, subscription_status')
@@ -275,8 +283,9 @@ export async function GET(request: NextRequest) {
 
         const activeMerchants = smsMerchants || [];
 
-        // Compute tomorrow per merchant timezone and batch query slots
         for (const m of activeMerchants) {
+          if (smsResults.sent >= SMS_CAP) break;
+
           const today = getTodayForCountry(m.country);
           const todayDate = new Date(today + 'T12:00:00');
           const tomorrowDate = new Date(todayDate);
@@ -293,6 +302,7 @@ export async function GET(request: NextRequest) {
             .is('primary_slot_id', null);
 
           for (const slot of tomorrowSlots || []) {
+            if (smsResults.sent >= SMS_CAP) break;
             if (!slot.client_phone) { smsResults.skipped++; continue; }
 
             const sent = await sendBookingSms(supabase, {

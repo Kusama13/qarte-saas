@@ -100,36 +100,40 @@ export async function GET(request: NextRequest) {
           continue;
         }
 
-        const pushResults = await Promise.allSettled(
-          subscriptions.map(async (sub) => {
-            await webpush.sendNotification(
-              { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-              JSON.stringify({
-                title: merchant?.shop_name || 'Qarte',
-                body: `${push.title}: ${push.body}`,
-                icon: '/icon-192.svg',
-                url: `/customer/card/${push.merchant_id}`,
-                tag: 'qarte-scheduled',
-              })
-            );
-          })
-        );
-
         let sentCount = 0;
         let failedCount = 0;
         const failedEndpoints: string[] = [];
+        const PUSH_BATCH_SIZE = 100;
 
-        pushResults.forEach((result, idx) => {
-          if (result.status === 'fulfilled') {
-            sentCount++;
-          } else {
-            failedCount++;
-            const webPushError = result.reason as { statusCode?: number };
-            if (webPushError?.statusCode === 404 || webPushError?.statusCode === 410) {
-              failedEndpoints.push(subscriptions[idx].endpoint);
+        for (let i = 0; i < subscriptions.length; i += PUSH_BATCH_SIZE) {
+          const batch = subscriptions.slice(i, i + PUSH_BATCH_SIZE);
+          const batchResults = await Promise.allSettled(
+            batch.map(async (sub) => {
+              await webpush.sendNotification(
+                { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+                JSON.stringify({
+                  title: merchant?.shop_name || 'Qarte',
+                  body: `${push.title}: ${push.body}`,
+                  icon: '/icon-192.svg',
+                  url: `/customer/card/${push.merchant_id}`,
+                  tag: 'qarte-scheduled',
+                })
+              );
+            })
+          );
+
+          batchResults.forEach((result, idx) => {
+            if (result.status === 'fulfilled') {
+              sentCount++;
+            } else {
+              failedCount++;
+              const webPushError = result.reason as { statusCode?: number };
+              if (webPushError?.statusCode === 404 || webPushError?.statusCode === 410) {
+                failedEndpoints.push(batch[idx].endpoint);
+              }
             }
-          }
-        });
+          });
+        }
 
         if (failedEndpoints.length > 0) {
           await supabase.from('push_subscriptions').delete().in('endpoint', failedEndpoints);

@@ -76,9 +76,15 @@ type MerchantPublic = Pick<
   | 'subscription_status'
 >;
 
-export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], isDemo = false, demoOffer, hasPhoneCookie = false }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null; hasPhoneCookie?: boolean }) {
+export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
   const t = useTranslations('programmeView');
   const locale = useLocale();
+
+  // Read cookie client-side to avoid cookies() in server component (breaks ISR)
+  const [hasPhoneCookie, setHasPhoneCookie] = useState(false);
+  useEffect(() => {
+    setHasPhoneCookie(document.cookie.includes('qarte_cust='));
+  }, []);
   const p = merchant.primary_color;
   const s = merchant.secondary_color || merchant.primary_color;
   const isCagnotte = merchant.loyalty_mode === 'cagnotte';

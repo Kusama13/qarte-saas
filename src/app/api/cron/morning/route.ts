@@ -540,7 +540,7 @@ export async function GET(request: NextRequest) {
         .select('merchant_id')
         .in('merchant_id', configuredIds)
         .eq('status', 'confirmed')
-        .limit(50000);
+        .limit(10000);
 
       const visitCountMap = new Map<string, number>();
       for (const v of visitCounts || []) {
