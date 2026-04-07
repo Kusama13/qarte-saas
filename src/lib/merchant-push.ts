@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
+import logger from './logger';
 
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
@@ -25,7 +26,7 @@ export async function sendMerchantPush(params: {
   const { supabase, merchantId, notificationType, referenceId, title, body, url, tag } = params;
 
   if (!vapidPublicKey || !vapidPrivateKey) {
-    console.error('[merchant-push] VAPID keys missing');
+    logger.error('[merchant-push] VAPID keys missing');
     return false;
   }
 
@@ -51,7 +52,7 @@ export async function sendMerchantPush(params: {
       .eq('merchant_id', merchantId);
 
     if (!subscriptions || subscriptions.length === 0) {
-      console.warn(`[merchant-push] No subscriptions for merchant ${merchantId}`);
+      logger.warn(`[merchant-push] No subscriptions for merchant ${merchantId}`);
       return false;
     }
 
@@ -73,9 +74,10 @@ export async function sendMerchantPush(params: {
       )
     );
 
-    // 4. Cleanup expired endpoints (404/410)
+    // 4. Cleanup expired endpoints (404/410) + handle quota (429)
     const failedEndpoints: string[] = [];
     let sentCount = 0;
+    let quotaExceeded = false;
     results.forEach((result, idx) => {
       if (result.status === 'fulfilled') {
         sentCount++;
@@ -83,9 +85,15 @@ export async function sendMerchantPush(params: {
         const err = result.reason as { statusCode?: number };
         if (err?.statusCode === 404 || err?.statusCode === 410) {
           failedEndpoints.push(subscriptions[idx].endpoint);
+        } else if (err?.statusCode === 429) {
+          quotaExceeded = true;
         }
       }
     });
+
+    if (quotaExceeded) {
+      logger.warn(`[merchant-push] Push quota exceeded for merchant ${merchantId}`);
+    }
 
     if (failedEndpoints.length > 0) {
       await supabase.from('merchant_push_subscriptions').delete().in('endpoint', failedEndpoints);
@@ -102,7 +110,7 @@ export async function sendMerchantPush(params: {
 
     return true;
   } catch (err) {
-    console.error(`[merchant-push] Error sending to merchant ${merchantId}:`, err);
+    logger.error(`[merchant-push] Error sending to merchant ${merchantId}:`, err);
     return false;
   }
 }

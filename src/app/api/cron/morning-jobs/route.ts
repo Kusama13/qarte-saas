@@ -105,21 +105,16 @@ export async function GET(request: NextRequest) {
           (existingBirthdayVouchers || []).map(v => `${v.customer_id}:${v.merchant_id}`)
         );
 
-        // Pre-fetch phone->customer_ids mapping to avoid N+1
-        const birthdayPhones = [...new Set(birthdayCustomers.map((c: any) => c.phone_number))];
-        const { data: allPhoneCustomers } = await supabase
-          .from('customers')
-          .select('id, phone_number')
-          .in('phone_number', birthdayPhones);
-
+        // Build phone->customer_ids mapping from already-fetched birthday customers (no extra query)
         const customersByPhone = new Map<string, string[]>();
-        for (const c of allPhoneCustomers || []) {
+        for (const c of birthdayCustomers) {
+          if (!c.phone_number) continue;
           if (!customersByPhone.has(c.phone_number)) customersByPhone.set(c.phone_number, []);
           customersByPhone.get(c.phone_number)!.push(c.id);
         }
 
         // Pre-fetch ALL push subscriptions for birthday customers in one query
-        const allBirthdayCustIds = [...new Set((allPhoneCustomers || []).map(c => c.id))];
+        const allBirthdayCustIds = [...new Set(birthdayCustomers.map(c => c.id))];
         const pushSubsByCustomer = new Map<string, Array<{ endpoint: string; p256dh: string; auth: string }>>();
         if (vapidPublicKey && vapidPrivateKey && allBirthdayCustIds.length > 0) {
           const { data: allPushSubs } = await supabase

@@ -75,8 +75,11 @@ async function sendEmail<P extends Record<string, unknown>>(
   const label = options?.logLabel ?? subject;
 
   try {
-    const html = await render(Component(props));
-    const text = await render(Component(props), { plainText: true });
+    const element = Component(props);
+    const [html, text] = await Promise.all([
+      render(element),
+      render(element, { plainText: true }),
+    ]);
 
     const { error } = await resend!.emails.send({
       from: EMAIL_FROM,
@@ -125,8 +128,11 @@ async function scheduleEmail<P extends Record<string, unknown>>(
   const label = options?.logLabel ?? subject;
 
   try {
-    const html = await render(Component(props));
-    const text = await render(Component(props), { plainText: true });
+    const element = Component(props);
+    const [html, text] = await Promise.all([
+      render(element),
+      render(element, { plainText: true }),
+    ]);
 
     const { data, error } = await resend!.emails.send({
       from: EMAIL_FROM,
