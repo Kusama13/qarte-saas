@@ -1023,7 +1023,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
 
         {/* ── FOOTER LINKTREE-STYLE ── */}
         <motion.a
-          href="https://getqarte.com/auth/merchant/signup"
+          href="https://getqarte.com/auth/merchant/signup?ref=vitrine-en-ligne"
           target="_blank"
           rel="noopener noreferrer"
           onClick={() => { trackCtaClick('vitrine_footer_cta', 'vitrine_page'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}

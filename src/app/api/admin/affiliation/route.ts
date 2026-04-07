@@ -5,7 +5,7 @@ import { z } from 'zod';
 const createSchema = z.object({
   name: z.string().min(1).max(100),
   slug: z.string().min(1).max(50).regex(/^[a-z0-9-]+$/),
-  commission_percent: z.number().int().min(1).max(100),
+  commission_percent: z.number().int().min(0).max(100),
   notes: z.string().max(500).optional(),
 });
 

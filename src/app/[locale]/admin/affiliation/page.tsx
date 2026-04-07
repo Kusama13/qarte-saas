@@ -494,8 +494,8 @@ export default function AffiliationPage() {
                 <input
                   type="number"
                   value={formCommission}
-                  onChange={(e) => setFormCommission(Math.max(1, Math.min(100, Number(e.target.value))))}
-                  min={1}
+                  onChange={(e) => setFormCommission(Math.max(0, Math.min(100, Number(e.target.value))))}
+                  min={0}
                   max={100}
                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#5167fc]/30 focus:border-[#5167fc]"
                 />

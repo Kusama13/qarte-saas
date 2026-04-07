@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 const patchSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  commission_percent: z.number().int().min(1).max(100).optional(),
+  commission_percent: z.number().int().min(0).max(100).optional(),
   notes: z.string().max(500).nullable().optional(),
   active: z.boolean().optional(),
 });
