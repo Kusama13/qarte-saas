@@ -24,6 +24,7 @@ import {
   Loader2,
   X,
   Wallet,
+  UserX,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { Button, Input, Modal } from '@/components/ui';
@@ -607,11 +608,11 @@ export default function AdminDashboardPage() {
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
         <StatCard label="Commerçants" value={stats.totalMerchants} icon={Store} color="emerald" />
-        <StatCard label="Payants" value={stats.activeMerchants} icon={CreditCard} color="pink" />
+        <StatCard label="Abonnes" value={stats.activeMerchants} icon={CreditCard} color="pink" />
         <StatCard label="MRR" value={`${Math.round(stats.mrr)}€`} icon={Wallet} color="purple" />
         <StatCard label="En essai" value={stats.trialMerchants} icon={Clock} color="amber" />
+        <StatCard label="Annules" value={stats.canceledMerchants} icon={UserX} color="red" />
         <StatCard label="Actifs 7j" value={stats.weeklyActiveMerchants} icon={Users} color="blue" />
-        <StatCard label="Activation 30j" value={`${stats.activationRate}%`} icon={TrendingUp} color="indigo" />
         <StatCard label="Conversion" value={`${conversionRate}%`} icon={Percent} color="green" />
       </div>
 
@@ -1098,7 +1099,7 @@ function StatCard({
   label: string;
   value: string | number;
   icon: React.ElementType;
-  color: 'emerald' | 'amber' | 'indigo' | 'pink' | 'blue' | 'green' | 'purple';
+  color: 'emerald' | 'amber' | 'indigo' | 'pink' | 'blue' | 'green' | 'purple' | 'red';
 }) {
   const colorMap = {
     emerald: 'bg-emerald-50 text-emerald-600',
@@ -1108,6 +1109,7 @@ function StatCard({
     blue: 'bg-blue-50 text-blue-600',
     green: 'bg-green-50 text-green-600',
     purple: 'bg-purple-50 text-purple-600',
+    red: 'bg-red-50 text-red-600',
   };
 
   return (

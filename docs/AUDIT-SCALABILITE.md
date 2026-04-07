@@ -1,13 +1,13 @@
 # AUDIT SCALABILITE — Qarte SaaS
 
-**Score : 84/100** — Mis a jour 7 avril 2026
+**Score : 86/100** — Mis a jour 7 avril 2026
 **Capacite estimee : ~5000-8000 merchants** (Supabase Pro, Vercel Pro)
 
 ---
 
 ## Resume
 
-3 critiques, 5 hautes, 9 moyennes restantes. Les principaux risques sont le rate limiting en memoire (C1 — necessite Redis), le refactor admin merchants-data (C3), et le hard timeout cron (C9).
+2 critiques, 5 hautes, 9 moyennes restantes. Les principaux risques sont le rate limiting en memoire (C1 — necessite Redis) et le hard timeout cron (C9).
 
 ---
 
@@ -33,7 +33,7 @@
 
 ---
 
-## CRITICAL (3 restantes)
+## CRITICAL (2 restantes)
 
 ### C1. Rate limiting en memoire — perdu au cold start
 **Fichier** : `src/lib/rate-limit.ts` lignes 8-19
@@ -42,11 +42,8 @@
 - **Touche** : checkin, booking, upload, customer-edit
 - **Fix** : Redis (Upstash) ou Vercel KV
 
-### C3. Admin merchants-data — 13 queries paralleles sans pagination
-**Fichier** : `src/app/api/admin/merchants-data/route.ts` lignes 41-54
-- Fetch `merchants.*` sans LIMIT + 12 tables avec `limit(10000)`
-- Tout agrege en JS cote serveur → memoire spike
-- **Fix** : RPC SQL pour aggregation, pagination merchants
+### ~~C3. Admin merchants-data — 13 queries paralleles sans pagination~~ FAIT (mig 100)
+7 tables `limit(10000)` remplacees par 4 RPC (COUNT GROUP BY + planning summary). ~100 rows au lieu de ~70k.
 
 ### C9. Timeout cron soft, pas hard
 **Fichier** : `src/app/api/cron/morning/route.ts` lignes 83-86
@@ -118,6 +115,7 @@ Permet des customers orphelins sans merchant.
 
 - `supabase/migrations/098_scalability_constraints.sql` — CHECK constraints, RLS admin, deposit exclusivite, composite indexes, UNIQUE push dedup, index reactivation tracking
 - `supabase/migrations/099_admin_metriques_rpc.sql` — RPC get_merchants_with_services/photos (DISTINCT)
+- `supabase/migrations/100_admin_merchants_data_rpc.sql` — RPC counts per merchant, pending visits, planning summary
 
 ---
 

@@ -8,10 +8,9 @@ export async function GET(request: NextRequest) {
   const { supabaseAdmin } = auth;
 
   try {
-    // Only load visits from last 30 days (C9 — was loading ALL visits)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    // Paginate listUsers to get ALL users (C10 — was capped at 1000)
+    // Paginate listUsers to get ALL users
     const allUsers: Array<{ id: string; email?: string }> = [];
     let usersPage = 1;
     let hasMoreUsers = true;
@@ -22,7 +21,7 @@ export async function GET(request: NextRequest) {
       usersPage++;
     }
 
-    // Fetch all data in parallel (service_role bypasses RLS)
+    // Fetch all data in parallel — RPCs for counts, direct queries for merchants/visits
     const [
       { data: merchants },
       { data: superAdmins },
@@ -30,13 +29,13 @@ export async function GET(request: NextRequest) {
       { data: loyaltyCards },
       { data: emailTracking },
       { data: reactivationTracking },
-      { data: pendingVisits },
-      { data: servicesList },
-      { data: photosList },
-      { data: vouchersList },
-      { data: redemptionsList },
-      { data: referralsList },
-      { data: slotsList },
+      { data: pendingVisitsRpc },
+      { data: servicesRpc },
+      { data: photosRpc },
+      { data: vouchersRpc },
+      { data: redemptionsRpc },
+      { data: referralsRpc },
+      { data: planningRpc },
     ] = await Promise.all([
       supabaseAdmin.from('merchants').select('*').order('created_at', { ascending: false }),
       supabaseAdmin.from('super_admins').select('user_id'),
@@ -44,50 +43,45 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.rpc('get_loyalty_card_counts_per_merchant'),
       supabaseAdmin.from('pending_email_tracking').select('merchant_id, reminder_day').limit(10000),
       supabaseAdmin.from('reactivation_email_tracking').select('merchant_id, day_sent').limit(10000),
-      supabaseAdmin.from('visits').select('merchant_id').eq('status', 'pending').limit(10000),
-      supabaseAdmin.from('merchant_services').select('merchant_id').limit(10000),
-      supabaseAdmin.from('merchant_photos').select('merchant_id').limit(10000),
-      supabaseAdmin.from('vouchers').select('merchant_id').limit(10000),
-      supabaseAdmin.from('redemptions').select('merchant_id').limit(10000),
-      supabaseAdmin.from('referrals').select('merchant_id').limit(10000),
-      supabaseAdmin.from('merchant_planning_slots').select('merchant_id, client_name, deposit_confirmed, slot_date').limit(10000),
+      supabaseAdmin.rpc('get_pending_visits_per_merchant'),
+      supabaseAdmin.rpc('get_counts_per_merchant', { p_table: 'merchant_services' }),
+      supabaseAdmin.rpc('get_counts_per_merchant', { p_table: 'merchant_photos' }),
+      supabaseAdmin.rpc('get_counts_per_merchant', { p_table: 'vouchers' }),
+      supabaseAdmin.rpc('get_counts_per_merchant', { p_table: 'redemptions' }),
+      supabaseAdmin.rpc('get_counts_per_merchant', { p_table: 'referrals' }),
+      supabaseAdmin.rpc('get_planning_summary_per_merchant'),
     ]);
 
-    // Super admin user_ids
     const superAdminIds = new Set((superAdmins || []).map((sa: { user_id: string }) => sa.user_id));
 
-    // Customer counts per merchant (from RPC aggregation)
+    // Customer counts per merchant (from existing RPC)
     const customerCounts: Record<string, number> = {};
     (loyaltyCards || []).forEach((row: { merchant_id: string; card_count: number }) => {
       customerCounts[row.merchant_id] = Number(row.card_count);
     });
 
-    // Visit aggregations
+    // Visit aggregations (30 days only)
     const lastVisitDates: Record<string, string> = {};
     const todayScans: Record<string, number> = {};
     const weeklyScans: Record<string, number> = {};
 
-    // Paris timezone: get start of today
     const nowParis = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
     const todayStart = new Date(nowParis.getFullYear(), nowParis.getMonth(), nowParis.getDate()).toISOString();
     const oneWeekAgo = new Date(nowParis.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
     (visits || []).forEach((v: { merchant_id: string; visited_at: string }) => {
-      // Last visit
       if (!lastVisitDates[v.merchant_id] || v.visited_at > lastVisitDates[v.merchant_id]) {
         lastVisitDates[v.merchant_id] = v.visited_at;
       }
-      // Today scans
       if (v.visited_at >= todayStart) {
         todayScans[v.merchant_id] = (todayScans[v.merchant_id] || 0) + 1;
       }
-      // Weekly scans
       if (v.visited_at >= oneWeekAgo) {
         weeklyScans[v.merchant_id] = (weeklyScans[v.merchant_id] || 0) + 1;
       }
     });
 
-    // Email tracking: milestone codes per merchant
+    // Email tracking
     const emailTrackingMap: Record<string, number[]> = {};
     (emailTracking || []).forEach((e: { merchant_id: string; reminder_day: number }) => {
       if (!emailTrackingMap[e.merchant_id]) emailTrackingMap[e.merchant_id] = [];
@@ -96,7 +90,7 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Reactivation tracking per merchant
+    // Reactivation tracking
     const reactivationMap: Record<string, number[]> = {};
     (reactivationTracking || []).forEach((r: { merchant_id: string; day_sent: number }) => {
       if (!reactivationMap[r.merchant_id]) reactivationMap[r.merchant_id] = [];
@@ -105,58 +99,31 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Pending points per merchant (shield)
-    const pendingPoints: Record<string, number> = {};
-    (pendingVisits || []).forEach((v: { merchant_id: string }) => {
-      pendingPoints[v.merchant_id] = (pendingPoints[v.merchant_id] || 0) + 1;
-    });
+    // RPC counts → Record<merchant_id, number>
+    const toCountMap = (data: Array<{ merchant_id: string; cnt: number }> | null): Record<string, number> => {
+      const map: Record<string, number> = {};
+      (data || []).forEach(r => { map[r.merchant_id] = Number(r.cnt); });
+      return map;
+    };
 
-    // Services counts per merchant
-    const servicesCounts: Record<string, number> = {};
-    (servicesList || []).forEach((s: { merchant_id: string }) => {
-      servicesCounts[s.merchant_id] = (servicesCounts[s.merchant_id] || 0) + 1;
-    });
+    const pendingPoints = toCountMap(pendingVisitsRpc);
+    const servicesCounts = toCountMap(servicesRpc);
+    const photosCounts = toCountMap(photosRpc);
+    const vouchersCounts = toCountMap(vouchersRpc);
+    const redemptionsCounts = toCountMap(redemptionsRpc);
+    const referralsCounts = toCountMap(referralsRpc);
 
-    // Photos counts per merchant
-    const photosCounts: Record<string, number> = {};
-    (photosList || []).forEach((p: { merchant_id: string }) => {
-      photosCounts[p.merchant_id] = (photosCounts[p.merchant_id] || 0) + 1;
-    });
-
-    // Vouchers counts per merchant
-    const vouchersCounts: Record<string, number> = {};
-    (vouchersList || []).forEach((v: { merchant_id: string }) => {
-      vouchersCounts[v.merchant_id] = (vouchersCounts[v.merchant_id] || 0) + 1;
-    });
-
-    // Redemptions counts per merchant
-    const redemptionsCounts: Record<string, number> = {};
-    (redemptionsList || []).forEach((r: { merchant_id: string }) => {
-      redemptionsCounts[r.merchant_id] = (redemptionsCounts[r.merchant_id] || 0) + 1;
-    });
-
-    // Referrals counts per merchant
-    const referralsCounts: Record<string, number> = {};
-    (referralsList || []).forEach((r: { merchant_id: string }) => {
-      referralsCounts[r.merchant_id] = (referralsCounts[r.merchant_id] || 0) + 1;
-    });
-
-    // Planning slots & bookings per merchant (+ pending deposits on future booked slots)
+    // Planning summary
     const slotsCounts: Record<string, number> = {};
     const bookingsCounts: Record<string, number> = {};
     const pendingDepositsCounts: Record<string, number> = {};
-    const todayDateStr = new Date().toISOString().split('T')[0];
-    (slotsList || []).forEach((s: { merchant_id: string; client_name: string | null; deposit_confirmed: boolean | null; slot_date: string }) => {
-      slotsCounts[s.merchant_id] = (slotsCounts[s.merchant_id] || 0) + 1;
-      if (s.client_name) {
-        bookingsCounts[s.merchant_id] = (bookingsCounts[s.merchant_id] || 0) + 1;
-        if (s.deposit_confirmed === false && s.slot_date >= todayDateStr) {
-          pendingDepositsCounts[s.merchant_id] = (pendingDepositsCounts[s.merchant_id] || 0) + 1;
-        }
-      }
+    (planningRpc || []).forEach((r: { merchant_id: string; total_slots: number; bookings: number; pending_deposits: number }) => {
+      slotsCounts[r.merchant_id] = Number(r.total_slots);
+      bookingsCounts[r.merchant_id] = Number(r.bookings);
+      pendingDepositsCounts[r.merchant_id] = Number(r.pending_deposits);
     });
 
-    // User emails mapping (uses paginated allUsers from C10 fix)
+    // User emails
     const userEmails: Record<string, string> = {};
     allUsers.forEach((u) => {
       if (u.email) userEmails[u.id] = u.email;
