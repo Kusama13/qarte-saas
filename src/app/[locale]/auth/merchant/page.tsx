@@ -7,7 +7,6 @@ import { getSupabase } from '@/lib/supabase';
 import { CheckCircle2 } from 'lucide-react';
 import { suggestEmailCorrection } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
-import LocaleSwitcher from '@/components/shared/LocaleSwitcher';
 import AuthBackground from '@/components/shared/AuthBackground';
 
 function MerchantLoginContent() {
@@ -75,11 +74,6 @@ function MerchantLoginContent() {
 
   return (
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center bg-[#f7f6fb]">
-      {/* Language switcher */}
-      <div className="absolute top-4 right-4 z-20">
-        <LocaleSwitcher variant="light" />
-      </div>
-
       <AuthBackground />
 
       <div className="max-w-md w-full mx-4 z-10">

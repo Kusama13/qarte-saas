@@ -20,7 +20,6 @@ import { SHOP_TYPES, type ShopType, COUNTRIES, COUNTRIES_BY_LOCALE, type Merchan
 import { trackPageView, trackSetupCompleted, trackSignupCompleted } from '@/lib/analytics';
 import { FacebookPixel, fbEvents } from '@/components/analytics/FacebookPixel';
 import { TikTokPixel, ttEvents, ttIdentify } from '@/components/analytics/TikTokPixel';
-import LocaleSwitcher from '@/components/shared/LocaleSwitcher';
 import AuthBackground from '@/components/shared/AuthBackground';
 
 export default function CompleteProfilePage() {
@@ -183,11 +182,6 @@ export default function CompleteProfilePage() {
     <div className="min-h-screen bg-[#f7f6fb] relative overflow-hidden">
       <FacebookPixel />
       <TikTokPixel />
-
-      {/* Language switcher */}
-      <div className="absolute top-4 right-4 z-20">
-        <LocaleSwitcher variant="light" />
-      </div>
 
       <AuthBackground />
 
