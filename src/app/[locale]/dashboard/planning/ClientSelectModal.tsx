@@ -366,12 +366,14 @@ export default function ClientSelectModal({
               {t('deleteSlot')}
             </button>
           )}
-          <button
-            onClick={handleSkip}
-            className="px-5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
-          >
-            {t('skipClient')}
-          </button>
+          {!hasClient && draft.clientPhone.trim().length < 6 && (
+            <button
+              onClick={handleSkip}
+              className="px-5 py-2.5 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-50 transition-colors"
+            >
+              {t('skipClient')}
+            </button>
+          )}
           {hasClient && (
             <button
               onClick={handleProceedWithClient}

@@ -327,10 +327,14 @@ export default function CustomersPage() {
     // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
+      const queryDigits = query.replace(/\D/g, '');
       filtered = filtered.filter((card) => {
         const name = `${card.customer?.first_name || ''} ${card.customer?.last_name || ''}`.toLowerCase();
+        if (name.includes(query)) return true;
+        // Phone: compare digits against E.164 stored format
         const phone = card.customer?.phone_number || '';
-        return name.includes(query) || phone.includes(query);
+        if (queryDigits.length >= 2 && phone.includes(queryDigits)) return true;
+        return false;
       });
     }
 

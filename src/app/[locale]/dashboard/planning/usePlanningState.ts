@@ -256,6 +256,8 @@ export function usePlanningState() {
     service_ids: string[];
     notes: string | null;
     phone_country?: string;
+    send_sms?: boolean;
+    send_sms_cancel?: boolean;
   }) => {
     if (!merchant) return;
     setSaving(true);
@@ -306,13 +308,14 @@ export function usePlanningState() {
     setModalState({ type: 'closed' });
   };
 
-  const handleMoveSlot = async (slotId: string, newTime: string, newDate?: string, force?: boolean): Promise<{ success: boolean; error?: string }> => {
+  const handleMoveSlot = async (slotId: string, newTime: string, newDate?: string, force?: boolean, sendSms?: boolean): Promise<{ success: boolean; error?: string }> => {
     if (!merchant) return { success: false, error: 'Merchant non charge' };
     setSaving(true);
     try {
       const payload: Record<string, string | boolean> = { merchantId: merchant.id, slotId, newTime };
       if (newDate) payload.newDate = newDate;
       if (force) payload.force = true;
+      if (sendSms) payload.send_sms = true;
       const res = await fetch('/api/planning/shift-slot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

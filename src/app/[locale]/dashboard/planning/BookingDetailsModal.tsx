@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen, ChevronDown, Camera, StickyNote, CalendarClock } from 'lucide-react';
+import { X, ArrowLeft, Trash2, Check, Loader2, AlertTriangle, Clock, ImagePlus, Instagram, History, BookOpen, ChevronDown, Camera, StickyNote, CalendarClock, MessageSquare } from 'lucide-react';
 import { getTypeStyle } from '@/lib/note-styles';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
 import { useTranslations } from 'next-intl';
@@ -25,6 +25,7 @@ interface BookingDetailsModalProps {
   locale: string;
   depositPercent?: number | null;
   depositAmount?: number | null;
+  subscriptionStatus?: string | null;
   onDraftChange: (partial: Partial<BookingDraft>) => void;
   onSave: (slotId: string, data: {
     client_name: string | null;
@@ -32,9 +33,11 @@ interface BookingDetailsModalProps {
     customer_id: string | null;
     service_ids: string[];
     notes: string | null;
+    send_sms?: boolean;
+    send_sms_cancel?: boolean;
   }) => Promise<void>;
   onDelete: (slotId: string) => Promise<void>;
-  onShiftSlot: (slotId: string, newTime: string, newDate?: string, force?: boolean) => Promise<{ success: boolean; error?: string }>;
+  onShiftSlot: (slotId: string, newTime: string, newDate?: string, force?: boolean, sendSms?: boolean) => Promise<{ success: boolean; error?: string }>;
   onRefreshSlots: () => Promise<void>;
   onConfirmDeposit?: (slot: PlanningSlot) => void;
   onCancelDeposit?: (slot: PlanningSlot) => void;
@@ -56,6 +59,7 @@ export default function BookingDetailsModal({
   locale,
   depositPercent,
   depositAmount: depositFixed,
+  subscriptionStatus,
   onDraftChange,
   onSave,
   onDelete,
@@ -91,6 +95,13 @@ export default function BookingDetailsModal({
   const [pinnedNotes, setPinnedNotes] = useState<Array<{ id: string; content: string; note_type: string }>>([]);
   const pinnedFetchedFor = useRef<string | null>(null);
 
+  const isPaid = subscriptionStatus === 'active' || subscriptionStatus === 'canceling' || subscriptionStatus === 'past_due';
+  const [sendSms, setSendSms] = useState(false);
+
+  const [showAllServices, setShowAllServices] = useState(false);
+  const [moveSendSms, setMoveSendSms] = useState(false);
+  const [cancelSendSms, setCancelSendSms] = useState(false);
+  const [cancelMode, setCancelMode] = useState(false);
   const [moveMode, setMoveMode] = useState(false);
   const [moveDate, setMoveDate] = useState(slot.slot_date);
   const [moveTime, setMoveTime] = useState('');
@@ -197,6 +208,7 @@ export default function BookingDetailsModal({
       service_ids: draft.serviceIds,
       notes: draft.notes.trim() || null,
       ...(draft.phoneCountry && { phone_country: draft.phoneCountry }),
+      ...(sendSms && { send_sms: true }),
     });
   };
 
@@ -207,6 +219,7 @@ export default function BookingDetailsModal({
       customer_id: null,
       service_ids: [],
       notes: null,
+      ...(cancelSendSms && { send_sms_cancel: true }),
     });
   };
 
@@ -225,7 +238,7 @@ export default function BookingDetailsModal({
     }
     setMoveError(null);
     setMoving(true);
-    const result = await onShiftSlot(slot.id, moveTime, moveDate !== slot.slot_date ? moveDate : undefined, true);
+    const result = await onShiftSlot(slot.id, moveTime, moveDate !== slot.slot_date ? moveDate : undefined, true, moveSendSms);
     setMoving(false);
     if (result.success) {
       setMoveMode(false);
@@ -399,37 +412,76 @@ export default function BookingDetailsModal({
             </div>
           )}
 
-          {/* ── Prestations (always visible) ── */}
-          {services.length > 0 && (
+          {/* ── Prestations ── */}
+          {services.length > 0 && (() => {
+            const selected = services.filter(s => draft.serviceIds.includes(s.id));
+            const unselected = services.filter(s => !draft.serviceIds.includes(s.id));
+            const VISIBLE_UNSELECTED = 4;
+            const hiddenCount = unselected.length - VISIBLE_UNSELECTED;
+            const visibleUnselected = showAllServices ? unselected : unselected.slice(0, VISIBLE_UNSELECTED);
+
+            const ServiceRow = ({ svc, isChecked }: { svc: ServiceWithDuration; isChecked: boolean }) => {
+              const svcColor = serviceColorMap.get(svc.id);
+              return (
+                <button
+                  key={svc.id}
+                  onClick={() => toggleService(svc.id)}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg border text-left transition-all text-[13px] ${isChecked ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-gray-200 hover:border-gray-300 text-gray-700'}`}
+                  style={colorBorderStyle(svcColor)}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className={`w-3.5 h-3.5 rounded shrink-0 flex items-center justify-center border ${isChecked ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
+                      {isChecked && <Check className="w-2.5 h-2.5 text-white" />}
+                    </div>
+                    <span className="font-medium truncate">{svc.name}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-400 shrink-0 ml-2">
+                    {svc.price > 0 && <span>{formatCurrency(svc.price, merchantCountry, locale)}</span>}
+                    {svc.duration && (
+                      <span className="flex items-center gap-0.5"><Clock className="w-2.5 h-2.5" />{svc.duration}</span>
+                    )}
+                  </div>
+                </button>
+              );
+            };
+
+            return (
             <div>
-              <label className="text-xs font-semibold text-gray-600 mb-2 block">{t('servicesLabel')}</label>
-              <div className="space-y-1.5 max-h-40 overflow-y-auto">
-                {services.map(svc => {
-                  const isChecked = draft.serviceIds.includes(svc.id);
-                  const svcColor = serviceColorMap.get(svc.id);
-                  return (
+              <label className="text-xs font-semibold text-gray-600 mb-1.5 block">{t('servicesLabel')}</label>
+
+              {/* Selected services — always visible */}
+              {selected.length > 0 && (
+                <div className="space-y-1 mb-2">
+                  {selected.map(svc => <ServiceRow key={svc.id} svc={svc} isChecked />)}
+                </div>
+              )}
+
+              {/* Unselected services */}
+              {unselected.length > 0 && (
+                <div className="space-y-1">
+                  {visibleUnselected.map(svc => <ServiceRow key={svc.id} svc={svc} isChecked={false} />)}
+                  {hiddenCount > 0 && !showAllServices && (
                     <button
-                      key={svc.id}
-                      onClick={() => toggleService(svc.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border text-left transition-all text-sm ${isChecked ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-gray-200 hover:border-gray-300 text-gray-700'}`}
-                      style={colorBorderStyle(svcColor)}
+                      type="button"
+                      onClick={() => setShowAllServices(true)}
+                      className="w-full flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
                     >
-                      <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded flex items-center justify-center border ${isChecked ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300'}`}>
-                          {isChecked && <Check className="w-3 h-3 text-white" />}
-                        </div>
-                        <span className="font-medium">{svc.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        {svc.price > 0 && <span>{formatCurrency(svc.price, merchantCountry, locale)}</span>}
-                        {svc.duration && (
-                          <span className="flex items-center gap-0.5"><Clock className="w-3 h-3" />{svc.duration}min</span>
-                        )}
-                      </div>
+                      {t('showMoreServices', { count: hiddenCount })}
+                      <ChevronDown className="w-3 h-3" />
                     </button>
-                  );
-                })}
-              </div>
+                  )}
+                  {showAllServices && hiddenCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllServices(false)}
+                      className="w-full flex items-center justify-center gap-1 py-1.5 text-[11px] font-semibold text-gray-400 hover:text-gray-500 transition-colors"
+                    >
+                      {t('showLessServices')}
+                      <ChevronDown className="w-3 h-3 rotate-180" />
+                    </button>
+                  )}
+                </div>
+              )}
 
               {(durationLabel || totalPrice) && (
                 <div className="mt-2 space-y-1.5">
@@ -461,7 +513,8 @@ export default function BookingDetailsModal({
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
 
           {/* Overlap warning */}
           {overlap && (
@@ -641,6 +694,46 @@ export default function BookingDetailsModal({
 
         {/* Footer actions */}
         <div className="p-4 border-t border-gray-100 space-y-2">
+          {/* SMS confirmation toggle — only for new bookings (slot not yet assigned) */}
+          {!slot.client_name && draft.clientPhone.trim() && (
+            <button
+              type="button"
+              onClick={() => isPaid && setSendSms(s => !s)}
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${
+                !isPaid
+                  ? 'border-gray-100 bg-gray-50 cursor-not-allowed'
+                  : sendSms
+                    ? 'border-indigo-200 bg-indigo-50'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+              }`}
+            >
+              <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                sendSms ? 'bg-indigo-100' : 'bg-gray-100'
+              }`}>
+                <MessageSquare className={`w-4 h-4 ${sendSms ? 'text-indigo-600' : 'text-gray-400'}`} />
+              </div>
+              <div className="flex-1 text-left min-w-0">
+                <p className={`text-xs font-semibold ${sendSms ? 'text-indigo-700' : 'text-gray-700'}`}>
+                  {t('sendSmsConfirmation')}
+                </p>
+                {!isPaid && (
+                  <p className="text-[10px] text-gray-400 mt-0.5">{t('sendSmsTrialHint')}</p>
+                )}
+              </div>
+              {isPaid ? (
+                <div className={`shrink-0 w-9 h-5 rounded-full transition-colors relative ${
+                  sendSms ? 'bg-indigo-600' : 'bg-gray-300'
+                }`}>
+                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
+                    sendSms ? 'translate-x-4' : 'translate-x-0.5'
+                  }`} />
+                </div>
+              ) : (
+                <span className="shrink-0 text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-md uppercase tracking-wide">Pro</span>
+              )}
+            </button>
+          )}
+
           {/* Confirm / cancel deposit */}
           {slot.deposit_confirmed === false && onConfirmDeposit && (
             <div className="flex justify-center">
@@ -684,7 +777,7 @@ export default function BookingDetailsModal({
               </button>
             )}
             <button
-              onClick={() => onDelete(slot.id)}
+              onClick={() => slot.client_name ? setCancelMode(true) : onDelete(slot.id)}
               disabled={saving}
               className="px-4 py-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
             >
@@ -693,7 +786,7 @@ export default function BookingDetailsModal({
           </div>
           {slot.client_name && (
             <button
-              onClick={handleClearSlot}
+              onClick={() => setCancelMode(true)}
               disabled={saving}
               className="w-full py-2 text-xs text-gray-400 font-medium hover:text-gray-600 transition-colors"
             >
@@ -768,22 +861,123 @@ export default function BookingDetailsModal({
                 </div>
               )}
             </div>
-            <div className="p-4 border-t border-gray-100 flex gap-2">
-              <button
-                onClick={() => setMoveMode(false)}
-                disabled={moving}
-                className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 transition-colors"
-              >
-                {t('cancel')}
+            <div className="p-4 border-t border-gray-100 space-y-2">
+              {slot.client_phone && (
+                <button
+                  type="button"
+                  onClick={() => isPaid && setMoveSendSms(s => !s)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all ${
+                    !isPaid
+                      ? 'border-gray-100 bg-gray-50 cursor-not-allowed'
+                      : moveSendSms
+                        ? 'border-violet-200 bg-violet-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${moveSendSms ? 'bg-violet-100' : 'bg-gray-100'}`}>
+                    <MessageSquare className={`w-3.5 h-3.5 ${moveSendSms ? 'text-violet-600' : 'text-gray-400'}`} />
+                  </div>
+                  <p className={`flex-1 text-left text-xs font-semibold ${moveSendSms ? 'text-violet-700' : 'text-gray-700'}`}>
+                    {t('sendSmsMove')}
+                  </p>
+                  {isPaid ? (
+                    <div className={`shrink-0 w-9 h-5 rounded-full transition-colors relative ${moveSendSms ? 'bg-violet-600' : 'bg-gray-300'}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${moveSendSms ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    </div>
+                  ) : (
+                    <span className="shrink-0 text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-md uppercase tracking-wide">Pro</span>
+                  )}
+                </button>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setMoveMode(false)}
+                  disabled={moving}
+                  className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 transition-colors"
+                >
+                  {t('cancel')}
+                </button>
+                <button
+                  onClick={handleMoveConfirm}
+                  disabled={moving || !moveTime}
+                  className="flex-[2] py-2.5 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {moving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarClock className="w-4 h-4" />}
+                  {t('moveBookingConfirm')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Cancel booking overlay */}
+        {cancelMode && (
+          <div className="absolute inset-0 z-20 bg-white rounded-2xl flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-red-500" />
+                <h3 className="text-sm font-bold text-gray-900">{t('cancelBookingTitle')}</h3>
+              </div>
+              <button onClick={() => { setCancelMode(false); setCancelSendSms(false); }} className="p-1.5 rounded-lg hover:bg-gray-100">
+                <X className="w-4 h-4 text-gray-400" />
               </button>
-              <button
-                onClick={handleMoveConfirm}
-                disabled={moving || !moveTime}
-                className="flex-[2] py-2.5 rounded-xl bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {moving ? <Loader2 className="w-4 h-4 animate-spin" /> : <CalendarClock className="w-4 h-4" />}
-                {t('moveBookingConfirm')}
-              </button>
+            </div>
+            <div className="flex-1 p-5 space-y-4">
+              <div className="text-center py-4">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+                  <AlertTriangle className="w-6 h-6 text-red-500" />
+                </div>
+                <p className="text-sm font-semibold text-gray-900 mb-1">{t('cancelBookingMessage')}</p>
+                <p className="text-xs text-gray-500">
+                  {draft.clientName} — {slot.slot_date} {t('at')} {formatTime(slot.start_time, locale)}
+                </p>
+              </div>
+            </div>
+            <div className="p-4 border-t border-gray-100 space-y-2">
+              {slot.client_phone && (
+                <button
+                  type="button"
+                  onClick={() => isPaid && setCancelSendSms(s => !s)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all ${
+                    !isPaid
+                      ? 'border-gray-100 bg-gray-50 cursor-not-allowed'
+                      : cancelSendSms
+                        ? 'border-red-200 bg-red-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${cancelSendSms ? 'bg-red-100' : 'bg-gray-100'}`}>
+                    <MessageSquare className={`w-3.5 h-3.5 ${cancelSendSms ? 'text-red-600' : 'text-gray-400'}`} />
+                  </div>
+                  <p className={`flex-1 text-left text-xs font-semibold ${cancelSendSms ? 'text-red-700' : 'text-gray-700'}`}>
+                    {t('sendSmsCancel')}
+                  </p>
+                  {isPaid ? (
+                    <div className={`shrink-0 w-9 h-5 rounded-full transition-colors relative ${cancelSendSms ? 'bg-red-600' : 'bg-gray-300'}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${cancelSendSms ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    </div>
+                  ) : (
+                    <span className="shrink-0 text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-md uppercase tracking-wide">Pro</span>
+                  )}
+                </button>
+              )}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setCancelMode(false); setCancelSendSms(false); }}
+                  disabled={saving}
+                  className="flex-1 py-2.5 rounded-xl bg-gray-100 text-gray-600 text-xs font-bold hover:bg-gray-200 transition-colors"
+                >
+                  {t('cancelBookingKeep')}
+                </button>
+                <button
+                  onClick={() => { handleClearSlot(); setCancelMode(false); }}
+                  disabled={saving}
+                  className="flex-[2] py-2.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                  {t('cancelBookingConfirm')}
+                </button>
+              </div>
             </div>
           </div>
         )}

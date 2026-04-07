@@ -311,6 +311,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Historique client** : dans le modal booking, affiche les RDV passes du client (via `GET /api/planning?customerId=`)
 - **Photos resultat** : photos "apres" prestation (max 3/creneau), separees des photos inspiration. Groupees sous un depliant "Photos" (Avant/Apres) dans le modal edition
 - Flow edition : clic slot reserve → direct modal edition (skip selection client). Clic slot libre → Modal 1 (choix/creation client) → Modal 2 (edition)
+- **Modal selection client** : recherche par nom OU telephone (API normalise le numero en E.164 via `getAllPhoneFormats`). Bouton "Passer" masque si un numero est saisi (force creation client). Bouton "Etape suivante" masque si aucun client selectionne
+- **Modal edition** : prestations selectionnees en haut, non-selectionnees en dessous (4 visibles + "Voir X autres" expandable). Toggle SMS confirmation (nouveau RDV uniquement). Overlay deplacement avec toggle SMS. Overlay annulation avec confirmation + toggle SMS
 - **Creation client depuis planning** : reutilise `/api/customers/create`. Si client existe deja (409), l'API retourne `customer_id` et le planning le reutilise automatiquement
 - **Auto-creation client + voucher bienvenue** : a la reservation en ligne, si nouveau client, creation automatique du customer + carte fidelite + voucher bienvenue (si `welcome_offer_enabled`)
 - Tables : `merchant_planning_slots` (mig 063+065+083+084), `planning_slot_services` (mig 071), `planning_slot_photos` (mig 072), `planning_slot_result_photos` (mig 074)
@@ -392,21 +394,23 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Config globale** : table `app_config` (key `sms_global`) — 4 toggles admin dans `/admin/sms`
 - **Pas de toggles merchant** — gere uniquement par l'admin
 - **Reserve aux abonnes actifs** (pas trial) — message CTA dans dashboard + planning settings
-- **6 types de SMS** :
+- **7 types de SMS** :
   - `reminder_j1` — rappel la veille a 18h (cron evening)
-  - `confirmation_no_deposit` — confirmation immediate apres resa sans acompte (`POST /api/planning/book`)
+  - `confirmation_no_deposit` — confirmation manuelle par le merchant (toggle dans BookingDetailsModal, opt-in)
   - `confirmation_deposit` — confirmation apres validation acompte par le merchant (`PATCH /api/planning`)
-  - `booking_moved` — notification client quand le merchant deplace un RDV (`POST /api/planning/shift-slot`)
+  - `booking_moved` — notification client quand le merchant deplace un RDV (toggle dans move overlay, opt-in)
+  - `booking_cancelled` — notification client quand le merchant annule un RDV (toggle dans cancel overlay, opt-in)
   - `birthday` — voeux + cadeau anniversaire (cron morning-jobs)
   - `referral_reward` — notification parrain quand le filleul utilise sa recompense (`POST /api/vouchers/use`)
+- **Toggles SMS merchant** : 3 toggles dans les modaux planning (confirmation, deplacement, annulation). Design harmonise : bandeau cliquable + toggle switch. Desactive par defaut. En trial : grise + badge "Pro". Visible uniquement si le slot a un numero de telephone
 - **Compteur SMS** : visible dans dashboard principal + planning parametres (barre de progression), cycle aligne sur la date d'abonnement Stripe (`billing_period_start`)
-- **Booking modal** : message SMS confirmation instantane (sans acompte) ou apres validation acompte, + hint "revenez sur cette page pour suivre votre reservation"
+- **Booking modal client** : pas de SMS a la reservation sans acompte (rappel J-1 suffit). Hint "un SMS de rappel vous sera envoye la veille". Avec acompte : SMS envoye apres validation par le merchant
 - **Landing** : SMS mis en avant dans Hero (badge), FeaturesGrid, PageProSection (bloc dedie avec visual 2 SMS), Pricing, FAQ (Q4+Q12)
 - **Admin** : `/admin/sms` — metriques (total, ce mois, echecs, cout), toggles globaux, breakdown par merchant avec plage de dates du cycle de facturation
 - **Admin activite** : badges "Acompte en attente" / "Acompte OK" sur les reservations
 - **Env vars** : `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`
 - **Sender** : "Qarte" (en attente validation OVH, fallback numero court via `senderForResponse`)
-- **Migrations** : 092 (sms_logs + app_config), 093 (birthday + referral types), 094 (booking_moved type)
+- **Migrations** : 092 (sms_logs + app_config), 093 (birthday + referral types), 094 (booking_moved + booking_cancelled types)
 
 ### Stripe
 - `POST /api/stripe/checkout` — Session paiement (verifie customer Stripe)

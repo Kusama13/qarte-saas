@@ -550,7 +550,7 @@
 | merchant_id | UUID FK | NOT NULL | → merchants(id) ON DELETE CASCADE |
 | slot_id | UUID FK | | → merchant_planning_slots(id) ON DELETE SET NULL |
 | phone_to | TEXT | NOT NULL | |
-| sms_type | TEXT | NOT NULL | CHECK IN ('reminder_j1', 'confirmation_no_deposit', 'confirmation_deposit', 'birthday', 'referral_reward', 'booking_moved') |
+| sms_type | TEXT | NOT NULL | CHECK IN ('reminder_j1', 'confirmation_no_deposit', 'confirmation_deposit', 'birthday', 'referral_reward', 'booking_moved', 'booking_cancelled') |
 | message_body | TEXT | NOT NULL | |
 | ovh_job_id | TEXT | | |
 | status | TEXT | 'sent' | CHECK IN ('sent', 'delivered', 'failed') |
@@ -1030,10 +1030,14 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 091 | move_booking_function | Fonction Postgres `move_booking(merchant_id, source_slot_id, target_date, target_time) RETURNS JSONB` — transfert atomique booking source → target (champs client + deposit + booked_online, et FKs `planning_slot_services`, `planning_slot_photos`, `planning_slot_result_photos`, `customer_notes`). Source devient vide, cible creee si absente ou reutilisee si vide, rejete si cible bookee ou multi-slot. `SECURITY DEFINER`, execute restreint a `service_role` |
 | 092 | sms_system | Table `sms_logs` (audit + quota + dedup) + table `app_config` (toggles admin globaux SMS) |
 | 093 | sms_birthday_referral | Ajout types `birthday` + `referral_reward` au CHECK sms_type, index dedup partiel (WHERE slot_id IS NOT NULL), toggles birthday_enabled + referral_enabled dans app_config |
-| 094 | sms_move_type | Ajout type `booking_moved` au CHECK sms_type |
+| 094 | sms_move_cancel_types | Ajout types `booking_moved` + `booking_cancelled` au CHECK sms_type |
 | 095 | billing_period_start | `merchants.billing_period_start` TIMESTAMPTZ + backfill 24 merchants |
 | 096 | customer_booking_edit | `merchants.allow_customer_cancel` BOOLEAN + `allow_customer_reschedule` BOOLEAN + `customer_edit_deadline_days` INTEGER — annulation/modification RDV par le client |
 | 097 | separate_edit_deadlines | Split `customer_edit_deadline_days` → `cancel_deadline_days` + `reschedule_deadline_days` (delais independants) |
+| 098 | scalability_constraints | CHECK constraints TEXT length, RLS admin tables, deposit exclusivite, composite indexes, UNIQUE push dedup, reactivation tracking index |
+| 099 | admin_metriques_rpc | RPC `get_merchants_with_services()` + `get_merchants_with_photos()` (DISTINCT) |
+| 100 | admin_merchants_data_rpc | RPC `get_counts_per_merchant(p_table)` avec whitelist + REVOKE, `get_pending_visits_per_merchant()`, `get_planning_summary_per_merchant()` |
+| 101 | sms_booking_cancelled_type | Ajout type `booking_cancelled` au CHECK sms_type |
 
 ---
 

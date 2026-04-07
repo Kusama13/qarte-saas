@@ -12,6 +12,7 @@ const shiftSlotSchema = z.object({
   // If true, delete an empty target slot to make room for the move (used when moving a booked slot).
   // If false (default, used for drag & drop of empty slots), reject on any target conflict.
   force: z.boolean().optional(),
+  send_sms: z.boolean().optional(),
 });
 
 // POST — shift a slot to a new time and/or date
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Donnees invalides' }, { status: 400 });
     }
 
-    const { merchantId, slotId, newTime, newDate, force } = parsed.data;
+    const { merchantId, slotId, newTime, newDate, force, send_sms } = parsed.data;
 
     // Verify ownership
     const { data: merchant } = await supabase
@@ -85,8 +86,8 @@ export async function POST(request: NextRequest) {
         const mapped = errorMap[result.error || ''] || { status: 500, message: 'Erreur lors du deplacement' };
         return NextResponse.json({ error: mapped.message }, { status: mapped.status });
       }
-      // SMS notification to client about moved booking
-      if (result.target_id) {
+      // SMS notification to client about moved booking (opt-in)
+      if (send_sms && result.target_id) {
         const [{ data: movedSlot }, { data: smsMerchant }] = await Promise.all([
           supabaseAdmin.from('merchant_planning_slots').select('client_phone, slot_date, start_time').eq('id', result.target_id).single(),
           supabaseAdmin.from('merchants').select('shop_name, locale, subscription_status').eq('id', merchantId).single(),

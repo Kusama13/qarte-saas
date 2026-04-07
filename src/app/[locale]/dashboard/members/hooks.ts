@@ -354,10 +354,11 @@ export function useAssignCustomer(
   // Filter customers for search
   const filteredCustomers = useMemo(() => {
     const search = customerSearch.toLowerCase();
+    const searchDigits = search.replace(/\D/g, '');
     return customers.filter((c) =>
       c.customer?.first_name?.toLowerCase().includes(search) ||
       c.customer?.last_name?.toLowerCase().includes(search) ||
-      c.customer?.phone_number?.includes(search)
+      (searchDigits.length >= 2 && c.customer?.phone_number?.includes(searchDigits))
     );
   }, [customers, customerSearch]);
 

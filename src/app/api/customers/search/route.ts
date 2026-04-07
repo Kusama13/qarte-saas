@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerSupabaseClient, getSupabaseAdmin } from '@/lib/supabase';
+import { getAllPhoneFormats, formatPhoneNumber } from '@/lib/utils';
 import logger from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
@@ -42,13 +43,45 @@ export async function GET(request: NextRequest) {
     if (sanitized.length < 2) {
       return NextResponse.json({ customers: [] });
     }
-    const pattern = `%${sanitized}%`;
-    const { data: customers, error } = await supabaseAdmin
-      .from('customers')
-      .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url, loyalty_cards!inner(merchant_id)')
-      .eq('loyalty_cards.merchant_id', merchantId)
-      .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},phone_number.ilike.${pattern}`)
-      .limit(10);
+
+    // Detect phone-like query (digits, spaces, +, -)
+    const digitsOnly = sanitized.replace(/[\s\-+]/g, '');
+    const isPhoneQuery = /^\d{2,}$/.test(digitsOnly);
+
+    let customers;
+    let error;
+
+    if (isPhoneQuery) {
+      // Get merchant country for phone format conversion
+      const { data: merchantData } = await supabaseAdmin
+        .from('merchants')
+        .select('country')
+        .eq('id', merchantId)
+        .single();
+      const country = (merchantData?.country || 'FR') as 'FR' | 'BE' | 'CH';
+      const e164 = formatPhoneNumber(digitsOnly, country);
+      const phoneFormats = getAllPhoneFormats(e164);
+      const phonePatterns = phoneFormats.map(p => `%${p}%`);
+
+      const result = await supabaseAdmin
+        .from('customers')
+        .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url, loyalty_cards!inner(merchant_id)')
+        .eq('loyalty_cards.merchant_id', merchantId)
+        .or(phonePatterns.map(p => `phone_number.ilike.${p}`).join(','))
+        .limit(10);
+      customers = result.data;
+      error = result.error;
+    } else {
+      const pattern = `%${sanitized}%`;
+      const result = await supabaseAdmin
+        .from('customers')
+        .select('id, first_name, last_name, phone_number, instagram_handle, tiktok_handle, facebook_url, loyalty_cards!inner(merchant_id)')
+        .eq('loyalty_cards.merchant_id', merchantId)
+        .or(`first_name.ilike.${pattern},last_name.ilike.${pattern},phone_number.ilike.${pattern}`)
+        .limit(10);
+      customers = result.data;
+      error = result.error;
+    }
 
     if (error) {
       logger.error('Customer search error:', error);

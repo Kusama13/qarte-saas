@@ -470,17 +470,19 @@ export default function BookingModal({
                 </h3>
                 <p className="text-center text-xs text-gray-500 mb-4">{merchant.shop_name}</p>
                 {depositResult?.link ? (
+                  <>
+                    <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
+                      {t('depositPendingMessage')}
+                    </p>
+                    {merchant.subscription_status !== 'trial' && (
+                      <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
+                        {t('smsAfterDeposit')}
+                      </p>
+                    )}
+                  </>
+                ) : (
                   <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
-                    {t('depositPendingMessage')}
-                  </p>
-                ) : merchant.subscription_status !== 'trial' ? (
-                  <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
-                    {t('smsConfirmationSent')}
-                  </p>
-                ) : null}
-                {depositResult?.link && merchant.subscription_status !== 'trial' && (
-                  <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
-                    {t('smsAfterDeposit')}
+                    {t('bookingConfirmedHint')}
                   </p>
                 )}
                 <p className="text-center text-[11px] text-gray-400 mb-4 px-2">

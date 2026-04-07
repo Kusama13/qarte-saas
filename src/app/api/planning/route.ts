@@ -198,6 +198,8 @@ const updateSlotSchema = z.object({
   notes: z.string().max(300).nullable().optional(),
   deposit_confirmed: z.boolean().nullable().optional(),
   phone_country: z.enum(['FR', 'BE', 'CH']).optional(),
+  send_sms: z.boolean().optional(),
+  send_sms_cancel: z.boolean().optional(),
 });
 
 export async function PATCH(request: NextRequest) {
@@ -216,7 +218,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Données invalides' }, { status: 400 });
     }
 
-    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, notes, deposit_confirmed } = parsed.data;
+    const { slotId, merchantId, client_name, client_phone, customer_id, service_ids, notes, deposit_confirmed, send_sms, send_sms_cancel } = parsed.data;
 
     if (!await verifyOwnership(supabase, merchantId, user.id)) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 403 });
@@ -272,6 +274,27 @@ export async function PATCH(request: NextRequest) {
           })
       : Promise.resolve();
 
+    // SMS cancellation — fetch slot data before clearing (phone will be erased)
+    if (send_sms_cancel && (client_name === null || client_name === '')) {
+      const [{ data: cancelSlot }, { data: cancelMerchant }] = await Promise.all([
+        supabaseAdmin.from('merchant_planning_slots').select('client_phone, slot_date, start_time').eq('id', slotId).single(),
+        supabaseAdmin.from('merchants').select('shop_name, locale, subscription_status').eq('id', merchantId).single(),
+      ]);
+      if (cancelSlot?.client_phone && cancelMerchant) {
+        sendBookingSms(supabaseAdmin, {
+          merchantId,
+          slotId,
+          phone: cancelSlot.client_phone,
+          shopName: cancelMerchant.shop_name,
+          date: cancelSlot.slot_date,
+          time: cancelSlot.start_time,
+          smsType: 'booking_cancelled',
+          locale: cancelMerchant.locale || 'fr',
+          subscriptionStatus: cancelMerchant.subscription_status,
+        }).catch(() => {});
+      }
+    }
+
     // If clearing a slot (client_name → null), also clear its filler slots
     const clearFillersPromise = (client_name === null || client_name === '')
       ? supabaseAdmin
@@ -288,8 +311,11 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur lors de la mise à jour' }, { status: 500 });
     }
 
-    // SMS confirmation when deposit is confirmed
-    if (deposit_confirmed === true) {
+    // SMS confirmation when deposit is confirmed OR merchant checks "send SMS"
+    const smsType: 'confirmation_deposit' | 'confirmation_no_deposit' | null =
+      deposit_confirmed === true ? 'confirmation_deposit' : send_sms ? 'confirmation_no_deposit' : null;
+
+    if (smsType) {
       const [{ data: smsSlot }, { data: smsMerchant }] = await Promise.all([
         supabaseAdmin.from('merchant_planning_slots').select('client_phone, slot_date, start_time').eq('id', slotId).single(),
         supabaseAdmin.from('merchants').select('shop_name, locale, subscription_status').eq('id', merchantId).single(),
@@ -302,7 +328,7 @@ export async function PATCH(request: NextRequest) {
           shopName: smsMerchant.shop_name,
           date: smsSlot.slot_date,
           time: smsSlot.start_time,
-          smsType: 'confirmation_deposit',
+          smsType,
           locale: smsMerchant.locale || 'fr',
           subscriptionStatus: smsMerchant.subscription_status,
         }).catch(() => {});

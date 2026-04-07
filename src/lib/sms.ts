@@ -8,7 +8,7 @@ const PAID_STATUSES = ['active', 'canceling', 'past_due'];
 
 // ── Templates SMS (< 160 chars, vouvoiement client-facing) ──
 
-export type SmsType = 'reminder_j1' | 'confirmation_no_deposit' | 'confirmation_deposit' | 'birthday' | 'referral_reward' | 'booking_moved';
+export type SmsType = 'reminder_j1' | 'confirmation_no_deposit' | 'confirmation_deposit' | 'birthday' | 'referral_reward' | 'booking_moved' | 'booking_cancelled';
 
 const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => string>> = {
   fr: {
@@ -18,6 +18,7 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     birthday: (shop, gift) => `Joyeux anniversaire ! ${shop} vous offre : ${gift}. Rendez-vous vite pour en profiter !`,
     referral_reward: (shop, reward) => `Bonne nouvelle ! Votre filleul(e) a utilisé sa récompense. Votre cadeau vous attend chez ${shop} : ${reward}`,
     booking_moved: (shop, date, time) => `Votre RDV chez ${shop} a été déplacé au ${date} à ${time}. À bientôt !`,
+    booking_cancelled: (shop, date, time) => `Votre RDV chez ${shop} le ${date} à ${time} a été annulé. Contactez-nous pour reprogrammer.`,
   },
   en: {
     reminder_j1: (shop, time) => `Reminder: appointment tomorrow at ${time} at ${shop}. Earn loyalty points on your visit!`,
@@ -26,6 +27,7 @@ const SMS_TEMPLATES: Record<string, Record<SmsType, (...args: string[]) => strin
     birthday: (shop, gift) => `Happy birthday! ${shop} offers you: ${gift}. Visit us to claim it!`,
     referral_reward: (shop, reward) => `Great news! Your referral used their reward. Your gift is waiting at ${shop}: ${reward}`,
     booking_moved: (shop, date, time) => `Your appointment at ${shop} has been moved to ${date} at ${time}. See you soon!`,
+    booking_cancelled: (shop, date, time) => `Your appointment at ${shop} on ${date} at ${time} has been cancelled. Contact us to reschedule.`,
   },
 };
 
@@ -61,7 +63,8 @@ function isTypeEnabled(smsType: SmsType, config: GlobalSmsConfig): boolean {
     case 'reminder_j1': return config.reminder_enabled;
     case 'confirmation_no_deposit':
     case 'confirmation_deposit':
-    case 'booking_moved': return config.confirmation_enabled;
+    case 'booking_moved':
+    case 'booking_cancelled': return config.confirmation_enabled;
     case 'birthday': return config.birthday_enabled;
     case 'referral_reward': return config.referral_enabled;
   }
@@ -190,6 +193,7 @@ export async function sendBookingSms(supabase: SupabaseClient, params: SendSmsPa
       case 'confirmation_no_deposit':
       case 'confirmation_deposit':
       case 'booking_moved':
+      case 'booking_cancelled':
         message = template(shopName, fmtDate, time || '');
         break;
       case 'birthday':

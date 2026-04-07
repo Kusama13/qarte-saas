@@ -7,7 +7,6 @@ import { setPhoneCookie } from '@/lib/customer-auth';
 import { checkRateLimit, getClientIP, rateLimitResponse } from '@/lib/rate-limit';
 import { sendBookingNotificationEmail } from '@/lib/email';
 import { sendMerchantPush } from '@/lib/merchant-push';
-import { sendBookingSms } from '@/lib/sms';
 import type { MerchantCountry } from '@/types';
 import logger from '@/lib/logger';
 
@@ -347,20 +346,8 @@ export async function POST(request: NextRequest) {
       tag: 'qarte-merchant-booking',
     }).catch(() => {});
 
-    // 10c. SMS confirmation to client (no deposit = send immediately)
-    if (!hasDeposit) {
-      sendBookingSms(supabaseAdmin, {
-        merchantId: merchant_id,
-        slotId: targetSlot.id,
-        phone: formattedPhone,
-        shopName: merchant.shop_name,
-        date: targetSlot.slot_date,
-        time: targetSlot.start_time,
-        smsType: 'confirmation_no_deposit',
-        locale: merchant.locale || 'fr',
-        subscriptionStatus: merchant.subscription_status,
-      }).catch(() => {});
-    }
+    // 10c. SMS confirmation to client — only for deposit bookings (sent after merchant validates)
+    // No-deposit bookings: client sees confirmation in BookingModal + gets J-1 reminder SMS
 
     // 11. Set phone cookie + return
     const jsonResponse = NextResponse.json({
