@@ -224,7 +224,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Config dans `/dashboard/program` (ExtrasSection)
 
 ### Push Notifications
-- Programmees (10h/18h), manuelles, automations (welcome, close_to_reward, reward_ready, inactive, reward_reminder, events)
+- Programmees (10h/19h), manuelles, automations (welcome, close_to_reward, reward_ready, inactive, reward_reminder, events)
 - Batched 50, pause 100ms entre batches
 
 ### Support Multi-Pays
@@ -396,7 +396,7 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - **Pas de toggles merchant** — gere uniquement par l'admin
 - **Reserve aux abonnes actifs** (pas trial) — message CTA dans dashboard + planning settings
 - **7 types de SMS** :
-  - `reminder_j1` — rappel la veille a 18h (cron evening)
+  - `reminder_j1` — rappel la veille a 19h (cron evening)
   - `confirmation_no_deposit` — confirmation manuelle par le merchant (toggle dans BookingDetailsModal, opt-in)
   - `confirmation_deposit` — confirmation apres validation acompte par le merchant (`PATCH /api/planning`)
   - `booking_moved` — notification client quand le merchant deplace un RDV (toggle dans move overlay, opt-in)
@@ -559,7 +559,7 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 | `/api/cron/morning` | 09:00 UTC | Emails : essai, onboarding, milestones, inactifs, reactivation, lifecycle, pending. Prefetch unique merchants/emails/tracking — filtres JS par section |
 | `/api/cron/morning-jobs` | 09:15 UTC | Vouchers anniversaire (timezone-aware) + SMS anniversaire + auto-liberation acomptes expires |
 | `/api/cron/morning-push` | 09:30 UTC | Push 10h (scheduled), push automations (inactifs/recompense/events), push trial reminders |
-| `/api/cron/evening` | 17:00 UTC | Push 18h (timezone-aware) + check acomptes expires + SMS rappel J-1 |
+| `/api/cron/evening` | 17:00 UTC | Push 19h (timezone-aware) + check acomptes expires + SMS rappel J-1 |
 | `/api/cron/reactivation` | — | Deprecie (integre dans morning, section 7) |
 
 ### Anti-spam

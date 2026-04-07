@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
             merchant_id: push.merchant_id,
             title: push.title,
             body: push.body,
-            filter_type: 'scheduled_18h',
+            filter_type: 'scheduled_19h',
             sent_count: sentCount,
             failed_count: failedCount,
           });
@@ -268,7 +268,7 @@ export async function GET(request: NextRequest) {
 
     if (depositPushes.length > 0) await Promise.allSettled(depositPushes);
 
-    // ── SMS REMINDERS (J-1, 18h) — cap 200 SMS/run ──
+    // ── SMS REMINDERS (J-1, 19h) — cap 200 SMS/run ──
     const SMS_CAP = 200;
     const smsResults = { sent: 0, skipped: 0, errors: 0 };
 

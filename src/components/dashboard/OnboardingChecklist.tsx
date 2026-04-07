@@ -7,7 +7,7 @@ import {
   Check, Sparkles, X, Heart, Globe, CalendarDays,
   Gift, ImageIcon, Share2, MapPin, Camera, QrCode,
   Users, UserPlus, Cake, Calendar, ChevronDown, ArrowRight,
-  Scissors, FileText,
+  Scissors, FileText, CreditCard,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMerchant } from '@/contexts/MerchantContext';
@@ -18,9 +18,11 @@ import { sparkleGrand, sparkleMedium, sparkleSubtle } from '@/lib/sparkles';
 interface Step {
   id: string;
   label: string;
+  hint?: string;
   done: boolean;
   href: string;
   icon: React.ElementType;
+  highlight?: boolean;
 }
 
 interface Group {
@@ -184,6 +186,7 @@ export default function OnboardingChecklist() {
               { id: 'slots', label: t('stepSlots'), done: slotsCount >= 1, href: '/dashboard/planning', icon: Calendar },
               { id: 'booking', label: t('stepBooking'), done: merchant.auto_booking_enabled === true, href: '/dashboard/planning', icon: Calendar },
               { id: 'first_booking', label: t('stepFirstBooking'), done: bookedCount >= 1, href: '/dashboard/planning', icon: Users },
+              { id: 'subscribe_sms', label: t('stepSubscribe'), hint: t('stepSubscribeHint'), done: false, href: '/dashboard/subscription', icon: CreditCard, highlight: true },
             ],
           },
         ];
@@ -269,7 +272,7 @@ export default function OnboardingChecklist() {
   if (dismissed || loading) return null;
 
 
-  const allSteps = groups.flatMap(g => g.steps);
+  const allSteps = groups.flatMap(g => g.steps).filter(s => !s.highlight);
   const completedCount = allSteps.filter(s => s.done).length;
   const totalCount = allSteps.length;
   const globalProgress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
@@ -323,10 +326,11 @@ export default function OnboardingChecklist() {
       <div className="px-4 pb-4 md:px-6 md:pb-6 pt-2 space-y-2">
         {groups.map((group) => {
           const isExpanded = expandedGroup === group.id;
-          const doneCount = group.steps.filter(s => s.done).length;
-          const isComplete = doneCount === group.steps.length;
-          const nextStep = group.steps.find(s => !s.done);
-          const progress = doneCount / group.steps.length;
+          const trackableSteps = group.steps.filter(s => !s.highlight);
+          const doneCount = trackableSteps.filter(s => s.done).length;
+          const isComplete = doneCount === trackableSteps.length;
+          const nextStep = trackableSteps.find(s => !s.done);
+          const progress = trackableSteps.length > 0 ? doneCount / trackableSteps.length : 0;
 
           // Color map for progress ring
           const ringColor = group.id === 'loyalty' ? '#7C3AED' : group.id === 'vitrine' ? '#6366F1' : '#06B6D4';
@@ -366,10 +370,10 @@ export default function OnboardingChecklist() {
 
                 {/* Progress ring + fraction */}
                 {isComplete ? (
-                  <span className="text-xs font-bold text-emerald-500 shrink-0">{doneCount}/{group.steps.length}</span>
+                  <span className="text-xs font-bold text-emerald-500 shrink-0">{doneCount}/{trackableSteps.length}</span>
                 ) : (
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs font-bold text-gray-500 tabular-nums">{doneCount}/{group.steps.length}</span>
+                    <span className="text-xs font-bold text-gray-500 tabular-nums">{doneCount}/{trackableSteps.length}</span>
                     <CircularProgressRing size={24} progress={progress} color={ringColor} />
                   </div>
                 )}
@@ -393,6 +397,28 @@ export default function OnboardingChecklist() {
                     <div className="pt-1 pb-1 pl-11 pr-3 space-y-0.5">
                       {group.steps.map((step) => {
                         const isNext = !step.done && step.id === nextStep?.id;
+
+                        if (step.highlight) {
+                          return (
+                            <Link
+                              key={step.id}
+                              href={step.href}
+                              className="flex items-center gap-2.5 py-2.5 px-3 mt-1 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 hover:shadow-md transition-all duration-200 group/step"
+                            >
+                              <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shrink-0 shadow-sm">
+                                <step.icon className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs font-semibold text-amber-900">{step.label}</span>
+                                {step.hint && (
+                                  <p className="text-[10px] text-amber-600/80 leading-tight mt-0.5">{step.hint}</p>
+                                )}
+                              </div>
+                              <ArrowRight className="w-3.5 h-3.5 text-amber-400 group-hover/step:translate-x-0.5 transition-transform shrink-0" />
+                            </Link>
+                          );
+                        }
+
                         return (
                           <Link
                             key={step.id}

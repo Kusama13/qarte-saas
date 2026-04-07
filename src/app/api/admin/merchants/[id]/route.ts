@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
 import logger from '@/lib/logger';
+import { z } from 'zod';
+
+const patchSchema = z.union([
+  z.object({ action: z.literal('restore') }),
+  z.object({ no_contact: z.boolean().optional(), admin_notes: z.string().nullable().optional() }).refine(
+    (d) => d.no_contact !== undefined || d.admin_notes !== undefined,
+    { message: 'Au moins un champ requis' }
+  ),
+]);
 
 // GET - Récupérer toutes les données d'un merchant (H5: service_role pour bypasser RLS)
 export async function GET(
@@ -199,14 +208,32 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const updates: Record<string, unknown> = {};
-
-    if (typeof body.no_contact === 'boolean') updates.no_contact = body.no_contact;
-    if (typeof body.admin_notes === 'string') updates.admin_notes = body.admin_notes || null;
-
-    if (Object.keys(updates).length === 0) {
-      return NextResponse.json({ error: 'Aucun champ à mettre à jour' }, { status: 400 });
+    const parsed = patchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid data', details: parsed.error.flatten() }, { status: 400 });
     }
+
+    // Restore soft-deleted merchant
+    if ('action' in parsed.data && parsed.data.action === 'restore') {
+      const { data, error } = await supabaseAdmin
+        .from('merchants')
+        .update({ deleted_at: null, updated_at: new Date().toISOString() })
+        .eq('id', merchantId)
+        .not('deleted_at', 'is', null)
+        .select('id, shop_name')
+        .single();
+
+      if (error || !data) {
+        return NextResponse.json({ error: 'Merchant introuvable ou non supprimé' }, { status: 404 });
+      }
+
+      return NextResponse.json({ success: true, message: `"${data.shop_name}" restauré` });
+    }
+
+    const updates: Record<string, unknown> = {};
+    const fields = parsed.data as { no_contact?: boolean; admin_notes?: string | null };
+    if (fields.no_contact !== undefined) updates.no_contact = fields.no_contact;
+    if (fields.admin_notes !== undefined) updates.admin_notes = fields.admin_notes || null;
 
     updates.updated_at = new Date().toISOString();
 

@@ -1038,6 +1038,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 099 | admin_metriques_rpc | RPC `get_merchants_with_services()` + `get_merchants_with_photos()` (DISTINCT) |
 | 100 | admin_merchants_data_rpc | RPC `get_counts_per_merchant(p_table)` avec whitelist + REVOKE, `get_pending_visits_per_merchant()`, `get_planning_summary_per_merchant()` |
 | 101 | sms_booking_cancelled_type | Ajout type `booking_cancelled` au CHECK sms_type |
+| 102 | prevent_merchant_hard_delete | Trigger BEFORE DELETE sur merchants : bloque hard delete si `deleted_at IS NULL` (force soft-delete), autorise si deja soft-deleted (purge). Fonction `prevent_merchant_hard_delete()` |
 
 ---
 

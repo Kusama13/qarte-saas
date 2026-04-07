@@ -7,7 +7,7 @@
 Les 3 crons tournent deja — verifier qu'ils ne fail pas :
 
 - [ ] `/api/cron/morning` (09:00 UTC) — emails trial, push 10h, vouchers anniversaire
-- [ ] `/api/cron/evening` (17:00 UTC) — push 18h
+- [ ] `/api/cron/evening` (17:00 UTC) — push 19h
 - [ ] `/api/cron/reactivation` (10:00 UTC) — win-back
 
 **Comment verifier** : Vercel Functions logs ou `/admin` pour voir si les emails partent.

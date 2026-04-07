@@ -234,7 +234,7 @@
     "smsHeader": "Qarte SMS",
     "smsHeaderSub": "Automatic",
     "smsMsg1": "Reminder: Appointment tomorrow at 2:30 PM at My Salon. See you soon!",
-    "smsMsg1Time": "6:00 PM",
+    "smsMsg1Time": "7:00 PM",
     "smsMsg2": "Booking confirmed at My Salon on 04/08 at 10:00 AM.",
     "smsMsg2Time": "10:02 AM",
     "smsMsg3": "Happy birthday! My Salon offers you -20%.",
@@ -1873,7 +1873,9 @@
     "stepPlanning": "Enable your calendar",
     "stepSlots": "Create time slots",
     "stepBooking": "Enable online booking",
-    "stepFirstBooking": "Get your first booking"
+    "stepFirstBooking": "Get your first booking",
+    "stepSubscribe": "Subscribe to unlock SMS reminders",
+    "stepSubscribeHint": "Your clients will never miss an appointment again"
   },
   "milestones": {
     "vitrine_live": {

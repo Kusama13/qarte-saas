@@ -148,6 +148,7 @@ export interface Merchant {
   signup_source: string | null;
   locale: 'fr' | 'en';
   first_feature_choice: 'loyalty' | 'vitrine' | null;
+  deleted_at: string | null;
 }
 
 export interface PlanningSlotService {

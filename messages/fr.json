@@ -234,7 +234,7 @@
     "smsHeader": "SMS Qarte",
     "smsHeaderSub": "Automatique",
     "smsMsg1": "Rappel : RDV demain à 14h30 chez Mon Salon. À bientôt !",
-    "smsMsg1Time": "18h00",
+    "smsMsg1Time": "19h00",
     "smsMsg2": "RDV confirmé chez Mon Salon le 08/04 à 10h00.",
     "smsMsg2Time": "10h02",
     "smsMsg3": "Joyeux anniversaire ! Mon Salon vous offre -20%.",
@@ -1873,7 +1873,9 @@
     "stepPlanning": "Active ton planning",
     "stepSlots": "Crée tes créneaux",
     "stepBooking": "Active la résa en ligne",
-    "stepFirstBooking": "Reçois ta 1ère résa"
+    "stepFirstBooking": "Reçois ta 1ère résa",
+    "stepSubscribe": "Abonne-toi pour les rappels SMS",
+    "stepSubscribeHint": "Tes clients ne rateront plus jamais un RDV"
   },
   "milestones": {
     "vitrine_live": {
