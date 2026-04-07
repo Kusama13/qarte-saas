@@ -124,7 +124,6 @@ export default function AdminDashboardPage() {
     canceledMerchants: 0,
     totalCustomers: 0,
     weeklyActiveMerchants: 0,
-    activationRate: 0,
     cagnotteMerchants: 0,
     mrr: 0,
   });
@@ -218,26 +217,18 @@ export default function AdminDashboardPage() {
     const merchantsWithAnyVisit = new Set<string>();
     const lastVisitMap = new Map<string, string>();
     const scans7dMap = new Map<string, number>();
-    const scans30dSet = new Set<string>();
 
     (allVisits || []).forEach((v: { merchant_id: string; visited_at: string }) => {
       merchantsWithAnyVisit.add(v.merchant_id);
       const visitDate = new Date(v.visited_at);
 
-      // Last visit per merchant
       const existing = lastVisitMap.get(v.merchant_id);
       if (!existing || visitDate > new Date(existing)) {
         lastVisitMap.set(v.merchant_id, v.visited_at);
       }
 
-      // Scans last 7 days
       if (visitDate >= sevenDaysAgo) {
         scans7dMap.set(v.merchant_id, (scans7dMap.get(v.merchant_id) || 0) + 1);
-      }
-
-      // Scans last 30 days (for activation rate)
-      if (visitDate >= thirtyDaysAgo) {
-        scans30dSet.add(v.merchant_id);
       }
     });
 
@@ -246,11 +237,6 @@ export default function AdminDashboardPage() {
     const active = merchants.filter((m: Merchant) => m.subscription_status === 'active' || m.subscription_status === 'canceling' || m.subscription_status === 'past_due');
     const canceled = merchants.filter((m: Merchant) => m.subscription_status === 'canceled');
     const weeklyActive = new Set([...scans7dMap.keys()].filter(id => merchants.some((m: Merchant) => m.id === id)));
-
-    // Activation rate: % of merchants created in last 30 days who have ≥1 scan
-    const recentCreated = merchants.filter((m: Merchant) => new Date(m.created_at) >= thirtyDaysAgo);
-    const recentActivated = recentCreated.filter((m: Merchant) => scans30dSet.has(m.id));
-    const activationRate = recentCreated.length > 0 ? Math.round((recentActivated.length / recentCreated.length) * 100) : 0;
 
     const cagnotte = merchants.filter((m: Merchant) => m.loyalty_mode === 'cagnotte');
 
@@ -266,7 +252,6 @@ export default function AdminDashboardPage() {
       canceledMerchants: canceled.length,
       totalCustomers: totalCustomers || 0,
       weeklyActiveMerchants: weeklyActive.size,
-      activationRate,
       cagnotteMerchants: cagnotte.length,
       mrr,
     });

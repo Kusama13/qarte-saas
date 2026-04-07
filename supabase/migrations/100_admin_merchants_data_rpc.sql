@@ -4,12 +4,21 @@
 CREATE OR REPLACE FUNCTION get_counts_per_merchant(p_table TEXT)
 RETURNS TABLE(merchant_id UUID, cnt BIGINT) AS $$
 BEGIN
+  -- Whitelist: only allowed tables
+  IF p_table NOT IN ('merchant_services', 'merchant_photos', 'vouchers', 'redemptions', 'referrals') THEN
+    RAISE EXCEPTION 'Table not allowed: %', p_table;
+  END IF;
   RETURN QUERY EXECUTE format(
     'SELECT merchant_id, COUNT(*)::BIGINT as cnt FROM %I GROUP BY merchant_id',
     p_table
   );
 END;
 $$ LANGUAGE plpgsql STABLE;
+
+-- Restreindre l'acces aux fonctions admin (service_role uniquement)
+REVOKE EXECUTE ON FUNCTION get_counts_per_merchant(TEXT) FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION get_pending_visits_per_merchant() FROM anon, authenticated;
+REVOKE EXECUTE ON FUNCTION get_planning_summary_per_merchant() FROM anon, authenticated;
 
 -- Pending visits count per merchant
 CREATE OR REPLACE FUNCTION get_pending_visits_per_merchant()
