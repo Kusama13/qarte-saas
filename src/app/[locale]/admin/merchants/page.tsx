@@ -707,7 +707,7 @@ export default function AdminMerchantsPage() {
             </button>
           ))}
           <div className="w-px h-6 bg-gray-200 flex-shrink-0 hidden sm:block self-center" />
-          {(['all', 'FR', 'BE', 'CH', 'LU', 'US', 'GB', 'CA', 'AU', 'ES', 'IT'] as const).map((c) => (
+          {(['all', 'FR', 'BE', 'CH'] as const).map((c) => (
             <button
               key={c}
               onClick={() => setCountryFilter(c)}
