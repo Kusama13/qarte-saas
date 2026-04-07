@@ -77,6 +77,8 @@ export default function MetriquesPage() {
   // Revenue metrics
   const [revenue, setRevenue] = useState({
     mrr: 0,
+    monthlyMrr: 0,
+    annualMrr: 0,
     activeSubscribers: 0,
     monthlyCount: 0,
     annualCount: 0,
@@ -229,6 +231,8 @@ export default function MetriquesPage() {
       const churned = merchants.filter(m => m.subscription_status === 'canceled').length;
       const total = merchants.length;
       const mrr = Math.round(activeMerchants.reduce((sum, m) => sum + getMerchantMonthlyPrice(m), 0));
+      const monthlyMrr = Math.round(activeMerchants.filter(m => m.billing_interval !== 'annual').reduce((sum, m) => sum + getMerchantMonthlyPrice(m), 0));
+      const annualMrr = Math.round(activeMerchants.filter(m => m.billing_interval === 'annual').reduce((sum, m) => sum + getMerchantMonthlyPrice(m), 0));
       const churnRate = (active + churned) > 0 ? Math.round((churned / (active + churned)) * 100) : 0;
 
       // Trial-to-paid rate (compute early for projection)
@@ -279,6 +283,8 @@ export default function MetriquesPage() {
 
       setRevenue({
         mrr,
+        monthlyMrr,
+        annualMrr,
         activeSubscribers: active,
         monthlyCount,
         annualCount,
@@ -685,14 +691,14 @@ export default function MetriquesPage() {
                 <p className="text-xs font-medium text-gray-500">Mensuel</p>
                 <p className="text-lg font-bold text-gray-900">{revenue.monthlyCount}</p>
               </div>
-              <p className="text-sm font-semibold text-[#5167fc]">{revenue.mrr}€/mois</p>
+              <p className="text-sm font-semibold text-[#5167fc]">{revenue.monthlyMrr}€/mois</p>
             </div>
             <div className="bg-white/80 px-4 py-3 rounded-xl border border-gray-100 shadow-sm flex items-center justify-between">
               <div>
                 <p className="text-xs font-medium text-gray-500">Annuel</p>
                 <p className="text-lg font-bold text-gray-900">{revenue.annualCount}</p>
               </div>
-              <p className="text-sm font-semibold text-purple-600">{Math.round(revenue.annualCount * 20)}€/mois</p>
+              <p className="text-sm font-semibold text-purple-600">{revenue.annualMrr}€/mois</p>
             </div>
           </div>
         )}
