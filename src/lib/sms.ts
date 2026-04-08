@@ -57,14 +57,15 @@ export async function getGlobalSmsConfig(supabase: SupabaseClient): Promise<Glob
   };
 }
 
-// Map SMS type to its global toggle key
+// Map SMS type to its global toggle key.
+// confirmation_* / booking_moved / booking_cancelled are merchant opt-in (toggle in UI) — always allowed here.
 function isTypeEnabled(smsType: SmsType, config: GlobalSmsConfig): boolean {
   switch (smsType) {
     case 'reminder_j1': return config.reminder_enabled;
     case 'confirmation_no_deposit':
     case 'confirmation_deposit':
     case 'booking_moved':
-    case 'booking_cancelled': return config.confirmation_enabled;
+    case 'booking_cancelled': return true;
     case 'birthday': return config.birthday_enabled;
     case 'referral_reward': return config.referral_enabled;
   }
