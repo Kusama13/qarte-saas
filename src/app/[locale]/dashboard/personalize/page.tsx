@@ -99,15 +99,11 @@ function PersonalizeContent() {
       if (updateError) throw updateError;
 
       refetch().catch(() => {});
-      if (from === 'program') {
-        router.push('/dashboard/program');
-      } else if (from === 'public-page') {
-        router.push('/dashboard/public-page');
-      } else {
-        router.push('/dashboard/program');
-      }
+      const destination = from === 'public-page' ? '/dashboard/public-page' : '/dashboard/program';
+      router.push(destination);
     } catch (error) {
       console.error('Error saving:', error);
+    } finally {
       setSaving(false);
     }
   };

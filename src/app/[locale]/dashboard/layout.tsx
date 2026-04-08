@@ -97,6 +97,7 @@ function DashboardLayoutContent({
   );
 
   const shouldRedirect = !loading
+    && !!merchant
     && (trialStatus.isInGracePeriod || trialStatus.isFullyExpired)
     && pathname !== '/dashboard/subscription';
 
