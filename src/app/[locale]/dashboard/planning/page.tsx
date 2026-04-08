@@ -136,7 +136,7 @@ export default function PlanningDashboard() {
     setDragOverDate(null);
   };
 
-  const handleConfirmDeposit = async (slot: PlanningSlot) => {
+  const handleConfirmDeposit = async (slot: PlanningSlot, sendSms = false) => {
     if (!merchant) return;
     try {
       const res = await fetch('/api/planning', {
@@ -147,6 +147,7 @@ export default function PlanningDashboard() {
           merchantId: merchant.id,
           client_name: slot.client_name,
           deposit_confirmed: true,
+          ...(sendSms && { send_sms: true }),
         }),
       });
       if (!res.ok) { setDepositError(t('saveError')); return; }
@@ -691,6 +692,7 @@ export default function PlanningDashboard() {
           onEditSlot={openEditSlot}
           onConfirmDeposit={handleConfirmDeposit}
           onCancelDeposit={handleCancelDeposit}
+          subscriptionStatus={merchant?.subscription_status}
           deepLinkSlotId={deepLinkSlotId}
           onDeepLinkHandled={() => setDeepLinkSlotId(null)}
         />

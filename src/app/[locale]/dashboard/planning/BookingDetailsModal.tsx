@@ -39,7 +39,7 @@ interface BookingDetailsModalProps {
   onDelete: (slotId: string) => Promise<void>;
   onShiftSlot: (slotId: string, newTime: string, newDate?: string, force?: boolean, sendSms?: boolean) => Promise<{ success: boolean; error?: string }>;
   onRefreshSlots: () => Promise<void>;
-  onConfirmDeposit?: (slot: PlanningSlot) => void;
+  onConfirmDeposit?: (slot: PlanningSlot, sendSms: boolean) => void;
   onCancelDeposit?: (slot: PlanningSlot) => void;
   onGoBack: () => void;
   onClose: () => void;
@@ -97,6 +97,7 @@ export default function BookingDetailsModal({
 
   const isPaid = subscriptionStatus === 'active' || subscriptionStatus === 'canceling' || subscriptionStatus === 'past_due';
   const [sendSms, setSendSms] = useState(false);
+  const [depositSendSms, setDepositSendSms] = useState(false);
 
   const [showAllServices, setShowAllServices] = useState(false);
   const [moveSendSms, setMoveSendSms] = useState(false);
@@ -736,14 +737,43 @@ export default function BookingDetailsModal({
 
           {/* Confirm / cancel deposit */}
           {slot.deposit_confirmed === false && onConfirmDeposit && (
-            <div className="flex justify-center">
-              <button
-                onClick={() => { onConfirmDeposit(slot); onClose(); }}
-                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
-              >
-                <Check className="w-3.5 h-3.5" />
-                {t('confirmDeposit')}
-              </button>
+            <div className="space-y-2">
+              {slot.client_phone && (
+                <button
+                  type="button"
+                  onClick={() => isPaid && setDepositSendSms(s => !s)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl border transition-all ${
+                    !isPaid
+                      ? 'border-gray-100 bg-gray-50 cursor-not-allowed'
+                      : depositSendSms
+                        ? 'border-emerald-200 bg-emerald-50'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${depositSendSms ? 'bg-emerald-100' : 'bg-gray-100'}`}>
+                    <MessageSquare className={`w-3.5 h-3.5 ${depositSendSms ? 'text-emerald-600' : 'text-gray-400'}`} />
+                  </div>
+                  <p className={`flex-1 text-left text-xs font-semibold ${depositSendSms ? 'text-emerald-700' : 'text-gray-700'}`}>
+                    {t('sendSmsConfirmation')}
+                  </p>
+                  {isPaid ? (
+                    <div className={`shrink-0 w-9 h-5 rounded-full transition-colors relative ${depositSendSms ? 'bg-emerald-600' : 'bg-gray-300'}`}>
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${depositSendSms ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                    </div>
+                  ) : (
+                    <span className="shrink-0 text-[9px] font-bold text-gray-400 bg-gray-200 px-1.5 py-0.5 rounded-md uppercase tracking-wide">Pro</span>
+                  )}
+                </button>
+              )}
+              <div className="flex justify-center">
+                <button
+                  onClick={() => { onConfirmDeposit(slot, depositSendSms); onClose(); }}
+                  className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  {t('confirmDeposit')}
+                </button>
+              </div>
             </div>
           )}
           {slot.deposit_confirmed === true && onCancelDeposit && (

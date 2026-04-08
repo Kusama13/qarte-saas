@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Loader2, MessageSquare, Check } from 'lucide-react';
+import { Loader2, MessageSquare } from 'lucide-react';
 
 interface MerchantSms {
   merchant_id: string;
@@ -20,12 +20,6 @@ interface SmsData {
   totalFailed: number;
   totalCost: number;
   merchants: MerchantSms[];
-  globalConfig: {
-    reminder_enabled: boolean;
-    confirmation_enabled: boolean;
-    birthday_enabled: boolean;
-    referral_enabled: boolean;
-  };
 }
 
 function MetricCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
@@ -41,8 +35,6 @@ function MetricCard({ label, value, sub }: { label: string; value: string | numb
 export default function AdminSmsPage() {
   const [data, setData] = useState<SmsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
 
   const fetchData = useCallback(async () => {
     const res = await fetch('/api/admin/sms');
@@ -54,26 +46,6 @@ export default function AdminSmsPage() {
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleToggle = async (field: 'reminder_enabled' | 'confirmation_enabled' | 'birthday_enabled' | 'referral_enabled') => {
-    if (!data) return;
-    const newConfig = { ...data.globalConfig, [field]: !data.globalConfig[field] };
-    setData({ ...data, globalConfig: newConfig });
-    setSaving(true);
-    setSaved(false);
-
-    const res = await fetch('/api/admin/sms', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newConfig),
-    });
-
-    setSaving(false);
-    if (res.ok) {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    }
-  };
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-[60vh]"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>;
@@ -94,11 +66,6 @@ export default function AdminSmsPage() {
           <h1 className="text-xl font-bold text-gray-900">SMS</h1>
           <p className="text-xs text-gray-400">Suivi et configuration des SMS transactionnels</p>
         </div>
-        {saved && (
-          <span className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
-            <Check className="w-3 h-3" /> Enregistré
-          </span>
-        )}
       </div>
 
       {/* Metrics */}
@@ -107,80 +74,6 @@ export default function AdminSmsPage() {
         <MetricCard label="Ce mois" value={data.totalMonth} />
         <MetricCard label="Cette semaine" value={data.totalWeek} />
         <MetricCard label="Échecs" value={data.totalFailed} sub={data.totalCost > 0 ? `Coût total: ${data.totalCost.toFixed(2)}€` : undefined} />
-      </div>
-
-      {/* Global toggles */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 mb-6">
-        <h2 className="text-sm font-bold text-gray-800 mb-3">Toggles globaux</h2>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-700">Rappels J-1 (18h)</p>
-              <p className="text-[11px] text-gray-400">SMS de rappel la veille du RDV</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={data.globalConfig.reminder_enabled}
-              onClick={() => handleToggle('reminder_enabled')}
-              disabled={saving}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${data.globalConfig.reminder_enabled ? 'bg-emerald-500' : 'bg-gray-300'} ${saving ? 'opacity-50' : ''}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${data.globalConfig.reminder_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
-          <div className="border-t border-gray-100" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-700">Confirmations et déplacements</p>
-              <p className="text-[11px] text-gray-400">SMS de confirmation après réservation, validation acompte ou déplacement de RDV</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={data.globalConfig.confirmation_enabled}
-              onClick={() => handleToggle('confirmation_enabled')}
-              disabled={saving}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${data.globalConfig.confirmation_enabled ? 'bg-emerald-500' : 'bg-gray-300'} ${saving ? 'opacity-50' : ''}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${data.globalConfig.confirmation_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
-          <div className="border-t border-gray-100" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-700">Anniversaires</p>
-              <p className="text-[11px] text-gray-400">SMS de vœux + cadeau anniversaire au client</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={data.globalConfig.birthday_enabled}
-              onClick={() => handleToggle('birthday_enabled')}
-              disabled={saving}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${data.globalConfig.birthday_enabled ? 'bg-emerald-500' : 'bg-gray-300'} ${saving ? 'opacity-50' : ''}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${data.globalConfig.birthday_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
-          <div className="border-t border-gray-100" />
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-700">Récompenses parrainage</p>
-              <p className="text-[11px] text-gray-400">SMS au parrain quand son filleul utilise sa récompense</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={data.globalConfig.referral_enabled}
-              onClick={() => handleToggle('referral_enabled')}
-              disabled={saving}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none ${data.globalConfig.referral_enabled ? 'bg-emerald-500' : 'bg-gray-300'} ${saving ? 'opacity-50' : ''}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${data.globalConfig.referral_enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* Per-merchant breakdown */}
