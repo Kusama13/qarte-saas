@@ -1852,6 +1852,9 @@
   },
   "onboarding": {
     "close": "Close",
+    "dismissConfirm": "You still have {count} step{count, plural, one {} other {s}} left. Close anyway?",
+    "dismissYes": "Yes, close",
+    "dismissNo": "Continue",
     "launchTitle": "Set up your business",
     "completed": "completed",
     "allDoneTitle": "All set!",

@@ -1852,6 +1852,9 @@
   },
   "onboarding": {
     "close": "Fermer",
+    "dismissConfirm": "Il te reste {count} étape{count, plural, one {} other {s}}. Tu veux vraiment fermer ?",
+    "dismissYes": "Oui, fermer",
+    "dismissNo": "Continuer",
     "launchTitle": "Lance ton activité",
     "completed": "complétées",
     "allDoneTitle": "Tout est prêt !",
