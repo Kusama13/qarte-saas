@@ -22,7 +22,7 @@ interface Step {
   done: boolean;
   href: string;
   icon: React.ElementType;
-  highlight?: boolean;
+
 }
 
 interface Group {
@@ -186,7 +186,6 @@ export default function OnboardingChecklist() {
               { id: 'slots', label: t('stepSlots'), done: slotsCount >= 1, href: '/dashboard/planning', icon: Calendar },
               { id: 'booking', label: t('stepBooking'), done: merchant.auto_booking_enabled === true, href: '/dashboard/planning', icon: Calendar },
               { id: 'first_booking', label: t('stepFirstBooking'), done: bookedCount >= 1, href: '/dashboard/planning', icon: Users },
-              { id: 'subscribe_sms', label: t('stepSubscribe'), hint: t('stepSubscribeHint'), done: false, href: '/dashboard/subscription', icon: CreditCard, highlight: true },
             ],
           },
         ];
@@ -272,7 +271,7 @@ export default function OnboardingChecklist() {
   if (dismissed || loading) return null;
 
 
-  const allSteps = groups.flatMap(g => g.steps).filter(s => !s.highlight);
+  const allSteps = groups.flatMap(g => g.steps);
   const completedCount = allSteps.filter(s => s.done).length;
   const totalCount = allSteps.length;
   const globalProgress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
@@ -322,11 +321,28 @@ export default function OnboardingChecklist() {
         />
       </div>
 
+      {/* Subscribe CTA — always visible during trial */}
+      <div className="mx-4 md:mx-6 mb-3">
+        <Link
+          href="/dashboard/subscription"
+          className="flex items-center gap-3 p-3.5 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 hover:shadow-md transition-all duration-200 group/cta"
+        >
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shrink-0 shadow-sm">
+            <CreditCard className="w-4 h-4" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-semibold text-amber-900 block">{t('stepSubscribe')}</span>
+            <p className="text-[11px] text-amber-600/80 leading-tight mt-0.5">{t('stepSubscribeHint')}</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-amber-400 group-hover/cta:translate-x-0.5 transition-transform shrink-0" />
+        </Link>
+      </div>
+
       {/* Groups accordion */}
       <div className="px-4 pb-4 md:px-6 md:pb-6 pt-2 space-y-2">
         {groups.map((group) => {
           const isExpanded = expandedGroup === group.id;
-          const trackableSteps = group.steps.filter(s => !s.highlight);
+          const trackableSteps = group.steps;
           const doneCount = trackableSteps.filter(s => s.done).length;
           const isComplete = doneCount === trackableSteps.length;
           const nextStep = trackableSteps.find(s => !s.done);
@@ -397,27 +413,6 @@ export default function OnboardingChecklist() {
                     <div className="pt-1 pb-1 pl-11 pr-3 space-y-0.5">
                       {group.steps.map((step) => {
                         const isNext = !step.done && step.id === nextStep?.id;
-
-                        if (step.highlight) {
-                          return (
-                            <Link
-                              key={step.id}
-                              href={step.href}
-                              className="flex items-center gap-2.5 py-2.5 px-3 mt-1 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/60 hover:shadow-md transition-all duration-200 group/step"
-                            >
-                              <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shrink-0 shadow-sm">
-                                <step.icon className="w-3.5 h-3.5" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <span className="text-xs font-semibold text-amber-900">{step.label}</span>
-                                {step.hint && (
-                                  <p className="text-[10px] text-amber-600/80 leading-tight mt-0.5">{step.hint}</p>
-                                )}
-                              </div>
-                              <ArrowRight className="w-3.5 h-3.5 text-amber-400 group-hover/step:translate-x-0.5 transition-transform shrink-0" />
-                            </Link>
-                          );
-                        }
 
                         return (
                           <Link
