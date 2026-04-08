@@ -43,6 +43,7 @@ function PersonalizeContent() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const [initialized, setInitialized] = useState(false);
 
@@ -104,8 +105,12 @@ function PersonalizeContent() {
 
       if (updateError) throw updateError;
 
-      const destination = from === 'public-page' ? '/dashboard/public-page' : '/dashboard/program';
-      router.push(destination);
+      if (from) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      } else {
+        router.push('/dashboard/program');
+      }
     } catch (error) {
       console.error('Error saving:', error);
     } finally {
@@ -266,6 +271,11 @@ function PersonalizeContent() {
         >
           {saving ? (
             <Loader2 className="w-5 h-5 animate-spin" />
+          ) : saved ? (
+            <>
+              <Check className="w-5 h-5" />
+              {t('saveSuccess')}
+            </>
           ) : from ? (
             <>
               <Check className="w-5 h-5" />

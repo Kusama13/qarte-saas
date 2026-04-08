@@ -11,7 +11,6 @@ self.addEventListener('install', (event) => {
 // Activate event
 self.addEventListener('activate', (event) => {
   console.log('[SW] Service worker activated');
-  event.waitUntil(self.clients.claim());
 });
 
 // Push event - received a push notification

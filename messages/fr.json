@@ -818,6 +818,7 @@
     "addLogoHint": "JPG, PNG — max 500 Ko",
     "ambianceLabel": "Ambiance",
     "save": "Enregistrer",
+    "saveSuccess": "Enregistré !",
     "continue": "Continuer",
     "uploadError": "Erreur lors de l'upload, réessaie."
   },
