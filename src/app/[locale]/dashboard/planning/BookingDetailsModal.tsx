@@ -765,10 +765,18 @@ export default function BookingDetailsModal({
                   )}
                 </button>
               )}
-              <div className="flex justify-center">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  {t('save')}
+                </button>
                 <button
                   onClick={() => { onConfirmDeposit(slot, depositSendSms); onClose(); }}
-                  className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
                 >
                   <Check className="w-3.5 h-3.5" />
                   {t('confirmDeposit')}
@@ -787,29 +795,31 @@ export default function BookingDetailsModal({
               </button>
             </div>
           )}
-          <div className="flex justify-center gap-2 flex-wrap">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              {t('save')}
-            </button>
+          <div className="flex justify-center gap-2">
+            {slot.deposit_confirmed !== false && (
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {t('save')}
+              </button>
+            )}
             {slot.client_name && (
               <button
                 onClick={() => { setMoveDate(slot.slot_date); setMoveTime(''); setMoveError(null); setMoveMode(true); }}
                 disabled={saving}
-                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-violet-50 text-violet-700 text-xs font-bold hover:bg-violet-100 transition-colors disabled:opacity-50"
+                className="p-2.5 rounded-xl bg-violet-50 text-violet-700 hover:bg-violet-100 transition-colors disabled:opacity-50"
+                title={t('moveBooking')}
               >
                 <CalendarClock className="w-4 h-4" />
-                {t('moveBooking')}
               </button>
             )}
             <button
               onClick={() => slot.client_name ? setCancelMode(true) : onDelete(slot.id)}
               disabled={saving}
-              className="px-4 py-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+              className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
             >
               <Trash2 className="w-4 h-4" />
             </button>

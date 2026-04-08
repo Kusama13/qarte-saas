@@ -505,13 +505,22 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                         )}
                       </button>
                     )}
-                    <button
-                      onClick={() => { onConfirmDeposit(viewingSlot, depositSendSms); }}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      {t('confirmDeposit')}
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => { setViewingSlot(null); onEditSlot(viewingSlot); }}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-bold hover:bg-gray-200 transition-colors"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        {t('editSlot')}
+                      </button>
+                      <button
+                        onClick={() => { onConfirmDeposit(viewingSlot, depositSendSms); }}
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        {t('confirmDeposit')}
+                      </button>
+                    </div>
                   </div>
                 )}
                 {viewingSlot.deposit_confirmed === true && onCancelDeposit && (
@@ -527,18 +536,20 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleAddToCalendar(viewingSlot)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 transition-colors"
+                    className="p-2.5 rounded-xl bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
+                    title={t('addToCalendar')}
                   >
                     <CalendarPlus className="w-3.5 h-3.5" />
-                    {t('addToCalendar')}
                   </button>
-                  <button
-                    onClick={() => { setViewingSlot(null); onEditSlot(viewingSlot); }}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                    {t('editSlot')}
-                  </button>
+                  {viewingSlot.deposit_confirmed !== false && (
+                    <button
+                      onClick={() => { setViewingSlot(null); onEditSlot(viewingSlot); }}
+                      className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      {t('editSlot')}
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
