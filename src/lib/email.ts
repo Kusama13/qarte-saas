@@ -98,7 +98,13 @@ async function sendEmail<P extends Record<string, unknown>>(
         });
 
         if (error) {
-          // API-level error (validation, quota) — no retry
+          // Resend SDK v6 returns network failures as { error: { name: 'application_error', statusCode: null } }
+          // instead of throwing — retry these like thrown exceptions
+          if (error.statusCode === null && attempt < MAX_RETRIES) {
+            await new Promise(r => setTimeout(r, 1000 * Math.pow(2, attempt)));
+            continue;
+          }
+          // API-level error (validation, quota, bad from address) — no retry
           logger.error(`Failed to send ${label}`, error);
           return { success: false, error: error.message };
         }
