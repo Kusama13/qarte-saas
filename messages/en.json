@@ -818,7 +818,8 @@
     "addLogoHint": "JPG, PNG — max 500 KB",
     "ambianceLabel": "Ambiance",
     "save": "Save",
-    "continue": "Continue"
+    "continue": "Continue",
+    "uploadError": "Upload failed, please try again."
   },
   "welcome": {
     "title1": "Qarte gives you",

@@ -818,7 +818,8 @@
     "addLogoHint": "JPG, PNG — max 500 Ko",
     "ambianceLabel": "Ambiance",
     "save": "Enregistrer",
-    "continue": "Continuer"
+    "continue": "Continuer",
+    "uploadError": "Erreur lors de l'upload, réessaie."
   },
   "welcome": {
     "title1": "Qarte t'offre",

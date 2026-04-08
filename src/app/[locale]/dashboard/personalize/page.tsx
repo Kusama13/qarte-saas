@@ -33,7 +33,7 @@ function PersonalizeContent() {
   const searchParams = useSearchParams();
   const from = searchParams.get('from');
   const supabase = getSupabase();
-  const { merchant, loading, refetch } = useMerchant();
+  const { merchant, loading } = useMerchant();
   const t = useTranslations('personalize');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,11 +41,15 @@ function PersonalizeContent() {
   const [primaryColor, setPrimaryColor] = useState('#db2777'); // Glamour par défaut
   const [secondaryColor, setSecondaryColor] = useState('#f472b6');
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Init from existing merchant data (in case of re-visit)
+  const [initialized, setInitialized] = useState(false);
+
+  // Init once from merchant data — runs only on first load, not on background refetch
   useEffect(() => {
-    if (merchant) {
+    if (merchant && !initialized) {
+      setInitialized(true);
       if (merchant.logo_url) setLogoUrl(merchant.logo_url);
       // Si les couleurs sont les valeurs génériques par défaut (jamais choisies),
       // garder Glamour pré-sélectionné plutôt que d'afficher aucune palette cochée
@@ -55,23 +59,24 @@ function PersonalizeContent() {
         if (merchant.secondary_color) setSecondaryColor(merchant.secondary_color);
       }
     }
-  }, [merchant]);
+  }, [merchant, initialized]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !merchant) return;
 
     setUploading(true);
+    setUploadError(false);
     try {
       const compressedFile = await compressLogo(file);
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split('.').pop() || (file.type === 'image/png' ? 'png' : 'jpg');
       const fileName = `${merchant.id}-${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: storageError } = await supabase.storage
         .from('logos')
         .upload(fileName, compressedFile);
 
-      if (uploadError) throw uploadError;
+      if (storageError) throw storageError;
 
       const { data: { publicUrl } } = supabase.storage
         .from('logos')
@@ -80,6 +85,7 @@ function PersonalizeContent() {
       setLogoUrl(publicUrl);
     } catch (error) {
       console.error('Error uploading logo:', error);
+      setUploadError(true);
     } finally {
       setUploading(false);
     }
@@ -98,7 +104,6 @@ function PersonalizeContent() {
 
       if (updateError) throw updateError;
 
-      refetch().catch(() => {});
       const destination = from === 'public-page' ? '/dashboard/public-page' : '/dashboard/program';
       router.push(destination);
     } catch (error) {
@@ -194,6 +199,9 @@ function PersonalizeContent() {
           onChange={handleFileUpload}
           className="hidden"
         />
+        {uploadError && (
+          <p className="mt-2 text-xs text-red-500">{t('uploadError')}</p>
+        )}
       </motion.div>
 
       {/* Color palettes */}
@@ -253,7 +261,7 @@ function PersonalizeContent() {
       >
         <button
           onClick={handleContinue}
-          disabled={saving}
+          disabled={saving || uploading}
           className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-200/60 transition-all disabled:opacity-50"
         >
           {saving ? (
