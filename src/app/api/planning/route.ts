@@ -311,9 +311,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Erreur lors de la mise à jour' }, { status: 500 });
     }
 
-    // SMS confirmation — only when merchant explicitly checks the toggle
     const smsType: 'confirmation_deposit' | 'confirmation_no_deposit' | null =
-      send_sms ? (deposit_confirmed === true ? 'confirmation_deposit' : 'confirmation_no_deposit') : null;
+      (send_sms && deposit_confirmed === true) ? 'confirmation_deposit'
+      : send_sms ? 'confirmation_no_deposit'
+      : null;
 
     if (smsType) {
       const [{ data: smsSlot }, { data: smsMerchant }] = await Promise.all([

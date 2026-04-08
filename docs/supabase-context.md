@@ -568,7 +568,7 @@
 | value | JSONB | '{}' | |
 | updated_at | TIMESTAMPTZ | `NOW()` | |
 
-**Donnees** : key `sms_global` → `{"reminder_enabled": true, "confirmation_enabled": true, "birthday_enabled": true, "referral_enabled": true}`
+**Donnees** : key `sms_global` → `{"reminder_enabled": true, "confirmation_enabled": true, "birthday_enabled": true, "referral_enabled": true}` (les toggles globaux admin sont supprimes de l'UI — la table reste en DB mais n'est plus lue que par `getGlobalSmsConfig` dans les crons evening/morning-jobs pour `reminder_j1`, `birthday`, `referral_reward`. Les SMS confirmation/acompte/deplacement/annulation sont desormais 100% opt-in via toggle merchant.)
 
 ### 2.30 admin_notes (mig 015)
 

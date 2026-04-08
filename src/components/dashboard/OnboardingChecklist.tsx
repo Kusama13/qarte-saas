@@ -22,7 +22,6 @@ interface Step {
   done: boolean;
   href: string;
   icon: React.ElementType;
-
 }
 
 interface Group {

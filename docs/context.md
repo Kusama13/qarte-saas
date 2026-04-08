@@ -392,22 +392,20 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 ### SMS (OVH Cloud)
 - **Client API** : `src/lib/ovh-sms.ts` — signature HMAC-SHA1 custom, fire-and-forget, pas de npm package
 - **Service** : `src/lib/sms.ts` — dedup via `sms_logs`, quota 100 SMS/mois inclus (0,075€ au-dela), templates FR/EN < 160 chars
-- **Config globale** : table `app_config` (key `sms_global`) — 4 toggles admin dans `/admin/sms`
-- **Pas de toggles merchant** — gere uniquement par l'admin
 - **Reserve aux abonnes actifs** (pas trial) — message CTA dans dashboard + planning settings
 - **7 types de SMS** :
   - `reminder_j1` — rappel la veille a 19h (cron evening)
-  - `confirmation_no_deposit` — confirmation manuelle par le merchant (toggle dans BookingDetailsModal, opt-in)
-  - `confirmation_deposit` — confirmation apres validation acompte par le merchant (`PATCH /api/planning`)
-  - `booking_moved` — notification client quand le merchant deplace un RDV (toggle dans move overlay, opt-in)
-  - `booking_cancelled` — notification client quand le merchant annule un RDV (toggle dans cancel overlay, opt-in)
+  - `confirmation_no_deposit` — confirmation manuelle par le merchant (toggle opt-in dans BookingDetailsModal)
+  - `confirmation_deposit` — validation acompte par le merchant avec toggle opt-in (BookingDetailsModal + ReservationsSection)
+  - `booking_moved` — notification client quand le merchant deplace un RDV (toggle opt-in dans move overlay)
+  - `booking_cancelled` — notification client quand le merchant annule un RDV (toggle opt-in dans cancel overlay)
   - `birthday` — voeux + cadeau anniversaire (cron morning-jobs)
   - `referral_reward` — notification parrain quand le filleul utilise sa recompense (`POST /api/vouchers/use`)
-- **Toggles SMS merchant** : 3 toggles dans les modaux planning (confirmation, deplacement, annulation). Design harmonise : bandeau cliquable + toggle switch. Desactive par defaut. En trial : grise + badge "Pro". Visible uniquement si le slot a un numero de telephone
+- **Toggles SMS merchant** : 4 toggles opt-in dans les modaux planning (confirmation nouveau RDV, validation acompte, deplacement, annulation). Design harmonise : bandeau cliquable + toggle switch. Desactive par defaut. En trial : grise + badge "Pro". Visible uniquement si le slot a un numero de telephone. Aucun auto-envoi — toujours opt-in.
 - **Compteur SMS** : visible dans dashboard principal + planning parametres (barre de progression), cycle aligne sur la date d'abonnement Stripe (`billing_period_start`)
-- **Booking modal client** : pas de SMS a la reservation sans acompte (rappel J-1 suffit). Hint "un SMS de rappel vous sera envoye la veille". Avec acompte : SMS envoye apres validation par le merchant
+- **Booking modal client** : pas de SMS a la reservation sans acompte (rappel J-1 suffit). Hint "un SMS de rappel vous sera envoye la veille".
 - **Landing** : SMS mis en avant dans Hero (badge), FeaturesGrid, PageProSection (bloc dedie avec visual 2 SMS), Pricing, FAQ (Q4+Q12)
-- **Admin** : `/admin/sms` — metriques (total, ce mois, echecs, cout), toggles globaux, breakdown par merchant avec plage de dates du cycle de facturation
+- **Admin** : `/admin/sms` — metriques uniquement (total, ce mois, echecs, cout) + breakdown par merchant avec plage de dates du cycle de facturation. Les toggles globaux ont ete supprimes — le merchant controle par action.
 - **Admin activite** : badges "Acompte en attente" / "Acompte OK" sur les reservations
 - **Env vars** : `OVH_APP_KEY`, `OVH_APP_SECRET`, `OVH_CONSUMER_KEY`, `OVH_SMS_SERVICE`, `OVH_SMS_SENDER`
 - **Sender** : "Qarte" (en attente validation OVH, fallback numero court via `senderForResponse`)

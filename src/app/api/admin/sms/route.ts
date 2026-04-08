@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authorizeAdmin } from '@/lib/api-helpers';
 import { getSupabaseAdmin } from '@/lib/supabase';
-import { getGlobalSmsConfig, SMS_FREE_QUOTA, SMS_OVERAGE_COST } from '@/lib/sms';
+import { SMS_FREE_QUOTA, SMS_OVERAGE_COST } from '@/lib/sms';
 
 const supabaseAdmin = getSupabaseAdmin();
 
@@ -20,14 +20,12 @@ export async function GET(request: NextRequest) {
     { count: totalMonth },
     { count: totalWeek },
     { count: totalFailed },
-    globalConfig,
     { data: costData },
   ] = await Promise.all([
     supabaseAdmin.from('sms_logs').select('id', { count: 'exact', head: true }),
     supabaseAdmin.from('sms_logs').select('id', { count: 'exact', head: true }).gte('created_at', firstOfMonth).neq('status', 'failed'),
     supabaseAdmin.from('sms_logs').select('id', { count: 'exact', head: true }).gte('created_at', firstOfWeekIso).neq('status', 'failed'),
     supabaseAdmin.from('sms_logs').select('id', { count: 'exact', head: true }).eq('status', 'failed'),
-    getGlobalSmsConfig(supabaseAdmin),
     supabaseAdmin.from('sms_logs').select('cost_euro').gt('cost_euro', 0),
   ]);
 
@@ -84,33 +82,5 @@ export async function GET(request: NextRequest) {
     totalFailed: totalFailed || 0,
     totalCost: parseFloat(totalCost.toFixed(2)),
     merchants,
-    globalConfig,
   });
-}
-
-export async function PATCH(request: NextRequest) {
-  const auth = await authorizeAdmin(request, 'admin-sms');
-  if (auth.response) return auth.response;
-
-  const body = await request.json();
-  const { reminder_enabled, confirmation_enabled, birthday_enabled, referral_enabled } = body;
-
-  const { error } = await supabaseAdmin
-    .from('app_config')
-    .update({
-      value: {
-        reminder_enabled: reminder_enabled !== false,
-        confirmation_enabled: confirmation_enabled !== false,
-        birthday_enabled: birthday_enabled !== false,
-        referral_enabled: referral_enabled !== false,
-      },
-      updated_at: new Date().toISOString(),
-    })
-    .eq('key', 'sms_global');
-
-  if (error) {
-    return NextResponse.json({ error: 'Erreur lors de la sauvegarde' }, { status: 500 });
-  }
-
-  return NextResponse.json({ success: true });
 }
