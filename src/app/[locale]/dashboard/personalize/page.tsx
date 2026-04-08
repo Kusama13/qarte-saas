@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, Suspense } from 'react';
+import { useState, useRef, useEffect, Suspense, useCallback } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -44,8 +44,14 @@ function PersonalizeContent() {
   const [uploadError, setUploadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
+  const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    return () => { if (redirectTimer.current) clearTimeout(redirectTimer.current); };
+  }, []);
 
   // Init once from merchant data — runs only on first load, not on background refetch
   useEffect(() => {
@@ -92,9 +98,10 @@ function PersonalizeContent() {
     }
   };
 
-  const handleContinue = async () => {
+  const handleContinue = useCallback(async () => {
     if (!merchant) return;
     setSaving(true);
+    setSaveError(false);
 
     try {
       const { error: updateError } = await supabase.from('merchants').update({
@@ -107,19 +114,18 @@ function PersonalizeContent() {
 
       if (from) {
         setSaved(true);
-        setTimeout(() => {
-          const destination = from === 'public-page' ? '/dashboard/public-page' : '/dashboard/program';
-          router.push(destination);
-        }, 1200);
+        const destination = from === 'public-page' ? '/dashboard/public-page' : '/dashboard/program';
+        redirectTimer.current = setTimeout(() => router.push(destination), 1200);
       } else {
         router.push('/dashboard/program');
       }
     } catch (error) {
       console.error('Error saving:', error);
+      setSaveError(true);
     } finally {
       setSaving(false);
     }
-  };
+  }, [merchant, logoUrl, primaryColor, secondaryColor, from, supabase, router]);
 
   if (loading || !merchant) {
     return (
@@ -269,7 +275,7 @@ function PersonalizeContent() {
       >
         <button
           onClick={handleContinue}
-          disabled={saving || uploading}
+          disabled={saving || uploading || saved}
           className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-lg shadow-indigo-200/50 hover:shadow-xl hover:shadow-indigo-200/60 transition-all disabled:opacity-50"
         >
           {saving ? (
@@ -291,6 +297,9 @@ function PersonalizeContent() {
             </>
           )}
         </button>
+        {saveError && (
+          <p className="mt-2 text-xs text-red-500 text-center">{t('saveError')}</p>
+        )}
       </motion.div>
     </div>
   );

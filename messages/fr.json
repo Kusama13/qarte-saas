@@ -820,7 +820,8 @@
     "save": "Enregistrer",
     "saveSuccess": "Enregistré !",
     "continue": "Continuer",
-    "uploadError": "Erreur lors de l'upload, réessaie."
+    "uploadError": "Erreur lors de l'upload, réessaie.",
+    "saveError": "Erreur lors de l'enregistrement, réessaie."
   },
   "welcome": {
     "title1": "Qarte t'offre",

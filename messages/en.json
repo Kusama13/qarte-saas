@@ -820,7 +820,8 @@
     "save": "Save",
     "saveSuccess": "Saved!",
     "continue": "Continue",
-    "uploadError": "Upload failed, please try again."
+    "uploadError": "Upload failed, please try again.",
+    "saveError": "Save failed, please try again."
   },
   "welcome": {
     "title1": "Qarte gives you",
