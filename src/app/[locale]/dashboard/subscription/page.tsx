@@ -69,15 +69,15 @@ export default function SubscriptionPage() {
     return false;
   });
   const features = [
+    t('featurePlanning'),
+    t('featureSms'),
     t('featureUnlimitedClients'),
     t('featureStampsCashback'),
     t('featureProPage'),
-    t('featurePlanning'),
     t('featureQrNfc'),
     t('featureReferral'),
     t('featureDuoOffer'),
     t('featureNotifications'),
-    t('featureSms'),
     t('featureNoCommission'),
   ];
 
@@ -444,8 +444,8 @@ export default function SubscriptionPage() {
             <div className="hidden sm:grid sm:grid-cols-2 gap-2 mb-6">
               {features.map((feature, i) => (
                 <div key={i} className="flex items-center gap-2 py-1.5">
-                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
-                  <span className="text-sm text-gray-600">{feature}</span>
+                  <Check className={`w-4 h-4 shrink-0 ${i < 2 ? 'text-indigo-500' : 'text-emerald-500'}`} />
+                  <span className={`text-sm ${i < 2 ? 'font-bold text-gray-900' : 'text-gray-600'}`}>{feature}</span>
                 </div>
               ))}
               {billingPlan === 'annual' && (
@@ -459,8 +459,8 @@ export default function SubscriptionPage() {
               <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
                 {features.map((feature, i) => (
                   <div key={i} className="flex items-center gap-1.5">
-                    <Check className="w-3 h-3 text-emerald-500 shrink-0" />
-                    <span className="text-[11px] text-gray-500 leading-tight">{feature}</span>
+                    <Check className={`w-3 h-3 shrink-0 ${i < 2 ? 'text-indigo-500' : 'text-emerald-500'}`} />
+                    <span className={`text-[11px] leading-tight ${i < 2 ? 'font-bold text-gray-800' : 'text-gray-500'}`}>{feature}</span>
                   </div>
                 ))}
               </div>
