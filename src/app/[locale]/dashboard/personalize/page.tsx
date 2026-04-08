@@ -107,7 +107,10 @@ function PersonalizeContent() {
 
       if (from) {
         setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        setTimeout(() => {
+          const destination = from === 'public-page' ? '/dashboard/public-page' : '/dashboard/program';
+          router.push(destination);
+        }, 1200);
       } else {
         router.push('/dashboard/program');
       }
