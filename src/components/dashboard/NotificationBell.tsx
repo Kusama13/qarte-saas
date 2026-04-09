@@ -47,8 +47,10 @@ export default function NotificationBell() {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const hasNotifs = merchant?.planning_enabled || merchant?.auto_booking_enabled;
+
   const fetchNotifications = useCallback(async () => {
-    if (!merchant?.id || document.hidden) return;
+    if (!merchant?.id || !hasNotifs || document.hidden) return;
     try {
       const res = await fetch(`/api/merchant-notifications?merchantId=${merchant.id}`);
       if (!res.ok) return;
@@ -56,7 +58,7 @@ export default function NotificationBell() {
       setNotifications(data.notifications || []);
       setUnreadCount(data.unreadCount || 0);
     } catch { /* silent */ }
-  }, [merchant?.id]);
+  }, [merchant?.id, hasNotifs]);
 
   useEffect(() => {
     fetchNotifications();
@@ -106,7 +108,7 @@ export default function NotificationBell() {
     setOpen(false);
   };
 
-  if (!merchant) return null;
+  if (!merchant || !hasNotifs) return null;
 
   return (
     <div ref={dropdownRef} className="relative">

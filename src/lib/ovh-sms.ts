@@ -4,7 +4,7 @@ const APP_KEY = (process.env.OVH_APP_KEY || '').trim();
 const APP_SECRET = (process.env.OVH_APP_SECRET || '').trim();
 const CONSUMER_KEY = (process.env.OVH_CONSUMER_KEY || '').trim();
 const SMS_SERVICE = (process.env.OVH_SMS_SERVICE || '').trim();
-const SMS_SENDER = (process.env.OVH_SMS_SENDER || '').trim();
+const SMS_SENDER = (process.env.OVH_SMS_SENDER || 'Qarte').trim();
 
 const OVH_BASE = 'https://eu.api.ovh.com/1.0';
 
