@@ -74,9 +74,15 @@ type MerchantPublic = Pick<
   | 'phone'
   | 'country'
   | 'subscription_status'
+  | 'booking_mode'
+  | 'buffer_minutes'
+  | 'allow_customer_cancel'
+  | 'cancel_deadline_days'
+  | 'allow_customer_reschedule'
+  | 'reschedule_deadline_days'
 >;
 
-export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
+export default function ProgrammeView({ merchant, photos = [], services = [], serviceCategories = [], planningSlots = [], bookedSlots = [], isDemo = false, demoOffer }: { merchant: MerchantPublic; photos?: Photo[]; services?: Service[]; serviceCategories?: ServiceCategory[]; planningSlots?: PlanningSlotPublic[]; bookedSlots?: PlanningSlotPublic[]; isDemo?: boolean; demoOffer?: PromoOffer | null }) {
   const t = useTranslations('programmeView');
   const locale = useLocale();
 
@@ -92,9 +98,14 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
   const [servicesExpanded, setServicesExpanded] = useState(false);
   const [planningExpanded, setPlanningExpanded] = useState(false);
   const [promoOffer, setPromoOffer] = useState<PromoOffer | null>(null);
-  // Online booking only works if merchant has actual available slots
-  const canBookOnline = merchant.auto_booking_enabled && planningSlots.length > 0;
-  const [bookingSlot, setBookingSlot] = useState<{ date: string; time: string } | null>(null);
+  // Online booking: mode créneaux needs pre-generated slots, mode libre needs at least one open day
+  const isFreeMod = merchant.booking_mode === 'free';
+  const canBookOnline = merchant.auto_booking_enabled && (
+    isFreeMod
+      ? Object.values(merchant.opening_hours ?? {}).some(h => h !== null)
+      : planningSlots.length > 0
+  );
+  const [bookingSlot, setBookingSlot] = useState<{ date: string | null; time: string | null } | null>(null);
 
   // Opening hours
   const DAY_LABELS_SHORT = t('dayLabelsShort').split(',');
@@ -187,7 +198,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     }
     return grouped;
   }, [planningSlots, merchant.planning_enabled, todayLocal, nowTime]);
-  const hasPlanning = merchant.planning_enabled && planningByMonth.length > 0;
+  const hasPlanning = merchant.planning_enabled && (isFreeMod ? canBookOnline : planningByMonth.length > 0);
   const messageExpired = merchant.planning_message_expires && merchant.planning_message_expires < todayLocal;
   const hasPublicMessage = !!merchant.planning_message && !messageExpired;
   const hasBookingMessage = !!merchant.booking_message;
@@ -390,10 +401,10 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             className={`${glassCard} p-4`}
           >
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-2.5">
-              <Clock className="w-3 h-3 inline-block mr-1 -mt-0.5" />
               {t('hours')}
             </p>
-            <div className="grid grid-cols-7 gap-1">
+            {/* Mobile / small tablet: vertical list */}
+            <div className="md:hidden space-y-1">
               {DAY_LABELS_SHORT.map((label, i) => {
                 const dayKey = String(i + 1);
                 const slot = hours![dayKey];
@@ -401,7 +412,37 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 return (
                   <div
                     key={dayKey}
-                    className={`text-center rounded-lg py-1.5 transition-colors ${
+                    className={`flex items-center justify-between px-3 py-1.5 rounded-lg ${slot ? 'bg-gray-50' : 'opacity-40'}`}
+                    style={isToday ? { boxShadow: `0 0 0 1px ${p}`, backgroundColor: `${p}08` } : undefined}
+                  >
+                    <p className={`text-xs font-bold w-8 ${isToday ? '' : 'text-gray-500'}`} style={isToday ? { color: p } : undefined}>
+                      {label}
+                    </p>
+                    {slot ? (
+                      <p className="text-xs text-gray-600 font-medium">
+                        {slot.break_start && slot.break_end
+                          ? `${slot.open} — ${slot.break_start} / ${slot.break_end} — ${slot.close}`
+                          : `${slot.open} — ${slot.close}`
+                        }
+                      </p>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic">{t('closed')}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop: 7-column grid */}
+            <div className="hidden md:grid md:grid-cols-7 gap-0.5">
+              {DAY_LABELS_SHORT.map((label, i) => {
+                const dayKey = String(i + 1);
+                const slot = hours![dayKey];
+                const isToday = dayKey === todayKey;
+                return (
+                  <div
+                    key={dayKey}
+                    className={`text-center rounded-lg py-1.5 px-0.5 overflow-hidden transition-colors ${
                       slot ? 'bg-gray-50' : 'bg-gray-50/50 opacity-50'
                     }`}
                     style={isToday ? { boxShadow: `0 0 0 1px ${p}`, backgroundColor: `${p}08` } : undefined}
@@ -410,10 +451,17 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                       {label}
                     </p>
                     {slot ? (
-                      <>
-                        <p className="text-[9px] text-gray-600 font-medium">{formatTime(slot.open, locale)}</p>
-                        <p className="text-[9px] text-gray-600 font-medium">{formatTime(slot.close, locale)}</p>
-                      </>
+                      slot.break_start && slot.break_end ? (
+                        <>
+                          <p className="text-[8px] text-gray-600 font-medium leading-tight">{slot.open}-{slot.break_start}</p>
+                          <p className="text-[8px] text-gray-600 font-medium leading-tight">{slot.break_end}-{slot.close}</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-[9px] text-gray-600 font-medium">{slot.open}</p>
+                          <p className="text-[9px] text-gray-600 font-medium">{slot.close}</p>
+                        </>
+                      )
                     ) : (
                       <p className="text-[9px] text-gray-400 font-medium">{t('closed')}</p>
                     )}
@@ -484,8 +532,21 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
               </div>
             )}
 
-            {/* Slots by month — preview 4 days, expandable */}
-            {(() => {
+            {/* Mode libre: single "Réserver" CTA */}
+            {isFreeMod && canBookOnline && !isDemo && (
+              <button
+                type="button"
+                onClick={() => setBookingSlot({ date: null, time: null })}
+                className="w-full py-3 rounded-xl text-sm font-bold text-white flex items-center justify-center gap-2 mb-3"
+                style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+              >
+                <CalendarDays className="w-4 h-4" />
+                {t('bookAppointment')}
+              </button>
+            )}
+
+            {/* Slots by month — preview 4 days, expandable (mode créneaux only) */}
+            {!isFreeMod && (() => {
               const PREVIEW_DAYS = 4;
               const allDays = planningByMonth.flatMap(mg => mg.days);
               const totalDays = allDays.length;
@@ -1229,12 +1290,13 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
       {/* ── BOOKING MODAL ── */}
       {bookingSlot && merchant.auto_booking_enabled && !isDemo && (
         <BookingModal
-          merchant={merchant}
+          merchant={merchant as any}
           services={services}
           serviceCategories={serviceCategories}
           slotDate={bookingSlot.date}
           slotTime={bookingSlot.time}
           planningSlots={planningSlots}
+          bookedSlots={bookedSlots}
           promoOffer={promoOffer}
           onClose={() => setBookingSlot(null)}
         />

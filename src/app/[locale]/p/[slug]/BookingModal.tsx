@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Check, Clock, ChevronRight, Loader2, Gift, CreditCard, CalendarDays, Hourglass } from 'lucide-react';
+import { X, Check, Clock, ChevronRight, ChevronLeft, Loader2, Gift, CreditCard, CalendarDays, Hourglass, Info } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { formatTime, toBCP47, formatCurrency } from '@/lib/utils';
@@ -18,21 +18,23 @@ type MerchantBooking = Pick<
   Merchant,
   'id' | 'shop_name' | 'primary_color' | 'secondary_color' | 'country' | 'booking_message' |
   'auto_booking_enabled' | 'deposit_link' | 'deposit_percent' | 'deposit_amount' |
-  'welcome_offer_enabled' | 'welcome_offer_description' | 'subscription_status'
+  'welcome_offer_enabled' | 'welcome_offer_description' | 'subscription_status' | 'booking_mode' |
+  'allow_customer_cancel' | 'cancel_deadline_days' | 'allow_customer_reschedule' | 'reschedule_deadline_days'
 >;
 
 interface BookingModalProps {
   merchant: MerchantBooking;
   services: Service[];
   serviceCategories: ServiceCategory[];
-  slotDate: string;
-  slotTime: string;
+  slotDate: string | null;
+  slotTime: string | null;
   planningSlots: PlanningSlotPublic[];
+  bookedSlots: PlanningSlotPublic[];
   promoOffer: PromoOffer | null;
   onClose: () => void;
 }
 
-type Step = 'services' | 'info' | 'confirm';
+type Step = 'services' | 'datetime' | 'info' | 'confirm';
 
 function timeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number);
@@ -76,6 +78,23 @@ function detectPaymentProvider(url: string): string | null {
   }
 }
 
+function PolicyNotice({ merchant, t, className = 'mb-3' }: { merchant: MerchantBooking; t: ReturnType<typeof import('next-intl').useTranslations>; className?: string }) {
+  if (!merchant.allow_customer_cancel && !merchant.allow_customer_reschedule) return null;
+  return (
+    <div className={`flex items-start gap-2 px-3 py-2 rounded-xl bg-blue-50 border border-blue-100 ${className}`}>
+      <Info className="w-3.5 h-3.5 text-blue-500 shrink-0 mt-0.5" />
+      <div className="text-[11px] text-blue-700 space-y-0.5">
+        {merchant.allow_customer_cancel && (
+          <p>{t('cancelPolicy', { days: merchant.cancel_deadline_days ?? 1 })}</p>
+        )}
+        {merchant.allow_customer_reschedule && (
+          <p>{t('reschedulePolicy', { days: merchant.reschedule_deadline_days ?? 1 })}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function BookingModal({
   merchant,
   services,
@@ -83,6 +102,7 @@ export default function BookingModal({
   slotDate,
   slotTime,
   planningSlots,
+  bookedSlots,
   promoOffer,
   onClose,
 }: BookingModalProps) {
@@ -92,8 +112,16 @@ export default function BookingModal({
   const p = merchant.primary_color;
   const country = (merchant.country || 'FR') as MerchantCountry;
 
+  const isFreeMod = merchant.booking_mode === 'free';
   const [step, setStep] = useState<Step>('services');
   const [selectedServiceIds, setSelectedServiceIds] = useState<Set<string>>(new Set());
+  // Mode libre: date/time selection
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
+  const [freeSlots, setFreeSlots] = useState<PlanningSlotPublic[]>([]);
+  const [loadingFreeSlots, setLoadingFreeSlots] = useState(false);
+  const [freeSlotsError, setFreeSlotsError] = useState(false);
+  const [calMonth, setCalMonth] = useState<Date>(() => { const d = new Date(); d.setDate(1); d.setHours(0, 0, 0, 0); return d; });
   const [phone, setPhone] = useState('');
   const [phoneCountry, setPhoneCountry] = useState<MerchantCountry>(country);
   const [firstName, setFirstName] = useState('');
@@ -129,27 +157,50 @@ export default function BookingModal({
     [selectedServices]
   );
 
-  // Check if consecutive slots are available
+  const hasDurationEstimate = useMemo(
+    () => selectedServices.some(s => !s.duration),
+    [selectedServices]
+  );
+
+  // Check if consecutive slots are available (mode créneaux only)
   const durationAvailable = useMemo(() => {
     if (selectedServiceIds.size === 0) return true;
+    if (isFreeMod) return true; // mode libre: server validates
+    if (!slotTime || !slotDate || totalDuration === 0) return true;
     const startMins = timeToMinutes(slotTime);
     const endMins = startMins + totalDuration;
-    const daySlots = planningSlots.filter(s => s.slot_date === slotDate);
-    const needed = daySlots.filter(s => {
+    // A booked slot strictly inside (startMins, endMins) blocks the booking
+    return !bookedSlots.some(s => {
+      if (s.slot_date !== slotDate) return false;
       const m = timeToMinutes(s.start_time);
-      return m >= startMins && m < endMins;
+      return m > startMins && m < endMins;
     });
-    // We need at least as many slots as the duration requires
-    // Simple check: the last needed slot should exist
-    return needed.length > 0;
-  }, [selectedServiceIds, slotDate, slotTime, planningSlots, totalDuration]);
+  }, [selectedServiceIds, slotDate, slotTime, bookedSlots, totalDuration, isFreeMod]);
+
+  const effectiveDate = isFreeMod ? selectedDate : (slotDate || '');
+  const effectiveTime = isFreeMod ? selectedTime : (slotTime || '');
 
   const formattedDate = useMemo(() => {
-    return new Date(slotDate + 'T12:00:00').toLocaleDateString(
+    if (!effectiveDate) return '';
+    return new Date(effectiveDate + 'T12:00:00').toLocaleDateString(
       toBCP47(locale),
       { weekday: 'long', day: 'numeric', month: 'long' }
     );
-  }, [slotDate, locale]);
+  }, [effectiveDate, locale]);
+
+  // Fetch free slots when date selected in mode libre
+  useEffect(() => {
+    if (!isFreeMod || !selectedDate || totalDuration === 0) return;
+    setFreeSlots([]);
+    setSelectedTime('');
+    setFreeSlotsError(false);
+    setLoadingFreeSlots(true);
+    fetch(`/api/planning/free-slots?merchantId=${merchant.id}&date=${selectedDate}&totalDuration=${totalDuration}`)
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => setFreeSlots(data.slots || []))
+      .catch(() => setFreeSlotsError(true))
+      .finally(() => setLoadingFreeSlots(false));
+  }, [isFreeMod, selectedDate, totalDuration, merchant.id]);
 
   const toggleService = (id: string) => {
     setSelectedServiceIds(prev => {
@@ -172,13 +223,14 @@ export default function BookingModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           merchant_id: merchant.id,
-          slot_date: slotDate,
-          slot_time: slotTime,
+          slot_date: effectiveDate,
+          slot_time: effectiveTime,
           phone_number: phone.trim(),
           phone_country: phoneCountry,
           first_name: firstName.trim(),
           last_name: lastName.trim() || undefined,
           service_ids: Array.from(selectedServiceIds),
+          ...(isFreeMod && { booking_mode: 'free' }),
         }),
       });
 
@@ -240,9 +292,13 @@ export default function BookingModal({
                 ? (depositResult?.link ? t('bookingPending') : t('bookingConfirmed'))
                 : t('bookSlot')}
             </h3>
-            <p className="text-xs text-gray-500 mt-0.5 capitalize">
-              {formattedDate} {t('at')} {formatTime(slotTime, locale)}
-            </p>
+            {effectiveDate && effectiveTime ? (
+              <p className="text-xs text-gray-500 mt-0.5 capitalize">
+                {formattedDate} {t('at')} {formatTime(effectiveTime, locale)}
+              </p>
+            ) : (
+              <p className="text-xs text-gray-500 mt-0.5">{t('chooseDateTime')}</p>
+            )}
           </div>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition-colors">
             <X className="w-4 h-4 text-gray-400" />
@@ -319,32 +375,35 @@ export default function BookingModal({
                 {selectedServiceIds.size > 0 && (
                   <div className="rounded-xl bg-gray-50 px-4 py-3 mb-4 space-y-1">
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">{t('totalDuration')}</span>
-                      <span className="font-bold text-gray-900">{formatDuration(totalDuration, locale)}</span>
+                      <span className="text-gray-500">{hasDurationEstimate ? t('totalDurationEstimate') : t('totalDuration')}</span>
+                      <span className="font-bold text-gray-900">{hasDurationEstimate ? '~' : ''}{formatDuration(totalDuration, locale)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">{t('totalPrice')}</span>
                       <span className="font-bold text-gray-900">{formatCurrency(totalPrice, country, locale)}</span>
                     </div>
-                    {merchant.deposit_link && (merchant.deposit_percent || merchant.deposit_amount) && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-500">
-                          {merchant.deposit_amount
-                            ? t('depositFixedLabel')
-                            : t('depositLabel', { percent: merchant.deposit_percent || 0 })}
-                        </span>
-                        <span className="font-bold" style={{ color: p }}>
-                          {formatCurrency(
-                            merchant.deposit_amount
-                              ? Number(merchant.deposit_amount)
-                              : Math.round(totalPrice * (merchant.deposit_percent || 0) / 100),
-                            country, locale
-                          )}
-                        </span>
-                      </div>
-                    )}
+                    {merchant.deposit_link && (merchant.deposit_percent || merchant.deposit_amount) && totalPrice > 0 && (() => {
+                      const rawDeposit = merchant.deposit_amount
+                        ? Number(merchant.deposit_amount)
+                        : Math.round(totalPrice * (merchant.deposit_percent || 0) / 100);
+                      const cappedDeposit = Math.min(rawDeposit, totalPrice);
+                      return (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">
+                            {merchant.deposit_amount
+                              ? t('depositFixedLabel')
+                              : t('depositLabel', { percent: merchant.deposit_percent || 0 })}
+                          </span>
+                          <span className="font-bold" style={{ color: p }}>
+                            {formatCurrency(cappedDeposit, country, locale)}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 )}
+
+                {selectedServiceIds.size > 0 && <PolicyNotice merchant={merchant} t={t} />}
 
                 {!durationAvailable && selectedServiceIds.size > 0 && (
                   <p className="text-xs text-red-500 font-medium mb-3">{t('durationTooLong')}</p>
@@ -352,7 +411,7 @@ export default function BookingModal({
 
                 <button
                   type="button"
-                  onClick={() => setStep('info')}
+                  onClick={() => setStep(isFreeMod ? 'datetime' : 'info')}
                   disabled={selectedServiceIds.size === 0 || !durationAvailable}
                   className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center justify-center gap-2"
                   style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
@@ -360,6 +419,156 @@ export default function BookingModal({
                   {t('next')}
                   <ChevronRight className="w-4 h-4" />
                 </button>
+              </motion.div>
+            )}
+
+            {/* ── STEP 1b: Date/Time (mode libre) ── */}
+            {step === 'datetime' && (
+              <motion.div key="datetime" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                <p className="text-sm font-semibold text-gray-700 mb-3">{t('chooseDate')}</p>
+
+                {/* Month calendar */}
+                {(() => {
+                  const bcp47 = toBCP47(locale);
+                  const today = new Date(); today.setHours(0, 0, 0, 0);
+                  const todayStr = today.toISOString().split('T')[0];
+                  const maxDate = new Date(today.getFullYear(), today.getMonth() + 3, 0); // last day of today+3 months
+                  const maxDateStr = maxDate.toISOString().split('T')[0];
+
+                  const year = calMonth.getFullYear();
+                  const month = calMonth.getMonth();
+                  const daysInMonth = new Date(year, month + 1, 0).getDate();
+                  // Week starts Monday (offset: 0=Mon…6=Sun)
+                  const firstDow = (new Date(year, month, 1).getDay() + 6) % 7;
+
+                  const canGoPrev = calMonth > new Date(today.getFullYear(), today.getMonth(), 1);
+                  const canGoNext = new Date(year, month + 1, 1) <= new Date(today.getFullYear(), today.getMonth() + 3, 1);
+
+                  // Mon-indexed short day labels
+                  const dayLabels = Array.from({ length: 7 }, (_, i) => {
+                    const d = new Date(2024, 0, 1 + i); // 2024-01-01 = Monday
+                    return d.toLocaleDateString(bcp47, { weekday: 'narrow' });
+                  });
+
+                  const monthLabel = calMonth.toLocaleDateString(bcp47, { month: 'long', year: 'numeric' });
+
+                  const cells: (number | null)[] = [
+                    ...Array(firstDow).fill(null),
+                    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+                  ];
+                  // Pad to full rows
+                  while (cells.length % 7 !== 0) cells.push(null);
+
+                  return (
+                    <div className="mb-4">
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-2">
+                        <button
+                          type="button"
+                          disabled={!canGoPrev}
+                          onClick={() => setCalMonth(new Date(year, month - 1, 1))}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="text-xs font-semibold text-gray-700 capitalize">{monthLabel}</span>
+                        <button
+                          type="button"
+                          disabled={!canGoNext}
+                          onClick={() => setCalMonth(new Date(year, month + 1, 1))}
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {/* Day headers */}
+                      <div className="grid grid-cols-7 mb-1">
+                        {dayLabels.map((l, i) => (
+                          <span key={i} className="text-center text-[10px] font-semibold text-gray-400 py-1">{l}</span>
+                        ))}
+                      </div>
+                      {/* Day cells */}
+                      <div className="grid grid-cols-7 gap-y-0.5">
+                        {cells.map((day, idx) => {
+                          if (day === null) return <span key={`e-${idx}`} />;
+                          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                          const isPast = dateStr < todayStr;
+                          const isFuture = dateStr > maxDateStr;
+                          const isSelected = dateStr === selectedDate;
+                          const isToday = dateStr === todayStr;
+                          return (
+                            <button
+                              key={dateStr}
+                              type="button"
+                              disabled={isPast || isFuture}
+                              onClick={() => { setSelectedDate(dateStr); if (selectedTime) setSelectedTime(''); }}
+                              className={`mx-auto w-8 h-8 flex items-center justify-center rounded-full text-xs transition-all
+                                ${isSelected ? 'font-bold text-white' : ''}
+                                ${!isSelected && isToday ? 'font-bold' : ''}
+                                ${isPast || isFuture ? 'text-gray-300 cursor-not-allowed' : !isSelected ? 'text-gray-700 hover:bg-gray-100' : ''}`}
+                              style={isSelected ? { backgroundColor: p } : isToday && !isSelected ? { color: p } : undefined}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Time slots */}
+                {selectedDate && (
+                  <div className="mb-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">{t('chooseTime')}</p>
+                    {loadingFreeSlots ? (
+                      <div className="flex justify-center py-4">
+                        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                      </div>
+                    ) : freeSlotsError ? (
+                      <p className="text-xs text-red-500">{t('freeSlotsError')}</p>
+                    ) : freeSlots.length === 0 ? (
+                      <p className="text-xs text-gray-400">{t('noFreeSlotsThisDay')}</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {freeSlots.map(slot => {
+                          const isSelected = slot.start_time === selectedTime;
+                          return (
+                            <button
+                              key={slot.start_time}
+                              type="button"
+                              onClick={() => setSelectedTime(slot.start_time)}
+                              className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${isSelected ? 'text-white border-transparent' : 'text-gray-700 border-gray-200 hover:border-opacity-60'}`}
+                              style={isSelected ? { backgroundColor: p, borderColor: p } : { borderColor: `${p}40` }}
+                            >
+                              {formatTime(slot.start_time, locale)}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep('services')}
+                    className="flex-1 py-3 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-all"
+                  >
+                    {t('back')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStep('info')}
+                    disabled={!selectedDate || !selectedTime}
+                    className="flex-1 py-3 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+                    style={{ background: `linear-gradient(135deg, ${p}, ${merchant.secondary_color || p})` }}
+                  >
+                    {t('next')}
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
               </motion.div>
             )}
 
@@ -413,8 +622,19 @@ export default function BookingModal({
                   </div>
                 )}
 
-                {/* No modify message */}
-                <p className="text-[11px] text-gray-400 text-center mb-3">{t('noModify')}</p>
+                {/* Cancel / reschedule policy contextual message */}
+                {merchant.allow_customer_cancel || merchant.allow_customer_reschedule ? (
+                  <div className="text-[11px] text-gray-500 text-center mb-3 space-y-0.5">
+                    {merchant.allow_customer_cancel && (
+                      <p>{t('cancelPolicy', { days: merchant.cancel_deadline_days ?? 1 })}</p>
+                    )}
+                    {merchant.allow_customer_reschedule && (
+                      <p>{t('reschedulePolicy', { days: merchant.reschedule_deadline_days ?? 1 })}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-[11px] text-gray-400 text-center mb-3">{t('noModify')}</p>
+                )}
 
                 {error && (
                   <p className="text-xs text-red-500 font-medium mb-3">{error}</p>
@@ -423,7 +643,7 @@ export default function BookingModal({
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => { setStep('services'); setError(null); }}
+                    onClick={() => { setStep(isFreeMod ? 'datetime' : 'services'); setError(null); }}
                     className="flex-1 py-3 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
                   >
                     {t('back')}
@@ -474,11 +694,9 @@ export default function BookingModal({
                     <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
                       {t('depositPendingMessage')}
                     </p>
-                    {merchant.subscription_status !== 'trial' && (
-                      <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
-                        {t('smsAfterDeposit')}
-                      </p>
-                    )}
+                    <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
+                      {merchant.subscription_status !== 'trial' ? t('smsAfterDeposit') : t('depositPendingHintTrial')}
+                    </p>
                   </>
                 ) : (
                   <p className="text-center text-[13px] text-gray-600 mb-2 px-2">
@@ -515,6 +733,8 @@ export default function BookingModal({
                   </div>
                 </div>
 
+                <PolicyNotice merchant={merchant} t={t} className="mb-4" />
+
                 {/* Deposit section */}
                 {depositResult && depositResult.link && (() => {
                   const depositLinks = depositResult.links && depositResult.links.length > 0
@@ -545,6 +765,12 @@ export default function BookingModal({
                         )}
                       </div>
                     </div>
+                    {depositResult.deadline_hours && (
+                      <p className="text-[11px] text-gray-500 mb-2">
+                        <Clock className="w-3 h-3 inline-block mr-1 -mt-0.5" />
+                        {t('depositDeadlineInfo', { hours: depositResult.deadline_hours })}
+                      </p>
+                    )}
                     {depositLinks.length > 1 && (
                       <p className="text-[11px] font-semibold text-gray-500 mb-2">{t('depositChooseMethod')}</p>
                     )}

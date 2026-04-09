@@ -21,6 +21,7 @@ const bookSchema = z.object({
   first_name: z.string().min(1).max(100),
   last_name: z.string().max(100).optional(),
   service_ids: z.array(z.string().uuid()).min(1).max(10),
+  booking_mode: z.enum(['slots', 'free']).optional(),
 });
 
 function timeToMinutes(time: string): number {
@@ -76,7 +77,7 @@ export async function POST(request: NextRequest) {
     // 1. Fetch merchant
     const { data: merchant } = await supabaseAdmin
       .from('merchants')
-      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description')
+      .select('id, user_id, shop_name, country, locale, stamps_required, loyalty_mode, auto_booking_enabled, planning_enabled, trial_ends_at, subscription_status, deposit_link, deposit_link_label, deposit_link_2, deposit_link_2_label, deposit_percent, deposit_amount, deposit_deadline_hours, welcome_offer_enabled, welcome_offer_description, booking_mode, buffer_minutes')
       .eq('id', merchant_id)
       .single();
 
@@ -100,34 +101,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Numéro de téléphone invalide' }, { status: 400 });
     }
 
-    // 3-5. Fetch slot, services, and day slots in parallel
-    const [{ data: targetSlot }, { data: services }, { data: daySlots }] = await Promise.all([
-      supabaseAdmin
-        .from('merchant_planning_slots')
-        .select('id, slot_date, start_time, client_name')
-        .eq('merchant_id', merchant_id)
-        .eq('slot_date', slot_date)
-        .eq('start_time', slot_time)
-        .single(),
-      supabaseAdmin
-        .from('merchant_services')
-        .select('id, name, price, duration')
-        .eq('merchant_id', merchant_id)
-        .in('id', service_ids),
-      supabaseAdmin
-        .from('merchant_planning_slots')
-        .select('id, start_time, client_name')
-        .eq('merchant_id', merchant_id)
-        .eq('slot_date', slot_date)
-        .order('start_time'),
-    ]);
+    const isFreeMod = merchant.booking_mode === 'free';
 
-    if (!targetSlot) {
-      return NextResponse.json({ error: 'Créneau introuvable' }, { status: 404 });
+    // 3-5. Fetch services + (mode créneaux: slot + day slots)
+    const servicesPromise = supabaseAdmin
+      .from('merchant_services')
+      .select('id, name, price, duration')
+      .eq('merchant_id', merchant_id)
+      .in('id', service_ids);
+
+    let targetSlot: { id: string; slot_date: string; start_time: string; client_name: string | null } | null = null;
+    let daySlots: { id: string; start_time: string; client_name: string | null }[] | null = null;
+
+    if (!isFreeMod) {
+      const [slotResult, , slotsResult] = await Promise.all([
+        supabaseAdmin
+          .from('merchant_planning_slots')
+          .select('id, slot_date, start_time, client_name')
+          .eq('merchant_id', merchant_id)
+          .eq('slot_date', slot_date)
+          .eq('start_time', slot_time)
+          .single(),
+        servicesPromise,
+        supabaseAdmin
+          .from('merchant_planning_slots')
+          .select('id, start_time, client_name')
+          .eq('merchant_id', merchant_id)
+          .eq('slot_date', slot_date)
+          .order('start_time'),
+      ]);
+      targetSlot = slotResult.data ?? null;
+      daySlots = slotsResult.data ?? null;
     }
 
-    if (targetSlot.client_name !== null) {
-      return NextResponse.json({ error: 'Ce créneau n\'est plus disponible' }, { status: 409 });
+    const { data: services } = await servicesPromise;
+
+    if (!isFreeMod) {
+      if (!targetSlot) {
+        return NextResponse.json({ error: 'Créneau introuvable' }, { status: 404 });
+      }
+      if (targetSlot.client_name !== null) {
+        return NextResponse.json({ error: 'Ce créneau n\'est plus disponible' }, { status: 409 });
+      }
     }
 
     if (!services || services.length === 0) {
@@ -137,18 +152,43 @@ export async function POST(request: NextRequest) {
     const totalDuration = services.reduce((sum, s) => sum + (s.duration || 30), 0);
     const totalPrice = services.reduce((sum, s) => sum + Number(s.price || 0), 0);
 
-    const startMins = timeToMinutes(targetSlot.start_time);
-    const endMins = startMins + totalDuration;
+    if (isFreeMod) {
+      // Mode libre: re-check conflict (race condition guard)
+      const { data: sameDayBooked } = await supabaseAdmin
+        .from('merchant_planning_slots')
+        .select('start_time, total_duration_minutes')
+        .eq('merchant_id', merchant_id)
+        .eq('slot_date', slot_date)
+        .not('client_name', 'is', null)
+        .is('primary_slot_id', null);
 
-    const slotsToBlock = (daySlots || []).filter(s => {
-      const mins = timeToMinutes(s.start_time);
-      return mins >= startMins && mins < endMins;
-    });
+      const requestedStart = timeToMinutes(slot_time);
+      const requestedEnd = requestedStart + totalDuration;
+      const buffer = merchant.buffer_minutes ?? 0;
 
-    // Check all slots are available
-    const unavailable = slotsToBlock.filter(s => s.client_name !== null);
-    if (unavailable.length > 0) {
-      return NextResponse.json({ error: 'Certains créneaux ne sont plus disponibles' }, { status: 409 });
+      const conflict = (sameDayBooked || []).some(s => {
+        const sStart = timeToMinutes(s.start_time);
+        const sEnd = sStart + (s.total_duration_minutes ?? 30) + buffer;
+        return requestedStart < sEnd && requestedEnd > sStart;
+      });
+
+      if (conflict) {
+        return NextResponse.json({ error: 'Ce créneau n\'est plus disponible' }, { status: 409 });
+      }
+    } else {
+      // Mode créneaux: check consecutive slots availability
+      const startMins = timeToMinutes(slot_time);
+      const endMins = startMins + totalDuration;
+
+      const slotsToBlock = (daySlots || []).filter(s => {
+        const mins = timeToMinutes(s.start_time);
+        return mins >= startMins && mins < endMins;
+      });
+
+      const unavailable = slotsToBlock.filter(s => s.client_name !== null);
+      if (unavailable.length > 0) {
+        return NextResponse.json({ error: 'Certains créneaux ne sont plus disponibles' }, { status: 409 });
+      }
     }
 
     // 6. Create or find customer
@@ -211,75 +251,125 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 7. Block all slots atomically
-    const slotIds = slotsToBlock.map(s => s.id);
-    const fillerIds = slotIds.filter(id => id !== targetSlot.id);
+    // 7. Create/block slot(s)
     const hasDeposit = !!merchant.deposit_link;
-    const baseData: Record<string, unknown> = {
-      client_name: clientName,
-      client_phone: formattedPhone,
-      customer_id: customerId,
-      booked_online: true,
-      booked_at: new Date().toISOString(),
-    };
-    if (hasDeposit) {
-      baseData.deposit_confirmed = false;
+    const bookedAt = new Date().toISOString();
 
-      // Compute deposit deadline with night grace period (22h-9h → pushed to 9am)
-      const deadlineHours = merchant.deposit_deadline_hours;
-      if (deadlineHours) {
-        const tz = getTimezoneForCountry(merchant.country);
-        const rdvTime = fromZonedTime(new Date(`${slot_date}T${targetSlot.start_time}:00`), tz);
-        const deadline = computeDepositDeadline(deadlineHours, rdvTime, tz);
-        if (deadline) baseData.deposit_deadline_at = deadline.toISOString();
+    // Compute deposit deadline (shared between modes)
+    let depositDeadlineAt: string | undefined;
+    if (hasDeposit && merchant.deposit_deadline_hours) {
+      const tz = getTimezoneForCountry(merchant.country);
+      const rdvTime = fromZonedTime(new Date(`${slot_date}T${slot_time}:00`), tz);
+      const deadline = computeDepositDeadline(merchant.deposit_deadline_hours, rdvTime, tz);
+      if (deadline) depositDeadlineAt = deadline.toISOString();
+    }
+
+    let bookedSlotId: string;
+    let slotsBlocked = 1;
+
+    if (isFreeMod) {
+      // Mode libre: INSERT one slot (no filler slots)
+      const insertData: Record<string, unknown> = {
+        merchant_id,
+        slot_date,
+        start_time: slot_time,
+        client_name: clientName,
+        client_phone: formattedPhone,
+        customer_id: customerId,
+        total_duration_minutes: totalDuration,
+        booked_online: true,
+        booked_at: bookedAt,
+      };
+      if (hasDeposit) {
+        insertData.deposit_confirmed = false;
+        if (depositDeadlineAt) insertData.deposit_deadline_at = depositDeadlineAt;
       }
-    }
 
-    // Block primary slot
-    const { error: primaryError } = await supabaseAdmin
-      .from('merchant_planning_slots')
-      .update(baseData)
-      .eq('id', targetSlot.id)
-      .is('client_name', null);
-
-    if (primaryError) {
-      logger.error('Booking block error (primary):', primaryError);
-      return NextResponse.json({ error: 'Erreur lors de la réservation' }, { status: 500 });
-    }
-
-    // Verify the primary slot was actually booked by us (check phone — unique per request)
-    const { data: verifySlot } = await supabaseAdmin
-      .from('merchant_planning_slots')
-      .select('client_phone')
-      .eq('id', targetSlot.id)
-      .single();
-
-    if (verifySlot?.client_phone !== formattedPhone) {
-      return NextResponse.json({ error: 'Ce créneau n\'est plus disponible' }, { status: 409 });
-    }
-
-    // Block filler slots with primary_slot_id
-    if (fillerIds.length > 0) {
-      const { error: fillerError } = await supabaseAdmin
+      const { data: newSlot, error: insertError } = await supabaseAdmin
         .from('merchant_planning_slots')
-        .update({ ...baseData, primary_slot_id: targetSlot.id })
-        .in('id', fillerIds)
-        .is('client_name', null);
+        .insert(insertData)
+        .select('id')
+        .single();
 
-      if (fillerError) {
-        // Rollback primary slot
-        await supabaseAdmin
-          .from('merchant_planning_slots')
-          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null })
-          .eq('id', targetSlot.id);
-        logger.error('Booking block error (fillers):', fillerError);
+      if (insertError || !newSlot) {
+        logger.error('Booking insert error (free mode):', insertError);
         return NextResponse.json({ error: 'Erreur lors de la réservation' }, { status: 500 });
       }
+      bookedSlotId = newSlot.id;
+    } else {
+      // Mode créneaux: UPDATE existing pre-generated slots
+      // Rebuild slotsToBlock from daySlots (computed earlier in the validation branch)
+      const startMins = timeToMinutes(slot_time);
+      const endMins = startMins + totalDuration;
+      const slotsToBlock = (daySlots || []).filter(s => {
+        const mins = timeToMinutes(s.start_time);
+        return mins >= startMins && mins < endMins;
+      });
+
+      const slotIds = slotsToBlock.map(s => s.id);
+      const fillerIds = slotIds.filter(id => id !== targetSlot!.id);
+      slotsBlocked = slotIds.length;
+
+      const baseData: Record<string, unknown> = {
+        client_name: clientName,
+        client_phone: formattedPhone,
+        customer_id: customerId,
+        booked_online: true,
+        booked_at: bookedAt,
+      };
+      if (hasDeposit) {
+        baseData.deposit_confirmed = false;
+        if (depositDeadlineAt) baseData.deposit_deadline_at = depositDeadlineAt;
+      }
+
+      // Block primary slot
+      const { error: primaryError } = await supabaseAdmin
+        .from('merchant_planning_slots')
+        .update(baseData)
+        .eq('id', targetSlot!.id)
+        .is('client_name', null);
+
+      if (primaryError) {
+        logger.error('Booking block error (primary):', primaryError);
+        return NextResponse.json({ error: 'Erreur lors de la réservation' }, { status: 500 });
+      }
+
+      // Verify the primary slot was actually booked by us (race condition guard)
+      const { data: verifySlot } = await supabaseAdmin
+        .from('merchant_planning_slots')
+        .select('client_phone')
+        .eq('id', targetSlot!.id)
+        .single();
+
+      if (verifySlot?.client_phone !== formattedPhone) {
+        return NextResponse.json({ error: 'Ce créneau n\'est plus disponible' }, { status: 409 });
+      }
+
+      // Block filler slots with primary_slot_id
+      if (fillerIds.length > 0) {
+        const { error: fillerError } = await supabaseAdmin
+          .from('merchant_planning_slots')
+          .update({ ...baseData, primary_slot_id: targetSlot!.id })
+          .in('id', fillerIds)
+          .is('client_name', null);
+
+        if (fillerError) {
+          // Rollback primary slot
+          await supabaseAdmin
+            .from('merchant_planning_slots')
+            .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null })
+            .eq('id', targetSlot!.id);
+          logger.error('Booking block error (fillers):', fillerError);
+          return NextResponse.json({ error: 'Erreur lors de la réservation' }, { status: 500 });
+        }
+      }
+
+      bookedSlotId = targetSlot!.id;
     }
 
-    // 8. Add services to the primary slot
+    // 8. Add services to the booked slot
     if (service_ids.length > 0) {
-      const rows = service_ids.map(sid => ({ slot_id: targetSlot.id, service_id: sid }));
+      const rows = service_ids.map(sid => ({ slot_id: bookedSlotId, service_id: sid }));
       await supabaseAdmin.from('planning_slot_services').insert(rows);
     }
 
@@ -323,8 +413,8 @@ export async function POST(request: NextRequest) {
           shopName: merchant.shop_name,
           clientName,
           clientPhone: formattedPhone,
-          date: targetSlot.slot_date,
-          time: targetSlot.start_time,
+          date: slot_date,
+          time: slot_time,
           services: serviceDetails,
           totalDuration,
           totalPrice,
@@ -339,9 +429,9 @@ export async function POST(request: NextRequest) {
       supabase: supabaseAdmin,
       merchantId: merchant_id,
       notificationType: 'booking',
-      referenceId: targetSlot.id,
+      referenceId: bookedSlotId,
       title: 'Nouvelle réservation',
-      body: `${clientName} — ${targetSlot.slot_date} à ${targetSlot.start_time}`,
+      body: `${clientName} — ${slot_date} à ${slot_time}`,
       url: '/dashboard/planning',
       tag: 'qarte-merchant-booking',
     }).catch(() => {});
@@ -353,12 +443,12 @@ export async function POST(request: NextRequest) {
     const jsonResponse = NextResponse.json({
       success: true,
       booking: {
-        date: targetSlot.slot_date,
-        time: targetSlot.start_time,
+        date: slot_date,
+        time: slot_time,
         services: serviceDetails,
         total_price: totalPrice,
         total_duration: totalDuration,
-        slots_blocked: slotIds.length,
+        slots_blocked: slotsBlocked,
       },
       deposit,
     });

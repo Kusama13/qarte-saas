@@ -250,40 +250,34 @@ export default function ReservationsSection({ slots, services, serviceColorMap, 
     </div>
   );
 
+  const upcomingCount = upcomingGroups.reduce((n, g) => n + g.slots.length, 0);
+  const pastCount = pastGroups.reduce((n, g) => n + g.slots.length, 0);
+
   return (
     <>
-      <div className="space-y-4">
-        {/* Stats */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {upcomingGroups.length > 0 && (
-              <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
-                {t('upcomingCount', { count: upcomingGroups.reduce((n, g) => n + g.slots.length, 0) })}
-              </span>
-            )}
-            {pastGroups.length > 0 && (
-              <span className="text-xs font-medium text-gray-400">
-                {t('pastCount', { count: pastGroups.reduce((n, g) => n + g.slots.length, 0) })}
-              </span>
-            )}
-          </div>
+      <div className="space-y-3">
+        {/* Summary bar */}
+        <div className="flex items-center justify-between px-1">
+          <p className="text-sm font-bold text-gray-900">
+            {upcomingCount > 0
+              ? t('upcomingCount', { count: upcomingCount })
+              : t('noUpcoming')}
+          </p>
+          {pastCount > 0 && (
+            <button
+              onClick={() => setShowPast(!showPast)}
+              className="text-xs font-medium text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              {showPast ? t('hidePast') : t('showPast', { count: pastCount })}
+            </button>
+          )}
         </div>
 
         {/* Upcoming */}
         {upcomingGroups.map(renderDayGroup)}
 
-        {/* Past toggle */}
-        {pastGroups.length > 0 && (
-          <>
-            <button
-              onClick={() => setShowPast(!showPast)}
-              className="w-full py-2.5 text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors flex items-center justify-center gap-1.5"
-            >
-              {showPast ? t('hidePast') : t('showPast', { count: pastGroups.reduce((n, g) => n + g.slots.length, 0) })}
-            </button>
-            {showPast && pastGroups.map(renderDayGroup)}
-          </>
-        )}
+        {/* Past */}
+        {showPast && pastGroups.map(renderDayGroup)}
       </div>
 
       {/* ── View Details Modal ── */}

@@ -16,6 +16,7 @@ interface DayViewProps {
   locale: string;
   isPast: boolean;
   isToday: boolean;
+  isFreeMod?: boolean;
   onSlotClick: (slot: PlanningSlot) => void;
   onAddSlots: (day: string) => void;
 }
@@ -34,6 +35,7 @@ export default function DayView({
   locale,
   isPast,
   isToday,
+  isFreeMod = false,
   onSlotClick,
   onAddSlots,
 }: DayViewProps) {
@@ -79,7 +81,7 @@ export default function DayView({
         <p className={`text-sm font-bold capitalize ${isToday ? 'text-indigo-600' : 'text-gray-700'}`}>
           {day.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
         </p>
-        {!isPast && (
+        {!isPast && !isFreeMod && (
           <button
             onClick={() => onAddSlots(formatDate(day))}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 text-xs font-semibold hover:bg-indigo-100 transition-colors"

@@ -953,6 +953,7 @@ export default function CustomerCardPage({
             merchantId={merchant.id}
             shopName={merchant.shop_name}
             merchantCountry={merchant.country}
+            bookingMode={(merchant.booking_mode || 'slots') as 'slots' | 'free'}
             allowCancel={!!merchant.allow_customer_cancel}
             allowReschedule={!!merchant.allow_customer_reschedule}
             cancelDeadlineDays={merchant.cancel_deadline_days ?? 1}

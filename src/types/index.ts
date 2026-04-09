@@ -72,7 +72,7 @@ export interface Merchant {
   welcome_message: string | null;
   promo_message: string | null;
   review_link: string | null;
-  opening_hours: Record<string, { open: string; close: string } | null> | null;
+  opening_hours: Record<string, { open: string; close: string; break_start?: string; break_end?: string } | null> | null;
   instagram_url: string | null;
   facebook_url: string | null;
   tiktok_url: string | null;
@@ -149,6 +149,16 @@ export interface Merchant {
   locale: 'fr' | 'en';
   first_feature_choice: 'loyalty' | 'vitrine' | null;
   deleted_at: string | null;
+  // Booking mode (free = merchant sets opening hours, system computes availability)
+  booking_mode: 'slots' | 'free';
+  buffer_minutes: 0 | 10 | 15 | 30;
+}
+
+export type BookingMode = 'slots' | 'free';
+
+export interface FreeSlotCandidate {
+  slot_date: string;   // "YYYY-MM-DD"
+  start_time: string;  // "HH:MM"
 }
 
 export interface PlanningSlotService {
@@ -178,6 +188,7 @@ export interface PlanningSlot {
   booked_online: boolean;
   booked_at: string | null;
   primary_slot_id: string | null;
+  total_duration_minutes: number | null;
   created_at: string;
   planning_slot_services?: PlanningSlotService[];
   planning_slot_photos?: PlanningSlotPhoto[];

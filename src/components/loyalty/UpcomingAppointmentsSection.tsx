@@ -11,11 +11,12 @@ interface AppointmentSlot {
   id: string;
   slot_date: string;
   start_time: string;
+  total_duration_minutes?: number | null;
   deposit_confirmed?: boolean | null;
   booked_online?: boolean;
   planning_slot_services: Array<{
     service_id: string;
-    service: { name: string } | null;
+    service: { name: string; duration?: number | null } | null;
   }>;
 }
 
@@ -25,6 +26,7 @@ interface UpcomingAppointmentsSectionProps {
   merchantId: string;
   shopName: string;
   merchantCountry?: MerchantCountry;
+  bookingMode?: 'slots' | 'free';
   allowCancel?: boolean;
   allowReschedule?: boolean;
   cancelDeadlineDays?: number;
@@ -41,6 +43,7 @@ export default function UpcomingAppointmentsSection({
   merchantId,
   shopName,
   merchantCountry,
+  bookingMode = 'slots',
   allowCancel = false,
   allowReschedule = false,
   cancelDeadlineDays = 1,
@@ -97,22 +100,51 @@ export default function UpcomingAppointmentsSection({
     return getDaysUntil(appt.slot_date) >= rescheduleDeadlineDays;
   };
 
-  const fetchAvailableSlots = async () => {
+  // Free mode: fetch slots per date (dynamic computation)
+  const fetchFreeSlotsForDate = async (date: string, duration: number, signal: AbortSignal) => {
+    const res = await fetch(`/api/planning/free-slots?merchantId=${merchantId}&date=${date}&totalDuration=${duration}`, { signal });
+    if (res.ok) {
+      const data = await res.json();
+      return (data.slots || []) as AvailableSlot[];
+    }
+    return [];
+  };
+
+  const fetchAvailableSlots = async (appt?: AppointmentSlot) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     setLoadingSlots(true);
     setError(null);
     try {
-      const res = await fetch(`/api/planning?public=true&merchantId=${merchantId}`, { signal: controller.signal });
-      if (res.ok) {
-        const data = await res.json();
-        setAvailableSlots(data.slots || []);
-        if (data.slots?.length > 0) {
-          setSelectedDate(data.slots[0].slot_date);
+      if (bookingMode === 'free' && appt) {
+        // Compute duration: prefer total_duration_minutes from slot, fallback to sum of services
+        const totalDuration = appt.total_duration_minutes
+          ?? (appt.planning_slot_services.reduce((sum, s) => sum + (s.service?.duration || 30), 0) || 60);
+        // Fetch next 14 days in parallel (batch of 7 + 7)
+        const today = getTodayForCountry(merchantCountry);
+        const dates = Array.from({ length: 14 }, (_, i) => {
+          const d = new Date(today + 'T12:00:00');
+          d.setDate(d.getDate() + i);
+          return d.toISOString().split('T')[0];
+        });
+        const batch1 = await Promise.all(dates.slice(0, 7).map(date => fetchFreeSlotsForDate(date, totalDuration, controller.signal)));
+        let allSlots = batch1.flat();
+        if (allSlots.length < 30) {
+          const batch2 = await Promise.all(dates.slice(7).map(date => fetchFreeSlotsForDate(date, totalDuration, controller.signal)));
+          allSlots = allSlots.concat(batch2.flat());
         }
+        setAvailableSlots(allSlots);
+        if (allSlots.length > 0) setSelectedDate(allSlots[0].slot_date);
       } else {
-        setError(t('rescheduleError'));
+        const res = await fetch(`/api/planning?public=true&merchantId=${merchantId}`, { signal: controller.signal });
+        if (res.ok) {
+          const data = await res.json();
+          setAvailableSlots(data.slots || []);
+          if (data.slots?.length > 0) setSelectedDate(data.slots[0].slot_date);
+        } else {
+          setError(t('rescheduleError'));
+        }
       }
     } catch (e) {
       if ((e as Error).name !== 'AbortError') setError(t('rescheduleError'));
@@ -125,7 +157,7 @@ export default function UpcomingAppointmentsSection({
     setSelectedDate(null);
     setSelectedTime(null);
     setError(null);
-    fetchAvailableSlots();
+    fetchAvailableSlots(appt);
   };
 
   const handleCancel = async (slotId: string) => {

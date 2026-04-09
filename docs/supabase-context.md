@@ -101,13 +101,15 @@
 | allow_customer_reschedule | BOOLEAN | `FALSE` | NOT NULL, mig 096, client peut deplacer ses RDV en ligne |
 | cancel_deadline_days | INTEGER | `1` | NOT NULL, mig 097, delai annulation en jours avant le RDV |
 | reschedule_deadline_days | INTEGER | `1` | NOT NULL, mig 097, delai modification en jours avant le RDV |
+| booking_mode | VARCHAR(10) | `'slots'` | NOT NULL, mig 103, CHECK ('slots','free'). Mode creneaux = slots pre-generes, mode libre = calcul dynamique depuis opening_hours |
+| buffer_minutes | SMALLINT | `0` | NOT NULL, mig 103, CHECK (0,10,15,30). Pause entre RDV en mode libre |
 | show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
 | signup_source | TEXT | NULL | mig 068 |
 | locale | TEXT | `'fr'` | NOT NULL, mig 069 |
 | first_feature_choice | TEXT | NULL | mig 070, values: 'loyalty', 'vitrine' |
 | deleted_at | TIMESTAMPTZ | NULL | mig 077, soft-delete (filtre `is('deleted_at', null)` sur routes publiques) |
 | bio | TEXT | NULL | mig 061 |
-| opening_hours | JSONB | NULL | mig 062 |
+| opening_hours | JSONB | NULL | mig 062, format: `{"1":{"open":"09:00","close":"18:00","break_start?":"12:00","break_end?":"14:00"},...}` — break_start/break_end optionnels (pause dejeuner) |
 | last_seen_at | TIMESTAMPTZ | NULL | mig 031 |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 | updated_at | TIMESTAMPTZ | `NOW()` | Trigger auto (exclut last_seen_at mig 032) |
@@ -691,6 +693,7 @@ Single-row table : id, content (TEXT, default ''), updated_at
 | booked_online | BOOLEAN | `false` | mig 088, true si reserve via /api/planning/book (vitrine) |
 | booked_at | TIMESTAMPTZ | NULL | mig 088, timestamp de reservation (set par book API + PATCH manual) |
 | primary_slot_id | UUID FK → merchant_planning_slots | NULL | mig 084, NULL=slot principal/libre, UUID=filler d'un booking multi-creneaux |
+| total_duration_minutes | SMALLINT | NULL | mig 103, NULL=mode creneaux (duree implicite via services lies), non-null=mode libre (duree totale du RDV) |
 | created_at | TIMESTAMPTZ | `NOW()` | |
 
 **RLS** : SELECT public (client_name IS NULL AND slot_date >= CURRENT_DATE), ALL merchant own
@@ -1039,6 +1042,7 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 100 | admin_merchants_data_rpc | RPC `get_counts_per_merchant(p_table)` avec whitelist + REVOKE, `get_pending_visits_per_merchant()`, `get_planning_summary_per_merchant()` |
 | 101 | sms_booking_cancelled_type | Ajout type `booking_cancelled` au CHECK sms_type |
 | 102 | prevent_merchant_hard_delete | Trigger BEFORE DELETE sur merchants : bloque hard delete si `deleted_at IS NULL` (force soft-delete), autorise si deja soft-deleted (purge). Fonction `prevent_merchant_hard_delete()` |
+| 103 | planning_free_mode | Colonnes `booking_mode VARCHAR(10) DEFAULT 'slots'` + `buffer_minutes SMALLINT DEFAULT 0` sur `merchants`. Colonne `total_duration_minutes SMALLINT NULL` sur `merchant_planning_slots` (NULL=mode créneaux, non-null=mode libre). Les horaires d'ouverture mode libre réutilisent le champ JSON `merchant.opening_hours` existant (clés "1"=Lun…"7"=Dim) |
 
 ---
 

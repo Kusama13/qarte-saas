@@ -12,7 +12,7 @@ import DemoNav from './DemoNav';
 import { cache } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promise<{ merchant: any; photos: any[]; services: any[]; serviceCategories: any[]; planningSlots: any[]; demoOffer?: any } | null> => {
+const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promise<{ merchant: any; photos: any[]; services: any[]; serviceCategories: any[]; planningSlots: any[]; bookedSlots: any[]; demoOffer?: any } | null> => {
   // Demo merchants: return hardcoded data without DB query
   const demo = getDemoMerchantData(slug, locale);
   if (demo) {
@@ -27,7 +27,7 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       const daySlots = times.filter((_, i) => (d + i) % 3 !== 0);
       for (const t of daySlots) demoSlots.push({ slot_date: dateStr, start_time: t });
     }
-    return { ...demo, planningSlots: demoSlots, demoOffer: demo.offer };
+    return { ...demo, planningSlots: demoSlots, bookedSlots: [], demoOffer: demo.offer };
   }
 
   const supabaseAdmin = getSupabaseAdmin();
@@ -48,7 +48,9 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       'loyalty_mode, cagnotte_percent, cagnotte_tier2_percent, ' +
       'planning_enabled, planning_message, planning_message_expires, booking_message, ' +
       'auto_booking_enabled, deposit_link, deposit_percent, deposit_amount, phone, country, ' +
-      'student_offer_enabled, student_offer_description, subscription_status'
+      'student_offer_enabled, student_offer_description, subscription_status, ' +
+      'booking_mode, buffer_minutes, ' +
+      'allow_customer_cancel, cancel_deadline_days, allow_customer_reschedule, reschedule_deadline_days'
     )
     .eq('slug', slug)
     .maybeSingle();
@@ -59,6 +61,8 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
   const todayDate = new Date(today);
   todayDate.setDate(todayDate.getDate() + 60);
   const endDate = todayDate.toISOString().split('T')[0];
+
+  const isFreeMod = (merchant as any).booking_mode === 'free';
 
   const [photosResult, servicesResult, categoriesResult, planningResult] = await Promise.all([
     supabaseAdmin
@@ -76,12 +80,13 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       .select('id, name, position')
       .eq('merchant_id', (merchant as any).id)
       .order('position'),
-    (merchant as any).planning_enabled
+    // Mode créneaux: fetch all slots (free + booked) to enable client-side conflict detection
+    // Mode libre: opening_hours already in merchant row, no extra query needed
+    (merchant as any).planning_enabled && !isFreeMod
       ? supabaseAdmin
           .from('merchant_planning_slots')
-          .select('slot_date, start_time')
+          .select('slot_date, start_time, client_name')
           .eq('merchant_id', (merchant as any).id)
-          .is('client_name', null)
           .gte('slot_date', today)
           .lte('slot_date', endDate)
           .order('slot_date')
@@ -89,12 +94,14 @@ const getMerchantData = cache(async (slug: string, locale: string = 'fr'): Promi
       : Promise.resolve({ data: [] }),
   ]);
 
+  const allSlots = (planningResult.data as any[]) || [];
   return {
     merchant,
     photos: (photosResult.data as any[]) || [],
     services: (servicesResult.data as any[]) || [],
     serviceCategories: (categoriesResult.data as any[]) || [],
-    planningSlots: (planningResult.data as any[]) || [],
+    planningSlots: allSlots.filter(s => !s.client_name).map((s: any) => ({ slot_date: s.slot_date, start_time: s.start_time })),
+    bookedSlots: allSlots.filter(s => !!s.client_name).map((s: any) => ({ slot_date: s.slot_date, start_time: s.start_time })),
   };
 });
 
@@ -153,7 +160,7 @@ export default async function ProgrammePage({
   return (
     <>
       {isDemo && <DemoNav current={slug} />}
-      <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} planningSlots={result.planningSlots} isDemo={isDemo} demoOffer={result.demoOffer} />
+      <ProgrammeView merchant={result.merchant as any} photos={result.photos} services={result.services} serviceCategories={result.serviceCategories} planningSlots={result.planningSlots} bookedSlots={result.bookedSlots} isDemo={isDemo} demoOffer={result.demoOffer} />
     </>
   );
 }

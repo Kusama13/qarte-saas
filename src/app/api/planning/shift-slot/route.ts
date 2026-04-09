@@ -48,10 +48,10 @@ export async function POST(request: NextRequest) {
 
     const supabaseAdmin = getSupabaseAdmin();
 
-    // Get the slot to shift
+    // Get the slot to shift (include total_duration_minutes for free mode overlap check)
     const { data: slot } = await supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name')
+      .select('id, slot_date, start_time, client_name, total_duration_minutes')
       .eq('id', slotId)
       .eq('merchant_id', merchantId)
       .single();
@@ -65,6 +65,41 @@ export async function POST(request: NextRequest) {
     // Booked slot with force flag → use the atomic RPC that transfers booking data
     // (source stays in grid as a free slot, target is created or reused)
     if (slot.client_name && force) {
+      // Free mode: check for OVERLAP with existing bookings at target date/time
+      // The RPC only checks exact start_time match; we need range overlap
+      const { data: merchantData } = await supabaseAdmin
+        .from('merchants')
+        .select('booking_mode, buffer_minutes')
+        .eq('id', merchantId)
+        .single();
+
+      if (merchantData?.booking_mode === 'free') {
+        const { data: existingBookings } = await supabaseAdmin
+          .from('merchant_planning_slots')
+          .select('start_time, total_duration_minutes')
+          .eq('merchant_id', merchantId)
+          .eq('slot_date', targetDate)
+          .not('client_name', 'is', null)
+          .neq('id', slotId)
+          .is('primary_slot_id', null);
+
+        const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+        const buffer = merchantData.buffer_minutes ?? 0;
+        const moveDuration = slot.total_duration_minutes ?? 60;
+        const moveStart = toMins(newTime);
+        const moveEnd = moveStart + moveDuration;
+
+        const hasConflict = (existingBookings || []).some(b => {
+          const bStart = toMins(b.start_time);
+          const bEnd = bStart + (b.total_duration_minutes ?? 60) + buffer;
+          return moveStart < bEnd && moveEnd > bStart;
+        });
+
+        if (hasConflict) {
+          return NextResponse.json({ error: 'Un RDV existe déjà sur cette plage' }, { status: 409 });
+        }
+      }
+
       const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('move_booking', {
         p_merchant_id: merchantId,
         p_source_slot_id: slotId,
@@ -105,6 +140,14 @@ export async function POST(request: NextRequest) {
             subscriptionStatus: smsMerchant.subscription_status,
           }).catch(() => {});
         }
+      }
+
+      // Free mode: copy total_duration_minutes to target (move_booking RPC doesn't handle it)
+      if (result.target_id && slot.total_duration_minutes != null) {
+        await supabaseAdmin
+          .from('merchant_planning_slots')
+          .update({ total_duration_minutes: slot.total_duration_minutes })
+          .eq('id', result.target_id);
       }
 
       return NextResponse.json({ success: true, target_id: result.target_id });

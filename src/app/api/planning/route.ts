@@ -274,6 +274,24 @@ export async function PATCH(request: NextRequest) {
           })
       : Promise.resolve();
 
+    // In free mode: recalculate total_duration_minutes when services change
+    if (service_ids !== undefined) {
+      const { data: slotMeta } = await supabaseAdmin
+        .from('merchant_planning_slots')
+        .select('total_duration_minutes')
+        .eq('id', slotId)
+        .single();
+
+      if (slotMeta?.total_duration_minutes != null) {
+        // Slot is in free mode — recalculate duration from new services
+        const { data: svcs } = service_ids.length > 0
+          ? await supabaseAdmin.from('merchant_services').select('duration').in('id', service_ids)
+          : { data: [] };
+        const newDuration = (svcs || []).reduce((sum, s) => sum + (s.duration || 30), 0) || 30;
+        updateData.total_duration_minutes = newDuration;
+      }
+    }
+
     // SMS cancellation — fetch slot data before clearing (phone will be erased)
     if (send_sms_cancel && (client_name === null || client_name === '')) {
       const [{ data: cancelSlot }, { data: cancelMerchant }] = await Promise.all([

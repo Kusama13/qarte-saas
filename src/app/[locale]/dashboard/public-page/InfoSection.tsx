@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import {
   CalendarDays,
-  Clock,
   Instagram,
   Facebook,
   ChevronDown,
@@ -37,7 +36,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
   const [tiktokUrl, setTiktokUrl] = useState('');
   const [snapchatUrl, setSnapchatUrl] = useState('');
   const [whatsappUrl, setWhatsappUrl] = useState('');
-  const [openingHours, setOpeningHours] = useState<Record<string, { open: string; close: string } | null>>({
+  const [openingHours, setOpeningHours] = useState<Record<string, { open: string; close: string; break_start?: string; break_end?: string } | null>>({
     '1': null, '2': null, '3': null, '4': null, '5': null, '6': null, '7': null,
   });
 
@@ -51,7 +50,7 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
     setAddress(merchant.shop_address || '');
     setBio(merchant.bio || '');
     if (merchant.opening_hours) {
-      setOpeningHours(merchant.opening_hours as Record<string, { open: string; close: string } | null>);
+      setOpeningHours(merchant.opening_hours as Record<string, { open: string; close: string; break_start?: string; break_end?: string } | null>);
       setHoursEnabled(Object.values(merchant.opening_hours as Record<string, unknown>).some(Boolean));
     } else {
       setHoursEnabled(false);
@@ -157,7 +156,6 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
             onClick={() => { if (hoursEnabled) setHoursOpen(prev => !prev); }}
             className="flex items-center gap-2 text-left"
           >
-            <Clock className="w-4 h-4 text-blue-500" />
             <span className="text-sm font-semibold text-gray-700">{t('infoOpeningHours')}</span>
             {hoursEnabled && (
               <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${hoursOpen ? 'rotate-180' : ''}`} />
@@ -184,44 +182,64 @@ export default function InfoSection({ merchant, refetch }: InfoSectionProps) {
               const key = String(i + 1);
               const slot = openingHours[key];
               const isOpen = slot !== null;
+              const hasBreak = isOpen && !!slot.break_start && !!slot.break_end;
               return (
-                <div key={key} className="flex items-center gap-2">
+                <div key={key} className="flex items-start gap-2">
                   <button
                     type="button"
                     onClick={() => setOpeningHours(prev => ({
                       ...prev,
                       [key]: isOpen ? null : { open: '09:00', close: '18:00' },
                     }))}
-                    className={`w-[82px] text-left text-[13px] font-medium py-1.5 px-2 rounded-lg transition-colors ${
+                    className={`w-[68px] sm:w-[82px] text-left text-[12px] sm:text-[13px] font-medium py-1.5 px-1.5 sm:px-2 rounded-lg transition-colors shrink-0 ${
                       isOpen ? 'text-gray-800 bg-gray-50' : 'text-gray-400 bg-gray-50/50 line-through'
                     }`}
                   >
                     {t(dayKey)}
                   </button>
                   {isOpen ? (
-                    <div className="flex items-center gap-1.5 flex-1">
-                      <input
-                        type="time"
-                        value={slot.open}
-                        onChange={(e) => setOpeningHours(prev => ({
-                          ...prev,
-                          [key]: { ...prev[key]!, open: e.target.value },
-                        }))}
-                        className="input h-8 text-xs w-[105px]"
-                      />
-                      <span className="text-gray-400 text-xs">&mdash;</span>
-                      <input
-                        type="time"
-                        value={slot.close}
-                        onChange={(e) => setOpeningHours(prev => ({
-                          ...prev,
-                          [key]: { ...prev[key]!, close: e.target.value },
-                        }))}
-                        className="input h-8 text-xs w-[105px]"
-                      />
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-1.5">
+                        <input type="time" value={slot.open}
+                          onChange={(e) => setOpeningHours(prev => ({ ...prev, [key]: { ...prev[key]!, open: e.target.value } }))}
+                          className="input h-8 text-xs w-[100px]" />
+                        <span className="text-gray-400 text-xs">&mdash;</span>
+                        <input type="time" value={hasBreak ? slot.break_start! : slot.close}
+                          onChange={(e) => setOpeningHours(prev => ({
+                            ...prev,
+                            [key]: { ...prev[key]!, ...(hasBreak ? { break_start: e.target.value } : { close: e.target.value }) },
+                          }))}
+                          className="input h-8 text-xs w-[100px]" />
+                        {!hasBreak && (
+                          <button type="button"
+                            onClick={() => setOpeningHours(prev => ({ ...prev, [key]: { ...prev[key]!, break_start: '12:00', break_end: '14:00' } }))}
+                            className="text-indigo-500 hover:text-indigo-700 text-[10px] font-semibold transition-colors whitespace-nowrap">
+                            + {t('infoBreak')}
+                          </button>
+                        )}
+                      </div>
+                      {hasBreak && (
+                        <div className="flex items-center gap-1.5">
+                          <input type="time" value={slot.break_end}
+                            onChange={(e) => setOpeningHours(prev => ({ ...prev, [key]: { ...prev[key]!, break_end: e.target.value } }))}
+                            className="input h-8 text-xs w-[100px]" />
+                          <span className="text-gray-400 text-xs">&mdash;</span>
+                          <input type="time" value={slot.close}
+                            onChange={(e) => setOpeningHours(prev => ({ ...prev, [key]: { ...prev[key]!, close: e.target.value } }))}
+                            className="input h-8 text-xs w-[100px]" />
+                          <button type="button"
+                            onClick={() => setOpeningHours(prev => {
+                              const { break_start, break_end, ...rest } = prev[key]!;
+                              return { ...prev, [key]: rest };
+                            })}
+                            className="text-red-400 hover:text-red-600 text-xs font-medium transition-colors">
+                            &times;
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <span className="text-[13px] text-gray-400 italic">{t('infoDayClosed')}</span>
+                    <span className="text-[13px] text-gray-400 italic py-1.5">{t('infoDayClosed')}</span>
                   )}
                 </div>
               );

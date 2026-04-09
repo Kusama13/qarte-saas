@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useMerchant } from '@/contexts/MerchantContext';
 import { getSupabase } from '@/lib/supabase';
-import type { PlanningSlot, CustomerSearchResult, MerchantCountry } from '@/types';
+import type { PlanningSlot, CustomerSearchResult, MerchantCountry, BookingMode } from '@/types';
 import { getWeekStart, formatDate, getSlotServiceIds } from './utils';
 import { toLocalPhone } from '@/lib/utils';
 
@@ -51,7 +51,7 @@ export function usePlanningState() {
   const { merchant, loading: merchantLoading, refetch } = useMerchant();
   const supabase = getSupabase();
 
-  const [tab, setTab] = useState<'slots' | 'reservations' | 'online' | 'settings'>('slots');
+  const [tab, setTab] = useState<'slots' | 'reservations' | 'settings'>('slots');
   const [viewMode, setViewMode] = useState<'week' | 'day'>('week');
   const [selectedDay, setSelectedDay] = useState<Date>(new Date());
   const [weekOffset, setWeekOffset] = useState(0);
@@ -80,6 +80,9 @@ export function usePlanningState() {
   const [depositPercent, setDepositPercent] = useState('');
   const [depositAmount, setDepositAmount] = useState('');
   const [depositDeadlineHours, setDepositDeadlineHours] = useState('1');
+  // Booking mode + buffer
+  const [bookingMode, setBookingMode] = useState<BookingMode>('slots');
+  const [bufferMinutes, setBufferMinutes] = useState<0 | 10 | 15 | 30>(0);
 
   // Services with duration
   const [services, setServices] = useState<ServiceWithDuration[]>([]);
@@ -129,8 +132,9 @@ export function usePlanningState() {
 
   // Stats
   const todayStr = useMemo(() => formatDate(new Date()), []); // eslint-disable-line react-hooks/exhaustive-deps
-  const totalSlots = slots.length;
-  const takenSlots = useMemo(() => slots.filter(s => s.client_name).length, [slots]);
+  const realSlots = useMemo(() => slots.filter(s => s.client_name !== '__blocked__'), [slots]);
+  const totalSlots = realSlots.length;
+  const takenSlots = useMemo(() => realSlots.filter(s => s.client_name).length, [realSlots]);
   const freeSlots = totalSlots - takenSlots;
   const isToday = (d: Date) => formatDate(d) === todayStr;
   const isPast = (d: Date) => formatDate(d) < todayStr;
@@ -154,6 +158,8 @@ export function usePlanningState() {
       setAllowCustomerReschedule(!!merchant.allow_customer_reschedule);
       setCancelDeadlineDays(String(merchant.cancel_deadline_days ?? 1));
       setRescheduleDeadlineDays(String(merchant.reschedule_deadline_days ?? 1));
+      setBookingMode((merchant.booking_mode as BookingMode) || 'slots');
+      setBufferMinutes((merchant.buffer_minutes as 0 | 10 | 15 | 30) || 0);
     }
   }, [merchant]);
 
@@ -552,7 +558,7 @@ export function usePlanningState() {
       const toStr = formatDate(futureDate);
       const res = await fetch(`/api/planning?merchantId=${merchant.id}&from=${fromStr}&to=${toStr}&booked=true`);
       const data = await res.json();
-      setUpcomingSlots(data.slots || []);
+      setUpcomingSlots((data.slots || []).filter((s: PlanningSlot) => s.client_name !== '__blocked__'));
       setUpcomingFetched(true);
     } catch { /* */ }
     setLoadingUpcoming(false);
@@ -585,6 +591,7 @@ export function usePlanningState() {
     allowCustomerCancel, setAllowCustomerCancel, allowCustomerReschedule, setAllowCustomerReschedule,
     cancelDeadlineDays, setCancelDeadlineDays, rescheduleDeadlineDays, setRescheduleDeadlineDays,
     depositLink, setDepositLink, depositLinkLabel, setDepositLinkLabel, depositLink2, setDepositLink2, depositLink2Label, setDepositLink2Label, depositPercent, setDepositPercent, depositAmount, setDepositAmount, depositDeadlineHours, setDepositDeadlineHours,
+    bookingMode, setBookingMode, bufferMinutes, setBufferMinutes,
     // Services
     services,
     // Modal state machine

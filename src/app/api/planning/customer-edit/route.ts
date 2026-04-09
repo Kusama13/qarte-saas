@@ -54,7 +54,7 @@ async function commonChecks(
   // Fetch merchant
   const { data: merchant, error: merchantErr } = await supabaseAdmin
     .from('merchants')
-    .select('id, allow_customer_cancel, allow_customer_reschedule, cancel_deadline_days, reschedule_deadline_days, country, shop_name, locale, user_id')
+    .select('id, allow_customer_cancel, allow_customer_reschedule, cancel_deadline_days, reschedule_deadline_days, country, shop_name, locale, user_id, booking_mode, buffer_minutes')
     .eq('id', merchantId)
     .single();
 
@@ -71,7 +71,7 @@ async function commonChecks(
   const [slotResult, customerResult] = await Promise.all([
     supabaseAdmin
       .from('merchant_planning_slots')
-      .select('id, slot_date, start_time, client_name, client_phone, customer_id, booked_online, primary_slot_id')
+      .select('id, slot_date, start_time, client_name, client_phone, customer_id, booked_online, primary_slot_id, total_duration_minutes')
       .eq('id', slotId)
       .eq('merchant_id', merchantId)
       .single(),
@@ -206,97 +206,159 @@ export async function PATCH(request: NextRequest) {
     if ('error' in checks) return checks.error;
 
     const { supabaseAdmin, merchant, slot } = checks;
-
-    // Check new slot exists and is free
-    const { data: targetSlot } = await supabaseAdmin
-      .from('merchant_planning_slots')
-      .select('id')
-      .eq('merchant_id', merchant_id)
-      .eq('slot_date', new_date)
-      .eq('start_time', new_time)
-      .is('client_name', null)
-      .single();
-
-    if (!targetSlot) {
-      return NextResponse.json({ error: 'Ce creneau n\'est pas disponible' }, { status: 400 });
-    }
+    const isFreeMod = merchant.booking_mode === 'free';
 
     let newSlotId: string;
 
-    // Try atomic RPC first
-    const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('move_booking', {
-      p_merchant_id: merchant_id,
-      p_source_slot_id: slot_id,
-      p_target_date: new_date,
-      p_target_time: new_time,
-    });
+    if (isFreeMod) {
+      // Mode libre: delete old slot + create new one at target date/time
+      const duration = slot.total_duration_minutes ?? 60;
+      const buffer = merchant.buffer_minutes ?? 0;
 
-    if (rpcErr) {
-      logger.warn('customer-edit PATCH move_booking RPC error, using fallback:', rpcErr);
-
-      // Fallback: manually clear old + fill new
-      const { error: clearErr } = await supabaseAdmin
+      // Check overlap at target
+      const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+      const { data: existing } = await supabaseAdmin
         .from('merchant_planning_slots')
-        .update({
-          client_name: null,
-          client_phone: null,
-          customer_id: null,
-          deposit_confirmed: null,
-          deposit_deadline_at: null,
-          booked_online: false,
-          booked_at: null,
-        })
-        .eq('id', slot_id);
+        .select('start_time, total_duration_minutes')
+        .eq('merchant_id', merchant_id)
+        .eq('slot_date', new_date)
+        .not('client_name', 'is', null)
+        .neq('id', slot_id)
+        .is('primary_slot_id', null);
 
-      if (clearErr) {
-        logger.error('customer-edit PATCH fallback clear error:', clearErr);
-        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+      const newStart = toMins(new_time);
+      const newEnd = newStart + duration;
+      const conflict = (existing || []).some(b => {
+        const bStart = toMins(b.start_time);
+        const bEnd = bStart + (b.total_duration_minutes ?? 30) + buffer;
+        return newStart < bEnd && newEnd > bStart;
+      });
+      if (conflict) {
+        return NextResponse.json({ error: 'Un RDV existe deja a cette heure' }, { status: 409 });
       }
 
-      const { error: fillErr } = await supabaseAdmin
+      // Create new slot with booking data
+      const { data: newSlot, error: insertErr } = await supabaseAdmin
         .from('merchant_planning_slots')
-        .update({
+        .insert({
+          merchant_id: merchant_id,
+          slot_date: new_date,
+          start_time: new_time,
           client_name: slot.client_name,
           client_phone: slot.client_phone,
           customer_id: slot.customer_id,
-          deposit_confirmed: null,
-          deposit_deadline_at: null,
+          total_duration_minutes: duration,
           booked_online: true,
           booked_at: new Date().toISOString(),
         })
-        .eq('id', targetSlot.id);
+        .select('id')
+        .single();
 
-      if (fillErr) {
-        logger.error('customer-edit PATCH fallback fill error:', fillErr);
+      if (insertErr || !newSlot) {
+        logger.error('customer-edit PATCH free mode insert error:', insertErr);
         return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
       }
 
       // Move services to new slot
       await supabaseAdmin
         .from('planning_slot_services')
-        .update({ slot_id: targetSlot.id })
+        .update({ slot_id: newSlot.id })
         .eq('slot_id', slot_id);
 
-      // Delete fillers from old slot
+      // Delete old slot
       await supabaseAdmin
         .from('merchant_planning_slots')
         .delete()
-        .eq('primary_slot_id', slot_id);
+        .eq('id', slot_id);
 
-      newSlotId = targetSlot.id;
+      newSlotId = newSlot.id;
     } else {
-      const result = rpcData as { success: boolean; error?: string; target_id?: string };
-      if (!result.success) {
-        const errorMap: Record<string, { status: number; message: string }> = {
-          source_not_found: { status: 404, message: 'Creneau introuvable' },
-          source_not_booked: { status: 400, message: 'Le creneau n\'a pas de reservation' },
-          multi_slot_not_supported: { status: 400, message: 'Deplacement des resas multi-creneaux pas encore supporte' },
-          target_already_booked: { status: 409, message: 'Un RDV existe deja a cette heure' },
-        };
-        const mapped = errorMap[result.error || ''] || { status: 500, message: 'Erreur lors du deplacement' };
-        return NextResponse.json({ error: mapped.message }, { status: mapped.status });
+      // Mode créneaux: find existing free slot
+      const { data: targetSlot } = await supabaseAdmin
+        .from('merchant_planning_slots')
+        .select('id')
+        .eq('merchant_id', merchant_id)
+        .eq('slot_date', new_date)
+        .eq('start_time', new_time)
+        .is('client_name', null)
+        .single();
+
+      if (!targetSlot) {
+        return NextResponse.json({ error: 'Ce creneau n\'est pas disponible' }, { status: 400 });
       }
-      newSlotId = result.target_id || targetSlot.id;
+
+      // Try atomic RPC first
+      const { data: rpcData, error: rpcErr } = await supabaseAdmin.rpc('move_booking', {
+        p_merchant_id: merchant_id,
+        p_source_slot_id: slot_id,
+        p_target_date: new_date,
+        p_target_time: new_time,
+      });
+
+      if (rpcErr) {
+        logger.warn('customer-edit PATCH move_booking RPC error, using fallback:', rpcErr);
+
+        const { error: clearErr } = await supabaseAdmin
+          .from('merchant_planning_slots')
+          .update({
+            client_name: null,
+            client_phone: null,
+            customer_id: null,
+            deposit_confirmed: null,
+            deposit_deadline_at: null,
+            booked_online: false,
+            booked_at: null,
+          })
+          .eq('id', slot_id);
+
+        if (clearErr) {
+          logger.error('customer-edit PATCH fallback clear error:', clearErr);
+          return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+        }
+
+        const { error: fillErr } = await supabaseAdmin
+          .from('merchant_planning_slots')
+          .update({
+            client_name: slot.client_name,
+            client_phone: slot.client_phone,
+            customer_id: slot.customer_id,
+            deposit_confirmed: null,
+            deposit_deadline_at: null,
+            booked_online: true,
+            booked_at: new Date().toISOString(),
+          })
+          .eq('id', targetSlot.id);
+
+        if (fillErr) {
+          logger.error('customer-edit PATCH fallback fill error:', fillErr);
+          return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+        }
+
+        await supabaseAdmin
+          .from('planning_slot_services')
+          .update({ slot_id: targetSlot.id })
+          .eq('slot_id', slot_id);
+
+        await supabaseAdmin
+          .from('merchant_planning_slots')
+          .delete()
+          .eq('primary_slot_id', slot_id);
+
+        newSlotId = targetSlot.id;
+      } else {
+        const result = rpcData as { success: boolean; error?: string; target_id?: string };
+        if (!result.success) {
+          const errorMap: Record<string, { status: number; message: string }> = {
+            source_not_found: { status: 404, message: 'Creneau introuvable' },
+            source_not_booked: { status: 400, message: 'Le creneau n\'a pas de reservation' },
+            multi_slot_not_supported: { status: 400, message: 'Deplacement des resas multi-creneaux pas encore supporte' },
+            target_already_booked: { status: 409, message: 'Un RDV existe deja a cette heure' },
+          };
+          const mapped = errorMap[result.error || ''] || { status: 500, message: 'Erreur lors du deplacement' };
+          return NextResponse.json({ error: mapped.message }, { status: mapped.status });
+        }
+        newSlotId = result.target_id || targetSlot.id;
+      }
     }
 
     const oldDate = formatDate(slot.slot_date);

@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     const merchant = card.merchant as Record<string, unknown>;
     const planningEnabled = !!merchant.planning_enabled;
     const today = planningEnabled ? getTodayForCountry(merchant.country as string) : '';
-    const slotSelect = 'id, slot_date, start_time, deposit_confirmed, booked_online, primary_slot_id, planning_slot_services(service_id, service:merchant_services!service_id(name))';
+    const slotSelect = 'id, slot_date, start_time, total_duration_minutes, deposit_confirmed, booked_online, primary_slot_id, planning_slot_services(service_id, service:merchant_services!service_id(name, duration))';
 
     const [visitsResult, adjustmentsResult, memberCardResult, redemptionsResult, vouchersResult, upcomingResult, pastResult] = await Promise.all([
       // Visits
