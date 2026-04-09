@@ -274,21 +274,65 @@ export async function PATCH(request: NextRequest) {
           })
       : Promise.resolve();
 
-    // In free mode: recalculate total_duration_minutes when services change
-    if (service_ids !== undefined) {
+    // Recalculate duration / fillers when services change on a booked slot
+    if (service_ids !== undefined && trimmedName) {
       const { data: slotMeta } = await supabaseAdmin
         .from('merchant_planning_slots')
-        .select('total_duration_minutes')
+        .select('total_duration_minutes, slot_date, start_time, client_phone, customer_id')
         .eq('id', slotId)
         .single();
 
+      const { data: svcs } = service_ids.length > 0
+        ? await supabaseAdmin.from('merchant_services').select('duration').in('id', service_ids)
+        : { data: [] };
+      const newDuration = (svcs || []).reduce((sum, s) => sum + (s.duration || 30), 0) || 30;
+
       if (slotMeta?.total_duration_minutes != null) {
-        // Slot is in free mode — recalculate duration from new services
-        const { data: svcs } = service_ids.length > 0
-          ? await supabaseAdmin.from('merchant_services').select('duration').in('id', service_ids)
-          : { data: [] };
-        const newDuration = (svcs || []).reduce((sum, s) => sum + (s.duration || 30), 0) || 30;
+        // Mode libre — recalculate total_duration_minutes
         updateData.total_duration_minutes = newDuration;
+      } else if (slotMeta) {
+        // Mode créneaux — recalculate filler slots
+        const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+        const startMins = toMins(slotMeta.start_time);
+        const endMins = startMins + newDuration;
+
+        // 1. Clear all existing fillers for this slot
+        await supabaseAdmin
+          .from('merchant_planning_slots')
+          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null, primary_slot_id: null, booked_online: false, booked_at: null })
+          .eq('primary_slot_id', slotId)
+          .eq('merchant_id', merchantId);
+
+        // 2. Block new fillers if duration spans multiple slots
+        const { data: daySlots } = await supabaseAdmin
+          .from('merchant_planning_slots')
+          .select('id, start_time, client_name')
+          .eq('merchant_id', merchantId)
+          .eq('slot_date', slotMeta.slot_date)
+          .neq('id', slotId)
+          .is('primary_slot_id', null)
+          .order('start_time');
+
+        const newFillers = (daySlots || []).filter(s => {
+          const mins = toMins(s.start_time);
+          return mins > startMins && mins < endMins && s.client_name === null;
+        });
+
+        if (newFillers.length > 0) {
+          const fillerPhone = (updateData.client_phone as string | null) ?? slotMeta.client_phone;
+          const fillerCustomerId = (updateData.customer_id as string | null) ?? slotMeta.customer_id;
+          await supabaseAdmin
+            .from('merchant_planning_slots')
+            .update({
+              client_name: trimmedName,
+              client_phone: fillerPhone,
+              customer_id: fillerCustomerId,
+              primary_slot_id: slotId,
+              booked_online: true,
+              booked_at: new Date().toISOString(),
+            })
+            .in('id', newFillers.map(f => f.id));
+        }
       }
     }
 
