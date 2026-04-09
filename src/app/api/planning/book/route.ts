@@ -432,7 +432,7 @@ export async function POST(request: NextRequest) {
       referenceId: bookedSlotId,
       title: 'Nouvelle réservation',
       body: `${clientName} — ${slot_date} à ${slot_time}`,
-      url: '/dashboard/planning',
+      url: `/dashboard/planning?date=${slot_date}`,
       tag: 'qarte-merchant-booking',
     }).catch(() => {});
 

@@ -11,7 +11,7 @@ import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotificatio
 import { AnimatePresence, motion } from 'framer-motion';
 import type { PlanningSlot } from '@/types';
 import { PHONE_CONFIG, formatTime, toBCP47, getCurrencySymbol, formatCurrency, formatPhoneLabel } from '@/lib/utils';
-import { formatDate, formatDateFr, getServiceColorMap, getSlotColor, colorBorderStyle } from './utils';
+import { formatDate, formatDateFr, getServiceColorMap, getSlotColor, colorBorderStyle, getWeekStart } from './utils';
 import { handleDownloadStory } from './StoryExport';
 import { PhoneInput } from '@/components/ui/PhoneInput';
 import { TikTokIcon, FacebookIcon } from '@/components/icons/SocialIcons';
@@ -71,6 +71,17 @@ export default function PlanningDashboard() {
     if (!deepLinkSlotId) return;
     setTab('reservations');
   }, [deepLinkSlotId, setTab]);
+
+  // Handle ?date=YYYY-MM-DD deep link (from push notifications)
+  useEffect(() => {
+    const dateParam = searchParams.get('date');
+    if (!dateParam || !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) return;
+    const target = new Date(dateParam + 'T12:00:00');
+    const now = getWeekStart(0);
+    const diffMs = target.getTime() - now.getTime();
+    const diffWeeks = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+    setWeekOffset(diffWeeks);
+  }, [searchParams, setWeekOffset]);
 
   // Deposit validation error
   const [depositError, setDepositError] = useState<string | null>(null);

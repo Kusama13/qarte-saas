@@ -278,7 +278,7 @@ export async function GET(request: NextRequest) {
                 referenceId: `${merchantId}-${todayParis}`,
                 title: `🎂 ${clientNames.length} anniversaire${clientNames.length > 1 ? 's' : ''} aujourd'hui`,
                 body: bodyText,
-                url: '/dashboard/planning',
+                url: `/dashboard/planning?date=${todayParis}`,
                 tag: 'qarte-merchant-birthday',
               }));
             } catch {
@@ -341,7 +341,7 @@ export async function GET(request: NextRequest) {
           body: isEN
             ? `${slot.client_name} — ${slot.slot_date} at ${slot.start_time}`
             : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
-          url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
+          url: `/dashboard/planning?date=${slot.slot_date}`, tag: 'qarte-merchant-deposit',
         }));
       }
 
@@ -369,7 +369,7 @@ export async function GET(request: NextRequest) {
           body: isEN
             ? `${slot.client_name} — confirm or the slot will be released`
             : `${slot.client_name} — confirme ou le créneau sera libéré`,
-          url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
+          url: `/dashboard/planning?date=${slot.slot_date}`, tag: 'qarte-merchant-deposit',
         }));
       }
 

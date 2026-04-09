@@ -172,7 +172,7 @@ export async function DELETE(request: NextRequest) {
       referenceId: slot_id,
       title: 'RDV annule',
       body: `${slot.client_name} a annule son RDV du ${formattedDate} a ${slot.start_time}`,
-      url: '/dashboard/planning',
+      url: `/dashboard/planning?date=${slot.slot_date}`,
     }).catch(() => {});
 
     // Fire-and-forget: email notification
@@ -381,7 +381,7 @@ export async function PATCH(request: NextRequest) {
       referenceId: newSlotId,
       title: 'RDV deplace',
       body: `${slot.client_name} a deplace son RDV du ${oldDate} ${slot.start_time} au ${newDateFormatted} ${new_time}`,
-      url: '/dashboard/planning',
+      url: `/dashboard/planning?date=${new_date}`,
     }).catch(() => {});
 
     // Fire-and-forget: email notification

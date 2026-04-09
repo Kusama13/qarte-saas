@@ -230,7 +230,7 @@ export async function GET(request: NextRequest) {
           body: isEN
             ? `${slot.client_name} — ${slot.slot_date} at ${slot.start_time}`
             : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
-          url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
+          url: `/dashboard/planning?date=${slot.slot_date}`, tag: 'qarte-merchant-deposit',
         }));
 
         depositReleased++;
@@ -266,7 +266,7 @@ export async function GET(request: NextRequest) {
         body: isEN
           ? `${slot.client_name} — confirm or the slot will be released`
           : `${slot.client_name} — confirme ou le créneau sera libéré`,
-        url: '/dashboard/planning', tag: 'qarte-merchant-deposit',
+        url: `/dashboard/planning?date=${slot.slot_date}`, tag: 'qarte-merchant-deposit',
       }));
       depositWarned++;
     }
