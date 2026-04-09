@@ -1176,7 +1176,8 @@ export default function CustomerCardPage({
               </div>
               <div className="flex-1 min-w-0 text-left">
                 <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-600">{t('contestLabel')}</p>
-                <p className="text-xs font-medium text-gray-600 truncate mt-0.5">{merchant.contest_prize}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{t('contestCardDesc')}</p>
+                <p className="text-xs font-semibold text-gray-700 mt-0.5">{merchant.contest_prize}</p>
               </div>
             </div>
           </motion.div>

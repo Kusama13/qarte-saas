@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Gift, Users, Zap, Trophy, CalendarDays, Sparkles, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard } from 'lucide-react';
+import { Gift, Users, Zap, Trophy, CalendarDays, MapPin, Navigation, X, ChevronLeft, ChevronRight, ChevronDown, Clock, Phone, ClipboardList, GraduationCap, CreditCard } from 'lucide-react';
 import SocialLinks from '@/components/loyalty/SocialLinks';
 import BrandedQRCode from '@/components/shared/BrandedQRCode';
 import SimulatedCard from './SimulatedCard';
@@ -739,30 +739,27 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
         {/* ── OFFRE DE BIENVENUE (nouveaux clients) ── */}
         {merchant.welcome_offer_enabled && merchant.welcome_offer_description && (canBookOnline || (merchant.welcome_referral_code && merchant.scan_code)) && (
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.28, ease: 'easeOut' }}
-            className="block rounded-2xl overflow-hidden border-2 shadow-lg"
-            style={{ borderColor: `${p}40`, boxShadow: `0 4px 24px ${p}20` }}
+            transition={{ duration: 0.4, delay: 0.28, ease: 'easeOut' }}
+            className="rounded-2xl overflow-hidden border"
+            style={{ borderColor: `${p}30`, background: `linear-gradient(135deg, ${p}10, ${p}05)` }}
           >
-            <div
-              className="px-5 py-5 flex items-center gap-4"
-              style={{ background: `linear-gradient(135deg, ${p}12, ${p}06)` }}
-            >
+            <div className="px-4 py-4 flex items-center gap-3">
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
-                style={{ background: `${p}20` }}
+                className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: `${p}18` }}
               >
-                <Sparkles className="w-6 h-6" style={{ color: p }} />
+                <Gift className="w-5 h-5" style={{ color: p }} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] mb-0.5" style={{ color: p }}>
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: p }}>
                   {t('welcomeOffer')}
                 </p>
-                <p className="text-[15px] font-bold text-gray-800 leading-tight">
+                <p className="text-[14px] font-bold text-gray-800 leading-snug mt-0.5">
                   {merchant.welcome_offer_description}
                 </p>
-                <p className="text-[12px] text-gray-500 mt-1">
+                <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">
                   {canBookOnline ? t('signUpToEnjoyBooking') : t('signUpToEnjoy')}
                 </p>
               </div>
@@ -770,17 +767,12 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 <a
                   href={isDemo ? '#' : `/scan/${merchant.scan_code}?welcome=${merchant.welcome_referral_code}`}
                   onClick={isDemo ? noOp : undefined}
-                  className="shrink-0 px-4 py-2 rounded-xl text-[13px] font-bold text-white"
+                  className="shrink-0 px-3 py-1.5 rounded-lg text-[12px] font-bold text-white"
                   style={{ background: p }}
                 >
                   {t('enjoyNow')}
                 </a>
               )}
-            </div>
-            <div className="px-5 pb-4" style={{ background: `linear-gradient(135deg, ${p}06, transparent)` }}>
-              <p className="text-[12px] text-gray-500 leading-relaxed">
-                {canBookOnline ? t('welcomeOfferInstructionsBooking') : t('welcomeOfferInstructions')}
-              </p>
             </div>
           </motion.div>
         )}
@@ -828,6 +820,28 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                   <span className="font-semibold text-amber-700"> {t('validUntil', { date: new Date(promoOffer.expires_at).toLocaleDateString(toBCP47(locale)) })}</span>
                 )}
               </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── JEU CONCOURS DU MOIS ── */}
+        {merchant.contest_enabled && merchant.contest_prize && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.4, ease: 'easeOut' }}
+            className="rounded-2xl overflow-hidden border border-amber-200/60"
+            style={{ background: `linear-gradient(135deg, ${p}08, #fef3c720, ${p}06)` }}
+          >
+            <div className="px-4 py-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shrink-0">
+                <Trophy className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-amber-600">{t('contestBadge')}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{t('contestDesc')}</p>
+                <p className="text-[14px] font-bold mt-0.5" style={{ color: p }}>{merchant.contest_prize}</p>
+              </div>
             </div>
           </motion.div>
         )}
@@ -996,17 +1010,6 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                 </div>
               )}
 
-              {merchant.contest_enabled && merchant.contest_prize && (
-                <div className="px-5 py-4 flex items-center gap-3.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                    <Trophy className="w-4 h-4 text-amber-500" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[13px] font-bold text-gray-800 leading-tight">{t('contestBadge')}</p>
-                    <p className="text-[12px] font-semibold mt-0.5 leading-snug" style={{ color: p }}>{merchant.contest_prize}</p>
-                  </div>
-                </div>
-              )}
 
               {merchant.double_days_enabled && (
                 <div className="px-5 py-4 flex items-center gap-3.5">
