@@ -403,38 +403,7 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.18em] mb-2.5">
               {t('hours')}
             </p>
-            {/* Mobile / small tablet: vertical list */}
-            <div className="md:hidden space-y-1">
-              {DAY_LABELS_SHORT.map((label, i) => {
-                const dayKey = String(i + 1);
-                const slot = hours![dayKey];
-                const isToday = dayKey === todayKey;
-                return (
-                  <div
-                    key={dayKey}
-                    className={`flex items-center justify-between px-3 py-1.5 rounded-lg ${slot ? 'bg-gray-50' : 'opacity-40'}`}
-                    style={isToday ? { boxShadow: `0 0 0 1px ${p}`, backgroundColor: `${p}08` } : undefined}
-                  >
-                    <p className={`text-xs font-bold w-8 ${isToday ? '' : 'text-gray-500'}`} style={isToday ? { color: p } : undefined}>
-                      {label}
-                    </p>
-                    {slot ? (
-                      <p className="text-xs text-gray-600 font-medium">
-                        {slot.break_start && slot.break_end
-                          ? `${slot.open} — ${slot.break_start} / ${slot.break_end} — ${slot.close}`
-                          : `${slot.open} — ${slot.close}`
-                        }
-                      </p>
-                    ) : (
-                      <p className="text-xs text-gray-400 italic">{t('closed')}</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Desktop: 7-column grid */}
-            <div className="hidden md:grid md:grid-cols-7 gap-0.5">
+            <div className="grid grid-cols-7 gap-0.5">
               {DAY_LABELS_SHORT.map((label, i) => {
                 const dayKey = String(i + 1);
                 const slot = hours![dayKey];
@@ -453,8 +422,9 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     {slot ? (
                       slot.break_start && slot.break_end ? (
                         <>
-                          <p className="text-[8px] text-gray-600 font-medium leading-tight">{slot.open}-{slot.break_start}</p>
-                          <p className="text-[8px] text-gray-600 font-medium leading-tight">{slot.break_end}-{slot.close}</p>
+                          <p className="text-[8px] text-gray-600 font-medium leading-tight">{slot.open} {slot.break_start}</p>
+                          <p className="text-[8px] text-gray-400 font-medium leading-tight">–</p>
+                          <p className="text-[8px] text-gray-600 font-medium leading-tight">{slot.break_end} {slot.close}</p>
                         </>
                       ) : (
                         <>
