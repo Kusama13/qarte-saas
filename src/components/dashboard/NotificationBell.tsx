@@ -24,6 +24,7 @@ const EMOJI_MAP: Record<string, string> = {
   deposit_expired: '\u23F0',
   deposit_expiring: '\u26A0\uFE0F',
   birthday_digest: '\uD83C\uDF82',
+  contest_winner: '\uD83C\uDF89',
   onboarding_planning: '\uD83D\uDC4B',
   onboarding_first_scan: '\uD83D\uDC4B',
   onboarding_qr: '\uD83D\uDC4B',

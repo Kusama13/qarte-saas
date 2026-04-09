@@ -445,6 +445,12 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 - Photos resultat agglomerees depuis tous les RDV passes (lazy-loaded)
 - Styles types partages via `src/lib/note-styles.ts` (getTypeStyle)
 
+### Jeu concours mensuel
+- `GET /api/contest?merchantId=` — Historique tirages (auth, 12 derniers)
+- `PATCH /api/contest` — Sauvegarde config (contestEnabled, contestPrize)
+- `GET /api/contest/participants?merchantId=` — Nombre participants uniques du mois courant
+- `GET /api/cron/monthly-contest` — Cron 1er du mois : tirage, insert merchant_contests, push + email merchant
+
 ### Clients (social)
 - `PATCH /api/customers/social` — MAJ liens sociaux (instagram_handle, tiktok_handle, facebook_url)
 
@@ -485,6 +491,8 @@ const shouldResetStamps = tier === 2 || !merchant.tier2_enabled;
 **BookingModal vitrine — section acompte** : fond + bordure + icone + CTA "Payer acompte" utilisent les couleurs du merchant (`primary_color` / `secondary_color` via styles inline avec opacites hex `0D`/`1A`/`26`). Plus d'ambre. `RewardCard` et `TierProgressDisplay` : tier 2 = gradient inverse des couleurs merchant (plus de violet Qarte hardcode `#8B5CF6`).
 
 **Headers unifies** : tous `bg-[#4b0082]/[0.04] border border-[#4b0082]/[0.08]` avec titre gradient `from-indigo-600 to-violet-600`.
+
+**Jeu concours mensuel** (mig 105) : merchants activent `contest_enabled` + configurent `contest_prize`. Clients ayant reserve pendant le mois participent automatiquement (dedup par customer_id, slots avec client_name NOT NULL + primary_slot_id IS NULL). Cron `monthly-contest` le 1er du mois tire un gagnant au hasard, insert `merchant_contests`, push + email merchant. Page dediee `/dashboard/contest` (admin-only via `super_admins` check dans le sidebar). Generation story Instagram (4:5, `ContestWinnerStory.tsx`, meme pattern glassmorphism que `SocialMediaTemplate.tsx`). Badge concours sur vitrine `/p/[slug]` si actif. Emoji `🎉` dans NotificationBell pour type `contest_winner`.
 
 ---
 
@@ -558,6 +566,7 @@ Tous les codes promo emails ont ete supprimes (QARTE50, QARTEBOOST, QARTELAST, Q
 | `/api/cron/morning-jobs` | 09:15 UTC | Vouchers anniversaire (timezone-aware) + SMS anniversaire + auto-liberation acomptes expires |
 | `/api/cron/morning-push` | 09:30 UTC | Push 10h (scheduled), push automations (inactifs/recompense/events), push trial reminders |
 | `/api/cron/evening` | 17:00 UTC | Push 19h (timezone-aware) + check acomptes expires + SMS rappel J-1 |
+| `/api/cron/monthly-contest` | 08:00 UTC, 1er du mois | Tirage au sort mensuel : pick random parmi clients ayant reserve le mois precedent, insert merchant_contests, push + email merchant |
 | `/api/cron/reactivation` | — | Deprecie (integre dans morning, section 7) |
 
 ### Anti-spam
@@ -617,7 +626,7 @@ Stats temps reel, programme fidelite, QR code & Kit promo, gestion clients (4 fi
 ### Admin (`/admin`)
 Metriques startup (MRR, churn, ARPU, LTV), lifecycle segments, health score, annonces, leads, analytics, depenses, tracking. **Exclut les comptes admin** des stats. Feature adoption : 15 features trackees (programme, logo, reseaux, parrainage, anniversaire, reservation, avis, offre active, PWA, shield, palier 2, offre bienvenue, double jours, adresse, mode cagnotte). Health score : /100 (programme +15, logo +10, reseaux +5, avis +5, reservation +5, clients +10-20, activite +15, recence +5-10, parrainage +5, shield +5, palier2 +5, bienvenue +5, anniversaire +3, double jours +2, planning +5, resa en ligne +5). **Dashboard** : 3 stat cards planning (Planning actif, Resa en ligne, Mode Libre). Badges merchants : Admin, NC, Shield pending, Resa/Planning, Libre, PWA, Bienvenue, Cagnotte, Page. **Detail merchant** : stat planning "X reservations / Y creneaux" + "Resas en ligne (total)", feature badges (Planning, Mode Libre, Buffer Xmin, Annulation J-X, Modif J-X), horaires avec pause dejeuner. **WhatsApp** : dropdown 2 onglets (Marketing 4 msgs + Tuto 2 msgs), constante `ADMIN_CONTACT_NAME` — sur liste et detail.
 
-**Notification Bell** (mig 104) : icone cloche dans le header dashboard (mobile top-right fixe + desktop sidebar) avec badge rouge unread count. Dropdown 10 dernières notifs avec emoji par type (📅 booking, ❌ annulé, 🔄 déplacé, ⏰ acompte expiré, ⚠️ acompte bientôt, 🎂 anniversaire, 👋 onboarding, 🔔 default). "Tout lu" pour marquer comme lues. Click → deep link vers la bonne date du planning. Polling 60s. API `/api/merchant-notifications` (GET + PATCH). Composant `src/components/dashboard/NotificationBell.tsx`.
+**Notification Bell** (mig 104) : icone cloche dans le header dashboard (mobile top-right fixe + desktop sidebar) avec badge rouge unread count. Dropdown 10 dernières notifs avec emoji par type (📅 booking, ❌ annulé, 🔄 déplacé, ⏰ acompte expiré, ⚠️ acompte bientôt, 🎂 anniversaire, 🎉 concours, 👋 onboarding, 🔔 default). "Tout lu" pour marquer comme lues. Click → deep link vers la bonne date du planning. Polling 60s. API `/api/merchant-notifications` (GET + PATCH). Composant `src/components/dashboard/NotificationBell.tsx`.
 
 ### Page Publique Programme (`/p/[slug]`)
 Bio reseaux sociaux, sans auth. **JAMAIS de QR code ni lien /scan/** sur cette page (sauf CTA offre bienvenue → `/scan/{code}?welcome=`).

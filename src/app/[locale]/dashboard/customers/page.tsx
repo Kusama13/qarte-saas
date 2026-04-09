@@ -397,6 +397,15 @@ export default function CustomersPage() {
               {t('vipPrograms')}
             </Button>
           </Link>
+          <Link href="/dashboard/contest">
+            <Button
+              variant="outline"
+              className="h-9 px-3 text-sm border-amber-200 hover:border-amber-300 hover:bg-amber-50/50 text-amber-700 rounded-lg transition-all duration-200 shadow-sm"
+            >
+              <Trophy className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+              {t('contest')}
+            </Button>
+          </Link>
           <Link href="/dashboard/marketing?tab=automations">
             <Button
               variant="outline"

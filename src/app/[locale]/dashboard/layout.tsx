@@ -52,6 +52,12 @@ function DashboardLayoutContent({
     dismiss: dismissPush,
   } = useMerchantPushNotifications();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+  const [previewDone, setPreviewDone] = useState(false);
+
+  useEffect(() => { setHasMounted(true); }, []);
+
   const navItems = [
     { href: '/dashboard', icon: Home, label: t('home'), color: 'text-indigo-500', bg: 'bg-indigo-50' },
     { href: '/dashboard/program', icon: Gift, label: t('program'), color: 'text-pink-500', bg: 'bg-pink-50' },
@@ -64,11 +70,6 @@ function DashboardLayoutContent({
     { href: '/dashboard/subscription', icon: Wallet, label: t('subscription'), color: 'text-teal-500', bg: 'bg-teal-50' },
     { href: '/dashboard/settings', icon: Settings, label: t('settings'), color: 'text-slate-500', bg: 'bg-slate-50' },
   ];
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [hasMounted, setHasMounted] = useState(false);
-  const [previewDone, setPreviewDone] = useState(false);
-
-  useEffect(() => { setHasMounted(true); }, []);
 
   // Check if merchant has tested their card (localStorage flag set on qr-download page)
   useEffect(() => {

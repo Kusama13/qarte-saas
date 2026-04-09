@@ -103,6 +103,8 @@
 | reschedule_deadline_days | INTEGER | `1` | NOT NULL, mig 097, delai modification en jours avant le RDV |
 | booking_mode | VARCHAR(10) | `'slots'` | NOT NULL, mig 103, CHECK ('slots','free'). Mode creneaux = slots pre-generes, mode libre = calcul dynamique depuis opening_hours |
 | buffer_minutes | SMALLINT | `0` | NOT NULL, mig 103, CHECK (0,10,15,30). Pause entre RDV en mode libre |
+| contest_enabled | BOOLEAN | `FALSE` | mig 105. Tirage au sort mensuel |
+| contest_prize | TEXT | NULL | mig 105. Description du lot a gagner |
 | show_public_page_on_card | BOOLEAN | `FALSE` | NOT NULL, mig 067 (toggle UI retire, colonne conservee) |
 | signup_source | TEXT | NULL | mig 068 |
 | locale | TEXT | `'fr'` | NOT NULL, mig 069 |
@@ -548,7 +550,25 @@
 **Index** : `idx_merchant_push_logs_lookup` (merchant_id, notification_type, sent_at), `idx_merchant_push_logs_unread` (merchant_id, read, sent_at DESC)
 **RLS** : service role full access + merchants SELECT/UPDATE own logs
 
-### 2.28 sms_logs (mig 092-094)
+### 2.28 merchant_contests (mig 105)
+
+| Colonne | Type | Default | Contrainte |
+|---------|------|---------|------------|
+| id | UUID PK | `gen_random_uuid()` | |
+| merchant_id | UUID FK | NOT NULL | → merchants(id) ON DELETE CASCADE |
+| contest_month | VARCHAR(7) | NOT NULL | YYYY-MM, UNIQUE(merchant_id, contest_month) |
+| prize_description | TEXT | NOT NULL | |
+| winner_customer_id | UUID FK | | → customers(id) ON DELETE SET NULL |
+| winner_name | TEXT | | |
+| winner_phone | TEXT | | |
+| participants_count | INTEGER | 0 | NOT NULL |
+| drawn_at | TIMESTAMPTZ | | |
+| created_at | TIMESTAMPTZ | `NOW()` | |
+
+**Index** : `idx_merchant_contests_merchant` (merchant_id, contest_month DESC)
+**RLS** : merchants SELECT own, service role full access
+
+### 2.29 sms_logs (mig 092-094)
 
 | Colonne | Type | Default | Contrainte |
 |---------|------|---------|------------|
@@ -1047,6 +1067,8 @@ auth.uid() IN (SELECT user_id FROM super_admins)
 | 101 | sms_booking_cancelled_type | Ajout type `booking_cancelled` au CHECK sms_type |
 | 102 | prevent_merchant_hard_delete | Trigger BEFORE DELETE sur merchants : bloque hard delete si `deleted_at IS NULL` (force soft-delete), autorise si deja soft-deleted (purge). Fonction `prevent_merchant_hard_delete()` |
 | 103 | planning_free_mode | Colonnes `booking_mode VARCHAR(10) DEFAULT 'slots'` + `buffer_minutes SMALLINT DEFAULT 0` sur `merchants`. Colonne `total_duration_minutes SMALLINT NULL` sur `merchant_planning_slots` (NULL=mode créneaux, non-null=mode libre). Les horaires d'ouverture mode libre réutilisent le champ JSON `merchant.opening_hours` existant (clés "1"=Lun…"7"=Dim) |
+| 104 | notification_center | Colonnes `title`, `body`, `url` TEXT + `read` BOOLEAN DEFAULT false sur `merchant_push_logs`. Index `idx_merchant_push_logs_unread`. Policies SELECT/UPDATE pour merchants |
+| 105 | monthly_contest | Colonnes `contest_enabled` BOOLEAN + `contest_prize` TEXT sur `merchants`. Table `merchant_contests` (tirage au sort mensuel) avec UNIQUE(merchant_id, contest_month) |
 
 ---
 

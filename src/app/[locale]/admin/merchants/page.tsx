@@ -199,7 +199,7 @@ function HealthDot({ score }: { score: number }) {
 // --- Shared Sub-Components ---
 
 /** Badges shown next to merchant name */
-function MerchantBadges({ isAdmin, noContact, pending, pendingDeposits, pwaInstalled, welcomeOffer, cagnotte, pageRemplie, planningEnabled, resaEnLigne, bookingMode }: { isAdmin: boolean; noContact: boolean | null; pending: number; pendingDeposits: number; pwaInstalled: boolean; welcomeOffer: boolean; cagnotte: boolean; pageRemplie: boolean; planningEnabled: boolean; resaEnLigne: boolean; bookingMode: 'slots' | 'free' | null }) {
+function MerchantBadges({ isAdmin, noContact, pending, pendingDeposits, pwaInstalled, welcomeOffer, cagnotte, pageRemplie, planningEnabled, resaEnLigne, bookingMode, contestEnabled }: { isAdmin: boolean; noContact: boolean | null; pending: number; pendingDeposits: number; pwaInstalled: boolean; welcomeOffer: boolean; cagnotte: boolean; pageRemplie: boolean; planningEnabled: boolean; resaEnLigne: boolean; bookingMode: 'slots' | 'free' | null; contestEnabled: boolean }) {
   return (
     <>
       {isAdmin && (
@@ -260,6 +260,11 @@ function MerchantBadges({ isAdmin, noContact, pending, pendingDeposits, pwaInsta
         <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-700 rounded-full flex-shrink-0 flex items-center gap-0.5" title="Vitrine en ligne remplie (services + photos + adresse)">
           <CheckCircle className="w-3 h-3" />
           Page
+        </span>
+      )}
+      {contestEnabled && (
+        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full flex-shrink-0" title="Jeu concours mensuel actif">
+          Concours
         </span>
       )}
     </>
@@ -849,7 +854,7 @@ export default function AdminMerchantsPage() {
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
                               <p className="font-medium text-gray-900 truncate max-w-[180px] text-sm">{merchant.shop_name}</p>
-                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pendingDeposits={pendingDeposits} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} planningEnabled={!!merchant.planning_enabled} resaEnLigne={!!merchant.auto_booking_enabled} bookingMode={merchant.booking_mode || null} />
+                              <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pendingDeposits={pendingDeposits} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} planningEnabled={!!merchant.planning_enabled} resaEnLigne={!!merchant.auto_booking_enabled} bookingMode={merchant.booking_mode || null} contestEnabled={!!merchant.contest_enabled} />
                             </div>
                             <div className="flex items-center gap-2 text-[11px] text-gray-400">
                               {data?.userEmails[merchant.user_id] && (
@@ -953,7 +958,7 @@ export default function AdminMerchantsPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
                           <p className="font-medium text-gray-900 truncate text-sm">{merchant.shop_name}</p>
-                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pendingDeposits={pendingDeposits} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} planningEnabled={!!merchant.planning_enabled} resaEnLigne={!!merchant.auto_booking_enabled} bookingMode={merchant.booking_mode || null} />
+                          <MerchantBadges isAdmin={isAdmin} noContact={merchant.no_contact} pending={pending} pendingDeposits={pendingDeposits} pwaInstalled={!!merchant.pwa_installed_at} welcomeOffer={!!merchant.welcome_offer_enabled} cagnotte={merchant.loyalty_mode === 'cagnotte'} pageRemplie={!!(data?.servicesCounts[merchant.id] && data?.photosCounts[merchant.id] && merchant.shop_address)} planningEnabled={!!merchant.planning_enabled} resaEnLigne={!!merchant.auto_booking_enabled} bookingMode={merchant.booking_mode || null} contestEnabled={!!merchant.contest_enabled} />
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className={cn("px-1.5 py-0.5 text-[10px] font-semibold rounded-full", lifecycle.bgColor, lifecycle.color)}>

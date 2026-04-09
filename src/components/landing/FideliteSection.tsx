@@ -432,6 +432,72 @@ function JournalVisual({ t }: { t: (key: string) => string }) {
   );
 }
 
+function ContestVisual({ t }: { t: (key: string) => string }) {
+  const participants = ['Sophie M.', 'Camille L.', 'Julie D.', 'Inès B.', 'Léa R.'];
+
+  return (
+    <div className="relative w-full max-w-[320px] mx-auto">
+      <div className="bg-white backdrop-blur-sm rounded-3xl shadow-xl shadow-gray-200/40 border border-gray-100 p-5">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl flex items-center justify-center text-base">
+            {'\uD83C\uDFC6'}
+          </div>
+          <div>
+            <p className="text-xs font-bold text-gray-800">{t('contestVisualTitle')}</p>
+            <p className="text-[10px] text-gray-400">{t('contestVisualSub')}</p>
+          </div>
+        </div>
+
+        {/* Prize card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.1, ease: EASE }}
+          className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-3.5 mb-3 border border-amber-100/60"
+        >
+          <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider mb-1">{t('contestVisualPrize')}</p>
+          <p className="text-sm font-bold text-gray-800">{t('contestVisualPrizeValue')}</p>
+        </motion.div>
+
+        {/* Participants */}
+        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">{t('contestVisualParticipants')}</p>
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {participants.map((name, i) => (
+            <motion.span
+              key={i}
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: 0.15 + i * 0.06, ease: EASE }}
+              className="px-2.5 py-1 text-[10px] font-medium text-gray-600 bg-gray-100 rounded-full"
+            >
+              {name}
+            </motion.span>
+          ))}
+        </div>
+
+        {/* Auto draw */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4, delay: 0.4, ease: EASE }}
+          className="flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-2"
+        >
+          <span className="text-sm">{'\u2705'}</span>
+          <span className="text-[11px] font-bold text-emerald-600">{t('contestVisualAuto')}</span>
+        </motion.div>
+      </div>
+
+      <div className="absolute -top-3 -right-2 flex items-center gap-1.5 bg-amber-500 rounded-full px-3 py-1.5 shadow-lg shadow-amber-500/30 animate-float-subtle">
+        <span className="text-sm">{'\uD83C\uDF89'}</span>
+        <span className="text-xs font-bold text-white">{t('contestBadge')}</span>
+      </div>
+    </div>
+  );
+}
+
 /* ── Section ── */
 
 export function FideliteSection() {
@@ -502,6 +568,17 @@ export function FideliteSection() {
             titleBold={t('journalTitleBold')}
             description={t('journalDesc')}
             visual={<JournalVisual t={t} />}
+            delay={0.05}
+          />
+
+          <Separator />
+
+          <FeatureBlock
+            title={t('contestTitle')}
+            titleBold={t('contestTitleBold')}
+            description={t('contestDesc')}
+            visual={<ContestVisual t={t} />}
+            reverse
             delay={0.05}
           />
         </div>

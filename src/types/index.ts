@@ -152,6 +152,9 @@ export interface Merchant {
   // Booking mode (free = merchant sets opening hours, system computes availability)
   booking_mode: 'slots' | 'free';
   buffer_minutes: 0 | 10 | 15 | 30;
+  // Monthly contest
+  contest_enabled: boolean;
+  contest_prize: string | null;
 }
 
 export type BookingMode = 'slots' | 'free';
@@ -207,6 +210,19 @@ export interface MerchantOffer {
   max_claims: number | null;
   claim_count: number;
   offer_code: string;
+  created_at: string;
+}
+
+export interface MerchantContest {
+  id: string;
+  merchant_id: string;
+  contest_month: string;
+  prize_description: string;
+  winner_customer_id: string | null;
+  winner_name: string | null;
+  winner_phone: string | null;
+  participants_count: number;
+  drawn_at: string | null;
   created_at: string;
 }
 

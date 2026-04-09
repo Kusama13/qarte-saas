@@ -51,6 +51,8 @@ type MerchantPublic = Pick<
   | 'duo_offer_description'
   | 'student_offer_enabled'
   | 'student_offer_description'
+  | 'contest_enabled'
+  | 'contest_prize'
   | 'double_days_enabled'
   | 'double_days_of_week'
   | 'booking_url'
@@ -157,7 +159,8 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
     (merchant.referral_program_enabled && !!(merchant.referral_reward_referrer || merchant.referral_reward_referred)) ||
     (merchant.duo_offer_enabled && !!merchant.duo_offer_description) ||
     merchant.double_days_enabled ||
-    (merchant.student_offer_enabled && !!merchant.student_offer_description);
+    (merchant.student_offer_enabled && !!merchant.student_offer_description) ||
+    (merchant.contest_enabled && !!merchant.contest_prize);
 
   const safeBookingUrl = merchant.booking_url && /^https?:\/\//i.test(merchant.booking_url) ? merchant.booking_url : null;
   // Hide external booking CTA when Qarte online booking is active
@@ -989,6 +992,18 @@ export default function ProgrammeView({ merchant, photos = [], services = [], se
                     <p className="text-[13px] font-bold text-gray-800 leading-tight">{t('studentOfferTitle')}</p>
                     <p className="text-[12px] font-semibold text-blue-600 mt-0.5 leading-snug">{merchant.student_offer_description}</p>
                     <p className="text-[11px] text-gray-400 mt-0.5">{t('studentOfferHint')}</p>
+                  </div>
+                </div>
+              )}
+
+              {merchant.contest_enabled && merchant.contest_prize && (
+                <div className="px-5 py-4 flex items-center gap-3.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
+                    <Trophy className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-bold text-gray-800 leading-tight">{t('contestBadge')}</p>
+                    <p className="text-[12px] font-semibold mt-0.5 leading-snug" style={{ color: p }}>{merchant.contest_prize}</p>
                   </div>
                 </div>
               )}

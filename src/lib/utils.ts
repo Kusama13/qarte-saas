@@ -161,6 +161,18 @@ export function calculateCashback(amount: number, percent: number): number {
   return Math.round(amount * percent) / 100;
 }
 
+export const MONTH_LABELS_FR: Record<string, string> = {
+  '01': 'Janvier', '02': 'Février', '03': 'Mars', '04': 'Avril',
+  '05': 'Mai', '06': 'Juin', '07': 'Juillet', '08': 'Août',
+  '09': 'Septembre', '10': 'Octobre', '11': 'Novembre', '12': 'Décembre',
+};
+
+/** Format "YYYY-MM" → "Janvier 2026" */
+export function formatContestMonth(yyyymm: string): string {
+  const [year, month] = yyyymm.split('-');
+  return `${MONTH_LABELS_FR[month] || month} ${year}`;
+}
+
 export function formatRelativeTime(date: string | Date, locale: string = 'fr'): string {
   const d = typeof date === 'string' ? new Date(date) : date;
   return formatDistanceToNow(d, { addSuffix: true, locale: locale === 'en' ? enUS : fr });
