@@ -127,31 +127,40 @@ export async function DELETE(request: NextRequest) {
     if ('error' in checks) return checks.error;
 
     const { supabaseAdmin, merchant, slot } = checks;
+    const isFreeMod = merchant.booking_mode === 'free';
 
-    // Clear the slot
-    const { error: updateErr } = await supabaseAdmin
-      .from('merchant_planning_slots')
-      .update({
-        client_name: null,
-        client_phone: null,
-        customer_id: null,
-        deposit_confirmed: null,
-        deposit_deadline_at: null,
-        booked_online: false,
-        booked_at: null,
-      })
-      .eq('id', slot_id);
+    if (isFreeMod) {
+      // Mode libre: delete slot entirely (no empty slots in libre)
+      await Promise.all([
+        supabaseAdmin.from('planning_slot_services').delete().eq('slot_id', slot_id),
+        supabaseAdmin.from('merchant_planning_slots').delete().eq('id', slot_id),
+      ]);
+    } else {
+      // Mode créneaux: clear slot data (slot stays as empty/available)
+      const { error: updateErr } = await supabaseAdmin
+        .from('merchant_planning_slots')
+        .update({
+          client_name: null,
+          client_phone: null,
+          customer_id: null,
+          deposit_confirmed: null,
+          deposit_deadline_at: null,
+          booked_online: false,
+          booked_at: null,
+        })
+        .eq('id', slot_id);
 
-    if (updateErr) {
-      logger.error('customer-edit DELETE update error:', updateErr);
-      return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+      if (updateErr) {
+        logger.error('customer-edit DELETE update error:', updateErr);
+        return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+      }
+
+      // Delete fillers + services in parallel
+      await Promise.all([
+        supabaseAdmin.from('merchant_planning_slots').delete().eq('primary_slot_id', slot_id),
+        supabaseAdmin.from('planning_slot_services').delete().eq('slot_id', slot_id),
+      ]);
     }
-
-    // Delete fillers + services in parallel
-    await Promise.all([
-      supabaseAdmin.from('merchant_planning_slots').delete().eq('primary_slot_id', slot_id),
-      supabaseAdmin.from('planning_slot_services').delete().eq('slot_id', slot_id),
-    ]);
 
     const formattedDate = formatDate(slot.slot_date);
 

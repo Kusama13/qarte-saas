@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
     // Fetch merchants for locale-aware notifications
     const depositMerchantIds = [...new Set((expiredSlots || []).map(s => s.merchant_id))];
     const { data: depositMerchants } = depositMerchantIds.length > 0
-      ? await supabase.from('merchants').select('id, locale').in('id', depositMerchantIds)
+      ? await supabase.from('merchants').select('id, locale, booking_mode').in('id', depositMerchantIds)
       : { data: [] };
     const depositMerchantMap = new Map((depositMerchants || []).map(m => [m.id, m]));
 
@@ -213,10 +213,15 @@ export async function GET(request: NextRequest) {
           logger.error(`Deposit release partial failure for slot ${slot.id}`, { deleteErr: deleteResult.error, updateErr: updateResult.error });
         }
 
-        await supabase
-          .from('merchant_planning_slots')
-          .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null })
-          .eq('id', slot.id);
+        const isLibre = depositMerchantMap.get(slot.merchant_id)?.booking_mode === 'free';
+        if (isLibre) {
+          await supabase.from('merchant_planning_slots').delete().eq('id', slot.id);
+        } else {
+          await supabase
+            .from('merchant_planning_slots')
+            .update({ client_name: null, client_phone: null, customer_id: null, deposit_confirmed: null, deposit_deadline_at: null })
+            .eq('id', slot.id);
+        }
 
         const isEN = depositMerchantMap.get(slot.merchant_id)?.locale === 'en';
         depositPushes.push(sendMerchantPush({
@@ -248,7 +253,7 @@ export async function GET(request: NextRequest) {
     // Fetch merchants for warning locale (reuse map if overlap)
     const warningMerchantIds = [...new Set((expiringSlots || []).map(s => s.merchant_id))].filter(id => !depositMerchantMap.has(id));
     if (warningMerchantIds.length > 0) {
-      const { data: warnMerchants } = await supabase.from('merchants').select('id, locale').in('id', warningMerchantIds);
+      const { data: warnMerchants } = await supabase.from('merchants').select('id, locale, booking_mode').in('id', warningMerchantIds);
       for (const m of warnMerchants || []) depositMerchantMap.set(m.id, m);
     }
 
