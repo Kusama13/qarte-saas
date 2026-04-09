@@ -2889,5 +2889,10 @@
     "promptDismiss": "Later",
     "enabled": "Notifications enabled",
     "error": "Could not enable notifications"
+  },
+  "notifBell": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications"
   }
 }

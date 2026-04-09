@@ -531,7 +531,7 @@
 **Index** : `idx_merchant_push_subs_merchant` (merchant_id)
 **RLS** : merchants manage own subs (WHERE merchant_id IN merchants WHERE user_id = auth.uid())
 
-### 2.27 merchant_push_logs (mig 085)
+### 2.27 merchant_push_logs (mig 085, 104)
 
 | Colonne | Type | Default | Contrainte |
 |---------|------|---------|------------|
@@ -539,10 +539,14 @@
 | merchant_id | UUID FK | NOT NULL | → merchants(id) ON DELETE CASCADE |
 | notification_type | TEXT | NOT NULL | |
 | reference_id | TEXT | | |
+| title | TEXT | | (mig 104) |
+| body | TEXT | | (mig 104) |
+| url | TEXT | | (mig 104) |
+| read | BOOLEAN | `false` | NOT NULL (mig 104) |
 | sent_at | TIMESTAMPTZ | `NOW()` | |
 
-**Index** : `idx_merchant_push_logs_lookup` (merchant_id, notification_type, sent_at)
-**RLS** : service role full access
+**Index** : `idx_merchant_push_logs_lookup` (merchant_id, notification_type, sent_at), `idx_merchant_push_logs_unread` (merchant_id, read, sent_at DESC)
+**RLS** : service role full access + merchants SELECT/UPDATE own logs
 
 ### 2.28 sms_logs (mig 092-094)
 

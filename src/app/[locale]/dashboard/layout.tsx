@@ -27,6 +27,7 @@ import { MerchantProvider, useMerchant } from '@/contexts/MerchantContext';
 import InstallAppBanner from '@/components/dashboard/InstallAppBanner';
 import AdminAnnouncementBanner from '@/components/dashboard/AdminAnnouncementBanner';
 import StatusBanner from '@/components/dashboard/StatusBanner';
+import NotificationBell from '@/components/dashboard/NotificationBell';
 import { useMerchantPushNotifications } from '@/hooks/useMerchantPushNotifications';
 
 
@@ -136,6 +137,10 @@ function DashboardLayoutContent({
         <span className="text-sm font-medium text-indigo-600">{t('menu')}</span>
       </button>
 
+      <div className="fixed z-40 top-3 right-3 lg:hidden bg-white/90 backdrop-blur-xl border border-gray-100 rounded-xl shadow-lg">
+        <NotificationBell />
+      </div>
+
       {/* Backdrop — always rendered, animated opacity */}
       <div
         className={cn(
@@ -169,13 +174,18 @@ function DashboardLayoutContent({
                 </span>
               </div>
             </Link>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              aria-label={t('closeMenu')}
-              className="p-2 lg:hidden rounded-lg hover:bg-white/80 hover:shadow-sm text-gray-500 transition-all duration-200 active:scale-95"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <div className="hidden lg:block">
+                <NotificationBell />
+              </div>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                aria-label={t('closeMenu')}
+                className="p-2 lg:hidden rounded-lg hover:bg-white/80 hover:shadow-sm text-gray-500 transition-all duration-200 active:scale-95"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Banner essai actif */}

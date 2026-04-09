@@ -2889,5 +2889,10 @@
     "promptDismiss": "Plus tard",
     "enabled": "Notifications activées",
     "error": "Impossible d'activer les notifications"
+  },
+  "notifBell": {
+    "title": "Notifications",
+    "markAllRead": "Tout lu",
+    "empty": "Aucune notification"
   }
 }

@@ -101,11 +101,14 @@ export async function sendMerchantPush(params: {
 
     if (sentCount === 0) return false;
 
-    // 5. Log for dedup
+    // 5. Log for dedup + notification center
     await supabase.from('merchant_push_logs').insert({
       merchant_id: merchantId,
       notification_type: notificationType,
       reference_id: referenceId || null,
+      title,
+      body,
+      url,
     });
 
     return true;

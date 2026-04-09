@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from '@/i18n/navigation';
-import { Users, UserCheck, UserPlus, Calendar, CalendarDays, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, ShieldOff, HelpCircle, QrCode, CreditCard, Coins, Globe, Heart, Cake, Eye, MessageSquare } from 'lucide-react';
+import { Users, UserCheck, UserPlus, Calendar, CalendarDays, Clock, Gift, Sparkles, ArrowRight, ArrowUpRight, ArrowDownRight, AlertTriangle, X, Shield, QrCode, CreditCard, Coins, Globe, Heart, Cake, Eye, MessageSquare } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { getSupabase } from '@/lib/supabase';
 import { formatRelativeTime, getTodayForCountry, formatCurrency, unwrapJoin } from '@/lib/utils';
@@ -58,17 +58,16 @@ const initialStats = {
 const initialWeeklyData = { thisWeek: 0, lastWeek: 0 };
 
 interface ActivityEvent {
-  type: 'scan' | 'reward' | 'booking' | 'referral' | 'welcome';
+  type: 'scan' | 'reward' | 'referral' | 'welcome';
   timestamp: string;
   title: string;
   subtitle: string;
-  depositStatus?: boolean | null;
+  customerId?: string;
 }
 
 const EVENT_CONFIG: Record<ActivityEvent['type'], { icon: React.ElementType; color: string; bg: string; href: string }> = {
   scan:     { icon: Eye,          color: 'text-emerald-600', bg: 'bg-emerald-50', href: '/dashboard/customers' },
   reward:   { icon: Gift,         color: 'text-pink-600',    bg: 'bg-pink-50',    href: '/dashboard/customers' },
-  booking:  { icon: CalendarDays, color: 'text-cyan-600',    bg: 'bg-cyan-50',    href: '/dashboard/planning' },
   referral: { icon: UserPlus,     color: 'text-violet-600',  bg: 'bg-violet-50',  href: '/dashboard/referrals' },
   welcome:  { icon: Sparkles,     color: 'text-orange-600',  bg: 'bg-orange-50',  href: '/dashboard/customers' },
 };
@@ -127,7 +126,6 @@ export default function DashboardPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [showShieldWarning, setShowShieldWarning] = useState(false);
-  const [showShieldHelp, setShowShieldHelp] = useState(false);
   const [shieldEnabled, setShieldEnabled] = useState(true);
   const [activeMilestone, setActiveMilestone] = useState<MilestoneType | null>(null);
   const [servicesCount, setServicesCount] = useState(0);
@@ -233,7 +231,6 @@ export default function DashboardPage() {
           servicesCountResult,
           allRedemptionsResult,
           allBookingsResult,
-          feedBookingsResult,
           feedReferralsResult,
           feedWelcomeResult,
         ] = await Promise.all([
@@ -260,7 +257,7 @@ export default function DashboardPage() {
           // Recent visits for activity feed
           supabase
             .from('visits')
-            .select('visited_at, points_earned, loyalty_card:loyalty_cards!inner(customer:customers(first_name, last_name))')
+            .select('visited_at, points_earned, loyalty_card:loyalty_cards!inner(customer_id, customer:customers(first_name, last_name))')
             .eq('merchant_id', merchant.id)
             .gte('visited_at', thirtyDaysAgo.toISOString())
             .eq('status', 'confirmed')
@@ -318,7 +315,7 @@ export default function DashboardPage() {
           // Recent redemptions for activity feed
           supabase
             .from('redemptions')
-            .select('redeemed_at, tier, loyalty_card:loyalty_cards!inner(customer:customers(first_name))')
+            .select('redeemed_at, tier, loyalty_card:loyalty_cards!inner(customer_id, customer:customers(first_name))')
             .eq('merchant_id', merchant.id)
             .gte('redeemed_at', thirtyDaysAgo.toISOString())
             .order('redeemed_at', { ascending: false })
@@ -352,15 +349,7 @@ export default function DashboardPage() {
                 .eq('merchant_id', merchant.id)
                 .not('client_name', 'is', null)
             : Promise.resolve({ count: 0 }),
-          // Activity feed: bookings, referrals, welcome
-          supabase
-            .from('merchant_planning_slots')
-            .select('client_name, slot_date, start_time, created_at, deposit_confirmed')
-            .eq('merchant_id', merchant.id)
-            .not('client_name', 'is', null)
-            .is('primary_slot_id', null)
-            .order('created_at', { ascending: false })
-            .limit(8),
+          // Activity feed: referrals, welcome
           supabase
             .from('referrals')
             .select('created_at, status')
@@ -370,7 +359,7 @@ export default function DashboardPage() {
           merchant.welcome_offer_enabled
             ? supabase
                 .from('vouchers')
-                .select('created_at, customer:customers(first_name)')
+                .select('created_at, customer_id, customer:customers(first_name)')
                 .eq('merchant_id', merchant.id)
                 .eq('source', 'welcome')
                 .order('created_at', { ascending: false })
@@ -407,7 +396,7 @@ export default function DashboardPage() {
         // Milestone data
         setServicesCount(servicesCountResult.count || 0);
         setTotalRedemptions(allRedemptionsResult.count || 0);
-        setHasAnyBooking((allBookingsResult.count || 0) >= 1 || (feedBookingsResult.data?.length || 0) >= 1);
+        setHasAnyBooking((allBookingsResult.count || 0) >= 1);
 
         const newStats = {
           totalCustomers: totalCustomersResult.count || 0,
@@ -422,18 +411,16 @@ export default function DashboardPage() {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const v of (feedVisitsResult.data || []) as any[]) {
-          const cust = unwrapJoin(unwrapJoin(v.loyalty_card)?.customer);
+          const card = unwrapJoin(v.loyalty_card);
+          const cust = unwrapJoin(card?.customer);
           const name = cust ? `${cust.first_name} ${cust.last_name?.charAt(0) || ''}`.trim() : t('defaultClient');
-          feed.push({ type: 'scan', timestamp: v.visited_at, title: name, subtitle: t('activityScan', { points: v.points_earned }) });
+          feed.push({ type: 'scan', timestamp: v.visited_at, title: name, subtitle: t('activityScan', { points: v.points_earned }), customerId: card?.customer_id });
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const r of (feedRedemptionsResult.data || []) as any[]) {
-          const cust = unwrapJoin(unwrapJoin(r.loyalty_card)?.customer);
-          feed.push({ type: 'reward', timestamp: r.redeemed_at, title: cust?.first_name || t('defaultClient'), subtitle: t('activityReward') });
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        for (const b of (feedBookingsResult.data || []) as any[]) {
-          feed.push({ type: 'booking', timestamp: b.created_at, title: b.client_name, subtitle: t('activityBooking', { date: b.slot_date, time: b.start_time }), depositStatus: b.deposit_confirmed });
+          const card = unwrapJoin(r.loyalty_card);
+          const cust = unwrapJoin(card?.customer);
+          feed.push({ type: 'reward', timestamp: r.redeemed_at, title: cust?.first_name || t('defaultClient'), subtitle: t('activityReward'), customerId: card?.customer_id });
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const ref of (feedReferralsResult.data || []) as any[]) {
@@ -442,7 +429,7 @@ export default function DashboardPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         for (const w of (feedWelcomeResult.data || []) as any[]) {
           const cust = unwrapJoin(w.customer);
-          feed.push({ type: 'welcome', timestamp: w.created_at, title: cust?.first_name || t('defaultClient'), subtitle: t('activityWelcome') });
+          feed.push({ type: 'welcome', timestamp: w.created_at, title: cust?.first_name || t('defaultClient'), subtitle: t('activityWelcome'), customerId: w.customer_id });
         }
 
         // Sort by timestamp DESC and take 8
@@ -750,60 +737,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* SMS Quota Widget */}
-      {smsUsage && (() => {
-        const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
-        const pct = Math.min(100, Math.round((smsUsage.sent / 100) * 100));
-        const isOverage = smsUsage.sent > 100;
-        const periodStartDate = new Date(smsUsage.periodStart);
-        const periodEndDate = new Date(periodStartDate);
-        periodEndDate.setMonth(periodEndDate.getMonth() + 1);
-        const fmtDate = (d: Date) => d.toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'short' });
-        return (
-          <div className={`backdrop-blur-xl border rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6 ${isPaid ? 'bg-white/80 border-white/20' : 'bg-amber-50/80 border-amber-200/40'}`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className={`p-1.5 rounded-lg ${isOverage ? 'bg-amber-50' : 'bg-emerald-50'}`}>
-                  <MessageSquare className={`w-4 h-4 ${isOverage ? 'text-amber-600' : 'text-emerald-600'}`} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-gray-900">{t('smsQuotaTitle')}</h3>
-                  <p className="text-[10px] text-gray-400">{t('smsQuotaDesc')}</p>
-                </div>
-              </div>
-              {isPaid && (
-                <div className="text-right">
-                  <span className="text-xs font-bold text-gray-700">{t('smsQuotaUsed', { sent: smsUsage.sent })}</span>
-                  <p className="text-[9px] text-gray-400">{fmtDate(periodStartDate)} — {fmtDate(periodEndDate)}</p>
-                </div>
-              )}
-            </div>
-            {isPaid ? (
-              <div className="mt-2">
-                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${isOverage ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-                {isOverage && (
-                  <p className="text-[11px] font-semibold text-amber-600 mt-1.5">
-                    {t('smsOverage', { count: smsUsage.overageCount, cost: smsUsage.overageCost.toFixed(2) })}
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <p className="text-[11px] text-gray-500">{t('smsQuotaTrialHint')}</p>
-                <Link href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-[11px] font-bold hover:shadow-md transition-all">
-                  {t('smsQuotaTrialCta')}
-                </Link>
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
       {/* Shield Disable Warning Modal */}
       {showShieldWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
@@ -936,92 +869,67 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Qarte Shield — only show when merchant has at least 1 client */}
       {stats.totalCustomers > 0 && (
-        <>
-          <div className="relative">
-            <div className={`flex items-center justify-between px-4 py-3 rounded-xl border ${
-              shieldEnabled
-                ? 'bg-emerald-50/50 border-emerald-100'
-                : 'bg-gray-50 border-gray-200'
-            }`}>
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${shieldEnabled ? 'bg-emerald-100' : 'bg-gray-200'}`}>
-                  {shieldEnabled ? (
-                    <Shield className="w-4 h-4 text-emerald-600" />
-                  ) : (
-                    <ShieldOff className="w-4 h-4 text-gray-400" />
-                  )}
+        <PendingPointsWidget
+          merchantId={merchant.id}
+          shieldEnabled={shieldEnabled}
+          onShieldToggle={handleShieldToggle}
+        />
+      )}
+
+      {/* SMS Quota Widget */}
+      {smsUsage && (() => {
+        const isPaid = merchant?.subscription_status === 'active' || merchant?.subscription_status === 'canceling' || merchant?.subscription_status === 'past_due';
+        const pct = Math.min(100, Math.round((smsUsage.sent / 100) * 100));
+        const isOverage = smsUsage.sent > 100;
+        const periodStartDate = new Date(smsUsage.periodStart);
+        const periodEndDate = new Date(periodStartDate);
+        periodEndDate.setMonth(periodEndDate.getMonth() + 1);
+        const fmtDate = (d: Date) => d.toLocaleDateString(locale === 'en' ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'short' });
+        return (
+          <div className={`backdrop-blur-xl border rounded-2xl md:rounded-3xl shadow-sm p-4 md:p-6 ${isPaid ? 'bg-white/80 border-white/20' : 'bg-amber-50/80 border-amber-200/40'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg ${isOverage ? 'bg-amber-50' : 'bg-emerald-50'}`}>
+                  <MessageSquare className={`w-4 h-4 ${isOverage ? 'text-amber-600' : 'text-emerald-600'}`} />
                 </div>
                 <div>
-                  <p className={`text-sm font-semibold ${shieldEnabled ? 'text-emerald-800' : 'text-gray-600'}`}>
-                    {t('shieldTitle')} {shieldEnabled ? t('shieldActive') : t('shieldInactive')}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {shieldEnabled ? t('shieldProtectionOn') : t('shieldProtectionOff')}
-                  </p>
+                  <h3 className="text-sm font-bold text-gray-900">{t('smsQuotaTitle')}</h3>
+                  <p className="text-[10px] text-gray-400">{t('smsQuotaDesc')}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowShieldHelp(!showShieldHelp)}
-                  className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                  aria-label={t('shieldInfoAria')}
-                >
-                  <HelpCircle className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={shieldEnabled}
-                  aria-label={t('shieldToggleAria')}
-                  onClick={() => handleShieldToggle(!shieldEnabled)}
-                  className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 ${
-                    shieldEnabled ? 'bg-emerald-500' : 'bg-gray-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${
-                      shieldEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
+              {isPaid && (
+                <div className="text-right">
+                  <span className="text-xs font-bold text-gray-700">{t('smsQuotaUsed', { sent: smsUsage.sent })}</span>
+                  <p className="text-[9px] text-gray-400">{fmtDate(periodStartDate)} — {fmtDate(periodEndDate)}</p>
+                </div>
+              )}
             </div>
-
-            {/* Shield Help Tooltip */}
-            {showShieldHelp && (
-              <div className="absolute right-0 top-full mt-2 z-20 w-[calc(100vw-4rem)] max-w-xs sm:w-80 rounded-xl border border-gray-200 bg-white p-4 shadow-lg animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-indigo-600" />
-                    <h4 className="text-sm font-bold text-gray-900">{t('shieldTitle')}</h4>
-                  </div>
-                  <button
-                    onClick={() => setShowShieldHelp(false)}
-                    className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+            {isPaid ? (
+              <div className="mt-2">
+                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${isOverage ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  {t('shieldDesc')}
-                </p>
-                <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-                  {t('shieldDesc2')}
-                </p>
+                {isOverage && (
+                  <p className="text-[11px] font-semibold text-amber-600 mt-1.5">
+                    {t('smsOverage', { count: smsUsage.overageCount, cost: smsUsage.overageCost.toFixed(2) })}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <p className="text-[11px] text-gray-500">{t('smsQuotaTrialHint')}</p>
+                <Link href="/dashboard/subscription" className="shrink-0 px-3 py-1.5 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-[11px] font-bold hover:shadow-md transition-all">
+                  {t('smsQuotaTrialCta')}
+                </Link>
               </div>
             )}
           </div>
-
-          <PendingPointsWidget
-            merchantId={merchant.id}
-            shieldEnabled={shieldEnabled}
-            onShieldToggle={handleShieldToggle}
-          />
-        </>
-      )}
+        );
+      })()}
 
       <div className="grid gap-4 md:gap-8 lg:grid-cols-2">
         {/* Weekly Comparison Card */}
@@ -1129,7 +1037,7 @@ export default function DashboardPage() {
                   return (
                     <Link
                       key={`${event.type}-${i}`}
-                      href={config.href}
+                      href={event.customerId ? `${config.href}?customer=${event.customerId}` : config.href}
                       className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-gray-50/80 border border-transparent hover:bg-white hover:border-gray-200 hover:shadow-sm transition-all duration-150 cursor-pointer"
                     >
                       <div className={`flex items-center justify-center w-8 h-8 shrink-0 rounded-lg ${config.bg}`}>
@@ -1138,17 +1046,6 @@ export default function DashboardPage() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <p className="text-sm font-semibold text-gray-900 truncate">{event.title}</p>
-                          {event.type === 'booking' && event.depositStatus === false && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-50 text-[9px] font-bold text-amber-600 shrink-0">
-                              <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
-                              {t('depositPending')}
-                            </span>
-                          )}
-                          {event.type === 'booking' && event.depositStatus === true && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-emerald-50 text-[9px] font-bold text-emerald-600 shrink-0">
-                              {t('depositOk')}
-                            </span>
-                          )}
                         </div>
                         {event.subtitle && (
                           <p className="text-[11px] text-gray-400 leading-none mt-0.5">{event.subtitle}</p>

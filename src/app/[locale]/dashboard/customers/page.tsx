@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import {
@@ -70,6 +71,8 @@ export default function CustomersPage() {
   const [loading, setLoading] = useState(true);
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerWithCard | null>(null);
+  const searchParams = useSearchParams();
+  const deepLinkCustomerId = searchParams.get('customer');
   const [subscriberIds, setSubscriberIds] = useState<string[]>([]);
   const [filterPushOnly, setFilterPushOnly] = useState(false);
   const [filterWelcome, setFilterWelcome] = useState(false);
@@ -192,6 +195,17 @@ export default function CustomersPage() {
 
     setLoading(false);
   }, [merchant, supabase]);
+
+  // Deep link: auto-open customer modal from ?customer= param (once only)
+  const hasDeepLinked = useRef(false);
+  useEffect(() => {
+    if (hasDeepLinked.current || !deepLinkCustomerId || customers.length === 0) return;
+    const match = customers.find(c => c.customer_id === deepLinkCustomerId);
+    if (match) {
+      setSelectedCustomer(match);
+      hasDeepLinked.current = true;
+    }
+  }, [deepLinkCustomerId, customers]);
 
   const handleOpenAdjustModal = (customer: CustomerWithCard) => {
     setSelectedCustomer(customer);
