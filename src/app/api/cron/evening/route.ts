@@ -6,6 +6,7 @@ import webpush from 'web-push';
 import { getTodayForCountry } from '@/lib/utils';
 import { sendMerchantPush } from '@/lib/merchant-push';
 import { sendBookingSms, getGlobalSmsConfig } from '@/lib/sms';
+import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
 import { verifyCronAuth, rateLimitDelay } from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
 
@@ -184,7 +185,7 @@ export async function GET(request: NextRequest) {
     // Fetch merchants for locale-aware notifications
     const depositMerchantIds = [...new Set((expiredSlots || []).map(s => s.merchant_id))];
     const { data: depositMerchants } = depositMerchantIds.length > 0
-      ? await supabase.from('merchants').select('id, locale, booking_mode').in('id', depositMerchantIds)
+      ? await supabase.from('merchants').select('id, locale, booking_mode, user_id, shop_name').in('id', depositMerchantIds)
       : { data: [] };
     const depositMerchantMap = new Map((depositMerchants || []).map(m => [m.id, m]));
 
@@ -223,7 +224,8 @@ export async function GET(request: NextRequest) {
             .eq('id', slot.id);
         }
 
-        const isEN = depositMerchantMap.get(slot.merchant_id)?.locale === 'en';
+        const depositMerchant = depositMerchantMap.get(slot.merchant_id);
+        const isEN = depositMerchant?.locale === 'en';
         depositPushes.push(sendMerchantPush({
           supabase, merchantId: slot.merchant_id, notificationType: 'deposit_expired', referenceId: slot.id,
           title: isEN ? 'Slot released — deposit not received' : 'Créneau libéré — acompte non reçu',
@@ -232,6 +234,24 @@ export async function GET(request: NextRequest) {
             : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
           url: `/dashboard/planning?date=${slot.slot_date}`, tag: 'qarte-merchant-deposit',
         }));
+
+        // Email notification
+        if (depositMerchant?.user_id) {
+          (async () => {
+            try {
+              const { data: authUser } = await supabase.auth.admin.getUserById(depositMerchant.user_id);
+              if (authUser?.user?.email) {
+                const subject = isEN
+                  ? `Slot released — ${slot.client_name}`
+                  : `Créneau libéré — ${slot.client_name}`;
+                const text = isEN
+                  ? `The slot on ${slot.slot_date} at ${slot.start_time} for ${slot.client_name} has been released — the deposit was not received in time.\n\nLog in to your dashboard to see your bookings.\nhttps://getqarte.com/dashboard/planning`
+                  : `Le créneau du ${slot.slot_date} à ${slot.start_time} pour ${slot.client_name} a été libéré — l'acompte n'a pas été reçu à temps.\n\nConnecte-toi sur ton dashboard pour voir tes réservations.\nhttps://getqarte.com/dashboard/planning`;
+                resend?.emails.send({ from: EMAIL_FROM, headers: EMAIL_HEADERS, to: authUser.user.email, subject, text }).catch(() => {});
+              }
+            } catch { /* silent */ }
+          })();
+        }
 
         depositReleased++;
       } catch (slotErr) {
@@ -253,7 +273,7 @@ export async function GET(request: NextRequest) {
     // Fetch merchants for warning locale (reuse map if overlap)
     const warningMerchantIds = [...new Set((expiringSlots || []).map(s => s.merchant_id))].filter(id => !depositMerchantMap.has(id));
     if (warningMerchantIds.length > 0) {
-      const { data: warnMerchants } = await supabase.from('merchants').select('id, locale, booking_mode').in('id', warningMerchantIds);
+      const { data: warnMerchants } = await supabase.from('merchants').select('id, locale, booking_mode, user_id, shop_name').in('id', warningMerchantIds);
       for (const m of warnMerchants || []) depositMerchantMap.set(m.id, m);
     }
 

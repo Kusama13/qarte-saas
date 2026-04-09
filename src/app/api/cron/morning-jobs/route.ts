@@ -8,6 +8,7 @@ import { sendBirthdayNotificationEmail } from '@/lib/email';
 import type { EmailLocale } from '@/emails/translations';
 import { sendMerchantPush } from '@/lib/merchant-push';
 import { sendBookingSms } from '@/lib/sms';
+import { resend, EMAIL_FROM, EMAIL_HEADERS } from '@/lib/resend';
 import { verifyCronAuth, batchGetUserEmails, rateLimitDelay } from '@/lib/cron-helpers';
 import logger from '@/lib/logger';
 
@@ -343,6 +344,22 @@ export async function GET(request: NextRequest) {
             : `${slot.client_name} — ${slot.slot_date} à ${slot.start_time}`,
           url: `/dashboard/planning?date=${slot.slot_date}`, tag: 'qarte-merchant-deposit',
         }));
+
+        // Email notification
+        (async () => {
+          try {
+            const { data: authUser } = await supabase.auth.admin.getUserById(bm.user_id);
+            if (authUser?.user?.email) {
+              const subject = isEN
+                ? `Slot released — ${slot.client_name}`
+                : `Créneau libéré — ${slot.client_name}`;
+              const text = isEN
+                ? `The slot on ${slot.slot_date} at ${slot.start_time} for ${slot.client_name} has been released — the deposit was not received in time.\n\nLog in to your dashboard to see your bookings.\nhttps://getqarte.com/dashboard/planning`
+                : `Le créneau du ${slot.slot_date} à ${slot.start_time} pour ${slot.client_name} a été libéré — l'acompte n'a pas été reçu à temps.\n\nConnecte-toi sur ton dashboard pour voir tes réservations.\nhttps://getqarte.com/dashboard/planning`;
+              resend?.emails.send({ from: EMAIL_FROM, headers: EMAIL_HEADERS, to: authUser.user.email, subject, text }).catch(() => {});
+            }
+          } catch { /* silent */ }
+        })();
       }
 
       results.depositDeadline.released++;
