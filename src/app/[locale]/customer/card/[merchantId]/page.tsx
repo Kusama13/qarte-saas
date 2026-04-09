@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, use, useCallback, useMemo } from 'react';
-import Image from 'next/image';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -24,9 +23,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { isIOSDevice, isStandalonePWA } from '@/lib/push';
-import { trackPwaInstalled, trackCtaClick } from '@/lib/analytics';
-import { fbEvents } from '@/components/analytics/FacebookPixel';
-import { ttEvents } from '@/components/analytics/TikTokPixel';
+import { trackPwaInstalled } from '@/lib/analytics';
 import { ensureTextContrast } from '@/lib/utils';
 import { sparkleGrand } from '@/lib/sparkles';
 import { DEMO_MERCHANTS_FLAT as DEMO_MERCHANTS } from '@/lib/demo-merchants';
@@ -169,9 +166,6 @@ export default function CustomerCardPage({
   const [showMemberCardModal, setShowMemberCardModal] = useState(false);
 
   const [isMobile, setIsMobile] = useState(false);
-  const [showDemoPopup, setShowDemoPopup] = useState(() => {
-    try { return !sessionStorage.getItem('qarte_demo_popup_seen'); } catch { return true; }
-  });
 
   // Push notifications (shared hook)
   const push = usePushNotifications({
@@ -306,6 +300,19 @@ export default function CustomerCardPage({
             flagged_reason: null,
           });
           setVisits([demoVisit('1', 2), demoVisit('2', 7), demoVisit('3', 14)]);
+
+          // Demo upcoming appointments
+          if (m.planning_enabled) {
+            const tomorrow = new Date(Date.now() + 86400000);
+            if (tomorrow.getDay() === 0) tomorrow.setDate(tomorrow.getDate() + 1);
+            const nextWeek = new Date(Date.now() + 6 * 86400000);
+            if (nextWeek.getDay() === 0) nextWeek.setDate(nextWeek.getDate() + 1);
+            const fmt = (d: Date) => d.toISOString().split('T')[0];
+            setUpcomingAppointments([
+              { id: 'apt-1', slot_date: fmt(tomorrow), start_time: '14:00', total_duration_minutes: 60, deposit_confirmed: null, booked_online: true, planning_slot_services: [{ service_id: 's1', service: { name: 'Prestation demo', duration: 60 } }] },
+              { id: 'apt-2', slot_date: fmt(nextWeek), start_time: '10:30', total_duration_minutes: 90, deposit_confirmed: null, booked_online: true, planning_slot_services: [{ service_id: 's2', service: { name: 'Prestation demo 2', duration: 90 } }] },
+            ]);
+          }
         } catch {
           router.push('/customer/cards');
           return;
@@ -1344,82 +1351,6 @@ export default function CustomerCardPage({
         </div>
       )}
 
-      {/* Demo popup */}
-      <AnimatePresence>
-        {isPreview && isDemo && showDemoPopup && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-[2px]"
-            onClick={() => { setShowDemoPopup(false); try { sessionStorage.setItem('qarte_demo_popup_seen', '1'); } catch {} }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 80, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 80, scale: 0.95 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-sm mx-4 mb-4 sm:mb-0 rounded-3xl overflow-hidden shadow-2xl bg-white"
-            >
-              {/* Image header with gradient overlay */}
-              <div className="relative h-40 overflow-hidden">
-                <Image src="/images/popup.jpg" alt="" width={400} height={160} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/30 via-violet-500/20 to-transparent" />
-              </div>
-
-              {/* Content */}
-              <div className="px-7 pt-5 pb-7 text-center">
-                <p className="text-lg text-gray-500 leading-relaxed mb-5">
-                  {t('demoPopupDesc')}
-                </p>
-
-                <button
-                  onClick={() => { setShowDemoPopup(false); try { sessionStorage.setItem('qarte_demo_popup_seen', '1'); } catch {} }}
-                  className="text-sm font-semibold text-indigo-600 hover:text-violet-600 transition-colors"
-                >
-                  {t('demoPopupCta')}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Demo CTA - Sticky bottom button to sign up */}
-      {isPreview && isDemo && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="fixed bottom-0 left-0 right-0 z-50 p-3 bg-white/90 backdrop-blur-xl border-t border-gray-200 shadow-2xl shadow-gray-900/10"
-        >
-          <div className="max-w-lg mx-auto flex gap-2.5">
-            <motion.div
-              animate={{ scale: [1, 1.04, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-              className="flex-1"
-            >
-              <Link
-                href={`/p/${merchantId}`}
-                target="_blank"
-                onClick={() => { trackCtaClick('demo_card_vitrine', 'demo_card'); }}
-                className="flex items-center justify-center py-3 px-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-sm rounded-xl shadow-md shadow-amber-200 hover:shadow-lg hover:from-amber-600 hover:to-orange-600 transition-all active:scale-[0.98]"
-              >
-                {t('demoVitrine')}
-              </Link>
-            </motion.div>
-            <Link
-              href="/auth/merchant/signup"
-              onClick={() => { trackCtaClick('demo_card_signup', 'demo_card'); fbEvents.initiateCheckout(); ttEvents.clickButton(); }}
-              className="flex-1 flex items-center justify-center py-3 px-4 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold text-sm rounded-xl shadow-md shadow-indigo-200 hover:shadow-lg hover:from-indigo-700 hover:to-violet-700 transition-all active:scale-[0.98]"
-            >
-              {t('tryFree')}
-            </Link>
-          </div>
-        </motion.div>
-      )}
 
       {/* Voucher Modals */}
       <VoucherModals

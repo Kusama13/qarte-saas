@@ -21,6 +21,7 @@ import {
   BarChart3,
   Link2,
   MessageSquare,
+  Eye,
 } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { cn } from '@/lib/utils';
@@ -36,6 +37,7 @@ const navItems = [
   { href: '/admin/sms', icon: MessageSquare, label: 'SMS' },
   { href: '/admin/depenses', icon: Wallet, label: 'Dépenses' },
   { href: '/admin/announcements', icon: Bell, label: 'Annonces' },
+  { href: '/admin/demos', icon: Eye, label: 'Démos' },
 ];
 
 export default function AdminLayout({
